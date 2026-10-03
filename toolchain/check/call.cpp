@@ -249,6 +249,10 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
 
   auto& callee = context.functions().Get(callee_function.function_id);
+  if (callee.return_type_inst_id == SemIR::AutoType::TypeInstId) {
+    context.TODO(loc_id, "call to function before return type is deduced");
+    return SemIR::ErrorInst::InstId;
+  }
   auto return_type_id =
       callee.GetDeclaredReturnType(context.sem_ir(), *callee_specific_id);
   if (!return_type_id.has_value()) {

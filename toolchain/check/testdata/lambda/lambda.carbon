@@ -26,12 +26,17 @@ fn TestBasic() {
   alias generic_id = fn [T: Core.Copy](x: T) -> T { return x; };
   let unused c: i32 = generic_id(a);
   let unused d: bool = generic_id(true);
+
+  alias terse_id_i32 = fn (x: i32) => x;
+  let unused e: i32 = terse_id_i32(42);
+  let unused f: i32 = (fn (x: i32) => x)(10);
 }
 //@dump-sem-ir-end
 
 fn PassToGeneric[F: type](unused f: F) {}
 
 alias id_fn = fn (x: i32) -> i32 { return x; };
+alias terse_id_fn = fn (x: i32) => x;
 
 fn TestFormsAndPatterns() {
   alias with_var = fn (var x: i32) -> i32 {
@@ -52,11 +57,18 @@ fn TestFormsAndPatterns() {
   let _: i32 = with_default();
   let _: i32 = with_default(8);
 
+  alias terse_with_default = fn (x: i32 = 7) => x;
+  let _: i32 = terse_with_default();
+  let _: i32 = terse_with_default(8);
+
   alias outer = fn () -> i32 {
     alias inner = fn (x: i32) -> i32 { return x; };
     return inner(3);
   };
   let _: i32 = outer();
+
+  alias terse_outer = fn () => (fn (x: i32) => x)(3);
+  let _: i32 = terse_outer();
 
   alias loop_in_lambda = fn () {
     while (true) {
@@ -66,10 +78,12 @@ fn TestFormsAndPatterns() {
   loop_in_lambda();
 
   PassToGeneric(id_fn);
+  PassToGeneric(terse_id_fn);
 }
 
 class InClass {
   var field: i32 = (fn (x: i32) -> i32 { return x; })(1);
+  var terse_field: i32 = (fn (x: i32) => x)(1);
 }
 
 // --- fail_self.carbon
@@ -155,6 +169,18 @@ fn F() {
     // CHECK:STDERR:
     return y;
   });
+  // CHECK:STDERR: fail_unused.carbon:[[@LINE+11]]:8: warning: binding `x` unused [UnusedBinding]
+  // CHECK:STDERR:   (fn (x: i32, unused y: i32) => y);
+  // CHECK:STDERR:        ^~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_unused.carbon:[[@LINE+7]]:23: error: variable `y` marked `unused` but used [UnusedButUsed]
+  // CHECK:STDERR:   (fn (x: i32, unused y: i32) => y);
+  // CHECK:STDERR:                       ^~~~~~
+  // CHECK:STDERR: fail_unused.carbon:[[@LINE+4]]:34: note: usage here [UnusedButUsedHere]
+  // CHECK:STDERR:   (fn (x: i32, unused y: i32) => y);
+  // CHECK:STDERR:                                  ^
+  // CHECK:STDERR:
+  (fn (x: i32, unused y: i32) => y);
 }
 
 // --- fail_break_continue.carbon
@@ -220,6 +246,14 @@ fn F() {
   // CHECK:STDERR:                         ^
   // CHECK:STDERR:
   (fn () -> Incomplete {});
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+7]]:27: error: function returns incomplete type `Incomplete` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR:   (fn (p: Incomplete*) => *p);
+  // CHECK:STDERR:                           ^~
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-26]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: class Incomplete;
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  (fn (p: Incomplete*) => *p);
 }
 
 // --- fail_conversion.carbon
@@ -250,17 +284,22 @@ fn F() {
   // CHECK:STDERR:    ^~~~~~~~~~~
   // CHECK:STDERR:
   (fn -> i32 { return 0; });
+  // CHECK:STDERR: fail_todo_positional_params.carbon:[[@LINE+4]]:4: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+  // CHECK:STDERR:   (fn => 0);
+  // CHECK:STDERR:    ^~~~~
+  // CHECK:STDERR:
+  (fn => 0);
 }
 
-// --- fail_todo_terse_body.carbon
+// --- fail_todo_dependent_terse_return.carbon
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_terse_body.carbon:[[@LINE+4]]:4: error: semantics TODO: `terse lambda body` [SemanticsTodo]
-  // CHECK:STDERR:   (fn (x: i32) => x);
-  // CHECK:STDERR:    ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_dependent_terse_return.carbon:[[@LINE+4]]:4: error: semantics TODO: `deduced return type that depends on a generic parameter` [SemanticsTodo]
+  // CHECK:STDERR:   (fn [T: Core.Copy](x: T) => x);
+  // CHECK:STDERR:    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  (fn (x: i32) => x);
+  (fn [T: Core.Copy](x: T) => x);
 }
 
 // CHECK:STDOUT: --- basic.carbon
@@ -354,6 +393,12 @@ fn F() {
 // CHECK:STDOUT:   %return.param_patt.5a1: %pattern_type.831 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.c0c: %pattern_type.831 = return_slot_pattern %return.param_patt.5a1, bool [concrete]
 // CHECK:STDOUT:   %fn.specific_fn.83e: <specific function> = specific_function %fn.f42, @fn.loc13(%Copy.facet.7af) [concrete]
+// CHECK:STDOUT:   %fn.type.389: type = fn_type @fn.loc17 [concrete]
+// CHECK:STDOUT:   %fn.0d5: %fn.type.389 = struct_value () [concrete]
+// CHECK:STDOUT:   %e.patt: %pattern_type.6b6 = value_binding_pattern e [concrete]
+// CHECK:STDOUT:   %f.patt.bde: %pattern_type.6b6 = value_binding_pattern f [concrete]
+// CHECK:STDOUT:   %fn.type.41c: type = fn_type @fn.loc19 [concrete]
+// CHECK:STDOUT:   %fn.30f: %fn.type.41c = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %complete_type.127: <witness> = complete_type_witness bool [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.d02: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.7af) [concrete]
@@ -411,14 +456,14 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %id_i32: %fn.type.360 = alias_binding id_i32, %fn.decl.loc8 [concrete = constants.%fn.10d]
 // CHECK:STDOUT:   %id_i32.ref: %fn.type.360 = name_ref id_i32, %id_i32 [concrete = constants.%fn.10d]
-// CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
+// CHECK:STDOUT:   %int_42.loc9: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
 // CHECK:STDOUT:   %impl.elem0.loc9: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc9_23.1: <bound method> = bound_method %int_42, %impl.elem0.loc9 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.bf3]
+// CHECK:STDOUT:   %bound_method.loc9_23.1: <bound method> = bound_method %int_42.loc9, %impl.elem0.loc9 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.bf3]
 // CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_23.2: <bound method> = bound_method %int_42, %specific_fn.loc9 [concrete = constants.%bound_method.098]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9: init %i32 = call %bound_method.loc9_23.2(%int_42) [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:   %bound_method.loc9_23.2: <bound method> = bound_method %int_42.loc9, %specific_fn.loc9 [concrete = constants.%bound_method.098]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9: init %i32 = call %bound_method.loc9_23.2(%int_42.loc9) [concrete = constants.%int_42.ac4]
 // CHECK:STDOUT:   %.loc9_23.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_42.ac4]
-// CHECK:STDOUT:   %.loc9_23.2: %i32 = converted %int_42, %.loc9_23.1 [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:   %.loc9_23.2: %i32 = converted %int_42.loc9, %.loc9_23.1 [concrete = constants.%int_42.ac4]
 // CHECK:STDOUT:   %fn.call.loc9: init %i32 = call %id_i32.ref(%.loc9_23.2)
 // CHECK:STDOUT:   %.loc9_25.1: %i32 = value_of_initializer %fn.call.loc9
 // CHECK:STDOUT:   %.loc9_25.2: %i32 = converted %fn.call.loc9, %.loc9_25.1
@@ -441,14 +486,14 @@ fn F() {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [concrete = constants.%int_10.64f]
+// CHECK:STDOUT:   %int_10.loc11: Core.IntLiteral = int_value 10 [concrete = constants.%int_10.64f]
 // CHECK:STDOUT:   %impl.elem0.loc11: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc11_58.1: <bound method> = bound_method %int_10, %impl.elem0.loc11 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.dcb]
+// CHECK:STDOUT:   %bound_method.loc11_58.1: <bound method> = bound_method %int_10.loc11, %impl.elem0.loc11 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.dcb]
 // CHECK:STDOUT:   %specific_fn.loc11: <specific function> = specific_function %impl.elem0.loc11, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc11_58.2: <bound method> = bound_method %int_10, %specific_fn.loc11 [concrete = constants.%bound_method.1b6]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11: init %i32 = call %bound_method.loc11_58.2(%int_10) [concrete = constants.%int_10.6bf]
+// CHECK:STDOUT:   %bound_method.loc11_58.2: <bound method> = bound_method %int_10.loc11, %specific_fn.loc11 [concrete = constants.%bound_method.1b6]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11: init %i32 = call %bound_method.loc11_58.2(%int_10.loc11) [concrete = constants.%int_10.6bf]
 // CHECK:STDOUT:   %.loc11_58.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc11 [concrete = constants.%int_10.6bf]
-// CHECK:STDOUT:   %.loc11_58.2: %i32 = converted %int_10, %.loc11_58.1 [concrete = constants.%int_10.6bf]
+// CHECK:STDOUT:   %.loc11_58.2: %i32 = converted %int_10.loc11, %.loc11_58.1 [concrete = constants.%int_10.6bf]
 // CHECK:STDOUT:   %fn.call.loc11: init %i32 = call %fn.decl.loc11(%.loc11_58.2)
 // CHECK:STDOUT:   %.loc11_60.1: %i32 = value_of_initializer %fn.call.loc11
 // CHECK:STDOUT:   %.loc11_60.2: %i32 = converted %fn.call.loc11, %.loc11_60.1
@@ -515,6 +560,66 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.831 = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %fn.decl.loc17: %fn.type.389 = fn_decl @fn.loc17 [concrete = constants.%fn.0d5] {
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt.cee]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.e3b]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, constants.%i32 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %x: %i32 = wrapper_binding x, %x.param
+// CHECK:STDOUT:     %.loc17: Core.Form = init_form constants.%i32 [concrete = constants.%.795f]
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %terse_id_i32: %fn.type.389 = alias_binding terse_id_i32, %fn.decl.loc17 [concrete = constants.%fn.0d5]
+// CHECK:STDOUT:   %terse_id_i32.ref: %fn.type.389 = name_ref terse_id_i32, %terse_id_i32 [concrete = constants.%fn.0d5]
+// CHECK:STDOUT:   %int_42.loc18: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
+// CHECK:STDOUT:   %impl.elem0.loc18: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
+// CHECK:STDOUT:   %bound_method.loc18_36.1: <bound method> = bound_method %int_42.loc18, %impl.elem0.loc18 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.bf3]
+// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc18_36.2: <bound method> = bound_method %int_42.loc18, %specific_fn.loc18 [concrete = constants.%bound_method.098]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18: init %i32 = call %bound_method.loc18_36.2(%int_42.loc18) [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:   %.loc18_36.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc18 [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:   %.loc18_36.2: %i32 = converted %int_42.loc18, %.loc18_36.1 [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:   %fn.call.loc18: init %i32 = call %terse_id_i32.ref(%.loc18_36.2)
+// CHECK:STDOUT:   %.loc18_38.1: %i32 = value_of_initializer %fn.call.loc18
+// CHECK:STDOUT:   %.loc18_38.2: %i32 = converted %fn.call.loc18, %.loc18_38.1
+// CHECK:STDOUT:   %i32.loc18: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %e: %i32 = wrapper_binding e, %.loc18_38.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %e.patt: %pattern_type.6b6 = value_binding_pattern e [concrete = constants.%e.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %fn.decl.loc19: %fn.type.41c = fn_decl @fn.loc19 [concrete = constants.%fn.30f] {
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%x.param_patt.cee]
+// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt.e3b]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, constants.%i32 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %x.param: %i32 = value_param call_param0
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %x: %i32 = wrapper_binding x, %x.param
+// CHECK:STDOUT:     %.loc19: Core.Form = init_form constants.%i32 [concrete = constants.%.795f]
+// CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
+// CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %int_10.loc19: Core.IntLiteral = int_value 10 [concrete = constants.%int_10.64f]
+// CHECK:STDOUT:   %impl.elem0.loc19: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
+// CHECK:STDOUT:   %bound_method.loc19_42.1: <bound method> = bound_method %int_10.loc19, %impl.elem0.loc19 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.dcb]
+// CHECK:STDOUT:   %specific_fn.loc19: <specific function> = specific_function %impl.elem0.loc19, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc19_42.2: <bound method> = bound_method %int_10.loc19, %specific_fn.loc19 [concrete = constants.%bound_method.1b6]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19: init %i32 = call %bound_method.loc19_42.2(%int_10.loc19) [concrete = constants.%int_10.6bf]
+// CHECK:STDOUT:   %.loc19_42.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc19 [concrete = constants.%int_10.6bf]
+// CHECK:STDOUT:   %.loc19_42.2: %i32 = converted %int_10.loc19, %.loc19_42.1 [concrete = constants.%int_10.6bf]
+// CHECK:STDOUT:   %fn.call.loc19: init %i32 = call %fn.decl.loc19(%.loc19_42.2)
+// CHECK:STDOUT:   %.loc19_44.1: %i32 = value_of_initializer %fn.call.loc19
+// CHECK:STDOUT:   %.loc19_44.2: %i32 = converted %fn.call.loc19, %.loc19_44.1
+// CHECK:STDOUT:   %i32.loc19: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %f: %i32 = wrapper_binding f, %.loc19_44.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %f.patt: %pattern_type.6b6 = value_binding_pattern f [concrete = constants.%f.patt.bde]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -577,6 +682,28 @@ fn F() {
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @fn.loc13.%T.as_type.loc13_43.1 (%T.as_type) to %.loc13_49.1 = call %bound_method.loc13_60.2(%x.ref)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @fn.loc17(%x.param: %i32) -> out %return.param: %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %bound_method.loc17_39.1: <bound method> = bound_method %x.ref, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc17_39.2: <bound method> = bound_method %x.ref, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc17_39.2(%x.ref)
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @fn.loc19(%x.param: %i32) -> out %return.param: %i32 {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
+// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %bound_method.loc19_39.1: <bound method> = bound_method %x.ref, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc19_39.2: <bound method> = bound_method %x.ref, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc19_39.2(%x.ref)
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @fn.loc13(constants.%T.f84) {

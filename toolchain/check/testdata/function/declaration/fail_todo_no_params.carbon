@@ -57,9 +57,9 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fn A => 0;
 // CHECK:STDERR: ^~~~~~~
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `HandleFunctionTerseDefinition` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:9: error: `Core.Copy` implicitly referenced here, but package `Core` not found [CoreNotFound]
 // CHECK:STDERR: fn A => 0;
-// CHECK:STDERR: ^~~~~~~~~~
+// CHECK:STDERR:         ^
 // CHECK:STDERR:
 fn A => 0;
 
@@ -184,7 +184,36 @@ fn A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_arrow_body.carbon
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A;
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
+// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %.f7d: Core.Form = init_form Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type Core.IntLiteral [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type = return_slot_pattern %return.param_patt, Core.IntLiteral [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .A = %A.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
+// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, Core.IntLiteral [concrete = constants.%return.patt]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc12: Core.Form = init_form Core.IntLiteral [concrete = constants.%.f7d]
+// CHECK:STDOUT:     %return.param: ref Core.IntLiteral = out_param call_param0
+// CHECK:STDOUT:     %return: ref Core.IntLiteral = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @A() -> out %return.param: Core.IntLiteral {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   return <error>
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_invalid_file_generic_regression_test.carbon
 // CHECK:STDOUT:

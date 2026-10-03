@@ -650,6 +650,89 @@ auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
   }
 }
 
+auto CheckFunctionTerseBody(Context& context, Parse::NodeId node_id,
+                            SemIR::FunctionId function_id,
+                            SemIR::InstId body_expr_id) -> void {
+  auto return_type_id = context.insts().Get(body_expr_id).type_id();
+  if (context.types().GetConstantId(return_type_id).is_symbolic()) {
+    context.TODO(node_id,
+                 "deduced return type that depends on a generic parameter");
+    return_type_id = SemIR::ErrorInst::TypeId;
+  }
+
+  auto& function = context.functions().Get(function_id);
+  auto return_type_inst_id = context.types().GetTypeInstId(return_type_id);
+  auto body_loc_id = SemIR::LocId(body_expr_id);
+
+  auto return_form_inst_id = AddInstInNoBlock(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), body_loc_id,
+          SemIR::InitForm{.type_id = SemIR::FormType::TypeId,
+                          .type_component_inst_id = return_type_inst_id}));
+  auto pattern_type_id = GetPatternType(context, return_type_id);
+  auto out_param_pattern_id = AddInstInNoBlock(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), body_loc_id,
+          SemIR::OutParamPattern{.type_id = pattern_type_id,
+                                 .pretty_name_id = SemIR::NameId::ReturnSlot}));
+  auto return_pattern_id = AddInstInNoBlock(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), body_loc_id,
+          SemIR::ReturnSlotPattern{.type_id = pattern_type_id,
+                                   .subpattern_id = out_param_pattern_id,
+                                   .type_inst_id = return_type_inst_id}));
+  auto return_param_index = function.call_param_ranges.explicit_end();
+  auto out_param_id = AddInstInNoBlock(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), body_loc_id,
+          SemIR::OutParam{.type_id = return_type_id,
+                          .index = return_param_index,
+                          .pretty_name_id = SemIR::NameId::ReturnSlot}));
+  auto return_slot_id = AddInstInNoBlock(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), body_loc_id,
+                   SemIR::ReturnSlot{.type_id = return_type_id,
+                                     .type_inst_id = return_type_inst_id,
+                                     .storage_id = out_param_id}));
+
+  function.return_type_inst_id = return_type_inst_id;
+  function.return_form_inst_id = return_form_inst_id;
+  function.return_pattern_id = return_pattern_id;
+
+  auto append_to_block = [&](SemIR::InstBlockId& block_id,
+                             llvm::ArrayRef<SemIR::InstId> new_insts) {
+    llvm::SmallVector<SemIR::InstId> insts;
+    auto old_insts = context.inst_blocks().GetOrEmpty(block_id);
+    insts.reserve(old_insts.size() + new_insts.size());
+    llvm::append_range(insts, old_insts);
+    llvm::append_range(insts, new_insts);
+    block_id = context.inst_blocks().Add(insts);
+  };
+  append_to_block(function.pattern_block_id,
+                  {out_param_pattern_id, return_pattern_id});
+  append_to_block(function.call_param_patterns_id, {out_param_pattern_id});
+  append_to_block(function.call_params_id, {out_param_id});
+  function.call_param_ranges = SemIR::Function::CallParamIndexRanges(
+      function.call_param_ranges.implicit_end(),
+      function.call_param_ranges.explicit_end(),
+      SemIR::CallParamIndex(return_param_index.index + 1));
+
+  auto decl =
+      context.insts().GetAs<SemIR::FunctionDecl>(function.definition_id);
+  append_to_block(decl.decl_block_id,
+                  {return_form_inst_id, out_param_id, return_slot_id});
+  ReplaceInstPreservingConstantValue(context, function.definition_id, decl);
+
+  CheckFunctionReturnPatternType(context, body_loc_id,
+                                 function.return_pattern_id,
+                                 SemIR::SpecificId::None);
+  BuildReturnWithExpr(context, body_loc_id, body_expr_id);
+}
+
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
     -> void {
   context.inst_block_stack().Pop();

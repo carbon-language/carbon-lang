@@ -8,6 +8,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/type.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/function.h"
@@ -38,6 +39,10 @@ auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
     auto return_form = context.PopReturnForm();
     return_type_inst_id = return_form.type_component_inst_id;
     return_form_inst_id = return_form.form_inst_id;
+  } else if (context.tokens().GetKind(context.parse_tree().node_token(
+                 node_id)) == Lex::TokenKind::EqualGreater) {
+    GetSingletonType(context, SemIR::AutoType::TypeInstId);
+    return_type_inst_id = SemIR::AutoType::TypeInstId;
   }
 
   Parse::NodeId first_param_node_id = Parse::NoneNodeId();
@@ -133,12 +138,17 @@ auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::LambdaId node_id) -> bool {
+  auto body_expr_id = SemIR::InstId::None;
   if (context.node_stack().PeekIs(Parse::NodeCategory::Expr)) {
-    return context.TODO(node_id, "terse lambda body");
+    body_expr_id = context.node_stack().PopExpr();
   }
   auto function_id =
       context.node_stack().Pop<Parse::NodeKind::LambdaDefinitionStart>();
-  CheckFunctionReturnOnFinish(context, node_id, function_id);
+  if (body_expr_id.has_value()) {
+    CheckFunctionTerseBody(context, node_id, function_id, body_expr_id);
+  } else {
+    CheckFunctionReturnOnFinish(context, node_id, function_id);
+  }
   FinishFunctionDefinition(context, function_id);
   context.scope_stack().Pop(/*check_unused=*/true);
   context.node_stack().Push(

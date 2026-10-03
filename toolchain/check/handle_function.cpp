@@ -378,6 +378,10 @@ static auto BuildFunctionDecl(Context& context,
     auto return_form = context.PopReturnForm();
     return_type_inst_id = return_form.type_component_inst_id;
     return_form_inst_id = return_form.form_inst_id;
+  } else if (context.tokens().GetKind(context.parse_tree().node_token(
+                 node_id)) == Lex::TokenKind::EqualGreater) {
+    GetSingletonType(context, SemIR::AutoType::TypeInstId);
+    return_type_inst_id = SemIR::AutoType::TypeInstId;
   }
 
   auto name = PopNameComponent(context, return_pattern_id);
@@ -488,8 +492,10 @@ static auto BuildFunctionDecl(Context& context,
   MaybeAddToNameLookup(context, name_context, introducer.modifier_set,
                        name_context.parent_scope_id, decl_id);
 
-  ValidateForEntryPoint(context, node_id, function_decl.function_id,
-                        function_info);
+  if (return_type_inst_id != SemIR::AutoType::TypeInstId) {
+    ValidateForEntryPoint(context, node_id, function_decl.function_id,
+                          function_info);
+  }
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
     context.definitions_required_by_decl().push_back(decl_id);
@@ -688,7 +694,18 @@ auto HandleParseNode(Context& context,
 
 auto HandleParseNode(Context& context, Parse::FunctionTerseDefinitionId node_id)
     -> bool {
-  return context.TODO(node_id, "HandleFunctionTerseDefinition");
+  auto body_expr_id = context.node_stack().PopExpr();
+  auto [signature_node_id, function_id] =
+      context.node_stack()
+          .PopWithNodeId<Parse::NodeKind::FunctionDefinitionStart>();
+
+  CheckFunctionTerseBody(context, node_id, function_id, body_expr_id);
+  ValidateForEntryPoint(context, signature_node_id, function_id,
+                        context.functions().Get(function_id));
+  FinishFunctionDefinition(context, function_id);
+  context.decl_name_stack().PopScope(/*check_unused=*/true);
+
+  return true;
 }
 
 }  // namespace Carbon::Check

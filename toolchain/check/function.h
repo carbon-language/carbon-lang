@@ -140,6 +140,12 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
 auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
                                  SemIR::FunctionId function_id) -> void;
 
+// Deduces the return type of a terse `=>` function or lambda definition from
+// its body expression and emits the implicit return instruction.
+auto CheckFunctionTerseBody(Context& context, Parse::NodeId node_id,
+                            SemIR::FunctionId function_id,
+                            SemIR::InstId body_expr_id) -> void;
+
 // Finishes definitions started by `StartFunctionDefinition`.
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
     -> void;
