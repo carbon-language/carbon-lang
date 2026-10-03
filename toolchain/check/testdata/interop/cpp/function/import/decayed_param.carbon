@@ -89,23 +89,23 @@ fn F() {
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete]
-// CHECK:STDOUT:   %array_type.d58: type = array_type %int_42, %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.c07: type = pattern_type %array_type.d58 [concrete]
-// CHECK:STDOUT:   %n.patt.dac: %pattern_type.c07 = ref_binding_pattern n [concrete]
-// CHECK:STDOUT:   %n.var_patt: %pattern_type.c07 = var_pattern %n.patt.dac [concrete]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %Array.db6: type = class_type @Array, @Array(%i32, %int_42) [concrete]
+// CHECK:STDOUT:   %pattern_type.b4a: type = pattern_type %Array.db6 [concrete]
+// CHECK:STDOUT:   %n.patt.b66: %pattern_type.b4a = ref_binding_pattern n [concrete]
+// CHECK:STDOUT:   %n.var_patt: %pattern_type.b4a = var_pattern %n.patt.b66 [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %UnformedInit.type: type = facet_type <@UnformedInit> [concrete]
 // CHECK:STDOUT:   %T.fef: %UnformedInit.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.215: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op.2, @T.as_type.as.DefaultOrUnformed.impl.52f(%T.fef) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.f65: %T.as_type.as.DefaultOrUnformed.impl.Op.type.215 = struct_value () [symbolic]
-// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %ptr.e8f: type = ptr_type %T.67d [symbolic]
 // CHECK:STDOUT:   %UnformedInit.impl_witness.0a2: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.9b9, @Int.as.UnformedInit.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %UnformedInit.facet.cac: %UnformedInit.type = facet_value %i32, (%UnformedInit.impl_witness.0a2) [concrete]
-// CHECK:STDOUT:   %UnformedInit.impl_witness.768: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.96b, @array_type.as.UnformedInit.impl(%UnformedInit.facet.cac, %int_42) [concrete]
-// CHECK:STDOUT:   %UnformedInit.facet.033: %UnformedInit.type = facet_value %array_type.d58, (%UnformedInit.impl_witness.768) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.06a: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.8f5, @T.as_type.as.DefaultOrUnformed.impl.52f(%UnformedInit.facet.033) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %array_type.d58, (%DefaultOrUnformed.impl_witness.06a) [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness.4e2: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.76f, @Array.as.UnformedInit.impl(%UnformedInit.facet.cac, %int_42) [concrete]
+// CHECK:STDOUT:   %UnformedInit.facet.3bd: %UnformedInit.type = facet_value %Array.db6, (%UnformedInit.impl_witness.4e2) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.a28: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.8f5, @T.as_type.as.DefaultOrUnformed.impl.52f(%UnformedInit.facet.3bd) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %Array.db6, (%DefaultOrUnformed.impl_witness.a28) [concrete]
 // CHECK:STDOUT:   %TakesArray.cpp_overload_set.type: type = cpp_overload_set_type @TakesArray.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %TakesArray.cpp_overload_set.value: %TakesArray.cpp_overload_set.type = cpp_overload_set_value @TakesArray.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
@@ -204,7 +204,7 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.518: <bound method> = bound_method %uninit, %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %TakesFunction.cpp_overload_set.type: type = cpp_overload_set_type @TakesFunction.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %TakesFunction.cpp_overload_set.value: %TakesFunction.cpp_overload_set.type = cpp_overload_set_value @TakesFunction.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %.659: type = cpp_fn_ptr_type clang_function_pointer_type7E000000 [concrete]
+// CHECK:STDOUT:   %.659: type = cpp_fn_ptr_type clang_function_pointer_type41000000 [concrete]
 // CHECK:STDOUT:   %TakesFunction.type: type = fn_type @TakesFunction [concrete]
 // CHECK:STDOUT:   %TakesFunction: %TakesFunction.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.266: %.659 = cpp_addr_of_fn %G, @G [concrete]
@@ -216,8 +216,8 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.6: %Destroy.WithSelf.Op.type.ef016f.6 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.6: type = fn_type @Destroy.WithSelf.SelfDestruct.loc10_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.6: %Destroy.WithSelf.SelfDestruct.type.fbceb5.6 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.087: %pattern_type.c07 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.b22: %pattern_type.c07 = wrapper_binding_pattern self, %self.param_patt.087 [concrete]
+// CHECK:STDOUT:   %self.param_patt.d6f: %pattern_type.b4a = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.365: %pattern_type.b4a = wrapper_binding_pattern self, %self.param_patt.d6f [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.7: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc10_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.7: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.7 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_41: Core.IntLiteral = int_value 41 [concrete]
@@ -275,7 +275,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.083: @T.as_type.as.DefaultOrUnformed.impl.52f.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.215) = import_ref Core//prelude/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.52f.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.f65)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.8f5 = impl_witness_table (%Core.import_ref.083), @T.as_type.as.DefaultOrUnformed.impl.52f [concrete]
-// CHECK:STDOUT:   %UnformedInit.impl_witness_table.96b = impl_witness_table (), @array_type.as.UnformedInit.impl [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness_table.76f = impl_witness_table (), @Array.as.UnformedInit.impl [concrete]
 // CHECK:STDOUT:   %UnformedInit.impl_witness_table.9b9 = impl_witness_table (), @Int.as.UnformedInit.impl [concrete]
 // CHECK:STDOUT:   %TakesArray.cpp_overload_set.value: %TakesArray.cpp_overload_set.type = cpp_overload_set_value @TakesArray.cpp_overload_set [concrete = constants.%TakesArray.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.import_ref.edf: @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
@@ -371,45 +371,45 @@ fn F() {
 // CHECK:STDOUT:     %self: ref %i32 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.6: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.7 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc10_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.7] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.c07 = ref_param_pattern [concrete = constants.%self.param_patt.087]
-// CHECK:STDOUT:     %self.patt: %pattern_type.c07 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.b22]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.b4a = ref_param_pattern [concrete = constants.%self.param_patt.d6f]
+// CHECK:STDOUT:     %self.patt: %pattern_type.b4a = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.365]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type.d58 = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type.d58 = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.db6 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.db6 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.6: %Destroy.WithSelf.Op.type.ef016f.7 = fn_decl @Destroy.WithSelf.Op.loc10_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.7] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.c07 = ref_param_pattern [concrete = constants.%self.param_patt.087]
-// CHECK:STDOUT:     %self.patt: %pattern_type.c07 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.b22]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.b4a = ref_param_pattern [concrete = constants.%self.param_patt.d6f]
+// CHECK:STDOUT:     %self.patt: %pattern_type.b4a = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.365]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type.d58 = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type.d58 = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.db6 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.db6 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.var: ref %array_type.d58 = var_storage %n.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%array_type.d58, (constants.%DefaultOrUnformed.impl_witness.06a) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc10_24.1: %DefaultOrUnformed.type = converted constants.%array_type.d58, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc10_24.1 [concrete = constants.%array_type.d58]
-// CHECK:STDOUT:   %.loc10_24.2: type = converted %.loc10_24.1, %as_type [concrete = constants.%array_type.d58]
+// CHECK:STDOUT:   %n.var: ref %Array.db6 = var_storage %n.var_patt
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Array.db6, (constants.%DefaultOrUnformed.impl_witness.a28) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %.loc10_24.1: %DefaultOrUnformed.type = converted constants.%Array.db6, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc10_24.1 [concrete = constants.%Array.db6]
+// CHECK:STDOUT:   %.loc10_24.2: type = converted %.loc10_24.1, %as_type [concrete = constants.%Array.db6]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc10_3: ref %array_type.d58 = splice_block %n.var {}
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %array_type.d58 to %.loc10_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   %.loc10_3: ref %Array.db6 = splice_block %n.var {}
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %Array.db6 to %.loc10_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %n.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call
-// CHECK:STDOUT:   %.loc10_23: type = splice_block %array_type [concrete = constants.%array_type.d58] {
+// CHECK:STDOUT:   %.loc10_23: type = splice_block %Array [concrete = constants.%Array.db6] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
-// CHECK:STDOUT:     %array_type: type = array_type %int_42, %i32 [concrete = constants.%array_type.d58]
+// CHECK:STDOUT:     %Array: type = class_type @Array, @Array(constants.%i32, constants.%int_42) [concrete = constants.%Array.db6]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %array_type.d58 = wrapper_binding n, %n.var
+// CHECK:STDOUT:   %n: ref %Array.db6 = wrapper_binding n, %n.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.c07 = ref_binding_pattern n [concrete = constants.%n.patt.dac]
-// CHECK:STDOUT:     %n.var_patt: %pattern_type.c07 = var_pattern %n.patt [concrete = constants.%n.var_patt]
+// CHECK:STDOUT:     %n.patt: %pattern_type.b4a = ref_binding_pattern n [concrete = constants.%n.patt.b66]
+// CHECK:STDOUT:     %n.var_patt: %pattern_type.b4a = var_pattern %n.patt [concrete = constants.%n.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesArray.ref.loc11: %TakesArray.cpp_overload_set.type = name_ref TakesArray, imports.%TakesArray.cpp_overload_set.value [concrete = constants.%TakesArray.cpp_overload_set.value]
-// CHECK:STDOUT:   %n.ref: ref %array_type.d58 = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: ref %Array.db6 = name_ref n, %n
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0.loc11_21: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc11_21.1: <bound method> = bound_method %int_0, %impl.elem0.loc11_21 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -504,7 +504,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_3.2(%self.param: ref %array_type.d58) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_3.2(%self.param: ref %Array.db6) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_41: Core.IntLiteral = int_value 41 [concrete = constants.%int_41]
 // CHECK:STDOUT:   %.loc10_3.1: ref %i32 = array_index %self.param, %int_41
@@ -677,9 +677,9 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_3.2(%self.param: ref %array_type.d58) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc10_3.2(%self.param: ref %Array.db6) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc10_3.2(%self.param: ref %array_type.d58) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc10_3.2(%self.param: ref %Array.db6) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.6(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.6(%self.param)
@@ -699,10 +699,10 @@ fn F() {
 // CHECK:STDOUT:   %Function.cpp_overload_set.type: type = cpp_overload_set_type @Function.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Function.cpp_overload_set.value: %Function.cpp_overload_set.type = cpp_overload_set_value @Function.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete]
-// CHECK:STDOUT:   %array_type.d58: type = array_type %int_42, %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.c07: type = pattern_type %array_type.d58 [concrete]
-// CHECK:STDOUT:   %n.patt.dac: %pattern_type.c07 = ref_binding_pattern n [concrete]
-// CHECK:STDOUT:   %n.var_patt: %pattern_type.c07 = var_pattern %n.patt.dac [concrete]
+// CHECK:STDOUT:   %Array.db6: type = class_type @Array, @Array(%i32, %int_42) [concrete]
+// CHECK:STDOUT:   %pattern_type.b4a: type = pattern_type %Array.db6 [concrete]
+// CHECK:STDOUT:   %n.patt.b66: %pattern_type.b4a = ref_binding_pattern n [concrete]
+// CHECK:STDOUT:   %n.var_patt: %pattern_type.b4a = var_pattern %n.patt.b66 [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %UnformedInit.type: type = facet_type <@UnformedInit> [concrete]
 // CHECK:STDOUT:   %T.fef: %UnformedInit.type = symbolic_binding T, 0 [symbolic]
@@ -710,10 +710,10 @@ fn F() {
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.f65: %T.as_type.as.DefaultOrUnformed.impl.Op.type.215 = struct_value () [symbolic]
 // CHECK:STDOUT:   %UnformedInit.impl_witness.0a2: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.9b9, @Int.as.UnformedInit.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %UnformedInit.facet.cac: %UnformedInit.type = facet_value %i32, (%UnformedInit.impl_witness.0a2) [concrete]
-// CHECK:STDOUT:   %UnformedInit.impl_witness.768: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.96b, @array_type.as.UnformedInit.impl(%UnformedInit.facet.cac, %int_42) [concrete]
-// CHECK:STDOUT:   %UnformedInit.facet.033: %UnformedInit.type = facet_value %array_type.d58, (%UnformedInit.impl_witness.768) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.06a: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.8f5, @T.as_type.as.DefaultOrUnformed.impl.52f(%UnformedInit.facet.033) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %array_type.d58, (%DefaultOrUnformed.impl_witness.06a) [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness.4e2: <witness> = impl_witness imports.%UnformedInit.impl_witness_table.76f, @Array.as.UnformedInit.impl(%UnformedInit.facet.cac, %int_42) [concrete]
+// CHECK:STDOUT:   %UnformedInit.facet.3bd: %UnformedInit.type = facet_value %Array.db6, (%UnformedInit.impl_witness.4e2) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.a28: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.8f5, @T.as_type.as.DefaultOrUnformed.impl.52f(%UnformedInit.facet.3bd) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %Array.db6, (%DefaultOrUnformed.impl_witness.a28) [concrete]
 // CHECK:STDOUT:   %int_0.5c6: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.914: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
@@ -732,7 +732,7 @@ fn F() {
 // CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
 // CHECK:STDOUT:   %Cpp.nullptr_t: type = class_type @NullptrT [concrete]
 // CHECK:STDOUT:   %uninit: %Cpp.nullptr_t = uninitialized_value [concrete]
-// CHECK:STDOUT:   %.659: type = cpp_fn_ptr_type clang_function_pointer_type41000000 [concrete]
+// CHECK:STDOUT:   %.659: type = cpp_fn_ptr_type clang_function_pointer_type61000000 [concrete]
 // CHECK:STDOUT:   %TakesFunction.type: type = fn_type @TakesFunction [concrete]
 // CHECK:STDOUT:   %TakesFunction: %TakesFunction.type = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.705: %pattern_type.6b6 = ref_param_pattern [concrete]
@@ -743,8 +743,8 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc16_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.087: %pattern_type.c07 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.b22: %pattern_type.c07 = wrapper_binding_pattern self, %self.param_patt.087 [concrete]
+// CHECK:STDOUT:   %self.param_patt.d6f: %pattern_type.b4a = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.365: %pattern_type.b4a = wrapper_binding_pattern self, %self.param_patt.d6f [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc16_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_41: Core.IntLiteral = int_value 41 [concrete]
@@ -804,7 +804,7 @@ fn F() {
 // CHECK:STDOUT:   %Function.cpp_overload_set.value: %Function.cpp_overload_set.type = cpp_overload_set_value @Function.cpp_overload_set [concrete = constants.%Function.cpp_overload_set.value]
 // CHECK:STDOUT:   %Core.import_ref.083: @T.as_type.as.DefaultOrUnformed.impl.52f.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.215) = import_ref Core//prelude/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.52f.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.f65)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.8f5 = impl_witness_table (%Core.import_ref.083), @T.as_type.as.DefaultOrUnformed.impl.52f [concrete]
-// CHECK:STDOUT:   %UnformedInit.impl_witness_table.96b = impl_witness_table (), @array_type.as.UnformedInit.impl [concrete]
+// CHECK:STDOUT:   %UnformedInit.impl_witness_table.76f = impl_witness_table (), @Array.as.UnformedInit.impl [concrete]
 // CHECK:STDOUT:   %UnformedInit.impl_witness_table.9b9 = impl_witness_table (), @Int.as.UnformedInit.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.edf: @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1aa = impl_witness_table (%Core.import_ref.edf), @Core.IntLiteral.as.ImplicitAs.impl.0e9 [concrete]
@@ -831,18 +831,18 @@ fn F() {
 // CHECK:STDOUT:     %self: ref %i32 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc16_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.3] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.c07 = ref_param_pattern [concrete = constants.%self.param_patt.087]
-// CHECK:STDOUT:     %self.patt: %pattern_type.c07 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.b22]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.b4a = ref_param_pattern [concrete = constants.%self.param_patt.d6f]
+// CHECK:STDOUT:     %self.patt: %pattern_type.b4a = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.365]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type.d58 = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type.d58 = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.db6 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.db6 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.3 = fn_decl @Destroy.WithSelf.Op.loc16_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.3] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.c07 = ref_param_pattern [concrete = constants.%self.param_patt.087]
-// CHECK:STDOUT:     %self.patt: %pattern_type.c07 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.b22]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.b4a = ref_param_pattern [concrete = constants.%self.param_patt.d6f]
+// CHECK:STDOUT:     %self.patt: %pattern_type.b4a = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.365]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type.d58 = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type.d58 = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.db6 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.db6 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -852,28 +852,28 @@ fn F() {
 // CHECK:STDOUT:   %TakesFunction.ref.loc14: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
 // CHECK:STDOUT:   %Cpp.ref.loc14_21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Function.ref: %Function.cpp_overload_set.type = name_ref Function, imports.%Function.cpp_overload_set.value [concrete = constants.%Function.cpp_overload_set.value]
-// CHECK:STDOUT:   %n.var: ref %array_type.d58 = var_storage %n.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%array_type.d58, (constants.%DefaultOrUnformed.impl_witness.06a) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc16_24.1: %DefaultOrUnformed.type = converted constants.%array_type.d58, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc16_24.1 [concrete = constants.%array_type.d58]
-// CHECK:STDOUT:   %.loc16_24.2: type = converted %.loc16_24.1, %as_type [concrete = constants.%array_type.d58]
+// CHECK:STDOUT:   %n.var: ref %Array.db6 = var_storage %n.var_patt
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Array.db6, (constants.%DefaultOrUnformed.impl_witness.a28) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %.loc16_24.1: %DefaultOrUnformed.type = converted constants.%Array.db6, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc16_24.1 [concrete = constants.%Array.db6]
+// CHECK:STDOUT:   %.loc16_24.2: type = converted %.loc16_24.1, %as_type [concrete = constants.%Array.db6]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc16_3: ref %array_type.d58 = splice_block %n.var {}
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %array_type.d58 to %.loc16_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   %.loc16_3: ref %Array.db6 = splice_block %n.var {}
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.call: init %Array.db6 to %.loc16_3 = call %T.as_type.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign %n.var, %T.as_type.as.DefaultOrUnformed.impl.Op.call
-// CHECK:STDOUT:   %.loc16_23: type = splice_block %array_type [concrete = constants.%array_type.d58] {
+// CHECK:STDOUT:   %.loc16_23: type = splice_block %Array [concrete = constants.%Array.db6] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
-// CHECK:STDOUT:     %array_type: type = array_type %int_42, %i32 [concrete = constants.%array_type.d58]
+// CHECK:STDOUT:     %Array: type = class_type @Array, @Array(constants.%i32, constants.%int_42) [concrete = constants.%Array.db6]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %n: ref %array_type.d58 = wrapper_binding n, %n.var
+// CHECK:STDOUT:   %n: ref %Array.db6 = wrapper_binding n, %n.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.c07 = ref_binding_pattern n [concrete = constants.%n.patt.dac]
-// CHECK:STDOUT:     %n.var_patt: %pattern_type.c07 = var_pattern %n.patt [concrete = constants.%n.var_patt]
+// CHECK:STDOUT:     %n.patt: %pattern_type.b4a = ref_binding_pattern n [concrete = constants.%n.patt.b66]
+// CHECK:STDOUT:     %n.var_patt: %pattern_type.b4a = var_pattern %n.patt [concrete = constants.%n.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Cpp.ref.loc25: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %TakesFunction.ref.loc25: %TakesFunction.cpp_overload_set.type = name_ref TakesFunction, imports.%TakesFunction.cpp_overload_set.value [concrete = constants.%TakesFunction.cpp_overload_set.value]
-// CHECK:STDOUT:   %n.ref: ref %array_type.d58 = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: ref %Array.db6 = name_ref n, %n
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %impl.elem0: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
 // CHECK:STDOUT:   %bound_method.loc25_24.1: <bound method> = bound_method %int_0, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -907,7 +907,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc16_3.2(%self.param: ref %array_type.d58) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc16_3.2(%self.param: ref %Array.db6) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_41: Core.IntLiteral = int_value 41 [concrete = constants.%int_41]
 // CHECK:STDOUT:   %.loc16_3.1: ref %i32 = array_index %self.param, %int_41
@@ -1080,9 +1080,9 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16_3.2(%self.param: ref %array_type.d58) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16_3.2(%self.param: ref %Array.db6) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc16_3.2(%self.param: ref %array_type.d58) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc16_3.2(%self.param: ref %Array.db6) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)

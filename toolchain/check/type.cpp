@@ -11,6 +11,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -42,6 +43,36 @@ auto ValidateIntType(Context& context, SemIR::LocId loc_id,
     context.emitter().Emit(loc_id, IntWidthTooLarge,
                            {.type = bit_width->type_id, .value = bit_width_val},
                            IntStore::MaxIntWidth);
+    return false;
+  }
+  return true;
+}
+
+auto ValidateArrayType(Context& context, SemIR::LocId loc_id,
+                       SemIR::ArrayType result) -> bool {
+  auto int_bound = context.insts().TryGetAs<SemIR::IntValue>(result.bound_id);
+  if (!int_bound) {
+    // Symbolic or erroneous bound.
+    return true;
+  }
+
+  // TODO: We should check that the size of the resulting array type
+  // fits in 64 bits, not just that the bound does. Should we use a
+  // 32-bit limit for 32-bit targets?
+  const auto& bound_val = context.ints().Get(int_bound->int_id);
+  if (context.types().IsSignedInt(int_bound->type_id) &&
+      bound_val.isNegative()) {
+    CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
+                      "array bound of {0} is negative", TypedInt);
+    context.emitter().Emit(loc_id, ArrayBoundNegative,
+                           {.type = int_bound->type_id, .value = bound_val});
+    return false;
+  }
+  if (bound_val.getActiveBits() > 64) {
+    CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
+                      "array bound of {0} is too large", TypedInt);
+    context.emitter().Emit(loc_id, ArrayBoundTooLarge,
+                           {.type = int_bound->type_id, .value = bound_val});
     return false;
   }
   return true;
@@ -264,13 +295,24 @@ auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
   return GetCompleteTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
 
-auto GetArrayType(Context& context, SemIR::InstId bound_id,
-                  SemIR::TypeInstId element_type_inst_id) -> SemIR::TypeId {
-  SemIR::ArrayType inst = {.type_id = SemIR::TypeType::TypeId,
-                           .bound_id = bound_id,
-                           .element_type_inst_id = element_type_inst_id};
-  return context.types().GetTypeIdForTypeConstantId(
-      EvalOrAddInst(context, SemIR::LocIdAndInst::NoLoc(inst)));
+auto TryGetPrimitiveArrayTypeForCoreArray(Context& context, SemIR::LocId loc_id,
+                                          SemIR::TypeId type_id)
+    -> SemIR::TypeId {
+  auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id);
+  if (!class_type ||
+      SemIR::RecognizedTypeInfo::ForType(context.sem_ir(), *class_type).kind !=
+          SemIR::RecognizedTypeInfo::Array) {
+    return SemIR::TypeId::None;
+  }
+  if (!TryToCompleteType(context, type_id, loc_id)) {
+    return SemIR::TypeId::None;
+  }
+  auto adapted_type_id = context.types().GetAdaptedType(type_id);
+  if (!adapted_type_id.has_value() ||
+      !context.types().Is<SemIR::ArrayType>(adapted_type_id)) {
+    return SemIR::TypeId::None;
+  }
+  return adapted_type_id;
 }
 
 auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
