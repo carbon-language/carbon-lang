@@ -199,6 +199,8 @@ class MatchContext {
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::TuplePattern tuple_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
+  auto DoPreWork(State state, SemIR::StructPattern struct_pattern,
+                 SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::SpliceInst splice,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::SpecificConstant specific_constant,
@@ -221,6 +223,8 @@ class MatchContext {
   auto DoPostWork(State state, SemIR::ReturnSlotPattern return_slot_pattern,
                   WorkItem entry) -> void;
   auto DoPostWork(State state, SemIR::TuplePattern tuple_pattern,
+                  WorkItem entry) -> void;
+  auto DoPostWork(State state, SemIR::StructPattern struct_pattern,
                   WorkItem entry) -> void;
   auto DoPostWork(State state, SemIR::SpecificConstant specific_constant,
                   WorkItem entry) -> void;
@@ -815,6 +819,149 @@ auto MatchContext::DoPostWork(State /*state*/,
   results_stack_.AppendToTop(tuple_value_id);
 }
 
+auto MatchContext::DoPreWork(State state, SemIR::StructPattern struct_pattern,
+                             SemIR::InstId scrutinee_id, WorkItem entry)
+    -> void {
+  if (struct_pattern.type_id == SemIR::ErrorInst::TypeId) {
+    return;
+  }
+  auto subpattern_ids = context_.inst_blocks().Get(struct_pattern.elements_id);
+  if (need_subpattern_results()) {
+    results_stack_.PushArray();
+    AddAsPostWork(entry);
+  }
+
+  if (!scrutinee_id.has_value()) {
+    CARBON_CHECK(std::holds_alternative<CalleeState*>(state) ||
+                 std::holds_alternative<ThunkState*>(state));
+    for (auto subpattern_id : llvm::reverse(subpattern_ids)) {
+      AddWork({.pattern_id = subpattern_id,
+               .work = PreWork{.scrutinee_id = SemIR::InstId::None},
+               .allow_unmarked_ref = entry.allow_unmarked_ref});
+    }
+    return;
+  }
+
+  auto scrutinee = context_.insts().GetWithLocId(scrutinee_id);
+
+  auto expected_type_id = GetScrutineeTypeInSpecific(context_, entry.pattern_id,
+                                                     specific_id_stack_.back());
+
+  auto expected_type_inst = context_.types().GetTypeInstId(expected_type_id);
+
+  auto pattern_struct_type_inst =
+      context_.insts().TryGetAs<SemIR::StructType>(expected_type_inst);
+
+  auto pattern_struct_fields =
+      context_.struct_type_fields().Get(pattern_struct_type_inst->fields_id);
+
+  SemIR::InstId converted_scrutinee_id = scrutinee_id;
+  llvm::ArrayRef<Carbon::SemIR::StructTypeField> scrutinee_struct_fields;
+
+  if (auto scrutinee_literal = scrutinee.inst.TryAs<SemIR::StructLiteral>()) {
+    auto scrutinee_literal_type_inst =
+        context_.types().GetTypeInstId(scrutinee_literal->type_id);
+
+    auto scrutinee_struct_type_inst =
+        context_.insts().TryGetAs<SemIR::StructType>(
+            scrutinee_literal_type_inst);
+
+    scrutinee_struct_fields = context_.struct_type_fields().Get(
+        scrutinee_struct_type_inst->fields_id);
+  } else {
+    converted_scrutinee_id =
+        ConvertToValueOrRefOfType(context_, SemIR::LocId(entry.pattern_id),
+                                  scrutinee_id, expected_type_id);
+
+    if (auto scrutinee_value = context_.insts().TryGetAs<SemIR::StructValue>(
+            converted_scrutinee_id)) {
+      auto scrutinee_value_type_inst =
+          context_.types().GetTypeInstId(scrutinee_value->type_id);
+
+      auto scrutinee_struct_type_inst =
+          context_.insts().TryGetAs<SemIR::StructType>(
+              scrutinee_value_type_inst);
+
+      scrutinee_struct_fields = context_.struct_type_fields().Get(
+          scrutinee_struct_type_inst->fields_id);
+    } else {
+      auto scrutinee_type =
+          context_.types().GetAs<SemIR::StructType>(expected_type_id);
+
+      scrutinee_struct_fields =
+          context_.struct_type_fields().Get(scrutinee_type.fields_id);
+    }
+  }
+
+  llvm::SmallVector<SemIR::InstId> field_access_insts;
+  field_access_insts.reserve(subpattern_ids.size());
+
+  Set<SemIR::NameId> pattern_field_names;
+  pattern_field_names.GrowForInsertCount(scrutinee_struct_fields.size());
+
+  for (auto field : pattern_struct_fields) {
+    bool field_found = false;
+    for (auto [i, s_field] : llvm::enumerate(scrutinee_struct_fields)) {
+      if (field.name_id == s_field.name_id) {
+        field_access_insts.push_back(GetOrAddInst<SemIR::StructAccess>(
+            context_, scrutinee.loc_id,
+            {.type_id =
+                 context_.types().GetTypeIdForTypeInstId(s_field.type_inst_id),
+             .struct_id = converted_scrutinee_id,
+             .index = SemIR::ElementIndex(i)}));
+        field_found = true;
+        break;
+      }
+    }
+    if (field_found) {
+      pattern_field_names.Insert(field.name_id);
+    } else {
+      CARBON_DIAGNOSTIC(StructPatternNoMatchingField, Error,
+                        "type {0} does not have a member `{1}`", TypeOfInstId,
+                        SemIR::NameId);
+      context_.emitter().Emit(scrutinee_id, StructPatternNoMatchingField,
+                              scrutinee_id, field.name_id);
+      return;
+    }
+  }
+
+  // TODO: Unmatched fields should be discarded once trailing `_` fields
+  // are implemented for struct patterns
+  for (auto field : scrutinee_struct_fields) {
+    auto result = pattern_field_names.Insert(field.name_id);
+    if (result.is_inserted()) {
+      CARBON_DIAGNOSTIC(
+          StructPatternUnhandledField, Error,
+          "scrutinee field `.{0}` not matched by provided pattern",
+          SemIR::NameId);
+      // NOTE: This diagnosis currently only effects matches against a
+      // struct literal. Other cases are caught during type conversion
+      // before pattern matching starts.
+      context_.emitter().Emit(scrutinee_id, StructPatternUnhandledField,
+                              field.name_id);
+    }
+  }
+  for (auto [subpattern_id, subscrutinee_id] :
+       llvm::reverse(llvm::zip_equal(subpattern_ids, field_access_insts))) {
+    AddWork({.pattern_id = subpattern_id,
+             .work = PreWork{.scrutinee_id = subscrutinee_id},
+             .allow_unmarked_ref = entry.allow_unmarked_ref});
+  }
+}
+
+auto MatchContext::DoPostWork(State /*state*/,
+                              SemIR::StructPattern /*struct_pattern*/,
+                              WorkItem entry) -> void {
+  auto elements_id = context_.inst_blocks().Add(results_stack_.PeekArray());
+  results_stack_.PopArray();
+  auto struct_value_id = AddInst<SemIR::StructValue>(
+      context_, SemIR::LocId(entry.pattern_id),
+      {.type_id = GetScrutineeTypeInSpecific(context_, entry.pattern_id,
+                                             specific_id_stack_.back()),
+       .elements_id = elements_id});
+  results_stack_.AppendToTop(struct_value_id);
+}
+
 // TODO: There is a cycle through pattern matching with an action.
 // NOLINTNEXTLINE(misc-no-recursion)
 auto MatchContext::DoPreWork(State state, SemIR::SpliceInst /*splice*/,
@@ -1015,6 +1162,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
           DoPreWork(state, tuple_pattern, work.scrutinee_id, entry);
           break;
         }
+        case CARBON_KIND(SemIR::StructPattern struct_pattern): {
+          DoPreWork(state, struct_pattern, work.scrutinee_id, entry);
+          break;
+        }
         case CARBON_KIND(SemIR::SpliceInst splice_inst): {
           DoPreWork(state, splice_inst, work.scrutinee_id, entry);
           break;
@@ -1061,6 +1212,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
         }
         case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
           DoPostWork(state, tuple_pattern, entry);
+          break;
+        }
+        case CARBON_KIND(SemIR::StructPattern struct_pattern): {
+          DoPostWork(state, struct_pattern, entry);
           break;
         }
         case CARBON_KIND(SemIR::SpecificConstant specific_constant): {

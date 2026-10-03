@@ -9,8 +9,10 @@
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/pattern.h"
+#include "toolchain/check/struct.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
 
@@ -39,7 +41,12 @@ auto HandleParseNode(Context& context, Parse::TuplePatternStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::StructPatternStartId node_id)
     -> bool {
-  return context.TODO(node_id, "struct pattern start");
+  EndEmptyExprRegionForPattern(context);
+  context.node_stack().Push(node_id);
+  context.struct_type_fields_stack().PushArray();
+  context.param_and_arg_refs_stack().Push();
+  BeginExprRegionForPattern(context);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::ExplicitParamListStartId node_id)
@@ -137,12 +144,95 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
 }
 
 auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
-  return context.TODO(node_id, "struct pattern");
+  if (context.node_stack().PeekIs(Parse::NodeKind::StructPatternStart)) {
+    // End the pending region started by a trailing comma, or the opening
+    // delimiter of an empty list.
+    EndEmptyExprRegionForPattern(context);
+  } else {
+    // End the pending region for the last pattern in the list.
+    EndExprRegionForPattern(context, context.node_stack());
+  }
+
+  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
+    bool is_var = context.full_pattern_stack().IsCurrentKindClassScopeVarDecl();
+    CARBON_DIAGNOSTIC(
+        FieldWithStructPattern, Error,
+        "found struct pattern in class member {0:var|let} declaration",
+        Diagnostics::BoolAsSelect);
+    context.emitter().Emit(node_id, FieldWithStructPattern, is_var);
+
+    return false;
+  }
+
+  if (context.node_stack().PeekIs(Parse::NodeKind::UnderscoreName)) {
+    return context.TODO(node_id, "Struct pattern underscore field");
+  }
+
+  if (!context.node_stack().PeekIs(Parse::NodeCategory::MemberName)) {
+    // Remove the last parameter from the node stack before collecting names.
+    context.param_and_arg_refs_stack().EndNoPop(
+        Parse::NodeKind::StructPatternStart);
+  }
+
+  auto fields = context.struct_type_fields_stack().PeekArray();
+
+  llvm::SmallVector<Parse::NodeId> field_name_nodes =
+      PopStructFieldNameNodes(context, fields.size());
+
+  auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
+      Parse::NodeKind::StructPatternStart);
+
+  context.node_stack()
+      .PopAndDiscardSoloNodeId<Parse::NodeKind::StructPatternStart>();
+
+  if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
+                             StructKind::StructPattern)) {
+    context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
+  } else {
+    auto type_id = GetPatternType(
+        context,
+        GetStructType(context,
+                      context.struct_type_fields().AddCanonical(fields)));
+
+    context.node_stack().Push(
+        node_id,
+        AddInst<SemIR::StructPattern>(
+            context, node_id, {.type_id = type_id, .elements_id = refs_id}));
+  }
+
+  context.struct_type_fields_stack().PopArray();
+  BeginExprRegionForPattern(context);
+  return true;
 }
 
 auto HandleParseNode(Context& context,
                      Parse::StructPatternDesignatedFieldId node_id) -> bool {
-  return context.TODO(node_id, "struct pattern field");
+  EndExprRegionForPattern(context, context.node_stack());
+
+  auto pattern_id = context.node_stack().PopPattern();
+  auto pattern_type_id = context.insts().Get(pattern_id).type_id();
+  auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
+
+  if (auto pattern_type = context.sem_ir().types().TryGetAs<SemIR::PatternType>(
+          pattern_type_id)) {
+    auto type_id = ExtractScrutineeType(context.sem_ir(), pattern_type_id);
+
+    auto type_inst = context.types().GetTypeInstId(type_id);
+
+    context.struct_type_fields_stack().AppendToTop(
+        {.name_id = name_id, .type_inst_id = type_inst});
+
+    context.node_stack().Push(node_id, pattern_id);
+  } else {
+    context.struct_type_fields_stack().AppendToTop(
+        {.name_id = name_id, .type_inst_id = SemIR::ErrorInst::TypeInstId});
+    context.node_stack().Push(node_id, pattern_id);
+  }
+
+  // Start a new pending `ExprRegion`, to maintain the invariant that one is
+  // pending at the end of handling for a pattern.
+  BeginExprRegionForPattern(context);
+  return true;
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)

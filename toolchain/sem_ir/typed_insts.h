@@ -2149,6 +2149,21 @@ struct StructLiteral {
   InstBlockId elements_id;
 };
 
+// A struct pattern, such as `{.x = y: i32, z: i32}`.
+struct StructPattern {
+  static constexpr auto Kind =
+      InstKind::StructPattern.Define<Parse::StructPatternId>(
+          {.ir_name = "struct_pattern",
+           .expr_category = ExprCategory::Pattern,
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  // Always a PatternType whose scrutinee type is a struct of the scrutinee
+  // types of the elements.
+  TypeId type_id;
+  InstBlockId elements_id;
+};
+
 // The type of a struct.
 struct StructType {
   static constexpr auto Kind = InstKind::StructType.Define<
