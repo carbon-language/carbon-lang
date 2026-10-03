@@ -860,11 +860,11 @@ Evaluation of the last line involves 6 function calls:
 1.  Call `MakeA`.
 2.  Call `A.(Core.ImplicitAsPrimitive(C)).Convert`, to convert the `A` object to
     a `C` value, as part of type conversion.
-3.  Call `A.(Core.Copy).Op` to copy the `C` value into the storage for `cd.0`,
+3.  Call `A.(Core.Copy).Copy` to copy the `C` value into the storage for `cd.0`,
     as part of category conversion.
 4.  Call `MakeB`.
 5.  Call `B.(Core.ImplicitAsPrimitive(D)).Convert`.
-6.  Call `B.(Core.Copy).Op`.
+6.  Call `B.(Core.Copy).Copy`.
 
 > **Note:** These `Core` interfaces haven't been specified yet, and their
 > details may change.
@@ -906,7 +906,7 @@ This DAG will always have a few key properties:
 
 > **Future work:** this design needs to be reconciled with the design for
 > [user-defined sum types](sum_types.md#user-defined-sum-types), because
-> `Match.Op` can violate this topology. This should probably be folded into a
+> `Match.Match` can violate this topology. This should probably be folded into a
 > broader redesign of sum type customization, which we expect to be necessary
 > for other reasons.
 

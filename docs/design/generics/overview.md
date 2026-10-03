@@ -21,6 +21,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Contrast with templates](#contrast-with-templates)
     -   [Implementing interfaces](#implementing-interfaces)
         -   [Accessing members of interfaces](#accessing-members-of-interfaces)
+        -   [Primary interface functions and abbreviated syntax](#primary-interface-functions-and-abbreviated-syntax)
     -   [Facet types](#facet-types)
     -   [Generic functions](#generic-functions)
         -   [Deduced parameters](#deduced-parameters)
@@ -278,6 +279,50 @@ song.(Comparable.Less)(song);
 // access expression, using the compound member access
 // syntax with the qualified name `Printable.Print`:
 song.(Printable.Print)();
+```
+
+#### Primary interface functions and abbreviated syntax
+
+When an interface has a single "primary" function whose name would be the same
+as the interface's name, the function's name can be omitted in the `fn`
+declaration. The function implicitly takes the name of the enclosing `interface`
+for qualified member lookup.
+
+An `impl` that defines only a single function (either an unnamed primary
+function or a named function when all other requirements have defaults) can omit
+the enclosing `{`...`}` braces. For example, instead of `Printable` with a
+`Print` method, we could define `Print` with a primary function, and abbreviate
+both `Print` and `Comparable` implementations:
+
+```
+interface Print {
+  fn (self);
+}
+
+class Song {
+  // ...
+
+  extend impl as Print fn (self) { ... }
+}
+
+impl Song as Comparable fn Less(self, rhs: Self) -> bool { ... }
+
+var song: Song;
+song.Print();
+song.(Print.Print)();
+```
+
+In an abbreviated `impl`, any associated constants that appear in the
+implemented function's signature are deduced from the `impl` function's
+signature without a `where` clause:
+
+```
+interface Negate {
+  default let Result: type = Self;
+  fn (self) -> Result;
+}
+
+impl i32 as Negate fn (self) -> i32 { ... }
 ```
 
 ### Facet types
@@ -675,8 +720,8 @@ priority order in a prioritization block.
 
 To overload an operator, implement the corresponding interface from the standard
 library. For example, to define how the unary `-` operator behaves for a type,
-implement the `Negatable` interface for that type. The interfaces and rewrites
-used for a given operator may be found in the
+implement the `Negate` interface for that type. The interfaces and rewrites used
+for a given operator may be found in the
 [expressions design](/docs/design/expressions/README.md).
 
 As a convenience, there is a shortcut for defining an implementation that
@@ -686,7 +731,8 @@ supports any type implicitly convertible to a specified type, using `like`:
 // Support multiplying values of type `Distance` with
 // values of type `f64` or any type implicitly
 // convertible to `f64`.
-impl Distance as MultipliableWith(like f64) ...
+impl Distance as MulWith(like f64)
+    fn (self, factor: f64) -> Distance { ... }
 ```
 
 ## Future work
@@ -706,3 +752,4 @@ impl Distance as MultipliableWith(like f64) ...
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
 -   [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
+-   [#7896: Abbreviated `interface` and `impl` syntax](https://github.com/carbon-language/carbon-lang/pull/7896)

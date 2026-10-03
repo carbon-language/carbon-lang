@@ -2096,7 +2096,7 @@ let five: f32 = p->Distance(3, 4);
 // from `const Point` API.
 p->Offset(3, 4);
 
-// ❌ Error: mutating method `AssignAdd.Op`
+// ❌ Error: mutating method `AddAssignWith.AddAssignWith`
 // excluded from `const i32` API.
 p->x += 2;
 ```
@@ -3317,7 +3317,7 @@ declaration may be used to
 
 Uses of an operator in an [expression](#expressions) is translated into a call
 to a method of an interface. For example, if `x` has type `T` and `y` has type
-`U`, then `x + y` is translated into a call to `x.(AddWith(U).Op)(y)`. So
+`U`, then `x + y` is translated into a call to `x.(AddWith(U).AddWith)(y)`. So
 overloading of the `+` operator is accomplished by implementing interface
 `AddWith(U)` for type `T`. In order to support
 [implicit conversion](expressions/implicit_conversions.md) of the first operand
@@ -3325,19 +3325,16 @@ to type `T` and the second argument to type `U`, add the `like` keyword to both
 types in the `impl` declaration, as in:
 
 ```carbon
-impl like T as AddWith(like U) where .Result = V {
-  // `Self` is `T` here
-  fn Op(self, other: U) -> V { ... }
-}
+impl like T as AddWith(like U)
+    // `Self` is `T` here
+    fn (self, other: U) -> V { ... }
 ```
 
 When the operand types and result type are all the same, this is equivalent to
-implementing the `Add` interface:
+implementing the `Add` constraint:
 
 ```carbon
-impl T as Add {
-  fn Op(self, other: Self) -> Self { ... }
-}
+impl T as Add fn (self, other: Self) -> Self { ... }
 ```
 
 The interfaces that correspond to each operator are given by:
@@ -3406,6 +3403,8 @@ implementing corresponding interfaces for the value's type.
 >     [#1191: Bitwise operators](https://github.com/carbon-language/carbon-lang/pull/1191)
 > -   Proposal
 >     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
+> -   Proposal
+>     [#7896: Abbreviated `interface` and `impl` syntax](https://github.com/carbon-language/carbon-lang/pull/7896)
 
 #### Common type
 

@@ -190,7 +190,7 @@ Compound member access `a.(m)` performs up to two steps:
 
 ### `impl` member access
 
-To get `impl` lookup without instance binding, for example to to get the method
+To get `impl` lookup without instance binding, for example to get the method
 `F` in the implementation of the interface `I` for the class `C`, write
 `C.impl(I.F)`. This always performs [`impl` lookup](#impl-lookup) with the
 `Self` type equal to `C` and nothing else. It is invalid unless `C` is known to
@@ -265,8 +265,9 @@ Like the previous case, types (including
 names, and lookup searches those names. For example:
 
 -   `i32.Least` finds the member constant `Least` of the type `i32`.
--   `Add.Op` finds the member function `Op` of the interface `Add`. Because a
-    facet type is a type, this is a special case of the previous bullet.
+-   `AddWith(i32).AddWith` finds the primary member function `AddWith` of the
+    interface `AddWith(i32)`. Because a facet type is a type, this is a special
+    case of the previous bullet.
 
 A search for a name within an extended type searches for the name in its
 [type component](/docs/design/values.md#extended-types). Note that this means
@@ -961,8 +962,14 @@ interface I {
   fn M(self);
 }
 
+interface Negate {
+  default let Result: type = Self;
+  fn (self) -> Result;
+}
+
 class C {}
 impl C as I { ... }
+impl C as Negate fn (self) -> C { ... }
 
 fn G(c: C) {
   // impl lookup of `I.F` for `C`: `C.impl(I.F)`
@@ -982,6 +989,11 @@ fn G(c: C) {
 
   // Equivalent to `c.(I.M)()`:
   I.M(c);
+
+  // When an interface has a primary function, its implicit name is the
+  // interface's name (`Negate.Negate`):
+  C.impl(Negate.Negate)(c);
+  c.(Negate.Negate)();
 }
 ```
 
@@ -1110,18 +1122,18 @@ interface Bind(T: type) {
 }
 
 // For a value expression `x` with type `T` and an expression
-// `y` of type `U`, `x.(y)` is `y.((U as BindToValue(T)).Op)(x)`
+// `y` of type `U`, `x.(y)` is `y.((U as BindToValue(T)).BindToValue)(x)`
 interface BindToValue(T: type) {
   extend require impls Bind(T);
-  fn Op(self, x: T) -> Result;
+  fn (self, x: T) -> Result;
 }
 
 // For a reference expression `x` with type `T` and an expression
 // `y` of type `U`, `x.(y)` is
-// `y.((U as BindToRef(T)).Op)(ref x)`
+// `y.((U as BindToRef(T)).BindToRef)(ref x)`
 interface BindToRef(T: type) {
   extend require impls Bind(T);
-  fn Op(self, ref p: T) -> ref Result;
+  fn (self, ref p: T) -> ref Result;
 }
 ```
 
@@ -1169,9 +1181,9 @@ is interpreted as:
 
 ```carbon
 let v: C = {.x = 3};
-Assert((v as __Binding_C_F).(Call(()).Op)() == 8);
+Assert((v as __Binding_C_F).(Call(()).Call)() == 8);
 var r: C = {.x = 4};
-Assert((r as __Binding_C_F).(Call(()).Op)() == 9);
+Assert((r as __Binding_C_F).(Call(()).Call)() == 9);
 ```
 
 How does this arise?
@@ -1194,19 +1206,17 @@ final impl __TypeOf_C_F as Bind(C) {
   where Result = __Binding_C_F;
 }
 
-final impl __TypeOf_C_F as BindToValue(C) {
-  fn Op(unused self, x: C) -> __Binding_C_F {
-    return x as __Binding_C_F;
-  }
+final impl __TypeOf_C_F as BindToValue(C)
+    fn (unused self, x: C) -> __Binding_C_F {
+  return x as __Binding_C_F;
 }
 
 // Note that the return type has to match, since
 // it is an associated type in the `Bind(C)` interface
 // that both `BindToValue(C)` and `BindToRef(C)` extend.
-final impl __TypeOf_C_F as BindToRef(C) {
-  fn Op(unused self, p: ref C) -> ref __Binding_C_F {
-    return p as __Binding_C_F;
-  }
+final impl __TypeOf_C_F as BindToRef(C)
+    fn (unused self, ref p: C) -> ref __Binding_C_F {
+  return p as __Binding_C_F;
 }
 ```
 
@@ -1218,13 +1228,13 @@ steps:
 // `v` is a value and so uses `BindToValue`
 v.F() == v.(C.F)()
       == v.(__C_F)()
-      == __C_F.((__TypeOf_C_F as BindToValue(C)).Op)(v)()
+      == __C_F.((__TypeOf_C_F as BindToValue(C)).BindToValue)(v)()
       == (v as __Binding_C_F)()
 
 // `r` is a reference expression and so uses `BindToRef`
 r.F() == r.(C.F)()
       == r.(__C_F)()
-      == __C_F.((__TypeOf_C_F as BindToRef(C)).Op)(ref r)()
+      == __C_F.((__TypeOf_C_F as BindToRef(C)).BindToRef)(ref r)()
       == (r as __Binding_C_F)()
 ```
 
@@ -1237,7 +1247,7 @@ uses an intrinsic compiler primitive, as in:
 v.F() == v.(C.F)()
       == v.(__C_F)()
       == inlined_method_call_compiler_intrinsic(
-              <function body (__TypeOf_C_F as BindToValue(C)).Op overload 0>,
+              <function body (__TypeOf_C_F as BindToValue(C)).BindToValue overload 0>,
               __C_F, (v))()
       == (v as __Binding_C_F)()
 
@@ -1245,7 +1255,7 @@ v.F() == v.(C.F)()
 r.F() == r.(C.F)()
       == r.(__C_F)()
       == inlined_method_call_compiler_intrinsic(
-              <function body (__TypeOf_C_F as BindToRef(C)).Op overload 0>,
+              <function body (__TypeOf_C_F as BindToRef(C)).BindToRef overload 0>,
               __C_F, (ref r))()
       == (r as __Binding_C_F)()
 ```
@@ -1263,42 +1273,38 @@ types:
 // `__Binding_C_F` whether it is a value or reference
 // expression. Since `C.F` takes `self: Self` it can be
 // used in both cases.
-impl __Binding_C_F as Call(()) where .Result = i32 {
-  fn Op(self) -> i32 {
-    // Calls `(self as C).(C.F)()`, but without triggering
-    // member binding again.
-    return inlined_method_call_compiler_intrinsic(
-        <function body C.F overload 0>, self as C, ());
-  }
+impl __Binding_C_F as Call(()) fn (self) -> i32 {
+  // Calls `(self as C).(C.F)()`, but without triggering
+  // member binding again.
+  return inlined_method_call_compiler_intrinsic(
+      <function body C.F overload 0>, self as C, ());
 }
 
 // `C.Static` is a non-instance member function, so `__TypeOf_C_Static`
 // implements the call interface directly (allowing `C.Static()` to work),
 // and does not implement `BindToValue` or `BindToRef`.
-impl __TypeOf_C_Static as Call(()) where .Result = i32 {
-  fn Op(unused self) -> i32 {
-    return inlined_call_compiler_intrinsic(
-               <function body C.Static overload 0>, ());
-  }
+impl __TypeOf_C_Static as Call(()) fn (unused self) -> i32 {
+  return inlined_call_compiler_intrinsic(
+             <function body C.Static overload 0>, ());
 }
 ```
 
 Going back to `v.F()` and `r.F()`, after member binding the next step is to
 resolve the call. As described in
 [proposal #2875](https://github.com/carbon-language/carbon-lang/pull/2875), this
-call is rewritten to an invocation of the `Op` method of the `Call(())`
+call is rewritten to an invocation of the primary function of the `Call(())`
 interface, using the implementations just defined. Note:
 
--   Passing `r as __Binding_C_F` to the `self` parameter of `Call(()).Op`
+-   Passing `r as __Binding_C_F` to the `self` parameter of `Call(()).Call`
     converts the reference expression to a value.
--   The `Call` interface is special. We don't rewrite calls to `Call(__).Op` to
-    avoid infinite recursion.
+-   The `Call` interface is special. We don't rewrite calls to `Call(__).Call`
+    to avoid infinite recursion.
 
 ```carbon
 v.F() == (v as __Binding_C_F)()
-      == (v as __Binding_C_F).((__Binding_C_F as Call(())).Op)()
+      == (v as __Binding_C_F).((__Binding_C_F as Call(())).Call)()
       == inlined_method_call_compiler_intrinsic(
-            <function body (__Binding_C_F as Call(())).Op overload 0>,
+            <function body (__Binding_C_F as Call(())).Call overload 0>,
             v as __Binding_C_F, ());
       == inlined_method_call_compiler_intrinsic(
              <function body C.F overload 0>,
@@ -1307,9 +1313,9 @@ v.F() == (v as __Binding_C_F)()
              <function body C.F overload 0>, v, ())
 
 r.F() == (r as __Binding_C_F)()
-      == (r as __Binding_C_F).((__Binding_C_F as Call(())).Op)()
+      == (r as __Binding_C_F).((__Binding_C_F as Call(())).Call)()
       == inlined_method_call_compiler_intrinsic(
-            <function body (__Binding_C_F as Call(())).Op overload 0>,
+            <function body (__Binding_C_F as Call(())).Call overload 0>,
             r as __Binding_C_F <as value expression>, ());
       == inlined_method_call_compiler_intrinsic(
              <function body C.F overload 0>,
@@ -1348,17 +1354,15 @@ final impl [T: ImplicitAs(B)] __TypeOf_B_F as Bind(T) {
 }
 
 
-final impl [T: ImplicitAs(B)] __TypeOf_B_F as BindToValue(T) {
-  fn Op(self, x: T) -> __Binding_B_F {
-    return (x as B) as __Binding_B_F;
-  }
+final impl [T: ImplicitAs(B)] __TypeOf_B_F as BindToValue(T)
+    fn (self, x: T) -> __Binding_B_F {
+  return (x as B) as __Binding_B_F;
 }
 
 final impl [T: type where .Self* impls ImplicitAs(B*)]
-    __TypeOf_B_F as BindToRef(T) {
-  fn Op(self, ref p: T) -> ref __Binding_B_F {
-    return *((&p as B*) as __Binding_B_F*);
-  }
+    __TypeOf_B_F as BindToRef(T)
+    fn (self, ref p: T) -> ref __Binding_B_F {
+  return *((&p as B*) as __Binding_B_F*);
 }
 ```
 
@@ -1433,19 +1437,17 @@ final impl __TypeOf_C_m as Bind(C) {
   where Result = i32;
 }
 
-final impl __TypeOf_C_m as BindToValue(C) {
-  fn Op(self, x: C) -> i32 {
-    // Effectively performs `x.m`, but without triggering member binding again.
-    return value_compiler_intrinsic(x, __OffsetOf_C_m, i32);
-  }
+final impl __TypeOf_C_m as BindToValue(C)
+    fn (self, x: C) -> i32 {
+  // Effectively performs `x.m`, but without triggering member binding again.
+  return value_compiler_intrinsic(x, __OffsetOf_C_m, i32);
 }
 
-final impl __TypeOf_C_m as BindToRef(C) {
-  fn Op(self, ref p: C) -> ref i32 {
-    // Effectively performs `p.m`, but without triggering member binding again,
-    // by doing something like `*(((&p as byte*) + __OffsetOf_C_m) as i32*)`
-    return *offset_compiler_intrinsic(&p, __OffsetOf_C_m, i32);
-  }
+final impl __TypeOf_C_m as BindToRef(C)
+    fn (self, ref p: C) -> ref i32 {
+  // Effectively performs `p.m`, but without triggering member binding again,
+  // by doing something like `*(((&p as byte*) + __OffsetOf_C_m) as i32*)`
+  return *offset_compiler_intrinsic(&p, __OffsetOf_C_m, i32);
 }
 ```
 
@@ -1453,18 +1455,18 @@ These definitions give us the desired semantics:
 
 ```carbon
 // For value `v` with type `T` and `y` of type `U`,
-// `v.(y)` is `y.((U as BindToValue(T)).Op)(v)`
+// `v.(y)` is `y.((U as BindToValue(T)).BindToValue)(v)`
 v.m == v.(C.m)
     == v.(__C_m)
     == v.(__C_m as (__TypeOf_C_m as BindToValue(C)))
-    == __C_m.((__TypeOf_C_m as BindToValue(C)).Op)(v)
+    == __C_m.((__TypeOf_C_m as BindToValue(C)).BindToValue)(v)
     == value_compiler_intrinsic(v, __OffsetOf_C_m, i32)
 
 // For reference expression `var x: T` and `y` of type `U`,
-// `x.(y)` is `y.(U as BindToRef(T)).Op(ref x)`
+// `x.(y)` is `y.(U as BindToRef(T)).BindToRef(ref x)`
 x.m == x.(C.m)
     == x.(__C_m)
-    == __C_m.((__TypeOf_C_m as BindToRef(C)).Op)(ref x)
+    == __C_m.((__TypeOf_C_m as BindToRef(C)).BindToRef)(ref x)
     == *offset_compiler_intrinsic(&x, __OffsetOf_C_m, i32)
 // Note that this requires `x` to be a reference expression,
 // so `&x` is valid, and produces a reference expression,
@@ -1519,7 +1521,7 @@ implements `Call(())`:
 fn CallMethod
     [T: type, M: BindToValue(T) where .Result impls Call(())]
     (x: T, m: M) -> auto {
-  // `x.(m)` is rewritten to a call to `BindToValue(T).Op`. The
+  // `x.(m)` is rewritten to a call to `BindToValue(T).BindToValue`. The
   // constraint on `M` ensures the result implements `Call(())`.
   return x.(m)();
 }
@@ -1564,8 +1566,8 @@ Fields can be accessed, given the type of the field:
 fn GetField
     [T: type, F: BindToValue(T) where .Result = i32]
     (x: T, f: F) -> i32 {
-  // `x.(f)` is rewritten to `f.((F as BindToValue(T)).Op)(x)`,
-  // and `(F as BindToValue(T)).Op` is a method on `f` with
+  // `x.(f)` is rewritten to `f.((F as BindToValue(T)).BindToValue)(x)`,
+  // and `(F as BindToValue(T)).BindToValue` is a method on `f` with
   // return type `i32` by the constraint on `F`.
   return x.(f);
 }
@@ -1574,9 +1576,9 @@ fn SetField
     [T: type, F: BindToRef(T) where .Result = i32]
     (ref x: T, f: F, y: i32) {
   // `x.(f)` which becomes:
-  //   `f.((F as BindToRef(T)).Op)(ref x)`.
+  //   `f.((F as BindToRef(T)).BindToRef)(ref x)`.
   // The constraint `F` says the return of
-  // `(F as BindToRef(T)).Op` is an `i32` reference
+  // `(F as BindToRef(T)).BindToRef` is an `i32` reference
   // which may then be assigned.
   x.(f) = y;
 }
@@ -1803,3 +1805,5 @@ var n: i32 = 1 + X.Y;
     [#6395: Type completeness in extend](https://github.com/carbon-language/carbon-lang/pull/6395)
 -   Proposal
     [#7697: Updates to member access](https://github.com/carbon-language/carbon-lang/pull/7697)
+-   Proposal
+    [#7896: Abbreviated `interface` and `impl` syntax](https://github.com/carbon-language/carbon-lang/pull/7896)
