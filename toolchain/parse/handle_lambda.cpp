@@ -45,6 +45,12 @@ static auto ParseLambdaBody(Context& context, Context::State state,
                             bool has_return_type) -> void {
   if (context.PositionIs(Lex::TokenKind::EqualGreater)) {
     // Terse body `=> expr`
+    if (has_return_type) {
+      CARBON_DIAGNOSTIC(ReturnTypeInTerseLambda, Error,
+                        "cannot specify a return type with `=>`");
+      context.emitter().Emit(*context.position(), ReturnTypeInTerseLambda);
+      state.has_error = true;
+    }
     context.AddNode(NodeKind::LambdaDefinitionStart, context.Consume(),
                     state.has_error);
     state.has_error = false;
@@ -59,7 +65,7 @@ static auto ParseLambdaBody(Context& context, Context::State state,
   } else {
     if (has_return_type) {
       CARBON_DIAGNOSTIC(ExpectedLambdaBodyAfterReturnType, Error,
-                        "expected `=>` or `{{` after return type");
+                        "expected `{{` after return type");
       context.emitter().Emit(*context.position(),
                              ExpectedLambdaBodyAfterReturnType);
     } else {

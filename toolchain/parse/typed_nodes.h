@@ -620,7 +620,7 @@ struct FunctionDefinition {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
-// A terse function definition: `fn F() -> i32 => expr;`.
+// A terse function definition: `fn F() => expr;`.
 struct FunctionTerseDefinition {
   static constexpr auto Kind = NodeKind::FunctionTerseDefinition.Define(
       {.category = NodeCategory::Decl,
