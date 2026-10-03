@@ -11,6 +11,7 @@
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/diagnostics/format_providers.h"
 
 namespace Carbon::Check {
 
@@ -103,6 +104,18 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
     // End the pending region for the last pattern in the list.
     EndExprRegionForPattern(context, context.node_stack());
   }
+
+  if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
+    bool is_var = context.full_pattern_stack().IsCurrentKindClassScopeVarDecl();
+    CARBON_DIAGNOSTIC(
+        FieldWithTuplePattern, Error,
+        "found tuple pattern in class member {0:var|let} declaration",
+        Diagnostics::BoolAsSelect);
+    context.emitter().Emit(node_id, FieldWithTuplePattern, is_var);
+
+    return false;
+  }
+
   auto refs_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::TuplePatternStart);
   context.node_stack()
@@ -112,15 +125,6 @@ auto HandleParseNode(Context& context, Parse::TuplePatternId node_id) -> bool {
   llvm::SmallVector<SemIR::InstId> type_inst_ids;
   type_inst_ids.reserve(inst_block.size());
   for (auto inst : inst_block) {
-    if (InNonStaticFieldDecl(context)) {
-      CARBON_DIAGNOSTIC(FieldWithTuplePattern, Error,
-                        "found tuple pattern in class `var` decl");
-      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                             FieldWithTuplePattern);
-
-      return false;
-    }
-
     auto type_id = ExtractScrutineeType(context.sem_ir(),
                                         context.insts().Get(inst).type_id());
     type_inst_ids.push_back(context.types().GetTypeInstId(type_id));
