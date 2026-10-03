@@ -30,7 +30,7 @@ static auto HandleLambdaSignature(Context& context,
                                   Parse::AnyLambdaDefinitionStartId node_id,
                                   bool is_terse_definition) -> bool {
   auto [return_type_inst_id, return_form_inst_id, return_pattern_id] =
-      PopFunctionReturnDecl(context, is_terse_definition);
+      PopFunctionReturnSpecifier(context, is_terse_definition);
 
   Parse::NodeId first_param_node_id = Parse::NoneNodeId();
   Parse::NodeId last_param_node_id = Parse::NoneNodeId();

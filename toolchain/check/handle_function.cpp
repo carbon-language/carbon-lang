@@ -50,9 +50,9 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   return true;
 }
 
-// Handles a `->` or `->?` return declaration.
-static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
-    -> bool {
+// Handles a `->` or `->?` return specifier.
+static auto HandleReturnSpecifier(Context& context,
+                                  Parse::AnyReturnSpecifierId node_id) -> bool {
   auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
   Context::FormExpr form_expr = [&] {
     if (context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind) {
@@ -68,11 +68,11 @@ static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
-  return HandleReturnDecl(context, node_id);
+  return HandleReturnSpecifier(context, node_id);
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnFormId node_id) -> bool {
-  return HandleReturnDecl(context, node_id);
+  return HandleReturnSpecifier(context, node_id);
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
@@ -370,7 +370,7 @@ static auto BuildFunctionDecl(Context& context,
   bool is_terse_definition = context.parse_tree().node_kind(node_id) ==
                              Parse::NodeKind::FunctionTerseDefinitionStart;
   auto [return_type_inst_id, return_form_inst_id, return_pattern_id] =
-      PopFunctionReturnDecl(context, is_terse_definition);
+      PopFunctionReturnSpecifier(context, is_terse_definition);
 
   auto name = PopNameComponent(context, return_pattern_id);
   auto name_context = context.decl_name_stack().FinishName(name);

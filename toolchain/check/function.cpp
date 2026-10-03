@@ -59,12 +59,12 @@ auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
        .type_inst_id = form_expr.type_component_inst_id});
 }
 
-auto PopFunctionReturnDecl(Context& context, bool is_terse_definition)
-    -> FunctionReturnDecl {
-  FunctionReturnDecl result;
+auto PopFunctionReturnSpecifier(Context& context, bool is_terse_definition)
+    -> FunctionReturnSpecifier {
+  FunctionReturnSpecifier result;
   if (auto [return_node, maybe_return_pattern_id] =
           context.node_stack()
-              .PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
+              .PopWithNodeIdIf<Parse::NodeCategory::ReturnSpecifier>();
       maybe_return_pattern_id) {
     if (is_terse_definition) {
       CARBON_DIAGNOSTIC(ReturnTypeInTerseFunction, Error,

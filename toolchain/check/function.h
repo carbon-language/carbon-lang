@@ -29,18 +29,18 @@ auto FindSelfPattern(Context& context,
 auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
                       Context::FormExpr form_expr) -> SemIR::InstId;
 
-// Return declaration information for a function or function expression.
-struct FunctionReturnDecl {
+// Return specifier information for a function or function expression.
+struct FunctionReturnSpecifier {
   SemIR::TypeInstId type_inst_id = SemIR::TypeInstId::None;
   SemIR::InstId form_inst_id = SemIR::InstId::None;
   SemIR::InstId pattern_id = SemIR::InstId::None;
 };
 
-// Pops a `ReturnDecl` node from the node stack if one is present, and
+// Pops a `ReturnSpecifier` node from the node stack if one is present, and
 // determines the return type, form, and pattern for a function or function
 // expression signature.
-auto PopFunctionReturnDecl(Context& context, bool is_terse_definition)
-    -> FunctionReturnDecl;
+auto PopFunctionReturnSpecifier(Context& context, bool is_terse_definition)
+    -> FunctionReturnSpecifier;
 
 // Returns whether `function` is a valid declaration of `builtin_kind`.
 auto IsValidBuiltinDeclaration(Context& context,
