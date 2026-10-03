@@ -146,6 +146,7 @@ auto HandleDocumentSymbol(
         symbol_kind = clang::clangd::SymbolKind::Function;
         break;
       case Parse::NodeKind::FunctionDefinitionStart:
+      case Parse::NodeKind::FunctionTerseDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
         symbol_kind = clang::clangd::SymbolKind::Function;
         break;

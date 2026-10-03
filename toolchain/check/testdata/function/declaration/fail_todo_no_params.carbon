@@ -2,9 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
-// TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
-// EXTRA-ARGS: --dump-sem-ir-ranges=if-present
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -51,15 +49,10 @@ fn A[] -> ();
 
 // --- fail_todo_arrow_body.carbon
 
-// TODO: We don't have parsing support for this yet.
 library "[[@TEST_NAME]]";
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+8]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:1: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
 // CHECK:STDERR: fn A => 0;
 // CHECK:STDERR: ^~~~~~~
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:6: error: semantics TODO: `HandleTerseBodyArrow` [SemanticsTodo]
-// CHECK:STDERR: fn A => 0;
-// CHECK:STDERR:      ^~
 // CHECK:STDERR:
 fn A => 0;
 
@@ -80,111 +73,3 @@ var generic x: () = ();
 fn A {
   A();
 }
-
-// CHECK:STDOUT: --- fail_no_body.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @A;
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_brace_body.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @A {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_return_type.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %return.param_patt: %pattern_type = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc7_10.2 [concrete = constants.%return.patt]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc7_10.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc7_10.2: type = converted %.loc7_10.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc7_10.3: Core.Form = init_form %.loc7_10.2 [concrete = constants.%.262]
-// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
-// CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> out %return.param: %empty_tuple.type;
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_implicit_only.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: constants {
-// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %return.param_patt: %pattern_type = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %empty_tuple.type [concrete]
-// CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
-// CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: file {
-// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %return.param_patt, %.loc7_12.2 [concrete = constants.%return.patt]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %.loc7_12.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc7_12.2: type = converted %.loc7_12.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc7_12.3: Core.Form = init_form %.loc7_12.2 [concrete = constants.%.262]
-// CHECK:STDOUT:     %return.param: ref %empty_tuple.type = out_param call_param0
-// CHECK:STDOUT:     %return: ref %empty_tuple.type = return_slot %return.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @A() -> out %return.param: %empty_tuple.type;
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_arrow_body.carbon
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @A;
-// CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_invalid_file_generic_regression_test.carbon
-// CHECK:STDOUT:

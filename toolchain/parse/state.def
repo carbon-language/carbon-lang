@@ -805,10 +805,15 @@ CARBON_PARSE_STATE(LambdaAfterImplicitParams)
 //   1. FunctionReturnTypeFinish  (Reused)
 //   2. LambdaBody
 //
+// fn ... ->? ...
+//        ^
+//   1. FunctionReturnFormFinish  (Reused)
+//   2. LambdaBody
+//
 // fn ... => ...
 //        ^
 //   1. Expr
-//   2. LambdaBodyFinish
+//   2. LambdaTerseBodyFinish
 //
 // fn ... { ... }
 //        ^
@@ -826,17 +831,22 @@ CARBON_PARSE_STATE(LambdaAfterParams)
 // fn ... -> ... => ...
 //               ^
 //   1. Expr
-//   2. LambdaBodyFinish
+//   2. LambdaTerseBodyFinish
 CARBON_PARSE_STATE(LambdaBody)
 
 // Finishes a lambda expression.
 //
 // fn ... }
 //         ^
+//   (state done)
+CARBON_PARSE_STATE(LambdaBodyFinish)
+
+// Finishes a lambda expression with a terse body.
+//
 // fn ... => expr
 //               ^
 //   (state done)
-CARBON_PARSE_STATE(LambdaBodyFinish)
+CARBON_PARSE_STATE(LambdaTerseBodyFinish)
 
 // Handles processing of a function's syntax after `)`, primarily the
 // possibility a `->` return type is there. Always enqueues signature finish

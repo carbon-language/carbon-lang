@@ -309,6 +309,7 @@ CARBON_DIAGNOSTIC_KIND(FunctionRedeclEvaluationModePrevious)
 CARBON_DIAGNOSTIC_KIND(InvalidMainRunParameters)
 CARBON_DIAGNOSTIC_KIND(InvalidMainRunReturnType)
 CARBON_DIAGNOSTIC_KIND(MissingReturnStatement)
+CARBON_DIAGNOSTIC_KIND(ReturnTypeInTerseFunction)
 CARBON_DIAGNOSTIC_KIND(UnknownBuiltinFunctionName)
 CARBON_DIAGNOSTIC_KIND(InvalidBuiltinSignature)
 CARBON_DIAGNOSTIC_KIND(ThunkSignature)
@@ -633,6 +634,9 @@ CARBON_DIAGNOSTIC_KIND(UnusedButUsedHere)
 CARBON_DIAGNOSTIC_KIND(UnusedModifierWithoutDefinition)
 CARBON_DIAGNOSTIC_KIND(UnusedPatternNoBindings)
 CARBON_DIAGNOSTIC_KIND(UnusedBinding)
+
+// Function expression diagnostics.
+CARBON_DIAGNOSTIC_KIND(SelfParameterInLambda)
 
 // ============================================================================
 // CodeGen diagnostics

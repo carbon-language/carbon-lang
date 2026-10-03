@@ -32,7 +32,7 @@ namespace Carbon::Parse {
   /* `require <type> impls` or just `require impls` */       \
   X(RequireImpls)                                            \
   X(Requirement)                                             \
-  X(ReturnDecl)                                              \
+  X(ReturnSpecifier)                                         \
   X(Statement)
 
 // We expect this to grow, so are using a bigger size than needed.

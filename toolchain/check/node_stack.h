@@ -404,7 +404,7 @@ class NodeStack {
                               Parse::NodeCategory::Statement |
                               Parse::NodeCategory::Modifier,
                           Id::Kind::None);
-    set_id_if_category_is(Parse::NodeCategory::ReturnDecl,
+    set_id_if_category_is(Parse::NodeCategory::ReturnSpecifier,
                           Id::KindFor<SemIR::InstId>());
     return result;
   }
@@ -430,7 +430,10 @@ class NodeStack {
       case Parse::NodeKind::WhileConditionStart:
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
+      case Parse::NodeKind::FunctionTerseDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
+      case Parse::NodeKind::LambdaDefinitionStart:
+      case Parse::NodeKind::LambdaTerseDefinitionStart:
         return Id::KindFor<SemIR::FunctionId>();
       case Parse::NodeKind::ChoiceDefinitionStart:
         // TODO: Should we have a separate SemIR::ChoiceId?
@@ -543,7 +546,6 @@ class NodeStack {
       case Parse::NodeKind::StructLiteralComma:
       case Parse::NodeKind::StructFieldDesignator:
       case Parse::NodeKind::StructTypeLiteralComma:
-      case Parse::NodeKind::TerseBodyArrow:
       case Parse::NodeKind::TupleLiteralComma:
       case Parse::NodeKind::TypeOfExprKeyword:
       case Parse::NodeKind::TypeOfExprOpenParen:

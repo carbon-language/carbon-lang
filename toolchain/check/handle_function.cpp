@@ -50,9 +50,9 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   return true;
 }
 
-// Handles a `->` or `->?` return declaration.
-static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
-    -> bool {
+// Handles a `->` or `->?` return specifier.
+static auto HandleReturnSpecifier(Context& context,
+                                  Parse::AnyReturnSpecifierId node_id) -> bool {
   auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
   Context::FormExpr form_expr = [&] {
     if (context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind) {
@@ -68,11 +68,11 @@ static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
-  return HandleReturnDecl(context, node_id);
+  return HandleReturnSpecifier(context, node_id);
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnFormId node_id) -> bool {
-  return HandleReturnDecl(context, node_id);
+  return HandleReturnSpecifier(context, node_id);
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
@@ -360,165 +360,6 @@ static auto RequestVtableIfVirtual(
   context.vtable_stack().AddInstId(decl_id);
 }
 
-// Diagnoses when positional params aren't supported. Reassigns the pattern
-// block if needed.
-static auto DiagnosePositionalParams(Context& context,
-                                     SemIR::Function& function_info) -> void {
-  if (function_info.param_patterns_id.has_value()) {
-    return;
-  }
-
-  context.TODO(function_info.latest_decl_id(),
-               "function with positional parameters");
-  function_info.param_patterns_id = SemIR::InstBlockId::Empty;
-}
-
-// For the top-level parameter patterns list, and for any level of nested tuple
-// patterns, ensure that if a subpattern provides a default value, all
-// subsequent patterns at that level of nesting must provide a default value as
-// well. Returns the number of default values provided at the top level of the
-// function parameter, useful for efficient arity checking in callers later on.
-//
-// TODO: per https://github.com/carbon-language/carbon-lang/issues/7529, this
-// should also consider automatically supplied defaults for fully-specified
-// tuple subpatterns, and consider them as having a default for the purposes
-// of the out-of-order detection. It will also need to detect the error
-// condition when a default is also specified for those fully-specified tuple
-// subpatterns.
-static auto CheckDefaults(Context& context, SemIR::Function& function)
-    -> int32_t {
-  if (!function.param_patterns_id.has_value()) {
-    return 0;
-  }
-
-  struct PatternLevelState {
-    // The inst ids of the subpatterns on this level of tuple subpattern
-    // nesting, treated as a work list, so in reverse order of declaration.
-    llvm::SmallVector<SemIR::InstId> subpattern_ids;
-
-    // If patterns at this level of nesting have default values, this refers
-    // to the first instruction to specify a default, useful for diagnostics.
-    SemIR::InstId first_pattern_with_default = SemIR::InstId::None;
-
-    // If we encounter a tuple-pattern during processing, we suspend processing
-    // of this pattern level, in the middle of processing a single pattern from
-    // root to leaves. So we record the current state of processing of a single
-    // pattern to return to it after processing any tuple subpatterns.
-
-    // True if the current pattern being processed has a default value
-    // specified.
-    bool current_pattern_has_default = false;
-
-    // The current pattern we are processing, stored separately since it's been
-    // popped from the `pattern_work_list` and already processed, just may need
-    // subsequent processing.
-    SemIR::InstId current_id = SemIR::InstId::None;
-
-    // A work list of patterns to be processed at this level of nesting.
-    llvm::SmallVector<SemIR::InstId> pattern_work_list;
-
-    // A list of subpatterns missing required defaults, to coalesce error
-    // reporting into a single diagnostic.
-    llvm::SmallVector<SemIR::InstId> patterns_missing_defaults;
-
-    // A count of the number of patterns on this level that have defaults.
-    int32_t default_count = 0;
-  };
-
-  llvm::SmallVector<PatternLevelState> level_state_stack;
-  size_t default_count = 0;
-  level_state_stack.push_back({});
-  llvm::append_range(
-      level_state_stack.back().subpattern_ids,
-      llvm::reverse(context.inst_blocks().Get(function.param_patterns_id)));
-
-  while (!level_state_stack.empty()) {
-    PatternLevelState* state = &level_state_stack.back();
-    while (!state->subpattern_ids.empty() ||
-           !state->pattern_work_list.empty() || state->current_id.has_value()) {
-      // If we're not resuming processing a pattern from a nested state, start
-      // processing the next subpattern.
-      if (!state->current_id.has_value()) {
-        state->pattern_work_list.push_back(
-            state->subpattern_ids.pop_back_val());
-        state->current_pattern_has_default = false;
-      }
-      while (!state->pattern_work_list.empty()) {
-        state->current_id = state->pattern_work_list.pop_back_val();
-        auto inst = context.insts().Get(state->current_id);
-        CARBON_KIND_SWITCH(inst) {
-          case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
-            state->current_pattern_has_default = true;
-            state->default_count += 1;
-            state->pattern_work_list.push_back(
-                default_value_pattern.subpattern_id);
-            break;
-          }
-          case CARBON_KIND(
-              SemIR::WrapperBindingPattern wrapper_binding_pattern): {
-            state->pattern_work_list.push_back(
-                wrapper_binding_pattern.subpattern_id);
-            break;
-          }
-          case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
-            auto elements =
-                context.inst_blocks().Get(tuple_pattern.elements_id);
-            if (!elements.empty()) {
-              // Start a new state for the nested tuple pattern elements.
-              level_state_stack.push_back({});
-              state = &level_state_stack.back();
-              llvm::append_range(state->subpattern_ids,
-                                 llvm::reverse(elements));
-            }
-            break;
-          }
-          default:
-            // We only process patterns containing subpatterns, so this is an
-            // intentional no-op.
-            break;
-        }
-      }
-      // Finished processing this subpattern, detect a missing default if
-      // required.
-      if (state->current_pattern_has_default &&
-          !state->first_pattern_with_default.has_value()) {
-        state->first_pattern_with_default = state->current_id;
-      } else if (!state->current_pattern_has_default &&
-                 state->first_pattern_with_default.has_value()) {
-        state->patterns_missing_defaults.push_back(state->current_id);
-      }
-      state->current_id = SemIR::InstId::None;
-    }
-    // Finished processing this tuple-pattern, emit diagnostics if any.
-    if (!state->patterns_missing_defaults.empty()) {
-      CARBON_DIAGNOSTIC(RequiredPatternDefaultValueMissing, Error,
-                        "this pattern is missing a required default value.");
-      CARBON_DIAGNOSTIC(RequiredPatternDefaultValueFirstDefault, Note,
-                        "all patterns to the right of this first pattern with "
-                        "a default value must also specify a default value.");
-      CARBON_DIAGNOSTIC(
-          RequiredPatternDefaultValueMissingAdditional, Note,
-          "this pattern is also missing a required default value.");
-      auto inst_ref = llvm::ArrayRef(state->patterns_missing_defaults);
-      auto builder = context.emitter().Build(
-          inst_ref.consume_front(), RequiredPatternDefaultValueMissing);
-      for (auto inst_id : inst_ref) {
-        builder.Note(inst_id, RequiredPatternDefaultValueMissingAdditional);
-      }
-      builder.Note(state->first_pattern_with_default,
-                   RequiredPatternDefaultValueFirstDefault);
-      builder.Emit();
-    }
-
-    // Extract the count from the level we just completed, overwriting any
-    // nested level value extracted previously.
-    default_count = level_state_stack.back().default_count;
-    level_state_stack.pop_back();
-  }
-
-  return default_count;
-}
-
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
@@ -526,18 +367,10 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_pattern_id = SemIR::InstId::None;
-  auto return_type_inst_id = SemIR::TypeInstId::None;
-  auto return_form_inst_id = SemIR::InstId::None;
-  if (auto [return_node, maybe_return_pattern_id] =
-          context.node_stack()
-              .PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
-      maybe_return_pattern_id) {
-    return_pattern_id = *maybe_return_pattern_id;
-    auto return_form = context.PopReturnForm();
-    return_type_inst_id = return_form.type_component_inst_id;
-    return_form_inst_id = return_form.form_inst_id;
-  }
+  bool is_terse_definition = context.parse_tree().node_kind(node_id) ==
+                             Parse::NodeKind::FunctionTerseDefinitionStart;
+  auto [return_type_inst_id, return_form_inst_id, return_pattern_id] =
+      PopFunctionReturnSpecifier(context, is_terse_definition);
 
   auto name = PopNameComponent(context, return_pattern_id);
   auto name_context = context.decl_name_stack().FinishName(name);
@@ -601,9 +434,7 @@ static auto BuildFunctionDecl(Context& context,
     function_info.definition_id = decl_id;
   }
 
-  function_info.default_value_arity = CheckDefaults(context, function_info);
-
-  DiagnosePositionalParams(context, function_info);
+  CheckFunctionParams(context, function_info);
 
   TryMergeRedecl(
       context, name_context, std::nullopt,
@@ -649,8 +480,10 @@ static auto BuildFunctionDecl(Context& context,
   MaybeAddToNameLookup(context, name_context, introducer.modifier_set,
                        name_context.parent_scope_id, decl_id);
 
-  ValidateForEntryPoint(context, node_id, function_decl.function_id,
-                        function_info);
+  if (!is_terse_definition) {
+    ValidateForEntryPoint(context, node_id, function_decl.function_id,
+                          function_info);
+  }
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
     context.definitions_required_by_decl().push_back(decl_id);
@@ -738,14 +571,14 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
 // built a function ID. This logic is shared between processing regular function
 // definitions and delayed parsing of inline method definitions.
 static auto HandleFunctionDefinitionAfterSignature(
-    Context& context, Parse::FunctionDefinitionStartId node_id,
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id,
     SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
   StartFunctionDefinition(context, decl_id, function_id);
   context.node_stack().Push(node_id, function_id);
 }
 
-auto HandleFunctionDefinitionSuspend(Context& context,
-                                     Parse::FunctionDefinitionStartId node_id)
+auto HandleFunctionDefinitionSuspend(
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id)
     -> DeferredDefinitionWorklist::SuspendedFunction {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
@@ -756,7 +589,7 @@ auto HandleFunctionDefinitionSuspend(Context& context,
 }
 
 auto HandleFunctionDefinitionResume(
-    Context& context, Parse::FunctionDefinitionStartId node_id,
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id,
     DeferredDefinitionWorklist::SuspendedFunction&& suspended_fn) -> void {
   context.decl_name_stack().Restore(std::move(suspended_fn.saved_name_state));
   HandleFunctionDefinitionAfterSignature(
@@ -778,20 +611,33 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   SemIR::FunctionId function_id =
       context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
 
-  // If the `}` of the function is reachable, reject if we need a return value
-  // and otherwise add an implicit `return;`.
-  if (IsCurrentPositionReachable(context)) {
-    if (context.functions().Get(function_id).return_form_inst_id.has_value()) {
-      CARBON_DIAGNOSTIC(
-          MissingReturnStatement, Error,
-          "missing `return` at end of function with declared return type");
-      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                             MissingReturnStatement);
-    } else {
-      AddReturnInstWithCleanups(context, node_id);
-    }
-  }
+  CheckFunctionReturnOnFinish(context, node_id, function_id);
+  FinishFunctionDefinition(context, function_id);
+  context.decl_name_stack().PopScope(/*check_unused=*/true);
 
+  return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::FunctionTerseDefinitionStartId node_id) -> bool {
+  // Process the declaration portion of the function.
+  auto [function_id, decl_id] =
+      BuildFunctionDecl(context, node_id, /*is_definition=*/true);
+  HandleFunctionDefinitionAfterSignature(context, node_id, function_id,
+                                         decl_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::FunctionTerseDefinitionId /*node_id*/) -> bool {
+  auto body_expr_id = context.node_stack().PopExpr();
+  auto [signature_node_id, function_id] =
+      context.node_stack()
+          .PopWithNodeId<Parse::NodeKind::FunctionTerseDefinitionStart>();
+
+  CheckFunctionTerseBody(context, function_id, body_expr_id);
+  ValidateForEntryPoint(context, signature_node_id, function_id,
+                        context.functions().Get(function_id));
   FinishFunctionDefinition(context, function_id);
   context.decl_name_stack().PopScope(/*check_unused=*/true);
 
@@ -858,11 +704,6 @@ auto HandleParseNode(Context& context,
   }
   context.decl_name_stack().PopScope();
   return true;
-}
-
-auto HandleParseNode(Context& context, Parse::FunctionTerseDefinitionId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleFunctionTerseDefinition");
 }
 
 }  // namespace Carbon::Check
