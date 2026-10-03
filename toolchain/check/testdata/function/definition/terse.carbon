@@ -73,6 +73,21 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn Run() => true;
 
+// --- fail_return_type.carbon
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_return_type.carbon:[[@LINE+4]]:14: error: cannot specify a return type with `=>` [ReturnTypeInTerseFunction]
+// CHECK:STDERR: fn G(x: i32) -> i32 => x;
+// CHECK:STDERR:              ^~~~~~
+// CHECK:STDERR:
+fn G(x: i32) -> i32 => x;
+
+// CHECK:STDERR: fail_return_type.carbon:[[@LINE+4]]:18: error: cannot specify a return form with `=>` [ReturnTypeInTerseFunction]
+// CHECK:STDERR: fn H(ref x: i32) ->? form(ref i32) => x;
+// CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+fn H(ref x: i32) ->? form(ref i32) => x;
+
 // --- fail_redecl.carbon
 library "[[@TEST_NAME]]";
 
@@ -139,9 +154,9 @@ fn UnusedTest(x: i32, unused y: i32) => y;
 // --- fail_todo_dependent_return.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_dependent_return.carbon:[[@LINE+4]]:1: error: semantics TODO: `deduced return type that depends on a generic parameter` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_dependent_return.carbon:[[@LINE+4]]:37: error: semantics TODO: `deduced return type that depends on a generic parameter` [SemanticsTodo]
 // CHECK:STDERR: fn GenericId[T: Core.Copy](x: T) => x;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:                                     ^
 // CHECK:STDERR:
 fn GenericId[T: Core.Copy](x: T) => x;
 

@@ -22,13 +22,13 @@ namespace Carbon::Check {
 // HandleFunctionDefinitionResume carry out the same actions as
 // HandleFunctionDefinitionStart, except that the various context stacks are
 // cleared out in between.
-auto HandleFunctionDefinitionSuspend(Context& context,
-                                     Parse::FunctionDefinitionStartId node_id)
+auto HandleFunctionDefinitionSuspend(
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id)
     -> DeferredDefinitionWorklist::SuspendedFunction;
 
 // Handle resuming the definition of a function, after a previous suspension.
 auto HandleFunctionDefinitionResume(
-    Context& context, Parse::FunctionDefinitionStartId node_id,
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id,
     DeferredDefinitionWorklist::SuspendedFunction&& suspended_fn) -> void;
 
 }  // namespace Carbon::Check

@@ -66,21 +66,6 @@ fn G() {
   var x: auto = fn -> i32 ;
 }
 
-// --- fail_return_type_with_terse_body.carbon
-
-fn H() {
-  // CHECK:STDERR: fail_return_type_with_terse_body.carbon:[[@LINE+4]]:30: error: cannot specify a return type with `=>` [ReturnTypeInTerseLambda]
-  // CHECK:STDERR:   var x: auto = fn () -> i32 => 0;
-  // CHECK:STDERR:                              ^~
-  // CHECK:STDERR:
-  var x: auto = fn () -> i32 => 0;
-  // CHECK:STDERR: fail_return_type_with_terse_body.carbon:[[@LINE+4]]:45: error: cannot specify a return type with `=>` [ReturnTypeInTerseLambda]
-  // CHECK:STDERR:   var y: auto = fn (ref a: i32) ->? ref i32 => a;
-  // CHECK:STDERR:                                             ^~
-  // CHECK:STDERR:
-  var y: auto = fn (ref a: i32) ->? ref i32 => a;
-}
-
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
@@ -125,9 +110,9 @@ fn H() {
 // CHECK:STDOUT:   │ │   │ │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │   │ ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │   ├─ExplicitParamList ')'
-// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '=>'
+// CHECK:STDOUT:   │ │ ╭─LambdaTerseDefinitionStart '=>'
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'x'
-// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   │ ├─LambdaTerseDefinition 'fn'
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'c'
@@ -222,54 +207,6 @@ fn H() {
 // CHECK:STDOUT:   │ │ │   ├─ReturnType '->'
 // CHECK:STDOUT:   │ │ │ ╭─LambdaDefinitionStart ';' has_error
 // CHECK:STDOUT:   │ │ ├─Lambda 'fn' has_error
-// CHECK:STDOUT:   │ ├─VariableDecl ';'
-// CHECK:STDOUT:   ├─FunctionDefinition '}'
-// CHECK:STDOUT:   ├─FileEnd ''
-// CHECK:STDOUT:   (root)
-// CHECK:STDOUT: - filename: fail_return_type_with_terse_body.carbon
-// CHECK:STDOUT:   ╭─FileStart ''
-// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
-// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'H'
-// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
-// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
-// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
-// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
-// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │   ├─AutoTypeLiteral 'auto'
-// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
-// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
-// CHECK:STDOUT:   │ │ ├─VariableInitializer '='
-// CHECK:STDOUT:   │ │ │   ╭─LambdaIntroducer 'fn'
-// CHECK:STDOUT:   │ │ │   │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │   ├─ExplicitParamList ')'
-// CHECK:STDOUT:   │ │ │   │ ╭─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │   ├─ReturnType '->'
-// CHECK:STDOUT:   │ │ │ ╭─LambdaDefinitionStart '=>' has_error
-// CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
-// CHECK:STDOUT:   │ │ ├─Lambda 'fn'
-// CHECK:STDOUT:   │ ├─VariableDecl ';'
-// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
-// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
-// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │   ├─AutoTypeLiteral 'auto'
-// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
-// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
-// CHECK:STDOUT:   │ │ ├─VariableInitializer '='
-// CHECK:STDOUT:   │ │ │   ╭─LambdaIntroducer 'fn'
-// CHECK:STDOUT:   │ │ │   │ ╭─ExplicitParamListStart '('
-// CHECK:STDOUT:   │ │ │   │ │   ╭─IdentifierNameNotBeforeSignature 'a'
-// CHECK:STDOUT:   │ │ │   │ │ ╭─RefBindingName 'ref'
-// CHECK:STDOUT:   │ │ │   │ │ ├─BindingPatternTypeStart ':'
-// CHECK:STDOUT:   │ │ │   │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │   │ ├─LetBindingPattern ':'
-// CHECK:STDOUT:   │ │ │   ├─ExplicitParamList ')'
-// CHECK:STDOUT:   │ │ │   │   ╭─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │   │ ╭─PrefixOperatorRef 'ref'
-// CHECK:STDOUT:   │ │ │   ├─ReturnForm '->?'
-// CHECK:STDOUT:   │ │ │ ╭─LambdaDefinitionStart '=>' has_error
-// CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'a'
-// CHECK:STDOUT:   │ │ ├─Lambda 'fn'
 // CHECK:STDOUT:   │ ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FunctionDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''

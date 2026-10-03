@@ -62,17 +62,9 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::EqualGreater: {
-      auto prev_kind =
-          context.tree().node_kind(NodeId(context.tree().size() - 1));
-      if (prev_kind == NodeKind::ReturnType ||
-          prev_kind == NodeKind::ReturnForm) {
-        CARBON_DIAGNOSTIC(ReturnTypeInTerseFunction, Error,
-                          "cannot specify a return type with `=>`");
-        context.emitter().Emit(*context.position(), ReturnTypeInTerseFunction);
-        state.has_error = true;
-      }
-      context.AddFunctionDefinitionStart(context.Consume(), state.has_error);
-      // Any error is recorded on the FunctionDefinitionStart.
+      context.AddFunctionTerseDefinitionStart(context.Consume(),
+                                              state.has_error);
+      // Any error is recorded on the FunctionTerseDefinitionStart.
       state.has_error = false;
       context.PushState(state, StateKind::FunctionTerseBodyFinish);
       context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());

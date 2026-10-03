@@ -367,22 +367,10 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_pattern_id = SemIR::InstId::None;
-  auto return_type_inst_id = SemIR::TypeInstId::None;
-  auto return_form_inst_id = SemIR::InstId::None;
-  if (auto [return_node, maybe_return_pattern_id] =
-          context.node_stack()
-              .PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
-      maybe_return_pattern_id) {
-    return_pattern_id = *maybe_return_pattern_id;
-    auto return_form = context.PopReturnForm();
-    return_type_inst_id = return_form.type_component_inst_id;
-    return_form_inst_id = return_form.form_inst_id;
-  } else if (context.tokens().GetKind(context.parse_tree().node_token(
-                 node_id)) == Lex::TokenKind::EqualGreater) {
-    GetSingletonType(context, SemIR::AutoType::TypeInstId);
-    return_type_inst_id = SemIR::AutoType::TypeInstId;
-  }
+  bool is_terse_definition = context.parse_tree().node_kind(node_id) ==
+                             Parse::NodeKind::FunctionTerseDefinitionStart;
+  auto [return_type_inst_id, return_form_inst_id, return_pattern_id] =
+      PopFunctionReturnDecl(context, is_terse_definition);
 
   auto name = PopNameComponent(context, return_pattern_id);
   auto name_context = context.decl_name_stack().FinishName(name);
@@ -492,7 +480,7 @@ static auto BuildFunctionDecl(Context& context,
   MaybeAddToNameLookup(context, name_context, introducer.modifier_set,
                        name_context.parent_scope_id, decl_id);
 
-  if (return_type_inst_id != SemIR::AutoType::TypeInstId) {
+  if (!is_terse_definition) {
     ValidateForEntryPoint(context, node_id, function_decl.function_id,
                           function_info);
   }
@@ -583,14 +571,14 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
 // built a function ID. This logic is shared between processing regular function
 // definitions and delayed parsing of inline method definitions.
 static auto HandleFunctionDefinitionAfterSignature(
-    Context& context, Parse::FunctionDefinitionStartId node_id,
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id,
     SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
   StartFunctionDefinition(context, decl_id, function_id);
   context.node_stack().Push(node_id, function_id);
 }
 
-auto HandleFunctionDefinitionSuspend(Context& context,
-                                     Parse::FunctionDefinitionStartId node_id)
+auto HandleFunctionDefinitionSuspend(
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id)
     -> DeferredDefinitionWorklist::SuspendedFunction {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
@@ -601,7 +589,7 @@ auto HandleFunctionDefinitionSuspend(Context& context,
 }
 
 auto HandleFunctionDefinitionResume(
-    Context& context, Parse::FunctionDefinitionStartId node_id,
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id,
     DeferredDefinitionWorklist::SuspendedFunction&& suspended_fn) -> void {
   context.decl_name_stack().Restore(std::move(suspended_fn.saved_name_state));
   HandleFunctionDefinitionAfterSignature(
@@ -624,6 +612,32 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
       context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
 
   CheckFunctionReturnOnFinish(context, node_id, function_id);
+  FinishFunctionDefinition(context, function_id);
+  context.decl_name_stack().PopScope(/*check_unused=*/true);
+
+  return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::FunctionTerseDefinitionStartId node_id) -> bool {
+  // Process the declaration portion of the function.
+  auto [function_id, decl_id] =
+      BuildFunctionDecl(context, node_id, /*is_definition=*/true);
+  HandleFunctionDefinitionAfterSignature(context, node_id, function_id,
+                                         decl_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::FunctionTerseDefinitionId /*node_id*/) -> bool {
+  auto body_expr_id = context.node_stack().PopExpr();
+  auto [signature_node_id, function_id] =
+      context.node_stack()
+          .PopWithNodeId<Parse::NodeKind::FunctionTerseDefinitionStart>();
+
+  CheckFunctionTerseBody(context, function_id, body_expr_id);
+  ValidateForEntryPoint(context, signature_node_id, function_id,
+                        context.functions().Get(function_id));
   FinishFunctionDefinition(context, function_id);
   context.decl_name_stack().PopScope(/*check_unused=*/true);
 
@@ -689,22 +703,6 @@ auto HandleParseNode(Context& context,
     }
   }
   context.decl_name_stack().PopScope();
-  return true;
-}
-
-auto HandleParseNode(Context& context, Parse::FunctionTerseDefinitionId node_id)
-    -> bool {
-  auto body_expr_id = context.node_stack().PopExpr();
-  auto [signature_node_id, function_id] =
-      context.node_stack()
-          .PopWithNodeId<Parse::NodeKind::FunctionDefinitionStart>();
-
-  CheckFunctionTerseBody(context, node_id, function_id, body_expr_id);
-  ValidateForEntryPoint(context, signature_node_id, function_id,
-                        context.functions().Get(function_id));
-  FinishFunctionDefinition(context, function_id);
-  context.decl_name_stack().PopScope(/*check_unused=*/true);
-
   return true;
 }
 

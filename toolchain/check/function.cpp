@@ -59,6 +59,32 @@ auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
        .type_inst_id = form_expr.type_component_inst_id});
 }
 
+auto PopFunctionReturnDecl(Context& context, bool is_terse_definition)
+    -> FunctionReturnDecl {
+  FunctionReturnDecl result;
+  if (auto [return_node, maybe_return_pattern_id] =
+          context.node_stack()
+              .PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
+      maybe_return_pattern_id) {
+    if (is_terse_definition) {
+      CARBON_DIAGNOSTIC(ReturnTypeInTerseFunction, Error,
+                        "cannot specify a return {0:type|form} with `=>`",
+                        Diagnostics::BoolAsSelect);
+      context.emitter().Emit(return_node, ReturnTypeInTerseFunction,
+                             context.parse_tree().node_kind(return_node) ==
+                                 Parse::NodeKind::ReturnType);
+    }
+    result.pattern_id = *maybe_return_pattern_id;
+    auto return_form = context.PopReturnForm();
+    result.type_inst_id = return_form.type_component_inst_id;
+    result.form_inst_id = return_form.form_inst_id;
+  } else if (is_terse_definition) {
+    GetSingletonType(context, SemIR::AutoType::TypeInstId);
+    result.type_inst_id = SemIR::AutoType::TypeInstId;
+  }
+  return result;
+}
+
 auto IsValidBuiltinDeclaration(Context& context,
                                const SemIR::Function& function,
                                SemIR::BuiltinFunctionKind builtin_kind)
@@ -650,37 +676,36 @@ auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
   }
 }
 
-auto CheckFunctionTerseBody(Context& context, Parse::NodeId node_id,
-                            SemIR::FunctionId function_id,
-                            SemIR::InstId body_expr_id) -> void {
-  auto return_type_id = context.insts().Get(body_expr_id).type_id();
-  if (context.types().GetConstantId(return_type_id).is_symbolic()) {
-    context.TODO(node_id,
+// Deduces the return type of `function` as `type_id`, updating the function's
+// return form, pattern, and call parameters.
+static auto DeduceReturnType(Context& context, SemIR::LocId loc_id,
+                             SemIR::Function& function, SemIR::TypeId type_id)
+    -> void {
+  if (context.types().GetConstantId(type_id).is_symbolic()) {
+    context.TODO(loc_id,
                  "deduced return type that depends on a generic parameter");
-    return_type_id = SemIR::ErrorInst::TypeId;
+    type_id = SemIR::ErrorInst::TypeId;
   }
 
-  auto& function = context.functions().Get(function_id);
-  auto return_type_inst_id = context.types().GetTypeInstId(return_type_id);
-  auto body_loc_id = SemIR::LocId(body_expr_id);
+  auto return_type_inst_id = context.types().GetTypeInstId(type_id);
 
   auto return_form_inst_id = AddInstInNoBlock(
       context,
       SemIR::LocIdAndInst::RuntimeVerified(
-          context.sem_ir(), body_loc_id,
+          context.sem_ir(), loc_id,
           SemIR::InitForm{.type_id = SemIR::FormType::TypeId,
                           .type_component_inst_id = return_type_inst_id}));
-  auto pattern_type_id = GetPatternType(context, return_type_id);
+  auto pattern_type_id = GetPatternType(context, type_id);
   auto out_param_pattern_id = AddInstInNoBlock(
       context,
       SemIR::LocIdAndInst::RuntimeVerified(
-          context.sem_ir(), body_loc_id,
+          context.sem_ir(), loc_id,
           SemIR::OutParamPattern{.type_id = pattern_type_id,
                                  .pretty_name_id = SemIR::NameId::ReturnSlot}));
   auto return_pattern_id = AddInstInNoBlock(
       context,
       SemIR::LocIdAndInst::RuntimeVerified(
-          context.sem_ir(), body_loc_id,
+          context.sem_ir(), loc_id,
           SemIR::ReturnSlotPattern{.type_id = pattern_type_id,
                                    .subpattern_id = out_param_pattern_id,
                                    .type_inst_id = return_type_inst_id}));
@@ -688,14 +713,14 @@ auto CheckFunctionTerseBody(Context& context, Parse::NodeId node_id,
   auto out_param_id = AddInstInNoBlock(
       context,
       SemIR::LocIdAndInst::RuntimeVerified(
-          context.sem_ir(), body_loc_id,
-          SemIR::OutParam{.type_id = return_type_id,
+          context.sem_ir(), loc_id,
+          SemIR::OutParam{.type_id = type_id,
                           .index = return_param_index,
                           .pretty_name_id = SemIR::NameId::ReturnSlot}));
   auto return_slot_id = AddInstInNoBlock(
       context, SemIR::LocIdAndInst::RuntimeVerified(
-                   context.sem_ir(), body_loc_id,
-                   SemIR::ReturnSlot{.type_id = return_type_id,
+                   context.sem_ir(), loc_id,
+                   SemIR::ReturnSlot{.type_id = type_id,
                                      .type_inst_id = return_type_inst_id,
                                      .storage_id = out_param_id}));
 
@@ -727,9 +752,18 @@ auto CheckFunctionTerseBody(Context& context, Parse::NodeId node_id,
                   {return_form_inst_id, out_param_id, return_slot_id});
   ReplaceInstPreservingConstantValue(context, function.definition_id, decl);
 
-  CheckFunctionReturnPatternType(context, body_loc_id,
-                                 function.return_pattern_id,
+  CheckFunctionReturnPatternType(context, loc_id, function.return_pattern_id,
                                  SemIR::SpecificId::None);
+}
+
+auto CheckFunctionTerseBody(Context& context, SemIR::FunctionId function_id,
+                            SemIR::InstId body_expr_id) -> void {
+  auto& function = context.functions().Get(function_id);
+  auto body_loc_id = SemIR::LocId(body_expr_id);
+  if (function.return_type_inst_id == SemIR::AutoType::TypeInstId) {
+    DeduceReturnType(context, body_loc_id, function,
+                     context.insts().Get(body_expr_id).type_id());
+  }
   BuildReturnWithExpr(context, body_loc_id, body_expr_id);
 }
 

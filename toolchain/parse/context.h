@@ -461,6 +461,10 @@ class Context {
   // definition if necessary.
   auto AddFunctionDefinitionStart(Lex::TokenIndex token, bool has_error)
       -> void;
+  // Adds a function terse definition start node, and begins tracking a deferred
+  // definition if necessary.
+  auto AddFunctionTerseDefinitionStart(Lex::TokenIndex token, bool has_error)
+      -> void;
   // Adds a function definition node, and ends tracking a deferred definition if
   // necessary.
   auto AddFunctionDefinition(Lex::TokenIndex token, bool has_error) -> void;

@@ -29,6 +29,19 @@ auto FindSelfPattern(Context& context,
 auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
                       Context::FormExpr form_expr) -> SemIR::InstId;
 
+// Return declaration information for a function or function expression.
+struct FunctionReturnDecl {
+  SemIR::TypeInstId type_inst_id = SemIR::TypeInstId::None;
+  SemIR::InstId form_inst_id = SemIR::InstId::None;
+  SemIR::InstId pattern_id = SemIR::InstId::None;
+};
+
+// Pops a `ReturnDecl` node from the node stack if one is present, and
+// determines the return type, form, and pattern for a function or function
+// expression signature.
+auto PopFunctionReturnDecl(Context& context, bool is_terse_definition)
+    -> FunctionReturnDecl;
+
 // Returns whether `function` is a valid declaration of `builtin_kind`.
 auto IsValidBuiltinDeclaration(Context& context,
                                const SemIR::Function& function,
@@ -142,8 +155,7 @@ auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
 
 // Deduces the return type of a terse `=>` function or lambda definition from
 // its body expression and emits the implicit return instruction.
-auto CheckFunctionTerseBody(Context& context, Parse::NodeId node_id,
-                            SemIR::FunctionId function_id,
+auto CheckFunctionTerseBody(Context& context, SemIR::FunctionId function_id,
                             SemIR::InstId body_expr_id) -> void;
 
 // Finishes definitions started by `StartFunctionDefinition`.

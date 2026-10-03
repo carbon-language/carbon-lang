@@ -430,8 +430,10 @@ class NodeStack {
       case Parse::NodeKind::WhileConditionStart:
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
+      case Parse::NodeKind::FunctionTerseDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
       case Parse::NodeKind::LambdaDefinitionStart:
+      case Parse::NodeKind::LambdaTerseDefinitionStart:
         return Id::KindFor<SemIR::FunctionId>();
       case Parse::NodeKind::ChoiceDefinitionStart:
         // TODO: Should we have a separate SemIR::ChoiceId?

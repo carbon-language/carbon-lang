@@ -26,24 +26,11 @@ auto HandleParseNode(Context& context, Parse::LambdaIntroducerId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
-    -> bool {
-  auto return_pattern_id = SemIR::InstId::None;
-  auto return_type_inst_id = SemIR::TypeInstId::None;
-  auto return_form_inst_id = SemIR::InstId::None;
-  if (auto [return_node, maybe_return_pattern_id] =
-          context.node_stack()
-              .PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
-      maybe_return_pattern_id) {
-    return_pattern_id = *maybe_return_pattern_id;
-    auto return_form = context.PopReturnForm();
-    return_type_inst_id = return_form.type_component_inst_id;
-    return_form_inst_id = return_form.form_inst_id;
-  } else if (context.tokens().GetKind(context.parse_tree().node_token(
-                 node_id)) == Lex::TokenKind::EqualGreater) {
-    GetSingletonType(context, SemIR::AutoType::TypeInstId);
-    return_type_inst_id = SemIR::AutoType::TypeInstId;
-  }
+static auto HandleLambdaSignature(Context& context,
+                                  Parse::AnyLambdaDefinitionStartId node_id,
+                                  bool is_terse_definition) -> bool {
+  auto [return_type_inst_id, return_form_inst_id, return_pattern_id] =
+      PopFunctionReturnDecl(context, is_terse_definition);
 
   Parse::NodeId first_param_node_id = Parse::NoneNodeId();
   Parse::NodeId last_param_node_id = Parse::NoneNodeId();
@@ -137,18 +124,35 @@ auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
+    -> bool {
+  return HandleLambdaSignature(context, node_id,
+                               /*is_terse_definition=*/false);
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::LambdaTerseDefinitionStartId node_id) -> bool {
+  return HandleLambdaSignature(context, node_id,
+                               /*is_terse_definition=*/true);
+}
+
 auto HandleParseNode(Context& context, Parse::LambdaId node_id) -> bool {
-  auto body_expr_id = SemIR::InstId::None;
-  if (context.node_stack().PeekIs(Parse::NodeCategory::Expr)) {
-    body_expr_id = context.node_stack().PopExpr();
-  }
   auto function_id =
       context.node_stack().Pop<Parse::NodeKind::LambdaDefinitionStart>();
-  if (body_expr_id.has_value()) {
-    CheckFunctionTerseBody(context, node_id, function_id, body_expr_id);
-  } else {
-    CheckFunctionReturnOnFinish(context, node_id, function_id);
-  }
+  CheckFunctionReturnOnFinish(context, node_id, function_id);
+  FinishFunctionDefinition(context, function_id);
+  context.scope_stack().Pop(/*check_unused=*/true);
+  context.node_stack().Push(
+      node_id, context.functions().Get(function_id).first_owning_decl_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::LambdaTerseDefinitionId node_id)
+    -> bool {
+  auto body_expr_id = context.node_stack().PopExpr();
+  auto function_id =
+      context.node_stack().Pop<Parse::NodeKind::LambdaTerseDefinitionStart>();
+  CheckFunctionTerseBody(context, function_id, body_expr_id);
   FinishFunctionDefinition(context, function_id);
   context.scope_stack().Pop(/*check_unused=*/true);
   context.node_stack().Push(
