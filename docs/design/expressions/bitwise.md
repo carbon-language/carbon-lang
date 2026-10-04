@@ -198,7 +198,7 @@ implementing the following family of interfaces:
 // Unary `^`.
 interface BitComplement {
   default let Result: type = Self;
-  fn Op(self) -> Result;
+  fn (self) -> Result;
 }
 ```
 
@@ -206,10 +206,11 @@ interface BitComplement {
 // Binary `&`.
 interface BitAndWith(U: type) {
   default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+  fn (self, other: U) -> Result;
 }
 constraint BitAnd {
-  extend BitAndWith(Self) where .Result = Self;
+  extend require impls BitAndWith(Self) where .Result = Self;
+  alias = BitAndWith(Self).BitAndWith;
 }
 ```
 
@@ -217,10 +218,11 @@ constraint BitAnd {
 // Binary `|`.
 interface BitOrWith(U: type) {
   default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+  fn (self, other: U) -> Result;
 }
 constraint BitOr {
-  extend BitOrWith(Self) where .Result = Self;
+  extend require impls BitOrWith(Self) where .Result = Self;
+  alias = BitOrWith(Self).BitOrWith;
 }
 ```
 
@@ -228,10 +230,11 @@ constraint BitOr {
 // Binary `^`.
 interface BitXorWith(U: type) {
   default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+  fn (self, other: U) -> Result;
 }
 constraint BitXor {
-  extend BitXorWith(Self) where .Result = Self;
+  extend require impls BitXorWith(Self) where .Result = Self;
+  alias = BitXorWith(Self).BitXorWith;
 }
 ```
 
@@ -239,10 +242,11 @@ constraint BitXor {
 // Binary `<<`.
 interface LeftShiftWith(U: type) {
   default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+  fn (self, other: U) -> Result;
 }
 constraint LeftShift {
-  extend LeftShiftWith(Self) where .Result = Self;
+  extend require impls LeftShiftWith(Self) where .Result = Self;
+  alias = LeftShiftWith(Self).LeftShiftWith;
 }
 ```
 
@@ -250,21 +254,24 @@ constraint LeftShift {
 // Binary `>>`.
 interface RightShiftWith(U: type) {
   default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+  fn (self, other: U) -> Result;
 }
 constraint RightShift {
-  extend RightShiftWith(Self) where .Result = Self;
+  extend require impls RightShiftWith(Self) where .Result = Self;
+  alias = RightShiftWith(Self).RightShiftWith;
 }
 ```
 
 Given `x: T` and `y: U`:
 
--   The expression `^x` is rewritten to `x.(BitComplement.Op)()`.
--   The expression `x & y` is rewritten to `x.(BitAndWith(U).Op)(y)`.
--   The expression `x | y` is rewritten to `x.(BitOrWith(U).Op)(y)`.
--   The expression `x ^ y` is rewritten to `x.(BitXorWith(U).Op)(y)`.
--   The expression `x << y` is rewritten to `x.(LeftShiftWith(U).Op)(y)`.
--   The expression `x >> y` is rewritten to `x.(RightShiftWith(U).Op)(y)`.
+-   The expression `^x` is rewritten to `x.(BitComplement.BitComplement)()`.
+-   The expression `x & y` is rewritten to `x.(BitAndWith(U).BitAndWith)(y)`.
+-   The expression `x | y` is rewritten to `x.(BitOrWith(U).BitOrWith)(y)`.
+-   The expression `x ^ y` is rewritten to `x.(BitXorWith(U).BitXorWith)(y)`.
+-   The expression `x << y` is rewritten to
+    `x.(LeftShiftWith(U).LeftShiftWith)(y)`.
+-   The expression `x >> y` is rewritten to
+    `x.(RightShiftWith(U).RightShiftWith)(y)`.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.
@@ -281,3 +288,5 @@ to give the semantics described above.
 
 -   Proposal
     [#1191: bitwise and shift operators](https://github.com/carbon-language/carbon-lang/pull/1191).
+-   Proposal
+    [#7896: Abbreviated `interface` and `impl` syntax](https://github.com/carbon-language/carbon-lang/pull/7896).

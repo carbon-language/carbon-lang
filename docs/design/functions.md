@@ -64,8 +64,10 @@ A lambda expression has one of the following syntactic forms:
 
 Named function definitions are distinguished from lambdas by the presence of a
 name after the `fn` keyword. If a statement or declaration begins with `fn`, a
-name is required and it becomes a function declaration. Otherwise, if in an
-expression context, `fn` introduces a lambda.
+name is required and it becomes a function declaration, except in an `interface`
+or `impl` declaration where omitting the name declares or implements the
+interface's [primary function](generics/details.md#primary-interface-functions).
+Otherwise, if in an expression context, `fn` introduces a lambda.
 
 The first form in both cases is a shorthand: `=> expression` is equivalent to
 `-> auto { return expression; }` (with a trailing semicolon for named
@@ -608,7 +610,11 @@ on cross-library forward declarations and modifier merging, see the
 
 Redeclarations of a function must match syntactically. The sequence of tokens
 following the `fn` keyword (and optional scope name) up to the semicolon or open
-brace must be identical.
+brace must be identical, except that a
+[primary interface function](generics/details.md#primary-interface-functions)
+declared without a name inside an `interface` or `impl` is matched by an
+out-of-line `fn` definition that explicitly specifies the interface's name, with
+identical tokens following that name.
 
 Specifically, the following must match exactly between the forward declaration
 and the definition:
@@ -787,14 +793,14 @@ interface:
 ```carbon
 interface Call(... each Arg: type) {
   let Result: type;
-  fn Op(self, ... each arg: each Arg) -> Result;
+  fn (self, ... each arg: each Arg) -> Result;
 }
 ```
 
 A call expression that is not a direct call is an _indirect call_. It is
-translated into an invocation of `Call(Arg1, Arg2,` ... `ArgN).Op`, where
+translated into an invocation of `Call(Arg1, Arg2,` ... `ArgN).Call`, where
 `Arg1`, `Arg2`, ... `ArgN` are the types of the call's arguments in order. So
-`F(arg1, arg2)` is translated into `F.(Call(Arg1, Arg2).Op)(arg1, arg2)`.
+`F(arg1, arg2)` is translated into `F.(Call(Arg1, Arg2).Call)(arg1, arg2)`.
 
 For example, given:
 
@@ -810,13 +816,13 @@ fn Sort[T: type, F: Call(T, T) where .Result = Ordering]
 The call `cmp(v[i], v[j])` is translated into:
 
 ```carbon
-  auto ord: auto = cmp.(Call(T, T).Op)(v[i], v[j]);
+  auto ord: auto = cmp.(Call(T, T).Call)(v[i], v[j]);
 ```
 
 A function type or bound method type implements the `Call` interface for every
 set of runtime argument types that a direct call to the function or bound method
-would accept. The behavior of `Call.Op` is to call the function or bound method
-with the provided argument list.
+would accept. The behavior of `Call.Call` is to call the function or bound
+method with the provided argument list.
 
 Implicit conversions are permitted for parameters whose types do not involve
 deduced parameters. The intent is for the `impl` to support indirect calls in
@@ -842,8 +848,8 @@ call operator for a type.
 
 ```carbon
 class Func(Arg: type) {
-  impl as Call((Arg,)) where .Result = () {
-    fn Op(self, arg: (Arg,)) { Print("hello, world"); }
+  impl as Call(Arg) fn (self, arg: Arg) {
+    Print("hello, world");
   }
 }
 
@@ -860,10 +866,8 @@ implementing an interface.
 ```carbon
 class X { var n: i32; }
 
-impl {.a: X} as Call(()) where .Result = i32 {
-  fn Op(self, args: ()) -> i32 {
-    return self.a.n;
-  }
+impl {.a: X} as Call() fn (self) -> i32 {
+  return self.a.n;
 }
 fn Run() -> i32 {
   // Returns 1.
@@ -920,3 +924,5 @@ Other designs build upon basic function syntax to add advanced features:
     [#5434: `ref` parameters, arguments, returns and `val` returns](https://github.com/carbon-language/carbon-lang/pull/5434)
 -   Proposal
     [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)
+-   Proposal
+    [#7896: Abbreviated `interface` and `impl` syntax](https://github.com/carbon-language/carbon-lang/pull/7896)

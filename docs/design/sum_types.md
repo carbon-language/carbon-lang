@@ -111,7 +111,7 @@ interface Match {
   }
 
   let template Continuation: type;
-  fn Op[C: Continuation](self, continuation: C*)
+  fn [C: Continuation](self, continuation: C*)
     -> C.(BaseContinuation.ReturnType);
 }
 ```
@@ -121,16 +121,16 @@ interface Match {
 alternatives: each alternative is represented as a method of that interface.
 When compiling a proper pattern (or set of patterns that includes a proper
 pattern, as with the cases of a `match`) whose type is a sum type, the compiler
-generates an implementation of `Continuation` and passes it to `Match.Op`. The
-sum type's implementation of `Match.Op` is responsible for determining which
-alternative is present and what its parameters are, and calling the
-corresponding method of `continuation` with those parameters. The `Match.Op`
+generates an implementation of `Continuation` and passes it to `Match.Match`.
+The sum type's implementation of `Match.Match` is responsible for determining
+which alternative is present and what its parameters are, and calling the
+corresponding method of `continuation` with those parameters. The `Match.Match`
 implementation is required to call exactly one such method exactly once before
 returning. The compiler populates the `Continuation` method bodies with whatever
 code should be executed when the corresponding alternatives match.
 
 **TODO:** if Carbon has explicit support for tail calls, we should probably
-require that `Match.Op` invoke the continuation as a tail call.
+require that `Match.Match` invoke the continuation as a tail call.
 
 For example, here's how `Optional` can be defined as a class:
 
@@ -150,7 +150,7 @@ class Optional(T: type) {
       fn None(ref self) -> ReturnType;
     }
 
-    fn Op[C: Continuation](self, continuation: C*) -> C.ReturnType {
+    fn [C: Continuation](self, continuation: C*) -> C.ReturnType {
       if (self.has_value) {
         return continuation->Some(self.value);
       } else {
@@ -180,7 +180,7 @@ class __MatchStatementImpl {
   }
 }
 
-my_opt.(Match.Op)({} as __MatchStatementImpl);
+my_opt.(Match.Match)({} as __MatchStatementImpl);
 ```
 
 (The name `__MatchStatementImpl` is a placeholder for illustration purposes; the

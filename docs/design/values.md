@@ -375,7 +375,7 @@ example:
 -   [Assignment statements](/docs/design/assignment.md) require the
     left-hand-side of the `=` to be a durable reference. This stronger
     requirement is enforced before the expression is rewritten to dispatch into
-    the `Carbon.Assign.Op` interface method.
+    the `Core.AssignWith.AssignWith` interface method.
 -   [Address-of expressions](#pointer-syntax) require their operand to be a
     durable reference and compute the address of the referenced object.
 -   [`ref` binding patterns](pattern_matching.md#name-binding-patterns) require
@@ -1452,7 +1452,7 @@ class String {
   private var capacity: i64;
 
   impl as ReferenceImplicitAs where .T = StringView {
-    fn Op(ref self: const Self) -> StringView {
+    fn Convert(ref self: const Self) -> StringView {
       // Because this is called on the String object prior to it becoming
       // a value, we can access an SSO buffer or other interior pointers
       // of `self`.
