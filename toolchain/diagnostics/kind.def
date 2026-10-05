@@ -200,6 +200,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedAssociatedConstantIdentifier)
 CARBON_DIAGNOSTIC_KIND(ExpectedAssociatedConstantColon)
 CARBON_DIAGNOSTIC_KIND(PhaseKeywordInAssociatedConstant)
 CARBON_DIAGNOSTIC_KIND(RequireExpectedImpls)
+CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierForFriend)
 
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)

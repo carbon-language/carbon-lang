@@ -507,6 +507,7 @@ class NodeStack {
       case Parse::NodeKind::Forall:
       case Parse::NodeKind::FormLiteralKeyword:
       case Parse::NodeKind::FormLiteralOpenParen:
+      case Parse::NodeKind::FriendIntroducer:
       case Parse::NodeKind::IdentifierNameQualifierWithParams:
       case Parse::NodeKind::IdentifierNameQualifierWithoutParams:
       case Parse::NodeKind::IdentifierPackageName:

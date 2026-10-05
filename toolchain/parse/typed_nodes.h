@@ -1650,6 +1650,25 @@ struct BaseDecl {
   Lex::SemiTokenIndex token;
 };
 
+// Friend declaration
+// ------------------
+
+using FriendIntroducer =
+    LeafNode<NodeKind::FriendIntroducer, Lex::FriendTokenIndex>;
+
+struct FriendDecl {
+  static constexpr auto Kind = NodeKind::FriendDecl.Define(
+      {.category = NodeCategory::Decl, .bracketed_by = FriendIntroducer::Kind});
+
+  FriendIntroducerId introducer;
+
+  // TODO: figure out the more general syntax for the name part of a friend
+  // declaration.
+  IdentifierNameExprId name;
+
+  Lex::SemiTokenIndex token;
+};
+
 // Interface declarations and definitions
 // --------------------------------------
 
