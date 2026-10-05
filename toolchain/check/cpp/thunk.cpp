@@ -165,9 +165,9 @@ static auto IsSimpleAbiType(clang::ASTContext& ast_context,
   return false;
 }
 
-CalleeFunctionInfo::CalleeFunctionInfo(Context& context,
-                                       clang::FunctionDecl* decl,
-                                       SemIR::ClangDeclSignatureId signature_id)
+CppCalleeFunctionInfo::CppCalleeFunctionInfo(
+    Context& context, clang::FunctionDecl* decl,
+    SemIR::ClangDeclSignatureId signature_id)
     : decl(decl),
       decl_name(decl->getDeclName()),
       clang_loc(decl->getLocation()),
@@ -197,8 +197,8 @@ CalleeFunctionInfo::CalleeFunctionInfo(Context& context,
                                            /*for_parameter=*/false);
 }
 
-CalleeFunctionInfo::CalleeFunctionInfo(Context& context,
-                                       const clang::Type* function_pointer_type)
+CppCalleeFunctionInfo::CppCalleeFunctionInfo(
+    Context& context, const clang::Type* function_pointer_type)
     : self_param_kind(SelfParamKind::FunctionPointer),
       decl(nullptr),
       decl_name(&context.ast_context().Idents.get("__invoke")),
@@ -228,7 +228,7 @@ CalleeFunctionInfo::CalleeFunctionInfo(Context& context,
   signature = &context.clang_decl_signatures().Get(signature_id);
 }
 
-auto CalleeFunctionInfo::GetCalleeParamIdentifier(int i) const
+auto CppCalleeFunctionInfo::GetCalleeParamIdentifier(int i) const
     -> clang::IdentifierInfo* {
   switch (self_param_kind) {
     case SelfParamKind::FunctionPointer:
@@ -238,7 +238,7 @@ auto CalleeFunctionInfo::GetCalleeParamIdentifier(int i) const
   }
 }
 
-auto CalleeFunctionInfo::GetCalleeParamLocation(int i) const
+auto CppCalleeFunctionInfo::GetCalleeParamLocation(int i) const
     -> clang::SourceLocation {
   switch (self_param_kind) {
     case SelfParamKind::FunctionPointer:
@@ -248,8 +248,8 @@ auto CalleeFunctionInfo::GetCalleeParamLocation(int i) const
   }
 }
 
-auto IsCppThunkRequired(Context& context, const CalleeFunctionInfo& callee_info)
-    -> bool {
+auto IsCppThunkRequired(Context& context,
+                        const CppCalleeFunctionInfo& callee_info) -> bool {
   auto* decl = cast<clang::FunctionDecl>(callee_info.decl);
   if (callee_info.signature->kind != SemIR::ClangDeclSignature::Normal ||
       callee_info.signature->num_params !=
@@ -316,7 +316,7 @@ static auto GetThunkParameterType(clang::ASTContext& ast_context,
 
 // Creates the thunk parameter types given the callee function.
 static auto BuildThunkParameterTypes(clang::ASTContext& ast_context,
-                                     CalleeFunctionInfo callee_info)
+                                     CppCalleeFunctionInfo callee_info)
     -> llvm::SmallVector<clang::QualType> {
   llvm::SmallVector<clang::QualType> thunk_param_types;
   thunk_param_types.reserve(callee_info.num_thunk_params());
@@ -340,7 +340,7 @@ static auto BuildThunkParameterTypes(clang::ASTContext& ast_context,
 
 // Returns the thunk parameters using the callee function parameter identifiers.
 static auto BuildThunkParameters(clang::ASTContext& ast_context,
-                                 CalleeFunctionInfo callee_info,
+                                 CppCalleeFunctionInfo callee_info,
                                  clang::SourceLocation clang_loc,
                                  clang::FunctionDecl* thunk_function_decl)
     -> llvm::SmallVector<clang::ParmVarDecl*> {
@@ -427,7 +427,7 @@ static auto GetDeclNameForThunk(clang::ASTContext& ast_context,
 // Returns the thunk function declaration given the callee function and the
 // thunk parameter types.
 static auto CreateThunkFunctionDecl(
-    Context& context, CalleeFunctionInfo callee_info,
+    Context& context, CppCalleeFunctionInfo callee_info,
     clang::SourceLocation clang_loc,
     llvm::ArrayRef<clang::QualType> thunk_param_types) -> clang::FunctionDecl* {
   clang::ASTContext& ast_context = context.ast_context();
@@ -506,7 +506,7 @@ static auto BuildThunkParamRef(
 // given callee parameter index.
 static auto BuildParamRefForCalleeArg(clang::Sema& sema,
                                       clang::FunctionDecl* thunk_function_decl,
-                                      CalleeFunctionInfo callee_info,
+                                      CppCalleeFunctionInfo callee_info,
                                       unsigned callee_index) -> clang::Expr* {
   unsigned thunk_index =
       callee_index + callee_info.callee_param_to_carbon_param_offset();
@@ -520,7 +520,7 @@ static auto BuildParamRefForCalleeArg(clang::Sema& sema,
 // the corresponding thunk parameters.
 static auto BuildCalleeArgs(clang::Sema& sema,
                             clang::FunctionDecl* thunk_function_decl,
-                            CalleeFunctionInfo callee_info)
+                            CppCalleeFunctionInfo callee_info)
     -> llvm::SmallVector<clang::Expr*> {
   llvm::SmallVector<clang::Expr*> call_args;
   call_args.reserve(callee_info.num_callee_params -
@@ -540,7 +540,7 @@ static auto BuildCalleeArgs(clang::Sema& sema,
 static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
                            clang::SourceLocation clang_loc,
                            clang::FunctionDecl* thunk_function_decl,
-                           CalleeFunctionInfo callee_info)
+                           CppCalleeFunctionInfo callee_info)
     -> clang::StmtResult {
   // TODO: Consider building a CompoundStmt holding our created statement to
   // make our result more closely resemble a real C++ function.
@@ -549,8 +549,8 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
   // the callee. Otherwise, build a regular reference to the function.
   clang::ExprResult callee;
   switch (callee_info.self_param_kind) {
-    case CalleeFunctionInfo::SelfParamKind::ExplicitObjectParam:
-    case CalleeFunctionInfo::SelfParamKind::ImplicitObjectParam: {
+    case CppCalleeFunctionInfo::SelfParamKind::ExplicitObjectParam:
+    case CppCalleeFunctionInfo::SelfParamKind::ImplicitObjectParam: {
       clang::QualType object_param_type =
           cast<clang::CXXMethodDecl>(callee_info.decl)
               ->getFunctionObjectParameterReferenceType();
@@ -574,12 +574,12 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
           clang::OK_Ordinary);
       break;
     }
-    case CalleeFunctionInfo::SelfParamKind::FunctionPointer:
+    case CppCalleeFunctionInfo::SelfParamKind::FunctionPointer:
       callee = BuildThunkParamRef(sema, thunk_function_decl, 0,
                                   callee_info.signature->self_passing_mode,
                                   callee_info.self_param_type);
       break;
-    case CalleeFunctionInfo::SelfParamKind::None:
+    case CppCalleeFunctionInfo::SelfParamKind::None:
       if (isa<clang::CXXConstructorDecl>(callee_info.decl)) {
         break;
       }
@@ -657,7 +657,7 @@ static auto BuildThunkBody(CppContext& cpp_context, clang::Sema& sema,
   return sema.ActOnExprStmt(placement_new, /*DiscardedValue=*/true);
 }
 
-auto BuildCppThunk(Context& context, const CalleeFunctionInfo& callee_info)
+auto BuildCppThunk(Context& context, const CppCalleeFunctionInfo& callee_info)
     -> clang::FunctionDecl* {
   // Build the thunk function declaration.
   auto thunk_param_types =
