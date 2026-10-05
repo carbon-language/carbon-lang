@@ -19,6 +19,7 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/base/install_paths.h"
+#include "toolchain/diagnostics/emitter.h"
 #include "toolchain/driver/runtimes_cache.h"
 #include "toolchain/driver/tool_runner_base.h"
 
@@ -83,7 +84,9 @@ class ClangRunner : ToolRunnerBase {
   auto Run(llvm::ArrayRef<llvm::StringRef> args,
            Runtimes::Cache& runtimes_cache,
            llvm::ThreadPoolInterface& runtimes_build_thread_pool,
-           bool enable_leaking = false) -> ErrorOr<bool>;
+           bool enable_leaking = false,
+           std::optional<Runtimes::Cache::Features> precomputed_features =
+               std::nullopt) -> ErrorOr<bool>;
 
   // Run Clang with the provided arguments and prebuilt runtimes.
   //
@@ -103,6 +106,19 @@ class ClangRunner : ToolRunnerBase {
   // not.
   auto RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
                          bool enable_leaking = false) -> ErrorOr<bool>;
+
+  // Computes the canonicalized `Runtimes::Cache::Features` for `target` and
+  // any Clang driver arguments `args`.
+  //
+  // `args` may be either a list of target-related flags (such as `-march=...`,
+  // `-mcpu=...`, `-mtune=...`, `-Xclang -target-feature ...`) or a full Clang
+  // driver command line; non-target flags and extra inputs are ignored. If
+  // `consumer` is provided, Clang driver diagnostics for invalid flags or
+  // target options are emitted to it.
+  auto ComputeRuntimesFeatures(llvm::StringRef target,
+                               llvm::ArrayRef<llvm::StringRef> args = {},
+                               Diagnostics::Consumer* consumer = nullptr)
+      -> ErrorOr<Runtimes::Cache::Features>;
 
  private:
   friend class ClangRuntimesBuilderBase;

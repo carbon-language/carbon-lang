@@ -41,6 +41,7 @@ cc_library(
         "//toolchain/base:install_paths",
         "//toolchain/base:kind_switch",
         "//toolchain/base:runtimes_build_info",
+        "//toolchain/diagnostics:emitter",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:clang-driver",
         "@llvm-project//clang:codegen",
@@ -62,6 +63,7 @@ cc_test(
     data = ["//toolchain/install:install_data"],
     deps = [
         ":clang_runner",
+        ":codegen_options",
         ":llvm_runner",
         ":runtimes_cache",
         "//common:all_llvm_targets",
@@ -202,6 +204,7 @@ cc_library(
         "//toolchain/parse:tree",
         "//toolchain/sem_ir:typed_insts",
         "//toolchain/source:source_buffer",
+        "@llvm-project//clang:basic",
         "@llvm-project//llvm:Core",
         "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Passes",
@@ -480,6 +483,7 @@ cc_test(
         "@googletest//:gtest",
         "@llvm-project//llvm:Object",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
     ],
 )
 

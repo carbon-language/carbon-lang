@@ -33,13 +33,16 @@ struct CompileOptions;
 class CarbonRuntimesBuilderBase {
  protected:
   CarbonRuntimesBuilderBase(DriverEnv* driver_env,
-                            const CodegenOptions* codegen_options);
+                            const Runtimes::Cache::Features& features);
 
   // We use protected members as this base is just factoring out common
   // implementation details of other runners.
   //
   // NOLINTBEGIN(misc-non-private-member-variables-in-classes)
   //
+  std::string target_;
+  CodegenOptions codegen_options_;
+  llvm::SmallVector<std::string> clang_args_storage_;
   CompileOptions compile_options_;
   CompileDriver compile_driver_;
   DriverEnv* driver_env_;
@@ -56,7 +59,7 @@ class CarbonRuntimesBuilderBase {
 class CarbonPreludeBuilder : public CarbonRuntimesBuilderBase {
  public:
   CarbonPreludeBuilder(DriverEnv* driver_env, Runtimes* runtimes,
-                       const CodegenOptions* codegen_options);
+                       const Runtimes::Cache::Features& features);
   auto Build() && -> ErrorOr<std::filesystem::path>;
 };
 

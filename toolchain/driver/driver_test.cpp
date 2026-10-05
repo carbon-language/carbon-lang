@@ -22,6 +22,8 @@
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/JSON.h"
+#include "llvm/TargetParser/Host.h"
+#include "llvm/TargetParser/Triple.h"
 #include "testing/base/capture_std_streams.h"
 #include "testing/base/file_helpers.h"
 #include "testing/base/global_exe_path.h"
@@ -367,6 +369,230 @@ fn Run() {
 
   // Executables are also classified as object files.
   EXPECT_TRUE(result->getBinary()->isObject());
+}
+
+TEST_F(DriverTest, TargetCpu) {
+  MakeTestFile("fn Run() {}", "test.carbon");
+
+  struct TargetCpuCase {
+    llvm::StringRef target;
+    llvm::StringRef cpu = "";
+    llvm::StringRef tune_cpu = "";
+    llvm::StringRef features = "";
+    llvm::SmallVector<llvm::StringRef, 2> clang_args = {};
+  };
+  TargetCpuCase compile_cases[] = {
+      {.target = "x86_64-unknown-linux-gnu", .cpu = "x86-64-v3"},
+      {.target = "x86_64-unknown-linux-gnu",
+       .cpu = "x86-64-v3",
+       .tune_cpu = "znver4"},
+      {.target = "x86_64-unknown-linux-gnu", .cpu = "znver4"},
+      {.target = "x86_64-unknown-linux-gnu", .tune_cpu = "znver4"},
+      {.target = "x86_64-unknown-linux-gnu",
+       .cpu = "x86-64-v2",
+       .tune_cpu = "znver4",
+       .features = "+avx2,-fma,bmi2",
+       .clang_args = {"--clang-arg=-march=x86-64", "--clang-arg=-mtune=generic",
+                      "--clang-arg=-mfma"}},
+      {.target = "aarch64-unknown-linux-gnu", .cpu = "armv9-a"},
+      {.target = "aarch64-unknown-linux-gnu",
+       .cpu = "armv9-a",
+       .tune_cpu = "neoverse-v2"},
+      {.target = "aarch64-unknown-linux-gnu", .cpu = "neoverse-v2"},
+      {.target = "aarch64-unknown-linux-gnu", .tune_cpu = "neoverse-v2"},
+      {.target = "aarch64-unknown-linux-gnu",
+       .cpu = "armv8.2-a",
+       .features = "sve,-crc",
+       .clang_args = {"--clang-arg=-march=armv9-a", "--clang-arg=-mcrc"}},
+  };
+
+  for (const auto& tc : compile_cases) {
+    SCOPED_TRACE(llvm::formatv("target={0}, cpu={1}, tune={2}, features={3}",
+                               tc.target, tc.cpu, tc.tune_cpu, tc.features)
+                     .str());
+    std::string target_arg = llvm::formatv("--target={0}", tc.target).str();
+    std::string cpu_arg = llvm::formatv("--target-cpu={0}", tc.cpu).str();
+    std::string tune_arg =
+        llvm::formatv("--target-cpu-tune={0}", tc.tune_cpu).str();
+    std::string features_arg =
+        llvm::formatv("--target-cpu-features={0}", tc.features).str();
+    llvm::SmallVector<llvm::StringRef> args = {"compile", "--no-prelude-import",
+                                               "--output=-", target_arg};
+    if (!tc.cpu.empty()) {
+      args.push_back(cpu_arg);
+    }
+    if (!tc.tune_cpu.empty()) {
+      args.push_back(tune_arg);
+    }
+    if (!tc.features.empty()) {
+      args.push_back(features_arg);
+    }
+    args.append(tc.clang_args.begin(), tc.clang_args.end());
+    args.push_back("test.carbon");
+    EXPECT_TRUE(driver_.RunCommand(args).success)
+        << test_error_stream_.TakeStr();
+    EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+    EXPECT_THAT(test_output_stream_.TakeStr(), ContainsRegex("main:"));
+  }
+
+  // Test `native` on the host target.
+  std::string host_target = llvm::sys::getDefaultTargetTriple();
+  llvm::Triple host_triple(host_target);
+  if (host_triple.isX86() || host_triple.isAArch64()) {
+    EXPECT_TRUE(driver_
+                    .RunCommand({"compile", "--no-prelude-import", "--output=-",
+                                 "--target-cpu=native",
+                                 "--target-cpu-tune=native", "test.carbon"})
+                    .success)
+        << test_error_stream_.TakeStr();
+    EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+    EXPECT_THAT(test_output_stream_.TakeStr(), ContainsRegex("main:"));
+  }
+
+  // Invalid target CPU, tune CPU, or target features should fail cleanly with a
+  // diagnostic across `compile`, `link`, and `build-runtimes`.
+  for (llvm::StringRef target :
+       {"x86_64-unknown-linux-gnu", "aarch64-unknown-linux-gnu"}) {
+    std::string target_arg = llvm::formatv("--target={0}", target).str();
+    EXPECT_FALSE(
+        driver_
+            .RunCommand({"compile", "--no-prelude-import", "--output=-",
+                         target_arg, "--target-cpu=not-a-valid-cpu",
+                         "test.carbon"})
+            .success);
+    EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("not-a-valid-cpu"));
+    test_output_stream_.TakeStr();
+
+    EXPECT_FALSE(
+        driver_
+            .RunCommand({"compile", "--no-prelude-import", "--output=-",
+                         target_arg, "--target-cpu-tune=not-a-valid-tune-cpu",
+                         "test.carbon"})
+            .success);
+    EXPECT_THAT(test_error_stream_.TakeStr(),
+                HasSubstr("not-a-valid-tune-cpu"));
+    test_output_stream_.TakeStr();
+
+    EXPECT_FALSE(
+        driver_
+            .RunCommand({"compile", "--no-prelude-import", "--output=-",
+                         target_arg, "--target-cpu-features=+not-a-feature",
+                         "test.carbon"})
+            .success);
+    EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("+not-a-feature"));
+    test_output_stream_.TakeStr();
+
+    EXPECT_FALSE(
+        driver_
+            .RunCommand({"--no-build-runtimes", "link", "--output=out",
+                         target_arg, "--target-cpu=not-a-valid-cpu", "test.o"})
+            .success);
+    EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("not-a-valid-cpu"));
+    test_output_stream_.TakeStr();
+
+    EXPECT_FALSE(
+        driver_
+            .RunCommand({"--no-build-runtimes", "link", "--output=out",
+                         target_arg, "--target-cpu-features=+not-a-feature",
+                         "test.o"})
+            .success);
+    EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("+not-a-feature"));
+    test_output_stream_.TakeStr();
+
+    EXPECT_FALSE(driver_
+                     .RunCommand({"build-runtimes", target_arg,
+                                  "--target-cpu=not-a-valid-cpu"})
+                     .success);
+    EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("not-a-valid-cpu"));
+    test_output_stream_.TakeStr();
+
+    EXPECT_FALSE(driver_
+                     .RunCommand({"build-runtimes", target_arg,
+                                  "--target-cpu-features=+not-a-feature"})
+                     .success);
+    EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("+not-a-feature"));
+    test_output_stream_.TakeStr();
+  }
+
+  // Test RISC-V `--target-cpu`, `--target-cpu-tune`, and
+  // `--target-cpu-features` mapping and Clang target validation via `config`
+  // (since the RISC-V LLVM codegen backend is not linked by default).
+  auto cleanup = ScopedTempWorkingDir();
+  MakeTestFile("fn Run() {}", "host_test.carbon");
+  if (host_triple.isX86() || host_triple.isAArch64()) {
+    llvm::StringRef host_cpu = host_triple.isX86() ? "x86-64-v3" : "armv8.2-a";
+    llvm::StringRef host_tune = host_triple.isX86() ? "znver4" : "neoverse-v2";
+    llvm::StringRef host_feature = host_triple.isX86() ? "+bmi2" : "+lse";
+    std::string cpu_arg = llvm::formatv("--target-cpu={0}", host_cpu).str();
+    std::string tune_arg =
+        llvm::formatv("--target-cpu-tune={0}", host_tune).str();
+    std::string feature_arg =
+        llvm::formatv("--target-cpu-features={0}", host_feature).str();
+
+    ASSERT_TRUE(driver_
+                    .RunCommand({"compile", "--no-prelude-import", cpu_arg,
+                                 tune_arg, feature_arg, "host_test.carbon"})
+                    .success)
+        << test_error_stream_.TakeStr();
+    EXPECT_TRUE(driver_
+                    .RunCommand({"--no-build-runtimes", "link",
+                                 "--output=host_test_linked", cpu_arg, tune_arg,
+                                 feature_arg, "host_test.o", "--", "-lc"})
+                    .success)
+        << test_error_stream_.TakeStr();
+    EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+
+    // Also verify `build` with `--target-cpu` and a compile-only `--clang-arg`
+    // (such as `-fsanitize=address`, which would fail linking if forwarded to
+    // the link step without sanitizer runtimes).
+    EXPECT_TRUE(
+        driver_
+            .RunCommand({"--no-build-runtimes", "build", "--no-use-temp-dir",
+                         "--no-prelude-import",
+                         "--clang-arg=-fsanitize=address", cpu_arg, tune_arg,
+                         feature_arg, "host_test.carbon", "--", "--", "-lc"})
+            .success)
+        << test_error_stream_.TakeStr();
+    EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  }
+
+  for (llvm::StringRef riscv_cpu : {"rv64gc", "rva22u64", "spacemit-x60"}) {
+    SCOPED_TRACE(riscv_cpu);
+    std::string cpu_arg = llvm::formatv("--target-cpu={0}", riscv_cpu).str();
+    EXPECT_TRUE(driver_
+                    .RunCommand({"config", "--json",
+                                 "--target=riscv64-unknown-linux-gnu", cpu_arg,
+                                 "--target-cpu-tune=spacemit-x60",
+                                 "--target-cpu-features=+zba,-m"})
+                    .success)
+        << test_error_stream_.TakeStr();
+    EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+    test_output_stream_.TakeStr();
+  }
+  EXPECT_FALSE(
+      driver_
+          .RunCommand({"config", "--json", "--target=riscv64-unknown-linux-gnu",
+                       "--target-cpu=not-a-valid-cpu"})
+          .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("not-a-valid-cpu"));
+  test_output_stream_.TakeStr();
+
+  EXPECT_FALSE(
+      driver_
+          .RunCommand({"config", "--json", "--target=riscv64-unknown-linux-gnu",
+                       "--target-cpu-tune=not-a-valid-tune-cpu"})
+          .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(), HasSubstr("not-a-valid-tune-cpu"));
+  test_output_stream_.TakeStr();
+
+  EXPECT_FALSE(
+      driver_
+          .RunCommand({"config", "--json", "--target=riscv64-unknown-linux-gnu",
+                       "--target-cpu-features=+f,+zfinx"})
+          .success);
+  EXPECT_THAT(test_error_stream_.TakeStr(),
+              HasSubstr("invalid feature combination"));
+  test_output_stream_.TakeStr();
 }
 
 }  // namespace
