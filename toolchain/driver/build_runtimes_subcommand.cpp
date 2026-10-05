@@ -82,8 +82,9 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
   ClangRunner runner(driver_env.installation, driver_env.fs,
                      driver_env.vlog_stream);
 
-  Runtimes::Cache::Features features = {
-      .target = options_.codegen_options.target.str()};
+  CARBON_ASSIGN_OR_RETURN(Runtimes::Cache::Features features,
+                          runner.ComputeRuntimesFeatures(
+                              options_.codegen_options, *driver_env.consumer));
 
   bool is_cache = options_.directory.empty();
   std::filesystem::path output_path = options_.directory.str();
@@ -102,14 +103,11 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
   }
 
   ClangResourceDirBuilder resource_dir_builder(&runner, driver_env.thread_pool,
-                                               llvm::Triple(features.target),
-                                               &runtimes);
+                                               &runtimes, features);
   ClangArchiveRuntimesBuilder<Runtimes::LibUnwind> lib_unwind_builder(
-      &runner, driver_env.thread_pool, llvm::Triple(features.target),
-      &runtimes);
+      &runner, driver_env.thread_pool, &runtimes, features);
   ClangArchiveRuntimesBuilder<Runtimes::Libcxx> libcxx_builder(
-      &runner, driver_env.thread_pool, llvm::Triple(features.target),
-      &runtimes);
+      &runner, driver_env.thread_pool, &runtimes, features);
   CarbonPreludeBuilder prelude_builder(&driver_env, &runtimes,
                                        &options_.codegen_options);
 

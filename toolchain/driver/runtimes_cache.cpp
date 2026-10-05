@@ -251,12 +251,21 @@ auto Runtimes::Cache::Lookup(const Features& features) -> ErrorOr<Runtimes> {
   // within the cache.
 
   llvm::SHA256 entry_hasher;
+  auto update_with_separator = [&](llvm::StringRef str) {
+    entry_hasher.update(str);
+    entry_hasher.update(llvm::ArrayRef<uint8_t>{0});
+  };
   // First incorporate our cache key that comes from the installation's digest.
   // This ensures we don't share a cache entry with any other Carbon
   // installations using different inputs.
-  entry_hasher.update(cache_key_);
+  update_with_separator(cache_key_);
   // Then incorporate the specific features that are enabled in this entry.
-  entry_hasher.update(features.target);
+  update_with_separator(features.target);
+  update_with_separator(features.cpu);
+  update_with_separator(features.tune_cpu);
+  for (llvm::StringRef feature : features.target_features) {
+    update_with_separator(feature);
+  }
 
   std::array<uint8_t, 32> entry_digest = entry_hasher.final();
   std::filesystem::path entry_path =
