@@ -456,6 +456,14 @@ auto BuildThunk(Context& context, SemIR::FunctionId signature_id,
                 SemIR::TypeId override_self_type_id, SemIR::InstId callee_id,
                 bool defer_definition) -> SemIR::InstId {
   auto callee = SemIR::GetCalleeAsFunction(context.sem_ir(), callee_id);
+  if (context.functions().Get(signature_id).return_type_inst_id ==
+          SemIR::AutoType::TypeInstId ||
+      context.functions().Get(callee.function_id).return_type_inst_id ==
+          SemIR::AutoType::TypeInstId) {
+    context.TODO(SemIR::LocId(callee_id),
+                 "thunk for function before return type is deduced");
+    return SemIR::ErrorInst::InstId;
+  }
 
   // Check whether we can use the given function without a thunk.
   // TODO: This is too strict; for example, we should not compare parameter

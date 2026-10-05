@@ -472,6 +472,16 @@ auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token, bool has_error)
   }
 }
 
+auto Context::AddFunctionTerseDefinitionStart(Lex::TokenIndex token,
+                                              bool has_error) -> void {
+  auto start_id =
+      AddNode<NodeKind::FunctionTerseDefinitionStart>(token, has_error);
+  if (ParsingInDeferredDefinitionScope(*this)) {
+    deferred_definition_stack_.push_back(
+        tree_->deferred_definitions_.Add({.start_id = start_id}));
+  }
+}
+
 auto Context::AddFunctionDefinition(Lex::TokenIndex token, bool has_error)
     -> void {
   auto definition_id = AddNode<NodeKind::FunctionDefinition>(token, has_error);

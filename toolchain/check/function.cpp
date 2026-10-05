@@ -7,6 +7,7 @@
 #include "common/find.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
@@ -14,6 +15,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/pattern_match.h"
+#include "toolchain/check/return.h"
 #include "toolchain/check/scope_stack.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
@@ -55,6 +57,32 @@ auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
       {.type_id = result_type_id,
        .subpattern_id = result_id,
        .type_inst_id = form_expr.type_component_inst_id});
+}
+
+auto PopFunctionReturnSpecifier(Context& context, bool is_terse_definition)
+    -> FunctionReturnSpecifier {
+  FunctionReturnSpecifier result;
+  if (auto [return_node, maybe_return_pattern_id] =
+          context.node_stack()
+              .PopWithNodeIdIf<Parse::NodeCategory::ReturnSpecifier>();
+      maybe_return_pattern_id) {
+    if (is_terse_definition) {
+      CARBON_DIAGNOSTIC(ReturnTypeInTerseFunction, Error,
+                        "cannot specify a return {0:type|form} with `=>`",
+                        Diagnostics::BoolAsSelect);
+      context.emitter().Emit(return_node, ReturnTypeInTerseFunction,
+                             context.parse_tree().node_kind(return_node) ==
+                                 Parse::NodeKind::ReturnType);
+    }
+    result.pattern_id = *maybe_return_pattern_id;
+    auto return_form = context.PopReturnForm();
+    result.type_inst_id = return_form.type_component_inst_id;
+    result.form_inst_id = return_form.form_inst_id;
+  } else if (is_terse_definition) {
+    GetSingletonType(context, SemIR::AutoType::TypeInstId);
+    result.type_inst_id = SemIR::AutoType::TypeInstId;
+  }
+  return result;
 }
 
 auto IsValidBuiltinDeclaration(Context& context,
@@ -454,6 +482,170 @@ auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
   return {decl_id, function_decl.function_id};
 }
 
+// Diagnoses when positional params aren't supported. Reassigns the pattern
+// block if needed.
+static auto DiagnosePositionalParams(Context& context,
+                                     SemIR::Function& function_info) -> void {
+  if (function_info.param_patterns_id.has_value()) {
+    return;
+  }
+
+  context.TODO(function_info.latest_decl_id(),
+               "function with positional parameters");
+  function_info.param_patterns_id = SemIR::InstBlockId::Empty;
+}
+
+// For the top-level parameter patterns list, and for any level of nested tuple
+// patterns, ensure that if a subpattern provides a default value, all
+// subsequent patterns at that level of nesting must provide a default value as
+// well. Returns the number of default values provided at the top level of the
+// function parameter, useful for efficient arity checking in callers later on.
+//
+// TODO: per https://github.com/carbon-language/carbon-lang/issues/7529, this
+// should also consider automatically supplied defaults for fully-specified
+// tuple subpatterns, and consider them as having a default for the purposes
+// of the out-of-order detection. It will also need to detect the error
+// condition when a default is also specified for those fully-specified tuple
+// subpatterns.
+static auto CheckDefaults(Context& context, SemIR::Function& function)
+    -> int32_t {
+  if (!function.param_patterns_id.has_value()) {
+    return 0;
+  }
+
+  struct PatternLevelState {
+    // The inst ids of the subpatterns on this level of tuple subpattern
+    // nesting, treated as a work list, so in reverse order of declaration.
+    llvm::SmallVector<SemIR::InstId> subpattern_ids;
+
+    // If patterns at this level of nesting have default values, this refers
+    // to the first instruction to specify a default, useful for diagnostics.
+    SemIR::InstId first_pattern_with_default = SemIR::InstId::None;
+
+    // If we encounter a tuple-pattern during processing, we suspend processing
+    // of this pattern level, in the middle of processing a single pattern from
+    // root to leaves. So we record the current state of processing of a single
+    // pattern to return to it after processing any tuple subpatterns.
+
+    // True if the current pattern being processed has a default value
+    // specified.
+    bool current_pattern_has_default = false;
+
+    // The current pattern we are processing, stored separately since it's been
+    // popped from the `pattern_work_list` and already processed, just may need
+    // subsequent processing.
+    SemIR::InstId current_id = SemIR::InstId::None;
+
+    // A work list of patterns to be processed at this level of nesting.
+    llvm::SmallVector<SemIR::InstId> pattern_work_list;
+
+    // A list of subpatterns missing required defaults, to coalesce error
+    // reporting into a single diagnostic.
+    llvm::SmallVector<SemIR::InstId> patterns_missing_defaults;
+
+    // A count of the number of patterns on this level that have defaults.
+    int32_t default_count = 0;
+  };
+
+  llvm::SmallVector<PatternLevelState> level_state_stack;
+  size_t default_count = 0;
+  level_state_stack.push_back({});
+  llvm::append_range(
+      level_state_stack.back().subpattern_ids,
+      llvm::reverse(context.inst_blocks().Get(function.param_patterns_id)));
+
+  while (!level_state_stack.empty()) {
+    PatternLevelState* state = &level_state_stack.back();
+    while (!state->subpattern_ids.empty() ||
+           !state->pattern_work_list.empty() || state->current_id.has_value()) {
+      // If we're not resuming processing a pattern from a nested state, start
+      // processing the next subpattern.
+      if (!state->current_id.has_value()) {
+        state->pattern_work_list.push_back(
+            state->subpattern_ids.pop_back_val());
+        state->current_pattern_has_default = false;
+      }
+      while (!state->pattern_work_list.empty()) {
+        state->current_id = state->pattern_work_list.pop_back_val();
+        auto inst = context.insts().Get(state->current_id);
+        CARBON_KIND_SWITCH(inst) {
+          case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
+            state->current_pattern_has_default = true;
+            state->default_count += 1;
+            state->pattern_work_list.push_back(
+                default_value_pattern.subpattern_id);
+            break;
+          }
+          case CARBON_KIND(
+              SemIR::WrapperBindingPattern wrapper_binding_pattern): {
+            state->pattern_work_list.push_back(
+                wrapper_binding_pattern.subpattern_id);
+            break;
+          }
+          case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
+            auto elements =
+                context.inst_blocks().Get(tuple_pattern.elements_id);
+            if (!elements.empty()) {
+              // Start a new state for the nested tuple pattern elements.
+              level_state_stack.push_back({});
+              state = &level_state_stack.back();
+              llvm::append_range(state->subpattern_ids,
+                                 llvm::reverse(elements));
+            }
+            break;
+          }
+          default:
+            // We only process patterns containing subpatterns, so this is an
+            // intentional no-op.
+            break;
+        }
+      }
+      // Finished processing this subpattern, detect a missing default if
+      // required.
+      if (state->current_pattern_has_default &&
+          !state->first_pattern_with_default.has_value()) {
+        state->first_pattern_with_default = state->current_id;
+      } else if (!state->current_pattern_has_default &&
+                 state->first_pattern_with_default.has_value()) {
+        state->patterns_missing_defaults.push_back(state->current_id);
+      }
+      state->current_id = SemIR::InstId::None;
+    }
+    // Finished processing this tuple-pattern, emit diagnostics if any.
+    if (!state->patterns_missing_defaults.empty()) {
+      CARBON_DIAGNOSTIC(RequiredPatternDefaultValueMissing, Error,
+                        "this pattern is missing a required default value.");
+      CARBON_DIAGNOSTIC(RequiredPatternDefaultValueFirstDefault, Note,
+                        "all patterns to the right of this first pattern with "
+                        "a default value must also specify a default value.");
+      CARBON_DIAGNOSTIC(
+          RequiredPatternDefaultValueMissingAdditional, Note,
+          "this pattern is also missing a required default value.");
+      auto inst_ref = llvm::ArrayRef(state->patterns_missing_defaults);
+      auto builder = context.emitter().Build(
+          inst_ref.consume_front(), RequiredPatternDefaultValueMissing);
+      for (auto inst_id : inst_ref) {
+        builder.Note(inst_id, RequiredPatternDefaultValueMissingAdditional);
+      }
+      builder.Note(state->first_pattern_with_default,
+                   RequiredPatternDefaultValueFirstDefault);
+      builder.Emit();
+    }
+
+    // Extract the count from the level we just completed, overwriting any
+    // nested level value extracted previously.
+    default_count = level_state_stack.back().default_count;
+    level_state_stack.pop_back();
+  }
+
+  return default_count;
+}
+
+auto CheckFunctionParams(Context& context, SemIR::Function& function) -> void {
+  function.default_value_arity = CheckDefaults(context, function);
+  DiagnosePositionalParams(context, function);
+}
+
 auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
                              SemIR::FunctionId function_id) -> void {
   // Create the function scope and the entry block.
@@ -465,6 +657,114 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
                          context.functions().Get(function_id).generic_id);
 
   CheckFunctionDefinitionSignature(context, function_id);
+}
+
+auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
+                                 SemIR::FunctionId function_id) -> void {
+  // If the `}` of the function is reachable, reject if we need a return value
+  // and otherwise add an implicit `return;`.
+  if (IsCurrentPositionReachable(context)) {
+    if (context.functions().Get(function_id).return_form_inst_id.has_value()) {
+      CARBON_DIAGNOSTIC(
+          MissingReturnStatement, Error,
+          "missing `return` at end of function with declared return type");
+      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
+                             MissingReturnStatement);
+    } else {
+      AddReturnInstWithCleanups(context, node_id);
+    }
+  }
+}
+
+// Deduces the return type of `function` as `type_id`, updating the function's
+// return form, pattern, and call parameters.
+static auto DeduceReturnType(Context& context, SemIR::LocId loc_id,
+                             SemIR::Function& function, SemIR::TypeId type_id)
+    -> void {
+  if (context.types().GetConstantId(type_id).is_symbolic()) {
+    context.TODO(loc_id,
+                 "deduced return type that depends on a generic parameter");
+    type_id = SemIR::ErrorInst::TypeId;
+  }
+
+  auto return_type_inst_id = context.types().GetTypeInstId(type_id);
+
+  auto return_form_inst_id = AddInstInNoBlock(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::InitForm{.type_id = SemIR::FormType::TypeId,
+                          .type_component_inst_id = return_type_inst_id}));
+  auto pattern_type_id = GetPatternType(context, type_id);
+  auto out_param_pattern_id = AddInstInNoBlock(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::OutParamPattern{.type_id = pattern_type_id,
+                                 .pretty_name_id = SemIR::NameId::ReturnSlot}));
+  auto return_pattern_id = AddInstInNoBlock(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::ReturnSlotPattern{.type_id = pattern_type_id,
+                                   .subpattern_id = out_param_pattern_id,
+                                   .type_inst_id = return_type_inst_id}));
+  auto return_param_index = function.call_param_ranges.explicit_end();
+  auto out_param_id = AddInstInNoBlock(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::OutParam{.type_id = type_id,
+                          .index = return_param_index,
+                          .pretty_name_id = SemIR::NameId::ReturnSlot}));
+  auto return_slot_id = AddInstInNoBlock(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), loc_id,
+                   SemIR::ReturnSlot{.type_id = type_id,
+                                     .type_inst_id = return_type_inst_id,
+                                     .storage_id = out_param_id}));
+
+  function.return_type_inst_id = return_type_inst_id;
+  function.return_form_inst_id = return_form_inst_id;
+  function.return_pattern_id = return_pattern_id;
+
+  auto append_to_block = [&](SemIR::InstBlockId& block_id,
+                             llvm::ArrayRef<SemIR::InstId> new_insts) {
+    llvm::SmallVector<SemIR::InstId> insts;
+    auto old_insts = context.inst_blocks().GetOrEmpty(block_id);
+    insts.reserve(old_insts.size() + new_insts.size());
+    llvm::append_range(insts, old_insts);
+    llvm::append_range(insts, new_insts);
+    block_id = context.inst_blocks().Add(insts);
+  };
+  append_to_block(function.pattern_block_id,
+                  {out_param_pattern_id, return_pattern_id});
+  append_to_block(function.call_param_patterns_id, {out_param_pattern_id});
+  append_to_block(function.call_params_id, {out_param_id});
+  function.call_param_ranges = SemIR::Function::CallParamIndexRanges(
+      function.call_param_ranges.implicit_end(),
+      function.call_param_ranges.explicit_end(),
+      SemIR::CallParamIndex(return_param_index.index + 1));
+
+  auto decl =
+      context.insts().GetAs<SemIR::FunctionDecl>(function.definition_id);
+  append_to_block(decl.decl_block_id,
+                  {return_form_inst_id, out_param_id, return_slot_id});
+  ReplaceInstPreservingConstantValue(context, function.definition_id, decl);
+
+  CheckFunctionReturnPatternType(context, loc_id, function.return_pattern_id,
+                                 SemIR::SpecificId::None);
+}
+
+auto CheckFunctionTerseBody(Context& context, SemIR::FunctionId function_id,
+                            SemIR::InstId body_expr_id) -> void {
+  auto& function = context.functions().Get(function_id);
+  auto body_loc_id = SemIR::LocId(body_expr_id);
+  if (function.return_type_inst_id == SemIR::AutoType::TypeInstId) {
+    DeduceReturnType(context, body_loc_id, function,
+                     context.insts().Get(body_expr_id).type_id());
+  }
+  BuildReturnWithExpr(context, body_loc_id, body_expr_id);
 }
 
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)

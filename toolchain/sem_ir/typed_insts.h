@@ -1560,7 +1560,7 @@ using NamespaceType = SingletonTypeInst<InstKind::NamespaceType, "<namespace>">;
 // `form_id`. See `AnyFormParamAction` for member documentation.
 struct OutFormParamPatternAction {
   static constexpr auto Kind =
-      // TODO: Use Parse::AnyReturnDeclId once we support passing node
+      // TODO: Use Parse::AnyReturnSpecifierId once we support passing node
       // categories to Define.
       InstKind::OutFormParamPatternAction
           .Define<Parse::NodeIdOneOf<Parse::ReturnFormId, Parse::ReturnTypeId>>(

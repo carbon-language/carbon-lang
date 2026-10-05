@@ -38,7 +38,7 @@ struct DeferredDefinitionIndex : public IndexBase<DeferredDefinitionIndex> {
 // for these functions in the parse tree to support this reordering.
 struct DeferredDefinition {
   // The node that starts the function definition.
-  FunctionDefinitionStartId start_id;
+  AnyFunctionDefinitionStartId start_id;
   // The function definition node.
   AnyFunctionDefinitionId definition_id = NodeId::None;
   // The index of the next method that is not nested within this one.

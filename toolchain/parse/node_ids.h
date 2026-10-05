@@ -117,7 +117,7 @@ using AnyObserveOperandId =
     NodeIdInCategory<NodeCategory::Expr | NodeCategory::ObserveOperator>;
 using AnyNonExprNameId = NodeIdInCategory<NodeCategory::NonExprName>;
 using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
-using AnyReturnDeclId = NodeIdInCategory<NodeCategory::ReturnDecl>;
+using AnyReturnSpecifierId = NodeIdInCategory<NodeCategory::ReturnSpecifier>;
 
 namespace Internal {
 template <typename T>
@@ -175,11 +175,18 @@ using AnyClassDeclId =
                 // class, so they are a form of class decls. This avoids
                 // duplicating all of SemIR::ClassDecl.
                 ChoiceDefinitionStartId>;
-using AnyFunctionDeclId = NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
-                                      BuiltinFunctionDefinitionStartId>;
+using AnyFunctionDeclId =
+    NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
+                FunctionTerseDefinitionStartId,
+                BuiltinFunctionDefinitionStartId, LambdaDefinitionStartId,
+                LambdaTerseDefinitionStartId>;
+using AnyFunctionDefinitionStartId =
+    NodeIdOneOf<FunctionDefinitionStartId, FunctionTerseDefinitionStartId>;
 using AnyFunctionDefinitionId =
     NodeIdOneOf<FunctionDefinitionId, FunctionTerseDefinitionId,
                 BuiltinFunctionDefinitionId>;
+using AnyLambdaDefinitionStartId =
+    NodeIdOneOf<LambdaDefinitionStartId, LambdaTerseDefinitionStartId>;
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;

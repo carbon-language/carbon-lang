@@ -62,8 +62,10 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::EqualGreater: {
-      context.AddFunctionDefinitionStart(context.Consume(), state.has_error);
-      context.AddLeafNode(NodeKind::TerseBodyArrow, *(context.position() - 1));
+      context.AddFunctionTerseDefinitionStart(context.Consume(),
+                                              state.has_error);
+      // Any error is recorded on the FunctionTerseDefinitionStart.
+      state.has_error = false;
       context.PushState(state, StateKind::FunctionTerseBodyFinish);
       context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
       break;
