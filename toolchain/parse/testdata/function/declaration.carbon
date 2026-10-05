@@ -197,6 +197,22 @@ let a: auto = fn -> ref u32 => 0;
 // CHECK:STDERR:
 fn RefReturn() -> ref;
 
+// --- val_var_return.carbon
+
+fn ValReturn() -> val u32;
+fn VarReturn() -> var u32;
+fn ComplexValReturn() -> val X.Y(Z);
+let a: auto = fn -> val u32 => 0;
+let b: auto = fn -> var u32 => 0;
+
+// --- fail_val_return_missing_type.carbon
+
+// CHECK:STDERR: fail_val_return_missing_type.carbon:[[@LINE+4]]:22: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fn ValReturn() -> val;
+// CHECK:STDERR:                      ^
+// CHECK:STDERR:
+fn ValReturn() -> val;
+
 // CHECK:STDOUT: - filename: basic.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
@@ -566,6 +582,79 @@ fn RefReturn() -> ref;
 // CHECK:STDOUT:   │ ├─ExplicitParamList ')'
 // CHECK:STDOUT:   │ │   ╭─InvalidParse ';' has_error
 // CHECK:STDOUT:   │ │ ╭─RefPrimitiveForm 'ref' has_error
+// CHECK:STDOUT:   │ ├─ReturnType '->'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: val_var_return.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'ValReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │   ╭─UnsignedIntTypeLiteral 'u32'
+// CHECK:STDOUT:   │ │ ╭─ValPrimitiveForm 'val'
+// CHECK:STDOUT:   │ ├─ReturnType '->'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'VarReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │   ╭─UnsignedIntTypeLiteral 'u32'
+// CHECK:STDOUT:   │ │ ╭─VarPrimitiveForm 'var'
+// CHECK:STDOUT:   │ ├─ReturnType '->'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'ComplexValReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │         ╭─IdentifierNameExpr 'X'
+// CHECK:STDOUT:   │ │         ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ │       ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │     ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │     ├─IdentifierNameExpr 'Z'
+// CHECK:STDOUT:   │ │   ╭─CallExpr ')'
+// CHECK:STDOUT:   │ │ ╭─ValPrimitiveForm 'val'
+// CHECK:STDOUT:   │ ├─ReturnType '->'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │   ╭─UnsignedIntTypeLiteral 'u32'
+// CHECK:STDOUT:   │ │ │ ╭─ValPrimitiveForm 'val'
+// CHECK:STDOUT:   │ │ ├─ReturnType '->'
+// CHECK:STDOUT:   │ │ ├─TerseBodyArrow '=>'
+// CHECK:STDOUT:   │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │   ╭─UnsignedIntTypeLiteral 'u32'
+// CHECK:STDOUT:   │ │ │ ╭─VarPrimitiveForm 'var'
+// CHECK:STDOUT:   │ │ ├─ReturnType '->'
+// CHECK:STDOUT:   │ │ ├─TerseBodyArrow '=>'
+// CHECK:STDOUT:   │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: fail_val_return_missing_type.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'ValReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │   ╭─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ ╭─ValPrimitiveForm 'val' has_error
 // CHECK:STDOUT:   │ ├─ReturnType '->'
 // CHECK:STDOUT:   ├─FunctionDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''

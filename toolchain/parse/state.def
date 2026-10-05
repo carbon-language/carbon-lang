@@ -861,9 +861,13 @@ CARBON_PARSE_STATE(LambdaBodyFinish)
 CARBON_PARSE_STATE(FunctionAfterParams)
 
 // Handles the expression following a `->` in a function or lambda, which may
-// begin with `ref` to specify a primitive return form.
+// begin with `val`, `ref`, or `var` to specify a primitive return form.
 //
+// -> val expr ...
+//    ^~~
 // -> ref expr ...
+//    ^~~
+// -> var expr ...
 //    ^~~
 //   1. Expr
 //   2. PrimitiveFormFinish

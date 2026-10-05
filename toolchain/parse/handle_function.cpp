@@ -35,8 +35,10 @@ auto HandleFunctionAfterParams(Context& context) -> void {
 auto HandleReturnTypeExpr(Context& context) -> void {
   context.PopAndDiscardState();
 
-  // `-> ref T` specifies a primitive return form.
-  if (context.PositionIs(Lex::TokenKind::Ref)) {
+  // `-> val T`, `-> ref T`, and `-> var T` specify a primitive return form.
+  if (context.PositionIs(Lex::TokenKind::Val) ||
+      context.PositionIs(Lex::TokenKind::Ref) ||
+      context.PositionIs(Lex::TokenKind::Var)) {
     context.PushState(StateKind::PrimitiveFormFinish, context.Consume());
   }
   context.PushStateForExpr(PrecedenceGroup::ForType());

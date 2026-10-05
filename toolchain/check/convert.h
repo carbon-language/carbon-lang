@@ -249,7 +249,8 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
 //
 // Note that the right-hand side of a `->` return type declaration is normally
 // a type expression, not a form, and should be handled by `ReturnExprAsForm`.
-// It's only a form if it begins with a primitive form keyword such as `ref`.
+// It's only a form if it begins with a primitive form keyword: `val`, `ref`,
+// or `var`.
 //
 // `diagnose` has the same effect as in `ExprAsType`.
 auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
