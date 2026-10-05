@@ -275,6 +275,15 @@ auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)
       .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
 }
 
+auto EvalConstantInst(Context& context, SemIR::ImplSelfWitness inst)
+    -> ConstantEvalResult {
+  // Canonicalize the self in the same way as LookupImplWitness.
+  inst.period_self = context.constant_values().GetInstId(
+      GetCanonicalQuerySelfForLookupImplWitness(
+          context, context.constant_values().Get(inst.period_self), nullptr));
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::LookupImplWitness inst) -> ConstantEvalResult {
   // Canonicalize the query self to reduce the number of unique witness
