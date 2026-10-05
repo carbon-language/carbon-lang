@@ -21,6 +21,24 @@ fn G() {
   let unused ref x: i32 = F();
 }
 
+// --- ref_return_parenthesized_type.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F() -> ref (i32);
+
+// --- fail_ref_return_parenthesized.carbon
+
+library "[[@TEST_NAME]]";
+
+// TODO: Per p5434, a return form starting with `(` is a compound form, which
+// isn't supported yet.
+// CHECK:STDERR: fail_ref_return_parenthesized.carbon:[[@LINE+4]]:12: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+// CHECK:STDERR: fn F() -> (ref i32);
+// CHECK:STDERR:            ^~~~~~~
+// CHECK:STDERR:
+fn F() -> (ref i32);
+
 // CHECK:STDOUT: --- ref_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
