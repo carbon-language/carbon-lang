@@ -1535,7 +1535,7 @@ CARBON_PARSE_STATE(StatementReturn)
 //   (state done)
 CARBON_PARSE_STATE(StatementReturnFinish)
 
-// Handles a statement pack expansion after its body.
+// Handles a pack expansion statement after its body.
 //
 // ... <statement>
 //                ^
