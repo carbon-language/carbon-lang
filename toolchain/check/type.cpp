@@ -53,7 +53,7 @@ auto ValidateArrayType(Context& context, SemIR::LocId loc_id,
   auto int_bound = context.insts().TryGetAs<SemIR::IntValue>(result.bound_id);
   if (!int_bound) {
     // Symbolic or erroneous bound.
-    return true;
+    return result.bound_id != SemIR::ErrorInst::InstId;
   }
 
   // TODO: We should check that the size of the resulting array type
