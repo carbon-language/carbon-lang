@@ -48,7 +48,7 @@ auto HandleLambdaAfterParams(Context& context) -> void {
     context.PushState(state, StateKind::LambdaBody);
     context.PushState(StateKind::FunctionReturnTypeFinish);
     context.ConsumeAndDiscard();
-    context.PushStateForExpr(PrecedenceGroup::ForType());
+    context.PushState(StateKind::ReturnTypeExpr);
   } else if (context.PositionIs(Lex::TokenKind::EqualGreater)) {
     // Terse body `=> expr`
     context.AddLeafNode(NodeKind::TerseBodyArrow, context.Consume());

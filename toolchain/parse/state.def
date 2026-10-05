@@ -802,8 +802,9 @@ CARBON_PARSE_STATE(LambdaAfterImplicitParams)
 //
 // fn ... -> ...
 //        ^
-//   1. FunctionReturnTypeFinish  (Reused)
-//   2. LambdaBody
+//   1. ReturnTypeExpr  (Reused)
+//   2. FunctionReturnTypeFinish  (Reused)
+//   3. LambdaBody
 //
 // fn ... => ...
 //        ^
@@ -844,7 +845,7 @@ CARBON_PARSE_STATE(LambdaBodyFinish)
 //
 // fn F(...) -> ...
 //           ^~
-//   1. Expr
+//   1. ReturnTypeExpr
 //   2. FunctionReturnTypeFinish
 //   3. FunctionSignatureFinish
 //
@@ -858,6 +859,19 @@ CARBON_PARSE_STATE(LambdaBodyFinish)
 //          ^
 //   1. FunctionSignatureFinish
 CARBON_PARSE_STATE(FunctionAfterParams)
+
+// Handles the expression following a `->` in a function or lambda, which may
+// begin with `ref` to specify a primitive return form.
+//
+// -> ref expr ...
+//    ^~~
+//   1. Expr
+//   2. PrimitiveFormFinish
+//
+// -> expr ...
+//    ^
+//   1. Expr
+CARBON_PARSE_STATE(ReturnTypeExpr)
 
 // Finishes a function return type.
 //
