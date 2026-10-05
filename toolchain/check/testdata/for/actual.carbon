@@ -1068,13 +1068,17 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   %Main.import_ref.e06: <witness> = import_ref Main//lib, loc24_1, loaded [symbolic = @IntRange.%complete_type (constants.%complete_type.aa1)]
 // CHECK:STDOUT:   %Main.import_ref.663 = import_ref Main//lib, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.ac1 = import_ref Main//lib, loc5_57, unloaded
-// CHECK:STDOUT:   %Main.import_ref.a12 = import_ref Main//lib, loc22_20, unloaded
-// CHECK:STDOUT:   %Main.import_ref.b83 = import_ref Main//lib, loc23_18, unloaded
+// CHECK:STDOUT:   %Main.import_ref.c92: @IntRange.%IntRange.elem (%IntRange.elem.bed) = import_ref Main//lib, loc22_20, loaded [concrete = %field_decl.eec]
+// CHECK:STDOUT:   %Main.import_ref.dc8: @IntRange.%IntRange.elem (%IntRange.elem.bed) = import_ref Main//lib, loc23_18, loaded [concrete = %field_decl.e2e]
 // CHECK:STDOUT:   %Main.import_ref.6b552a.2: Core.IntLiteral = import_ref Main//lib, loc4_17, loaded [symbolic = @IntRange.%N (constants.%N)]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/operators/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.edf: @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1aa = impl_witness_table (%Core.import_ref.edf), @Core.IntLiteral.as.ImplicitAs.impl.0e9 [concrete]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.18da56.1 = import_ref Main//lib, loc23_30, unloaded
+// CHECK:STDOUT:   %field_decl.e2e: @IntRange.%IntRange.elem (%IntRange.elem.bed) = field_decl end, element1, %Main.import_ref.18da56.1 in [concrete] {}
+// CHECK:STDOUT:   %Main.import_ref.18da56.2 = import_ref Main//lib, loc22_32, unloaded
+// CHECK:STDOUT:   %field_decl.eec: @IntRange.%IntRange.elem (%IntRange.elem.bed) = field_decl start, element0, %Main.import_ref.18da56.2 in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
@@ -1163,8 +1167,8 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.663
 // CHECK:STDOUT:     .Make = imports.%Main.import_ref.ac1
-// CHECK:STDOUT:     .start [private] = imports.%Main.import_ref.a12
-// CHECK:STDOUT:     .end [private] = imports.%Main.import_ref.b83
+// CHECK:STDOUT:     .start [private] = imports.%Main.import_ref.c92
+// CHECK:STDOUT:     .end [private] = imports.%Main.import_ref.dc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1272,6 +1276,14 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc5_3.3(%self.param: ref %IntRange.bbd) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %end.ref: %IntRange.elem.6b1 = name_ref end, imports.%Main.import_ref.dc8 [concrete = imports.%field_decl.e2e]
+// CHECK:STDOUT:   %.loc5_3.1: ref %i32 = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc5_3.1: <bound method> = bound_method %.loc5_3.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc5_3.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc5_3.1(%.loc5_3.1)
+// CHECK:STDOUT:   %start.ref: %IntRange.elem.6b1 = name_ref start, imports.%Main.import_ref.c92 [concrete = imports.%field_decl.eec]
+// CHECK:STDOUT:   %.loc5_3.2: ref %i32 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc5_3.2: <bound method> = bound_method %.loc5_3.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc5_3.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc5_3.2(%.loc5_3.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

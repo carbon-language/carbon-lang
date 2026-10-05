@@ -215,12 +215,12 @@ fn G() {
 // CHECK:STDOUT:   %require_complete.loc8 => constants.%complete_type.0c6
 // CHECK:STDOUT:   %.loc9_4.4 => constants.%inst.splice_block.426619.1
 // CHECK:STDOUT:   %.loc9_4.5 => constants.%i32
-// CHECK:STDOUT:   %.loc9_4.6 => invalid
+// CHECK:STDOUT:   %.loc9_4.6 => <not constant>
 // CHECK:STDOUT:   %require_complete.loc9 => constants.%complete_type.f8a
 // CHECK:STDOUT:   %.loc9_7.2 => constants.%tuple
 // CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc9_7.3 => constants.%int_456.8dd
 // CHECK:STDOUT:   %.loc9_4.7 => constants.%inst.splice_block.426619.3
-// CHECK:STDOUT:   %.loc9_4.8 => invalid
+// CHECK:STDOUT:   %.loc9_4.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

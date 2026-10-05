@@ -73,18 +73,32 @@ cc_binary(
     ],
 )
 
-# TODO: This test is expected to fail. tree-sitter support has fallen
-# significantly behind the toolchain. Anybody looking at this can still use
-# these tests to work on improving support, but also, it may be worth improving
-# the test setup to:
-# - Support file_test's split files.
-# - Better understand when the toolchain doesn't expect a test file to parse.
+# Parses the toolchain's testdata. Files and split files named `fail_*` are
+# skipped, as are non-Carbon split files; everything else is expected to parse
+# without errors.
+#
+# Some testdata is excluded because it isn't expected to parse:
+# - lex and format tests only tokenize their input.
+# - language_server tests don't follow the `fail_*` naming convention for files
+#   that are not expected to parse.
 cc_test(
     name = "toolchain_testdata_tests",
     size = "small",
     srcs = ["test_runner.cpp"],
-    args = ["$(locations //toolchain/testing:all_testdata)"],
-    data = ["//toolchain/testing:all_testdata"],
+    args = [
+        "$(locations //toolchain/check:testdata)",
+        "$(locations //toolchain/codegen:testdata)",
+        "$(locations //toolchain/driver:testdata)",
+        "$(locations //toolchain/lower:testdata)",
+        "$(locations //toolchain/parse:testdata)",
+    ],
+    data = [
+        "//toolchain/check:testdata",
+        "//toolchain/codegen:testdata",
+        "//toolchain/driver:testdata",
+        "//toolchain/lower:testdata",
+        "//toolchain/parse:testdata",
+    ],
     tags = ["manual"],
     deps = [
         ":parser",

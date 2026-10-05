@@ -503,14 +503,12 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
 }
 
 // Performs a conversion from a function to a C++ function pointer type.
-static auto ConvertFunctionToCppPointer(Context& context, SemIR::LocId loc_id,
-                                        SemIR::FunctionType src_type,
-                                        SemIR::CppFunctionPointerType dest_type,
-                                        SemIR::InstId value_id,
-                                        ConversionTarget target)
-    -> SemIR::InstId {
+static auto ConvertFunctionToCppPointer(
+    Context& context, SemIR::LocId loc_id, SemIR::FunctionType src_type,
+    SemIR::CppFunctionPointerType target_type, SemIR::InstId value_id,
+    ConversionTarget target) -> SemIR::InstId {
   if (!ExportFunctionToCppPointerConversion(context, value_id, src_type,
-                                            dest_type, target.diagnose)) {
+                                            target_type, target.diagnose)) {
     return SemIR::ErrorInst::InstId;
   }
 

@@ -120,12 +120,16 @@ auto GetHighestAllowedAccess(Context& context,
 
     // Check if private access is allowed.
     while (access_context_scope_id.has_value()) {
+      if (class_info.scope_id == access_context_scope_id ||
+          access_context_scope_id ==
+          SemIR::NameScopeId::AllowHighestAccessLevel) {
+        return SemIR::AccessKind::Private;
+      }
       auto& access_context_scope =
           context.name_scopes().Get(access_context_scope_id);
       auto access_const_id =
           context.constant_values().Get(access_context_scope.inst_id());
-      if (class_info.scope_id == access_context_scope_id ||
-          class_info.friend_scopes.Lookup(access_const_id)) {
+      if (class_info.friend_scopes.Lookup(access_const_id)) {
         return SemIR::AccessKind::Private;
       }
 

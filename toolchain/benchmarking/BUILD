@@ -69,6 +69,7 @@ cc_binary(
         ":source_gen_lib",
         "//common:all_llvm_targets",
         "//common:filesystem",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "//testing/base:global_exe_path",
         "//toolchain/base:install_paths",
@@ -102,6 +103,7 @@ cc_binary(
     deps = [
         "//common:all_llvm_targets",
         "//common:check",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "//testing/base:global_exe_path",
         "//toolchain/base:install_paths",

@@ -293,8 +293,14 @@ static auto TryMapType(Context& context, SemIR::TypeId type_id)
         return clang::QualType();
       }
       clang::QualType clang_fn_type(clang_decl->getFunctionType(), /*Quals=*/0);
-      clang::QualType clang_ptr_type =
-          context.ast_context().getPointerType(clang_fn_type);
+      clang::QualType clang_ptr_type;
+      if (const auto* method_decl =
+              llvm::dyn_cast<clang::CXXMethodDecl>(clang_decl)) {
+        clang_ptr_type = context.ast_context().getMemberPointerType(
+            clang_fn_type, std::nullopt, method_decl->getParent());
+      } else {
+        clang_ptr_type = context.ast_context().getPointerType(clang_fn_type);
+      }
       return context.ast_context().getAttributedType(
           clang::attr::TypeNonNull, clang_ptr_type, clang_ptr_type);
     }

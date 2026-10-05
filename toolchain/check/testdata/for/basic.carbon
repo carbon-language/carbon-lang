@@ -59,6 +59,10 @@ fn Run() {
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %T.f84: %Copy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.c1c: type = facet_access_type %T.f84 [symbolic]
+// CHECK:STDOUT:   %Optional.e88: type = class_type @Optional, @Optional(%T.f84) [symbolic]
+// CHECK:STDOUT:   %Optional.elem.2ae: type = unbound_element_type %Optional.e88, %T.as_type.c1c [symbolic]
+// CHECK:STDOUT:   %Optional.elem.2fa: type = unbound_element_type %Optional.e88, bool [symbolic]
 // CHECK:STDOUT:   %Optional.Get.type.e1b: type = fn_type @Optional.Get, @Optional(%T.f84) [symbolic]
 // CHECK:STDOUT:   %Optional.Get.20c: %Optional.Get.type.e1b = struct_value () [symbolic]
 // CHECK:STDOUT:   %Optional.HasValue.type.224: type = fn_type @Optional.HasValue, @Optional(%T.f84) [symbolic]
@@ -87,6 +91,8 @@ fn Run() {
 // CHECK:STDOUT:   %Optional.HasValue.3ad: %Optional.HasValue.type.a09 = struct_value () [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.9ee: type = fn_type @Optional.Get, @Optional(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %Optional.Get.20b: %Optional.Get.type.9ee = struct_value () [concrete]
+// CHECK:STDOUT:   %Optional.elem.c90: type = unbound_element_type %Optional.0cb, bool [concrete]
+// CHECK:STDOUT:   %Optional.elem.889: type = unbound_element_type %Optional.0cb, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %struct_type.has_value.value.da2: type = struct_type {.has_value: bool, .value: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %Body.type: type = fn_type @Body [concrete]
 // CHECK:STDOUT:   %Body: %Body.type = struct_value () [concrete]
@@ -157,8 +163,14 @@ fn Run() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.1db: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.224) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.c4f)]
 // CHECK:STDOUT:   %Core.import_ref.73b: @Optional.%Optional.Get.type (%Optional.Get.type.e1b) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.20c)]
+// CHECK:STDOUT:   %Core.import_ref.613: @Optional.%Optional.elem.1 (%Optional.elem.2fa) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.4a0]
+// CHECK:STDOUT:   %Core.import_ref.7e3: @Optional.%Optional.elem.2 (%Optional.elem.2ae) = import_ref Core//prelude/parts/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.c67]
 // CHECK:STDOUT:   %Core.import_ref.9c3: %empty_tuple.type.as.Copy.impl.Op.type = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [concrete = constants.%empty_tuple.type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %Copy.impl_witness_table.229 = impl_witness_table (%Core.import_ref.9c3), @empty_tuple.type.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.127 = import_ref Core//prelude/parts/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.c67: @Optional.%Optional.elem.2 (%Optional.elem.2ae) = field_decl value, element1, %Core.import_ref.127 in [concrete] {}
+// CHECK:STDOUT:   %Core.import_ref.b0d0 = import_ref Core//prelude/parts/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %field_decl.4a0: @Optional.%Optional.elem.1 (%Optional.elem.2fa) = field_decl has_value, element0, %Core.import_ref.b0d0 in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
@@ -368,6 +380,14 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc18_35.4(%self.param: ref %Optional.0cb) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %value.ref: %Optional.elem.889 = name_ref value, imports.%Core.import_ref.7e3 [concrete = imports.%field_decl.c67]
+// CHECK:STDOUT:   %.loc18_35.1: ref %empty_tuple.type = class_element_access %self.param, element1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc18_35.1: <bound method> = bound_method %.loc18_35.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc18_35.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc18_35.1(%.loc18_35.1)
+// CHECK:STDOUT:   %has_value.ref: %Optional.elem.c90 = name_ref has_value, imports.%Core.import_ref.613 [concrete = imports.%field_decl.4a0]
+// CHECK:STDOUT:   %.loc18_35.2: ref bool = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc18_35.2: <bound method> = bound_method %.loc18_35.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc18_35.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc18_35.2(%.loc18_35.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
