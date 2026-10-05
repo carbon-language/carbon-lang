@@ -122,7 +122,7 @@ auto GetHighestAllowedAccess(Context& context,
     while (access_context_scope_id.has_value()) {
       if (class_info.scope_id == access_context_scope_id ||
           access_context_scope_id ==
-          SemIR::NameScopeId::AllowHighestAccessLevel) {
+              SemIR::NameScopeId::AllowHighestAccessLevel) {
         return SemIR::AccessKind::Private;
       }
       auto& access_context_scope =
