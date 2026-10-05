@@ -2210,19 +2210,22 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
 
     // Move the `target.storage_access_block` into the `InitializeAction` so
     // that it can be inserted when the action is performed.
+    auto storage_access_block_id = SemIR::InstId::None;
     auto pending_inst_block = target.storage_access_block->TakeAsInstBlock();
-    auto pending_splice_block = AddInstInNoBlock<SemIR::SpliceBlock>(
-        context, loc_id,
-        {
-            .type_id = SemIR::InstType::TypeId,
-            .block_id = pending_inst_block,
-            .result_id = target.storage_id,
-        });
-    auto storage_access_block_id =
-        context.constant_values().GetInstId(context.constants().GetOrAdd(
-            SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
-                             .inst_id = pending_splice_block},
-            SemIR::ConstantDependence::None));
+    if (pending_inst_block != SemIR::InstBlockId::Empty) {
+      auto pending_splice_block = AddInstInNoBlock<SemIR::SpliceBlock>(
+          context, loc_id,
+          {
+              .type_id = SemIR::InstType::TypeId,
+              .block_id = pending_inst_block,
+              .result_id = target.storage_id,
+          });
+      storage_access_block_id =
+          context.constant_values().GetInstId(context.constants().GetOrAdd(
+              SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
+                               .inst_id = pending_splice_block},
+              SemIR::ConstantDependence::None));
+    }
 
     // Create the initialization action.
     auto action_id = AddDependentActionInst<SemIR::InitializeAction>(
@@ -2372,13 +2375,14 @@ auto PerformAction(Context& context, SemIR::SpecificId specific_id,
 
   // Add the storage access block from the `action` to the pending
   // `target_block`.
-  auto inst_value = context.insts().GetAs<SemIR::InstValue>(
-      target_bundle.storage_access_block_id);
-  auto splice_block =
-      context.insts().GetAs<SemIR::SpliceBlock>(inst_value.inst_id);
-  auto inst_block = context.inst_blocks().Get(splice_block.block_id);
-  for (auto inst_id : inst_block) {
-    target_block.AddInstId(inst_id);
+  if (auto inst_value = context.insts().TryGetAsIfValid<SemIR::InstValue>(
+          target_bundle.storage_access_block_id)) {
+    auto splice_block =
+        context.insts().GetAs<SemIR::SpliceBlock>(inst_value->inst_id);
+    auto inst_block = context.inst_blocks().Get(splice_block.block_id);
+    for (auto inst_id : inst_block) {
+      target_block.AddInstId(inst_id);
+    }
   }
 
   ConversionTarget target = {

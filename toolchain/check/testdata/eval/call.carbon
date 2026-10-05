@@ -187,9 +187,6 @@ fn H() {
 // CHECK:STDOUT:   %v.var_patt.53d: %pattern_type.231 = var_pattern %v.patt.bcc [template]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %tuple.type.f7a: type = tuple_type (<instruction>) [concrete]
-// CHECK:STDOUT:   %inst.splice_block.426619.1: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.ab5: ref <instruction> = splice_block @UseFGenerically.%v.var {}
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.519: %F.call = splice_inst @UseFGenerically.%tuple.elem0 [template]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Self.0e7: %Destroy.type = symbolic_binding Self, 0 [symbolic]
@@ -206,13 +203,13 @@ fn H() {
 // CHECK:STDOUT:   %v.patt.5c6: %pattern_type.98b = ref_binding_pattern v [concrete]
 // CHECK:STDOUT:   %v.var_patt.a6f: %pattern_type.98b = var_pattern %v.patt.5c6 [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
-// CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:   %inst.splice_block.426619.1: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.d7f: init %C = splice_block %.c83 [concrete = %C.val] {
 // CHECK:STDOUT:       %.6ba47e.2: ref %C = specific_inst @UseFGenerically.%v.var, @UseFGenerically(%int_3.410)
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %tuple.242: %tuple.type.f7a = tuple_value (%inst.splice_block.426619.2) [concrete]
+// CHECK:STDOUT:   %tuple.242: %tuple.type.f7a = tuple_value (%inst.splice_block.426619.1) [concrete]
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %self.param_patt.52f: %pattern_type.a96 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.4b1: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt.52f [concrete]
@@ -232,7 +229,7 @@ fn H() {
 // CHECK:STDOUT:   %Destroy.facet.601: %Destroy.type = facet_value %C, (%custom_witness.f8f19d.2) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.c6a: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.601) [concrete]
 // CHECK:STDOUT:   %.977: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.c6a, %Destroy.facet.601 [concrete]
-// CHECK:STDOUT:   %inst.splice_block.426619.3: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.db6: <bound method> = splice_block %bound_method.db6 {
 // CHECK:STDOUT:       %.6ba47e.1: ref %C = specific_inst @UseFGenerically.%v.var, @UseFGenerically(%int_3.410)
 // CHECK:STDOUT:       %impl.elem2: %.977 = impl_witness_access %custom_witness.f8f19d.2, element2 [concrete = %Destroy.WithSelf.SelfDestruct.db3fdb.2]
@@ -301,7 +298,7 @@ fn H() {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %F.call.loc11_20.2 [template = %pattern_type (constants.%pattern_type.231)]
 // CHECK:STDOUT:   %v.patt.loc11_15.2: @UseFGenerically.%pattern_type (%pattern_type.231) = ref_binding_pattern v [template = %v.patt.loc11_15.2 (constants.%v.patt.bcc)]
 // CHECK:STDOUT:   %v.var_patt.loc11_3.2: @UseFGenerically.%pattern_type (%pattern_type.231) = var_pattern %v.patt.loc11_15.2 [template = %v.var_patt.loc11_3.2 (constants.%v.var_patt.53d)]
-// CHECK:STDOUT:   %.loc11_3.6: %tuple.type.f7a = initialize_action %.loc11_25, %F.call.loc11_20.2, %v.var, constants.%inst.splice_block.426619.1, false [template]
+// CHECK:STDOUT:   %.loc11_3.6: %tuple.type.f7a = initialize_action %.loc11_25, %F.call.loc11_20.2, %v.var, none, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc11_3.6, element0 [template]
 // CHECK:STDOUT:   %.loc11_3.7: @UseFGenerically.%F.call.loc11_20.2 (%F.call) = splice_inst %tuple.elem0 [template = %.loc11_3.7 (constants.%.519)]
 // CHECK:STDOUT:   %.loc11_3.8: <instruction> = compound_member_access_action %v.var, constants.%assoc2 [template]
@@ -375,9 +372,9 @@ fn H() {
 // CHECK:STDOUT:   %v.patt.loc11_15.2 => constants.%v.patt.5c6
 // CHECK:STDOUT:   %v.var_patt.loc11_3.2 => constants.%v.var_patt.a6f
 // CHECK:STDOUT:   %.loc11_3.6 => constants.%tuple.242
-// CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.2
+// CHECK:STDOUT:   %tuple.elem0 => constants.%inst.splice_block.426619.1
 // CHECK:STDOUT:   %.loc11_3.7 => constants.%C.val
-// CHECK:STDOUT:   %.loc11_3.8 => constants.%inst.splice_block.426619.3
+// CHECK:STDOUT:   %.loc11_3.8 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc11_3.9 => <bound method>
 // CHECK:STDOUT:   %.loc11_3.10 => <not constant>
 // CHECK:STDOUT:   %.loc11_3.11 => constants.%inst.call
