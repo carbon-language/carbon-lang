@@ -1591,7 +1591,7 @@ static auto MakeParamPattern(
 // TODO: Consider refactoring to extract and reuse more logic from
 // `HandleAnyBindingPattern()`.
 static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
-                                     const CalleeFunctionInfo& function_info)
+                                     const CppCalleeFunctionInfo& function_info)
     -> SemIR::InstBlockId {
   // The `self` parameter of a method is the first entry in the explicit
   // parameter list. Build it (if any) first, then the remaining explicit
@@ -1682,7 +1682,7 @@ static auto MakeParamPatternsBlockId(Context& context, SemIR::LocId loc_id,
 // are treated as returning a class instance.
 // TODO: Support more return types.
 static auto GetReturnTypeExpr(Context& context, SemIR::LocId loc_id,
-                              const CalleeFunctionInfo& function_info)
+                              const CppCalleeFunctionInfo& function_info)
     -> Context::FormExpr {
   auto make_init_form = [&](SemIR::TypeInstId type_component_inst_id) {
     SemIR::InitForm inst = {.type_id = SemIR::FormType::TypeId,
@@ -1749,7 +1749,7 @@ struct ReturnInfo {
 // and the returned return_type_inst_id will be `SemIR::ErrorInst::InstId`.
 // Constructors are treated as returning a class instance.
 static auto GetReturnInfo(Context& context, SemIR::LocId loc_id,
-                          const CalleeFunctionInfo& function_info)
+                          const CppCalleeFunctionInfo& function_info)
     -> ReturnInfo {
   auto [form_inst_id, type_inst_id, type_id] =
       GetReturnTypeExpr(context, loc_id, function_info);
@@ -1825,7 +1825,7 @@ struct FunctionSignatureInsts {
 // signature to the Carbon function signature.
 static auto CreateFunctionSignatureInsts(
     Context& context, SemIR::LocId loc_id,
-    const CalleeFunctionInfo& function_info)
+    const CppCalleeFunctionInfo& function_info)
     -> std::optional<FunctionSignatureInsts> {
   context.full_pattern_stack().StartExplicitParamList();
   auto param_patterns_id =
@@ -1859,7 +1859,7 @@ static auto CreateFunctionSignatureInsts(
 
 // Returns the Carbon function name for the given function.
 static auto GetFunctionName(Context& context,
-                            const CalleeFunctionInfo& function_info)
+                            const CppCalleeFunctionInfo& function_info)
     -> SemIR::NameId {
   clang::DeclarationName decl_name = function_info.decl_name;
   switch (decl_name.getNameKind()) {
@@ -1899,7 +1899,7 @@ static auto GetFunctionName(Context& context,
 // * Have not been imported before.
 // * Be of supported type (ignoring parameters).
 static auto ImportFunction(Context& context, SemIR::LocId loc_id,
-                           const CalleeFunctionInfo& function_info)
+                           const CppCalleeFunctionInfo& function_info)
     -> std::optional<SemIR::InstId> {
   StartFunctionSignature(context);
 
@@ -1991,7 +1991,7 @@ static auto ImportFunction(Context& context, SemIR::LocId loc_id,
 // `ImportFunction`), this builds a simple-ABI thunk that invokes the callee,
 // and defines the imported function as calling it.
 static auto DefineAsThunkCall(Context& context, SemIR::LocId loc_id,
-                              const CalleeFunctionInfo& callee_info,
+                              const CppCalleeFunctionInfo& callee_info,
                               SemIR::Function& function) -> void {
   clang::FunctionDecl* thunk_clang_decl = BuildCppThunk(context, callee_info);
   if (thunk_clang_decl == nullptr) {
@@ -2007,8 +2007,8 @@ static auto DefineAsThunkCall(Context& context, SemIR::LocId loc_id,
   SemIR::ClangDeclSignatureId thunk_signature_id =
       context.clang_decl_signatures().Add(std::move(thunk_signature));
 
-  CalleeFunctionInfo thunk_callee_info(context, thunk_clang_decl,
-                                       thunk_signature_id);
+  CppCalleeFunctionInfo thunk_callee_info(context, thunk_clang_decl,
+                                          thunk_signature_id);
   auto thunk_decl_id = ImportFunction(context, loc_id, thunk_callee_info);
   if (thunk_decl_id == std::nullopt) {
     return;
@@ -2056,7 +2056,7 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
 
   CARBON_CHECK(clang_decl->getFunctionType()->isFunctionProtoType(),
                "Not Prototype function (non-C++ code)");
-  CalleeFunctionInfo callee_info(context, clang_decl, key.signature_id);
+  CppCalleeFunctionInfo callee_info(context, clang_decl, key.signature_id);
   auto function_decl_id = ImportFunction(context, loc_id, callee_info);
   if (!function_decl_id) {
     MarkFailedDecl(context, key);
@@ -2143,7 +2143,7 @@ auto ImportFunctionPointerInvoke(
         builder.Note(loc_id, InCppFunctionPointerThunk);
       });
 
-  CalleeFunctionInfo callee_info(context, info.clang_type);
+  CppCalleeFunctionInfo callee_info(context, info.clang_type);
   SemIR::ClangFunctionPointerTypeInfo result = {
       .clang_type = info.clang_type,
       .decl_id = SemIR::ErrorInst::InstId,
