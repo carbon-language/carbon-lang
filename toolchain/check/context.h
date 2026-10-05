@@ -129,6 +129,10 @@ class Context {
     return field_decls_stack_;
   }
 
+  auto friend_scopes_stack() -> ArrayStack<SemIR::ConstantId>& {
+    return friend_scopes_stack_;
+  }
+
   auto require_impls_stack() -> RequireImplsStack& {
     return require_impls_stack_;
   }
@@ -506,6 +510,10 @@ class Context {
 
   // The stack of FieldDecls for in-progress Class definitions.
   ArrayStack<SemIR::InstId> field_decls_stack_;
+
+  // The stack of `friend` decls for in-progress Class definitions, identified
+  // by the constant value of an expression that names them.
+  ArrayStack<SemIR::ConstantId> friend_scopes_stack_;
 
   // The stack of RequireImpls for in-progress Interface and Constraint
   // definitions.
