@@ -37,10 +37,30 @@ class ClangDriverDiagnosticConsumer : public clang::DiagnosticConsumer {
 };
 
 // Builds and returns a clang `CompilerInvocation` to use when building code for
-// interop, from a list of clang driver arguments. Emits diagnostics to
-// `consumer` if the arguments are invalid.
+// interop, from a list of clang driver arguments. Validates the target options
+// and canonicalizes `TargetOptions::Features` via
+// `clang::TargetInfo::CreateTargetInfo`. Emits diagnostics to `consumer` if the
+// arguments or target options are invalid.
+//
+// If `allow_extra_inputs` is true, warnings are suppressed and
+// `RecoverOnError` is enabled on `clang::createInvocation` so that target
+// options can still be extracted from driver or link command lines that may
+// contain linker flags or multiple inputs.
 auto BuildClangInvocation(Diagnostics::Consumer& consumer,
                           llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                          const InstallPaths& install_paths,
+                          llvm::StringRef target_str,
+                          llvm::ArrayRef<llvm::StringRef> extra_args = {},
+                          bool allow_extra_inputs = false)
+    -> std::unique_ptr<clang::CompilerInvocation>;
+
+// Non-diagnosing overload of `BuildClangInvocation` that ignores any Clang
+// driver diagnostics and returns `nullptr` if an invocation cannot be built.
+// Like `BuildClangInvocation` above, this validates target options and
+// canonicalizes `TargetOptions::Features`, and enables `allow_extra_inputs`
+// (`RecoverOnError = true`) to tolerate extra inputs or jobs on driver command
+// lines.
+auto BuildClangInvocation(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
                           const InstallPaths& install_paths,
                           llvm::StringRef target_str,
                           llvm::ArrayRef<llvm::StringRef> extra_args = {})

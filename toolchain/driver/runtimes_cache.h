@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <string>
 #include <utility>
 
 #include "common/check.h"
@@ -14,6 +15,7 @@
 #include "common/filesystem.h"
 #include "common/ostream.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/base/install_paths.h"
 
@@ -234,9 +236,22 @@ class Runtimes::Cache {
   // The features of a cached runtimes directory.
   //
   // TODO: Add support for more build flags that we want to enable when building
-  // runtimes such as sanitizers and CPU-specific optimizations.
+  // runtimes such as sanitizers.
   struct Features {
+    // The target triple to build runtimes for.
     std::string target;
+
+    // The canonical target CPU name (from `clang::TargetOptions::CPU`).
+    std::string cpu = "";
+
+    // The canonical tune CPU name (from `clang::TargetOptions::TuneCPU`, or
+    // defaulted from `cpu` when `TuneCPU` is unset and `cpu` is a valid tune
+    // target).
+    std::string tune_cpu = "";
+
+    // The canonical sorted target features (`+<feature>` / `-<feature>` from
+    // `clang::TargetOptions::Features`).
+    llvm::SmallVector<std::string> target_features = {};
   };
 
   Cache() = default;
