@@ -48,7 +48,6 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
   auto call_params_id = SemIR::InstBlockId::None;
   auto param_ranges = SemIR::Function::CallParamIndexRanges::Empty;
   auto pattern_block_id = SemIR::InstBlockId::None;
-  auto unspecified_values_block_id = SemIR::InstBlockId::Empty;
   if (param_patterns_id->has_value() ||
       implicit_param_patterns_id->has_value() ||
       return_pattern_id.has_value()) {
@@ -57,8 +56,6 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
     call_param_patterns_id = results.call_param_patterns_id;
     call_params_id = results.call_params_id;
     param_ranges = results.param_ranges;
-    unspecified_values_block_id = context.inst_blocks().Add(
-        context.full_pattern_stack().GetUnspecifiedDefaultValues());
     pattern_block_id = context.pattern_block_stack().Pop();
     context.full_pattern_stack().PopFullPattern();
   }
@@ -77,8 +74,7 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
           .call_param_patterns_id = call_param_patterns_id,
           .call_params_id = call_params_id,
           .param_ranges = param_ranges,
-          .pattern_block_id = pattern_block_id,
-          .unspecified_values_block_id = unspecified_values_block_id};
+          .pattern_block_id = pattern_block_id};
 }
 
 // Pop the name of a declaration from the node stack, and diagnose if it has

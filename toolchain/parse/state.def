@@ -144,6 +144,21 @@ CARBON_PARSE_STATE(PrimitiveFormFinish)
 //   (state done)
 CARBON_PARSE_STATE(FormLiteralFinish)
 
+// Handles the `typeof` keyword and opening paren in a `typeof` expression.
+//
+// typeof(x)
+// ^~~~~~~
+//   1. Expr
+//   2. TypeOfExprFinish
+CARBON_PARSE_STATE(TypeOfExpr)
+
+// Handles finishing the `typeof` expression.
+//
+// typeof(x)
+//         ^
+//   (state done)
+CARBON_PARSE_STATE(TypeOfExprFinish)
+
 // Handles the `{` of a brace expression.
 //
 // {}
@@ -362,6 +377,10 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // fn <...>
 // ^~
 //   1. FunctionIntroducer
+//
+// friend <...>
+// ^~~~~~
+//   1. FriendDecl
 //
 // impl <...>
 // ^~~~
@@ -737,6 +756,15 @@ CARBON_PARSE_STATE(WhereFinish)
 //      ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(ExprStatementFinish)
+
+// Handles a `friend` declaration.
+//
+// friend <identifier> ;
+//        ^~~~~~~~~~~~~~
+// friend ??? ;
+//        ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(FriendDecl)
 
 // Handles a function's introducer.
 //

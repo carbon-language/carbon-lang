@@ -123,7 +123,6 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case SemIR::NamespaceType::Kind:
           case SemIR::RequireSpecificDefinitionType::Kind:
           case SemIR::SpecificFunctionType::Kind:
-          case SemIR::UnspecifiedValueType::Kind:
           case SemIR::VtableType::Kind:
           case SemIR::WitnessType::Kind: {
             os << self_inst.kind().ir_name();
@@ -269,6 +268,8 @@ auto Mangler::MangleImpl(SemIR::FunctionId function_id,
                    function.non_generated_builtin_function_kind());
     case SemIR::Function::SpecialFunctionKind::HasCppThunk:
       CARBON_FATAL("C++ functions should have been handled earlier");
+    case SemIR::Function::SpecialFunctionKind::CppFunctionPointerThunk:
+      CARBON_FATAL("Attempting to mangle call to function pointer");
   }
 
   MangleInverseQualifiedNameScope(os, function.parent_scope_id,

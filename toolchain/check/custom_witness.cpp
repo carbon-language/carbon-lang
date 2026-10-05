@@ -5,8 +5,10 @@
 #include "toolchain/check/custom_witness.h"
 
 #include "llvm/ADT/APFloat.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
@@ -179,11 +181,35 @@ enum class DestroyFormat {
   NonTrivial,
 };
 
+// Returns true if the type is known to have trivial destruction.
+static auto IsBuiltinWithTrivialDestruction(Context& context,
+                                            SemIR::InstId inst_id) -> bool {
+  CARBON_KIND_SWITCH(context.insts().Get(inst_id)) {
+    case SemIR::BoolType::Kind:
+    case SemIR::CppFunctionPointerType::Kind:
+    case SemIR::FacetType::Kind:
+    case SemIR::FloatType::Kind:
+    case SemIR::FormType::Kind:
+    case SemIR::FunctionType::Kind:
+    case SemIR::IntLiteralType::Kind:
+    case SemIR::IntType::Kind:
+    case SemIR::PointerType::Kind:
+      // Trivially destructible.
+      return true;
+    default:
+      return false;
+  }
+}
+
 // Similar to `HasWitnessForRepeatedField`, but for cases where there's only one
 // field, this can handle the call to `PrepareForHasWitness`.
 static auto HasWitnessForOneField(
     Context& context, SemIR::LocId loc_id, SemIR::InstId field_inst_id,
     SemIR::SpecificInterface query_specific_interface) -> DestroyFormat {
+  if (IsBuiltinWithTrivialDestruction(context, field_inst_id)) {
+    return DestroyFormat::Trivial;
+  }
+
   auto query_facet_type_const_id =
       PrepareForHasWitness(context, loc_id, query_specific_interface);
   auto has_witness = HasWitnessForRepeatedField(context, loc_id, field_inst_id,
@@ -217,9 +243,22 @@ static auto CanDestroyClass(Context& context, SemIR::LocId loc_id,
         class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
   }
 
-  return HasWitnessForOneField(context, loc_id,
-                               context.types().GetTypeInstId(object_repr_id),
-                               query_specific_interface);
+  auto has_witness = HasWitnessForOneField(
+      context, loc_id, context.types().GetTypeInstId(object_repr_id),
+      query_specific_interface);
+  if (has_witness == DestroyFormat::NoDestroy) {
+    return DestroyFormat::NoDestroy;
+  }
+
+  if (class_info.GetStructTypeFields(context.sem_ir(), class_type.specific_id)
+          .empty()) {
+    return DestroyFormat::Trivial;
+  }
+
+  // TODO: check that a class' base has trivial destruction.
+  // TODO: check that a class' subobjects have trivial destruction.
+
+  return DestroyFormat::NonTrivial;
 }
 
 // Returns true if the `Self` should impl `Destroy`. This will recurse into impl
@@ -231,8 +270,12 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
     -> DestroyFormat {
   auto inst_id = context.constant_values().GetInstId(
       GetCanonicalFacet(context, query_self_const_id));
-  auto inst = context.insts().Get(inst_id);
 
+  if (IsBuiltinWithTrivialDestruction(context, inst_id)) {
+    return DestroyFormat::Trivial;
+  }
+
+  auto inst = context.insts().Get(inst_id);
   if (context.types().IsConstrainedFacetType(inst.type_id())) {
     // The value's type is a symbolic constrained facet. We don't provide a
     // custom witness for constrained facets. The witness must be found in the
@@ -341,18 +384,21 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
       return has_witness ? DestroyFormat::NonTrivial : DestroyFormat::NoDestroy;
     }
 
-    case SemIR::BoolType::Kind:
-    case SemIR::FacetType::Kind:
-    case SemIR::FloatType::Kind:
-    case SemIR::FormType::Kind:
-    case SemIR::IntLiteralType::Kind:
-    case SemIR::IntType::Kind:
-    case SemIR::PointerType::Kind:
-      // Trivially destructible.
-      return DestroyFormat::Trivial;
-
     default:
       CARBON_FATAL("Unexpected type for CanDestroyType: {0}", inst.kind());
+  }
+}
+
+// Calls `self.<field>.(Destroy.SelfDestruct)` for a field in a `StructType`.
+static auto DestroyStructFields(
+    Context& context, SemIR::LocId loc_id, SemIR::InstId callee_self_param_id,
+    llvm::ArrayRef<SemIR::StructTypeField> struct_fields) -> void {
+  for (auto i = static_cast<std::int64_t>(struct_fields.size()) - 1; i >= 0;
+       --i) {
+    auto member_id = PerformMemberAccess(context, loc_id, callee_self_param_id,
+                                         struct_fields[i].name_id);
+    auto self_destruct_call = BuildSelfDestructCall(context, member_id);
+    DiscardExpr(context, self_destruct_call);
   }
 }
 
@@ -362,29 +408,105 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
 // maintain mostly-consistent behavior with current logic while working. That
 // also means using `self`.
 static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
-                                       SemIR::TypeId self_type_id,
-                                       SemIR::InstId self_param_id)
-    -> SemIR::InstBlockId {
-  context.inst_block_stack().Push();
-  auto inst = context.types().GetAsInst(self_type_id);
+                                       SemIR::InstId callee_self_param_id,
+                                       SemIR::TypeId self_type_id) -> void {
+  while (self_type_id.has_value()) {
+    auto inst = context.types().GetAsInst(self_type_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::ArrayType array_type): {
+        auto size = context.ints()
+                        .Get(context.insts()
+                                 .GetAs<SemIR::IntValue>(array_type.bound_id)
+                                 .int_id)
+                        .getSExtValue();
+        auto index_type_id =
+            GetSingletonType(context, SemIR::IntLiteralType::TypeInstId);
 
-  CARBON_KIND_SWITCH(inst) {
-    case SemIR::ArrayType::Kind:
-    case SemIR::ClassType::Kind:
-    case SemIR::ConstType::Kind:
-    case SemIR::MaybeUnformedType::Kind:
-    case SemIR::PartialType::Kind:
-    case SemIR::StructType::Kind:
-    case SemIR::TupleType::Kind:
-      (void)self_param_id;
-      // TODO: Implement destruction of the type.
-      break;
-    default:
-      CARBON_FATAL("Unexpected type for MakeSubobjectDestroyOpBody: {0}", inst);
+        // TODO: Significantly reduce how much SemIR we output by replacing O(N)
+        // calls to `Destroy.SelfDestruct` loop over the array that calls the
+        // method in its body.
+        //
+        // We probably need to use `StartLoopHeader`, `BranchAndStartLoopBody`,
+        // and `FinishLoopBody`, which are currently private functions in
+        // `/toolchain/check/handle_loop_statement.cpp`.
+        while (--size >= 0) {
+          auto int_id = context.ints().Add(size);
+          auto index_id = AddInst(
+              context, loc_id,
+              SemIR::IntValue{.type_id = index_type_id, .int_id = int_id});
+          auto element_id = AddInst<SemIR::ArrayIndex>(
+              context, loc_id,
+              {.type_id = context.types().GetTypeIdForTypeInstId(
+                   array_type.element_type_inst_id),
+               .array_id = callee_self_param_id,
+               .index_id = index_id});
+          BuildSelfDestructCall(context, element_id);
+        }
+        return;
+      }
+      case CARBON_KIND(SemIR::ClassType class_type): {
+        auto class_info = context.classes().Get(class_type.class_id);
+        auto access_context =
+            llvm::SaveAndRestore(context.access_context(),
+                                 SemIR::NameScopeId::AllowHighestAccessLevel);
+
+        DestroyStructFields(
+            context, loc_id, callee_self_param_id,
+            class_info
+                .GetStructTypeFields(context.sem_ir(), class_type.specific_id)
+                .drop_while([](SemIR::StructTypeField struct_field) {
+                  return struct_field.name_id == SemIR::NameId::Vptr;
+                }));
+        return;
+      }
+      case CARBON_KIND(SemIR::ConstType const_type): {
+        self_type_id =
+            context.types().GetTypeIdForTypeInstId(const_type.inner_id);
+        break;
+      }
+      case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
+        // TODO: implement destruction for `Core.MaybeUnformed(T)`.
+        (void)maybe_unformed_type;
+        return;
+      }
+      case CARBON_KIND(SemIR::PartialType partial_type): {
+        // TODO: implement destruction for partial types.
+        (void)partial_type;
+        return;
+      }
+      case CARBON_KIND(SemIR::StructType struct_type): {
+        DestroyStructFields(
+            context, loc_id, callee_self_param_id,
+            context.struct_type_fields().Get(struct_type.fields_id));
+        return;
+      }
+      case CARBON_KIND(SemIR::TupleType tuple_type): {
+        auto tuple_elements =
+            context.inst_blocks().Get(tuple_type.type_elements_id);
+        CARBON_CHECK(!tuple_elements.empty(),
+                     "empty tuples should be trivially destructible");
+
+        for (auto i = static_cast<std::int64_t>(tuple_elements.size()) - 1;
+             i >= 0; --i) {
+          auto int_id = context.ints().Add(i);
+          BuildSelfDestructCall(
+              context,
+              PerformTupleAccess(
+                  context, loc_id, callee_self_param_id,
+                  AddInst(context, loc_id,
+                          SemIR::IntValue{
+                              .type_id = GetSingletonType(
+                                  context, SemIR::IntLiteralType::TypeInstId),
+                              .int_id = int_id})));
+        }
+        return;
+      }
+      default: {
+        CARBON_FATAL("Unexpected type for MakeSubobjectDestroyOpBody: {0}",
+                     inst);
+      }
+    }
   }
-
-  AddInst(context, loc_id, SemIR::Return{});
-  return context.inst_block_stack().Pop();
 }
 
 // Returns a manufactured `Destroy.Op` function with the `self` parameter typed
@@ -449,9 +571,19 @@ static auto MakeSubobjectDestroyOpFunction(
         builtin_kind = SemIR::BuiltinFunctionKind::NoOp;
         break;
       case DestroyFormat::NonTrivial: {
-        auto body_id = MakeSubobjectDestroyOpBody(context, loc_id, self_type_id,
-                                                  function.self_param_id);
-        function.body_block_ids.push_back(body_id);
+        // TODO: should we make a NameRef for `self`?
+        auto call_params = context.inst_blocks().Get(function.call_params_id);
+        CARBON_CHECK(
+            call_params.size() == 1,
+            "`Core.SubobjectDestroy.Op` should only have `ref self` as its "
+            "parameter");
+        context.inst_block_stack().Push();
+        StartFunctionDefinition(context, decl_id, function_id);
+        MakeSubobjectDestroyOpBody(context, loc_id, call_params[0],
+                                   self_type_id);
+        BuildReturnWithNoExpr(context, loc_id);
+        FinishFunctionDefinition(context, function_id);
+        context.inst_block_stack().Pop();
         break;
       }
       case DestroyFormat::NoDestroy:

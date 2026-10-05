@@ -49,7 +49,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: block
           # When adding endpoints, see README.md.
@@ -61,6 +61,7 @@ jobs:
             api.github.com:443
             api.ipify.org:443
             bcr.bazel.build:443
+            download.gnome.org:443
             downloads.sourceforge.net:443
             files.pythonhosted.org:443
             github.com:443

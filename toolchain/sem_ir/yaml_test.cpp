@@ -62,7 +62,6 @@ TEST(SemIRTest, Yaml) {
       Pair("import_ir_insts", Yaml::Mapping(SizeIs(0))),
       Pair("clang_decls", Yaml::Mapping(SizeIs(0))),
       Pair("clang_decl_signatures", Yaml::Mapping(SizeIs(0))),
-      Pair("default_values", Yaml::Mapping(SizeIs(0))),
       Pair("name_scopes", Yaml::Mapping(SizeIs(1))),
       Pair("entity_names", Yaml::Mapping(SizeIs(1))),
       Pair("functions", Yaml::Mapping(SizeIs(1))),

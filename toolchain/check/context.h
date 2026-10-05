@@ -401,9 +401,6 @@ class Context {
   auto declared_facet_types() -> SemIR::DeclaredFacetTypeStore& {
     return sem_ir().declared_facet_types();
   }
-  auto default_values() -> SemIR::DefaultValueStore& {
-    return sem_ir().default_values();
-  }
   auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
     return sem_ir().identified_facet_types();
   }
@@ -452,6 +449,14 @@ class Context {
   auto total_ir_count() const -> int { return total_ir_count_; }
   auto mangle_string_fingerprint() const -> bool {
     return mangle_string_fingerprint_;
+  }
+
+  auto clang_function_pointer_types() -> SemIR::ClangFunctionPointerTypeStore& {
+    return sem_ir().clang_function_pointer_types();
+  }
+  auto clang_function_pointer_types() const
+      -> const SemIR::ClangFunctionPointerTypeStore& {
+    return sem_ir().clang_function_pointer_types();
   }
 
   // --------------------------------------------------------------------------

@@ -24,6 +24,8 @@ class PendingBlock {
   PendingBlock(const PendingBlock&) = delete;
   auto operator=(const PendingBlock&) -> PendingBlock& = delete;
 
+  auto context() -> Context& { return *context_; }
+
   // A scope in which we will tentatively add instructions to a pending block.
   // If we leave the scope without inserting or merging the block, instructions
   // added after this point will be removed again.
@@ -82,20 +84,11 @@ class PendingBlock {
   // Replace the instruction at target_id with the instructions in this block.
   // The new value for target_id should be value_id. Returns the InstId that
   // should be used to refer to the result from now on. value_id must dominate
-  // target_id (but see below), or refer to an instruction within this block, in
-  // order to preserve the property that SemIR is topologically sorted.
-  //
-  // TODO: We don't have an implementation of a proper dominance check, so we
-  // fake one up by comparing the order in which the insts were created.
-  // Add a general end-of-phase dominance check and remove the one here and in
-  // `InitializeExisting`.
+  // target_id, or refer to an instruction within this block, in order to
+  // preserve the property that SemIR is topologically sorted.
   auto MergeReplacing(SemIR::InstId target_id, SemIR::InstId value_id)
       -> SemIR::InstId {
     CARBON_CHECK(target_id != value_id);
-    CARBON_CHECK(context_->insts().GetRawIndex(value_id) <=
-                         context_->insts().GetRawIndex(target_id) ||
-                     llvm::is_contained(insts_, value_id),
-                 "Splice might break dominance condition");
     SemIR::LocIdAndInst value = context_->insts().GetWithLocId(value_id);
 
     auto result_id = value_id;
@@ -120,6 +113,28 @@ class PendingBlock {
     }
 
     ReplaceLocIdAndInstBeforeConstantUse(*context_, target_id, value);
+    insts_.clear();
+
+    AddPendingCleanups();
+    return result_id;
+  }
+
+  // Merges this pending block into a single instruction that executes the
+  // instructions in the block and produces `value_id`. Cleanups are registered,
+  // but the new instruction is not added to a block; the caller is expected to
+  // add it somewhere suitable. This is used during template actions to produce
+  // the pending block as an action result.
+  auto MergeInNoBlock(SemIR::InstId value_id) -> SemIR::InstId {
+    auto result_id = value_id;
+    if (insts_.size() != 1 || insts_[0] != value_id) {
+      // Create a splice block if the block is not exactly `{value_id}`.
+      result_id = AddInstInNoBlock<SemIR::SpliceBlock>(
+          *context_, SemIR::LocId(value_id),
+          {.type_id = context_->insts().Get(value_id).type_id(),
+           .block_id = context_->inst_blocks().Add(insts_),
+           .result_id = value_id});
+    }
+
     insts_.clear();
 
     AddPendingCleanups();

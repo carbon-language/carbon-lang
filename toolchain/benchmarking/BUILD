@@ -69,6 +69,7 @@ cc_binary(
         ":source_gen_lib",
         "//common:all_llvm_targets",
         "//common:filesystem",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "//testing/base:global_exe_path",
         "//toolchain/base:install_paths",
@@ -87,10 +88,10 @@ sh_test(
     srcs = [":compile_benchmark"],
     args = [
         "--benchmark_dry_run",
-        # Dry-run the smallest (256-line) case of every benchmark. The optional
-        # `/real_time` suffix is present on the subprocess benchmarks, which use
-        # real time. The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=/256(/real_time)?$$",
+        # Dry-run the smallest (256-line) case of every benchmark. Also run just
+        # the lex benchmark that executes a subprocess to reduce the overhead
+        # and reduce timeouts. The `$$` is repeated for Bazel escaping of `$`.
+        "--benchmark_filter=^(BM_CompileApi.*/256|BM_CompileExec.*Phase::Lex.*/256/real_time)$$",
     ],
     env = cc_env(),
 )
@@ -102,6 +103,7 @@ cc_binary(
     deps = [
         "//common:all_llvm_targets",
         "//common:check",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "//testing/base:global_exe_path",
         "//toolchain/base:install_paths",
