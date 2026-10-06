@@ -56,8 +56,8 @@ jobs:
           stale-issue-label: 'inactive'
           stale-pr-label: 'inactive'
           exempt-issue-labels:
-            'long term issue,design idea,design update,good first issue,leads
-            question'
+            'long term issue,design idea,needs design doc update,good first
+            issue,leads question'
           days-before-stale: 90
           days-before-close: 14
           days-before-issue-close: -1

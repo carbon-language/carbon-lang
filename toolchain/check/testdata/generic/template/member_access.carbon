@@ -280,9 +280,9 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.cdf
 // CHECK:STDOUT:   %.loc6_17.4 => constants.%inst.splice_block.426619.1
 // CHECK:STDOUT:   %.loc6_17.5 => constants.%i32
-// CHECK:STDOUT:   %.loc6_17.6 => invalid
+// CHECK:STDOUT:   %.loc6_17.6 => <not constant>
 // CHECK:STDOUT:   %.loc6_17.7 => constants.%inst.splice_block.426619.2
-// CHECK:STDOUT:   %.loc6_17.8 => invalid
+// CHECK:STDOUT:   %.loc6_17.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%struct_type.m.n) {
@@ -296,9 +296,9 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.08f
 // CHECK:STDOUT:   %.loc6_17.4 => constants.%inst.splice_block.426619.3
 // CHECK:STDOUT:   %.loc6_17.5 => constants.%i32
-// CHECK:STDOUT:   %.loc6_17.6 => invalid
+// CHECK:STDOUT:   %.loc6_17.6 => <not constant>
 // CHECK:STDOUT:   %.loc6_17.7 => constants.%inst.splice_block.426619.4
-// CHECK:STDOUT:   %.loc6_17.8 => invalid
+// CHECK:STDOUT:   %.loc6_17.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- compound_member_access.carbon
@@ -437,8 +437,8 @@ fn G() {
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.756
 // CHECK:STDOUT:   %.loc10_11.3 => constants.%inst.splice_block.426619.1
 // CHECK:STDOUT:   %.loc10_11.4 => constants.%i32
-// CHECK:STDOUT:   %.loc10_11.5 => invalid
+// CHECK:STDOUT:   %.loc10_11.5 => <not constant>
 // CHECK:STDOUT:   %.loc10_17.2 => constants.%inst.splice_block.426619.2
-// CHECK:STDOUT:   %.loc10_17.3 => invalid
+// CHECK:STDOUT:   %.loc10_17.3 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

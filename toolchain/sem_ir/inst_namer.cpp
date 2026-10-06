@@ -1481,7 +1481,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(TupleValue inst): {
-      if (sem_ir().types().Is<ArrayType>(inst.type_id)) {
+      if (sem_ir().types().Is<ArrayType>(
+              sem_ir().types().GetTransitiveAdaptedType(inst.type_id))) {
         AddInstName("array");
       } else if (inst.elements_id == InstBlockId::Empty) {
         AddInstName("empty_tuple");

@@ -963,6 +963,25 @@ struct WhileStatement {
   CodeBlockId body;
 };
 
+// The start of a pack expansion: `...`. This marks the beginning of the
+// expanded region.
+using PackExpansionStart =
+    LeafNode<NodeKind::PackExpansionStart, Lex::PeriodPeriodPeriodTokenIndex>;
+
+// A statement pack expansion: `... statement`.
+struct PackExpansionStatement {
+  static constexpr auto Kind = NodeKind::PackExpansionStatement.Define(
+      {.category = NodeCategory::Statement,
+       .bracketed_by = PackExpansionStart::Kind,
+       .child_count = 2});
+
+  PackExpansionStartId start;
+  AnyStatementId body;
+  // This is a virtual token. The `...` token is owned by the
+  // PackExpansionStart node.
+  Lex::PeriodPeriodPeriodTokenIndex token;
+};
+
 using MatchConditionStart =
     LeafNode<NodeKind::MatchConditionStart, Lex::OpenParenTokenIndex>;
 
@@ -1656,6 +1675,25 @@ struct BaseDecl {
   llvm::SmallVector<AnyModifierId> modifiers;
   BaseColonId colon;
   AnyExprId base_class;
+  Lex::SemiTokenIndex token;
+};
+
+// Friend declaration
+// ------------------
+
+using FriendIntroducer =
+    LeafNode<NodeKind::FriendIntroducer, Lex::FriendTokenIndex>;
+
+struct FriendDecl {
+  static constexpr auto Kind = NodeKind::FriendDecl.Define(
+      {.category = NodeCategory::Decl, .bracketed_by = FriendIntroducer::Kind});
+
+  FriendIntroducerId introducer;
+
+  // TODO: figure out the more general syntax for the name part of a friend
+  // declaration.
+  IdentifierNameExprId name;
+
   Lex::SemiTokenIndex token;
 };
 

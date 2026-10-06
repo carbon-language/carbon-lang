@@ -116,7 +116,13 @@ class FunctionContext {
   auto IsConstant(SemIR::InstId) -> bool;
 
   // Returns a value for the given instruction.
-  auto GetValue(SemIR::InstId inst_id) -> llvm::Value*;
+  //
+  // If `require_value` is true, the instruction is required to have emitted a
+  // value or have a concrete constant in the current specific, and will CHECK
+  // if these conditions are not met. If `require_value` is false, `nullptr`
+  // will be returned instead if there is no value for the instruction.
+  auto GetValue(SemIR::InstId inst_id, bool require_value = true)
+      -> llvm::Value*;
 
   // Sets the value for the given instruction.
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) -> void {

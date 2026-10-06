@@ -10,11 +10,16 @@
 #include <optional>
 #include <string>
 
+#include "common/error.h"
+#include "common/raw_string_ostream.h"
 #include "common/set.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/VirtualFileSystem.h"
+#include "testing/base/capture_std_streams.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/base/install_paths_test_helpers.h"
+#include "toolchain/driver/clang_runner.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {
@@ -30,6 +35,7 @@ using ::testing::Gt;
 using ::testing::Le;
 using ::testing::MatchesRegex;
 using ::testing::SizeIs;
+using ::testing::StrEq;
 
 // Tiny helper to sum the sizes of a range of ranges. Uses a template to avoid
 // hard coding any specific types for the two ranges.
@@ -229,23 +235,45 @@ TEST(SourceGenTest, UniqueIdentifiers) {
   }
 }
 
-// Check that the source code doesn't have compiler errors.
-auto TestCompile(llvm::StringRef source) -> bool {
+// Compiles `source` and returns whether it compiled with no diagnostics at all.
+// Generated code should be warning-free: warnings would add diagnostic
+// emission to the compile benchmarks.
+auto TestCompile(SourceGen::Language language, llvm::StringRef source) -> bool {
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
   InstallPaths installation(
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath()));
-  Driver driver(fs, &installation, /*input_stream=*/nullptr, &llvm::outs(),
-                &llvm::errs());
 
-  AddPreludeFilesToVfs(installation, fs);
+  if (language == SourceGen::Language::Carbon) {
+    RawStringOstream diagnostics;
+    Driver driver(fs, &installation, /*input_stream=*/nullptr, &llvm::outs(),
+                  &diagnostics);
+    AddPreludeFilesToVfs(installation, fs);
+    fs->addFile("test.carbon", /*ModificationTime=*/0,
+                llvm::MemoryBuffer::getMemBuffer(source));
+    bool success = driver
+                       .RunCommand({"compile", "--phase=check",
+                                    "--no-include-carbon-core", "test.carbon"})
+                       .success;
+    std::string output = diagnostics.TakeStr();
+    EXPECT_THAT(output, StrEq(""));
+    return success && output.empty();
+  }
 
-  fs->addFile("test.carbon", /*ModificationTime=*/0,
+  // Clang reads the system headers from the real filesystem.
+  llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem> overlay_fs =
+      new llvm::vfs::OverlayFileSystem(llvm::vfs::getRealFileSystem());
+  overlay_fs->pushOverlay(fs);
+  fs->addFile("test.cpp", /*ModificationTime=*/0,
               llvm::MemoryBuffer::getMemBuffer(source));
-  return driver
-      .RunCommand({"compile", "--phase=check", "--no-include-carbon-core",
-                   "test.carbon"})
-      .success;
+  ClangRunner runner(&installation, overlay_fs);
+  std::string out;
+  std::string err;
+  ErrorOr<bool> result = CallWithCapturedOutput(out, err, [&] {
+    return runner.RunWithNoRuntimes({"-fsyntax-only", "test.cpp"});
+  });
+  EXPECT_THAT(err, StrEq(""));
+  return result.ok() && *result && err.empty();
 }
 
 TEST(SourceGenTest, GenApiFileDenseDeclsTest) {
@@ -256,8 +284,7 @@ TEST(SourceGenTest, GenApiFileDenseDeclsTest) {
   // Should be within 1% of the requested line count.
   EXPECT_THAT(source, Contains('\n').Times(AllOf(Ge(950), Le(1050))));
 
-  // Make sure we generated valid Carbon code.
-  EXPECT_TRUE(TestCompile(source));
+  EXPECT_TRUE(TestCompile(SourceGen::Language::Carbon, source));
 }
 
 TEST(SourceGenTest, GenApiFileDenseDeclsCppTest) {
@@ -270,8 +297,7 @@ TEST(SourceGenTest, GenApiFileDenseDeclsCppTest) {
   // Should be within 10% of the requested line count.
   EXPECT_THAT(source, Contains('\n').Times(AllOf(Ge(900), Le(1100))));
 
-  // TODO: When the driver supports compiling C++ code as easily as Carbon, we
-  // should test that the generated C++ code is valid.
+  EXPECT_TRUE(TestCompile(SourceGen::Language::Cpp, source));
 }
 
 }  // namespace

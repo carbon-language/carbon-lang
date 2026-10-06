@@ -21,6 +21,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "testing/base/benchmark_helpers.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/base/install_paths.h"
 #include "toolchain/base/install_paths_test_helpers.h"
@@ -331,7 +332,7 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
       // We block optimizing `i` as that has proven both more effective at
       // blocking the loop from being optimized away and avoiding disruption of
       // the generated code that we're benchmarking.
-      benchmark::DoNotOptimize(i);
+      DoNotOptimize(i);
 
       bool success = bench.RunCompile(file_names[i], P);
       CARBON_CHECK(success, "Compilation failed for file: {0}", file_names[i]);

@@ -705,8 +705,8 @@ class InstBlockStore
 };
 
 // See common/hashing.h.
-inline auto CarbonHashValue(const Inst& value, uint64_t seed) -> HashCode {
-  Hasher hasher(seed);
+inline auto CarbonHashValue(const Inst& value) -> HashCode {
+  Hasher hasher;
   hasher.HashRaw(value);
   return static_cast<HashCode>(hasher);
 }

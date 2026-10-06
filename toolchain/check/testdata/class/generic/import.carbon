@@ -744,6 +744,10 @@ class Class(U: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc6_3.3(%self.param: ref %CompleteClass.d55) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %n.ref: %CompleteClass.elem.2cc = name_ref n, imports.%Main.import_ref.082 [concrete = imports.%field_decl]
+// CHECK:STDOUT:   %.loc6: ref %i32 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc6, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc6)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -894,12 +898,14 @@ class Class(U: type) {
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.0aa: <witness> = import_ref Main//foo, loc9_1, loaded [concrete = constants.%complete_type.cdf]
 // CHECK:STDOUT:   %Main.import_ref.5db = import_ref Main//foo, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.bfc = import_ref Main//foo, loc7_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.082: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.c1f) = import_ref Main//foo, loc7_8, loaded [concrete = %field_decl]
 // CHECK:STDOUT:   %Main.import_ref.a02 = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T)]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Main.import_ref.69c = import_ref Main//foo, loc7_10, unloaded
+// CHECK:STDOUT:   %field_decl: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.c1f) = field_decl n, element0, %Main.import_ref.69c in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
@@ -975,7 +981,7 @@ class Class(U: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.5db
-// CHECK:STDOUT:     .n = imports.%Main.import_ref.bfc
+// CHECK:STDOUT:     .n = imports.%Main.import_ref.082
 // CHECK:STDOUT:     .F = imports.%Main.import_ref.a02
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -1042,6 +1048,10 @@ class Class(U: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc13_3.3(%self.param: ref %CompleteClass.22b) {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %n.ref: %CompleteClass.elem.014 = name_ref n, imports.%Main.import_ref.082 [concrete = imports.%field_decl]
+// CHECK:STDOUT:   %.loc13: ref %i32 = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc13, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc13)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -65,17 +65,13 @@ eval fn F(x: i32) -> i32 { return x; }
 
 var a: array(i32, F(3)) = (1, 2, 3);
 
-// --- fail_todo_dependent_call.carbon
+// --- dependent_call.carbon
 
 library "[[@TEST_NAME]]";
 
 eval fn F(x: i32) -> i32 { return x; }
 
 fn G(generic N: i32) {
-  // CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+4]]:36: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
-  // CHECK:STDERR:   var unused a: array(i32, F(N)) = (0, 1, 2);
-  // CHECK:STDERR:                                    ^~~~~~~~~
-  // CHECK:STDERR:
   var unused a: array(i32, F(N)) = (0, 1, 2);
 }
 
@@ -376,10 +372,10 @@ fn H() {
 // CHECK:STDOUT:   %.loc11_3.7 => constants.%C.val
 // CHECK:STDOUT:   %.loc11_3.8 => constants.%inst.splice_block.426619.2
 // CHECK:STDOUT:   %.loc11_3.9 => <bound method>
-// CHECK:STDOUT:   %.loc11_3.10 => invalid
+// CHECK:STDOUT:   %.loc11_3.10 => <not constant>
 // CHECK:STDOUT:   %.loc11_3.11 => constants.%inst.call
 // CHECK:STDOUT:   %.loc11_3.12 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %.loc11_3.13 => invalid
+// CHECK:STDOUT:   %.loc11_3.13 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- return_in_place_discarded.carbon
