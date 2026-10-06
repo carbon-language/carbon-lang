@@ -153,6 +153,9 @@ auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
     EndExprRegionForPattern(context, context.node_stack());
   }
 
+  // TODO: Reject StructPatterns in classes during Parse, or treat patterns in a
+  // class scope as patterns and generate the FieldDecl insts in a later
+  // pattern-matching step.
   if (context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>()) {
     bool is_var = context.full_pattern_stack().IsCurrentKindClassScopeVarDecl();
     CARBON_DIAGNOSTIC(
@@ -213,8 +216,11 @@ auto HandleParseNode(Context& context,
   auto pattern_type_id = context.insts().Get(pattern_id).type_id();
   auto name_id = context.node_stack().Peek<Parse::NodeCategory::MemberName>();
 
-  if (auto pattern_type = context.sem_ir().types().TryGetAs<SemIR::PatternType>(
-          pattern_type_id)) {
+  // NOTE: This check is required for the case when the struct pattern is found
+  // in a class field, so the node_stack contains FieldDecls instead of
+  // Patterns. See the TODO in the HandleParseNode function for the
+  // StructPatternId.
+  if (context.sem_ir().types().TryGetAs<SemIR::PatternType>(pattern_type_id)) {
     auto type_id = ExtractScrutineeType(context.sem_ir(), pattern_type_id);
 
     auto type_inst = context.types().GetTypeInstId(type_id);

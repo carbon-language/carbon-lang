@@ -5,7 +5,11 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_STRUCT_H_
 #define CARBON_TOOLCHAIN_CHECK_STRUCT_H_
 
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "toolchain/check/context.h"
+#include "toolchain/parse/node_ids.h"
+#include "toolchain/sem_ir/struct_type_field.h"
 
 namespace Carbon::Check {
 
