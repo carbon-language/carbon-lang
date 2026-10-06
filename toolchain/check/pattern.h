@@ -107,12 +107,14 @@ auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
 // `kind`. This only sets up the parameter pattern, binding pattern and type;
 // callers are expected to add the returned parameter pattern instruction to
 // appropriate blocks. This is used when generating functions, rather than
-// processing a user-authored declaration.
+// processing a user-authored declaration. If `default_value_expr_id` has
+// a value, the returned pattern will be a `DefaultValuePattern` wrapping
+// the specified paramter pattern.
 auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                      SemIR::NameId name_id,
                      SemIR::ExprRegionId type_expr_region_id,
-                     SemIR::TypeId type_id, ParamPatternKind kind)
-    -> SemIR::InstId;
+                     SemIR::TypeId type_id, ParamPatternKind kind,
+                     SemIR::InstId default_value_expr_id) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

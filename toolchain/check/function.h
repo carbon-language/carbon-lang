@@ -80,6 +80,10 @@ struct FunctionDeclArgs {
   llvm::ArrayRef<ParamPatternKind> param_kinds = {};
   // The return form, or `None` if the function doesn't declare a return form.
   Context::FormExpr return_form = Context::FormExpr::None;
+  // The values for parameter default values, `None` if there is none.
+  llvm::ArrayRef<SemIR::InstId> param_default_values = {};
+  // The number of top-level parameters that have a default value provided.
+  int32_t default_value_arity = 0;
 };
 
 // Generates and returns a function declaration. The caller should update the

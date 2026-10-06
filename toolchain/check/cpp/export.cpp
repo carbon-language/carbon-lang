@@ -11,17 +11,21 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Sema.h"
+#include "llvm/ADT/Repeated.h"
 #include "llvm/Support/Casting.h"
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
+#include "toolchain/check/pattern_match.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -641,13 +645,54 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 }
 
 namespace {
+
+static auto ExtractParameterDefaults(Context& context,
+                                     SemIR::InstBlockId param_patterns_id)
+    -> llvm::SmallVector<SemIR::InstId> {
+  auto canonical_params = llvm::map_range(
+      context.inst_blocks().Get(param_patterns_id),
+      [&context](SemIR::InstId inst_id) {
+        return context.constant_values().GetConstantInstId(inst_id);
+      });
+  llvm::SmallVector<SemIR::InstId> parameter_defaults;
+  for (auto inst_id : canonical_params) {
+    auto pattern_id = inst_id;
+    auto default_id = SemIR::InstId::None;
+    while (pattern_id.has_value()) {
+      CARBON_KIND_SWITCH(context.insts().Get(pattern_id)) {
+        case CARBON_KIND(SemIR::DefaultValuePattern inst): {
+          default_id = inst.value_id;
+          pattern_id = inst.subpattern_id;
+          break;
+        }
+        case CARBON_KIND_ANY(SemIR::AnyBindingPattern, inst): {
+          pattern_id = inst.subpattern_id;
+          break;
+        }
+        case CARBON_KIND_ANY(SemIR::AnyParamPattern, _): {
+          parameter_defaults.push_back(default_id);
+          pattern_id = SemIR::InstId::None;
+          break;
+        }
+        default: {
+          pattern_id = SemIR::InstId::None;
+          break;
+        }
+      }
+    }
+  }
+  return parameter_defaults;
+}
+
 struct FunctionInfo {
   struct Param {
-    Param(Context& context, SemIR::InstId param_inst_id)
+    Param(Context& context, SemIR::InstId param_inst_id,
+          SemIR::InstId default_value_inst_id)
         : pattern_inst_id(param_inst_id),
           type_id(ExtractScrutineeType(
               context.sem_ir(), context.insts().Get(param_inst_id).type_id())),
-          kind(GetParamPatternKind(context, param_inst_id)) {}
+          kind(GetParamPatternKind(context, param_inst_id)),
+          default_value_inst_id(default_value_inst_id) {}
 
     // The parameter's pattern type.
     SemIR::InstId pattern_inst_id;
@@ -657,6 +702,10 @@ struct FunctionInfo {
 
     // Kind of the parameter pattern.
     ParamPatternKind kind;
+
+    // Canonical inst id for a default value for the pattern, if specified,
+    // or `None` if pattern has no default value.
+    SemIR::InstId default_value_inst_id;
   };
 
   explicit FunctionInfo(Context& context, SemIR::FunctionId function_id,
@@ -670,7 +719,11 @@ struct FunctionInfo {
         export_as_constructor(export_as_constructor) {
     auto function_params =
         context.inst_blocks().Get(function.call_param_patterns_id);
+    auto parameter_defaults =
+        ExtractParameterDefaults(context, function.param_patterns_id);
     const auto& ranges = function.call_param_ranges;
+    CARBON_CHECK(parameter_defaults.size() ==
+                 static_cast<size_t>(ranges.explicit_size()));
     auto explicit_begin = ranges.explicit_begin().index;
 
     // Get the function's `self` parameter, if present. `self` is the first
@@ -679,13 +732,16 @@ struct FunctionInfo {
     // convention rather than inspecting the pattern.)
     if (function.self_param_id.has_value()) {
       CARBON_CHECK(explicit_begin != ranges.explicit_end().index);
-      self_param = Param(context, function_params[explicit_begin]);
+      self_param =
+          Param(context, function_params[explicit_begin], SemIR::InstId::None);
       ++explicit_begin;
     }
 
     // The remaining explicit parameters are the caller-provided arguments.
     for (auto i = explicit_begin; i != ranges.explicit_end().index; ++i) {
-      explicit_params.push_back(Param(context, function_params[i]));
+      explicit_params.push_back(
+          Param(context, function_params[i],
+                parameter_defaults[i - ranges.explicit_begin().index]));
     }
   }
 
@@ -826,7 +882,9 @@ static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
 // return type.
 //
 // The function's name will match the one referenced by `function_name_id`,
-// and the function will be added to the given `decl_context`.
+// and the function will be added to the given `decl_context`. `default_values`
+// can be either an empty array, in which case no defaults are provided, or
+// an array of the same length as `param_types`.
 static auto BuildCppFunctionDecl(Context& context,
                                  clang::DeclContext* decl_context,
                                  SemIR::LocId loc_id,
@@ -862,7 +920,7 @@ static auto BuildCppFunctionDecl(Context& context,
 
   // Build parameter decls.
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
-  for (auto [i, type] : llvm::enumerate(param_types)) {
+  for (auto type : param_types) {
     auto* param_tinfo =
         context.ast_context().getTrivialTypeSourceInfo(type, clang_loc);
     clang::ParmVarDecl* param = clang::ParmVarDecl::Create(
@@ -874,6 +932,161 @@ static auto BuildCppFunctionDecl(Context& context,
   function_decl->setParams(param_var_decls);
 
   return function_decl;
+}
+
+static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
+                                  const FunctionInfo& target,
+                                  int32_t parameter_index,
+                                  SemIR::InstId pattern_id,
+                                  SemIR::InstId value_id) -> clang::Expr* {
+  if (!value_id.has_value()) {
+    return nullptr;
+  }
+  // Set up to capture issued insts
+  context.inst_block_stack().Push();
+
+  // VariableIntroducer
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Var>();
+  context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushNameBindingDecl();
+  BeginExprRegionForPattern(context);  // This does the following:
+  // context.inst_block_stack().Push();
+  // context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
+
+  // IdentifierNameNotBeforeSignature
+  // Synthesize a variable, initialized to the default value, for export to C++.
+  llvm::SmallString<64> var_name =
+      llvm::formatv("{}__{}__default_value",
+                    target.GetIdentifier(context)->getName(), parameter_index);
+  auto& ident = context.ast_context().Idents.get(var_name);
+  auto name_id =
+      SemIR::NameId::ForIdentifier(context.identifiers().Add(ident.getName()));
+  auto pattern_type_id = context.insts().Get(pattern_id).type_id();
+  auto entity_name_id = AddBindingEntityName(
+      context, name_id, context.types().GetTypeInstId(pattern_type_id),
+      SemIR::InstId::None,
+      /*is_unused=*/false, BindingPhase::Runtime);
+
+  // BindingPatternTypeStart <- saves the ElementIndex (0 for us) on the
+  // node stack
+
+  // IntTypeLiteral - this is a type instruction that is assumed issued in
+  // the inst block at the top of the stack
+  auto scrutinee_type_id = context.insts().Get(value_id).type_id();
+  auto type_expr_canonical_inst_id =
+      context.types().GetTypeInstId(scrutinee_type_id);
+  // Create a non-canonical copy of the type instruction on the block stack.
+  auto type_expr_inst_id = AddInst(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::Inst(context.insts().Get(type_expr_canonical_inst_id))));
+
+  // VarBindingPattern -> HandleAnyBindingPattern
+  //  |
+  //  +- HandleAnyBindingPatternType extracts the inst_id for the type
+  //  instruction |  at the top of the node stack
+  //  |
+  //  +- ConsumeExprRegionForPattern -> note this pops from the expr_region and
+  //  inst_block stacks.
+  auto type_region_id = ConsumeExprRegionForPattern(context, type_expr_inst_id);
+  //  |
+  //  +- AddBindingPattern
+  auto binding =
+      AddBindingPattern(context, loc_id, type_region_id, scrutinee_type_id,
+                        {.kind = SemIR::InstKind::RefBindingPattern,
+                         .type_id = pattern_type_id,
+                         .entity_name_id = entity_name_id,
+                         .subpattern_id = SemIR::InstId::None});
+  //  |
+  //  \- MakeUnqualifiedName
+  auto name_context =
+      context.decl_name_stack().MakeUnqualifiedName(loc_id, name_id);
+  context.decl_name_stack().AddNameOrDiagnose(name_context, binding.bind_id,
+                                              SemIR::AccessKind::Public);
+  context.full_pattern_stack().AddBindName(name_id);
+
+  // VariablePattern
+  //  |
+  //  +- EndExprRegionForPattern looks for expressions on the node stack, but
+  //  we would have pushed a pattern, pop the unreachable region pushed by
+  // ConsumeExprRegionForPattern. TODO: ensure it also doesn't pop a block
+  EndEmptyExprRegionForPattern(context);
+  //  |
+  //  +- AddInst for VarPattern
+  auto var_pattern_id = AddInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), loc_id,
+                   SemIR::VarPattern({.type_id = pattern_type_id,
+                                      .subpattern_id = binding.pattern_id})));
+  //  |
+  //  +- GetOrAddVarStorage
+  auto var_storage_id =
+      GetOrAddVarStorage(context, var_pattern_id, /*is_returned_var=*/false);
+  context.full_pattern_stack().AddLocalVarPattern(
+      {.pattern_id = var_pattern_id, .storage_id = var_storage_id});
+  //  |
+  //  \- BeginExprRegionForPattern (which I don't think we need to call)
+
+  // VariableInitializer -> HandleInitializer
+  //  |
+  //  +- EndFullPattern (does nothing we need)
+  //  |
+  //  \- StartPatternInitializer - cannot be called because it attempts to look
+  // up lexical names which are dynamically generated
+  // context.full_pattern_stack().StartPatternInitializer();
+
+  // Now we have the literal value node
+  // Then we need to push the value onto the stack?
+  auto scrutinee_id =
+      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                           context.sem_ir(), loc_id,
+                           SemIR::Inst(context.insts().Get(value_id))));
+
+  // VariableDecl
+  //  |
+  //  +- HandleDecl
+  //     |
+  //     +- EndPatternInitializer - this tries lexical lookups on any pushed
+  // decl names, to make sure they are valid. We can't lookup names declared
+  // for generated code, so we omit this call to avoid an assert on lookup.
+  //  context.full_pattern_stack().EndPatternInitializer();
+  //  |
+  //  +- LocalPatternMatch - cannot be called because it assumes a properly
+  // configured full pattern stack
+  //     |
+  //     +- InitializeExisting
+  auto init_id = InitializeExisting(context, loc_id, var_storage_id,
+                                    scrutinee_id, /*for_return=*/false);
+  AddInst<SemIR::Assign>(context, loc_id,
+                         {.lhs_id = var_storage_id, .rhs_id = init_id});
+  AddInst(context,
+          SemIR::LocIdAndInst::RuntimeVerified(
+              context.sem_ir(), loc_id,
+              SemIR::WrapperBindingPattern({.type_id = pattern_type_id,
+                                            .entity_name_id = entity_name_id,
+                                            .subpattern_id = var_pattern_id})));
+
+  //  |
+  //  +- Create the NameBindingDecl
+  auto pattern_block_id = context.pattern_block_stack().Pop();
+  AddInst<SemIR::NameBindingDecl>(context, loc_id,
+                                  {.pattern_block_id = pattern_block_id});
+  context.full_pattern_stack().PopFullPattern();
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
+  context.inst_block_stack().Pop();
+
+  // Export this variable to C++
+  auto* var_decl =
+      ExportVarToCpp(context, var_storage_id,
+                     context.insts().GetAs<SemIR::VarStorage>(var_storage_id));
+  // Return a reference expression to the variable.
+  auto* decl_ref_expr = clang::DeclRefExpr::Create(
+      context.ast_context(), var_decl->getQualifierLoc(),
+      clang::SourceLocation(), var_decl, false, clang::SourceLocation(),
+      var_decl->getType(), clang::ExprValueKind::VK_PRValue);
+  CARBON_CHECK(decl_ref_expr);
+  return decl_ref_expr;
 }
 
 // Create a `clang::FunctionDecl` for the given Carbon function. This
@@ -904,7 +1117,7 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
   if (target.export_as_constructor) {
     params_to_map = params_to_map.drop_front();
   }
-  for (auto param : params_to_map) {
+  for (auto [i, param] : llvm::enumerate(params_to_map)) {
     auto cpp_type = MapToCppThunkParamType(context, param.type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map Carbon type to C++");
@@ -1071,6 +1284,7 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
       ->getAs<clang::FunctionProtoType>();
 }
 
+// FIXME: THIS IS E0
 // Create the declaration of the C++ thunk.
 static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
                                       const FunctionInfo& target,
@@ -1151,10 +1365,13 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
 
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
   for (auto [i, type] : llvm::enumerate(thunk_function_type->param_types())) {
+    const auto& param = target.explicit_params[i];
     clang::ParmVarDecl* thunk_param = clang::ParmVarDecl::Create(
         ast_context, thunk_function_decl, /*StartLoc=*/clang_loc,
         /*IdLoc=*/clang_loc, /*Id=*/nullptr, type,
-        /*TInfo=*/nullptr, clang::SC_None, /*DefArg=*/nullptr);
+        /*TInfo=*/nullptr, clang::SC_None,
+        BuildDefaultValueExpr(context, loc_id, target, i, param.pattern_inst_id,
+                              param.default_value_inst_id));
     param_var_decls.push_back(thunk_param);
   }
   thunk_function_decl->setParams(param_var_decls);
@@ -1324,8 +1541,10 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
   // the addition of an output parameter for the callee's return value
   // (if it has one).
   llvm::SmallVector<SemIR::TypeId> thunk_param_type_ids;
+  llvm::SmallVector<SemIR::InstId> param_default_values;
   for (const auto& param : target.explicit_params) {
     thunk_param_type_ids.push_back(param.type_id);
+    param_default_values.push_back(param.default_value_inst_id);
   }
   if (target.return_type_id != SemIR::TypeId::None) {
     thunk_param_type_ids.push_back(target.return_type_id);
@@ -1351,7 +1570,9 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
            .name_id = thunk_name_id,
            .self_type_id = target.GetSelfTypeId(),
            .param_type_ids = thunk_param_type_ids,
-           .param_kinds = thunk_param_kinds})
+           .param_kinds = thunk_param_kinds,
+           .param_default_values = param_default_values,
+           .default_value_arity = target.function.default_value_arity})
           .second;
 
   BuildThunkDefinitionForExport(
