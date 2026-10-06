@@ -14,12 +14,6 @@
 '''py
     Block literal with a file type indicator.
 '''
-'''sql // A trailing comment on the introducer line.
-    SELECT 1;
-'''
-''' // A comment with no file type indicator.
-    Text.
-'''
 
 #"a raw \n literal, where \#n is the escape"#
 ##"nested "# stays inside, and \##n is the escape"##
@@ -33,7 +27,6 @@
 
 'a' '\n' '\0' '\u{1F600}'
 '\x70'
-"\x4F is an escape, \x4f is not"
 ''
 'abcde'
 
