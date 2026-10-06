@@ -93,6 +93,9 @@ interface Iterate {
     (`ref cursor: CursorType`), allowing the method to modify the cursor
     in-place.
 
+> **TODO:** Update this interface to be extended type generic once suitable
+> language facilities exist.
+
 #### Loop desugaring
 
 A `for` loop of the form:
@@ -118,6 +121,11 @@ values:
   }
 }
 ```
+
+> **TODO:** The above uses the deduced extended type syntax `:? auto` from
+> in-progress proposal
+> [#5389](https://github.com/carbon-language/carbon-lang/pull/5389), and should
+> be updated to match the final state of that proposal.
 
 > **Note:** Any temporaries in `<range>` will remain live until the end of the
 > loop.
