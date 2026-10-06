@@ -37,7 +37,7 @@ documentation to see how to use the bundle.
 ## Samples
 
 `Samples/` holds Carbon sources that exercise the grammar, each with an SVG
-rendering of the scopes this bundle gives it. Some deliberately contain invalid
+rendering of how this bundle highlights it. Some deliberately contain invalid
 code, to show that highlighting stays sensible while something is being typed.
 
 The renderings are generated, not screenshotted, so they always reflect the
@@ -47,13 +47,3 @@ the grammar, so a reviewer can see what the change does to real code:
 ```shell
 utils/textmate/render_sample.py utils/textmate/Samples/*.carbon
 ```
-
-The colors are a palette built for this grammar rather than an editor's theme.
-Each family of related scopes gets one color, and bold, italic, and underline
-distinguish the scopes within a family. Every scope the grammar picks from
-context renders differently, so a change to what the grammar scopes is visible
-in the image. Scopes that follow from the spelling alone, such as a bracket's
-shape, can share a rendering, since the text already shows them. Unscoped text
-is dimmer than any scope's color, so text the grammar misses stands out. A scope
-with no entry of its own takes its family's color and style, so give a new
-context-dependent scope an entry of its own.
