@@ -124,12 +124,11 @@ auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId;
 
-// If `type_id` is `Core.Array(T, N)` -- the type named by `array(T, N)` --
-// attempts to complete it and returns the primitive array type that it adapts.
-// Otherwise, returns `None`.
-auto TryGetPrimitiveArrayTypeForCoreArray(Context& context, SemIR::LocId loc_id,
-                                          SemIR::TypeId type_id)
-    -> SemIR::TypeId;
+// If `type_id` is `Core.Array(T, N)` or a primitive array type, returns the
+// primitive array type that it is or adapts. Otherwise, returns `std::nullopt`.
+auto TryGetAsArrayType(Context& context, SemIR::LocId loc_id,
+                       SemIR::TypeId type_id)
+    -> std::optional<SemIR::ArrayType>;
 
 // Returns a struct type with the given fields.
 auto GetStructType(Context& context, SemIR::StructTypeFieldsId fields_id)

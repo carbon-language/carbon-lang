@@ -52,54 +52,42 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
   // `ArrayIndex` accepts an operand whose type adapts an array type directly.
   // TODO: Model this as an `IndexWith` / `IndirectIndexWith` impl in the
   // prelude once that can produce a durable reference.
-  auto array_type_id =
-      TryGetPrimitiveArrayTypeForCoreArray(context, node_id, operand_type_id);
-  if (!array_type_id.has_value()) {
-    array_type_id = operand_type_id;
-  }
-
-  CARBON_KIND_SWITCH(context.types().GetAsInst(array_type_id)) {
-    case CARBON_KIND(SemIR::ArrayType array_type): {
-      auto cast_index_id = ConvertToValueOfType(
-          context, SemIR::LocId(index_inst_id), index_inst_id,
-          // TODO: Replace this with impl lookup rather than hardcoding `i32`.
-          MakeIntType(context, node_id, SemIR::IntKind::Signed,
-                      context.ints().Add(32)));
-      auto array_cat =
-          SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
-      if (array_cat == SemIR::ExprCategory::Value) {
-        // If the operand is an array value, convert it to an ephemeral
-        // reference to an array so we can perform a primitive indexing into it.
-        operand_inst_id = AddInst<SemIR::ValueAsRef>(
-            context, node_id,
-            {.type_id = operand_type_id, .value_id = operand_inst_id});
-      }
-      // Constant evaluation will perform a bounds check on this array indexing
-      // if the index is constant.
-      auto elem_id = AddInst<SemIR::ArrayIndex>(
+  if (auto array_type = TryGetAsArrayType(context, node_id, operand_type_id)) {
+    auto cast_index_id = ConvertToValueOfType(
+        context, SemIR::LocId(index_inst_id), index_inst_id,
+        // TODO: Replace this with impl lookup rather than hardcoding `i32`.
+        MakeIntType(context, node_id, SemIR::IntKind::Signed,
+                    context.ints().Add(32)));
+    auto array_cat = SemIR::GetExprCategory(context.sem_ir(), operand_inst_id);
+    if (array_cat == SemIR::ExprCategory::Value) {
+      // If the operand is an array value, convert it to an ephemeral
+      // reference to an array so we can perform a primitive indexing into it.
+      operand_inst_id = AddInst<SemIR::ValueAsRef>(
           context, node_id,
-          {.type_id = context.types().GetTypeIdForTypeInstId(
-               array_type.element_type_inst_id),
-           .array_id = operand_inst_id,
-           .index_id = cast_index_id});
-      if (array_cat != SemIR::ExprCategory::DurableRef) {
-        // Indexing a durable reference gives a durable reference expression.
-        // Indexing anything else gives a value expression.
-        // TODO: This should be replaced by a choice between using `IndexWith`
-        // and `IndirectIndexWith`.
-        elem_id = ConvertToValueExpr(context, elem_id);
-      }
-      context.node_stack().Push(node_id, elem_id);
-      return true;
+          {.type_id = operand_type_id, .value_id = operand_inst_id});
     }
-
-    default: {
-      auto elem_id =
-          PerformIndexWith(context, node_id, operand_inst_id, index_inst_id);
-      context.node_stack().Push(node_id, elem_id);
-      return true;
+    // Constant evaluation will perform a bounds check on this array indexing
+    // if the index is constant.
+    auto elem_id = AddInst<SemIR::ArrayIndex>(
+        context, node_id,
+        {.type_id = context.types().GetTypeIdForTypeInstId(
+             array_type->element_type_inst_id),
+         .array_id = operand_inst_id,
+         .index_id = cast_index_id});
+    if (array_cat != SemIR::ExprCategory::DurableRef) {
+      // Indexing a durable reference gives a durable reference expression.
+      // Indexing anything else gives a value expression.
+      // TODO: This should be replaced by a choice between using `IndexWith`
+      // and `IndirectIndexWith`.
+      elem_id = ConvertToValueExpr(context, elem_id);
     }
+    context.node_stack().Push(node_id, elem_id);
+  } else {
+    auto elem_id =
+        PerformIndexWith(context, node_id, operand_inst_id, index_inst_id);
+    context.node_stack().Push(node_id, elem_id);
   }
+  return true;
 }
 
 }  // namespace Carbon::Check

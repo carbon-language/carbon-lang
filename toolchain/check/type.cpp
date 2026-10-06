@@ -7,6 +7,7 @@
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
@@ -295,24 +296,19 @@ auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
   return GetCompleteTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
 
-auto TryGetPrimitiveArrayTypeForCoreArray(Context& context, SemIR::LocId loc_id,
-                                          SemIR::TypeId type_id)
-    -> SemIR::TypeId {
-  auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id);
-  if (!class_type ||
-      SemIR::RecognizedTypeInfo::ForType(context.sem_ir(), *class_type).kind !=
+auto TryGetAsArrayType(Context& context, SemIR::LocId loc_id,
+                       SemIR::TypeId type_id)
+    -> std::optional<SemIR::ArrayType> {
+  if (auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id);
+      class_type &&
+      SemIR::RecognizedTypeInfo::ForType(context.sem_ir(), *class_type).kind ==
           SemIR::RecognizedTypeInfo::Array) {
-    return SemIR::TypeId::None;
+    // Resolve the definition of the specific class so we can determine which
+    // type is being adapted.
+    ResolveSpecificDefinition(context, loc_id, class_type->specific_id);
+    type_id = context.types().GetAdaptedType(type_id);
   }
-  if (!TryToCompleteType(context, type_id, loc_id)) {
-    return SemIR::TypeId::None;
-  }
-  auto adapted_type_id = context.types().GetAdaptedType(type_id);
-  if (!adapted_type_id.has_value() ||
-      !context.types().Is<SemIR::ArrayType>(adapted_type_id)) {
-    return SemIR::TypeId::None;
-  }
-  return adapted_type_id;
+  return context.types().TryGetAs<SemIR::ArrayType>(type_id);
 }
 
 auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)

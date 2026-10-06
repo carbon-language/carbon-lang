@@ -1644,13 +1644,8 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   // `array(T, n)`, and to the primitive array type that it adapts.
   if (auto src_tuple_type =
           sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
-    auto array_type_id =
-        TryGetPrimitiveArrayTypeForCoreArray(context, loc_id, target.type_id);
-    if (!array_type_id.has_value()) {
-      array_type_id = target.type_id;
-    }
     if (auto target_array_type =
-            sem_ir.types().TryGetAs<SemIR::ArrayType>(array_type_id)) {
+            TryGetAsArrayType(context, loc_id, target.type_id)) {
       return ConvertTupleToArray(context, *src_tuple_type, *target_array_type,
                                  value_id, target);
     }
