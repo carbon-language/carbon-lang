@@ -375,8 +375,8 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, ArrayType inst) -> void {
-    *out_ << "array(";
-    step_stack_->Push(inst.element_type_inst_id, ", ", inst.bound_id, ")");
+    *out_ << "<builtin array(";
+    step_stack_->Push(inst.element_type_inst_id, ", ", inst.bound_id, ")>");
   }
 
   auto StringifyInst(InstId /*inst_id*/, AssociatedConstantDecl inst) -> void {
@@ -579,6 +579,14 @@ class Stringifier {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
     if (auto type_info = RecognizedTypeInfo::ForType(*sem_ir_, inst);
         type_info.is_valid()) {
+      if (type_info.kind == RecognizedTypeInfo::Array) {
+        auto args = sem_ir_->inst_blocks().Get(type_info.args_id);
+        if (args.size() == 2) {
+          *out_ << "array(";
+          step_stack_->Push(args[0], ", ", args[1], ")");
+          return;
+        }
+      }
       if (type_info.PrintLiteral(*sem_ir_, *out_)) {
         return;
       }
@@ -1150,7 +1158,7 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
   auto decl = sem_ir.insts().Get(generic.decl_id);
   CARBON_KIND_SWITCH(decl) {
     case CARBON_KIND(ClassDecl class_decl): {
-      // Print `Core.Int(N)` as `iN`.
+      // Print `Core.Int(N)` as `iN` and `Core.Array(T, N)` as `array(T, N)`.
       // TODO: This duplicates work done in StringifyInst for ClassType.
       const auto& class_info = sem_ir.classes().Get(class_decl.class_id);
       if (auto type_info = RecognizedTypeInfo::ForType(
@@ -1158,6 +1166,13 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
                                 .class_id = class_decl.class_id,
                                 .specific_id = specific_id});
           type_info.is_valid()) {
+        if (type_info.kind == RecognizedTypeInfo::Array) {
+          auto args = sem_ir.inst_blocks().Get(type_info.args_id);
+          if (args.size() == 2) {
+            step_stack.Push("array(", args[0], ", ", args[1], ")");
+            break;
+          }
+        }
         RawStringOstream out;
         if (type_info.PrintLiteral(sem_ir, out)) {
           return out.TakeStr();

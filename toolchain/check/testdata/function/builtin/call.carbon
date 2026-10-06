@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -74,19 +74,21 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Int.as.ImplicitAs.impl.Convert.69e, @Int.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.545: <bound method> = bound_method %int_3.410, %Int.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
-// CHECK:STDOUT:   %array_type: type = array_type %int_3.1ba, %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.771: type = pattern_type %array_type [concrete]
-// CHECK:STDOUT:   %arr.patt: %pattern_type.771 = ref_binding_pattern arr [concrete]
-// CHECK:STDOUT:   %arr.var_patt: %pattern_type.771 = var_pattern %arr.patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
+// CHECK:STDOUT:   %Array.type: type = generic_class_type @Array [concrete]
+// CHECK:STDOUT:   %Array.generic: %Array.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %Array.b3a: type = class_type @Array, @Array(%i32, %int_3.1ba) [concrete]
+// CHECK:STDOUT:   %pattern_type.7a1: type = pattern_type %Array.b3a [concrete]
+// CHECK:STDOUT:   %arr.patt: %pattern_type.7a1 = ref_binding_pattern arr [concrete]
+// CHECK:STDOUT:   %arr.var_patt: %pattern_type.7a1 = var_pattern %arr.patt [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.53a: %T.as.DefaultOrUnformed.impl.Op.type.150 = struct_value () [symbolic]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.8fb: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%array_type) [concrete]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.f29: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%array_type) [concrete]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.2c9: %T.as.DefaultOrUnformed.impl.Op.type.f29 = struct_value () [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %array_type, (%DefaultOrUnformed.impl_witness.8fb) [concrete]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.2c9, @T.as.DefaultOrUnformed.impl.Op(%array_type) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.c11: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%Array.b3a) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.042: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%Array.b3a) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.fd3: %T.as.DefaultOrUnformed.impl.Op.type.042 = struct_value () [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %Array.b3a, (%DefaultOrUnformed.impl_witness.c11) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.fd3, @T.as.DefaultOrUnformed.impl.Op(%Array.b3a) [concrete]
 // CHECK:STDOUT:   %RuntimeCall.type: type = fn_type @RuntimeCall [concrete]
 // CHECK:STDOUT:   %RuntimeCall: %RuntimeCall.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -95,6 +97,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Array = %Core.Array
 // CHECK:STDOUT:     .DefaultOrUnformed = %Core.DefaultOrUnformed
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
@@ -105,6 +108,7 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1aa = impl_witness_table (%Core.import_ref.edf), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.32e: @Int.as.ImplicitAs.impl.%Int.as.ImplicitAs.impl.Convert.type (%Int.as.ImplicitAs.impl.Convert.type.48d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.ImplicitAs.impl.%Int.as.ImplicitAs.impl.Convert (constants.%Int.as.ImplicitAs.impl.Convert.0f9)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.204 = impl_witness_table (%Core.import_ref.32e), @Int.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.Array: %Array.type = import_ref Core//prelude/parts/array, Array, loaded [concrete = constants.%Array.generic]
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
 // CHECK:STDOUT:   %Core.import_ref.cc8: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.150) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.53a)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.cc8), @T.as.DefaultOrUnformed.impl [concrete]
@@ -137,8 +141,8 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param2
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr.var: ref %array_type = var_storage %arr.var_patt [concrete]
-// CHECK:STDOUT:   %.loc17_30: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %arr.var: ref %Array.b3a = var_storage %arr.var_patt [concrete]
+// CHECK:STDOUT:   %.loc17_30: type = splice_block %Array [concrete = constants.%Array.b3a] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %Add.ref: %Add.type = name_ref Add, %Add.decl [concrete = constants.%Add]
 // CHECK:STDOUT:     %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
@@ -167,12 +171,12 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:     %Int.as.ImplicitAs.impl.Convert.call: init Core.IntLiteral = call %bound_method.loc17_29.2(%.loc17_29.2) [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %.loc17_29.3: Core.IntLiteral = value_of_initializer %Int.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:     %.loc17_29.4: Core.IntLiteral = converted %Add.call, %.loc17_29.3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:     %array_type: type = array_type %.loc17_29.4, %i32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %Array: type = class_type @Array, @Array(constants.%i32, constants.%int_3.1ba) [concrete = constants.%Array.b3a]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %arr: ref %array_type = wrapper_binding arr, %arr.var [concrete = %arr.var]
+// CHECK:STDOUT:   %arr: ref %Array.b3a = wrapper_binding arr, %arr.var [concrete = %arr.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %arr.patt: %pattern_type.771 = ref_binding_pattern arr [concrete = constants.%arr.patt]
-// CHECK:STDOUT:     %arr.var_patt: %pattern_type.771 = var_pattern %arr.patt [concrete = constants.%arr.var_patt]
+// CHECK:STDOUT:     %arr.patt: %pattern_type.7a1 = ref_binding_pattern arr [concrete = constants.%arr.patt]
+// CHECK:STDOUT:     %arr.var_patt: %pattern_type.7a1 = var_pattern %arr.patt [concrete = constants.%arr.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeCall.decl: %RuntimeCall.type = fn_decl @RuntimeCall [concrete = constants.%RuntimeCall] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%a.param_patt]
@@ -208,13 +212,13 @@ fn RuntimeCall(a: i32, b: i32) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%array_type, (constants.%DefaultOrUnformed.impl_witness.8fb) [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %.loc17_31.1: %DefaultOrUnformed.type = converted constants.%array_type, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
-// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc17_31.1 [concrete = constants.%array_type]
-// CHECK:STDOUT:   %.loc17_31.2: type = converted %.loc17_31.1, %as_type [concrete = constants.%array_type]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.DefaultOrUnformed.impl.Op.2c9, @T.as.DefaultOrUnformed.impl.Op(constants.%array_type) [concrete = constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn]
-// CHECK:STDOUT:   %.loc17_1: ref %array_type = splice_block file.%arr.var [concrete = file.%arr.var] {}
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %array_type to %.loc17_1 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%Array.b3a, (constants.%DefaultOrUnformed.impl_witness.c11) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %.loc17_31.1: %DefaultOrUnformed.type = converted constants.%Array.b3a, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %as_type: type = facet_access_type %.loc17_31.1 [concrete = constants.%Array.b3a]
+// CHECK:STDOUT:   %.loc17_31.2: type = converted %.loc17_31.1, %as_type [concrete = constants.%Array.b3a]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function constants.%T.as.DefaultOrUnformed.impl.Op.fd3, @T.as.DefaultOrUnformed.impl.Op(constants.%Array.b3a) [concrete = constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn]
+// CHECK:STDOUT:   %.loc17_1: ref %Array.b3a = splice_block file.%arr.var [concrete = file.%arr.var] {}
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call: init %Array.b3a to %.loc17_1 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn()
 // CHECK:STDOUT:   assign file.%arr.var, %T.as.DefaultOrUnformed.impl.Op.call
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

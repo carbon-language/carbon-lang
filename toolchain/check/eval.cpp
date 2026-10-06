@@ -1096,8 +1096,12 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   // regardless of whether the array itself is constant.
   const auto& index_val = eval_context.ints().Get(index->int_id);
   auto aggregate_type_id = eval_context.GetTypeOfInst(inst.array_id);
-  if (auto array_type =
-          eval_context.types().TryGetAs<SemIR::ArrayType>(aggregate_type_id)) {
+  // The array operand may have a type that adapts an array type, such as
+  // `Core.Array`.
+  if (auto array_type = eval_context.types().TryGetAs<SemIR::ArrayType>(
+          eval_context.types()
+              .GetTransitiveUnqualifiedAdaptedType(aggregate_type_id)
+              .first)) {
     if (auto bound = eval_context.insts().TryGetAs<SemIR::IntValue>(
             array_type->bound_id)) {
       // This awkward call to `getZExtValue` is a workaround for APInt not
@@ -1286,6 +1290,22 @@ static auto PerformCharLiteralSubChar(Context& context, SemIR::InstId lhs_id,
   int32_t result = lhs.value.index - rhs.value.index;
   return MakeIntResult(context, dest_type_id, /*is_signed=*/true,
                        llvm::APInt(32, result, /*isSigned=*/true));
+}
+
+// Forms a constant array type as an evaluation result. Requires that
+// `element_type_id` and `bound_id` are constant.
+static auto MakeArrayTypeResult(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId element_type_id,
+                                SemIR::InstId bound_id, Phase phase)
+    -> SemIR::ConstantId {
+  auto result = SemIR::ArrayType{
+      .type_id = SemIR::TypeType::TypeId,
+      .bound_id = bound_id,
+      .element_type_inst_id = context.types().GetAsTypeInstId(element_type_id)};
+  if (!ValidateArrayType(context, loc_id, result)) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return MakeConstantResult(context, result, phase);
 }
 
 // Forms a constant int type as an evaluation result. Requires that width_id is
@@ -2652,6 +2672,11 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
               .type_id = SemIR::TypeType::TypeId,
               .inner_id = context.types().GetAsTypeInstId(arg_ids[0])},
           phase);
+    }
+
+    case SemIR::BuiltinFunctionKind::ArrayMakeType: {
+      return MakeArrayTypeResult(context, loc_id, arg_ids[0], arg_ids[1],
+                                 phase);
     }
 
     case SemIR::BuiltinFunctionKind::FormMakeType: {

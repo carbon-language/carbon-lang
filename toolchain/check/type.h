@@ -15,6 +15,11 @@ namespace Carbon::Check {
 auto ValidateIntType(Context& context, SemIR::LocId loc_id,
                      SemIR::IntType result) -> bool;
 
+// Enforces that an array type has a valid bound. Diagnostics are emitted at
+// `loc_id`.
+auto ValidateArrayType(Context& context, SemIR::LocId loc_id,
+                       SemIR::ArrayType result) -> bool;
+
 // Enforces that a float type has a valid bit width. If the `float_kind` field
 // is `None`, sets it to a suitable kind for the bit width.
 auto ValidateFloatTypeAndSetKind(Context& context, SemIR::LocId loc_id,
@@ -119,9 +124,11 @@ auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)
 auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
     -> SemIR::TypeId;
 
-// Returns an array type with the given `bound_id` and `element_type_inst_id`.
-auto GetArrayType(Context& context, SemIR::InstId bound_id,
-                  SemIR::TypeInstId element_type_inst_id) -> SemIR::TypeId;
+// If `type_id` is `Core.Array(T, N)` or a primitive array type, returns the
+// primitive array type that it is or adapts. Otherwise, returns `std::nullopt`.
+auto TryGetAsArrayType(Context& context, SemIR::LocId loc_id,
+                       SemIR::TypeId type_id)
+    -> std::optional<SemIR::ArrayType>;
 
 // Returns a struct type with the given fields.
 auto GetStructType(Context& context, SemIR::StructTypeFieldsId fields_id)
