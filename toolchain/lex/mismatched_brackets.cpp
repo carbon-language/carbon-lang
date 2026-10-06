@@ -685,8 +685,8 @@ struct StateKey {
   friend auto operator==(const StateKey& lhs, const StateKey& rhs)
       -> bool = default;
 
-  friend auto CarbonHashValue(const StateKey& key, uint64_t seed) -> HashCode {
-    Hasher hasher(seed);
+  friend auto CarbonHashValue(const StateKey& key) -> HashCode {
+    Hasher hasher;
     hasher.Hash(key.stack, key.closer_inserted);
     return static_cast<HashCode>(hasher);
   }

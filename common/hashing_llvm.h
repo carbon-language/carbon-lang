@@ -14,8 +14,8 @@ namespace Carbon::InternalHashDispatch {
 
 template <>
 struct CustomHashValue<llvm::APInt> {
-  static auto Hash(llvm::APInt value, uint64_t seed) -> HashCode {
-    Hasher hasher(seed);
+  static auto Hash(llvm::APInt value) -> HashCode {
+    Hasher hasher;
     if (LLVM_LIKELY(value.isSingleWord())) {
       hasher.Hash(value.getBitWidth(), value.getZExtValue());
     } else {
@@ -29,12 +29,12 @@ struct CustomHashValue<llvm::APInt> {
 
 template <>
 struct CustomHashValue<llvm::APFloat> {
-  static auto Hash(llvm::APFloat value, uint64_t seed) -> HashCode {
-    Hasher hasher(seed);
+  static auto Hash(llvm::APFloat value) -> HashCode {
+    Hasher hasher;
     // Hashing floating point numbers is complex and depends on the specific
     // internal semantics of `APFloat`, so delegate to the LLVM hashing
-    // framework here. We re-hash the result to mix in our seed. All of this is
-    // a bit inefficient, and we can revisit this to provide a dedicated
+    // framework here. We re-hash the result to mix it into our hash. All of
+    // this is a bit inefficient, and we can revisit this to provide a dedicated
     // implementation if it becomes a bottleneck.
     using llvm::hash_value;
     hasher.HashRaw(hash_value(value));
