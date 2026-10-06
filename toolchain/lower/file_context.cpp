@@ -116,7 +116,7 @@ auto FileContext::LowerDefinitions() -> void {
   LowerGlobalVariables(sem_ir().top_inst_block_id());
 
   // Lower static class variable definitions.
-  for (auto class_info : sem_ir().classes().values()) {
+  for (const auto& class_info : sem_ir().classes().values()) {
     auto inst_block_id = class_info.body_block_id;
     if (inst_block_id.has_value()) {
       LowerGlobalVariables(inst_block_id);
