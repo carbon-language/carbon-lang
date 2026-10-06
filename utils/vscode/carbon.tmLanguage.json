@@ -26,7 +26,7 @@
     "comments": {
       "patterns": [
         {
-          "comment": "Toolchain directives. The lexer only acts on one that is the whole comment and the whole line, so anything looser is an ordinary comment. The comment scope sits on a capture rather than on the rule, to leave the indentation this has to match outside it.",
+          "comment": "Toolchain directives. The comment scope sits on a capture rather than on the rule, to leave the leading indentation outside it.",
           "match": "^\\s*((//)(@(?:dump-sem-ir-(?:begin|end)|include-in-dumps)))$",
           "captures": {
             "1": { "name": "comment.line.double-slash.carbon" },
@@ -246,7 +246,6 @@
     "string-escapes": {
       "patterns": [
         {
-          "comment": "The lexer takes only uppercase hexadecimal digits in `\\x` and `\\u{}`.",
           "name": "constant.character.escape.carbon",
           "match": "\\\\(?:[tnr0'\\\"\\\\]|x[0-9A-F]{2}|u\\{[0-9A-F]+\\})"
         }
@@ -279,7 +278,7 @@
     "builtin-functions": {
       "patterns": [
         {
-          "comment": "A builtin function is defined by naming the builtin in a string, and that string names a function rather than holding text: it is 56% of the double-quoted content in `core/`. The lookahead finds the `= \"` before the region opens, and the region cannot outlive its line, since `$` ends it.",
+          "comment": "A builtin function declaration (`fn ... = \"...\"`), scoping the string contents as `support.function.builtin`.",
           "begin": "\\b(fn)\\b(?=[^\"/;]*=\\s*\")",
           "beginCaptures": {
             "1": { "name": "storage.type.carbon" }
@@ -313,7 +312,7 @@
     "declarations": {
       "patterns": [
         {
-          "comment": "The name a function declaration declares, after any qualifiers. `destroy` is a keyword naming a destructor, not a name.",
+          "comment": "The name a function declaration declares, after any qualifiers, or the `destroy` keyword.",
           "begin": "(?<=\\bfn)\\s+(?=(?:r#)?[A-Za-z_])",
           "end": "(?:(destroy)|((?:r#)?[A-Za-z_][A-Za-z0-9_]*))\\b(?!\\s*(?:\\[[^\\[\\]]*\\]\\s*)?(?:\\([^()]*(?:\\([^()]*(?:\\([^()]*\\)[^()]*)*\\)[^()]*)*\\)\\s*)?\\.)|(?=[^\\sA-Za-z_])|$",
           "endCaptures": {
@@ -323,7 +322,7 @@
           "patterns": [{ "include": "#declared-name-qualifier" }]
         },
         {
-          "comment": "The name a class declaration declares. The kind is on the name because some themes color a class apart from other type names; no theme tells the other kinds apart, so they share the rule below.",
+          "comment": "The name a class declaration declares, given `entity.name.type.class` for themes that color classes apart from other types.",
           "begin": "(?<=\\bclass)\\s+(?=(?:r#)?[A-Za-z_])",
           "end": "((?:r#)?[A-Za-z_][A-Za-z0-9_]*)\\b(?!\\s*(?:\\[[^\\[\\]]*\\]\\s*)?(?:\\([^()]*(?:\\([^()]*(?:\\([^()]*\\)[^()]*)*\\)[^()]*)*\\)\\s*)?\\.)|(?=[^\\sA-Za-z_])|$",
           "endCaptures": {
@@ -341,7 +340,7 @@
           "patterns": [{ "include": "#declared-name-qualifier" }]
         },
         {
-          "comment": "`let` binds a name to a value that does not change; `var` binds one that does. A binding modifier can sit between the introducer and the name, and `_`, `self`, and `Self` keep the scope they carry everywhere else.",
+          "comment": "`let` and `var` bindings, with optional modifiers before the name. `_` and `self` are left to `#literals`.",
           "match": "\\b(let)\\s+((?:(?:generic|ref|template|unused|var)\\s+)*)(?!_\\s*:)(r#)?([A-Za-z_][A-Za-z0-9_]*)(?=\\s*:(?![=!?]))",
           "captures": {
             "1": { "name": "storage.type.carbon" },
@@ -360,7 +359,7 @@
           }
         },
         {
-          "comment": "Package, namespace, and import names. `library` and `inline` are keywords that may follow `import`, not names, and `Core` and `Cpp` keep the scope they carry everywhere else.",
+          "comment": "Package, namespace, and import names, excluding keywords (`library`, `inline`) and `Core` and `Cpp`.",
           "match": "\\b(import)\\s+(?!(?:library|inline|Core|Cpp)\\b)((?:r#)?[A-Za-z_][A-Za-z0-9_]*)",
           "captures": {
             "1": { "name": "keyword.control.import.carbon" },
@@ -375,7 +374,7 @@
           }
         },
         {
-          "comment": "A library name is written as a string because it can hold `/`. It names a unit of code inside a package rather than a namespace of its own, so the scope says which kind of name it is and leaves the string underneath.",
+          "comment": "A library name, written as a string, with `entity.name.namespace.library` nested inside the string scope.",
           "match": "\\b(library)\\s+((\")((?:\\\\.|[^\"\\\\\\n])*)(\"))",
           "captures": {
             "1": { "name": "storage.type.carbon" },
@@ -390,7 +389,7 @@
     "declared-name-qualifier": {
       "patterns": [
         {
-          "comment": "One qualifier on a declared name, such as `N.` or `Base(T:! type).`. A name is a qualifier when its parameter lists are followed by `.`, which is how the parser tells too. The qualifier is `entity.name.scope-resolution` nested inside `entity.name.type`, so a theme with no rule for the first gives it the type color. The parameters bind compile-time values, so they read as a type context: a binding is a parameter and anything else is a type.",
+          "comment": "One qualifier on a declared name, such as `N.` or `Base(T: type).`, matched when followed by `.` after any parameter lists. `entity.name.scope-resolution` is nested inside `entity.name.type` so themes without a scope-resolution rule fall back to the type color.",
           "begin": "(((?:r#)?[A-Za-z_][A-Za-z0-9_]*))\\b(?=\\s*(?:\\[[^\\[\\]]*\\]\\s*)?(?:\\([^()]*(?:\\([^()]*(?:\\([^()]*\\)[^()]*)*\\)[^()]*)*\\)\\s*)?\\.)",
           "beginCaptures": {
             "1": { "name": "entity.name.type.carbon" },
@@ -404,22 +403,10 @@
         }
       ]
     },
-    "declaration-qualifier": {
-      "patterns": [
-        {
-          "comment": "One segment of the qualifier on a declared name, which names the scope the declaration belongs to. Syntax cannot tell a namespace from a type here, so neither scope applies.",
-          "match": "((?:r#)?[A-Za-z_][A-Za-z0-9_]*)(\\.)",
-          "captures": {
-            "1": { "name": "entity.name.scope-resolution.carbon" },
-            "2": { "name": "punctuation.separator.dot-access.carbon" }
-          }
-        }
-      ]
-    },
     "type-annotation": {
       "patterns": [
         {
-          "comment": "A type expression, from the token that introduces it to the first token that cannot continue one. Carbon instantiates a generic type by calling it, so a name applied to arguments is a type here rather than a function. The region cannot outlive its line, since `$` ends it.",
+          "comment": "A type expression, from the token that introduces it to the first token that cannot continue one.",
           "name": "meta.type.annotation.carbon",
           "begin": "(:!)|(:\\?)|(:(?![=!?]))|((?<![A-Za-z0-9_)\\]}])\\->\\?)|((?<![A-Za-z0-9_)\\]}])\\->(?!\\?))|\\b(as)\\b|\\b(adapt)\\b|\\b(require)\\b",
           "beginCaptures": {
@@ -471,19 +458,22 @@
           "patterns": [{ "include": "#type-body" }]
         },
         {
-          "comment": "A `where` clause constrains associated members, and the `=` in one names the type a member has to be rather than starting an initializer, so it does not end the type. It ends at a `)` or `]` it did not open, so a clause inside brackets closes with them.",
+          "comment": "A `where` clause switches to expression scoping so `=` does not end the enclosing type as an initializer, and ends at a `)` or `]` it did not open.",
           "begin": "\\bwhere\\b",
           "beginCaptures": {
             "0": { "name": "keyword.other.where.carbon" }
           },
           "end": "(?=[;{}\\)\\]]|$)",
-          "patterns": [{ "include": "#type-body" }]
+          "patterns": [
+            { "include": "#expression-parens" },
+            { "include": "$self" }
+          ]
         },
         { "include": "#impls-clause" },
         { "include": "#comments" },
         { "include": "#strings" },
         {
-          "comment": "`typeof` takes an expression, so its operand is not a type even when the `typeof` is.",
+          "comment": "`typeof` takes an expression operand, switching out of `#type-body`.",
           "begin": "\\b(typeof)\\s*(\\()",
           "end": "(\\))|$",
           "beginCaptures": {
@@ -506,7 +496,7 @@
         { "include": "#literals" },
         { "include": "#numbers" },
         {
-          "comment": "A pointer type is spelled with a `*` written directly against what it points to, which is what separates it from a multiplication.",
+          "comment": "Pointer `*`, written directly after the pointee type.",
           "name": "keyword.operator.type.pointer.carbon",
           "match": "(?<=[A-Za-z0-9_)\\]*])\\*(?!=)"
         },
@@ -521,7 +511,7 @@
           }
         },
         {
-          "comment": "Every name written here is a type: that is what the context means, whatever the name's spelling. An argument reads the same way as the name it is applied to, which is how `Optional(Slice(i32))` comes out; a qualifier is taken by the rule above. A leading `.` designates a member of a struct type or of an interface, so a qualifier has to precede the dot.",
+          "comment": "Unqualified names and qualified member names in a type context. A `.` with no preceding qualifier (such as a struct field `.x`) is left to `#identifiers`.",
           "name": "entity.name.type.carbon",
           "match": "(?:(?<=[A-Za-z0-9_)\\]]\\.)|(?<!\\.))\\b(r#)?[A-Za-z_][A-Za-z0-9_]*\\b",
           "captures": {
@@ -535,7 +525,7 @@
     "inheritance": {
       "patterns": [
         {
-          "comment": "An `impl` declaration names the type it implements the interface for, then the interface after `as`. The declaration needs a region of its own so that this `as` reads as the interface rather than as a cast, and `impl` before another introducer is a modifier rather than this. The region cannot outlive its line, since `$` ends it.",
+          "comment": "An `impl` declaration (when `impl` does not precede another declaration keyword), scoping the type before `as` with `#type-body` and the interface after `as` with `#inheritance-body`.",
           "begin": "\\b(impl)\\b(?!\\s*(?:adapt|alias|base|choice|class|constraint|export|fn|impl|import|interface|let|library|match_first|namespace|observe|package|require|var)\\b)",
           "beginCaptures": {
             "1": { "name": "storage.type.carbon" }
@@ -556,7 +546,7 @@
           "name": "meta.type.annotation.carbon"
         },
         {
-          "comment": "A `base` declaration names the class it extends. `.base` names the base class subobject instead, and `base class` modifies a declaration, so neither reaches this.",
+          "comment": "A `base:` declaration, excluding `.base` member access and `base class`.",
           "name": "meta.inheritance-clause.carbon",
           "begin": "(?<!\\.)\\b(base)\\s*(:)(?![=!?])",
           "beginCaptures": {
@@ -572,7 +562,6 @@
     "impls-clause": {
       "patterns": [
         {
-          "comment": "`impls` requires a type to implement an interface.",
           "name": "meta.inheritance-clause.carbon",
           "begin": "\\b(impls)\\b",
           "beginCaptures": {
@@ -586,7 +575,26 @@
     "inheritance-body": {
       "patterns": [
         {
-          "comment": "Only the interface itself is the one being implemented. Its arguments are ordinary types, so an argument list switches back to `#type-body`.",
+          "comment": "Only the interface itself is scoped as `entity.other.inherited-class`; its argument list switches to expression scoping.",
+          "begin": "(?<=[A-Za-z0-9_\\]])\\(",
+          "end": "(\\))|$",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.parens.begin.bracket.round.carbon"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.section.parens.end.bracket.round.carbon"
+            }
+          },
+          "patterns": [
+            { "include": "#expression-parens" },
+            { "include": "$self" }
+          ]
+        },
+        {
+          "comment": "Grouping parentheses around an interface name stay in `#inheritance-body`.",
           "begin": "\\(",
           "end": "(\\))|$",
           "beginCaptures": {
@@ -599,21 +607,24 @@
               "name": "punctuation.section.parens.end.bracket.round.carbon"
             }
           },
-          "patterns": [{ "include": "#type-body" }]
+          "patterns": [{ "include": "#inheritance-body" }]
         },
         {
-          "comment": "A `where` clause constrains the interface named before it, and what it names are ordinary types. It ends at a `)` or `]` it did not open, so a clause inside brackets closes with them.",
+          "comment": "A `where` clause switches to expression scoping and ends at a `)` or `]` it did not open.",
           "begin": "\\b(where)\\b",
           "beginCaptures": {
             "1": { "name": "keyword.other.where.carbon" }
           },
           "end": "(?=[;{}\\)\\]]|$)",
-          "patterns": [{ "include": "#type-body" }]
+          "patterns": [
+            { "include": "#expression-parens" },
+            { "include": "$self" }
+          ]
         },
         { "include": "#keywords" },
         { "include": "#literals" },
         {
-          "comment": "The last segment of a qualified name is the interface; a qualifier ahead of it reads as one does in any type. A keyword written here keeps the scope it carries everywhere else, which is why `#keywords` and `#literals` come first.",
+          "comment": "The final identifier of the interface or base class name; any preceding qualifiers fall through to `#type-body`.",
           "name": "entity.other.inherited-class.carbon",
           "match": "\\b(?:r#)?[A-Za-z_][A-Za-z0-9_]*\\b(?!\\s*\\.)"
         },
@@ -623,12 +634,11 @@
     "keywords": {
       "patterns": [
         {
-          "comment": "`.base` names the base class subobject, so it comes ahead of the rules that read `base` as an introducer.",
+          "comment": "`.base` member access, matched before `base` as an introducer.",
           "name": "keyword.other.base.carbon",
           "match": "(?<=\\.)\\b(base)\\b"
         },
         {
-          "comment": "`import` names a library this file depends on rather than declaring anything in it, which is the reading the Go, TypeScript, Swift, and Python grammars all give their own import keyword.",
           "name": "keyword.control.import.carbon",
           "match": "\\b(import)\\b"
         },
@@ -637,7 +647,7 @@
           "match": "\\b(adapt|alias|choice|class|constraint|fn|inline|interface|let|library|match_first|namespace|observe|require|var)\\b"
         },
         {
-          "comment": "`base` introduces a base class declaration unless it modifies one.",
+          "comment": "`base` as an introducer (not `base class`).",
           "name": "storage.type.carbon",
           "match": "\\b(base)\\b(?!\\s*class\\b)"
         },
@@ -650,7 +660,7 @@
           "match": "\\b(impl)\\b(?!\\s*(adapt|alias|base|choice|class|constraint|export|fn|impl|import|interface|let|library|match_first|namespace|observe|package|require|var)\\b)"
         },
         {
-          "comment": "`package` is an introducer unless it begins a qualified name.",
+          "comment": "`package` as an introducer (not `package.`).",
           "name": "storage.type.carbon",
           "match": "\\b(package)\\b(?!\\.)"
         },
@@ -659,7 +669,7 @@
           "match": "\\b(abstract|const|eval|extend|extern|final|generic|musteval|override|partial|private|protected|ref|runtime|static|template|unsafe|unused|val|virtual)\\b"
         },
         {
-          "comment": "`default` is a declaration modifier unless it opens a match arm.",
+          "comment": "`default` as a modifier (not `default =>`).",
           "name": "storage.modifier.carbon",
           "match": "\\b(default)\\b(?!\\s*=>)"
         },
@@ -680,12 +690,11 @@
           "match": "\\b(break|case|continue|else|for|if|match|return|returned|then|while)\\b"
         },
         {
-          "comment": "`default` is a match arm here, and a declaration modifier elsewhere.",
+          "comment": "`default` in a `match` clause.",
           "name": "keyword.control.carbon",
           "match": "\\b(default)\\b(?=\\s*=>)"
         },
         {
-          "comment": "`and` and `or` short circuit, so they branch and belong with the other control flow. `not` only negates, so it is a word operator like `as`.",
           "name": "keyword.control.carbon",
           "match": "\\b(and|or)\\b"
         },
@@ -694,7 +703,7 @@
           "match": "\\b(not)\\b"
         },
         {
-          "comment": "`as` and `impls` also introduce a type, and `#type-annotation` scopes them when they do.",
+          "comment": "Fallback when not matched by `#type-annotation` or `#inheritance`.",
           "name": "keyword.operator.expression.as.carbon",
           "match": "\\b(as)\\b"
         },
@@ -730,18 +739,17 @@
           "match": "\\b(_)\\b"
         },
         {
-          "comment": "Language-provided package roots.",
+          "comment": "Built-in package names.",
           "name": "support.class.carbon",
           "match": "\\b(Core|Cpp)\\b"
         },
         {
-          "comment": "`package` as a qualified-name root names the current package.",
+          "comment": "`package` as a qualifier.",
           "name": "variable.language.carbon",
           "match": "\\b(package)\\b(?=\\.)"
         },
         { "name": "constant.language.carbon", "match": "\\b(true|false)\\b" },
         {
-          "comment": "`array` builds a type, `auto` stands in for one, and `type` is the type of types, so none of the three is a primitive.",
           "name": "support.type.builtin.carbon",
           "match": "\\b(array|auto|type)\\b"
         },
@@ -750,7 +758,7 @@
           "match": "\\b(bool|char|str)\\b"
         },
         {
-          "comment": "Integer and float type literals. The lexer accepts any width with no leading zero, so this must not be restricted to the common ones.",
+          "comment": "Integer and floating-point type literals.",
           "name": "support.type.primitive.carbon",
           "match": "\\b[iuf][1-9][0-9]*\\b"
         }
@@ -759,7 +767,7 @@
     "numbers": {
       "patterns": [
         {
-          "comment": "The lexer scans a whole alphanumeric word starting with a digit as one literal, so these do too: a malformed spelling reads as one bad number rather than as a number stuck to an identifier. A radix point needs an alphanumeric after it, and an exponent sign needs a lowercase `e` or `p` before it. A literal written directly after `.` or `->` never forms a real, which is what makes `t.0.Op()` a member access.",
+          "comment": "Each numeric rule matches a full alphanumeric word starting with a digit so a malformed suffix is not split into an identifier. Real literals exclude a leading `.` or `->` so tuple access like `t.0.1` is not matched as a real.",
           "name": "constant.numeric.hex.carbon",
           "match": "(?<!\\.)(?<!->)\\b(0x)[_0-9A-Za-z]*\\.[0-9A-Za-z][_0-9A-Za-z]*(?:(?<=[a-z])[-+][0-9A-Za-z][_0-9A-Za-z]*)?",
           "captures": {
@@ -805,7 +813,6 @@
     "operators": {
       "patterns": [
         {
-          "comment": "Each rule guards its own spelling with a lookahead, so that a longer operator is never split by a shorter one listed ahead of it.",
           "name": "keyword.operator.type.annotation.symbolic.carbon",
           "match": ":!"
         },
@@ -818,7 +825,7 @@
           "match": ":(?![=!?])"
         },
         {
-          "comment": "`->` reaches through a pointer to a member when it is written against the pointer, and introduces a result type when it is not.",
+          "comment": "`->` directly after an operand is pointer member access rather than a return type arrow.",
           "name": "punctuation.separator.pointer-access.carbon",
           "match": "(?<=[A-Za-z0-9_)\\]}])\\->(?!\\?)"
         },
@@ -841,7 +848,7 @@
       "patterns": [
         { "include": "#bindings" },
         {
-          "comment": "Raw identifiers, which suppress keyword meaning.",
+          "comment": "Raw identifiers.",
           "name": "variable.other.carbon",
           "match": "\\b(r#)([A-Za-z_][A-Za-z0-9_]*)",
           "captures": {
@@ -849,17 +856,17 @@
           }
         },
         {
-          "comment": "A member applied to an argument list is a call on that member.",
+          "comment": "Member function call.",
           "name": "entity.name.function.member.carbon",
           "match": "(?:(?<=\\.)|(?<=\\->))[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()"
         },
         {
-          "comment": "A member read through `.` or `->`. Nothing here says whether it names a type: in Carbon a name is a type because of where it is written, which `#type-body` is what marks.",
+          "comment": "Member access via `.` or `->`.",
           "name": "variable.other.property.carbon",
           "match": "(?:(?<=\\.)|(?<=\\->))[A-Za-z_][A-Za-z0-9_]*\\b"
         },
         {
-          "comment": "A name applied to an argument list is a call.",
+          "comment": "Function call.",
           "name": "entity.name.function.call.carbon",
           "match": "\\b[A-Za-z_][A-Za-z0-9_]*(?=\\s*\\()"
         },
@@ -872,7 +879,6 @@
     "punctuation": {
       "patterns": [
         {
-          "comment": "Brackets are named by shape. Which role a bracket plays is not decidable without tracking every region it can open, and the grammar keeps regions to the few places a terminator reliably turns up.",
           "name": "punctuation.section.parens.begin.bracket.round.carbon",
           "match": "\\("
         },
@@ -904,7 +910,7 @@
     "choice-definitions": {
       "patterns": [
         {
-          "comment": "A choice declaration, so that the names in its body read as the alternatives they declare. The region ends after the body, or at the first token that can neither continue the head nor open the body, so a choice with no definition closes on the spot.",
+          "comment": "A `choice` declaration, scoping names in its body as enum members and closing immediately if there is no body.",
           "begin": "\\b(choice)\\b",
           "beginCaptures": {
             "1": { "name": "storage.type.carbon" }
@@ -921,7 +927,7 @@
             },
             { "include": "#comments" },
             {
-              "comment": "The choice's own parameters.",
+              "comment": "Choice parameters.",
               "begin": "\\(",
               "end": "(\\))|$",
               "beginCaptures": {
@@ -937,7 +943,7 @@
               "patterns": [{ "include": "#choice-parameters" }]
             },
             {
-              "comment": "The body holds nothing but alternatives, each a name with an optional parameter list.",
+              "comment": "Choice body.",
               "begin": "\\{",
               "end": "(\\})|(?=[;=])",
               "beginCaptures": {
@@ -953,7 +959,7 @@
               "patterns": [
                 { "include": "#comments" },
                 {
-                  "comment": "An alternative's own parameters.",
+                  "comment": "Alternative parameters.",
                   "begin": "\\(",
                   "end": "(\\))|$",
                   "beginCaptures": {
@@ -969,7 +975,7 @@
                   "patterns": [{ "include": "#choice-parameters" }]
                 },
                 {
-                  "comment": "An alternative cannot take implicit parameters, but reads better than the rest of the file would if it does.",
+                  "comment": "Invalid implicit parameter list on an alternative, matched so its contents are not scoped as enum members.",
                   "begin": "\\[",
                   "end": "(\\])|$",
                   "beginCaptures": {
@@ -1000,7 +1006,6 @@
       ]
     },
     "choice-parameters": {
-      "comment": "What a pattern list holds, wherever a choice declaration has one.",
       "patterns": [
         { "include": "#comments" },
         { "include": "#strings" },
@@ -1017,7 +1022,7 @@
     "bindings": {
       "patterns": [
         {
-          "comment": "A name written directly before its type is bound here rather than used, which is how Carbon writes a parameter. `#declarations` takes the `let` and `var` forms before this is reached. The scope sits on a capture inside `variable.other`, so a theme that styles only the broader name still colors it.",
+          "comment": "Parameter bindings (`name: Type` when not preceded by `let` or `var`), with `variable.parameter` nested inside `variable.other`.",
           "name": "variable.other.carbon",
           "match": "(?<!\\.)(?<!->)\\b(r#)?([A-Za-z_][A-Za-z0-9_]*)(?=\\s*:(?![=!?]))",
           "captures": {
