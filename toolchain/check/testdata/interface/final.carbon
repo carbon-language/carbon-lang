@@ -46,7 +46,7 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:   %T.patt.ac1: %pattern_type.2c5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.e40: %J.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.d90: type = facet_access_type %T.e40 [symbolic]
-// CHECK:STDOUT:   %.d3d: <witness> = impl_self_witness %T.as_type.d90, @I [symbolic]
+// CHECK:STDOUT:   %.6ac: <witness> = impl_self_witness %T.e40, @I [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.b7c: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%T.e40) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.type.f53: type = fn_type @T.as_type.as.I.impl.F, @T.as_type.as.I.impl(%T.e40) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.305: %T.as_type.as.I.impl.F.type.f53 = struct_value () [symbolic]
@@ -125,7 +125,7 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc7_21.2: %J.type = symbolic_binding T, 0 [symbolic = %T.loc7_21.1 (constants.%T.e40)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @T.as_type.as.I.impl.%.loc7_26, @I [symbolic = @T.as_type.as.I.impl.%.loc7_33 (constants.%.d3d)]
+// CHECK:STDOUT:   %.loc7: <witness> = impl_self_witness @T.as_type.as.I.impl.%.loc7_26, @I [symbolic = @T.as_type.as.I.impl.%.loc7_33 (constants.%.6ac)]
 // CHECK:STDOUT:   %UseI.decl: %UseI.type = fn_decl @UseI [concrete = constants.%UseI] {
 // CHECK:STDOUT:     %T.patt.loc11_18.1: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_18.2 (constants.%T.patt.1df)]
 // CHECK:STDOUT:   } {
@@ -184,7 +184,7 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:   %T.patt.loc7_21.2: %pattern_type.2c5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc7_21.2 (constants.%T.patt.ac1)]
 // CHECK:STDOUT:   %T.loc7_21.1: %J.type = symbolic_binding T, 0 [symbolic = %T.loc7_21.1 (constants.%T.e40)]
 // CHECK:STDOUT:   %T.as_type.loc7_26.1: type = facet_access_type %T.loc7_21.1 [symbolic = %T.as_type.loc7_26.1 (constants.%T.as_type.d90)]
-// CHECK:STDOUT:   %.loc7_33: <witness> = impl_self_witness %T.as_type.loc7_26.1, @I [symbolic = %.loc7_33 (constants.%.d3d)]
+// CHECK:STDOUT:   %.loc7_33: <witness> = impl_self_witness %T.loc7_21.1, @I [symbolic = %.loc7_33 (constants.%.6ac)]
 // CHECK:STDOUT:   %I.impl_witness.loc7_33.2: <witness> = impl_witness %I.impl_witness_table, @T.as_type.as.I.impl(%T.loc7_21.1) [symbolic = %I.impl_witness.loc7_33.2 (constants.%I.impl_witness.b7c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -310,7 +310,7 @@ fn Use() { UseJ(C); }
 // CHECK:STDOUT:   %T.patt.loc7_21.2 => constants.%T.patt.ac1
 // CHECK:STDOUT:   %T.loc7_21.1 => constants.%T.e40
 // CHECK:STDOUT:   %T.as_type.loc7_26.1 => constants.%T.as_type.d90
-// CHECK:STDOUT:   %.loc7_33 => constants.%.d3d
+// CHECK:STDOUT:   %.loc7_33 => constants.%.6ac
 // CHECK:STDOUT:   %I.impl_witness.loc7_33.2 => constants.%I.impl_witness.b7c
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
