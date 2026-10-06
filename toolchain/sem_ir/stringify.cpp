@@ -158,6 +158,10 @@ class StepStack {
 
   // Pushes all components of a qualified name (`A.B.C`) onto the stack.
   auto PushQualifiedName(NameScopeId name_scope_id, NameId name_id) -> void {
+    if (!name_id.has_value()) {
+      PushString("<unnamed>");
+      return;
+    }
     PushNameId(name_id);
     if (!qualified_names_) {
       return;
@@ -671,8 +675,17 @@ class Stringifier {
     *out_ << "<C++ type " << clang_type.getAsString() << ">";
   }
 
+  auto StringifyInst(InstId /*inst_id*/, FunctionDecl inst) -> void {
+    const auto& fn = sem_ir_->functions().Get(inst.function_id);
+    step_stack_->PushQualifiedName(fn.parent_scope_id, fn.name_id);
+  }
+
   auto StringifyInst(InstId /*inst_id*/, FunctionType inst) -> void {
     const auto& fn = sem_ir_->functions().Get(inst.function_id);
+    if (!fn.name_id.has_value()) {
+      *out_ << "<type of function expression>";
+      return;
+    }
     *out_ << "<type of ";
     step_stack_->Push(
         StepStack::QualifiedNameItem{fn.parent_scope_id, fn.name_id}, ">");

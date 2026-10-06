@@ -637,6 +637,9 @@ CARBON_DIAGNOSTIC_KIND(UnusedModifierWithoutDefinition)
 CARBON_DIAGNOSTIC_KIND(UnusedPatternNoBindings)
 CARBON_DIAGNOSTIC_KIND(UnusedBinding)
 
+// Function expression diagnostics.
+CARBON_DIAGNOSTIC_KIND(SelfParameterInLambda)
+
 // ============================================================================
 // CodeGen diagnostics
 // ============================================================================

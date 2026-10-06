@@ -116,7 +116,7 @@ auto FileContext::LowerDefinitions() -> void {
   LowerGlobalVariables(sem_ir().top_inst_block_id());
 
   // Lower static class variable definitions.
-  for (auto class_info : sem_ir().classes().values()) {
+  for (const auto& class_info : sem_ir().classes().values()) {
     auto inst_block_id = class_info.body_block_id;
     if (inst_block_id.has_value()) {
       LowerGlobalVariables(inst_block_id);
@@ -699,14 +699,18 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   if (!context().di_compile_unit()) {
     return nullptr;
   }
-  auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
-  CARBON_CHECK(name, "Unexpected special name for function: {0}",
-               function.name_id);
+  llvm::StringRef name = "";
+  if (function.name_id.has_value()) {
+    auto maybe_name =
+        sem_ir().names().GetAsStringIfIdentifier(function.name_id);
+    CARBON_CHECK(maybe_name, "Unexpected special name for function: {0}",
+                 function.name_id);
+    name = *maybe_name;
+  }
   auto loc = GetLocForDI(function.definition_id);
   llvm::DISubroutineType* subroutine_type = function_info.di_type;
   auto* subprogram = context().di_builder().createFunction(
-      context().di_compile_unit(), *name,
-      function_info.llvm_function->getName(),
+      context().di_compile_unit(), name, function_info.llvm_function->getName(),
       /*File=*/context().di_builder().createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number, subroutine_type,
       /*ScopeLine=*/0, llvm::DINode::FlagZero,

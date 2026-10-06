@@ -815,7 +815,12 @@ CARBON_PARSE_STATE(LambdaAfterImplicitParams)
 //
 // fn <...> -> <...>
 //          ^
-//   1. FunctionReturnTypeFinish  (Reused)
+//   1. FunctionReturnTypeFinish
+//   2. LambdaBody
+//
+// fn <...> ->? <...>
+//          ^
+//   1. FunctionReturnFormFinish
 //   2. LambdaBody
 //
 // fn <...> => <...>
