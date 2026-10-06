@@ -45,11 +45,9 @@ static auto ParseLambdaBody(Context& context, Context::State state,
                             bool has_return_type) -> void {
   if (context.PositionIs(Lex::TokenKind::EqualGreater)) {
     // Terse body `=> expr`
-    auto arrow_token = context.Consume();
-    context.AddNode(NodeKind::LambdaDefinitionStart, arrow_token,
+    context.AddNode(NodeKind::LambdaDefinitionStart, context.Consume(),
                     state.has_error);
     state.has_error = false;
-    context.AddLeafNode(NodeKind::TerseBodyArrow, arrow_token);
     context.PushState(state, StateKind::LambdaBodyFinish);
     context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
   } else if (context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
