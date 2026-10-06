@@ -19,37 +19,38 @@ interface Foo {
 }
 
 // CHECK:STDOUT: - filename: fail_self_param_syntax.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Sub'},
-// CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'me'},
-// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 13},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Mul'},
-// CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 13},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 30},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'Sub'
+// CHECK:STDOUT:   │ │ │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'me'
+// CHECK:STDOUT:   │ │ ├─ImplicitParamList ']' has_error
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ │ ╭─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │ ├─ReturnType '->'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'Mul'
+// CHECK:STDOUT:   │ │ │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │ │ │ ├─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │ ├─ImplicitParamList ']'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ │ ╭─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │ ├─ReturnType '->'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

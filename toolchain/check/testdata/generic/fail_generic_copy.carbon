@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-fn F[T:! type](x: T) -> T {
+fn F[T: type](x: T) -> T {
   // CHECK:STDERR: fail_return.carbon:[[@LINE+7]]:10: error: cannot copy value of type `T` [CopyOfUncopyableType]
   // CHECK:STDERR:   return x;
   // CHECK:STDERR:          ^
@@ -29,7 +29,7 @@ fn F[T:! type](x: T) -> T {
 
 library "[[@TEST_NAME]]";
 
-fn F[T:! Core.Destroy](x: T) {
+fn F[T: Core.Destroy](x: T) {
   // CHECK:STDERR: fail_var.carbon:[[@LINE+7]]:21: error: cannot copy value of type `T` [CopyOfUncopyableType]
   // CHECK:STDERR:   var unused y: T = x;
   // CHECK:STDERR:                     ^

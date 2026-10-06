@@ -86,6 +86,11 @@ auto InstallPaths::ReadClangHeadersManifest() const
   return ReadManifest(root_, "clang_headers_manifest.txt");
 }
 
+auto InstallPaths::ReadCarbonCoreManifest() const
+    -> ErrorOr<llvm::SmallVector<std::string>> {
+  return ReadManifest(core_package(), "core_library_manifest.txt");
+}
+
 auto InstallPaths::ReadManifest(std::filesystem::path manifest_path,
                                 std::filesystem::path manifest_file) const
     -> ErrorOr<llvm::SmallVector<std::string>> {

@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: block
           # When adding endpoints, see README.md.
@@ -49,6 +49,7 @@ jobs:
             api.github.com:443
             api.ipify.org:443
             bcr.bazel.build:443
+            download.gnome.org:443
             downloads.sourceforge.net:443
             files.pythonhosted.org:443
             github.com:443
@@ -69,6 +70,8 @@ jobs:
 
       - name: Checkout branch
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up remote cache access
         env:
@@ -92,7 +95,7 @@ jobs:
           ./scripts/run_bazel.py \
             --attempts=5 --jobs-on-last-attempt=4 \
             test -c opt --stamp --remote_download_toplevel \
-            --pre_release=nightly --nightly_date=${{ env.nightly_date }} \
+            --pre_release=nightly --nightly_date=${nightly_date} \
             //toolchain \
             //toolchain/install:carbon_toolchain_tar_gz \
             //toolchain/install:carbon_toolchain_tar_gz_test
@@ -113,8 +116,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create \
-            --title "Nightly build ${{ env.nightly_date }}" \
+            --title "Nightly build ${nightly_date}" \
             --generate-notes \
             --prerelease \
-            v${{ env.release_version }} \
-            "bazel-bin/toolchain/install/carbon_toolchain-${{ env.release_version }}.tar.gz"
+            v${release_version} \
+            "bazel-bin/toolchain/install/carbon_toolchain-${release_version}.tar.gz"

@@ -40,6 +40,8 @@ inline constexpr llvm::StringLiteral LibcxxCopts[] = {LIBCXX_AND_ABI_COPTS};
 inline constexpr llvm::StringLiteral LibunwindSrcs[] = {LIBUNWIND_SRCS};
 inline constexpr llvm::StringLiteral LibunwindCopts[] = {LIBUNWIND_COPTS};
 
+inline constexpr llvm::StringLiteral CarbonCorePreludeSrcs[] = {PRELUDE_FILES};
+
 }  // namespace Carbon::RuntimesBuildInfo
 
 #endif  // CARBON_TOOLCHAIN_BASE_RUNTIMES_BUILD_INFO_TPL_H_

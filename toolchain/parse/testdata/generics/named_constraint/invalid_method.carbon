@@ -19,43 +19,44 @@ constraint Foo {
 }
 
 // CHECK:STDOUT: - filename: invalid_method.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'E'},
-// CHECK:STDOUT:       {kind: 'NamedConstraintDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'DeclaredMethod'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'SelfValueName', text: 'self'},
-// CHECK:STDOUT:           {kind: 'SelfBindingPattern', text: 'self', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 8},
-// CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 13},
-// CHECK:STDOUT:     {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 17},
-// CHECK:STDOUT:         {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:       {kind: 'NamedConstraintDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'DefinedMethod'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'SelfValueName', text: 'self'},
-// CHECK:STDOUT:               {kind: 'SelfBindingPattern', text: 'self', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'UnusedPattern', text: 'unused', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:               {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:             {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 9},
-// CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:           {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 14},
-// CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 15},
-// CHECK:STDOUT:     {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 19},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─NamedConstraintIntroducer 'constraint'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'E'
+// CHECK:STDOUT:   │ ╭─NamedConstraintDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'DeclaredMethod'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─SelfValueName 'self'
+// CHECK:STDOUT:   │ │ │ ├─SelfBindingPattern 'self'
+// CHECK:STDOUT:   │ │ │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ │ ╭─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │ ├─ReturnType '->'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─NamedConstraintDefinition '}'
+// CHECK:STDOUT:   │   ╭─NamedConstraintIntroducer 'constraint'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   │ ╭─NamedConstraintDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameMaybeBeforeSignature 'DefinedMethod'
+// CHECK:STDOUT:   │ │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │   │ │   ╭─SelfValueName 'self'
+// CHECK:STDOUT:   │ │   │ │ ╭─SelfBindingPattern 'self'
+// CHECK:STDOUT:   │ │   │ ├─UnusedPattern 'unused'
+// CHECK:STDOUT:   │ │   │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ │ ├─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │   │ ╭─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─NamedConstraintDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

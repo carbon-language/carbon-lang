@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 AggregateT
+AnyOther
 ArchType
 atleast
 circularly
@@ -17,6 +18,7 @@ groupt
 indext
 inout
 isELF
+iterm
 parameteras
 pullrequest
 rightt

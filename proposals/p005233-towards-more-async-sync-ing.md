@@ -125,11 +125,11 @@ We would like an easy way for folks to flag things that are interesting to
 include into the summaries, especially PRs that might otherwise be missed. We
 suggest one or both of two options far flagging these:
 
-1. Create a dedicated discord channel that folks can post links / snippets to
-   that they find interesting.
-2. Create a discord channel that automatically gets bot postings for each PR
-   that is merged, and encourage folks to use reactions to signal interest in
-   that being included in the summary.
+1.  Create a dedicated discord channel that folks can post links / snippets to
+    that they find interesting.
+2.  Create a discord channel that automatically gets bot postings for each PR
+    that is merged, and encourage folks to use reactions to signal interest in
+    that being included in the summary.
 
 ### Discussion / demo session every two months
 

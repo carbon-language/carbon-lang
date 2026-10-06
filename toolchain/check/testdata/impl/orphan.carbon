@@ -14,16 +14,16 @@
 library "[[@TEST_NAME]]";
 
 class ImportedC {}
-class ImportedD(T:! type) {}
+class ImportedD(T: type) {}
 
 interface ImportedY {}
-interface ImportedZ(T:! type) {}
+interface ImportedZ(T: type) {}
 
-constraint ImportedN(T:! type) {}
+constraint ImportedN(T: type) {}
 
-class ImportedAnyParam[T:! type](X:! T) {}
+class ImportedAnyParam[T: type](X: T) {}
 
-// --- fail_todo_class_definition_missing.carbon
+// --- class_definition_missing.carbon
 library "[[@TEST_NAME]]";
 
 import library "imports";
@@ -31,14 +31,9 @@ import library "imports";
 // This is the first owning decl of C, so it can be an anchor name.
 class C;
 
-// TODO: This should be accepted.
-// CHECK:STDERR: fail_todo_class_definition_missing.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl C as ImportedY {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl C as ImportedY {}
 
-// --- fail_todo_class_definition_missing_for_self_specific.carbon
+// --- class_definition_missing_for_self_specific.carbon
 library "[[@TEST_NAME]]";
 
 import library "imports";
@@ -46,14 +41,9 @@ import library "imports";
 // This is the first owning decl of C, so it can be an anchor name.
 class C;
 
-// TODO: This should be accepted.
-// CHECK:STDERR: fail_todo_class_definition_missing_for_self_specific.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl ImportedD(C) as ImportedY {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl ImportedD(C) as ImportedY {}
 
-// --- fail_todo_class_definition_missing_for_interface_specific.carbon
+// --- class_definition_missing_for_interface_specific.carbon
 library "[[@TEST_NAME]]";
 
 import library "imports";
@@ -61,11 +51,6 @@ import library "imports";
 // This is the first owning decl of C, so it can be an anchor name.
 class C;
 
-// TODO: This should be accepted.
-// CHECK:STDERR: fail_todo_class_definition_missing_for_interface_specific.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl ImportedC as ImportedZ(C) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl ImportedC as ImportedZ(C) {}
 
 // --- fail_imported_class.carbon
@@ -177,7 +162,7 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-class D(T:! type) {}
+class D(T: type) {}
 
 impl ImportedAnyParam(D) as ImportedY {}
 
@@ -197,7 +182,7 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-interface Z(T:! type) {}
+interface Z(T: type) {}
 
 impl ImportedAnyParam(Z) as ImportedY {}
 
@@ -217,7 +202,7 @@ library "[[@TEST_NAME]]";
 
 import library "imports";
 
-constraint N(T:! type) {}
+constraint N(T: type) {}
 
 impl ImportedAnyParam(N) as ImportedY {}
 
@@ -256,7 +241,7 @@ library "[[@TEST_NAME]]";
 
 interface Z {}
 
-fn F(unused T:! type) {
+fn F(unused generic T: type) {
   class C {}
   impl C as Z {}
 }
@@ -267,7 +252,7 @@ library "[[@TEST_NAME]]";
 interface Z {}
 
 // Neither {} nor Z are defined within or by the scope of `F`.
-fn F(unused T:! type) {
+fn F(unused generic T: type) {
   // TODO: The error should be about being an orphan, not an unused binding.
   // CHECK:STDERR: fail_todo_orphan_in_generic_fn_scope.carbon:[[@LINE+4]]:3: error: `impl` with unused generic binding [ImplUnusedBinding]
   // CHECK:STDERR:   impl {} as Z {}
@@ -402,10 +387,9 @@ import library "imports";
 // CHECK:STDERR:
 extern library "extern_class" class C;
 
-// CHECK:STDERR: fail_use_extern_class.carbon:[[@LINE+4]]:1: error: orphan `impl` found; something in the self-type or constraint must be defined in the same file [ImplIsOrphan]
-// CHECK:STDERR: impl C as ImportedY {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
+// TODO: This should be an orphan `impl`. `C` is owned by `extern_class`, so it
+// can't be an anchor name. No error will be emitted until `extern library` is
+// implemented for classes.
 impl C as ImportedY {}
 
 // --- imported_first_owning_decl.carbon

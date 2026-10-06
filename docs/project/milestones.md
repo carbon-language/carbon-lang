@@ -16,7 +16,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Language features](#language-features)
         -   [Code organization and structuring](#code-organization-and-structuring)
         -   [Type system](#type-system)
-        -   [Functions, statements, expressions, ...](#functions-statements-expressions-)
+        -   [Functions, statements, expressions, etc](#functions-statements-expressions-etc)
         -   [Standard library components](#standard-library-components)
     -   [Project features](#project-features)
 -   [Milestone 0.2: feature complete product for evaluation](#milestone-02-feature-complete-product-for-evaluation)
@@ -149,7 +149,7 @@ into Carbon.
         -   Mapping C++20 concepts into named predicates, and named predicates
             into C++20 concepts
 
-#### Functions, statements, expressions, ...
+#### Functions, statements, expressions, etc
 
 -   Functions
     -   Separate declaration and definition

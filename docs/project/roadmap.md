@@ -28,9 +28,9 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 We have two areas of focus for 2025:
 
-1. Get a major chunk of our C++ interop working to the point where we can
-   demonstrate it in realistic scenarios.
-2. Build a concrete and specific design for memory safety in Carbon.
+1.  Get a major chunk of our C++ interop working to the point where we can
+    demonstrate it in realistic scenarios.
+2.  Build a concrete and specific design for memory safety in Carbon.
 
 We will scope the first one to non-template C++ APIs, and prioritize accessing
 C++ APIs from Carbon. This still will require major progress on the
@@ -105,7 +105,7 @@ subsequent years.
 ### Potential 2026 goals: ship a working [0.1 language] for evaluation
 
 [0.1 language]:
-    /docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation
+/docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation
 
 Because we are adding a design for memory safety to our 0.1 milestone, we are
 also expecting to push it out by at least a year. Shipping 0.1 in 2026 will be a
@@ -119,7 +119,7 @@ evaluation will take some time.
 ### Potential 2027-2028 goals: finish [0.2 language], stop experimenting
 
 [0.2 language]:
-    /docs/project/milestones.md#milestone-02-feature-complete-product-for-evaluation
+/docs/project/milestones.md#milestone-02-feature-complete-product-for-evaluation
 
 Once Carbon is moving quickly and getting public feedback, we should be able to
 conclude the experiment. We should know if this is the right direction for
@@ -145,7 +145,7 @@ Some concrete goals that might show up in this time frame:
 ### Potential goals _beyond_ 2028: ship [1.0 language] & organization
 
 [1.0 language]:
-    /docs/project/milestones.md#milestone-10-no-longer-an-experiment-usable-in-production
+/docs/project/milestones.md#milestone-10-no-longer-an-experiment-usable-in-production
 
 A major milestone will be the first version of a production language. We also
 plan to finish transferring all governance of Carbon to an independent open

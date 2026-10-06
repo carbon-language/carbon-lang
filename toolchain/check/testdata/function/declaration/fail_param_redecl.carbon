@@ -24,13 +24,14 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT: --- fail_param_redecl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %n.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %n.patt: %pattern_type.6b6 = at_binding_pattern n, %n.param_patt [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -52,16 +53,16 @@ fn F(n: i32, n: i32);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %n.param_patt.loc22_7: %pattern_type.6b6 = value_param_pattern [concrete = constants.%n.param_patt]
-// CHECK:STDOUT:     %n.patt.loc22_7: %pattern_type.6b6 = at_binding_pattern n, %n.param_patt.loc22_7 [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %n.patt.loc22_7: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt.loc22_7 [concrete = constants.%n.patt]
 // CHECK:STDOUT:     %n.param_patt.loc22_15: %pattern_type.6b6 = value_param_pattern [concrete = constants.%n.param_patt]
-// CHECK:STDOUT:     %n.patt.loc22_15: %pattern_type.6b6 = at_binding_pattern n, %n.param_patt.loc22_15 [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %n.patt.loc22_15: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt.loc22_15 [concrete = constants.%n.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param.loc22_7: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32.loc22_9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n.loc22_7: %i32 = value_binding n, %n.param.loc22_7
+// CHECK:STDOUT:     %n.loc22_7: %i32 = wrapper_binding n, %n.param.loc22_7
 // CHECK:STDOUT:     %n.param.loc22_15: %i32 = value_param call_param1
 // CHECK:STDOUT:     %i32.loc22_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %n.loc22_15: %i32 = value_binding n, %n.param.loc22_15
+// CHECK:STDOUT:     %n.loc22_15: %i32 = wrapper_binding n, %n.param.loc22_15
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

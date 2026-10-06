@@ -33,7 +33,7 @@ disclosure", but that approach has not been codified as a design principle.
 ## Proposal
 
 See
-(`docs/project/principles/progressive_disclosure.md`)[/docs/project/principles/progressive_disclosure.md],
+[`docs/project/principles/progressive_disclosure.md`](/docs/project/principles/progressive_disclosure.md),
 which is introduced by this proposal.
 
 ## Rationale

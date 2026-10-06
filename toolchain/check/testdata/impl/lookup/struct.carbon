@@ -11,7 +11,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/lookup/struct.carbon
 
 interface Z {
-  let X:! type;
+  let X: type;
   fn ZZ() -> X;
 }
 
@@ -35,7 +35,7 @@ impl {.b: (), .a: ()} as Z where .X = D {
   fn ZZ() -> D { return () as D; }
 }
 
-fn F(T:! Z) -> T.X {
+fn F(generic T: Z) -> T.X {
   return T.ZZ();
 }
 

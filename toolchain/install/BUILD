@@ -41,13 +41,13 @@ load(
     "filegroup_with_stage",
     "gen_cc_toolchain_paths_with_stage",
 )
+load("//bazel/cc_toolchains:make_include_copts.bzl", "make_include_copts")
 load("//bazel/manifest:defs.bzl", "manifest")
 load(
     "//toolchain/base:runtimes_build_info.bzl",
     "generate_runtimes_build_vars",
 )
-load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_runtimes_config")
-load("bazel/make_include_copts.bzl", "make_include_copts")
+load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_prelude", "carbon_runtimes_config")
 load(
     "install_filegroups.bzl",
     "filtered_toolchain_files",
@@ -144,6 +144,12 @@ toolchain_llvm_binaries(
 toolchain_files(
     name = "core",
     srcs = ["//core:prelude"],
+    prefix = "core/",
+)
+
+toolchain_files(
+    name = "core_library",
+    srcs = ["//core:core_library"],
     prefix = "core/",
 )
 
@@ -317,7 +323,6 @@ toolchain_files(
         "bazel/carbon_clang_variables.bzl",
         "bazel/carbon_detected_variables.tpl.bzl",
         "bazel/carbon_toolchain.bzl",
-        "bazel/make_include_copts.bzl",
     ],
 )
 
@@ -367,6 +372,7 @@ filegroup(
         ":builtins_all_srcs",
         ":clang_hdrs",
         ":core",
+        ":core_library",
         ":install_marker",
         ":installed_bazel_files",
         ":libc_internal_libcxx_hdrs",
@@ -483,6 +489,15 @@ filegroup(
     output_group = "archive",
 )
 
+carbon_prelude(
+    name = "carbon_prelude",
+    srcs = [":core"],
+    target_compatible_with = select({
+        ":is_runtimes_build": [],
+        "//conditions:default": ["@platforms//:incompatible"],
+    }),
+)
+
 cc_library(
     name = "libunwind",
     srcs = [":libunwind_srcs"],
@@ -551,6 +566,16 @@ cc_library(
 
         # TODO: Remove this once we are building sanitizer runtime libraries.
         "-fno-sanitize=all",
+
+        # While the toolchain is built without exceptions, libc++ internally
+        # must be built with them enabled. It's explicitly allowed to build the
+        # libc++ and libc++abi library implementations with different flags
+        # than the client (our toolchain) uses, even though they both include
+        # the same headers from the libraries.
+        "-fexceptions",
+        # Like exceptions, these libraries are built internally with RTTI
+        # enabled, while the toolchain is built without.
+        "-frtti",
     ],
     hdrs_check = "strict",
     includes = [
@@ -576,6 +601,7 @@ filegroup(
 carbon_runtimes_config(
     name = "runtimes_cfg",
     builtins_archive = ":builtins_archive",
+    carbon_prelude_prebuilt = ":carbon_prelude",
     clang_hdrs_prefix = "llvm/lib/clang/{0}/include/".format(LLVM_VERSION_MAJOR),
     crt_copts = crt_copts + [
         # Disable all sanitizers for CRT objects.

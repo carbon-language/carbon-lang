@@ -57,20 +57,10 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
   return BadReturnType(a, b);
 }
 
-// --- fail_literal.carbon
-
-library "[[@TEST_NAME]]";
-
-fn Literal() -> type = "float_literal.make_type";
-// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn AddLiteral(a: Literal(), b: Literal()) -> Literal() = "float.add";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn AddLiteral(a: Literal(), b: Literal()) -> Literal() = "float.add";
-
 // CHECK:STDOUT: --- float_add.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [concrete]

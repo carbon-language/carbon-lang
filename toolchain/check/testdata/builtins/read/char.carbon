@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// EXTRA-ARGS: --include-carbon-core
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
 //
 // AUTOUPDATE
@@ -26,6 +27,7 @@ fn Main() {
 // CHECK:STDOUT: --- char.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -53,17 +55,14 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = value_binding_pattern n [concrete = constants.%n.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %ReadChar.ref.loc8: %ReadChar.type.fc4 = name_ref ReadChar, file.%ReadChar.decl [concrete = constants.%ReadChar.c25]
 // CHECK:STDOUT:   %ReadChar.call.loc8: init %i32 = call %ReadChar.ref.loc8()
 // CHECK:STDOUT:   %.loc8_32.1: %i32 = value_of_initializer %ReadChar.call.loc8
 // CHECK:STDOUT:   %.loc8_32.2: %i32 = converted %ReadChar.call.loc8, %.loc8_32.1
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %n: %i32 = value_binding n, %.loc8_32.2
+// CHECK:STDOUT:   %n: %i32 = wrapper_binding n, %.loc8_32.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %m.patt: %pattern_type.6b6 = value_binding_pattern m [concrete = constants.%m.patt]
+// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %ReadChar.ref.loc9: %ReadChar.type.490 = name_ref ReadChar, imports.%Core.ReadChar [concrete = constants.%ReadChar.3b5]
@@ -71,7 +70,10 @@ fn Main() {
 // CHECK:STDOUT:   %.loc9_37.1: %i32 = value_of_initializer %ReadChar.call.loc9
 // CHECK:STDOUT:   %.loc9_37.2: %i32 = converted %ReadChar.call.loc9, %.loc9_37.1
 // CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %m: %i32 = value_binding m, %.loc9_37.2
+// CHECK:STDOUT:   %m: %i32 = wrapper_binding m, %.loc9_37.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %m.patt: %pattern_type.6b6 = value_binding_pattern m [concrete = constants.%m.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

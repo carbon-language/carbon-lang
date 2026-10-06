@@ -77,12 +77,11 @@ and binary integer literals, and decimal and hexadecimal real number literals.
 The following types are defined in the Carbon prelude:
 
 -   `Core.BigInt`, an arbitrary-precision integer type;
--   `Core.Rational(T:! type)`, a rational type, parameterized by a type used for
+-   `Core.Rational(T: type)`, a rational type, parameterized by a type used for
     its numerator and denominator -- the exact constraints on `T` are not yet
     decided;
--   `Core.IntLiteral(N:! Core.BigInt)`, a type representing integer literals;
-    and
--   `Core.FloatLiteral(X:! Core.Rational(Core.BigInt))`, a type representing
+-   `Core.IntLiteral(N: Core.BigInt)`, a type representing integer literals; and
+-   `Core.FloatLiteral(X: Core.Rational(Core.BigInt))`, a type representing
     floating-point literals.
 
 All of these types are usable during compilation. `Core.BigInt` supports the
@@ -100,13 +99,13 @@ these operations are typically heterogeneous: for example, an addition between
 `Core.IntLiteral(N)` converts to any sufficiently large integer type, as if by:
 
 ```
-impl forall [template N:! Core.BigInt, template M:! Core.BigInt]
+impl forall [template N: Core.BigInt, template M: Core.BigInt]
     Core.IntLiteral(N) as ImplicitAs(Core.Int(M))
     if N >= Core.Int(M).MinValue as Core.BigInt
     and N <= Core.Int(M).MaxValue as Core.BigInt {
   ...
 }
-impl forall [template N:! Core.BigInt, template M:! Core.BigInt]
+impl forall [template N: Core.BigInt, template M: Core.BigInt]
     Core.IntLiteral(N) as ImplicitAs(Core.UInt(M))
     if N >= Core.UInt(M).MinValue as Core.BigInt
     and N <= Core.UInt(M).MaxValue as Core.BigInt {
@@ -147,7 +146,7 @@ var z: f64 = 1.0 / 3.0;
 // This is an error: 300 cannot be represented in type `i8`.
 var c: i8 = 300;
 
-fn F[template T:! type](v: T) {
+fn F[template T: type](v: T) {
   var x: i32 = v * 2;
 }
 
@@ -158,7 +157,7 @@ F(1_000_000_000);
 F(2_000_000_000);
 
 // No storage required for the bound when it's of integer literal type.
-struct Span(template T:! type, template BoundT:! type) {
+struct Span(template T: type, template BoundT: type) {
   var begin: T*;
   var bound: BoundT;
 }
@@ -176,13 +175,13 @@ fn G() -> i32 {
 fn PassMeZero(_: Core.IntLiteral(0));
 
 // Can only be called with integer literals in the given range.
-fn ConvertToByte[template N:! Core.BigInt](_: Core.IntLiteral(N)) -> i8
+fn ConvertToByte[template N: Core.BigInt](_: Core.IntLiteral(N)) -> i8
     if N >= -128 and N <= 127 {
   return N as i8;
 }
 
 // Given any int literal, produces a literal whose value is one higher.
-fn OneHigher(L: Core.IntLiteral(template _:! Core.BigInt)) -> auto {
+fn OneHigher(L: Core.IntLiteral(template _: Core.BigInt)) -> auto {
   return L + 1;
 }
 // Error: 256 can't be represented in type `i8`.

@@ -346,9 +346,11 @@ We considered the following options:
     right-hand operand as runtime state, and allow that type to be converted in
     the same way as its integer constant. However, this would introduce
     substantial complexity: reasonable and expected uses such as
+
     ```
     var mask: u32 = (1 << a) - 1;
     ```
+
     would require a second new type for a shifted value plus an offset, and
     general support would require a facility analogous to
     [expression templates](https://en.wikipedia.org/wiki/Expression_templates).

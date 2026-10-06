@@ -145,7 +145,7 @@ are examples of character literals for each specific type:
 -   `Char8`: The character literal consists of a single Unicode code point that
     can be represented within 8 bits. For example:
 
-`let allowed: Char8 = ‘a’ `
+`let allowed: Char8 = 'a'`
 
 In this example, the character literal `’a’` corresponds to the Unicode code
 point `97`, which is within the valid range of `Char8` since `97` is less than

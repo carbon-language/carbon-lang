@@ -7,7 +7,6 @@
 library "day12_common";
 
 import Core library "io";
-import Core library "range";
 import library "io_utils";
 
 class Map {

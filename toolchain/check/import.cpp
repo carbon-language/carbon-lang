@@ -45,9 +45,8 @@ static auto GetImportName(const SemIR::File& import_sem_ir,
     -> std::pair<SemIR::NameId, SemIR::NameScopeId> {
   CARBON_KIND_SWITCH(import_inst) {
     case SemIR::AliasBinding::Kind:
-    case SemIR::RefBinding::Kind:
     case SemIR::SymbolicBinding::Kind:
-    case SemIR::ValueBinding::Kind:
+    case SemIR::WrapperBinding::Kind:
     case SemIR::ExportDecl::Kind: {
       auto bind_inst = import_inst.As<SemIR::AnyBindingOrExportDecl>();
       return GetImportNameForEntity(

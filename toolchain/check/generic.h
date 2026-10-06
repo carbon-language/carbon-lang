@@ -53,6 +53,15 @@ struct DependentInst {
 auto AttachDependentInstToCurrentGeneric(Context& context,
                                          DependentInst dependent_inst) -> void;
 
+// Given an instruction that might have a generic constant value, returns an
+// instruction that has the corresponding specific constant value in the current
+// generic, if any. This is typically not necessary except when manually adding
+// instructions directly to the eval block, for example when building an Action
+// instruction.
+auto GetOrAddInstWithSpecificConstantValue(Context& context,
+                                           SemIR::InstId inst_id)
+    -> SemIR::InstId;
+
 // Discard the information about the current generic entity. This should be
 // called instead of `FinishGenericDecl` if the corresponding `Generic` object
 // would not actually be used, or when recovering from an error.
@@ -103,7 +112,7 @@ auto MakeSpecific(Context& context, SemIR::LocId loc_id,
     -> SemIR::SpecificId;
 
 // Builds the specific that describes how the generic should refer to itself.
-// For example, for a generic `G(T:! type)`, this is the specific `G(T)`. If
+// For example, for a generic `G(T: type)`, this is the specific `G(T)`. If
 // `generic_id` is `None`, returns `None`.
 auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
                       SemIR::GenericId generic_id) -> SemIR::SpecificId;
@@ -167,6 +176,16 @@ auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
                            SemIR::SpecificId specific_id,
                            SemIR::GenericId target_generic_id)
     -> SemIR::SpecificId;
+
+auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id) -> void;
+
+// Returns the substituted scrutinee type of `pattern_id` in `specific_id`. As
+// with `GetTypeOfInstInSpecific`, this does not perform substitution, and it
+// accepts `SpecificId::None`, treating it as a request for the value to use
+// within the generic itself.
+auto GetScrutineeTypeInSpecific(const Context& context,
+                                SemIR::InstId pattern_id,
+                                SemIR::SpecificId specific_id) -> SemIR::TypeId;
 
 }  // namespace Carbon::Check
 

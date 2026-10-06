@@ -43,8 +43,8 @@ fn UInt16ToChar(a: u16) -> u8 = "int.convert_char";
 fn UInt32ToChar(a: u32) -> u8 = "int.convert_char";
 fn UInt64ToChar(a: u64) -> u8 = "int.convert_char";
 
-class Expect[T:! type](N:! T) {}
-fn Test[T:! type](N:! T) -> Expect(N) { return {}; }
+class Expect[T: type](N: T) {}
+fn Test[T: type](generic N: T) -> Expect(N) { return {}; }
 
 // --- runtime_call.carbon
 
@@ -290,6 +290,7 @@ fn F() {
 // CHECK:STDOUT: --- runtime_call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]

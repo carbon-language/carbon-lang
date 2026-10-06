@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 
 fn Neq(a: bool, b: bool) -> bool = "bool.neq";
 
-class C(B:! bool) {}
+class C(B: bool) {}
 
 fn True() -> C(true);
 fn False() -> C(false);
@@ -32,7 +32,7 @@ var d: C(Neq(false, false)) = False();
 
 library "[[@TEST_NAME]]";
 
-class C(B:! bool) {}
+class C(B: bool) {}
 
 fn True() -> C(true);
 fn False() -> C(false);
@@ -47,6 +47,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: --- builtin_call.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Neq.type: type = fn_type @Neq [concrete]
 // CHECK:STDOUT:   %Neq: %Neq.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
@@ -62,11 +63,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete = constants.%a.patt.c70]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C.4b2 = var %a.var_patt [concrete]
+// CHECK:STDOUT:   %a.var: ref %C.4b2 = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc12_25.1: type = splice_block %C.loc12 [concrete = constants.%C.4b2] {
 // CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %Neq.ref.loc12: %Neq.type = name_ref Neq, %Neq.decl [concrete = constants.%Neq]
@@ -77,7 +74,11 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:     %.loc12_25.3: bool = converted %Neq.call.loc12, %.loc12_25.2 [concrete = constants.%false]
 // CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%false) [concrete = constants.%C.4b2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.4b2 = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %C.4b2 = wrapper_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete = constants.%a.patt.c70]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -92,6 +93,7 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: --- prelude.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
@@ -103,8 +105,8 @@ var d: C(false != false) = False();
 // CHECK:STDOUT:   %EqWith.type.539: type = facet_type <@EqWith, @EqWith(bool)> [concrete]
 // CHECK:STDOUT:   %EqWith.impl_witness: <witness> = impl_witness imports.%EqWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %EqWith.facet: %EqWith.type.539 = facet_value bool, (%EqWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.e09: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(bool, %EqWith.facet) [concrete]
-// CHECK:STDOUT:   %.72d: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.e09, %EqWith.facet [concrete]
+// CHECK:STDOUT:   %EqWith.WithSelf.NotEqual.type.779: type = fn_type @EqWith.WithSelf.NotEqual, @EqWith.WithSelf(bool, %EqWith.facet) [concrete]
+// CHECK:STDOUT:   %.db4: type = fn_type_with_self_type %EqWith.WithSelf.NotEqual.type.779, %EqWith.facet [concrete]
 // CHECK:STDOUT:   %bool.as.EqWith.impl.NotEqual.type: type = fn_type @bool.as.EqWith.impl.NotEqual [concrete]
 // CHECK:STDOUT:   %bool.as.EqWith.impl.NotEqual: %bool.as.EqWith.impl.NotEqual.type = struct_value () [concrete]
 // CHECK:STDOUT:   %bool.as.EqWith.impl.NotEqual.bound.598: <bound method> = bound_method %true, %bool.as.EqWith.impl.NotEqual [concrete]
@@ -119,23 +121,23 @@ var d: C(false != false) = False();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete = constants.%a.var_patt]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %C.4b2 = var %a.var_patt [concrete]
+// CHECK:STDOUT:   %a.var: ref %C.4b2 = var_storage %a.var_patt [concrete]
 // CHECK:STDOUT:   %.loc10_22.1: type = splice_block %C.loc10 [concrete = constants.%C.4b2] {
 // CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true.loc10_10: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %true.loc10_18: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %impl.elem1.loc10: %.72d = impl_witness_access constants.%EqWith.impl_witness, element1 [concrete = constants.%bool.as.EqWith.impl.NotEqual]
+// CHECK:STDOUT:     %impl.elem1.loc10: %.db4 = impl_witness_access constants.%EqWith.impl_witness, element1 [concrete = constants.%bool.as.EqWith.impl.NotEqual]
 // CHECK:STDOUT:     %bound_method.loc10: <bound method> = bound_method %true.loc10_10, %impl.elem1.loc10 [concrete = constants.%bool.as.EqWith.impl.NotEqual.bound.598]
 // CHECK:STDOUT:     %bool.as.EqWith.impl.NotEqual.call.loc10: init bool = call %bound_method.loc10(%true.loc10_10, %true.loc10_18) [concrete = constants.%false]
 // CHECK:STDOUT:     %.loc10_22.2: bool = value_of_initializer %bool.as.EqWith.impl.NotEqual.call.loc10 [concrete = constants.%false]
 // CHECK:STDOUT:     %.loc10_22.3: bool = converted %bool.as.EqWith.impl.NotEqual.call.loc10, %.loc10_22.2 [concrete = constants.%false]
 // CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%false) [concrete = constants.%C.4b2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.4b2 = ref_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %C.4b2 = wrapper_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.794 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.794 = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

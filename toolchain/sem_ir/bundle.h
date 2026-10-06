@@ -43,8 +43,9 @@ namespace Carbon::SemIR {
 //
 // A bundle type like `Args` must be an aggregate, and its fields must all be
 // ID types, i.e. types listed in the definition of `IdKind`. `BundleId<Args>`
-// itself must also be added to that list, although bundles should generally not
-// have bundle IDs as members.
+// itself must also be added to that list, although bundles must not have
+// bundle IDs as members (bundles are an optimization of a flat argument list,
+// not a recursive data structure).
 //
 // Unlike insts, bundles do not record their own kind and the `BundleStore`
 // is not guaranteed to record it either. Instead, that information is tracked
@@ -71,24 +72,11 @@ class BundleStore {
   explicit BundleStore(llvm::BumpPtrAllocator& allocator, CheckIRId tag_id)
       : store_(allocator, tag_id, 0), bundle_kind_cache_(store_.GetIdTag()) {}
 
-  // Adds a new bundle to the store, and returns its ID.
-  template <typename BundleT>
-  auto Add(const BundleT& bundle) -> BundleId<BundleT> {
-    return BundleId<BundleT>{store_.Add(BundleToArray(bundle))};
-  }
-
   // Returns the canonical ID of the given bundle, allocating a new one if
   // it does not already exist.
   template <typename BundleT>
   auto AddCanonical(const BundleT& bundle) -> BundleId<BundleT> {
     return BundleId<BundleT>{store_.AddCanonical(BundleToArray(bundle))};
-  }
-
-  // Returns the canonical ID of the bundle specified by `bundle_id`, allocating
-  // a new canonical ID if none exists already.
-  template <typename BundleT>
-  auto MakeCanonical(BundleId<BundleT> bundle_id) -> BundleId<BundleT> {
-    return BundleId<BundleT>{store_.MakeCanonical(bundle_id.index)};
   }
 
   // Returns the bundle with the given ID.

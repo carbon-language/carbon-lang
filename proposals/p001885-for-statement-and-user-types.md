@@ -376,7 +376,7 @@ could be a hashmap index, a string, or pointer to a node, without changing the
 usage for users.
 
 The `ElementType` can be a tuple, such as a `(key, value)` for maps, or a single
-value. See [Future work][#future-work] for other examples.
+value. See [Future work](#future-work) for other examples.
 
 #### R-value containers
 

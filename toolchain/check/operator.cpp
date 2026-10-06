@@ -8,6 +8,7 @@
 
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/call.h"
 #include "toolchain/check/cpp/operators.h"
 #include "toolchain/check/generic.h"
@@ -102,6 +103,15 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                      /*is_desugared=*/true);
 }
 
+auto BuildSelfDestructCall(Context& context, SemIR::InstId object_id)
+    -> SemIR::InstId {
+  return BuildUnaryOperator(context,
+                            context.insts().GetLocIdForDesugaring(object_id),
+                            {.interface_name = CoreIdentifier::Destroy,
+                             .op_name = CoreIdentifier::SelfDestruct},
+                            object_id);
+}
+
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
                          SemIR::InstId lhs_id, SemIR::InstId rhs_id,
                          bool diagnose,
@@ -115,7 +125,7 @@ auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
   // For binary operators with a C++ class as at least one of the operands, try
   // to import and call the C++ operator.
   // TODO: Instead of hooking this here, change impl lookup, so that a generic
-  // constraint such as `T:! Core.Add` is satisfied by C++ class types that are
+  // constraint such as `T: Core.Add` is satisfied by C++ class types that are
   // addable. See
   // https://github.com/carbon-language/carbon-lang/pull/5996/files/5d01fa69511b76f87efbc0387f5e40abcf4c911a#r2308666348
   // and

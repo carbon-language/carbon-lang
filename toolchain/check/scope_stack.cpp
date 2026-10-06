@@ -9,6 +9,7 @@
 #include "common/check.h"
 #include "common/find.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/unused.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -28,8 +29,7 @@ auto ScopeStack::VerifyOnFinish() const -> void {
   CARBON_CHECK(break_continue_stack_.empty(), "{0}",
                break_continue_stack_.size());
   CARBON_CHECK(scope_stack_.empty(), "{0}", scope_stack_.size());
-  CARBON_CHECK(destroy_id_stack_.empty(), "{0}",
-               destroy_id_stack_.all_values_size());
+  CARBON_CHECK(destroy_id_stack_.empty(), "{0}", destroy_id_stack_.size());
   CARBON_CHECK(non_lexical_scope_stack_.empty(), "{0}",
                non_lexical_scope_stack_.size());
   CARBON_CHECK(compile_time_binding_stack_.empty(), "{0}",
@@ -51,6 +51,7 @@ auto ScopeStack::VerifyNextCompileTimeBindIndex(llvm::StringLiteral label,
 
 auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
                       SemIR::SpecificId specific_id,
+                      CleanupScopeKind cleanup_scope_kind,
                       bool lexical_lookup_has_load_error) -> void {
   // If this scope doesn't have a specific of its own, it lives in the enclosing
   // scope's specific, if any.
@@ -68,7 +69,9 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
        .next_compile_time_bind_index = SemIR::CompileTimeBindIndex(
            compile_time_binding_stack_.all_values_size()),
        .lexical_lookup_has_load_error =
-           LexicalLookupHasLoadError() || lexical_lookup_has_load_error});
+           LexicalLookupHasLoadError() || lexical_lookup_has_load_error,
+       .cleanup_scope_kind = cleanup_scope_kind,
+       .cleanup_scope_depth = CleanupScopeDepth(destroy_id_stack_.size())});
   if (scope_stack_.back().is_lexical_scope()) {
     // For lexical lookups, unqualified lookup doesn't know how to find the
     // associated specific, so if we start adding lexical scopes associated with
@@ -97,7 +100,7 @@ auto ScopeStack::Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
 
 auto ScopeStack::PushForDeclName() -> void {
   Push(SemIR::InstId::None, SemIR::NameScopeId::None, SemIR::SpecificId::None,
-       /*lexical_lookup_has_load_error=*/false);
+       CleanupScopeKind::None, /*lexical_lookup_has_load_error=*/false);
   MarkNestingIfInReturnScope();
 }
 
@@ -107,13 +110,20 @@ auto ScopeStack::PushForEntity(SemIR::InstId scope_inst_id,
                                bool lexical_lookup_has_load_error) -> void {
   CARBON_CHECK(scope_inst_id.has_value());
   CARBON_DCHECK(!sem_ir().insts().Is<SemIR::FunctionDecl>(scope_inst_id));
-  Push(scope_inst_id, scope_id, specific_id, lexical_lookup_has_load_error);
+  Push(scope_inst_id, scope_id, specific_id, CleanupScopeKind::None,
+       lexical_lookup_has_load_error);
   MarkNestingIfInReturnScope();
 }
 
-auto ScopeStack::PushForSameRegion() -> void {
+auto ScopeStack::PushForSameRegion(CleanupScopeKind cleanup_scope_kind)
+    -> void {
+  if (cleanup_scope_kind == CleanupScopeKind::Inherited &&
+      Peek().cleanup_scope_kind == CleanupScopeKind::None) {
+    cleanup_scope_kind = CleanupScopeKind::None;
+  }
+
   Push(SemIR::InstId::None, SemIR::NameScopeId::None, SemIR::SpecificId::None,
-       /*lexical_lookup_has_load_error=*/false);
+       cleanup_scope_kind, /*lexical_lookup_has_load_error=*/false);
 }
 
 auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
@@ -122,10 +132,10 @@ auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
   const auto& function = sem_ir().functions().Get(function_decl.function_id);
   auto self_specific = sem_ir().generics().GetSelfSpecific(function.generic_id);
   Push(scope_inst_id, SemIR::NameScopeId::None, self_specific,
-       /*lexical_lookup_has_load_error=*/false);
+       CleanupScopeKind::Owned, /*lexical_lookup_has_load_error=*/false);
 
-  return_scope_stack_.push_back({.decl_id = scope_inst_id});
-  destroy_id_stack_.PushArray();
+  return_scope_stack_.push_back(
+      {.decl_id = scope_inst_id, .cleanup_scope_depth = cleanup_scope_depth()});
 }
 
 auto ScopeStack::Pop(bool check_unused) -> void {
@@ -133,7 +143,7 @@ auto ScopeStack::Pop(bool check_unused) -> void {
 
   // TODO: Multiple diagnostics on same line has non-deterministic order.
   // Add second sort key in diagnostics sorting.
-  scope.names.ForEach([&, check_unused](SemIR::NameId name_id) {
+  for (SemIR::NameId name_id : scope.names.entries()) {
     auto& lexical_results = lexical_lookup_.Get(name_id);
     CARBON_CHECK(lexical_results.back().scope_index == scope.index,
                  "Inconsistent scope index for name {0}", name_id);
@@ -141,12 +151,18 @@ auto ScopeStack::Pop(bool check_unused) -> void {
       CheckUnusedBinding(*context_, name_id, lexical_results.back());
     }
     lexical_results.pop_back();
-  });
+  }
 
   if (!scope.is_lexical_scope()) {
     CARBON_CHECK(non_lexical_scope_stack_.back().scope_index == scope.index);
     non_lexical_scope_stack_.pop_back();
   }
+
+  CARBON_CHECK(scope.cleanup_scope_kind == CleanupScopeKind::Inherited ||
+                   static_cast<size_t>(scope.cleanup_scope_depth.index) ==
+                       destroy_id_stack_.size(),
+               "Popping scope with cleanups: have {0} but expected {1}",
+               destroy_id_stack_.size(), scope.cleanup_scope_depth.index);
 
   if (!return_scope_stack_.empty()) {
     if (scope.has_returned_var) {
@@ -157,13 +173,12 @@ auto ScopeStack::Pop(bool check_unused) -> void {
     if (return_scope_stack_.back().decl_id == scope.scope_inst_id) {
       // Leaving the function scope.
       return_scope_stack_.pop_back();
-      destroy_id_stack_.PopArray();
-    } else if (return_scope_stack_.back().nested_scope_index == scope.index) {
-      // Returned to a function scope from a non-function nested entity scope.
-      return_scope_stack_.back().nested_scope_index = ScopeIndex::None;
+    } else {
+      if (return_scope_stack_.back().nested_scope_index == scope.index) {
+        // Returned to a function scope from a non-function nested entity scope.
+        return_scope_stack_.back().nested_scope_index = ScopeIndex::None;
+      }
     }
-  } else {
-    CARBON_CHECK(!scope.has_returned_var);
   }
 
   VerifyNextCompileTimeBindIndex("Pop", scope);
@@ -177,6 +192,29 @@ auto ScopeStack::PopTo(ScopeIndex index, bool check_unused) -> void {
   CARBON_CHECK(PeekIndex() == index,
                "Scope index {0} does not enclose the current scope {1}", index,
                PeekIndex());
+}
+
+auto ScopeStack::MergeTopScopeIntoGrandparentAndPop() -> void {
+  CARBON_CHECK(scope_stack_.size() >= 3);
+  auto& grandparent = scope_stack_[scope_stack_.size() - 3];
+  auto& parent = scope_stack_[scope_stack_.size() - 2];
+  auto& current = scope_stack_[scope_stack_.size() - 1];
+
+  CARBON_CHECK(current.num_names == 0);
+  CARBON_CHECK(grandparent.cleanup_scope_kind != CleanupScopeKind::None &&
+               parent.cleanup_scope_kind == CleanupScopeKind::Owned &&
+               current.cleanup_scope_kind == CleanupScopeKind::Owned);
+
+  // NOLINTNEXTLINE(readability-qualified-auto)
+  auto new_mid =
+      std::rotate(destroy_id_stack_.begin() + parent.cleanup_scope_depth.index,
+                  destroy_id_stack_.begin() + current.cleanup_scope_depth.index,
+                  destroy_id_stack_.end());
+  parent.cleanup_scope_depth =
+      CleanupScopeDepth(new_mid - destroy_id_stack_.begin());
+  current.cleanup_scope_depth = CleanupScopeDepth(destroy_id_stack_.size());
+
+  Pop();
 }
 
 auto ScopeStack::MarkUsed(SemIR::NameId name_id, SemIR::LocId loc_id,
@@ -337,7 +375,7 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   result.suspended_items.reserve(result.entry.num_names +
                                  peek_compile_time_bindings.size());
 
-  result.entry.names.ForEach([&](SemIR::NameId name_id) {
+  for (SemIR::NameId name_id : result.entry.names.entries()) {
     auto suspended = lexical_lookup_.Suspend(name_id);
     CARBON_CHECK(suspended.index !=
                  SuspendedScope::ScopeItem::IndexForCompileTimeBinding);
@@ -346,7 +384,7 @@ auto ScopeStack::Suspend() -> SuspendedScope {
          .inst_id = suspended.inst_id,
          .is_decl_reachable = suspended.is_decl_reachable,
          .use_loc_id = suspended.use_loc_id});
-  });
+  }
   CARBON_CHECK(static_cast<int>(result.suspended_items.size()) ==
                result.entry.num_names);
 
@@ -361,6 +399,8 @@ auto ScopeStack::Suspend() -> SuspendedScope {
   compile_time_binding_stack_.PopArray();
 
   // This would be easy to support if we had a need, but currently we do not.
+  CARBON_CHECK(result.entry.cleanup_scope_kind == CleanupScopeKind::None,
+               "Should not suspend a function definition scope.");
   CARBON_CHECK(!result.entry.has_returned_var,
                "Should not suspend a scope with a returned var.");
   return result;

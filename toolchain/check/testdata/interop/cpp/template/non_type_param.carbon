@@ -83,33 +83,34 @@ var s: Cpp.Simple({} as C) = Cpp.MakeSimple123();
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<bool B> struct Struct {};
-Struct<true> MakeStruct() { return Struct<true>(); }
+template<bool B> struct BoolStruct {};
+BoolStruct<true> MakeBoolStruct() { return BoolStruct<true>(); }
 ''';
 
-var s: Cpp.Struct(true) = Cpp.MakeStruct();
+var s: Cpp.BoolStruct(true) = Cpp.MakeBoolStruct();
 
 // --- float.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<float N> struct Struct {};
-Struct<123.5f> MakeStruct() { return Struct<123.5f>(); }
+template<float N> struct FloatStruct {};
+FloatStruct<123.5f> MakeFloatStruct() { return FloatStruct<123.5f>(); }
 ''';
-let v: Cpp.Struct(123.5) = Cpp.MakeStruct();
+
+let v: Cpp.FloatStruct(123.5) = Cpp.MakeFloatStruct();
 
 // --- pointer.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<const int* _Nonnull P> struct Struct {};
+template<const int* _Nonnull P> struct PtrStruct {};
 static int i = 123;
-Struct<&i> MakeStruct() { return Struct<&i>(); }
+PtrStruct<&i> MakePtrStruct() { return PtrStruct<&i>(); }
 ''';
 
-let xyz: Cpp.Struct(&Cpp.i) = Cpp.MakeStruct();
+let xyz: Cpp.PtrStruct(&Cpp.i) = Cpp.MakePtrStruct();
 
 // --- valid.carbon
 
@@ -181,6 +182,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- valid.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %TwoNonType: type = class_type @TwoNonType [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.2aa: type = pattern_type %TwoNonType [concrete]
@@ -191,12 +193,12 @@ fn G() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %x.var: ref %TwoNonType = var_storage %x.var_patt [concrete]
+// CHECK:STDOUT:   %x: ref %TwoNonType = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.2aa = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.2aa = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %TwoNonType = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %x: ref %TwoNonType = ref_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -211,6 +213,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- dependent.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DependentNonType.type: type = cpp_type_template_type DependentNonType [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DependentNonType.template: %DependentNonType.type = struct_value () [concrete]
@@ -253,22 +256,22 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %StaticInt.patt: %pattern_type.6b6 = ref_binding_pattern StaticInt [concrete = constants.%StaticInt.patt]
 // CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.6b6 = var_pattern %StaticInt.patt [concrete = constants.%StaticInt.var_patt]
-// CHECK:STDOUT:   %StaticInt.var: ref %i32 = var %StaticInt.var_patt [concrete]
+// CHECK:STDOUT:   %StaticInt.var: ref %i32 = var_storage %StaticInt.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %x.var: ref %DependentNonType.43e = var_storage %x.var_patt [concrete]
+// CHECK:STDOUT:   %x: ref %DependentNonType.43e = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.eef = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.eef = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %DependentNonType.43e = var %x.var_patt [concrete]
-// CHECK:STDOUT:   %x: ref %DependentNonType.43e = ref_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %y.var: ref %DependentNonType.d43 = var_storage %y.var_patt [concrete]
+// CHECK:STDOUT:   %y: ref %DependentNonType.d43 = wrapper_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.70d = ref_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:     %y.var_patt: %pattern_type.70d = var_pattern %y.patt [concrete = constants.%y.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y.var: ref %DependentNonType.d43 = var %y.var_patt [concrete]
-// CHECK:STDOUT:   %y: ref %DependentNonType.d43 = ref_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

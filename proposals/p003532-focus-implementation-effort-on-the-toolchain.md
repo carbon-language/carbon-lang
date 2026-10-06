@@ -52,11 +52,11 @@ out our energy across both.
 
 Originally, the Carbon Explorer served two major purposes:
 
-1. A high-level or "abstract machine" executable semantic model for the design
-   of the language.
+1.  A high-level or "abstract machine" executable semantic model for the design
+    of the language.
 
-2. A rapid prototyping platform with a generated parser and maximally simple &
-   traditional internal architecture (ASTs, etc.).
+2.  A rapid prototyping platform with a generated parser and maximally simple &
+    traditional internal architecture (ASTs, etc.).
 
 The first purpose and use case remains extremely important and something that we
 should support. However, long-term it may make more sense to build on the same

@@ -75,99 +75,97 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: basics.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'FormLiteralKeyword', text: 'form'},
-// CHECK:STDOUT:           {kind: 'FormLiteralOpenParen', text: '('},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'RefPrimitiveForm', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FormLiteral', text: ')', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'FormLiteralKeyword', text: 'form'},
-// CHECK:STDOUT:           {kind: 'FormLiteralOpenParen', text: '('},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:               {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'X'},
-// CHECK:STDOUT:               {kind: 'TupleLiteralComma', text: ','},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Y'},
-// CHECK:STDOUT:             {kind: 'CallExpr', text: ')', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'VarPrimitiveForm', text: 'var', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'FormLiteral', text: ')', subtree_size: 10},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 11},
-// CHECK:STDOUT:           {kind: 'FormLiteralKeyword', text: 'form'},
-// CHECK:STDOUT:           {kind: 'FormLiteralOpenParen', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'X'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:             {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'ValPrimitiveForm', text: 'val', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'FormLiteral', text: ')', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 31},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'VarReturn'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'FormLiteralKeyword', text: 'form'},
-// CHECK:STDOUT:           {kind: 'FormLiteralOpenParen', text: '('},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'RefPrimitiveForm', text: 'ref', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FormLiteral', text: ')', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ReturnForm', text: '->?', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
+// CHECK:STDOUT:   │ │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │   ├─RefPrimitiveForm 'ref'
+// CHECK:STDOUT:   │ │ ╭─FormLiteral ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
+// CHECK:STDOUT:   │ │   │     ╭─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │ │   │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   │   ├─IdentifierNameExpr 'X'
+// CHECK:STDOUT:   │ │   │   ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │   │   ├─IdentifierNameExpr 'Y'
+// CHECK:STDOUT:   │ │   │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ │   ├─VarPrimitiveForm 'var'
+// CHECK:STDOUT:   │ │ ╭─FormLiteral ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
+// CHECK:STDOUT:   │ │   │   ╭─IdentifierNameExpr 'X'
+// CHECK:STDOUT:   │ │   │   ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ │   │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │   ├─ValPrimitiveForm 'val'
+// CHECK:STDOUT:   │ │ ╭─FormLiteral ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'VarReturn'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
+// CHECK:STDOUT:   │ │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │   ├─RefPrimitiveForm 'ref'
+// CHECK:STDOUT:   │ │ ╭─FormLiteral ')'
+// CHECK:STDOUT:   │ ├─ReturnForm '->?'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_invalid_form_literal.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'FormLiteralKeyword', text: 'form'},
-// CHECK:STDOUT:           {kind: 'FormLiteralOpenParen', text: 'form', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'form', has_error: yes},
-// CHECK:STDOUT:         {kind: 'FormLiteral', text: 'form', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'FormLiteralKeyword', text: 'form'},
-// CHECK:STDOUT:           {kind: 'FormLiteralOpenParen', text: '('},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: ')', has_error: yes},
-// CHECK:STDOUT:           {kind: 'ValPrimitiveForm', text: 'form', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FormLiteral', text: ')', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'FormLiteralKeyword', text: 'form'},
-// CHECK:STDOUT:           {kind: 'FormLiteralOpenParen', text: '('},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'ValPrimitiveForm', text: 'form', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FormLiteral', text: ')', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'FormLiteralKeyword', text: 'form'},
-// CHECK:STDOUT:           {kind: 'FormLiteralOpenParen', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'whole'},
-// CHECK:STDOUT:           {kind: 'ValPrimitiveForm', text: 'form', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FormLiteral', text: ')', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'FormLiteralKeyword', text: 'form'},
-// CHECK:STDOUT:           {kind: 'FormLiteralOpenParen', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'whole'},
-// CHECK:STDOUT:           {kind: 'VarPrimitiveForm', text: 'var', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FormLiteral', text: ')', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'FormLiteralKeyword', text: 'form'},
-// CHECK:STDOUT:           {kind: 'FormLiteralOpenParen', text: 'form', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'form', has_error: yes},
-// CHECK:STDOUT:         {kind: 'FormLiteral', text: 'form', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'FormLiteralKeyword', text: 'form'},
-// CHECK:STDOUT:           {kind: 'FormLiteralOpenParen', text: 'form', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: 'form', has_error: yes},
-// CHECK:STDOUT:         {kind: 'FormLiteral', text: 'form', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 45},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen 'form' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse 'form' has_error
+// CHECK:STDOUT:   │ │ ╭─FormLiteral 'form' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
+// CHECK:STDOUT:   │ │   │ ╭─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │   ├─ValPrimitiveForm 'form' has_error
+// CHECK:STDOUT:   │ │ ╭─FormLiteral ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
+// CHECK:STDOUT:   │ │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │   ├─ValPrimitiveForm 'form' has_error
+// CHECK:STDOUT:   │ │ ╭─FormLiteral ')'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'whole'
+// CHECK:STDOUT:   │ │   ├─ValPrimitiveForm 'form' has_error
+// CHECK:STDOUT:   │ │ ╭─FormLiteral ')' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen '('
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'whole'
+// CHECK:STDOUT:   │ │   ├─VarPrimitiveForm 'var'
+// CHECK:STDOUT:   │ │ ╭─FormLiteral ')' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen 'form' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse 'form' has_error
+// CHECK:STDOUT:   │ │ ╭─FormLiteral 'form' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
+// CHECK:STDOUT:   │ │   ╭─FormLiteralKeyword 'form'
+// CHECK:STDOUT:   │ │   ├─FormLiteralOpenParen 'form' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse 'form' has_error
+// CHECK:STDOUT:   │ │ ╭─FormLiteral 'form' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

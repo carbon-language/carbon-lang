@@ -33,34 +33,33 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: fail_variety.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:               {kind: 'InfixOperatorStar', text: '*', subtree_size: 3},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'd'},
-// CHECK:STDOUT:               {kind: 'InfixOperatorStar', text: '*', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'InfixOperatorPlus', text: '+', subtree_size: 7},
-// CHECK:STDOUT:           {kind: 'InfixOperatorEqual', text: '=', subtree_size: 9},
-// CHECK:STDOUT:                   {kind: 'IdentifierNameExpr', text: 'd'},
-// CHECK:STDOUT:                   {kind: 'IdentifierNameExpr', text: 'd'},
-// CHECK:STDOUT:                 {kind: 'InfixOperatorStar', text: '*', subtree_size: 3},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'e'},
-// CHECK:STDOUT:               {kind: 'InfixOperatorLessLess', text: '<<', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'f'},
-// CHECK:STDOUT:             {kind: 'InfixOperatorAmp', text: '&', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'g'},
-// CHECK:STDOUT:             {kind: 'PrefixOperatorNot', text: 'not', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'InfixOperatorMinus', text: '-', has_error: yes, subtree_size: 10},
-// CHECK:STDOUT:         {kind: 'InfixOperatorEqual', text: '=', has_error: yes, subtree_size: 20},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 21},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 27},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'n'
+// CHECK:STDOUT:   │ │     │   ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │     │   ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │     │ ╭─InfixOperatorStar '*'
+// CHECK:STDOUT:   │ │     │ │ ╭─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ │     │ │ ├─IdentifierNameExpr 'd'
+// CHECK:STDOUT:   │ │     │ ├─InfixOperatorStar '*'
+// CHECK:STDOUT:   │ │     ├─InfixOperatorPlus '+'
+// CHECK:STDOUT:   │ │   ╭─InfixOperatorEqual '='
+// CHECK:STDOUT:   │ │   │       ╭─IdentifierNameExpr 'd'
+// CHECK:STDOUT:   │ │   │       ├─IdentifierNameExpr 'd'
+// CHECK:STDOUT:   │ │   │     ╭─InfixOperatorStar '*'
+// CHECK:STDOUT:   │ │   │     ├─IdentifierNameExpr 'e'
+// CHECK:STDOUT:   │ │   │   ╭─InfixOperatorLessLess '<<' has_error
+// CHECK:STDOUT:   │ │   │   ├─IdentifierNameExpr 'f'
+// CHECK:STDOUT:   │ │   │ ╭─InfixOperatorAmp '&' has_error
+// CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameExpr 'g'
+// CHECK:STDOUT:   │ │   │ ├─PrefixOperatorNot 'not'
+// CHECK:STDOUT:   │ │   ├─InfixOperatorMinus '-' has_error
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorEqual '=' has_error
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

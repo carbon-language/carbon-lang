@@ -17,36 +17,35 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: local.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:         {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameMaybeBeforeSignature', text: 'G'},
-// CHECK:STDOUT:               {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'FunctionDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'H'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ClassDefinition', text: '}', subtree_size: 15},
-// CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameQualifierWithoutParams', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'H'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 29},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │   ├─IdentifierNameMaybeBeforeSignature 'G'
+// CHECK:STDOUT:   │ │ │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ├─FunctionDefinition '}'
+// CHECK:STDOUT:   │ │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameMaybeBeforeSignature 'H'
+// CHECK:STDOUT:   │ │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ├─ClassDefinition '}'
+// CHECK:STDOUT:   │ │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameQualifierWithoutParams '.'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameMaybeBeforeSignature 'H'
+// CHECK:STDOUT:   │ │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -14,8 +14,8 @@
 
 library "[[@TEST_NAME]]";
 
-class Expect(N:! i32) {}
-fn Test(N:! i32) -> Expect(N) { return {}; }
+class Expect(N: i32) {}
+fn Test(generic N: i32) -> Expect(N) { return {}; }
 
 fn LeftShift(a: i32, b: i32) -> i32 = "int.left_shift";
 
@@ -40,8 +40,8 @@ fn RuntimeCallIsValid(a: i32, b: i32) -> i32 {
 
 library "[[@TEST_NAME]]";
 
-class Expect(N:! u32) {}
-fn Test(N:! u32) -> Expect(N) { return {}; }
+class Expect(N: u32) {}
+fn Test(generic N: u32) -> Expect(N) { return {}; }
 
 fn LeftShift(a: u32, b: i32) -> u32 = "int.left_shift";
 
@@ -68,8 +68,8 @@ library "[[@TEST_NAME]]";
 
 fn LeftShift(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.left_shift";
 
-class Expect(N:! Core.IntLiteral) {}
-fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   // Zero can be shifted by any amount.
@@ -231,6 +231,7 @@ let bad4: Core.IntLiteral = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT: --- i32.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %LeftShift.type: type = fn_type @LeftShift [concrete]
@@ -249,6 +250,7 @@ let bad4: Core.IntLiteral = LeftShiftOfLit(12, an_i32);
 // CHECK:STDOUT: --- u32.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]

@@ -8,6 +8,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/action.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
@@ -45,8 +46,9 @@ auto FindSelfPattern(Context& context,
 auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
                       Context::FormExpr form_expr) -> SemIR::InstId {
   auto result_type_id = GetPatternType(context, form_expr.type_component_id);
+  auto result_type_inst_id = context.types().GetTypeInstId(result_type_id);
   auto result_id = HandleAction<SemIR::OutFormParamPatternAction>(
-      context, loc_id, form_expr.type_component_inst_id,
+      context, loc_id, result_type_inst_id,
       {.type_id = SemIR::InstType::TypeId, .form_id = form_expr.form_inst_id});
   return AddInst<SemIR::ReturnSlotPattern>(
       context, loc_id,
@@ -116,39 +118,32 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
   if (!args.self_type_id.has_value() && args.param_type_ids.empty()) {
     insts.param_patterns_id = SemIR::InstBlockId::Empty;
   } else {
-    context.inst_block_stack().Push();
+    llvm::SmallVector<SemIR::InstId> param_patterns;
     if (args.self_type_id.has_value()) {
-      BeginSubpattern(context);
-      auto self_type_region_id = ConsumeSubpatternExpr(
+      auto self_type_region_id = MakeEmptyRegion(
           context, context.types().GetTypeInstId(args.self_type_id));
-      EndEmptySubpattern(context);
-
       insts.self_param_id = AddParamPattern(
           context, loc_id, SemIR::NameId::SelfValue, self_type_region_id,
           args.self_type_id, args.self_kind);
-      context.inst_block_stack().AddInstId(insts.self_param_id);
+      param_patterns.push_back(insts.self_param_id);
     }
-    for (auto param_type_id : args.param_type_ids) {
-      BeginSubpattern(context);
-      auto param_type_region_id = ConsumeSubpatternExpr(
+    for (auto [param_type_id, param_kind] :
+         llvm::zip_equal(args.param_type_ids, args.param_kinds)) {
+      auto param_type_region_id = MakeEmptyRegion(
           context, context.types().GetTypeInstId(param_type_id));
-      EndEmptySubpattern(context);
-
-      context.inst_block_stack().AddInstId(AddParamPattern(
-          context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
-          param_type_id, args.param_kind));
+      param_patterns.push_back(
+          AddParamPattern(context, loc_id, SemIR::NameId::Underscore,
+                          param_type_region_id, param_type_id, param_kind));
     }
-    insts.param_patterns_id = context.inst_block_stack().Pop();
+    insts.param_patterns_id = context.inst_blocks().Add(param_patterns);
   }
   context.full_pattern_stack().EndExplicitParamList();
 
-  // Build and add the return type. We always use an initializing form for now.
-  if (args.return_type_id.has_value()) {
-    auto return_form = ReturnExprAsForm(
-        context, loc_id, context.types().GetTypeInstId(args.return_type_id));
-    insts.return_type_inst_id = return_form.type_component_inst_id;
-    insts.return_form_inst_id = return_form.form_inst_id;
-    insts.return_pattern_id = AddReturnPattern(context, loc_id, return_form);
+  if (args.return_form.form_inst_id.has_value()) {
+    insts.return_type_inst_id = args.return_form.type_component_inst_id;
+    insts.return_form_inst_id = args.return_form.form_inst_id;
+    insts.return_pattern_id =
+        AddReturnPattern(context, loc_id, args.return_form);
   }
 
   auto match_results =
@@ -156,6 +151,7 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
                          insts.param_patterns_id, insts.return_pattern_id);
   insts.call_param_patterns_id = match_results.call_param_patterns_id;
   insts.call_params_id = match_results.call_params_id;
+  insts.call_param_patterns_id = match_results.call_param_patterns_id;
   insts.call_param_ranges = match_results.param_ranges;
 
   auto [pattern_block_id, decl_block_id] =
@@ -383,7 +379,7 @@ auto CheckFunctionDefinitionSignature(Context& context,
 
     // The parameter types need to be complete.
     RequireCompleteType(
-        context, context.insts().GetAs<SemIR::AnyParam>(param_ref_id).type_id,
+        context, context.insts().Get(param_ref_id).type_id(),
         SemIR::LocId(param_ref_id), [&](auto& builder) {
           CARBON_DIAGNOSTIC(
               IncompleteTypeInFunctionParam, Context,
@@ -405,10 +401,9 @@ auto CheckFunctionDefinitionSignature(Context& context,
     if (return_call_param.has_value()) {
       // TODO: If the types are already checked for completeness then this does
       // nothing?
-      TryToCompleteType(
-          context,
-          context.insts().GetAs<SemIR::AnyParam>(return_call_param).type_id,
-          SemIR::LocId(return_call_param));
+      TryToCompleteType(context,
+                        context.insts().Get(return_call_param).type_id(),
+                        SemIR::LocId(return_call_param));
     }
   }
 }
@@ -464,6 +459,7 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
   // Create the function scope and the entry block.
   context.scope_stack().PushForFunctionBody(decl_id);
   context.inst_block_stack().Push();
+  context.observe_stack().PushArray();
   context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
   StartGenericDefinition(context,
                          context.functions().Get(function_id).generic_id);
@@ -474,10 +470,18 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)
     -> void {
   context.inst_block_stack().Pop();
+  // Any cleanups for a function will have been handled when emitting `return`s.
+  context.scope_stack().DiscardCleanupsSince(
+      context.scope_stack().function_cleanup_scope_depth());
   context.scope_stack().Pop(/*check_unused=*/true);
+
+  auto observe_block_id =
+      context.observe_blocks().Add(context.observe_stack().PeekArray());
+  context.observe_stack().PopArray();
 
   auto& function = context.functions().Get(function_id);
   function.body_block_ids = context.region_stack().PopRegion();
+  function.observe_block_id = observe_block_id;
 
   // If this is a generic function, collect information about the definition.
   FinishGenericDefinition(context, function.generic_id);

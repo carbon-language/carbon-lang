@@ -21,12 +21,13 @@ class LinkSubcommand : public DriverSubcommand {
   explicit LinkSubcommand();
 
   auto BuildOptions(CommandLine::CommandBuilder& b) -> void override {
-    options_.BuildForLinkSubcommand(b);
+    options_.BuildForLinkSubcommand(b, &codegen_options);
   }
 
   auto Run(DriverEnv& driver_env) -> DriverResult override;
 
  private:
+  CodegenOptions codegen_options;
   LinkOptions options_;
 };
 

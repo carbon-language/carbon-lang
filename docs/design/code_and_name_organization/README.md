@@ -283,9 +283,9 @@ in many cases.
 
 Every source file will consist of, in order:
 
-1. Either a `package` directive, a `library` directive, or no introduction.
-2. A section of zero or more `import` directives.
-3. Source file body, with other code.
+1.  Either a `package` directive, a `library` directive, or no introduction.
+2.  A section of zero or more `import` directives.
+3.  Source file body, with other code.
 
 Comments and blank lines may be intermingled with these sections.
 [Metaprogramming](/docs/design/metaprogramming.md) code may also be

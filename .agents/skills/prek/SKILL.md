@@ -43,6 +43,21 @@ script:
 This script runs `prek` on all files that have changed between `trunk` and your
 current Jujutsu `@` change.
 
+Note that the script always compares against `trunk`. If your change is based on
+another bookmark rather than on `trunk`, the script also checks the files
+changed by that underlying change, so a reported failure may not be in your own
+work.
+
+## Hooks that rewrite files
+
+Some hooks, notably `clang-format` and `rumdl`, fix problems in place rather
+than only reporting them. When they do, `prek` reports a failure and exits
+non-zero even though the tree is now correct.
+
+Re-run `prek` after any failure that modified files, and treat the second, clean
+run as the result. Review what it changed: a reflow is expected, but a content
+change may not be what you intended.
+
 ## Prek dependency errors
 
 > [!TIP] If `prek` fails with an error about resolving dependencies or security

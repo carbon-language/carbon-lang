@@ -11,6 +11,7 @@
 #include "common/raw_string_ostream.h"
 #include "toolchain/lex/dump.h"
 #include "toolchain/parse/context.h"
+#include "toolchain/parse/tree.h"
 
 namespace Carbon::Parse {
 

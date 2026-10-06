@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 #define CARBON_TOOLCHAIN_LOWER_FILE_CONTEXT_H_
 
-#include "clang/CodeGen/ModuleBuilder.h"
-#include "clang/Lex/PreprocessorOptions.h"
 #include "toolchain/lower/context.h"
 #include "toolchain/lower/specific_coalescer.h"
 #include "toolchain/lower/type.h"
@@ -14,6 +12,12 @@
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_namer.h"
+#include "toolchain/sem_ir/mangler.h"
+
+namespace clang {
+class CodeGenerator;
+class FunctionDecl;
+}  // namespace clang
 
 namespace Carbon::Lower {
 
@@ -163,13 +167,10 @@ class FileContext {
   auto context() -> Context& { return *context_; }
   auto llvm_context() -> llvm::LLVMContext& { return context().llvm_context(); }
   auto llvm_module() -> llvm::Module& { return context().llvm_module(); }
-  auto cpp_code_generator() -> clang::CodeGenerator& {
-    CARBON_CHECK(cpp_code_generator_);
-    return *cpp_code_generator_;
-  }
   auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
   auto cpp_file() -> const SemIR::CppFile* { return sem_ir().cpp_file(); }
   auto inst_namer() -> const SemIR::InstNamer* { return inst_namer_; }
+  auto mangler() -> SemIR::Mangler& { return mangler_; }
   auto global_variables() -> const Map<SemIR::InstId, llvm::GlobalVariable*>& {
     return global_variables_;
   }
@@ -267,10 +268,6 @@ class FileContext {
   // The input SemIR.
   const SemIR::File* const sem_ir_;
 
-  // The Clang `CodeGenerator` to generate LLVM module from imported C++
-  // code. Can be null if no C++ code is imported.
-  clang::CodeGenerator* cpp_code_generator_;
-
   // The instruction namer, if given.
   const SemIR::InstNamer* const inst_namer_;
 
@@ -316,6 +313,8 @@ class FileContext {
       vtables_;
   FixedSizeValueStore<SemIR::SpecificId, llvm::Constant*, Tag<SemIR::CheckIRId>>
       specific_vtables_;
+
+  SemIR::Mangler mangler_;
 };
 
 }  // namespace Carbon::Lower

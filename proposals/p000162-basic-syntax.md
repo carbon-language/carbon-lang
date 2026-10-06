@@ -8,8 +8,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 [Pull request](https://github.com/carbon-language/carbon-lang/pull/162)
 
-## Table of contents
-
 <!-- toc -->
 
 ## Table of contents
@@ -156,7 +154,9 @@ expression:  expression ':' identifier
 
 is for pattern variables. For example, in a variable definition such as
 
-    var Int: x = 0;
+```
+var Int: x = 0;
+```
 
 the `Int: x` is parsed with the grammar rule for pattern variables. In the
 right-hand side of the above grammar rule, the `expression` to the left of the
@@ -286,7 +286,9 @@ member:  "var" expression ':' identifier ';'
 the `expression` must evaluate to a type at compile time. The same is true for
 the `tuple` in the grammar rule for an alternative:
 
-    alternative:  identifier tuple ';'
+```
+alternative:  identifier tuple ';'
+```
 
 ### Precedence and Associativity
 
@@ -298,13 +300,15 @@ lowest to highest precedence, with operators on the same line having equal
 precedence. Proposal 168 differs in that the operator groups are partially
 ordered instead of being totally ordered.
 
-    nonassoc '{' '}'
-    nonassoc ':' ','
-    left "or" "and"
-    nonassoc "==" "not"
-    left '+' '-'
-    left '.' "->"
-    nonassoc '(' ')' '[' ']'
+```
+nonassoc '{' '}'
+nonassoc ':' ','
+left "or" "and"
+nonassoc "==" "not"
+left '+' '-'
+left '.' "->"
+nonassoc '(' ')' '[' ']'
+```
 
 ### Abstract Syntax
 
@@ -459,9 +463,9 @@ The proposal does not include declarations for uninitialized variables, leaving
 that to a later proposal.
 
 In this proposal, assignment is a statement. It could instead be an expression
-as it is in C and C++. The arguments against assignment-as-an-expression
-include 1) it complicates reasoning about the ordering of side-effects and 2) it
-can cause confusion between `=` and `==`
+as it is in C and C++. The arguments against assignment-as-an-expression include
+(1) it complicates reasoning about the ordering of side-effects and (2) it can
+cause confusion between `=` and `==`
 [(SEI CERT C Coding Standard)](https://wiki.sei.cmu.edu/confluence/display/c/EXP45-C.+Do+not+perform+assignments+in+selection+statements)
 [Visual Studio Warning](https://docs.microsoft.com/en-us/cpp/error-messages/compiler-warnings/compiler-warning-level-4-c4706?view=vs-2019).
 

@@ -13,6 +13,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 ## Table of contents
 
 -   [Abstract](#abstract)
+-   [Background](#background)
 -   [Syntax Overview](#syntax-overview)
     -   [Syntax Defined](#syntax-defined)
 -   [Introducer](#introducer)
@@ -55,7 +56,7 @@ Associated discussion docs:
 -   [Lambdas Discussion 3](https://docs.google.com/document/d/1VVOlRuPGt8GQpjsygMwH2B7Wd0mBsS3Qif8Ve2yhX_A/)
 -   [Lambdas Discussion 4](https://docs.google.com/document/d/1Sevhvjo06Bc6wTigNL1pK-mlF3IXvzmU1lI2X1W9OYA/)
 
-# Background
+## Background
 
 Refer to the following documentation about lambdas in other languages. What
 separates these three and makes them more analegous to Carbon's direction is the

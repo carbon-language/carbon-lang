@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
-// ARGS: -v compile --phase=check %s
+// ARGS: -v compile --phase=check --no-include-carbon-core %s
 //
 // Only checks a couple statements in order to minimize manual update churn.
 // To test this file alone, run:

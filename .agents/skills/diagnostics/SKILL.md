@@ -74,6 +74,7 @@ declaration (`CARBON_DIAGNOSTIC` or `CARBON_DIAGNOSTIC_ON_SCOPE`).
 -   **Local Scope (Recommended)**: If the diagnostic is unique to a single
     block/function body, declare it **locally** inside the function body
     adjacent to its `Emit` trigger:
+
     ```cpp
     void ConvertFloatValueToInt(...) {
       CARBON_DIAGNOSTIC(FloatNaNConvertedToInt, Error,
@@ -81,6 +82,7 @@ declaration (`CARBON_DIAGNOSTIC` or `CARBON_DIAGNOSTIC_ON_SCOPE`).
       context.emitter().Emit(loc_id, FloatNaNConvertedToInt, dest_type_id);
     }
     ```
+
 -   **File Scope**: If the diagnostic is shared among multiple functions inside
     the _same_ file, declare it at **file scope** inside the anonymous namespace
     of the `.cpp` file.
@@ -177,12 +179,14 @@ scopes:
 
 -   `ContextScope`: Automatically converts any diagnostics emitted within its
     scope into sub-notes under a high-level operation descriptor:
+
     ```cpp
     ContextScope context_scope(&context.emitter(), [&](ContextBuilder& builder) {
       builder.Context(eval_loc, InCallToEvalFn);
     });
     // any checker error emitted here will automatically append the 'InCallToEvalFn' note
     ```
+
 -   `AnnotationScope`: RAII block scope that automatically attaches blanket note
     annotations to all scoped diagnostics.
 
@@ -211,8 +215,8 @@ interoperable code, adhere strictly to these rules:
     be mentioned if it wouldn't otherwise be clear:
     -   _Situation-only_: `"redeclaration of X"` (implies that redeclaration is
         not permitted).
-    -   _Rule-inclusion_:
-        ``"`self` declared in invalid context; can only be declared in implicit parameter list"``.
+    -   _Rule-inclusion_: ``"`self` declared in invalid context; can only be
+        declared in implicit parameter list"``.
 -   **Wording Choice ("cannot" vs "allowed")**: Explicitly avoid `"allowed"`,
     `"legal"`, `"permitted"`, `"valid"`, and related passive wording. You may
     use `"cannot"` if needed, but try to use phrasing that does not require it:
@@ -224,8 +228,8 @@ interoperable code, adhere strictly to these rules:
 -   **Developer Intent Hints**: It is acceptable for a diagnostic to guess at
     the developer's intent and provide a hint _after_ explaining the situation
     and the rule, but never as a substitute for that:
-    -   _Correct_:
-        ``"cannot implicitly convert `i32` to `String`; add `as String` for explicit conversion"``
+    -   _Correct_: ``"cannot implicitly convert `i32` to `String`; add `as
+        String` for explicit conversion"``
     -   _Incorrect_: ``"add `as String` to convert `i32` to `String`"`` (Lacks
         the core violation message).
 -   **Structure for Tooling API**: Try to structure diagnostics such that
@@ -246,10 +250,12 @@ Carbon strictly enforces testing coverage at build-time.
 2.  **Stderr Checklist Matchers**: The testcase split verifying the diagnostic
     must catch it using standard CHECK matchers, explicitly tracking the
     matching enum tag in standard error comments:
+
     ```carbon
     // CHECK:STDERR: fail_bounds.carbon:[[@LINE+1]]:15: error: cannot convert NaN to integer type `i32` [FloatNaNConvertedToInt]
     let a: i32 = Convert(nan_val);
     ```
+
 3.  **Build Enforcement**: Failing to provide a diagnostic test check matcher
     triggers a build compilation error on the target test
     `//toolchain/diagnostics:coverage_test`.

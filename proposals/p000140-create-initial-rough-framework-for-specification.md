@@ -8,8 +8,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 [Pull request](https://github.com/carbon-language/carbon-lang/pull/140)
 
-## Table of contents
-
 <!-- toc -->
 
 ## Table of contents
@@ -19,7 +17,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Details](#details)
     -   [Conventions](#conventions)
 -   [Alternatives considered](#alternatives-considered)
-    -   [Maintain the specification in a different language.](#maintain-the-specification-in-a-different-language)
+    -   [Maintain the specification in a different language](#maintain-the-specification-in-a-different-language)
 
 <!-- tocstop -->
 
@@ -67,7 +65,7 @@ Hyperlinks between sections of the specification are used liberally.
 
 ## Alternatives considered
 
-### Maintain the specification in a different language.
+### Maintain the specification in a different language
 
 Advantages:
 

@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/where_expr/impl_where.carbon
 
 interface Interface {
-  let T:! type;
+  let T: type;
 }
 
 impl i32 as Interface where .T = () {
@@ -25,98 +25,97 @@ impl f64 as Interface where .T = (type where .Self impls type) {
 }
 
 // CHECK:STDOUT: - filename: impl_where.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Interface'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':!', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:             {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'RequirementEqual', text: '=', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 13},
-// CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:         {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:       {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:         {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'RequirementEqual', text: '=', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'WhereExpr', text: 'where', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', subtree_size: 11},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:               {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'RequirementEqual', text: '=', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'ParenExpr', text: ')', subtree_size: 10},
-// CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 15},
-// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 16},
-// CHECK:STDOUT:       {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:           {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'ImplTypeAs', text: 'as', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:               {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:                   {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:                 {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:                   {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'RequirementEqual', text: '=', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'WhereExpr', text: 'where', subtree_size: 8},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', subtree_size: 10},
-// CHECK:STDOUT:         {kind: 'WhereOperand', text: 'where', subtree_size: 11},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:           {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'RequirementEqual', text: '=', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'WhereExpr', text: 'where', subtree_size: 17},
-// CHECK:STDOUT:     {kind: 'ImplDecl', text: ';', subtree_size: 22},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:           {kind: 'FloatTypeLiteral', text: 'f64'},
-// CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:                   {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:                 {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:                     {kind: 'SelfTypeName', text: 'Self'},
-// CHECK:STDOUT:                   {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:                   {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:                 {kind: 'RequirementImpls', text: 'impls', subtree_size: 4},
-// CHECK:STDOUT:               {kind: 'WhereExpr', text: 'where', subtree_size: 7},
-// CHECK:STDOUT:             {kind: 'ParenExpr', text: ')', subtree_size: 9},
-// CHECK:STDOUT:           {kind: 'RequirementEqual', text: '=', subtree_size: 12},
-// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', subtree_size: 15},
-// CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 19},
-// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 20},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Interface'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ ├─AssociatedConstantNameAndType ':'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   │   ╭─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   │   │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │   │ │   ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │   │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │   │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │   │ ├─RequirementEqual '='
+// CHECK:STDOUT:   │   ├─WhereExpr 'where'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │ ╭─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ├─RequirementEqual '='
+// CHECK:STDOUT:   │ ├─WhereExpr 'where'
+// CHECK:STDOUT:   ├─ImplDecl ';'
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │   ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │   │ ╭─TupleLiteral ')'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │   │ │   ╭─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   │   │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │   │ │ │   ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │   │ │ │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │   │ │ │ ├─StructLiteral '}'
+// CHECK:STDOUT:   │   │ │ ├─RequirementEqual '='
+// CHECK:STDOUT:   │   │ ├─WhereExpr 'where'
+// CHECK:STDOUT:   │   ├─ParenExpr ')'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   │ ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │   ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ ╭─StructLiteral '}'
+// CHECK:STDOUT:   │ ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │ │     ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │     │   ╭─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   │ │     │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │     │ │   ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │     │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │     │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │     │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │     │ ├─RequirementEqual '='
+// CHECK:STDOUT:   │ │     ├─WhereExpr 'where'
+// CHECK:STDOUT:   │ │   ╭─ParenExpr ')'
+// CHECK:STDOUT:   │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─RequirementEqual '='
+// CHECK:STDOUT:   │ ├─WhereExpr 'where'
+// CHECK:STDOUT:   ├─ImplDecl ';'
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─FloatTypeLiteral 'f64'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   │   ╭─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   │   │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │   │ │   ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │   │ │ │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │   │ │ │ │   ╭─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ │ │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │   │ │ │ │ │   ╭─SelfTypeName 'Self'
+// CHECK:STDOUT:   │   │ │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │   │ │ │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ │ │ │ ├─RequirementImpls 'impls'
+// CHECK:STDOUT:   │   │ │ │ ├─WhereExpr 'where'
+// CHECK:STDOUT:   │   │ │ ├─ParenExpr ')'
+// CHECK:STDOUT:   │   │ ├─RequirementEqual '='
+// CHECK:STDOUT:   │   ├─WhereExpr 'where'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

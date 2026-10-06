@@ -19,10 +19,14 @@
 #include "llvm/ADT/ScopeExit.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Passes/OptimizationLevel.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/StandardInstrumentations.h"
+#include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Target/TargetMachine.h"
 #include "toolchain/base/clang_invocation.h"
 #include "toolchain/base/timings.h"
 #include "toolchain/check/check.h"
@@ -39,13 +43,11 @@
 
 namespace Carbon {
 
-CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
-                                 int total_ir_count, DriverEnv* driver_env,
-                                 const CompileOptions* options,
-                                 Diagnostics::Consumer* consumer,
-                                 llvm::StringRef input_filename,
-                                 std::string output_filename,
-                                 const llvm::Target* target)
+CompilationUnit::CompilationUnit(
+    SemIR::CheckIRId check_ir_id, int total_ir_count, DriverEnv* driver_env,
+    const CompileOptions* options, Diagnostics::Consumer* consumer,
+    llvm::StringRef input_filename, std::string output_filename,
+    const llvm::Target* target, llvm::LLVMContext* llvm_context)
     : check_ir_id_(check_ir_id),
       total_ir_count_(total_ir_count),
       driver_env_(driver_env),
@@ -53,7 +55,8 @@ CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
       target_(target),
       input_filename_(input_filename),
       output_filename_(std::move(output_filename)),
-      vlog_stream_(driver_env_->vlog_stream) {
+      vlog_stream_(driver_env_->vlog_stream),
+      llvm_context_(llvm_context) {
   if (vlog_stream_ != nullptr || options_->stream_errors) {
     consumer_ = consumer;
   } else {
@@ -61,6 +64,8 @@ CompilationUnit::CompilationUnit(SemIR::CheckIRId check_ir_id,
     consumer_ = &*sorting_consumer_;
   }
 }
+
+CompilationUnit::~CompilationUnit() = default;
 
 auto CompilationUnit::IncludeInDumps() -> bool {
   return cache_->include_in_dumps().Get(check_ir_id_);
@@ -70,7 +75,10 @@ auto CompilationUnit::SetMultiUnitCache(MultiUnitCache* cache) -> void {
   CARBON_CHECK(!cache_, "Called SetMultiUnitCache twice");
   cache_ = cache;
 
-  if (options_->dump_mem_usage && IncludeInDumps()) {
+  // Collect memory usage if this unit dumps it, or if the caller provided a
+  // `MemUsage` to merge it into (see `PostCompile`).
+  if ((options_->dump_mem_usage || driver_env_->mem_usage) &&
+      IncludeInDumps()) {
     CARBON_CHECK(!mem_usage_);
     mem_usage_ = MemUsage();
   }
@@ -125,7 +133,7 @@ auto CompilationUnit::RunParse() -> void {
     options.vlog_stream = vlog_stream_;
     if (options_->dump_parse_tree && IncludeInDumps()) {
       options.dump_stream = driver_env_->output_stream;
-      options.dump_preorder_parse_tree = options_->preorder_parse_tree;
+      options.dump_format = options_->parse_dump_format;
     }
     parse_tree_ = Parse::Parse(*tokens_, options);
   });
@@ -146,14 +154,12 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
   };
   sem_ir_.emplace(&*parse_tree_, check_ir_id_, parse_tree_->packaging_decl(),
                   value_stores_, input_filename_);
-  if (!llvm_context_) {
-    llvm_context_ = std::make_unique<llvm::LLVMContext>();
-  }
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
           .sem_ir = &*sem_ir_,
-          .llvm_context = llvm_context_.get(),
+          .llvm_context = llvm_context_,
+          .is_lowered = is_lowered(),
           .total_ir_count = total_ir_count_};
 }
 
@@ -175,10 +181,9 @@ auto CompilationUnit::PostCheck() -> void {
 }
 
 auto CompilationUnit::RunLower() -> void {
+  CARBON_CHECK(is_lowered(), "Should not lower this compilation unit");
+
   LogCall("Lower::LowerToLLVM", "lower", [&] {
-    if (!llvm_context_) {
-      llvm_context_ = std::make_unique<llvm::LLVMContext>();
-    }
     Lower::LowerToLLVMOptions options;
     options.llvm_verifier_stream =
         options_->run_llvm_verifier ? driver_env_->error_stream : nullptr;
@@ -186,6 +191,8 @@ auto CompilationUnit::RunLower() -> void {
     options.vlog_stream = vlog_stream_;
     options.opt_level = options_->opt_level;
     options.mangle_string_fingerprint = options_->mangle_string_fingerprint;
+    // Only generate inst names if the llvm IR needs to be human-readable.
+    options.generate_inst_names = options_->dump_llvm_ir;
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
                                  total_ir_count_, options);
@@ -304,8 +311,10 @@ auto CompilationUnit::RunOptimize(
 auto CompilationUnit::PostLower() -> void {
   CARBON_CHECK(module_, "Must call RunLower first");
   if (options_->dump_llvm_ir && IncludeInDumps()) {
+    *driver_env_->output_stream << "; ---\n";
     module_->print(*driver_env_->output_stream, /*AAW=*/nullptr,
                    /*ShouldPreserveUseListOrder=*/true);
+    *driver_env_->output_stream << "\n";
   }
 }
 
@@ -321,8 +330,15 @@ auto CompilationUnit::PostCompile() -> void {
   }
   if (mem_usage_) {
     mem_usage_->Collect("value_stores_", value_stores_);
-    Yaml::Print(*driver_env_->output_stream,
-                mem_usage_->OutputYaml(input_filename_));
+    if (options_->dump_mem_usage && IncludeInDumps()) {
+      Yaml::Print(*driver_env_->output_stream,
+                  mem_usage_->OutputYaml(input_filename_));
+    }
+    // Merge this file's usage into the caller-provided sink, if any, so it can
+    // be queried programmatically.
+    if (driver_env_->mem_usage) {
+      driver_env_->mem_usage->Add(*mem_usage_);
+    }
   }
   if (timings_) {
     Yaml::Print(*driver_env_->output_stream,
@@ -358,27 +374,10 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
       }
     }
   } else {
-    llvm::SmallString<256> output_filename = llvm::StringRef(output_filename_);
-    if (output_filename.empty()) {
-      if (!source_->is_regular_file()) {
-        // Don't invent file names like `-.o` or `/dev/stdin.o`.
-        // TODO: Consider rephrasing the diagnostic to use the file as the
-        // `Emit` location.
-        CARBON_DIAGNOSTIC(CompileInputNotRegularFile, Error,
-                          "output file name must be specified for input `{0}` "
-                          "that is not a regular file",
-                          std::string);
-        driver_env_->emitter.Emit(CompileInputNotRegularFile, input_filename_);
-        return false;
-      }
-      output_filename = input_filename_;
-      llvm::sys::path::replace_extension(output_filename,
-                                         options_->asm_output ? ".s" : ".o");
-    }
-    CARBON_VLOG("Writing output to: {0}\n", output_filename);
+    CARBON_VLOG("Writing output to: {0}\n", output_filename_);
 
     std::error_code ec;
-    llvm::raw_fd_ostream output_file(output_filename, ec,
+    llvm::raw_fd_ostream output_file(output_filename_, ec,
                                      llvm::sys::fs::OF_None);
     if (ec) {
       // TODO: Consider rephrasing the diagnostic to use the file as the `Emit`
@@ -386,8 +385,8 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
       CARBON_DIAGNOSTIC(CompileOutputFileOpenError, Error,
                         "could not open output file `{0}`: {1}", std::string,
                         std::string);
-      driver_env_->emitter.Emit(CompileOutputFileOpenError,
-                                output_filename.str().str(), ec.message());
+      driver_env_->emitter.Emit(CompileOutputFileOpenError, output_filename_,
+                                ec.message());
       return false;
     }
     if (options_->asm_output) {
@@ -403,7 +402,7 @@ auto CompilationUnit::RunCodeGenHelper() -> bool {
   return true;
 }
 
-auto CompilationUnit::GetParseTreeAndSubtrees()
+auto CompilationUnit::GetParseTreeAndSubtrees() const
     -> const Parse::TreeAndSubtrees& {
   if (!parse_tree_and_subtrees_) {
     parse_tree_and_subtrees_ = Parse::TreeAndSubtrees(*tokens_, *parse_tree_);
@@ -428,6 +427,8 @@ auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
 }
 
 CompileDriver::CompileDriver(CompileOptions* options) : options_(options) {}
+
+CompileDriver::~CompileDriver() = default;
 
 auto CompileDriver::Initialize(
     DriverEnv& driver_env,
@@ -468,16 +469,38 @@ auto CompileDriver::Initialize(
     }
   }
 
+  // Append the Core library files on request.
+  llvm::SmallVector<std::string> core_library;
+  if (options_->include_carbon_core && !options_->custom_core &&
+      options_->phase >= CompileOptions::Phase::Check) {
+    if (auto find = driver_env.installation->ReadCarbonCoreManifest();
+        !find.ok()) {
+      CARBON_DIAGNOSTIC(CompileCoreManifestError, Error, "{0}", std::string);
+      driver_env.emitter.Emit(CompileCoreManifestError,
+                              PrintToString(find.error()));
+      return false;
+    } else {
+      // Note we also compile any .impl files, as we will need to include them
+      // in the subsequent link step.
+      core_library = std::move(*find);
+    }
+  }
+
+  llvm_context_ = std::make_unique<llvm::LLVMContext>();
+
   // Prepare CompilationUnits before building scope exit handlers.
   int unit_index = -1;
-  int total_unit_count = prelude.size() + options_->input_filenames.size();
+  int total_unit_count =
+      prelude.size() + core_library.size() + options_->input_filenames.size();
   auto unit_builder = [&](llvm::StringRef filename) {
     ++unit_index;
     return std::make_unique<CompilationUnit>(
         SemIR::CheckIRId(unit_index), total_unit_count, &driver_env, options_,
-        &driver_env.consumer, filename, map_input(filename), target);
+        driver_env.consumer, filename, map_input(filename), target,
+        llvm_context_.get());
   };
   llvm::append_range(units_, llvm::map_range(prelude, unit_builder));
+  llvm::append_range(units_, llvm::map_range(core_library, unit_builder));
   input_filenames_index_ = units_.size();
   llvm::append_range(units_,
                      llvm::map_range(options_->input_filenames, unit_builder));
@@ -500,7 +523,7 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
       unit->PostCompile();
     }
 
-    driver_env.consumer.Flush();
+    driver_env.consumer->Flush();
   });
 
   PrettyStackTraceFunction flush_on_crash([&](llvm::raw_ostream& out) {
@@ -512,14 +535,19 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
       out << "Flushing diagnostics\n";
     } else {
       out << "Pending diagnostics:\n";
-      driver_env.consumer.set_stream(&out);
     }
+
+    // In non-streaming mode, swap out the consumer for one that writes to the
+    // given ostream before flushing the diagnostics.
+    Diagnostics::StreamConsumer stack_trace_consumer(&out);
+    llvm::SaveAndRestore<Diagnostics::Consumer*> restore(
+        driver_env.consumer,
+        options_->stream_errors ? driver_env.consumer : &stack_trace_consumer);
 
     for (auto& unit : units_) {
       unit->FlushForStackTrace();
     }
-    driver_env.consumer.Flush();
-    driver_env.consumer.set_stream(driver_env.error_stream);
+    driver_env.consumer->Flush();
   });
 
   // Returns a DriverResult object. Called whenever Compile returns.
@@ -571,6 +599,7 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
   options.vlog_stream = driver_env.vlog_stream;
   options.fuzzing = driver_env.fuzzing;
   options.mangle_string_fingerprint = options_->mangle_string_fingerprint;
+  options.share_cpp_ast = options_->share_cpp_ast;
   if (options.vlog_stream || options_->dump_sem_ir || options_->dump_cpp_ast ||
       options_->dump_raw_sem_ir) {
     options.include_in_dumps = &cache_->include_in_dumps();
@@ -613,6 +642,10 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
 
   // Lower and optimize.
   for (const auto& unit : units_) {
+    if (!unit->is_lowered()) {
+      continue;
+    }
+
     unit->RunLower();
 
     if (options_->phase != CompileOptions::Phase::Lower) {
@@ -628,28 +661,9 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
   CARBON_CHECK(options_->phase == CompileOptions::Phase::CodeGen,
                "CodeGen should be the last stage");
 
-  bool output_last_input_only = options_->output_last_input_only;
-  if (!output_last_input_only && units_.size() > 1 &&
-      !options_->output_filename.empty() && options_->output_filename != "-") {
-    // TODO: Command line structure should change to make this implicit
-    // (passing non-compiling inputs differently), and the warning should be
-    // removed.
-    CARBON_DIAGNOSTIC(
-        CompileMultipleInputsWithOutput, Warning,
-        "only outputting {0} to {1}, skipping output of {2} input "
-        "file{2:s}; pass `--output-last-input-only` to silence this warning",
-        std::string, std::string, Diagnostics::IntAsSelect);
-    driver_env.emitter.Emit(CompileMultipleInputsWithOutput,
-                            units_.back()->input_filename().str(),
-                            options_->output_filename.str(), units_.size() - 1);
-    output_last_input_only = true;
-  }
-
   // Codegen.
-  if (output_last_input_only) {
-    units_.back()->RunCodeGen();
-  } else {
-    for (const auto& unit : units_) {
+  for (const auto& unit : units_) {
+    if (unit->is_lowered()) {
       unit->RunCodeGen();
     }
   }

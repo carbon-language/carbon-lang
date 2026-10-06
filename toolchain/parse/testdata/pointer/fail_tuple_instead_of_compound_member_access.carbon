@@ -59,61 +59,60 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: fail_tuple_instead_of_compound_member_access.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: ')', has_error: yes},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'y'},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'z'},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'w'},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'v'},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: ')', has_error: yes},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'PointerMemberAccessExpr', text: '->', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'u'},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'f'},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'PointerMemberAccessExpr', text: '->', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 't'},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '2'},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'PointerMemberAccessExpr', text: '->', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 's'},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'g'},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'PointerMemberAccessExpr', text: '->', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 54},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │   │ ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'z'
+// CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'w'
+// CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'v'
+// CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
+// CHECK:STDOUT:   │ │ ╭─PointerMemberAccessExpr '->'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'u'
+// CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'f'
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
+// CHECK:STDOUT:   │ │ ╭─PointerMemberAccessExpr '->'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 't'
+// CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │   │ ├─IntLiteral '2'
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
+// CHECK:STDOUT:   │ │ ╭─PointerMemberAccessExpr '->'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 's'
+// CHECK:STDOUT:   │ │   │ ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │   │ ├─IdentifierNameExpr 'g'
+// CHECK:STDOUT:   │ │   ├─ParenExpr ')' has_error
+// CHECK:STDOUT:   │ │ ╭─PointerMemberAccessExpr '->'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

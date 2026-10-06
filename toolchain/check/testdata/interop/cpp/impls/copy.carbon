@@ -120,7 +120,7 @@ fn CopyDeletedMove(c: Cpp.DeletedMove) -> Cpp.DeletedMove {
 
 fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+7]]:10: error: cannot copy value of type `Cpp.NonConstCopy` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+7]]:10: error: cannot copy value of type `NonConstCopy` [CopyOfUncopyableType]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: note: type `Cpp.NonConstCopy` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
@@ -132,7 +132,7 @@ fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
 
 fn CopyAmbiguousCopy(c: Cpp.AmbiguousCopy) -> Cpp.AmbiguousCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+7]]:10: error: cannot copy value of type `Cpp.AmbiguousCopy` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+7]]:10: error: cannot copy value of type `AmbiguousCopy` [CopyOfUncopyableType]
   // CHECK:STDERR:   return c;
   // CHECK:STDERR:          ^
   // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: note: type `Cpp.AmbiguousCopy` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
@@ -174,7 +174,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "types.h";
 
-fn Copy[T:! Core.Copy](c: T) -> T {
+fn Copy[T: Core.Copy](c: T) -> T {
   return c;
 }
 
@@ -184,7 +184,7 @@ fn DoCopy(c: Cpp.Copyable) -> Cpp.Copyable {
   //@dump-sem-ir-end
 }
 
-class Wrap(T:! Core.Copy) {}
+class Wrap(T: Core.Copy) {}
 
 fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
   //@dump-sem-ir-begin
@@ -195,6 +195,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT: --- copy_copyable.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Copyable: type = class_type @Copyable [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
@@ -291,6 +292,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT: --- copy_generically.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Copy.type.bd0: type = facet_type <@Copy.1> [concrete]
 // CHECK:STDOUT:   %Copy.type.705: type = fn_type @Copy.loc6 [concrete]
 // CHECK:STDOUT:   %Copy: %Copy.type.705 = struct_value () [concrete]
@@ -305,18 +307,18 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %Copy.specific_fn: <specific function> = specific_function %Copy, @Copy.loc6(%Copy.facet.07e) [concrete]
 // CHECK:STDOUT:   %Wrap.993: type = class_type @Wrap, @Wrap(%Copy.facet.07e) [concrete]
 // CHECK:STDOUT:   %ptr.fa1: type = ptr_type %Wrap.993 [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.73a: <witness> = impl_witness imports.%Copy.impl_witness_table.4f1, @ptr.as.Copy.impl(%Wrap.993) [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.8c2: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%Wrap.993) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.085: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Wrap.993) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.a0b: %ptr.as.Copy.impl.Op.type.085 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.ba8: %Copy.type.bd0 = facet_value %ptr.fa1, (%Copy.impl_witness.73a) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.b3b: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.ba8) [concrete]
-// CHECK:STDOUT:   %.a0e: type = fn_type_with_self_type %Copy.WithSelf.Op.type.b3b, %Copy.facet.ba8 [concrete]
+// CHECK:STDOUT:   %Copy.facet.13d: %Copy.type.bd0 = facet_value %ptr.fa1, (%Copy.impl_witness.8c2) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.c10: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.13d) [concrete]
+// CHECK:STDOUT:   %.85e: type = fn_type_with_self_type %Copy.WithSelf.Op.type.c10, %Copy.facet.13d [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.a0b, @ptr.as.Copy.impl.Op(%Wrap.993) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.e5f: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.ff5) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.ce9)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.4f1 = impl_witness_table (%Core.import_ref.e5f), @ptr.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness_table.fb0 = impl_witness_table (%Core.import_ref.e5f), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DoCopy(%c.param: %Copyable) -> out %return.param: %Copyable {
@@ -337,7 +339,7 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT: fn @EqualWitnesses(%p.param: %ptr.fa1) -> out %return.param: %ptr.fa1 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.fa1 = name_ref p, %p
-// CHECK:STDOUT:   %impl.elem0: %.a0e = impl_witness_access constants.%Copy.impl_witness.73a, element0 [concrete = constants.%ptr.as.Copy.impl.Op.a0b]
+// CHECK:STDOUT:   %impl.elem0: %.85e = impl_witness_access constants.%Copy.impl_witness.8c2, element0 [concrete = constants.%ptr.as.Copy.impl.Op.a0b]
 // CHECK:STDOUT:   %bound_method.loc20_10.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Wrap.993) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc20_10.2: <bound method> = bound_method %p.ref, %specific_fn

@@ -30,10 +30,11 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT: --- arrow.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt: %pattern_type.98b = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt: %pattern_type.98b = at_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:   %self.patt: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt [concrete]
 // CHECK:STDOUT:   %C.Member.type: type = fn_type @C.Member [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C.Member: %C.Member.type = struct_value () [concrete]
@@ -43,7 +44,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %struct_type.field: type = struct_type {.field: %ptr.6b6} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.field [concrete]
 // CHECK:STDOUT:   %ptr.param_patt: %pattern_type.fcb = value_param_pattern [concrete]
-// CHECK:STDOUT:   %ptr.patt: %pattern_type.fcb = at_binding_pattern ptr, %ptr.param_patt [concrete]
+// CHECK:STDOUT:   %ptr.patt: %pattern_type.fcb = wrapper_binding_pattern ptr, %ptr.param_patt [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]
 // CHECK:STDOUT:   %Foo: %Foo.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -65,27 +66,30 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %ptr.param_patt: %pattern_type.fcb = value_param_pattern [concrete = constants.%ptr.param_patt]
-// CHECK:STDOUT:     %ptr.patt: %pattern_type.fcb = at_binding_pattern ptr, %ptr.param_patt [concrete = constants.%ptr.patt]
+// CHECK:STDOUT:     %ptr.patt: %pattern_type.fcb = wrapper_binding_pattern ptr, %ptr.param_patt [concrete = constants.%ptr.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %ptr.param: %ptr.6b6 = value_param call_param0
 // CHECK:STDOUT:     %.loc20: type = splice_block %ptr.loc20_14 [concrete = constants.%ptr.6b6] {
 // CHECK:STDOUT:       %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %ptr.loc20_14: type = ptr_type %C.ref [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %ptr.loc20_11: %ptr.6b6 = value_binding ptr, %ptr.param
+// CHECK:STDOUT:     %ptr.loc20_11: %ptr.6b6 = wrapper_binding ptr, %ptr.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
 // CHECK:STDOUT:   %C.Member.decl: %C.Member.type = fn_decl @C.Member [concrete = constants.%C.Member] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.98b = value_param_pattern [concrete = constants.%self.param_patt]
-// CHECK:STDOUT:     %self.patt: %pattern_type.98b = at_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
+// CHECK:STDOUT:     %self.patt: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %C = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
-// CHECK:STDOUT:     %self: %C = value_binding self, %self.param
+// CHECK:STDOUT:     %self: %C = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: %C.elem = field_decl field, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %C.elem = field_decl field, element0, %ptr in [concrete] {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr: type = ptr_type %C.ref [concrete = constants.%ptr.6b6]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.field [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -93,7 +97,7 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT:   .Member = %C.Member.decl
 // CHECK:STDOUT:   .C = <poisoned>
-// CHECK:STDOUT:   .field = %.loc17
+// CHECK:STDOUT:   .field = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @C.Member(%self.param: %C);
@@ -114,19 +118,19 @@ fn Foo(ptr: C*) {
 // CHECK:STDOUT:   %C.Member.call.loc22: init %empty_tuple.type = call %C.Member.bound.loc22(%.loc22_6.2)
 // CHECK:STDOUT:   %ptr.ref.loc24: %ptr.6b6 = name_ref ptr, %ptr.loc20_11
 // CHECK:STDOUT:   %.loc24_4: ref %C = deref %ptr.ref.loc24
-// CHECK:STDOUT:   %field.ref.loc24: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %field.ref.loc24: %C.elem = name_ref field, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc24_9: ref %ptr.6b6 = class_element_access %.loc24_4, element0
 // CHECK:STDOUT:   %ptr.ref.loc25: %ptr.6b6 = name_ref ptr, %ptr.loc20_11
 // CHECK:STDOUT:   %.loc25_6.1: ref %C = deref %ptr.ref.loc25
-// CHECK:STDOUT:   %field.ref.loc25: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %field.ref.loc25: %C.elem = name_ref field, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc25_6.2: ref %ptr.6b6 = class_element_access %.loc25_6.1, element0
 // CHECK:STDOUT:   %ptr.ref.loc27: %ptr.6b6 = name_ref ptr, %ptr.loc20_11
 // CHECK:STDOUT:   %.loc27_6.1: ref %C = deref %ptr.ref.loc27
-// CHECK:STDOUT:   %field.ref.loc27_6: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %field.ref.loc27_6: %C.elem = name_ref field, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc27_6.2: ref %ptr.6b6 = class_element_access %.loc27_6.1, element0
 // CHECK:STDOUT:   %.loc27_6.3: %ptr.6b6 = acquire_value %.loc27_6.2
 // CHECK:STDOUT:   %.loc27_13.1: ref %C = deref %.loc27_6.3
-// CHECK:STDOUT:   %field.ref.loc27_13: %C.elem = name_ref field, @C.%.loc17 [concrete = @C.%.loc17]
+// CHECK:STDOUT:   %field.ref.loc27_13: %C.elem = name_ref field, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc27_13.2: ref %ptr.6b6 = class_element_access %.loc27_13.1, element0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

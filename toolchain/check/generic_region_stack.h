@@ -26,7 +26,7 @@ using ConstantsInGenericMap = Map<SemIR::InstId, SemIR::InstId, 256>;
 //
 // We split a generic into two regions -- declaration and definition -- because
 // these are in general introduced separately, and substituted into separately.
-// For example, for `class C(T:! type, N:! T) { var x: T; }`, a use such as
+// For example, for `class C(T: type, N: T) { var x: T; }`, a use such as
 // `C(i32, 0)*` substitutes into just the declaration, whereas a use such as
 // `var x: C(i32, 0) = {.x = 0};` also substitutes into the definition.
 class GenericRegionStack {

@@ -502,12 +502,12 @@ be productive and has a high risk of becoming acrimonious or worse.
 There are two techniques to use to resolve these situations that should be tried
 early on:
 
-1. Bring another person into the review to help address the specific issue.
-   Typically they should at least be an owner, and may usefully be a
-   [Carbon lead](groups.md#carbon-leads).
+1.  Bring another person into the review to help address the specific issue.
+    Typically they should at least be an owner, and may usefully be a
+    [Carbon lead](groups.md#carbon-leads).
 
-2. Ask the specific question in a broader forum, such as Discord, in order to
-   get a broad set of perspectives on a particular area or issue.
+2.  Ask the specific question in a broader forum, such as Discord, in order to
+    get a broad set of perspectives on a particular area or issue.
 
 The goal of these steps isn't to override the author or the reviewer, but to get
 more perspectives and voices involved. Often this will clarify the issue and its

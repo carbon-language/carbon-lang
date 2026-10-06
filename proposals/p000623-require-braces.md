@@ -134,7 +134,6 @@ Disadvantages:
     -   If Carbon were to reuse `if` and `else` keywords for a ternary operator,
         that could omit braces in order to avoid ambiguity. For example,
         `int x = if y then 3 else 7;`.
-
 -   Developers are known to make mistakes adding statements to conditionals
     missing braces, keeping consistent indentation, and missing the incorrect
     behavior due to cognitive load. For example:

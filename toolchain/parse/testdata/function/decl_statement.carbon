@@ -44,145 +44,147 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: valid.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'AliasIntroducer', text: 'alias'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'A'},
-// CHECK:STDOUT:         {kind: 'AliasInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:       {kind: 'Alias', text: ';', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'A'},
-// CHECK:STDOUT:         {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ClassDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:           {kind: 'BaseModifier', text: 'base'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'B'},
-// CHECK:STDOUT:         {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ClassDefinition', text: '}', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:           {kind: 'AbstractModifier', text: 'abstract'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'Abstract'},
-// CHECK:STDOUT:         {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ClassDefinition', text: '}', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'FunctionDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:         {kind: 'NamedConstraintDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:         {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'A'},
-// CHECK:STDOUT:           {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:         {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ImplDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:           {kind: 'FinalModifier', text: 'final'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'A'},
-// CHECK:STDOUT:           {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:         {kind: 'ImplDefinitionStart', text: '{', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ImplDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:           {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:         {kind: 'ChoiceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ChoiceDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'v'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 69},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AliasIntroducer 'alias'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'A'
+// CHECK:STDOUT:   │ │ ├─AliasInitializer '='
+// CHECK:STDOUT:   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ ├─Alias ';'
+// CHECK:STDOUT:   │ │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'A'
+// CHECK:STDOUT:   │ │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─ClassDefinition '}'
+// CHECK:STDOUT:   │ │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ │   ├─BaseModifier 'base'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'B'
+// CHECK:STDOUT:   │ │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─ClassDefinition '}'
+// CHECK:STDOUT:   │ │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ │   ├─AbstractModifier 'abstract'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'Abstract'
+// CHECK:STDOUT:   │ │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─ClassDefinition '}'
+// CHECK:STDOUT:   │ │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─FunctionDefinition '}'
+// CHECK:STDOUT:   │ │   ╭─NamedConstraintIntroducer 'constraint'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ │ ╭─NamedConstraintDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─NamedConstraintDefinition '}'
+// CHECK:STDOUT:   │ │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │ │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'A'
+// CHECK:STDOUT:   │ │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'I'
+// CHECK:STDOUT:   │ │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─ImplDefinition '}'
+// CHECK:STDOUT:   │ │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │   ├─FinalModifier 'final'
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'A'
+// CHECK:STDOUT:   │ │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'I'
+// CHECK:STDOUT:   │ │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─ImplDefinition '}'
+// CHECK:STDOUT:   │ │   ╭─ChoiceIntroducer 'choice'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ │ ╭─ChoiceDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─ChoiceDefinition '}'
+// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'n'
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ ├─LetDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'v'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: syntactically_valid.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'A'},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AdaptIntroducer', text: 'adapt'},
-// CHECK:STDOUT:         {kind: 'ExtendModifier', text: 'extend'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'A'},
-// CHECK:STDOUT:       {kind: 'AdaptDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'BaseIntroducer', text: 'base'},
-// CHECK:STDOUT:         {kind: 'ExtendModifier', text: 'extend'},
-// CHECK:STDOUT:         {kind: 'BaseColon', text: ':'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'B'},
-// CHECK:STDOUT:       {kind: 'BaseDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:         {kind: 'ExtendModifier', text: 'extend'},
-// CHECK:STDOUT:         {kind: 'ImplDefaultSelfAs', text: 'as'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:       {kind: 'ImplDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'N'},
-// CHECK:STDOUT:       {kind: 'Namespace', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'DefaultModifier', text: 'default'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'G'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'OverrideModifier', text: 'override'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'H'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'VirtualModifier', text: 'virtual'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'H'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'PrivateModifier', text: 'private'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'v'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:         {kind: 'ProtectedModifier', text: 'protected'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'v'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 64},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'A'
+// CHECK:STDOUT:   │ ├─AdaptDecl ';'
+// CHECK:STDOUT:   │ │ ╭─AdaptIntroducer 'adapt'
+// CHECK:STDOUT:   │ │ ├─ExtendModifier 'extend'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'A'
+// CHECK:STDOUT:   │ ├─AdaptDecl ';'
+// CHECK:STDOUT:   │ │ ╭─BaseIntroducer 'base'
+// CHECK:STDOUT:   │ │ ├─ExtendModifier 'extend'
+// CHECK:STDOUT:   │ │ ├─BaseColon ':'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'B'
+// CHECK:STDOUT:   │ ├─BaseDecl ';'
+// CHECK:STDOUT:   │ │ ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │ ├─ExtendModifier 'extend'
+// CHECK:STDOUT:   │ │ ├─ImplDefaultSelfAs 'as'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'I'
+// CHECK:STDOUT:   │ ├─ImplDecl ';'
+// CHECK:STDOUT:   │ │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'N'
+// CHECK:STDOUT:   │ ├─Namespace ';'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─DefaultModifier 'default'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─ImplModifier 'impl'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'G'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─OverrideModifier 'override'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'H'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─VirtualModifier 'virtual'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'H'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ ├─PrivateModifier 'private'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'v'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ ├─ProtectedModifier 'protected'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'v'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

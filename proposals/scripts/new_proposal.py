@@ -114,6 +114,7 @@ def _fill_template(template_path: str, title: str, pr_num: int) -> str:
         r"\g<1>%d" % pr_num,
         content,
     )
+    content = re.sub(r"\n-   \[TODO: .*?\n", r"\n", content)
     content = re.sub(r"\n## TODO(?:.|\n)*?(\n## )", r"\1", content)
     return content
 
@@ -167,10 +168,11 @@ def main() -> None:
     if Path(".jj").is_dir():
         jj_bin = _find_tool("jj")
         git_bin = None
+        prek_bin = "scripts/jj_prek.sh"
     else:
         git_bin = _find_tool("git")
         jj_bin = None
-    prek_bin = _find_tool("prek")
+        prek_bin = _find_tool("prek")
 
     # Verify there are no uncommitted changes (jj has no equivalent).
     if git_bin:
@@ -273,10 +275,7 @@ def main() -> None:
     else:
         assert jj_bin  # For mypy.
 
-        _run(
-            [prek_bin, "run", "--files", "$(jj diff --name-only)"],
-            check=False,
-        )
+        _run([prek_bin], check=False)
         _run([jj_bin, "describe", "-m", final_desc])
         _run([jj_bin, "git", "push"])
 

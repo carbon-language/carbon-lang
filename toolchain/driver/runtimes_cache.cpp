@@ -4,6 +4,8 @@
 
 #include "toolchain/driver/runtimes_cache.h"
 
+#include <unistd.h>
+
 #include <algorithm>
 #include <chrono>
 #include <filesystem>

@@ -2,7 +2,7 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-load("//bazel/cc_rules:defs.bzl", "cc_library", "cc_test")
+load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 package(default_visibility = ["//visibility:public"])
 
@@ -58,6 +58,7 @@ cc_library(
         "//common:hashtable_key_context",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "//common:set",
         "//toolchain/base:canonical_value_store",
         "//toolchain/base:value_store",
         "@llvm-project//clang:ast",
@@ -66,9 +67,14 @@ cc_library(
 
 cc_library(
     name = "cpp_file",
-    hdrs = ["cpp_file.h"],
+    hdrs = [
+        "cpp_domain.h",
+        "cpp_file.h",
+    ],
     deps = [
+        ":typed_insts",
         "//common:check",
+        "//common:map",
         "@llvm-project//clang:ast",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:codegen",
@@ -89,14 +95,18 @@ cc_library(
         "class.cpp",
         "constant.cpp",
         "core_interface.cpp",
+        "cpp_domain.cpp",
         "cpp_file.cpp",
         "cpp_initializer_list.cpp",
         "cpp_overload_set.cpp",
-        "facet_type_info.cpp",
+        "declared_facet_type.cpp",
+        "dominance.cpp",
+        "entity_name.cpp",
         "field.cpp",
         "file.cpp",
         "function.cpp",
         "generic.cpp",
+        "identified_facet_type.cpp",
         "impl.cpp",
         "import_ir.cpp",
         "inst.cpp",
@@ -104,6 +114,7 @@ cc_library(
         "name.cpp",
         "name_scope.cpp",
         "named_constraint.cpp",
+        "observe.cpp",
         "pattern.cpp",
         "require_impls.cpp",
         "specific_interface.cpp",
@@ -121,15 +132,18 @@ cc_library(
         "constant.h",
         "copy_on_write_block.h",
         "core_interface.h",
+        "cpp_domain.h",
         "cpp_initializer_list.h",
         "cpp_overload_set.h",
+        "declared_facet_type.h",
+        "dominance.h",
         "entity_name.h",
         "entity_with_params_base.h",
-        "facet_type_info.h",
         "field.h",
         "file.h",
         "function.h",
         "generic.h",
+        "identified_facet_type.h",
         "impl.h",
         "import_cpp.h",
         "import_ir.h",
@@ -138,6 +152,7 @@ cc_library(
         "name.h",
         "name_scope.h",
         "named_constraint.h",
+        "observe.h",
         "pattern.h",
         "require_impls.h",
         "struct_type_field.h",
@@ -167,6 +182,7 @@ cc_library(
         "//common:struct_reflection",
         "//toolchain/base:block_value_store",
         "//toolchain/base:canonical_value_store",
+        "//toolchain/base:grouped_value_store",
         "//toolchain/base:id_tag",
         "//toolchain/base:index_base",
         "//toolchain/base:int",
@@ -182,7 +198,21 @@ cc_library(
         "@llvm-project//clang:ast",
         "@llvm-project//clang:basic",
         "@llvm-project//clang:frontend",
+        "@llvm-project//clang:parse",
         "@llvm-project//clang:sema",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "sugared_type",
+    srcs = ["sugared_type.cpp"],
+    hdrs = ["sugared_type.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//common:check",
+        "//toolchain/base:kind_switch",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -193,11 +223,13 @@ cc_library(
     hdrs = ["stringify.h"],
     deps = [
         ":file",
+        ":sugared_type",
         ":typed_insts",
         "//common:check",
         "//common:concepts",
         "//common:raw_string_ostream",
         "//toolchain/base:kind_switch",
+        "@llvm-project//clang:ast",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -213,6 +245,7 @@ cc_library(
         "inst_namer.h",
     ],
     deps = [
+        ":dump",
         ":file",
         ":typed_insts",
         "//common:concepts",
@@ -350,6 +383,50 @@ cc_test(
     ],
 )
 
+cc_library(
+    name = "dominance_test_helpers",
+    testonly = 1,
+    hdrs = ["dominance_test_helpers.h"],
+    deps = [
+        ":file",
+        ":typed_insts",
+        "//toolchain/base:shared_value_stores",
+        "//toolchain/parse:node_kind",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "dominance_test",
+    size = "small",
+    srcs = ["dominance_test.cpp"],
+    deps = [
+        ":dominance_test_helpers",
+        ":file",
+        ":typed_insts",
+        "//testing/base:gtest_main",
+        "//toolchain/parse:node_kind",
+        "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_binary(
+    name = "dominance_benchmark",
+    testonly = 1,
+    srcs = ["dominance_benchmark.cpp"],
+    deps = [
+        ":dominance_test_helpers",
+        ":file",
+        ":typed_insts",
+        "//common:check",
+        "//common:error",
+        "//testing/base:benchmark_main",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "yaml_test",
     size = "small",
@@ -379,6 +456,9 @@ cc_library(
         "//common:raw_string_ostream",
         "//toolchain/base:kind_switch",
         "@llvm-project//clang:ast",
+        "@llvm-project//clang:basic",
+        "@llvm-project//clang:codegen",
+        "@llvm-project//llvm:Core",
         "@llvm-project//llvm:Support",
     ],
 )

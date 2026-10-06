@@ -6,6 +6,6 @@ package Core library "prelude/operators/deref";
 
 // TODO: Align with https://docs.carbon-lang.dev/docs/design/values.html#dereferencing-customization.
 interface CppUnsafeDeref {
-  let Result:! type;
+  let Result: type;
   fn Op(self) -> Result;
 }

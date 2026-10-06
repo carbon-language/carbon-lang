@@ -30,9 +30,9 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst5000002E}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst5000002E}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name50000000: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
+// CHECK:STDOUT:     entity_name50000000: {name: name1, parent_scope: name_scope<none>, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst50000013}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block5000000B, call_params_id: inst_block5000000C, return_type_inst_id: inst50000022, return_form_inst_id: inst50000023, return_pattern_id: inst50000028, body: [inst_block5000000F]}
 // CHECK:STDOUT:   classes:         {}
@@ -90,9 +90,11 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:   facet_types:     {}
+// CHECK:STDOUT:   declared_facet_types:
+// CHECK:STDOUT:     'declared_facet_type(Empty)': {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'inst(TypeType)':  {kind: FacetType, arg0: declared_facet_type(Empty), type: type(TypeType)}
+// CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000010:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000011:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000012:    {kind: TupleValue, arg0: inst_block_empty, type: type(inst50000010)}
@@ -102,7 +104,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst50000016:    {kind: ValueParamPattern, arg0: name1, type: type(inst50000014)}
 // CHECK:STDOUT:     inst50000017:    {kind: WrapperBindingPattern, arg0: entity_name50000000, arg1: inst50000015, type: type(inst50000014)}
 // CHECK:STDOUT:     inst50000018:    {kind: WrapperBindingPattern, arg0: entity_name50000000, arg1: inst50000016, type: type(inst50000014)}
-// CHECK:STDOUT:     inst50000019:    {kind: ValueBinding, arg0: entity_name50000000, arg1: inst5000002A, type: type(inst50000010)}
+// CHECK:STDOUT:     inst50000019:    {kind: WrapperBinding, arg0: entity_name50000000, arg1: inst5000002A, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000001A:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000001B:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000001C:    {kind: TupleType, arg0: inst_block50000008, type: type(TypeType)}
@@ -130,20 +132,21 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst50000032:    {kind: TupleLiteral, arg0: inst_block_empty, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000033:    {kind: TupleLiteral, arg0: inst_block50000010, type: type(inst5000001C)}
 // CHECK:STDOUT:     inst50000034:    {kind: TupleAccess, arg0: inst5000002C, arg1: element0, type: type(inst50000010)}
-// CHECK:STDOUT:     inst50000035:    {kind: TupleInit, arg0: inst_block50000011, arg1: inst50000034, type: type(inst50000010)}
+// CHECK:STDOUT:     inst50000035:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst50000034, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000036:    {kind: Converted, arg0: inst50000031, arg1: inst50000035, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000037:    {kind: InPlaceInit, arg0: inst50000036, arg1: inst50000034, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000038:    {kind: TupleAccess, arg0: inst5000002C, arg1: element1, type: type(inst50000010)}
 // CHECK:STDOUT:     inst50000039:    {kind: TupleInit, arg0: inst_block_empty, arg1: inst50000038, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000003A:    {kind: Converted, arg0: inst50000032, arg1: inst50000039, type: type(inst50000010)}
 // CHECK:STDOUT:     inst5000003B:    {kind: InPlaceInit, arg0: inst5000003A, arg1: inst50000038, type: type(inst50000010)}
-// CHECK:STDOUT:     inst5000003C:    {kind: TupleInit, arg0: inst_block50000012, arg1: inst5000002C, type: type(inst5000001C)}
+// CHECK:STDOUT:     inst5000003C:    {kind: TupleInit, arg0: inst_block50000011, arg1: inst5000002C, type: type(inst5000001C)}
 // CHECK:STDOUT:     inst5000003D:    {kind: Converted, arg0: inst50000033, arg1: inst5000003C, type: type(inst5000001C)}
 // CHECK:STDOUT:     inst5000003E:    {kind: ReturnExpr, arg0: inst5000003D, arg1: inst5000002C}
 // CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       instF:           concrete_constant(instF)
+// CHECK:STDOUT:       'inst(TypeType)':  concrete_constant(inst(TypeType))
+// CHECK:STDOUT:       'inst(Package)':   concrete_constant(inst(Package))
 // CHECK:STDOUT:       inst50000010:    concrete_constant(inst50000010)
 // CHECK:STDOUT:       inst50000011:    concrete_constant(inst50000012)
 // CHECK:STDOUT:       inst50000012:    concrete_constant(inst50000012)
@@ -249,12 +252,11 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:     inst_block50000010:
 // CHECK:STDOUT:       0:               inst50000031
 // CHECK:STDOUT:       1:               inst50000032
-// CHECK:STDOUT:     inst_block50000011: {}
-// CHECK:STDOUT:     inst_block50000012:
+// CHECK:STDOUT:     inst_block50000011:
 // CHECK:STDOUT:       0:               inst50000037
 // CHECK:STDOUT:       1:               inst5000003B
-// CHECK:STDOUT:     inst_block50000013:
-// CHECK:STDOUT:       0:               instF
+// CHECK:STDOUT:     inst_block50000012:
+// CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               inst5000002E
 // CHECK:STDOUT:   value_stores:
 // CHECK:STDOUT:     shared_values:
@@ -269,11 +271,12 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT: --- one_file_with_textual_ir.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %n.param_patt: %pattern_type.cb1 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %n.patt: %pattern_type.cb1 = at_binding_pattern n, %n.param_patt [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.cb1 = wrapper_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%empty_tuple, %empty_tuple) [concrete]
 // CHECK:STDOUT:   %.e3a: Core.Form = init_form %tuple.type [concrete]
@@ -290,7 +293,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {
 // CHECK:STDOUT:     %n.param_patt: %pattern_type.cb1 = value_param_pattern [concrete = constants.%n.param_patt]
-// CHECK:STDOUT:     %n.patt: %pattern_type.cb1 = at_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %n.patt: %pattern_type.cb1 = wrapper_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.5b8 = out_param_pattern [concrete = constants.%return.param_patt]
 // CHECK:STDOUT:     %return.patt: %pattern_type.5b8 = return_slot_pattern %return.param_patt, %.loc16_25.4 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
@@ -306,7 +309,7 @@ fn Foo(n: ()) -> ((), ()) {
 // CHECK:STDOUT:       %.loc16_12.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:       %.loc16_12.3: type = converted %.loc16_12.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %n: %empty_tuple.type = value_binding n, %n.param
+// CHECK:STDOUT:     %n: %empty_tuple.type = wrapper_binding n, %n.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type = out_param call_param1
 // CHECK:STDOUT:     %return: ref %tuple.type = return_slot %return.param
 // CHECK:STDOUT:   }

@@ -59,41 +59,40 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: fail_in_nested_scope.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'PackageExpr', text: 'package'},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'PackageExpr', text: 'package'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'P'},
-// CHECK:STDOUT:         {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:         {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:         {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─PackageDecl ';' has_error
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─PackageExpr 'package'
+// CHECK:STDOUT:   │ ├─ExprStatement ';' has_error
+// CHECK:STDOUT:   │ │   ╭─PackageExpr 'package'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'P'
+// CHECK:STDOUT:   │ │ ╭─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ │ ├─ImplModifier 'impl'
+// CHECK:STDOUT:   │ ├─PackageDecl ';' has_error
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ │ ├─ImplModifier 'impl'
+// CHECK:STDOUT:   │ ├─PackageDecl ';' has_error
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 import Core library "io";
-import Core library "range";
 
 // Compute and return the number of primes less than 1000.
 

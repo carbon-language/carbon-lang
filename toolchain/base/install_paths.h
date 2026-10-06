@@ -81,6 +81,11 @@ class InstallPaths {
   auto ReadClangHeadersManifest() const
       -> ErrorOr<llvm::SmallVector<std::string>>;
 
+  // Returns the contents of the core library manifest file. This is the list
+  // of Carbon source files in the Carbon Core library, excluding the prelude.
+  auto ReadCarbonCoreManifest() const
+      -> ErrorOr<llvm::SmallVector<std::string>>;
+
   // Check for an error detecting the install paths correctly.
   //
   // A nullopt return means no errors encountered and the paths should work

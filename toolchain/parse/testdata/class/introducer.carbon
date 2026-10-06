@@ -19,41 +19,40 @@ abstract class C {}
 extern class D {}
 
 // CHECK:STDOUT: - filename: introducer.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'A'},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'BaseModifier', text: 'base'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'B'},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'AbstractModifier', text: 'abstract'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'ExternModifier', text: 'extern'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'D'},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'A'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'BaseModifier', text: 'base'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'B'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'AbstractModifier', text: 'abstract'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'ExternModifier', text: 'extern'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'D'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'A'
+// CHECK:STDOUT:   ├─ClassDecl ';'
+// CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ ├─BaseModifier 'base'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'B'
+// CHECK:STDOUT:   ├─ClassDecl ';'
+// CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ ├─AbstractModifier 'abstract'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   ├─ClassDecl ';'
+// CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ ├─ExternModifier 'extern'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'D'
+// CHECK:STDOUT:   ├─ClassDecl ';'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'A'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─BaseModifier 'base'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'B'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─AbstractModifier 'abstract'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─ExternModifier 'extern'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'D'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -62,8 +62,17 @@ auto HandleLambdaAfterParams(Context& context) -> void {
     CARBON_DIAGNOSTIC(ExpectedLambdaBody, Error,
                       "expected `->`, `=>`, or `{{`");
     context.emitter().Emit(*context.position(), ExpectedLambdaBody);
+
+    // Add a dummy node for the missing body without consuming the current
+    // token, then bundle everything into a complete lambda node. This keeps the
+    // lambda a valid expression for error recovery -- otherwise the orphaned
+    // `LambdaIntroducer` would be left where an expression is required, for
+    // example in `(fn)`.
+    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
+                        /*has_error=*/true);
+
     state.has_error = true;
-    context.ReturnErrorOnState();
+    context.PushState(state, StateKind::LambdaBodyFinish);
   }
 }
 

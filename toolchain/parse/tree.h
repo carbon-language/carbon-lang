@@ -13,11 +13,11 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator.h"
 #include "llvm/ADT/iterator_range.h"
+#include "llvm/Support/TypeName.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/parse/node_kind.h"
-#include "toolchain/parse/typed_nodes.h"
 
 namespace Carbon::Parse {
 
@@ -134,7 +134,7 @@ class Tree : public Printable<Tree> {
 
   template <typename IdT>
   auto IsValid(IdT id) const -> bool {
-    using T = typename NodeForId<IdT>::TypedNode;
+    using T = NodeForId<IdT>::TypedNode;
     CARBON_DCHECK(node_kind(id) == T::Kind);
     return !node_has_error(id);
   }
@@ -157,7 +157,8 @@ class Tree : public Printable<Tree> {
   auto As(NodeId n) const -> T {
     CARBON_DCHECK(n.has_value());
     CARBON_DCHECK(ConvertTo<T>::AllowedFor(node_kind(n)),
-                  "cannot convert {0} to {1}", node_kind(n), typeid(T).name());
+                  "cannot convert {0} to {1}", node_kind(n),
+                  llvm::getTypeName<T>());
     return T::UnsafeMake(n);
   }
 

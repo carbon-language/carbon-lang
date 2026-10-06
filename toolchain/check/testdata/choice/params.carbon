@@ -39,7 +39,7 @@ choice C {
 // --- fail_todo_generic_params.carbon
 library "[[@TEST_NAME]]";
 
-choice C(T:! type) {
+choice C(T: type) {
   // CHECK:STDERR: fail_todo_generic_params.carbon:[[@LINE+4]]:6: error: semantics TODO: `choice alternatives with parameters are not yet supported` [SemanticsTodo]
   // CHECK:STDERR:   Alt(a: T)
   // CHECK:STDERR:      ^~~~~~

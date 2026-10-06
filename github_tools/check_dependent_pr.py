@@ -400,11 +400,11 @@ def _process_pr(
         pr_node["headRefOid"], state, description, token, dry_run
     )
 
-    first_independent_commit_oid = None
+    first_non_dep_oid = None
     if open_deps:
-        dependent_oids = set()
+        dep_oids = set()
         for d in open_deps:
-            dependent_oids.update(pr_to_commits[d])
+            dep_oids.update(pr_to_commits[d])
 
         # previous_first_commit already assigned from comment state.
         if previous_first_commit and previous_first_commit in current_oids:
@@ -413,18 +413,18 @@ def _process_pr(
             start_idx = 0
 
         # Assumes `current_oids` is in chronological order (oldest first).
-        # This guarantees we find the first independent commit to start the
+        # This guarantees we find the first non-dependency commit to start the
         # review.
         for oid in current_oids[start_idx:]:
-            if oid not in dependent_oids:
-                first_independent_commit_oid = oid
+            if oid not in dep_oids:
+                first_non_dep_oid = oid
                 break
 
         last_dep_pr_num = max(open_deps)
         last_dep_oids = pr_to_commits[last_dep_pr_num]
 
         # Find the most recent commit in the current PR that is also in the
-        # last dependent PR.
+        # last dependency PR.
         last_dep_head_oid = None
         for oid in reversed(current_oids):
             if oid in last_dep_oids:
@@ -433,15 +433,14 @@ def _process_pr(
 
         # Detect non-linear history: any commit in the current PR that is in
         # *some* dependency but *not* in the last dependency.
-        any_later_dependent_oids = any(
-            oid in dependent_oids and oid not in last_dep_oids
-            for oid in current_oids
+        any_later_dep_oids = any(
+            oid in dep_oids and oid not in last_dep_oids for oid in current_oids
         )
 
     if (
         open_deps == parsed_open_deps
         and merged_deps == parsed_merged_deps
-        and first_independent_commit_oid == previous_first_commit
+        and first_non_dep_oid == previous_first_commit
     ):
         return
 
@@ -452,7 +451,7 @@ def _process_pr(
     new_state: dict[str, Any] = {
         "open": open_deps,
         "merged": merged_deps,
-        "first_commit": first_independent_commit_oid,
+        "first_commit": first_non_dep_oid,
     }
     state_json = json.dumps(new_state)
 
@@ -469,10 +468,10 @@ def _process_pr(
                 f"Depends on {pr_list_str}, start review with "
                 f"[these changes]({changes_url})"
             )
-            if any_later_dependent_oids:
+            if any_later_dep_oids:
                 comment_body += (
                     "\n\n> [!WARNING]\n"
-                    "> Also contains changes from dependent PRs due to "
+                    "> Also contains changes from dependency PRs due to "
                     "non-linear history."
                 )
         else:
@@ -481,11 +480,11 @@ def _process_pr(
                 f"commit from simple analysis"
             )
     else:
-        comment_body += "All dependent PRs are merged."
+        comment_body += "All dependency PRs are merged."
 
     if merged_deps:
         merged_str = ", ".join([f"#{num}" for num in sorted(merged_deps)])
-        comment_body += f"\n\nMerged dependent PRs: {merged_str}"
+        comment_body += f"\n\nMerged dependency PRs: {merged_str}"
 
     comment_body += f"\n\n(Last updated: {timestamp})"
 

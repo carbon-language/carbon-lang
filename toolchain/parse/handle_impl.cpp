@@ -29,7 +29,8 @@ auto HandleImplAfterIntroducer(Context& context) -> void {
     context.PushState(StateKind::ImplAfterForall);
     context.AddLeafNode(NodeKind::Forall, context.Consume());
     if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
-      context.PushState(StateKind::PatternListAsImplicit);
+      context.PushState(StateKind::PatternListAsImplicit, *context.position(),
+                        BindingContext::DeducedParam);
     } else {
       CARBON_DIAGNOSTIC(ImplExpectedAfterForall, Error,
                         "expected `[` after `forall` in `impl` declaration");

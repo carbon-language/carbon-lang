@@ -11,19 +11,19 @@
 var x: package.Foo = package.Bar;
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:             {kind: 'PackageExpr', text: 'package'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:           {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'PackageExpr', text: 'package'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Bar'},
-// CHECK:STDOUT:       {kind: 'MemberAccessExpr', text: '.', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ╭─PackageExpr 'package'
+// CHECK:STDOUT:   │ │   │ ├─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   │ │   ├─MemberAccessExpr '.'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─PackageExpr 'package'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'Bar'
+// CHECK:STDOUT:   │ ├─MemberAccessExpr '.'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

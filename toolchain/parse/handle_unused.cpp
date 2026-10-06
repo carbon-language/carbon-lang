@@ -20,7 +20,8 @@ auto HandleUnusedPattern(Context& context) -> void {
 
   context.PushStateForPattern(StateKind::Pattern, state.in_var_pattern,
                               /*in_unused_pattern=*/true,
-                              state.ambient_precedence);
+                              state.in_field_shorthand_pattern,
+                              state.binding_context, state.ambient_precedence);
 }
 
 auto HandleFinishUnusedPattern(Context& context) -> void {

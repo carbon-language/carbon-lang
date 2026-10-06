@@ -286,12 +286,12 @@ Disadvantages:
         expectations, for example in some important bit-manipulation cases.
     -   Give integer types a range of values rather than simply a bit-width. For
         example, we can say that negation on `i32` produces a type that can
-        represent [-2<sup>31</sup>+1, 2<sup>31</sup>], which still fits in 32 bits.
-        However, this would add significant complexity to the type system, and with
-        this approach, division would still increase the bit width: for example,
-        `a / b`, where `a` and `b` are `iN`s, has 2<sup>`N`</sup>+1 distinct possible
-        values. This is especially surprising because integer division is usually
-        expected to make a number smaller!
+        represent [-2<sup>31</sup>+1, 2<sup>31</sup>], which still fits in 32
+        bits. However, this would add significant complexity to the type system,
+        and with this approach, division would still increase the bit width: for
+        example, `a / b`, where `a` and `b` are `iN`s, has 2<sup>`N`</sup>+1
+        distinct possible values. This is especially surprising because integer
+        division is usually expected to make a number smaller!
 -   Refactoring code becomes more challenging, as the appropriate intermediate
     type must be determined. Mitigating this, the type system would inform the
     programmer when they make a mistake.
@@ -379,9 +379,9 @@ cases are:
     difference of such unsigned quantities, and it's generally preferable for
     such subtractions to produce a negative result rather than a subtle bug.
     Moreover, while a restriction to non-negative values is common, supporting
-    only the case of a range restriction to [0, 2<sup>N</sup>-1], but not any other
-    range, does not do a good job of addressing the general desire to capture intent
-    and to make invalid states unrepresentable.
+    only the case of a range restriction to [0, 2<sup>N</sup>-1], but not any
+    other range, does not do a good job of addressing the general desire to
+    capture intent and to make invalid states unrepresentable.
 -   Ability to reduce storage size. Spending a sign bit every time a number is
     stored, even when it's known to be non-negative is wasteful. This is an
     important concern, and one we should address, but it's thought to be better
@@ -530,7 +530,7 @@ signed integers (whether we provide those operations as operators or library
 functions). Assuming operator notation for now, and that we define modulo as
 `a % b == a - a / b * b`, the following options all have merit:
 
-<!-- prettier-ignore -->
+<!-- rumdl-disable -->
 | Property                             | Round towards zero (truncating division) | Round towards negative infinity (floor division) | Round based on sign of divisor\[1] (Euclidean division) |
 | ------------------------------------ | -------- | -------- | --------- |
 | `(-a) / b ==`<br>` a / (-b)`         | :+1: Yes | :+1: Yes | No        |
@@ -541,6 +541,7 @@ functions). Assuming operator notation for now, and that we define modulo as
 | x86 instruction?                     | :+1: Yes: `cqo` (or similar) + `idiv` | First option + fixup:<br> `s * (a / (s * b))` where `s` is `sign(a) * sign(b)`[2] | First option + fixup:<br>`a / b - (a % b < 0)` |
 | LLVM IR + optimization support       | :+1: Yes | No       | No        |
 | Use in existing languages            | C, C++, Rust, Swift <br> `quotRem` in Haskell | `//` and `%` in Python <br> `/` in Python 2 only <br> `divMod` in Haskell | None? |
+<!-- rumdl-enable -->
 
 The cells marked :+1: suggest generally desirable properties. For further
 reading, see

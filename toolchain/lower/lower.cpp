@@ -23,14 +23,17 @@ auto LowerToLLVM(
   Context context(
       &llvm_context, std::move(fs), options.want_debug_info,
       &tree_and_subtrees_getters,
-      sem_ir.cpp_file() ? sem_ir.cpp_file()->GetCodeGenerator() : nullptr,
+      sem_ir.cpp_file() ? sem_ir.cpp_file()->code_generator() : nullptr,
       sem_ir.filename(), total_ir_count, options.opt_level,
       options.mangle_string_fingerprint, options.vlog_stream);
 
-  // TODO: Consider disabling instruction naming by default if we're not
-  // producing textual LLVM IR.
-  SemIR::InstNamer inst_namer(&sem_ir, total_ir_count);
-  context.GetFileContext(&sem_ir, &inst_namer).LowerDefinitions();
+  std::optional<SemIR::InstNamer> inst_namer;
+  if (options.generate_inst_names) {
+    inst_namer.emplace(&sem_ir, total_ir_count);
+  }
+  context
+      .GetFileContext(&sem_ir, inst_namer.has_value() ? &*inst_namer : nullptr)
+      .LowerDefinitions();
 
   std::unique_ptr<llvm::Module> module = std::move(context).Finalize();
 

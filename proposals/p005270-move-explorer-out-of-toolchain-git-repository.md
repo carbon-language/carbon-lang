@@ -68,18 +68,18 @@ explorer tests[^2][^3][^4].
 
 ## Proposal
 
-1. Add a tag `explorer-archived` in the main `carbon-lang` git repository.
-2. Create a new `explorer` repository under the `carbon-language` organization
-   that only contains the `//explorer` and `//installers` directories and their
-   dependencies at head.
-3. Locally ensure the explorer tests build and pass under the `explorer`
-   repository.
-4. Add a `README.md` to the `explorer` repository that explains explorer is
-   archived and not under active development.
-5. Stop building, or remove the "Explorer (trunk)" compiler option from
-   [carbon.compiler-explorer.com](https://carbon.compiler-explorer.com).
-6. Delete `//explorer` and `//installers` in the main `carbon-lang` repository.
-7. Archive the `explorer` repository in GitHub, making it read-only.
+1.  Add a tag `explorer-archived` in the main `carbon-lang` git repository.
+2.  Create a new `explorer` repository under the `carbon-language` organization
+    that only contains the `//explorer` and `//installers` directories and their
+    dependencies at head.
+3.  Locally ensure the explorer tests build and pass under the `explorer`
+    repository.
+4.  Add a `README.md` to the `explorer` repository that explains explorer is
+    archived and not under active development.
+5.  Stop building, or remove the "Explorer (trunk)" compiler option from
+    [carbon.compiler-explorer.com](https://carbon.compiler-explorer.com).
+6.  Delete `//explorer` and `//installers` in the main `carbon-lang` repository.
+7.  Archive the `explorer` repository in GitHub, making it read-only.
 
 Note that fuzzer test cases from the explorer are already relocated under
 `//toolchain/*/fuzzer_corpus/`.
@@ -114,23 +114,17 @@ However the [problems](#problem) discussed above result from this situation. We
 can gain the benefit of access to the codebase while reducing its impact on
 developers and users by moving it into a separate git repository.
 
-[^5]:
-    https://discord.com/channels/655572317891461132/998959756045713438/1225116234199203860
+[^5]: https://discord.com/channels/655572317891461132/998959756045713438/1225116234199203860
 
-[^6]:
-    https://discord.com/channels/655572317891461132/998959756045713438/1237143981150830673
+[^6]: https://discord.com/channels/655572317891461132/998959756045713438/1237143981150830673
 
-[^7]:
-    https://discord.com/channels/655572317891461132/709488742942900284/1250577021474443376
+[^7]: https://discord.com/channels/655572317891461132/709488742942900284/1250577021474443376
 
-[^8]:
-    https://discord.com/channels/655572317891461132/748959784815951963/1255669935439482993
+[^8]: https://discord.com/channels/655572317891461132/748959784815951963/1255669935439482993
 
-[^9]:
-    https://discord.com/channels/655572317891461132/655578254970716160/1302033729761443963
+[^9]: https://discord.com/channels/655572317891461132/655578254970716160/1302033729761443963
 
-[^10]:
-    https://discord.com/channels/655572317891461132/941071822756143115/1349523309682753606
+[^10]: https://discord.com/channels/655572317891461132/941071822756143115/1349523309682753606
 
 ## Alternatives considered
 

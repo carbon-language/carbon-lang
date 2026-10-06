@@ -46,8 +46,8 @@ class Logger : public clang::clangd::Logger {
 
 auto Run(const InstallPaths& installation, FILE* input_stream,
          llvm::raw_ostream& output_stream, llvm::raw_ostream& error_stream,
-         llvm::raw_ostream* vlog_stream, Diagnostics::Consumer& consumer)
-    -> bool {
+         llvm::raw_ostream* vlog_stream, Diagnostics::Consumer& consumer,
+         bool prelude_import) -> bool {
   // The language server internally uses diagnostics for logging issues, but the
   // clangd parts have their own logging system. We intercept that here.
   Logger logger(&error_stream, vlog_stream);
@@ -59,7 +59,8 @@ auto Run(const InstallPaths& installation, FILE* input_stream,
                                       /*InMirror=*/nullptr,
                                       /*Pretty=*/true));
   OutgoingMessages outgoing(transport.get());
-  Context context(&installation, vlog_stream, &consumer, &outgoing);
+  Context context(&installation, vlog_stream, &consumer, &outgoing,
+                  prelude_import);
   IncomingMessages incoming(transport.get(), &context);
 
   // Run the server loop.

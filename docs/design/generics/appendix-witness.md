@@ -204,7 +204,7 @@ defining a witness table type like:
 class Vector {
   // `Self` is the representation type, which is only
   // known at compile time.
-  var Self:! type;
+  var Self: type;
   // `fnty` is placeholder syntax for a "function type",
   // so `Add` is a function that takes two `Self` parameters
   // and returns a value of type `Self`.
@@ -230,9 +230,9 @@ var VectorForPoint_Inline: Vector  = {
 };
 ```
 
-Since generic arguments (where the parameter is declared using `:!`) are passed
-at compile time, the actual value of `VectorForPoint_Inline` can be used to
-generate the code for functions using that impl.
+Since generic arguments are passed at compile time, the actual value of
+`VectorForPoint_Inline` can be used to generate the code for functions using
+that impl.
 
 ### Associated facets example
 
@@ -245,7 +245,7 @@ interface Iterator {
 }
 
 interface Container {
-  let IteratorType:! Iterator;
+  let IteratorType: Iterator;
   fn Begin(ref self) -> IteratorType;
 }
 ```
@@ -254,15 +254,15 @@ could be represented by:
 
 ```
 class Iterator {
-  var Self:! type;
+  var Self: type;
   var Advance: fnty(this: Self*);
   ...
 }
 class Container {
-  var Self:! type;
+  var Self: type;
 
   // Witness that IteratorType implements Iterator.
-  var IteratorType:! Iterator*;
+  var IteratorType: Iterator*;
 
   // Method
   var Begin: fnty (this: Self*) -> IteratorType->Self;

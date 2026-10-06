@@ -86,6 +86,11 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
            *this == TokenKind::FloatTypeLiteral;
   }
 
+  // Test whether this kind of token is a dollar int literal.
+  auto is_dollar_int_literal() const -> bool {
+    return *this == TokenKind::DollarIntLiteral;
+  }
+
   // Test whether this kind of token is a word.
   auto is_word() const -> bool {
     return *this == TokenKind::Identifier || *this == TokenKind::Underscore ||
@@ -94,8 +99,7 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
 
   // Test whether this kind of token is a binding pattern operator.
   auto is_binding_pattern_operator() const -> bool {
-    return *this == TokenKind::Colon || *this == TokenKind::ColonExclaim ||
-           *this == TokenKind::ColonQuestion;
+    return *this == TokenKind::Colon || *this == TokenKind::ColonQuestion;
   }
 
   // If this token kind has a fixed spelling when in source code, returns it.

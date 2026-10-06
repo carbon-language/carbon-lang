@@ -27,3 +27,4 @@ wants to pursue, as well as those we want to exclude.
 -   [Prefer providing only one way to do a given thing](one_way.md)
 -   [One static open extension mechanism](static_open_extension.md)
 -   [Success criteria](success_criteria.md)
+-   [File concatenation](file_concatenation.md)

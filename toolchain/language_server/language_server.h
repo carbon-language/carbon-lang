@@ -18,8 +18,8 @@ namespace Carbon::LanguageServer {
 // This is thread-hostile because `clangd::LoggingSession` relies on a global.
 auto Run(const InstallPaths& installation, FILE* input_stream,
          llvm::raw_ostream& output_stream, llvm::raw_ostream& error_stream,
-         llvm::raw_ostream* vlog_stream, Diagnostics::Consumer& consumer)
-    -> bool;
+         llvm::raw_ostream* vlog_stream, Diagnostics::Consumer& consumer,
+         bool prelude_import) -> bool;
 
 }  // namespace Carbon::LanguageServer
 

@@ -10,7 +10,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/impl/require_satisified_in_named_constraint.carbon
 
-// --- todo_fail_missing_require_for_concrete_type.carbon
+// --- fail_missing_require_for_concrete_type.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
@@ -25,10 +25,13 @@ constraint N {
 impl () as N;
 
 // () needs to impl Z at the start of the definition.
-// TODO: RequireImplsNotImplemented error that () does not implement Z.
+// CHECK:STDERR: fail_missing_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: constraint `N` being implemented requires that `()` implements `Z` [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR: impl () as N {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl () as N {}
 
-// --- todo_fail_missing_require_for_symbolic_type.carbon
+// --- fail_missing_require_for_symbolic_type.carbon
 library "[[@TEST_NAME]]";
 
 interface Y {}
@@ -40,11 +43,14 @@ constraint N {
 }
 
 // T does not need to impl Z yet.
-impl forall [T:! type] T as N;
+impl forall [T: type] T as N;
 
 // T needs to impl Z at the start of the definition.
-// TODO: RequireImplsNotImplemented error that () does not implement Z.
-impl forall [T:! type] T as N {}
+// CHECK:STDERR: fail_missing_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: constraint `N` being implemented requires that `T` implements `Z` [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR: impl forall [T: type] T as N {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl forall [T: type] T as N {}
 
 // --- require_for_concrete_type.carbon
 library "[[@TEST_NAME]]";
@@ -80,15 +86,15 @@ constraint N {
 }
 
 // T does not need to impl Z yet.
-impl forall [T:! type] T as N;
+impl forall [T: type] T as N;
 
 // Now we know T impls Z.
-impl forall [T:! type] T as Z;
+impl forall [T: type] T as Z;
 
 // So no error here.
-impl forall [T:! type] T as N {}
+impl forall [T: type] T as N {}
 
-impl forall [T:! type] T as Z {}
+impl forall [T: type] T as Z {}
 
 // --- require_for_symbolic_type_impl_matches_same_interface.carbon
 library "[[@TEST_NAME]]";
@@ -102,18 +108,18 @@ constraint N {
 }
 
 // This only matches T that impl Z so no error here.
-impl forall [T:! Z] T as N {}
+impl forall [T: Z] T as N {}
 
 // --- require_for_generic_interfaces.carbon
 library "[[@TEST_NAME]]";
 
-interface Y(T:! type) {}
-interface Z(T:! type) {}
+interface Y(T: type) {}
+interface Z(T: type) {}
 
 class A;
 class B;
 
-constraint N(U:! type) {
+constraint N(U: type) {
   extend require impls Y(U);
   require impls Z(B);
 }

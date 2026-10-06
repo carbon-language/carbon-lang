@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 class C {

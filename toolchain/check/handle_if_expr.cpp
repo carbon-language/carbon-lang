@@ -24,6 +24,10 @@ auto HandleParseNode(Context& context, Parse::IfExprIfId node_id) -> bool {
   auto else_block_id = AddDominatedBlockAndBranch(context, if_node);
 
   // Start emitting the `then` block.
+  // TODO: Track the condition on the scope stack so that it can be associated
+  // with any cleanups that are registered within this arm of the `if`. We want
+  // to conditionalize the cleanups so they run in the same cases where the
+  // corresponding `if` arm was taken.
   context.inst_block_stack().Pop();
   context.inst_block_stack().Push(then_block_id);
   context.region_stack().AddToRegion(then_block_id, node_id);

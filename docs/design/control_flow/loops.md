@@ -77,8 +77,8 @@ The `Core.Iterate` interface is defined as:
 
 ```carbon
 interface Iterate {
-  let ElementType:! Copy & Destroy;
-  let CursorType:! Destroy;
+  let ElementType: Copy & Destroy;
+  let CursorType: Destroy;
   fn NewCursor(self) -> CursorType;
   fn Next(self, ref cursor: CursorType) -> Optional(ElementType);
 }

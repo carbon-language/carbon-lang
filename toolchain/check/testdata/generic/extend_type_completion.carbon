@@ -13,9 +13,9 @@
 // --- class_impl_doesnt_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface K(T:! type) {}
+interface K(T: type) {}
 
-class C(N:! i32) {
+class C(N: i32) {
   impl as K(array(i32, N)) {}
 }
 
@@ -25,9 +25,9 @@ fn F(unused v: C(-1)) {}
 // --- fail_class_extend_impl_does_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface K(T:! type) {}
+interface K(T: type) {}
 
-class C(N:! i32) {
+class C(N: i32) {
   extend impl as K(array(i32, N)) {}
 }
 
@@ -44,8 +44,8 @@ fn F(unused v: C(-1)) {}
 // --- interface_require_impls_doesnt_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface K(T:! type) {}
-interface J(N:! i32) {
+interface K(T: type) {}
+interface J(N: i32) {
   require impls K(array(i32, N));
 }
 
@@ -55,11 +55,11 @@ fn F(unused v: J(-1)) {}
 // --- fail_interface_extend_require_impls_does_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface K(T:! type) {}
-interface J(N:! i32) {
+interface K(T: type) {}
+interface J(N: i32) {
   extend require impls K(array(i32, N));
 }
-interface I(N:! i32) {
+interface I(N: i32) {
   extend require impls J(N);
 }
 
@@ -84,8 +84,8 @@ fn F(unused v: I(-1)) {}
 // --- constraint_require_impls_doesnt_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface K(T:! type) {}
-constraint J(N:! i32) {
+interface K(T: type) {}
+constraint J(N: i32) {
   require impls K(array(i32, N));
 }
 
@@ -95,11 +95,11 @@ fn F(unused v: J(-1)) {}
 // --- fail_constraint_extend_require_impls_does_need_complete_interface.carbon
 library "[[@TEST_NAME]]";
 
-interface K(T:! type) {}
-constraint J(N:! i32) {
+interface K(T: type) {}
+constraint J(N: i32) {
   extend require impls K(array(i32, N));
 }
-constraint I(N:! i32) {
+constraint I(N: i32) {
   extend require impls J(N);
 }
 
@@ -120,7 +120,7 @@ fn F(unused v: I(-1)) {}
 library "[[@TEST_NAME]]";
 
 interface K {}
-interface J(N:! i32) {
+interface J(N: i32) {
   require array(Self, N) impls K;
 }
 
@@ -131,7 +131,7 @@ fn F(unused v: J(-1)) {}
 library "[[@TEST_NAME]]";
 
 interface K {}
-constraint J(N:! i32) {
+constraint J(N: i32) {
   require array(Self, N) impls K;
 }
 

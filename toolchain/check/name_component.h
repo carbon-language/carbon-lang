@@ -14,8 +14,8 @@ namespace Carbon::Check {
 
 class Context;
 
-// A component in a declaration name, such as `C[T:! type](N:! T)` in
-// `fn C[T:! type](N:! T).F() {}`.
+// A component in a declaration name, such as `C[T: type](N: T)` in
+// `fn C[T: type](N: T).F() {}`.
 struct NameComponent {
   // The name of the declaration.
   Parse::NodeId name_loc_id;
@@ -53,8 +53,10 @@ auto PopNameComponent(Context& context,
     -> NameComponent;
 
 // Equivalent to PopNameComponent, but also diagnoses if the name component has
-// parameters.
-auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer)
+// parameters. Sets `*diagnosed_params` to true when diagnosing parameters if
+// it's not null.
+auto PopNameComponentWithoutParams(Context& context, Lex::TokenKind introducer,
+                                   bool* diagnosed_params = nullptr)
     -> NameComponent;
 
 }  // namespace Carbon::Check

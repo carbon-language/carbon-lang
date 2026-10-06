@@ -63,11 +63,16 @@ cc_binary(
     name = "compile_benchmark",
     testonly = 1,
     srcs = ["compile_benchmark.cpp"],
+    # The subprocess benchmarks execute the installed toolchain binaries.
+    data = ["//toolchain/install:install_data"],
     deps = [
         ":source_gen_lib",
         "//common:all_llvm_targets",
+        "//common:filesystem",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "//testing/base:global_exe_path",
+        "//toolchain/base:install_paths",
         "//toolchain/base:install_paths_test_helpers",
         "//toolchain/driver",
         "//toolchain/driver:clang_runner",
@@ -83,8 +88,39 @@ sh_test(
     srcs = [":compile_benchmark"],
     args = [
         "--benchmark_dry_run",
-        # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=/256$$",
+        # Dry-run the smallest (256-line) case of every benchmark. Also run just
+        # the lex benchmark that executes a subprocess to reduce the overhead
+        # and reduce timeouts. The `$$` is repeated for Bazel escaping of `$`.
+        "--benchmark_filter=^(BM_CompileApi.*/256|BM_CompileExec.*Phase::Lex.*/256/real_time)$$",
     ],
+    env = cc_env(),
+)
+
+cc_binary(
+    name = "prelude_benchmark",
+    testonly = 1,
+    srcs = ["prelude_benchmark.cpp"],
+    deps = [
+        "//common:all_llvm_targets",
+        "//common:check",
+        "//testing/base:benchmark_helpers",
+        "//testing/base:benchmark_main",
+        "//testing/base:global_exe_path",
+        "//toolchain/base:install_paths",
+        "//toolchain/base:install_paths_test_helpers",
+        "//toolchain/base:mem_usage",
+        "//toolchain/driver",
+        "@google_benchmark//:benchmark",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+sh_test(
+    name = "prelude_benchmark_test",
+    size = "small",
+    srcs = [":prelude_benchmark"],
+    # No `--benchmark_filter` is needed (unlike `compile_benchmark_test`): the
+    # benchmarks aren't `Range()`-parameterized, so a dry run is already cheap.
+    args = ["--benchmark_dry_run"],
     env = cc_env(),
 )

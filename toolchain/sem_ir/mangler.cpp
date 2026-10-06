@@ -6,7 +6,11 @@
 
 #include <string>
 
+#include "clang/AST/ASTContext.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/CodeGen/ModuleBuilder.h"
 #include "common/raw_string_ostream.h"
+#include "llvm/IR/Module.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/ids.h"
@@ -119,7 +123,6 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case SemIR::NamespaceType::Kind:
           case SemIR::RequireSpecificDefinitionType::Kind:
           case SemIR::SpecificFunctionType::Kind:
-          case SemIR::TypeType::Kind:
           case SemIR::VtableType::Kind:
           case SemIR::WitnessType::Kind: {
             os << self_inst.kind().ir_name();
@@ -135,6 +138,11 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
             break;
           }
           default: {
+            if (self_const_inst_id == SemIR::TypeType::TypeInstId) {
+              os << "type";
+              break;
+            }
+
             // Fall back to including a fingerprint.
             MangleFingerprint(os, &sem_ir(), self_const_inst_id);
             break;
@@ -183,12 +191,14 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
   }
 }
 
-auto Mangler::Mangle(SemIR::FunctionId function_id,
-                     SemIR::SpecificId specific_id) -> std::string {
+auto Mangler::MangleImpl(SemIR::FunctionId function_id,
+                         SemIR::SpecificId specific_id, llvm::raw_ostream& os)
+    -> void {
   const auto& function = sem_ir().functions().Get(function_id);
   if (SemIR::IsEntryPoint(sem_ir(), function_id)) {
     CARBON_CHECK(!specific_id.has_value(), "entry point should not be generic");
-    return "main";
+    os << "main";
+    return;
   }
 
   // Clang should emit C++ function declarations for us.
@@ -199,7 +209,6 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
                  "Shouldn't mangle C++ function");
   }
 
-  RawStringOstream os;
   os << "_C";
 
   MangleNameId(os, function.name_id);
@@ -211,11 +220,31 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
     case SemIR::Function::SpecialFunctionKind::CppThunk:
       break;
 
-    case SemIR::Function::SpecialFunctionKind::CoreWitness:
+    case SemIR::Function::SpecialFunctionKind::Generated: {
       os << ".";
-      MangleFingerprint(os, &sem_ir(), function.self_param_id);
+      const auto& canonical_key = sem_ir()
+                                      .generated_functions()
+                                      .Get(function.generated_function_id())
+                                      .canonical_key;
+      auto specific_interface = sem_ir().specific_interfaces().Get(
+          canonical_key.specific_interface_id);
+      if (specific_interface.specific_id.has_value()) {
+        const auto& specific =
+            sem_ir().specifics().Get(specific_interface.specific_id);
+        // TODO: Should we use the fully qualified name of each argument (and
+        // any parameters each type has...) when possible?
+        MangleFingerprint(os, &sem_ir(), specific.args_id);
+        os << ".";
+      }
+      MangleFingerprint(
+          os, &sem_ir(),
+          sem_ir().types().GetTypeInstId(canonical_key.self_type_id));
+      // TODO: We want to include the function's parameters here when they are
+      // part of the GeneratedFunction::CanonicalKey to disambiguate overloads.
+      // Or perhaps using the index of the function in the witness table?
       os << ":core";
       break;
+    }
     case SemIR::Function::SpecialFunctionKind::Thunk:
       os << ":thunk";
       if (function.thunk_id().has_value()) {
@@ -236,9 +265,11 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
 
     case SemIR::Function::SpecialFunctionKind::Builtin:
       CARBON_FATAL("Attempting to mangle declaration of builtin function {0}",
-                   function.builtin_function_kind());
+                   function.non_generated_builtin_function_kind());
     case SemIR::Function::SpecialFunctionKind::HasCppThunk:
       CARBON_FATAL("C++ functions should have been handled earlier");
+    case SemIR::Function::SpecialFunctionKind::CppFunctionPointerThunk:
+      CARBON_FATAL("Attempting to mangle call to function pointer");
   }
 
   MangleInverseQualifiedNameScope(os, function.parent_scope_id,
@@ -251,7 +282,32 @@ auto Mangler::Mangle(SemIR::FunctionId function_id,
   }
 
   MangleSpecificId(os, specific_id);
+}
 
+auto Mangler::Mangle(SemIR::FunctionId function_id,
+                     SemIR::SpecificId specific_id) -> std::string {
+  RawStringOstream os;
+  MangleImpl(function_id, specific_id, os);
+  return os.TakeStr();
+}
+
+auto Mangler::MangleWithPlatform(SemIR::FunctionId function_id,
+                                 SemIR::SpecificId specific_id) -> std::string {
+  RawStringOstream os;
+
+  CARBON_CHECK(sem_ir_.cpp_file());
+  // The only platform mangling that's relevant for us is applying a global
+  // prefix, if the platform has one.
+  // TODO: Cache this rather than parsing the data layout string each time we
+  // need it.
+  if (char prefix = llvm::DataLayout(sem_ir_.cpp_file()
+                                         ->ast_context()
+                                         .getTargetInfo()
+                                         .getDataLayoutString())
+                        .getGlobalPrefix()) {
+    os << prefix;
+  }
+  MangleImpl(function_id, specific_id, os);
   return os.TakeStr();
 }
 
@@ -312,6 +368,12 @@ auto Mangler::MangleVTable(const SemIR::Class& class_info,
 
   MangleSpecificId(os, specific_id);
 
+  return os.TakeStr();
+}
+
+auto Mangler::MangleSpecificId(SemIR::SpecificId specific_id) -> std::string {
+  RawStringOstream os;
+  MangleSpecificId(os, specific_id);
   return os.TakeStr();
 }
 

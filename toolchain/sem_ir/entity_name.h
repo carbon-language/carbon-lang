@@ -17,22 +17,37 @@ struct EntityName : public Printable<EntityName> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << "{name: " << name_id << ", parent_scope: " << parent_scope_id
         << ", index: " << bind_index_value << ", is_template: " << is_template
-        << ", is_unused: " << is_unused << ", form: " << form_id << "}";
+        << ", is_unused: " << is_unused;
+    if (name_id == SemIR::NameId::PeriodSelf) {
+      out << ", is_frozen_period_self: " << is_frozen_period_self;
+    }
+    out << ", form: " << form_id << ", type: " << type_inst_id << "}";
+  }
+
+  // Returns a copy of this name with the fields that are not part of its
+  // identity cleared. Two `EntityName`s that differ only in how the declared
+  // type of the binding was written describe the same name.
+  auto IdentityKey() const -> EntityName {
+    EntityName key = *this;
+    key.type_inst_id = TypeInstId::None;
+    return key;
   }
 
   friend auto CarbonHashtableEq(const EntityName& lhs, const EntityName& rhs)
       -> bool {
     // This requires that there are no padding bits in the type. This is upheld
     // since it holds values all of the same size: each is 32 bits, with one
-    // split into 30, 1, and 1 bits.
-    return std::memcmp(&lhs, &rhs, sizeof(EntityName)) == 0;
+    // split into 29, 1, 1, and 1 bits.
+    EntityName lhs_key = lhs.IdentityKey();
+    EntityName rhs_key = rhs.IdentityKey();
+    return std::memcmp(&lhs_key, &rhs_key, sizeof(EntityName)) == 0;
   }
 
   // Hashing for EntityName. See common/hashing.h.
   friend auto CarbonHashValue(const EntityName& value, uint64_t seed)
       -> HashCode {
     Hasher hasher(seed);
-    hasher.HashRaw(value);
+    hasher.HashRaw(value.IdentityKey());
     return static_cast<HashCode>(hasher);
   }
 
@@ -53,11 +68,15 @@ struct EntityName : public Printable<EntityName> {
   // them for other kinds of `EntityName`.
 
   // The bind_index() value, unwrapped so it can be stored in a bit-field.
-  int32_t bind_index_value : 30 = CompileTimeBindIndex::None.index;
+  int32_t bind_index_value : 29 = CompileTimeBindIndex::None.index;
   // Whether this binding is a template parameter.
   bool is_template : 1 = false;
   // Whether this binding is marked unused.
   bool is_unused : 1 = false;
+  // Whether this binding is a `.Self` symbolic binding, within the scope of the
+  // `.Self` name during facet type under construction. Such bindings cannot be
+  // replaced during identify.
+  bool is_frozen_period_self : 1 = false;
 
   // The declared form of the binding. This is guaranteed to be set for
   // `:?` bindings, and may be set for other binding kinds as well.
@@ -65,6 +84,14 @@ struct EntityName : public Printable<EntityName> {
   // TODO: Unify this with the previous three fields, which also represent form
   // information.
   InstId form_id = InstId::None;
+
+  // The declared type of the binding, as written. This describes the same type
+  // as the binding's `type_id`, but may retain type sugar that `type_id` loses,
+  // such as the use of an alias to name the type. For a `:?` binding, this is
+  // the type component of `form_id`. This is `None` if the binding has no
+  // declared type, or if it was not written in the source, for example because
+  // the binding was synthesized or imported.
+  TypeInstId type_inst_id = TypeInstId::None;
 };
 
 // Value store for EntityName. In addition to the regular ValueStore
@@ -77,12 +104,14 @@ struct EntityNameStore
   // Adds an entity name for a symbolic binding.
   auto AddSymbolicBindingName(NameId name_id, NameScopeId parent_scope_id,
                               CompileTimeBindIndex bind_index, bool is_template,
-                              bool is_unused) -> EntityNameId {
+                              bool is_unused, bool is_frozen_period_self)
+      -> EntityNameId {
     EntityName name = {.name_id = name_id,
                        .parent_scope_id = parent_scope_id,
                        .bind_index_value = bind_index.index,
                        .is_template = is_template,
-                       .is_unused = is_unused};
+                       .is_unused = is_unused,
+                       .is_frozen_period_self = is_frozen_period_self};
     CARBON_CHECK(name.bind_index_value == bind_index.index,
                  "Bind index out of range for bit-field: {0}",
                  bind_index.index);
@@ -131,5 +160,10 @@ inline auto EntityNameStore::MakeCanonical(EntityNameId id) -> EntityNameId {
 }
 
 }  // namespace Carbon::SemIR
+
+namespace Carbon {
+extern template class ValueStore<SemIR::EntityNameId, SemIR::EntityName,
+                                 Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_ENTITY_NAME_H_

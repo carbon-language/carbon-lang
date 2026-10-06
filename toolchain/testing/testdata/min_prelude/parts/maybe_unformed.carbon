@@ -12,6 +12,6 @@ export import library "prelude/parts/destroy";
 
 private fn Make(t: type) -> type = "maybe_unformed.make_type";
 
-class MaybeUnformed(T:! type) {
+class MaybeUnformed(T: type) {
   adapt Make(T);
 }

@@ -485,6 +485,10 @@ class InstStore {
     return Get(inst_id).As<InstT>();
   }
 
+  // Use `Get()` when the instruction type is known.
+  template <typename InstT, typename KnownInstT>
+  auto GetAs(KnownInstId<KnownInstT> inst_id) const = delete;
+
   // Returns the requested instruction as the specified type, if it is of that
   // type.
   template <typename InstT>
@@ -674,7 +678,8 @@ class InstBlockStore
   // Adds an uninitialized block of the given size. The caller is expected to
   // modify values.
   auto AddUninitialized(size_t size) -> InstBlockId {
-    return values().Add(AllocateUninitialized(size));
+    return size ? values().Add(AllocateUninitialized(size))
+                : InstBlockId::Empty;
   }
 
   // Reserves and returns a block ID. The contents of the block should be
@@ -714,6 +719,8 @@ extern template class ValueStore<SemIR::InstBlockId,
                                  Tag<SemIR::CheckIRId>>;
 extern template class BlockValueStore<SemIR::InstBlockId, SemIR::InstId,
                                       Tag<SemIR::CheckIRId>>;
+extern template class ValueStore<SemIR::InstId, SemIR::Inst,
+                                 Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_H_

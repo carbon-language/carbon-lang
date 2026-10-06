@@ -43,7 +43,7 @@ struct Generic : public Printable<Generic> {
   InstBlockId bindings_id;
   // The self specific of this generic, which is a specific where every generic
   // parameter's argument is that same parameter. For example, the self specific
-  // of `Vector(T:! type)` is `Vector(T)`.
+  // of `Vector(T: type)` is `Vector(T)`.
   SpecificId self_specific_id;
 
   // The following members are set at the end of the corresponding region of the
@@ -100,10 +100,27 @@ struct Specific : Printable<Specific> {
                ? decl_block_id
                : definition_block_id;
   }
+  // Sets the specified value block of this specific.
+  auto SetValueBlock(GenericInstIndex::Region region, InstBlockId inst_block_id)
+      -> void {
+    auto& value_block_id = region == GenericInstIndex::Region::Declaration
+                               ? decl_block_id
+                               : definition_block_id;
+    CARBON_CHECK(!value_block_id.has_value(), "Value block set twice");
+    value_block_id = inst_block_id;
+  }
 
   // Returns whether either block has an error.
   auto HasError() const -> bool {
     return decl_block_has_error || definition_block_has_error;
+  }
+  // Sets that one of the blocks has an error.
+  auto SetHasError(GenericInstIndex::Region region) -> void {
+    if (region == SemIR::GenericInstIndex::Declaration) {
+      decl_block_has_error = true;
+    } else {
+      definition_block_has_error = true;
+    }
   }
 
   // The generic that this is a specific version of.

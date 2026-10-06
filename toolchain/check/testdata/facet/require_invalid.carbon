@@ -196,7 +196,7 @@ interface Z {
 // --- todo_fail_impl_mismatch_named_constraint_rewrites.carbon
 library "[[@TEST_NAME]]";
 
-interface Z { let Z0:! type; }
+interface Z { let Z0: type; }
 
 constraint M {
   require impls Z where .Z0 = {};

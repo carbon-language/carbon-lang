@@ -46,8 +46,8 @@ library "[[@TEST_NAME]]";
 
 fn Eq(a: Core.IntLiteral, b: Core.IntLiteral) -> bool = "int.eq";
 
-class Expect(B:! bool) {}
-fn Test(B:! bool) -> Expect(B) { return {}; }
+class Expect(B: bool) {}
+fn Test(generic B: bool) -> Expect(B) { return {}; }
 
 fn F() {
   Test(Eq(5, 5)) as Expect(true);
@@ -62,8 +62,8 @@ library "[[@TEST_NAME]]";
 
 fn Eq(a: Core.IntLiteral, b: i32) -> bool = "int.eq";
 
-class Expect(B:! bool) {}
-fn Test(B:! bool) -> Expect(B) { return {}; }
+class Expect(B: bool) {}
+fn Test(generic B: bool) -> Expect(B) { return {}; }
 
 fn F() {
   Test(Eq(5, 5)) as Expect(true);
@@ -110,6 +110,7 @@ fn Test(n: Core.IntLiteral) {
 // CHECK:STDOUT: --- int_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Eq.type: type = fn_type @Eq [concrete]

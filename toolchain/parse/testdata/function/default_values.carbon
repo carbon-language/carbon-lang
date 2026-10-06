@@ -1,0 +1,93 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+//
+// AUTOUPDATE
+// TIP: To test this file alone, run:
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/function/default_values.carbon
+// TIP: To dump output, run:
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/function/default_values.carbon
+
+fn F(x: i32, y: i32 = 0);
+fn G((x: i32, y: i32) = (1, 2));
+fn H(unused x: i32 = _);
+var b: auto = fn (x: i32 = 0) => x;
+
+// CHECK:STDOUT: - filename: default_values.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ╭─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '='
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'G'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │   ╭─TuplePatternStart '('
+// CHECK:STDOUT:   │ │ │   │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │   │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │   ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │   ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ │   │ ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │   │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │   ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ ╭─TuplePattern ')'
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ │ ├─IntLiteral '1'
+// CHECK:STDOUT:   │ │ │ │ ├─TupleLiteralComma ','
+// CHECK:STDOUT:   │ │ │ │ ├─IntLiteral '2'
+// CHECK:STDOUT:   │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '='
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'H'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │     ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │     ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │     ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │   ╭─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ ╭─UnusedPattern 'unused'
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ ├─DefaultValueUnspecified '_'
+// CHECK:STDOUT:   │ │ ├─DefaultValuePattern '='
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─AutoTypeLiteral 'auto'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─LambdaIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ │ ╭─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ │ ├─DefaultValueExprStart '='
+// CHECK:STDOUT:   │ │ │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ │ ├─DefaultValuePattern '='
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ ├─TerseBodyArrow '=>'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

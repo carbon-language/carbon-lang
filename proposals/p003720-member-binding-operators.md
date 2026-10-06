@@ -164,7 +164,7 @@ The other member access operators -- `x.y`, `x->y`, and `x->(y)` -- are defined
 by how they rewrite into the `x.(y)` form using these two rules:
 
 -   `x.y` is interpreted using the existing
-    [member resolution rules](/docs/design/expressions/member_access.md#member-resolution).
+    [member resolution rules](/docs/design/expressions/member_access.md).
     For example, `x.y` is treated as `x.(T.y)` for non-type values `x` with type
     `T`.
     -   Simple member access of a facet `T`, as in `T.y`, is not rewritten into
@@ -187,8 +187,8 @@ class C {
 Each member of `C` with a distinct name will have a corresponding type (like
 `__TypeOf_C_F`) and value of that type (like `__C_F`). There are two more types
 for each member function (either static class function or method), though, that
-[adapt](/docs/design/generics/terminology.md#adapting-a-type) `C` and represent
-the type of binding that member with either a `C` value or variable.
+[adapt](/docs/design/classes.md#adapters) `C` and represent the type of binding
+that member with either a `C` value or variable.
 
 ```carbon
 class __TypeOf_C_F {}
@@ -229,20 +229,20 @@ Assert((r as __Binding_C_Static).(Call(()).Op)() == 2);
 
 How does this arise?
 
-1. First the simple member access is resolved using the type of the receiver: \
-   `v.F` -> `v.(C.F)`, `v.Static` -> `v.(C.Static)`, `r.F` -> `r.(C.F)`,
-   `r.Static` -> `r.(C.Static)`. \
-   Note that `C.F` is `__C_F` with type `__TypeOf_C_F`, and `C.Static` is
-   `__C_Static` with type `__TypeOf_C_Static`.
-2. It then looks at the expression to the left of the `.`:
-    - If it is a facet value, the "member binding to type" (`BindToType`)
-      operator is applied.
-    - If it is a reference expression, the "member binding to reference"
-      (`BindToRef`) operator is applied.
-    - If it is a value expression, the "member binding to value" (`BindToValue`)
-      operator is applied.
-3. The result of the member binding has a type that implements the call
-   interface.
+1.  First the simple member access is resolved using the type of the receiver: \
+    `v.F` -> `v.(C.F)`, `v.Static` -> `v.(C.Static)`, `r.F` -> `r.(C.F)`,
+    `r.Static` -> `r.(C.Static)`. \
+    Note that `C.F` is `__C_F` with type `__TypeOf_C_F`, and `C.Static` is
+    `__C_Static` with type `__TypeOf_C_Static`.
+2.  It then looks at the expression to the left of the `.`:
+    -   If it is a facet value, the "member binding to type" (`BindToType`)
+        operator is applied.
+    -   If it is a reference expression, the "member binding to reference"
+        (`BindToRef`) operator is applied.
+    -   If it is a value expression, the "member binding to value"
+        (`BindToValue`) operator is applied.
+3.  The result of the member binding has a type that implements the call
+    interface.
 
 > **Note:** The current wording in
 > [member_access.md](/docs/design/expressions/member_access.md) says that
@@ -877,7 +877,7 @@ requirements. If necessary, we can in the future introduce a specific construct
 just for C++ interop that invokes the C++ arrow operator, such as
 `CppArrowOperator(x)`, that returns a pointer.
 
-**Context:** This was discuseed in
+**Context:** This was discussed in
 [2024-02-29 open discussion](https://docs.google.com/document/d/1s3mMCupmuSpWOFJGnvjoElcBIe2aoaysTIdyczvKX84/edit?resourcekey=0-G095Wc3sR6pW1hLJbGgE0g&tab=t.0#heading=h.5vj8ohrvqjqh)
 and in
 [a comment on this proposal](https://github.com/carbon-language/carbon-lang/pull/3720/files#r1507917882).

@@ -24,7 +24,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-fn Copy[N:! IntLiteral](x: UInt(N)) -> UInt(N) = "primitive_copy";
+fn Copy[N: IntLiteral](x: UInt(N)) -> UInt(N) = "primitive_copy";
 
 fn F(n: UInt(64)) ->
     //@dump-sem-ir-begin
@@ -42,7 +42,7 @@ fn G(n: UInt(13)) ->
   return Copy(n);
 }
 
-fn Symbolic(N:! IntLiteral, x: UInt(N)) -> UInt(N)
+fn Symbolic(generic N: IntLiteral, x: UInt(N)) -> UInt(N)
     {
   return Copy(x);
 }
@@ -88,6 +88,7 @@ var m: UInt(1000000000);
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %u64.builtin: type = int_type unsigned, %int_64 [concrete]
 // CHECK:STDOUT:   %int_13: Core.IntLiteral = int_value 13 [concrete]

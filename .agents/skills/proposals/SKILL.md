@@ -53,9 +53,9 @@ filename.
     `error_handling.md`, `one_way.md`).
 -   **Living design**: If the proposal updates design documentation, include
     those changes in the PR if possible. If deferred, add "TODO" comments
-    pointing to the proposal (e.g.,
-    `> **TODO:** Document ... adopted in [p######](/proposals/p######-title.md)`).
-    For pervasive changes, file a GitHub issue instead of adding many TODOs.
+    pointing to the proposal (e.g., `> **TODO:** Document ... adopted in
+    [p######](/proposals/p######-title.md)`). For pervasive changes, file a
+    GitHub issue instead of adding many TODOs.
 
 ## Alternatives considered and leads decisions
 

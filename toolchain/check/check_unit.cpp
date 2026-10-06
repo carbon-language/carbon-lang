@@ -9,6 +9,7 @@
 #include <tuple>
 #include <utility>
 
+#include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Sema/Sema.h"
 #include "common/growing_range.h"
 #include "common/pretty_stack_trace_function.h"
@@ -60,16 +61,10 @@ static auto GetImportedIRCount(UnitAndImports* unit_and_imports) -> int {
 CheckUnit::CheckUnit(
     UnitAndImports* unit_and_imports,
     const Parse::GetTreeAndSubtreesStore* tree_and_subtrees_getters,
-    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-    llvm::LLVMContext* llvm_context,
-    std::shared_ptr<clang::CompilerInvocation> clang_invocation,
     llvm::raw_ostream* vlog_stream, bool mangle_string_fingerprint)
     : unit_and_imports_(unit_and_imports),
       tree_and_subtrees_getter_(tree_and_subtrees_getters->Get(
           unit_and_imports->unit->sem_ir->check_ir_id())),
-      fs_(std::move(fs)),
-      llvm_context_(llvm_context),
-      clang_invocation_(std::move(clang_invocation)),
       emitter_(&unit_and_imports_->err_tracker, tree_and_subtrees_getters,
                unit_and_imports_->unit->sem_ir),
       context_(&emitter_, tree_and_subtrees_getter_,
@@ -164,10 +159,10 @@ auto CheckUnit::InitPackageScopeAndImports() -> void {
   CARBON_CHECK(context_.scope_stack().PeekIndex() == ScopeIndex::Package);
   ImportOtherPackages(namespace_type_id);
 
-  const auto& cpp_imports = unit_and_imports_->cpp_imports;
-  if (!cpp_imports.empty()) {
-    ImportCpp(context_, cpp_imports, fs_, llvm_context_, clang_invocation_);
-  }
+  // Do this last: this also picks up indirect C++ imports through Carbon
+  // imports.
+  ImportCpp(context_, unit_and_imports_->cpp_imports,
+            unit_and_imports_->cpp_domain);
 }
 
 auto CheckUnit::CollectDirectImports(
@@ -490,11 +485,13 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
         }
         break;
       }
-      case SemIR::InterfaceDecl::Kind: {
-        // TODO: Handle `interface` as well, once we can test it without
-        // triggering
-        // https://github.com/carbon-language/carbon-lang/issues/4071.
-        CARBON_FATAL("TODO: Support interfaces in DiagnoseMissingDefinitions");
+      case CARBON_KIND(SemIR::InterfaceDecl interface_decl): {
+        auto& interface =
+            context_.interfaces().Get(interface_decl.interface_id);
+        if (!interface.is_complete()) {
+          emitter_.Emit(decl_inst_id, MissingDefinitionInImpl);
+        }
+        break;
       }
       default: {
         CARBON_FATAL("Unexpected inst in definitions_required_by_decl: {0}",
@@ -541,41 +538,68 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
     }
     if (found_witness_id != poison.witness_id) {
       auto witness_to_impl_id = [&](SemIR::ConstantId witness_id) {
-        auto table_id = context_.constant_values()
-                            .GetInstAs<SemIR::ImplWitness>(witness_id)
-                            .witness_table_id;
-        return context_.insts()
-            .GetAs<SemIR::ImplWitnessTable>(table_id)
-            .impl_id;
+        auto inst = context_.constant_values().GetInst(witness_id);
+        CARBON_KIND_SWITCH(inst) {
+          case CARBON_KIND(SemIR::ImplWitness impl_witness): {
+            auto table_id = impl_witness.witness_table_id;
+            return context_.insts()
+                .GetAs<SemIR::ImplWitnessTable>(table_id)
+                .impl_id;
+          }
+          case CARBON_KIND(SemIR::CustomWitness _): {
+            return SemIR::ImplId::None;
+          }
+          default:
+            CARBON_FATAL("Unsupported entity");
+        }
       };
 
       // We can get the `Impl` from the resulting witness here, which is the
       // `Impl` that conflicts with the previous poison query.
       auto bad_impl_id = witness_to_impl_id(found_witness_id);
-      const auto& bad_impl = context_.impls().Get(bad_impl_id);
-
       auto prev_impl_id = witness_to_impl_id(poison.witness_id);
+      CARBON_CHECK(prev_impl_id.has_value(),
+                   "previous implementation should always have a value");
       const auto& prev_impl = context_.impls().Get(prev_impl_id);
+      if (bad_impl_id.has_value()) {
+        const auto& bad_impl = context_.impls().Get(bad_impl_id);
+        CARBON_DIAGNOSTIC(
+            PoisonedImplLookupConcreteResult, Error,
+            "found `impl` that would change the result of an earlier "
+            "use of `{0} as {1}`",
+            InstIdAsRawType, SpecificInterfaceIdAsRawType);
+        CARBON_DIAGNOSTIC(
+            PoisonedImplLookupConcreteResultNoteBadImpl, Note,
+            "the use would select the `impl` here but it was not found yet");
+        CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl,
+                          Note, "the use had selected the `impl` here");
+        emitter_
+            .Build(poison.loc_id, PoisonedImplLookupConcreteResult,
+                   poison.query.query_self_inst_id,
+                   poison.query.query_specific_interface_id)
+            .Note(bad_impl.first_decl_id(),
+                  PoisonedImplLookupConcreteResultNoteBadImpl)
+            .Note(prev_impl.first_decl_id(),
+                  PoisonedImplLookupConcreteResultNotePreviousImpl)
+            .Emit();
+      } else {
+        CARBON_DIAGNOSTIC(
+            PoisonedImplLookupCustomResult, Error,
+            "found `impl` for {0} as {1}, which has a custom witness",
+            InstIdAsRawType, SpecificInterfaceIdAsRawType);
+        CARBON_DIAGNOSTIC(
+            PoisonedImplLookupCustomResultNoteBadImpl, Note,
+            "the use tried to select the `impl` here, but a custom "
+            "witness was already chosen");
 
-      CARBON_DIAGNOSTIC(
-          PoisonedImplLookupConcreteResult, Error,
-          "found `impl` that would change the result of an earlier "
-          "use of `{0} as {1}`",
-          InstIdAsRawType, SpecificInterfaceIdAsRawType);
-      auto builder =
-          emitter_.Build(poison.loc_id, PoisonedImplLookupConcreteResult,
-                         poison.query.query_self_inst_id,
-                         poison.query.query_specific_interface_id);
-      CARBON_DIAGNOSTIC(
-          PoisonedImplLookupConcreteResultNoteBadImpl, Note,
-          "the use would select the `impl` here but it was not found yet");
-      builder.Note(bad_impl.first_decl_id(),
-                   PoisonedImplLookupConcreteResultNoteBadImpl);
-      CARBON_DIAGNOSTIC(PoisonedImplLookupConcreteResultNotePreviousImpl, Note,
-                        "the use had selected the `impl` here");
-      builder.Note(prev_impl.first_decl_id(),
-                   PoisonedImplLookupConcreteResultNotePreviousImpl);
-      builder.Emit();
+        emitter_
+            .Build(poison.loc_id, PoisonedImplLookupCustomResult,
+                   poison.query.query_self_inst_id,
+                   poison.query.query_specific_interface_id)
+            .Note(prev_impl.first_decl_id(),
+                  PoisonedImplLookupCustomResultNoteBadImpl)
+            .Emit();
+      }
     }
   }
   context_.inst_block_stack().PopAndDiscard();

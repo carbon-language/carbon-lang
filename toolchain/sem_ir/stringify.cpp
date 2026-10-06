@@ -9,32 +9,99 @@
 #include <utility>
 #include <variant>
 
+#include "clang/AST/Type.h"
 #include "common/concepts.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
-#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/singleton_insts.h"
+#include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/struct_type_field.h"
+#include "toolchain/sem_ir/sugared_type.h"
 #include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::SemIR {
 
-// Map an instruction kind representing an expression into an integer describing
-// the precedence of that expression's syntax. Higher numbers correspond to
-// higher precedence.
-static auto GetPrecedence(InstKind kind) -> int {
-  if (kind == ConstType::Kind) {
-    return -1;
+// Precedence levels for the syntax produced when stringifying an instruction.
+// Higher numbers correspond to higher precedence. An operand needs to be
+// parenthesized if its precedence is lower than that required by the enclosing
+// syntax.
+//
+// Carbon's precedence is a partial order, not a total order, but the only
+// enclosing syntax that we currently check for is prefix and postfix operators,
+// which have higher precedence than all infix operators, so a total order
+// suffices for now.
+enum class Precedence : int8_t {
+  // `A where ...`
+  Where = -5,
+  // `A & B`
+  BitwiseAnd = -4,
+  // `A as B`
+  As = -3,
+  // `T*`
+  PostfixStar = -2,
+  // `const T`, `partial T`
+  PrefixType = -1,
+  // Names, literals, calls, member access, and anything parenthesized or
+  // otherwise bracketed.
+  Primary = 0,
+};
+
+// Returns the precedence of the syntax that stringifying `inst_id` produces.
+static auto GetPrecedence(const File& sem_ir, InstId inst_id) -> Precedence {
+  while (inst_id.has_value()) {
+    auto inst = sem_ir.insts().Get(inst_id);
+    switch (inst.kind()) {
+      case Call::Kind:
+      case TypeOfInst::Kind: {
+        // These print their constant value instead, if it's different.
+        auto const_inst_id =
+            sem_ir.constant_values().GetConstantInstId(inst_id);
+        if (!const_inst_id.has_value() || const_inst_id == inst_id) {
+          return Precedence::Primary;
+        }
+        inst_id = const_inst_id;
+        break;
+      }
+      case FacetAccessType::Kind: {
+        inst_id = inst.As<FacetAccessType>().facet_value_inst_id;
+        break;
+      }
+      case FacetType::Kind: {
+        const auto& info = sem_ir.declared_facet_types().Get(
+            inst.As<FacetType>().declared_facet_type_id);
+        if (info.other_requirements || !info.rewrite_constraints.empty() ||
+            !info.self_impls_constraints.empty() ||
+            !info.self_impls_named_constraints.empty() ||
+            !info.type_impls_interfaces.empty() ||
+            !info.type_impls_named_constraints.empty()) {
+          return Precedence::Where;
+        }
+        if (info.extend_constraints.size() +
+                info.extend_named_constraints.size() >
+            1) {
+          return Precedence::BitwiseAnd;
+        }
+        return Precedence::Primary;
+      }
+      case FacetValue::Kind:
+      case LookupImplWitness::Kind:
+        return Precedence::As;
+      case PointerType::Kind:
+        return Precedence::PostfixStar;
+      case ConstType::Kind:
+      case PartialType::Kind:
+        return Precedence::PrefixType;
+      default:
+        // TODO: Handle other kinds of expressions with precedence.
+        return Precedence::Primary;
+    }
   }
-  if (kind == PointerType::Kind) {
-    return -2;
-  }
-  // TODO: Handle other kinds of expressions with precedence.
-  return 0;
+  return Precedence::Primary;
 }
 
 namespace {
@@ -51,9 +118,9 @@ class StepStack {
 
   // An individual step in the stack, which stringifies some component of a type
   // name.
-  using Step =
-      std::variant<InstId, llvm::StringRef, NameId, ElementIndex, FacetTypeId,
-                   StopQualifiedNames, ResumeQualifiedNames>;
+  using Step = std::variant<InstId, llvm::StringRef, NameId, ElementIndex,
+                            DeclaredFacetTypeId, StopQualifiedNames,
+                            ResumeQualifiedNames>;
 
   // Support `Push` for a qualified name. e.g., `A.B.C`.
   using QualifiedNameItem = std::pair<NameScopeId, NameId>;
@@ -79,8 +146,8 @@ class StepStack {
   auto PushElementIndex(ElementIndex element_index) -> void {
     steps_.push_back(element_index);
   }
-  auto PushFacetType(FacetTypeId facet_type_id) -> void {
-    steps_.push_back(facet_type_id);
+  auto PushFacetType(DeclaredFacetTypeId declared_facet_type_id) -> void {
+    steps_.push_back(declared_facet_type_id);
   }
   auto PushResumeQualfiedNames() -> void {
     steps_.push_back(ResumeQualifiedNames{});
@@ -289,10 +356,12 @@ class Stringifier {
   template <typename InstT>
   auto StringifyInst(InstId inst_id, InstT inst) -> void {
     // This doesn't use requires so that more specific overloads are chosen when
-    // provided.
-    static_assert(InstT::Kind.is_type() != InstIsType::Always ||
-                      std::same_as<InstT, WhereExpr>,
-                  "Types should have a dedicated overload");
+    // provided. Indirect constants can be printed by desugaring.
+    static_assert(
+        InstT::Kind.is_type() != InstIsType::Always ||
+            InstT::Kind.constant_kind() == InstConstantKind::Indirect ||
+            std::same_as<InstT, WhereExpr>,
+        "Types should have a dedicated overload");
     // TODO: We should have Stringify support for all types where
     // InstT::Kind.constant_kind() is neither Never nor Indirect.
     StringifyInstDefault(inst_id, inst);
@@ -333,6 +402,179 @@ class Stringifier {
     step_stack_->PushEntityNameId(inst.entity_name_id);
   }
 
+  // Pushes the argument list of a call, including the enclosing parentheses.
+  //
+  // The arguments of a `Call` are the arguments of the SemIR calling
+  // convention: compile-time arguments are absent, because they're instead
+  // found in the callee's specific, and the remaining arguments are flattened
+  // by pattern matching. In order to print the call as it was written, we walk
+  // the parameter patterns of the callee and pick out the argument
+  // corresponding to each leaf pattern.
+  auto PushCallArgs(llvm::ArrayRef<InstId> param_patterns,
+                    llvm::ArrayRef<InstId> args,
+                    llvm::ArrayRef<InstId> specific_args) -> void {
+    // The pieces of the argument list that we've not printed yet, in print
+    // order. We process these from the back, so that we walk the patterns from
+    // right to left, which is the order in which the step stack wants to be
+    // given them, and which lets us consume `args` from the back.
+    llvm::SmallVector<std::variant<InstId, llvm::StringRef>> worklist;
+    worklist.push_back(llvm::StringRef("("));
+    llvm::ListSeparator sep;
+    for (auto param_id : param_patterns) {
+      worklist.push_back(llvm::StringRef(sep));
+      worklist.push_back(param_id);
+    }
+    worklist.push_back(llvm::StringRef(")"));
+
+    while (!worklist.empty()) {
+      auto next = worklist.pop_back_val();
+      if (auto* string = std::get_if<llvm::StringRef>(&next)) {
+        step_stack_->PushString(*string);
+        continue;
+      }
+
+      auto pattern_id = std::get<InstId>(next);
+      CARBON_KIND_SWITCH(sem_ir_->insts().Get(pattern_id)) {
+        case CARBON_KIND(TuplePattern tuple): {
+          auto elements = sem_ir_->inst_blocks().Get(tuple.elements_id);
+          worklist.push_back(llvm::StringRef("("));
+          llvm::ListSeparator element_sep;
+          for (auto element_id : elements) {
+            worklist.push_back(llvm::StringRef(element_sep));
+            worklist.push_back(element_id);
+          }
+          // A tuple of one element has a comma to disambiguate from a
+          // parenthesized pattern.
+          worklist.push_back(
+              llvm::StringRef(elements.size() == 1 ? ",)" : ")"));
+          break;
+        }
+        case CARBON_KIND_ANY(AnyVarPattern, var_pattern): {
+          worklist.push_back(var_pattern.subpattern_id);
+          break;
+        }
+        case CARBON_KIND(DefaultValuePattern default_value): {
+          worklist.push_back(default_value.subpattern_id);
+          break;
+        }
+        case CARBON_KIND_ANY(AnyBindingPattern, binding): {
+          if (binding.subpattern_id.has_value()) {
+            worklist.push_back(binding.subpattern_id);
+            break;
+          }
+          // A compile-time binding's argument is an argument of the specific.
+          auto bind_index =
+              sem_ir_->entity_names().Get(binding.entity_name_id).bind_index();
+          if (bind_index.has_value() &&
+              static_cast<size_t>(bind_index.index) < specific_args.size()) {
+            step_stack_->PushInstId(specific_args[bind_index.index]);
+          } else {
+            // We don't know the argument, so name the parameter instead.
+            step_stack_->PushEntityNameId(binding.entity_name_id);
+          }
+          break;
+        }
+        case CARBON_KIND_ANY(AnyLeafParamPattern, _): {
+          // A runtime parameter's argument is the next argument of the call,
+          // taken from the back because we're walking right to left.
+          if (args.empty()) {
+            step_stack_->PushString("<missing argument>");
+          } else {
+            step_stack_->PushInstId(args.back());
+            args = args.drop_back();
+          }
+          break;
+        }
+        default: {
+          // We don't know how to find the argument for this pattern, so print
+          // the pattern instead.
+          step_stack_->PushInstId(pattern_id);
+          break;
+        }
+      }
+    }
+  }
+
+  auto StringifyInst(InstId inst_id, Call inst) -> void {
+    // If the call has a different constant value, for example because it was
+    // evaluated at compile time, print that instead.
+    auto const_inst_id = sem_ir_->constant_values().GetConstantInstId(inst_id);
+    if (const_inst_id.has_value() && const_inst_id != inst_id) {
+      step_stack_->PushInstId(const_inst_id);
+      return;
+    }
+
+    auto args = sem_ir_->inst_blocks().Get(inst.args_id);
+    auto callee = GetCallee(*sem_ir_, inst.callee_id);
+    auto* callee_fn = std::get_if<CalleeFunction>(&callee);
+    if (!callee_fn) {
+      // We don't know the signature of the callee, so print the arguments of
+      // the `Call` directly.
+      step_stack_->PushString(")");
+      llvm::ListSeparator sep;
+      for (auto arg : llvm::reverse(args)) {
+        step_stack_->Push(arg, &sep);
+      }
+      step_stack_->Push("(", inst.callee_id);
+      return;
+    }
+
+    const auto& function = sem_ir_->functions().Get(callee_fn->function_id);
+    auto specific_id = callee_fn->resolved_specific_id.has_value()
+                           ? callee_fn->resolved_specific_id
+                           : callee_fn->enclosing_specific_id;
+
+    llvm::ArrayRef<InstId> param_patterns;
+    if (function.param_patterns_id.has_value()) {
+      param_patterns = sem_ir_->inst_blocks().Get(function.param_patterns_id);
+    }
+
+    llvm::ArrayRef<InstId> specific_args;
+    if (specific_id.has_value()) {
+      specific_args = sem_ir_->inst_blocks().Get(
+          sem_ir_->specifics().Get(specific_id).args_id);
+    }
+
+    // Only the explicit parameters are written as arguments in the call.
+    const auto& param_ranges = function.call_param_ranges;
+    auto args_begin =
+        std::min<size_t>(param_ranges.explicit_begin().index, args.size());
+    auto args_end =
+        std::min<size_t>(param_ranges.explicit_end().index, args.size());
+    args = args.slice(args_begin, args_end - args_begin);
+
+    // In a method call, `self` is the first explicit parameter, but is written
+    // before the name of the function rather than in the argument list.
+    auto self_id = InstId::None;
+    if (callee_fn->self_id.has_value() && function.self_param_id.has_value() &&
+        !param_patterns.empty() && !args.empty()) {
+      self_id = args.front();
+      args = args.drop_front();
+      param_patterns = param_patterns.drop_front();
+    }
+
+    PushCallArgs(param_patterns, args, specific_args);
+
+    // Print the name of the callee. Note that we avoid stringifying the callee
+    // instruction itself when it names a function, because that would print
+    // the function's parameter list, and we're printing the call's arguments
+    // instead.
+    if (auto specific_impl_fn =
+            sem_ir_->insts().TryGetAs<SpecificImplFunction>(inst.callee_id)) {
+      // The callee of a `specific_impl_function` is an `impl_witness_access`,
+      // which names both the interface function and the `Self` type.
+      step_stack_->PushInstId(specific_impl_fn->callee_id);
+    } else {
+      step_stack_->PushQualifiedName(function.parent_scope_id,
+                                     function.name_id);
+    }
+
+    if (self_id.has_value()) {
+      // TODO: Omit the parentheses when they're not needed.
+      step_stack_->Push("(", self_id, ").");
+    }
+  }
+
   auto StringifyInst(InstId /*inst_id*/, ClassType inst) -> void {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
     if (auto type_info = RecognizedTypeInfo::ForType(*sem_ir_, inst);
@@ -347,15 +589,23 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, ConstType inst) -> void {
     *out_ << "const ";
 
+    // `const (const T)` is the same type as `const T`, so don't print a chain
+    // of `const`s.
+    // TODO: Do this generically for all type qualifiers, and don't repeat
+    // qualifiers in types like `const (partial (const T))`.
+    auto inner_id = inst.inner_id;
+    while (auto inner_const = sem_ir_->insts().TryGetAs<ConstType>(inner_id)) {
+      inner_id = inner_const->inner_id;
+    }
+
     // Add parentheses if required.
-    if (GetPrecedence(sem_ir_->insts().Get(inst.inner_id).kind()) <
-        GetPrecedence(ConstType::Kind)) {
+    if (GetPrecedence(*sem_ir_, inner_id) < Precedence::PrefixType) {
       *out_ << "(";
-      // Note the `inst.inner_id` ends up here.
+      // Note the `inner_id` ends up here.
       step_stack_->PushString(")");
     }
 
-    step_stack_->PushInstId(inst.inner_id);
+    step_stack_->PushInstId(inner_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, CppTemplateNameType inst) -> void {
@@ -370,12 +620,12 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetAccessType inst) -> void {
-    // Given `T:! I`, print `T as type` as simply `T`.
+    // Given `T: I`, print `T as type` as simply `T`.
     step_stack_->PushInstId(inst.facet_value_inst_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetType inst) -> void {
-    step_stack_->PushFacetType(inst.facet_type_id);
+    step_stack_->PushFacetType(inst.declared_facet_type_id);
   }
 
   auto StringifyInst(InstId /*inst_id*/, FacetValue inst) -> void {
@@ -403,6 +653,14 @@ class Stringifier {
     step_stack_->Push(StepStack::QualifiedNameItem{overload_set.parent_scope_id,
                                                    overload_set.name_id},
                       ">");
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, CppFunctionPointerType inst) -> void {
+    clang::QualType clang_type(sem_ir_->clang_function_pointer_types()
+                                   .Get(inst.clang_type_id)
+                                   .clang_type,
+                               0);
+    *out_ << "<C++ type " << clang_type.getAsString() << ">";
   }
 
   auto StringifyInst(InstId /*inst_id*/, FunctionType inst) -> void {
@@ -453,6 +711,11 @@ class Stringifier {
                       ">");
   }
 
+  auto StringifyInst(InstId /*inst_id*/, SpliceInst inst) -> void {
+    *out_ << "<splice of ";
+    step_stack_->Push(inst.inst_id, ">");
+  }
+
   // Determine the specific interface that an impl witness instruction provides
   // an implementation of.
   // TODO: Should we track this in the type?
@@ -471,9 +734,18 @@ class Stringifier {
   auto StringifyInst(InstId /*inst_id*/, ImplWitnessAccess inst) -> void {
     auto witness_inst_id =
         sem_ir_->constant_values().GetConstantInstId(inst.witness_id);
-    auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
-    auto specific_interface =
-        sem_ir_->specific_interfaces().Get(lookup.query_specific_interface_id);
+
+    auto specific_interface = SemIR::SpecificInterface::None;
+    if (auto self_witness =
+            sem_ir_->insts().TryGetAs<ImplSelfWitness>(witness_inst_id)) {
+      specific_interface = sem_ir_->specific_interfaces().Get(
+          self_witness->specific_interface_id);
+    } else {
+      auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
+      specific_interface = sem_ir_->specific_interfaces().Get(
+          lookup.query_specific_interface_id);
+    }
+
     const auto& interface =
         sem_ir_->interfaces().Get(specific_interface.interface_id);
     if (!interface.associated_entities_id.has_value()) {
@@ -487,19 +759,23 @@ class Stringifier {
       auto entity_inst_id = entities[index];
       step_stack_->PushString(")");
       step_stack_->PushResumeQualfiedNames();
-      if (auto associated_const =
-              sem_ir_->insts().TryGetAs<AssociatedConstantDecl>(
-                  entity_inst_id)) {
-        step_stack_->PushNameId(sem_ir_->associated_constants()
-                                    .Get(associated_const->assoc_const_id)
-                                    .name_id);
-      } else if (auto function_decl =
-                     sem_ir_->insts().TryGetAs<FunctionDecl>(entity_inst_id)) {
-        const auto& function =
-            sem_ir_->functions().Get(function_decl->function_id);
-        step_stack_->PushNameId(function.name_id);
-      } else {
-        step_stack_->PushInstId(entity_inst_id);
+      CARBON_KIND_SWITCH(sem_ir_->insts().Get(entity_inst_id)) {
+        case CARBON_KIND(AssociatedConstantDecl associated_const): {
+          step_stack_->PushNameId(sem_ir_->associated_constants()
+                                      .Get(associated_const.assoc_const_id)
+                                      .name_id);
+          break;
+        }
+        case CARBON_KIND(FunctionDecl function_decl): {
+          const auto& function =
+              sem_ir_->functions().Get(function_decl.function_id);
+          step_stack_->PushNameId(function.name_id);
+          break;
+        }
+        default: {
+          step_stack_->PushInstId(entity_inst_id);
+          break;
+        }
       }
       // Don't qualify names after the `.` operator, until the closing `)`.
       step_stack_->PushStopQualfiedNames();
@@ -509,16 +785,28 @@ class Stringifier {
       step_stack_->Push(".(");
     }
 
-    if (auto lookup =
-            sem_ir_->insts().TryGetAs<LookupImplWitness>(witness_inst_id)) {
-      bool period_self = false;
+    if (auto self_witness =
+            sem_ir_->insts().TryGetAs<ImplSelfWitness>(witness_inst_id)) {
+      bool is_period_self = false;
+      if (auto sym_name = sem_ir_->insts().TryGetAs<SymbolicBinding>(
+              self_witness->period_self)) {
+        auto name_id =
+            sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
+        is_period_self = (name_id == NameId::PeriodSelf);
+      }
+      if (!is_period_self) {
+        step_stack_->PushInstId(self_witness->period_self);
+      }
+    } else if (auto lookup = sem_ir_->insts().TryGetAs<LookupImplWitness>(
+                   witness_inst_id)) {
+      bool is_period_self = false;
       if (auto sym_name = sem_ir_->insts().TryGetAs<SymbolicBinding>(
               lookup->query_self_inst_id)) {
         auto name_id =
             sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
-        period_self = (name_id == NameId::PeriodSelf);
+        is_period_self = (name_id == NameId::PeriodSelf);
       }
-      if (!period_self) {
+      if (!is_period_self) {
         step_stack_->PushInstId(lookup->query_self_inst_id);
       }
     } else {
@@ -708,40 +996,42 @@ class Stringifier {
     *out_ << "<vtable ptr>";
   }
 
-  auto StringifyFacetType(FacetTypeId facet_type_id) -> void {
-    const FacetTypeInfo& facet_type_info =
-        sem_ir_->facet_types().Get(facet_type_id);
+  auto StringifyFacetType(DeclaredFacetTypeId declared_facet_type_id) -> void {
+    const DeclaredFacetType& declared_facet_type =
+        sem_ir_->declared_facet_types().Get(declared_facet_type_id);
     // Output `where` restrictions.
     bool some_where = false;
-    if (facet_type_info.other_requirements) {
+    if (declared_facet_type.other_requirements) {
       step_stack_->PushString("...");
       some_where = true;
     }
-    for (auto rewrite : llvm::reverse(facet_type_info.rewrite_constraints)) {
+    for (auto rewrite :
+         llvm::reverse(declared_facet_type.rewrite_constraints)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
       step_stack_->Push(" ", rewrite.lhs_id, " = ", rewrite.rhs_id);
       some_where = true;
     }
-    if (!facet_type_info.self_impls_constraints.empty() ||
-        !facet_type_info.self_impls_named_constraints.empty()) {
+    if (!declared_facet_type.self_impls_constraints.empty() ||
+        !declared_facet_type.self_impls_named_constraints.empty()) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
       llvm::ListSeparator sep(" & ");
       for (auto impls :
-           llvm::reverse(facet_type_info.self_impls_named_constraints)) {
+           llvm::reverse(declared_facet_type.self_impls_named_constraints)) {
         step_stack_->Push(impls, &sep);
       }
-      for (auto impls : llvm::reverse(facet_type_info.self_impls_constraints)) {
+      for (auto impls :
+           llvm::reverse(declared_facet_type.self_impls_constraints)) {
         step_stack_->Push(impls, &sep);
       }
       step_stack_->PushString(" .Self impls ");
       some_where = true;
     }
     for (const auto& type_impls :
-         llvm::reverse(facet_type_info.type_impls_interfaces)) {
+         llvm::reverse(declared_facet_type.type_impls_interfaces)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
@@ -750,7 +1040,7 @@ class Stringifier {
       some_where = true;
     }
     for (const auto& type_impls :
-         llvm::reverse(facet_type_info.type_impls_named_constraints)) {
+         llvm::reverse(declared_facet_type.type_impls_named_constraints)) {
       if (some_where) {
         step_stack_->PushString(" and");
       }
@@ -763,17 +1053,17 @@ class Stringifier {
     }
 
     // Output extend interface and named constraint requirements.
-    if (facet_type_info.extend_constraints.empty() &&
-        facet_type_info.extend_named_constraints.empty()) {
+    if (declared_facet_type.extend_constraints.empty() &&
+        declared_facet_type.extend_named_constraints.empty()) {
       step_stack_->PushString("type");
       return;
     }
     llvm::ListSeparator sep(" & ");
     for (auto extend :
-         llvm::reverse(facet_type_info.extend_named_constraints)) {
+         llvm::reverse(declared_facet_type.extend_named_constraints)) {
       step_stack_->Push(extend, &sep);
     }
-    for (auto extend : llvm::reverse(facet_type_info.extend_constraints)) {
+    for (auto extend : llvm::reverse(declared_facet_type.extend_constraints)) {
       step_stack_->Push(extend, &sep);
     }
   }
@@ -822,8 +1112,8 @@ static auto Stringify(const File& sem_ir, StepStack& step_stack)
         out << element_index.index;
         break;
       }
-      case CARBON_KIND(FacetTypeId facet_type_id): {
-        stringifier.StringifyFacetType(facet_type_id);
+      case CARBON_KIND(DeclaredFacetTypeId declared_facet_type_id): {
+        stringifier.StringifyFacetType(declared_facet_type_id);
         break;
       }
       case CARBON_KIND(StepStack::StopQualifiedNames _): {
@@ -845,6 +1135,10 @@ auto StringifyConstantInst(const File& sem_ir, InstId outer_inst_id)
   StepStack step_stack(&sem_ir);
   step_stack.PushInstId(outer_inst_id);
   return Stringify(sem_ir, step_stack);
+}
+
+auto StringifyTypeOfInst(const File& sem_ir, InstId inst_id) -> std::string {
+  return StringifyConstantInst(sem_ir, GetSugaredTypeOfInst(sem_ir, inst_id));
 }
 
 auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
@@ -931,10 +1225,11 @@ auto StringifySpecificInterface(const File& sem_ir,
   }
 }
 
-auto StringifyFacetType(const File& sem_ir, FacetTypeId facet_type_id)
+auto StringifyDeclaredFacetType(const File& sem_ir,
+                                DeclaredFacetTypeId declared_facet_type_id)
     -> std::string {
   StepStack step_stack(&sem_ir);
-  step_stack.PushFacetType(facet_type_id);
+  step_stack.PushFacetType(declared_facet_type_id);
   return Stringify(sem_ir, step_stack);
 }
 

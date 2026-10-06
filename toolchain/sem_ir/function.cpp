@@ -7,6 +7,7 @@
 #include <optional>
 #include <variant>
 
+#include "toolchain/base/canonical_value_store_impl.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_store_impl.h"
 #include "toolchain/sem_ir/file.h"
@@ -16,6 +17,33 @@
 
 namespace Carbon::SemIR {
 
+auto TryGetCalleeAsBoundMethod(const File& sem_ir, InstId callee_id,
+                               SpecificId caller_specific_id)
+    -> std::optional<BoundMethod> {
+  // Step through splices before checking for a bound method. Unfortunately we
+  // can't just look at the constant value of callee_id here, because bound
+  // methods are non-constant if their `self` is, so we do a mini-eval here.
+  while (true) {
+    auto inst = sem_ir.insts().Get(callee_id);
+    if (auto splice_inst = inst.TryAs<SpliceInst>()) {
+      auto inst_value_id = GetConstantValueInSpecific(
+          sem_ir, caller_specific_id, splice_inst->inst_id);
+      if (!inst_value_id.is_concrete()) {
+        break;
+      }
+      callee_id = sem_ir.constant_values()
+                      .GetInstAs<SemIR::InstValue>(inst_value_id)
+                      .inst_id;
+    } else if (auto splice_block = inst.TryAs<SpliceBlock>()) {
+      callee_id = splice_block->result_id;
+    } else {
+      break;
+    }
+  }
+
+  return sem_ir.insts().TryGetAs<BoundMethod>(callee_id);
+}
+
 auto GetCallee(const File& sem_ir, InstId callee_id,
                SpecificId caller_specific_id) -> Callee {
   CalleeFunction fn = {.function_id = FunctionId::None,
@@ -23,7 +51,8 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
                        .resolved_specific_id = SpecificId::None,
                        .self_type_id = InstId::None,
                        .self_id = InstId::None};
-  if (auto bound_method = sem_ir.insts().TryGetAs<BoundMethod>(callee_id)) {
+  if (auto bound_method =
+          TryGetCalleeAsBoundMethod(sem_ir, callee_id, caller_specific_id)) {
     fn.self_id = bound_method->object_id;
     callee_id = bound_method->function_decl_id;
   }
@@ -33,6 +62,12 @@ auto GetCallee(const File& sem_ir, InstId callee_id,
         GetConstantValueInSpecific(sem_ir, caller_specific_id, callee_id));
     CARBON_CHECK(callee_id.has_value(),
                  "Invalid callee id in a specific context");
+  }
+
+  if (auto fn_ptr_type = sem_ir.types().TryGetAs<CppFunctionPointerType>(
+          sem_ir.insts().Get(callee_id).type_id())) {
+    return CalleeCppFunctionPointer{.function_type_id =
+                                        fn_ptr_type->clang_type_id};
   }
 
   auto val_id = sem_ir.constant_values().GetConstantInstId(callee_id);
@@ -125,6 +160,20 @@ auto DecomposeVirtualFunction(const File& sem_ir, InstId fn_decl_id,
           .specific_id = specific_id};
 }
 
+auto Function::GetBuiltinFunctionKind(const File& file) const
+    -> BuiltinFunctionKind {
+  switch (special_function_kind) {
+    case SpecialFunctionKind::Builtin:
+      return non_generated_builtin_function_kind();
+    case SpecialFunctionKind::Generated: {
+      auto generated_id = GeneratedFunctionId(special_function_kind_data.index);
+      return file.generated_functions().Get(generated_id).builtin_function_kind;
+    }
+    default:
+      return BuiltinFunctionKind::None;
+  }
+}
+
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
   if (!return_type_inst_id.has_value()) {
@@ -150,4 +199,7 @@ auto Function::GetDeclaredReturnForm(const File& file,
 namespace Carbon {
 template class ValueStore<SemIR::FunctionId, SemIR::Function,
                           Tag<SemIR::CheckIRId>>;
+template class CanonicalValueStore<
+    SemIR::GeneratedFunctionId, SemIR::GeneratedFunction::CanonicalKey,
+    Tag<SemIR::CheckIRId>, SemIR::GeneratedFunction>;
 }  // namespace Carbon

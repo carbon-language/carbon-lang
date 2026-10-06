@@ -236,6 +236,12 @@ COST_METRIC_PATTERNS = [
         r"(?i)cycles",
         r"(?i)instructions",
         r"(?i)time",
+        # Memory-size metrics, by convention named with a `Mem` prefix. Unlike
+        # the patterns above, this is anchored and case-sensitive so it matches
+        # only those counters and not an arbitrary "mem"/"memory" substring. We
+        # don't match a bare `bytes` because byte-rate throughput counters (such
+        # as `Bytes` in `compile_benchmark`) measure speed, not cost.
+        r"^Mem",
     ]
 ]
 
@@ -458,7 +464,10 @@ def render_fixed_width_float(x: float) -> str:
 
     frac, whole = math.modf(x)
     frac_str = f"{math.fabs(frac):<4.3f}"[1:]
-    return f"{int(whole):> 3}{frac_str}"
+    # Render the sign separately, as the whole part of a value in (-1, 0) is
+    # zero, which has no sign as an `int`.
+    whole_str = f"{'-' if x < 0 else ' '}{int(math.fabs(whole))}"
+    return f"{whole_str:>3}{frac_str}"
 
 
 def render_ratio(ratio: float) -> str:
@@ -494,6 +503,10 @@ def render_metric(
         style_prefix = "base_"
     else:
         style_prefix = "exp_"
+
+    # This benchmark didn't report this metric; render an empty cell.
+    if not times:
+        return RenderedMetric("", "")
 
     units = times[0].units
     if all(x == times[0] for x in times):
@@ -539,6 +552,12 @@ def render_delta(
         base: The baseline measurements.
         exp: The experiment measurements.
     """
+    # Skip any delta when either side has no data, which happens when a metric
+    # is missing from one side: reported by only one of the two binaries, or
+    # absent for this particular benchmark.
+    if not base or not exp:
+        return RenderedDelta(DeltaKind.NEUTRAL, "", "")
+
     # Skip any delta when all the data is zero. This typically occurs for
     # uninteresting metrics or metrics that weren't collected for a given run.
     if all(b == 0 for b in base) and all(e == 0 for e in exp):
@@ -887,6 +906,10 @@ def collect_benchmark_metrics(
         for b in run["benchmarks"]:
             name = b["name"]
             for metric in metrics:
+                # Not every benchmark reports every metric; skip metrics this
+                # benchmark didn't produce rather than failing.
+                if metric not in b:
+                    continue
                 # Time metrics have a `time_unit` field that needs to be
                 # appended for correct parsing by the Quantity library.
                 unit = b.get("time_unit", "") if "time" in metric else ""
@@ -915,6 +938,10 @@ def collect_benchmark_metrics(
             # to populate the 'base' list for main benchmarks.
             if name in benchmark_names:
                 for metric in metrics:
+                    # Not every benchmark reports every metric; skip metrics
+                    # this benchmark didn't produce rather than failing.
+                    if metric not in b:
+                        continue
                     unit = b.get("time_unit", "") if "time" in metric else ""
                     benchmark_metrics[metric][name].base.append(
                         Quantity(f"{b[metric]}{unit}")

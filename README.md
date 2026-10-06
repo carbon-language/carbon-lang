@@ -251,10 +251,10 @@ challenge for C++ and something a successor language needs to address.
 
 We plan to support a two step migration process:
 
-1. Highly automated, minimal supervision migration from C++ to a dialect of
-   Carbon designed for C++ interop and migration.
-2. Incremental refactoring of the Carbon code to adopt memory-safe designs,
-   patterns, and APIs.
+1.  Highly automated, minimal supervision migration from C++ to a dialect of
+    Carbon designed for C++ interop and migration.
+2.  Incremental refactoring of the Carbon code to adopt memory-safe designs,
+    patterns, and APIs.
 
 We also want to address important, low-hanging fruit in the safety space
 immediately when migrating into Carbon:
@@ -367,8 +367,16 @@ Carbon focused talks from the community:
 
 ### 2026
 
+-   Carbon memory safety: a first deep dive (July 10,
+    [video](https://drive.google.com/file/d/1tQlzpnbWZfn2WtTFMoJgF93QteByBBwm/view?usp=sharing),
+    [transcript](https://docs.google.com/document/d/1JB9H3KzVixAPC5WIytS4AMyrvjwzC7TXqp596veLT34/edit?usp=sharing),
+    [slides](https://chandlerc.blog/slides/2026-memory-safety-deep-3/))
 -   Benchmarking and optimizing the Carbon compiler, NDC {Toronto} (May 5-8)
+    ([video](https://www.youtube.com/watch?v=hN6KcAKfTN0),
+    [slides](https://chandlerc.blog/slides/2026-ndc-toronto-carbon-benchmarking))
 -   Carbon: graduating from the experiment, NDC {Toronto} (May 5-8)
+    ([video](https://www.youtube.com/watch?v=WJl4ftb5Fxg),
+    [slides](https://chandlerc.blog/slides/2026-ndc-toronto-carbon-update/))
 
 ### 2025
 

@@ -24,7 +24,7 @@ struct Ordered {
 };
 ''';
 
-fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
+fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   //@dump-sem-ir-begin
   x < y;
   x <= y;
@@ -91,7 +91,7 @@ struct B3 {
 };
 ''';
 
-fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
+fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   //@dump-sem-ir-begin
   x < y;
   x <= y;
@@ -124,7 +124,7 @@ struct LessReturnsBoolish {
   // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+6]]:8: note: type `i32` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:   auto operator<(LessReturnsBoolish) const -> int;
   // CHECK:STDERR:        ^
-  // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:26:3: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:3: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   fn Less(self, other: Other) -> bool;
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   auto operator<(LessReturnsBoolish) const -> int;
@@ -168,8 +168,8 @@ struct AllReturnBoolish {
 ''';
 
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+82]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-36]]:8: error: cannot implicitly convert expression of type `Core.Optional(i32* as Core.OptionalStorage)` to `bool` [ConversionFailure]
 // CHECK:STDERR:   auto operator<=(LessEqualReturnsBoolish) const -> int*;
@@ -177,12 +177,12 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-39]]:8: note: type `Core.Optional(i32* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator<=(LessEqualReturnsBoolish) const -> int*;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:27:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn LessOrEquivalent(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+69]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-39]]:8: error: cannot implicitly convert expression of type `Cpp.Result` to `bool` [ConversionFailure]
 // CHECK:STDERR:   auto operator>=(GreaterEqualReturnsBoolish) const -> Result;
@@ -190,12 +190,12 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-42]]:8: note: type `Cpp.Result` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator>=(GreaterEqualReturnsBoolish) const -> Result;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:31:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn GreaterOrEquivalent(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+56]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-37]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
 // CHECK:STDERR:   auto operator<(AllReturnBoolish) const -> double;
@@ -203,12 +203,12 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-40]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator<(AllReturnBoolish) const -> double;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:26:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn Less(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+43]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-49]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
 // CHECK:STDERR:   auto operator<=(AllReturnBoolish) const -> double;
@@ -216,12 +216,12 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-52]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator<=(AllReturnBoolish) const -> double;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:27:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn LessOrEquivalent(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+30]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-61]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
 // CHECK:STDERR:   auto operator>(AllReturnBoolish) const -> double;
@@ -229,12 +229,12 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-64]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator>(AllReturnBoolish) const -> double;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:30:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn Greater(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+17]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-73]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
 // CHECK:STDERR:   auto operator>=(AllReturnBoolish) const -> double;
@@ -242,14 +242,14 @@ struct AllReturnBoolish {
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-76]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:   auto operator>=(AllReturnBoolish) const -> double;
 // CHECK:STDERR:        ^
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:31:3: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR:   fn GreaterOrEquivalent(self, other: Other) -> bool;
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+4]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
+fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   x < y;
   x <= y;
   x > y;
@@ -318,7 +318,7 @@ struct LessNonConst {
 };
 ''';
 
-fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
+fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   x < y;
   x <= y;
   x > y;
@@ -336,8 +336,8 @@ fn Test(missing_less: Cpp.MissingLess,
   // CHECK:STDERR:   OrderedWith(missing_less, missing_less);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-17]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   OrderedWith(missing_less, missing_less);
 
@@ -345,8 +345,8 @@ fn Test(missing_less: Cpp.MissingLess,
   // CHECK:STDERR:   OrderedWith(missing_less_equal, missing_less_equal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-26]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   OrderedWith(missing_less_equal, missing_less_equal);
 
@@ -354,8 +354,8 @@ fn Test(missing_less: Cpp.MissingLess,
   // CHECK:STDERR:   OrderedWith(missing_greater, missing_greater);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-35]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   OrderedWith(missing_greater, missing_greater);
 
@@ -363,8 +363,8 @@ fn Test(missing_less: Cpp.MissingLess,
   // CHECK:STDERR:   OrderedWith(missing_greater_equal, missing_greater_equal);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-44]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   OrderedWith(missing_greater_equal, missing_greater_equal);
 
@@ -372,8 +372,8 @@ fn Test(missing_less: Cpp.MissingLess,
   // CHECK:STDERR:   OrderedWith(no_relevant_members, no_relevant_members);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-53]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   OrderedWith(no_relevant_members, no_relevant_members);
 
@@ -381,8 +381,8 @@ fn Test(missing_less: Cpp.MissingLess,
   // CHECK:STDERR:   OrderedWith(less_returns_void, less_returns_void);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-62]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn OrderedWith[U:! type, T:! Core.OrderedWith(U)](x: T, y: U) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   OrderedWith(less_returns_void, less_returns_void);
 
@@ -392,8 +392,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT: --- returns_bool.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %Other: type = symbolic_binding Other, 0 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.type.32ae87.1: type = facet_type <@OrderedWith.1, @OrderedWith.1(%Other)> [symbolic]
@@ -411,18 +412,18 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.ebc: type = pattern_type %OrderedWith.type.32ae87.2 [symbolic]
 // CHECK:STDOUT:   %T.patt.aaa: %pattern_type.ebc = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T: %OrderedWith.type.32ae87.2 = symbolic_binding T, 1 [symbolic]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.f6ec4f.2: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %x.param_patt.a58: %pattern_type.f6ec4f.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.bcb: %pattern_type.f6ec4f.2 = wrapper_binding_pattern x, %x.param_patt.a58 [symbolic]
+// CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %U [symbolic]
+// CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %y.patt.678: %pattern_type.51d1c4.2 = wrapper_binding_pattern y, %y.param_patt.be3 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.1d2e6f.2: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%U) [symbolic]
 // CHECK:STDOUT:   %assoc0.c0023b.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element0, imports.%Core.import_ref.e7a [symbolic]
 // CHECK:STDOUT:   %assoc1.3efd77.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element1, imports.%Core.import_ref.3f7 [symbolic]
 // CHECK:STDOUT:   %assoc2.48eff0.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element2, imports.%Core.import_ref.385 [symbolic]
 // CHECK:STDOUT:   %assoc3.5d53f7.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element3, imports.%Core.import_ref.39b [symbolic]
-// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
-// CHECK:STDOUT:   %pattern_type.f6ec4f.2: type = pattern_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %x.param_patt.a58: %pattern_type.f6ec4f.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.140: %pattern_type.f6ec4f.2 = at_binding_pattern x, %x.param_patt.a58 [symbolic]
-// CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %U [symbolic]
-// CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %y.patt.b85: %pattern_type.51d1c4.2 = at_binding_pattern y, %y.param_patt.be3 [symbolic]
 // CHECK:STDOUT:   %require_complete.3c0: <witness> = require_complete_type %OrderedWith.type.32ae87.2 [symbolic]
 // CHECK:STDOUT:   %assoc0.13c: %OrderedWith.assoc_type.1d2e6f.1 = assoc_entity element0, imports.%Core.import_ref.447 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.lookup_impl_witness: <witness> = lookup_impl_witness %T, @OrderedWith.1, @OrderedWith.1(%U) [symbolic]
@@ -468,9 +469,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.d57: type = pattern_type %OrderedWith.type.39d [concrete]
 // CHECK:STDOUT:   %T.patt.67e: %pattern_type.d57 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.e3d: %pattern_type.e66 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.51a: %pattern_type.e66 = at_binding_pattern x, %x.param_patt.e3d [concrete]
+// CHECK:STDOUT:   %x.patt.88c: %pattern_type.e66 = wrapper_binding_pattern x, %x.param_patt.e3d [concrete]
 // CHECK:STDOUT:   %y.param_patt.4a3: %pattern_type.e66 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.397: %pattern_type.e66 = at_binding_pattern y, %y.param_patt.4a3 [concrete]
+// CHECK:STDOUT:   %y.patt.68b: %pattern_type.e66 = wrapper_binding_pattern y, %y.param_patt.4a3 [concrete]
 // CHECK:STDOUT:   %complete_type.e48: <witness> = complete_type_witness %OrderedWith.type.39d [concrete]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.652: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.517) [concrete]
 // CHECK:STDOUT:   %.92e: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.652, %OrderedWith.facet.517 [concrete]
@@ -497,40 +498,40 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %Core.import_ref.6c6 = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @OrderedWith.loc13(%U.loc13_17.2: type, %T.loc13_27.2: @OrderedWith.loc13.%OrderedWith.type.loc13_48.1 (%OrderedWith.type.32ae87.2)) {
+// CHECK:STDOUT: generic fn @OrderedWith.loc13(%U.loc13_17.2: type, %T.loc13_26.2: @OrderedWith.loc13.%OrderedWith.type.loc13_46.1 (%OrderedWith.type.32ae87.2)) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type %OrderedWith.type.loc13_48.1 [symbolic = %require_complete.loc15 (constants.%require_complete.3c0)]
+// CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type %OrderedWith.type.loc13_46.1 [symbolic = %require_complete.loc15 (constants.%require_complete.3c0)]
 // CHECK:STDOUT:   %OrderedWith.assoc_type: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%U.loc13_17.1) [symbolic = %OrderedWith.assoc_type (constants.%OrderedWith.assoc_type.1d2e6f.2)]
 // CHECK:STDOUT:   %assoc0: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = assoc_entity element0, imports.%Core.import_ref.e7a [symbolic = %assoc0 (constants.%assoc0.c0023b.2)]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%U.loc13_17.1, %T.loc13_27.1) [symbolic = %OrderedWith.WithSelf.Less.type (constants.%OrderedWith.WithSelf.Less.type.b87f4b.3)]
-// CHECK:STDOUT:   %.loc15_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type, %T.loc13_27.1 [symbolic = %.loc15_5.2 (constants.%.6ec)]
-// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_27.1, @OrderedWith.1, @OrderedWith.1(%U.loc13_17.1) [symbolic = %OrderedWith.lookup_impl_witness (constants.%OrderedWith.lookup_impl_witness)]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%U.loc13_17.1, %T.loc13_26.1) [symbolic = %OrderedWith.WithSelf.Less.type (constants.%OrderedWith.WithSelf.Less.type.b87f4b.3)]
+// CHECK:STDOUT:   %.loc15_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type, %T.loc13_26.1 [symbolic = %.loc15_5.2 (constants.%.6ec)]
+// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_26.1, @OrderedWith.1, @OrderedWith.1(%U.loc13_17.1) [symbolic = %OrderedWith.lookup_impl_witness (constants.%OrderedWith.lookup_impl_witness)]
 // CHECK:STDOUT:   %impl.elem0.loc15_5.2: @OrderedWith.loc13.%.loc15_5.2 (%.6ec) = impl_witness_access %OrderedWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_5.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %specific_impl_fn.loc15_5.2: <specific function> = specific_impl_function %impl.elem0.loc15_5.2, @OrderedWith.WithSelf.Less(%U.loc13_17.1, %T.loc13_27.1) [symbolic = %specific_impl_fn.loc15_5.2 (constants.%specific_impl_fn.527)]
+// CHECK:STDOUT:   %specific_impl_fn.loc15_5.2: <specific function> = specific_impl_function %impl.elem0.loc15_5.2, @OrderedWith.WithSelf.Less(%U.loc13_17.1, %T.loc13_26.1) [symbolic = %specific_impl_fn.loc15_5.2 (constants.%specific_impl_fn.527)]
 // CHECK:STDOUT:   %assoc1: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = assoc_entity element1, imports.%Core.import_ref.3f7 [symbolic = %assoc1 (constants.%assoc1.3efd77.2)]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%U.loc13_17.1, %T.loc13_27.1) [symbolic = %OrderedWith.WithSelf.LessOrEquivalent.type (constants.%OrderedWith.WithSelf.LessOrEquivalent.type.13d375.3)]
-// CHECK:STDOUT:   %.loc16_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type, %T.loc13_27.1 [symbolic = %.loc16_5.2 (constants.%.02d)]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%U.loc13_17.1, %T.loc13_26.1) [symbolic = %OrderedWith.WithSelf.LessOrEquivalent.type (constants.%OrderedWith.WithSelf.LessOrEquivalent.type.13d375.3)]
+// CHECK:STDOUT:   %.loc16_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type, %T.loc13_26.1 [symbolic = %.loc16_5.2 (constants.%.02d)]
 // CHECK:STDOUT:   %impl.elem1.loc16_5.2: @OrderedWith.loc13.%.loc16_5.2 (%.02d) = impl_witness_access %OrderedWith.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc16_5.2 (constants.%impl.elem1)]
-// CHECK:STDOUT:   %specific_impl_fn.loc16_5.2: <specific function> = specific_impl_function %impl.elem1.loc16_5.2, @OrderedWith.WithSelf.LessOrEquivalent(%U.loc13_17.1, %T.loc13_27.1) [symbolic = %specific_impl_fn.loc16_5.2 (constants.%specific_impl_fn.001)]
+// CHECK:STDOUT:   %specific_impl_fn.loc16_5.2: <specific function> = specific_impl_function %impl.elem1.loc16_5.2, @OrderedWith.WithSelf.LessOrEquivalent(%U.loc13_17.1, %T.loc13_26.1) [symbolic = %specific_impl_fn.loc16_5.2 (constants.%specific_impl_fn.001)]
 // CHECK:STDOUT:   %assoc2: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = assoc_entity element2, imports.%Core.import_ref.385 [symbolic = %assoc2 (constants.%assoc2.48eff0.2)]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%U.loc13_17.1, %T.loc13_27.1) [symbolic = %OrderedWith.WithSelf.Greater.type (constants.%OrderedWith.WithSelf.Greater.type.9ce25c.3)]
-// CHECK:STDOUT:   %.loc17_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type, %T.loc13_27.1 [symbolic = %.loc17_5.2 (constants.%.666)]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%U.loc13_17.1, %T.loc13_26.1) [symbolic = %OrderedWith.WithSelf.Greater.type (constants.%OrderedWith.WithSelf.Greater.type.9ce25c.3)]
+// CHECK:STDOUT:   %.loc17_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type, %T.loc13_26.1 [symbolic = %.loc17_5.2 (constants.%.666)]
 // CHECK:STDOUT:   %impl.elem2.loc17_5.2: @OrderedWith.loc13.%.loc17_5.2 (%.666) = impl_witness_access %OrderedWith.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc17_5.2 (constants.%impl.elem2)]
-// CHECK:STDOUT:   %specific_impl_fn.loc17_5.2: <specific function> = specific_impl_function %impl.elem2.loc17_5.2, @OrderedWith.WithSelf.Greater(%U.loc13_17.1, %T.loc13_27.1) [symbolic = %specific_impl_fn.loc17_5.2 (constants.%specific_impl_fn.735)]
+// CHECK:STDOUT:   %specific_impl_fn.loc17_5.2: <specific function> = specific_impl_function %impl.elem2.loc17_5.2, @OrderedWith.WithSelf.Greater(%U.loc13_17.1, %T.loc13_26.1) [symbolic = %specific_impl_fn.loc17_5.2 (constants.%specific_impl_fn.735)]
 // CHECK:STDOUT:   %assoc3: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = assoc_entity element3, imports.%Core.import_ref.39b [symbolic = %assoc3 (constants.%assoc3.5d53f7.2)]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%U.loc13_17.1, %T.loc13_27.1) [symbolic = %OrderedWith.WithSelf.GreaterOrEquivalent.type (constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.7dedb2.3)]
-// CHECK:STDOUT:   %.loc18_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type, %T.loc13_27.1 [symbolic = %.loc18_5.2 (constants.%.73b)]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%U.loc13_17.1, %T.loc13_26.1) [symbolic = %OrderedWith.WithSelf.GreaterOrEquivalent.type (constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.7dedb2.3)]
+// CHECK:STDOUT:   %.loc18_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type, %T.loc13_26.1 [symbolic = %.loc18_5.2 (constants.%.73b)]
 // CHECK:STDOUT:   %impl.elem3.loc18_5.2: @OrderedWith.loc13.%.loc18_5.2 (%.73b) = impl_witness_access %OrderedWith.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc18_5.2 (constants.%impl.elem3)]
-// CHECK:STDOUT:   %specific_impl_fn.loc18_5.2: <specific function> = specific_impl_function %impl.elem3.loc18_5.2, @OrderedWith.WithSelf.GreaterOrEquivalent(%U.loc13_17.1, %T.loc13_27.1) [symbolic = %specific_impl_fn.loc18_5.2 (constants.%specific_impl_fn.418)]
+// CHECK:STDOUT:   %specific_impl_fn.loc18_5.2: <specific function> = specific_impl_function %impl.elem3.loc18_5.2, @OrderedWith.WithSelf.GreaterOrEquivalent(%U.loc13_17.1, %T.loc13_26.1) [symbolic = %specific_impl_fn.loc18_5.2 (constants.%specific_impl_fn.418)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @OrderedWith.loc13.%T.as_type.loc13_54.1 (%T.as_type), %y.param: @OrderedWith.loc13.%U.loc13_17.1 (%U)) {
+// CHECK:STDOUT:   fn(%x.param: @OrderedWith.loc13.%T.as_type.loc13_52.1 (%T.as_type), %y.param: @OrderedWith.loc13.%U.loc13_17.1 (%U)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref.loc15: @OrderedWith.loc13.%T.as_type.loc13_54.1 (%T.as_type) = name_ref x, %x
+// CHECK:STDOUT:     %x.ref.loc15: @OrderedWith.loc13.%T.as_type.loc13_52.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc15: @OrderedWith.loc13.%U.loc13_17.1 (%U) = name_ref y, %y
-// CHECK:STDOUT:     %OrderedWith.type.loc15: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc13_48.1 (constants.%OrderedWith.type.32ae87.2)]
+// CHECK:STDOUT:     %OrderedWith.type.loc15: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc13_46.1 (constants.%OrderedWith.type.32ae87.2)]
 // CHECK:STDOUT:     %.loc15_5.1: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = specific_constant imports.%Core.import_ref.ef7, @OrderedWith.WithSelf(constants.%U, constants.%Self.7df555.1) [symbolic = %assoc0 (constants.%assoc0.c0023b.2)]
 // CHECK:STDOUT:     %Less.ref: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = name_ref Less, %.loc15_5.1 [symbolic = %assoc0 (constants.%assoc0.c0023b.2)]
 // CHECK:STDOUT:     %impl.elem0.loc15_5.1: @OrderedWith.loc13.%.loc15_5.2 (%.6ec) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_5.2 (constants.%impl.elem0)]
@@ -538,9 +539,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:     %specific_impl_fn.loc15_5.1: <specific function> = specific_impl_function %impl.elem0.loc15_5.1, @OrderedWith.WithSelf.Less(constants.%U, constants.%T) [symbolic = %specific_impl_fn.loc15_5.2 (constants.%specific_impl_fn.527)]
 // CHECK:STDOUT:     %bound_method.loc15_5.2: <bound method> = bound_method %x.ref.loc15, %specific_impl_fn.loc15_5.1
 // CHECK:STDOUT:     %OrderedWith.WithSelf.Less.call: init bool = call %bound_method.loc15_5.2(%x.ref.loc15, %y.ref.loc15)
-// CHECK:STDOUT:     %x.ref.loc16: @OrderedWith.loc13.%T.as_type.loc13_54.1 (%T.as_type) = name_ref x, %x
+// CHECK:STDOUT:     %x.ref.loc16: @OrderedWith.loc13.%T.as_type.loc13_52.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc16: @OrderedWith.loc13.%U.loc13_17.1 (%U) = name_ref y, %y
-// CHECK:STDOUT:     %OrderedWith.type.loc16: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc13_48.1 (constants.%OrderedWith.type.32ae87.2)]
+// CHECK:STDOUT:     %OrderedWith.type.loc16: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc13_46.1 (constants.%OrderedWith.type.32ae87.2)]
 // CHECK:STDOUT:     %.loc16_5.1: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = specific_constant imports.%Core.import_ref.878, @OrderedWith.WithSelf(constants.%U, constants.%Self.7df555.1) [symbolic = %assoc1 (constants.%assoc1.3efd77.2)]
 // CHECK:STDOUT:     %LessOrEquivalent.ref: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = name_ref LessOrEquivalent, %.loc16_5.1 [symbolic = %assoc1 (constants.%assoc1.3efd77.2)]
 // CHECK:STDOUT:     %impl.elem1.loc16_5.1: @OrderedWith.loc13.%.loc16_5.2 (%.02d) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc16_5.2 (constants.%impl.elem1)]
@@ -548,9 +549,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:     %specific_impl_fn.loc16_5.1: <specific function> = specific_impl_function %impl.elem1.loc16_5.1, @OrderedWith.WithSelf.LessOrEquivalent(constants.%U, constants.%T) [symbolic = %specific_impl_fn.loc16_5.2 (constants.%specific_impl_fn.001)]
 // CHECK:STDOUT:     %bound_method.loc16_5.2: <bound method> = bound_method %x.ref.loc16, %specific_impl_fn.loc16_5.1
 // CHECK:STDOUT:     %OrderedWith.WithSelf.LessOrEquivalent.call: init bool = call %bound_method.loc16_5.2(%x.ref.loc16, %y.ref.loc16)
-// CHECK:STDOUT:     %x.ref.loc17: @OrderedWith.loc13.%T.as_type.loc13_54.1 (%T.as_type) = name_ref x, %x
+// CHECK:STDOUT:     %x.ref.loc17: @OrderedWith.loc13.%T.as_type.loc13_52.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc17: @OrderedWith.loc13.%U.loc13_17.1 (%U) = name_ref y, %y
-// CHECK:STDOUT:     %OrderedWith.type.loc17: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc13_48.1 (constants.%OrderedWith.type.32ae87.2)]
+// CHECK:STDOUT:     %OrderedWith.type.loc17: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc13_46.1 (constants.%OrderedWith.type.32ae87.2)]
 // CHECK:STDOUT:     %.loc17_5.1: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = specific_constant imports.%Core.import_ref.d4f, @OrderedWith.WithSelf(constants.%U, constants.%Self.7df555.1) [symbolic = %assoc2 (constants.%assoc2.48eff0.2)]
 // CHECK:STDOUT:     %Greater.ref: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = name_ref Greater, %.loc17_5.1 [symbolic = %assoc2 (constants.%assoc2.48eff0.2)]
 // CHECK:STDOUT:     %impl.elem2.loc17_5.1: @OrderedWith.loc13.%.loc17_5.2 (%.666) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc17_5.2 (constants.%impl.elem2)]
@@ -558,9 +559,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:     %specific_impl_fn.loc17_5.1: <specific function> = specific_impl_function %impl.elem2.loc17_5.1, @OrderedWith.WithSelf.Greater(constants.%U, constants.%T) [symbolic = %specific_impl_fn.loc17_5.2 (constants.%specific_impl_fn.735)]
 // CHECK:STDOUT:     %bound_method.loc17_5.2: <bound method> = bound_method %x.ref.loc17, %specific_impl_fn.loc17_5.1
 // CHECK:STDOUT:     %OrderedWith.WithSelf.Greater.call: init bool = call %bound_method.loc17_5.2(%x.ref.loc17, %y.ref.loc17)
-// CHECK:STDOUT:     %x.ref.loc18: @OrderedWith.loc13.%T.as_type.loc13_54.1 (%T.as_type) = name_ref x, %x
+// CHECK:STDOUT:     %x.ref.loc18: @OrderedWith.loc13.%T.as_type.loc13_52.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc18: @OrderedWith.loc13.%U.loc13_17.1 (%U) = name_ref y, %y
-// CHECK:STDOUT:     %OrderedWith.type.loc18: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc13_48.1 (constants.%OrderedWith.type.32ae87.2)]
+// CHECK:STDOUT:     %OrderedWith.type.loc18: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc13_46.1 (constants.%OrderedWith.type.32ae87.2)]
 // CHECK:STDOUT:     %.loc18_5.1: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = specific_constant imports.%Core.import_ref.b87, @OrderedWith.WithSelf(constants.%U, constants.%Self.7df555.1) [symbolic = %assoc3 (constants.%assoc3.5d53f7.2)]
 // CHECK:STDOUT:     %GreaterOrEquivalent.ref: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = name_ref GreaterOrEquivalent, %.loc18_5.1 [symbolic = %assoc3 (constants.%assoc3.5d53f7.2)]
 // CHECK:STDOUT:     %impl.elem3.loc18_5.1: @OrderedWith.loc13.%.loc18_5.2 (%.73b) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc18_5.2 (constants.%impl.elem3)]
@@ -575,37 +576,37 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT: specific @OrderedWith.loc13(constants.%U, constants.%T) {
 // CHECK:STDOUT:   %U.patt.loc13_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc13_17.1 => constants.%U
-// CHECK:STDOUT:   %OrderedWith.type.loc13_48.1 => constants.%OrderedWith.type.32ae87.2
-// CHECK:STDOUT:   %pattern_type.loc13_27 => constants.%pattern_type.ebc
-// CHECK:STDOUT:   %T.patt.loc13_27.2 => constants.%T.patt.aaa
-// CHECK:STDOUT:   %T.loc13_27.1 => constants.%T
-// CHECK:STDOUT:   %T.as_type.loc13_54.1 => constants.%T.as_type
-// CHECK:STDOUT:   %pattern_type.loc13_52 => constants.%pattern_type.f6ec4f.2
-// CHECK:STDOUT:   %x.param_patt.loc13_52.2 => constants.%x.param_patt.a58
-// CHECK:STDOUT:   %x.patt.loc13_52.2 => constants.%x.patt.140
-// CHECK:STDOUT:   %pattern_type.loc13_58 => constants.%pattern_type.51d1c4.2
-// CHECK:STDOUT:   %y.param_patt.loc13_58.2 => constants.%y.param_patt.be3
-// CHECK:STDOUT:   %y.patt.loc13_58.2 => constants.%y.patt.b85
+// CHECK:STDOUT:   %OrderedWith.type.loc13_46.1 => constants.%OrderedWith.type.32ae87.2
+// CHECK:STDOUT:   %pattern_type.loc13_26 => constants.%pattern_type.ebc
+// CHECK:STDOUT:   %T.patt.loc13_26.2 => constants.%T.patt.aaa
+// CHECK:STDOUT:   %T.loc13_26.1 => constants.%T
+// CHECK:STDOUT:   %T.as_type.loc13_52.1 => constants.%T.as_type
+// CHECK:STDOUT:   %pattern_type.loc13_50 => constants.%pattern_type.f6ec4f.2
+// CHECK:STDOUT:   %x.param_patt.loc13_50.2 => constants.%x.param_patt.a58
+// CHECK:STDOUT:   %x.patt.loc13_50.2 => constants.%x.patt.bcb
+// CHECK:STDOUT:   %pattern_type.loc13_56 => constants.%pattern_type.51d1c4.2
+// CHECK:STDOUT:   %y.param_patt.loc13_56.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc13_56.2 => constants.%y.patt.678
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc13(constants.%Ordered, constants.%OrderedWith.facet.517) {
 // CHECK:STDOUT:   %U.patt.loc13_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc13_17.1 => constants.%Ordered
-// CHECK:STDOUT:   %OrderedWith.type.loc13_48.1 => constants.%OrderedWith.type.39d
-// CHECK:STDOUT:   %pattern_type.loc13_27 => constants.%pattern_type.d57
-// CHECK:STDOUT:   %T.patt.loc13_27.2 => constants.%T.patt.67e
-// CHECK:STDOUT:   %T.loc13_27.1 => constants.%OrderedWith.facet.517
-// CHECK:STDOUT:   %T.as_type.loc13_54.1 => constants.%Ordered
-// CHECK:STDOUT:   %pattern_type.loc13_52 => constants.%pattern_type.e66
-// CHECK:STDOUT:   %x.param_patt.loc13_52.2 => constants.%x.param_patt.e3d
-// CHECK:STDOUT:   %x.patt.loc13_52.2 => constants.%x.patt.51a
-// CHECK:STDOUT:   %pattern_type.loc13_58 => constants.%pattern_type.e66
-// CHECK:STDOUT:   %y.param_patt.loc13_58.2 => constants.%y.param_patt.4a3
-// CHECK:STDOUT:   %y.patt.loc13_58.2 => constants.%y.patt.397
+// CHECK:STDOUT:   %OrderedWith.type.loc13_46.1 => constants.%OrderedWith.type.39d
+// CHECK:STDOUT:   %pattern_type.loc13_26 => constants.%pattern_type.d57
+// CHECK:STDOUT:   %T.patt.loc13_26.2 => constants.%T.patt.67e
+// CHECK:STDOUT:   %T.loc13_26.1 => constants.%OrderedWith.facet.517
+// CHECK:STDOUT:   %T.as_type.loc13_52.1 => constants.%Ordered
+// CHECK:STDOUT:   %pattern_type.loc13_50 => constants.%pattern_type.e66
+// CHECK:STDOUT:   %x.param_patt.loc13_50.2 => constants.%x.param_patt.e3d
+// CHECK:STDOUT:   %x.patt.loc13_50.2 => constants.%x.patt.88c
+// CHECK:STDOUT:   %pattern_type.loc13_56 => constants.%pattern_type.e66
+// CHECK:STDOUT:   %y.param_patt.loc13_56.2 => constants.%y.param_patt.4a3
+// CHECK:STDOUT:   %y.patt.loc13_56.2 => constants.%y.patt.68b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc13_52 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc13_58 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc13_50 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc13_56 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc15 => constants.%complete_type.e48
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.e83
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.621
@@ -634,8 +635,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT: --- cross_type_ordering.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %U.patt: %pattern_type.98f = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %Other: type = symbolic_binding Other, 0 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.type.32ae87.1: type = facet_type <@OrderedWith.1, @OrderedWith.1(%Other)> [symbolic]
@@ -653,18 +655,18 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.ebc: type = pattern_type %OrderedWith.type.32ae87.2 [symbolic]
 // CHECK:STDOUT:   %T.patt.aaa: %pattern_type.ebc = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %T: %OrderedWith.type.32ae87.2 = symbolic_binding T, 1 [symbolic]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.f6ec4f.2: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %x.param_patt.a58: %pattern_type.f6ec4f.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.bcb: %pattern_type.f6ec4f.2 = wrapper_binding_pattern x, %x.param_patt.a58 [symbolic]
+// CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %U [symbolic]
+// CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.2 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %y.patt.678: %pattern_type.51d1c4.2 = wrapper_binding_pattern y, %y.param_patt.be3 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.1d2e6f.2: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%U) [symbolic]
 // CHECK:STDOUT:   %assoc0.c0023b.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element0, imports.%Core.import_ref.e7a [symbolic]
 // CHECK:STDOUT:   %assoc1.3efd77.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element1, imports.%Core.import_ref.3f7 [symbolic]
 // CHECK:STDOUT:   %assoc2.48eff0.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element2, imports.%Core.import_ref.385 [symbolic]
 // CHECK:STDOUT:   %assoc3.5d53f7.2: %OrderedWith.assoc_type.1d2e6f.2 = assoc_entity element3, imports.%Core.import_ref.39b [symbolic]
-// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
-// CHECK:STDOUT:   %pattern_type.f6ec4f.2: type = pattern_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %x.param_patt.a58: %pattern_type.f6ec4f.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.140: %pattern_type.f6ec4f.2 = at_binding_pattern x, %x.param_patt.a58 [symbolic]
-// CHECK:STDOUT:   %pattern_type.51d1c4.2: type = pattern_type %U [symbolic]
-// CHECK:STDOUT:   %y.param_patt.be3: %pattern_type.51d1c4.2 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %y.patt.b85: %pattern_type.51d1c4.2 = at_binding_pattern y, %y.param_patt.be3 [symbolic]
 // CHECK:STDOUT:   %require_complete.3c0: <witness> = require_complete_type %OrderedWith.type.32ae87.2 [symbolic]
 // CHECK:STDOUT:   %assoc0.13c: %OrderedWith.assoc_type.1d2e6f.1 = assoc_entity element0, imports.%Core.import_ref.447 [symbolic]
 // CHECK:STDOUT:   %OrderedWith.lookup_impl_witness: <witness> = lookup_impl_witness %T, @OrderedWith.1, @OrderedWith.1(%U) [symbolic]
@@ -720,9 +722,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.53b: type = pattern_type %OrderedWith.type.4d9 [concrete]
 // CHECK:STDOUT:   %T.patt.8c1: %pattern_type.53b = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.c7f: %pattern_type.3b4 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.4ff: %pattern_type.3b4 = at_binding_pattern x, %x.param_patt.c7f [concrete]
+// CHECK:STDOUT:   %x.patt.efd: %pattern_type.3b4 = wrapper_binding_pattern x, %x.param_patt.c7f [concrete]
 // CHECK:STDOUT:   %y.param_patt.9d7: %pattern_type.5b2 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.979: %pattern_type.5b2 = at_binding_pattern y, %y.param_patt.9d7 [concrete]
+// CHECK:STDOUT:   %y.patt.9fc: %pattern_type.5b2 = wrapper_binding_pattern y, %y.param_patt.9d7 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.fe8: type = facet_type <@OrderedWith.1, @OrderedWith.1(%A1)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.31d: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%A1) [concrete]
 // CHECK:STDOUT:   %assoc0.a34: %OrderedWith.assoc_type.31d = assoc_entity element0, imports.%Core.import_ref.e7a [concrete]
@@ -742,9 +744,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.280: type = pattern_type %OrderedWith.type.fe8 [concrete]
 // CHECK:STDOUT:   %T.patt.5de: %pattern_type.280 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.bff: %pattern_type.5b2 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.f3d: %pattern_type.5b2 = at_binding_pattern x, %x.param_patt.bff [concrete]
+// CHECK:STDOUT:   %x.patt.033: %pattern_type.5b2 = wrapper_binding_pattern x, %x.param_patt.bff [concrete]
 // CHECK:STDOUT:   %y.param_patt.257: %pattern_type.3b4 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.774: %pattern_type.3b4 = at_binding_pattern y, %y.param_patt.257 [concrete]
+// CHECK:STDOUT:   %y.patt.ab9: %pattern_type.3b4 = wrapper_binding_pattern y, %y.param_patt.257 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.9ee: type = facet_type <@OrderedWith.1, @OrderedWith.1(%A2)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.941: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%A2) [concrete]
 // CHECK:STDOUT:   %assoc0.73a: %OrderedWith.assoc_type.941 = assoc_entity element0, imports.%Core.import_ref.e7a [concrete]
@@ -764,9 +766,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %OrderedWith.type.9ee [concrete]
 // CHECK:STDOUT:   %T.patt.e0a: %pattern_type.a96 = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.0e6: %pattern_type.d1e = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.94e: %pattern_type.d1e = at_binding_pattern x, %x.param_patt.0e6 [concrete]
+// CHECK:STDOUT:   %x.patt.d0b: %pattern_type.d1e = wrapper_binding_pattern x, %x.param_patt.0e6 [concrete]
 // CHECK:STDOUT:   %y.param_patt.a4f: %pattern_type.9f0 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.912: %pattern_type.9f0 = at_binding_pattern y, %y.param_patt.a4f [concrete]
+// CHECK:STDOUT:   %y.patt.a96: %pattern_type.9f0 = wrapper_binding_pattern y, %y.param_patt.a4f [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.cc8: type = facet_type <@OrderedWith.1, @OrderedWith.1(%B3)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.45f: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%B3) [concrete]
 // CHECK:STDOUT:   %assoc0.2c4: %OrderedWith.assoc_type.45f = assoc_entity element0, imports.%Core.import_ref.e7a [concrete]
@@ -786,9 +788,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.edf: type = pattern_type %OrderedWith.type.cc8 [concrete]
 // CHECK:STDOUT:   %T.patt.8a7: %pattern_type.edf = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.429: %pattern_type.7fe = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.6e2: %pattern_type.7fe = at_binding_pattern x, %x.param_patt.429 [concrete]
+// CHECK:STDOUT:   %x.patt.39e: %pattern_type.7fe = wrapper_binding_pattern x, %x.param_patt.429 [concrete]
 // CHECK:STDOUT:   %y.param_patt.b51: %pattern_type.2dd = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.7b8: %pattern_type.2dd = at_binding_pattern y, %y.param_patt.b51 [concrete]
+// CHECK:STDOUT:   %y.patt.e2b: %pattern_type.2dd = wrapper_binding_pattern y, %y.param_patt.b51 [concrete]
 // CHECK:STDOUT:   %OrderedWith.type.30a: type = facet_type <@OrderedWith.1, @OrderedWith.1(%A3)> [concrete]
 // CHECK:STDOUT:   %OrderedWith.assoc_type.18e: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%A3) [concrete]
 // CHECK:STDOUT:   %assoc0.d97: %OrderedWith.assoc_type.18e = assoc_entity element0, imports.%Core.import_ref.e7a [concrete]
@@ -808,9 +810,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %pattern_type.5db: type = pattern_type %OrderedWith.type.30a [concrete]
 // CHECK:STDOUT:   %T.patt.36b: %pattern_type.5db = symbolic_binding_pattern T, 1 [symbolic]
 // CHECK:STDOUT:   %x.param_patt.074: %pattern_type.2dd = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt.234: %pattern_type.2dd = at_binding_pattern x, %x.param_patt.074 [concrete]
+// CHECK:STDOUT:   %x.patt.9ae: %pattern_type.2dd = wrapper_binding_pattern x, %x.param_patt.074 [concrete]
 // CHECK:STDOUT:   %y.param_patt.d86: %pattern_type.7fe = value_param_pattern [concrete]
-// CHECK:STDOUT:   %y.patt.fd9: %pattern_type.7fe = at_binding_pattern y, %y.param_patt.d86 [concrete]
+// CHECK:STDOUT:   %y.patt.426: %pattern_type.7fe = wrapper_binding_pattern y, %y.param_patt.d86 [concrete]
 // CHECK:STDOUT:   %complete_type.f5b: <witness> = complete_type_witness %OrderedWith.type.4d9 [concrete]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.bf4: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.370) [concrete]
 // CHECK:STDOUT:   %.e3b: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.bf4, %OrderedWith.facet.370 [concrete]
@@ -873,40 +875,40 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %Core.import_ref.6c6 = import_ref Core//prelude/operators/comparison, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @OrderedWith.loc54(%U.loc54_17.2: type, %T.loc54_27.2: @OrderedWith.loc54.%OrderedWith.type.loc54_48.1 (%OrderedWith.type.32ae87.2)) {
+// CHECK:STDOUT: generic fn @OrderedWith.loc54(%U.loc54_17.2: type, %T.loc54_26.2: @OrderedWith.loc54.%OrderedWith.type.loc54_46.1 (%OrderedWith.type.32ae87.2)) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %require_complete.loc56: <witness> = require_complete_type %OrderedWith.type.loc54_48.1 [symbolic = %require_complete.loc56 (constants.%require_complete.3c0)]
+// CHECK:STDOUT:   %require_complete.loc56: <witness> = require_complete_type %OrderedWith.type.loc54_46.1 [symbolic = %require_complete.loc56 (constants.%require_complete.3c0)]
 // CHECK:STDOUT:   %OrderedWith.assoc_type: type = assoc_entity_type @OrderedWith.1, @OrderedWith.1(%U.loc54_17.1) [symbolic = %OrderedWith.assoc_type (constants.%OrderedWith.assoc_type.1d2e6f.2)]
 // CHECK:STDOUT:   %assoc0: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = assoc_entity element0, imports.%Core.import_ref.e7a [symbolic = %assoc0 (constants.%assoc0.c0023b.2)]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%U.loc54_17.1, %T.loc54_27.1) [symbolic = %OrderedWith.WithSelf.Less.type (constants.%OrderedWith.WithSelf.Less.type.b87f4b.3)]
-// CHECK:STDOUT:   %.loc56_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type, %T.loc54_27.1 [symbolic = %.loc56_5.2 (constants.%.6ec)]
-// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc54_27.1, @OrderedWith.1, @OrderedWith.1(%U.loc54_17.1) [symbolic = %OrderedWith.lookup_impl_witness (constants.%OrderedWith.lookup_impl_witness)]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%U.loc54_17.1, %T.loc54_26.1) [symbolic = %OrderedWith.WithSelf.Less.type (constants.%OrderedWith.WithSelf.Less.type.b87f4b.3)]
+// CHECK:STDOUT:   %.loc56_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type, %T.loc54_26.1 [symbolic = %.loc56_5.2 (constants.%.6ec)]
+// CHECK:STDOUT:   %OrderedWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc54_26.1, @OrderedWith.1, @OrderedWith.1(%U.loc54_17.1) [symbolic = %OrderedWith.lookup_impl_witness (constants.%OrderedWith.lookup_impl_witness)]
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2: @OrderedWith.loc54.%.loc56_5.2 (%.6ec) = impl_witness_access %OrderedWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc56_5.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %specific_impl_fn.loc56_5.2: <specific function> = specific_impl_function %impl.elem0.loc56_5.2, @OrderedWith.WithSelf.Less(%U.loc54_17.1, %T.loc54_27.1) [symbolic = %specific_impl_fn.loc56_5.2 (constants.%specific_impl_fn.527)]
+// CHECK:STDOUT:   %specific_impl_fn.loc56_5.2: <specific function> = specific_impl_function %impl.elem0.loc56_5.2, @OrderedWith.WithSelf.Less(%U.loc54_17.1, %T.loc54_26.1) [symbolic = %specific_impl_fn.loc56_5.2 (constants.%specific_impl_fn.527)]
 // CHECK:STDOUT:   %assoc1: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = assoc_entity element1, imports.%Core.import_ref.3f7 [symbolic = %assoc1 (constants.%assoc1.3efd77.2)]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%U.loc54_17.1, %T.loc54_27.1) [symbolic = %OrderedWith.WithSelf.LessOrEquivalent.type (constants.%OrderedWith.WithSelf.LessOrEquivalent.type.13d375.3)]
-// CHECK:STDOUT:   %.loc57_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type, %T.loc54_27.1 [symbolic = %.loc57_5.2 (constants.%.02db)]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%U.loc54_17.1, %T.loc54_26.1) [symbolic = %OrderedWith.WithSelf.LessOrEquivalent.type (constants.%OrderedWith.WithSelf.LessOrEquivalent.type.13d375.3)]
+// CHECK:STDOUT:   %.loc57_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type, %T.loc54_26.1 [symbolic = %.loc57_5.2 (constants.%.02db)]
 // CHECK:STDOUT:   %impl.elem1.loc57_5.2: @OrderedWith.loc54.%.loc57_5.2 (%.02db) = impl_witness_access %OrderedWith.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc57_5.2 (constants.%impl.elem1)]
-// CHECK:STDOUT:   %specific_impl_fn.loc57_5.2: <specific function> = specific_impl_function %impl.elem1.loc57_5.2, @OrderedWith.WithSelf.LessOrEquivalent(%U.loc54_17.1, %T.loc54_27.1) [symbolic = %specific_impl_fn.loc57_5.2 (constants.%specific_impl_fn.001)]
+// CHECK:STDOUT:   %specific_impl_fn.loc57_5.2: <specific function> = specific_impl_function %impl.elem1.loc57_5.2, @OrderedWith.WithSelf.LessOrEquivalent(%U.loc54_17.1, %T.loc54_26.1) [symbolic = %specific_impl_fn.loc57_5.2 (constants.%specific_impl_fn.001)]
 // CHECK:STDOUT:   %assoc2: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = assoc_entity element2, imports.%Core.import_ref.385 [symbolic = %assoc2 (constants.%assoc2.48eff0.2)]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%U.loc54_17.1, %T.loc54_27.1) [symbolic = %OrderedWith.WithSelf.Greater.type (constants.%OrderedWith.WithSelf.Greater.type.9ce25c.3)]
-// CHECK:STDOUT:   %.loc58_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type, %T.loc54_27.1 [symbolic = %.loc58_5.2 (constants.%.666)]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%U.loc54_17.1, %T.loc54_26.1) [symbolic = %OrderedWith.WithSelf.Greater.type (constants.%OrderedWith.WithSelf.Greater.type.9ce25c.3)]
+// CHECK:STDOUT:   %.loc58_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.Greater.type, %T.loc54_26.1 [symbolic = %.loc58_5.2 (constants.%.666)]
 // CHECK:STDOUT:   %impl.elem2.loc58_5.2: @OrderedWith.loc54.%.loc58_5.2 (%.666) = impl_witness_access %OrderedWith.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc58_5.2 (constants.%impl.elem2)]
-// CHECK:STDOUT:   %specific_impl_fn.loc58_5.2: <specific function> = specific_impl_function %impl.elem2.loc58_5.2, @OrderedWith.WithSelf.Greater(%U.loc54_17.1, %T.loc54_27.1) [symbolic = %specific_impl_fn.loc58_5.2 (constants.%specific_impl_fn.735)]
+// CHECK:STDOUT:   %specific_impl_fn.loc58_5.2: <specific function> = specific_impl_function %impl.elem2.loc58_5.2, @OrderedWith.WithSelf.Greater(%U.loc54_17.1, %T.loc54_26.1) [symbolic = %specific_impl_fn.loc58_5.2 (constants.%specific_impl_fn.735)]
 // CHECK:STDOUT:   %assoc3: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = assoc_entity element3, imports.%Core.import_ref.39b [symbolic = %assoc3 (constants.%assoc3.5d53f7.2)]
-// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%U.loc54_17.1, %T.loc54_27.1) [symbolic = %OrderedWith.WithSelf.GreaterOrEquivalent.type (constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.7dedb2.3)]
-// CHECK:STDOUT:   %.loc59_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type, %T.loc54_27.1 [symbolic = %.loc59_5.2 (constants.%.73b)]
+// CHECK:STDOUT:   %OrderedWith.WithSelf.GreaterOrEquivalent.type: type = fn_type @OrderedWith.WithSelf.GreaterOrEquivalent, @OrderedWith.WithSelf(%U.loc54_17.1, %T.loc54_26.1) [symbolic = %OrderedWith.WithSelf.GreaterOrEquivalent.type (constants.%OrderedWith.WithSelf.GreaterOrEquivalent.type.7dedb2.3)]
+// CHECK:STDOUT:   %.loc59_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.GreaterOrEquivalent.type, %T.loc54_26.1 [symbolic = %.loc59_5.2 (constants.%.73b)]
 // CHECK:STDOUT:   %impl.elem3.loc59_5.2: @OrderedWith.loc54.%.loc59_5.2 (%.73b) = impl_witness_access %OrderedWith.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc59_5.2 (constants.%impl.elem3)]
-// CHECK:STDOUT:   %specific_impl_fn.loc59_5.2: <specific function> = specific_impl_function %impl.elem3.loc59_5.2, @OrderedWith.WithSelf.GreaterOrEquivalent(%U.loc54_17.1, %T.loc54_27.1) [symbolic = %specific_impl_fn.loc59_5.2 (constants.%specific_impl_fn.418)]
+// CHECK:STDOUT:   %specific_impl_fn.loc59_5.2: <specific function> = specific_impl_function %impl.elem3.loc59_5.2, @OrderedWith.WithSelf.GreaterOrEquivalent(%U.loc54_17.1, %T.loc54_26.1) [symbolic = %specific_impl_fn.loc59_5.2 (constants.%specific_impl_fn.418)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @OrderedWith.loc54.%T.as_type.loc54_54.1 (%T.as_type), %y.param: @OrderedWith.loc54.%U.loc54_17.1 (%U)) {
+// CHECK:STDOUT:   fn(%x.param: @OrderedWith.loc54.%T.as_type.loc54_52.1 (%T.as_type), %y.param: @OrderedWith.loc54.%U.loc54_17.1 (%U)) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref.loc56: @OrderedWith.loc54.%T.as_type.loc54_54.1 (%T.as_type) = name_ref x, %x
+// CHECK:STDOUT:     %x.ref.loc56: @OrderedWith.loc54.%T.as_type.loc54_52.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc56: @OrderedWith.loc54.%U.loc54_17.1 (%U) = name_ref y, %y
-// CHECK:STDOUT:     %OrderedWith.type.loc56: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc54_48.1 (constants.%OrderedWith.type.32ae87.2)]
+// CHECK:STDOUT:     %OrderedWith.type.loc56: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc54_46.1 (constants.%OrderedWith.type.32ae87.2)]
 // CHECK:STDOUT:     %.loc56_5.1: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = specific_constant imports.%Core.import_ref.ef7, @OrderedWith.WithSelf(constants.%U, constants.%Self.7df555.1) [symbolic = %assoc0 (constants.%assoc0.c0023b.2)]
 // CHECK:STDOUT:     %Less.ref: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = name_ref Less, %.loc56_5.1 [symbolic = %assoc0 (constants.%assoc0.c0023b.2)]
 // CHECK:STDOUT:     %impl.elem0.loc56_5.1: @OrderedWith.loc54.%.loc56_5.2 (%.6ec) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc56_5.2 (constants.%impl.elem0)]
@@ -914,9 +916,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:     %specific_impl_fn.loc56_5.1: <specific function> = specific_impl_function %impl.elem0.loc56_5.1, @OrderedWith.WithSelf.Less(constants.%U, constants.%T) [symbolic = %specific_impl_fn.loc56_5.2 (constants.%specific_impl_fn.527)]
 // CHECK:STDOUT:     %bound_method.loc56_5.2: <bound method> = bound_method %x.ref.loc56, %specific_impl_fn.loc56_5.1
 // CHECK:STDOUT:     %OrderedWith.WithSelf.Less.call: init bool = call %bound_method.loc56_5.2(%x.ref.loc56, %y.ref.loc56)
-// CHECK:STDOUT:     %x.ref.loc57: @OrderedWith.loc54.%T.as_type.loc54_54.1 (%T.as_type) = name_ref x, %x
+// CHECK:STDOUT:     %x.ref.loc57: @OrderedWith.loc54.%T.as_type.loc54_52.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc57: @OrderedWith.loc54.%U.loc54_17.1 (%U) = name_ref y, %y
-// CHECK:STDOUT:     %OrderedWith.type.loc57: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc54_48.1 (constants.%OrderedWith.type.32ae87.2)]
+// CHECK:STDOUT:     %OrderedWith.type.loc57: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc54_46.1 (constants.%OrderedWith.type.32ae87.2)]
 // CHECK:STDOUT:     %.loc57_5.1: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = specific_constant imports.%Core.import_ref.878, @OrderedWith.WithSelf(constants.%U, constants.%Self.7df555.1) [symbolic = %assoc1 (constants.%assoc1.3efd77.2)]
 // CHECK:STDOUT:     %LessOrEquivalent.ref: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = name_ref LessOrEquivalent, %.loc57_5.1 [symbolic = %assoc1 (constants.%assoc1.3efd77.2)]
 // CHECK:STDOUT:     %impl.elem1.loc57_5.1: @OrderedWith.loc54.%.loc57_5.2 (%.02db) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element1 [symbolic = %impl.elem1.loc57_5.2 (constants.%impl.elem1)]
@@ -924,9 +926,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:     %specific_impl_fn.loc57_5.1: <specific function> = specific_impl_function %impl.elem1.loc57_5.1, @OrderedWith.WithSelf.LessOrEquivalent(constants.%U, constants.%T) [symbolic = %specific_impl_fn.loc57_5.2 (constants.%specific_impl_fn.001)]
 // CHECK:STDOUT:     %bound_method.loc57_5.2: <bound method> = bound_method %x.ref.loc57, %specific_impl_fn.loc57_5.1
 // CHECK:STDOUT:     %OrderedWith.WithSelf.LessOrEquivalent.call: init bool = call %bound_method.loc57_5.2(%x.ref.loc57, %y.ref.loc57)
-// CHECK:STDOUT:     %x.ref.loc58: @OrderedWith.loc54.%T.as_type.loc54_54.1 (%T.as_type) = name_ref x, %x
+// CHECK:STDOUT:     %x.ref.loc58: @OrderedWith.loc54.%T.as_type.loc54_52.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc58: @OrderedWith.loc54.%U.loc54_17.1 (%U) = name_ref y, %y
-// CHECK:STDOUT:     %OrderedWith.type.loc58: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc54_48.1 (constants.%OrderedWith.type.32ae87.2)]
+// CHECK:STDOUT:     %OrderedWith.type.loc58: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc54_46.1 (constants.%OrderedWith.type.32ae87.2)]
 // CHECK:STDOUT:     %.loc58_5.1: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = specific_constant imports.%Core.import_ref.d4f, @OrderedWith.WithSelf(constants.%U, constants.%Self.7df555.1) [symbolic = %assoc2 (constants.%assoc2.48eff0.2)]
 // CHECK:STDOUT:     %Greater.ref: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = name_ref Greater, %.loc58_5.1 [symbolic = %assoc2 (constants.%assoc2.48eff0.2)]
 // CHECK:STDOUT:     %impl.elem2.loc58_5.1: @OrderedWith.loc54.%.loc58_5.2 (%.666) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc58_5.2 (constants.%impl.elem2)]
@@ -934,9 +936,9 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:     %specific_impl_fn.loc58_5.1: <specific function> = specific_impl_function %impl.elem2.loc58_5.1, @OrderedWith.WithSelf.Greater(constants.%U, constants.%T) [symbolic = %specific_impl_fn.loc58_5.2 (constants.%specific_impl_fn.735)]
 // CHECK:STDOUT:     %bound_method.loc58_5.2: <bound method> = bound_method %x.ref.loc58, %specific_impl_fn.loc58_5.1
 // CHECK:STDOUT:     %OrderedWith.WithSelf.Greater.call: init bool = call %bound_method.loc58_5.2(%x.ref.loc58, %y.ref.loc58)
-// CHECK:STDOUT:     %x.ref.loc59: @OrderedWith.loc54.%T.as_type.loc54_54.1 (%T.as_type) = name_ref x, %x
+// CHECK:STDOUT:     %x.ref.loc59: @OrderedWith.loc54.%T.as_type.loc54_52.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %y.ref.loc59: @OrderedWith.loc54.%U.loc54_17.1 (%U) = name_ref y, %y
-// CHECK:STDOUT:     %OrderedWith.type.loc59: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc54_48.1 (constants.%OrderedWith.type.32ae87.2)]
+// CHECK:STDOUT:     %OrderedWith.type.loc59: type = facet_type <@OrderedWith.1, @OrderedWith.1(constants.%U)> [symbolic = %OrderedWith.type.loc54_46.1 (constants.%OrderedWith.type.32ae87.2)]
 // CHECK:STDOUT:     %.loc59_5.1: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = specific_constant imports.%Core.import_ref.b87, @OrderedWith.WithSelf(constants.%U, constants.%Self.7df555.1) [symbolic = %assoc3 (constants.%assoc3.5d53f7.2)]
 // CHECK:STDOUT:     %GreaterOrEquivalent.ref: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.1d2e6f.2) = name_ref GreaterOrEquivalent, %.loc59_5.1 [symbolic = %assoc3 (constants.%assoc3.5d53f7.2)]
 // CHECK:STDOUT:     %impl.elem3.loc59_5.1: @OrderedWith.loc54.%.loc59_5.2 (%.73b) = impl_witness_access constants.%OrderedWith.lookup_impl_witness, element3 [symbolic = %impl.elem3.loc59_5.2 (constants.%impl.elem3)]
@@ -951,37 +953,37 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT: specific @OrderedWith.loc54(constants.%U, constants.%T) {
 // CHECK:STDOUT:   %U.patt.loc54_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc54_17.1 => constants.%U
-// CHECK:STDOUT:   %OrderedWith.type.loc54_48.1 => constants.%OrderedWith.type.32ae87.2
-// CHECK:STDOUT:   %pattern_type.loc54_27 => constants.%pattern_type.ebc
-// CHECK:STDOUT:   %T.patt.loc54_27.2 => constants.%T.patt.aaa
-// CHECK:STDOUT:   %T.loc54_27.1 => constants.%T
-// CHECK:STDOUT:   %T.as_type.loc54_54.1 => constants.%T.as_type
-// CHECK:STDOUT:   %pattern_type.loc54_52 => constants.%pattern_type.f6ec4f.2
-// CHECK:STDOUT:   %x.param_patt.loc54_52.2 => constants.%x.param_patt.a58
-// CHECK:STDOUT:   %x.patt.loc54_52.2 => constants.%x.patt.140
-// CHECK:STDOUT:   %pattern_type.loc54_58 => constants.%pattern_type.51d1c4.2
-// CHECK:STDOUT:   %y.param_patt.loc54_58.2 => constants.%y.param_patt.be3
-// CHECK:STDOUT:   %y.patt.loc54_58.2 => constants.%y.patt.b85
+// CHECK:STDOUT:   %OrderedWith.type.loc54_46.1 => constants.%OrderedWith.type.32ae87.2
+// CHECK:STDOUT:   %pattern_type.loc54_26 => constants.%pattern_type.ebc
+// CHECK:STDOUT:   %T.patt.loc54_26.2 => constants.%T.patt.aaa
+// CHECK:STDOUT:   %T.loc54_26.1 => constants.%T
+// CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%T.as_type
+// CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.f6ec4f.2
+// CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.a58
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.bcb
+// CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.51d1c4.2
+// CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.be3
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.678
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OrderedWith.loc54(constants.%B1, constants.%OrderedWith.facet.370) {
 // CHECK:STDOUT:   %U.patt.loc54_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc54_17.1 => constants.%B1
-// CHECK:STDOUT:   %OrderedWith.type.loc54_48.1 => constants.%OrderedWith.type.4d9
-// CHECK:STDOUT:   %pattern_type.loc54_27 => constants.%pattern_type.53b
-// CHECK:STDOUT:   %T.patt.loc54_27.2 => constants.%T.patt.8c1
-// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.370
-// CHECK:STDOUT:   %T.as_type.loc54_54.1 => constants.%A1
-// CHECK:STDOUT:   %pattern_type.loc54_52 => constants.%pattern_type.3b4
-// CHECK:STDOUT:   %x.param_patt.loc54_52.2 => constants.%x.param_patt.c7f
-// CHECK:STDOUT:   %x.patt.loc54_52.2 => constants.%x.patt.4ff
-// CHECK:STDOUT:   %pattern_type.loc54_58 => constants.%pattern_type.5b2
-// CHECK:STDOUT:   %y.param_patt.loc54_58.2 => constants.%y.param_patt.9d7
-// CHECK:STDOUT:   %y.patt.loc54_58.2 => constants.%y.patt.979
+// CHECK:STDOUT:   %OrderedWith.type.loc54_46.1 => constants.%OrderedWith.type.4d9
+// CHECK:STDOUT:   %pattern_type.loc54_26 => constants.%pattern_type.53b
+// CHECK:STDOUT:   %T.patt.loc54_26.2 => constants.%T.patt.8c1
+// CHECK:STDOUT:   %T.loc54_26.1 => constants.%OrderedWith.facet.370
+// CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%A1
+// CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.3b4
+// CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.c7f
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.efd
+// CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.5b2
+// CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.9d7
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.9fc
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc54_52 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc54_58 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc54_50 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc54_56 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc56 => constants.%complete_type.f5b
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.993
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.9a4
@@ -1010,21 +1012,21 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT: specific @OrderedWith.loc54(constants.%A1, constants.%OrderedWith.facet.288) {
 // CHECK:STDOUT:   %U.patt.loc54_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc54_17.1 => constants.%A1
-// CHECK:STDOUT:   %OrderedWith.type.loc54_48.1 => constants.%OrderedWith.type.fe8
-// CHECK:STDOUT:   %pattern_type.loc54_27 => constants.%pattern_type.280
-// CHECK:STDOUT:   %T.patt.loc54_27.2 => constants.%T.patt.5de
-// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.288
-// CHECK:STDOUT:   %T.as_type.loc54_54.1 => constants.%B1
-// CHECK:STDOUT:   %pattern_type.loc54_52 => constants.%pattern_type.5b2
-// CHECK:STDOUT:   %x.param_patt.loc54_52.2 => constants.%x.param_patt.bff
-// CHECK:STDOUT:   %x.patt.loc54_52.2 => constants.%x.patt.f3d
-// CHECK:STDOUT:   %pattern_type.loc54_58 => constants.%pattern_type.3b4
-// CHECK:STDOUT:   %y.param_patt.loc54_58.2 => constants.%y.param_patt.257
-// CHECK:STDOUT:   %y.patt.loc54_58.2 => constants.%y.patt.774
+// CHECK:STDOUT:   %OrderedWith.type.loc54_46.1 => constants.%OrderedWith.type.fe8
+// CHECK:STDOUT:   %pattern_type.loc54_26 => constants.%pattern_type.280
+// CHECK:STDOUT:   %T.patt.loc54_26.2 => constants.%T.patt.5de
+// CHECK:STDOUT:   %T.loc54_26.1 => constants.%OrderedWith.facet.288
+// CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%B1
+// CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.5b2
+// CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.bff
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.033
+// CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.3b4
+// CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.257
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.ab9
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc54_52 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc54_58 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc54_50 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc54_56 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc56 => constants.%complete_type.9ae
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.31d
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.a34
@@ -1053,21 +1055,21 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT: specific @OrderedWith.loc54(constants.%A2, constants.%OrderedWith.facet.2ea) {
 // CHECK:STDOUT:   %U.patt.loc54_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc54_17.1 => constants.%A2
-// CHECK:STDOUT:   %OrderedWith.type.loc54_48.1 => constants.%OrderedWith.type.9ee
-// CHECK:STDOUT:   %pattern_type.loc54_27 => constants.%pattern_type.a96
-// CHECK:STDOUT:   %T.patt.loc54_27.2 => constants.%T.patt.e0a
-// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.2ea
-// CHECK:STDOUT:   %T.as_type.loc54_54.1 => constants.%B2
-// CHECK:STDOUT:   %pattern_type.loc54_52 => constants.%pattern_type.d1e
-// CHECK:STDOUT:   %x.param_patt.loc54_52.2 => constants.%x.param_patt.0e6
-// CHECK:STDOUT:   %x.patt.loc54_52.2 => constants.%x.patt.94e
-// CHECK:STDOUT:   %pattern_type.loc54_58 => constants.%pattern_type.9f0
-// CHECK:STDOUT:   %y.param_patt.loc54_58.2 => constants.%y.param_patt.a4f
-// CHECK:STDOUT:   %y.patt.loc54_58.2 => constants.%y.patt.912
+// CHECK:STDOUT:   %OrderedWith.type.loc54_46.1 => constants.%OrderedWith.type.9ee
+// CHECK:STDOUT:   %pattern_type.loc54_26 => constants.%pattern_type.a96
+// CHECK:STDOUT:   %T.patt.loc54_26.2 => constants.%T.patt.e0a
+// CHECK:STDOUT:   %T.loc54_26.1 => constants.%OrderedWith.facet.2ea
+// CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%B2
+// CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.d1e
+// CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.0e6
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.d0b
+// CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.9f0
+// CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.a4f
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.a96
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc54_52 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc54_58 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc54_50 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc54_56 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc56 => constants.%complete_type.674
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.941
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.73a
@@ -1096,21 +1098,21 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT: specific @OrderedWith.loc54(constants.%B3, constants.%OrderedWith.facet.d6b) {
 // CHECK:STDOUT:   %U.patt.loc54_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc54_17.1 => constants.%B3
-// CHECK:STDOUT:   %OrderedWith.type.loc54_48.1 => constants.%OrderedWith.type.cc8
-// CHECK:STDOUT:   %pattern_type.loc54_27 => constants.%pattern_type.edf
-// CHECK:STDOUT:   %T.patt.loc54_27.2 => constants.%T.patt.8a7
-// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.d6b
-// CHECK:STDOUT:   %T.as_type.loc54_54.1 => constants.%A3
-// CHECK:STDOUT:   %pattern_type.loc54_52 => constants.%pattern_type.7fe
-// CHECK:STDOUT:   %x.param_patt.loc54_52.2 => constants.%x.param_patt.429
-// CHECK:STDOUT:   %x.patt.loc54_52.2 => constants.%x.patt.6e2
-// CHECK:STDOUT:   %pattern_type.loc54_58 => constants.%pattern_type.2dd
-// CHECK:STDOUT:   %y.param_patt.loc54_58.2 => constants.%y.param_patt.b51
-// CHECK:STDOUT:   %y.patt.loc54_58.2 => constants.%y.patt.7b8
+// CHECK:STDOUT:   %OrderedWith.type.loc54_46.1 => constants.%OrderedWith.type.cc8
+// CHECK:STDOUT:   %pattern_type.loc54_26 => constants.%pattern_type.edf
+// CHECK:STDOUT:   %T.patt.loc54_26.2 => constants.%T.patt.8a7
+// CHECK:STDOUT:   %T.loc54_26.1 => constants.%OrderedWith.facet.d6b
+// CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%A3
+// CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.7fe
+// CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.429
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.39e
+// CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.2dd
+// CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.b51
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.e2b
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc54_52 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc54_58 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc54_50 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc54_56 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc56 => constants.%complete_type.672
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.45f
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.2c4
@@ -1139,21 +1141,21 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT: specific @OrderedWith.loc54(constants.%A3, constants.%OrderedWith.facet.52f) {
 // CHECK:STDOUT:   %U.patt.loc54_17.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc54_17.1 => constants.%A3
-// CHECK:STDOUT:   %OrderedWith.type.loc54_48.1 => constants.%OrderedWith.type.30a
-// CHECK:STDOUT:   %pattern_type.loc54_27 => constants.%pattern_type.5db
-// CHECK:STDOUT:   %T.patt.loc54_27.2 => constants.%T.patt.36b
-// CHECK:STDOUT:   %T.loc54_27.1 => constants.%OrderedWith.facet.52f
-// CHECK:STDOUT:   %T.as_type.loc54_54.1 => constants.%B3
-// CHECK:STDOUT:   %pattern_type.loc54_52 => constants.%pattern_type.2dd
-// CHECK:STDOUT:   %x.param_patt.loc54_52.2 => constants.%x.param_patt.074
-// CHECK:STDOUT:   %x.patt.loc54_52.2 => constants.%x.patt.234
-// CHECK:STDOUT:   %pattern_type.loc54_58 => constants.%pattern_type.7fe
-// CHECK:STDOUT:   %y.param_patt.loc54_58.2 => constants.%y.param_patt.d86
-// CHECK:STDOUT:   %y.patt.loc54_58.2 => constants.%y.patt.fd9
+// CHECK:STDOUT:   %OrderedWith.type.loc54_46.1 => constants.%OrderedWith.type.30a
+// CHECK:STDOUT:   %pattern_type.loc54_26 => constants.%pattern_type.5db
+// CHECK:STDOUT:   %T.patt.loc54_26.2 => constants.%T.patt.36b
+// CHECK:STDOUT:   %T.loc54_26.1 => constants.%OrderedWith.facet.52f
+// CHECK:STDOUT:   %T.as_type.loc54_52.1 => constants.%B3
+// CHECK:STDOUT:   %pattern_type.loc54_50 => constants.%pattern_type.2dd
+// CHECK:STDOUT:   %x.param_patt.loc54_50.2 => constants.%x.param_patt.074
+// CHECK:STDOUT:   %x.patt.loc54_50.2 => constants.%x.patt.9ae
+// CHECK:STDOUT:   %pattern_type.loc54_56 => constants.%pattern_type.7fe
+// CHECK:STDOUT:   %y.param_patt.loc54_56.2 => constants.%y.param_patt.d86
+// CHECK:STDOUT:   %y.patt.loc54_56.2 => constants.%y.patt.426
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc54_52 => constants.%complete_type.357
-// CHECK:STDOUT:   %require_complete.loc54_58 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc54_50 => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete.loc54_56 => constants.%complete_type.357
 // CHECK:STDOUT:   %require_complete.loc56 => constants.%complete_type.04a
 // CHECK:STDOUT:   %OrderedWith.assoc_type => constants.%OrderedWith.assoc_type.18e
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.d97

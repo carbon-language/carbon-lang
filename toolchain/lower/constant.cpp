@@ -200,6 +200,11 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::AddrOf inst)
   return context.GetConstant(inst.lvalue_id);
 }
 
+static auto EmitAsConstant(ConstantContext& context,
+                           SemIR::CppAddrOfFunction inst) -> llvm::Constant* {
+  return context.GetFunction(inst.function_id);
+}
+
 static auto EmitAsConstant(ConstantContext& context, SemIR::VtablePtr inst)
     -> llvm::Constant* {
   return context.GetVtable(inst.vtable_id, inst.specific_id);
@@ -373,7 +378,9 @@ static auto MaybeEmitAsConstant(ConstantContext& context, InstT inst)
                 InstT::Kind.constant_kind() ==
                     SemIR::InstConstantKind::Indirect ||
                 InstT::Kind.constant_kind() ==
-                    SemIR::InstConstantKind::SymbolicOnly) {
+                    SemIR::InstConstantKind::SymbolicOnly ||
+                InstT::Kind.constant_kind() ==
+                    SemIR::InstConstantKind::TemplateOnly) {
     CARBON_FATAL("Unexpected constant instruction kind {0}", inst);
   } else if constexpr (!InstT::Kind.is_lowered()) {
     // This instruction has a constant value, but that constant value will never

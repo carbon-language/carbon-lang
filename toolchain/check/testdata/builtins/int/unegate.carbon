@@ -108,8 +108,8 @@ library "[[@TEST_NAME]]";
 
 fn Negate(a: u32) -> u32 = "int.unegate";
 
-class Expect(N:! u32) {}
-fn Test(N:! u32) -> Expect(N) { return {}; }
+class Expect(N: u32) {}
+fn Test(generic N: u32) -> Expect(N) { return {}; }
 
 fn F() {
   // -(-INT_MAX) is INT_MAX.
@@ -123,6 +123,7 @@ fn F() {
 // CHECK:STDOUT: --- int_negate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [concrete]

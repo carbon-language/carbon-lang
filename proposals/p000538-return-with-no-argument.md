@@ -209,16 +209,20 @@ fn F() -> var (): _ = () { ... }
         integration.
 -   **Interoperability with and migration from existing C++ code**
     -   This proposal rejects some constructs that would be valid in C++:
+
         ```
         return F();
         ```
+
         in a function with `void` return type would no longer be valid in a
         corresponding Carbon function with no specified return type, and would
         need to be translated into
+
         ```
         F();
         return;
         ```
+
         (possibly with braces added). However, the fact that this construct is
         valid in C++ is surprising to many, and the constructs that would be
         idiomatic in C++ are still valid under these rules.

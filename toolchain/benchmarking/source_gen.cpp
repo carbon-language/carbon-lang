@@ -554,16 +554,13 @@ auto SourceGen::AppendUniqueIdentifiers(
   // Append all the identifiers directly out of the set. We make no guarantees
   // about the relative order so we just use the non-deterministic order of the
   // set and avoid additional storage.
-  //
-  // TODO: It's awkward the `ForEach` here can't early-exit. This just walks the
-  // whole set which is harmless if inefficient. We should add early exiting
-  // the loop support to `Set` and update this code.
-  unique_idents.ForEach([&](llvm::StringRef ident) {
-    if (number > 0) {
-      dest.push_back(ident);
-      --number;
+  for (llvm::StringRef ident : unique_idents.entries()) {
+    if (number == 0) {
+      break;
     }
-  });
+    dest.push_back(ident);
+    --number;
+  }
   CARBON_CHECK(number == 0);
 }
 
@@ -654,11 +651,15 @@ auto SourceGen::GetIdentifiersImpl(int number, int min_length, int max_length,
   idents.reserve(number);
 
   // First, compute the total weight of the distribution so we know how many
-  // identifiers we'll get each time we collect from it.
+  // identifiers we'll get each time we collect from it. For a uniform
+  // distribution every length has weight one, so the sum is simply the number
+  // of lengths; this also avoids indexing the bounded `IdentifierLengthCounts`
+  // table, which only covers lengths up to 64 and which uniform callers are
+  // allowed to exceed.
   int num_lengths = max_length - min_length + 1;
-  auto length_counts =
-      llvm::ArrayRef(IdentifierLengthCounts).slice(min_length - 1, num_lengths);
-  int count_sum = uniform ? num_lengths : Sum(length_counts);
+  int count_sum = uniform ? num_lengths
+                          : Sum(llvm::ArrayRef(IdentifierLengthCounts)
+                                    .slice(min_length - 1, num_lengths));
   CARBON_CHECK(count_sum >= 1);
 
   int number_rem = number % count_sum;

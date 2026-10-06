@@ -29,6 +29,18 @@ static auto DumpNameIfValid(const File& file, NameId name_id) -> std::string {
   return out.TakeStr();
 }
 
+static auto DumpNameOfEntityName(const File& file,
+                                 const EntityName& entity_name) -> std::string {
+  RawStringOstream out;
+  out << " `";
+  out << file.names().GetFormatted(entity_name.name_id);
+  if (entity_name.is_frozen_period_self) {
+    out << "[frozen]";
+  }
+  out << "`";
+  return out.TakeStr();
+}
+
 static auto DumpLocSummary(const File& file, LocId loc_id) -> std::string {
   RawStringOstream out;
   // TODO: If the canonical location is None but the original is an InstId,
@@ -188,6 +200,19 @@ LLVM_DUMP_METHOD auto Dump(const File& file, RawBundleId bundle_id)
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file,
+                           GeneratedFunctionId generated_function_id)
+    -> std::string {
+  RawStringOstream out;
+  out << generated_function_id;
+  if (generated_function_id.has_value()) {
+    const auto& canon = file.generated_functions().Get(generated_function_id);
+    out << ": " << canon;
+    out << "\n  - decl: " << DumpInstSummary(file, canon.decl_id);
+  }
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file, ClassId class_id) -> std::string {
   RawStringOstream out;
   out << class_id;
@@ -217,26 +242,30 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ConstantId const_id)
   return out.TakeStr();
 }
 
-LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
+LLVM_DUMP_METHOD auto Dump(const File& file, CppOverloadSetId overload_set_id)
     -> std::string {
   RawStringOstream out;
-  out << entity_name_id;
-  if (entity_name_id.has_value()) {
-    auto entity_name = file.entity_names().Get(entity_name_id);
-    out << ": " << entity_name << DumpNameIfValid(file, entity_name.name_id);
+  out << overload_set_id;
+  if (overload_set_id.has_value()) {
+    const auto& overload_set = file.cpp_overload_sets().Get(overload_set_id);
+    out << ": " << overload_set;
+    // TODO: Consider also including a dump of the functions in the overload
+    // set. Printing the set just includes the name and parent scope.
   }
   return out.TakeStr();
 }
 
-LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
+LLVM_DUMP_METHOD auto Dump(const File& file,
+                           DeclaredFacetTypeId declared_facet_type_id)
     -> std::string {
   RawStringOstream out;
-  out << facet_type_id;
-  if (!facet_type_id.has_value()) {
+  out << declared_facet_type_id;
+  if (!declared_facet_type_id.has_value()) {
     return out.TakeStr();
   }
 
-  const auto& facet_type = file.facet_types().Get(facet_type_id);
+  const auto& facet_type =
+      file.declared_facet_types().Get(declared_facet_type_id);
   out << ": " << facet_type;
   for (auto impls : facet_type.extend_constraints) {
     out << "\n  - " << DumpInterfaceSummary(file, impls.interface_id);
@@ -270,6 +299,17 @@ LLVM_DUMP_METHOD auto Dump(const File& file, FacetTypeId facet_type_id)
     out << "\n"
         << "  - " << DumpInstSummary(file, rewrite.lhs_id) << "\n"
         << "  - " << DumpInstSummary(file, rewrite.rhs_id);
+  }
+  return out.TakeStr();
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file, EntityNameId entity_name_id)
+    -> std::string {
+  RawStringOstream out;
+  out << entity_name_id;
+  if (entity_name_id.has_value()) {
+    auto entity_name = file.entity_names().Get(entity_name_id);
+    out << ": " << entity_name << DumpNameOfEntityName(file, entity_name);
   }
   return out.TakeStr();
 }
@@ -384,8 +424,7 @@ static auto DumpInstCommonDetails(const File& file, const Inst& inst,
   if (inst.arg0_and_kind().kind() == IdKind::For<EntityNameId>) {
     auto entity_name_id = EntityNameId(inst.arg0());
     out << "\n  - name:"
-        << DumpNameIfValid(file,
-                           file.entity_names().Get(entity_name_id).name_id);
+        << DumpNameOfEntityName(file, file.entity_names().Get(entity_name_id));
   }
 
   if (inst.type_id().has_value()) {
@@ -603,6 +642,10 @@ LLVM_DUMP_METHOD auto Dump(const File& file, TypeId type_id) -> std::string {
 LLVM_DUMP_METHOD static auto MakeBundleId(int id) -> RawBundleId {
   return RawBundleId(id);
 }
+LLVM_DUMP_METHOD static auto MakeGeneratedFunctionId(int id)
+    -> GeneratedFunctionId {
+  return GeneratedFunctionId(id);
+}
 LLVM_DUMP_METHOD static auto MakeClassId(int id) -> ClassId {
   return ClassId(id);
 }
@@ -615,8 +658,9 @@ LLVM_DUMP_METHOD auto MakeSymbolicConstantId(int id) -> ConstantId {
 LLVM_DUMP_METHOD static auto MakeEntityNameId(int id) -> EntityNameId {
   return EntityNameId(id);
 }
-LLVM_DUMP_METHOD static auto MakeFacetTypeId(int id) -> FacetTypeId {
-  return FacetTypeId(id);
+LLVM_DUMP_METHOD static auto MakeDeclaredFacetTypeId(int id)
+    -> DeclaredFacetTypeId {
+  return DeclaredFacetTypeId(id);
 }
 LLVM_DUMP_METHOD static auto MakeFunctionId(int id) -> FunctionId {
   return FunctionId(id);
@@ -639,6 +683,9 @@ LLVM_DUMP_METHOD static auto MakeNameScopeId(int id) -> NameScopeId {
 LLVM_DUMP_METHOD static auto MakeIdentifiedFacetTypeId(int id)
     -> IdentifiedFacetTypeId {
   return IdentifiedFacetTypeId(id);
+}
+LLVM_DUMP_METHOD static auto MakeImportIRInstId(int id) -> ImportIRInstId {
+  return ImportIRInstId(id);
 }
 LLVM_DUMP_METHOD static auto MakeNamedConstraintId(int id)
     -> NamedConstraintId {

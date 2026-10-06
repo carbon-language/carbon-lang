@@ -651,6 +651,13 @@ static auto BuildTypeForInst(FileContext& /*context*/,
   return {nullptr, nullptr};
 }
 
+static auto BuildTypeForInst(FileContext& context,
+                             SemIR::CppFunctionPointerType /*inst*/)
+    -> LoweredTypes {
+  return {llvm::PointerType::get(context.llvm_context(), /*AddressSpace=*/0),
+          nullptr};
+}
+
 static auto BuildTypeForInst(FileContext& context, SemIR::FloatType inst)
     -> LoweredTypes {
   return {llvm::Type::getFloatingPointTy(context.llvm_context(),
@@ -802,7 +809,7 @@ static auto BuildTypeForInst(FileContext& context, SemIR::TupleType inst)
   return BuildStructType(context, subtypes, layouts);
 }
 
-static auto BuildTypeForInst(FileContext& context, SemIR::TypeType /*inst*/)
+static auto BuildTypeForInst(FileContext& context, SemIR::FacetType /*inst*/)
     -> LoweredTypes {
   return {context.GetTypeType(), nullptr};
 }
@@ -821,11 +828,11 @@ template <typename InstT>
   requires(InstT::Kind.template IsAnyOf<
            SemIR::AssociatedEntityType, SemIR::AutoType, SemIR::BoundMethodType,
            SemIR::CharLiteralType, SemIR::CppOverloadSetType,
-           SemIR::CppTemplateNameType, SemIR::FacetType,
-           SemIR::FloatLiteralType, SemIR::FunctionType,
-           SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
-           SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
-           SemIR::InstType, SemIR::IntLiteralType, SemIR::NamespaceType,
+           SemIR::CppTemplateNameType, SemIR::FloatLiteralType,
+           SemIR::FunctionType, SemIR::FunctionTypeWithSelfType,
+           SemIR::GenericClassType, SemIR::GenericInterfaceType,
+           SemIR::GenericNamedConstraintType, SemIR::InstType,
+           SemIR::IntLiteralType, SemIR::NamespaceType,
            SemIR::RequireSpecificDefinitionType, SemIR::SpecificFunctionType,
            SemIR::UnboundElementType, SemIR::WhereExpr, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)

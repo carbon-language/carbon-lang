@@ -10,11 +10,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/generic_default_fn.carbon
 
-interface I(_:! type) {
+interface I(_: type) {
   // TODO: Use `default` here.
   fn F(ref self) -> Self*;
 }
 
-fn I(_:! type).F(ref self) -> Self* {
+fn I(_: type).F(ref self) -> Self* {
   return &self;
 }

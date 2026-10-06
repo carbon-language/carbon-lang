@@ -127,7 +127,7 @@ TEST_F(TreeTest, PrintPreorderAsYaml) {
       compile_helper_.GetTokenizedBufferWithTreeAndSubtrees("fn F();");
   EXPECT_FALSE(tree_and_subtrees.tree().has_errors());
   RawStringOstream print_stream;
-  tree_and_subtrees.PrintPreorder(print_stream);
+  tree_and_subtrees.PrintYamlPreorder(print_stream);
 
   auto param_list = Yaml::Sequence(ElementsAre(Yaml::Mapping(
       ElementsAre(Pair("node_index", "3"),
@@ -176,6 +176,22 @@ TEST_F(TreeTest, HighRecursion) {
   options.consumer = &consumer;
   Tree tree = Parse(tokens, options);
   EXPECT_FALSE(tree.has_errors());
+}
+
+TEST_F(TreeTest, IncompleteLambdaRecovers) {
+  // An incomplete lambda -- a `fn` introducer with no body, here `(fn)` -- must
+  // still parse to a structurally valid tree (a `Lambda` node with a
+  // placeholder body) rather than leaving an orphaned introducer where an
+  // expression is required, which would fail the parser's own tree
+  // verification.
+  Lex::TokenizedBuffer& tokens =
+      compile_helper_.GetTokenizedBuffer("var x: auto = (fn);");
+  ASSERT_FALSE(tokens.has_errors());
+  ::testing::NiceMock<Testing::MockDiagnosticConsumer> consumer;
+  Parse::ParseOptions options;
+  options.consumer = &consumer;
+  Tree tree = Parse(tokens, options);
+  EXPECT_TRUE(tree.has_errors());
 }
 
 }  // namespace

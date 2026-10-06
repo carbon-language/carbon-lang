@@ -8,8 +8,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 [Pull request](https://github.com/carbon-language/carbon-lang/pull/144)
 
-## Table of contents
-
 <!-- toc -->
 
 ## Table of contents
@@ -267,18 +265,24 @@ Advantages:
     types.
 -   Writing a function that takes any integer literal can be done with more
     obvious syntax and less syntactic overhead. Instead of:
+
     ```
     fn OneHigher(L: IntLiteral(template _:! BigInt));
     ```
+
     we could write
+
     ```
     fn OneHigher(template L:! Integer);
     ```
+
     However, with this proposal, a function taking any integer expression that
     can be evaluated to a constant can be written as
+
     ```
     fn F(template N:! BigInt);
     ```
+
     and such a function would accept all integer literals, as well as
     non-literal constants.
 

@@ -14,14 +14,17 @@
 
 namespace Carbon {
 
-// Implements the link subcommand of the driver.
+// Implements the language-server subcommand of the driver.
 class LanguageServerSubcommand : public DriverSubcommand {
  public:
   explicit LanguageServerSubcommand();
 
-  auto BuildOptions(CommandLine::CommandBuilder& /*b*/) -> void override {}
+  auto BuildOptions(CommandLine::CommandBuilder& b) -> void override;
 
   auto Run(DriverEnv& driver_env) -> DriverResult override;
+
+ private:
+  bool prelude_import_ = true;
 };
 
 }  // namespace Carbon

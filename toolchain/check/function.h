@@ -44,10 +44,10 @@ struct FunctionDeclArgs {
   ParamPatternKind self_kind = ParamPatternKind::Ref;
   // The types of the explicit parameters.
   llvm::ArrayRef<SemIR::TypeId> param_type_ids = {};
-  // The kind of the parameters described by `param_type_ids`.
-  ParamPatternKind param_kind = ParamPatternKind::Value;
-  // The return type, or `None` if the function doesn't declare a return type.
-  SemIR::TypeId return_type_id = SemIR::TypeId::None;
+  // The kinds of the parameters described by `param_type_ids`.
+  llvm::ArrayRef<ParamPatternKind> param_kinds = {};
+  // The return form, or `None` if the function doesn't declare a return form.
+  Context::FormExpr return_form = Context::FormExpr::None;
 };
 
 // Generates and returns a function declaration. The caller should update the

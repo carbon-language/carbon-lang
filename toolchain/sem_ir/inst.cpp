@@ -169,4 +169,5 @@ template class ValueStore<SemIR::InstBlockId,
                           Tag<SemIR::CheckIRId>>;
 template class BlockValueStore<SemIR::InstBlockId, SemIR::InstId,
                                Tag<SemIR::CheckIRId>>;
+template class ValueStore<SemIR::InstId, SemIR::Inst, Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon

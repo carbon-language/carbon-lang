@@ -222,6 +222,7 @@ constraints and restrict the syntax of `where A = B` as follows:
     `SameAs` relations. Same-type constraints are not used automatically by the
     language rules for any purpose, but a blanket `ImplicitAs` impl permits
     conversions between types that are known to be the same:
+
     ```
     impl forall [T:! type, U:! type where .Self == T] T as ImplicitAs(U);
     ```

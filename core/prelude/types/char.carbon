@@ -34,11 +34,11 @@ impl CharLiteral as As(Char) {
   fn Convert(self) -> Char = "char_literal.convert_char";
 }
 
-impl forall [From:! IntLiteral] UInt(From) as As(Char) {
+impl forall [From: IntLiteral] UInt(From) as As(Char) {
   fn Convert(self) -> Char = "int.convert_char";
 }
 // `char` explicitly converts to any type that `u8` implicitly converts to.
-impl forall [T:! type where u8 impls ImplicitAs(.Self)] Char as As(T) {
+impl forall [T: type where u8 impls ImplicitAs(.Self)] Char as As(T) {
   fn Convert(self) -> T {
     return self as u8;
   }
@@ -58,24 +58,24 @@ impl Char as OrderedWith(Char) {
   fn GreaterOrEquivalent(self, other: Char) -> bool = "int.greater_eq";
 }
 
-impl forall [T:! ImplicitAs(Char)] Char as EqWith(T) {
+impl forall [T: ImplicitAs(Char)] Char as EqWith(T) {
   fn Equal(self, other: Char) -> bool = "int.eq";
   fn NotEqual(self, other: Char) -> bool = "int.neq";
 }
 
-impl forall [T:! ImplicitAs(Char)] Char as OrderedWith(T) {
+impl forall [T: ImplicitAs(Char)] Char as OrderedWith(T) {
   fn Less(self, other: Char) -> bool = "int.less";
   fn LessOrEquivalent(self, other: Char) -> bool = "int.less_eq";
   fn Greater(self, other: Char) -> bool = "int.greater";
   fn GreaterOrEquivalent(self, other: Char) -> bool = "int.greater_eq";
 }
 
-impl forall [T:! ImplicitAs(Char)] T as EqWith(Char) {
+impl forall [T: ImplicitAs(Char)] T as EqWith(Char) {
   fn Equal(self: Char, other: Char) -> bool = "int.eq";
   fn NotEqual(self: Char, other: Char) -> bool = "int.neq";
 }
 
-impl forall [T:! ImplicitAs(Char)] T as OrderedWith(Char) {
+impl forall [T: ImplicitAs(Char)] T as OrderedWith(Char) {
   fn Less(self: Char, other: Char) -> bool = "int.less";
   fn LessOrEquivalent(self: Char, other: Char) -> bool = "int.less_eq";
   fn Greater(self: Char, other: Char) -> bool = "int.greater";
@@ -86,10 +86,10 @@ impl forall [T:! ImplicitAs(Char)] T as OrderedWith(Char) {
 
 private interface AnyInt {}
 
-impl forall [N:! IntLiteral] Int(N) as AnyInt {}
-impl forall [N:! IntLiteral] UInt(N) as AnyInt {}
+impl forall [N: IntLiteral] Int(N) as AnyInt {}
+impl forall [N: IntLiteral] UInt(N) as AnyInt {}
 
-impl forall [T:! AnyInt & As(u8)]
+impl forall [T: AnyInt & As(u8)]
     Char as AddWith(T) where .Result = Char {
   fn Op(self, other: T) -> Self {
     // TODO: This should be erroneous if the addition overflows.
@@ -97,7 +97,7 @@ impl forall [T:! AnyInt & As(u8)]
   }
 }
 
-impl forall [T:! AnyInt & As(u8)]
+impl forall [T: AnyInt & As(u8)]
     T as AddWith(Char) where .Result = Char {
   fn Op(self, other: Char) -> Char {
     // TODO: This should be erroneous if the addition overflows.
@@ -105,7 +105,7 @@ impl forall [T:! AnyInt & As(u8)]
   }
 }
 
-final impl forall [T:! AnyInt & As(u8)]
+final impl forall [T: AnyInt & As(u8)]
     Char as SubWith(T) where .Result = Char {
   fn Op(self, other: T) -> Self {
     // TODO: This should be erroneous if the addition overflows.
@@ -119,13 +119,13 @@ impl Char as SubWith(Char) where .Result = i32 {
   }
 }
 
-impl forall [T:! ImplicitAs(Char)] T as SubWith(Char) where .Result = i32 {
+impl forall [T: ImplicitAs(Char)] T as SubWith(Char) where .Result = i32 {
   fn Op(self: Char, other: Char) -> i32 {
     return (self as i32) - (other as i32);
   }
 }
 
-impl forall [T:! ImplicitAs(Char)] Char as SubWith(T) where .Result = i32 {
+impl forall [T: ImplicitAs(Char)] Char as SubWith(T) where .Result = i32 {
   fn Op(self, other: Char) -> i32 {
     return (self as i32) - (other as i32);
   }

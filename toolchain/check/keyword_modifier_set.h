@@ -71,6 +71,7 @@ class KeywordModifierSet : public CARBON_ENUM_MASK_BASE(KeywordModifierSet) {
   static const KeywordModifierSet Access;
   static const KeywordModifierSet Class;
   static const KeywordModifierSet Method;
+  static const KeywordModifierSet MatchFirst;
   static const KeywordModifierSet ImplDecl;
   static const KeywordModifierSet Interface;
   static const KeywordModifierSet Evaluation;
@@ -140,12 +141,14 @@ inline constexpr KeywordModifierSet KeywordModifierSet::Class(Abstract | Base);
 inline constexpr KeywordModifierSet KeywordModifierSet::Method(Abstract |
                                                                Override |
                                                                Virtual);
+inline constexpr KeywordModifierSet KeywordModifierSet::MatchFirst(Final);
 inline constexpr KeywordModifierSet KeywordModifierSet::ImplDecl(Extend |
                                                                  Final);
 inline constexpr KeywordModifierSet KeywordModifierSet::Interface(Default |
                                                                   Final);
 inline constexpr KeywordModifierSet KeywordModifierSet::Decl(Class | Method |
-                                                             Impl | Interface |
+                                                             MatchFirst | Impl |
+                                                             Interface |
                                                              Export | Returned);
 inline constexpr KeywordModifierSet KeywordModifierSet::Evaluation(Eval |
                                                                    MustEval);

@@ -100,8 +100,8 @@ fn foo() -> f64 {
 
 The node order is (with indentation to indicate nesting):
 
-<!-- Prevent prettier from changing indents. -->
-<!-- prettier-ignore-start -->
+<!-- Prevent changing indents. -->
+<!-- rumdl-disable -->
 
 ```yaml
 [
@@ -121,7 +121,7 @@ The node order is (with indentation to indicate nesting):
 ]
 ```
 
-<!-- prettier-ignore-end -->
+<!-- rumdl-enable -->
 
 In this example, `FileStart`, `FunctionDefinition`, and `FileEnd` are "root"
 nodes for the tree. Function components are children of `FunctionDefinition`.
@@ -175,6 +175,7 @@ var x: i32 = y + 1;
 Lexing creates distinct tokens for each syntactic element, which will form the
 basis of the parse tree:
 
+<!-- rumdl-disable -->
 <pre>
 <b>Tokens:</b>
 
@@ -371,6 +372,7 @@ respect to the depth of the parse tree.
 | var | |  x  | | i32 | |  :  | |  =  | |  y  | |  1  | |  +  | |  ;  |
 +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+ +-----+
 </pre>
+<!-- rumdl-enable -->
 
 The structural concepts of bracketing nodes (`var` and `;`) and parent nodes
 with a known child count (`:` and `+` with 2 children, but also `=` with 0

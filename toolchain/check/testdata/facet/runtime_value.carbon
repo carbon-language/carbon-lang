@@ -56,7 +56,7 @@ fn F(c: C) {
 library "[[@TEST_NAME]]";
 
 interface Z {
-    let X:! type;
+    let X: type;
 }
 
 // CHECK:STDERR: fail_compound_member_lookup_in_runtime_facet_without_value.carbon:[[@LINE+4]]:15: error: semantics TODO: `associated value lookup on runtime facet value` [SemanticsTodo]
@@ -69,7 +69,7 @@ fn F(T: Z, v: T.(Z.X));
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 // TODO: Improve this diagnostic. The problem is that T is a runtime facet
@@ -86,7 +86,7 @@ fn F(T: Z, v: T.X);
 library "[[@TEST_NAME]]";
 
 interface Z {
-    let X:! type;
+    let X: type;
 }
 
 // TODO: We should be able to get the value of `.X` from the `FacetType` of
@@ -102,7 +102,7 @@ fn F(T: Z where .X = (), v: T.(Z.X));
 library "[[@TEST_NAME]]";
 
 interface Z {
-  let X:! type;
+  let X: type;
 }
 
 // TODO: We should be able to get the value of `.X` from the `FacetType` of
@@ -129,9 +129,36 @@ fn F(T: Z) {
   T.G();
 }
 
+// --- fail_member_access_runtime_facet.carbon
+library "[[@TEST_NAME]]";
+
+interface Z {
+  fn G();
+}
+
+fn F(T: Z) {
+  // CHECK:STDERR: fail_member_access_runtime_facet.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Z` in type `Z` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:   T.G();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
+  T.G();
+}
+
+// --- fail_member_access_runtime_type.carbon
+library "[[@TEST_NAME]]";
+
+fn F(T: type) {
+  // CHECK:STDERR: fail_member_access_runtime_type.carbon:[[@LINE+4]]:3: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:   T.G();
+  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR:
+  T.G();
+}
+
 // CHECK:STDOUT: --- facet_value_copy_from_reference.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
@@ -141,21 +168,22 @@ fn F(T: Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%.loc6 [concrete = @C.%.loc6]
+// CHECK:STDOUT:   %i.ref: %C.elem = name_ref i, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc13_22.1: ref %I.type = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc13_22.2: %I.type = acquire_value %.loc13_22.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   %a: %I.type = value_binding a, %.loc13_22.2
+// CHECK:STDOUT:   %a: %I.type = wrapper_binding a, %.loc13_22.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_facet_copy_narrowing_from_reference.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@I & @J> [concrete]
@@ -166,15 +194,15 @@ fn F(T: Z) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%.loc7 [concrete = @C.%.loc7]
+// CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc21_22.1: ref %facet_type = class_element_access %c.ref, element0
 // CHECK:STDOUT:   %.loc21_22.2: %facet_type = acquire_value %.loc21_22.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
-// CHECK:STDOUT:   %a: %I.type = value_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:   %a: %I.type = wrapper_binding a, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %a.patt: %pattern_type.6cb = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

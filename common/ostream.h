@@ -7,6 +7,7 @@
 
 // Libraries should include this header instead of raw_ostream.
 
+#include <compare>
 #include <concepts>
 #include <ostream>
 #include <type_traits>
@@ -17,11 +18,31 @@
 
 namespace Carbon {
 
-// CRTP base class for printable types. Children (DerivedT) must implement:
+// CRTP base class for printable types. Derived classes (DerivedT) must
+// implement:
 // - auto Print(llvm::raw_ostream& out) const -> void
 template <typename DerivedT>
 // NOLINTNEXTLINE(bugprone-crtp-constructor-accessibility)
 class Printable {
+  // Comparisons of the base class itself, which is empty and so always compares
+  // equal, allowing derived classes to default their own comparison operators.
+  //
+  // These are templated so that they are only used when the types of the
+  // arguments are exactly `Printable`, rather than a derived class, and are
+  // hidden friends so that they aren't candidates for unrelated comparisons.
+  template <typename T>
+    requires std::same_as<T, Printable>
+  friend constexpr auto operator==(const T& /*lhs*/, const T& /*rhs*/) noexcept
+      -> bool {
+    return true;
+  }
+  template <typename T>
+    requires std::same_as<T, Printable>
+  friend constexpr auto operator<=>(const T& /*lhs*/, const T& /*rhs*/) noexcept
+      -> std::strong_ordering {
+    return std::strong_ordering::equal;
+  }
+
   // Supports printing to llvm::raw_ostream.
   friend auto operator<<(llvm::raw_ostream& out, const DerivedT& obj)
       -> llvm::raw_ostream& {

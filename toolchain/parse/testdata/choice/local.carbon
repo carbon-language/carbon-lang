@@ -16,20 +16,19 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: local.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:         {kind: 'ChoiceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'X'},
-// CHECK:STDOUT:         {kind: 'ChoiceAlternativeListComma', text: ','},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'ChoiceDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 13},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─ChoiceIntroducer 'choice'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ │ ╭─ChoiceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'X'
+// CHECK:STDOUT:   │ │ ├─ChoiceAlternativeListComma ','
+// CHECK:STDOUT:   │ │ ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ ├─ChoiceDefinition '}'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

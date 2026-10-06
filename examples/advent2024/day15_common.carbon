@@ -18,14 +18,9 @@ class Square {
       return (self as char).(Core.Copy.Op)() as Self;
     }
   }
-  impl as Core.EqWith(Square) {
+  impl as Core.Eq {
     fn Equal(self, other: Self) -> bool {
-      // TODO: Use a `char` comparison when it's supported.
-      return (self as u8) == (other as u8);
-    }
-    fn NotEqual(self, other: Self) -> bool {
-      // TODO: Use a `char` comparison when it's supported.
-      return (self as u8) != (other as u8);
+      return (self as char) == (other as char);
     }
   }
 

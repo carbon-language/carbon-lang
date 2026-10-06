@@ -11,6 +11,7 @@
 #include "common/filesystem.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
+#include "testing/base/benchmark_helpers.h"
 
 namespace Carbon::Filesystem {
 namespace {
@@ -203,13 +204,13 @@ auto BM_Stat(benchmark::State& state) -> void {
       if constexpr (Comp == Carbon) {
         auto status = context.tmpdir.Stat(context.file_paths[i]);
         CARBON_CHECK(status.ok(), "{0}", status.error());
-        benchmark::DoNotOptimize(status->permissions());
+        Testing::DoNotOptimize(status->permissions());
       } else if constexpr (Comp == Std) {
         std::error_code ec;
         auto status = std::filesystem::status(
             context.tmpdir.path() / context.file_paths[i], ec);
         CARBON_CHECK(!ec, "{0}", ec.message());
-        benchmark::DoNotOptimize(status.permissions());
+        Testing::DoNotOptimize(status.permissions());
       } else {
         static_assert(false, "Invalid benchmark comparable");
       }
@@ -341,7 +342,7 @@ auto BM_Read(benchmark::State& state) -> void {
         auto read_result =
             context.tmpdir.ReadFileToString(context.file_paths[i]);
         CARBON_CHECK(read_result.ok(), "{0}", read_result.error());
-        benchmark::DoNotOptimize(*read_result);
+        Testing::DoNotOptimize(*read_result);
       } else if constexpr (Comp == Std) {
         std::ifstream f(context.tmpdir.path() / context.file_paths[i],
                         std::ios::binary);
@@ -351,7 +352,7 @@ auto BM_Read(benchmark::State& state) -> void {
         // all have the same or worse performance.
         std::string read_content((std::istreambuf_iterator<char>(f)),
                                  (std::istreambuf_iterator<char>()));
-        benchmark::DoNotOptimize(read_content);
+        Testing::DoNotOptimize(read_content);
       } else {
         static_assert(false, "Invalid benchmark comparable");
       }
@@ -444,9 +445,9 @@ auto BM_CreateDirectories(benchmark::State& state) -> void {
   CARBON_CHECK(existing_depth <= depth);
   CARBON_CHECK(depth > 0);
 
-  // Use a batch size of 10 to get avoid completely swamping the measurements
+  // Use a batch size of 5 to get avoid completely swamping the measurements
   // with overhead from creating existing directories and cleaning up.
-  constexpr int BatchSize = 10;
+  constexpr int BatchSize = 5;
 
   // Pre-build both the paths and the existing paths. Note that we use
   // relatively short paths here, which if anything makes the benefits of the

@@ -62,6 +62,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [`return`](#return)
             -   [`returned var`](#returned-var)
         -   [`match`](#match)
+    -   [Lambdas](#lambdas)
 -   [User-defined types](#user-defined-types)
     -   [Classes](#classes)
         -   [Assignment](#assignment)
@@ -121,7 +122,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Error handling](#error-handling)
     -   [Execution abstractions](#execution-abstractions)
         -   [Abstract machine and execution model](#abstract-machine-and-execution-model)
-        -   [Lambdas](#lambdas)
         -   [Co-routines](#co-routines)
         -   [Concurrency](#concurrency)
 
@@ -209,8 +209,8 @@ accessible as members of `Math`, like `Math.Sqrt`. The `Core.Print` function
 comes from the `Core` package's `io` library. Unlike C++, the namespaces of
 different packages are kept separate, so there are no name conflicts.
 
-Carbon [comments](#code-and-comments) must be on a line by themselves starting
-with `//`:
+Carbon [comments](#code-and-comments) start with `//` and run to the end of the
+line, either on a line by themselves or following other content:
 
 ```carbon
 // Returns the smallest factor of `n` > 1, and
@@ -353,11 +353,14 @@ allowed to have non-ASCII characters.
 var résultat: String = "Succès";
 ```
 
-Comments start with two slashes `//` and go to the end of the line. They are
-required to be the only non-whitespace on the line.
+Comments start with two slashes `//` and go to the end of the line. A comment
+may be the only content on its line, or it may follow other content as a
+trailing comment. Full-line comments are preferred for documentation, while
+trailing comments mark or annotate a specific line.
 
 ```carbon
-// Compute an approximation of π
+// Compute an approximation of π.
+var pi: f64 = 3.14159; // Accurate enough for our purposes.
 ```
 
 > References:
@@ -368,6 +371,8 @@ required to be the only non-whitespace on the line.
 >     [#142: Unicode source files](https://github.com/carbon-language/carbon-lang/pull/142)
 > -   Proposal
 >     [#198: Comments](https://github.com/carbon-language/carbon-lang/pull/198)
+> -   Proposal
+>     [#7441: Trailing comments](https://github.com/carbon-language/carbon-lang/pull/7441)
 
 ## Build modes
 
@@ -734,11 +739,11 @@ Value expressions are further broken down into three _expression phases_:
     [monomorphization](https://en.wikipedia.org/wiki/Monomorphization) happens,
     but is not known during type checking. This includes
     [checked-generic parameters](#checked-and-template-parameters), and type
-    expressions with checked-generic arguments, like `Optional(T*)`.
+    expressions with symbolic constant arguments, like `Optional(T*)`.
 -   A _runtime value_ has a dynamic value only known at runtime.
 
 Template constants and symbolic constants are collectively called _compile-time
-constants_ and correspond to declarations using `:!`.
+constants_ and correspond to declarations of compile-time parameters.
 
 Carbon will automatically convert a template constant to a symbolic constant, or
 any value to a runtime value:
@@ -942,6 +947,7 @@ Some common expressions in Carbon include:
     -   [Move](#move): `~x`
 
 -   [Conditionals](expressions/if.md): `if c then t else f`
+
 -   Parentheses: `(7 + 8) * (3 - 1)`
 
 When an expression appears in a context in which an expression of a specific
@@ -1048,6 +1054,29 @@ name. It can only match values that may be
 underscore (`_`) may be used instead of the name to match a value but without
 binding any name to it.
 
+Every binding pattern has a _phase_ (either compile-time or runtime). A
+[compile-time binding](#checked-and-template-parameters) can only match
+[compile-time constants](#expression-phases), not run-time values.
+
+To minimize keyword noise, Carbon uses contextual defaults to determine the
+phase (compile-time vs runtime) of a binding:
+
+-   Parameters to compile-time entities (such as `interface`, `impl`, and
+    `class`) are checked generics by default.
+-   Deduced function parameters (declared in `[]`) are checked generics by
+    default.
+-   Explicit function parameters (declared in `()`) and local bindings are
+    runtime by default.
+
+These defaults can be overridden by using the `template`, `generic`, or
+`runtime` keywords. However, using a keyword that matches the contextual default
+is disallowed to maintain consistency. A `template` keyword before the binding
+selects a template binding instead of a checked binding.
+
+[Associated constants](#associated-constants) are always checked generic
+bindings. This is not a contextual default: no other phase is possible for an
+associated constant, and so no phase keyword is allowed there.
+
 Binding patterns default to _`let` bindings_. The `var` keyword is used to make
 it a _`var` binding_.
 
@@ -1067,11 +1096,6 @@ implementation's choice among these options may be indirectly observable, for
 example through side effects of the destructor, copy, and move operations, but
 the program's correctness must not depend on which option the Carbon
 implementation chooses.
-
-A [compile-time binding](#checked-and-template-parameters) uses `:!` instead of
-a colon (`:`) and can only match [compile-time constants](#expression-phases),
-not run-time values. A `template` keyword before the binding selects a template
-binding instead of a symbolic binding.
 
 The keyword `auto` may be used in place of the type in a binding pattern, as
 long as the type can be deduced from the type of a value in the same
@@ -1180,8 +1204,8 @@ they are used.
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 > -   Proposal
 >     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
-> -   Proposal
->     [#339: Add `var <type> <identifier> [ = <value> ];` syntax for variables](https://github.com/carbon-language/carbon-lang/pull/339)
+> -   Proposal [#339: Add `var <type> <identifier> [ = <value> ];` syntax for
+>     variables](https://github.com/carbon-language/carbon-lang/pull/339)
 > -   Proposal
 >     [#618: var ordering](https://github.com/carbon-language/carbon-lang/pull/618)
 > -   Proposal
@@ -1253,8 +1277,8 @@ fn Add(a: i64, b: i64) -> i64 {
 ```
 
 The names of the parameters are in scope until the end of the definition or
-declaration. The parameter names in a forward declaration may be omitted using
-`_`, but must match the definition if they are specified.
+declaration. Parameters may be marked with the `unused` keyword in the
+definition or given the name `_` if they are unused.
 
 > References:
 >
@@ -1263,10 +1287,13 @@ declaration. The parameter names in a forward declaration may be omitted using
 >     [#162: Basic Syntax](https://github.com/carbon-language/carbon-lang/pull/162)
 > -   Proposal
 >     [#438: Add statement syntax for function declarations](https://github.com/carbon-language/carbon-lang/pull/438)
+> -   Proposal
+>     [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
 > -   Question-for-leads issue
 >     [#476: Optional argument names (unused arguments)](https://github.com/carbon-language/carbon-lang/issues/476)
 > -   Question-for-leads issue
 >     [#1132: How do we match forward declarations with their definitions?](https://github.com/carbon-language/carbon-lang/issues/1132)
+> -   ["`_` parameter names and `unused` modifier" in proposal #3763](/proposals/p003763-matching-redeclarations.md#_-parameter-names-and-unused-modifier)
 
 ### Parameters
 
@@ -1313,7 +1340,7 @@ fn Positive(a: i64) -> auto {
 > References:
 >
 > -   [Type inference](type_inference.md)
-> -   [Function return clause](functions.md#return-clause)
+> -   [Function return specification](functions.md#return-specification)
 > -   Proposal
 >     [#826: Function return type inference](https://github.com/carbon-language/carbon-lang/pull/826)
 
@@ -1629,6 +1656,30 @@ fn Foo() -> f32 {
 >     [#1283: how should pattern matching and implicit conversion interact?](https://github.com/carbon-language/carbon-lang/issues/1283)
 > -   Proposal
 >     [#2188: Pattern matching syntax and semantics](https://github.com/carbon-language/carbon-lang/pull/2188)
+
+### Lambdas
+
+Lambdas are anonymous function expressions, and have a unified syntax with other
+function definitions, with two possible forms:
+
+-   `fn` [_implicit-parameters_] [_tuple-pattern_] `=>` _expression_
+-   `fn` [_implicit-parameters_] [_tuple-pattern_] [`->` _return-form_] `{`
+    _statements_ `}`
+
+Lambdas share many of the same features as named functions, but some features
+such as positional parameters and captures will more commonly be used with
+lambdas. For example:
+
+```carbon
+// A lambda that takes two positional parameters being used as a comparator
+Sort(ref my_list, fn => $0.val < $1.val);
+
+// Captures `self` from outer scope
+let lambda: auto = fn [self] { self.F(); };
+```
+
+> References: [Functions](functions.md),
+> [Proposal #3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 
 ## User-defined types
 
@@ -2690,7 +2741,7 @@ has a type\* parameter `T` that can be any type that implements the `Ordered`
 interface.
 
 ```carbon
-fn Min[T:! Ordered](x: T, y: T) -> T {
+fn Min[T: Ordered](x: T, y: T) -> T {
   // Can compare `x` and `y` since they have
   // type `T` known to implement `Ordered`.
   return if x <= y then x else y;
@@ -2728,9 +2779,13 @@ not itself a type.
 
 ### Checked and template parameters
 
-The `:!` marks it as a compile-time binding pattern, and so `T` is a
-compile-time parameter. Compile-time parameters may either be _checked_ or
-_template_, and default to checked.
+Compile-time bindings may either be _checked_ or _template_ bindings and are
+often used as _parameters_ to generic entities. A binding pattern declares a
+checked binding if it's marked `generic`, or appears in a context that only
+supports compile-time bindings, such as the deduced parameter list `[]` of a
+function, the parameter list of a `class` or `interface`, or an associated
+constant declaration. A binding pattern declares a template binding if it's
+marked `template`.
 
 "Checked" here means that the body of `Min` is type checked when the function is
 defined, independent of the specific values `T` is instantiated with, and name
@@ -2740,10 +2795,11 @@ type `T` that implements the `Ordered` interface. Subsequent calls to `Min` only
 need to check that the deduced value of `T` implements `Ordered`.
 
 The parameter could alternatively be declared to be a _template_ generic
-parameter by prefixing with the `template` keyword, as in `template T:! type`.
+parameter by prefixing it with the `template` keyword. Keywords matching the
+contextual default are disallowed to ensure consistency.
 
 ```carbon
-fn Convert[template T:! type](source: T, template U:! type) -> U {
+fn Convert[template T: type](source: T, template U: type) -> U {
   var converted: U = source;
   return converted;
 }
@@ -2759,7 +2815,7 @@ A template parameter can still use a constraint. The `Min` example could have
 been declared as:
 
 ```carbon
-fn TemplatedMin[template T:! Ordered](x: T, y: T) -> T {
+fn TemplatedMin[template T: Ordered](x: T, y: T) -> T {
   return if x <= y then x else y;
 }
 ```
@@ -2779,9 +2835,10 @@ constraints declared in the function signature and evaluated at compile-time.
 
 The [expression phase](#expression-phases) of a checked parameter is a symbolic
 constant whereas the expression phase of a template parameter is template
-constant. A binding pattern using `:!` is a _compile-time binding pattern_; more
-specifically a _template binding pattern_ if it uses `template`, and a _symbolic
-binding pattern_ if it does not.
+constant. A binding pattern for a compile-time parameter is a _compile-time
+binding pattern_; more specifically a _template binding pattern_ if it uses
+`template`, and a _checked binding pattern_ if it uses `generic` or defaults to
+it.
 
 Although checked generics are generally preferred, templates enable translation
 of code between C++ and Carbon, and address some cases where the type checking
@@ -2856,7 +2913,7 @@ In this case, `Print` is not a direct member of `Circle`, but:
     `Printable`.
 
     ```carbon
-    fn GenericPrint[T:! Printable](x: T) {
+    fn GenericPrint[T: Printable](x: T) {
       // Look up into `T` delegates to `Printable`, so this
       // finds `Printable.Print`:
       x.Print();
@@ -2917,7 +2974,7 @@ A function can require type arguments to implement multiple interfaces (or other
 facet types) by combining them using an ampersand (`&`):
 
 ```carbon
-fn PrintMin[T:! Ordered & Printable](x: T, y: T) {
+fn PrintMin[T: Ordered & Printable](x: T, y: T) {
   // Can compare since type `T` implements `Ordered`.
   if (x <= y) {
     // Can call `Print` since type `T` implements `Printable`.
@@ -2935,7 +2992,7 @@ syntax ([1](expressions/member_access.md),
 qualify the name of the member, as in:
 
 ```carbon
-fn DrawTies[T:! Renderable & GameResult](x: T) {
+fn DrawTies[T: Renderable & GameResult](x: T) {
   if (x.(GameResult.Draw)()) {
     x.(Renderable.Draw)();
   }
@@ -2967,18 +3024,18 @@ class Game {
   }
 }
 
-fn TemplateDraw[template T:! type](x: T) {
+fn TemplateDraw[template T: type](x: T) {
   // Calls `Game.Draw` when `T` is `Game`:
   x.Draw();
 }
 
-fn ConstrainedTemplateDraw[template T:! Renderable](x: T) {
+fn ConstrainedTemplateDraw[template T: Renderable](x: T) {
   // ❌ Error when `T` is `Game`: Finds both `T.Draw` and
   // `Renderable.Draw`, and they are different.
   x.Draw();
 }
 
-fn CheckedGenericDraw[T:! Renderable](x: T) {
+fn CheckedGenericDraw[T: Renderable](x: T) {
   // Always calls `Renderable.Draw`, even when `T` is `Game`:
   x.Draw();
 }
@@ -3002,17 +3059,19 @@ to a checked parameter.
 
 An associated constant is a member of an interface whose value is determined by
 the implementation of that interface for a specific type. These values are set
-to compile-time values in implementations, and so use the
-[`:!` compile-time binding pattern syntax](#checked-and-template-parameters)
-inside a [`let` declaration](#constant-let-declarations) without an initializer.
-This allows types in the signatures of functions in the interface to vary. For
+to compile-time values in implementations, which allows types in the signatures
+of functions in the interface to vary. An associated constant is defined using a
+[`let` declaration](#constant-let-declarations) without an initializer. Since an
+interface is a compile-time entity, the binding is a
+[checked generic binding](#checked-and-template-parameters) by context; no phase
+keyword is allowed, so an associated constant cannot be made `template`. For
 example, an interface describing a
 [stack](<https://en.wikipedia.org/wiki/Stack_(abstract_data_type)>) might use an
 associated constant to represent the type of elements stored in the stack.
 
 ```
 interface StackInterface {
-  let ElementType:! Movable;
+  let ElementType: Movable;
   fn Push(ref self, value: ElementType);
   fn Pop(ref self) -> ElementType;
   fn IsEmpty(self) -> bool;
@@ -3054,12 +3113,12 @@ Many Carbon entities, not just functions, may be made generic by adding
 #### Generic Classes
 
 Classes may be defined with an optional explicit parameter list. All parameters
-to a class must be compile-time, and so defined with `:!`, either with or
-without the `template` prefix. For example, to define a stack that can hold
-values of any type `T`:
+to a class must be compile-time, and are checked generic parameters by default,
+or can be marked with the `template` keyword. For example, to define a stack
+that can hold values of any type `T`:
 
 ```carbon
-class Stack(T:! type) {
+class Stack(T: type) {
   fn Push(ref self, value: T);
   fn Pop(ref self) -> T;
 
@@ -3081,7 +3140,7 @@ The values of type parameters are part of a type's value, and so may be deduced
 in a function call, as in this example:
 
 ```carbon
-fn PeekTopOfStack[T:! type](s: Stack(T)*) -> T {
+fn PeekTopOfStack[T: type](s: Stack(T)*) -> T {
   var top: T = s->Pop();
   s->Push(top);
   return top;
@@ -3102,7 +3161,7 @@ PeekTopOfStack(&int_stack);
 [Choice types](#choice-types) may be parameterized similarly to classes:
 
 ```carbon
-choice Result(T:! type, Error:! type) {
+choice Result(T: type, Error: type) {
   Success(value: T),
   Failure(error: Error)
 }
@@ -3114,7 +3173,7 @@ Interfaces are always parameterized by a `Self` type, but in some cases they
 will have additional parameters.
 
 ```carbon
-interface AddWith(U:! type);
+interface AddWith(U: type);
 ```
 
 Interfaces without parameters may only be implemented once for a given type, but
@@ -3137,12 +3196,12 @@ An `impl` declaration may be parameterized by adding `forall [`_compile-time
 parameter list_`]` after the `impl` keyword introducer, as in:
 
 ```carbon
-impl forall [T:! Printable] Vector(T) as Printable;
-impl forall [Key:! Hashable, Value:! type]
+impl forall [T: Printable] Vector(T) as Printable;
+impl forall [Key: Hashable, Value: type]
     HashMap(Key, Value) as Has(Key);
-impl forall [T:! Ordered] T as PartiallyOrdered;
-impl forall [T:! ImplicitAs(i32)] BigInt as AddWith(T);
-impl forall [U:! type, T:! As(U)]
+impl forall [T: Ordered] T as PartiallyOrdered;
+impl forall [T: ImplicitAs(i32)] BigInt as AddWith(T);
+impl forall [U: type, T: As(U)]
     Optional(T) as As(Optional(U));
 ```
 
@@ -3358,7 +3417,7 @@ There are some situations where the common type for two types is needed:
     will be set to the common type of the corresponding arguments, as in:
 
     ```carbon
-    fn F[T:! type](x: T, y: T);
+    fn F[T: type](x: T, y: T);
 
     // Calls `F` with `T` set to the
     // common type of `G()` and `H()`:
@@ -3814,14 +3873,6 @@ the critical underpinnings of such abstractions.
 #### Abstract machine and execution model
 
 > **TODO:**
-
-#### Lambdas
-
-> **TODO:** References need to be evolved. Needs a detailed design and a high
-> level summary provided inline.
-
-> References: [Lambdas](lambdas.md),
-> [Proposal #3848: Lambdas](https://github.com/carbon-language/carbon-lang/pull/3848)
 
 #### Co-routines
 

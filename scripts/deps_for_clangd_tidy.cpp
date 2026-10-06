@@ -5,4 +5,6 @@
 // This file is only validating expected includes exist. See the BUILD target
 // for more information.
 
+#include <tree_sitter/api.h>
+
 #include <boost/unordered/unordered_flat_map.hpp>

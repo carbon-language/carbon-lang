@@ -28,10 +28,40 @@ cc_library(
 )
 
 cc_library(
+    name = "sem_ir_index",
+    srcs = ["sem_ir_index.cpp"],
+    hdrs = ["sem_ir_index.h"],
+    deps = [
+        "//toolchain/base:grouped_value_store",
+        "//toolchain/lex:token_index",
+        "//toolchain/lex:token_kind",
+        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/parse:node_kind",
+        "//toolchain/parse:tree",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:typed_insts",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "sem_ir_text",
+    srcs = ["sem_ir_text.cpp"],
+    hdrs = ["sem_ir_text.h"],
+    deps = [
+        "//common:raw_string_ostream",
+        "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "context",
     srcs = ["context.cpp"],
     hdrs = ["context.h"],
     deps = [
+        ":sem_ir_index",
+        ":sem_ir_text",
         "//common:check",
         "//common:map",
         "//common:raw_string_ostream",
@@ -41,6 +71,9 @@ cc_library(
         "//toolchain/check",
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:file_diagnostics",
+        "//toolchain/driver:codegen_options",
+        "//toolchain/driver:compile_driver",
+        "//toolchain/driver:compile_options",
         "//toolchain/lex",
         "//toolchain/lex:tokenized_buffer",
         "//toolchain/parse",
@@ -48,26 +81,56 @@ cc_library(
         "//toolchain/sem_ir:file",
         "//toolchain/source:source_buffer",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
+        "@llvm-project//llvm:Support",
         "@llvm-project//llvm:TargetParser",
     ],
 )
 
 cc_library(
-    name = "handle",
-    srcs = glob(["handle_*"]),
-    hdrs = ["handle.h"],
+    name = "position",
+    srcs = ["position.cpp"],
+    hdrs = ["position.h"],
     deps = [
         ":context",
+        ":sem_ir_index",
+        "//toolchain/lex:token_index",
+        "//toolchain/lex:tokenized_buffer",
+        "//toolchain/parse:tree",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:typed_insts",
+        "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
+    name = "handle",
+    srcs = glob(["handle_*.cpp"]),
+    hdrs = [
+        "handle.h",
+        "handle_sem_ir_text.h",
+    ],
+    deps = [
+        ":context",
+        ":position",
+        ":sem_ir_index",
+        ":sem_ir_text",
         "//common:check",
+        "//common:raw_string_ostream",
         "//toolchain/base:shared_value_stores",
+        "//toolchain/format",
         "//toolchain/lex",
         "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",
         "//toolchain/parse",
         "//toolchain/parse:node_kind",
         "//toolchain/parse:tree",
+        "//toolchain/sem_ir:file",
+        "//toolchain/sem_ir:stringify",
+        "//toolchain/sem_ir:typed_insts",
         "//toolchain/source:source_buffer",
         "@llvm-project//clang-tools-extra/clangd:ClangDaemon",
+        "@llvm-project//llvm:Support",
     ],
 )
 

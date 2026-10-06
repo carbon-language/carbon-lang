@@ -7,8 +7,10 @@
 
 #include <concepts>
 
+#include "clang/AST/TypeBase.h"
 #include "common/hashtable_key_context.h"
 #include "common/ostream.h"
+#include "common/set.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/ids.h"
 
@@ -20,7 +22,7 @@ class FunctionDecl;
 namespace Carbon::SemIR {
 
 // Information about how to form the Carbon function signature from the Clang
-// function declaration.
+// function signature.
 struct ClangDeclSignature : public Printable<ClangDeclSignature> {
   // A passing mode for a parameter in a C++ function signature.
   enum class PassingMode : int8_t {
@@ -88,11 +90,7 @@ struct ClangDeclSignature : public Printable<ClangDeclSignature> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  auto operator==(const ClangDeclSignature& rhs) const -> bool {
-    return kind == rhs.kind && num_params == rhs.num_params &&
-           passing_modes == rhs.passing_modes &&
-           self_passing_mode == rhs.self_passing_mode;
-  }
+  auto operator==(const ClangDeclSignature& rhs) const -> bool = default;
 
   // Hashing for ClangDeclSignature.
   friend auto CarbonHashValue(const ClangDeclSignature& value, uint64_t seed)
@@ -138,9 +136,7 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
 
   auto Print(llvm::raw_ostream& out) const -> void;
 
-  auto operator==(const ClangDeclKey& rhs) const -> bool {
-    return decl == rhs.decl && signature_id == rhs.signature_id;
-  }
+  auto operator==(const ClangDeclKey& rhs) const -> bool = default;
 
   // Hashing for ClangDecl. See common/hashing.h.
   friend auto CarbonHashValue(const ClangDeclKey& value, uint64_t seed)
@@ -165,6 +161,11 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
                UncheckedTag /*_*/);
 };
 
+// A ClangDeclSignature mapped to an ID.
+using ClangDeclSignatureStore =
+    CanonicalValueStore<ClangDeclSignatureId, ClangDeclSignature,
+                        Tag<CheckIRId>, ClangDeclSignature>;
+
 // A Clang declaration mapped to a Carbon instruction.
 //
 // Instances of this type are managed by a `ClangDeclStore`, which ensures that
@@ -177,6 +178,16 @@ struct ClangDecl : public Printable<ClangDecl> {
 
   // The instruction the Clang declaration is mapped to.
   InstId inst_id;
+
+  // The specific the Clang declaration is mapped to.
+  SpecificId specific_id = SpecificId::None;
+
+  // When exporting a `VarStorage`, its `InstId` is needed in some cases, but
+  // its pattern is used as the primary `inst_id`. The pattern provides a more
+  // stable lookup key than the `VarStorage` `InstId`. For example, a call to
+  // `Convert` may cause a new `VarStorage` instruction to be created, but the
+  // pattern will remain the same.
+  InstId var_storage_inst_id = InstId::None;
 
   // True if this declaration originated from C++. False if this declaration was
   // created by exporting some Carbon declaration to C++.
@@ -197,26 +208,26 @@ class ClangDeclStore {
   // Adds a `ClangDecl`, returning an ID to reference it.
   auto Add(ClangDecl value) -> ClangDeclId;
 
-  // Same as `Add`, but for `VarStorage` that maps to a `clang::VarDecl`.
-  //
-  // When looking up via `InstId`, the pattern's `InstId` must be used
-  // instead of the `InstId` corresponding to the `VarStorage`. Note however
-  // that the `value.inst_id` is still the `VarStorage` `InstId`.
-  //
-  // The pattern's `InstId` is used because it provides a more stable
-  // lookup key than the `VarStorage` `InstId`. For example, a call to
-  // `Convert` may cause a new `VarStorage` instruction to be created,
-  // but the pattern will remain the same.
-  auto AddVar(ClangDecl value, InstId pattern_id) -> ClangDeclId;
-
   // Looks up a `ClangDecl` by `ClangDeclId`.
   auto Get(ClangDeclId id) const -> const ClangDecl& { return values_.Get(id); }
 
   // Looks up a `ClangDeclId` by `ClangDeclKey`.
   auto LookupId(ClangDeclKey key) const -> ClangDeclId;
 
-  // Looks up a `ClangDecl` by `InstId`. Returns nullptr if not found.
-  auto Lookup(InstId inst_id) const -> const ClangDecl*;
+  // Looks up a `ClangDeclId` by `InstId` and optional `SpecificId`.
+  auto LookupId(InstId inst_id, SpecificId specific_id = SpecificId::None) const
+      -> ClangDeclId;
+
+  // Looks up a `ClangDecl` by `InstId` and optional `SpecificId`. Returns
+  // nullptr if not found.
+  auto Lookup(InstId inst_id, SpecificId specific_id = SpecificId::None) const
+      -> const ClangDecl* {
+    if (auto clang_decl_id = LookupId(inst_id, specific_id);
+        clang_decl_id.has_value()) {
+      return &Get(clang_decl_id);
+    }
+    return nullptr;
+  }
 
   auto OutputYaml() const -> Yaml::OutputMapping;
 
@@ -224,19 +235,45 @@ class ClangDeclStore {
       -> void;
 
  private:
+  class KeyContext;
+
   // Canonical storage for `ClangDecl`s. Allows mapping from a
   // `ClangDeclId` to an `InstId`.
   CanonicalValueStore<ClangDeclId, ClangDeclKey, Tag<CheckIRId>, ClangDecl>
       values_;
 
-  // Map from `InstId` to `ClangDeclId`.
-  Map<InstId, ClangDeclId> inst_id_to_clang_decl_id_;
+  // Provides lookup by `InstId` and `SpecificId`.
+  Set<ClangDeclId, 0, KeyContext> reverse_lookup_;
 };
 
-// A ClangDeclSignature mapped to an ID.
-using ClangDeclSignatureStore =
-    CanonicalValueStore<ClangDeclSignatureId, ClangDeclSignature,
-                        Tag<CheckIRId>, ClangDeclSignature>;
+// Information about a Clang function pointer type. We can't use `ClangDecl`
+// to represent function pointer callees, because function pointer types
+// don't have declarations in C++, so this type is used in its place.
+struct ClangFunctionPointerTypeInfo {
+  auto GetAsKey() const -> const clang::Type* { return clang_type; }
+
+  // The function pointer type. This should be a canonical type.
+  //
+  // TODO: figure out how to get a canonical type that preserves nullability
+  // attributes, which canonicalization discards. Note that this applies to both
+  // the function pointer type and its parameter/return types.
+  const clang::Type* clang_type;
+
+  // The ID of the `FunctionDecl` for the Carbon thunk that invokes
+  // function pointers of this type, or `None` if the thunk has not yet
+  // been imported.
+  SemIR::InstId decl_id;
+
+  // The corresponding function ID, or `None` if it has not yet been
+  // imported. This should always be the same as `decl_id`'s `function_id`
+  // field, but we cache it here for convenience and efficiency.
+  SemIR::FunctionId function_id;
+};
+
+// Canonical storage for `ClangFunctionPointerTypeInfo`.
+using ClangFunctionPointerTypeStore =
+    CanonicalValueStore<SemIR::ClangFunctionPointerTypeId, const clang::Type*,
+                        Tag<SemIR::CheckIRId>, ClangFunctionPointerTypeInfo>;
 
 }  // namespace Carbon::SemIR
 

@@ -38,10 +38,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Member access](#member-access)
     -   [Simple member access](#simple-member-access)
     -   [Qualified member access expression](#qualified-member-access-expression)
--   [Compatible types](#compatible-types)
 -   [Subtyping and casting](#subtyping-and-casting)
 -   [Coherence](#coherence)
--   [Adapting a type](#adapting-a-type)
 -   [Type erasure](#type-erasure)
 -   [Archetype](#archetype)
 -   [Extending an interface](#extending-an-interface)
@@ -53,6 +51,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Conditional conformance](#conditional-conformance)
 -   [Interface parameters and associated constants](#interface-parameters-and-associated-constants)
 -   [Type constraints](#type-constraints)
+-   [Alternatives considered](#alternatives-considered)
 -   [References](#references)
 
 <!-- tocstop -->
@@ -83,18 +82,28 @@ example, Rust supports
 ## Checked versus template parameters
 
 When we distinguish between checked and template generics in Carbon, it is on a
-parameter by parameter basis. A single function can take a mix of regular,
-checked, and template parameters.
+parameter by parameter basis. A single function can take a mix of runtime,
+checked generic, and template generic parameters.
 
--   **Regular parameters**, or "dynamic parameters", are designated using the
-    "\<name>`:` \<type>" syntax (or "\<value>").
--   **Checked parameters** are designated using `:!` between the name and the
-    type (so it is "\<name>`:!` \<type>").
--   **Template parameters** are designated using "`template` \<name>`:!`
-    \<type>".
+-   **Runtime parameters** are the default for explicit function parameter lists
+    (`()`) and locals. They can be explicitly marked with the `runtime` keyword
+    in a context where they are not the default.
+-   **Checked generic parameters** are the default in deduced parameter lists
+    (`[]`) and parameters to compile-time entities (like `interface` or
+    `class`). They can be explicitly marked with the `generic` keyword when used
+    in explicit parameter lists (`()`).
+-   **Template generic parameters** are designated by prefixing the parameter
+    with the `template` keyword and are never the default.
+
+Keywords matching the contextual default are disallowed to ensure consistency.
+
+[Associated constants](#interface-parameters-and-associated-constants) are
+always checked generic bindings. This is not a contextual default: no other
+phase is possible for an associated constant, and so no phase keyword is allowed
+there.
 
 The syntax for checked and template parameters was decided in
-[questions-for-leads issue #565](https://github.com/carbon-language/carbon-lang/issues/565).
+[leads issue #6932](https://github.com/carbon-language/carbon-lang/issues/6932).
 
 Expected difference between checked and template parameters:
 
@@ -204,7 +213,7 @@ alone. For example, let's say we have some overloaded function called `F` that
 has two overloads:
 
 ```
-fn F[template T:! type](x: T*) -> T;
+fn F[template T: type](x: T*) -> T;
 fn F(x: Int) -> bool;
 ```
 
@@ -272,7 +281,7 @@ that don’t instantiate the implementation (for example,
 
 Early type checking is where expressions and statements are type checked when
 the definition of the function body is compiled, as part of definition checking.
-This occurs for regular and checked-generic values.
+This occurs for runtime values and symbolic constants.
 
 Late type checking is where expressions and statements may only be fully
 typechecked once calling information is known. Late type checking delays
@@ -288,28 +297,30 @@ classes, interfaces, and so on. There are three kinds of binding patterns,
 corresponding to
 [the three expression phases](/docs/design/README.md#expression-phases):
 
--   A _runtime binding pattern_ binds to a dynamic value at runtime, and is
-    written using a `:`, as in `x: i32`.
--   A _symbolic binding pattern_ binds to a compile-time value that is not known
-    when type checking, and is used to declare
-    [checked generic](#checked-versus-template-parameters) parameters. These
-    binding use `:!`, as in `T:! type`.
--   A _template binding pattern_ binds to a compile-time value that is known
-    when type checking, and is used to declare
-    [template](#checked-versus-template-parameters) parameters. These bindings
-    use the keyword `template` in addition to `:!`, as in `template T:! type`.
+-   A _runtime binding pattern_ binds to a dynamic value at runtime. It is the
+    default for explicit function parameters.
+-   A _checked generic binding pattern_ binds to a _symbolic constant_: a
+    compile-time value that is not known when type checking. It is the default
+    for deduced function parameters and parameters to compile-time entities, and
+    the only kind allowed for [associated constants](#associated-entity).
+-   A _template generic binding pattern_ binds to a _template constant_: a
+    compile-time value that is known when type checking. It is indicated by the
+    `template` keyword. Expressions using such a binding are
+    [dependent](#dependent-names) and are
+    [late type checked](#early-versus-late-type-checking) once an instantiation
+    provides the binding's value.
 
-The last two binding patterns, which are about binding a compile-time value, are
-called _compile-time binding patterns_, and correspond to those binding patterns
-that use `:!`.
+These patterns use the keywords `runtime`, `generic`, and `template` to override
+the contextual defaults when necessary.
 
-The name being declared, which is the identifier to the left of the `:` or `:!`,
-is called a _binding_, or more specifically a _runtime binding_, _compile-time
-binding_, _symbolic binding_, or _template binding_. The expression to the right
-defining the type of the binding pattern is called the _binding type
-expression_, a kind of [type expression](#type-expression). For example, in
-`T:! Hashable`, `T` is the binding (a symbolic binding in this case), and
-`Hashable` is the binding type expression.
+The name being declared, which is the identifier to the left of the `:` is
+called a _binding_, or more specifically a _runtime binding_, _compile-time
+binding_, _checked generic binding_, or _template generic binding_. The
+expression to the right defining the type of the binding pattern is called the
+_binding type expression_, a kind of [type expression](#type-expression). For
+example, in a checked generic binding pattern `T: Hashable`, `T` is the binding
+(a checked generic binding in this case), and `Hashable` is the binding type
+expression.
 
 ## Types and `type`
 
@@ -363,10 +374,10 @@ cases, we are concerned with the type value after the implicit conversion.
 ## Facet binding
 
 We use the term _facet binding_ to refer to the name introduced by a
-[compile-time binding pattern](#bindings) (using `:!` with or without the
-`template` modifier) where the declared type is a [facet type](#facet-type). In
-the binding pattern `T:! Hashable`, `T` is a facet binding, and the value of `T`
-is a [facet](#facet).
+[compile-time binding pattern](#bindings) (indicated by context or keywords like
+`generic` or `template`) where the declared type is a [facet type](#facet-type).
+In a checked binding pattern `T: Hashable`, `T` is a facet binding, and the
+value of `T` is a [facet](#facet).
 
 ## Deduced parameter
 
@@ -465,7 +476,7 @@ members of the interface as named members of the type. This means that the
 members of the interface are available by way of both
 [simple member access and qualified member access expressions](#member-access).
 See
-[how `extend` affects member access](../expressions/member_access.md#extend).
+[how `extend` affects member access](/docs/design/expressions/member_access.md#extend).
 
 If a type implements an interface without extending, the members of the
 interface may only be accessed using
@@ -509,22 +520,6 @@ member access expression `s1.(Comparable.Less)(s2)`.
 This form may be used to access any member of an interface implemented for a
 type, whether or not it [extends the implementation](#extending-an-impl).
 
-## Compatible types
-
-Two types are compatible if they have the same notional set of values and
-represent those values in the same way, even if they expose different APIs. The
-representation of a type describes how the values of that type are represented
-as a sequence of bits in memory. The set of values of a type includes properties
-that the compiler can't directly see, such as invariants that the type
-maintains.
-
-We can't just say two types are compatible based on structural reasons. Instead,
-we have specific constructs that create compatible types from existing types in
-ways that encourage preserving the programmer's intended semantics and
-invariants, such as implementing the API of the new type by calling (public)
-methods of the original API, instead of accessing any private implementation
-details.
-
 ## Subtyping and casting
 
 Both subtyping and casting are different names for changing the type of a value
@@ -556,14 +551,16 @@ make it clear that the data representation of the value is not changing, just
 its type as reflected in the API available to manipulate the value.
 
 Casting is indicated explicitly by way of some syntax in the source code. You
-might use a cast to switch between [type adaptations](#adapting-a-type), or to
-be explicit where an implicit conversion would otherwise occur. For now, we are
-saying "`x as y`" is the provisional syntax in Carbon for casting the value `x`
-to the type `y`. Note that outside of generics, the term "casting" includes any
-explicit type change, including those that change the data representation.
+might use a cast to switch between
+[type adaptations](/docs/design/classes.md#adapters), or to be explicit where an
+implicit conversion would otherwise occur. For now, we are saying "`x as y`" is
+the provisional syntax in Carbon for casting the value `x` to the type `y`. Note
+that outside of generics, the term "casting" includes any explicit type change,
+including those that change the data representation.
 
 In contexts where an expression of one type is provided and a different type is
-required, an [implicit conversion](../expressions/implicit_conversions.md) is
+required, an
+[implicit conversion](/docs/design/expressions/implicit_conversions.md) is
 performed if it is considered safe to do so. Such an implicit conversion, if
 permitted, always has the same meaning as an explicit cast.
 
@@ -593,27 +590,6 @@ This is enforced using two kinds of rules:
 
 The rationale for Carbon choosing coherence and alternatives considered may be
 found in [this appendix](appendix-coherence.md)
-
-## Adapting a type
-
-A type can be adapted by creating a new type that is
-[compatible](#compatible-types) with an existing type, but has a different API.
-In particular, the new type might implement different interfaces or provide
-different implementations of the same interfaces.
-
-Unlike extending a type (as with C++ class inheritance), you are not allowed to
-add new data fields onto the end of the representation -- you may only change
-the API. This means that it is safe to [cast](#subtyping-and-casting) a value
-between those two types without any dynamic checks or danger of
-[object slicing](https://en.wikipedia.org/wiki/Object_slicing).
-
-This is called "newtype" in Rust, and is used for capturing additional
-information in types to improve type safety by moving some checking to compile
-time ([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
-[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
-[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html))
-and as a workaround for
-[Rust's orphan rules for coherence](https://github.com/Ixrec/rust-orphan-rules#why-are-the-orphan-rules-controversial).
 
 ## Type erasure
 
@@ -651,7 +627,7 @@ An interface can be extended by defining an interface that includes the full API
 of another interface, plus some additional API. Types implementing the extended
 interface should automatically be considered to have implemented the narrower
 interface. See
-[how `extend` affects member access](../expressions/member_access.md#extend).
+[how `extend` affects member access](/docs/design/expressions/member_access.md#extend).
 
 ## Dynamic-dispatch witness table
 
@@ -754,14 +730,14 @@ associated constants.
 ```
 // Stack using associated facets
 interface Stack {
-  let ElementType:! type;
+  let ElementType: type;
   fn Push(ref self, value: ElementType);
   fn Pop(ref self) -> ElementType;
 }
 
 // Works on any type implementing `Stack`. Return type
 // is determined by the type's implementation of `Stack`.
-fn PeekAtTopOfStack[T:! Stack](s: T*) -> T.ElementType {
+fn PeekAtTopOfStack[T: Stack](s: T*) -> T.ElementType {
   let ret: T.ElementType = s->Pop();
   s->Push(ret);
   return ret;
@@ -791,8 +767,8 @@ For example, we might have an interface that says how to perform addition with
 another type:
 
 ```
-interface AddWith(T:! type) {
-  let ResultType:! type;
+interface AddWith(T: type) {
+  let ResultType: type;
   fn Add(self, rhs: T) -> ResultType;
 }
 ```
@@ -811,12 +787,12 @@ to be some way to determine the type to add to:
 ```
 // ✅ This is allowed, since the value of `T` is determined by the
 // `y` parameter.
-fn DoAdd[T:! type, U:! AddWith(T)](x: U, y: T) -> U.ResultType {
+fn DoAdd[T: type, U: AddWith(T)](x: U, y: T) -> U.ResultType {
   return x.Add(y);
 }
 
 // ❌ This is forbidden, can't uniquely determine `T`.
-fn CompileError[T:! type, U:! AddWith(T)](x: U) -> T;
+fn CompileError[T: type, U: AddWith(T)](x: U) -> T;
 ```
 
 Once the interface parameters can be determined, that determines the values for
@@ -850,12 +826,22 @@ express, for example:
     element type.
 -   An interface may define an associated facet that needs to be constrained to
     implement some interfaces.
--   This type must be [compatible](#compatible-types) with another type. You
-    might use this to define alternate implementations of a single interfaces,
-    such as sorting order, for a single type.
+-   This type must be [compatible](/docs/design/classes.md#compatible-types)
+    with another type. You might use this to define alternate implementations of
+    a single interfaces, such as sorting order, for a single type.
 
 Note that type constraints can be a restriction on one facet parameter or
 associated facet, or can define a relationship between multiple facets.
+
+## Alternatives considered
+
+-   [Keep the `:!` syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#keep-the--syntax)
+-   [Alternative keyword names](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#alternative-keyword-names)
+-   [Use `template generic` instead of just `template`](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#use-template-generic-instead-of-just-template)
+-   [Context-independent syntax](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-independent-syntax)
+-   [Erased model for generics](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#erased-model-for-generics)
+-   [Context-sensitive defaults based on parameter type](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#context-sensitive-defaults-based-on-parameter-type)
+-   [Allow redundant phase keywords](/proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md#allow-redundant-phase-keywords)
 
 ## References
 
@@ -866,3 +852,4 @@ associated facet, or can define a relationship between multiple facets.
 -   [#2138: Checked and template generic terminology](https://github.com/carbon-language/carbon-lang/pull/2138)
 -   [#2360: Types are values of type `type`](https://github.com/carbon-language/carbon-lang/pull/2360)
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
+-   [#7254: Replace `:!` and `:?` with keywords and contextual defaults](https://github.com/carbon-language/carbon-lang/pull/7254)

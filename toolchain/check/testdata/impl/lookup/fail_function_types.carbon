@@ -17,7 +17,7 @@ interface Z {
   fn G();
 }
 
-impl forall [T:! type] T as Z {
+impl forall [T: type] T as Z {
   fn G() {}
 }
 

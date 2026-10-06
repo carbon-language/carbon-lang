@@ -117,7 +117,6 @@ conditional conformance options:
 
     This was too different from how those same impls would be declared
     out-of-line.
-
 -   Another approach that was too different between inline and out-of-line, is
     to use pattern matching instead of boolean conditions. This might look like:
 

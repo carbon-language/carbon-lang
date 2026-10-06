@@ -14,6 +14,7 @@
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/StringExtras.h"
+#include "testing/base/benchmark_helpers.h"
 #include "toolchain/base/shared_value_stores.h"
 #include "toolchain/benchmarking/source_gen.h"
 #include "toolchain/diagnostics/emitter.h"
@@ -56,7 +57,6 @@ auto GetSymbolTokenTable() -> llvm::ArrayRef<TokenKind> {
     table.insert(table.end(), 8, TokenKind::Colon);
     table.insert(table.end(), 8, TokenKind::Equal);
     table.insert(table.end(), 4, TokenKind::Amp);
-    table.insert(table.end(), 4, TokenKind::ColonExclaim);
     table.insert(table.end(), 4, TokenKind::EqualEqual);
     table.insert(table.end(), 4, TokenKind::ExclaimEqual);
     table.insert(table.end(), 4, TokenKind::MinusGreater);
@@ -587,9 +587,9 @@ auto BM_SpeedOfLightStrCpy(benchmark::State& state) -> void {
 
   for (auto _ : state) {
     const char* text = source.data();
-    benchmark::DoNotOptimize(text);
+    Testing::DoNotOptimize(text);
     strcpy(buffer.data(), text);
-    benchmark::DoNotOptimize(buffer.data());
+    Testing::DoNotOptimize(buffer.data());
   }
 
   state.SetBytesProcessed(state.iterations() * source.size());
@@ -727,7 +727,7 @@ auto BM_SpeedOfLightDispatch(benchmark::State& state) -> void {
 
   for (auto _ : state) {
     const char* text = source.data();
-    benchmark::DoNotOptimize(text);
+    Testing::DoNotOptimize(text);
 
     // Use `ssize_t` to minimize indexing overhead.
     ssize_t i = 0;
@@ -736,7 +736,7 @@ auto BM_SpeedOfLightDispatch(benchmark::State& state) -> void {
         i, text, buffer.data());
     CARBON_CHECK(i == static_cast<ssize_t>(source.size()));
 
-    benchmark::DoNotOptimize(buffer.data());
+    Testing::DoNotOptimize(buffer.data());
   }
 
   state.SetBytesProcessed(state.iterations() * source.size());

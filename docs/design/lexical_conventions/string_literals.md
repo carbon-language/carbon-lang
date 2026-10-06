@@ -151,11 +151,21 @@ var String: invalid = '''
   ''';
 ```
 
-A _file type indicator_ is any sequence of non-whitespace characters other than
-`'` or `#`. The file type indicator has no semantic meaning to the Carbon
-compiler, but some file type indicators are understood by the language tooling
-(for example, syntax highlighter, code formatter) as indicating the structure of
-the string literal's content.
+A _file type indicator_ is the text following the `'''` on the introducer line,
+with surrounding whitespace removed; it may not contain `'`, `#`, or `"`. A
+[trailing comment](comments.md) may follow the file type indicator on the
+introducer line. It is an ordinary comment, and tools treat it as one; like the
+surrounding whitespace it is not part of the indicator, and so it may contain
+characters that the indicator may not. The file type indicator has no semantic
+meaning to the Carbon compiler, but some file type indicators are understood by
+the language tooling (for example, syntax highlighter, code formatter) as
+indicating the structure of the string literal's content.
+
+Because a [character literal](character_literals.md) is never empty, `''` can
+only occur as the start of the `'''` that begins or ends a block string
+literal. A `'''` whose introducer line does not have the required form, such
+as the single-line `'''foo'''`, is an error; it is never interpreted as a
+sequence of character literals.
 
 ```carbon
 // This is a block string literal. Its first two characters are spaces, and its
@@ -346,3 +356,5 @@ string in the type system. In such string literals, we should consider rejecting
     [#199: String literals](https://github.com/carbon-language/carbon-lang/pull/199)
 -   Proposal
     [#2040: Unicode escape code length](https://github.com/carbon-language/carbon-lang/pull/2040)
+-   Proposal
+    [#7441: Trailing comments](https://github.com/carbon-language/carbon-lang/pull/7441)

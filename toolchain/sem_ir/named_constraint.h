@@ -57,6 +57,19 @@ struct NamedConstraint : public EntityWithParamsBase,
   auto is_being_defined() const -> bool {
     return has_definition_started() && !is_complete();
   }
+
+  // When merging a declaration and definition, prefer things which would point
+  // at the definition for diagnostics.
+  auto MergeDefinition(const NamedConstraint& definition) -> void {
+    EntityWithParamsBase::MergeBaseDefinition(definition);
+    scope_with_self_id = definition.scope_with_self_id;
+    scope_without_self_id = definition.scope_without_self_id;
+    body_block_without_self_id = definition.body_block_without_self_id;
+    body_block_with_self_id = definition.body_block_with_self_id;
+    self_param_id = definition.self_param_id;
+    require_impls_block_id = definition.require_impls_block_id;
+    complete = definition.complete;
+  }
 };
 
 using NamedConstraintStore =

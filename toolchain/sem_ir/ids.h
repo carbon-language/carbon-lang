@@ -315,7 +315,6 @@ struct CheckIRId : public IdBase<CheckIRId> {
   static constexpr llvm::StringLiteral Label = "check_ir";
 
   using IdBase::IdBase;
-  auto Print(llvm::raw_ostream& out) const -> void;
 };
 
 // The ID of a `Class`.
@@ -360,13 +359,21 @@ struct AssociatedConstantId : public IdBase<AssociatedConstantId> {
   using IdBase::IdBase;
 };
 
-// The ID of a `FacetTypeInfo`.
-struct FacetTypeId : public IdBase<FacetTypeId> {
-  static constexpr llvm::StringLiteral Label = "facet_type";
+// The ID of a `DeclaredFacetType`.
+struct DeclaredFacetTypeId : public IdBase<DeclaredFacetTypeId> {
+  static constexpr llvm::StringLiteral Label = "declared_facet_type";
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
 
+  // The canonical empty DeclaredFacetType, which is found in the `TypeType`
+  // instruction. Always the 0 index.
+  static const DeclaredFacetTypeId Empty;
+
   using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
 };
+
+inline constexpr DeclaredFacetTypeId DeclaredFacetTypeId::Empty =
+    DeclaredFacetTypeId(0);
 
 // The ID of an resolved facet type value.
 struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
@@ -502,6 +509,13 @@ struct ClangDeclSignatureId : public IdBase<ClangDeclSignatureId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `ClangFunctionPointerTypeInfo`.
+struct ClangFunctionPointerTypeId : public IdBase<ClangFunctionPointerTypeId> {
+  static constexpr llvm::StringLiteral Label = "clang_function_pointer_type";
+
+  using IdBase::IdBase;
+};
+
 // A boolean value.
 struct BoolValue : public IdBase<BoolValue> {
   // Not used by `Print`, but for `IdKind`.
@@ -514,7 +528,7 @@ struct BoolValue : public IdBase<BoolValue> {
   static constexpr auto From(bool b) -> BoolValue { return b ? True : False; }
 
   // Returns the `bool` corresponding to this `BoolValue`.
-  constexpr auto ToBool() -> bool {
+  constexpr auto ToBool() const -> bool {
     CARBON_CHECK(*this == False || *this == True, "Invalid bool value {0}",
                  index);
     return *this != False;
@@ -709,6 +723,16 @@ inline constexpr int NameId::NonIndexValueCount =
     1 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_COUNT);
 #undef CARBON_SPECIAL_NAME_ID_FOR_COUNT
 
+// An X-macro for special name scopes. Uses should look like:
+//
+//   #define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ(Name) ...
+//   CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ)
+//   #undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ
+#define CARBON_SPECIAL_NAME_SCOPE_ID(X)                                \
+  /* A scope used by the toolchain to indicate it has access to all */ \
+  /* of a class' members. */                                           \
+  X(AllowHighestAccessLevel)
+
 // The ID of a `NameScope`.
 struct NameScopeId : public IdBase<NameScopeId> {
   static constexpr llvm::StringLiteral Label = "name_scope";
@@ -716,10 +740,34 @@ struct NameScopeId : public IdBase<NameScopeId> {
   // The package (or file) name scope, guaranteed to be the first added.
   static const NameScopeId Package;
 
+  // An enum of special name scopes.
+  enum class SpecialNameScopeId : uint8_t {
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM(Name) Name,
+    CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM
+  };
+
+  // For each SpecialNameScopeId, provide a matching `NameScopeId` instance for
+  // convenience.
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL(Name) \
+  static const NameScopeId Name;
+  CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL
+
   using IdBase::IdBase;
 };
 
 inline constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
+
+// Define the special `static const NameScopeId` values.
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF(Name) \
+  inline constexpr NameScopeId NameScopeId::Name = \
+      NameScopeId(NoneIndex - 1 -                  \
+                  static_cast<int>(NameScopeId::SpecialNameScopeId::Name));
+CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF
+
+#undef CARBON_SPECIAL_NAME_SCOPE_ID
 
 // The ID of an `InstId` block.
 struct InstBlockId : public IdBase<InstBlockId> {
@@ -759,6 +807,11 @@ struct InstBlockId : public IdBase<InstBlockId> {
   static const InstBlockId Unreachable;
 
   using IdBase::IdBase;
+
+  // The instruction ID type that should be used to refer to elements of this
+  // block.
+  using InstIdT = InstId;
+
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
@@ -827,6 +880,8 @@ class AbsoluteInstBlockId : public InstBlockId {
       : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
+
+  using InstIdT = AbsoluteInstId;
 };
 
 // An ID of an instruction block that is used as the declaration block within a
@@ -842,6 +897,23 @@ class DeclInstBlockId : public InstBlockId {
       : InstBlockId(inst_block_id) {}
 
   using InstBlockId::InstBlockId;
+};
+
+// An ID of an instruction block that is referenced as a meta-operand of an
+// action. This is analogous to a `MetaInstId`, but for an instructions block
+// instead of an instruction.
+class MetaInstBlockId : public InstBlockId {
+ public:
+  static constexpr llvm::StringLiteral Label = "meta_inst_block";
+
+  // Support implicit conversion from InstBlockId so that InstBlockId and
+  // MetaInstBlockId have the same interface.
+  explicit(false) constexpr MetaInstBlockId(InstBlockId inst_block_id)
+      : InstBlockId(inst_block_id) {}
+
+  using InstBlockId::InstBlockId;
+
+  using InstIdT = MetaInstId;
 };
 
 // An ID of an instruction block that is used as a label in a branch instruction
@@ -939,6 +1011,14 @@ struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
   using IdBase::IdBase;
 };
 
+// The ID of a `GeneratedFunction`.
+struct GeneratedFunctionId : public IdBase<GeneratedFunctionId> {
+  static constexpr llvm::StringLiteral Label =
+      "canonical_core_witness_function";
+
+  using IdBase::IdBase;
+};
+
 // An index for element access, for structs, tuples, and classes.
 struct ElementIndex : public IndexBase<ElementIndex> {
   static constexpr llvm::StringLiteral Label = "element";
@@ -1010,26 +1090,47 @@ struct RequireImplsBlockId : public IdBase<RequireImplsBlockId> {
 inline constexpr RequireImplsBlockId RequireImplsBlockId::Empty =
     RequireImplsBlockId(0);
 
+// The ID of an `Observe`.
+struct ObserveId : public IdBase<ObserveId> {
+  static constexpr llvm::StringLiteral Label = "observe";
+
+  using IdBase::IdBase;
+};
+
+// The ID of a `ObserveId` block.
+struct ObserveBlockId : public IdBase<ObserveBlockId> {
+  static constexpr llvm::StringLiteral Label = "observe_block";
+
+  // The canonical empty block, reused to avoid allocating empty vectors. Always
+  // the 0-index block.
+  static const ObserveBlockId Empty;
+
+  using IdBase::IdBase;
+  auto Print(llvm::raw_ostream& out) const -> void;
+};
+
+inline constexpr ObserveBlockId ObserveBlockId::Empty = ObserveBlockId(0);
+
+// The ID of a bundle of arguments with an unspecified type.
+struct RawBundleId : public IdBase<RawBundleId> {
+  static constexpr llvm::StringLiteral Label = "bundle";
+
+  using IdBase::IdBase;
+};
+
 // The ID of a bundle of arguments with type `BundleT`.
 template <typename BundleT>
 struct BundleId : public IdBase<BundleId<BundleT>> {
   static constexpr llvm::StringLiteral Label = "bundle";
 
   using IdBase<BundleId<BundleT>>::IdBase;
-};
 
-// The ID of a bundle of arguments with an unspecified type.
-struct RawBundleId : public IdBase<RawBundleId> {
-  static constexpr llvm::StringLiteral Label = "bundle";
+  explicit BundleId(RawBundleId raw_id)
+      : IdBase<BundleId<BundleT>>(raw_id.index) {}
 
-  template <typename BundleT>
-  explicit(false) RawBundleId(BundleId<BundleT> bundle_id)
-      : IdBase(bundle_id.index) {}
-  using IdBase::IdBase;
-
-  template <typename BundleT>
-  explicit operator BundleId<BundleT>() const {
-    return BundleId<BundleT>(index);
+  // NOLINTNEXTLINE(google-explicit-constructor)
+  explicit(false) operator RawBundleId() const {
+    return RawBundleId(this->index);
   }
 };
 

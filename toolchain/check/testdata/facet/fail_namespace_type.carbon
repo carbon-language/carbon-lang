@@ -17,7 +17,7 @@ namespace N;
 
 interface Z {}
 
-impl forall [T:! type] T as Z {}
+impl forall [T: type] T as Z {}
 
 fn F() {
   // CHECK:STDERR: fail_namespace_as.carbon:[[@LINE+4]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
@@ -34,17 +34,17 @@ namespace N;
 
 interface Z {}
 
-impl forall [T:! type] T as Z {}
+impl forall [T: type] T as Z {}
 
-fn G[T:! Z](unused a: T) {}
+fn G[T: Z](unused a: T) {}
 
 fn F() {
   // CHECK:STDERR: fail_namespace_argument.carbon:[[@LINE+7]]:5: error: expression cannot be used as a value [UseOfNonExprAsValue]
   // CHECK:STDERR:   G(N);
   // CHECK:STDERR:     ^
-  // CHECK:STDERR: fail_namespace_argument.carbon:[[@LINE-6]]:20: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn G[T:! Z](unused a: T) {}
-  // CHECK:STDERR:                    ^~~~
+  // CHECK:STDERR: fail_namespace_argument.carbon:[[@LINE-6]]:19: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fn G[T: Z](unused a: T) {}
+  // CHECK:STDERR:                   ^~~~
   // CHECK:STDERR:
   G(N);
 }

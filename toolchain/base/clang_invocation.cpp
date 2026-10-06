@@ -100,6 +100,10 @@ auto BuildClangInvocation(Diagnostics::Consumer& consumer,
   }
 
   if (invocation) {
+    // Track submodule visibility in the preprocessor and Sema.
+    invocation->getLangOpts().Modules = true;
+    invocation->getLangOpts().ModulesLocalVisibility = true;
+
     // Do not emit Clang's name and version as the creator of the output file.
     invocation->getCodeGenOpts().EmitVersionIdentMetadata = false;
     invocation->getCodeGenOpts().DiscardValueNames = false;

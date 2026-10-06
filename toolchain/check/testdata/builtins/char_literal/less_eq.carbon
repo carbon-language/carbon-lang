@@ -26,6 +26,7 @@ let c: bool = LessEq('b', 'a');
 // CHECK:STDOUT: --- less_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %LessEq.type: type = fn_type @LessEq [concrete]
 // CHECK:STDOUT:   %LessEq: %LessEq.type = struct_value () [concrete]
@@ -39,27 +40,27 @@ let c: bool = LessEq('b', 'a');
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete = constants.%a.patt.567]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc21_30.1: bool = value_of_initializer @__global_init.%LessEq.call.loc21 [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc21_30.2: bool = converted @__global_init.%LessEq.call.loc21, %.loc21_30.1 [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc21_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %a: bool = value_binding a, %.loc21_30.2
+// CHECK:STDOUT:   %a: bool = wrapper_binding a, %.loc21_30.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt.438]
+// CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete = constants.%a.patt.567]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22_30.1: bool = value_of_initializer @__global_init.%LessEq.call.loc22 [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc22_30.2: bool = converted @__global_init.%LessEq.call.loc22, %.loc22_30.1 [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc22_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = value_binding b, %.loc22_30.2
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc22_30.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %c.patt: %pattern_type.831 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt.438]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23_30.1: bool = value_of_initializer @__global_init.%LessEq.call.loc23 [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc23_30.2: bool = converted @__global_init.%LessEq.call.loc23, %.loc23_30.1 [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc23_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %c: bool = value_binding c, %.loc23_30.2
+// CHECK:STDOUT:   %c: bool = wrapper_binding c, %.loc23_30.2
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %c.patt: %pattern_type.831 = value_binding_pattern c [concrete = constants.%c.patt]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

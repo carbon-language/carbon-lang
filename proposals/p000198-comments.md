@@ -378,9 +378,11 @@ context of the complete language design.
 
 ### Multi-line text comments
 
+<!-- rumdl-disable -->
 No support is provided for multi-line text comments. Instead, the intent is that
 such comments are expressed by prepending each line with the same `// ` comment
 marker.
+<!-- rumdl-enable -->
 
 Requiring each line to repeat the comment marker will improve readability, by
 removing a source of non-local state, and removes a needless source of stylistic

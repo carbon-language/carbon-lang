@@ -52,13 +52,13 @@ left-to-right with all of them.
 Its semantics are defined in terms of the following interfaces:
 
 ```
-interface IndexWith(SubscriptType:! type) {
-  let ElementType:! type;
+interface IndexWith(SubscriptType: type) {
+  let ElementType: type;
   fn At(bound self, subscript: SubscriptType) -> val ElementType;
   fn Ref(bound ref self, subscript: SubscriptType) -> ref ElementType;
 }
 
-interface IndirectIndexWith(SubscriptType:! type) {
+interface IndirectIndexWith(SubscriptType: type) {
   require Self impls IndexWith(SubscriptType);
   fn Ref(bound self, subscript: SubscriptType) -> ref ElementType;
 }
@@ -81,7 +81,7 @@ implement `IndirectIndexWith(I)`:
 
 ```
 final impl forall
-    [SubscriptType:! type, T:! IndirectIndexWith(SubscriptType)]
+    [SubscriptType: type, T: IndirectIndexWith(SubscriptType)]
     T as IndexWith(SubscriptType) {
   where ElementType = T.(IndirectIndexWith(SubscriptType).ElementType);
   fn At(bound self, subscript: SubscriptType) -> val ElementType {
@@ -101,9 +101,9 @@ its own definitions of `IndexWith.At` and `IndexWith.Ref`.
 An array type could implement subscripting like so:
 
 ```
-class Array(template T:! type, template N:! i64) {
+class Array(template T: type, template N: i64) {
   impl as IndexWith(like i64) {
-    let ElementType:! type = T;
+    let ElementType: type = T;
     fn At(bound self, subscript: i64) -> val T;
     fn Ref(bound ref self, subscript: i64) -> ref T;
   }
@@ -113,9 +113,9 @@ class Array(template T:! type, template N:! i64) {
 And a type such as `std::span` could look like this:
 
 ```
-class Span(T:! type) {
+class Span(T: type) {
   impl as IndirectIndexWith(like i64) {
-    let ElementType:! type = T;
+    let ElementType: type = T;
     fn Ref(bound ref self, subscript: i64) -> ref T;
   }
 }

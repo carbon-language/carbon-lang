@@ -401,8 +401,8 @@ Ordering is essentially a question of pairing identifiers and types. This can be
 cast as asking which question developers consider more important when reading
 code:
 
-1. What is the type of variable `x`?
-2. What is the identifier of the `Int` variable?
+1.  What is the type of variable `x`?
+2.  What is the identifier of the `Int` variable?
 
 We assert the first question is the more important one: developers will see an
 identifier in later code, and want to know its type. However, how do we

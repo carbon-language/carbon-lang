@@ -7,9 +7,12 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
+#include <optional>
 #include <string>
 
 #include "common/set.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/FormatVariadic.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/base/install_paths_test_helpers.h"
 #include "toolchain/driver/driver.h"
@@ -87,6 +90,89 @@ TEST(SourceGenTest, Identifiers) {
   EXPECT_THAT(idents, Each(SizeIs(AllOf(Ge(10), Le(20)))));
 }
 
+// For fixed parameters, the total number of bytes across the returned
+// identifiers must not depend on the random seed, even though the specific
+// identifiers do. This checks that across a range of parameters and across many
+// freshly-seeded generators (each `SourceGen` gets an independent random seed).
+TEST(SourceGenTest, IdentifierByteSumStableAcrossSeeds) {
+  struct Config {
+    int number;
+    int min_length;
+    int max_length;
+    bool uniform;
+    bool unique;
+  };
+  // A spread of parameters including: the default range, narrow ranges, the
+  // single-length extreme, uniform distributions, and a uniform range with a
+  // `max_length` well beyond the 64 limit that only the uniform path allows.
+  Config configs[] = {
+      {.number = 1000, .min_length = 1, .max_length = 64, .uniform = false},
+      {.number = 1000, .min_length = 4, .max_length = 64, .uniform = false},
+      {.number = 999, .min_length = 1, .max_length = 64, .uniform = false},
+      {.number = 1000, .min_length = 10, .max_length = 20, .uniform = false},
+      {.number = 1000, .min_length = 8, .max_length = 8, .uniform = false},
+      {.number = 100, .min_length = 10, .max_length = 19, .uniform = true},
+      {.number = 97, .min_length = 10, .max_length = 19, .uniform = true},
+      {.number = 500, .min_length = 50, .max_length = 200, .uniform = true},
+      {.number = 1000,
+       .min_length = 4,
+       .max_length = 64,
+       .uniform = false,
+       .unique = true},
+      {.number = 1000,
+       .min_length = 4,
+       .max_length = 4,
+       .uniform = false,
+       .unique = true},
+      {.number = 200,
+       .min_length = 30,
+       .max_length = 120,
+       .uniform = true,
+       .unique = true},
+  };
+
+  for (const Config& c : configs) {
+    SCOPED_TRACE(llvm::formatv(
+        "Config: number={0} min_length={1} max_length={2} uniform={3} "
+        "unique={4}",
+        c.number, c.min_length, c.max_length, c.uniform, c.unique));
+    std::optional<ssize_t> expected_sum;
+    bool any_different = false;
+    std::optional<llvm::SmallVector<std::string>> first;
+    constexpr int NumSeeds = 8;
+    for (int seed : llvm::seq(NumSeeds)) {
+      // Each iteration constructs a fresh generator with an independent random
+      // seed; the traced index identifies which iteration failed.
+      SCOPED_TRACE(llvm::formatv("Seed iteration: {0}", seed));
+      SourceGen gen;
+      auto idents = c.unique
+                        ? gen.GetShuffledUniqueIdentifiers(
+                              c.number, c.min_length, c.max_length, c.uniform)
+                        : gen.GetShuffledIdentifiers(c.number, c.min_length,
+                                                     c.max_length, c.uniform);
+      EXPECT_THAT(idents, SizeIs(c.number));
+      EXPECT_THAT(idents,
+                  Each(SizeIs(AllOf(Ge(c.min_length), Le(c.max_length)))));
+
+      ssize_t sum = SumSizes(idents);
+      if (!expected_sum) {
+        expected_sum = sum;
+        first.emplace(idents.begin(), idents.end());
+        continue;
+      }
+      // The byte sum must be identical regardless of the seed.
+      EXPECT_THAT(sum, Eq(*expected_sum));
+      if (!llvm::equal(idents, *first)) {
+        any_different = true;
+      }
+    }
+    // Sanity check that the generators really are producing different content,
+    // so that the invariance check above is meaningful rather than trivially
+    // passing on identical output.
+    EXPECT_TRUE(any_different);
+  }
+}
+
 TEST(SourceGenTest, UniformIdentifiers) {
   SourceGen gen;
   // Check that uniform identifier length results in exact coverage of each
@@ -156,7 +242,10 @@ auto TestCompile(llvm::StringRef source) -> bool {
 
   fs->addFile("test.carbon", /*ModificationTime=*/0,
               llvm::MemoryBuffer::getMemBuffer(source));
-  return driver.RunCommand({"compile", "--phase=check", "test.carbon"}).success;
+  return driver
+      .RunCommand({"compile", "--phase=check", "--no-include-carbon-core",
+                   "test.carbon"})
+      .success;
 }
 
 TEST(SourceGenTest, GenApiFileDenseDeclsTest) {

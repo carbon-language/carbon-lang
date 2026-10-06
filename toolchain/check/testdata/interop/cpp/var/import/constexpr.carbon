@@ -19,7 +19,7 @@ import Cpp inline '''
 constexpr bool b = true;
 ''';
 
-class C(B:! bool) {}
+class C(B: bool) {}
 fn F() -> C(Cpp.b);
 let x: C(true) = F();
 
@@ -31,7 +31,7 @@ import Cpp inline '''
 constexpr int i = 123;
 ''';
 
-class C(I:! i32) {}
+class C(I: i32) {}
 fn F() -> C(Cpp.i);
 let x: C(123) = F();
 
@@ -43,7 +43,7 @@ import Cpp inline '''
 constexpr float flt = 123.5;
 ''';
 
-class C(V:! f32) {}
+class C(V: f32) {}
 fn F() -> C(Cpp.flt);
 let x: C(123.5) = F();
 
@@ -56,6 +56,6 @@ int i = 123;
 constexpr int* _Nonnull ptr = &i;
 ''';
 
-class C(V:! i32*) {}
+class C(V: i32*) {}
 fn F() -> C(Cpp.ptr);
 let x: C(&Cpp.i) = F();

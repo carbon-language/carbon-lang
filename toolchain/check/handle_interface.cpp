@@ -40,6 +40,92 @@ auto HandleParseNode(Context& context, Parse::InterfaceIntroducerId node_id)
   return true;
 }
 
+static auto ValidateCoreInterfaceAssociatedFunction(
+    Context& context, SemIR::InstId decl_id, int index, CoreIdentifier name_id,
+    SemIR::Function::InterfaceModifier interface_modifier =
+        SemIR::Function::InterfaceModifier::None) -> bool {
+  auto loc_id = context.insts().GetCanonicalLocId(decl_id);
+  auto decl = context.insts().TryGetAs<SemIR::FunctionDecl>(decl_id);
+  if (!decl) {
+    context.TODO(loc_id, "associated entity must be a method");
+    return false;
+  }
+
+  auto fn = context.functions().Get(decl->function_id);
+
+  if (fn.name_id != context.core_identifiers().AddNameId(name_id)) {
+    context.TODO(loc_id,
+                 llvm::formatv("associated function #{} must be named `{}`",
+                               index, name_id));
+    return false;
+  }
+
+  auto call_params = context.inst_blocks().Get(fn.call_param_patterns_id);
+
+  // TODO: extend to support arbitrary parameters.
+  if (call_params.size() != 1) {
+    context.TODO(loc_id, "associated function must have exactly 1 parameter");
+    return false;
+  }
+
+  auto self = context.insts().TryGetAs<SemIR::RefParamPattern>(call_params[0]);
+  if (!self.has_value() || self->pretty_name_id != SemIR::NameId::SelfValue) {
+    context.TODO(loc_id,
+                 "associated function must take `ref self` as its parameter");
+    return false;
+  }
+
+  // TODO: extend to support arbitrary return types.
+  if (fn.return_type_inst_id.has_value()) {
+    context.TODO(loc_id, "associated function must not have a return type");
+    return false;
+  }
+
+  if (fn.interface_modifier != interface_modifier) {
+    context.TODO(
+        loc_id,
+        interface_modifier == SemIR::Function::InterfaceModifier::None
+            ? std::string(
+                  "associated function must not have an interface modifier")
+            : llvm::formatv("associated function must be `{}`",
+                            interface_modifier));
+    return false;
+  }
+
+  return true;
+}
+
+static auto ValidateCoreDestroy(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstBlockId associated_entities_id)
+    -> bool {
+  auto assoc_entities = context.inst_blocks().Get(associated_entities_id);
+  if (assoc_entities.size() != 3) {
+    context.TODO(
+        loc_id,
+        "interface `Core.Destroy` needs exactly 3 associated functions");
+    return false;
+  }
+
+  if (!ValidateCoreInterfaceAssociatedFunction(context, assoc_entities[0], 1,
+                                               CoreIdentifier::Op)) {
+    return false;
+  }
+
+  if (!ValidateCoreInterfaceAssociatedFunction(
+          context, assoc_entities[1], 2, CoreIdentifier::SubobjectDestroy,
+          SemIR::Function::InterfaceModifier::Final)) {
+    return false;
+  }
+
+  if (!ValidateCoreInterfaceAssociatedFunction(
+          context, assoc_entities[2], 3, CoreIdentifier::SelfDestruct,
+          SemIR::Function::InterfaceModifier::Final)) {
+    return false;
+  }
+
+  return true;
+}
+
 static auto BuildInterfaceDecl(Context& context,
                                Parse::AnyInterfaceDeclId node_id,
                                bool is_definition)
@@ -73,15 +159,11 @@ static auto BuildInterfaceDecl(Context& context,
   SemIR::ScopeLookupResult lookup_result =
       context.decl_name_stack().LookupOrAddName(
           name_context, decl_inst_id, introducer.modifier_set.GetAccessKind());
-  if (auto existing_decl = TryGetExistingDecl(context, name, lookup_result,
-                                              interface_info, is_definition)) {
-    auto existing_interface_decl = existing_decl->As<SemIR::InterfaceDecl>();
-    interface_decl.interface_id = existing_interface_decl.interface_id;
-    interface_decl.type_id = existing_interface_decl.type_id;
-    // TODO: If the new declaration is a definition, keep its parameter
-    // and implicit parameter lists rather than the ones from the
-    // previous declaration.
-
+  if (TryMergeRedecl(
+          context, name_context, lookup_result,
+          MergeRedeclEntityInfo<SemIR::Interface>{
+              .new_entity_decl = interface_decl, .new_entity = interface_info},
+          is_definition)) {
     auto prev_decl_generic_id =
         context.interfaces().Get(interface_decl.interface_id).generic_id;
     FinishGenericRedecl(context, prev_decl_generic_id);
@@ -110,6 +192,10 @@ static auto BuildInterfaceDecl(Context& context,
 
   // Write the interface ID into the InterfaceDecl.
   ReplaceInstBeforeConstantUse(context, decl_inst_id, interface_decl);
+
+  if (!is_definition && context.sem_ir().is_impl()) {
+    context.definitions_required_by_decl().push_back(decl_inst_id);
+  }
 
   return {interface_decl.interface_id, decl_inst_id};
 }
@@ -198,6 +284,7 @@ auto HandleParseNode(Context& context,
 
   context.inst_block_stack().Push();
   context.require_impls_stack().Push(interface_id);
+  context.observe_stack().PushArray();
   // We use the arg stack to build the witness table type.
   context.args_type_info_stack().Push();
 
@@ -217,7 +304,7 @@ auto HandleParseNode(Context& context,
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
+auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId node_id)
     -> bool {
   auto interface_id =
       context.node_stack().Pop<Parse::NodeKind::InterfaceDefinitionStart>();
@@ -229,9 +316,14 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
       context.require_impls_stack().PeekTop());
   context.require_impls_stack().Pop();
 
+  auto observe_block_id =
+      context.observe_blocks().Add(context.observe_stack().PeekArray());
+  context.observe_stack().PopArray();
+
   auto& interface_info = context.interfaces().Get(interface_id);
   if (!interface_info.associated_entities_id.has_value()) {
     interface_info.require_impls_block_id = require_impls_block_id;
+    interface_info.observe_block_id = observe_block_id;
     // This marks the interface type as fully defined.
     interface_info.associated_entities_id = associated_entities_id;
   }
@@ -244,6 +336,38 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId /*node_id*/)
 
   // Finish the definition of interface-without-self.
   FinishGenericDefinition(context, interface_info.generic_id);
+
+  if (context.sem_ir().package_id() == PackageNameId::Core) {
+    switch (interface_info.core_interface) {
+      case SemIR::CoreInterface::Destroy:
+        return ValidateCoreDestroy(context, node_id,
+                                   interface_info.associated_entities_id);
+      case SemIR::CoreInterface::AddAssignWith:
+      case SemIR::CoreInterface::AddWith:
+      case SemIR::CoreInterface::Copy:
+      case SemIR::CoreInterface::CppRangeForIterate:
+      case SemIR::CoreInterface::CppUnsafeDeref:
+      case SemIR::CoreInterface::Dec:
+      case SemIR::CoreInterface::Default:
+      case SemIR::CoreInterface::FloatFitsIn:
+      case SemIR::CoreInterface::DivAssignWith:
+      case SemIR::CoreInterface::DivWith:
+      case SemIR::CoreInterface::EqWith:
+      case SemIR::CoreInterface::Inc:
+      case SemIR::CoreInterface::IntFitsIn:
+      case SemIR::CoreInterface::ModAssignWith:
+      case SemIR::CoreInterface::ModWith:
+      case SemIR::CoreInterface::MulAssignWith:
+      case SemIR::CoreInterface::MulWith:
+      case SemIR::CoreInterface::Negate:
+      case SemIR::CoreInterface::OrderedWith:
+      case SemIR::CoreInterface::SubAssignWith:
+      case SemIR::CoreInterface::SubWith:
+      case SemIR::CoreInterface::Unknown:
+        // TODO: validate other core interfaces
+        return true;
+    }
+  }
 
   // The decl_name_stack and scopes are popped by `ProcessNodeIds`.
   return true;

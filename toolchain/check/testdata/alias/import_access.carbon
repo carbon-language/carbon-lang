@@ -59,6 +59,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT: --- def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -85,6 +86,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT: --- def.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -110,13 +112,13 @@ var inst: Test.A = {};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
 // CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %inst.var: ref %C = var_storage %inst.var_patt [concrete]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Test.A [concrete = constants.%C]
+// CHECK:STDOUT:   %inst: ref %C = wrapper_binding inst, %inst.var [concrete = %inst.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %inst.patt: %pattern_type = ref_binding_pattern inst [concrete = constants.%inst.patt]
 // CHECK:STDOUT:     %inst.var_patt: %pattern_type = var_pattern %inst.patt [concrete = constants.%inst.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.var: ref %C = var %inst.var_patt [concrete]
-// CHECK:STDOUT:   %A.ref: type = name_ref A, imports.%Test.A [concrete = constants.%C]
-// CHECK:STDOUT:   %inst: ref %C = ref_binding inst, %inst.var [concrete = %inst.var]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C [from "def.carbon"] {
@@ -138,6 +140,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT: --- fail_local_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -153,13 +156,13 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %inst.var: ref <error> = var_storage %inst.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [concrete = <error>]
+// CHECK:STDOUT:   %inst: <error> = wrapper_binding inst, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %inst.patt: <error> = ref_binding_pattern inst [concrete = <error>]
 // CHECK:STDOUT:     %inst.var_patt: <error> = var_pattern %inst.patt [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.var: ref <error> = var %inst.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %A.ref: <error> = name_ref A, <error> [concrete = <error>]
-// CHECK:STDOUT:   %inst: ref <error> = ref_binding inst, <error> [concrete = <error>]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -172,6 +175,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT: --- fail_other_def.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -189,16 +193,16 @@ var inst: Test.A = {};
 // CHECK:STDOUT:     .inst = %inst
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %inst.patt: <error> = ref_binding_pattern inst [concrete = <error>]
-// CHECK:STDOUT:     %inst.var_patt: <error> = var_pattern %inst.patt [concrete = <error>]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst.var: ref <error> = var %inst.var_patt [concrete = <error>]
+// CHECK:STDOUT:   %inst.var: ref <error> = var_storage %inst.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:     %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:     %A.ref: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %inst: ref <error> = ref_binding inst, <error> [concrete = <error>]
+// CHECK:STDOUT:   %inst: <error> = wrapper_binding inst, <error> [concrete = <error>]
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %inst.patt: <error> = ref_binding_pattern inst [concrete = <error>]
+// CHECK:STDOUT:     %inst.var_patt: <error> = var_pattern %inst.patt [concrete = <error>]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -31,8 +31,8 @@ library "[[@TEST_NAME]]";
 
 fn And(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
 
-class Expect(N:! Core.IntLiteral) {}
-fn Test(N:! Core.IntLiteral) -> Expect(N) { return {}; }
+class Expect(N: Core.IntLiteral) {}
+fn Test(generic N: Core.IntLiteral) -> Expect(N) { return {}; }
 
 fn F() {
   Test(And(1, 2)) as Expect(0);
@@ -126,6 +126,7 @@ fn Test(n: Core.IntLiteral) {
 // CHECK:STDOUT: --- int_and.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %And.type: type = fn_type @And [concrete]

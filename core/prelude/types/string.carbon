@@ -14,7 +14,7 @@ import library "prelude/types/int";
 import library "prelude/operators/as";
 
 class String {
-  fn Size(self) -> u64 { return self.size; }
+  fn Size(self) -> i64 { return self.size; }
 
   impl as Copy {
     fn Op(self) -> Self { return {.ptr = self.ptr, .size = self.size}; }
@@ -22,11 +22,11 @@ class String {
   // TODO: This should be an array iterator.
   private var ptr: Char*;
   // TODO: This should be a word-sized integer.
-  private var size: u64;
+  private var size: i64;
 }
 
 impl String as UnformedInit {}
 
-impl forall [T:! ImplicitAs(i64)] String as IndexWith(T) where .ElementType = Char {
+impl forall [T: ImplicitAs(i64)] String as IndexWith(T) where .ElementType = Char {
   fn At(self, subscript: T) -> Char = "string.at";
 }

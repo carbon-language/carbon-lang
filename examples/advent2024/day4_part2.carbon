@@ -5,7 +5,6 @@
 // https://adventofcode.com/2024/day/4
 
 import Core library "io";
-import Core library "range";
 
 import library "day4_common";
 import library "io_utils";
@@ -17,10 +16,10 @@ fn Run() {
 
   for (y: i32 in Core.InclusiveRange(1, 138)) {
     for (x: i32 in Core.InclusiveRange(1, 138)) {
-      if ((search.Check3(mas, x - 1, y - 1, 1, 1) or
-           search.Check3(mas, x + 1, y + 1, -1, -1)) and
-          (search.Check3(mas, x - 1, y + 1, 1, -1) or
-           search.Check3(mas, x + 1, y - 1, -1, 1))) {
+      if ((search.Check(3, mas, x - 1, y - 1, 1, 1) or
+           search.Check(3, mas, x + 1, y + 1, -1, -1)) and
+          (search.Check(3, mas, x - 1, y + 1, 1, -1) or
+           search.Check(3, mas, x + 1, y - 1, -1, 1))) {
         ++found;
       }
     }

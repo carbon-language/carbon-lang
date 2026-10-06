@@ -36,6 +36,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Bi-directional type mapping: standard library types](#bi-directional-type-mapping-standard-library-types)
     -   [`std::string_view` and `str`](#stdstring_view-and-str)
 -   [TODO: The operator interoperability model](#todo-the-operator-interoperability-model)
+-   [References](#references)
 
 <!-- tocstop -->
 
@@ -144,9 +145,11 @@ This syntax is used for both standard library headers and user-defined headers:
     This import makes entities like `putchar` available.
 
 -   **C++ User-Defined Header:**
+
     ```carbon
     import Cpp library "circle.h";
     ```
+
     This import makes user-defined declarations and definitions available.
 
 ### TODO: Importing C++ code (inline)
@@ -244,6 +247,9 @@ interoperability, though bits will be interpreted differently in each language.
 
 ## TODO: Advanced type mapping: pointers, references, and `const`
 
+> **TODO:** Incorporate proposal
+> [#6357: C++ Interop: Mapping pointer types](https://github.com/carbon-language/carbon-lang/pull/6357)
+
 ## Bi-directional type mapping: standard library types
 
 TODO: C++ view types such as `std::span` and other standard library types will
@@ -270,3 +276,8 @@ default until layout compatibility is established.
 >     [#6177: C++ Interop: Mapping `std::string_view` to `Core.Str`](https://github.com/carbon-language/carbon-lang/pull/6177)
 
 ## TODO: The operator interoperability model
+
+## References
+
+-   Proposal
+    [#6358: C++ Interop: API importing and semantics](https://github.com/carbon-language/carbon-lang/pull/6358)

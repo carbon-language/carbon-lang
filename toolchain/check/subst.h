@@ -29,6 +29,9 @@ class SubstInstCallbacks {
     FullySubstituted,
     // Attempt to substitute into the operands of the instruction.
     SubstOperands,
+    // Attempt to substitute into the operands of the instruction, but omit the
+    // instruction's `type_id` if it has one.
+    SubstOperandsSkipType,
     // Attempt to substitute again on the resulting instruction, acting like
     // recursion on the instruction itself.
     SubstAgain,

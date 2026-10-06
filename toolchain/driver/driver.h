@@ -43,6 +43,14 @@ class Driver {
   // error stream (stderr by default).
   auto RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult;
 
+  // Sets a memory-usage sink for subsequent commands. When set, a compile
+  // command collects each compiled file's memory usage into `mem_usage` (the
+  // same data `--dump-mem-usage` reports), so it can be queried
+  // programmatically. The labels of files compiled together are accumulated
+  // into the one `mem_usage`; consumers typically sum entries by label. Pass
+  // null to disable.
+  auto set_mem_usage(MemUsage* mem_usage) -> void { mem_usage_ = mem_usage; }
+
  private:
   // We store the initial values in the `DriverEnv` that will be used for each
   // subcommand invocation here. These are used as the _starting_ values of the
@@ -57,6 +65,7 @@ class Driver {
   llvm::raw_pwrite_stream* error_stream_;
   bool fuzzing_;
   bool enable_leaking_;
+  MemUsage* mem_usage_ = nullptr;
 };
 
 }  // namespace Carbon

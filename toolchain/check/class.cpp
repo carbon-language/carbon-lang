@@ -18,6 +18,7 @@
 #include "toolchain/check/pattern_match.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/function.h"
@@ -122,7 +123,7 @@ static auto AddStructTypeFields(
         SemIR::ElementIndex{static_cast<int>(struct_type_fields.size())};
     if (field_decl.type_id == SemIR::ErrorInst::TypeId) {
       struct_type_fields.push_back(
-          {.name_id = field_decl.name_id,
+          {.name_id = field.name_id,
            .type_inst_id = SemIR::ErrorInst::TypeInstId});
       continue;
     }
@@ -130,7 +131,7 @@ static auto AddStructTypeFields(
         context.sem_ir().types().GetAs<SemIR::UnboundElementType>(
             field_decl.type_id);
     struct_type_fields.push_back(
-        {.name_id = field_decl.name_id,
+        {.name_id = field.name_id,
          .type_inst_id = unbound_element_type.element_type_inst_id});
   }
   auto fields_id =
@@ -138,13 +139,50 @@ static auto AddStructTypeFields(
   return fields_id;
 }
 
-// Builds and returns a vtable for the current class. Assumes that the virtual
-// functions for the class are listed as the top element of the `vtable_stack`.
+// Result of comparing a virtual function in a base class with a potential
+// overrider in a derived class.
+enum class OverrideMatchResult : uint8_t {
+  // The functions match.
+  Match,
+  // The potential overrider is not marked `override`.
+  NotAnOverride,
+  // The names do not match.
+  NameMismatch,
+  // The arity (number of explicit parameters) does not match.
+  ArityMismatch,
+};
+
+// Compares a virtual function in a base class with a potential overrider in a
+// derived class.
+static auto CompareVirtualWithOverrider(const SemIR::Function& base_fn,
+                                        const SemIR::Function& derived_fn)
+    -> OverrideMatchResult {
+  if (derived_fn.virtual_modifier !=
+      SemIR::FunctionFields::VirtualModifier::Override) {
+    return OverrideMatchResult::NotAnOverride;
+  }
+  if (derived_fn.name_id != base_fn.name_id) {
+    return OverrideMatchResult::NameMismatch;
+  }
+  if (derived_fn.call_param_ranges.explicit_size() !=
+      base_fn.call_param_ranges.explicit_size()) {
+    return OverrideMatchResult::ArityMismatch;
+  }
+  // TODO: We should check more thoroughly for compatibility between the two
+  // functions here, so that we can determine which function is being overridden
+  // if the base function is in a C++ overload set.
+  return OverrideMatchResult::Match;
+}
+
+// Builds and returns a vtable for the current class, along with a bool
+// indicating whether it is a Carbon-native vtable (false for a foreign vtable
+// inherited from a C++ base class). Assumes that the virtual functions for the
+// class are listed as the top element of the `vtable_stack`.
 static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                         SemIR::ClassId class_id,
                         std::optional<SemIR::ClassType> base_class_type,
                         llvm::ArrayRef<SemIR::InstId> vtable_contents)
-    -> SemIR::VtableId {
+    -> std::pair<SemIR::VtableId, bool> {
   auto base_vtable_id = SemIR::VtableId::None;
   auto base_class_specific_id = SemIR::SpecificId::None;
 
@@ -186,8 +224,11 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
   };
 
   llvm::SmallVector<SemIR::InstId> vtable;
-  Set<SemIR::FunctionId> implemented_impls;
+  Set<SemIR::FunctionId, 16> implemented_impls;
   bool carbon_native_vtable = true;
+
+  // Add vtable entries from the base class, updating them to point to a derived
+  // class overrider if there is one.
   if (base_vtable_id.has_value()) {
     const auto& base_vtable = context.vtables().Get(base_vtable_id);
     carbon_native_vtable = base_vtable.carbon_native_vtable;
@@ -216,9 +257,8 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
                 context.insts()
                     .GetAs<SemIR::FunctionDecl>(override_fn_decl_id)
                     .function_id);
-            return override_fn.virtual_modifier ==
-                       SemIR::FunctionFields::VirtualModifier::Override &&
-                   override_fn.name_id == fn.name_id;
+            return CompareVirtualWithOverrider(fn, override_fn) ==
+                   OverrideMatchResult::Match;
           });
       if (i != vtable_contents.end()) {
         auto override_fn_id =
@@ -264,6 +304,8 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     }
   }
 
+  // Add any remaining virtual functions from the derived class to the vtable,
+  // and diagnose any `override fn`s that didn't override anything.
   for (auto inst_id : vtable_contents) {
     auto fn_decl = context.insts().GetAs<SemIR::FunctionDecl>(inst_id);
     auto& fn = context.functions().Get(fn_decl.function_id);
@@ -274,15 +316,55 @@ static auto BuildVtable(Context& context, Parse::ClassDefinitionId node_id,
     } else if (!implemented_impls.Lookup(fn_decl.function_id)) {
       CARBON_DIAGNOSTIC(OverrideWithoutVirtualInBase, Error,
                         "override without compatible virtual in base class");
-      context.emitter().Emit(SemIR::LocId(inst_id),
-                             OverrideWithoutVirtualInBase);
+      CARBON_DIAGNOSTIC(OverrideCandidateArityMismatch, Note,
+                        "base class function has {2:more|fewer} parameters "
+                        "({0} vs {1} excluding `self`)",
+                        Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
+                        Diagnostics::BoolAsSelect);
+      auto builder = context.emitter().Build(SemIR::LocId(inst_id),
+                                             OverrideWithoutVirtualInBase);
+      if (base_vtable_id.has_value()) {
+        const auto& base_vtable = context.vtables().Get(base_vtable_id);
+        auto base_vtable_inst_block =
+            context.inst_blocks().Get(base_vtable.virtual_functions_id);
+        for (auto base_vtable_entry_id : base_vtable_inst_block) {
+          if (!base_vtable_entry_id.has_value()) {
+            continue;
+          }
+          auto [derived_vtable_entry_id, derived_vtable_entry_const_id, fn_id,
+                specific_id] =
+              DecomposeVirtualFunction(context.sem_ir(), base_vtable_entry_id,
+                                       base_class_specific_id);
+          const auto& base_fn = context.sem_ir().functions().Get(fn_id);
+          switch (CompareVirtualWithOverrider(base_fn, fn)) {
+            case OverrideMatchResult::ArityMismatch:
+              builder.Note(base_fn.first_owning_decl_id,
+                           OverrideCandidateArityMismatch,
+                           base_fn.call_param_ranges.explicit_size() - 1,
+                           fn.call_param_ranges.explicit_size() - 1,
+                           base_fn.call_param_ranges.explicit_size() >
+                               fn.call_param_ranges.explicit_size());
+              break;
+            case OverrideMatchResult::NameMismatch:
+              // TODO: If the name is similar enough and the overrider otherwise
+              // matches, emit a note about the potential misspelling.
+              break;
+            case OverrideMatchResult::Match:
+              CARBON_FATAL("Unexpectedly found a matching overrider");
+            case OverrideMatchResult::NotAnOverride:
+              CARBON_FATAL("Should only consider `override fn`s here");
+          }
+        }
+      }
+      builder.Emit();
     }
   }
 
-  return context.vtables().Add(
+  auto vtable_id = context.vtables().Add(
       {{.class_id = class_id,
         .virtual_functions_id = context.inst_blocks().Add(vtable),
         .carbon_native_vtable = carbon_native_vtable}});
+  return {vtable_id, carbon_native_vtable};
 }
 
 // Checks that the specified finished class definition is valid and builds and
@@ -332,9 +414,11 @@ static auto CheckCompleteClassType(
         {.name_id = SemIR::NameId::Base, .type_inst_id = base_type_inst_id});
   }
 
+  bool foreign_vtable = false;
   if (class_info.is_dynamic) {
-    auto vtable_id = BuildVtable(context, node_id, class_id, base_class_type,
-                                 vtable_contents);
+    auto [vtable_id, carbon_native_vtable] = BuildVtable(
+        context, node_id, class_id, base_class_type, vtable_contents);
+    foreign_vtable = !carbon_native_vtable;
     auto vptr_type_id = GetPointerType(context, SemIR::VtableType::TypeInstId);
     class_info.vtable_decl_id = AddInst<SemIR::VtableDecl>(
         context, node_id, {.type_id = vptr_type_id, .vtable_id = vtable_id});
@@ -343,11 +427,25 @@ static auto CheckCompleteClassType(
   auto struct_type_id = GetStructType(
       context, AddStructTypeFields(context, struct_type_fields, field_decls));
 
-  return AddInst<SemIR::CompleteTypeWitness>(
+  auto complete_type_witness_id = AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
       {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
        .object_repr_type_inst_id =
            context.types().GetTypeInstId(struct_type_id)});
+  class_info.complete_type_witness_id = complete_type_witness_id;
+
+  if (foreign_vtable) {
+    if (class_info.generic_id.has_value()) {
+      context.TODO(class_info.first_decl_id(),
+                   "generic class deriving from C++ virtual class");
+    } else {
+      ExportAndCompleteClassToCpp(
+          context,
+          context.types().GetAs<SemIR::ClassType>(class_info.self_type_id));
+    }
+  }
+
+  return complete_type_witness_id;
 }
 
 auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,

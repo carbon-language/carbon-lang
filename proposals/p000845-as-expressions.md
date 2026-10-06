@@ -34,14 +34,17 @@ We would like to provide a notation for the following operations:
 
 -   Requesting a type conversion in order to select an operation to perform, or
     to resolve an ambiguity between possible operations:
+
     ```
     fn Ratio(a: i32, b: i32) -> f64 {
       // Note that a / b would invoke a different / operation.
       return a / (b as f64);
     }
     ```
+
 -   Specifying the type that an expression will have or will be converted into,
     for documentation purposes.
+
     ```
     class Thing {
       var id: i32;
@@ -51,8 +54,10 @@ We would like to provide a notation for the following operations:
       Print(t.id as i32);
     }
     ```
+
 -   Specifying the type that an expression is expected to have, potentially
     after implicit conversions, as a form of static assertion.
+
     ```
     fn Munge() {
       // I expect this expression to produce a Widget but I'm getting compiler
@@ -364,6 +369,7 @@ Advantage:
     implicitly. `as` conversions will likely be fairly common and routine in
     Carbon code due to their use in generics. As such, they may be written
     without much thought and not given much scrutiny in code review.
+
     ```
     var found: bool = false;
     var total_found: i32 = 0;

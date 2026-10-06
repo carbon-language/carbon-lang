@@ -4,6 +4,7 @@
 
 #include "toolchain/lex/lex.h"
 
+#include <algorithm>
 #include <array>
 #include <limits>
 #include <optional>
@@ -19,6 +20,7 @@
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/character_set.h"
 #include "toolchain/lex/helpers.h"
+#include "toolchain/lex/mismatched_brackets.h"
 #include "toolchain/lex/numeric_literal.h"
 #include "toolchain/lex/string_literal.h"
 #include "toolchain/lex/token_index.h"
@@ -82,9 +84,10 @@ class [[clang::internal_linkage]] Lexer {
     bool formed_token_;
   };
 
-  Lexer(SharedValueStores& value_stores, SourceBuffer& source,
-        Diagnostics::Consumer& consumer)
-      : buffer_(value_stores, source),
+  Lexer(const LexOptions& options, SharedValueStores& value_stores,
+        SourceBuffer& source, Diagnostics::Consumer& consumer)
+      : options_(options),
+        buffer_(value_stores, source),
         consumer_(consumer),
         emitter_(&consumer_, &buffer_),
         token_emitter_(&consumer_, &buffer_) {}
@@ -188,6 +191,11 @@ class [[clang::internal_linkage]] Lexer {
   auto LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
       -> LexResult;
 
+  // Given a lexed word, determine whether it is a dollar int literal and if so
+  // form the corresponding token,
+  auto LexWordAsDollarIntLiteralToken(llvm::StringRef word, int32_t byte_offset)
+      -> LexResult;
+
   auto LexKeywordOrIdentifier(llvm::StringRef source_text, ssize_t& position)
       -> LexResult;
 
@@ -226,6 +234,8 @@ class [[clang::internal_linkage]] Lexer {
 
   // Handles `//@dump-sem-ir-end` for a `DumpSemIRRange`.
   auto EndDumpSemIRRange(const char* diag_loc) -> void;
+
+  LexOptions options_;
 
   TokenizedBuffer buffer_;
 
@@ -281,6 +291,7 @@ static constexpr std::array<bool, 256> IsIdStartByteTable = [] {
     table[c] = true;
   }
   table['_'] = true;
+  table['$'] = true;
   return table;
 }();
 
@@ -292,6 +303,8 @@ static constexpr std::array<bool, 256> IsIdByteTable = [] {
   for (char c = '0'; c <= '9'; ++c) {
     table[c] = true;
   }
+  // Identifiers can only have `$` in start.
+  table['$'] = false;
   return table;
 }();
 
@@ -302,6 +315,12 @@ static constexpr std::array<bool, 256> IsIdByteTable = [] {
 static auto ScanForIdentifierPrefixScalar(llvm::StringRef text, ssize_t i)
     -> llvm::StringRef {
   const ssize_t size = text.size();
+  if (i == 0 && !text.empty()) {
+    if (!IsIdStartByteTable[static_cast<unsigned char>(text[i])]) {
+      return {};
+    }
+    ++i;
+  }
   while (i < size && IsIdByteTable[static_cast<unsigned char>(text[i])]) {
     ++i;
   }
@@ -405,6 +424,13 @@ static auto ScanForIdentifierPrefixX86(llvm::StringRef text)
 
   // Use `ssize_t` for performance here as we index memory in a tight loop.
   ssize_t i = 0;
+  if (!text.empty()) {
+    if (!IsIdStartByteTable[static_cast<unsigned char>(text[i])]) {
+      return {};
+    }
+    ++i;
+  }
+
   const ssize_t size = text.size();
   while ((i + 16) <= size) {
     __m128i input =
@@ -639,6 +665,7 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   table['/'] = &DispatchLexCommentOrSlash;
 
   table['_'] = &DispatchLexKeywordOrIdentifier;
+  table['$'] = &DispatchLexKeywordOrIdentifier;
   // Note that we don't use `llvm::seq` because this needs to be `constexpr`
   // evaluated.
   for (unsigned char c = 'a'; c <= 'z'; ++c) {
@@ -951,43 +978,51 @@ auto Lexer::EndDumpSemIRRangeIfIncomplete(const char* diag_loc) -> void {
 auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   CARBON_DCHECK(source_text.substr(position).starts_with("//"));
   int32_t comment_start = position;
-
-  // Any comment must be the only non-whitespace on the line.
   const auto line_info = current_line_info();
-  if (LLVM_UNLIKELY(position != line_info.start + line_info.indent)) {
-    CARBON_DIAGNOSTIC(TrailingComment, Error,
-                      "trailing comments are not permitted");
 
-    emitter_.Emit(source_text.begin() + position, TrailingComment);
+  // A comment is _trailing_ when it follows other content on its line, rather
+  // than being the only non-whitespace on the line. Both kinds of comment are
+  // lexed identically -- they run from `//` to the end of the line -- but we
+  // record the distinction so that tooling can tell a comment annotating the
+  // code on its line apart from one introducing the code below it.
+  //
+  // `line_info.indent` is the width of the line's leading whitespace, so
+  // `line_info.start + line_info.indent` is the line's first non-whitespace
+  // byte.
+  const bool is_trailing = position != line_info.start + line_info.indent;
 
-    // Note that we cannot fall-through here as the logic below doesn't handle
-    // trailing comments. Instead, we treat trailing comments as vertical
-    // whitespace, which already is designed to skip over any erroneous text at
-    // the end of the line.
-    LexVerticalWhitespace(source_text, position);
-    buffer_.AddComment(line_info.indent, comment_start, position);
-    return;
-  }
-
-  // The introducer '//' must be followed by whitespace or EOF.
+  // Check whether the `//` introducer is followed by something valid.
   bool is_valid_after_slashes = true;
   if (position + 2 < static_cast<ssize_t>(source_text.size()) &&
       LLVM_UNLIKELY(!IsSpace(source_text[position + 2]))) {
     llvm::StringRef comment_text = source_text.substr(position);
-    if (comment_text.starts_with("//@include-in-dumps\n")) {
-      buffer_.has_include_in_dumps_ = true;
-      AdvanceToLine(source_text, position, next_line());
-      return;
-    }
-    if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
-      BeginDumpSemIRRange(comment_text.begin());
-      AdvanceToLine(source_text, position, next_line());
-      return;
-    }
-    if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
-      EndDumpSemIRRange(comment_text.begin());
-      AdvanceToLine(source_text, position, next_line());
-      return;
+    // The `//@...` directives are tooling markers that are only meaningful as
+    // full-line comments, so we only recognize them when not trailing.
+    if (!is_trailing) {
+      // A directive is also recorded as a comment: the tokens and comments
+      // together reconstruct the source, so tooling such as the formatter
+      // would otherwise silently drop the directive line.
+      auto add_directive_comment_line = [&] {
+        buffer_.AddComment(line_info.indent, comment_start,
+                           buffer_.line_infos_.Get(next_line()).start,
+                           /*is_trailing=*/false);
+        AdvanceToLine(source_text, position, next_line());
+      };
+      if (comment_text.starts_with("//@include-in-dumps\n")) {
+        buffer_.has_include_in_dumps_ = true;
+        add_directive_comment_line();
+        return;
+      }
+      if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
+        BeginDumpSemIRRange(comment_text.begin());
+        add_directive_comment_line();
+        return;
+      }
+      if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
+        EndDumpSemIRRange(comment_text.begin());
+        add_directive_comment_line();
+        return;
+      }
     }
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                       "whitespace is required after '//'");
@@ -1001,14 +1036,33 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
   LineIndex line_index = next_line();
   position = buffer_.line_infos_.Get(line_index).start;
 
+  // A trailing comment runs to the end of its line. Unlike a full-line comment,
+  // it can never be part of a block of identical comment lines, so we skip the
+  // block-skipping optimization below and simply advance past this one line. We
+  // also don't optimize for the case of a trailing comment as we expect them to
+  // be relatively rare compared to other comment structures.
+  if (LLVM_UNLIKELY(is_trailing)) {
+    buffer_.AddComment(line_info.indent, comment_start, position,
+                       /*is_trailing=*/true);
+    // Unlike a full-line comment, a trailing comment can directly follow a
+    // token that cleared the leading-whitespace flag (`x;// y`), so restore it
+    // here for the next line's first token.
+    NoteWhitespace();
+    AdvanceToLine(source_text, position, line_index);
+    return;
+  }
+
   // A very common pattern is a long block of comment lines all with the same
-  // indent and comment start. We skip these comment blocks in bulk both for
-  // speed and to reduce redundant diagnostics if each line has the same
-  // erroneous comment start like `//!`.
+  // indent and comment start. We skip these comment blocks in bulk for speed,
+  // and with SIMD support short indents can be scanned extremely quickly; we
+  // expect these to be the dominant cases.
   //
-  // When we have SIMD support this is even more important for speed, as short
-  // indents can be scanned extremely quickly with SIMD and we expect these to
-  // be the dominant cases.
+  // An invalid comment start was already diagnosed above, so its block is
+  // instead skipped line by line below: a run of invalid comment lines lumps
+  // into one block regardless of which invalid byte follows each `//`, keeping
+  // the diagnostic noise to one per run, while a line whose introducer is
+  // valid (whitespace, or a `//@...` directive) ends the run and is lexed on
+  // its own.
   //
   // TODO: We should extend this to 32-byte SIMD on platforms with support.
   constexpr int MaxIndent = 13;
@@ -1023,7 +1077,7 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     next_line_info.indent = indent;
     position = next_line_info.start;
   };
-  if (CARBON_USE_SIMD &&
+  if (CARBON_USE_SIMD && is_valid_after_slashes &&
       position + 16 < static_cast<ssize_t>(source_text.size()) &&
       indent <= MaxIndent) {
     // Load a mask based on the amount of text we want to compare.
@@ -1070,20 +1124,62 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
 #else
 #error "Unsupported SIMD architecture!"
 #endif
-    // TODO: If we finish the loop due to the position approaching the end of
-    // the buffer we may fail to skip the last line in a comment block that
-    // has an invalid initial sequence and thus emit extra diagnostics. We
-    // should really fall through to the generic skipping logic, but the code
-    // organization will need to change significantly to allow that.
   } else {
-    while (position + prefix_size < static_cast<ssize_t>(source_text.size()) &&
-           memcmp(source_text.data() + first_line_start,
-                  source_text.data() + position, prefix_size) == 0) {
+    auto continues_block = [&](ssize_t position) -> bool {
+      // Make sure the source text extends far enough for us to continue the
+      // block.
+      if (position + prefix_size > static_cast<ssize_t>(source_text.size())) {
+        return false;
+      }
+
+      // Check that the prefix matches. Otherwise, the block is done.
+      if (memcmp(source_text.data() + first_line_start,
+                 source_text.data() + position, prefix_size) != 0) {
+        return false;
+      }
+
+      // For something valid after `//`, we're done as we've ensured it was the
+      // _same_ valid suffix in the `memcmp`.
+      if (LLVM_LIKELY(is_valid_after_slashes)) {
+        return true;
+      }
+
+      // Past here, the block is a run of invalid comment lines and the
+      // matched prefix only covers this line's `//`, so examine what follows
+      // those slashes: only another invalid comment line continues the block,
+      // while a valid comment or directive ends it and is lexed on its own.
+
+      // A `//` that ends the source is a valid comment, so it doesn't
+      // continue the block.
+      if (position + prefix_size == static_cast<ssize_t>(source_text.size())) {
+        return false;
+      }
+
+      char after_slashes = source_text[position + prefix_size];
+
+      // Whitespace after the `//` makes this line a valid comment, so it
+      // doesn't continue the block.
+      if (IsSpace(after_slashes)) {
+        return false;
+      }
+
+      // An `@` makes this line a `//@...` directive that must be lexed on its
+      // own to recognize its side effects, so it doesn't continue the block.
+      if (after_slashes == '@') {
+        return false;
+      }
+
+      // Anything else is another invalid comment line continuing the block.
+      return true;
+    };
+
+    // Skip lines that are combined into a comment block.
+    while (continues_block(position)) {
       skip_to_next_line();
     }
   }
 
-  buffer_.AddComment(indent, comment_start, position);
+  buffer_.AddComment(indent, comment_start, position, /*is_trailing=*/false);
   AdvanceToLine(source_text, position, line_index);
 }
 
@@ -1151,7 +1247,6 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
 
   // Capture the position before we step past the token.
   int32_t byte_offset = position;
-  int string_column = byte_offset - current_line_info().start;
   position += literal->text().size();
 
   // Helper for error paths.
@@ -1172,15 +1267,40 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
     return lex_as_error();
   }
 
+  if (literal->has_invalid_introducer()) {
+    // The literal covers only the malformed introducer line, so it spans no
+    // lines and needs no line updates.
+    CARBON_DIAGNOSTIC(MultiLineStringInvalidIntroducer, Error,
+                      "invalid multi-line string literal introducer; a file "
+                      "type indicator may not contain `'`, `#`, or `\"`, and "
+                      "the content must begin on a new line");
+    emitter_.Emit(literal->text().begin(), MultiLineStringInvalidIntroducer);
+    return lex_as_error();
+  }
+
   // Update line and column information.
   if (literal->kind() != StringLiteral::Kind::SingleLine) {
+    // A block string literal's content is indented to match its closing
+    // delimiter: leading whitespace up to the delimiter's column is
+    // indentation, and anything past it is part of the content. Each line the
+    // literal spans is given the closing delimiter's column as its indentation.
+    // The closing line's indentation must be correct because tokens and
+    // comments can follow the closing delimiter and rely on it, for example to
+    // detect a trailing comment. Multi-line literals are rare, so this cold
+    // path need not be fast.
+    LineIndex first_spanned_line(line_index_.index + 1);
     while (next_line_info().start < position) {
       ++line_index_.index;
-      current_line_info().indent = string_column;
     }
-    // Note that we've updated the current line at this point, but
-    // `set_indent_` is already true from above. That remains correct as the
-    // last line of the multi-line literal *also* has its indent set.
+    // The closing delimiter is the first non-whitespace on the closing line, so
+    // its column is that line's leading-whitespace width.
+    LineInfo& closing_line_info = current_line_info();
+    ssize_t indent_end = closing_line_info.start;
+    SkipHorizontalWhitespace(source_text, indent_end);
+    int32_t indent = indent_end - closing_line_info.start;
+    for (int32_t i = first_spanned_line.index; i <= line_index_.index; ++i) {
+      buffer_.line_infos_.Get(LineIndex(i)).indent = indent;
+    }
   }
 
   if (!literal->is_terminated()) {
@@ -1355,6 +1475,89 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
   return LexTokenWithPayload(kind, bit_width_payload, byte_offset);
 }
 
+auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
+                                           int32_t byte_offset) -> LexResult {
+  if (!word.starts_with('$')) {
+    return LexResult::NoMatch();
+  }
+
+  if (!has_leading_space_) {
+    auto prev_token = buffer_.tokens().end()[-1];
+    auto kind = buffer_.GetKind(prev_token);
+    if (kind.is_word()) {
+      CARBON_DIAGNOSTIC(
+          CharacterOnlyAllowedAtStart, Error,
+          "`$` is only allowed at the start of a positional parameter");
+      emitter_.Emit(word.begin(), CharacterOnlyAllowedAtStart);
+
+      auto& prev_token_info = buffer_.token_infos_.Get(prev_token);
+      auto prev_token_text_size = buffer_.GetTokenText(prev_token).size();
+      prev_token_info = TokenInfo(TokenKind::Error, has_leading_space_,
+                                  prev_token_text_size + word.size(),
+                                  prev_token_info.byte_offset());
+      return LexResult(TokenIndex(buffer_.token_infos_.size() - 1));
+    }
+  }
+
+  auto diagnose_invalid_char = [&]() {
+    CARBON_DIAGNOSTIC(
+        InvalidCharacterInDollarIntLiteral, Error,
+        "Positional parameters can only contain digits after `$`");
+    emitter_.Emit(word.begin() + 1, InvalidCharacterInDollarIntLiteral);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  };
+
+  if (word.size() < 2) {
+    CARBON_DIAGNOSTIC(DollarIntLiteralMissingNumber, Error,
+                      "Expected digits after `$`");
+    emitter_.Emit(word.begin() + 1, DollarIntLiteralMissingNumber);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  }
+  if (word[1] == '0' && word.size() > 2) {
+    CARBON_DIAGNOSTIC(
+        DollarIntLiteralLeadingZero, Error,
+        "Leading zeroes are not allowed in positional parameters");
+    emitter_.Emit(word.begin() + 1, DollarIntLiteralLeadingZero);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  }
+  if ((word[1] < '0' || word[1] > '9')) {
+    return diagnose_invalid_char();
+  }
+
+  auto suffix = word.substr(1);
+  int64_t suffix_value;
+  constexpr ssize_t DigitLimit =
+      std::numeric_limits<decltype(suffix_value)>::digits10;
+  if (suffix.size() > DigitLimit) {
+    // See if this is not actually a dollar int literal.
+    if (!llvm::all_of(suffix, IsDecimalDigit)) {
+      return diagnose_invalid_char();
+    }
+
+    // Otherwise, diagnose and produce an error token.
+    CARBON_DIAGNOSTIC(TooManyDollarIntDigits, Error,
+                      "found a positional parameter using {0} digits, "
+                      "which is greater than the limit of {1}",
+                      size_t, size_t);
+    emitter_.Emit(word.begin() + 1, TooManyDollarIntDigits, suffix.size(),
+                  DigitLimit);
+    return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
+  }
+
+  suffix_value = suffix[0] - '0';
+  for (char c : suffix.drop_front()) {
+    if (!IsDecimalDigit(c)) {
+      return diagnose_invalid_char();
+    }
+    suffix_value = suffix_value * 10 + (c - '0');
+  }
+  CARBON_CHECK(suffix_value >= 0);
+  return LexTokenWithPayload(
+      TokenKind::DollarIntLiteral,
+      buffer_.value_stores_->ints().Add(suffix_value).AsTokenPayload(),
+      byte_offset);
+}
+
 auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
                                    ssize_t& position) -> LexResult {
   if (static_cast<unsigned char>(source_text[position]) > 0x7F) {
@@ -1376,6 +1579,10 @@ auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
   // Check if the text is a type literal, and if so form such a literal.
   if (LexResult result =
           LexWordAsTypeLiteralToken(identifier_text, byte_offset)) {
+    return result;
+  }
+  if (LexResult result =
+          LexWordAsDollarIntLiteralToken(identifier_text, byte_offset)) {
     return result;
   }
 
@@ -1537,36 +1744,22 @@ class Lexer::ErrorRecoveryBuffer {
   explicit ErrorRecoveryBuffer(TokenizedBuffer* buffer) : buffer_(buffer) {}
 
   auto empty() const -> bool {
-    return new_tokens_.empty() && !any_error_tokens_;
+    return insertions_.empty() && !any_error_tokens_;
   }
 
-  // Insert a recovery token of kind `kind` before `insert_before`. Note that we
-  // currently require insertions to be specified in source order, but this
-  // restriction would be easy to relax.
-  auto InsertBefore(TokenIndex insert_before, TokenKind kind) -> void {
-    CARBON_CHECK(insert_before.index > 0,
-                 "Cannot insert before the start of file token.");
-    CARBON_CHECK(
-        insert_before.index < static_cast<int>(buffer_->token_infos_.size()),
-        "Cannot insert after the end of file token.");
-    CARBON_CHECK(
-        new_tokens_.empty() || new_tokens_.back().first <= insert_before,
-        "Insertions performed out of order.");
+  // Insert a recovery token of kind `kind` before `insert_before`. Multiple
+  // insertions before the same token are applied in reverse of the order they
+  // were requested (LIFO). Returns an id that `GetInsertedTokenIndex` maps to
+  // the inserted token, once `Apply` has run.
+  auto InsertBefore(TokenIndex insert_before, TokenKind kind) -> int {
+    return AddInsertion(insert_before, kind, /*is_after=*/false);
+  }
 
-    // If the `insert_before` token has leading whitespace, mark the
-    // inserted token as also having leading whitespace. This avoids changing
-    // whether the prior tokens had leading or trailing whitespace when
-    // inserting.
-    bool insert_leading_space = buffer_->HasLeadingWhitespace(insert_before);
-
-    // Find the end of the token before the target token, and add the new token
-    // there.
-    TokenIndex insert_after(insert_before.index - 1);
-    const auto& prev_info = buffer_->token_infos_.Get(insert_after);
-    int32_t byte_offset =
-        prev_info.byte_offset() + buffer_->GetTokenText(insert_after).size();
-    new_tokens_.push_back(
-        {insert_before, TokenInfo(kind, insert_leading_space, byte_offset)});
+  // Insert a recovery token of kind `kind` after `insert_after`. Multiple
+  // insertions after the same token are applied in the order they were
+  // requested (FIFO). Returns an id as `InsertBefore` does.
+  auto InsertAfter(TokenIndex insert_after, TokenKind kind) -> int {
+    return AddInsertion(insert_after, kind, /*is_after=*/true);
   }
 
   // Replace the given token with an error token. We do this immediately,
@@ -1580,24 +1773,65 @@ class Lexer::ErrorRecoveryBuffer {
 
   // Merge the recovery tokens into the token list of the tokenized buffer.
   auto Apply() -> void {
+    llvm::sort(insertions_);
+
     ValueStore<TokenIndex, TokenInfo> old_tokens =
         std::exchange(buffer_->token_infos_, {});
-    int new_size = old_tokens.size() + new_tokens_.size();
+    int new_size = old_tokens.size() + insertions_.size();
     buffer_->token_infos_.Reserve(new_size);
     buffer_->recovery_tokens_.resize(new_size);
+    inserted_token_index_.assign(insertions_.size(), TokenIndex::None);
+    new_token_index_.assign(old_tokens.size(), TokenIndex::None);
 
-    auto old_tokens_range = old_tokens.enumerate();
-    auto old_tokens_it = old_tokens_range.begin();
-    for (auto [next_offset, info] : new_tokens_) {
-      for (; old_tokens_it->first < next_offset; ++old_tokens_it) {
-        buffer_->token_infos_.Add(old_tokens_it->second);
+    size_t ins_idx = 0;
+    for (TokenIndex old_idx(0);
+         old_idx.index < static_cast<int>(old_tokens.size()); ++old_idx.index) {
+      if (ins_idx == insertions_.size() ||
+          insertions_[ins_idx].target() != old_idx) {
+        // Nothing is inserted before this token: it keeps its leading
+        // whitespace and simply moves across.
+        new_token_index_[old_idx.index] =
+            buffer_->token_infos_.Add(old_tokens.Get(old_idx));
+        continue;
       }
-      buffer_->AddToken(info);
-      buffer_->recovery_tokens_.set(next_offset.index);
+
+      // At least one insertion goes before this token. `insertions_` is sorted
+      // by target, so they are exactly the next run of entries. The first of
+      // them takes over the token's leading whitespace, so that the whitespace
+      // stays at the start of the run.
+      bool orig_leading_space = old_tokens.Get(old_idx).has_leading_space();
+      bool is_first = true;
+      for (; ins_idx < insertions_.size() &&
+             insertions_[ins_idx].target() == old_idx;
+           ++ins_idx) {
+        TokenInfo info = insertions_[ins_idx].info.WithLeadingSpace(
+            is_first ? orig_leading_space : false);
+        is_first = false;
+        TokenIndex added = buffer_->AddToken(info);
+        buffer_->recovery_tokens_.set(added.index);
+        inserted_token_index_[insertions_[ins_idx].insertion_order] = added;
+      }
+      new_token_index_[old_idx.index] = buffer_->token_infos_.Add(
+          old_tokens.Get(old_idx).WithLeadingSpace(false));
     }
-    for (; old_tokens_it != old_tokens_range.end(); ++old_tokens_it) {
-      buffer_->token_infos_.Add(old_tokens_it->second);
+  }
+
+  // Maps a token index from before `Apply` to the same token's index after it.
+  // `Apply` must have run, except that with no insertions to apply this is the
+  // identity either way.
+  auto GetNewTokenIndex(TokenIndex old_index) const -> TokenIndex {
+    if (insertions_.empty()) {
+      return old_index;
     }
+    CARBON_CHECK(!new_token_index_.empty(),
+                 "Token indexes are only renumbered by `Apply`.");
+    return new_token_index_[old_index.index];
+  }
+
+  // Maps an id returned by `InsertBefore` or `InsertAfter` to the token that
+  // insertion added. `Apply` must have run.
+  auto GetInsertedTokenIndex(int insertion_id) const -> TokenIndex {
+    return inserted_token_index_[insertion_id];
   }
 
   // Perform bracket matching to fix cross-references between tokens. This must
@@ -1626,23 +1860,373 @@ class Lexer::ErrorRecoveryBuffer {
   }
 
  private:
+  struct Insertion {
+    TokenIndex anchor;
+    bool is_after;
+    // Where this insertion came in the sequence of requests, which is both the
+    // id handed back to the caller and the tiebreak between insertions that go
+    // in the same place.
+    int insertion_order;
+    TokenInfo info;
+
+    // The token this insertion goes before, indexed in the stream as it was
+    // before `Apply`. `Apply` sorts insertions by this.
+    auto target() const -> TokenIndex {
+      return is_after ? TokenIndex(anchor.index + 1) : anchor;
+    }
+
+    // Orders insertions as `Apply` emits them, so that sorting produces the
+    // final token order. Insertions are grouped by the token they go before,
+    // because `Apply` walks the old tokens in order, and within a group:
+    //
+    // - An insertion requested as "after the previous token" comes before one
+    //   requested as "before this token", so that each stays on the side of
+    //   the gap it was anchored to.
+    // - A closing bracket comes before an opening one, so that a group ending
+    //   in the gap is closed before a new group is opened in it.
+    // - Otherwise the request order breaks the tie, in the direction that puts
+    //   the earliest request nearest its anchor: first-requested first for
+    //   insertions after a token, last-requested first for insertions before
+    //   one.
+    friend auto operator<(const Insertion& lhs, const Insertion& rhs) -> bool {
+      if (lhs.target() != rhs.target()) {
+        return lhs.target() < rhs.target();
+      }
+      if (lhs.is_after != rhs.is_after) {
+        return lhs.is_after;
+      }
+      bool lhs_is_closing = lhs.info.kind().is_closing_symbol();
+      bool rhs_is_closing = rhs.info.kind().is_closing_symbol();
+      if (lhs_is_closing != rhs_is_closing) {
+        return lhs_is_closing;
+      }
+      return lhs.is_after ? lhs.insertion_order < rhs.insertion_order
+                          : lhs.insertion_order > rhs.insertion_order;
+    }
+  };
+
+  auto AddInsertion(TokenIndex anchor, TokenKind kind, bool is_after) -> int {
+    CARBON_CHECK(anchor.index >= 0, "Invalid anchor token index.");
+    CARBON_CHECK(anchor.index < static_cast<int>(buffer_->token_infos_.size()),
+                 "Cannot insert past the end of file token.");
+    if (!is_after) {
+      CARBON_CHECK(anchor.index > 0,
+                   "Cannot insert before the start of file token.");
+    }
+
+    bool insert_leading_space = false;
+    int32_t byte_offset = 0;
+
+    if (!is_after) {
+      insert_leading_space = buffer_->HasLeadingWhitespace(anchor);
+      TokenIndex insert_after_idx(anchor.index - 1);
+      const auto& prev_info = buffer_->token_infos_.Get(insert_after_idx);
+      byte_offset = prev_info.byte_offset() +
+                    buffer_->GetTokenText(insert_after_idx).size();
+    } else {
+      const auto& anchor_info = buffer_->token_infos_.Get(anchor);
+      byte_offset =
+          anchor_info.byte_offset() + buffer_->GetTokenText(anchor).size();
+      TokenIndex next_tok(anchor.index + 1);
+      if (next_tok.index < static_cast<int>(buffer_->token_infos_.size())) {
+        insert_leading_space = buffer_->HasLeadingWhitespace(next_tok);
+      }
+    }
+
+    int insertion_order = static_cast<int>(insertions_.size());
+    insertions_.push_back({
+        .anchor = anchor,
+        .is_after = is_after,
+        .insertion_order = insertion_order,
+        .info = TokenInfo(kind, insert_leading_space, byte_offset),
+    });
+    return insertion_order;
+  }
+
   TokenizedBuffer* buffer_;
-
-  // A list of tokens to insert into the token stream to fix mismatched
-  // brackets. The first element in each pair is the original token index to
-  // insert the new token before.
-  llvm::SmallVector<std::pair<TokenIndex, TokenInfo>> new_tokens_;
-
-  // Whether we have changed any tokens into error tokens.
+  llvm::SmallVector<Insertion> insertions_;
   bool any_error_tokens_ = false;
+
+  // Filled in by `Apply`: which token each insertion added, indexed by the id
+  // `AddInsertion` handed out.
+  llvm::SmallVector<TokenIndex> inserted_token_index_;
+
+  // Filled in by `Apply`: the new index of each token that existed before it,
+  // indexed by that token's old index.
+  llvm::SmallVector<TokenIndex> new_token_index_;
 };
 
-// Issue an UnmatchedOpening diagnostic.
-static auto DiagnoseUnmatchedOpening(Diagnostics::Emitter<TokenIndex>& emitter,
-                                     TokenIndex opening_token) -> void {
-  CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
-                    "opening symbol without a corresponding closing symbol");
-  emitter.Emit(opening_token, UnmatchedOpening);
+// Returns true if the token kind forms a complete primary expression on its
+// own: an identifier, a literal, `self`, a type keyword, and so on.
+static auto IsLeafTokenKind(TokenKind kind) -> bool {
+  switch (kind) {
+    case TokenKind::Identifier:
+    case TokenKind::IntLiteral:
+    case TokenKind::RealLiteral:
+    case TokenKind::StringLiteral:
+    case TokenKind::CharLiteral:
+    case TokenKind::IntTypeLiteral:
+    case TokenKind::UnsignedIntTypeLiteral:
+    case TokenKind::FloatTypeLiteral:
+    case TokenKind::True:
+    case TokenKind::False:
+    case TokenKind::SelfValueIdentifier:
+    case TokenKind::SelfTypeIdentifier:
+    case TokenKind::Underscore:
+    case TokenKind::Bool:
+    case TokenKind::Type:
+    case TokenKind::Auto:
+    case TokenKind::Array:
+    case TokenKind::Str:
+    case TokenKind::Char:
+    case TokenKind::Core:
+    case TokenKind::Cpp:
+      return true;
+    default:
+      return false;
+  }
+}
+
+static auto CollectMismatchedBracketTokens(const TokenizedBuffer& buffer)
+    -> llvm::SmallVector<MismatchedBracketToken> {
+  llvm::SmallVector<MismatchedBracketToken> input_tokens;
+  input_tokens.reserve(buffer.size());
+
+  // Where the previous token in the full stream ended (comments are not
+  // tokens, so they don't interrupt this).
+  int32_t prev_end_byte = -1;
+  int32_t prev_line_index = -1;
+
+  for (auto it = buffer.tokens().begin(); it != buffer.tokens().end(); ++it) {
+    TokenIndex token = *it;
+    auto kind = buffer.GetKind(token);
+    int32_t byte_offset = buffer.GetByteOffset(token);
+    auto token_line = buffer.GetLine(token);
+    bool has_wide_leading_space = prev_end_byte >= 0 &&
+                                  token_line.index == prev_line_index &&
+                                  byte_offset - prev_end_byte >= 2;
+    prev_end_byte =
+        byte_offset + static_cast<int32_t>(buffer.GetTokenText(token).size());
+    prev_line_index = token_line.index;
+
+    bool is_paren_keyword = false;
+    bool is_else_keyword = false;
+    BracketTokenKind bracket_kind;
+    switch (kind) {
+      case TokenKind::OpenParen:
+        bracket_kind = BracketTokenKind::OpenParen;
+        break;
+      case TokenKind::OpenCurlyBrace:
+        bracket_kind = BracketTokenKind::OpenCurlyBrace;
+        break;
+      case TokenKind::OpenSquareBracket:
+        bracket_kind = BracketTokenKind::OpenSquareBracket;
+        break;
+      case TokenKind::CloseParen:
+        bracket_kind = BracketTokenKind::CloseParen;
+        break;
+      case TokenKind::CloseCurlyBrace:
+        bracket_kind = BracketTokenKind::CloseCurlyBrace;
+        break;
+      case TokenKind::CloseSquareBracket:
+        bracket_kind = BracketTokenKind::CloseSquareBracket;
+        break;
+      case TokenKind::Semi:
+        bracket_kind = BracketTokenKind::Semi;
+        break;
+      case TokenKind::Comma:
+        bracket_kind = BracketTokenKind::Comma;
+        break;
+      case TokenKind::Period:
+        bracket_kind = BracketTokenKind::Period;
+        break;
+      case TokenKind::If:
+      case TokenKind::While:
+      case TokenKind::For:
+      case TokenKind::Match:
+        bracket_kind = BracketTokenKind::StatementIntroducer;
+        is_paren_keyword = true;
+        break;
+      case TokenKind::Else: {
+        bracket_kind = BracketTokenKind::StatementIntroducer;
+        // Only a statement `else` (followed by `{` or `if`) normally follows
+        // a `}`; a ternary `if..then..else` is followed by an expression.
+        auto else_next = std::next(it);
+        if (else_next != buffer.tokens().end()) {
+          auto next_kind = buffer.GetKind(*else_next);
+          is_else_keyword = next_kind == TokenKind::OpenCurlyBrace ||
+                            next_kind == TokenKind::If;
+        }
+        break;
+      }
+#define CARBON_DECL_INTRODUCER_TOKEN(kind, name) case TokenKind::kind:
+#include "toolchain/lex/token_kind.def"
+      case TokenKind::Abstract:
+      case TokenKind::Case:
+      case TokenKind::Continue:
+      case TokenKind::Default:
+      case TokenKind::Eval:
+      case TokenKind::Extend:
+      case TokenKind::Final:
+      case TokenKind::Friend:
+      case TokenKind::Inline:
+      case TokenKind::MustEval:
+      case TokenKind::Observe:
+      case TokenKind::Override:
+      case TokenKind::Private:
+      case TokenKind::Protected:
+      case TokenKind::Return:
+      case TokenKind::Returned:
+      case TokenKind::Static:
+      case TokenKind::Virtual:
+        bracket_kind = BracketTokenKind::StatementIntroducer;
+        break;
+      case TokenKind::Forall:
+        bracket_kind = BracketTokenKind::Other;
+        is_paren_keyword = true;
+        break;
+      case TokenKind::Equal:
+        bracket_kind = BracketTokenKind::Assignment;
+        break;
+      case TokenKind::As:
+        bracket_kind = BracketTokenKind::As;
+        break;
+      case TokenKind::MinusGreater:
+      case TokenKind::Where:
+        bracket_kind = BracketTokenKind::StructuralOp;
+        break;
+      case TokenKind::Ref:
+      case TokenKind::Unused:
+      case TokenKind::Template:
+      case TokenKind::Const:
+        bracket_kind = BracketTokenKind::ModifierKeyword;
+        break;
+      case TokenKind::EqualEqual:
+      case TokenKind::ExclaimEqual:
+      case TokenKind::Less:
+      case TokenKind::LessEqual:
+      case TokenKind::Greater:
+      case TokenKind::GreaterEqual:
+      case TokenKind::And:
+      case TokenKind::Or:
+        bracket_kind = BracketTokenKind::ComparisonOp;
+        break;
+      case TokenKind::FileStart:
+        continue;
+      case TokenKind::FileEnd:
+        bracket_kind = BracketTokenKind::FileEnd;
+        break;
+      default:
+        bracket_kind = IsLeafTokenKind(kind) ? BracketTokenKind::Leaf
+                                             : BracketTokenKind::Other;
+        break;
+    }
+
+    auto line = token_line;
+    int32_t line_indent =
+        (kind == TokenKind::FileEnd) ? 0 : buffer.GetIndentColumnNumber(line);
+
+    auto next_it = std::next(it);
+    bool is_at_end_of_line =
+        (next_it == buffer.tokens().end() || buffer.GetLine(*next_it) != line);
+
+    bool is_struct_brace = false;
+    if (kind == TokenKind::OpenCurlyBrace) {
+      if (next_it != buffer.tokens().end()) {
+        auto next_kind = buffer.GetKind(*next_it);
+        if (next_kind == TokenKind::Period ||
+            next_kind == TokenKind::CloseCurlyBrace) {
+          is_struct_brace = true;
+        } else if (next_kind == TokenKind::Identifier) {
+          auto next2_it = std::next(next_it);
+          if (next2_it != buffer.tokens().end() &&
+              buffer.GetKind(*next2_it) == TokenKind::Colon) {
+            is_struct_brace = true;
+          }
+        }
+      }
+    }
+
+    input_tokens.push_back(MismatchedBracketToken{
+        .token_index = token,
+        .kind = bracket_kind,
+        .line = line.index,
+        .line_indent = line_indent,
+        .is_at_end_of_line = is_at_end_of_line,
+        .is_struct_brace = is_struct_brace,
+        .is_paren_keyword = is_paren_keyword,
+        .is_else_keyword = is_else_keyword,
+        .has_leading_space = buffer.HasLeadingWhitespace(token),
+        .has_wide_leading_space = has_wide_leading_space,
+    });
+  }
+
+  return input_tokens;
+}
+
+// The source position where `token` starts. Note that this can't go through
+// `GetTokenText`, which returns the kind's fixed spelling rather than a pointer
+// into the source for most token kinds.
+static auto TokenStartPosition(const TokenizedBuffer& buffer, TokenIndex token)
+    -> const char* {
+  return buffer.source().text().begin() + buffer.GetByteOffset(token);
+}
+
+// The source position just past the end of `token`.
+static auto TokenEndPosition(const TokenizedBuffer& buffer, TokenIndex token)
+    -> const char* {
+  return TokenStartPosition(buffer, token) + buffer.GetTokenText(token).size();
+}
+
+// Where in the source a bracket that `correction` proposes would be written:
+// just past the end of the token it goes after, rather than at the start of the
+// token it goes before. For `f(x` on one line and `;` on the next, that points
+// the suggestion at the position directly after the `x`, where the `)` belongs,
+// instead of down at the `;`. Where the two tokens are separated, the bracket
+// is then placed on the side that matches how it would be written.
+static auto BracketInsertionPosition(const TokenizedBuffer& buffer,
+                                     const BracketCorrection& correction)
+    -> const char* {
+  TokenIndex insert_after =
+      correction.fix_action == BracketFixAction::InsertAfter
+          ? correction.fix_token_index
+          : TokenIndex(correction.fix_token_index.index - 1);
+  // Nothing precedes the first token, so an insertion before it goes at the
+  // very start of the file.
+  if (!insert_after.has_value()) {
+    return TokenStartPosition(buffer, correction.fix_token_index);
+  }
+
+  const char* pos = TokenEndPosition(buffer, insert_after);
+  const char* end = buffer.source().text().end();
+
+  // Advances over the spaces starting at `from`, up to `limit` of them.
+  auto skip_spaces = [end](const char* from, int32_t limit) {
+    for (; limit > 0 && from != end && *from == ' '; --limit) {
+      ++from;
+    }
+    return from;
+  };
+  constexpr int32_t NoLimit = std::numeric_limits<int32_t>::max();
+
+  if (correction.fix_token_kind == TokenKind::CloseCurlyBrace) {
+    // A `}` closing a multi-line scope goes on a line of its own, indented to
+    // line up with the `{` it closes. Point at that column when the next line
+    // is indented far enough to have a position there, and otherwise at the
+    // start of it: a diagnostic can't name the virtual space to the right of
+    // the end of a line, so this is as close as the source gets.
+    if (const char* line_end = skip_spaces(pos, NoLimit);
+        line_end != end && *line_end == '\n') {
+      auto open_line = buffer.GetLine(correction.diagnostic_token_index);
+      pos = skip_spaces(line_end + 1,
+                        buffer.GetIndentColumnNumber(open_line) - 1);
+    }
+  } else if (correction.fix_token_kind.is_opening_symbol()) {
+    // An opening bracket binds to what comes after it, so it belongs on the far
+    // side of any space separating it from the token it follows.
+    pos = skip_spaces(pos, NoLimit);
+  }
+  return pos;
 }
 
 // If brackets didn't pair or nest properly, find a set of places to insert
@@ -1650,83 +2234,80 @@ static auto DiagnoseUnmatchedOpening(Diagnostics::Emitter<TokenIndex>& emitter,
 // token list to describe the fixes.
 auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
   ErrorRecoveryBuffer fixes(&buffer_);
+  auto input_tokens = CollectMismatchedBracketTokens(buffer_);
+  auto corrections = FixMismatchedBrackets(input_tokens);
 
-  // Look for mismatched brackets and decide where to add tokens to fix them.
-  //
-  // TODO: For now, we use a greedy algorithm for this. We could do better by
-  // taking indentation into account. For example:
-  //
-  //     1  fn F() {
-  //     2    if (thing1)
-  //     3      thing2;
-  //     4    }
-  //     5  }
-  //
-  // Here, we'll match the `{` on line 1 with the `}` on line 4, and then
-  // report that the `}` on line 5 is unmatched. Instead, we should notice that
-  // line 1 matches better with line 5 due to indentation, and work out that
-  // the missing `{` was on line 2, also based on indentation.
-  open_groups_.clear();
-  for (auto token : buffer_.tokens()) {
-    auto kind = buffer_.GetKind(token);
-    if (kind.is_opening_symbol()) {
-      open_groups_.push_back(token);
-      continue;
+  // For each correction, the insertion it requested, or -1 if it made none.
+  // Applying the fixes renumbers the token stream, so this is what lets the
+  // corrections be reported against the indexes the caller will see.
+  llvm::SmallVector<int> insertion_ids(corrections.size(), -1);
+
+  for (auto [correction_index, correction] : llvm::enumerate(corrections)) {
+    CARBON_DIAGNOSTIC(UnmatchedOpening, Error,
+                      "opening symbol without a corresponding closing symbol");
+    CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
+                      "closing symbol without a corresponding opening symbol");
+    CARBON_DIAGNOSTIC(PossiblyMissingBracketHere, Note,
+                      "possibly missing `{0}` here", Lex::TokenKind);
+
+    // The note names a position between two tokens, which only the source
+    // pointer emitter can express.
+    auto builder = emitter_.Build(
+        TokenStartPosition(buffer_, correction.diagnostic_token_index),
+        correction.diagnostic_kind == BracketDiagnosticKind::UnmatchedOpening
+            ? UnmatchedOpening
+            : UnmatchedClosing);
+
+    if (correction.fix_action == BracketFixAction::ReplaceWithError) {
+      fixes.ReplaceWithError(correction.fix_token_index);
+    } else if (correction.is_tied) {
+      // The cheapest repairs disagree about where this bracket goes, so give up
+      // on the bracket rather than suggest one of them.
+      fixes.ReplaceWithError(correction.diagnostic_token_index);
+    } else {
+      builder.Note(BracketInsertionPosition(buffer_, correction),
+                   PossiblyMissingBracketHere, correction.fix_token_kind);
+      insertion_ids[correction_index] =
+          correction.fix_action == BracketFixAction::InsertBefore
+              ? fixes.InsertBefore(correction.fix_token_index,
+                                   correction.fix_token_kind)
+              : fixes.InsertAfter(correction.fix_token_index,
+                                  correction.fix_token_kind);
     }
 
-    if (!kind.is_closing_symbol()) {
-      continue;
-    }
-
-    // Find the innermost matching opening symbol.
-    auto opening_it = llvm::find_if(
-        llvm::reverse(open_groups_), [&](TokenIndex opening_token) {
-          return buffer_.token_infos_.Get(opening_token)
-                     .kind()
-                     .closing_symbol() == kind;
-        });
-    if (opening_it == open_groups_.rend()) {
-      CARBON_DIAGNOSTIC(
-          UnmatchedClosing, Error,
-          "closing symbol without a corresponding opening symbol");
-      token_emitter_.Emit(token, UnmatchedClosing);
-      fixes.ReplaceWithError(token);
-      continue;
-    }
-
-    // All intermediate open tokens have no matching close token.
-    for (auto it = open_groups_.rbegin(); it != opening_it; ++it) {
-      DiagnoseUnmatchedOpening(token_emitter_, *it);
-
-      // Add a closing bracket for the unclosed group here.
-      //
-      // TODO: Indicate in the diagnostic that we did this, perhaps by
-      // annotating the snippet.
-      auto opening_kind = buffer_.GetKind(*it);
-      fixes.InsertBefore(token, opening_kind.closing_symbol());
-    }
-
-    open_groups_.erase(opening_it.base() - 1, open_groups_.end());
+    builder.Emit();
   }
 
-  // Diagnose any remaining unmatched opening symbols.
-  for (auto token : open_groups_) {
-    // We don't have a good location to insert a close bracket. Convert the
-    // opening token from a bracket to an error.
-    DiagnoseUnmatchedOpening(token_emitter_, token);
-    fixes.ReplaceWithError(token);
+  buffer_.has_errors_ = true;
+
+  if (!fixes.empty()) {
+    fixes.Apply();
+    fixes.FixTokenCrossReferences();
   }
 
-  CARBON_CHECK(!fixes.empty(), "Didn't find anything to fix");
-  fixes.Apply();
-  fixes.FixTokenCrossReferences();
+  if (options_.bracket_corrections) {
+    // Report the corrections against the token stream the caller sees, rather
+    // than the one recovery started from, which no longer exists. A correction
+    // that inserted a bracket names the inserted token itself; one that only
+    // proposed a bracket, or replaced one with an error, names the token it
+    // still refers to.
+    for (auto [correction_index, correction] : llvm::enumerate(corrections)) {
+      correction.diagnostic_token_index =
+          fixes.GetNewTokenIndex(correction.diagnostic_token_index);
+      correction.fix_token_index =
+          insertion_ids[correction_index] >= 0
+              ? fixes.GetInsertedTokenIndex(insertion_ids[correction_index])
+              : fixes.GetNewTokenIndex(correction.fix_token_index);
+    }
+    *options_.bracket_corrections = std::move(corrections);
+  }
 }
 
 auto Lex(SharedValueStores& value_stores, SourceBuffer& source,
          LexOptions options) -> TokenizedBuffer {
   auto* consumer =
       options.consumer ? options.consumer : &Diagnostics::ConsoleConsumer();
-  auto tokens = Lexer(value_stores, source, *consumer).Lex();
+  auto tokens = Lexer(options, value_stores, source, *consumer).Lex();
 
   if (options.vlog_stream || options.dump_stream) {
     // Flush diagnostics before printing.

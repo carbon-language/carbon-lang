@@ -17,25 +17,25 @@ interface X {}
 interface Y {}
 interface Z {}
 
-impl forall [T:! Y] T as X {}
+impl forall [T: Y] T as X {}
 
-class C(T:! X) {}
+class C(T: X) {}
 
 // The `adapt C(T)` line produces a symbolic impl lookup that `T` impls `X`:
 // - At first the impl lookup query in the eval block has self as
-//   `SymbolicBinding(T:! Y)`.
+//   `SymbolicBinding(T: Y)`.
 //
 // The call to construct `D` from in `Test()` makes a specific for `D`:
 // - The value of `T` in `D` is deduced to be a `FacetValue` of type `Y & Z`
-//   pointing to the `SymbolicBinding(T:! Y & Z)` from `Test()`. But
+//   pointing to the `SymbolicBinding(T: Y & Z)` from `Test()`. But
 //   `FacetValue` needs an instruction of type `TypeType` so the
 //   `SymbolicBinding` is wrapped in `FacetAccessType`, meaning it's
-//   `FacetValue(FacetAccessType(SymbolicBinding(T:! Y & Z)))`.
+//   `FacetValue(FacetAccessType(SymbolicBinding(T: Y & Z)))`.
 // - That facet value is written to the specific of `D` constructed from
 //   `Test()`.
 // - The eval block of `D` is run with the above specific. This runs the
 //   symbolic impl lookup that `T` impls `X`. But with the `T` rewritten by the
-//   specific to the `FacetValue(FacetAccessType(SymbolicBinding(T:! Y & Z)))`.
+//   specific to the `FacetValue(FacetAccessType(SymbolicBinding(T: Y & Z)))`.
 //
 // The impl lookup unwraps the `FacetValue` to get the underlying type as it may
 // have access to a more constrained FacetType (with access to more interfaces)
@@ -48,24 +48,24 @@ class C(T:! X) {}
 // `FacetAccessType` in the initial query that makes the symbolic lookup
 // instruction (`LookupImplWitness`), but then the self type being replaced
 // with a `FacetAccessType` when evaluating the instruction.
-class D(T:! Y) { adapt C(T); }
+class D(T: Y) { adapt C(T); }
 
-fn Test(T:! Y & Z, unused d: D(T)) {}
+fn Test(generic T: Y & Z, unused d: D(T)) {}
 
 // --- final_symbolic_rewrite.carbon
 library "[[@TEST_NAME]]";
 
-interface Z(T:! type) {
-  let X:! type;
+interface Z(T: type) {
+  let X: type;
 }
 
 // This impl has a rewrite to a symbolic constant, and the `.Self` type has a
 // dependency on a generic parameter.
-final impl forall [T:! type, S:! type] T as Z(S) where .X = T {}
+final impl forall [T: type, S: type] T as Z(S) where .X = T {}
 
 class C {}
 
-fn F(T:! Z(C), t: T) {
+fn F(generic T: Z(C), t: T) {
   // This should typecheck, the `final impl` should give the same `T`.
   let unused a: T.X = t;
 }

@@ -15,11 +15,10 @@
 choice MissingDefinition;
 
 // CHECK:STDOUT: - filename: fail_missing_definition.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'MissingDefinition'},
-// CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ChoiceDefinition', text: ';', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ChoiceIntroducer 'choice'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'MissingDefinition'
+// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart ';' has_error
+// CHECK:STDOUT:   ├─ChoiceDefinition ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

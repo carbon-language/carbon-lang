@@ -4,6 +4,7 @@
     "bierner.github-markdown-preview",
     "carbon-lang.carbon-vscode",
     "esbenp.prettier-vscode",
+    "rvben.rumdl",
     "llvm-vs-code-extensions.vscode-clangd",
     "charliermarsh.ruff",
     "astral-sh.ty"

@@ -135,7 +135,13 @@ class InstallTest(unittest.TestCase):
         try:
             obj_file = self.tmpdir / f"{name}.o"
             subprocess.run(
-                [carbon, "compile", f"--output={obj_file}", src_file],
+                [
+                    carbon,
+                    "compile",
+                    "--no-include-carbon-core",
+                    f"--output={obj_file}",
+                    src_file,
+                ],
                 check=True,
                 capture_output=True,
                 text=True,
