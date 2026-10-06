@@ -65,6 +65,17 @@ fn G() {
   let unused x: i32 = F();
 }
 
+// --- val_return_form_definition.carbon
+library "[[@TEST_NAME]]";
+
+fn F() ->? form(val i32) {
+  return 1;
+}
+
+fn G() {
+  let unused x: i32 = F();
+}
+
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'ref_form_param.carbon'
 // CHECK:STDOUT: source_filename = "ref_form_param.carbon"
@@ -298,4 +309,41 @@ fn G() {
 // CHECK:STDOUT: !77 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !75, line: 5, type: !24, spFlags: DISPFlagDefinition, unit: !76)
 // CHECK:STDOUT: !78 = !DILocation(line: 6, column: 23, scope: !77)
 // CHECK:STDOUT: !81 = !DILocation(line: 5, column: 1, scope: !77)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
+// CHECK:STDOUT: ; ModuleID = 'val_return_form_definition.carbon'
+// CHECK:STDOUT: source_filename = "val_return_form_definition.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CF.Main() #0 !dbg !84 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret i32 1, !dbg !87
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !88 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main(), !dbg !89
+// CHECK:STDOUT:   ret void, !dbg !92
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.dbg.cu = !{!83}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !23 = !{null}
+// CHECK:STDOUT: !24 = !DISubroutineType(types: !23)
+// CHECK:STDOUT: !63 = !{!20}
+// CHECK:STDOUT: !64 = !DISubroutineType(types: !63)
+// CHECK:STDOUT: !82 = !DIFile(filename: "val_return_form_definition.carbon", directory: "")
+// CHECK:STDOUT: !83 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !82, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !82, line: 3, type: !64, spFlags: DISPFlagDefinition, unit: !83)
+// CHECK:STDOUT: !87 = !DILocation(line: 4, column: 3, scope: !84)
+// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !82, line: 7, type: !24, spFlags: DISPFlagDefinition, unit: !83)
+// CHECK:STDOUT: !89 = !DILocation(line: 8, column: 23, scope: !88)
+// CHECK:STDOUT: !92 = !DILocation(line: 7, column: 1, scope: !88)
 // CHECK:STDOUT:
