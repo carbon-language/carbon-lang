@@ -37,6 +37,12 @@ auto ConstantStore::GetOrAdd(Inst inst, ConstantDependence dependence)
   return result.value();
 }
 
+auto ConstantStore::Get(Inst inst) const -> ConstantId {
+  auto result = map_.Lookup(inst);
+  CARBON_CHECK(result);
+  return result.value();
+}
+
 auto GetInstWithConstantValue(const File& file, ConstantId const_id) -> InstId {
   if (!const_id.has_value() || !const_id.is_constant()) {
     return InstId::None;

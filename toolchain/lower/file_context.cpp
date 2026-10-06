@@ -782,13 +782,31 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
   return context().GetLocForDI(abs_node_ref);
 }
 
+// Get a `ClassType` inst ID for the given class and specific. This is used for
+// looking up a `ClassTemplateSpecializationDecl` in `clang_decls`.
+static auto GetClassTypeInstId(const SemIR::File& sem_ir,
+                               SemIR::ClassId class_id,
+                               SemIR::SpecificId specific_id) -> SemIR::InstId {
+  SemIR::ClassType class_type{SemIR::TypeType::TypeId, class_id, specific_id};
+  auto const_id = sem_ir.constants().Get(class_type);
+  return sem_ir.constant_values().GetInstId(const_id);
+}
+
 auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
                               SemIR::SpecificId specific_id)
     -> llvm::Constant* {
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
   if (!vtable.carbon_native_vtable) {
-    const auto* clang_decl =
-        sem_ir().clang_decls().Lookup(class_info.first_decl_id());
+    // Find the clang decl corresponding to this vtable and specific. For
+    // generic classes this will be a `ClassTemplateSpecializationDecl`,
+    // otherwise it will be a regular `CXXRecordDecl`.
+    auto lookup_id = SemIR::InstId::None;
+    if (class_info.generic_id.has_value()) {
+      lookup_id = GetClassTypeInstId(sem_ir(), vtable.class_id, specific_id);
+    } else {
+      lookup_id = class_info.first_decl_id();
+    }
+    auto clang_decl = sem_ir().clang_decls().Lookup(lookup_id);
     CARBON_CHECK(clang_decl, "Missing Clang declaration for class {0}",
                  class_info.name_id);
     auto* cxx_record_decl = cast<clang::CXXRecordDecl>(clang_decl->key.decl);
