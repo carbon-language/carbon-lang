@@ -177,7 +177,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc9_4.5: type = type_of_inst %.loc9_4.4 [template = %.loc9_4.5 (constants.%.939)]
 // CHECK:STDOUT:   %.loc9_4.6: @F.%.loc9_4.5 (%.939) = splice_inst %.loc9_4.4 [template = %.loc9_4.6 (constants.%.fa5)]
 // CHECK:STDOUT:   %require_complete.loc9: <witness> = require_complete_type %.loc9_4.5 [template = %require_complete.loc9 (constants.%require_complete.906)]
-// CHECK:STDOUT:   %.loc9_7.2: %tuple.type = initialize_action %int_456, %.loc9_4.5, %.loc9_4.2, false [template]
+// CHECK:STDOUT:   %.loc9_7.2: %tuple.type = initialize_action %int_456, %.loc9_4.5, %.loc9_4.2, none, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc9_7.2, element0 [template]
 // CHECK:STDOUT:   %.loc9_7.3: @F.%.loc9_4.5 (%.939) = splice_inst %tuple.elem0 [template = %.loc9_7.3 (constants.%.6a7)]
 // CHECK:STDOUT:   %.loc9_4.7: <instruction> = convert_to_category_action %.loc9_4.2, element9 [template]

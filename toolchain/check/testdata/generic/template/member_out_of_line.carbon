@@ -293,7 +293,7 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc18_31: <witness> = require_complete_type %.loc18_34.5 [template = %require_complete.loc18_31 (constants.%require_complete.cb0614.1)]
 // CHECK:STDOUT:   %require_complete.loc18_38: <witness> = require_complete_type %.loc18_42.5 [template = %require_complete.loc18_38 (constants.%require_complete.cb0614.2)]
-// CHECK:STDOUT:   %.loc19_11.2: %tuple.type = initialize_action %n.ref, %.loc18_42.5, %return.param, false [template]
+// CHECK:STDOUT:   %.loc19_11.2: %tuple.type = initialize_action %n.ref, %.loc18_42.5, %return.param, none, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc19_11.2, element0 [template]
 // CHECK:STDOUT:   %.loc19_11.3: @Class.F.loc18.%.loc18_42.5 (%.5372ba.2) = splice_inst %tuple.elem0 [template = %.loc19_11.3 (constants.%.5d6323.1)]
 // CHECK:STDOUT:
@@ -327,7 +327,7 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %.loc30_14.3: <instruction> = access_member_action %self.ref, n [template]
 // CHECK:STDOUT:   %.loc30_14.4: type = type_of_inst %.loc30_14.3 [template = %.loc30_14.4 (constants.%.237)]
 // CHECK:STDOUT:   %.loc30_14.5: @Class.G.loc29.%.loc30_14.4 (%.237) = splice_inst %.loc30_14.3 [template = %.loc30_14.5 (constants.%.f96)]
-// CHECK:STDOUT:   %.loc30_16.2: %tuple.type = initialize_action %.loc30_14.2, %.loc29_40.5, %return.param, false [template]
+// CHECK:STDOUT:   %.loc30_16.2: %tuple.type = initialize_action %.loc30_14.2, %.loc29_40.5, %return.param, none, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc30_16.2, element0 [template]
 // CHECK:STDOUT:   %.loc30_16.3: @Class.G.loc29.%.loc29_40.5 (%.5372ba.4) = splice_inst %tuple.elem0 [template = %.loc30_16.3 (constants.%.5d6323.2)]
 // CHECK:STDOUT:

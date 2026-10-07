@@ -2211,6 +2211,25 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
         num_storage_args + 1, SemIR::InstType::TypeInstId);
     auto action_type_id = GetTupleType(context, action_type_elements_id);
 
+    // Move the `target.storage_access_block` into the `InitializeAction` so
+    // that it can be inserted when the action is performed.
+    auto storage_access_block_id = SemIR::InstId::None;
+    auto pending_inst_block = target.storage_access_block->TakeAsInstBlock();
+    if (pending_inst_block != SemIR::InstBlockId::Empty) {
+      auto pending_splice_block = AddInstInNoBlock<SemIR::SpliceBlock>(
+          context, loc_id,
+          {
+              .type_id = SemIR::InstType::TypeId,
+              .block_id = pending_inst_block,
+              .result_id = target.storage_id,
+          });
+      storage_access_block_id =
+          context.constant_values().GetInstId(context.constants().GetOrAdd(
+              SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
+                               .inst_id = pending_splice_block},
+              SemIR::ConstantDependence::None));
+    }
+
     // Create the initialization action.
     auto action_id = AddDependentActionInst<SemIR::InitializeAction>(
         context, loc_id,
@@ -2220,6 +2239,7 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
              context.bundles().AddCanonical(SemIR::InitializeAction::Target{
                  .target_type_inst_id = target_type_inst_id,
                  .storage_id = target.storage_id,
+                 .storage_access_block_id = storage_access_block_id,
                  .in_place = SemIR::BoolValue::From(
                      target.kind == ConversionTarget::InPlaceInitializing)})});
 
@@ -2353,8 +2373,22 @@ auto PerformAction(Context& context, SemIR::SpecificId specific_id,
 
   const auto& target_bundle = context.bundles().Get(action.target_id);
   PendingBlock target_block(&context);
+
+  // Add the storage access block from the `action` to the pending
+  // `target_block`.
+  if (auto inst_value = context.insts().TryGetAsIfValid<SemIR::InstValue>(
+          target_bundle.storage_access_block_id)) {
+    auto splice_block =
+        context.insts().GetAs<SemIR::SpliceBlock>(inst_value->inst_id);
+    auto inst_block = context.inst_blocks().Get(splice_block.block_id);
+    for (auto inst_id : inst_block) {
+      target_block.AddInstId(inst_id);
+    }
+  }
+
   auto specific_storage_id = AddSpecificInstToPendingBlock(
       target_block, target_bundle.storage_id, specific_id);
+
   ConversionTarget target = {
       .kind = ConversionTarget::Kind(target_bundle.in_place.ToBool()
                                          ? ConversionTarget::InPlaceInitializing
