@@ -283,23 +283,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       SemIR::GetExprCategory(context.sem_ir(), inst.expr_id,
                              &context.specific_sem_ir(), context.specific_id());
   context.AddEnumToCurrentFingerprint(expr_cat);
-  switch (expr_cat) {
-    case SemIR::ExprCategory::EphemeralRef:
-    case SemIR::ExprCategory::DurableRef:
-    case SemIR::ExprCategory::Value:
-    case SemIR::ExprCategory::ReprInitializing:
-    case SemIR::ExprCategory::InPlaceInitializing:
-      break;
-
-    case SemIR::ExprCategory::Mixed:
-    case SemIR::ExprCategory::RefTagged:
-    case SemIR::ExprCategory::NotExpr:
-    case SemIR::ExprCategory::Error:
-    case SemIR::ExprCategory::Pattern:
-    case SemIR::ExprCategory::Dependent:
-      CARBON_FATAL("Unexpected category {0} for `return` expression {1}",
-                   expr_cat, context.sem_ir().insts().Get(inst.expr_id));
-  }
 
   auto return_kind = GetReturnKind(context);
   context.AddEnumToCurrentFingerprint(return_kind);
