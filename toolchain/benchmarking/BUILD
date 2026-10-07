@@ -97,7 +97,7 @@ sh_test(
         # Dry-run the smallest case of every benchmark. Also run just the lex
         # benchmark that executes a subprocess to reduce the overhead and reduce
         # timeouts. The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=^(BM_CompileApiFileDenseDecls.*/256|BM_CompileImplFile.*/1024|BM_CompileExec.*Phase::Lex.*/256/real_time)$$",
+        "--benchmark_filter=^(BM_CompileApiFile(DenseDecls|RealisticHeader).*/256|BM_CompileImplFile.*/1024|BM_CompileExec.*Phase::Lex.*/256/real_time)$$",
     ],
     env = cc_env(),
 )
