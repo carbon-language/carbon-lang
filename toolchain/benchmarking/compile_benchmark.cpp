@@ -260,7 +260,6 @@ using CompilerFor =
 static auto DenseDeclParams() -> SourceGen::DenseDeclParams {
   SourceGen::DenseDeclParams params;
   params.class_params.inline_function_defs = 1;
-  params.class_params.max_body_locals = 3;
   params.class_params.inline_getters = 1;
   params.class_params.inline_forwarders = 1;
   return params;
