@@ -27,7 +27,7 @@ library "[[@TEST_NAME]]";
 
 fn F() -> ref (i32);
 
-// --- fail_ref_return_parenthesized.carbon
+// --- fail_todo_ref_return_parenthesized.carbon
 
 library "[[@TEST_NAME]]";
 
