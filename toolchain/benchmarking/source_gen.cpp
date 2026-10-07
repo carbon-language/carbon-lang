@@ -158,7 +158,8 @@ struct DefPlan {
 // `DenseDeclParams` and `ClassParams` parameterize the high-level shape of a
 // generated file: what declarations and definitions a class contains, what
 // types they use, and the distribution of definition sizes
-// (`out_of_line_def_sizes`). Once a definition's statement count is chosen,
+// (`out_of_line_def_sizes` and `inline_function_def_sizes`). Once a
+// definition's statement count is chosen,
 // the constants below govern its internal statement mix and control-flow
 // nesting (`if`/`else`/`while` blocks, guard returns/exits, and local variable
 // density) so that generated definitions of any size have a realistic internal
@@ -447,12 +448,12 @@ static auto ApportionDefSizes(int num_defs,
   return counts;
 }
 
-// Builds the plans for `num_defs` definitions, with sizes following `sizes`.
-// Each size's plans spread evenly through the order, so that any stretch of the
-// order has a mix of sizes.
+// Builds the plans for `num_defs` definitions, with sizes following `sizes`,
+// and appends them to `plans`. Each size's plans spread evenly through the
+// order, so that any stretch of the order has a mix of sizes.
 static auto BuildDefPlans(int num_defs,
-                          llvm::ArrayRef<SourceGen::DefSizeWeight> sizes)
-    -> llvm::SmallVector<DefPlan> {
+                          llvm::ArrayRef<SourceGen::DefSizeWeight> sizes,
+                          llvm::SmallVectorImpl<DefPlan>& plans) -> void {
   // `position` is a `double` in `(0, 1)` so that buckets with different counts
   // can be interleaved by sorting on `(variant + 0.5) / count` directly rather
   // than scaling to a common integer denominator.
@@ -474,12 +475,10 @@ static auto BuildDefPlans(int num_defs,
   llvm::stable_sort(entries, [](const Entry& lhs, const Entry& rhs) {
     return lhs.position < rhs.position;
   });
-  llvm::SmallVector<DefPlan> plans;
-  plans.reserve(num_defs);
+  plans.reserve(plans.size() + num_defs);
   for (const Entry& entry : entries) {
     plans.push_back(ComposeDefPlan(entry.statements, entry.variant));
   }
-  return plans;
 }
 
 // Estimates the average number of lines in the plans of definitions with sizes
@@ -531,13 +530,15 @@ class SourceGen::ClassGenState {
   auto inline_function_param_counts() -> llvm::SmallVectorImpl<int>& {
     return inline_function_param_counts_;
   }
-  auto local_counts() -> llvm::SmallVectorImpl<int>& { return local_counts_; }
   auto forwarder_param_counts() -> llvm::SmallVectorImpl<int>& {
     return forwarder_param_counts_;
   }
-  // The plans of the out-of-line definitions. A definition uses the plan with
-  // the index of its return type's use; see `BuildTypePool`.
+  // The plans of the out-of-line definitions, followed by those of inline
+  // function definitions, starting at `inline_def_plans_start()`. A definition
+  // uses the plan at the index of its return type's use among the plans of its
+  // kind; see `BuildTypePool`.
   auto def_plans() -> llvm::ArrayRef<DefPlan> { return def_plans_; }
+  auto inline_def_plans_start() -> int { return inline_def_plans_start_; }
 
   auto getter_field_types() -> llvm::SmallVectorImpl<llvm::StringRef>& {
     return getter_field_types_;
@@ -589,7 +590,7 @@ class SourceGen::ClassGenState {
   }
 
   // The names of all classes in the file. Parameter, member, and field names
-  // exclude these so that they can't shadow a class that a body names.
+  // exclude these so that they can't shadow a class that a definition names.
   auto class_name_set() -> const Set<llvm::StringRef>& {
     return class_name_set_;
   }
@@ -686,9 +687,9 @@ class SourceGen::ClassGenState {
   llvm::SmallVector<int> private_method_param_counts_;
 
   llvm::SmallVector<int> inline_function_param_counts_;
-  llvm::SmallVector<int> local_counts_;
   llvm::SmallVector<int> forwarder_param_counts_;
   llvm::SmallVector<DefPlan> def_plans_;
+  int inline_def_plans_start_;
 
   // Getters return a copy of their field, and `Make` initializes it, so getter
   // and predicate fields have fixed types with a value expression. These types
@@ -794,15 +795,15 @@ SourceGen::ClassGenState::ClassGenState(SourceGen& gen, int num_classes,
   inline_function_param_counts_ =
       gen.GetShuffledInts(num_inline_functions, 0,
                           class_params.inline_function_decl_params.max_params);
-  local_counts_ = gen.GetShuffledInts(num_inline_functions, 0,
-                                      class_params.max_body_locals);
   // Each inline definition has one parameter beyond its random count; see
   // `BuildClassAndTypeNames`.
   int num_inline_params =
       Sum(inline_function_param_counts_) + num_inline_functions;
-  def_plans_ =
-      BuildDefPlans(num_out_of_line_defs, params.out_of_line_def_sizes);
-  int num_locals = Sum(local_counts_);
+  BuildDefPlans(num_out_of_line_defs, params.out_of_line_def_sizes, def_plans_);
+  inline_def_plans_start_ = def_plans_.size();
+  BuildDefPlans(num_inline_functions, class_params.inline_function_def_sizes,
+                def_plans_);
+  int num_locals = 0;
   for (const DefPlan& plan : def_plans_) {
     num_locals += plan.locals;
   }
@@ -1052,7 +1053,9 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   int num_fields = num_classes * class_params.private_field_decls;
 
   // Each class draws `inline_function_defs` return types from this pool after
-  // its fields.
+  // its fields. As for out-of-line definitions, a definition's guards also
+  // return values of its return type, so each use's pre-shuffle index pairs it
+  // with a definition plan.
   inline_return_pool_ =
       BuildTypePool(gen, num_inline_returns, class_params.inline_function_defs,
                     /*needs_value_expr=*/true, /*consumed=*/false,
@@ -1195,20 +1198,14 @@ static auto EstimateAvgMethodDeclLines(SourceGen::MethodDeclParams params,
 }
 
 // Estimates the average number of lines in an inline function definition,
-// excluding its comment. The body has an accumulator line, a line per
-// parameter, a line per local plus one more when there are any, a return line,
-// and a closing brace line.
-static auto EstimateAvgInlineFunctionDefLines(SourceGen::ClassParams params)
-    -> double {
+// excluding its comment. The definition has an accumulator line, a line reading
+// the parameters, its plan's lines, a return line, and a closing brace line.
+static auto EstimateAvgInlineFunctionDefLines(
+    const SourceGen::ClassParams& params) -> double {
   constexpr int ExtraParams = 1;
-  double avg_params =
-      params.inline_function_decl_params.max_params / 2.0 + ExtraParams;
-  double max_locals = params.max_body_locals;
-  double avg_locals = max_locals / 2.0;
-  double prob_any_local = max_locals / (max_locals + 1.0);
   return EstimateAvgFunctionDeclLines(params.inline_function_decl_params,
                                       ExtraParams) +
-         1.0 + avg_params + avg_locals + prob_any_local + 2.0;
+         4.0 + EstimateAvgDefPlanLines(params.inline_function_def_sizes);
 }
 
 // Note that this should match the heuristics used when formatting.
@@ -1240,8 +1237,8 @@ static auto EstimateAvgClassDefLines(
          params.inline_function_defs;
   // Getters and predicates are on one line.
   avg += 3.0 * (params.inline_getters + params.inline_predicates);
-  // A forwarder's body has a return line and a closing brace line, and the
-  // declaration it calls has the same signature.
+  // A forwarder's definition has a return line and a closing brace line, and
+  // the declaration it calls has the same signature.
   double forwarder_signature_lines =
       EstimateAvgMethodDeclLines(params.inline_forwarder_params);
   avg += (2.0 + forwarder_signature_lines + 2.0 + 2.0 +
@@ -1342,7 +1339,6 @@ auto SourceGen::GenApiFileDenseDecls(int target_lines,
   CARBON_CHECK(class_gen_state.private_function_param_counts().empty());
   CARBON_CHECK(class_gen_state.private_method_param_counts().empty());
   CARBON_CHECK(class_gen_state.inline_function_param_counts().empty());
-  CARBON_CHECK(class_gen_state.local_counts().empty());
   CARBON_CHECK(class_gen_state.forwarder_param_counts().empty());
   CARBON_CHECK(class_gen_state.getter_field_types().empty());
   CARBON_CHECK(class_gen_state.predicate_fields().empty());
@@ -2048,9 +2044,9 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
   return def;
 }
 
-// Emits the statements of `def` after its `acc` declaration. Locals take their
-// names from `locals` in turn, the `ReadParams` statement adds `reads`, and
-// guards return `return_value`.
+// Emits the statements of `def` after its `acc` declaration, indented beyond
+// `indent`. Locals take their names from `locals` in turn, the `ReadParams`
+// statement adds `reads`, and guards return `return_value`.
 //
 // The first operand of each statement after a local is that local, so that
 // every local is read. Every other operand, and the target of each update, is a
@@ -2058,8 +2054,8 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
 static auto EmitArrangedDef(const ArrangedDef& def,
                             llvm::ArrayRef<llvm::StringRef> locals,
                             llvm::StringRef reads, llvm::StringRef return_value,
-                            bool is_cpp, absl::BitGen& rng,
-                            llvm::raw_ostream& os) -> void {
+                            bool is_cpp, llvm::StringRef indent,
+                            absl::BitGen& rng, llvm::raw_ostream& os) -> void {
   llvm::SmallVector<llvm::StringRef> scope = {"acc"};
   llvm::StringRef pending = "acc";
   int next_local = 0;
@@ -2080,7 +2076,10 @@ static auto EmitArrangedDef(const ArrangedDef& def,
   auto emit_cond = [&](int form) {
     emit_expr(PlanConds[form % std::size(PlanConds)]);
   };
-  auto indent = [&](int depth) { os.indent(2 * depth); };
+  auto indent_to = [&](int depth) {
+    os << indent;
+    os.indent(2 * depth);
+  };
 
   // The blocks being emitted, with the index of the next statement in each,
   // and the size of the scope outside it.
@@ -2107,7 +2106,7 @@ static auto EmitArrangedDef(const ArrangedDef& def,
       const ArrangedStmt& owner =
           def.stmts[def.blocks[owner_frame.block]
                         .stmts[owner_frame.next_stmt - 1]];
-      indent(depth - 1);
+      indent_to(depth - 1);
       if (NumPlanBlocks(owner.plan.kind) == 1 || ended != owner.first_block) {
         os << "}\n";
         continue;
@@ -2128,7 +2127,7 @@ static auto EmitArrangedDef(const ArrangedDef& def,
     const ArrangedStmt& stmt = def.stmts[block.stmts[frame.next_stmt]];
     ++frame.next_stmt;
     PlanStmt planned = stmt.plan;
-    indent(depth);
+    indent_to(depth);
     switch (planned.kind) {
       case PlanKind::Local: {
         llvm::StringRef name = locals[next_local++];
@@ -2166,27 +2165,75 @@ static auto EmitArrangedDef(const ArrangedDef& def,
         os << "if (";
         emit_cond(planned.form);
         os << ") {\n";
-        indent(depth + 1);
+        indent_to(depth + 1);
         if (planned.kind == PlanKind::GuardReturn) {
           os << "return " << return_value << ";\n";
         } else {
           os << (planned.form % 2 == 0 ? "break;\n" : "continue;\n");
         }
-        indent(depth);
+        indent_to(depth);
         os << "}\n";
         break;
     }
   }
 }
 
-// Generates an out-of-line definition for the declaration `sig`, and writes it
-// to the provided stream.
+// Generates the statements of a plan-based function or method definition (used
+// for both `inline_function_defs` and out-of-line definitions) with signature
+// `sig`, from its `acc` declaration through its `return`, indented beyond
+// `indent`.
 //
-// The definition declares an `i32` accumulator, `acc`, and then has its plan's
-// statements arranged randomly, along with a statement at depth 0 that reads
-// every parameter with its consumer template, and `self` in a method with
-// `Checksum`. The signature and that statement are each on one line however
-// long they are, which the line estimates assume.
+// Unlike the single-expression member idioms (`GenerateGetter`,
+// `GeneratePredicate`, and `GenerateForwarder`), which have fixed signatures
+// coupled to a class field or private `<name>Impl` declaration, a plan-based
+// definition works with any `FunctionSig`: after declaring `acc`, it arranges
+// its `DefPlan` statements randomly along with a depth-0 statement that reads
+// every parameter with its consumer template (and `self` in a method with
+// `Checksum`), and ends with `return`. That parameter-read statement is on one
+// line however long it is, which the line estimates assume.
+auto SourceGen::GenerateFunctionDef(ClassGenState& state,
+                                    const FunctionSig& sig,
+                                    llvm::StringRef indent,
+                                    llvm::raw_ostream& os) -> void {
+  os << indent << (IsCpp() ? "  int acc = 0;\n" : "  var acc: i32 = 0;\n");
+
+  RawStringOstream reads;
+  llvm::ListSeparator read_sep(" + ");
+  if (sig.is_method) {
+    reads << read_sep << (IsCpp() ? "Checksum()" : "self.Checksum()");
+  }
+  for (auto [param, consumer] : llvm::zip(sig.params, sig.param_consumers)) {
+    reads << read_sep;
+    EmitTemplate(consumer, param.name, reads);
+  }
+
+  // Locals and parameters draw from the same identifiers of each length, so
+  // exclude this function's parameter names: C++ rejects a local that
+  // redeclares a parameter.
+  const DefPlan& plan = state.def_plans()[sig.def_plan];
+  Set<llvm::StringRef> param_names;
+  for (const TypedName& param : sig.params) {
+    param_names.Insert(param.name);
+  }
+  UniqueIdentifierPopper unique_local_names(*this, state.local_names(),
+                                            &param_names);
+  llvm::SmallVector<llvm::StringRef> locals;
+  locals.reserve(plan.locals);
+  for (auto _ : llvm::seq(plan.locals)) {
+    locals.push_back(unique_local_names.Pop());
+  }
+
+  RawStringOstream return_value;
+  state.ProduceValue(sig.return_type, return_value);
+  std::string return_value_str = return_value.TakeStr();
+  EmitArrangedDef(ArrangeDef(plan, rng_), locals, reads.TakeStr(),
+                  return_value_str, IsCpp(), indent, rng_, os);
+  os << indent << "  return " << return_value_str << ";\n";
+}
+
+// Generates an out-of-line definition for the declaration `sig`, and writes it
+// to the provided stream. The signature is on one line however long it is,
+// which the line estimates assume.
 auto SourceGen::GenerateOutOfLineDef(ClassGenState& state,
                                      llvm::StringRef class_name,
                                      const FunctionSig& sig,
@@ -2217,123 +2264,42 @@ auto SourceGen::GenerateOutOfLineDef(ClassGenState& state,
     }
   }
   os << ") -> " << sig.return_type << " {\n";
-  os << (IsCpp() ? "  int acc = 0;\n" : "  var acc: i32 = 0;\n");
-
-  RawStringOstream reads;
-  llvm::ListSeparator read_sep(" + ");
-  if (sig.is_method) {
-    reads << read_sep << (IsCpp() ? "Checksum()" : "self.Checksum()");
-  }
-  for (auto [param, consumer] : llvm::zip(sig.params, sig.param_consumers)) {
-    reads << read_sep;
-    EmitTemplate(consumer, param.name, reads);
-  }
-
-  // Locals and parameters draw from the same identifiers of each length, so
-  // exclude this function's parameter names: C++ rejects a local that
-  // redeclares a parameter.
-  const DefPlan& plan = state.def_plans()[sig.def_plan];
-  Set<llvm::StringRef> param_names;
-  for (const TypedName& param : sig.params) {
-    param_names.Insert(param.name);
-  }
-  UniqueIdentifierPopper unique_local_names(*this, state.local_names(),
-                                            &param_names);
-  llvm::SmallVector<llvm::StringRef> locals;
-  locals.reserve(plan.locals);
-  for (auto _ : llvm::seq(plan.locals)) {
-    locals.push_back(unique_local_names.Pop());
-  }
-
-  RawStringOstream return_value;
-  state.ProduceValue(sig.return_type, return_value);
-  EmitArrangedDef(ArrangeDef(plan, rng_), locals, reads.TakeStr(),
-                  return_value.TakeStr(), IsCpp(), rng_, os);
-  os << "  return ";
-  state.ProduceValue(sig.return_type, os);
-  os << ";\n}\n";
+  GenerateFunctionDef(state, sig, /*indent=*/"", os);
+  os << "}\n";
 }
 
 // Generates an inline function definition and writes it to the provided
-// stream.
-//
-// The body adds every parameter to an `i32` accumulator, declares a chain of
-// `i32` locals, and returns a value of the return type. Reading every parameter
-// and local keeps the code free of unused-binding warnings.
-//
-// TODO: Build these definitions from plans, as out-of-line definitions do, so
-// that one builder makes every function definition except the fixed shapes of
-// getters, predicates, and forwarders.
+// stream. Its statements follow the plan paired with its return type; see
+// `GenerateFunctionDef`.
 auto SourceGen::GenerateInlineFunctionDef(ClassGenState& state,
                                           llvm::StringRef name, int param_count,
-                                          int local_count,
                                           llvm::StringRef indent,
                                           llvm::raw_ostream& os) -> void {
   // Add the extra parameter; see `BuildClassAndTypeNames`.
   param_count += 1;
 
-  // Exclude class names so that a parameter can't shadow a class that the body
-  // names.
+  // Exclude class names so that a parameter can't shadow a class that the
+  // definition names.
   UniqueIdentifierPopper unique_param_names(*this, state.inline_param_names(),
                                             &state.class_name_set());
-  llvm::SmallVector<TypedName> params;
-  llvm::SmallVector<llvm::StringRef> consumers;
-  params.reserve(param_count);
-  consumers.reserve(param_count);
+  FunctionSig sig = {.name = name, .is_method = false};
+  sig.params.reserve(param_count);
+  sig.param_consumers.reserve(param_count);
   for (auto _ : llvm::seq(param_count)) {
     llvm::StringRef param = unique_param_names.Pop();
     ClassGenState::TypeUse type = state.GetInlineParamType();
-    params.push_back({.name = param, .type = type.name});
-    consumers.push_back(type.consumer);
+    sig.params.push_back({.name = param, .type = type.name});
+    sig.param_consumers.push_back(type.consumer);
   }
-  llvm::StringRef return_type = state.GetInlineReturnType().name;
+  ClassGenState::TypeUse return_type = state.GetInlineReturnType();
+  sig.return_type = return_type.name;
+  sig.def_plan = state.inline_def_plans_start() + return_type.index;
 
   os << indent << "// TODO: make better comment text\n";
   os << indent << (IsCpp() ? "static auto " : "fn ") << name << "(";
-  EmitParams(/*is_method=*/false, params, indent, os);
-  os << ") -> " << return_type << " {\n";
-
-  std::string body_indent = indent.str() + "  ";
-
-  os << body_indent << (IsCpp() ? "int acc = 0;\n" : "var acc: i32 = 0;\n");
-  for (auto [param, consumer] : llvm::zip(params, consumers)) {
-    os << body_indent << "acc = acc + ";
-    EmitTemplate(consumer, param.name, os);
-    os << ";\n";
-  }
-
-  // Each local after the first reads the previous one. Locals and parameters
-  // draw from the same identifiers of each length, so exclude this function's
-  // parameter names: C++ rejects a local that redeclares a parameter.
-  llvm::SmallVector<llvm::StringRef> locals;
-  locals.reserve(local_count);
-  UniqueIdentifierPopper unique_local_names(*this, state.local_names(),
-                                            &unique_param_names.used());
-  for (int i : llvm::seq(local_count)) {
-    llvm::StringRef local = unique_local_names.Pop();
-    locals.push_back(local);
-    if (!IsCpp()) {
-      os << body_indent << "var " << local << ": i32 = ";
-    } else {
-      os << body_indent << "int " << local << " = ";
-    }
-    if (i == 0) {
-      os << "1";
-    } else {
-      os << locals[i - 1] << " + 1";
-    }
-    os << ";\n";
-  }
-  // Read the last local by assigning it to the first. With one local, this is a
-  // self-assignment, which still reads it.
-  if (local_count > 0) {
-    os << body_indent << locals.front() << " = " << locals.back() << ";\n";
-  }
-
-  os << body_indent << "return ";
-  state.ProduceValue(return_type, os);
-  os << ";\n";
-
+  EmitParams(/*is_method=*/false, sig.params, indent, os);
+  os << ") -> " << sig.return_type << " {\n";
+  GenerateFunctionDef(state, sig, indent, os);
   os << indent << "}\n";
 }
 
@@ -2479,8 +2445,8 @@ auto SourceGen::GenerateClassDef(
          field.predicate});
   }
 
-  // Bodies in this class can name any class, so exclude class names from member
-  // names. Inline function names are too short to be class names.
+  // Definitions in this class can name any class, so exclude class names from
+  // member names. Inline function names are too short to be class names.
   UniqueIdentifierPopper unique_member_names(*this, state.decl_names(),
                                              &state.class_name_set());
   unique_member_names.Reserve(unique_accessed_names.used());
@@ -2508,8 +2474,8 @@ auto SourceGen::GenerateClassDef(
     os << line_sep;
     GenerateInlineFunctionDef(
         state, unique_inline_names.Pop(),
-        state.inline_function_param_counts().pop_back_val(),
-        state.local_counts().pop_back_val(), /*indent=*/"  ", os);
+        state.inline_function_param_counts().pop_back_val(), /*indent=*/"  ",
+        os);
   }
   for (auto _ : llvm::seq(params.public_method_decls)) {
     os << line_sep;
