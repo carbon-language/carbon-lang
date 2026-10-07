@@ -2370,8 +2370,6 @@ auto PerformAction(Context& context, SemIR::SpecificId specific_id,
 
   const auto& target_bundle = context.bundles().Get(action.target_id);
   PendingBlock target_block(&context);
-  auto specific_storage_id = AddSpecificInstToPendingBlock(
-      target_block, target_bundle.storage_id, specific_id);
 
   // Add the storage access block from the `action` to the pending
   // `target_block`.
@@ -2384,6 +2382,9 @@ auto PerformAction(Context& context, SemIR::SpecificId specific_id,
       target_block.AddInstId(inst_id);
     }
   }
+
+  auto specific_storage_id = AddSpecificInstToPendingBlock(
+      target_block, target_bundle.storage_id, specific_id);
 
   ConversionTarget target = {
       .kind = ConversionTarget::Kind(target_bundle.in_place.ToBool()
