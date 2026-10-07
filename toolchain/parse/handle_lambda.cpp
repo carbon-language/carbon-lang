@@ -92,17 +92,6 @@ auto HandleLambdaAfterParams(Context& context) -> void {
     context.PushState(StateKind::FunctionReturnFormFinish);
     context.ConsumeAndDiscard();
     context.PushStateForExpr(PrecedenceGroup::ForType());
-    context.PushStateForExpr(PrecedenceGroup::ForType());
-    context.PushState(StateKind::ReturnTypeOrFormExpr);
-  } else if (context.PositionIs(Lex::TokenKind::EqualGreater)) {
-    // Terse body `=> expr`
-    context.AddLeafNode(NodeKind::TerseBodyArrow, context.Consume());
-    context.PushState(state, StateKind::LambdaBodyFinish);
-    context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
-  } else if (context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
-    // Block body `{ ... }`
-    context.PushState(state, StateKind::LambdaBodyFinish);
-    context.PushState(StateKind::CodeBlock);
   } else {
     ParseLambdaBody(context, state, /*has_return_type=*/false);
   }

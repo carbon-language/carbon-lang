@@ -861,25 +861,13 @@ CARBON_PARSE_STATE(LambdaBodyFinish)
 // possibility a `->` return type is there. Always enqueues signature finish
 // handling.
 //
-<<<<<<< HEAD
 // fn F(<...>) -> <...>
 //             ^~
 //   1. Expr
-||||||| parent of 05606c289 (Parse `-> ref T` as a primitive return form)
+//
 // fn F(...) -> ...
 //           ^~
-//   1. Expr
-=======
-// fn F(...) -> ...
-//           ^~
-<<<<<<< HEAD
-//   1. ReturnTypeExpr
->>>>>>> 05606c289 (Parse `-> ref T` as a primitive return form)
-||||||| parent of 1ffb37e (Rename `ReturnTypeExpr` parse state to `ReturnTypeOrFormExpr`)
-//   1. ReturnTypeExpr
-=======
 //   1. ReturnTypeOrFormExpr
->>>>>>> 1ffb37e (Rename `ReturnTypeExpr` parse state to `ReturnTypeOrFormExpr`)
 //   2. FunctionReturnTypeFinish
 //   3. FunctionSignatureFinish
 //
