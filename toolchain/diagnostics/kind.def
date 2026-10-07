@@ -200,6 +200,7 @@ CARBON_DIAGNOSTIC_KIND(ExpectedAssociatedConstantIdentifier)
 CARBON_DIAGNOSTIC_KIND(ExpectedAssociatedConstantColon)
 CARBON_DIAGNOSTIC_KIND(PhaseKeywordInAssociatedConstant)
 CARBON_DIAGNOSTIC_KIND(RequireExpectedImpls)
+CARBON_DIAGNOSTIC_KIND(ExpectedIdentifierForFriend)
 
 // Alias diagnostics.
 CARBON_DIAGNOSTIC_KIND(ExpectedAliasInitializer)
@@ -333,6 +334,8 @@ CARBON_DIAGNOSTIC_KIND(ClassForwardDeclaredHere)
 CARBON_DIAGNOSTIC_KIND(ClassIncompleteWithinDefinition)
 CARBON_DIAGNOSTIC_KIND(FieldNamedUnderscore)
 CARBON_DIAGNOSTIC_KIND(FieldWithTuplePattern)
+CARBON_DIAGNOSTIC_KIND(FriendNotAllowedInScope)
+CARBON_DIAGNOSTIC_KIND(FriendNotNameScope)
 CARBON_DIAGNOSTIC_KIND(GenericVirtual)
 CARBON_DIAGNOSTIC_KIND(OverrideWithoutBase)
 CARBON_DIAGNOSTIC_KIND(OverrideWithoutVirtualInBase)
@@ -633,6 +636,9 @@ CARBON_DIAGNOSTIC_KIND(UnusedButUsedHere)
 CARBON_DIAGNOSTIC_KIND(UnusedModifierWithoutDefinition)
 CARBON_DIAGNOSTIC_KIND(UnusedPatternNoBindings)
 CARBON_DIAGNOSTIC_KIND(UnusedBinding)
+
+// Function expression diagnostics.
+CARBON_DIAGNOSTIC_KIND(SelfParameterInLambda)
 
 // ============================================================================
 // CodeGen diagnostics

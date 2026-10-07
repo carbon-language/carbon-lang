@@ -18,7 +18,8 @@ auto HandleLambdaAfterIntroducer(Context& context) -> void {
 
   if (context.PositionIs(Lex::TokenKind::OpenSquareBracket)) {
     context.PushState(state, StateKind::LambdaAfterImplicitParams);
-    context.PushState(StateKind::PatternListAsImplicit);
+    context.PushState(StateKind::PatternListAsImplicit, *context.position(),
+                      BindingContext::DeducedParam);
   } else if (context.PositionIs(Lex::TokenKind::OpenParen)) {
     context.PushState(state, StateKind::LambdaAfterParams);
     context.PushState(StateKind::PatternListAsExplicit);
@@ -40,6 +41,42 @@ auto HandleLambdaAfterImplicitParams(Context& context) -> void {
   }
 }
 
+static auto ParseLambdaBody(Context& context, Context::State state,
+                            bool has_return_type) -> void {
+  if (context.PositionIs(Lex::TokenKind::EqualGreater)) {
+    // Terse body `=> expr`
+    context.AddNode(NodeKind::LambdaDefinitionStart, context.Consume(),
+                    state.has_error);
+    state.has_error = false;
+    context.PushState(state, StateKind::LambdaBodyFinish);
+    context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
+  } else if (context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
+    // Block body `{ ... }`
+    context.PushState(StateKind::LambdaBodyFinish);
+    context.AddNode(NodeKind::LambdaDefinitionStart, context.Consume(),
+                    state.has_error);
+    context.PushState(StateKind::StatementScopeLoop);
+  } else {
+    if (has_return_type) {
+      CARBON_DIAGNOSTIC(ExpectedLambdaBodyAfterReturnType, Error,
+                        "expected `=>` or `{{` after return type");
+      context.emitter().Emit(*context.position(),
+                             ExpectedLambdaBodyAfterReturnType);
+    } else {
+      CARBON_DIAGNOSTIC(ExpectedLambdaBody, Error,
+                        "expected `->`, `=>`, or `{{`");
+      context.emitter().Emit(*context.position(), ExpectedLambdaBody);
+    }
+
+    // Bundle everything into a complete lambda node for error recovery --
+    // otherwise the orphaned `LambdaIntroducer` would be left where an
+    // expression is required, for example in `(fn)`.
+    context.AddNode(NodeKind::LambdaDefinitionStart, *context.position(),
+                    /*has_error=*/true);
+    context.AddNode(NodeKind::Lambda, state.token, /*has_error=*/true);
+  }
+}
+
 auto HandleLambdaAfterParams(Context& context) -> void {
   auto state = context.PopState();
 
@@ -49,68 +86,29 @@ auto HandleLambdaAfterParams(Context& context) -> void {
     context.PushState(StateKind::FunctionReturnTypeFinish);
     context.ConsumeAndDiscard();
     context.PushStateForExpr(PrecedenceGroup::ForType());
-  } else if (context.PositionIs(Lex::TokenKind::EqualGreater)) {
-    // Terse body `=> expr`
-    context.AddLeafNode(NodeKind::TerseBodyArrow, context.Consume());
-    context.PushState(state, StateKind::LambdaBodyFinish);
-    context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
-  } else if (context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
-    // Block body `{ ... }`
-    context.PushState(state, StateKind::LambdaBodyFinish);
-    context.PushState(StateKind::CodeBlock);
+  } else if (context.PositionIs(Lex::TokenKind::MinusGreaterQuestion)) {
+    // Has return form.
+    context.PushState(state, StateKind::LambdaBody);
+    context.PushState(StateKind::FunctionReturnFormFinish);
+    context.ConsumeAndDiscard();
+    context.PushStateForExpr(PrecedenceGroup::ForType());
   } else {
-    CARBON_DIAGNOSTIC(ExpectedLambdaBody, Error,
-                      "expected `->`, `=>`, or `{{`");
-    context.emitter().Emit(*context.position(), ExpectedLambdaBody);
-
-    // Add a dummy node for the missing body without consuming the current
-    // token, then bundle everything into a complete lambda node. This keeps the
-    // lambda a valid expression for error recovery -- otherwise the orphaned
-    // `LambdaIntroducer` would be left where an expression is required, for
-    // example in `(fn)`.
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
-
-    state.has_error = true;
-    context.PushState(state, StateKind::LambdaBodyFinish);
+    ParseLambdaBody(context, state, /*has_return_type=*/false);
   }
 }
 
 auto HandleLambdaBody(Context& context) -> void {
   auto state = context.PopState();
-
-  // We arrive here after parsing return type.
-  // So we look for `=>` or `{`.
-
-  if (context.PositionIs(Lex::TokenKind::EqualGreater)) {
-    // Terse body `=> expr`
-    context.AddLeafNode(NodeKind::TerseBodyArrow, context.Consume());
-    context.PushState(state, StateKind::LambdaBodyFinish);
-    context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
-  } else if (context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
-    // Block body `{ ... }`
-    context.PushState(state, StateKind::LambdaBodyFinish);
-    context.PushState(StateKind::CodeBlock);
-  } else {
-    CARBON_DIAGNOSTIC(ExpectedLambdaBodyAfterReturnType, Error,
-                      "expected `=>` or `{{` after return type");
-    context.emitter().Emit(*context.position(),
-                           ExpectedLambdaBodyAfterReturnType);
-
-    // Add a dummy node for the missing body without consuming the current
-    // token.
-    context.AddLeafNode(NodeKind::InvalidParse, *context.position(),
-                        /*has_error=*/true);
-
-    state.has_error = true;
-    // Bundle all nodes into a complete lambda node.
-    context.PushState(state, StateKind::LambdaBodyFinish);
-  }
+  ParseLambdaBody(context, state, /*has_return_type=*/true);
 }
 
 auto HandleLambdaBodyFinish(Context& context) -> void {
   auto state = context.PopState();
-  context.AddNode(NodeKind::Lambda, state.token, state.has_error);
+  if (context.tokens().GetKind(state.token) == Lex::TokenKind::OpenCurlyBrace) {
+    context.AddNode(NodeKind::Lambda, context.Consume(), state.has_error);
+  } else {
+    context.AddNode(NodeKind::Lambda, state.token, state.has_error);
+  }
 }
 
 }  // namespace Carbon::Parse

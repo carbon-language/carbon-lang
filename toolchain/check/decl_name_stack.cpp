@@ -321,6 +321,7 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
     name_context.parent_scope_id = PushNameQualifierScope(
         *context_, name_context.loc_id, scope_id, generic_id,
         context_->name_scopes().Get(scope_id).has_error());
+    UpdateAccessContext();
   } else {
     name_context.state = NameContext::State::Error;
   }

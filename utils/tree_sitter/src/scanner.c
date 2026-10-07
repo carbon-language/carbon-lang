@@ -84,6 +84,11 @@ bool tree_sitter_carbon_external_scanner_scan(
     // move to past the *, add * to current token
     lexer->advance(lexer, /* skip= */ false);
 
+    // `*=` is a separate token, handled by the internal lexer.
+    if (lexer->lookahead == '=') {
+      return false;
+    }
+
     // https://github.com/carbon-language/carbon-lang/blob/trunk/docs/design/lexical_conventions/symbolic_tokens.md
     if (is_whitespace(lexer->lookahead) && whitespace) {
       // foo * bar

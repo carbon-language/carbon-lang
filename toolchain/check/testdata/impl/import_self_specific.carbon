@@ -99,7 +99,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %impl.elem0: %Y.type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %impl.elem0 [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem0, @Z [symbolic]
-// CHECK:STDOUT:   %.516: <witness> = impl_self_witness %as_type, @Z [symbolic]
+// CHECK:STDOUT:   %.85e: <witness> = impl_self_witness %impl.elem0, @Z [symbolic]
 // CHECK:STDOUT:   %Z.impl_witness.95f: <witness> = impl_witness @U.as.Z.impl.%Z.impl_witness_table, @U.as.Z.impl(%as_type) [symbolic]
 // CHECK:STDOUT:   %.5b1: require_specific_def_type = require_specific_def @U.as.Z.impl(%as_type) [symbolic]
 // CHECK:STDOUT:   %Z.facet.4d3: %Z.type = facet_value %as_type, (%Z.lookup_impl_witness) [symbolic]
@@ -328,7 +328,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT: specific @U.as.Z.impl(constants.%as_type) {
 // CHECK:STDOUT:   %U.patt.loc9_15.2 => constants.%U.patt
 // CHECK:STDOUT:   %U.loc9_15.2 => constants.%as_type
-// CHECK:STDOUT:   %.loc9_30 => constants.%.516
+// CHECK:STDOUT:   %.loc9_30 => constants.%.85e
 // CHECK:STDOUT:   %Z.impl_witness.loc9_30.2 => constants.%Z.impl_witness.95f
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -398,7 +398,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %.68b: require_specific_def_type = require_specific_def @U.as.Z.impl(%as_type) [symbolic]
 // CHECK:STDOUT:   %Z.impl_witness.65d: <witness> = impl_witness imports.%Z.impl_witness_table, @U.as.Z.impl(%as_type) [symbolic]
-// CHECK:STDOUT:   %.7e3: <witness> = impl_self_witness %as_type, @Z [symbolic]
+// CHECK:STDOUT:   %.b71: <witness> = impl_self_witness %impl.elem0.67e, @Z [symbolic]
 // CHECK:STDOUT:   %.Self.frozen.3a0: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %I.WithSelf.F.type.183: type = fn_type @I.WithSelf.F, @I.WithSelf(%.Self.frozen.3a0) [symbolic_self]
 // CHECK:STDOUT:   %I.WithSelf.F.b1e: %I.WithSelf.F.type.183 = struct_value () [symbolic_self]
@@ -714,7 +714,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT: specific @U.as.Z.impl(constants.%as_type) {
 // CHECK:STDOUT:   %U.patt => constants.%U.patt
 // CHECK:STDOUT:   %U => constants.%as_type
-// CHECK:STDOUT:   %.1 => constants.%.7e3
+// CHECK:STDOUT:   %.1 => constants.%.b71
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.65d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

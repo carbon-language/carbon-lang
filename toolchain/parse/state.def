@@ -17,10 +17,10 @@
 //
 // The comments before each state describe the portion of the grammar that the
 // state is implementing, by giving an example of each kind of token sequence
-// that this state handles. In these examples, `...` indicates a sequence of
-// tokens handled by some other state, and `???` indicates a sequence of invalid
-// tokens. A trailing `??? ;` indicates an attempt to skip to the end of the
-// declaration, which may or may not actually find a `;` token.
+// that this state handles. In these examples, `<...>` indicates a sequence of
+// tokens handled by some other state, and `<???>` indicates a sequence of
+// invalid tokens. A trailing `<???> ;` indicates an attempt to skip to the end
+// of the declaration, which may or may not actually find a `;` token.
 //
 // The position in the token stream before the state is indicated by the caret
 // `^` on the line below the example, and all tokens consumed by the state are
@@ -101,25 +101,25 @@ CARBON_PARSE_STATE(ArrayExprFinish)
 
 // Handles the start of a form literal.
 //
-// form ( ...
+// form ( <...>
 // ^~~~~~
 //   1. PrimitiveForm
 //   2. FormLiteralFinish
 //
-// form ???
+// form <???>
 // ^~~~
 //   1. FormLiteralFinish
 CARBON_PARSE_STATE(FormLiteral)
 
 // Handles the category modifier and type of a form literal.
 //
-// form ( val ...
+// form ( val <...>
 //        ^~~
-// form ( var ...
+// form ( var <...>
 //        ^~~
-// form ( ref ...
+// form ( ref <...>
 //        ^~~
-// form ( ???
+// form ( <???>
 //       ^
 //   1. Expr
 //   2. PrimitiveFormFinish
@@ -127,19 +127,19 @@ CARBON_PARSE_STATE(PrimitiveForm)
 
 // Finishes handling of PrimitiveForm.
 //
-// form ( ... )
+// form ( <...> )
+//             ^
+// form <???>
 //           ^
-// form ???
-//         ^
 CARBON_PARSE_STATE(PrimitiveFormFinish)
 
 // Handles the end of a form literal.
 //
-// form ( ... )
-//            ^
-// form ( ??? )
-//        ^~~~~
-// form ???
+// form ( <...> )
+//              ^
+// form ( <???> )
+//        ^~~~~~~
+// form <???>
 //     ^
 //   (state done)
 CARBON_PARSE_STATE(FormLiteralFinish)
@@ -165,7 +165,7 @@ CARBON_PARSE_STATE(TypeOfExprFinish)
 // ^
 //   1. BraceExprFinishAsUnknown
 //
-// { ... }
+// { <...> }
 // ^
 //   1. BraceExprParamAsUnknown
 //   2. BraceExprFinishAsUnknown
@@ -175,12 +175,12 @@ CARBON_PARSE_STATE(BraceExpr)
 // but should be known after the first valid parameter. All later inconsistent
 // parameters are invalid.
 //
-// { .foo ... }
+// { .foo <...> }
 //  ^
 //   1. PeriodAsStruct
 //   2. BraceExprParamAfterDesignatorAs(Type|Value|Unknown)
 //
-// { ???
+// { <???>
 //  ^
 //   1. BraceExprParamFinishAs(Type|Value|Unknown)
 CARBON_PARSE_STATE_VARIANTS3(BraceExprParam, Type, Value, Unknown)
@@ -188,17 +188,17 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprParam, Type, Value, Unknown)
 // Handles a brace expression parameter after the initial designator. This
 // should be at a `:` or `=`, depending on whether it's a type or value literal.
 //
-// { .foo = bar ... }
+// { .foo = bar <...> }
 //        ^
 //   1. Expr
 //   2. BraceExprParamFinishAsValue
 //
-// { .foo: bar ... }
+// { .foo: bar <...> }
 //       ^
 //   1. Expr
 //   2. BraceExprParamFinishAsType
 //
-// { .foo ???
+// { .foo <???>
 //       ^
 //   1. BraceExprParamFinishAs(Type|Value|Unknown)
 CARBON_PARSE_STATE_VARIANTS3(BraceExprParamAfterDesignator, Type, Value,
@@ -206,27 +206,27 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprParamAfterDesignator, Type, Value,
 
 // Handles the end of a brace expression parameter.
 //
-// { ... }
-//      ^
+// { <...> }
+//        ^
 //   (state done)
 //
-// { .foo = bar, ... }
+// { .foo = bar, <...> }
 //             ^
 //   1. BraceExprParamAsValue
 //
-// { .foo: bar, ... }
+// { .foo: bar, <...> }
 //            ^
 //   1. BraceExprParamAsType
 //
-// { ??? , ... }
-//       ^
+// { <???> , <...> }
+//         ^
 //   1. BraceExprParamAsUnknown
 CARBON_PARSE_STATE_VARIANTS3(BraceExprParamFinish, Type, Value, Unknown)
 
 // Handles the `}` of a brace expression.
 //
-// { ... }
-//       ^
+// { <...> }
+//         ^
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(BraceExprFinish, Type, Value, Unknown)
 
@@ -236,7 +236,7 @@ CARBON_PARSE_STATE_VARIANTS3(BraceExprFinish, Type, Value, Unknown)
 //  ^
 //   1. CallExprFinish
 //
-// F( ...
+// F( <...>
 //  ^
 //   1. Expr
 //   2. TupleLiteralElementFinish
@@ -257,7 +257,7 @@ CARBON_PARSE_STATE(CallExprFinish)
 //   1. StatementScopeLoop
 //   2. CodeBlockFinish
 //
-// if (cond) ???
+// if (cond) <???>
 //          ^
 //   1. Statement
 //   2. CodeBlockFinish
@@ -266,32 +266,32 @@ CARBON_PARSE_STATE(CodeBlock)
 // Handles processing at the `}` on a typical code block, after a statement
 // scope is done.
 //
-// if (cond) { ... }
-//                 ^
+// if (cond) { <...> }
+//                   ^
 //   (state done)
 CARBON_PARSE_STATE(CodeBlockFinish)
 
-// Handles a declaration name and parameters, such as `Foo[...](...)`.
+// Handles a declaration name and parameters, such as `Foo[T: type](x: T)`.
 //
-// name . ...
+// name . <...>
 // ^~~~~~
 //   1. DeclNameAndParams
 //
-// name [ ... ]
+// name [ <...> ]
 // ^~~~
 //   1. PatternListAsImplicit
 //   2. DeclNameAndParamsAfterImplicit
 //
-// name ( ... )
+// name ( <...> )
 // ^~~~
 //   1. PatternListAsExplicit
 //   2. DeclNameAndParamsAfterParams
 //
-// name ...
+// name <...>
 // ^~~~
 //   (state done)
 //
-//  ???
+//  <???>
 // ^
 //   (state done)
 CARBON_PARSE_STATE(DeclNameAndParams)
@@ -299,25 +299,25 @@ CARBON_PARSE_STATE(DeclNameAndParams)
 // Inside a declaration, conditionally starts explicit parameter handling. Only
 // used after implicit parameters.
 //
-// name [ ... ] ( ... )
-//             ^
+// name [ <...> ] ( <...> )
+//               ^
 //   1. PatternListAsExplicit
 //   2. DeclNameAndParamsAfterParams
 //
-// name [ ... ] ???
-//             ^
+// name [ <...> ] <???>
+//               ^
 //   (state done)
 CARBON_PARSE_STATE(DeclNameAndParamsAfterImplicit)
 
 // Inside a declaration, conditionally starts another qualified name. Only used
 // after regular parameters.
 //
-// name [ ... ] ( ... ) .
-//                      ^
+// name [ <...> ] ( <...> ) .
+//                          ^
 //   1. DeclNameAndParams
 //
-// name [ ... ] ( ... ) ...
-//                     ^
+// name [ <...> ] ( <...> ) <...>
+//                         ^
 //   (state done)
 CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 
@@ -346,87 +346,91 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^~~~~~~
 //   1. Decl
 //
-// adapt ...
+// adapt <...>
 // ^~~~~
 //   1. AdaptAfterIntroducer
 //
-// alias ...
+// alias <...>
 // ^~~~~
 //   1. Alias
 //
-// base : ...
+// base : <...>
 // ^~~~
 //   1. BaseAfterIntroducer
 //
-// choice ...
+// choice <...>
 // ^~~~~~
 //   1. ChoiceIntroducer
 //
-// class ...
+// class <...>
 // ^~~~~
 //   1. TypeAfterIntroducerAsClass
 //
-// constraint ...
+// constraint <...>
 // ^~~~~~~~~~
 //   1. TypeAfterIntroducerAsNamedConstraint
 //
-// export <name> ...
+// export <name> <...>
 // ^~~~~~
 //   1. ExportName
 //
-// fn ...
+// fn <...>
 // ^~
 //   1. FunctionIntroducer
 //
-// impl ...
+// friend <...>
+// ^~~~~~
+//   1. FriendDecl
+//
+// impl <...>
 // ^~~~
 //   1. ImplAfterIntroducer
 //
-// import ...    (in packaging directives)
+// import <...>  (in packaging directives)
 // ^~~~~~
 //   1. Import
 //
-// inline ...
+// inline <...>
 // ^~~~~~
 //   1. InlineDeclAfterIntroducer (variant is Regular)
 //
-// interface ...
+// interface <...>
 // ^~~~~~~~~
 //   1. TypeAfterIntroducerAsInterface
 //
-// let ...        (variant is Regular)
+// let <...>      (variant is Regular)
 // ^~~
 //   1. Let
 //
-// let ...        (variant is Interface)
+// let <...>      (variant is Interface)
 // ^~~
 //   1. AssociatedConstant
 //
-// library ...    (in packaging directives)
+// library <...>  (in packaging directives)
 // ^~~~~~~
 //   1. Library
 //
-// match_first ...
+// match_first <...>
 // ^~~~~~~~~
 //   1. MatchFirst
 //
-// namespace ...
+// namespace <...>
 // ^~~~~~~~~
 //   1. Namespace
 //
-// package ...    (in packaging directives)
+// package <...>  (in packaging directives)
 // ^~~~~~~
 //   1. Package
 //
-// require ...
+// require <...>
 // ^~~~~~~
 //   1. RequireAfterIntroducer
 //
-// observe ...
+// observe <...>
 // ^~~~~~~
 //   1. ObserveAfterIntroducer
 //
-// var ...        (variant is Regular)
+// var <...>      (variant is Regular)
 // ^~~
 //   1. VarAsRegular
 //
@@ -434,8 +438,8 @@ CARBON_PARSE_STATE(DeclNameAndParamsAfterParams)
 // ^
 //   (state done)
 //
-// ??? ;
-// ^~~~~
+// <???> ;
+// ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(Decl, Class, Interface, Regular)
 
@@ -448,7 +452,7 @@ CARBON_PARSE_STATE_VARIANTS3(Decl, Class, Interface, Regular)
 // ^
 //   (state done)
 //
-//  ...
+//  <...>
 // ^
 //   1. DeclAs(Class|Interface|Regular)
 //   2. DeclScopeLoopAs(Class|Interface|Regular)
@@ -480,18 +484,18 @@ CARBON_PARSE_STATE(InlineDeclAfterIntroducer)
 // ^~~~~~
 // -> base   (variant is not Decl)
 // ^~~~~~~
-// . ???     (??? consumed if it is a keyword)
+// . <???>   (<???> consumed if it is a keyword)
 // ^
-// -> ???    (??? consumed if it is a keyword)
+// -> <???>  (<???> consumed if it is a keyword)
 // ^~
 //   (state done)
 //
-// expr . ( ... )
+// expr . ( <...> )
 //      ^
 //   1. OnlyParenExpr
 //   2. CompoundMemberAccess
 //
-// expr -> ( ... )
+// expr -> ( <...> )
 //      ^~
 //   1. OnlyParenExpr
 //   2. CompoundPointerMemberAccess
@@ -516,25 +520,25 @@ CARBON_PARSE_STATE(CompoundPointerMemberAccess)
 // ^~~~~~~
 //   (state done)
 //
-// -> ???    (??? consumed if it is a keyword)
+// -> <???>  (<???> consumed if it is a keyword)
 // ^~
 //   (state done)
 CARBON_PARSE_STATE(ArrowExpr)
 
 // Handles processing of an expression.
 //
-// if ...
+// if <...>
 // ^~
 //   1. Expr
 //   2. IfExprCondition
 //   3. IfExprFinish
 //
-// <prefix operator> ...
+// <prefix operator> <...>
 // ^~~~~~~~~~~~~~~~~
 //   1. Expr
 //   2. ExprLoopForPrefix
 //
-//  ...
+//  <...>
 // ^
 //   1. ExprInPostfix
 //   2. ExprLoop
@@ -573,7 +577,7 @@ CARBON_PARSE_STATE(Expr)
 //   1. FormExpr
 //   2. ExprInPostfixLoop
 //
-//  ???
+//  <???>
 // ^
 //   (state done)
 CARBON_PARSE_STATE(ExprInPostfix)
@@ -581,34 +585,34 @@ CARBON_PARSE_STATE(ExprInPostfix)
 // Handles looping through elements following the initial postfix expression,
 // such as designators or parenthesized parameters.
 //
-// expr . ...
+// expr . <...>
 //     ^
 //   1. PeriodAsExpr
 //   2. ExprInPostfixLoop
 //
-// expr -> ...
+// expr -> <...>
 //     ^
 //   1. ArrowExpr
 //   2. ExprInPostfixLoop
 //
-// expr ( ... )
+// expr ( <...> )
 //     ^
 //   1. CallExpr
 //   2. ExprInPostfixLoop
 //
-// expr [ ... ]
+// expr [ <...> ]
 //     ^
 //   1. IndexExprStart
 //   2. ExprInPostfixLoop
 //
-//  ...
+//  <...>
 // ^
 //   (state done)
 CARBON_PARSE_STATE(ExprInPostfixLoop)
 
 // Handles processing of an expression.
 //
-// expr <infix operator> ...
+// expr <infix operator> <...>
 //      ^~~~~~~~~~~~~~~~
 //   1. Expr
 //   2. ExprLoopForBinary
@@ -617,12 +621,12 @@ CARBON_PARSE_STATE(ExprInPostfixLoop)
 //      ^~~~~~~~~~~~~~~~~~
 //   1. ExprLoop
 //
-// expr <short circuit operator> ...
+// expr <short circuit operator> <...>
 //      ^~~~~~~~~~~~~~~~~~~~~~~~
 //   1. Expr
 //   2. ExprLoopForShortCircuitOperator
 //
-// expr ...
+// expr <...>
 //     ^
 //   (state done)
 CARBON_PARSE_STATE(ExprLoop)
@@ -630,7 +634,7 @@ CARBON_PARSE_STATE(ExprLoop)
 // Completes an ExprLoop pass by adding an infix operator, then goes back
 // to ExprLoop.
 //
-// expr <infix operator> expr ...
+// expr <infix operator> expr <...>
 //                           ^
 //   1. ExprLoop
 CARBON_PARSE_STATE(ExprLoopForInfixOperator)
@@ -638,7 +642,7 @@ CARBON_PARSE_STATE(ExprLoopForInfixOperator)
 // Completes an ExprLoop pass by adding a prefix operator, then goes back
 // to ExprLoop.
 //
-// <prefix operator> expr ...
+// <prefix operator> expr <...>
 //                       ^
 //   1. ExprLoop
 CARBON_PARSE_STATE(ExprLoopForPrefixOperator)
@@ -646,19 +650,19 @@ CARBON_PARSE_STATE(ExprLoopForPrefixOperator)
 // Completes an ExprLoop pass by adding a short circuit operator, then goes back
 // to ExprLoop.
 //
-// expr <short circuit operator> expr ...
+// expr <short circuit operator> expr <...>
 //                                   ^
 //   1. ExprLoop
 CARBON_PARSE_STATE_VARIANTS2(ExprLoopForShortCircuitOperator, And, Or)
 
 // Completes the condition of an `if` expression and handles the `then` token.
 //
-// if expr then ...
+// if expr then <...>
 //         ^~~~
 //   1. Expr
 //   2. IfExprFinishThen
 //
-// if expr ???
+// if expr <???>
 //        ^
 //  (state done)
 CARBON_PARSE_STATE(IfExprFinishCondition)
@@ -666,12 +670,12 @@ CARBON_PARSE_STATE(IfExprFinishCondition)
 // Completes the first alternative in an `if` expression and handles the `else`
 // token.
 //
-// if expr then expr else ...
+// if expr then expr else <...>
 //                   ^~~~
 //   1. Expr
 //   2. IfExprFinishElse
 //
-// if expr then expr ???
+// if expr then expr <???>
 //                  ^
 //  (state done)
 CARBON_PARSE_STATE(IfExprFinishThen)
@@ -687,8 +691,8 @@ CARBON_PARSE_STATE(IfExprFinishElse)
 //
 // if expr then expr else expr
 //                            ^
-// if ???
-//       ^
+// if <???>
+//         ^
 //   (state done)
 CARBON_PARSE_STATE(IfExprFinish)
 
@@ -696,11 +700,11 @@ CARBON_PARSE_STATE(IfExprFinish)
 // an expression.
 // TODO: Also a `require` declaration?
 //
-// expr where .designator = ...
+// expr where .designator = <...>
 //            ^~~~~~~~~~~~~
 //   1. Expr
 //   2. RequirementOperatorFinish
-// expr where ...
+// expr where <...>
 //           ^
 //   1. Expr
 //   2. RequirementOperator
@@ -708,11 +712,11 @@ CARBON_PARSE_STATE(RequirementBegin)
 
 // Handles a requirement operator in a `where` expression.
 //
-// expr where expr impls ...
+// expr where expr impls <...>
 //                 ^~~~
-// expr where expr = ...
+// expr where expr = <...>
 //                 ^
-// expr where expr == ...
+// expr where expr == <...>
 //                 ^~
 //   1. Expr
 //   2. RequirementOperatorFinish
@@ -748,14 +752,23 @@ CARBON_PARSE_STATE(WhereFinish)
 //
 // expr ;
 //      ^
-// expr ??? ;
-//      ^~~~~
+// expr <???> ;
+//      ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(ExprStatementFinish)
 
+// Handles a `friend` declaration.
+//
+// friend <identifier> ;
+//        ^~~~~~~~~~~~~~
+// friend ??? ;
+//        ^~~~~
+//   (state done)
+CARBON_PARSE_STATE(FriendDecl)
+
 // Handles a function's introducer.
 //
-// fn ...
+// fn <...>
 //   ^
 //   1. DeclNameAndParams
 //   2. FunctionAfterParams
@@ -763,7 +776,7 @@ CARBON_PARSE_STATE(FunctionIntroducer)
 
 // Handles a lambda's introducer.
 //
-// fn ...
+// fn <...>
 //   ^
 //   1. LambdaIntroducer
 //   2. LambdaAfterIntroducer
@@ -771,70 +784,75 @@ CARBON_PARSE_STATE(LambdaIntroducer)
 
 // Handles processing of a lambda after the introducer.
 //
-// fn [ ... ] ...
+// fn [ <...> ] <...>
 //    ^
 //   1. PatternListAsImplicit
 //   2. LambdaAfterImplicitParams
 //
-// fn ( ... ) ...
+// fn ( <...> ) <...>
 //    ^
 //   1. PatternListAsExplicit
 //   2. LambdaAfterParams
 //
-// fn ...
+// fn <...>
 //   ^
 //   1. LambdaAfterParams
 CARBON_PARSE_STATE(LambdaAfterIntroducer)
 
 // Handles processing of a lambda after implicit parameters.
 //
-// fn [ ... ] ( ... ) ...
-//            ^
+// fn [ <...> ] ( <...> ) <...>
+//              ^
 //   1. PatternListAsExplicit
 //   2. LambdaAfterParams
 //
-// fn [ ... ] ...
-//           ^
+// fn [ <...> ] <...>
+//             ^
 //   1. LambdaAfterParams
 CARBON_PARSE_STATE(LambdaAfterImplicitParams)
 
 // Handles processing of a lambda after optional parameters.
 //
-// fn ... -> ...
-//        ^
-//   1. FunctionReturnTypeFinish  (Reused)
+// fn <...> -> <...>
+//          ^
+//   1. FunctionReturnTypeFinish
 //   2. LambdaBody
 //
-// fn ... => ...
-//        ^
+// fn <...> ->? <...>
+//          ^
+//   1. FunctionReturnFormFinish
+//   2. LambdaBody
+//
+// fn <...> => <...>
+//          ^
 //   1. Expr
 //   2. LambdaBodyFinish
 //
-// fn ... { ... }
-//        ^
+// fn <...> { <...> }
+//          ^
 //   1. StatementScopeLoop
 //   2. LambdaBodyFinish
 CARBON_PARSE_STATE(LambdaAfterParams)
 
 // Handles processing of a lambda body.
 //
-// fn ... -> ... { ... }
-//               ^
+// fn <...> -> <...> { <...> }
+//                   ^
 //   1. StatementScopeLoop
 //   2. LambdaBodyFinish
 //
-// fn ... -> ... => ...
-//               ^
+// fn <...> -> <...> => <...>
+//                   ^
 //   1. Expr
 //   2. LambdaBodyFinish
 CARBON_PARSE_STATE(LambdaBody)
 
 // Finishes a lambda expression.
 //
-// fn ... }
-//         ^
-// fn ... => expr
-//               ^
+// fn <...> }
+//           ^
+// fn <...> => expr
+//                 ^
 //   (state done)
 CARBON_PARSE_STATE(LambdaBodyFinish)
 
@@ -842,67 +860,67 @@ CARBON_PARSE_STATE(LambdaBodyFinish)
 // possibility a `->` return type is there. Always enqueues signature finish
 // handling.
 //
-// fn F(...) -> ...
-//           ^~
+// fn F(<...>) -> <...>
+//             ^~
 //   1. Expr
 //   2. FunctionReturnTypeFinish
 //   3. FunctionSignatureFinish
 //
-// fn F(...) ->? ...
-//           ^~~
+// fn F(<...>) ->? <...>
+//             ^~~
 //   1. Expr
 //   2. FunctionReturnFormFinish
 //   3. FunctionSignatureFinish
 //
-// fn F(...) ...
-//          ^
+// fn F(<...>) <...>
+//            ^
 //   1. FunctionSignatureFinish
 CARBON_PARSE_STATE(FunctionAfterParams)
 
 // Finishes a function return type.
 //
-// fn F(...) -> expr ...
-//                  ^
+// fn F(<...>) -> expr <...>
+//                    ^
 //   (state done)
 CARBON_PARSE_STATE(FunctionReturnTypeFinish)
 
 // Finishes a function return form.
 //
-// fn F(...) ->? expr ...
-//                  ^
+// fn F(<...>) ->? expr <...>
+//                    ^
 //   (state done)
 CARBON_PARSE_STATE(FunctionReturnFormFinish)
 
 // Finishes a function signature. If it's a declaration, the function is done;
 // otherwise, this also starts definition processing.
 //
-// fn ... ;
-//        ^
+// fn <...> ;
+//          ^
 //   (state done)
 //
-// fn ... {
-//        ^
+// fn <...> {
+//          ^
 //   1. StatementScopeLoop
 //   2. FunctionDefinitionFinish
 //
-// fn ... ??? ;
-//        ^~~~~
+// fn <...> <???> ;
+//          ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(FunctionSignatureFinish)
 
 // Finishes a function definition.
 //
-// fn ... }
-//         ^
-// fn ... ;
-//         ^
+// fn <...> }
+//           ^
+// fn <...> ;
+//           ^
 //   (state done)
 CARBON_PARSE_STATE(FunctionDefinitionFinish)
 
 // Finishes a function with a terse body.
 //
-// fn ... => expr ;
-//                ^
+// fn <...> => expr ;
+//                  ^
 //   (state done)
 CARBON_PARSE_STATE(FunctionTerseBodyFinish)
 
@@ -927,8 +945,8 @@ CARBON_PARSE_STATE(ExportNameFinish)
 //        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // import library "libname" ;
 //        ^~~~~~~~~~~~~~~~~~~
-// import ??? ;
-//        ^~~~~
+// import <???> ;
+//        ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(Import)
 
@@ -936,14 +954,14 @@ CARBON_PARSE_STATE(Import)
 //
 // library "libname" ;
 //         ^~~~~~~~~~~
-// library ??? ;
-//         ^~~~~
+// library <???> ;
+//         ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(Library)
 
 // Handles `match_first` and opens the block.
 //
-// match_first { ...
+// match_first { <...>
 // ^~~~~~~~~~~~~
 //   1. DeclScopeLoopAsRegular
 //   2. MatchFirstFinish
@@ -951,14 +969,14 @@ CARBON_PARSE_STATE(MatchFirst)
 
 // Handles closing the `match_first` block.
 //
-// match_first { ... }
-//                   ^
+// match_first { <...> }
+//                     ^
 //   (state done)
 CARBON_PARSE_STATE(MatchFirstFinish)
 
 // Handles `namespace`.
 //
-// namespace ...
+// namespace <...>
 //          ^
 //   1. DeclNameAndParams
 //   2. NamespaceFinish
@@ -966,10 +984,10 @@ CARBON_PARSE_STATE(Namespace)
 
 // Handles `namespace` after the name.
 //
-// namespace ... ;
-//               ^
-// namespace ... ??? ;
-//               ^~~~~
+// namespace <...> ;
+//                 ^
+// namespace <...> <???> ;
+//                 ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(NamespaceFinish)
 
@@ -977,14 +995,14 @@ CARBON_PARSE_STATE(NamespaceFinish)
 //
 // package pkgname [library "libname"] ;
 //         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// package ??? ;
-//         ^~~~~
+// package <???> ;
+//         ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(Package)
 
 // Handles `alias` after the introducer.
 //
-// alias ...
+// alias <...>
 //      ^
 //   1. DeclNameAndParams
 //   2. AliasInitializer
@@ -992,21 +1010,21 @@ CARBON_PARSE_STATE(Alias)
 
 // Handles `alias` after the name.
 //
-// alias ... = ... ;
-//           ^
+// alias <...> = <...> ;
+//             ^
 //   1. Expr
 //   2. AliasFinish
 //
-// alias ???
+// alias <???>
 //       ^
 //   (state done)
 CARBON_PARSE_STATE(AliasAfterName)
 
 // Handles `alias` at the end.
 //
-// alias ... ;
-//           ^
-// alias ???
+// alias <...> ;
+//             ^
+// alias <???>
 //       ^
 //   (state done)
 CARBON_PARSE_STATE(AliasFinish)
@@ -1015,20 +1033,20 @@ CARBON_PARSE_STATE(AliasFinish)
 // whether it is part of an implicit parameter list, struct pattern or a tuple
 // pattern.
 //
-//  ...
+//  <...>
 // ^
 //   1. Pattern
 //   2. PatternListElementCheckForDefaultValue
 //   2. PatternListElementFinishAs(Tuple|Struct|Explicit|Implicit)
 //
-//  .foo = ... (variant is Struct)
+//  .foo = <...> (variant is Struct)
 // ^
 //   1. PeriodAsStruct
 //   2. StructPatternFieldAfterDesignator
 //   3. PatternListElementCheckForDefaultValue
 //   4. PatternListElementFinishAsStruct
 //
-//  _ ... (variant is Struct)
+//  _ <...> (variant is Struct)
 // ^
 //  1. StructPatternUnderscore
 //  2. PatternListElementFinishAsStruct
@@ -1039,21 +1057,21 @@ CARBON_PARSE_STATE_VARIANTS4(PatternListElement, Tuple, Struct, Explicit,
 // this state checks for the `=` and if present parses it before moving on
 // to finish the list element.
 //
-// ... = ...
-//     ^
+// <...> = <...>
+//       ^
 //   1. Expr
 //   2. PatternListElementFinishDefaultValue
 //
-//  ...
-//      ^
+//  <...>
+//        ^
 //   (state done)
 CARBON_PARSE_STATE(PatternListElementCheckForDefaultValue)
 
 // After parsing the default value Expr this state attaches that Expr
 // as a default value to the pattern.
 //
-// ... = ...
-//           ^
+// <...> = <...>
+//               ^
 //   (state done)
 CARBON_PARSE_STATE(PatternListElementFinishDefaultValue)
 
@@ -1061,26 +1079,26 @@ CARBON_PARSE_STATE(PatternListElementFinishDefaultValue)
 // optional trailing `,`. If there are more patterns, enqueues another
 // pattern parsing state.
 //
-// ... , )  (variant is Tuple)
-//     ^
+// <...> , )  (variant is Tuple)
+//       ^
 //   (state done)
 //   SPECIAL: parent becomes PatternListFinishAsTuple
 //
-// ... , }  (variant is Struct)
-//     ^
+// <...> , }  (variant is Struct)
+//       ^
 //   (state done)
 //
-// ... , ]  (variant is Implicit)
-//     ^
+// <...> , ]  (variant is Implicit)
+//       ^
 //   (state done)
 //
-// ... , ...
-//     ^
+// <...> , <...>
+//       ^
 //   1. PatternListElementAs(Tuple|Struct|Explicit|Implicit)
 //   SPECIAL (variant is Tuple): parent becomes PatternListFinishAsTuple
 //
-// ...
-//    ^
+// <...>
+//      ^
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS4(PatternListElementFinish, Tuple, Struct, Explicit,
                              Implicit)
@@ -1096,19 +1114,19 @@ CARBON_PARSE_STATE_VARIANTS4(PatternListElementFinish, Tuple, Struct, Explicit,
 // ^
 //   1. PatternListFinishAs(Tuple|Struct|Explicit|Implicit)
 //
-// ( ... )    (variant is Explicit)
+// ( <...> )  (variant is Explicit)
 // ^
-// [ ... ]    (variant is Implicit)
+// [ <...> ]  (variant is Implicit)
 // ^
 //   1. PatternListElementAs(Explicit|Implicit)
 //   2. PatternListFinishAs(Explicit|Implicit)
 //
-// ( ... )    (variant is Tuple)
+// ( <...> )  (variant is Tuple)
 // ^
 //   1. PatternListElementAsTuple
 //   2. PatternListFinishAsParen             (SPECIAL: may be replaced)
 //
-// { ... }    (variant is Struct)
+// { <...> }  (variant is Struct)
 // ^
 //   1. PatternListElementAsStruct
 //   2. PatternListFinishAsStruct
@@ -1116,43 +1134,43 @@ CARBON_PARSE_STATE_VARIANTS4(PatternList, Tuple, Struct, Explicit, Implicit)
 
 // Handles processing of a parameter list `]`, `)` or `}`.
 //
-// ( ... )    (variant is Paren, Tuple or Explicit)
-//       ^
-// [ ... ]    (variant is Implicit)
-//       ^
-// { ... }    (variant is Struct)
-//       ^
+// ( <...> )  (variant is Paren, Tuple or Explicit)
+//         ^
+// [ <...> ]  (variant is Implicit)
+//         ^
+// { <...> }  (variant is Struct)
+//         ^
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS5(PatternListFinish, Paren, Tuple, Struct, Explicit,
                              Implicit)
 
 //
-// ... ,
-//    ^
+// <...> ,
+//      ^
 //   (state done)
 //
-// ... }
-//    ^
+// <...> }
+//      ^
 //   (state done)
 CARBON_PARSE_STATE(StructPatternDesignatedFieldFinish)
 
 // Handles a struct pattern parameter after the initial designator.
-// .foo = ...
+// .foo = <...>
 //      ^
 //   1. Pattern
 //   2. StructPatternDesignatedFieldFinish
 //
-// .foo ??? = ...
-//      ^~~~~
+// .foo <???> = <...>
+//      ^~~~~~~
 //   1. Pattern
 //   2. StructPatternDesignatedFieldFinish
 //
-// .foo ??? , ...
-//      ^~~~
+// .foo <???> , <...>
+//      ^~~~~~
 //   1. StructPatternDesignatedFieldFinish
 //
-// .foo ??? } ...
-//      ^~~~
+// .foo <???> } <...>
+//      ^~~~~~
 //   1. StructPatternDesignatedFieldFinish
 CARBON_PARSE_STATE(StructPatternFieldAfterDesignator)
 
@@ -1161,11 +1179,11 @@ CARBON_PARSE_STATE(StructPatternFieldAfterDesignator)
 //  ^
 //   (state done)
 //
-//  _ : ???
+//  _ : <???>
 // ^
 // 1. BindingPattern
 //
-//  _ :? ???
+//  _ :? <???>
 // ^
 // 1. BindingPattern
 CARBON_PARSE_STATE(StructPatternUnderscore)
@@ -1176,9 +1194,9 @@ CARBON_PARSE_STATE(StructPatternUnderscore)
 //               ^
 //   1. ParenConditionAs(If|While|Match)Finish
 //
-// if/while/match ( ... )
+// if/while/match ( <...> )
 //                ^
-// if/while/match ???
+// if/while/match <???>
 //               ^
 //   1. Expr
 //   2. ParenConditionAs(If|While|Match)Finish
@@ -1190,23 +1208,23 @@ CARBON_PARSE_STATE_VARIANTS3(ParenCondition, If, While, Match)
 //                       ^
 // if/while/match {
 //               ^
-// if/while/match ??? {
-//                   ^
+// if/while/match <???> {
+//                     ^
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS3(ParenConditionFinish, If, While, Match)
 
 // Handles compound member access `(` after `->` or `.`
 //
-// ( ... )
+// ( <...> )
 // ^
 //   1. Expr
 //   2. OnlyParenExprFinish
 CARBON_PARSE_STATE(OnlyParenExpr)
 
-// Handles the `)` after `->(`... or `.(`...
+// Handles the `)` after `->(` <...> or `.(` <...>
 //
-// ( ... )
-//       ^
+// ( <...> )
+//         ^
 CARBON_PARSE_STATE(OnlyParenExprFinish)
 
 // Handles the `(` of an expression that's presumed to be a parenthesized
@@ -1216,7 +1234,7 @@ CARBON_PARSE_STATE(OnlyParenExprFinish)
 // ^
 //   1. TupleLiteralFinish
 //
-// ( ... )
+// ( <...> )
 // ^
 //   1. Expr
 //   2. ExprAfterOpenParenFinish
@@ -1225,77 +1243,77 @@ CARBON_PARSE_STATE(ParenExpr)
 
 // Handles the `)` of a tuple literal.
 //
-// ( ... )
-//       ^
+// ( <...> )
+//         ^
 //   (state done)
 CARBON_PARSE_STATE(TupleLiteralFinish)
 
 // Handles the end of an expression following an open parenthesis.
 //
-// ( ... , )
-//       ^
+// ( <...> , )
+//         ^
 //   (state done)
 //   SPECIAL: parent becomes TupleLiteralFinish
 //
-// ( ... , ... )
-//       ^
+// ( <...> , <...> )
+//         ^
 //   1. Expr
 //   2. TupleLiteralElementFinish
 //   SPECIAL: parent becomes TupleLiteralFinish
 //
-// ( ... )
-//      ^
+// ( <...> )
+//        ^
 //   (state done)
 CARBON_PARSE_STATE(ExprAfterOpenParenFinish)
 
 // Handles the end of an expression that is known to be an element of a tuple
 // literal expression.
 //
-// ( ... , )
-//       ^
+// ( <...> , )
+//         ^
 //   (state done)
 //
-// ( ... , ... )
-//       ^
+// ( <...> , <...> )
+//         ^
 //   1. Expr
 //   2. TupleLiteralElementFinish
 //
-// ( ... )
-//      ^
+// ( <...> )
+//        ^
 //   (state done)
 CARBON_PARSE_STATE(TupleLiteralElementFinish)
 
 // Handles the `)` of a parenthesized single expression.
 //
-// ( ... )
-//       ^
+// ( <...> )
+//         ^
 //   (state done)
 CARBON_PARSE_STATE(ParenExprFinish)
 
 // Handles processing of a pattern.
 //
-//  ( ... )
+//  ( <...> )
 // ^
 //   1. PatternListAsTuple
 //
-//  var ...
+//  var <...>
 // ^
 //
 //   1. VariablePattern
 //
-//  unused ...
+//  unused <...>
 // ^
 //   1. UnusedPattern
 //
 //  [identifier|self] [:|:!|:?]
 // ^
-//  template ...
+//  template <...>
 // ^
-//  ref ...
+//  ref <...>
 // ^
 //   1. BindingPattern
 //
-//  ...
+//  <...>
 // ^
 //   1. Expr
 //   2. ExprPattern
@@ -1303,7 +1321,7 @@ CARBON_PARSE_STATE(Pattern)
 
 // Tracks that we are parsing an expression as an expression pattern.
 //
-//  ...
+//  <...>
 // ^
 //   (state done)
 CARBON_PARSE_STATE(ExprPattern)
@@ -1314,34 +1332,34 @@ CARBON_PARSE_STATE(ExprPattern)
 // TODO: treat `ref` as a unary pattern operator in order to avoid ambiguity
 // with `ref` in expression patterns. See issue #6342.
 //
-// [ref] name: ...
+// [ref] name: <...>
 // ^~~~~~~~~~~
-// [ref] self: ...
+// [ref] self: <...>
 // ^~~~~~~~~~~
-// [ref] _: ...
+// [ref] _: <...>
 // ^~~~~~~~
 //   1. Expr
 //   2. BindingPatternFinishAsRegular
 //
-// [template] name:! ...
+// [template] name:! <...>
 // ^~~~~~~~~~~~~~~~~
-// [template] self:! ...
+// [template] self:! <...>
 // ^~~~~~~~~~~~~~~~~
-// [template] _:! ...
+// [template] _:! <...>
 // ^~~~~~~~~~~~~~
 //   1. Expr
 //   2. BindingPatternFinishAsGeneric
 //
-// name:? ...
+// name:? <...>
 // ^~~~~~
-// self:? ...
+// self:? <...>
 // ^~~~~~
-// _:? ...
+// _:? <...>
 // ^~~
 //   1. Expr
 //   2. BindingPatternFinishAsForm
 //
-//  ???
+//  <???>
 // ^
 //   1. BindingPatternFinishAsRegular
 CARBON_PARSE_STATE(BindingPattern)
@@ -1355,7 +1373,7 @@ CARBON_PARSE_STATE_VARIANTS3(BindingPatternFinish, Generic, Regular, Form)
 
 // Handles `var` in a pattern context.
 //
-// var ...
+// var <...>
 // ^~~
 //   1. Pattern
 //   2. FinishVariablePattern
@@ -1363,14 +1381,14 @@ CARBON_PARSE_STATE(VariablePattern)
 
 // Finishes `var` in a pattern context.
 //
-// var ...
-//        ^
+// var <...>
+//          ^
 //   (state done)
 CARBON_PARSE_STATE(FinishVariablePattern)
 
 // Handles `unused` in a pattern context.
 //
-// unused ...
+// unused <...>
 // ^~~~~~
 //   1. Pattern
 //   2. FinishUnusedPattern
@@ -1378,8 +1396,8 @@ CARBON_PARSE_STATE(UnusedPattern)
 
 // Finishes `unused` in a pattern context.
 //
-// unused ...
-//           ^
+// unused <...>
+//             ^
 //   (state done)
 CARBON_PARSE_STATE(FinishUnusedPattern)
 
@@ -1387,43 +1405,48 @@ CARBON_PARSE_STATE(FinishUnusedPattern)
 // can also be used for error recovery where we expect a statement block and
 // are missing braces.
 //
-// break ...
+// break <...>
 // ^~~~~
 //   1. StatementBreakFinish
 //
-// continue ...
+// continue <...>
 // ^~~~~~~~
 //   1. StatementContinueFinish
 //
-// for ...
+// for <...>
 // ^~~
 //   1. StatementForHeader
 //   2. StatementForFinish
 //
-//  if ...
+//  if <...>
 // ^
 //   1. StatementIf
 //
-//  return ...
+//  return <...>
 // ^
 //   1. StatementReturn
 //
-//  returned ...
+//  returned <...>
 // ^
 //   1. VarAsReturned
 //
-//  while ...
+//  while <...>
 // ^
 //   1. StatementWhile
 //
-//  ...
+//  <...>
 // ^
 //   1. Expr
 //   2. ExprStatementFinish
 //
-//  match ...
+//  match <...>
 // ^
 //   1. MatchIntroducer
+//
+// ... <...>
+// ^~~
+//   1. Statement
+//   2. StatementPackExpansionFinish
 //
 //  <decl introducer or modifier>
 // ^
@@ -1446,9 +1469,9 @@ CARBON_PARSE_STATE(StatementContinueFinish)
 
 // Handles `for` processing of `(`, proceeding to a pattern before continuing.
 //
-// for ( ... )
+// for ( <...> )
 //     ^
-// for ???
+// for <???>
 //    ^
 //   1. Pattern
 //   2. StatementForHeaderIn
@@ -1457,33 +1480,33 @@ CARBON_PARSE_STATE(StatementForHeader)
 // Handles `for` processing of `in`, proceeding to an expression before
 // continuing.
 //
-// for ( ... in ... )
-//           ^~
-// for ( ... : ... )
-//           ^
-// for ( ... ??? )
-//          ^
+// for ( <...> in <...> )
+//             ^~
+// for ( <...> : <...> )
+//             ^
+// for ( <...> <???> )
+//            ^
 //   1. Expr
 //   2. StatementForHeaderFinish
 CARBON_PARSE_STATE(StatementForHeaderIn)
 
 // Handles `for` processing of `)`, proceeding to the statement block.
 //
-// for ( ... ) ...
-//           ^
+// for ( <...> ) <...>
+//             ^
 //   1. CodeBlock
 CARBON_PARSE_STATE(StatementForHeaderFinish)
 
 // Handles `for` processing after the final `}`.
 //
-// for ( ... ) { ... }
-//                    ^
+// for ( <...> ) { <...> }
+//                        ^
 //   (state done)
 CARBON_PARSE_STATE(StatementForFinish)
 
 // Handles `if` processing at the start.
 //
-// if ...
+// if <...>
 // ^~
 //   1. ParenConditionAsIf
 //   2. StatementIfConditionFinish
@@ -1492,8 +1515,8 @@ CARBON_PARSE_STATE(StatementIf)
 // Handles `if` processing between the condition and start of the first code
 // block.
 //
-// if ( ... ) ...
-//           ^
+// if ( <...> ) <...>
+//             ^
 //   1. CodeBlock
 //   2. StatementIfThenBlockFinish
 CARBON_PARSE_STATE(StatementIfConditionFinish)
@@ -1501,24 +1524,24 @@ CARBON_PARSE_STATE(StatementIfConditionFinish)
 // Handles `if` processing after the end of the first code block, with the
 // optional `else`.
 //
-// if ( ... ) { ... } else if ...
-//                    ^~~~
+// if ( <...> ) { <...> } else if <...>
+//                        ^~~~
 //   1. StatementIf
 //   2. StatementIfElseBlockFinish
 //
-// if ( ... ) { ... } else ...
-//                    ^~~~
+// if ( <...> ) { <...> } else <...>
+//                        ^~~~
 //   1. CodeBlock
 //   2. StatementIfElseBlockFinish
 //
-// if ( ... ) { ... } ...
+// if ( <...> ) { <...> } <...>
 //   (state done)
 CARBON_PARSE_STATE(StatementIfThenBlockFinish)
 
 // Handles `if` processing after a provided `else` code block.
 //
-// if ( ... ) { ... } else { ... }
-//                                ^
+// if ( <...> ) { <...> } else { <...> }
+//                                      ^
 //   (state done)
 CARBON_PARSE_STATE(StatementIfElseBlockFinish)
 
@@ -1528,11 +1551,11 @@ CARBON_PARSE_STATE(StatementIfElseBlockFinish)
 // ^~~~~~
 //   1. StatementReturnFinish
 //
-// return var ...
+// return var <...>
 // ^~~~~~~~~~
 //   1. StatementReturnFinish
 //
-// return ...
+// return <...>
 // ^~~~~~
 //   1. Expr
 //   2. StatementReturnFinish
@@ -1540,26 +1563,33 @@ CARBON_PARSE_STATE(StatementReturn)
 
 // Handles `return` processing at the `;`.
 //
-// return ... ;
-//            ^
+// return <...> ;
+//              ^
 //   (state done)
 CARBON_PARSE_STATE(StatementReturnFinish)
 
+// Handles a pack expansion statement after its body.
+//
+// ... <statement>
+//                ^
+//   (state done)
+CARBON_PARSE_STATE(StatementPackExpansionFinish)
+
 // Handles processing of statements within a scope.
 //
-// { ... }
-//      ^
+// { <...> }
+//        ^
 //   (state done)
 //
-// { ... ... }
-//      ^
+// { <...> <...> }
+//        ^
 //   1. Statement
 //   2. StatementScopeLoop
 CARBON_PARSE_STATE(StatementScopeLoop)
 
 // Handles `while` processing.
 //
-// while ...
+// while <...>
 // ^~~~~
 //   1. ParenConditionAsWhile
 //   2. StatementWhileConditionFinish
@@ -1567,30 +1597,30 @@ CARBON_PARSE_STATE(StatementWhile)
 
 // Handles `while` processing between the condition and start of the code block.
 //
-// while ( ... ) ...
-//              ^
+// while ( <...> ) <...>
+//                ^
 //   1. CodeBlock
 //   2. StatementWhileBlockFinish
 CARBON_PARSE_STATE(StatementWhileConditionFinish)
 
 // Handles `while` processing after the end of the code block.
 //
-// while ( ... ) { ... }
-//                      ^
+// while ( <...> ) { <...> }
+//                          ^
 //   (state done)
 CARBON_PARSE_STATE(StatementWhileBlockFinish)
 
 // Handles parsing after the declaration scope of a type.
 //
-// class/impl/interface/constraint ... { ... }
-//                                           ^
+// class/impl/interface/constraint <...> { <...> }
+//                                               ^
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS4(DeclDefinitionFinish, Class, Impl, Interface,
                              NamedConstraint)
 
 // Handles processing of a type after its introducer.
 //
-// class/interface/constraint ...
+// class/interface/constraint <...>
 //                           ^
 //   1. DeclNameAndParams
 //   2. DeclOrDefinitionAs(Class|Interface|NamedConstraint)
@@ -1599,15 +1629,15 @@ CARBON_PARSE_STATE_VARIANTS3(TypeAfterIntroducer, Class, Interface,
 
 // Handles processing of a type after its optional parameters.
 //
-// class/impl/interface/constraint name ( ... ) {
-//                                              ^
+// class/impl/interface/constraint name ( <...> ) {
+//                                                ^
 //   1. DeclScopeLoopAs(Class|Regular)
 //   2. DeclDefinitionFinishAs(Class|Impl|Interface|NamedConstraint)
 //
-// class/impl/interface/constraint name ( ... ) ;
-//                                              ^
-// class/impl/interface/constraint name ( ... ) ???
-//                                              ^
+// class/impl/interface/constraint name ( <...> ) ;
+//                                                ^
+// class/impl/interface/constraint name ( <...> ) <???>
+//                                                ^
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS4(DeclOrDefinition, Class, Impl, Interface,
                              NamedConstraint)
@@ -1624,8 +1654,8 @@ CARBON_PARSE_STATE(AdaptAfterIntroducer)
 //
 // adapt T ;
 //         ^
-// adapt T ??? ;
-//         ^~~~~
+// adapt T <???> ;
+//         ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(AdaptDecl)
 
@@ -1635,8 +1665,8 @@ CARBON_PARSE_STATE(AdaptDecl)
 //     ^
 //   1. Expr
 //   2. BaseDecl
-// base ??? ;
-//      ^~~
+// base <???> ;
+//      ^~~~~
 //   (state done)
 CARBON_PARSE_STATE(BaseAfterIntroducer)
 
@@ -1644,23 +1674,23 @@ CARBON_PARSE_STATE(BaseAfterIntroducer)
 //
 // base: B ;
 //         ^
-// base: B ??? ;
-//         ^~~~~
+// base: B <???> ;
+//         ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(BaseDecl)
 
 // Handles processing of an `impl...as` declaration after the introducer.
 //
-// impl forall [ ...
+// impl forall [ <...>
 //      ^~~~~~
 //   1. PatternListAsImplicit
 //   2. ImplAfterForall
 //   3. DeclOrDefinitionAsImpl
-// impl as ...
+// impl as <...>
 //      ^~
 //   1. Expr
 //   2. DeclOrDefinitionAsImpl
-// impl TypeExpression as ...
+// impl TypeExpression as <...>
 //     ^
 //   1. Expr
 //   2. ImplBeforeAs
@@ -1670,11 +1700,11 @@ CARBON_PARSE_STATE(ImplAfterIntroducer)
 // Handles processing of an `impl forall` declaration after the implicit
 // parameter list.
 //
-// impl forall [ ... ] as ...
-//                     ^~
+// impl forall [ <...> ] as <...>
+//                       ^~
 //   1. Expr
-// impl forall [ ... ] TypeExpression as ...
-//                    ^
+// impl forall [ <...> ] TypeExpression as <...>
+//                      ^
 //   1. Expr
 //   2. ImplBeforeAs
 CARBON_PARSE_STATE(ImplAfterForall)
@@ -1682,18 +1712,18 @@ CARBON_PARSE_STATE(ImplAfterForall)
 // Handles processing of the `as` in an `impl` declaration after the type
 // expression.
 //
-// impl TypeExpression as ...
+// impl TypeExpression as <...>
 //                     ^~
 //   1. Expr
 CARBON_PARSE_STATE(ImplBeforeAs)
 
 // Handles processing of a `require...impls` declaration after the introducer.
 //
-// require impls ...
+// require impls <...>
 //         ^~~~~
 //   1. Expr
 //   2. RequireDecl
-// require TypeExpression impls ...
+// require TypeExpression impls <...>
 //        ^
 //   1. Expr
 //   2. RequireBeforeImpls
@@ -1703,7 +1733,7 @@ CARBON_PARSE_STATE(RequireAfterIntroducer)
 // Handles processing of the `impls` in a `require` declaration after the type
 // expression.
 //
-// require TypeExpression impls ...
+// require TypeExpression impls <...>
 //                        ^~~~~
 //   1. Expr
 CARBON_PARSE_STATE(RequireBeforeImpls)
@@ -1717,7 +1747,7 @@ CARBON_PARSE_STATE(RequireDecl)
 
 // Handles processing of an `observe` declaration after the introducer.
 //
-// observe TypeExpression ...
+// observe TypeExpression <...>
 //        ^
 //   1. Expr
 //   2. ObserveOperator
@@ -1725,11 +1755,11 @@ CARBON_PARSE_STATE(ObserveAfterIntroducer)
 
 // Handles processing of an operator in an `observe` declaration.
 //
-// observe TypeExpression == TypeExpression ...
+// observe TypeExpression == TypeExpression <...>
 //                        ^~
 //   1. Expr
 //   2. ObserveFinishOperator
-// observe TypeExpression impls ...
+// observe TypeExpression impls <...>
 //                        ^~~~~
 //   1. Expr
 //   2. ObserveFinishOperator
@@ -1737,7 +1767,7 @@ CARBON_PARSE_STATE(ObserveOperator)
 
 // Finishes an operator in an `observe` declaration.
 //
-// observe TypeExpression == TypeExpression ...
+// observe TypeExpression == TypeExpression <...>
 //                                         ^
 //   1. ObserveOperator
 // observe TypeExpression == TypeExpression ;
@@ -1747,56 +1777,56 @@ CARBON_PARSE_STATE(ObserveFinishOperator)
 
 // Handles processing of a completed `observe` declaration.
 //
-// observe ... ;
-//             ^
+// observe <...> ;
+//               ^
 //   (state done)
 CARBON_PARSE_STATE(ObserveDecl)
 
 // Handles the start of a `var` or `returned var` in a non-class context.
 //
-// var ...             (variant is Regular)
+// var <...>           (variant is Regular)
 //    ^
 //   1. Pattern
 //   2. VarAfterPattern
 //   3. VarFinish
 //
-// returned var ...    (variant is Returned)
+// returned var <...>  (variant is Returned)
 // ^~~~~~~~~~~~
 //   1. Pattern
 //   2. VarAfterPattern
 //   3. VarFinish
 //
-// returned ??? ;      (variant is Returned)
-// ^~~~~~~~~~~~~~
+// returned <???> ;    (variant is Returned)
+// ^~~~~~~~~~~~~~~~
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS2(Var, Regular, Returned)
 
 // Handles `var` after the pattern, either followed by an initializer or the
 // semicolon.
 //
-// var ... = ...
-//         ^
-// var ... ??? = ...
-//         ^~~~~
+// var <...> = <...>
+//           ^
+// var <...> <???> = <...>
+//           ^~~~~~~
 //   1. Expr
 //
-// var ... ...
-//        ^
+// var <...> <...>
+//          ^
 //   (state done)
 CARBON_PARSE_STATE(VarAfterPattern)
 
 // Handles `var` parsing at the end.
 //
-// var ... ;
-//         ^
-// var ... ??? ;
-//         ^~~~~
+// var <...> ;
+//           ^
+// var <...> <???> ;
+//           ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(VarFinish)
 
 // Handles the start of a `let`.
 //
-// let ...
+// let <...>
 //    ^
 //   1. Pattern
 //   2. LetAfterPattern
@@ -1807,44 +1837,44 @@ CARBON_PARSE_STATE(Let)
 // initializer is required except in an associated constant declaration, but
 // that is enforced by check.
 //
-// let ... = ...
-//         ^
-// let ... ??? = ...
-//         ^~~~~
+// let <...> = <...>
+//           ^
+// let <...> <???> = <...>
+//           ^~~~~~~
 //   1. Expr
 //
-// let ... ;
-//        ^
-// let ... ??? ;
-//         ^~~
+// let <...> ;
+//          ^
+// let <...> <???> ;
+//           ^~~~~
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS2(LetAfterPattern, Regular, AssociatedConstant)
 
 // Handles `let` parsing at the end.
 //
-// let ... ;
-//         ^
-// let ... ??? ;
-//         ^~~~~
+// let <...> ;
+//           ^
+// let <...> <???> ;
+//           ^~~~~~~
 //   (state done)
 CARBON_PARSE_STATE_VARIANTS2(LetFinish, Regular, AssociatedConstant)
 
 // Handles the start of an associated constant declaration (`let` in an
 // interface context).
 //
-// let name :! ...
+// let name :! <...>
 //     ^~~~~~~
 //   1. AssociatedConstantFinish
-// let ??? ;
-//     ^~~~~
-// let name ??? ;
-//     ^~~~~~~~~
+// let <???> ;
+//     ^~~~~~~
+// let name <???> ;
+//     ^~~~~~~~~~~~
 //   (state done)
 CARBON_PARSE_STATE(AssociatedConstant)
 
 // Handles a choice's introducer.
 //
-// choice ...
+// choice <...>
 // ^~~~~~
 //   1. DeclNameAndParams
 //   2. ChoiceDefinitionStart
@@ -1853,26 +1883,26 @@ CARBON_PARSE_STATE(ChoiceIntroducer)
 
 // Handles processing of a choice after its optional parameters.
 //
-// choice name ... {}
-//                 ^
+// choice name <...> {}
+//                   ^
 //   (state done)
 //
-// choice name ... { ... }
-//                 ^
+// choice name <...> { <...> }
+//                   ^
 //   1. ChoiceAlternative
 //
-// choice name ... ???
-//                 ^
+// choice name <...> <???>
+//                   ^
 //   (state done)
 CARBON_PARSE_STATE(ChoiceDefinitionStart)
 
 // Starts alternative parsing.
 //
-//  name( ... )
+//  name( <...> )
 //  ^~~~
 //   1. ParamListAsRegular
 //   2. ChoiceAlternativeFinish
-//  name ...
+//  name <...>
 //  ^~~~
 //   1. ChoiceAlternativeFinish
 CARBON_PARSE_STATE(ChoiceAlternative)
@@ -1880,29 +1910,29 @@ CARBON_PARSE_STATE(ChoiceAlternative)
 // Finishes parsing a choice's alternative, including the optional trailing `,`.
 // If there are more alternatives, enqueues another alternative parsing state.
 //
-// ... , }
-//     ^
+// <...> , }
+//       ^
 //   (state done)
 //
-// ... , ...
-//     ^
+// <...> , <...>
+//       ^
 //   1. ChoiceAlternative
 //
-// ...
-//    ^
+// <...>
+//      ^
 //   (state done)
 CARBON_PARSE_STATE(ChoiceAlternativeFinish)
 
 // Finishes a choice definition.
 //
-// choice ... }
-//            ^
+// choice <...> }
+//              ^
 //   (state done)
 CARBON_PARSE_STATE(ChoiceDefinitionFinish)
 
 // Handles `match` introducer.
 //
-// match ...
+// match <...>
 // ^~~~~
 //   1. ParenConditionAsMatch
 //   2. MatchConditionFinish
@@ -1910,43 +1940,43 @@ CARBON_PARSE_STATE(MatchIntroducer)
 
 // Handles `match` cases block start after the condition.
 //
-// match (...) { ... }
-//             ^
+// match (<...>) { <...> }
+//               ^
 //   1. MatchCaseLoop
 //   2. MatchStatementFinish
 //
-// match (...) ???
-//             ^
+// match (<...>) <???>
+//               ^
 //   (state done)
 CARBON_PARSE_STATE(MatchConditionFinish)
 
 // Handles `match` cases.
 //
-// match (...) { case ...}
-//              ^
+// match (<...>) { case <...>}
+//                ^
 //   1. MatchCaseIntroducer
 //   2. MatchCaseLoop
-// match (...) { default ...}
-//              ^
+// match (<...>) { default <...>}
+//                ^
 //   1. MatchDefaultIntroducer
 //   2. MatchCaseLoopAfterDefault
 CARBON_PARSE_STATE(MatchCaseLoop)
 
 // Handles `match` `case` introducer.
 //
-// match (...) { case ...}
-//               ^~~~
+// match (<...>) { case <...>}
+//                 ^~~~
 //   1. Pattern
 //   2. MatchCaseAfterPattern
 CARBON_PARSE_STATE(MatchCaseIntroducer)
 
 // Handles `match` case after pattern.
 //
-// match (...) { case ... => ... }
-//                       ^
+// match (<...>) { case <...> => <...> }
+//                           ^
 //   1. MatchCaseStart
-// match (...) { case ... if (...) }
-//                        ^~~~
+// match (<...>) { case <...> if (<...>) }
+//                            ^~~~
 //   1. Expr
 //   2. MatchCaseGuardFinish
 //   3. MatchCaseStart
@@ -1954,73 +1984,73 @@ CARBON_PARSE_STATE(MatchCaseAfterPattern)
 
 // Handles `match` case guard closing parenthesis.
 //
-// match (...) { case ... if (...) => ... }
-//                               ^
+// match (<...>) { case <...> if (<...>) => <...> }
+//                                     ^
 //   (state done)
 CARBON_PARSE_STATE(MatchCaseGuardFinish)
 
 // Handles `match` case `=>` and `{` opening statements block.
 //
-// match (...) { case ... => {...} }
-//                        ^~~~
+// match (<...>) { case <...> => {<...>} }
+//                            ^~~~
 //   1. StatementScopeLoop
 //   2. MatchHandlerFinish
 //
-// match (...) { case ... ??? }
-//                        ^
+// match (<...>) { case <...> <???> }
+//                            ^
 //   (state done)
 //
-// match (...) { case ... => ??? }
-//                           ^
+// match (<...>) { case <...> => <???> }
+//                               ^
 //   (state done)
 CARBON_PARSE_STATE(MatchCaseStart)
 
 // Handles `match` default introducer, `=>` and `{` opening statements block.
 //
-// match (...) { default => {...} }
-//               ^~~~~~~~~~~~
+// match (<...>) { default => {<...>} }
+//                 ^~~~~~~~~~~~
 //   1. StatementScopeLoop
 //   2. MatchHandlerFinish
 //
-// match (...) { default ??? }
-//                       ^
+// match (<...>) { default <???> }
+//                         ^
 //   (state done)
 //
-// match (...) { default => ??? }
-//                          ^
+// match (<...>) { default => <???> }
+//                            ^
 //   (state done)
 CARBON_PARSE_STATE(MatchDefaultIntroducer)
 
 // Handles `match` handler block closing `}`.
 //
-// match (...) { case ... => {...} }
-//                               ^
+// match (<...>) { case <...> => {<...>} }
+//                                     ^
 //   (state done)
 //
-// match (...) { default => {...} }
-//                              ^
+// match (<...>) { default => {<...>} }
+//                                  ^
 //   (state done)
 CARBON_PARSE_STATE(MatchHandlerFinish)
 
 // Handles `match` cases after the `default` case.
 //
-// match (...) { default => {...} case ... }
-//                                ^~~~
+// match (<...>) { default => {<...>} case <...> }
+//                                    ^~~~
 //   1. MatchCaseLoopAfterDefault
 //
-// match (...) { default => {...} default ... }
-//                                ^~~~~~~
+// match (<...>) { default => {<...>} default <...> }
+//                                    ^~~~~~~
 //   1. MatchCaseLoopAfterDefault
 //
-// match (...) { default => {...} }
-//                                ^
+// match (<...>) { default => {<...>} }
+//                                    ^
 //   (state done)
 CARBON_PARSE_STATE(MatchCaseLoopAfterDefault)
 
 // Finishes `match` statement.
 //
-// match (...) {...}
-//                 ^
+// match (<...>) {<...>}
+//                     ^
 //   (state done)
 CARBON_PARSE_STATE(MatchStatementFinish)
 

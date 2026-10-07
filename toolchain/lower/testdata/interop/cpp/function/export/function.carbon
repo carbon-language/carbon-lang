@@ -62,6 +62,22 @@ inline void G2() {
 
 fn H() { Cpp.G2(); }
 
+// --- keyword_name.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp;
+
+fn r#base() {}
+
+inline Cpp '''
+inline void CallBase() {
+  Carbon::base();
+}
+''';
+
+fn CallCallBase() { Cpp.CallBase(); }
+
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'other.carbon'
 // CHECK:STDOUT: source_filename = "other.carbon"
@@ -376,4 +392,76 @@ fn H() { Cpp.G2(); }
 // CHECK:STDOUT: !79 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !73, line: 20, type: !8, spFlags: DISPFlagDefinition, unit: !74)
 // CHECK:STDOUT: !80 = !DILocation(line: 20, column: 10, scope: !79)
 // CHECK:STDOUT: !81 = !DILocation(line: 20, column: 1, scope: !79)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
+// CHECK:STDOUT: ; ModuleID = 'keyword_name.carbon'
+// CHECK:STDOUT: source_filename = "keyword_name.carbon"
+// CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+// CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
+// CHECK:STDOUT:
+// CHECK:STDOUT: $_Z8CallBasev = comdat any
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_Cbase.Main() #0 !dbg !84 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret void, !dbg !85
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_Cbase__carbon_thunk.Main() #0 !dbg !86 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_Cbase.Main(), !dbg !87
+// CHECK:STDOUT:   ret void, !dbg !87
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CCallCallBase.Main() #0 !dbg !88 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_Z8CallBasev(), !dbg !89
+// CHECK:STDOUT:   ret void, !dbg !90
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z8CallBasev() #1 comdat {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_ZN6CarbonL4baseEv()
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
+// CHECK:STDOUT: define internal void @_ZN6CarbonL4baseEv() #2 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_Cbase__carbon_thunk.Main()
+// CHECK:STDOUT:   ret void
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { inlinehint mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.dbg.cu = !{!83}
+// CHECK:STDOUT: !llvm.module.flags = !{!68, !69, !70, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!72}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !7 = !{null}
+// CHECK:STDOUT: !8 = !DISubroutineType(types: !7)
+// CHECK:STDOUT: !60 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !61 = !{!"omnipotent char", !60, i64 0}
+// CHECK:STDOUT: !64 = !{!"int", !61, i64 0}
+// CHECK:STDOUT: !68 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !69 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !70 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !71 = !{!"__libc_errno", !64, i64 0}
+// CHECK:STDOUT: !72 = !{!71, !64, i64 0}
+// CHECK:STDOUT: !82 = !DIFile(filename: "keyword_name.carbon", directory: "")
+// CHECK:STDOUT: !83 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !82, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !84 = distinct !DISubprogram(name: "base", linkageName: "_Cbase.Main", scope: null, file: !82, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !83)
+// CHECK:STDOUT: !85 = !DILocation(line: 6, column: 1, scope: !84)
+// CHECK:STDOUT: !86 = distinct !DISubprogram(name: "base__carbon_thunk", linkageName: "_Cbase__carbon_thunk.Main", scope: null, file: !82, line: 6, type: !8, spFlags: DISPFlagDefinition, unit: !83)
+// CHECK:STDOUT: !87 = !DILocation(line: 6, column: 1, scope: !86)
+// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "CallCallBase", linkageName: "_CCallCallBase.Main", scope: null, file: !82, line: 14, type: !8, spFlags: DISPFlagDefinition, unit: !83)
+// CHECK:STDOUT: !89 = !DILocation(line: 14, column: 21, scope: !88)
+// CHECK:STDOUT: !90 = !DILocation(line: 14, column: 1, scope: !88)
 // CHECK:STDOUT:

@@ -206,6 +206,8 @@ def main() -> None:
         + [
             "//:generate_compile_commands",
             "--",
+            "//... except attr(tags, '\\bmanual\\b', //...) "
+            "+ //utils/tree_sitter:test_runner",
         ]
         + [f"--extra_aquery_arg={arg}" for arg in args.extra_bazel_flag]
     )

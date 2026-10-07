@@ -161,7 +161,8 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 
     // Complete the type here to avoid hitting a clang assert later when
     // adding methods.
-    if (auto* record_decl = llvm::dyn_cast<clang::RecordDecl>(decl_context)) {
+    if (auto* record_decl =
+            llvm::dyn_cast<clang::CXXRecordDecl>(decl_context)) {
       context.ast_context().getExternalSource()->CompleteType(record_decl);
     }
   }
@@ -612,6 +613,10 @@ auto ExportAllFieldsToCpp(Context& context,
 auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
                       SemIR::FieldDecl field_decl,
                       SemIR::SpecificId specific_id) -> clang::FieldDecl* {
+  if (field_decl.type_id == SemIR::ErrorInst::TypeId) {
+    return nullptr;
+  }
+
   // Get the `SemIR::Class` that contains the `field_decl`.
   auto unbound_element_type =
       context.types().GetAs<SemIR::UnboundElementType>(field_decl.type_id);
@@ -701,16 +706,24 @@ struct FunctionInfo {
     return SemIR::TypeId::None;
   }
 
+  // Get the identifier that names this function. Only functions declared in
+  // Carbon are exported, and a Carbon declaration always names its function
+  // with an identifier.
+  auto GetIdentifier(Context& context) const -> clang::IdentifierInfo* {
+    auto* identifier_info = GetClangIdentifierInfo(context, function.name_id);
+    CARBON_CHECK(identifier_info, "non-identifier function name {0}",
+                 function.name_id);
+    return identifier_info;
+  }
+
   // Get the clang::DeclarationName of this function's C++ counterpart.
   auto GetCppName(Context& context) const -> clang::DeclarationName {
     if (export_as_constructor) {
       auto* record_decl = cast<clang::CXXRecordDecl>(decl_context);
       return context.ast_context().DeclarationNames.getCXXConstructorName(
           context.ast_context().getCanonicalTagType(record_decl));
-    } else {
-      return &context.ast_context().Idents.get(
-          context.names().GetFormatted(function.name_id));
     }
+    return GetIdentifier(context);
   }
 
   SemIR::FunctionId function_id;
@@ -1299,8 +1312,7 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
                                      std::string_view extra_name = "")
     -> FunctionInfo {
   // Create the thunk's name.
-  llvm::SmallString<64> thunk_name =
-      context.names().GetFormatted(target.function.name_id);
+  llvm::SmallString<64> thunk_name = target.GetIdentifier(context)->getName();
   thunk_name += "__carbon_thunk";
   thunk_name += extra_name;
   auto& ident = context.ast_context().Idents.get(thunk_name);

@@ -121,9 +121,8 @@ TEST(HashtableKeyContextTest, HashtableEqAPFloat) {
 struct CustomHash {
   int x;
 
-  friend auto CarbonHashValue(const CustomHash& value, uint64_t seed)
-      -> HashCode {
-    return HashValue(value.x + 42, seed);
+  friend auto CarbonHashValue(const CustomHash& value) -> HashCode {
+    return HashValue(value.x + 42);
   }
 };
 
@@ -155,20 +154,15 @@ TEST(HashtableKeyContextTest, DefaultKeyContext) {
   EXPECT_FALSE(HashtableEq(zero_float, neg_zero_float));
 
   // Also check hash dispatching.
-  uint64_t seed = 1234;
-  EXPECT_THAT(context.HashKey(42, seed), Eq(HashValue(42, seed)));
-  EXPECT_THAT(context.HashKey(CustomHash{.x = 1234}, seed),
-              Eq(HashValue(CustomHash{.x = 1234}, seed)));
-  EXPECT_THAT(context.HashKey(one_64, seed), Eq(HashValue(one_64, seed)));
-  EXPECT_THAT(context.HashKey(one_128, seed), Eq(HashValue(one_128, seed)));
-  EXPECT_THAT(context.HashKey(one_64, seed),
-              Ne(context.HashKey(one_128, seed)));
-  EXPECT_THAT(context.HashKey(zero_float, seed),
-              Eq(HashValue(zero_float, seed)));
-  EXPECT_THAT(context.HashKey(neg_zero_float, seed),
-              Eq(HashValue(neg_zero_float, seed)));
-  EXPECT_THAT(context.HashKey(zero_float, seed),
-              Ne(context.HashKey(neg_zero_float, seed)));
+  EXPECT_THAT(context.HashKey(42), Eq(HashValue(42)));
+  EXPECT_THAT(context.HashKey(CustomHash{.x = 1234}),
+              Eq(HashValue(CustomHash{.x = 1234})));
+  EXPECT_THAT(context.HashKey(one_64), Eq(HashValue(one_64)));
+  EXPECT_THAT(context.HashKey(one_128), Eq(HashValue(one_128)));
+  EXPECT_THAT(context.HashKey(one_64), Ne(context.HashKey(one_128)));
+  EXPECT_THAT(context.HashKey(zero_float), Eq(HashValue(zero_float)));
+  EXPECT_THAT(context.HashKey(neg_zero_float), Eq(HashValue(neg_zero_float)));
+  EXPECT_THAT(context.HashKey(zero_float), Ne(context.HashKey(neg_zero_float)));
 }
 
 struct TestTranslatingKeyContext
@@ -191,13 +185,12 @@ TEST(HashtableKeyContextTest, TranslatingKeyContext) {
 
   TestTranslatingKeyContext context = {.array = values};
 
-  uint64_t seed = 1234;
-  EXPECT_THAT(context.HashKey(0, seed), Eq(HashValue(one_64, seed)));
-  EXPECT_THAT(context.HashKey(1, seed), Eq(HashValue(two_64, seed)));
-  EXPECT_THAT(context.HashKey(2, seed), Eq(HashValue(one_128, seed)));
-  EXPECT_THAT(context.HashKey(3, seed), Eq(HashValue(two_128, seed)));
-  EXPECT_THAT(context.HashKey(4, seed), Eq(HashValue(one_64, seed)));
-  EXPECT_THAT(context.HashKey(5, seed), Eq(HashValue(one_64, seed)));
+  EXPECT_THAT(context.HashKey(0), Eq(HashValue(one_64)));
+  EXPECT_THAT(context.HashKey(1), Eq(HashValue(two_64)));
+  EXPECT_THAT(context.HashKey(2), Eq(HashValue(one_128)));
+  EXPECT_THAT(context.HashKey(3), Eq(HashValue(two_128)));
+  EXPECT_THAT(context.HashKey(4), Eq(HashValue(one_64)));
+  EXPECT_THAT(context.HashKey(5), Eq(HashValue(one_64)));
 
   EXPECT_TRUE(context.KeyEq(one_64, 0));
   EXPECT_TRUE(context.KeyEq(one_64, 4));
