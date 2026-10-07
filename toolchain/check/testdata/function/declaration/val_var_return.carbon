@@ -87,7 +87,7 @@ fn F() -> val i32 {
   return 1;
 }
 
-// --- todo_val_return_redecl_mismatch.carbon
+// --- todo_fail_val_return_redecl_mismatch.carbon
 
 library "[[@TEST_NAME]]";
 
