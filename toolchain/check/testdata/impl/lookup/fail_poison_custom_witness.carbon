@@ -14,10 +14,9 @@
 
 package Core library "destroy";
 
-// TODO: uncomment when `require impls` adds a witness table entry.
-// interface SubobjectDestroy {
-//   final fn Op(ref self) = "subobject.destroy";
-// }
+interface SubobjectDestroy {
+  fn Op(ref self);
+}
 
 interface Destroy {
   // TODO: uncomment when `require impls` adds a witness table entry.
@@ -25,19 +24,6 @@ interface Destroy {
 
   // TODO: change `Self` to `partial Self`.
   fn Op(ref self);
-
-  // TODO: remove when `require impls` adds a witness table entry.
-  final fn SubobjectDestroy(unused ref self) {
-    // This function body is ignored by the toolchain. We can't use
-    // a built-in because the compiler treats it as an error. We
-    // should address this at some point, but it's not a high
-    // priority right now.
-  }
-
-  final fn SelfDestruct(ref self) {
-    self.Op();
-    self.SubobjectDestroy();
-  }
 }
 
 // TODO: uncomment when `require impls` adds a witness table entry.
@@ -47,6 +33,19 @@ interface Destroy {
 
 impl forall [T: type] T as Destroy {
   fn Op(unused ref self) {}
+}
+
+// TODO: move `SelfDestruct.Op` to `Destroy.SelfDestruct`
+// when `require impls` adds a witness table entry.
+interface SelfDestruct {
+  fn Op(ref self);
+}
+
+impl forall [T: SubobjectDestroy & Destroy] T as SelfDestruct {
+  fn Op(ref self) {
+    self.(Destroy.Op)();
+    self.(SubobjectDestroy.Op)();
+  }
 }
 
 // --- fail_poison_custom_witness.carbon
