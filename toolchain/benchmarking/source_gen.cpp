@@ -84,14 +84,23 @@ static auto WeightedFixedTypes(
 // arranges them randomly. A statement has the same size wherever it lands at
 // its depth, so the arrangement doesn't change the definition's size.
 //
-// TODO: Plans only declare and update `i32` locals, read each parameter once,
-// and make no calls. Real definitions have locals of many types, read
-// parameters and fields throughout, and make calls in most statements. Add
-// those statements and expressions, fixing each one's spelling before the
-// shuffle as the type use pools do, so that sizes stay the same for every seed.
+// TODO: Plans read each parameter once, read class-typed locals only with
+// `Checksum`, and make no calls. Real definitions read parameters and fields
+// throughout, and make calls in most statements, many of them to methods of
+// their locals. Add those statements and expressions, fixing each one's
+// spelling before the shuffle as the type use pools do, so that sizes stay the
+// same for every seed.
 enum class PlanKind : uint8_t {
   // `var <local>: i32 = <expr>;`
   Local,
+  // `var <local>: <class> = <class>.Make();`, followed by
+  // `<local> = <local> + <class local>.Checksum();`, which reads it: two
+  // statements.
+  ClassLocal,
+  // A declaration that destructures a tuple into two locals, such as
+  // `let (<local>: i32, <local>: i64) = (<expr>, <expr> as i64);`, whose locals
+  // the next statement reads. `form` selects among `DestructureForms`.
+  Destructure,
   // `<local> = <expr>;`
   Update,
   // `if (<cond>) {`, a block, and `}`.
@@ -126,6 +135,12 @@ static auto NumPlanBlocks(PlanKind kind) -> int {
   }
 }
 
+// Whether a statement of `kind` declares locals, which the statement after it
+// reads.
+static auto IsDeclaration(PlanKind kind) -> bool {
+  return kind == PlanKind::Local || kind == PlanKind::Destructure;
+}
+
 // A statement in a definition plan. `form` selects among the kind's spellings.
 struct PlanStmt {
   PlanKind kind;
@@ -140,13 +155,55 @@ static constexpr llvm::StringLiteral PlanExprs[] = {
 static constexpr llvm::StringLiteral PlanConds[] = {"{0} > 3", "{0} < 9",
                                                     "{0} == 2", "{0} != 5"};
 
+// A form of `Destructure` statement. `{0}` and `{1}` are operands, and `{a}`
+// and `{b}` the two locals, which `read` reads as an `i32` expression. Later
+// statements can also read the locals that are `i32`s, and update them when
+// they're `var`s.
+struct DestructureForm {
+  llvm::StringLiteral carbon_decl;
+  llvm::StringLiteral cpp_decl;
+  llvm::StringLiteral carbon_read;
+  llvm::StringLiteral cpp_read;
+  bool is_var;
+  bool a_is_i32;
+  bool b_is_i32;
+};
+static constexpr DestructureForm DestructureForms[] = {
+    {.carbon_decl = "let ({a}: i32, {b}: i32) = ({0} + 1, {1} * 2);",
+     .cpp_decl = "const auto [{a}, {b}] = std::pair{{0} + 1, {1} * 2};",
+     .carbon_read = "({a} + {b})",
+     .cpp_read = "({a} + {b})",
+     .is_var = false,
+     .a_is_i32 = true,
+     .b_is_i32 = true},
+    {.carbon_decl = "let ({a}: i32, {b}: i64) = ({0}, {1} as i64);",
+     .cpp_decl = "const auto [{a}, {b}] = "
+                 "std::pair{{0}, static_cast<std::int64_t>({1})};",
+     .carbon_read = "({a} + ({b} as i32))",
+     .cpp_read = "({a} + static_cast<int>({b}))",
+     .is_var = false,
+     .a_is_i32 = true,
+     .b_is_i32 = false},
+    {.carbon_decl = "var ({a}: bool, {b}: i32) = ({0} > 3, {1});",
+     .cpp_decl = "auto [{a}, {b}] = std::pair{{0} > 3, {1}};",
+     .carbon_read = "((if {a} then 1 else 0) + {b})",
+     .cpp_read = "(({a} ? 1 : 0) + {b})",
+     .is_var = true,
+     .a_is_i32 = false,
+     .b_is_i32 = true},
+};
+
 // The statements of a definition plan at each depth. The statement that a guard
 // returns or exits with is one depth below the guard, and isn't listed.
 struct DefPlan {
   llvm::SmallVector<llvm::SmallVector<PlanStmt>> levels;
-  // The number of lines, and of locals, in the plan's statements.
+  // The number of lines in the plan's statements, of locals that they declare,
+  // and of class-typed locals among those.
   int lines = 0;
   int locals = 0;
+  int class_locals = 0;
+  // The classes of the plan's class-typed locals, with `""` for `Self`.
+  llvm::SmallVector<llvm::StringRef> class_local_types;
 };
 
 // The internal shape calibration of definition plans, which approximates the
@@ -239,6 +296,14 @@ static constexpr int LoopBlockWeight = 3;
 // local variable.
 static constexpr int TopLocalPercent = 35;
 static constexpr int NestedLocalPercent = 25;
+// The percentages of declarations that destructure a tuple, and of the rest
+// that declare a local of a class type, which takes an update to read it.
+// Structured bindings are 0.2-1.9% of the declarations in the sample, and
+// Carbon's tuples suggest the high end. Class types are 29-78% of the types of
+// local variables, 49% on average, which this percentage gives after the depths
+// with too few updates cap it.
+static constexpr int DestructurePercent = 2;
+static constexpr int ClassLocalPercent = 70;
 
 // Scales `count` by `percent`%, rounding up with probability equal to the
 // remainder (`(count * percent % 100) / 100.0`).
@@ -394,8 +459,14 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
     int local_percent = depth == 0 ? TopLocalPercent : NestedLocalPercent;
     int locals = std::min(scale_by_percent(heads, local_percent), max_locals);
     int else_ifs = scale_by_percent(pairs, ElseIfPercent);
-    add(depth, PlanKind::Local, locals);
-    add(depth, PlanKind::Update, heads - fixed - locals);
+    int updates = heads - fixed - locals;
+    int destructures = scale_by_percent(locals, DestructurePercent);
+    int class_locals = std::min(
+        scale_by_percent(locals - destructures, ClassLocalPercent), updates);
+    add(depth, PlanKind::Local, locals - destructures - class_locals);
+    add(depth, PlanKind::ClassLocal, class_locals);
+    add(depth, PlanKind::Destructure, destructures);
+    add(depth, PlanKind::Update, updates - class_locals);
     add(depth, PlanKind::If, ifs);
     add(depth, PlanKind::IfElse, pairs - else_ifs);
     add(depth, PlanKind::ElseIf, else_ifs);
@@ -406,7 +477,9 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
     // Each statement takes a line, and so does the `}` that ends each block and
     // guard, and the line between the blocks of a pair.
     plan.lines += count + ifs + loops + 2 * pairs + guards + exits;
-    plan.locals += locals;
+    // Each destructuring declares two locals.
+    plan.locals += locals + destructures;
+    plan.class_locals += class_locals;
     guard_children = guards + exits;
     blocks = next_blocks;
     loop_blocks = loops;
@@ -586,6 +659,7 @@ class SourceGen::ClassGenState {
   }
 
   auto AddValidTypeName(llvm::StringRef type_name) -> void {
+    current_class_ = type_name;
     valid_type_names_.Insert(type_name);
   }
 
@@ -631,13 +705,13 @@ class SourceGen::ClassGenState {
   // Return types of inline function definitions (spelled once in the
   // signature, and constructed in `return` statements).
   auto GetInlineReturnType() -> TypeUse {
-    return GetValidTypeUse(inline_return_pool_);
+    return GetValidReturnType(inline_return_pool_, /*is_inline=*/true);
   }
   // Return types of declarations with out-of-line definitions (spelled in both
   // the declaration and the definition, and constructed in `return`
   // statements).
   auto GetOutOfLineReturnType() -> TypeUse {
-    return GetValidTypeUse(out_of_line_return_pool_);
+    return GetValidReturnType(out_of_line_return_pool_, /*is_inline=*/false);
   }
   // Parameter types of declarations with out-of-line definitions (spelled in
   // both the declaration and the definition, and read once in the definition
@@ -672,14 +746,20 @@ class SourceGen::ClassGenState {
     int last_index = 0;
   };
 
-  auto GetValidTypeUse(TypePool& pool) -> TypeUse;
+  auto GetValidTypeUse(
+      TypePool& pool, llvm::function_ref<auto(const TypeUse&)->bool> is_valid =
+                          [](const TypeUse&) { return true; }) -> TypeUse;
+  auto GetValidReturnType(TypePool& pool, bool is_inline) -> TypeUse;
 
   auto BuildClassAndTypeNames(SourceGen& gen, int num_classes,
                               const ClassParams& class_params,
                               const TypeUseParams& type_use_params) -> void;
   auto BuildTypePool(SourceGen& gen, int num_types, int max_refs_per_class,
-                     bool needs_value_expr, bool consumed, bool for_fields,
+                     bool needs_value_expr, bool consumed,
+                     bool exclude_last_class,
                      const TypeUseParams& type_use_params) -> TypePool;
+  auto AssignClassLocalTypes(SourceGen& gen, int defs_per_class,
+                             llvm::MutableArrayRef<DefPlan> plans) -> void;
 
   llvm::SmallVector<int> public_function_param_counts_;
   llvm::SmallVector<int> public_method_param_counts_;
@@ -731,6 +811,7 @@ class SourceGen::ClassGenState {
   TypePool forward_type_pool_;
   TypePool out_of_line_return_pool_;
   TypePool out_of_line_param_pool_;
+  llvm::StringRef current_class_;
   Set<llvm::StringRef> valid_type_names_;
 
   Set<llvm::StringRef> class_name_set_;
@@ -832,7 +913,9 @@ SourceGen::ClassGenState::ClassGenState(SourceGen& gen, int num_classes,
                          params.type_use_params);
 }
 
-auto SourceGen::ClassGenState::GetValidTypeUse(TypePool& pool) -> TypeUse {
+auto SourceGen::ClassGenState::GetValidTypeUse(
+    TypePool& pool, llvm::function_ref<auto(const TypeUse&)->bool> is_valid)
+    -> TypeUse {
   // Check that we don't completely wrap the type names by tracking where we
   // started.
   int initial_last_index = pool.last_index;
@@ -845,7 +928,7 @@ auto SourceGen::ClassGenState::GetValidTypeUse(TypePool& pool) -> TypeUse {
     }
     --pool.last_index;
     TypeUse& use = pool.uses[pool.last_index];
-    if (valid_type_names_.Contains(use.name)) {
+    if (valid_type_names_.Contains(use.name) && is_valid(use)) {
       // Found a valid type use, swap it with the back and pop that off.
       std::swap(pool.uses.back(), use);
       return pool.uses.pop_back_val();
@@ -860,24 +943,45 @@ auto SourceGen::ClassGenState::GetValidTypeUse(TypePool& pool) -> TypeUse {
   }
 }
 
+auto SourceGen::ClassGenState::GetValidReturnType(TypePool& pool,
+                                                  bool is_inline) -> TypeUse {
+  int plans_start = is_inline ? inline_def_plans_start_ : 0;
+  return GetValidTypeUse(pool, [&](const TypeUse& use) {
+    // A definition spells its own class `Self` (`""`), never by class name.
+    // Inline definitions can only name classes defined prior to
+    // `current_class_`, whereas out-of-line definitions follow every class and
+    // can name any other class.
+    const DefPlan& plan = def_plans_[plans_start + use.index];
+    for (llvm::StringRef type : plan.class_local_types) {
+      if (!type.empty() && (type == current_class_ ||
+                            (is_inline && !valid_type_names_.Contains(type)))) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
 // Builds a shuffled pool of `num_types` type uses, mixing references to the
 // classes with the fixed types to roughly match the weights in
 // `type_use_params`. `max_refs_per_class` caps the references to each class.
 //
-// With `for_fields`, the pool is used for field types, which each class draws
-// before becoming a valid type itself, so the pool excludes the last class
-// defined in the file. With `needs_value_expr`, the pool only includes fixed
-// types that have a value expression (for initializing a field in `Make` or
-// returning a value from a function definition). With `consumed`, each use gets
-// one of its type's consumer templates, assigned round-robin per type before
-// the shuffle so that the mix of templates doesn't depend on the seed. Each use
-// also records its pre-shuffle index so it can be paired deterministically with
-// a definition plan.
+// With `exclude_last_class`, the pool excludes the last class defined in the
+// file (`class_names_[0]`): field types are drawn before the current class is
+// valid, and return types are paired with definition plans whose non-`Self`
+// class-typed locals cannot name the enclosing class (or, for inline
+// definitions, any later class). With `needs_value_expr`, the pool only
+// includes fixed types that have a value expression (for initializing a field
+// in `Make` or returning a value from a function definition). With `consumed`,
+// each use gets one of its type's consumer templates, assigned round-robin per
+// type before the shuffle so that the mix of templates doesn't depend on the
+// seed. Each use also records its pre-shuffle index so it can be paired
+// deterministically with a definition plan.
 //
 // `valid_type_names_` must already contain the fixed type spellings.
 auto SourceGen::ClassGenState::BuildTypePool(
     SourceGen& gen, int num_types, int max_refs_per_class,
-    bool needs_value_expr, bool consumed, bool for_fields,
+    bool needs_value_expr, bool consumed, bool exclude_last_class,
     const TypeUseParams& type_use_params) -> TypePool {
   TypePool pool;
   if (num_types == 0) {
@@ -919,7 +1023,7 @@ auto SourceGen::ClassGenState::BuildTypePool(
   // class names until there is some remainder of names needed. The class
   // defined last has the first unshuffled name; see `BuildClassAndTypeNames`.
   llvm::ArrayRef<llvm::StringRef> classes = class_names_;
-  if (for_fields) {
+  if (exclude_last_class) {
     classes = classes.drop_front();
   }
   int num_classes = classes.size();
@@ -932,20 +1036,21 @@ auto SourceGen::ClassGenState::BuildTypePool(
 
   // Cap the references to each class so that `GetValidTypeUse` always finds a
   // valid type regardless of the shuffle order:
-  // - For function and method signature pools (`!for_fields`), a class is added
-  //   to `valid_type_names_` after its fields are chosen, so references to a
+  // - For pools with `!exclude_last_class`, a class is added to
+  //   `valid_type_names_` after its fields are chosen, so references to a
   //   class can only be used on its own functions/methods or in later classes.
   //   In particular, the last class defined in the file can only be referenced
   //   by its own functions/methods, so each class can be referenced at most
   //   `max_refs_per_class` times (the number of draws per class from this
   //   pool).
-  // - For `field_type_pool_` (`for_fields`), a class cannot have a field of its
-  //   own type or any later class's type. Excluding the last class defined in
-  //   the file ensures every remaining class is valid during at least the last
-  //   class's field draws, and in general the `k` classes defined after the
-  //   current class draw `k * private_field_decls` fields total, so capping
-  //   each class at `private_field_decls` references guarantees a valid field
-  //   type is always available.
+  // - For pools with `exclude_last_class` (`field_type_pool_`,
+  //   `inline_return_pool_`, and `out_of_line_return_pool_`), a class cannot
+  //   use its own type (or any later class's type, for fields and inline
+  //   definitions). Excluding the last class defined in the file ensures every
+  //   remaining class is valid during at least the last class's draws, and in
+  //   general at most `k * max_refs_per_class` entries are invalid when `k`
+  //   classes remain after the current class, so a valid entry is always
+  //   available.
   //
   // The fixed types below replace any references removed by the cap, so the
   // pool's spellings and total byte count remain independent of the shuffle.
@@ -1005,6 +1110,59 @@ auto SourceGen::ClassGenState::BuildTypePool(
   return pool;
 }
 
+// Assigns the types of class-typed locals for `plans`, which are paired by
+// pre-shuffle index with a return-type pool built with
+// `exclude_last_class = true` and `max_refs_per_class = defs_per_class`.
+//
+// In that pool, each index `< (num_classes - 1) * defs_per_class` has return
+// type `classes[index % (num_classes - 1)]` (where `classes` excludes the last
+// class defined in the file) or a fixed type, and the final `defs_per_class`
+// indices have fixed return types. Assigning `classes[index % (num_classes -
+// 1)]` (or `""` for `Self`) to the first group and `""` (`Self`) to the final
+// `defs_per_class` plans ensures each plan depends on at most one class from
+// `classes`, and at least `defs_per_class` plans are valid even in the first
+// class defined in the file (where no prior classes exist). Because this runs
+// before `class_names_` is shuffled, the multiset of class-local spellings and
+// the file's total byte count are independent of the seed.
+auto SourceGen::ClassGenState::AssignClassLocalTypes(
+    SourceGen& gen, int defs_per_class, llvm::MutableArrayRef<DefPlan> plans)
+    -> void {
+  int total_class_locals = 0;
+  for (const DefPlan& plan : plans) {
+    total_class_locals += plan.class_locals;
+  }
+  if (total_class_locals == 0) {
+    return;
+  }
+
+  llvm::ArrayRef<llvm::StringRef> classes =
+      llvm::ArrayRef(class_names_).drop_front();
+  int num_classes = class_names_.size();
+  int class_plans = static_cast<int>(classes.size()) * defs_per_class;
+  int self_locals = 0;
+  for (DefPlan& plan : plans.drop_front(class_plans)) {
+    plan.class_local_types.append(plan.class_locals, "");
+    self_locals += plan.class_locals;
+  }
+
+  int target_self_locals = (total_class_locals + num_classes - 1) / num_classes;
+  int extra_self_locals = std::max(0, target_self_locals - self_locals);
+  for (auto [index, plan] : llvm::enumerate(plans.take_front(class_plans))) {
+    llvm::StringRef class_name = classes[index % classes.size()];
+    plan.class_local_types.reserve(plan.class_locals);
+    for (auto _ : llvm::seq(plan.class_locals)) {
+      if (extra_self_locals > 0) {
+        plan.class_local_types.push_back("");
+        --extra_self_locals;
+      } else {
+        plan.class_local_types.push_back(class_name);
+      }
+    }
+    std::shuffle(plan.class_local_types.begin(), plan.class_local_types.end(),
+                 gen.rng_);
+  }
+}
+
 // Builds the class names and the type use pools. Each pool caps the references
 // to each class at the number of uses each class draws from it after its
 // fields; see `BuildTypePool`.
@@ -1059,7 +1217,10 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   inline_return_pool_ =
       BuildTypePool(gen, num_inline_returns, class_params.inline_function_defs,
                     /*needs_value_expr=*/true, /*consumed=*/false,
-                    /*for_fields=*/false, type_use_params);
+                    /*exclude_last_class=*/true, type_use_params);
+  AssignClassLocalTypes(
+      gen, class_params.inline_function_defs,
+      llvm::MutableArrayRef(def_plans_).drop_front(inline_def_plans_start_));
 
   // Each class draws `private_field_decls` field types from this pool before
   // becoming a valid type itself. When the file has definitions, `Make`
@@ -1067,7 +1228,7 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   field_type_pool_ =
       BuildTypePool(gen, num_fields, class_params.private_field_decls,
                     /*needs_value_expr=*/has_defs_, /*consumed=*/false,
-                    /*for_fields=*/true, type_use_params);
+                    /*exclude_last_class=*/true, type_use_params);
 
   // Each inline definition has one parameter beyond its random count, so that
   // each class draws at least `inline_function_defs` parameter types from this
@@ -1077,7 +1238,7 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
       BuildTypePool(gen, num_inline_params + num_inline_extra_params,
                     class_params.inline_function_defs,
                     /*needs_value_expr=*/false, /*consumed=*/true,
-                    /*for_fields=*/false, type_use_params);
+                    /*exclude_last_class=*/false, type_use_params);
 
   if (!define_decls_out_of_line_) {
     // Each class draws `decls_per_class` return types from this pool after its
@@ -1085,7 +1246,7 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
     decl_type_pool_ =
         BuildTypePool(gen, num_decl_returns + num_decl_params, decls_per_class,
                       /*needs_value_expr=*/false, /*consumed=*/false,
-                      /*for_fields=*/false, type_use_params);
+                      /*exclude_last_class=*/false, type_use_params);
   } else {
     // Each class draws `decls_per_class` return types from this pool after its
     // fields. A definition's guards also return values of its return type, so
@@ -1094,15 +1255,18 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
     out_of_line_return_pool_ =
         BuildTypePool(gen, num_decl_returns, decls_per_class,
                       /*needs_value_expr=*/true, /*consumed=*/false,
-                      /*for_fields=*/false, type_use_params);
+                      /*exclude_last_class=*/true, type_use_params);
+    AssignClassLocalTypes(
+        gen, decls_per_class,
+        llvm::MutableArrayRef(def_plans_).take_front(inline_def_plans_start_));
     // As for inline definitions, each declaration has one parameter beyond its
     // random count, so that each class draws at least `decls_per_class`
     // parameter types from this pool.
     int num_decl_extra_params = num_decl_returns;
     out_of_line_param_pool_ = BuildTypePool(
         gen, num_decl_params + num_decl_extra_params, decls_per_class,
-        /*needs_value_expr=*/false, /*consumed=*/true, /*for_fields=*/false,
-        type_use_params);
+        /*needs_value_expr=*/false, /*consumed=*/true,
+        /*exclude_last_class=*/false, type_use_params);
   }
 
   // Each class draws `inline_forwarders` return types from this pool after its
@@ -1113,7 +1277,7 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
                         Sum(forwarder_param_counts_),
                     class_params.inline_forwarders,
                     /*needs_value_expr=*/false, /*consumed=*/false,
-                    /*for_fields=*/false, type_use_params);
+                    /*exclude_last_class=*/false, type_use_params);
 
   auto value = [&](const TypeUseParams::FixedTypeWeight& fw) {
     return gen.IsCpp() ? fw.cpp_value : fw.carbon_value;
@@ -1151,7 +1315,8 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   std::shuffle(predicate_fields_.begin(), predicate_fields_.end(), gen.rng_);
 
   // Classes are defined from the back, so the first unshuffled name is always
-  // the class defined last, which field pools leave out; see `BuildTypePool`.
+  // the class defined last, which field and return pools leave out; see
+  // `BuildTypePool`.
   std::shuffle(class_names_.begin() + 1, class_names_.end(), gen.rng_);
 }
 
@@ -1257,8 +1422,8 @@ static auto EstimateAvgClassDefLines(
 
   // `Make` and `Checksum` each have a blank line, a comment line, a signature
   // line, a return line, and a closing brace line. A C++ constructor puts its
-  // initializers and empty definition on one line, so this overestimates C++ by
-  // a line.
+  // initializers and empty definition on one line, and the class begins with a
+  // `Self` alias.
   if (has_defs) {
     avg += 10.0;
   }
@@ -1930,8 +2095,8 @@ struct ArrangedDef {
 
 // Randomly arranges the statements of `plan`, along with a `ReadParams`
 // statement at depth 0. Each block gets at least one statement, and ends with a
-// statement that isn't a local, so that the statement after each local can read
-// it. Guard exits go in distinct loop blocks.
+// statement that isn't a declaration, so that the statement after each
+// declaration can read its locals. Guard exits go in distinct loop blocks.
 //
 // The statements beyond the first in each block go in a block chosen with
 // probability proportional to its statements so far, counting loop blocks
@@ -1952,11 +2117,8 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
           case PlanKind::GuardExit:
             exits.push_back(stmt);
             break;
-          case PlanKind::Local:
-            locals.push_back(stmt);
-            break;
           default:
-            others.push_back(stmt);
+            (IsDeclaration(stmt.kind) ? locals : others).push_back(stmt);
             break;
         }
       }
@@ -2006,7 +2168,7 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
       llvm::SmallVector<int>& stmts = def.blocks[block].stmts;
       std::shuffle(stmts.begin(), stmts.end(), rng);
       auto is_local = [&](int stmt) {
-        return def.stmts[stmt].plan.kind == PlanKind::Local;
+        return IsDeclaration(def.stmts[stmt].plan.kind);
       };
       if (is_local(stmts.back())) {
         llvm::SmallVector<int> non_locals;
@@ -2045,22 +2207,36 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
 }
 
 // Emits the statements of `def` after its `acc` declaration, indented beyond
-// `indent`. Locals take their names from `locals` in turn, the `ReadParams`
-// statement adds `reads`, and guards return `return_value`.
+// `indent`. Locals take their names from `locals` in turn, class-typed locals
+// take their classes from `class_local_types` (with `""` for `Self`), the
+// `ReadParams` statement adds `reads`, and guards return `return_value`.
 //
-// The first operand of each statement after a local is that local, so that
-// every local is read. Every other operand, and the target of each update, is a
-// random local in scope.
+// The first operand of each statement after a declaration reads the locals
+// that it declares, so that every local is read. Every other operand is a
+// random `i32` local in scope, and the target of each update a random `var`
+// one.
 static auto EmitArrangedDef(const ArrangedDef& def,
                             llvm::ArrayRef<llvm::StringRef> locals,
+                            llvm::ArrayRef<llvm::StringRef> class_local_types,
                             llvm::StringRef reads, llvm::StringRef return_value,
                             bool is_cpp, llvm::StringRef indent,
                             absl::BitGen& rng, llvm::raw_ostream& os) -> void {
-  llvm::SmallVector<llvm::StringRef> scope = {"acc"};
-  llvm::StringRef pending = "acc";
+  // The `i32` locals in scope that later statements can update, and the ones
+  // that they can only read.
+  llvm::SmallVector<llvm::StringRef> var_scope = {"acc"};
+  llvm::SmallVector<llvm::StringRef> let_scope;
+  // An expression reading the locals that the last statement declared.
+  std::string pending = "acc";
   int next_local = 0;
+  int next_class_local = 0;
   auto pick_local = [&]() {
-    return scope[absl::Uniform<int>(rng, 0, scope.size())];
+    int index = absl::Uniform<int>(rng, 0, var_scope.size() + let_scope.size());
+    return index < static_cast<int>(var_scope.size())
+               ? var_scope[index]
+               : let_scope[index - var_scope.size()];
+  };
+  auto pick_var = [&]() {
+    return var_scope[absl::Uniform<int>(rng, 0, var_scope.size())];
   };
   auto emit_expr = [&](llvm::StringRef format) {
     while (!format.empty()) {
@@ -2082,21 +2258,28 @@ static auto EmitArrangedDef(const ArrangedDef& def,
   };
 
   // The blocks being emitted, with the index of the next statement in each,
-  // and the size of the scope outside it.
+  // and the sizes of the scopes outside it.
   struct Frame {
     int block;
     int next_stmt;
-    int outer_scope_size;
+    int outer_var_scope_size;
+    int outer_let_scope_size;
   };
-  llvm::SmallVector<Frame> stack = {
-      {.block = 0, .next_stmt = 0, .outer_scope_size = 1}};
+  auto open_block = [&](int block) -> Frame {
+    return {.block = block,
+            .next_stmt = 0,
+            .outer_var_scope_size = static_cast<int>(var_scope.size()),
+            .outer_let_scope_size = static_cast<int>(let_scope.size())};
+  };
+  llvm::SmallVector<Frame> stack = {open_block(0)};
   while (!stack.empty()) {
     Frame& frame = stack.back();
     int depth = stack.size();
     const ArrangedBlock& block = def.blocks[frame.block];
     if (frame.next_stmt == static_cast<int>(block.stmts.size())) {
       // End the block, and start the second block of an `else` or `else if`.
-      scope.truncate(frame.outer_scope_size);
+      var_scope.truncate(frame.outer_var_scope_size);
+      let_scope.truncate(frame.outer_let_scope_size);
       int ended = frame.block;
       stack.pop_back();
       if (stack.empty()) {
@@ -2118,9 +2301,7 @@ static auto EmitArrangedDef(const ArrangedDef& def,
         emit_cond(owner.plan.form + 1);
         os << ") {\n";
       }
-      stack.push_back({.block = ended + 1,
-                       .next_stmt = 0,
-                       .outer_scope_size = static_cast<int>(scope.size())});
+      stack.push_back(open_block(ended + 1));
       continue;
     }
 
@@ -2135,17 +2316,58 @@ static auto EmitArrangedDef(const ArrangedDef& def,
            << (is_cpp ? " = " : ": i32 = ");
         emit_expr(PlanExprs[planned.form % std::size(PlanExprs)]);
         os << ";\n";
-        scope.push_back(name);
+        var_scope.push_back(name);
         pending = name;
         break;
       }
+      case PlanKind::ClassLocal: {
+        llvm::StringRef name = locals[next_local++];
+        llvm::StringRef type = class_local_types[next_class_local++];
+        if (type.empty()) {
+          os << (is_cpp ? "Self " : "var ") << name
+             << (is_cpp ? " = Self();\n" : ": Self = Make();\n");
+        } else if (is_cpp) {
+          os << type << " " << name << " = " << type << "();\n";
+        } else {
+          os << "var " << name << ": " << type << " = " << type << ".Make();\n";
+        }
+        indent_to(depth);
+        os << pick_var() << " = ";
+        emit_expr("{0}");
+        os << " + " << name << ".Checksum();\n";
+        break;
+      }
+      case PlanKind::Destructure: {
+        const DestructureForm& form =
+            DestructureForms[planned.form % std::size(DestructureForms)];
+        llvm::StringRef a = locals[next_local++];
+        llvm::StringRef b = locals[next_local++];
+        auto substitute = [&](llvm::StringRef format) {
+          std::string text = format.str();
+          for (auto [placeholder, name] : {std::pair{"{a}", a}, {"{b}", b}}) {
+            text.replace(text.find(placeholder), 3, name);
+          }
+          return text;
+        };
+        emit_expr(substitute(is_cpp ? form.cpp_decl : form.carbon_decl));
+        os << "\n";
+        auto& scope = form.is_var ? var_scope : let_scope;
+        if (form.a_is_i32) {
+          scope.push_back(a);
+        }
+        if (form.b_is_i32) {
+          scope.push_back(b);
+        }
+        pending = substitute(is_cpp ? form.cpp_read : form.carbon_read);
+        break;
+      }
       case PlanKind::Update:
-        os << pick_local() << " = ";
+        os << pick_var() << " = ";
         emit_expr(PlanExprs[planned.form % std::size(PlanExprs)]);
         os << ";\n";
         break;
       case PlanKind::ReadParams:
-        os << pick_local() << " = ";
+        os << pick_var() << " = ";
         emit_expr("{0}");
         os << " + " << reads << ";\n";
         break;
@@ -2156,9 +2378,7 @@ static auto EmitArrangedDef(const ArrangedDef& def,
         os << (planned.kind == PlanKind::While ? "while (" : "if (");
         emit_cond(planned.form);
         os << ") {\n";
-        stack.push_back({.block = stmt.first_block,
-                         .next_stmt = 0,
-                         .outer_scope_size = static_cast<int>(scope.size())});
+        stack.push_back(open_block(stmt.first_block));
         break;
       case PlanKind::GuardReturn:
       case PlanKind::GuardExit:
@@ -2191,6 +2411,12 @@ static auto EmitArrangedDef(const ArrangedDef& def,
 // every parameter with its consumer template (and `self` in a method with
 // `Checksum`), and ends with `return`. That parameter-read statement is on one
 // line however long it is, which the line estimates assume.
+//
+// Both inline and out-of-line definitions spell their enclosing class `Self`
+// (`""`) in class-typed locals. For other class types, inline definitions only
+// use classes defined prior to the enclosing class, whereas out-of-line
+// definitions follow every class and can use any other class; see
+// `GetValidReturnType`.
 auto SourceGen::GenerateFunctionDef(ClassGenState& state,
                                     const FunctionSig& sig,
                                     llvm::StringRef indent,
@@ -2226,8 +2452,8 @@ auto SourceGen::GenerateFunctionDef(ClassGenState& state,
   RawStringOstream return_value;
   state.ProduceValue(sig.return_type, return_value);
   std::string return_value_str = return_value.TakeStr();
-  EmitArrangedDef(ArrangeDef(plan, rng_), locals, reads.TakeStr(),
-                  return_value_str, IsCpp(), indent, rng_, os);
+  EmitArrangedDef(ArrangeDef(plan, rng_), locals, plan.class_local_types,
+                  reads.TakeStr(), return_value_str, IsCpp(), indent, rng_, os);
   os << indent << "  return " << return_value_str << ";\n";
 }
 
@@ -2409,6 +2635,9 @@ auto SourceGen::GenerateClassDef(
   os << "class " << name << " {\n";
   if (IsCpp()) {
     os << " public:\n";
+    if (state.has_defs()) {
+      os << "  using Self = " << name << ";\n";
+    }
   }
 
   // Field types can't be the class we're currently declaring. We enforce this
