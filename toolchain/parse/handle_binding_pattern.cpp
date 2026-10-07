@@ -196,6 +196,9 @@ auto HandleBindingPattern(Context& context) -> void {
   // the default would otherwise be generic) is reported by `check` as a
   // misplaced `self` — the relevant error — rather than also producing a
   // `ref`-on-generic error from that default.
+  //
+  // TODO: This is wrong: it rejects `fn F(template self: Self)` and treats
+  // `fn F(generic self: Self)` as being non-generic.
   if (self_token) {
     resolved_generic = false;
   }
