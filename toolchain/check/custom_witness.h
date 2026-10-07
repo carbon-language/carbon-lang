@@ -75,7 +75,7 @@ auto BuildDestroyWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::TypeId self_type_id,
                          SemIR::ConstantId query_self_const_id,
                          SemIR::SpecificInterface query_specific_interface,
-                         SemIR::InstId subobject_destroy_fn_id)
+                         SemIR::InstId op_id = SemIR::InstId::None)
     -> SemIR::InstId;
 
 }  // namespace Carbon::Check

@@ -17,6 +17,7 @@
 #include "toolchain/check/custom_witness.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
@@ -573,31 +574,6 @@ static auto GetBuiltinOperatorInfo(clang::OverloadedOperatorKind kind)
     return table;
   }();
   return OpTable[kind];
-}
-
-static auto GetCoreInterfaceId(Context& context, SemIR::LocId loc_id,
-                               CoreIdentifier interface_name)
-    -> SemIR::InterfaceId {
-  auto inst_id = LookupNameInCore(context, loc_id, interface_name);
-
-  // Non-generic interfaces.
-  if (auto facet_type = context.insts().TryGetAs<SemIR::FacetType>(inst_id)) {
-    const auto& declared =
-        context.declared_facet_types().Get(facet_type->declared_facet_type_id);
-    auto single = declared.TryAsSingleExtend();
-    CARBON_KIND_SWITCH(*single) {
-      case CARBON_KIND(SemIR::SpecificInterface si): {
-        return si.interface_id;
-      }
-      case CARBON_KIND(SemIR::SpecificNamedConstraint _): {
-        CARBON_FATAL("Operators in named constraints are not yet needed");
-      }
-    }
-  }
-
-  auto type_id = context.insts().Get(inst_id).type_id();
-  auto generic = context.types().GetAs<SemIR::GenericInterfaceType>(type_id);
-  return generic.interface_id;
 }
 
 // Builds a Carbon builtin function declaration corresponding to an overload

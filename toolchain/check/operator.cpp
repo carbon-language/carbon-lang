@@ -6,6 +6,7 @@
 
 #include <optional>
 
+#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/call.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
@@ -105,10 +106,11 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
 auto BuildSelfDestructCall(Context& context, SemIR::InstId object_id)
     -> SemIR::InstId {
+  // TODO: Call a function instead of a unary operator.
   return BuildUnaryOperator(context,
                             context.insts().GetLocIdForDesugaring(object_id),
-                            {.interface_name = CoreIdentifier::Destroy,
-                             .op_name = CoreIdentifier::SelfDestruct},
+                            {.interface_name = CoreIdentifier::SelfDestruct,
+                             .op_name = CoreIdentifier::Op},
                             object_id);
 }
 
