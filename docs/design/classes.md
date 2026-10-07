@@ -1161,7 +1161,7 @@ fn List.Iterate() -> Iterator {
 
 ### Nominal data classes
 
-We will mark [data classes](#data-classes) with an `impl as Data {}` line.
+We will mark [data classes](#data-classes) with an `impl Self as Data {}` line.
 
 ```
 class TextLabel {
@@ -1172,7 +1172,7 @@ class TextLabel {
 
   // This line makes `TextLabel` a data class, which defines
   // a number of operations field-wise.
-  impl as Data {}
+  impl Self as Data {}
 }
 ```
 
@@ -1971,7 +1971,7 @@ checked-generic function expecting a `Deletable` type, use the
 ```
 class UnsafeAllowDelete(T: Concrete) {
   extend adapt T;
-  impl as Deletable {}
+  impl Self as Deletable {}
 }
 
 // Example usage:

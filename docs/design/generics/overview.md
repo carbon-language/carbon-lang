@@ -21,6 +21,7 @@ pointers to other design documents that dive deeper into individual topics.
         -   [Contrast with templates](#contrast-with-templates)
     -   [Implementing interfaces](#implementing-interfaces)
         -   [Accessing members of interfaces](#accessing-members-of-interfaces)
+        -   [Primary interface functions and abbreviated syntax](#primary-interface-functions-and-abbreviated-syntax)
     -   [Facet types](#facet-types)
     -   [Generic functions](#generic-functions)
         -   [Deduced parameters](#deduced-parameters)
@@ -237,7 +238,7 @@ class Song {
   // Implementing `Printable` for `Song` inside the definition of `Song`
   // with the keyword `extend` means all names of `Printable`, such
   // as `F`, are included as a part of the `Song` API.
-  extend impl as Printable {
+  extend impl Self as Printable {
     // Could use `Self` in place of `Song` here.
     fn Print(self: Song) { ... }
   }
@@ -278,6 +279,53 @@ song.(Comparable.Less)(song);
 // access expression, using the compound member access
 // syntax with the qualified name `Printable.Print`:
 song.(Printable.Print)();
+```
+
+#### Primary interface functions and abbreviated syntax
+
+When an interface has a single "primary" function whose name would be the same
+as the interface's name, the function's name can be omitted in the `fn`
+declaration. The function implicitly takes the name of the enclosing `interface`
+for qualified member lookup.
+
+An `impl` that defines only a single function (either an unnamed primary
+function or a named function when all other requirements have defaults or are
+deduced) can omit the enclosing `{`...`}` braces. Within a `class`, `impl fn
+X.Y.Z` is a shorthand for `impl Self as X.Y.Z fn` when `X.Y.Z` names an
+interface (or named constraint) with a primary function (such as `Print` or
+`Core.Add`), and for `impl Self as X.Y fn Z` when `X.Y.Z` has more than one
+component and names a function member `Z` of `X.Y` (such as `Comparable.Less` or
+`Core.Eq.Equal`):
+
+```
+interface Print {
+  fn (self);
+}
+
+class Song {
+  // ...
+
+  extend impl fn Print(self) { ... }
+  impl fn Comparable.Less(self, rhs: Self) -> bool { ... }
+}
+
+var song: Song;
+song.Print();
+song.(Print.Print)();
+```
+
+In an abbreviated `impl`, omitted interface arguments and associated constants
+that appear in the implemented function's signature are deduced from the `impl`
+function's signature without repeating operand types or writing a `where`
+clause:
+
+```
+interface Core.AddWith(U: type) {
+  default let Result: type = Self;
+  fn (self, other: U) -> Result;
+}
+
+impl i32 as Core.AddWith fn (self, other: i32) -> i32 { ... }
 ```
 
 ### Facet types
@@ -419,7 +467,7 @@ methods in the implementation of the derived interface.
 ```
 class Key {
   // ...
-  extend impl as Hashable {
+  extend impl Self as Hashable {
     fn IsEqual(self: Key, rhs: Key) -> bool { ... }
     fn Hash(self: Key) -> u64 { ... }
   }
@@ -505,7 +553,7 @@ For example: If there were a class `CDCover` defined this way:
 
 ```
 class CDCover  {
-  extend impl as Printable {
+  extend impl Self as Printable {
     ...
   }
 }
@@ -539,12 +587,12 @@ class Song { ... }
 
 class SongByArtist {
   extend adapt Song;
-  extend impl as Comparable { ... }
+  extend impl Self as Comparable { ... }
 }
 
 class SongByTitle {
   extend adapt Song;
-  extend impl as Comparable { ... }
+  extend impl Self as Comparable { ... }
 }
 ```
 
@@ -647,7 +695,7 @@ of associated constants.
 
 ```
 class Vector(T: Movable) {
-  extend impl as Stack where .ElementType = T { ... }
+  extend impl Self as Stack where .ElementType = T { ... }
 }
 ```
 
@@ -675,8 +723,8 @@ priority order in a prioritization block.
 
 To overload an operator, implement the corresponding interface from the standard
 library. For example, to define how the unary `-` operator behaves for a type,
-implement the `Negatable` interface for that type. The interfaces and rewrites
-used for a given operator may be found in the
+implement the `Negate` interface for that type. The interfaces and rewrites used
+for a given operator may be found in the
 [expressions design](/docs/design/expressions/README.md).
 
 As a convenience, there is a shortcut for defining an implementation that
@@ -686,7 +734,8 @@ supports any type implicitly convertible to a specified type, using `like`:
 // Support multiplying values of type `Distance` with
 // values of type `f64` or any type implicitly
 // convertible to `f64`.
-impl Distance as MultipliableWith(like f64) ...
+impl Distance as MulWith(like f64)
+    fn (self, factor: f64) -> Distance { ... }
 ```
 
 ## Future work
@@ -706,3 +755,4 @@ impl Distance as MultipliableWith(like f64) ...
 -   [#950: Generic details 6: remove facets](https://github.com/carbon-language/carbon-lang/pull/950)
 -   [#1013: Generics: Set associated constants using `where` constraints](https://github.com/carbon-language/carbon-lang/pull/1013)
 -   [#1084: Generics details 9: forward declarations](https://github.com/carbon-language/carbon-lang/pull/1084)
+-   [#7896: Abbreviated `interface` and `impl` syntax](https://github.com/carbon-language/carbon-lang/pull/7896)
