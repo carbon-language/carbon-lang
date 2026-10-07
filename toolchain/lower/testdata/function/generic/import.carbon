@@ -56,6 +56,31 @@ fn Call() -> i32 {
   return *p;
 }
 
+// --- return_var.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {
+  var data: i32;
+  var next: C*;
+}
+
+fn Make(unused generic T: type) -> C {
+  returned var c: C;
+  c = {.data = 42, .next = &c };
+  return var;
+}
+
+// --- use_return_var.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "return_var";
+
+fn Run() {
+  Make(());
+}
+
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'indirectly_imported.carbon'
 // CHECK:STDOUT: source_filename = "indirectly_imported.carbon"
