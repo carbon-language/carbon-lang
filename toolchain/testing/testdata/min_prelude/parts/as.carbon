@@ -9,9 +9,6 @@
 
 package Core library "prelude/parts/as";
 
-export import library "prelude/parts/default";
-export import library "prelude/parts/form";
-
 interface UnsafeAs(Dest: type) {
   fn Convert(self) -> Dest;
 }
