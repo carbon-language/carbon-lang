@@ -22,6 +22,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/expr_info.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/pattern.h"
@@ -855,7 +856,13 @@ auto MatchContext::DoPreWork(State state, SemIR::StructPattern struct_pattern,
   auto pattern_struct_fields =
       context_.struct_type_fields().Get(pattern_struct_type_inst->fields_id);
 
-  SemIR::InstId converted_scrutinee_id = scrutinee_id;
+  auto scrutinee_type_id = SemIR::GetTypeOfInstInSpecific(
+      context_.sem_ir(), specific_id_stack_.back(), scrutinee_id);
+
+  SemIR::InstId converted_scrutinee_id =
+      ConvertToValueOrRefOfType(context_, SemIR::LocId(entry.pattern_id),
+                                scrutinee_id, scrutinee_type_id);
+
   llvm::ArrayRef<Carbon::SemIR::StructTypeField> scrutinee_struct_fields;
 
   if (auto scrutinee_literal = scrutinee.inst.TryAs<SemIR::StructLiteral>()) {
@@ -869,10 +876,6 @@ auto MatchContext::DoPreWork(State state, SemIR::StructPattern struct_pattern,
     scrutinee_struct_fields = context_.struct_type_fields().Get(
         scrutinee_struct_type_inst->fields_id);
   } else {
-    converted_scrutinee_id =
-        ConvertToValueOrRefOfType(context_, SemIR::LocId(entry.pattern_id),
-                                  scrutinee_id, expected_type_id);
-
     if (auto scrutinee_value = context_.insts().TryGetAs<SemIR::StructValue>(
             converted_scrutinee_id)) {
       auto scrutinee_value_type_inst =
