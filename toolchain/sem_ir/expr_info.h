@@ -44,8 +44,16 @@ inline auto IsInitializerCategory(ExprCategory cat) -> bool {
 // initialization; i.e. its type's initializing representation is not in-place,
 // and its category is `Initializing`.
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
-                                  SpecificId specific_id = SpecificId::None,
                                   bool allow_transitive = true) -> InstId;
+
+// Same as `FindStorageArgForInitializer`, but also takes a `SpecificId` and
+// corresponding `File`. Returns the inst ID of the storage to initialize and
+// the `File` of that inst.
+auto FindStorageArgForInitializerInSpecific(const File& sem_ir, InstId init_id,
+                                            const File& specific_sem_ir,
+                                            SpecificId specific_id,
+                                            bool allow_transitive = true)
+    -> std::pair<const File*, InstId>;
 
 // Information about the form of an expression.
 struct FormInfo {

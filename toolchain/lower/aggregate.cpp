@@ -226,9 +226,11 @@ auto EmitAggregateInitializer(FunctionContext& context,
       // non-constant initialization.
       for (auto [i, ref_id] : llvm::enumerate(refs)) {
         if (context.sem_ir().constant_values().Get(ref_id).is_constant()) {
-          CARBON_CHECK(&context.sem_ir() == &context.specific_sem_ir());
-          auto dest_id = SemIR::FindStorageArgForInitializer(
-              context.sem_ir(), ref_id, context.specific_id());
+          auto [dest_sem_ir, dest_id] =
+              SemIR::FindStorageArgForInitializerInSpecific(
+                  context.sem_ir(), ref_id, context.specific_sem_ir(),
+                  context.specific_id());
+          CARBON_CHECK(&context.sem_ir() == dest_sem_ir);
           auto src_id = ref_id;
           auto storage_type = context.GetTypeIdOfInst(dest_id);
           context.InitializeStorage(storage_type, dest_id, src_id);
