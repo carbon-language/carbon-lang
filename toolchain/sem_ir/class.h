@@ -77,6 +77,10 @@ struct ClassFields {
   // inherited) virtual functions.
   InstId vtable_decl_id = InstId::None;
 
+  // The scopes that are declared as friends of this class. Each scope is
+  // identified by the constant value of the expression that names it.
+  Set<SemIR::ConstantId> friend_scopes;
+
   auto PrintClassFields(llvm::raw_ostream& out) const -> void {
     out << "self_type_id: " << self_type_id << ", inheritance_kind: ";
     switch (inheritance_kind) {

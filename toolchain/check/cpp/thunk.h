@@ -22,11 +22,11 @@ namespace Carbon::Check {
 //   Carbon.
 // - The Carbon function that is actually called by user code, and maps its
 //   parameters to the simple ABI.
-struct CalleeFunctionInfo {
+struct CppCalleeFunctionInfo {
   // Constructs a CalleeFunctionInfo that represents the given C++ function with
   // the given signature.
-  explicit CalleeFunctionInfo(Context& context, clang::FunctionDecl* decl,
-                              SemIR::ClangDeclSignatureId signature_id);
+  explicit CppCalleeFunctionInfo(Context& context, clang::FunctionDecl* decl,
+                                 SemIR::ClangDeclSignatureId signature_id);
 
   // Constructs a CalleeFunctionInfo that represents a C++ function pointer.
   // We treat function pointer types as having an `__invoke` method, with the
@@ -36,8 +36,8 @@ struct CalleeFunctionInfo {
   // return types already have simple ABIs). The Carbon counterpart of this
   // method is real, however, and takes the pointer value as its `self`
   // parameter.
-  explicit CalleeFunctionInfo(Context& context,
-                              const clang::Type* function_pointer_type);
+  explicit CppCalleeFunctionInfo(Context& context,
+                                 const clang::Type* function_pointer_type);
 
   // Returns the offset I such that callee parameter N corresponds to
   // parameter N+I of the imported Carbon function.
@@ -167,13 +167,13 @@ struct CalleeFunctionInfo {
 // used to call it. A C++ thunk is required for functions whose ABI uses any
 // type except void, pointer and reference types, and signed 32-bit and 64-bit
 // integers.
-auto IsCppThunkRequired(Context& context, const CalleeFunctionInfo& callee_info)
-    -> bool;
+auto IsCppThunkRequired(Context& context,
+                        const CppCalleeFunctionInfo& callee_info) -> bool;
 
 // Builds a C++ thunk with simple ABI (pointers, i32 and i64 types) that calls
 // the specified callee. Assumes `IsCppThunkRequired()` return true for
 // `callee_info`. Returns `nullptr` on failure.
-auto BuildCppThunk(Context& context, const CalleeFunctionInfo& callee_info)
+auto BuildCppThunk(Context& context, const CppCalleeFunctionInfo& callee_info)
     -> clang::FunctionDecl*;
 
 // Builds a call to a thunk function that forwards a call argument list built

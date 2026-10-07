@@ -236,7 +236,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc8_25.10: <instruction> = call_action (%.loc8_25.3), false [template]
 // CHECK:STDOUT:   %.loc8_25.11: type = type_of_inst %.loc8_25.10 [template = %.loc8_25.11 (constants.%.b48)]
 // CHECK:STDOUT:   %.loc8_25.12: @F.%.loc8_25.11 (%.b48) = splice_inst %.loc8_25.10 [template = %.loc8_25.12 (constants.%.e18)]
-// CHECK:STDOUT:   %.loc8_3.6: %tuple.type = initialize_action %.loc8_25.5, %.loc8_24.9, %v.var, false [template]
+// CHECK:STDOUT:   %.loc8_3.6: %tuple.type = initialize_action %.loc8_25.5, %.loc8_24.9, %v.var, none, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc8_3.6, element0 [template]
 // CHECK:STDOUT:   %.loc8_3.7: @F.%.loc8_24.9 (%.537) = splice_inst %tuple.elem0 [template = %.loc8_3.7 (constants.%.5d6)]
 // CHECK:STDOUT:   %.loc8_3.8: <instruction> = compound_member_access_action %v.var, constants.%assoc2 [template]

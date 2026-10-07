@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -65,17 +65,13 @@ eval fn F(x: i32) -> i32 { return x; }
 
 var a: array(i32, F(3)) = (1, 2, 3);
 
-// --- fail_todo_dependent_call.carbon
+// --- dependent_call.carbon
 
 library "[[@TEST_NAME]]";
 
 eval fn F(x: i32) -> i32 { return x; }
 
 fn G(generic N: i32) {
-  // CHECK:STDERR: fail_todo_dependent_call.carbon:[[@LINE+4]]:36: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
-  // CHECK:STDERR:   var unused a: array(i32, F(N)) = (0, 1, 2);
-  // CHECK:STDERR:                                    ^~~~~~~~~
-  // CHECK:STDERR:
   var unused a: array(i32, F(N)) = (0, 1, 2);
 }
 
@@ -298,7 +294,7 @@ fn H() {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %F.call.loc11_20.2 [template = %pattern_type (constants.%pattern_type.231)]
 // CHECK:STDOUT:   %v.patt.loc11_15.2: @UseFGenerically.%pattern_type (%pattern_type.231) = ref_binding_pattern v [template = %v.patt.loc11_15.2 (constants.%v.patt.bcc)]
 // CHECK:STDOUT:   %v.var_patt.loc11_3.2: @UseFGenerically.%pattern_type (%pattern_type.231) = var_pattern %v.patt.loc11_15.2 [template = %v.var_patt.loc11_3.2 (constants.%v.var_patt.53d)]
-// CHECK:STDOUT:   %.loc11_3.6: %tuple.type.f7a = initialize_action %.loc11_25, %F.call.loc11_20.2, %v.var, false [template]
+// CHECK:STDOUT:   %.loc11_3.6: %tuple.type.f7a = initialize_action %.loc11_25, %F.call.loc11_20.2, %v.var, none, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc11_3.6, element0 [template]
 // CHECK:STDOUT:   %.loc11_3.7: @UseFGenerically.%F.call.loc11_20.2 (%F.call) = splice_inst %tuple.elem0 [template = %.loc11_3.7 (constants.%.519)]
 // CHECK:STDOUT:   %.loc11_3.8: <instruction> = compound_member_access_action %v.var, constants.%assoc2 [template]

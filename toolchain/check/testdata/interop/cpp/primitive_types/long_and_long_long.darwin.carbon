@@ -630,7 +630,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Cpp.long: type = class_type @Long64 [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
+// CHECK:STDOUT:   %N.fe9: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.ada: type = pattern_type %Cpp.long [concrete]
 // CHECK:STDOUT:   %cpp_long.patt: %pattern_type.ada = value_binding_pattern cpp_long [concrete]
@@ -671,16 +671,16 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Cpp.long.as.ImplicitAs.impl.Convert.type.ae6f4c.2: type = fn_type @Cpp.long.as.ImplicitAs.impl.Convert.2 [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.ImplicitAs.impl.Convert.3cefb0.2: %Cpp.long.as.ImplicitAs.impl.Convert.type.ae6f4c.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Cpp.long.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.33f, %Cpp.long.as.ImplicitAs.impl.Convert.3cefb0.2 [concrete]
-// CHECK:STDOUT:   %array_type: type = array_type %int_1.5b8, %f32.c73 [concrete]
-// CHECK:STDOUT:   %pattern_type.18b: type = pattern_type %array_type [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:   %Array.0a4: type = class_type @Array, @Array(%f32.c73, %int_1.5b8) [concrete]
+// CHECK:STDOUT:   %pattern_type.c23: type = pattern_type %Array.0a4 [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.c23 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.c23 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %float.6da: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.FloatLiteral) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%float.6da) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.ed3: type = facet_type <@ImplicitAs, @ImplicitAs(%f32.c73)> [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%N.fe9) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.d4f: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.2fa: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1e0, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.a62: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
@@ -693,7 +693,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.b37, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.943: %f32.c73 = float_value 1 [concrete]
-// CHECK:STDOUT:   %array: %array_type = tuple_value (%float.943) [concrete]
+// CHECK:STDOUT:   %array: %Array.0a4 = tuple_value (%float.943) [concrete]
 // CHECK:STDOUT:   %self.param_patt.c62: %pattern_type.240 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.ed0: %pattern_type.240 = wrapper_binding_pattern self, %self.param_patt.c62 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc11_3.1 [concrete]
@@ -702,8 +702,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.1: type = fn_type @Destroy.WithSelf.SelfDestruct.loc11_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.1: %Destroy.WithSelf.SelfDestruct.type.fbceb5.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.c06: %pattern_type.18b = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.a67: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt.c06 [concrete]
+// CHECK:STDOUT:   %self.param_patt.bc8: %pattern_type.c23 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.5b5: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt.bc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc11_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc11_3.2 [concrete]
@@ -745,18 +745,18 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %self: ref %f32.c73 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc11_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.18b = ref_param_pattern [concrete = constants.%self.param_patt.c06]
-// CHECK:STDOUT:     %self.patt: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a67]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c23 = ref_param_pattern [concrete = constants.%self.param_patt.bc8]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.5b5]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.0a4 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.0a4 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc11_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.18b = ref_param_pattern [concrete = constants.%self.param_patt.c06]
-// CHECK:STDOUT:     %self.patt: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a67]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c23 = ref_param_pattern [concrete = constants.%self.param_patt.bc8]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.5b5]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.0a4 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.0a4 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -787,7 +787,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_long.patt: %pattern_type.f57 = value_binding_pattern carbon_long [concrete = constants.%carbon_long.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type = var_storage %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %Array.0a4 = var_storage %a.var_patt
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6da]
 // CHECK:STDOUT:   %.loc11_50.1: %tuple.type = tuple_literal (%float) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %impl.elem0.loc11_50: %.7fe = impl_witness_access constants.%ImplicitAs.impl_witness.2fa, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.b37]
@@ -799,10 +799,10 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_50.3: ref %f32.c73 = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc11_50.4: init %f32.c73 to %.loc11_50.3 = in_place_init %.loc11_50.2 [concrete = constants.%float.943]
-// CHECK:STDOUT:   %.loc11_50.5: init %array_type to %a.var = array_init (%.loc11_50.4) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc11_3: init %array_type = converted %.loc11_50.1, %.loc11_50.5 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_50.5: init %Array.0a4 to %a.var = array_init (%.loc11_50.4) [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_3: init %Array.0a4 = converted %.loc11_50.1, %.loc11_50.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc11_3
-// CHECK:STDOUT:   %.loc11_41: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc11_41: type = splice_block %Array [concrete = constants.%Array.0a4] {
 // CHECK:STDOUT:     %f32: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:     %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -817,12 +817,12 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.long.as.ImplicitAs.impl.Convert.call.loc11: init Core.IntLiteral = call %bound_method.loc11_30.2(%.loc11_30.2) [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %.loc11_30.3: Core.IntLiteral = value_of_initializer %Cpp.long.as.ImplicitAs.impl.Convert.call.loc11 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %.loc11_30.4: Core.IntLiteral = converted %.loc11_30.2, %.loc11_30.3 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:     %array_type: type = array_type %.loc11_30.4, %f32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %Array: type = class_type @Array, @Array(constants.%f32.c73, constants.%int_1.5b8) [concrete = constants.%Array.0a4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = wrapper_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Array.0a4 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.c23 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.c23 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%a.var)
@@ -840,7 +840,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc11_3.2(%self.param: ref %array_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc11_3.2(%self.param: ref %Array.0a4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11: ref %f32.c73 = array_index %self.param, %int_0
@@ -849,9 +849,9 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc11_3.2(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc11_3.2(%self.param: ref %Array.0a4) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc11_3.2(%self.param: ref %array_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc11_3.2(%self.param: ref %Array.0a4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)
@@ -865,7 +865,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Cpp.unsigned_long: type = class_type @ULong64 [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
+// CHECK:STDOUT:   %N.fe9: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.172: type = pattern_type %Cpp.unsigned_long [concrete]
 // CHECK:STDOUT:   %cpp_unsigned_long.patt: %pattern_type.172 = value_binding_pattern cpp_unsigned_long [concrete]
@@ -906,16 +906,16 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.type.ae6f4c.2: type = fn_type @Cpp.unsigned_long.as.ImplicitAs.impl.Convert.2 [concrete]
 // CHECK:STDOUT:   %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.3cefb0.2: %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.type.ae6f4c.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.9e8, %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.3cefb0.2 [concrete]
-// CHECK:STDOUT:   %array_type: type = array_type %int_1.5b8, %f32.c73 [concrete]
-// CHECK:STDOUT:   %pattern_type.18b: type = pattern_type %array_type [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:   %Array.0a4: type = class_type @Array, @Array(%f32.c73, %int_1.5b8) [concrete]
+// CHECK:STDOUT:   %pattern_type.c23: type = pattern_type %Array.0a4 [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.c23 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.c23 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %float.6da: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.FloatLiteral) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%float.6da) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.ed3: type = facet_type <@ImplicitAs, @ImplicitAs(%f32.c73)> [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%N.fe9) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.d4f: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.2fa: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1e0, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.a62: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
@@ -928,7 +928,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.b37, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.943: %f32.c73 = float_value 1 [concrete]
-// CHECK:STDOUT:   %array: %array_type = tuple_value (%float.943) [concrete]
+// CHECK:STDOUT:   %array: %Array.0a4 = tuple_value (%float.943) [concrete]
 // CHECK:STDOUT:   %self.param_patt.c62: %pattern_type.240 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.ed0: %pattern_type.240 = wrapper_binding_pattern self, %self.param_patt.c62 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc11_3.1 [concrete]
@@ -937,8 +937,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.1: type = fn_type @Destroy.WithSelf.SelfDestruct.loc11_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.1: %Destroy.WithSelf.SelfDestruct.type.fbceb5.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.c06: %pattern_type.18b = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.a67: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt.c06 [concrete]
+// CHECK:STDOUT:   %self.param_patt.bc8: %pattern_type.c23 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.5b5: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt.bc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc11_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc11_3.2 [concrete]
@@ -980,18 +980,18 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %self: ref %f32.c73 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc11_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.18b = ref_param_pattern [concrete = constants.%self.param_patt.c06]
-// CHECK:STDOUT:     %self.patt: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a67]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c23 = ref_param_pattern [concrete = constants.%self.param_patt.bc8]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.5b5]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.0a4 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.0a4 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc11_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.18b = ref_param_pattern [concrete = constants.%self.param_patt.c06]
-// CHECK:STDOUT:     %self.patt: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a67]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c23 = ref_param_pattern [concrete = constants.%self.param_patt.bc8]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.5b5]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.0a4 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.0a4 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1022,7 +1022,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_unsigned_long.patt: %pattern_type.b35 = value_binding_pattern carbon_unsigned_long [concrete = constants.%carbon_unsigned_long.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type = var_storage %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %Array.0a4 = var_storage %a.var_patt
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6da]
 // CHECK:STDOUT:   %.loc11_59.1: %tuple.type = tuple_literal (%float) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %impl.elem0.loc11_59: %.7fe = impl_witness_access constants.%ImplicitAs.impl_witness.2fa, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.b37]
@@ -1034,10 +1034,10 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11_59.3: ref %f32.c73 = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc11_59.4: init %f32.c73 to %.loc11_59.3 = in_place_init %.loc11_59.2 [concrete = constants.%float.943]
-// CHECK:STDOUT:   %.loc11_59.5: init %array_type to %a.var = array_init (%.loc11_59.4) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc11_3: init %array_type = converted %.loc11_59.1, %.loc11_59.5 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_59.5: init %Array.0a4 to %a.var = array_init (%.loc11_59.4) [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc11_3: init %Array.0a4 = converted %.loc11_59.1, %.loc11_59.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc11_3
-// CHECK:STDOUT:   %.loc11_50: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc11_50: type = splice_block %Array [concrete = constants.%Array.0a4] {
 // CHECK:STDOUT:     %f32: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:     %int_1.loc11: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -1052,12 +1052,12 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.call.loc11: init Core.IntLiteral = call %bound_method.loc11_30.2(%.loc11_30.2) [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %.loc11_30.3: Core.IntLiteral = value_of_initializer %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.call.loc11 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %.loc11_30.4: Core.IntLiteral = converted %.loc11_30.2, %.loc11_30.3 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:     %array_type: type = array_type %.loc11_30.4, %f32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %Array: type = class_type @Array, @Array(constants.%f32.c73, constants.%int_1.5b8) [concrete = constants.%Array.0a4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = wrapper_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Array.0a4 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.c23 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.c23 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%a.var)
@@ -1075,7 +1075,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc11_3.2(%self.param: ref %array_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc11_3.2(%self.param: ref %Array.0a4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc11: ref %f32.c73 = array_index %self.param, %int_0
@@ -1084,9 +1084,9 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc11_3.2(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc11_3.2(%self.param: ref %Array.0a4) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc11_3.2(%self.param: ref %array_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc11_3.2(%self.param: ref %Array.0a4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)
@@ -1099,7 +1099,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
+// CHECK:STDOUT:   %N.fe9: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.f57: type = pattern_type %i64 [concrete]
 // CHECK:STDOUT:   %cpp_long_long.patt: %pattern_type.f57 = value_binding_pattern cpp_long_long [concrete]
@@ -1173,16 +1173,16 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.d98, %Int.as.ImplicitAs.impl.Convert.be5 [concrete]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Int.as.ImplicitAs.impl.Convert.be5, @Int.as.ImplicitAs.impl.Convert(%int_64) [concrete]
 // CHECK:STDOUT:   %bound_method.e21: <bound method> = bound_method %int_1.d98, %Int.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %array_type: type = array_type %int_1.5b8, %f32.c73 [concrete]
-// CHECK:STDOUT:   %pattern_type.18b: type = pattern_type %array_type [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:   %Array.0a4: type = class_type @Array, @Array(%f32.c73, %int_1.5b8) [concrete]
+// CHECK:STDOUT:   %pattern_type.c23: type = pattern_type %Array.0a4 [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.c23 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.c23 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %float.6da: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.FloatLiteral) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%float.6da) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.ed3: type = facet_type <@ImplicitAs, @ImplicitAs(%f32.c73)> [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%N.fe9) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.d4f: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.2fa: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1e0, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.a62: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
@@ -1195,7 +1195,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.b37, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.3e4: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.943: %f32.c73 = float_value 1 [concrete]
-// CHECK:STDOUT:   %array: %array_type = tuple_value (%float.943) [concrete]
+// CHECK:STDOUT:   %array: %Array.0a4 = tuple_value (%float.943) [concrete]
 // CHECK:STDOUT:   %self.param_patt.c62: %pattern_type.240 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.ed0: %pattern_type.240 = wrapper_binding_pattern self, %self.param_patt.c62 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc24_3.1 [concrete]
@@ -1204,8 +1204,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.1: type = fn_type @Destroy.WithSelf.SelfDestruct.loc24_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.1: %Destroy.WithSelf.SelfDestruct.type.fbceb5.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.c06: %pattern_type.18b = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.a67: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt.c06 [concrete]
+// CHECK:STDOUT:   %self.param_patt.bc8: %pattern_type.c23 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.5b5: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt.bc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc24_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc24_3.2 [concrete]
@@ -1290,18 +1290,18 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %self: ref %f32.c73 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc24_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.18b = ref_param_pattern [concrete = constants.%self.param_patt.c06]
-// CHECK:STDOUT:     %self.patt: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a67]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c23 = ref_param_pattern [concrete = constants.%self.param_patt.bc8]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.5b5]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.0a4 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.0a4 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc24_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.18b = ref_param_pattern [concrete = constants.%self.param_patt.c06]
-// CHECK:STDOUT:     %self.patt: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a67]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c23 = ref_param_pattern [concrete = constants.%self.param_patt.bc8]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.5b5]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.0a4 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.0a4 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.3: %Destroy.WithSelf.Op.type.ef016f.3 = fn_decl @Destroy.WithSelf.Op.loc22 [concrete = constants.%Destroy.WithSelf.Op.403171.3] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.357 = ref_param_pattern [concrete = constants.%self.param_patt.98a]
@@ -1409,7 +1409,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_i64_result.patt: %pattern_type.357 = value_binding_pattern carbon_i64_result [concrete = constants.%carbon_i64_result.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type = var_storage %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %Array.0a4 = var_storage %a.var_patt
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6da]
 // CHECK:STDOUT:   %.loc24_55.1: %tuple.type = tuple_literal (%float) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %impl.elem0.loc24_55: %.7fe = impl_witness_access constants.%ImplicitAs.impl_witness.2fa, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.b37]
@@ -1421,10 +1421,10 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24_55.3: ref %f32.c73 = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc24_55.4: init %f32.c73 to %.loc24_55.3 = in_place_init %.loc24_55.2 [concrete = constants.%float.943]
-// CHECK:STDOUT:   %.loc24_55.5: init %array_type to %a.var = array_init (%.loc24_55.4) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc24_3: init %array_type = converted %.loc24_55.1, %.loc24_55.5 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_55.5: init %Array.0a4 to %a.var = array_init (%.loc24_55.4) [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_3: init %Array.0a4 = converted %.loc24_55.1, %.loc24_55.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc24_3
-// CHECK:STDOUT:   %.loc24_46: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc24_46: type = splice_block %Array [concrete = constants.%Array.0a4] {
 // CHECK:STDOUT:     %f32: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:     %int_1.loc24: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -1443,12 +1443,12 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Int.as.ImplicitAs.impl.Convert.call: init Core.IntLiteral = call %bound_method.loc24_30.4(%.loc24_30.2) [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %.loc24_30.3: Core.IntLiteral = value_of_initializer %Int.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %.loc24_30.4: Core.IntLiteral = converted %.loc24_30.2, %.loc24_30.3 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:     %array_type: type = array_type %.loc24_30.4, %f32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %Array: type = class_type @Array, @Array(constants.%f32.c73, constants.%int_1.5b8) [concrete = constants.%Array.0a4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = wrapper_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Array.0a4 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.c23 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.c23 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc24: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc24: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc24(%a.var)
@@ -1472,7 +1472,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc24_3.2(%self.param: ref %array_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc24_3.2(%self.param: ref %Array.0a4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24: ref %f32.c73 = array_index %self.param, %int_0
@@ -1481,9 +1481,9 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc24_3.2(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc24_3.2(%self.param: ref %Array.0a4) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc24_3.2(%self.param: ref %array_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc24_3.2(%self.param: ref %Array.0a4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)
@@ -4173,7 +4173,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
+// CHECK:STDOUT:   %N.fe9: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
 // CHECK:STDOUT:   %pattern_type.b35: type = pattern_type %u64 [concrete]
 // CHECK:STDOUT:   %cpp_unsigned_long_long.patt: %pattern_type.b35 = value_binding_pattern cpp_unsigned_long_long [concrete]
@@ -4238,16 +4238,16 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.type: type = fn_type @Cpp.unsigned_long.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %Cpp.unsigned_long.as.ImplicitAs.impl.Convert: %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.9e8, %Cpp.unsigned_long.as.ImplicitAs.impl.Convert [concrete]
-// CHECK:STDOUT:   %array_type: type = array_type %int_1.5b8, %f32.c73 [concrete]
-// CHECK:STDOUT:   %pattern_type.18b: type = pattern_type %array_type [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:   %Array.0a4: type = class_type @Array, @Array(%f32.c73, %int_1.5b8) [concrete]
+// CHECK:STDOUT:   %pattern_type.c23: type = pattern_type %Array.0a4 [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.c23 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.c23 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT:   %float.6da: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (Core.FloatLiteral) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%float.6da) [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.ed3: type = facet_type <@ImplicitAs, @ImplicitAs(%f32.c73)> [concrete]
-// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%N.fe9) [symbolic]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.d4f: %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.063 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.2fa: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1e0, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.a62: type = fn_type @Core.FloatLiteral.as.ImplicitAs.impl.Convert, @Core.FloatLiteral.as.ImplicitAs.impl(%int_32) [concrete]
@@ -4260,7 +4260,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.FloatLiteral.as.ImplicitAs.impl.Convert.b37, @Core.FloatLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method.3e4: <bound method> = bound_method %float.6da, %Core.FloatLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %float.943: %f32.c73 = float_value 1 [concrete]
-// CHECK:STDOUT:   %array: %array_type = tuple_value (%float.943) [concrete]
+// CHECK:STDOUT:   %array: %Array.0a4 = tuple_value (%float.943) [concrete]
 // CHECK:STDOUT:   %self.param_patt.c62: %pattern_type.240 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.ed0: %pattern_type.240 = wrapper_binding_pattern self, %self.param_patt.c62 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc24_3.1 [concrete]
@@ -4269,8 +4269,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.1: type = fn_type @Destroy.WithSelf.SelfDestruct.loc24_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.1: %Destroy.WithSelf.SelfDestruct.type.fbceb5.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.c06: %pattern_type.18b = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.a67: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt.c06 [concrete]
+// CHECK:STDOUT:   %self.param_patt.bc8: %pattern_type.c23 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.5b5: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt.bc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc24_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc24_3.2 [concrete]
@@ -4355,18 +4355,18 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %self: ref %f32.c73 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc24_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.18b = ref_param_pattern [concrete = constants.%self.param_patt.c06]
-// CHECK:STDOUT:     %self.patt: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a67]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c23 = ref_param_pattern [concrete = constants.%self.param_patt.bc8]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.5b5]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.0a4 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.0a4 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc24_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.18b = ref_param_pattern [concrete = constants.%self.param_patt.c06]
-// CHECK:STDOUT:     %self.patt: %pattern_type.18b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a67]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.c23 = ref_param_pattern [concrete = constants.%self.param_patt.bc8]
+// CHECK:STDOUT:     %self.patt: %pattern_type.c23 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.5b5]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %array_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %array_type = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %Array.0a4 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %Array.0a4 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.3: %Destroy.WithSelf.Op.type.ef016f.3 = fn_decl @Destroy.WithSelf.Op.loc22 [concrete = constants.%Destroy.WithSelf.Op.403171.3] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.97e = ref_param_pattern [concrete = constants.%self.param_patt.2ef]
@@ -4481,7 +4481,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %carbon_u64_result.patt: %pattern_type.97e = value_binding_pattern carbon_u64_result [concrete = constants.%carbon_u64_result.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.var: ref %array_type = var_storage %a.var_patt
+// CHECK:STDOUT:   %a.var: ref %Array.0a4 = var_storage %a.var_patt
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float.6da]
 // CHECK:STDOUT:   %.loc24_59.1: %tuple.type = tuple_literal (%float) [concrete = constants.%tuple]
 // CHECK:STDOUT:   %impl.elem0.loc24_59: %.7fe = impl_witness_access constants.%ImplicitAs.impl_witness.2fa, element0 [concrete = constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.b37]
@@ -4493,10 +4493,10 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24_59.3: ref %f32.c73 = array_index %a.var, %int_0
 // CHECK:STDOUT:   %.loc24_59.4: init %f32.c73 to %.loc24_59.3 = in_place_init %.loc24_59.2 [concrete = constants.%float.943]
-// CHECK:STDOUT:   %.loc24_59.5: init %array_type to %a.var = array_init (%.loc24_59.4) [concrete = constants.%array]
-// CHECK:STDOUT:   %.loc24_3: init %array_type = converted %.loc24_59.1, %.loc24_59.5 [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_59.5: init %Array.0a4 to %a.var = array_init (%.loc24_59.4) [concrete = constants.%array]
+// CHECK:STDOUT:   %.loc24_3: init %Array.0a4 = converted %.loc24_59.1, %.loc24_59.5 [concrete = constants.%array]
 // CHECK:STDOUT:   assign %a.var, %.loc24_3
-// CHECK:STDOUT:   %.loc24_50: type = splice_block %array_type [concrete = constants.%array_type] {
+// CHECK:STDOUT:   %.loc24_50: type = splice_block %Array [concrete = constants.%Array.0a4] {
 // CHECK:STDOUT:     %f32: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
 // CHECK:STDOUT:     %int_1.loc24: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
@@ -4511,12 +4511,12 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:     %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.call: init Core.IntLiteral = call %bound_method.loc24_30.2(%.loc24_30.2) [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %.loc24_30.3: Core.IntLiteral = value_of_initializer %Cpp.unsigned_long.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:     %.loc24_30.4: Core.IntLiteral = converted %.loc24_30.2, %.loc24_30.3 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:     %array_type: type = array_type %.loc24_30.4, %f32 [concrete = constants.%array_type]
+// CHECK:STDOUT:     %Array: type = class_type @Array, @Array(constants.%f32.c73, constants.%int_1.5b8) [concrete = constants.%Array.0a4]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %array_type = wrapper_binding a, %a.var
+// CHECK:STDOUT:   %a: ref %Array.0a4 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.18b = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.18b = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.c23 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.c23 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc24: <bound method> = bound_method %a.var, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc24: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc24(%a.var)
@@ -4540,7 +4540,7 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc24_3.2(%self.param: ref %array_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc24_3.2(%self.param: ref %Array.0a4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc24: ref %f32.c73 = array_index %self.param, %int_0
@@ -4549,9 +4549,9 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc24_3.2(%self.param: ref %array_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc24_3.2(%self.param: ref %Array.0a4) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc24_3.2(%self.param: ref %array_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc24_3.2(%self.param: ref %Array.0a4) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)

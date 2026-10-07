@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/primitives.carbon
 // TODO: Add ranges and switch to "--dump-sem-ir-ranges=only".
 // EXTRA-ARGS: --dump-sem-ir-ranges=if-present
 //
@@ -42,11 +42,13 @@ fn F(generic N: i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Int.as.ImplicitAs.impl.Convert.69e, @Int.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %N.37f, %Int.as.ImplicitAs.impl.Convert.specific_fn [symbolic]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call: init Core.IntLiteral = call %bound_method(%N.37f) [symbolic]
-// CHECK:STDOUT:   %array_type: type = array_type %Int.as.ImplicitAs.impl.Convert.call, %i32 [symbolic]
-// CHECK:STDOUT:   %ptr: type = ptr_type %array_type [symbolic]
-// CHECK:STDOUT:   %pattern_type.5a4: type = pattern_type %ptr [symbolic]
-// CHECK:STDOUT:   %a.param_patt: %pattern_type.5a4 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %a.patt: %pattern_type.5a4 = wrapper_binding_pattern a, %a.param_patt [symbolic]
+// CHECK:STDOUT:   %Array.type: type = generic_class_type @Array [concrete]
+// CHECK:STDOUT:   %Array.generic: %Array.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Array.867: type = class_type @Array, @Array(%i32, %Int.as.ImplicitAs.impl.Convert.call) [symbolic]
+// CHECK:STDOUT:   %ptr: type = ptr_type %Array.867 [symbolic]
+// CHECK:STDOUT:   %pattern_type.bdd: type = pattern_type %ptr [symbolic]
+// CHECK:STDOUT:   %a.param_patt: %pattern_type.bdd = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %a.patt: %pattern_type.bdd = wrapper_binding_pattern a, %a.param_patt [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -55,6 +57,7 @@ fn F(generic N: i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
+// CHECK:STDOUT:     .Array = %Core.Array
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -62,6 +65,7 @@ fn F(generic N: i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.import_ref.32e: @Int.as.ImplicitAs.impl.%Int.as.ImplicitAs.impl.Convert.type (%Int.as.ImplicitAs.impl.Convert.type.48d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.ImplicitAs.impl.%Int.as.ImplicitAs.impl.Convert (constants.%Int.as.ImplicitAs.impl.Convert.0f9)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.204 = impl_witness_table (%Core.import_ref.32e), @Int.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.Array: %Array.type = import_ref Core//prelude/parts/array, Array, loaded [concrete = constants.%Array.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -72,8 +76,8 @@ fn F(generic N: i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %N.patt.loc15_15.1: %pattern_type.6b6 = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc15_15.2 (constants.%N.patt.38a)]
-// CHECK:STDOUT:     %a.param_patt.loc15_23.1: @F.%pattern_type (%pattern_type.5a4) = value_param_pattern [symbolic = %a.param_patt.loc15_23.2 (constants.%a.param_patt)]
-// CHECK:STDOUT:     %a.patt.loc15_23.1: @F.%pattern_type (%pattern_type.5a4) = wrapper_binding_pattern a, %a.param_patt.loc15_23.1 [symbolic = %a.patt.loc15_23.2 (constants.%a.patt)]
+// CHECK:STDOUT:     %a.param_patt.loc15_23.1: @F.%pattern_type (%pattern_type.bdd) = value_param_pattern [symbolic = %a.param_patt.loc15_23.2 (constants.%a.param_patt)]
+// CHECK:STDOUT:     %a.patt.loc15_23.1: @F.%pattern_type (%pattern_type.bdd) = wrapper_binding_pattern a, %a.param_patt.loc15_23.1 [symbolic = %a.patt.loc15_23.2 (constants.%a.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc15_17: type = splice_block %i32.loc15_17 [concrete = constants.%i32] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -91,8 +95,8 @@ fn F(generic N: i32, a: array(i32, N)*);
 // CHECK:STDOUT:       %Int.as.ImplicitAs.impl.Convert.call.loc15_36.2: init Core.IntLiteral = call %bound_method.loc15_36.3(%N.ref) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:       %.loc15_36.1: Core.IntLiteral = value_of_initializer %Int.as.ImplicitAs.impl.Convert.call.loc15_36.2 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
 // CHECK:STDOUT:       %.loc15_36.2: Core.IntLiteral = converted %N.ref, %.loc15_36.1 [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
-// CHECK:STDOUT:       %array_type.loc15_37.2: type = array_type %.loc15_36.2, %i32.loc15_31 [symbolic = %array_type.loc15_37.1 (constants.%array_type)]
-// CHECK:STDOUT:       %ptr.loc15_38.2: type = ptr_type %array_type.loc15_37.2 [symbolic = %ptr.loc15_38.1 (constants.%ptr)]
+// CHECK:STDOUT:       %Array.loc15_37.2: type = class_type @Array, @Array(constants.%i32, constants.%Int.as.ImplicitAs.impl.Convert.call) [symbolic = %Array.loc15_37.1 (constants.%Array.867)]
+// CHECK:STDOUT:       %ptr.loc15_38.2: type = ptr_type %Array.loc15_37.2 [symbolic = %ptr.loc15_38.1 (constants.%ptr)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %a: @F.%ptr.loc15_38.1 (%ptr) = wrapper_binding a, %a.param
 // CHECK:STDOUT:   }
@@ -104,11 +108,11 @@ fn F(generic N: i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %N.loc15_15.1, constants.%Int.as.ImplicitAs.impl.Convert.69e [symbolic = %Int.as.ImplicitAs.impl.Convert.bound (constants.%Int.as.ImplicitAs.impl.Convert.bound)]
 // CHECK:STDOUT:   %bound_method.loc15_36.1: <bound method> = bound_method %N.loc15_15.1, constants.%Int.as.ImplicitAs.impl.Convert.specific_fn [symbolic = %bound_method.loc15_36.1 (constants.%bound_method)]
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1: init Core.IntLiteral = call %bound_method.loc15_36.1(%N.loc15_15.1) [symbolic = %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1 (constants.%Int.as.ImplicitAs.impl.Convert.call)]
-// CHECK:STDOUT:   %array_type.loc15_37.1: type = array_type %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1, constants.%i32 [symbolic = %array_type.loc15_37.1 (constants.%array_type)]
-// CHECK:STDOUT:   %ptr.loc15_38.1: type = ptr_type %array_type.loc15_37.1 [symbolic = %ptr.loc15_38.1 (constants.%ptr)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc15_38.1 [symbolic = %pattern_type (constants.%pattern_type.5a4)]
-// CHECK:STDOUT:   %a.param_patt.loc15_23.2: @F.%pattern_type (%pattern_type.5a4) = value_param_pattern [symbolic = %a.param_patt.loc15_23.2 (constants.%a.param_patt)]
-// CHECK:STDOUT:   %a.patt.loc15_23.2: @F.%pattern_type (%pattern_type.5a4) = wrapper_binding_pattern a, %a.param_patt.loc15_23.2 [symbolic = %a.patt.loc15_23.2 (constants.%a.patt)]
+// CHECK:STDOUT:   %Array.loc15_37.1: type = class_type @Array, @Array(constants.%i32, %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1) [symbolic = %Array.loc15_37.1 (constants.%Array.867)]
+// CHECK:STDOUT:   %ptr.loc15_38.1: type = ptr_type %Array.loc15_37.1 [symbolic = %ptr.loc15_38.1 (constants.%ptr)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc15_38.1 [symbolic = %pattern_type (constants.%pattern_type.bdd)]
+// CHECK:STDOUT:   %a.param_patt.loc15_23.2: @F.%pattern_type (%pattern_type.bdd) = value_param_pattern [symbolic = %a.param_patt.loc15_23.2 (constants.%a.param_patt)]
+// CHECK:STDOUT:   %a.patt.loc15_23.2: @F.%pattern_type (%pattern_type.bdd) = wrapper_binding_pattern a, %a.param_patt.loc15_23.2 [symbolic = %a.patt.loc15_23.2 (constants.%a.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%a.param: @F.%ptr.loc15_38.1 (%ptr));
 // CHECK:STDOUT: }
@@ -119,9 +123,9 @@ fn F(generic N: i32, a: array(i32, N)*);
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.bound => constants.%Int.as.ImplicitAs.impl.Convert.bound
 // CHECK:STDOUT:   %bound_method.loc15_36.1 => constants.%bound_method
 // CHECK:STDOUT:   %Int.as.ImplicitAs.impl.Convert.call.loc15_36.1 => constants.%Int.as.ImplicitAs.impl.Convert.call
-// CHECK:STDOUT:   %array_type.loc15_37.1 => constants.%array_type
+// CHECK:STDOUT:   %Array.loc15_37.1 => constants.%Array.867
 // CHECK:STDOUT:   %ptr.loc15_38.1 => constants.%ptr
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.5a4
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.bdd
 // CHECK:STDOUT:   %a.param_patt.loc15_23.2 => constants.%a.param_patt
 // CHECK:STDOUT:   %a.patt.loc15_23.2 => constants.%a.patt
 // CHECK:STDOUT: }

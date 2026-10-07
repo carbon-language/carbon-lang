@@ -67,7 +67,11 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
       {.break_target = loop_exit_id,
        .break_depth = context.scope_stack().cleanup_scope_depth(),
        .continue_target = loop_header_id,
-       .continue_depth = continue_depth});
+       .continue_depth = continue_depth,
+       .return_scope_decl_id =
+           context.scope_stack().IsInFunctionScope()
+               ? context.scope_stack().GetReturnScopeDeclId()
+               : SemIR::InstId::None});
 }
 
 // Finishes emitting the body for a `while`-like loop. Adds a back-edge to the
@@ -271,7 +275,9 @@ auto HandleParseNode(Context& context, Parse::ForStatementId node_id) -> bool {
 auto HandleParseNode(Context& context, Parse::BreakStatementStartId node_id)
     -> bool {
   auto& stack = context.break_continue_stack();
-  if (stack.empty()) {
+  if (stack.empty() || !context.scope_stack().IsInFunctionScope() ||
+      stack.back().return_scope_decl_id !=
+          context.scope_stack().GetReturnScopeDeclId()) {
     CARBON_DIAGNOSTIC(BreakOutsideLoop, Error,
                       "`break` can only be used in a loop");
     context.emitter().Emit(node_id, BreakOutsideLoop);
@@ -296,7 +302,9 @@ auto HandleParseNode(Context& /*context*/, Parse::BreakStatementId /*node_id*/)
 auto HandleParseNode(Context& context, Parse::ContinueStatementStartId node_id)
     -> bool {
   auto& stack = context.break_continue_stack();
-  if (stack.empty()) {
+  if (stack.empty() || !context.scope_stack().IsInFunctionScope() ||
+      stack.back().return_scope_decl_id !=
+          context.scope_stack().GetReturnScopeDeclId()) {
     CARBON_DIAGNOSTIC(ContinueOutsideLoop, Error,
                       "`continue` can only be used in a loop");
     context.emitter().Emit(node_id, ContinueOutsideLoop);

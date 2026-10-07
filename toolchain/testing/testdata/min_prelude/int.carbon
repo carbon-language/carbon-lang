@@ -7,7 +7,7 @@
 
 // --- min_prelude/int.carbon
 
-// A minimal prelude for testing using `Int` or `i32`; required for arrays.
+// A minimal prelude for testing `Int` or `i32`.
 package Core library "prelude";
 
 export import library "prelude/parts/int";

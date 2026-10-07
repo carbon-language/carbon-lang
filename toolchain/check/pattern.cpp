@@ -224,6 +224,9 @@ auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
       return ParamPatternKind::Var;
     case SemIR::ValueParamPattern::Kind:
       return ParamPatternKind::Value;
+    case SemIR::ErrorInst::Kind:
+      // For error recovery, treat errors as values.
+      return ParamPatternKind::Value;
     default:
       CARBON_FATAL("Unexpected pattern kind: {0}", param);
   }

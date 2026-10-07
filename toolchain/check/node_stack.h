@@ -431,6 +431,7 @@ class NodeStack {
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
+      case Parse::NodeKind::LambdaDefinitionStart:
         return Id::KindFor<SemIR::FunctionId>();
       case Parse::NodeKind::ChoiceDefinitionStart:
         // TODO: Should we have a separate SemIR::ChoiceId?
@@ -468,6 +469,7 @@ class NodeStack {
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::NamedConstraintIntroducer:
+      case Parse::NodeKind::PackExpansionStart:
       case Parse::NodeKind::RefBindingName:
       case Parse::NodeKind::RuntimeBindingName:
       case Parse::NodeKind::ReturnStatementStart:
@@ -544,7 +546,6 @@ class NodeStack {
       case Parse::NodeKind::StructLiteralComma:
       case Parse::NodeKind::StructFieldDesignator:
       case Parse::NodeKind::StructTypeLiteralComma:
-      case Parse::NodeKind::TerseBodyArrow:
       case Parse::NodeKind::TupleLiteralComma:
       case Parse::NodeKind::TypeOfExprKeyword:
       case Parse::NodeKind::TypeOfExprOpenParen:

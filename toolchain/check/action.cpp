@@ -67,6 +67,10 @@ static auto OperandDependenceInSpecific(Context& context,
                                         SemIR::SpecificId specific_id,
                                         SemIR::MetaInstId inst_id)
     -> SemIR::ConstantDependence {
+  if (!inst_id.has_value()) {
+    return SemIR::ConstantDependence::None;
+  }
+
   // A meta-instruction operand makes the instruction dependent if its type or
   // constant value is dependent in this specific.
   return std::max(
@@ -242,6 +246,10 @@ static auto RefineTypedOperand(Context& /*context*/, SemIR::LocId /*loc_id*/,
 
 static auto RefineTypedOperand(Context& context, SemIR::LocId /*loc_id*/,
                                SemIR::MetaInstId inst_id) -> SemIR::MetaInstId {
+  if (!inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
+
   // TODO: Can we delete this check?
   if (context.insts().Is<SemIR::SpliceInst>(inst_id)) {
     // The argument will evaluate to the spliced instruction, which is already

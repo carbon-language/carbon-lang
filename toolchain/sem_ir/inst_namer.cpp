@@ -634,7 +634,9 @@ auto InstNamer::PushEntity(FunctionId function_id, ScopeId scope_id,
   scope.name = globals_.AllocateName(
       *this, fn_loc,
       llvm::formatv("{0}{1}{2}", scope_prefix, scope_prefix.empty() ? "" : ".",
-                    sem_ir_->names().GetIRBaseName(fn.name_id)));
+                    fn.name_id.has_value()
+                        ? sem_ir_->names().GetIRBaseName(fn.name_id)
+                        : "fn"));
   if (!fn.body_block_ids.empty()) {
     AddBlockLabel(scope_id, fn.body_block_ids.front(), "entry", fn_loc);
   }
@@ -1479,7 +1481,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(TupleValue inst): {
-      if (sem_ir().types().Is<ArrayType>(inst.type_id)) {
+      if (sem_ir().types().Is<ArrayType>(
+              sem_ir().types().GetTransitiveAdaptedType(inst.type_id))) {
         AddInstName("array");
       } else if (inst.elements_id == InstBlockId::Empty) {
         AddInstName("empty_tuple");

@@ -125,11 +125,20 @@ auto MakeFunctionDecl(Context& context, SemIR::LocId loc_id,
                       bool is_definition, SemIR::Function function)
     -> std::pair<SemIR::InstId, SemIR::FunctionId>;
 
+// Checks that a function's parameter patterns have valid default values and
+// diagnoses unsupported positional parameters.
+auto CheckFunctionParams(Context& context, SemIR::Function& function) -> void;
+
 // Starts a function definition. Handles necessary stack setup, creating the
 // function scope and entry block, and definition validation. This is used for
 // both generated functions/thunks and user-declared functions.
 auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
                              SemIR::FunctionId function_id) -> void;
+
+// Checks that a function definition has a `return` at the end if required, or
+// adds an implicit `return;` if reachable.
+auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
+                                 SemIR::FunctionId function_id) -> void;
 
 // Finishes definitions started by `StartFunctionDefinition`.
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)

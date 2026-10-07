@@ -864,7 +864,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc10_39.3: <instruction> = call_action (%.loc10_36.2), false [template]
 // CHECK:STDOUT:   %.loc10_39.4: type = type_of_inst %.loc10_39.3 [template = %.loc10_39.4 (constants.%.e81)]
 // CHECK:STDOUT:   %.loc10_39.5: @F.%.loc10_39.4 (%.e81) = splice_inst %.loc10_39.3 [template = %.loc10_39.5 (constants.%.949)]
-// CHECK:STDOUT:   %.loc10_3.6: %tuple.type = initialize_action %.loc10_39.2, %.loc10_24.9, %a.var, false [template]
+// CHECK:STDOUT:   %.loc10_3.6: %tuple.type = initialize_action %.loc10_39.2, %.loc10_24.9, %a.var, none, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc10_3.6, element0 [template]
 // CHECK:STDOUT:   %.loc10_3.7: @F.%.loc10_24.9 (%.537) = splice_inst %tuple.elem0 [template = %.loc10_3.7 (constants.%.5d6)]
 // CHECK:STDOUT:   %.loc10_3.8: <instruction> = compound_member_access_action %a.var, constants.%assoc2 [template]
