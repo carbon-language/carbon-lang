@@ -815,7 +815,7 @@ CARBON_PARSE_STATE(LambdaAfterImplicitParams)
 //
 // fn <...> -> <...>
 //          ^
-//   1. ReturnTypeExpr  (Reused)
+//   1. ReturnTypeOrFormExpr  (Reused)
 //   2. FunctionReturnTypeFinish
 //   3. LambdaBody
 //
@@ -872,8 +872,14 @@ CARBON_PARSE_STATE(LambdaBodyFinish)
 =======
 // fn F(...) -> ...
 //           ^~
+<<<<<<< HEAD
 //   1. ReturnTypeExpr
 >>>>>>> 05606c289 (Parse `-> ref T` as a primitive return form)
+||||||| parent of 1ffb37e (Rename `ReturnTypeExpr` parse state to `ReturnTypeOrFormExpr`)
+//   1. ReturnTypeExpr
+=======
+//   1. ReturnTypeOrFormExpr
+>>>>>>> 1ffb37e (Rename `ReturnTypeExpr` parse state to `ReturnTypeOrFormExpr`)
 //   2. FunctionReturnTypeFinish
 //   3. FunctionSignatureFinish
 //
@@ -899,7 +905,7 @@ CARBON_PARSE_STATE(FunctionAfterParams)
 // -> expr ...
 //    ^
 //   1. Expr
-CARBON_PARSE_STATE(ReturnTypeExpr)
+CARBON_PARSE_STATE(ReturnTypeOrFormExpr)
 
 // Finishes a function return type.
 //
