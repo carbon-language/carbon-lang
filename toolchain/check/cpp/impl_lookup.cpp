@@ -631,6 +631,8 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::FloatFitsIn:
       return SemIR::InstId::None;
 
+    case SemIR::CoreInterface::SelfDestruct:
+    case SemIR::CoreInterface::SubobjectDestroy:
     case SemIR::CoreInterface::Unknown:
       CARBON_FATAL("unexpected CoreInterface `{0}`", core_interface);
   }
