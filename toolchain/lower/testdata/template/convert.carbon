@@ -161,6 +161,30 @@ fn Test2(c: C) {
   AsType(c, i32);
 }
 
+// --- initialize_from_template_method_call.carbon
+
+library "[[@TEST_NAME]]";
+
+class B {
+  fn MakeB() -> B {
+    return {};
+  }
+}
+
+class A {
+  var field: B;
+}
+
+fn MakeA(template T: type) -> A {
+   return {
+     .field = T.MakeB(),
+   };
+}
+
+fn Run() {
+  MakeA(B);
+}
+
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'convert.carbon'
 // CHECK:STDOUT: source_filename = "convert.carbon"
