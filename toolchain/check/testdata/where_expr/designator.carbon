@@ -427,15 +427,7 @@ class C(T: type);
 // CHECK:STDERR:
 alias A(U: type) = C(U);
 
-// CHECK:STDERR: fail_todo_generic_alias_preserves_self.carbon:[[@LINE+8]]:15: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_generic_alias_preserves_self.carbon:[[@LINE+4]]:15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR:
-fn F(unused T:! I where C == A(.Self)) {}
+fn F(unused T: I where C == A(.Self)) {}
 
 // --- fail_generic_alias_without_self.carbon
 library "[[@TEST_NAME]]";
@@ -453,15 +445,7 @@ alias A(U: type) = C;
 
 // TODO: Once we can write a generic alias, this should become an error because
 // there is no constraint against `.Self`.
-// CHECK:STDERR: fail_generic_alias_without_self.carbon:[[@LINE+8]]:15: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR:
-// CHECK:STDERR: fail_generic_alias_without_self.carbon:[[@LINE+4]]:15: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR: fn F(unused T:! I where C == A(.Self)) {}
-// CHECK:STDERR:               ^
-// CHECK:STDERR:
-fn F(unused T:! I where C == A(.Self)) {}
+fn F(unused T: I where C == A(.Self)) {}
 
 // CHECK:STDOUT: --- success.carbon
 // CHECK:STDOUT:
