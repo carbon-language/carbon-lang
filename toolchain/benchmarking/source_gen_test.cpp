@@ -36,6 +36,9 @@ using ::testing::Le;
 using ::testing::MatchesRegex;
 using ::testing::SizeIs;
 using ::testing::StrEq;
+using ::testing::TestParamInfo;
+using ::testing::TestWithParam;
+using ::testing::Values;
 
 // Tiny helper to sum the sizes of a range of ranges. Uses a template to avoid
 // hard coding any specific types for the two ranges.
@@ -304,111 +307,159 @@ static auto CountLines(llvm::StringRef source) -> ssize_t {
   return llvm::count(source, '\n');
 }
 
-// Generates a file with each of `num_seeds` independently seeded generators,
-// and expects all of the files to have the same byte and line counts. Also
-// expects the first file to compile, and the content to vary so that the size
-// check isn't vacuous.
-static auto ExpectSeedIndependentSize(SourceGen::Language language,
-                                      int target_lines,
-                                      const SourceGen::DenseDeclParams& params,
-                                      int num_seeds) -> void {
-  SCOPED_TRACE(
-      llvm::formatv("language={0}, target_lines={1}",
-                    language == SourceGen::Language::Carbon ? "Carbon" : "C++",
-                    target_lines)
-          .str());
-  std::string first;
+// Matches a `SourceGen::Language` for which
+// `GenApiFileDenseDecls(target_lines, params)` generates files with the same
+// byte and line counts using each of `num_seeds` independently seeded
+// generators. The files must not all have the same content, which would make
+// that match vacuous.
+// NOLINTNEXTLINE(modernize-use-trailing-return-type): Macro based function.
+MATCHER_P3(GeneratesSeedIndependentSize, target_lines, params, num_seeds,
+           "generates files of the same size with every seed") {
+  SourceGen::Language language = arg;
+  std::string first =
+      SourceGen(language).GenApiFileDenseDecls(target_lines, params);
   bool any_different = false;
-  for (int i : llvm::seq(num_seeds)) {
-    SourceGen gen(language);
-    std::string source = gen.GenApiFileDenseDecls(target_lines, params);
-    if (i == 0) {
-      EXPECT_TRUE(TestCompile(language, source));
-      first = std::move(source);
-      continue;
+  for (int i : llvm::seq(1, num_seeds)) {
+    std::string source =
+        SourceGen(language).GenApiFileDenseDecls(target_lines, params);
+    if (source.size() != first.size() ||
+        CountLines(source) != CountLines(first)) {
+      *result_listener << "where seed iteration " << i << " generated "
+                       << source.size() << " bytes and " << CountLines(source)
+                       << " lines, but seed iteration 0 generated "
+                       << first.size() << " bytes and " << CountLines(first)
+                       << " lines";
+      return false;
     }
-    EXPECT_THAT(source.size(), Eq(first.size()));
-    EXPECT_THAT(CountLines(source), Eq(CountLines(first)));
     any_different = any_different || source != first;
   }
-  EXPECT_TRUE(any_different);
+  if (!any_different) {
+    *result_listener << "where all files have the same content";
+    return false;
+  }
+  return true;
 }
 
-// Benchmarks are only comparable if the generated source has the same size for
-// any seed.
-TEST(SourceGenTest, GenApiFileDenseDeclsStableSizeAcrossSeeds) {
-  for (SourceGen::Language language :
-       {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
-    // From barely enough lines for one class up to a large file.
-    for (int target_lines : {200, 1000, 5000, 20000}) {
-      ExpectSeedIndependentSize(language, target_lines,
-                                SourceGen::DenseDeclParams{}, /*num_seeds=*/16);
-    }
-  }
+// Each test generates files with one set of parameters, and checks that they
+// compile cleanly and have the same size for any seed, which benchmarks need to
+// be comparable. Each test runs for both languages.
+using GenApiFileDenseDeclsParamsTest = TestWithParam<SourceGen::Language>;
+
+INSTANTIATE_TEST_SUITE_P(
+    Languages, GenApiFileDenseDeclsParamsTest,
+    Values(SourceGen::Language::Carbon, SourceGen::Language::Cpp),
+    [](const TestParamInfo<SourceGen::Language>& info) -> std::string {
+      return info.param == SourceGen::Language::Carbon ? "Carbon" : "Cpp";
+    });
+
+// Barely enough lines for one class.
+TEST_P(GenApiFileDenseDeclsParamsTest, DefaultParamsAt200Lines) {
+  SourceGen::DenseDeclParams params;
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(200, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(200, params)));
 }
 
-TEST(SourceGenTest, GenApiFileDenseDeclsStableSizeWithVariedParams) {
-  llvm::SmallVector<SourceGen::DenseDeclParams, 0> param_set;
-  // Function declarations only: no methods and no fields.
-  param_set.push_back({.class_params = {.public_function_decls = 20,
-                                        .public_method_decls = 0,
-                                        .private_function_decls = 0,
-                                        .private_method_decls = 0,
-                                        .private_field_decls = 0}});
-  // Large parameter counts, which wrap onto several lines.
-  param_set.push_back(
-      {.class_params = {.public_function_decls = 2,
-                        .public_function_decl_params = {.max_params = 16},
-                        .public_method_decls = 4,
-                        .public_method_decl_params = {.max_params = 16},
-                        .private_function_decls = 0,
-                        .private_method_decls = 0,
-                        .private_field_decls = 0}});
-  // The default shape scaled up 2x.
-  param_set.push_back({.class_params = {.public_function_decls = 8,
-                                        .public_method_decls = 20,
-                                        .private_function_decls = 4,
-                                        .private_method_decls = 16,
-                                        .private_field_decls = 12}});
+TEST_P(GenApiFileDenseDeclsParamsTest, DefaultParamsAt1000Lines) {
+  SourceGen::DenseDeclParams params;
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(1000, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(1000, params)));
+}
 
-  for (const SourceGen::DenseDeclParams& params : param_set) {
-    for (SourceGen::Language language :
-         {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
-      ExpectSeedIndependentSize(language, /*target_lines=*/5000, params,
-                                /*num_seeds=*/12);
-    }
-  }
+TEST_P(GenApiFileDenseDeclsParamsTest, DefaultParamsAt5000Lines) {
+  SourceGen::DenseDeclParams params;
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(5000, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(5000, params)));
+}
+
+TEST_P(GenApiFileDenseDeclsParamsTest, DefaultParamsAt20000Lines) {
+  SourceGen::DenseDeclParams params;
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(20000, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(20000, params)));
+}
+
+// Function declarations only: no methods and no fields.
+TEST_P(GenApiFileDenseDeclsParamsTest, OnlyFunctions) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 20,
+                       .public_method_decls = 0,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 0}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(5000, params, 12));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(5000, params)));
+}
+
+// Large parameter counts, which wrap onto several lines.
+TEST_P(GenApiFileDenseDeclsParamsTest, WrappedParamLists) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 2,
+                       .public_function_decl_params = {.max_params = 16},
+                       .public_method_decls = 4,
+                       .public_method_decl_params = {.max_params = 16},
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 0}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(5000, params, 12));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(5000, params)));
+}
+
+// The default shape scaled up 2x.
+TEST_P(GenApiFileDenseDeclsParamsTest, DoubledDefaultShape) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 8,
+                       .public_method_decls = 20,
+                       .private_function_decls = 4,
+                       .private_method_decls = 16,
+                       .private_field_decls = 12}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(5000, params, 12));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(5000, params)));
 }
 
 // A class's fields can't reference it or any later class, so field-heavy
 // classes leave few type uses for references to a class. Whether the valid type
-// names run out depends on the shuffle, so use many seeds.
-TEST(SourceGenTest, GenApiFileDenseDeclsRobustForFieldHeavyParams) {
-  llvm::SmallVector<SourceGen::DenseDeclParams, 0> param_set;
-  param_set.push_back({.class_params = {.public_function_decls = 1,
-                                        .public_method_decls = 1,
-                                        .private_function_decls = 0,
-                                        .private_method_decls = 0,
-                                        .private_field_decls = 30}});
-  param_set.push_back({.class_params = {.public_function_decls = 0,
-                                        .public_method_decls = 1,
-                                        .private_function_decls = 0,
-                                        .private_method_decls = 0,
-                                        .private_field_decls = 50}});
-  // No functions or methods, so every type use is a fixed type.
-  param_set.push_back({.class_params = {.public_function_decls = 0,
-                                        .public_method_decls = 0,
-                                        .private_function_decls = 0,
-                                        .private_method_decls = 0,
-                                        .private_field_decls = 16}});
+// names run out depends on the shuffle, so these tests use many seeds.
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyFieldsAndTwoFunctions) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 30}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 32));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
 
-  for (const SourceGen::DenseDeclParams& params : param_set) {
-    for (SourceGen::Language language :
-         {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
-      ExpectSeedIndependentSize(language, /*target_lines=*/3000, params,
-                                /*num_seeds=*/32);
-    }
-  }
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyFieldsAndOneMethod) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 0,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 50}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 32));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// No functions or methods, so every type use is a fixed type.
+TEST_P(GenApiFileDenseDeclsParamsTest, OnlyFields) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 0,
+                       .public_method_decls = 0,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 16}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 32));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
 }
 
 }  // namespace
