@@ -1078,7 +1078,8 @@ auto Formatter::FormatNameAndForm(InstId inst_id, Inst inst) -> void {
         out() << "init ";
         FormatTypeOfInst(inst_id);
         auto init_target_id = FindStorageArgForInitializer(
-            *sem_ir_, inst_id, /*allow_transitive=*/false);
+            *sem_ir_, inst_id, SemIR::SpecificId::None,
+            /*allow_transitive=*/false);
         FormatReturnSlotArg(init_target_id);
         break;
       }

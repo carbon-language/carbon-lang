@@ -227,9 +227,9 @@ auto GetExprCategory(const File& file, InstId inst_id,
 }
 
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
-                                  bool allow_transitive) -> InstId {
+                                  SpecificId specific_id, bool allow_transitive)
+    -> InstId {
   const File* ir = &sem_ir;
-  auto specific_id = SemIR::SpecificId::None;
   while (true) {
     Inst init_untyped = ir->insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
