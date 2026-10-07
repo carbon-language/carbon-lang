@@ -450,7 +450,8 @@ TEST_P(GenApiFileDenseDeclsParamsTest, ManyFieldsAndOneMethod) {
       GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
 }
 
-// No functions or methods, so every type use is a fixed type.
+// Classes with only fields (no functions or methods). Because fields have their
+// own type pool, fields can still reference earlier classes.
 TEST_P(GenApiFileDenseDeclsParamsTest, OnlyFields) {
   SourceGen::DenseDeclParams params = {
       .class_params = {.public_function_decls = 0,
