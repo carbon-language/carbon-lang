@@ -10,10 +10,6 @@ package Core library "prelude/parts/destroy";
 
 import library "prelude/parts/int_literal";
 
-interface DestroyFormat {
-  let value: IntLiteral;
-}
-
 // TODO: uncomment when `require impls` adds a witness table entry.
 // interface SubobjectDestroy {
 //   final fn Op(ref self) = "subobject.destroy";
@@ -44,3 +40,5 @@ interface Destroy {
 // impl forall [T: SubobjectDestroy] partial T as Destroy {
 //   alias Op = T.Op;
 // }
+
+interface TrivialDestroy {}
