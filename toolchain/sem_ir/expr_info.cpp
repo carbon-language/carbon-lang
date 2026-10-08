@@ -229,9 +229,10 @@ auto GetExprCategory(const File& file, InstId inst_id,
 
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
                                   bool allow_transitive) -> InstId {
-  return FindStorageArgForInitializerInSpecific(
-             sem_ir, init_id, sem_ir, SpecificId::None, allow_transitive)
-      .second;
+  auto [storage_sem_ir, storage_id] = FindStorageArgForInitializerInSpecific(
+      sem_ir, init_id, sem_ir, SpecificId::None, allow_transitive);
+  CARBON_CHECK(storage_sem_ir == &sem_ir);
+  return storage_id;
 }
 
 auto FindStorageArgForInitializerInSpecific(const File& sem_ir, InstId init_id,
