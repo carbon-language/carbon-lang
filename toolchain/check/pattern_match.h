@@ -46,6 +46,19 @@ auto CalleePatternMatch(Context& context,
                         SemIR::InstId return_pattern_id)
     -> CalleePatternMatchResults;
 
+// Emits the callee pattern-match IR for `return_pattern_id`, for an entity
+// whose parameters were already matched by `CalleePatternMatch` without a
+// return pattern, producing `param_results`. This is used when the return
+// pattern is only formed after the parameters, as for a deduced return type.
+// Returns `param_results` extended with the return's `Call` parameters.
+//
+// As with `CalleePatternMatch`, the pattern block containing the return pattern
+// should be on top of `context.pattern_block_stack()`.
+auto CalleeReturnPatternMatch(Context& context,
+                              const CalleePatternMatchResults& param_results,
+                              SemIR::InstId return_pattern_id)
+    -> CalleePatternMatchResults;
+
 // Return type for ThunkPatternMatch.
 struct ThunkPatternMatchResults {
   // The syntactic argument list. If there is a self parameter, the first

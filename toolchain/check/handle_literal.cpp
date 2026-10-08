@@ -148,6 +148,19 @@ auto HandleParseNode(Context& context, Parse::TypeTypeLiteralId node_id)
 
 auto HandleParseNode(Context& context, Parse::AutoTypeLiteralId node_id)
     -> bool {
+  // `auto` is currently only supported as the entire return type of a
+  // function, as in `fn F() -> auto`. In that case, `auto` is the only child of
+  // a `ReturnType` node, so is immediately followed by it in postorder. There
+  // is always a following node, because the tree ends with `FileEnd`.
+  //
+  // `HandleReturnDecl` recognizes the `auto` by its parse node, so the value we
+  // push here is just a placeholder.
+  Parse::NodeId next_node_id(node_id.index + 1);
+  if (context.parse_tree().node_kind(next_node_id) ==
+      Parse::NodeKind::ReturnType) {
+    context.node_stack().Push(node_id, SemIR::AutoType::TypeInstId);
+    return true;
+  }
   return context.TODO(node_id, "HandleAutoTypeLiteral");
 }
 

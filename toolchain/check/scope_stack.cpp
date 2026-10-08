@@ -172,6 +172,8 @@ auto ScopeStack::Pop(bool check_unused) -> void {
 
     if (return_scope_stack_.back().decl_id == scope.scope_inst_id) {
       // Leaving the function scope.
+      CARBON_CHECK(return_scope_stack_.back().pending_returns.empty(),
+                   "Leaving function with pending `return`s");
       return_scope_stack_.pop_back();
     } else {
       if (return_scope_stack_.back().nested_scope_index == scope.index) {

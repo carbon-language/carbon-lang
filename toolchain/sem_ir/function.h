@@ -67,7 +67,10 @@ struct FunctionFields {
   enum class InterfaceModifier : uint8_t { None, Default, Final };
 
   // The following members always have values, and do not change throughout the
-  // lifetime of the function.
+  // lifetime of the function. The exception is a function with a deduced return
+  // type: its `Call` parameters, parameter pattern block and return
+  // information are extended once, when the return type is deduced at the end
+  // of the function body. See `has_undeduced_return_type`.
 
   // This block consists of references to the `*ParamPattern` insts that
   // represent the function's `Call` parameters. The "`Call` parameters" are the
@@ -180,6 +183,11 @@ struct FunctionFields {
   // Which, if any, interface modifier is applied to this function.
   InterfaceModifier interface_modifier = InterfaceModifier::None;
 
+  // Whether the function's return type is deduced from its body, as in
+  // `-> auto`. Until the return type is deduced, the function has no return
+  // information; see `has_undeduced_return_type`.
+  bool has_deduced_return_type = false;
+
   // The `self` parameter pattern, if any. This is the first pattern in
   // `param_patterns_id` (from EntityWithParamsBase).
   InstId self_param_id = InstId::None;
@@ -264,6 +272,9 @@ struct Function : public EntityWithParamsBase,
     if (interface_modifier != InterfaceModifier::None) {
       out << ", interface_modifier: " << interface_modifier;
     }
+    if (has_deduced_return_type) {
+      out << ", has_deduced_return_type: true";
+    }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
           ", body: [{0}]",
@@ -319,10 +330,20 @@ struct Function : public EntityWithParamsBase,
   // to both Builtin and Generated special functions.
   auto GetBuiltinFunctionKind(const File& file) const -> BuiltinFunctionKind;
 
+  // Returns whether this function's return type is to be deduced from its
+  // body, but has not been deduced yet. This is the case only between the
+  // function's declaration and the end of its body, or its first `returned
+  // var`. In this state, the function has no return information, and
+  // querying its return type or form is an error.
+  auto has_undeduced_return_type() const -> bool {
+    return has_deduced_return_type && !return_form_inst_id.has_value();
+  }
+
   // Gets the declared return type for a specific version of this function, or
   // the canonical return type for the original declaration no specific is
   // specified.  Returns `None` if no return type was specified, in which
-  // case the effective return type is an empty tuple.
+  // case the effective return type is an empty tuple. The function must not
+  // have an undeduced return type.
   auto GetDeclaredReturnType(const File& file,
                              SpecificId specific_id = SpecificId::None) const
       -> TypeId;
@@ -331,6 +352,7 @@ struct Function : public EntityWithParamsBase,
   // function, or for the original declaration if no specific is specified.
   // Returns `None` if the function was declared without a return form, in which
   // case the effective return form is an empty tuple initializing expression.
+  // The function must not have an undeduced return type.
   auto GetDeclaredReturnForm(const File& file,
                              SpecificId specific_id = SpecificId::None) const
       -> InstId;

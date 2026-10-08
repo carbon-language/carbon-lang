@@ -2646,6 +2646,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
         return_form_const_id);
   }
   new_function.return_pattern_id = AddLoadedImportRef(resolver, return_pattern);
+  new_function.has_deduced_return_type =
+      import_function.has_deduced_return_type;
   if (import_function.definition_id.has_value()) {
     new_function.definition_id = new_function.first_owning_decl_id;
   }

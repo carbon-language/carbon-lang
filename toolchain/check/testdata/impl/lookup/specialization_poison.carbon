@@ -169,23 +169,30 @@ final impl forall [V: Core.Copy] V* as I where .T = V {
   fn F(self) -> V { return *self; }
 }
 
-// --- fail_todo_poisoned_concrete_lookup_from_eval_fn.carbon
+// --- fail_poisoned_concrete_lookup_from_eval_fn.carbon
 library "[[@TEST_NAME]]";
+
+interface Z {}
 
 fn F() {
   class D {}
 
-  // CHECK:STDERR: fail_todo_poisoned_concrete_lookup_from_eval_fn.carbon:[[@LINE+4]]:22: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
-  // CHECK:STDERR:   musteval fn G() -> auto {
-  // CHECK:STDERR:                      ^~~~
-  // CHECK:STDERR:
   musteval fn G() -> auto {
     class C(T: type) {}
     impl forall [T: type] C(T) as Z {}
+    // CHECK:STDERR: fail_poisoned_concrete_lookup_from_eval_fn.carbon:[[@LINE+3]]:5: error: found `impl` that would change the result of an earlier use of `C(D) as Z` [PoisonedImplLookupConcreteResult]
+    // CHECK:STDERR:     C(D) as Z;
+    // CHECK:STDERR:     ^~~~~~~~~
     C(D) as Z;
     return C(D);
   }
 
-  // TODO: error: found `impl` that would change the result of an earlier use of `C(D) as Z`.
+  // CHECK:STDERR: fail_poisoned_concrete_lookup_from_eval_fn.carbon:[[@LINE+7]]:3: note: the use would select the `impl` here but it was not found yet [PoisonedImplLookupConcreteResultNoteBadImpl]
+  // CHECK:STDERR:   impl G() as Z {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_poisoned_concrete_lookup_from_eval_fn.carbon:[[@LINE-11]]:5: note: the use had selected the `impl` here [PoisonedImplLookupConcreteResultNotePreviousImpl]
+  // CHECK:STDERR:     impl forall [T: type] C(T) as Z {}
+  // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   impl G() as Z {}
 }

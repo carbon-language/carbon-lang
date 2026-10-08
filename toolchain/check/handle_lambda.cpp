@@ -27,18 +27,7 @@ auto HandleParseNode(Context& context, Parse::LambdaIntroducerId node_id)
 
 auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
     -> bool {
-  auto return_pattern_id = SemIR::InstId::None;
-  auto return_type_inst_id = SemIR::TypeInstId::None;
-  auto return_form_inst_id = SemIR::InstId::None;
-  if (auto [return_node, maybe_return_pattern_id] =
-          context.node_stack()
-              .PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
-      maybe_return_pattern_id) {
-    return_pattern_id = *maybe_return_pattern_id;
-    auto return_form = context.PopReturnForm();
-    return_type_inst_id = return_form.type_component_inst_id;
-    return_form_inst_id = return_form.form_inst_id;
-  }
+  auto return_decl = PopReturnDecl(context);
 
   Parse::NodeId first_param_node_id = Parse::NoneNodeId();
   Parse::NodeId last_param_node_id = Parse::NoneNodeId();
@@ -73,12 +62,12 @@ auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
 
   auto match_results =
       CalleePatternMatch(context, *implicit_param_patterns_id,
-                         *param_patterns_id, return_pattern_id);
+                         *param_patterns_id, return_decl.pattern_id);
   context.full_pattern_stack().PopFullPattern();
   auto pattern_block_id = context.pattern_block_stack().Pop();
   if (!param_patterns_id->has_value() &&
       !implicit_param_patterns_id->has_value() &&
-      !return_pattern_id.has_value()) {
+      !return_decl.has_return_decl()) {
     pattern_block_id = SemIR::InstBlockId::None;
   }
   auto decl_block_id = context.inst_block_stack().Pop();
@@ -119,9 +108,10 @@ auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
               .call_param_patterns_id = match_results.call_param_patterns_id,
               .call_params_id = match_results.call_params_id,
               .call_param_ranges = match_results.param_ranges,
-              .return_type_inst_id = return_type_inst_id,
-              .return_form_inst_id = return_form_inst_id,
-              .return_pattern_id = return_pattern_id,
+              .return_type_inst_id = return_decl.form.type_component_inst_id,
+              .return_form_inst_id = return_decl.form.form_inst_id,
+              .return_pattern_id = return_decl.pattern_id,
+              .has_deduced_return_type = return_decl.is_deduced,
           }});
   context.inst_block_stack().AddInstId(decl_id);
 

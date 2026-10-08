@@ -191,6 +191,27 @@ class ScopeStack {
     return return_scope_stack_.back().decl_id;
   }
 
+  // A `return` statement in a function whose return type is being deduced.
+  // Initialization of the return value is deferred until the return type is
+  // known.
+  struct PendingReturn {
+    // The returned expression, before conversion to the return type.
+    SemIR::InstId expr_id;
+    // A placeholder `SpliceBlock` producing `expr_id`, to be replaced by the
+    // conversion of `expr_id` to the return type.
+    SemIR::InstId splice_id;
+    // The `ReturnExpr` instruction. Its destination is set once the return
+    // type is known.
+    SemIR::InstId return_id;
+  };
+
+  // Returns the `return` statements in the current function whose
+  // initialization is waiting for the return type to be deduced.
+  auto pending_returns() -> llvm::SmallVector<PendingReturn>& {
+    CARBON_CHECK(IsInFunctionScope(), "Handling return but not in a function");
+    return return_scope_stack_.back().pending_returns;
+  }
+
   // Looks up the name `name_id` in the current scope and enclosing scopes, but
   // do not look past `scope_index`. Returns the existing lookup result, if any.
   // If `use_loc_id` is specified, the name is marked as used at that location.
@@ -371,6 +392,10 @@ class ScopeStack {
     // The value corresponding to the current `returned var`, if any. Will be
     // set and unset as `returned var`s are declared and go out of scope.
     SemIR::InstId returned_var = SemIR::InstId::None;
+
+    // The `return` statements whose initialization is waiting for the
+    // function's return type to be deduced.
+    llvm::SmallVector<PendingReturn> pending_returns = {};
 
     // The cleanup stack depth when entering the function body.
     CleanupScopeDepth cleanup_scope_depth;

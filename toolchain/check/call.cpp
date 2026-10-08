@@ -249,6 +249,30 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
 
   auto& callee = context.functions().Get(callee_function.function_id);
+
+  // We can't call a function before its return type is known. This happens for
+  // a function with a deduced return type that is called from within its own
+  // body, or from the body of a class member function that precedes it.
+  if (callee.has_undeduced_return_type()) {
+    CARBON_DIAGNOSTIC(CallBeforeReturnTypeDeduced, Error,
+                      "call to `{0}` before its return type is deduced",
+                      SemIR::NameId);
+    CARBON_DIAGNOSTIC(ReturnTypeDeducedFromDefinition, Note,
+                      "return type of `{0}` is deduced from its definition",
+                      SemIR::NameId);
+    context.emitter()
+        .Build(loc_id, CallBeforeReturnTypeDeduced, callee.name_id)
+        .Note(callee.latest_decl_id(), ReturnTypeDeducedFromDefinition,
+              callee.name_id)
+        .Emit();
+    return SemIR::ErrorInst::InstId;
+  }
+  if (callee.has_deduced_return_type && callee_specific_id->has_value()) {
+    // TODO: Resolve the specific definition to determine the return type.
+    context.TODO(loc_id, "call to generic function with deduced return type");
+    return SemIR::ErrorInst::InstId;
+  }
+
   auto return_type_id =
       callee.GetDeclaredReturnType(context.sem_ir(), *callee_specific_id);
   if (!return_type_id.has_value()) {

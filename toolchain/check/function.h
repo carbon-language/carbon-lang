@@ -29,6 +29,38 @@ auto FindSelfPattern(Context& context,
 auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
                       Context::FormExpr form_expr) -> SemIR::InstId;
 
+// Information about the return declaration of a function, as popped by
+// `PopReturnDecl`.
+struct ReturnDeclInfo {
+  // The return declaration, or `None` if there is none.
+  Parse::NodeId node_id = Parse::NoneNodeId();
+  // Whether the return type is deduced from the body, as in `-> auto`.
+  bool is_deduced = false;
+  // The declared return pattern. `None` if there is no return declaration or
+  // the return type is deduced.
+  SemIR::InstId pattern_id = SemIR::InstId::None;
+  // The declared return form. `None` if there is no return declaration or the
+  // return type is deduced.
+  Context::FormExpr form = Context::FormExpr::None;
+
+  auto has_return_decl() const -> bool { return node_id.has_value(); }
+};
+
+// Pops the return declaration of a function declaration or function expression
+// from the node stack, if it has one.
+auto PopReturnDecl(Context& context) -> ReturnDeclInfo;
+
+// Sets the return type of a function whose return type is deduced, once that
+// type is known. `type_id` is the deduced type, or the error type if deduction
+// failed, and `loc_id` is the location it was deduced from.
+//
+// This creates the function's return form, return pattern and return `Call`
+// parameter, just as if the return type had been declared explicitly. Within a
+// generic function's definition, the return type is computed in the
+// definition's eval block.
+auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
+                          SemIR::LocId loc_id, SemIR::TypeId type_id) -> void;
+
 // Returns whether `function` is a valid declaration of `builtin_kind`.
 auto IsValidBuiltinDeclaration(Context& context,
                                const SemIR::Function& function,
@@ -136,7 +168,9 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
                              SemIR::FunctionId function_id) -> void;
 
 // Checks that a function definition has a `return` at the end if required, or
-// adds an implicit `return;` if reachable.
+// adds an implicit `return;` if reachable. If the function's return type is
+// deduced and hasn't been deduced yet, deduces it from the function's `return`
+// statements first.
 auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
                                  SemIR::FunctionId function_id) -> void;
 

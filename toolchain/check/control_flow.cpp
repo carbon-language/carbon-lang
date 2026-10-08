@@ -204,9 +204,10 @@ auto AddBranchWithCleanups(Context& context, SemIR::LocId loc_id,
 }
 
 auto AddReturnInstWithCleanups(Context& context,
-                               SemIR::LocIdAndInst loc_id_and_inst) -> void {
+                               SemIR::LocIdAndInst loc_id_and_inst)
+    -> SemIR::InstId {
   AddCleanups(context, context.scope_stack().function_cleanup_scope_depth());
-  AddInst(context, loc_id_and_inst);
+  return AddInst(context, loc_id_and_inst);
 }
 
 }  // namespace Carbon::Check

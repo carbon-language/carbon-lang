@@ -23,6 +23,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/unused.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/parse/node_ids.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
@@ -54,13 +55,19 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
 static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
     -> bool {
   auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
-  Context::FormExpr form_expr = [&] {
-    if (context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind) {
-      return ReturnExprAsForm(context, expr_node_id, expr_inst_id);
-    } else {
-      return FormExprAsForm(context, expr_node_id, expr_inst_id);
-    }
-  }();
+  bool is_return_type =
+      context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind;
+  if (is_return_type && context.parse_tree().node_kind(expr_node_id) ==
+                            Parse::NodeKind::AutoTypeLiteral) {
+    // `-> auto`: the return type is deduced from the function body, so there is
+    // no return form or pattern yet. Push a marker in place of the pattern; see
+    // `PopReturnDecl`.
+    context.node_stack().Push(node_id, SemIR::AutoType::TypeInstId);
+    return true;
+  }
+  Context::FormExpr form_expr =
+      is_return_type ? ReturnExprAsForm(context, expr_node_id, expr_inst_id)
+                     : FormExprAsForm(context, expr_node_id, expr_inst_id);
   context.PushReturnForm(form_expr);
   context.node_stack().Push(node_id,
                             AddReturnPattern(context, node_id, form_expr));
@@ -360,6 +367,64 @@ static auto RequestVtableIfVirtual(
   context.vtable_stack().AddInstId(decl_id);
 }
 
+// Diagnoses if a deduced return type is not permitted for the given function
+// declaration, and returns whether it is permitted. If not, clears any virtual
+// modifier, because a virtual function needs a known return type.
+static auto CheckDeducedReturnTypeAllowed(
+    Context& context, Parse::AnyFunctionDeclId node_id,
+    Parse::NodeId return_node_id, bool is_definition, bool is_extern,
+    SemIR::Function::VirtualModifier& virtual_modifier,
+    const std::optional<SemIR::Inst>& parent_scope_inst) -> bool {
+  enum class Reason : int8_t { Builtin, Extern, InterfaceMember, Virtual };
+  std::optional<Reason> reason;
+  if (context.parse_tree().node_kind(node_id) ==
+      Parse::NodeKind::BuiltinFunctionDefinitionStart) {
+    // A builtin function has no body to deduce from.
+    reason = Reason::Builtin;
+  } else if (is_extern) {
+    // An `extern` function is declared elsewhere.
+    reason = Reason::Extern;
+  } else if (parent_scope_inst &&
+             parent_scope_inst->Is<SemIR::InterfaceWithSelfDecl>()) {
+    // The return type of an associated function is needed before the body of
+    // any `default` definition is checked.
+    reason = Reason::InterfaceMember;
+  } else if (virtual_modifier != SemIR::Function::VirtualModifier::None) {
+    // The vtable is built before the function body is checked.
+    reason = Reason::Virtual;
+    virtual_modifier = SemIR::Function::VirtualModifier::None;
+  }
+  if (reason) {
+    CARBON_DIAGNOSTIC(DeducedReturnTypeNotAllowed, Error,
+                      "{0:=0:builtin function|=1:`extern` function|=2:"
+                      "interface member|=3:virtual function} with deduced "
+                      "return type",
+                      Diagnostics::IntAsSelect);
+    context.emitter().Emit(return_node_id, DeducedReturnTypeNotAllowed,
+                           static_cast<int>(*reason));
+    return false;
+  }
+
+  // The return type is deduced from the function body, so only a definition
+  // can declare one. As a consequence, the function can't be redeclared.
+  if (!is_definition) {
+    CARBON_DIAGNOSTIC(DeducedReturnTypeNotDefinition, Error,
+                      "forward declaration of function with deduced return "
+                      "type");
+    context.emitter().Emit(return_node_id, DeducedReturnTypeNotDefinition);
+    return false;
+  }
+
+  if (parent_scope_inst && parent_scope_inst->Is<SemIR::ImplDecl>()) {
+    // TODO: The impl witness and any thunks are built before the function body
+    // is checked.
+    context.TODO(return_node_id, "deduced return type for `impl` member");
+    return false;
+  }
+
+  return true;
+}
+
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
@@ -367,20 +432,10 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_pattern_id = SemIR::InstId::None;
-  auto return_type_inst_id = SemIR::TypeInstId::None;
-  auto return_form_inst_id = SemIR::InstId::None;
-  if (auto [return_node, maybe_return_pattern_id] =
-          context.node_stack()
-              .PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
-      maybe_return_pattern_id) {
-    return_pattern_id = *maybe_return_pattern_id;
-    auto return_form = context.PopReturnForm();
-    return_type_inst_id = return_form.type_component_inst_id;
-    return_form_inst_id = return_form.form_inst_id;
-  }
+  auto return_decl = PopReturnDecl(context);
 
-  auto name = PopNameComponent(context, return_pattern_id);
+  auto name = PopNameComponent(context, return_decl.pattern_id,
+                               return_decl.has_return_decl());
   auto name_context = context.decl_name_stack().FinishName(name);
 
   context.node_stack()
@@ -415,6 +470,14 @@ static auto BuildFunctionDecl(Context& context,
   auto evaluation_mode = GetEvaluationMode(introducer.modifier_set);
   auto interface_modifier = GetInterfaceModifier(introducer.modifier_set);
 
+  // If the return type is deduced in a context where that's not allowed, we
+  // will treat the function as having an invalid return type.
+  bool is_invalid_deduced_return =
+      return_decl.is_deduced &&
+      !CheckDeducedReturnTypeAllowed(context, node_id, return_decl.node_id,
+                                     is_definition, is_extern, virtual_modifier,
+                                     parent_scope_inst);
+
   // Add the function declaration.
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
                                        SemIR::FunctionId::None,
@@ -423,21 +486,22 @@ static auto BuildFunctionDecl(Context& context,
 
   // Build the function entity. This will be merged into an existing function if
   // there is one, or otherwise added to the function store.
-  auto function_info =
-      SemIR::Function{name_context.MakeEntityWithParamsBase(
-                          name, decl_id, is_extern, introducer.extern_library),
-                      {
-                          .call_param_patterns_id = name.call_param_patterns_id,
-                          .call_params_id = name.call_params_id,
-                          .call_param_ranges = name.param_ranges,
-                          .return_type_inst_id = return_type_inst_id,
-                          .return_form_inst_id = return_form_inst_id,
-                          .return_pattern_id = return_pattern_id,
-                          .virtual_modifier = virtual_modifier,
-                          .evaluation_mode = evaluation_mode,
-                          .interface_modifier = interface_modifier,
-                          .self_param_id = self_param_id,
-                      }};
+  auto function_info = SemIR::Function{
+      name_context.MakeEntityWithParamsBase(name, decl_id, is_extern,
+                                            introducer.extern_library),
+      {
+          .call_param_patterns_id = name.call_param_patterns_id,
+          .call_params_id = name.call_params_id,
+          .call_param_ranges = name.param_ranges,
+          .return_type_inst_id = return_decl.form.type_component_inst_id,
+          .return_form_inst_id = return_decl.form.form_inst_id,
+          .return_pattern_id = return_decl.pattern_id,
+          .virtual_modifier = virtual_modifier,
+          .evaluation_mode = evaluation_mode,
+          .interface_modifier = interface_modifier,
+          .has_deduced_return_type = return_decl.is_deduced,
+          .self_param_id = self_param_id,
+      }};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
@@ -473,6 +537,13 @@ static auto BuildFunctionDecl(Context& context,
   // Write the function ID into the FunctionDecl.
   ReplaceInstBeforeConstantUse(context, decl_id, function_decl);
 
+  // If we diagnosed the deduced return type, recover by giving the function an
+  // invalid return type.
+  if (is_invalid_deduced_return) {
+    SetDeducedReturnType(context, function_decl.function_id,
+                         return_decl.node_id, SemIR::ErrorInst::TypeId);
+  }
+
   // Diagnose 'definition of `abstract` function' using the canonical Function's
   // modifiers.
   if (is_definition &&
@@ -488,8 +559,12 @@ static auto BuildFunctionDecl(Context& context,
   MaybeAddToNameLookup(context, name_context, introducer.modifier_set,
                        name_context.parent_scope_id, decl_id);
 
-  ValidateForEntryPoint(context, node_id, function_decl.function_id,
-                        function_info);
+  // If the return type is deduced, we validate the entry point at the end of
+  // the definition, once the return type is known.
+  if (!return_decl.is_deduced) {
+    ValidateForEntryPoint(context, node_id, function_decl.function_id,
+                          function_info);
+  }
 
   if (!is_definition && context.sem_ir().is_impl() && !is_extern) {
     context.definitions_required_by_decl().push_back(decl_id);
@@ -614,11 +689,21 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionStartId node_id)
 
 auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
     -> bool {
-  SemIR::FunctionId function_id =
-      context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
+  auto [start_node_id, function_id] =
+      context.node_stack()
+          .PopWithNodeId<Parse::NodeKind::FunctionDefinitionStart>();
 
   CheckFunctionReturnOnFinish(context, node_id, function_id);
   FinishFunctionDefinition(context, function_id);
+
+  // Now that the return type has been deduced, we can validate the entry point.
+  if (context.functions().Get(function_id).has_deduced_return_type) {
+    // Validation can import entities, invalidating references into the
+    // function store, so validate a copy of the function.
+    auto function = context.functions().Get(function_id);
+    ValidateForEntryPoint(context, start_node_id, function_id, function);
+  }
+
   context.decl_name_stack().PopScope(/*check_unused=*/true);
 
   return true;
