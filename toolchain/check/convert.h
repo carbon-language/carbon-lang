@@ -247,17 +247,17 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
 
 // Converts an expression in a form position for use as a form.
 //
-// Note that the right-hand side of a `->` return type declaration is not
-// a form position for this purpose, because it uses a special syntax to specify
-// forms. `ReturnExprAsForm` should be used instead in that case.
+// Note that the right-hand side of a `->` return type declaration is normally
+// a type expression, not a form, and should be handled by `ReturnExprAsForm`.
+// It's only a form if it begins with a primitive form keyword such as `ref`.
 //
 // `diagnose` has the same effect as in `ExprAsType`.
 auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
                     SemIR::InstId value_id) -> Context::FormExpr;
 
-// Evaluates an expression in the return-type position (following `->`, not
-// `->?`) for use as a form, following the special-case language rules for
-// evaluating an expression in that position.
+// Evaluates a type expression in the return-type position (following `->`, not
+// `->?`, and not beginning with a primitive form keyword such as `ref`) for use
+// as a form. The result is an initializing form of that type.
 auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId value_id) -> Context::FormExpr;
 

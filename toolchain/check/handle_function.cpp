@@ -55,7 +55,11 @@ static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
     -> bool {
   auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
   Context::FormExpr form_expr = [&] {
-    if (context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind) {
+    // `-> T` provides a type expression, whereas `-> ref T` and `->? F`
+    // provide a form.
+    if (context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind &&
+        context.parse_tree().node_kind(expr_node_id) !=
+            Parse::RefPrimitiveFormId::Kind) {
       return ReturnExprAsForm(context, expr_node_id, expr_inst_id);
     } else {
       return FormExprAsForm(context, expr_node_id, expr_inst_id);

@@ -401,9 +401,9 @@ auto DominatorTreeBuilder::Build() -> ErrorOr<DominatorTree> {
 
   for (auto [i, block] : llvm::enumerate(body_blocks_)) {
     if (!visited.test(i)) {
-      return ErrorBuilder()
-             << "Block " << block << " in function " << function_.name_id
-             << " is unreachable from entry block";
+      return ErrorBuilder() << "Block " << block << " in function "
+                            << file_.names().GetFormatted(function_.name_id)
+                            << " is unreachable from entry block";
     }
   }
 

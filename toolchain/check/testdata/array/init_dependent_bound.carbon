@@ -364,7 +364,7 @@ fn H() { G(3); }
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.loc6_31.9 [template = %pattern_type (constants.%pattern_type.fcb)]
 // CHECK:STDOUT:   %arr.patt.loc6_17.2: @G.%pattern_type (%pattern_type.fcb) = ref_binding_pattern arr [template = %arr.patt.loc6_17.2 (constants.%arr.patt.c8d)]
 // CHECK:STDOUT:   %arr.var_patt.loc6_3.2: @G.%pattern_type (%pattern_type.fcb) = var_pattern %arr.patt.loc6_17.2 [template = %arr.var_patt.loc6_3.2 (constants.%arr.var_patt.1e0)]
-// CHECK:STDOUT:   %.loc6_3.6: %tuple.type.f7a = initialize_action %.loc6_43, %.loc6_31.9, %arr.var, false [template]
+// CHECK:STDOUT:   %.loc6_3.6: %tuple.type.f7a = initialize_action %.loc6_43, %.loc6_31.9, %arr.var, none, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc6_3.6, element0 [template]
 // CHECK:STDOUT:   %.loc6_3.7: @G.%.loc6_31.9 (%.537) = splice_inst %tuple.elem0 [template = %.loc6_3.7 (constants.%.5d6)]
 // CHECK:STDOUT:   %.loc6_3.8: <instruction> = compound_member_access_action %arr.var, constants.%assoc2 [template]

@@ -76,6 +76,16 @@ fn G() {
   let unused x: i32 = F();
 }
 
+// --- val_return_form_class_definition.carbon
+library "[[@TEST_NAME]]";
+
+class C { var a: i32; }
+
+// Returns a pointer to the caller's argument.
+fn F(c: C) ->? form(val C) {
+  return c;
+}
+
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'ref_form_param.carbon'
 // CHECK:STDOUT: source_filename = "ref_form_param.carbon"
@@ -346,4 +356,31 @@ fn G() {
 // CHECK:STDOUT: !88 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !82, line: 7, type: !24, spFlags: DISPFlagDefinition, unit: !83)
 // CHECK:STDOUT: !89 = !DILocation(line: 8, column: 23, scope: !88)
 // CHECK:STDOUT: !92 = !DILocation(line: 7, column: 1, scope: !88)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
+// CHECK:STDOUT: ; ModuleID = 'val_return_form_class_definition.carbon'
+// CHECK:STDOUT: source_filename = "val_return_form_class_definition.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define ptr @_CF.Main(ptr %c) #0 !dbg !97 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret ptr %c, !dbg !103
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.dbg.cu = !{!94}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !53 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !93 = !DIFile(filename: "val_return_form_class_definition.carbon", directory: "")
+// CHECK:STDOUT: !94 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !93, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !95 = !{!53, !53}
+// CHECK:STDOUT: !96 = !DISubroutineType(types: !95)
+// CHECK:STDOUT: !97 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !93, line: 6, type: !96, spFlags: DISPFlagDefinition, unit: !94, retainedNodes: !104)
+// CHECK:STDOUT: !98 = !DILocalVariable(arg: 1, scope: !97, type: !53)
+// CHECK:STDOUT: !103 = !DILocation(line: 7, column: 3, scope: !97)
+// CHECK:STDOUT: !104 = !{!98}
 // CHECK:STDOUT:

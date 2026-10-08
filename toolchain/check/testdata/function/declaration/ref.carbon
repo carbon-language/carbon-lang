@@ -21,6 +21,24 @@ fn G() {
   let unused ref x: i32 = F();
 }
 
+// --- ref_return_parenthesized_type.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F() -> ref (i32);
+
+// --- fail_todo_ref_return_parenthesized.carbon
+
+library "[[@TEST_NAME]]";
+
+// TODO: Per p5434, a return form starting with `(` is a compound form, which
+// isn't supported yet.
+// CHECK:STDERR: fail_todo_ref_return_parenthesized.carbon:[[@LINE+4]]:12: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+// CHECK:STDERR: fn F() -> (ref i32);
+// CHECK:STDERR:            ^~~~~~~
+// CHECK:STDERR:
+fn F() -> (ref i32);
+
 // CHECK:STDOUT: --- ref_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -58,11 +76,11 @@ fn G() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %.loc4_11.1: %pattern_type.6b6 = ref_return_pattern [concrete = constants.%.ae0]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %.loc4_11.1, %i32 [concrete = constants.%return.patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %.loc4_11.1, %.loc4_11.3 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc4_11.2: type = ref_tag %i32
-// CHECK:STDOUT:     %.loc4_11.3: Core.Form = ref_form %i32 [concrete = constants.%.512]
+// CHECK:STDOUT:     %.loc4_11.2: Core.Form = ref_form %i32 [concrete = constants.%.512]
+// CHECK:STDOUT:     %.loc4_11.3: type = type_component_of %.loc4_11.2 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4_11.4: ref %i32 = ref_return
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %.loc4_11.4
 // CHECK:STDOUT:   }

@@ -297,7 +297,11 @@ class Formatter {
     llvm::ListSeparator sep;
     auto format_with_sep = [&](auto id) {
       out() << sep;
-      FormatArg(id);
+      if (id.has_value()) {
+        FormatArg(id);
+      } else {
+        out() << "none";
+      }
     };
     std::apply([&](auto... id) -> void { (..., format_with_sep(id)); },
                sem_ir_->bundles().GetAsTuple(bundle_id));

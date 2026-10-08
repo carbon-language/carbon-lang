@@ -1159,7 +1159,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.loc7_20.9 [template = %pattern_type (constants.%pattern_type.fcb)]
 // CHECK:STDOUT:   %v.patt.loc7_15.2: @F.%pattern_type (%pattern_type.fcb) = ref_binding_pattern v [template = %v.patt.loc7_15.2 (constants.%v.patt.126)]
 // CHECK:STDOUT:   %v.var_patt.loc7_3.2: @F.%pattern_type (%pattern_type.fcb) = var_pattern %v.patt.loc7_15.2 [template = %v.var_patt.loc7_3.2 (constants.%v.var_patt.768)]
-// CHECK:STDOUT:   %.loc7_3.6: %tuple.type = initialize_action %.loc7_25, %.loc7_20.9, %v.var, false [template]
+// CHECK:STDOUT:   %.loc7_3.6: %tuple.type = initialize_action %.loc7_25, %.loc7_20.9, %v.var, none, false [template]
 // CHECK:STDOUT:   %tuple.elem0: <instruction> = tuple_access %.loc7_3.6, element0 [template]
 // CHECK:STDOUT:   %.loc7_3.7: @F.%.loc7_20.9 (%.537) = splice_inst %tuple.elem0 [template = %.loc7_3.7 (constants.%.5d6)]
 // CHECK:STDOUT:   %.loc7_3.8: <instruction> = compound_member_access_action %v.var, constants.%assoc2 [template]

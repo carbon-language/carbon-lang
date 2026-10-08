@@ -24,12 +24,22 @@ auto HandleFunctionAfterParams(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::MinusGreater)) {
     context.PushState(StateKind::FunctionReturnTypeFinish);
     context.ConsumeAndDiscard();
-    context.PushStateForExpr(PrecedenceGroup::ForType());
+    context.PushState(StateKind::ReturnTypeOrFormExpr);
   } else if (context.PositionIs(Lex::TokenKind::MinusGreaterQuestion)) {
     context.PushState(StateKind::FunctionReturnFormFinish);
     context.ConsumeAndDiscard();
     context.PushStateForExpr(PrecedenceGroup::ForType());
   }
+}
+
+auto HandleReturnTypeOrFormExpr(Context& context) -> void {
+  context.PopAndDiscardState();
+
+  // `-> ref T` specifies a primitive return form.
+  if (context.PositionIs(Lex::TokenKind::Ref)) {
+    context.PushState(StateKind::PrimitiveFormFinish, context.Consume());
+  }
+  context.PushStateForExpr(PrecedenceGroup::ForType());
 }
 
 auto HandleFunctionReturnTypeFinish(Context& context) -> void {
