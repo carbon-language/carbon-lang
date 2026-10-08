@@ -386,8 +386,11 @@ static auto CheckDeducedReturnTypeAllowed(
     reason = Reason::Extern;
   } else if (parent_scope_inst &&
              parent_scope_inst->Is<SemIR::InterfaceWithSelfDecl>()) {
-    // The return type of an associated function is needed before the body of
-    // any `default` definition is checked.
+    // An associated function's return type is part of the interface's contract
+    // with its impls, so shouldn't depend on a `default` definition.
+    // TODO: A `final` function can't be overridden, so deducing its return
+    // type from its definition would be reasonable. Consider allowing that
+    // once calls to generic functions with deduced return types are supported.
     reason = Reason::InterfaceMember;
   } else if (virtual_modifier != SemIR::Function::VirtualModifier::None) {
     // The vtable is built before the function body is checked.
@@ -697,10 +700,8 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   FinishFunctionDefinition(context, function_id);
 
   // Now that the return type has been deduced, we can validate the entry point.
-  if (context.functions().Get(function_id).has_deduced_return_type) {
-    // Validation can import entities, invalidating references into the
-    // function store, so validate a copy of the function.
-    auto function = context.functions().Get(function_id);
+  const auto& function = context.functions().Get(function_id);
+  if (function.has_deduced_return_type) {
     ValidateForEntryPoint(context, start_node_id, function_id, function);
   }
 

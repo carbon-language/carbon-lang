@@ -210,7 +210,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
+// CHECK:STDOUT: fn @F() -> out %return.param: %i32 [deduced] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
 // CHECK:STDOUT:   %i32.loc5_15: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -303,7 +303,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> out %return.param: %C {
+// CHECK:STDOUT: fn @F() -> out %return.param: %C [deduced] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
@@ -419,7 +419,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   return %fn.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @fn(%x.param: %i32) -> out %return.param: %i32 {
+// CHECK:STDOUT: fn @fn(%x.param: %i32) -> out %return.param: %i32 [deduced] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x
 // CHECK:STDOUT:   %.loc5_48: init %i32 = splice_block %Int.as.Copy.impl.Op.call {

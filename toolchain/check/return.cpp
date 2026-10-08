@@ -4,8 +4,6 @@
 
 #include "toolchain/check/return.h"
 
-#include <utility>
-
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
@@ -203,7 +201,7 @@ static auto BuildPendingReturn(Context& context, SemIR::LocId loc_id,
   auto return_id = AddReturnInstWithCleanups(
       context, loc_id,
       SemIR::ReturnExpr{.expr_id = splice_id, .dest_id = SemIR::InstId::None});
-  context.scope_stack().pending_returns().push_back(
+  context.scope_stack().AddPendingReturn(
       {.expr_id = expr_id, .splice_id = splice_id, .return_id = return_id});
 }
 
@@ -211,21 +209,20 @@ static auto BuildPendingReturn(Context& context, SemIR::LocId loc_id,
 // current function, once its return type has been deduced.
 static auto CompletePendingReturns(Context& context,
                                    SemIR::FunctionId function_id) -> void {
-  auto pending_returns =
-      std::exchange(context.scope_stack().pending_returns(), {});
+  auto pending_returns = context.scope_stack().TakePendingReturns();
   if (pending_returns.empty()) {
     return;
   }
+
+  const auto& function = context.functions().Get(function_id);
 
   // Any problems converting to the return type are probably due to the choice
   // of return type, so point out where it came from.
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](DiagnosticBuilder& builder) {
-        auto return_type_inst_id =
-            context.functions().Get(function_id).return_type_inst_id;
-        builder.Note(
-            return_type_inst_id, ReturnTypeDeducedHere,
-            context.types().GetTypeIdForTypeInstId(return_type_inst_id));
+        builder.Note(function.return_type_inst_id, ReturnTypeDeducedHere,
+                     context.types().GetTypeIdForTypeInstId(
+                         function.return_type_inst_id));
       });
 
   for (auto [expr_id, splice_id, return_id] : pending_returns) {
@@ -236,8 +233,7 @@ static auto CompletePendingReturns(Context& context,
     context.inst_block_stack().Push();
     context.scope_stack().PushForSameRegion(
         ScopeStack::CleanupScopeKind::Owned);
-    auto converted = ConvertReturnExpr(
-        context, loc_id, context.functions().Get(function_id), expr_id);
+    auto converted = ConvertReturnExpr(context, loc_id, function, expr_id);
     AddAndDiscardScopeCleanups(context);
     context.scope_stack().Pop();
     auto block_id = context.inst_block_stack().Pop();
@@ -415,11 +411,10 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
 
 auto DeduceReturnTypeAtEndOfBody(Context& context,
                                  SemIR::FunctionId function_id) -> bool {
-  CARBON_CHECK(
-      context.functions().Get(function_id).has_undeduced_return_type());
-  const auto& pending_returns = context.scope_stack().pending_returns();
-  auto decl_loc_id =
-      SemIR::LocId(context.functions().Get(function_id).latest_decl_id());
+  const auto& function = context.functions().Get(function_id);
+  CARBON_CHECK(function.has_undeduced_return_type());
+  auto pending_returns = context.scope_stack().PeekPendingReturns();
+  auto decl_loc_id = SemIR::LocId(function.latest_decl_id());
 
   if (pending_returns.empty()) {
     CARBON_DIAGNOSTIC(DeducedReturnTypeWithoutReturn, Error,

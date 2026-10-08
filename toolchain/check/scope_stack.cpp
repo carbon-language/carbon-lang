@@ -26,6 +26,8 @@ auto ScopeStack::sem_ir() const -> const SemIR::File& {
 
 auto ScopeStack::VerifyOnFinish() const -> void {
   CARBON_CHECK(return_scope_stack_.empty(), "{0}", return_scope_stack_.size());
+  CARBON_CHECK(pending_return_stack_.empty(), "{0}",
+               pending_return_stack_.all_values_size());
   CARBON_CHECK(break_continue_stack_.empty(), "{0}",
                break_continue_stack_.size());
   CARBON_CHECK(scope_stack_.empty(), "{0}", scope_stack_.size());
@@ -136,6 +138,7 @@ auto ScopeStack::PushForFunctionBody(SemIR::InstId scope_inst_id) -> void {
 
   return_scope_stack_.push_back(
       {.decl_id = scope_inst_id, .cleanup_scope_depth = cleanup_scope_depth()});
+  pending_return_stack_.PushArray();
 }
 
 auto ScopeStack::Pop(bool check_unused) -> void {
@@ -172,8 +175,9 @@ auto ScopeStack::Pop(bool check_unused) -> void {
 
     if (return_scope_stack_.back().decl_id == scope.scope_inst_id) {
       // Leaving the function scope.
-      CARBON_CHECK(return_scope_stack_.back().pending_returns.empty(),
+      CARBON_CHECK(pending_return_stack_.PeekArray().empty(),
                    "Leaving function with pending `return`s");
+      pending_return_stack_.PopArray();
       return_scope_stack_.pop_back();
     } else {
       if (return_scope_stack_.back().nested_scope_index == scope.index) {

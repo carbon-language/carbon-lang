@@ -434,26 +434,26 @@ auto CheckFunctionDefinitionSignature(Context& context,
   }
 }
 
-// Returns a block containing the instructions in `first` followed by those in
-// `second`.
-static auto ConcatInstBlocks(Context& context, SemIR::InstBlockId first,
-                             SemIR::InstBlockId second) -> SemIR::InstBlockId {
-  llvm::SmallVector<SemIR::InstId> insts(
-      context.inst_blocks().GetOrEmpty(first));
-  llvm::append_range(insts, context.inst_blocks().GetOrEmpty(second));
-  return context.inst_blocks().Add(insts);
-}
-
 auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
                           SemIR::LocId loc_id, SemIR::TypeId type_id) -> void {
-  CARBON_CHECK(
-      context.functions().Get(function_id).has_undeduced_return_type());
+  auto& function = context.functions().Get(function_id);
+  CARBON_CHECK(function.has_undeduced_return_type());
 
-  // Build the return form and return pattern, as `HandleReturnDecl` would for
-  // an explicitly declared return type, followed by the callee pattern-match
-  // IR for the return, as `PopNameComponent` would.
-  context.inst_block_stack().Push();
-  context.pattern_block_stack().Push();
+  // A function with a deduced return type can't be redeclared, so there is only
+  // one declaration to complete.
+  auto decl_id = function.latest_decl_id();
+  auto decl = context.insts().GetAs<SemIR::FunctionDecl>(decl_id);
+
+  // Reopen the function's declaration and pattern blocks to finish building the
+  // signature. Add the return form and return pattern, as `HandleReturnDecl`
+  // would for an explicitly declared return type, followed by the callee
+  // pattern-match IR for the return, as `PopNameComponent` would.
+  context.inst_block_stack().Push(
+      SemIR::InstBlockId::None,
+      context.inst_blocks().GetOrEmpty(decl.decl_block_id));
+  context.pattern_block_stack().Push(
+      SemIR::InstBlockId::None,
+      context.inst_blocks().GetOrEmpty(function.pattern_block_id));
   auto form = Context::FormExpr::Error;
   if (type_id != SemIR::ErrorInst::TypeId) {
     // Represent the return type as a type literal at the location it was
@@ -475,30 +475,15 @@ auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
                 context.types().GetTypeIdForTypeInstId(type_inst_id)};
   }
   auto return_pattern_id = AddReturnPattern(context, loc_id, form);
-  auto results = [&] {
-    const auto& function = context.functions().Get(function_id);
-    return CalleeReturnPatternMatch(
-        context,
-        {.call_param_patterns_id = function.call_param_patterns_id,
-         .call_params_id = function.call_params_id,
-         .param_ranges = function.call_param_ranges},
-        return_pattern_id);
-  }();
-  auto new_patterns_id = context.pattern_block_stack().Pop();
-  auto new_insts_id = context.inst_block_stack().Pop();
-
-  // Add the new signature instructions to the function's declaration and
-  // pattern blocks, where lowering and formatting expect to find them. A
-  // function with a deduced return type can't be redeclared, so there is only
-  // one declaration to update.
-  auto& function = context.functions().Get(function_id);
-  auto decl_id = function.latest_decl_id();
-  auto decl = context.insts().GetAs<SemIR::FunctionDecl>(decl_id);
-  decl.decl_block_id =
-      ConcatInstBlocks(context, decl.decl_block_id, new_insts_id);
+  auto results = CalleeReturnPatternMatch(
+      context,
+      {.call_param_patterns_id = function.call_param_patterns_id,
+       .call_params_id = function.call_params_id,
+       .param_ranges = function.call_param_ranges},
+      return_pattern_id);
+  function.pattern_block_id = context.pattern_block_stack().Pop();
+  decl.decl_block_id = context.inst_block_stack().Pop();
   ReplaceInstPreservingConstantValue(context, decl_id, decl);
-  function.pattern_block_id =
-      ConcatInstBlocks(context, function.pattern_block_id, new_patterns_id);
 
   function.call_param_patterns_id = results.call_param_patterns_id;
   function.call_params_id = results.call_params_id;

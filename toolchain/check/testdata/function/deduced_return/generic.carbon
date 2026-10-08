@@ -110,7 +110,7 @@ fn G() -> i32 { return F(0 as i32); }
 // CHECK:STDOUT:   %impl.elem0.loc4_43.2: @F.%.loc4_43.5 (%.c29) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc4_43.2 (constants.%impl.elem0.bd2)]
 // CHECK:STDOUT:   %specific_impl_fn.loc4_43.2: <specific function> = specific_impl_function %impl.elem0.loc4_43.2, @Copy.WithSelf.Op(%T.loc4_7.1) [symbolic = %specific_impl_fn.loc4_43.2 (constants.%specific_impl_fn.e2a)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @F.%T.as_type.loc4_23.1 (%T.as_type)) -> out %return.param: @F.%T.as_type.loc4_23.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%x.param: @F.%T.as_type.loc4_23.1 (%T.as_type)) -> out %return.param: @F.%T.as_type.loc4_23.1 (%T.as_type) [deduced] {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.as_type.loc4_23.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %.loc4_44: init @F.%T.as_type.loc4_23.1 (%T.as_type) = splice_block %Copy.WithSelf.Op.call {

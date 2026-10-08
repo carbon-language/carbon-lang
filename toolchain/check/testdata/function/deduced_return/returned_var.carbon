@@ -188,7 +188,7 @@ fn F(b: bool) -> auto {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
+// CHECK:STDOUT: fn @F() -> out %return.param: %i32 [deduced] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %r.var: ref %i32 = var_storage %r.var_patt
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
@@ -308,7 +308,7 @@ fn F(b: bool) -> auto {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%b.param: bool) -> out %return.param: %i32 {
+// CHECK:STDOUT: fn @F(%b.param: bool) -> out %return.param: %i32 [deduced] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %b.ref: bool = name_ref b, %b
 // CHECK:STDOUT:   if %b.ref br !if.then else br !if.else
@@ -414,7 +414,7 @@ fn F(b: bool) -> auto {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F() -> out %return.param: %C {
+// CHECK:STDOUT: fn @F() -> out %return.param: %C [deduced] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]

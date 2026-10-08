@@ -576,6 +576,9 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
       fn.call_params_id, fn.call_param_ranges.return_begin(),
       fn.has_undeduced_return_type() ? InstId::None
                                      : fn.GetDeclaredReturnForm(*sem_ir_));
+  if (fn.has_deduced_return_type) {
+    out() << " [deduced]";
+  }
 
   if (auto builtin_kind = fn.GetBuiltinFunctionKind(*sem_ir_);
       builtin_kind != BuiltinFunctionKind::None) {
