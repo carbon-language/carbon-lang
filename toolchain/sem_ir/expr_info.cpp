@@ -231,7 +231,7 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
                                   bool allow_transitive) -> InstId {
   auto [storage_sem_ir, storage_id] = FindStorageArgForInitializerInSpecific(
       sem_ir, init_id, sem_ir, SpecificId::None, allow_transitive);
-  CARBON_CHECK(storage_sem_ir == &sem_ir);
+  CARBON_CHECK(!storage_id.has_value() || storage_sem_ir == &sem_ir);
   return storage_id;
 }
 
