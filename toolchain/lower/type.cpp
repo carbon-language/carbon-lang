@@ -136,6 +136,8 @@ class FunctionTypeInfoBuilder {
     auto lowered_return_types = GetLoweredTypes(func_ctx, return_type_id);
     return_type_ = lowered_return_types.llvm_ir_type;
     param_di_types_.push_back(lowered_return_types.llvm_di_type);
+    return_kind_ =
+        return_type_id.has_value() ? ReturnKind::ByCopy : ReturnKind::None;
     return true;
   }
 
@@ -145,6 +147,7 @@ class FunctionTypeInfoBuilder {
     return_type_ = llvm::Type::getInt32Ty(func_ctx.context->llvm_context());
     param_di_types_.push_back(context_->di_builder().createBasicType(
         "int", 32, llvm::dwarf::DW_ATE_signed));
+    return_kind_ = ReturnKind::EntryPointInt32;
     return true;
   }
 
@@ -156,6 +159,7 @@ class FunctionTypeInfoBuilder {
                                           /*AddressSpace=*/0);
     // TODO: replace this with a reference type.
     param_di_types_.push_back(GetPointerDIType(nullptr));
+    return_kind_ = ReturnKind::ByReference;
     return true;
   }
 
@@ -167,6 +171,7 @@ class FunctionTypeInfoBuilder {
     sret_type_ = func_ctx.context->GetType(return_type_id);
     // We don't add to param_di_types_ because that will be handled by the
     // loop over the SemIR parameters.
+    return_kind_ = ReturnKind::InPlace;
     return true;
   }
 
@@ -270,6 +275,9 @@ class FunctionTypeInfoBuilder {
   // If not null, the LLVM function's first parameter should have a `sret`
   // attribute with this type.
   llvm::Type* sret_type_ = nullptr;
+
+  // How the LLVM function returns its result.
+  ReturnKind return_kind_ = ReturnKind::None;
 
   // Whether we failed to form an exact description of the function type. This
   // can happen if a parameter or return type is incomplete. In this case, we
@@ -508,6 +516,7 @@ auto FunctionTypeInfoBuilder::Finalize() -> FunctionTypeInfo {
           .unused_param_indices = std::move(unused_param_indices_),
           .param_name_ids = std::move(param_name_ids_),
           .sret_type = sret_type_,
+          .return_kind = return_kind_,
           .inexact = inexact_};
 }
 
@@ -519,6 +528,7 @@ auto FunctionTypeInfoBuilder::Abort() -> FunctionTypeInfo {
   param_types_.clear();
   param_di_types_.clear();
   return_type_ = llvm::Type::getVoidTy(context_->llvm_context());
+  return_kind_ = ReturnKind::None;
   param_di_types_.push_back(nullptr);
   inexact_ = true;
   return Finalize();
