@@ -291,10 +291,11 @@ fn Test() -> i32 {
 // CHECK:STDOUT:       %Inner.ref: type = name_ref Inner, %.loc9_17.2 [symbolic = %Inner (constants.%Inner.06b)]
 // CHECK:STDOUT:       %.loc9_17.3: Core.Form = init_form %Inner.ref [symbolic = %.loc9_17.1 (constants.%.c17)]
 // CHECK:STDOUT:       %n.param: @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc9_11.1: type = splice_block %.loc9_11.2 [symbolic = %T.as_type.loc9_11.1 (constants.%T.as_type)] {
-// CHECK:STDOUT:         %T.ref: %Copy.type = name_ref T, @Outer.%T.loc4_14.2 [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %.loc9_11.1: type = splice_block %.loc9_11.3 [symbolic = %T.as_type.loc9_11.1 (constants.%T.as_type)] {
+// CHECK:STDOUT:         %.loc9_11.2: %Copy.type = specific_constant @Outer.%T.loc4_14.2, @Outer(constants.%T.f84) [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:         %T.ref: %Copy.type = name_ref T, %.loc9_11.2 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:         %T.as_type.loc9_11.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc9_11.1 (constants.%T.as_type)]
-// CHECK:STDOUT:         %.loc9_11.2: type = converted %T.ref, %T.as_type.loc9_11.2 [symbolic = %T.as_type.loc9_11.1 (constants.%T.as_type)]
+// CHECK:STDOUT:         %.loc9_11.3: type = converted %T.ref, %T.as_type.loc9_11.2 [symbolic = %T.as_type.loc9_11.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %n: @Outer.F.%T.as_type.loc9_11.1 (%T.as_type) = wrapper_binding n, %n.param
 // CHECK:STDOUT:       %return.param: ref @Outer.F.%Inner (%Inner.06b) = out_param call_param1
@@ -322,10 +323,11 @@ fn Test() -> i32 {
 // CHECK:STDOUT:   %complete_type.loc7_3.2: <witness> = complete_type_witness %struct_type.n [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.22c)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %field_decl: @Inner.%Inner.elem (%Inner.elem.51d) = field_decl n, element0, %.loc6 in [concrete] {
-// CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, @Outer.%T.loc4_14.2 [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:     %field_decl: @Inner.%Inner.elem (%Inner.elem.51d) = field_decl n, element0, %.loc6_12.2 in [concrete] {
+// CHECK:STDOUT:       %.loc6_12.1: %Copy.type = specific_constant @Outer.%T.loc4_14.2, @Outer(constants.%T.f84) [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, %.loc6_12.1 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:       %T.as_type.loc6_12.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc6_12.2 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc6: type = converted %T.ref, %T.as_type.loc6_12.1 [symbolic = %T.as_type.loc6_12.2 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc6_12.2: type = converted %T.ref, %T.as_type.loc6_12.1 [symbolic = %T.as_type.loc6_12.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc7_3.1: <witness> = complete_type_witness constants.%struct_type.n.797 [symbolic = %complete_type.loc7_3.2 (constants.%complete_type.22c)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc7_3.1
@@ -761,8 +763,9 @@ fn Test() -> i32 {
 // CHECK:STDOUT:       %return.param_patt.loc6_19.1: @Inner.WithSelf.F.%pattern_type.loc6_19 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc6_19.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:       %return.patt.loc6_16.1: @Inner.WithSelf.F.%pattern_type.loc6_19 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc6_19.1, %T.ref [symbolic = %return.patt.loc6_16.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc4_14.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc6_19.2: Core.Form = init_form %T.ref [symbolic = %.loc6_19.1 (constants.%.184)]
+// CHECK:STDOUT:       %.loc6_19.2: type = specific_constant @Outer.%T.loc4_14.2, @Outer(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc6_19.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc6_19.3: Core.Form = init_form %T.ref [symbolic = %.loc6_19.1 (constants.%.184)]
 // CHECK:STDOUT:       %self.param: @Inner.WithSelf.F.%Self.as_type.loc6_10.1 (%Self.as_type.abe) = value_param call_param0
 // CHECK:STDOUT:       %.loc6_10.1: type = splice_block %.loc6_10.3 [symbolic = %Self.as_type.loc6_10.1 (constants.%Self.as_type.abe)] {
 // CHECK:STDOUT:         %.loc6_10.2: @Inner.WithSelf.F.%Inner.type (%Inner.type.84b) = specific_constant @Inner.%Self.loc5_19.1, @Inner(constants.%T) [symbolic = %Self (constants.%Self.656)]
@@ -809,8 +812,9 @@ fn Test() -> i32 {
 // CHECK:STDOUT:       %return.param_patt.loc11_24.1: @C.as.Inner.impl.F.%pattern_type.loc11_24 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc11_24.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:       %return.patt.loc11_21.1: @C.as.Inner.impl.F.%pattern_type.loc11_24 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc11_24.1, %T.ref [symbolic = %return.patt.loc11_21.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc4_14.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc11_24.3: Core.Form = init_form %T.ref [symbolic = %.loc11_24.2 (constants.%.184)]
+// CHECK:STDOUT:       %.loc11_24.3: type = specific_constant @Outer.%T.loc4_14.2, @Outer(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc11_24.3 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc11_24.4: Core.Form = init_form %T.ref [symbolic = %.loc11_24.2 (constants.%.184)]
 // CHECK:STDOUT:       %self.param: @C.as.Inner.impl.F.%C (%C.7d7) = value_param call_param0
 // CHECK:STDOUT:       %.loc11_18.1: type = splice_block %C.ref [symbolic = %C (constants.%C.7d7)] {
 // CHECK:STDOUT:         %.loc11_18.2: type = specific_constant @Outer.%C.decl, @Outer(constants.%T) [symbolic = %C (constants.%C.7d7)]

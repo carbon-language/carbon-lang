@@ -131,6 +131,9 @@ class DominanceTestFile {
     file_.specifics()
         .Get(specific_id)
         .SetValueBlock(GenericInstIndex::Declaration, value_block_id);
+    file_.specifics()
+        .Get(specific_id)
+        .SetValueBlock(GenericInstIndex::Definition, InstBlockId::Empty);
     return generic_id;
   }
 

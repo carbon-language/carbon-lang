@@ -174,8 +174,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:       %return.param_patt.loc4_23.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_23 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc4_23.2 (constants.%return.param_patt)]
 // CHECK:STDOUT:       %return.patt.loc4_20.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_23 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc4_23.1, %Dest.ref [symbolic = %return.patt.loc4_20.2 (constants.%return.patt)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc3_26.2 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:       %.loc4_23.2: Core.Form = init_form %Dest.ref [symbolic = %.loc4_23.1 (constants.%.184)]
+// CHECK:STDOUT:       %.loc4_23.2: type = specific_constant @ImplicitAs.%Dest.loc3_26.2, @ImplicitAs(constants.%Dest) [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, %.loc4_23.2 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:       %.loc4_23.3: Core.Form = init_form %Dest.ref [symbolic = %.loc4_23.1 (constants.%.184)]
 // CHECK:STDOUT:       %self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_14.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc4_14.1: type = splice_block %.loc4_14.3 [symbolic = %Self.as_type.loc4_14.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc4_14.2: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = specific_constant @ImplicitAs.%Self.loc3_34.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]
@@ -1033,8 +1034,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:       %return.param_patt.loc6_16.1: @Factory.WithSelf.Make.%pattern_type (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc6_16.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:       %return.patt.loc6_13.1: @Factory.WithSelf.Make.%pattern_type (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc6_16.1, %T.ref [symbolic = %return.patt.loc6_13.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Factory.%T.loc4_20.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc6_16.2: Core.Form = init_form %T.ref [symbolic = %.loc6_16.1 (constants.%.184)]
+// CHECK:STDOUT:       %.loc6_16.2: type = specific_constant @Factory.%T.loc4_20.2, @Factory(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc6_16.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc6_16.3: Core.Form = init_form %T.ref [symbolic = %.loc6_16.1 (constants.%.184)]
 // CHECK:STDOUT:       %return.param: ref @Factory.WithSelf.Make.%T (%T) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Factory.WithSelf.Make.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -1045,8 +1047,9 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:       %return.param_patt.loc8_22.1: @Factory.WithSelf.Method.%pattern_type.loc8_22 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc8_22.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:       %return.patt.loc8_19.1: @Factory.WithSelf.Method.%pattern_type.loc8_22 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc8_22.1, %T.ref [symbolic = %return.patt.loc8_19.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Factory.%T.loc4_20.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc8_22.2: Core.Form = init_form %T.ref [symbolic = %.loc8_22.1 (constants.%.184)]
+// CHECK:STDOUT:       %.loc8_22.2: type = specific_constant @Factory.%T.loc4_20.2, @Factory(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc8_22.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc8_22.3: Core.Form = init_form %T.ref [symbolic = %.loc8_22.1 (constants.%.184)]
 // CHECK:STDOUT:       %self.param: @Factory.WithSelf.Method.%Self.as_type.loc8_13.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc8_13.1: type = splice_block %.loc8_13.3 [symbolic = %Self.as_type.loc8_13.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc8_13.2: @Factory.WithSelf.Method.%Factory.type (%Factory.type.711) = specific_constant @Factory.%Self.loc4_28.1, @Factory(constants.%T) [symbolic = %Self (constants.%Self.9c2)]

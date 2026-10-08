@@ -141,7 +141,8 @@ class Declaration(T: type);
 // CHECK:STDOUT:       %return.param_patt.loc6_28.1: @Class.GetAddr.%pattern_type.loc6_28 (%pattern_type.d5b) = out_param_pattern [symbolic = %return.param_patt.loc6_28.2 (constants.%return.param_patt.4df)]
 // CHECK:STDOUT:       %return.patt.loc6_24.1: @Class.GetAddr.%pattern_type.loc6_28 (%pattern_type.d5b) = return_slot_pattern %return.param_patt.loc6_28.1, %ptr.loc6_28.2 [symbolic = %return.patt.loc6_24.2 (constants.%return.patt.c21)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, @Class.%T.loc5_14.2 [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %.loc6_27: %Copy.type = specific_constant @Class.%T.loc5_14.2, @Class(constants.%T.f84) [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, %.loc6_27 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:       %T.as_type.loc6_28.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc6_28.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %.loc6_28.2: type = converted %T.ref, %T.as_type.loc6_28.2 [symbolic = %T.as_type.loc6_28.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       %ptr.loc6_28.2: type = ptr_type %.loc6_28.2 [symbolic = %ptr.loc6_28.1 (constants.%ptr.215)]
@@ -159,12 +160,13 @@ class Declaration(T: type);
 // CHECK:STDOUT:       %self.param_patt.loc10_15.1: @Class.GetValue.%pattern_type.loc10_15 (%pattern_type.e18) = value_param_pattern [symbolic = %self.param_patt.loc10_15.2 (constants.%self.param_patt.aaa)]
 // CHECK:STDOUT:       %self.patt.loc10_15.1: @Class.GetValue.%pattern_type.loc10_15 (%pattern_type.e18) = wrapper_binding_pattern self, %self.param_patt.loc10_15.1 [symbolic = %self.patt.loc10_15.2 (constants.%self.patt.f4e)]
 // CHECK:STDOUT:       %return.param_patt.loc10_24.1: @Class.GetValue.%pattern_type.loc10_24 (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc10_24.2 (constants.%return.param_patt.bf4475.2)]
-// CHECK:STDOUT:       %return.patt.loc10_21.1: @Class.GetValue.%pattern_type.loc10_24 (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc10_24.1, %.loc10_24.3 [symbolic = %return.patt.loc10_21.2 (constants.%return.patt.f44)]
+// CHECK:STDOUT:       %return.patt.loc10_21.1: @Class.GetValue.%pattern_type.loc10_24 (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc10_24.1, %.loc10_24.4 [symbolic = %return.patt.loc10_21.2 (constants.%return.patt.f44)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, @Class.%T.loc5_14.2 [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %.loc10_24.3: %Copy.type = specific_constant @Class.%T.loc5_14.2, @Class(constants.%T.f84) [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, %.loc10_24.3 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:       %T.as_type.loc10_24.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc10_24.1 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc10_24.3: type = converted %T.ref, %T.as_type.loc10_24.2 [symbolic = %T.as_type.loc10_24.1 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc10_24.4: Core.Form = init_form %.loc10_24.3 [symbolic = %.loc10_24.2 (constants.%.1ce700.2)]
+// CHECK:STDOUT:       %.loc10_24.4: type = converted %T.ref, %T.as_type.loc10_24.2 [symbolic = %T.as_type.loc10_24.1 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc10_24.5: Core.Form = init_form %.loc10_24.4 [symbolic = %.loc10_24.2 (constants.%.1ce700.2)]
 // CHECK:STDOUT:       %self.param: @Class.GetValue.%Class (%Class) = value_param call_param0
 // CHECK:STDOUT:       %.loc10_15.1: type = splice_block %Self.ref [symbolic = %Class (constants.%Class)] {
 // CHECK:STDOUT:         %.loc10_15.2: type = specific_constant constants.%Class, @Class(constants.%T.f84) [symbolic = %Class (constants.%Class)]

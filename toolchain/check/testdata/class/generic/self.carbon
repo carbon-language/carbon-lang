@@ -144,7 +144,8 @@ class Class(T: type) {
 // CHECK:STDOUT:       %return.patt.loc19_18.1: @Class.MakeClass.%pattern_type (%pattern_type.36e) = return_slot_pattern %return.param_patt.loc19_28.1, %Class.loc19_28.2 [symbolic = %return.patt.loc19_18.2 (constants.%return.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc15_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc19_27: type = specific_constant @Class.%T.loc15_14.2, @Class(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc19_27 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Class.loc19_28.2: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc19_28.1 (constants.%Class)]
 // CHECK:STDOUT:       %.loc19_28.2: Core.Form = init_form %Class.loc19_28.2 [symbolic = %.loc19_28.1 (constants.%.030)]
 // CHECK:STDOUT:       %return.param: ref @Class.MakeClass.%Class.loc19_28.1 (%Class) = out_param call_param0
@@ -240,7 +241,8 @@ class Class(T: type) {
 // CHECK:STDOUT:     assign %c.var, %Class.MakeSelf.call
 // CHECK:STDOUT:     %.loc21_26: type = splice_block %Class.loc21_26.1 [symbolic = %Class.loc21_26.2 (constants.%Class)] {
 // CHECK:STDOUT:       %Class.ref: %Class.type = name_ref Class, file.%Class.decl [concrete = constants.%Class.generic]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc15_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc21_25: type = specific_constant @Class.%T.loc15_14.2, @Class(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc21_25 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Class.loc21_26.1: type = class_type @Class, @Class(constants.%T) [symbolic = %Class.loc21_26.2 (constants.%Class)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: ref @Class.F.%Class.loc21_26.2 (%Class) = wrapper_binding c, %c.var

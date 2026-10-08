@@ -677,8 +677,9 @@ fn H() {
 // CHECK:STDOUT:       %return.param_patt.loc5_13.1: @X.G.%pattern_type (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc5_13.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:       %return.patt.loc5_10.1: @X.G.%pattern_type (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc5_13.1, %U.ref [symbolic = %return.patt.loc5_10.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc4_15.2 [symbolic = %U (constants.%U)]
-// CHECK:STDOUT:       %.loc5_13.3: Core.Form = init_form %U.ref [symbolic = %.loc5_13.2 (constants.%.184)]
+// CHECK:STDOUT:       %.loc5_13.3: type = specific_constant @X.%U.loc4_15.2, @X(constants.%U) [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:       %U.ref: type = name_ref U, %.loc5_13.3 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:       %.loc5_13.4: Core.Form = init_form %U.ref [symbolic = %.loc5_13.2 (constants.%.184)]
 // CHECK:STDOUT:       %return.param: ref @X.G.%U (%U) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @X.G.%U (%U) = return_slot %return.param
 // CHECK:STDOUT:     }

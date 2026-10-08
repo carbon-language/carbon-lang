@@ -90,7 +90,10 @@ class C {
 // CHECK:STDOUT:       %x.patt.loc16_9.1: @GenericInterface.WithSelf.F.%pattern_type (%pattern_type.51d) = wrapper_binding_pattern x, %x.param_patt.loc16_9.1 [symbolic = %x.patt.loc16_9.2 (constants.%x.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @GenericInterface.WithSelf.F.%T (%T) = value_param call_param0
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @GenericInterface.%T.loc15_29.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc16_11.1: type = splice_block %T.ref [symbolic = %T (constants.%T)] {
+// CHECK:STDOUT:         %.loc16_11.2: type = specific_constant @GenericInterface.%T.loc15_29.2, @GenericInterface(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %T.ref: type = name_ref T, %.loc16_11.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %x: @GenericInterface.WithSelf.F.%T (%T) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc16_13.1: @GenericInterface.WithSelf.%GenericInterface.assoc_type (%GenericInterface.assoc_type) = assoc_entity element0, %GenericInterface.WithSelf.F.decl [symbolic = %assoc0.loc16_13.2 (constants.%assoc0)]
@@ -123,7 +126,10 @@ class C {
 // CHECK:STDOUT:       %x.patt.loc25_18.1: @C.as.GenericInterface.impl.F.%pattern_type (%pattern_type.51d) = wrapper_binding_pattern x, %x.param_patt.loc25_18.1 [symbolic = %x.patt.loc25_18.2 (constants.%x.patt)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @C.as.GenericInterface.impl.F.%T (%T) = value_param call_param0
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @C.as.GenericInterface.impl.%T.loc24_24.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc25_20.1: type = splice_block %T.ref [symbolic = %T (constants.%T)] {
+// CHECK:STDOUT:         %.loc25_20.2: type = specific_constant @C.as.GenericInterface.impl.%T.loc24_24.2, @C.as.GenericInterface.impl(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %T.ref: type = name_ref T, %.loc25_20.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %x: @C.as.GenericInterface.impl.F.%T (%T) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %GenericInterface.impl_witness_table = impl_witness_table (), @C.as.GenericInterface.impl [concrete]

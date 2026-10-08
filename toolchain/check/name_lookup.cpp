@@ -96,6 +96,26 @@ auto LookupNameInDecl(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Returns the generic that `inst_id` is attached to, if any.
+static auto GetGenericForInst(Context& context, SemIR::InstId inst_id)
+    -> SemIR::GenericId {
+  auto const_id = context.constant_values().GetAttached(inst_id);
+  if (const_id.has_value() && const_id.is_symbolic()) {
+    if (auto generic_id =
+            context.constant_values().GetSymbolicConstant(const_id).generic_id;
+        generic_id.has_value()) {
+      return generic_id;
+    }
+  }
+  auto type_id = context.insts().GetAttachedType(inst_id);
+  if (type_id.has_value() && type_id.is_symbolic()) {
+    return context.constant_values()
+        .GetSymbolicConstant(context.types().GetConstantId(type_id))
+        .generic_id;
+  }
+  return SemIR::GenericId::None;
+}
+
 auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                            SemIR::NameId name_id, bool required)
     -> LookupResult {
@@ -156,10 +176,18 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
   }
 
   if (lexical_result.has_value()) {
-    // A lexical scope never needs an associated specific. If there's a
-    // lexically enclosing generic, then it also encloses the point of use of
-    // the name.
-    return {.specific_id = SemIR::SpecificId::None,
+    // If the instruction belongs to an enclosing generic rather than the
+    // current generic, pair it with the enclosing generic's self-specific.
+    auto specific_id = SemIR::SpecificId::None;
+    auto decl_generic_id = GetGenericForInst(context, lexical_result);
+    auto current_generic_id =
+        context.generic_region_stack().Empty()
+            ? SemIR::GenericId::None
+            : context.generic_region_stack().PeekPendingGeneric().generic_id;
+    if (decl_generic_id.has_value() && decl_generic_id != current_generic_id) {
+      specific_id = context.generics().GetSelfSpecific(decl_generic_id);
+    }
+    return {.specific_id = specific_id,
             .scope_result = SemIR::ScopeLookupResult::MakeFound(
                 lexical_result, SemIR::AccessKind::Public)};
   }

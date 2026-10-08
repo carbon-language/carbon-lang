@@ -148,8 +148,8 @@ using SpecificsByGeneric =
     GroupedValueStore<GenericId, SpecificId, Tag<CheckIRId>>;
 
 // Collects the specifics in `file`, grouped by the generic they're a specific
-// of. A specific that has never been resolved, or whose resolution failed,
-// doesn't have instructions to check, so is omitted.
+// of. A specific whose definition has never been resolved, or whose resolution
+// failed, doesn't have body instructions to check, so is omitted.
 //
 // This grouping is built once for the file so that each generic function can
 // find its own specifics without scanning all of them.
@@ -159,7 +159,7 @@ using SpecificsByGeneric =
 auto CollectSpecifics(const File& file) -> SpecificsByGeneric {
   return SpecificsByGeneric(file.generics(), [&](auto add) {
     for (const auto& [specific_id, specific] : file.specifics().enumerate()) {
-      if (specific.IsUnresolved() || specific.HasError()) {
+      if (!specific.definition_block_id.has_value() || specific.HasError()) {
         continue;
       }
       add(specific.generic_id, specific_id);
@@ -541,6 +541,18 @@ auto DominanceVerifier::VerifyAndRecordInst(InstId root_inst_id,
       continue;
     }
 
+    // A non-constant `SpecificInst` evaluates to the value of the instruction
+    // that its `AbsoluteInstId` operand names.
+    if (auto specific_inst = inst.TryAs<SpecificInst>()) {
+      if (!GetConstantValueInSpecific(file_, specific_id_, inst_id)
+               .is_constant()) {
+        CARBON_RETURN_IF_ERROR(
+            VerifyOperand(inst_id, specific_inst->inst_id, block_index));
+      }
+      RecordEvaluated(inst_id);
+      continue;
+    }
+
     CARBON_RETURN_IF_ERROR(
         VerifyArg(inst_id, inst.arg0_and_kind(), block_index));
     CARBON_RETURN_IF_ERROR(
@@ -598,14 +610,8 @@ auto DominanceVerifier::VerifyOperand(InstId user_id, InstId operand_id,
     return Success();
   }
   // A constant isn't evaluated in the function body, so can be used anywhere.
-  //
-  // TODO: Use `GetConstantValueInSpecific` here, so that an instruction that is
-  // only constant in this specific is also exempt. That currently crashes,
-  // because a function body can name an instruction whose constant value is
-  // attached to an enclosing generic rather than to this function's generic,
-  // which `GetConstantInSpecific` rejects. Lowering should hit the same crash;
-  // see `FunctionContext::LowerInst`.
-  if (file_.constant_values().Get(operand_id).is_constant()) {
+  if (GetConstantValueInSpecific(file_, specific_id_, operand_id)
+          .is_constant()) {
     return Success();
   }
   if (evaluated_.Contains(operand_id)) {

@@ -743,7 +743,8 @@ class Outer(T: type) {
 // CHECK:STDOUT:       %return.patt.loc4_12.1: @Inner.A.%pattern_type (%pattern_type.dec) = return_slot_pattern %return.param_patt.loc4_22.1, %Outer.loc4_22.2 [symbolic = %return.patt.loc4_12.2 (constants.%return.patt.828)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc2_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc4_21: type = specific_constant @Outer.%T.loc2_14.2, @Outer(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc4_21 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Outer.loc4_22.2: type = class_type @Outer, @Outer(constants.%T) [symbolic = %Outer.loc4_22.1 (constants.%Outer.dee)]
 // CHECK:STDOUT:       %.loc4_22.2: Core.Form = init_form %Outer.loc4_22.2 [symbolic = %.loc4_22.1 (constants.%.156)]
 // CHECK:STDOUT:       %return.param: ref @Inner.A.%Outer.loc4_22.1 (%Outer.dee) = out_param call_param0
@@ -754,7 +755,8 @@ class Outer(T: type) {
 // CHECK:STDOUT:       %return.patt.loc7_12.1: @Inner.B.%pattern_type (%pattern_type.a71) = return_slot_pattern %return.param_patt.loc7_22.1, %Outer.loc7_22.2 [symbolic = %return.patt.loc7_12.2 (constants.%return.patt.998)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Outer.ref: %Outer.type = name_ref Outer, file.%Outer.decl [concrete = constants.%Outer.generic]
-// CHECK:STDOUT:       %U.ref: type = name_ref U, @Inner.%U.loc3_16.2 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:       %.loc7_21: type = specific_constant @Inner.%U.loc3_16.2, @Inner(constants.%T, constants.%U) [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:       %U.ref: type = name_ref U, %.loc7_21 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %Outer.loc7_22.2: type = class_type @Outer, @Outer(constants.%U) [symbolic = %Outer.loc7_22.1 (constants.%Outer.20b)]
 // CHECK:STDOUT:       %.loc7_22.2: Core.Form = init_form %Outer.loc7_22.2 [symbolic = %.loc7_22.1 (constants.%.aaf)]
 // CHECK:STDOUT:       %return.param: ref @Inner.B.%Outer.loc7_22.1 (%Outer.20b) = out_param call_param0
@@ -766,7 +768,8 @@ class Outer(T: type) {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc10_15: @Inner.C.%Inner.type (%Inner.type.8f7) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.generic (constants.%Inner.generic.b3a)]
 // CHECK:STDOUT:       %Inner.ref: @Inner.C.%Inner.type (%Inner.type.8f7) = name_ref Inner, %.loc10_15 [symbolic = %Inner.generic (constants.%Inner.generic.b3a)]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Outer.%T.loc2_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc10_21: type = specific_constant @Outer.%T.loc2_14.2, @Outer(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc10_21 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %Inner.loc10_22.2: type = class_type @Inner, @Inner(constants.%T, constants.%T) [symbolic = %Inner.loc10_22.1 (constants.%Inner.61d)]
 // CHECK:STDOUT:       %.loc10_22.2: Core.Form = init_form %Inner.loc10_22.2 [symbolic = %.loc10_22.1 (constants.%.2f2)]
 // CHECK:STDOUT:       %return.param: ref @Inner.C.%Inner.loc10_22.1 (%Inner.61d) = out_param call_param0
@@ -778,7 +781,8 @@ class Outer(T: type) {
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %.loc13_15: @Inner.D.%Inner.type (%Inner.type.8f7) = specific_constant @Outer.%Inner.decl, @Outer(constants.%T) [symbolic = %Inner.generic (constants.%Inner.generic.b3a)]
 // CHECK:STDOUT:       %Inner.ref: @Inner.D.%Inner.type (%Inner.type.8f7) = name_ref Inner, %.loc13_15 [symbolic = %Inner.generic (constants.%Inner.generic.b3a)]
-// CHECK:STDOUT:       %U.ref: type = name_ref U, @Inner.%U.loc3_16.2 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:       %.loc13_21: type = specific_constant @Inner.%U.loc3_16.2, @Inner(constants.%T, constants.%U) [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:       %U.ref: type = name_ref U, %.loc13_21 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %Inner.loc13_22.2: type = class_type @Inner, @Inner(constants.%T, constants.%U) [symbolic = %Inner.loc13_22.1 (constants.%Inner.34b)]
 // CHECK:STDOUT:       %.loc13_22.2: Core.Form = init_form %Inner.loc13_22.2 [symbolic = %.loc13_22.1 (constants.%.556)]
 // CHECK:STDOUT:       %return.param: ref @Inner.D.%Inner.loc13_22.1 (%Inner.34b) = out_param call_param0

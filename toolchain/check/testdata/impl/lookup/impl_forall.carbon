@@ -195,11 +195,15 @@ fn TestSpecific(a: A({})*) -> {}* {
 // CHECK:STDOUT:       %return.param_patt.loc13_22.1: @A.as.I.impl.F.%pattern_type.loc13_22 (%pattern_type.4f4b84.2) = out_param_pattern [symbolic = %return.param_patt.loc13_22.2 (constants.%return.param_patt.27f587.2)]
 // CHECK:STDOUT:       %return.patt.loc13_18.1: @A.as.I.impl.F.%pattern_type.loc13_22 (%pattern_type.4f4b84.2) = return_slot_pattern %return.param_patt.loc13_22.1, %ptr.loc13_22.2 [symbolic = %return.patt.loc13_18.2 (constants.%return.patt.d67681.2)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %V.ref: type = name_ref V, @A.as.I.impl.%V.loc12_15.2 [symbolic = %V (constants.%V.67d)]
+// CHECK:STDOUT:       %.loc13_21: type = specific_constant @A.as.I.impl.%V.loc12_15.2, @A.as.I.impl(constants.%V.67d) [symbolic = %V (constants.%V.67d)]
+// CHECK:STDOUT:       %V.ref: type = name_ref V, %.loc13_21 [symbolic = %V (constants.%V.67d)]
 // CHECK:STDOUT:       %ptr.loc13_22.2: type = ptr_type %V.ref [symbolic = %ptr.loc13_22.1 (constants.%ptr.e8f8f9.2)]
 // CHECK:STDOUT:       %.loc13_22.2: Core.Form = init_form %ptr.loc13_22.2 [symbolic = %.loc13_22.1 (constants.%.cb6cb9.2)]
 // CHECK:STDOUT:       %self.param: ref @A.as.I.impl.F.%A (%A.47a1de.2) = ref_param call_param0
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @A.as.I.impl.%A.loc12_26.2 [symbolic = %A (constants.%A.47a1de.2)]
+// CHECK:STDOUT:       %.loc13_12.1: type = splice_block %Self.ref [symbolic = %A (constants.%A.47a1de.2)] {
+// CHECK:STDOUT:         %.loc13_12.2: type = specific_constant @A.as.I.impl.%A.loc12_26.2, @A.as.I.impl(constants.%V.67d) [symbolic = %A (constants.%A.47a1de.2)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc13_12.2 [symbolic = %A (constants.%A.47a1de.2)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: ref @A.as.I.impl.F.%A (%A.47a1de.2) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @A.as.I.impl.F.%ptr.loc13_22.1 (%ptr.e8f8f9.2) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @A.as.I.impl.F.%ptr.loc13_22.1 (%ptr.e8f8f9.2) = return_slot %return.param

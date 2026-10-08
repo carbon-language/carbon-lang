@@ -287,8 +287,9 @@ let n: type = i32;
 // CHECK:STDOUT:       %return.param_patt.loc9_23.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_23 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc9_23.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:       %return.patt.loc9_20.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc9_23 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc9_23.1, %T.ref [symbolic = %return.patt.loc9_20.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @ImplicitAs.%T.loc8_23.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc9_23.2: Core.Form = init_form %T.ref [symbolic = %.loc9_23.1 (constants.%.184)]
+// CHECK:STDOUT:       %.loc9_23.2: type = specific_constant @ImplicitAs.%T.loc8_23.2, @ImplicitAs(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc9_23.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc9_23.3: Core.Form = init_form %T.ref [symbolic = %.loc9_23.1 (constants.%.184)]
 // CHECK:STDOUT:       %self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc9_14.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc9_14.1: type = splice_block %.loc9_14.3 [symbolic = %Self.as_type.loc9_14.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc9_14.2: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = specific_constant @ImplicitAs.%Self.loc8_31.1, @ImplicitAs(constants.%T) [symbolic = %Self (constants.%Self)]

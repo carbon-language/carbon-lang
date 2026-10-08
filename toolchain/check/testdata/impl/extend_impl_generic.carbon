@@ -281,8 +281,9 @@ class X(U: type) {
 // CHECK:STDOUT:       %return.param_patt.loc5_13.1: @HasF.WithSelf.F.%pattern_type (%pattern_type.51d1c4.1) = out_param_pattern [symbolic = %return.param_patt.loc5_13.2 (constants.%return.param_patt.41d2d9.1)]
 // CHECK:STDOUT:       %return.patt.loc5_10.1: @HasF.WithSelf.F.%pattern_type (%pattern_type.51d1c4.1) = return_slot_pattern %return.param_patt.loc5_13.1, %T.ref [symbolic = %return.patt.loc5_10.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @HasF.%T.loc4_17.2 [symbolic = %T (constants.%T.67d)]
-// CHECK:STDOUT:       %.loc5_13.2: Core.Form = init_form %T.ref [symbolic = %.loc5_13.1 (constants.%.184347.1)]
+// CHECK:STDOUT:       %.loc5_13.2: type = specific_constant @HasF.%T.loc4_17.2, @HasF(constants.%T.67d) [symbolic = %T (constants.%T.67d)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc5_13.2 [symbolic = %T (constants.%T.67d)]
+// CHECK:STDOUT:       %.loc5_13.3: Core.Form = init_form %T.ref [symbolic = %.loc5_13.1 (constants.%.184347.1)]
 // CHECK:STDOUT:       %return.param: ref @HasF.WithSelf.F.%T (%T.67d) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @HasF.WithSelf.F.%T (%T.67d) = return_slot %return.param
 // CHECK:STDOUT:     }
@@ -654,7 +655,10 @@ class X(U: type) {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @I.WithSelf.F.%Self.as_type.loc5_8.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @I.WithSelf.F.%T (%T) = value_param call_param1
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @I.%T.loc4_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc5_17.1: type = splice_block %T.ref [symbolic = %T (constants.%T)] {
+// CHECK:STDOUT:         %.loc5_17.2: type = specific_constant @I.%T.loc4_14.2, @I(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %T.ref: type = name_ref T, %.loc5_17.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %t: @I.WithSelf.F.%T (%T) = wrapper_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc0.loc5_19.1: @I.WithSelf.%I.assoc_type (%I.assoc_type.b71f2b.1) = assoc_entity element0, %I.WithSelf.F.decl [symbolic = %assoc0.loc5_19.2 (constants.%assoc0.13b5f8.1)]
@@ -675,7 +679,7 @@ class X(U: type) {
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:   %X: type = class_type @X, @X(%U) [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:   %I.type.loc9_21.1: type = facet_type <@I, @I(%U)> [symbolic = %I.type.loc9_21.1 (constants.%I.type.3fe556.2)]
-// CHECK:STDOUT:   %.loc9: <witness> = impl_self_witness %X, @I, @I(%U) [symbolic = %.loc9 (constants.%.3db)]
+// CHECK:STDOUT:   %.loc9_23: <witness> = impl_self_witness %X, @I, @I(%U) [symbolic = %.loc9_23 (constants.%.3db)]
 // CHECK:STDOUT:   %I.impl_witness.loc9_23.2: <witness> = impl_witness %I.impl_witness_table, @X.as.I.impl(%U) [symbolic = %I.impl_witness.loc9_23.2 (constants.%I.impl_witness)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -697,7 +701,10 @@ class X(U: type) {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @X.as.I.impl.F.%X (%X) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @X.as.I.impl.F.%U (%U) = value_param call_param1
-// CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc8_10.2 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:       %.loc10_33.1: type = splice_block %U.ref [symbolic = %U (constants.%U)] {
+// CHECK:STDOUT:         %.loc10_33.2: type = specific_constant @X.%U.loc8_10.2, @X(constants.%U) [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:         %U.ref: type = name_ref U, %.loc10_33.2 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %t: @X.as.I.impl.F.%U (%U) = wrapper_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %I.impl_witness_table = impl_witness_table (%X.as.I.impl.F.decl), @X.as.I.impl [concrete]
@@ -723,10 +730,11 @@ class X(U: type) {
 // CHECK:STDOUT:     impl_decl @X.as.I.impl [concrete] {} {
 // CHECK:STDOUT:       %Self.ref: type = name_ref Self, constants.%X [symbolic = %X (constants.%X)]
 // CHECK:STDOUT:       %I.ref: %I.type.335 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
-// CHECK:STDOUT:       %U.ref: type = name_ref U, @X.%U.loc8_10.2 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:       %.loc9_20: type = specific_constant @X.%U.loc8_10.2, @X(constants.%U) [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:       %U.ref: type = name_ref U, %.loc9_20 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:       %I.type.loc9_21.2: type = facet_type <@I, @I(constants.%U)> [symbolic = %I.type.loc9_21.1 (constants.%I.type.3fe556.2)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc9_23: <witness> = impl_self_witness @X.as.I.impl.%Self.ref, @I, @I(constants.%U) [symbolic = @X.as.I.impl.%.loc9 (constants.%.3db)]
+// CHECK:STDOUT:     %.loc9_23: <witness> = impl_self_witness @X.as.I.impl.%Self.ref, @I, @I(constants.%U) [symbolic = @X.as.I.impl.%.loc9_23 (constants.%.3db)]
 // CHECK:STDOUT:     %.loc9_21: type = specific_constant @X.as.I.impl.%I.type.loc9_21.2, @X.as.I.impl(constants.%U) [symbolic = %I.type (constants.%I.type.3fe556.2)]
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -816,7 +824,7 @@ class X(U: type) {
 // CHECK:STDOUT:   %U => constants.%U
 // CHECK:STDOUT:   %X => constants.%X
 // CHECK:STDOUT:   %I.type.loc9_21.1 => constants.%I.type.3fe556.2
-// CHECK:STDOUT:   %.loc9 => constants.%.3db
+// CHECK:STDOUT:   %.loc9_23 => constants.%.3db
 // CHECK:STDOUT:   %I.impl_witness.loc9_23.2 => constants.%I.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

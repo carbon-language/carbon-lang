@@ -1981,9 +1981,9 @@ struct ReturnSlotPattern {
   TypeInstId type_inst_id;
 };
 
-// Given an instruction with a constant value that depends on a generic
-// parameter, selects a version of that instruction with the constant value
-// corresponding to a particular specific.
+// Given a constant instruction whose constant value or type depends on a
+// generic parameter, selects a version of that instruction with the type and
+// constant value corresponding to a particular specific.
 struct SpecificConstant {
   // TODO: Can we make Parse::NodeId more specific?
   static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(
@@ -2062,9 +2062,10 @@ struct SpecificImplFunction {
 // used to refer to constants and to instructions from the same scope (and hence
 // the same specific) that this instruction occupies.
 //
-// This is used as a convenience during action evaluation to allow an action to
-// refer to its `MetaInstId` operands from the generic with their specific types
-// and constant values.
+// This is used for lexical references to non-constant instructions from an
+// enclosing generic, and as a convenience during action evaluation to allow an
+// action to refer to its `MetaInstId` operands from the generic with their
+// specific types and constant values.
 struct SpecificInst {
   static constexpr auto Kind = InstKind::SpecificInst.Define<Parse::NodeId>(
       {.ir_name = "specific_inst",
