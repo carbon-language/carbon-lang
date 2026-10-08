@@ -877,11 +877,11 @@ constraint N {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) [identified] {
 // CHECK:STDOUT:   %Self => constants.%T
 // CHECK:STDOUT:   %Self.as_type.loc9_18.2 => constants.%T.as_type
 // CHECK:STDOUT: }
@@ -1041,7 +1041,7 @@ constraint N {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.331
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T.f45) {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T.f45) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%T.f45
 // CHECK:STDOUT:   %Self.as_type => constants.%T.as_type
@@ -1049,7 +1049,7 @@ constraint N {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.331
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T.f45) {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T.f45) [identified] {
 // CHECK:STDOUT:   %Self => constants.%T.f45
 // CHECK:STDOUT:   %Self.as_type.loc9_18.2 => constants.%T.as_type
 // CHECK:STDOUT:   %Y.type.loc9_30.2 => constants.%Y.type.a55
@@ -1106,11 +1106,11 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) [identified] {
 // CHECK:STDOUT:   %Self => constants.%T
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%T.as_type
 // CHECK:STDOUT: }
@@ -1168,11 +1168,11 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) [identified] {
 // CHECK:STDOUT:   %Self => constants.%T
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%T.as_type
 // CHECK:STDOUT: }
@@ -1584,11 +1584,11 @@ constraint N {
 // CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.e7d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%T.d09) {
+// CHECK:STDOUT: specific @N.WithSelf(constants.%T.d09) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.d09) {
+// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.d09) [identified] {
 // CHECK:STDOUT:   %Self => constants.%T.d09
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2 => constants.%T.as_type
 // CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.bfc
@@ -1691,11 +1691,11 @@ constraint N {
 // CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.a0f3c6.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%T.013) {
+// CHECK:STDOUT: specific @N.WithSelf(constants.%T.013) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.013) {
+// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.013) [identified] {
 // CHECK:STDOUT:   %Self => constants.%T.013
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2 => constants.%T.as_type
 // CHECK:STDOUT:   %C.loc10_19 => constants.%C.953
