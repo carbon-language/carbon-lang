@@ -320,7 +320,7 @@ fn F(generic B: Y) {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.de7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X.WithSelf(constants.%A) {
+// CHECK:STDOUT: specific @X.WithSelf(constants.%A) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%A
 // CHECK:STDOUT:   %Self.as_type => constants.%A.as_type
@@ -328,7 +328,7 @@ fn F(generic B: Y) {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.327231.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X.WithSelf.Self.as_type.impls.Z.type.require(constants.%A) {
+// CHECK:STDOUT: specific @X.WithSelf.Self.as_type.impls.Z.type.require(constants.%A) [identified] {
 // CHECK:STDOUT:   %Self => constants.%A
 // CHECK:STDOUT:   %Self.as_type => constants.%A.as_type
 // CHECK:STDOUT:   %Z.type => constants.%Z.type.56f318.2

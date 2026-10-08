@@ -1125,11 +1125,11 @@ interface B {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.b43) {
+// CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.b43) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.WithSelf.Self.as_type.impls.Z.type.require(constants.%Self.b43) {
+// CHECK:STDOUT: specific @Y.WithSelf.Self.as_type.impls.Z.type.require(constants.%Self.b43) [identified] {
 // CHECK:STDOUT:   %Self => constants.%Self.b43
 // CHECK:STDOUT:   %Self.as_type.loc6_11.2 => constants.%Self.as_type.ace
 // CHECK:STDOUT: }

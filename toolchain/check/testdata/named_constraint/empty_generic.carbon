@@ -267,7 +267,7 @@ fn G(generic T: Z, generic U: Empty(T), generic V: type) {
 // CHECK:STDOUT:   %V.loc20_50.1 => constants.%V
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.as_type, constants.%empty_struct_type) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.as_type, constants.%empty_struct_type) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -282,7 +282,7 @@ fn G(generic T: Z, generic U: Empty(T), generic V: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.as_type, type) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.as_type, type) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,7 +297,7 @@ fn G(generic T: Z, generic U: Empty(T), generic V: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.as_type, constants.%T.013) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.as_type, constants.%T.013) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -323,7 +323,7 @@ fn G(generic T: Z, generic U: Empty(T), generic V: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.as_type, constants.%V) {
+// CHECK:STDOUT: specific @Empty.WithSelf(constants.%T.as_type, constants.%V) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
