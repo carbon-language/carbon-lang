@@ -3588,6 +3588,14 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
         builder.Context(loc_id, ResolvingSpecificHere, specific_id);
       });
 
+  // The `declaring_impl_decls` is a global state that modifies the evaluation
+  // of LookupImplWitness. As a global state, it should only affect new
+  // instructions introduced during a given state. When we are evaluating for a
+  // specific, we are resolving existing instructions in the eval block for a
+  // generic. The global state should not apply to anything done while resolving
+  // a specific.
+  auto declaring = std::exchange(context.declaring_impl_decls(), {});
+
   for (auto [i, inst_id, result_id] :
        llvm::enumerate(eval_block, value_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
@@ -3599,6 +3607,9 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
     }
     result_id = context.constant_values().GetInstId(const_id);
   }
+
+  CARBON_CHECK(context.declaring_impl_decls().empty());
+  context.declaring_impl_decls() = std::move(declaring);
 }
 
 // Information about the function call we are currently executing. Unlike
