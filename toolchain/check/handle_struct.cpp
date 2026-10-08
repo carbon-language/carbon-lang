@@ -7,6 +7,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/struct.h"
 #include "toolchain/check/type.h"
 #include "toolchain/check/unused.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -77,47 +78,6 @@ auto HandleParseNode(Context& context,
   return true;
 }
 
-// Diagnoses and returns true if there's a duplicate name.
-static auto DiagnoseDuplicateNames(
-    Context& context, llvm::ArrayRef<Parse::NodeId> field_name_nodes,
-    llvm::ArrayRef<SemIR::StructTypeField> fields, bool is_struct_type_literal)
-    -> bool {
-  Map<SemIR::NameId, Parse::NodeId> names;
-  for (auto [field_name_node, field] :
-       llvm::zip_equal(field_name_nodes, fields)) {
-    auto result = names.Insert(field.name_id, field_name_node);
-    if (!result.is_inserted()) {
-      CARBON_DIAGNOSTIC(StructNameDuplicate, Error,
-                        "duplicated field name `{1}` in "
-                        "{0:struct type literal|struct literal}",
-                        Diagnostics::BoolAsSelect, SemIR::NameId);
-      CARBON_DIAGNOSTIC(StructNamePrevious, Note,
-                        "field with the same name here");
-      context.emitter()
-          .Build(result.value(), StructNameDuplicate, is_struct_type_literal,
-                 field.name_id)
-          .Note(field_name_node, StructNamePrevious)
-          .Emit();
-      return true;
-    }
-  }
-  return false;
-}
-
-// Pops the names of each field from the stack. These will have been left while
-// handling struct fields.
-static auto PopFieldNameNodes(Context& context, size_t field_count)
-    -> llvm::SmallVector<Parse::NodeId> {
-  llvm::SmallVector<Parse::NodeId> nodes;
-  nodes.reserve(field_count);
-  for ([[maybe_unused]] auto i : llvm::seq(field_count)) {
-    auto [name_node, _] =
-        context.node_stack().PopWithNodeId<Parse::NodeCategory::MemberName>();
-    nodes.push_back(name_node);
-  }
-  return nodes;
-}
-
 auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
   if (!context.node_stack().PeekIs(Parse::NodeCategory::MemberName)) {
     // Remove the last parameter from the node stack before collecting names.
@@ -127,7 +87,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
 
   auto fields = context.struct_type_fields_stack().PeekArray();
   llvm::SmallVector<Parse::NodeId> field_name_nodes =
-      PopFieldNameNodes(context, fields.size());
+      PopStructFieldNameNodes(context, fields.size());
 
   auto elements_id = context.param_and_arg_refs_stack().EndAndPop(
       Parse::NodeKind::StructLiteralStart);
@@ -137,7 +97,7 @@ auto HandleParseNode(Context& context, Parse::StructLiteralId node_id) -> bool {
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructLiteralStart>();
 
   if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
-                             /*is_struct_type_literal=*/false)) {
+                             StructKind::StructLiteral)) {
     context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
   } else {
     auto type_id = GetStructType(
@@ -156,14 +116,14 @@ auto HandleParseNode(Context& context, Parse::StructTypeLiteralId node_id)
     -> bool {
   auto fields = context.struct_type_fields_stack().PeekArray();
   llvm::SmallVector<Parse::NodeId> field_name_nodes =
-      PopFieldNameNodes(context, fields.size());
+      PopStructFieldNameNodes(context, fields.size());
 
   context.scope_stack().Pop(/*check_unused=*/true);
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::StructTypeLiteralStart>();
 
   if (DiagnoseDuplicateNames(context, field_name_nodes, fields,
-                             /*is_struct_type_literal=*/true)) {
+                             StructKind::StructTypeLiteral)) {
     context.node_stack().Push(node_id, SemIR::ErrorInst::InstId);
   } else {
     auto fields_id = context.struct_type_fields().AddCanonical(fields);
