@@ -60,6 +60,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
         -   [Assignment with inheritance](#assignment-with-inheritance)
     -   [Compatible types](#compatible-types)
         -   [Adapters](#adapters)
+            -   [Unsafe adapters](#unsafe-adapters)
     -   [Destructors](#destructors)
     -   [Access control](#access-control)
         -   [Private access](#private-access)
@@ -674,9 +675,8 @@ effectively performs an initialization of each of the function's parameters from
 the caller's arguments, and will be valid when those initializations are all
 valid.
 
-A data class has an unformed state if all its members do. Treatment of unformed
-state follows proposal
-[#257](https://github.com/carbon-language/carbon-lang/pull/257).
+A data class has an [unformed state](/docs/design/values.md#unformed-state) if
+all its members do.
 
 Destruction is performed field-wise in reverse order.
 
@@ -1768,8 +1768,11 @@ invariants, such as implementing the API of the new type by calling (public)
 methods of the original API, instead of accessing any private implementation
 details.
 
-Casting a value between compatible types is safe without any dynamic checks or
-danger of [object slicing](https://en.wikipedia.org/wiki/Object_slicing).
+Casting a value between compatible types with `as` is safe without any dynamic
+checks or danger of
+[object slicing](https://en.wikipedia.org/wiki/Object_slicing), unless the
+compatibility relationship crosses an [`unsafe adapt`](#unsafe-adapters)
+declaration.
 
 #### Adapters
 
@@ -1840,14 +1843,39 @@ units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
 versus `Meters`.
 
 > **Future work:** We should have some way of restricting the casts between a
-> type and an adapter to address this use case. One possibility would be to add
-> the keyword `private` before `adapt`, so you might write `extend private adapt
-> Date;`.
+> type and an adapter to the defining library to address validated-invariant and
+> unit use cases. One possibility would be to add the keyword `private` before
+> `adapt`, so you might write `extend private adapt Date;`. When crossing the
+> adapter boundary is a memory- or type-safety invariant rather than an
+> access-control boundary, [unsafe adapters](#unsafe-adapters) restrict the
+> casts to `unsafe as`.
 
 Haskell has a [`newtype` feature](https://wiki.haskell.org/Newtype) as well.
 Haskell's feature doesn't directly support reusing implementations either, but
 the most popular compiler provides it as
 [an extension](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/newtype_deriving.html).
+
+##### Unsafe adapters
+
+An adapter is sometimes used when converting between the adapter and the adapted
+type has safety preconditions that the compiler cannot verify, such as
+[`Core.MaybeUnformed(T)`](/docs/design/values.md#using-an-object-that-might-be-unformed)
+or exposing the raw storage underneath an object. Casting freely between the two
+types with `as` would bypass those safety invariants, so such an adapter is
+declared with `unsafe adapt`:
+
+```carbon
+class MaybeUnformed(T: type) {
+  unsafe adapt T;
+}
+```
+
+An unsafe adapter has all the same properties as a normal adapter, except that
+any conversion between compatible types that crosses an `unsafe adapt` is only
+available with
+[`unsafe as`](/docs/design/expressions/as_expressions.md#unsafe-as-expressions).
+An unsafe adapter can then explicitly implement `As` or `ImplicitAs` to make a
+conversion safe, potentially in only one direction or only under a condition.
 
 ### Destructors
 
@@ -2602,6 +2630,14 @@ the type of `U.x`."
     -   [`static` for package- and namespace-scope variables](/proposals/p007016-updating-self-syntax-and-adding-static-member-variables.md#static-for-package--and-namespace-scope-variables)
     -   [Distinct `method` introducer](/proposals/p007016-updating-self-syntax-and-adding-static-member-variables.md#distinct-method-introducer)
 
+-   [#7640: Reworking unformed state](https://github.com/carbon-language/carbon-lang/pull/7640)
+
+    Revisits [#257](https://github.com/carbon-language/carbon-lang/pull/257)'s
+    decisions against passing unformed objects and against unformed members;
+    both are now expressed with `Core.MaybeUnformed(T)`.
+
+    -   [Using `private adapt` instead of `unsafe adapt`](/proposals/p007640-reworking-unformed-state.md#using-private-adapt-instead-of-unsafe-adapt)
+
 ## References
 
 -   [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
@@ -2619,3 +2655,4 @@ the type of `U.x`."
 -   [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
 -   [#5017: Destructor syntax](https://github.com/carbon-language/carbon-lang/pull/5017)
 -   [#7016: Updating `self` syntax and adding `static` fields](https://github.com/carbon-language/carbon-lang/pull/7016)
+-   [#7640: Reworking unformed state](https://github.com/carbon-language/carbon-lang/pull/7640)

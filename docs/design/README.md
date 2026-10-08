@@ -1193,9 +1193,12 @@ var x: i64 = 42;
 x = 7;
 ```
 
-Variables with a type that has [an unformed state](#unformed-state) do not need
-to be initialized in the variable declaration, but do need to be assigned before
-they are used.
+A variable declaration may omit its initializer. If the type has
+[a default value](values.md#declaring-a-variable-with-no-initializer) the
+variable is initialized to it; otherwise, if the type has
+[an unformed state](#unformed-state), the variable is left unformed and needs to
+be assigned or initialized before it is used. See
+[declaring a variable with no initializer](values.md#declaring-a-variable-with-no-initializer).
 
 > References:
 >
@@ -1210,6 +1213,8 @@ they are used.
 >     [#618: var ordering](https://github.com/carbon-language/carbon-lang/pull/618)
 > -   Proposal
 >     [#2006: Values, variables, pointers, and references](https://github.com/carbon-language/carbon-lang/pull/2006)
+> -   Proposal
+>     [#7640: Reworking unformed state](https://github.com/carbon-language/carbon-lang/pull/7640)
 
 ### `auto`
 
@@ -2109,36 +2114,30 @@ p->x += 2;
 
 #### Unformed state
 
-Types indicate that they support unformed states by
-[implementing a particular interface](#interfaces-and-implementations),
-otherwise variables of that type must be explicitly initialized when they are
-declared.
+An object is _unformed_ when it has been given storage but not a value. Types
+indicate that they support this state by
+[implementing particular interfaces](#interfaces-and-implementations), or by
+being composed of members that all have an unformed state; otherwise, variables
+of that type must be explicitly initialized when they are declared, unless the
+type has a default value.
 
-An unformed state for an object is one that satisfies the following properties:
+A type's unformed state is either an invalid value representation that can be
+tested at run time (`Core.IsUnformed`), in which case destruction skips unformed
+objects and assignment initializes them rather than overwriting an existing
+value, or a valid value representation whose destruction and assignment are
+optional no-ops (`Core.UnformedNoop`).
 
--   Assignment from a fully formed value is correct using the normal assignment
-    implementation for the type.
--   Destruction must be correct using the type's normal destruction
-    implementation.
--   Destruction must be optional. The behavior of the program must be equivalent
-    whether the destructor is run or not for an unformed object, including not
-    leaking resources.
-
-A type might have more than one in-memory representation for the unformed state,
-and those representations may be the same as valid fully formed values for that
-type. For example, all values are legal representations of the unformed state
-for any type with a trivial destructor like `i32`. Types may define additional
-initialization for the [hardened build mode](#build-modes). For example, this
-causes integers to be set to `0` when in unformed state in this mode.
-
-Any operation on an unformed object _other_ than destruction or assignment from
-a fully formed value is an error, even if its in-memory representation is that
-of a valid value for that type.
+Apart from assignment and destruction, the only operations available on an
+object that might be unformed are those provided by the type
+`Core.MaybeUnformed(T)`.
 
 > References:
 >
+> -   [Unformed state](values.md#unformed-state)
 > -   Proposal
 >     [#257: Initialization of memory and variables](https://github.com/carbon-language/carbon-lang/pull/257)
+> -   Proposal
+>     [#7640: Reworking unformed state](https://github.com/carbon-language/carbon-lang/pull/7640)
 
 #### Move
 
