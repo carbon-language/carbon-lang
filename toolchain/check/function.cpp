@@ -59,15 +59,16 @@ auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
        .type_inst_id = form_expr.type_component_inst_id});
 }
 
-auto PopReturnDecl(Context& context) -> ReturnDeclInfo {
+auto PopReturnSpecifier(Context& context) -> ReturnSpecifierInfo {
   auto [node_id, pattern_id] =
-      context.node_stack().PopWithNodeIdIf<Parse::NodeCategory::ReturnDecl>();
+      context.node_stack()
+          .PopWithNodeIdIf<Parse::NodeCategory::ReturnSpecifier>();
   if (!pattern_id) {
     return {};
   }
   if (*pattern_id == SemIR::AutoType::TypeInstId) {
-    // For a deduced return type, `HandleReturnDecl` pushes `auto` in place of
-    // a return pattern, and doesn't push a return form.
+    // For a deduced return type, `HandleReturnSpecifier` pushes `auto` in place
+    // of a return pattern, and doesn't push a return form.
     return {.node_id = node_id, .is_deduced = true};
   }
   return {.node_id = node_id,
@@ -445,9 +446,10 @@ auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
   auto decl = context.insts().GetAs<SemIR::FunctionDecl>(decl_id);
 
   // Reopen the function's declaration and pattern blocks to finish building the
-  // signature. Add the return form and return pattern, as `HandleReturnDecl`
-  // would for an explicitly declared return type, followed by the callee
-  // pattern-match IR for the return, as `PopNameComponent` would.
+  // signature. Add the return form and return pattern, as
+  // `HandleReturnSpecifier` would for an explicitly declared return type,
+  // followed by the callee pattern-match IR for the return, as
+  // `PopNameComponent` would.
   context.inst_block_stack().Push(
       SemIR::InstBlockId::None,
       context.inst_blocks().GetOrEmpty(decl.decl_block_id));

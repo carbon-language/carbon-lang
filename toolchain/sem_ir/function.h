@@ -69,8 +69,8 @@ struct FunctionFields {
   // The following members always have values, and do not change throughout the
   // lifetime of the function. The exception is a function with a deduced return
   // type: its `Call` parameters, parameter pattern block and return
-  // information are extended once, when the return type is deduced at the end
-  // of the function body. See `has_undeduced_return_type`.
+  // information are extended once, when the return type is deduced. See
+  // `has_undeduced_return_type`.
 
   // This block consists of references to the `*ParamPattern` insts that
   // represent the function's `Call` parameters. The "`Call` parameters" are the
@@ -152,8 +152,8 @@ struct FunctionFields {
   InstId return_form_inst_id;
 
   // The parameter pattern inst that is declared by the function's return
-  // declaration. This will be a ReturnSlotPattern, or None if the function
-  // doesn't have a return declaration. It may or may not be used, depending on
+  // specifier. This will be a ReturnSlotPattern, or None if the function
+  // doesn't have a return specifier. It may or may not be used, depending on
   // whether the type has an in-place initializing representation.
   //
   // TODO: Extend this to support composite return forms.

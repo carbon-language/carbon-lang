@@ -29,26 +29,26 @@ auto FindSelfPattern(Context& context,
 auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
                       Context::FormExpr form_expr) -> SemIR::InstId;
 
-// Information about the return declaration of a function, as popped by
-// `PopReturnDecl`.
-struct ReturnDeclInfo {
-  // The return declaration, or `None` if there is none.
+// Information about the return specifier of a function, as popped by
+// `PopReturnSpecifier`.
+struct ReturnSpecifierInfo {
+  // The return specifier, or `None` if there is none.
   Parse::NodeId node_id = Parse::NoneNodeId();
   // Whether the return type is deduced from the body, as in `-> auto`.
   bool is_deduced = false;
-  // The declared return pattern. `None` if there is no return declaration or
+  // The declared return pattern. `None` if there is no return specifier or
   // the return type is deduced.
   SemIR::InstId pattern_id = SemIR::InstId::None;
-  // The declared return form. `None` if there is no return declaration or the
+  // The declared return form. `None` if there is no return specifier or the
   // return type is deduced.
   Context::FormExpr form = Context::FormExpr::None;
 
-  auto has_return_decl() const -> bool { return node_id.has_value(); }
+  auto has_return_specifier() const -> bool { return node_id.has_value(); }
 };
 
-// Pops the return declaration of a function declaration or function expression
+// Pops the return specifier of a function declaration or function expression
 // from the node stack, if it has one.
-auto PopReturnDecl(Context& context) -> ReturnDeclInfo;
+auto PopReturnSpecifier(Context& context) -> ReturnSpecifierInfo;
 
 // Sets the return type of a function whose return type is deduced, once that
 // type is known. `type_id` is the deduced type, or the error type if deduction

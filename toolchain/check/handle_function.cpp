@@ -51,9 +51,9 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
   return true;
 }
 
-// Handles a `->` or `->?` return declaration.
-static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
-    -> bool {
+// Handles a `->` or `->?` return specifier.
+static auto HandleReturnSpecifier(Context& context,
+                                  Parse::AnyReturnSpecifierId node_id) -> bool {
   auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
   bool is_return_type =
       context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind;
@@ -61,7 +61,7 @@ static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
                             Parse::NodeKind::AutoTypeLiteral) {
     // `-> auto`: the return type is deduced from the function body, so there is
     // no return form or pattern yet. Push a marker in place of the pattern; see
-    // `PopReturnDecl`.
+    // `PopReturnSpecifier`.
     context.node_stack().Push(node_id, SemIR::AutoType::TypeInstId);
     return true;
   }
@@ -75,11 +75,11 @@ static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnTypeId node_id) -> bool {
-  return HandleReturnDecl(context, node_id);
+  return HandleReturnSpecifier(context, node_id);
 }
 
 auto HandleParseNode(Context& context, Parse::ReturnFormId node_id) -> bool {
-  return HandleReturnDecl(context, node_id);
+  return HandleReturnSpecifier(context, node_id);
 }
 
 // Diagnoses issues with the modifiers, removing modifiers that shouldn't be
@@ -435,10 +435,10 @@ static auto BuildFunctionDecl(Context& context,
                               Parse::AnyFunctionDeclId node_id,
                               bool is_definition)
     -> std::pair<SemIR::FunctionId, SemIR::InstId> {
-  auto return_decl = PopReturnDecl(context);
+  auto return_specifier = PopReturnSpecifier(context);
 
-  auto name = PopNameComponent(context, return_decl.pattern_id,
-                               return_decl.has_return_decl());
+  auto name = PopNameComponent(context, return_specifier.pattern_id,
+                               return_specifier.has_return_specifier());
   auto name_context = context.decl_name_stack().FinishName(name);
 
   context.node_stack()
@@ -476,8 +476,8 @@ static auto BuildFunctionDecl(Context& context,
   // If the return type is deduced in a context where that's not allowed, we
   // will treat the function as having an invalid return type.
   bool is_invalid_deduced_return =
-      return_decl.is_deduced &&
-      !CheckDeducedReturnTypeAllowed(context, node_id, return_decl.node_id,
+      return_specifier.is_deduced &&
+      !CheckDeducedReturnTypeAllowed(context, node_id, return_specifier.node_id,
                                      is_definition, is_extern, virtual_modifier,
                                      parent_scope_inst);
 
@@ -496,13 +496,13 @@ static auto BuildFunctionDecl(Context& context,
           .call_param_patterns_id = name.call_param_patterns_id,
           .call_params_id = name.call_params_id,
           .call_param_ranges = name.param_ranges,
-          .return_type_inst_id = return_decl.form.type_component_inst_id,
-          .return_form_inst_id = return_decl.form.form_inst_id,
-          .return_pattern_id = return_decl.pattern_id,
+          .return_type_inst_id = return_specifier.form.type_component_inst_id,
+          .return_form_inst_id = return_specifier.form.form_inst_id,
+          .return_pattern_id = return_specifier.pattern_id,
           .virtual_modifier = virtual_modifier,
           .evaluation_mode = evaluation_mode,
           .interface_modifier = interface_modifier,
-          .has_deduced_return_type = return_decl.is_deduced,
+          .has_deduced_return_type = return_specifier.is_deduced,
           .self_param_id = self_param_id,
       }};
   if (is_definition) {
@@ -544,7 +544,7 @@ static auto BuildFunctionDecl(Context& context,
   // invalid return type.
   if (is_invalid_deduced_return) {
     SetDeducedReturnType(context, function_decl.function_id,
-                         return_decl.node_id, SemIR::ErrorInst::TypeId);
+                         return_specifier.node_id, SemIR::ErrorInst::TypeId);
   }
 
   // Diagnose 'definition of `abstract` function' using the canonical Function's
@@ -564,7 +564,7 @@ static auto BuildFunctionDecl(Context& context,
 
   // If the return type is deduced, we validate the entry point at the end of
   // the definition, once the return type is known.
-  if (!return_decl.is_deduced) {
+  if (!return_specifier.is_deduced) {
     ValidateForEntryPoint(context, node_id, function_decl.function_id,
                           function_info);
   }

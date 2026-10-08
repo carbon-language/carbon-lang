@@ -153,8 +153,8 @@ auto HandleParseNode(Context& context, Parse::AutoTypeLiteralId node_id)
   // a `ReturnType` node, so is immediately followed by it in postorder. There
   // is always a following node, because the tree ends with `FileEnd`.
   //
-  // `HandleReturnDecl` recognizes the `auto` by its parse node, so the value we
-  // push here is just a placeholder.
+  // `HandleReturnSpecifier` recognizes the `auto` by its parse node, so the
+  // value we push here is just a placeholder.
   Parse::NodeId next_node_id(node_id.index + 1);
   if (context.parse_tree().node_kind(next_node_id) ==
       Parse::NodeKind::ReturnType) {
