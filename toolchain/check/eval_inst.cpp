@@ -297,15 +297,15 @@ static auto TryFindValueInRewriteConstraints(
     return SemIR::ConstantId::None;
   }
 
-  // The `ImplWitnessAccess` is accessing a value, by index, for this `self
-  // impls interface` combination.
-  auto access_interface =
-      context.specific_interfaces().Get(specific_interface_id);
+  auto access_identified_facet_type_id = TryToIdentifyFacetType(
+      context, loc_id, context.constant_values().Get(search_facet),
+      access_self_type_id, true);
+  if (!access_identified_facet_type_id.has_value()) {
+    return SemIR::ConstantId::None;
+  }
+  const auto& access_identified =
+      context.identified_facet_types().Get(access_identified_facet_type_id);
 
-  auto access_self_declared_facet_type_id =
-      context.types()
-          .GetAs<SemIR::FacetType>(access_self_type_id)
-          .declared_facet_type_id;
   // TODO: We could consider something better than linear search here, such as a
   // map. However that would probably require heap allocations which may be
   // worse overall since the number of rewrite constraints is generally low. If
@@ -313,14 +313,14 @@ static auto TryFindValueInRewriteConstraints(
   // grouped together, as in ResolveFacetTypeRewriteConstraints(), and limited
   // to just the `ImplWitnessAccess` entries, then a binary search may work
   // here.
-  for (const auto& rewrite : context.declared_facet_types()
-                                 .Get(access_self_declared_facet_type_id)
-                                 .rewrite_constraints) {
-    // Look at each rewrite constraint in the self facet's type. If the LHS is
-    // an `ImplWitnessAccess` into the same interface that `inst` is indexing
-    // into, then we can use its RHS as the value.
+  //
+  // Look at each rewrite constraint available in the identified facet type of
+  // the `search_facet`. If we find a rewrite into `specific_interface_id`, we
+  // can evaluate to the RHS of that rewrite.
+  for (auto rewrite : access_identified.rewrites()) {
     auto rewrite_lhs_access =
-        context.insts().TryGetAs<SemIR::ImplWitnessAccess>(rewrite.lhs_id);
+        context.constant_values().TryGetInstAs<SemIR::ImplWitnessAccess>(
+            rewrite.lhs);
     if (!rewrite_lhs_access) {
       continue;
     }
@@ -328,19 +328,8 @@ static auto TryFindValueInRewriteConstraints(
       continue;
     }
 
-    // Witnesses come from impl lookup, and the operands are from
-    // IdentifiedFacetTypes, so `.Self` is replaced. However rewrite constraints
-    // are not part of an IdentifiedFacetType, so they are not replaced. We have
-    // to do the same replacement in the rewrite's LHS witness in order to
-    // compare it with the access witness.
-    //
-    // However we don't substitute the witness directly as that would
-    // re-evaluate it and cause us to do an impl lookup. Instead we substitute
-    // and compare its operands.
-    auto rewrite_lhs_witness = context.insts().GetAs<SemIR::LookupImplWitness>(
+    auto rewrite_lhs_witness = context.insts().GetAs<SemIR::IdentifiedWitness>(
         rewrite_lhs_access->witness_id);
-
-    auto self_const_id = context.constant_values().Get(search_facet);
 
     // The LHS of a rewrite can be an arbitrary type. For example:
     // ```
@@ -390,12 +379,21 @@ static auto TryFindValueInRewriteConstraints(
         break;
       }
       auto rewrite_lhs_witness =
-          context.insts().GetAs<SemIR::LookupImplWitness>(
+          context.insts().GetAs<SemIR::IdentifiedWitness>(
               rewrite_lhs_access->witness_id);
-      auto qualifier_witness = context.insts().GetAs<SemIR::LookupImplWitness>(
-          rewrite_lhs_access->witness_id);
-      if (rewrite_lhs_witness.query_specific_interface_id !=
-          qualifier_witness.query_specific_interface_id) {
+      auto qualifier_witness =
+          context.insts().GetAs<SemIR::IdentifiedWitness>(qualifier.witness_id);
+
+      auto rewrite_lhs_interface = EvaluateIdentifiedWitnesses(
+          context, loc_id,
+          context.specific_interfaces().Get(
+              rewrite_lhs_witness.query_specific_interface_id));
+      auto qualifier_interface = EvaluateIdentifiedWitnesses(
+          context, loc_id,
+          context.specific_interfaces().Get(
+              qualifier_witness.query_specific_interface_id));
+
+      if (rewrite_lhs_interface != qualifier_interface) {
         mismatching_qualifier = true;
         break;
       }
@@ -404,28 +402,19 @@ static auto TryFindValueInRewriteConstraints(
     if (mismatching_qualifier) {
       continue;
     }
-    if (!IsPeriodSelf(context, rewrite_lhs_self)) {
-      continue;
-    }
 
-    auto rewrite_lhs_interface =
-        SubstPeriodSelf(context, loc_id,
-                        context.specific_interfaces().Get(
-                            rewrite_lhs_witness.query_specific_interface_id),
-                        self_const_id);
+    auto rewrite_lhs_interface = EvaluateIdentifiedWitnesses(
+        context, loc_id,
+        context.specific_interfaces().Get(
+            rewrite_lhs_witness.query_specific_interface_id));
 
-    if (rewrite_lhs_interface != access_interface) {
+    if (rewrite_lhs_interface !=
+        context.specific_interfaces().Get(specific_interface_id)) {
       // This rewrite is into a different interface than the access query.
       continue;
     }
 
-    // The `ImplWitnessAccess` evaluates to the RHS from the witness self facet
-    // value's type. Any `.Self` references in the RHS are also replaced with
-    // the self type of the access.
-    auto rewrite_rhs = SubstPeriodSelf(
-        context, loc_id, context.constant_values().Get(rewrite.rhs_id),
-        self_const_id);
-    return rewrite_rhs;
+    return EvaluateIdentifiedWitnesses(context, loc_id, rewrite.rhs);
   }
 
   return SemIR::ConstantId::None;

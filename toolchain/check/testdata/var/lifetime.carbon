@@ -47,7 +47,7 @@ fn F() {
 // CHECK:STDOUT:   %A.as.Copy.impl.Op.type: type = fn_type @A.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %A.as.Copy.impl.Op: %A.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %A, (%Copy.impl_witness.a05) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.143: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.0e8: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
@@ -59,7 +59,7 @@ fn F() {
 // CHECK:STDOUT:   %tuple.cc9: %tuple.type.777 = tuple_value (%A.val, %A.val) [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %.367: ref %A = temporary invalid, %A.val [concrete]
-// CHECK:STDOUT:   %.345: type = fn_type_with_self_type %Copy.WithSelf.Op.type.143, %Copy.facet [concrete]
+// CHECK:STDOUT:   %.02e: type = fn_type_with_self_type %Copy.WithSelf.Op.type.0e8, %Copy.facet [concrete]
 // CHECK:STDOUT:   %A.as.Copy.impl.Op.bound: <bound method> = bound_method %A.val, %A.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.9ef = ref_binding_pattern b [concrete]
 // CHECK:STDOUT:   %b.var_patt: %pattern_type.9ef = var_pattern %b.patt [concrete]
@@ -134,7 +134,7 @@ fn F() {
 // CHECK:STDOUT:   %tuple: %tuple.type.777 = tuple_value (%.loc15_25.3, %.loc15_34.3) [concrete = constants.%tuple.cc9]
 // CHECK:STDOUT:   %.loc15_38.2: %tuple.type.777 = converted %.loc15_38.1, %tuple [concrete = constants.%tuple.cc9]
 // CHECK:STDOUT:   %tuple.elem1: %A = tuple_access %.loc15_38.2, element1 [concrete = constants.%A.val]
-// CHECK:STDOUT:   %impl.elem0: %.345 = impl_witness_access constants.%Copy.impl_witness.a05, element0 [concrete = constants.%A.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.02e = impl_witness_access constants.%Copy.impl_witness.a05, element0 [concrete = constants.%A.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %tuple.elem1, %impl.elem0 [concrete = constants.%A.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %.loc15_3: ref %A = splice_block %a.var {}
 // CHECK:STDOUT:   %A.as.Copy.impl.Op.call: init %A to %.loc15_3 = call %bound_method(%tuple.elem1)

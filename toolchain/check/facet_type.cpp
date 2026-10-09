@@ -6,6 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
@@ -538,6 +539,223 @@ auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool {
   FindWhereCallbacks callbacks(&context, &found);
   SubstInst(context, context.constant_values().GetInstId(const_id), callbacks);
   return found;
+}
+
+class EvaluateSubstCallbacks : public SubstInstCallbacks {
+ public:
+  explicit EvaluateSubstCallbacks(
+      Context* context, SemIR::LocId loc_id,
+      SubstIdentifiedWitnessesCallbacks* subst_callbacks = nullptr)
+      : SubstInstCallbacks(context),
+        loc_id_(loc_id),
+        subst_callbacks_(subst_callbacks) {}
+
+  auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+    // SubstPeriodSelf recurses into facet types, so we need to do the same to
+    // find those witnesses first. So we can't early out if the inst has a
+    // concrete constant value.
+    if (inst_id == SemIR::TypeType::TypeInstId ||
+        inst_id == SemIR::ErrorInst::InstId) {
+      return FullySubstituted;
+    }
+    return SubstOperands;
+  }
+
+  auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
+    if (auto witness = context().insts().TryGetAs<SemIR::IdentifiedWitness>(
+            orig_inst_id)) {
+      return SubstIdentifiedWitness(*witness);
+    }
+    if (auto witness =
+            context().insts().TryGetAs<SemIR::ImplSelfWitness>(orig_inst_id)) {
+      return SubstImplSelfWitness(*witness);
+    }
+    return orig_inst_id;
+  }
+
+  auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst new_inst)
+      -> SemIR::InstId override {
+    if (auto witness = new_inst.TryAs<SemIR::IdentifiedWitness>()) {
+      return SubstIdentifiedWitness(*witness);
+    }
+    if (auto witness = new_inst.TryAs<SemIR::ImplSelfWitness>()) {
+      return SubstImplSelfWitness(*witness);
+    }
+    return RebuildNewInst(loc_id_, new_inst);
+  }
+
+ private:
+  auto SubstIdentifiedWitness(SemIR::IdentifiedWitness witness)
+      -> SemIR::InstId {
+    if (subst_callbacks_) {
+      auto replaced_id = subst_callbacks_->ReplaceIdentified(witness);
+      if (replaced_id.has_value()) {
+        CARBON_CHECK(
+            !context().insts().Is<SemIR::IdentifiedWitness>(replaced_id));
+        return replaced_id;
+      }
+    }
+
+    auto const_id = EvalOrAddInst<SemIR::LookupImplWitness>(
+        context(), loc_id_,
+        {.type_id = witness.type_id,
+         .query_self_inst_id = witness.query_self_inst_id,
+         .query_specific_interface_id = witness.query_specific_interface_id});
+    auto inst_id = context().constant_values().GetInstId(const_id);
+    CARBON_CHECK(!context().insts().Is<SemIR::IdentifiedWitness>(inst_id));
+    return inst_id;
+  }
+
+  auto SubstImplSelfWitness(SemIR::ImplSelfWitness witness) -> SemIR::InstId {
+    if (subst_callbacks_) {
+      auto replaced_id = subst_callbacks_->ReplaceImplSelfWitness(witness);
+      if (replaced_id.has_value()) {
+        return replaced_id;
+      }
+    }
+    return RebuildNewInst(loc_id_, witness);
+  }
+
+  SemIR::LocId loc_id_;
+  SubstIdentifiedWitnessesCallbacks* subst_callbacks_;
+};
+
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::IdentifiedFacetType::RequiredImpl req)
+    -> SemIR::IdentifiedFacetType::RequiredImpl {
+  if (context.eval_lookup_to_identified_witness()) {
+    return req;
+  }
+  EvaluateSubstCallbacks callbacks(&context, loc_id);
+  auto self_id = SubstInst(
+      context, context.constant_values().GetInstId(req.self_facet_value),
+      callbacks);
+  auto interface =
+      EvaluateIdentifiedWitnesses(context, loc_id, req.specific_interface);
+  return {.self_facet_value = context.constant_values().Get(self_id),
+          .specific_interface = interface};
+}
+
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::IdentifiedFacetType::Rewrite rewrite)
+    -> SemIR::IdentifiedFacetType::Rewrite {
+  if (context.eval_lookup_to_identified_witness()) {
+    return rewrite;
+  }
+  EvaluateSubstCallbacks callbacks(&context, loc_id);
+  auto lhs_id = SubstInst(
+      context, context.constant_values().GetInstId(rewrite.lhs), callbacks);
+  auto rhs_id = SubstInst(
+      context, context.constant_values().GetInstId(rewrite.rhs), callbacks);
+  return {.lhs = context.constant_values().Get(lhs_id),
+          .rhs = context.constant_values().Get(rhs_id)};
+}
+
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::SpecificInterface interface)
+    -> SemIR::SpecificInterface {
+  if (context.eval_lookup_to_identified_witness()) {
+    return interface;
+  }
+  EvaluateSubstCallbacks callbacks(&context, loc_id);
+  auto specific_id = interface.specific_id;
+  if (specific_id.has_value()) {
+    const auto& specific = context.specifics().Get(specific_id);
+    llvm::SmallVector<SemIR::InstId> args(
+        context.inst_blocks().Get(specific.args_id));
+    for (auto& arg_id : args) {
+      arg_id = SubstInst(context, arg_id, callbacks);
+    }
+    specific_id = MakeSpecific(context, loc_id, specific.generic_id, args);
+  }
+  return {.interface_id = interface.interface_id, .specific_id = specific_id};
+}
+
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::ConstantId const_id)
+    -> SemIR::ConstantId {
+  if (context.eval_lookup_to_identified_witness()) {
+    return const_id;
+  }
+  EvaluateSubstCallbacks callbacks(&context, loc_id);
+  auto inst_id = context.constant_values().GetInstId(const_id);
+  inst_id = SubstInst(context, inst_id, callbacks);
+  return context.constant_values().Get(inst_id);
+}
+
+auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                              SemIR::IdentifiedFacetType::RequiredImpl req,
+                              SubstIdentifiedWitnessesCallbacks& callbacks)
+    -> SemIR::IdentifiedFacetType::RequiredImpl {
+  // SubstIdentifiedWitnesses allows the caller to cleverly replace witnesses
+  // coming from identify with their own. If we do this in the middle of
+  // identify, it means there is another caller waiting for identify and they
+  // may also want to do their own replacements. This would be problematic! But
+  // since during identify we only create specifics, and resolving them through
+  // eval should not end up here, we make note of that.
+  CARBON_CHECK(!context.eval_lookup_to_identified_witness(),
+               "SubstIdentifiedWitnesses called during identify");
+
+  EvaluateSubstCallbacks subst_callbacks(&context, loc_id, &callbacks);
+  auto self_id = SubstInst(
+      context, context.constant_values().GetInstId(req.self_facet_value),
+      subst_callbacks);
+
+  auto interface_id = req.specific_interface.interface_id;
+  auto specific_id = req.specific_interface.specific_id;
+  if (specific_id.has_value()) {
+    const auto& specific = context.specifics().Get(specific_id);
+    llvm::SmallVector<SemIR::InstId> args(
+        context.inst_blocks().Get(specific.args_id));
+    for (auto& arg_id : args) {
+      arg_id = SubstInst(context, arg_id, subst_callbacks);
+    }
+    specific_id = MakeSpecific(context, loc_id, specific.generic_id, args);
+  }
+  return {.self_facet_value = context.constant_values().Get(self_id),
+          .specific_interface = {.interface_id = interface_id,
+                                 .specific_id = specific_id}};
+}
+
+auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                              SemIR::IdentifiedFacetType::Equivalent equiv,
+                              SubstIdentifiedWitnessesCallbacks& callbacks)
+    -> SemIR::IdentifiedFacetType::Equivalent {
+  // SubstIdentifiedWitnesses allows the caller to cleverly replace witnesses
+  // coming from identify with their own. If we do this in the middle of
+  // identify, it means there is another caller waiting for identify and they
+  // may also want to do their own replacements. This would be problematic! But
+  // since during identify we only create specifics, and resolving them through
+  // eval should not end up here, we make note of that.
+  CARBON_CHECK(!context.eval_lookup_to_identified_witness(),
+               "SubstIdentifiedWitnesses called during identify");
+
+  EvaluateSubstCallbacks subst_callbacks(&context, loc_id, &callbacks);
+  auto lhs_inst_id = SubstInst(
+      context, context.constant_values().GetInstId(equiv.lhs), subst_callbacks);
+  auto rhs_inst_id = SubstInst(
+      context, context.constant_values().GetInstId(equiv.rhs), subst_callbacks);
+  return {context.constant_values().Get(lhs_inst_id),
+          context.constant_values().Get(rhs_inst_id)};
+}
+
+auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                              SemIR::ConstantId const_id,
+                              SubstIdentifiedWitnessesCallbacks& callbacks)
+    -> SemIR::ConstantId {
+  // SubstIdentifiedWitnesses allows the caller to cleverly replace witnesses
+  // coming from identify with their own. If we do this in the middle of
+  // identify, it means there is another caller waiting for identify and they
+  // may also want to do their own replacements. This would be problematic! But
+  // since during identify we only create specifics, and resolving them through
+  // eval should not end up here, we make note of that.
+  CARBON_CHECK(!context.eval_lookup_to_identified_witness(),
+               "SubstIdentifiedWitnesses called during identify");
+
+  EvaluateSubstCallbacks subst_callbacks(&context, loc_id, &callbacks);
+  auto inst_id = SubstInst(
+      context, context.constant_values().GetInstId(const_id), subst_callbacks);
+  return context.constant_values().Get(inst_id);
 }
 
 }  // namespace Carbon::Check

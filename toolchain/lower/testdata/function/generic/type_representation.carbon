@@ -87,12 +87,12 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CF_i32.Main(i32 %a) #0 !dbg !40 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.804fd121057d1d93(i32 %a), !dbg !46
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.18f9ca7d55ca3467(i32 %a), !dbg !46
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !49 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core"(ptr %self) #0 !dbg !49 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !51
 // CHECK:STDOUT: }
@@ -119,19 +119,19 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.b4c762864cd9a02b:core.Destroy.Core"(ptr %self) #0 !dbg !72 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.577f68a0158fbae7:core.Destroy.Core"(ptr %self) #0 !dbg !72 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc44_13.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !74
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc44_13.1.b), !dbg !74
+// CHECK:STDOUT:   call void @"_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core"(ptr %.loc44_13.1.b), !dbg !74
 // CHECK:STDOUT:   %.loc44_13.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !74
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc44_13.2.a), !dbg !74
+// CHECK:STDOUT:   call void @"_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core"(ptr %.loc44_13.2.a), !dbg !74
 // CHECK:STDOUT:   ret void, !dbg !74
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.b4c762864cd9a02b:core.Destroy.Core"(ptr %self) #0 !dbg !76 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.577f68a0158fbae7:core.Destroy.Core"(ptr %self) #0 !dbg !76 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CSubobjectDestroy.b4c762864cd9a02b:core.Destroy.Core"(ptr %self), !dbg !78
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.577f68a0158fbae7:core.Destroy.Core"(ptr %self), !dbg !78
 // CHECK:STDOUT:   ret void, !dbg !78
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,9 +139,9 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.8b0bf151036f045a:core.Destroy.Core"(ptr %self) #0 !dbg !80 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc44_13.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !82
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc44_13.1.b), !dbg !82
+// CHECK:STDOUT:   call void @"_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core"(ptr %.loc44_13.1.b), !dbg !82
 // CHECK:STDOUT:   %.loc44_13.2.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !82
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %.loc44_13.2.a), !dbg !82
+// CHECK:STDOUT:   call void @"_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core"(ptr %.loc44_13.2.a), !dbg !82
 // CHECK:STDOUT:   ret void, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -172,7 +172,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.e554695bf635d9c1:Copy.Main"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !104 {
+// CHECK:STDOUT: define void @"_COp.259659847699cb84:Copy.Main"(ptr sret({ i32, i32 }) %return, ptr %self) #0 !dbg !104 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %tuple.elem0.loc59_12.1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !109
 // CHECK:STDOUT:   %tuple.elem0.loc59_12.1.tuple.elem.load = load i32, ptr %tuple.elem0.loc59_12.1.tuple.elem, align 4, !dbg !109
@@ -188,34 +188,34 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF_two_tuple.Main(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !112 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.25802053f9465fe8(ptr %return, ptr %a), !dbg !118
+// CHECK:STDOUT:   call void @_CF.Main.73dc5b79333e983d(ptr %return, ptr %a), !dbg !118
 // CHECK:STDOUT:   ret void, !dbg !119
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.e554695bf635d9c1:core.Destroy.Core"(ptr %self) #0 !dbg !121 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.259659847699cb84:core.Destroy.Core"(ptr %self) #0 !dbg !121 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !123
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %tuple.elem1.tuple.elem), !dbg !123
+// CHECK:STDOUT:   call void @"_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core"(ptr %tuple.elem1.tuple.elem), !dbg !123
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !123
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %tuple.elem0.tuple.elem), !dbg !123
+// CHECK:STDOUT:   call void @"_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core"(ptr %tuple.elem0.tuple.elem), !dbg !123
 // CHECK:STDOUT:   ret void, !dbg !123
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.e554695bf635d9c1:core.Destroy.Core"(ptr %self) #0 !dbg !125 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.259659847699cb84:core.Destroy.Core"(ptr %self) #0 !dbg !125 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CSubobjectDestroy.e554695bf635d9c1:core.Destroy.Core"(ptr %self), !dbg !127
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.259659847699cb84:core.Destroy.Core"(ptr %self), !dbg !127
 // CHECK:STDOUT:   ret void, !dbg !127
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"_COp.ae1e3622d7875d32:Copy.Main"(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %self) #0 !dbg !129 {
+// CHECK:STDOUT: define void @"_COp.689e71032e0a5b6e:Copy.Main"(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %self) #0 !dbg !129 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %tuple.elem0.loc69_17.tuple.elem = getelementptr inbounds nuw { ptr, ptr }, ptr %self, i32 0, i32 0, !dbg !134
 // CHECK:STDOUT:   %tuple.elem0.loc69_17.tuple.elem.load = load ptr, ptr %tuple.elem0.loc69_17.tuple.elem, align 8, !dbg !134
 // CHECK:STDOUT:   %tuple.elem0.loc69_51.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 0, !dbg !135
-// CHECK:STDOUT:   call void @"_COp.e554695bf635d9c1:Copy.Main"(ptr %tuple.elem0.loc69_51.tuple.elem, ptr %tuple.elem0.loc69_17.tuple.elem.load), !dbg !134
+// CHECK:STDOUT:   call void @"_COp.259659847699cb84:Copy.Main"(ptr %tuple.elem0.loc69_51.tuple.elem, ptr %tuple.elem0.loc69_17.tuple.elem.load), !dbg !134
 // CHECK:STDOUT:   %tuple.elem1.loc69_37.tuple.elem = getelementptr inbounds nuw { ptr, ptr }, ptr %self, i32 0, i32 1, !dbg !136
 // CHECK:STDOUT:   %tuple.elem1.loc69_37.tuple.elem.load = load ptr, ptr %tuple.elem1.loc69_37.tuple.elem, align 8, !dbg !136
 // CHECK:STDOUT:   %tuple.elem1.loc69_51.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %return, i32 0, i32 1, !dbg !135
@@ -226,36 +226,36 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define void @_CF_nested_tuple.Main(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !139 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.f37d80e656707351(ptr %return, ptr %a), !dbg !145
+// CHECK:STDOUT:   call void @_CF.Main.cc81df682fabe51d(ptr %return, ptr %a), !dbg !145
 // CHECK:STDOUT:   ret void, !dbg !146
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.ae1e3622d7875d32:core.Destroy.Core"(ptr %self) #0 !dbg !148 {
+// CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.689e71032e0a5b6e:core.Destroy.Core"(ptr %self) #0 !dbg !148 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %tuple.elem1.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %self, i32 0, i32 1, !dbg !150
 // CHECK:STDOUT:   call void @"_CSelfDestruct.8b0bf151036f045a:core.Destroy.Core"(ptr %tuple.elem1.tuple.elem), !dbg !150
 // CHECK:STDOUT:   %tuple.elem0.tuple.elem = getelementptr inbounds nuw { { i32, i32 }, { i32, i32 } }, ptr %self, i32 0, i32 0, !dbg !150
-// CHECK:STDOUT:   call void @"_CSelfDestruct.e554695bf635d9c1:core.Destroy.Core"(ptr %tuple.elem0.tuple.elem), !dbg !150
+// CHECK:STDOUT:   call void @"_CSelfDestruct.259659847699cb84:core.Destroy.Core"(ptr %tuple.elem0.tuple.elem), !dbg !150
 // CHECK:STDOUT:   ret void, !dbg !150
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.ae1e3622d7875d32:core.Destroy.Core"(ptr %self) #0 !dbg !152 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.689e71032e0a5b6e:core.Destroy.Core"(ptr %self) #0 !dbg !152 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @"_CSubobjectDestroy.ae1e3622d7875d32:core.Destroy.Core"(ptr %self), !dbg !154
+// CHECK:STDOUT:   call void @"_CSubobjectDestroy.689e71032e0a5b6e:core.Destroy.Core"(ptr %self), !dbg !154
 // CHECK:STDOUT:   ret void, !dbg !154
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.804fd121057d1d93(i32 %a) #0 !dbg !156 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.18f9ca7d55ca3467(i32 %a) #0 !dbg !156 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !161
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !161
 // CHECK:STDOUT:   %Copy.WithSelf.Op.call.loc18 = call i32 @"_COp.Int.be1e879c1ad406d8.Core:Copy.Main"(i32 %a), !dbg !162
 // CHECK:STDOUT:   store i32 %Copy.WithSelf.Op.call.loc18, ptr %_.var, align 4, !dbg !161
 // CHECK:STDOUT:   %Copy.WithSelf.Op.call.loc19 = call i32 @"_COp.Int.be1e879c1ad406d8.Core:Copy.Main"(i32 %a), !dbg !164
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %_.var), !dbg !161
+// CHECK:STDOUT:   call void @"_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core"(ptr %_.var), !dbg !161
 // CHECK:STDOUT:   ret i32 %Copy.WithSelf.Op.call.loc19, !dbg !165
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -282,24 +282,24 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.25802053f9465fe8(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !187 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.73dc5b79333e983d(ptr sret({ i32, i32 }) %return, ptr %a) #0 !dbg !187 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { i32, i32 }, align 4, !dbg !192
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !192
-// CHECK:STDOUT:   call void @"_COp.e554695bf635d9c1:Copy.Main"(ptr %_.var, ptr %a), !dbg !193
-// CHECK:STDOUT:   call void @"_COp.e554695bf635d9c1:Copy.Main"(ptr %return, ptr %a), !dbg !195
-// CHECK:STDOUT:   call void @"_CSelfDestruct.e554695bf635d9c1:core.Destroy.Core"(ptr %_.var), !dbg !192
+// CHECK:STDOUT:   call void @"_COp.259659847699cb84:Copy.Main"(ptr %_.var, ptr %a), !dbg !193
+// CHECK:STDOUT:   call void @"_COp.259659847699cb84:Copy.Main"(ptr %return, ptr %a), !dbg !195
+// CHECK:STDOUT:   call void @"_CSelfDestruct.259659847699cb84:core.Destroy.Core"(ptr %_.var), !dbg !192
 // CHECK:STDOUT:   ret void, !dbg !196
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.f37d80e656707351(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !198 {
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.cc81df682fabe51d(ptr sret({ { i32, i32 }, { i32, i32 } }) %return, ptr %a) #0 !dbg !198 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %_.var = alloca { { i32, i32 }, { i32, i32 } }, align 4, !dbg !203
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !203
-// CHECK:STDOUT:   call void @"_COp.ae1e3622d7875d32:Copy.Main"(ptr %_.var, ptr %a), !dbg !204
-// CHECK:STDOUT:   call void @"_COp.ae1e3622d7875d32:Copy.Main"(ptr %return, ptr %a), !dbg !206
-// CHECK:STDOUT:   call void @"_CSelfDestruct.ae1e3622d7875d32:core.Destroy.Core"(ptr %_.var), !dbg !203
+// CHECK:STDOUT:   call void @"_COp.689e71032e0a5b6e:Copy.Main"(ptr %_.var, ptr %a), !dbg !204
+// CHECK:STDOUT:   call void @"_COp.689e71032e0a5b6e:Copy.Main"(ptr %return, ptr %a), !dbg !206
+// CHECK:STDOUT:   call void @"_CSelfDestruct.689e71032e0a5b6e:core.Destroy.Core"(ptr %_.var), !dbg !203
 // CHECK:STDOUT:   ret void, !dbg !207
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -340,7 +340,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: !46 = !DILocation(line: 29, column: 10, scope: !40)
 // CHECK:STDOUT: !47 = !DILocation(line: 29, column: 3, scope: !40)
 // CHECK:STDOUT: !48 = !{!41}
-// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !18, line: 29, type: !24, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !52)
+// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core", scope: null, file: !18, line: 29, type: !24, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !52)
 // CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !49, type: !20)
 // CHECK:STDOUT: !51 = !DILocation(line: 29, column: 10, scope: !49)
 // CHECK:STDOUT: !52 = !{!50}
@@ -356,11 +356,11 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: !69 = !DILocation(line: 44, column: 10, scope: !63)
 // CHECK:STDOUT: !70 = !DILocation(line: 44, column: 3, scope: !63)
 // CHECK:STDOUT: !71 = !{!64}
-// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.b4c762864cd9a02b:core.Destroy.Core", scope: null, file: !18, line: 44, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !75)
+// CHECK:STDOUT: !72 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.577f68a0158fbae7:core.Destroy.Core", scope: null, file: !18, line: 44, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !75)
 // CHECK:STDOUT: !73 = !DILocalVariable(arg: 1, scope: !72, type: !25)
 // CHECK:STDOUT: !74 = !DILocation(line: 44, column: 10, scope: !72)
 // CHECK:STDOUT: !75 = !{!73}
-// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.b4c762864cd9a02b:core.Destroy.Core", scope: null, file: !18, line: 44, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !79)
+// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.577f68a0158fbae7:core.Destroy.Core", scope: null, file: !18, line: 44, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !79)
 // CHECK:STDOUT: !77 = !DILocalVariable(arg: 1, scope: !76, type: !25)
 // CHECK:STDOUT: !78 = !DILocation(line: 44, column: 10, scope: !76)
 // CHECK:STDOUT: !79 = !{!77}
@@ -381,7 +381,7 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: !101 = !DILocalVariable(arg: 1, scope: !100, type: !25)
 // CHECK:STDOUT: !102 = !DILocation(line: 54, column: 10, scope: !100)
 // CHECK:STDOUT: !103 = !{!101}
-// CHECK:STDOUT: !104 = distinct !DISubprogram(name: "Op", linkageName: "_COp.e554695bf635d9c1:Copy.Main", scope: null, file: !18, line: 58, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !111)
+// CHECK:STDOUT: !104 = distinct !DISubprogram(name: "Op", linkageName: "_COp.259659847699cb84:Copy.Main", scope: null, file: !18, line: 58, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !111)
 // CHECK:STDOUT: !105 = !DILocalVariable(arg: 1, scope: !104, type: !25)
 // CHECK:STDOUT: !109 = !DILocation(line: 59, column: 12, scope: !104)
 // CHECK:STDOUT: !110 = !DILocation(line: 59, column: 5, scope: !104)
@@ -391,15 +391,15 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: !118 = !DILocation(line: 64, column: 10, scope: !112)
 // CHECK:STDOUT: !119 = !DILocation(line: 64, column: 3, scope: !112)
 // CHECK:STDOUT: !120 = !{!113}
-// CHECK:STDOUT: !121 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.e554695bf635d9c1:core.Destroy.Core", scope: null, file: !18, line: 64, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !124)
+// CHECK:STDOUT: !121 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.259659847699cb84:core.Destroy.Core", scope: null, file: !18, line: 64, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !124)
 // CHECK:STDOUT: !122 = !DILocalVariable(arg: 1, scope: !121, type: !25)
 // CHECK:STDOUT: !123 = !DILocation(line: 64, column: 10, scope: !121)
 // CHECK:STDOUT: !124 = !{!122}
-// CHECK:STDOUT: !125 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.e554695bf635d9c1:core.Destroy.Core", scope: null, file: !18, line: 64, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !128)
+// CHECK:STDOUT: !125 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.259659847699cb84:core.Destroy.Core", scope: null, file: !18, line: 64, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !128)
 // CHECK:STDOUT: !126 = !DILocalVariable(arg: 1, scope: !125, type: !25)
 // CHECK:STDOUT: !127 = !DILocation(line: 64, column: 10, scope: !125)
 // CHECK:STDOUT: !128 = !{!126}
-// CHECK:STDOUT: !129 = distinct !DISubprogram(name: "Op", linkageName: "_COp.ae1e3622d7875d32:Copy.Main", scope: null, file: !18, line: 68, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !138)
+// CHECK:STDOUT: !129 = distinct !DISubprogram(name: "Op", linkageName: "_COp.689e71032e0a5b6e:Copy.Main", scope: null, file: !18, line: 68, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !138)
 // CHECK:STDOUT: !130 = !DILocalVariable(arg: 1, scope: !129, type: !25)
 // CHECK:STDOUT: !134 = !DILocation(line: 69, column: 13, scope: !129)
 // CHECK:STDOUT: !135 = !DILocation(line: 69, column: 12, scope: !129)
@@ -411,15 +411,15 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: !145 = !DILocation(line: 74, column: 10, scope: !139)
 // CHECK:STDOUT: !146 = !DILocation(line: 74, column: 3, scope: !139)
 // CHECK:STDOUT: !147 = !{!140}
-// CHECK:STDOUT: !148 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.ae1e3622d7875d32:core.Destroy.Core", scope: null, file: !18, line: 74, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !151)
+// CHECK:STDOUT: !148 = distinct !DISubprogram(name: "SubobjectDestroy", linkageName: "_CSubobjectDestroy.689e71032e0a5b6e:core.Destroy.Core", scope: null, file: !18, line: 74, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !151)
 // CHECK:STDOUT: !149 = !DILocalVariable(arg: 1, scope: !148, type: !25)
 // CHECK:STDOUT: !150 = !DILocation(line: 74, column: 10, scope: !148)
 // CHECK:STDOUT: !151 = !{!149}
-// CHECK:STDOUT: !152 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.ae1e3622d7875d32:core.Destroy.Core", scope: null, file: !18, line: 74, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !155)
+// CHECK:STDOUT: !152 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.689e71032e0a5b6e:core.Destroy.Core", scope: null, file: !18, line: 74, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !155)
 // CHECK:STDOUT: !153 = !DILocalVariable(arg: 1, scope: !152, type: !25)
 // CHECK:STDOUT: !154 = !DILocation(line: 74, column: 10, scope: !152)
 // CHECK:STDOUT: !155 = !{!153}
-// CHECK:STDOUT: !156 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.804fd121057d1d93", scope: null, file: !18, line: 17, type: !22, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !166)
+// CHECK:STDOUT: !156 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.18f9ca7d55ca3467", scope: null, file: !18, line: 17, type: !22, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !166)
 // CHECK:STDOUT: !157 = !DILocalVariable(arg: 1, scope: !156, type: !20)
 // CHECK:STDOUT: !161 = !DILocation(line: 18, column: 3, scope: !156)
 // CHECK:STDOUT: !162 = !DILocation(line: 18, column: 14, scope: !156)
@@ -438,14 +438,14 @@ fn F_nested_tuple(a: ((i32, i32), X)) -> ((i32, i32), X) {
 // CHECK:STDOUT: !183 = !DILocation(line: 18, column: 14, scope: !178)
 // CHECK:STDOUT: !185 = !DILocation(line: 19, column: 10, scope: !178)
 // CHECK:STDOUT: !186 = !DILocation(line: 19, column: 3, scope: !178)
-// CHECK:STDOUT: !187 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.25802053f9465fe8", scope: null, file: !18, line: 17, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !197)
+// CHECK:STDOUT: !187 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.73dc5b79333e983d", scope: null, file: !18, line: 17, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !197)
 // CHECK:STDOUT: !188 = !DILocalVariable(arg: 1, scope: !187, type: !25)
 // CHECK:STDOUT: !192 = !DILocation(line: 18, column: 3, scope: !187)
 // CHECK:STDOUT: !193 = !DILocation(line: 18, column: 14, scope: !187)
 // CHECK:STDOUT: !195 = !DILocation(line: 19, column: 10, scope: !187)
 // CHECK:STDOUT: !196 = !DILocation(line: 19, column: 3, scope: !187)
 // CHECK:STDOUT: !197 = !{!188}
-// CHECK:STDOUT: !198 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.f37d80e656707351", scope: null, file: !18, line: 17, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !208)
+// CHECK:STDOUT: !198 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.cc81df682fabe51d", scope: null, file: !18, line: 17, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !208)
 // CHECK:STDOUT: !199 = !DILocalVariable(arg: 1, scope: !198, type: !25)
 // CHECK:STDOUT: !203 = !DILocation(line: 18, column: 3, scope: !198)
 // CHECK:STDOUT: !204 = !DILocation(line: 18, column: 14, scope: !198)

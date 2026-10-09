@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/lower/testdata/impl/period_self.carbon
 
 // --- library_with_period_self_in_impl.carbon
-
 library "[[@TEST_NAME]]";
 
 interface J {}
@@ -32,7 +31,6 @@ fn F[T: type](x: A(T)) {
 }
 
 // --- import_period_self_in_impl.carbon
-
 library "[[@TEST_NAME]]";
 
 import library "library_with_period_self_in_impl";
@@ -66,13 +64,13 @@ fn G(a: A(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.a6a60dfee2d7d273(ptr %x) #0 !dbg !32 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8"(ptr %x), !dbg !35
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.53235a9041408e43"(ptr %x), !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8"(ptr %self) #0 !dbg !40 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8"(ptr %self), !dbg !45
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.53235a9041408e43"(ptr %self) #0 !dbg !40 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.53235a9041408e43"(ptr %self), !dbg !45
 // CHECK:STDOUT:   ret ptr %1, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -89,21 +87,21 @@ fn G(a: A(B)) {
 // CHECK:STDOUT: !22 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !23 = !{null, !22}
 // CHECK:STDOUT: !24 = !DISubroutineType(types: !23)
-// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !20, line: 6, type: !24, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !31)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !20, line: 5, type: !24, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !31)
 // CHECK:STDOUT: !26 = !DILocalVariable(arg: 1, scope: !25, type: !22)
-// CHECK:STDOUT: !29 = !DILocation(line: 7, column: 3, scope: !25)
-// CHECK:STDOUT: !30 = !DILocation(line: 6, column: 1, scope: !25)
+// CHECK:STDOUT: !29 = !DILocation(line: 6, column: 3, scope: !25)
+// CHECK:STDOUT: !30 = !DILocation(line: 5, column: 1, scope: !25)
 // CHECK:STDOUT: !31 = !{!26}
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.a6a60dfee2d7d273", scope: null, file: !18, line: 17, type: !24, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !39)
+// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.a6a60dfee2d7d273", scope: null, file: !18, line: 16, type: !24, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !39)
 // CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !32, type: !22)
-// CHECK:STDOUT: !35 = !DILocation(line: 18, column: 3, scope: !32)
+// CHECK:STDOUT: !35 = !DILocation(line: 17, column: 3, scope: !32)
 // CHECK:STDOUT: !36 = !{!22, !22}
 // CHECK:STDOUT: !37 = !DISubroutineType(types: !36)
-// CHECK:STDOUT: !38 = !DILocation(line: 17, column: 1, scope: !32)
+// CHECK:STDOUT: !38 = !DILocation(line: 16, column: 1, scope: !32)
 // CHECK:STDOUT: !39 = !{!33}
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8", scope: null, file: !18, line: 12, type: !37, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !47)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.53235a9041408e43", scope: null, file: !18, line: 11, type: !37, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !47)
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !40, type: !22)
-// CHECK:STDOUT: !45 = !DILocation(line: 13, column: 12, scope: !40)
-// CHECK:STDOUT: !46 = !DILocation(line: 13, column: 5, scope: !40)
+// CHECK:STDOUT: !45 = !DILocation(line: 12, column: 12, scope: !40)
+// CHECK:STDOUT: !46 = !DILocation(line: 12, column: 5, scope: !40)
 // CHECK:STDOUT: !47 = !{!41}
 // CHECK:STDOUT:

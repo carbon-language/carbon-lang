@@ -337,7 +337,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !114
 // CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK4IntBcviEv.carbon_thunk._(ptr %b), !dbg !114
 // CHECK:STDOUT:   store i32 %__carbon_thunk.call, ptr %a.var, align 4, !dbg !114
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %a.var), !dbg !114
+// CHECK:STDOUT:   call void @"_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core"(ptr %a.var), !dbg !114
 // CHECK:STDOUT:   ret void, !dbg !117
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -352,7 +352,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) #0 !dbg !119 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core"(ptr %self) #0 !dbg !119 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !121
 // CHECK:STDOUT: }
@@ -403,7 +403,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: !114 = !DILocation(line: 12, column: 3, scope: !111)
 // CHECK:STDOUT: !117 = !DILocation(line: 11, column: 1, scope: !111)
 // CHECK:STDOUT: !118 = !{!112}
-// CHECK:STDOUT: !119 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !105, line: 12, type: !110, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !122)
+// CHECK:STDOUT: !119 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.76db170ab64c05aa:core.Destroy.Core", scope: null, file: !105, line: 12, type: !110, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !122)
 // CHECK:STDOUT: !120 = !DILocalVariable(arg: 1, scope: !119, type: !20)
 // CHECK:STDOUT: !121 = !DILocation(line: 12, column: 3, scope: !119)
 // CHECK:STDOUT: !122 = !{!120}

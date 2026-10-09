@@ -41,10 +41,25 @@ static auto RequiredLess(const IdentifiedFacetType::RequiredImpl& lhs,
                   rhs.specific_interface.specific_id.index);
 }
 
+// Canonically ordered by the numerical ids.
+static auto RewriteLess(const IdentifiedFacetType::Rewrite& lhs,
+                        const IdentifiedFacetType::Rewrite& rhs) -> bool {
+  return std::tie(lhs.lhs.index, lhs.rhs.index) <
+         std::tie(rhs.lhs.index, rhs.rhs.index);
+}
+
+// Canonically ordered by the numerical ids.
+static auto EquivalentLess(const IdentifiedFacetType::Equivalent& lhs,
+                           const IdentifiedFacetType::Equivalent& rhs) -> bool {
+  return std::tie(lhs.lhs.index, lhs.rhs.index) <
+         std::tie(rhs.lhs.index, rhs.rhs.index);
+}
+
 IdentifiedFacetType::IdentifiedFacetType(
     IdentifiedFacetTypeKey key, bool partially_identified,
     llvm::ArrayRef<RequiredImpl> extends,
-    llvm::ArrayRef<RequiredImpl> self_impls, llvm::ArrayRef<Rewrite> rewrites)
+    llvm::ArrayRef<RequiredImpl> self_impls, llvm::ArrayRef<Rewrite> rewrites,
+    llvm::ArrayRef<Equivalent> equivalents)
     : key_(key) {
   required_impls_.reserve(extends.size() + self_impls.size());
   llvm::append_range(required_impls_, extends);
@@ -62,6 +77,7 @@ IdentifiedFacetType::IdentifiedFacetType(
 
   llvm::append_range(required_impls_, self_impls);
   SortAndDeduplicate(required_impls_, RequiredLess);
+  SortAndDeduplicate(required_impls_, RequiredLess);
 
   if (partially_identified) {
     // This marks the IdentifiedFacetType as being partially identified, and
@@ -72,6 +88,9 @@ IdentifiedFacetType::IdentifiedFacetType(
   }
 
   rewrites_.assign(rewrites);
+  SortAndDeduplicate(rewrites_, RewriteLess);
+  equivalents_.assign(equivalents);
+  SortAndDeduplicate(equivalents_, EquivalentLess);
 }
 
 auto AddCanonicalWitnessesBlock(File& sem_ir,

@@ -45,28 +45,28 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %MulWith.type.63d: type = facet_type <@MulWith, @MulWith(%C)> [concrete]
+// CHECK:STDOUT:   %MulWith.type.883: type = facet_type <@MulWith, @MulWith(%C)> [concrete]
 // CHECK:STDOUT:   %MulWith.impl_witness: <witness> = impl_witness @C.as.MulWith.impl.%MulWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.MulWith.impl.Op.type: type = fn_type @C.as.MulWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.MulWith.impl.Op: %C.as.MulWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %MulWith.facet: %MulWith.type.63d = facet_value %C, (%MulWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %MulWith.WithSelf.Op.type.bf6: type = fn_type @MulWith.WithSelf.Op, @MulWith.WithSelf(%C, %MulWith.facet) [concrete]
-// CHECK:STDOUT:   %MulAssignWith.type.b55: type = facet_type <@MulAssignWith, @MulAssignWith(%C)> [concrete]
+// CHECK:STDOUT:   %MulWith.facet.5f2: %MulWith.type.883 = facet_value %C, (%MulWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %MulWith.WithSelf.Op.type.03e: type = fn_type @MulWith.WithSelf.Op, @MulWith.WithSelf(%C, %MulWith.facet.5f2) [concrete]
+// CHECK:STDOUT:   %MulAssignWith.type.24f: type = facet_type <@MulAssignWith, @MulAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %MulAssignWith.impl_witness: <witness> = impl_witness @C.as.MulAssignWith.impl.%MulAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op.type: type = fn_type @C.as.MulAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op: %C.as.MulAssignWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %MulAssignWith.facet: %MulAssignWith.type.b55 = facet_value %C, (%MulAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %MulAssignWith.WithSelf.Op.type.e98: type = fn_type @MulAssignWith.WithSelf.Op, @MulAssignWith.WithSelf(%C, %MulAssignWith.facet) [concrete]
-// CHECK:STDOUT:   %.2e4: type = fn_type_with_self_type %MulWith.WithSelf.Op.type.bf6, %MulWith.facet [concrete]
+// CHECK:STDOUT:   %MulAssignWith.facet: %MulAssignWith.type.24f = facet_value %C, (%MulAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %MulAssignWith.WithSelf.Op.type.534: type = fn_type @MulAssignWith.WithSelf.Op, @MulAssignWith.WithSelf(%C, %MulAssignWith.facet) [concrete]
+// CHECK:STDOUT:   %.387: type = fn_type_with_self_type %MulWith.WithSelf.Op.type.03e, %MulWith.facet.5f2 [concrete]
 // CHECK:STDOUT:   %ptr.00e: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %.de5: type = fn_type_with_self_type %MulAssignWith.WithSelf.Op.type.e98, %MulAssignWith.facet [concrete]
+// CHECK:STDOUT:   %.d01: type = fn_type_with_self_type %MulAssignWith.WithSelf.Op.type.534, %MulAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param: %C, %b.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.2e4 = impl_witness_access constants.%MulWith.impl_witness, element1 [concrete = constants.%C.as.MulWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.387 = impl_witness_access constants.%MulWith.impl_witness, element1 [concrete = constants.%C.as.MulWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.MulWith.impl.Op.call: init %C to %.loc30_26.1 = call %bound_method(%a.ref, %b.ref)
@@ -78,7 +78,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %ptr.00e = name_ref a, %a
 // CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.de5 = impl_witness_access constants.%MulAssignWith.impl_witness, element0 [concrete = constants.%C.as.MulAssignWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.d01 = impl_witness_access constants.%MulAssignWith.impl_witness, element0 [concrete = constants.%C.as.MulAssignWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
 // CHECK:STDOUT:   %C.as.MulAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc38, %b.ref)
 // CHECK:STDOUT:   <elided>

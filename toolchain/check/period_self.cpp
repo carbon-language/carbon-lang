@@ -143,6 +143,11 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
   auto ConvertReplacement(SemIR::InstId replacement_self_inst_id,
                           SemIR::InstId period_self_inst_id,
                           SemIR::TypeId period_self_type_id) -> SemIR::InstId {
+    // TODO: If this replacement is in the query self of a LookupImplWitness
+    // instruction, it's just going to strip off the FacetValue and
+    // FacetAccessType anyway, so we are wasting effort here. We could just
+    // directly return the `replacement_self_inst_id`.
+
     // Ensure the replacement is a type, which we will need for the return or to
     // construct FacetValue.
     auto replacement_self_type_inst_id = context().types().GetTypeInstId(
@@ -300,14 +305,14 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
   };
   auto replace_rewrite = [&](SemIR::DeclaredFacetType::RewriteConstraint r)
       -> SemIR::DeclaredFacetType::RewriteConstraint {
-    // The LHS access instruction is not substituted so it keeps its `.Self`.
-    // This avoids evaluation replacing it with a concrete value from a final
-    // impl, as that would drop the association with the associated constant
-    // being rewritten.
+    auto lhs = SubstPeriodSelf(context, loc_id,
+                               context.constant_values().Get(r.lhs_id),
+                               period_self_replacement_id);
     auto rhs = SubstPeriodSelf(context, loc_id,
                                context.constant_values().Get(r.rhs_id),
                                period_self_replacement_id);
-    return {r.lhs_id, context.constant_values().GetInstId(rhs)};
+    return {context.constant_values().GetInstId(lhs),
+            context.constant_values().GetInstId(rhs)};
   };
 
   SemIR::DeclaredFacetType declared_facet_type;
