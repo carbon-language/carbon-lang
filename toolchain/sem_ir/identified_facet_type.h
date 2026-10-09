@@ -99,10 +99,10 @@ struct IdentifiedFacetType {
   // constraint. Sorted and deduplicated.
   llvm::SmallVector<RequiredImpl> required_impls_;
 
-  // Rewrite constraints from a facet type and any named constraints that it
-  // references, flattened to a single list with `.Self` replaced on the RHS.
-  // The witness on the LHS should be ignored other than to specify in which
-  // interface the associated constant is being rewritten.
+  // Rewrite requirements from a facet type and any named constraints that it
+  // references, flattened to a single list. Only rewrite requirements from
+  // extended require decls are included here. Rewrite requirements from a
+  // non-extended require decl are treated as same-type requirements.
   llvm::SmallVector<Rewrite> rewrites_;
 
   // The single interface from `required_impls` to implement if this is

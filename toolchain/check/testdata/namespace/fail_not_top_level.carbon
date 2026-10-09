@@ -54,8 +54,8 @@ interface I {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %I.type.8e7: type = facet_type <@I.loc33> [concrete]
 // CHECK:STDOUT:   %Self: %I.type.8e7 = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %I.type.a85: type = fn_type @I.loc39, @I.WithSelf(%Self) [symbolic]
-// CHECK:STDOUT:   %I: %I.type.a85 = struct_value () [symbolic]
+// CHECK:STDOUT:   %I.type.237: type = fn_type @I.loc39, @I.WithSelf(%Self) [symbolic]
+// CHECK:STDOUT:   %I: %I.type.237 = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -86,7 +86,7 @@ interface I {
 // CHECK:STDOUT:   %N: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .I = %I.decl
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: @I.WithSelf.%I.type (%I.type.a85) = fn_decl @I.loc39 [symbolic = @I.WithSelf.%I (constants.%I)] {} {}
+// CHECK:STDOUT:   %I.decl: @I.WithSelf.%I.type (%I.type.237) = fn_decl @I.loc39 [symbolic = @I.WithSelf.%I (constants.%I)] {} {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -140,7 +140,7 @@ interface I {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %I.type => constants.%I.type.a85
+// CHECK:STDOUT:   %I.type => constants.%I.type.237
 // CHECK:STDOUT:   %I => constants.%I
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

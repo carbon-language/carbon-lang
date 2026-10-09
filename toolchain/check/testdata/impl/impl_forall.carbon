@@ -26,8 +26,8 @@ impl forall [T: type] T as Simple {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Simple.type: type = facet_type <@Simple> [concrete]
 // CHECK:STDOUT:   %Self: %Simple.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Simple.WithSelf.F.type.49c: type = fn_type @Simple.WithSelf.F, @Simple.WithSelf(%Self) [symbolic]
-// CHECK:STDOUT:   %Simple.WithSelf.F.66e: %Simple.WithSelf.F.type.49c = struct_value () [symbolic]
+// CHECK:STDOUT:   %Simple.WithSelf.F.type.a46: type = fn_type @Simple.WithSelf.F, @Simple.WithSelf(%Self) [symbolic]
+// CHECK:STDOUT:   %Simple.WithSelf.F.0d0: %Simple.WithSelf.F.type.a46 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type @Simple [concrete]
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, @Simple.WithSelf.%Simple.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
@@ -39,8 +39,8 @@ impl forall [T: type] T as Simple {
 // CHECK:STDOUT:   %T.as.Simple.impl.F.type: type = fn_type @T.as.Simple.impl.F, @T.as.Simple.impl(%T) [symbolic]
 // CHECK:STDOUT:   %T.as.Simple.impl.F: %T.as.Simple.impl.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %T, (%Simple.impl_witness) [symbolic]
-// CHECK:STDOUT:   %Simple.WithSelf.F.type.7bf: type = fn_type @Simple.WithSelf.F, @Simple.WithSelf(%Simple.facet) [symbolic]
-// CHECK:STDOUT:   %Simple.WithSelf.F.c46: %Simple.WithSelf.F.type.7bf = struct_value () [symbolic]
+// CHECK:STDOUT:   %Simple.WithSelf.F.type.9de: type = fn_type @Simple.WithSelf.F, @Simple.WithSelf(%Simple.facet) [symbolic]
+// CHECK:STDOUT:   %Simple.WithSelf.F.25d: %Simple.WithSelf.F.type.9de = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -67,7 +67,7 @@ impl forall [T: type] T as Simple {
 // CHECK:STDOUT:   %Simple.WithSelf.decl = interface_with_self_decl @Simple [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %Simple.WithSelf.F.decl: @Simple.WithSelf.%Simple.WithSelf.F.type (%Simple.WithSelf.F.type.49c) = fn_decl @Simple.WithSelf.F [symbolic = @Simple.WithSelf.%Simple.WithSelf.F (constants.%Simple.WithSelf.F.66e)] {} {}
+// CHECK:STDOUT:   %Simple.WithSelf.F.decl: @Simple.WithSelf.%Simple.WithSelf.F.type (%Simple.WithSelf.F.type.a46) = fn_decl @Simple.WithSelf.F [symbolic = @Simple.WithSelf.%Simple.WithSelf.F (constants.%Simple.WithSelf.F.0d0)] {} {}
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, %Simple.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -116,8 +116,8 @@ impl forall [T: type] T as Simple {
 // CHECK:STDOUT: specific @Simple.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Simple.WithSelf.F.type => constants.%Simple.WithSelf.F.type.49c
-// CHECK:STDOUT:   %Simple.WithSelf.F => constants.%Simple.WithSelf.F.66e
+// CHECK:STDOUT:   %Simple.WithSelf.F.type => constants.%Simple.WithSelf.F.type.a46
+// CHECK:STDOUT:   %Simple.WithSelf.F => constants.%Simple.WithSelf.F.0d0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.WithSelf.F(constants.%Self) {}
@@ -138,8 +138,8 @@ impl forall [T: type] T as Simple {
 // CHECK:STDOUT: specific @Simple.WithSelf(constants.%Simple.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Simple.facet
-// CHECK:STDOUT:   %Simple.WithSelf.F.type => constants.%Simple.WithSelf.F.type.7bf
-// CHECK:STDOUT:   %Simple.WithSelf.F => constants.%Simple.WithSelf.F.c46
+// CHECK:STDOUT:   %Simple.WithSelf.F.type => constants.%Simple.WithSelf.F.type.9de
+// CHECK:STDOUT:   %Simple.WithSelf.F => constants.%Simple.WithSelf.F.25d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.WithSelf.F(constants.%Simple.facet) {}

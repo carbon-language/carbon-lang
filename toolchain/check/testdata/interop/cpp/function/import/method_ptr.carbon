@@ -181,8 +181,8 @@ fn G() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.416: %Copy.WithSelf.Op.type.7f5 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.bab: <witness> = custom_witness (%Copy.WithSelf.Op.416), @Copy [concrete]
 // CHECK:STDOUT:   %Copy.facet.8df: %Copy.type = facet_value %.659, (%custom_witness.bab) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.adb: type = fn_type @Copy.WithSelf.Op.1, @Copy.WithSelf(%Copy.facet.8df) [concrete]
-// CHECK:STDOUT:   %.e6b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.adb, %Copy.facet.8df [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.dbb: type = fn_type @Copy.WithSelf.Op.1, @Copy.WithSelf(%Copy.facet.8df) [concrete]
+// CHECK:STDOUT:   %.c79: type = fn_type_with_self_type %Copy.WithSelf.Op.type.dbb, %Copy.facet.8df [concrete]
 // CHECK:STDOUT:   %self.param_patt.952: %pattern_type.4b7 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.a35: %pattern_type.4b7 = wrapper_binding_pattern self, %self.param_patt.952 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc7 [concrete]
@@ -243,7 +243,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc7_38.3: ref %.659 = temporary %.loc7_38.1, %.loc7_38.2
 // CHECK:STDOUT:   %.loc7_38.4: %.659 = acquire_value %.loc7_38.3
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0: %.e6b = impl_witness_access constants.%custom_witness.bab, element0 [concrete = constants.%Copy.WithSelf.Op.416]
+// CHECK:STDOUT:   %impl.elem0: %.c79 = impl_witness_access constants.%custom_witness.bab, element0 [concrete = constants.%Copy.WithSelf.Op.416]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc7_38.4, %impl.elem0
 // CHECK:STDOUT:   %Copy.WithSelf.Op.call: init %.659 = call %bound_method(%.loc7_38.4)
 // CHECK:STDOUT:   %.loc7_38.5: ref %.659 = temporary_storage
@@ -286,8 +286,8 @@ fn G() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.416: %Copy.WithSelf.Op.type.7f5 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.bab: <witness> = custom_witness (%Copy.WithSelf.Op.416), @Copy [concrete]
 // CHECK:STDOUT:   %Copy.facet.8df: %Copy.type = facet_value %.659, (%custom_witness.bab) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.adb: type = fn_type @Copy.WithSelf.Op.1, @Copy.WithSelf(%Copy.facet.8df) [concrete]
-// CHECK:STDOUT:   %.e6b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.adb, %Copy.facet.8df [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.dbb: type = fn_type @Copy.WithSelf.Op.1, @Copy.WithSelf(%Copy.facet.8df) [concrete]
+// CHECK:STDOUT:   %.c79: type = fn_type_with_self_type %Copy.WithSelf.Op.type.dbb, %Copy.facet.8df [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.bound: <bound method> = bound_method %.b35, %Copy.WithSelf.Op.416 [concrete]
 // CHECK:STDOUT:   %self.param_patt.952: %pattern_type.4b7 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.a35: %pattern_type.4b7 = wrapper_binding_pattern self, %self.param_patt.952 [concrete]
@@ -331,7 +331,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc15_3.1: %.659 = cpp_addr_of_fn %Method.ref, @C.Method [concrete = constants.%.b35]
 // CHECK:STDOUT:   %.loc15_3.2: %.659 = converted %Method.ref, %.loc15_3.1 [concrete = constants.%.b35]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0: %.e6b = impl_witness_access constants.%custom_witness.bab, element0 [concrete = constants.%Copy.WithSelf.Op.416]
+// CHECK:STDOUT:   %impl.elem0: %.c79 = impl_witness_access constants.%custom_witness.bab, element0 [concrete = constants.%Copy.WithSelf.Op.416]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc15_3.2, %impl.elem0 [concrete = constants.%Copy.WithSelf.Op.bound]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.call: init %.659 = call %bound_method(%.loc15_3.2) [concrete = constants.%.b35]
 // CHECK:STDOUT:   assign %ptr.var, %Copy.WithSelf.Op.call
@@ -388,8 +388,8 @@ fn G() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.416: %Copy.WithSelf.Op.type.7f5 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.bab: <witness> = custom_witness (%Copy.WithSelf.Op.416), @Copy [concrete]
 // CHECK:STDOUT:   %Copy.facet.8df: %Copy.type = facet_value %.659, (%custom_witness.bab) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.adb: type = fn_type @Copy.WithSelf.Op.1, @Copy.WithSelf(%Copy.facet.8df) [concrete]
-// CHECK:STDOUT:   %.e6b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.adb, %Copy.facet.8df [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.dbb: type = fn_type @Copy.WithSelf.Op.1, @Copy.WithSelf(%Copy.facet.8df) [concrete]
+// CHECK:STDOUT:   %.c79: type = fn_type_with_self_type %Copy.WithSelf.Op.type.dbb, %Copy.facet.8df [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.bound: <bound method> = bound_method %.b35, %Copy.WithSelf.Op.416 [concrete]
 // CHECK:STDOUT:   %.fc1: ref %.659 = temporary invalid, %.b35 [concrete]
 // CHECK:STDOUT:   %addr: %ptr.796 = addr_of %.fc1 [concrete]
@@ -443,7 +443,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc11_29.1: %.659 = cpp_addr_of_fn %Method.ref, @C.Method [concrete = constants.%.b35]
 // CHECK:STDOUT:   %.loc11_29.2: %.659 = converted %Method.ref, %.loc11_29.1 [concrete = constants.%.b35]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0: %.e6b = impl_witness_access constants.%custom_witness.bab, element0 [concrete = constants.%Copy.WithSelf.Op.416]
+// CHECK:STDOUT:   %impl.elem0: %.c79 = impl_witness_access constants.%custom_witness.bab, element0 [concrete = constants.%Copy.WithSelf.Op.416]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc11_29.2, %impl.elem0 [concrete = constants.%Copy.WithSelf.Op.bound]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.call: init %.659 = call %bound_method(%.loc11_29.2) [concrete = constants.%.b35]
 // CHECK:STDOUT:   %.loc11_29.3: ref %.659 = temporary_storage

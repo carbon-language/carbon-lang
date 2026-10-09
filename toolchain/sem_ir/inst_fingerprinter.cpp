@@ -589,6 +589,7 @@ struct Worklist {
     const auto& specific = sem_ir->specifics().Get(specific_id);
     Add(specific.generic_id);
     Add(specific.args_id);
+    AddInteger(specific.identified);
   }
 
   auto Add(SpecificInterface specific_interface) -> void {

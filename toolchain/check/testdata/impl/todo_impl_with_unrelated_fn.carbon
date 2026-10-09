@@ -31,8 +31,8 @@ class X {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = facet_type <@A> [concrete]
 // CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %A.WithSelf.B.type.ab5: type = fn_type @A.WithSelf.B, @A.WithSelf(%Self) [symbolic]
-// CHECK:STDOUT:   %A.WithSelf.B.a0b: %A.WithSelf.B.type.ab5 = struct_value () [symbolic]
+// CHECK:STDOUT:   %A.WithSelf.B.type.ac8: type = fn_type @A.WithSelf.B, @A.WithSelf(%Self) [symbolic]
+// CHECK:STDOUT:   %A.WithSelf.B.c08: %A.WithSelf.B.type.ac8 = struct_value () [symbolic]
 // CHECK:STDOUT:   %A.assoc_type: type = assoc_entity_type @A [concrete]
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, @A.WithSelf.%A.WithSelf.B.decl [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
@@ -43,8 +43,8 @@ class X {
 // CHECK:STDOUT:   %X.as.A.impl.F.type: type = fn_type @X.as.A.impl.F [concrete]
 // CHECK:STDOUT:   %X.as.A.impl.F: %X.as.A.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.facet: %A.type = facet_value %X, (%A.impl_witness) [concrete]
-// CHECK:STDOUT:   %A.WithSelf.B.type.210: type = fn_type @A.WithSelf.B, @A.WithSelf(%A.facet) [concrete]
-// CHECK:STDOUT:   %A.WithSelf.B.11e: %A.WithSelf.B.type.210 = struct_value () [concrete]
+// CHECK:STDOUT:   %A.WithSelf.B.type.4e3: type = fn_type @A.WithSelf.B, @A.WithSelf(%A.facet) [concrete]
+// CHECK:STDOUT:   %A.WithSelf.B.c2b: %A.WithSelf.B.type.4e3 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -63,7 +63,7 @@ class X {
 // CHECK:STDOUT:   %A.WithSelf.decl = interface_with_self_decl @A [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %A.WithSelf.B.decl: @A.WithSelf.%A.WithSelf.B.type (%A.WithSelf.B.type.ab5) = fn_decl @A.WithSelf.B [symbolic = @A.WithSelf.%A.WithSelf.B (constants.%A.WithSelf.B.a0b)] {} {}
+// CHECK:STDOUT:   %A.WithSelf.B.decl: @A.WithSelf.%A.WithSelf.B.type (%A.WithSelf.B.type.ac8) = fn_decl @A.WithSelf.B [symbolic = @A.WithSelf.%A.WithSelf.B (constants.%A.WithSelf.B.c08)] {} {}
 // CHECK:STDOUT:   %assoc0: %A.assoc_type = assoc_entity element0, %A.WithSelf.B.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -118,8 +118,8 @@ class X {
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.ab5
-// CHECK:STDOUT:   %A.WithSelf.B => constants.%A.WithSelf.B.a0b
+// CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.ac8
+// CHECK:STDOUT:   %A.WithSelf.B => constants.%A.WithSelf.B.c08
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.B(constants.%Self) {}
@@ -127,8 +127,8 @@ class X {
 // CHECK:STDOUT: specific @A.WithSelf(constants.%A.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%A.facet
-// CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.210
-// CHECK:STDOUT:   %A.WithSelf.B => constants.%A.WithSelf.B.11e
+// CHECK:STDOUT:   %A.WithSelf.B.type => constants.%A.WithSelf.B.type.4e3
+// CHECK:STDOUT:   %A.WithSelf.B => constants.%A.WithSelf.B.c2b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.B(constants.%A.facet) {}

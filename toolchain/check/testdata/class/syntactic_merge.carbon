@@ -391,7 +391,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %Foo.generic.04949d.1: %Foo.type.3e04c8.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.3e04c8.2: type = generic_class_type @Foo.loc14 [concrete]
 // CHECK:STDOUT:   %Foo.generic.04949d.2: %Foo.type.3e04c8.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.2fb251.2: type = class_type @Foo.loc14, @Foo.loc14(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.2bf015.2: type = class_type @Foo.loc14, @Foo.loc14(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -446,7 +446,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.2fb251.2
+// CHECK:STDOUT:     .Self = constants.%Foo.2bf015.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -475,7 +475,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %Foo.generic.04949d.1: %Foo.type.3e04c8.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.3e04c8.2: type = generic_class_type @Foo.loc14 [concrete]
 // CHECK:STDOUT:   %Foo.generic.04949d.2: %Foo.type.3e04c8.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.2fb251.2: type = class_type @Foo.loc14, @Foo.loc14(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.2bf015.2: type = class_type @Foo.loc14, @Foo.loc14(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -530,7 +530,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.2fb251.2
+// CHECK:STDOUT:     .Self = constants.%Foo.2bf015.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -744,7 +744,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %b: %C = symbolic_binding b, 0 [symbolic]
 // CHECK:STDOUT:   %Foo.type.3e04c8.2: type = generic_class_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.generic.04949d.2: %Foo.type.3e04c8.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.2fb251.2: type = class_type @Foo.loc15, @Foo.loc15(%b) [symbolic]
+// CHECK:STDOUT:   %Foo.2bf015.2: type = class_type @Foo.loc15, @Foo.loc15(%b) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -802,7 +802,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.2fb251.2
+// CHECK:STDOUT:     .Self = constants.%Foo.2bf015.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -831,7 +831,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %Foo.generic.04949d.1: %Foo.type.3e04c8.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.3e04c8.2: type = generic_class_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.generic.04949d.2: %Foo.type.3e04c8.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.2fb251.2: type = class_type @Foo.loc15, @Foo.loc15(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.2bf015.2: type = class_type @Foo.loc15, @Foo.loc15(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -889,7 +889,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.2fb251.2
+// CHECK:STDOUT:     .Self = constants.%Foo.2bf015.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -918,7 +918,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %Foo.generic.04949d.1: %Foo.type.3e04c8.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.3e04c8.2: type = generic_class_type @Foo.loc15 [concrete]
 // CHECK:STDOUT:   %Foo.generic.04949d.2: %Foo.type.3e04c8.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.2fb251.2: type = class_type @Foo.loc15, @Foo.loc15(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.2bf015.2: type = class_type @Foo.loc15, @Foo.loc15(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -976,7 +976,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.2fb251.2
+// CHECK:STDOUT:     .Self = constants.%Foo.2bf015.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1129,7 +1129,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:   %Foo.generic.04949d.1: %Foo.type.3e04c8.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type.3e04c8.2: type = generic_class_type @Foo.loc18 [concrete]
 // CHECK:STDOUT:   %Foo.generic.04949d.2: %Foo.type.3e04c8.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Foo.13c14a.2: type = class_type @Foo.loc18, @Foo.loc18(%a) [symbolic]
+// CHECK:STDOUT:   %Foo.7eeac7.2: type = class_type @Foo.loc18, @Foo.loc18(%a) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1187,7 +1187,7 @@ fn Base.F(ref self: Base) {
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Foo.13c14a.2
+// CHECK:STDOUT:     .Self = constants.%Foo.7eeac7.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

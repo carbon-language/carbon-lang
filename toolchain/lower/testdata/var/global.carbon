@@ -146,7 +146,7 @@ var a: i32 = 1;
 // CHECK:STDOUT: source_filename = "tuple_in_var.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_Cd.Main = global { i32, i32 } zeroinitializer
-// CHECK:STDOUT: @tuple.8a1.loc4_1 = internal constant { i32, i32 } { i32 4, i32 5 }
+// CHECK:STDOUT: @tuple.dbf.loc4_1 = internal constant { i32, i32 } { i32 4, i32 5 }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -164,7 +164,7 @@ var a: i32 = 1;
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !57 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cd.Main, ptr align 4 @tuple.8a1.loc4_1, i64 8, i1 false), !dbg !58
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cd.Main, ptr align 4 @tuple.dbf.loc4_1, i64 8, i1 false), !dbg !58
 // CHECK:STDOUT:   ret void, !dbg !59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -203,15 +203,15 @@ var a: i32 = 1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_Cx.Main = global { i32, i32 } zeroinitializer
 // CHECK:STDOUT: @var.anon.var_patt.loc5 = internal global { i32, i32 } zeroinitializer
-// CHECK:STDOUT: @tuple.102.loc4_1 = internal constant { i32, i32 } { i32 1, i32 2 }
-// CHECK:STDOUT: @tuple.e16.loc5_1 = internal constant { i32, i32 } { i32 3, i32 4 }
+// CHECK:STDOUT: @tuple.d3f.loc4_1 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @tuple.77a.loc5_1 = internal constant { i32, i32 } { i32 3, i32 4 }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !62 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cx.Main, ptr align 4 @tuple.102.loc4_1, i64 8, i1 false), !dbg !63
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @var.anon.var_patt.loc5, ptr align 4 @tuple.e16.loc5_1, i64 8, i1 false), !dbg !65
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cx.Main, ptr align 4 @tuple.d3f.loc4_1, i64 8, i1 false), !dbg !63
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @var.anon.var_patt.loc5, ptr align 4 @tuple.77a.loc5_1, i64 8, i1 false), !dbg !65
 // CHECK:STDOUT:   ret void, !dbg !66
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
