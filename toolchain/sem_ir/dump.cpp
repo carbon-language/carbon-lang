@@ -8,6 +8,7 @@
 
 #include <string>
 
+#include "clang/AST/DeclBase.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -219,7 +220,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, ClangDeclId clang_decl_id)
   out << clang_decl_id;
   if (clang_decl_id.has_value()) {
     const auto& clang_decl = file.clang_decls().Get(clang_decl_id);
-    out << ": " << clang_decl;
+    out << ": " << clang_decl << "\ndecl:\n";
+    clang_decl.decl()->dump(out);
   }
   return out.TakeStr();
 }
