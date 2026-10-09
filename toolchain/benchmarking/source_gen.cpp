@@ -78,6 +78,7 @@ class SourceGen::ClassGenState {
 
  private:
   auto BuildClassAndTypeNames(SourceGen& gen, int num_classes, int num_types,
+                              int max_refs_per_class,
                               const TypeUseParams& type_use_params) -> void;
 
   llvm::SmallVector<int> public_function_param_counts_;
@@ -122,11 +123,13 @@ SourceGen::ClassGenState::ClassGenState(SourceGen& gen, int num_classes,
       gen.GetShuffledInts(num_classes * class_params.private_method_decls, 0,
                           class_params.private_method_decl_params.max_params);
 
+  // Each function and method declaration has a return type that can reference
+  // its own class, so each class has at least this many such type uses.
+  int decls_per_class =
+      class_params.public_function_decls + class_params.public_method_decls +
+      class_params.private_function_decls + class_params.private_method_decls;
   int num_members =
-      num_classes *
-      (class_params.public_function_decls + class_params.public_method_decls +
-       class_params.private_function_decls + class_params.private_method_decls +
-       class_params.private_field_decls);
+      num_classes * (decls_per_class + class_params.private_field_decls);
   member_names_ = gen.GetShuffledIdentifiers(
       num_members, /*min_length=*/MinMemberNameLength);
   int num_params =
@@ -135,7 +138,7 @@ SourceGen::ClassGenState::ClassGenState(SourceGen& gen, int num_classes,
   param_names_ = gen.GetShuffledIdentifiers(num_params);
 
   BuildClassAndTypeNames(gen, num_classes, num_members + num_params,
-                         type_use_params);
+                         decls_per_class, type_use_params);
 }
 
 auto SourceGen::ClassGenState::GetValidTypeName() -> llvm::StringRef {
@@ -157,6 +160,8 @@ auto SourceGen::ClassGenState::GetValidTypeName() -> llvm::StringRef {
       return type_names_.pop_back_val();
     }
 
+    // `BuildClassAndTypeNames` caps the references to each class so that a
+    // valid type name always remains.
     CARBON_CHECK(last_type_name_index_ != initial_last_type_name_index,
                  "Failed to find a valid type name with {0} candidates, an "
                  "initial index of {1}, and with {2} classes left to emit!",
@@ -187,7 +192,7 @@ auto SourceGen::ClassGenState::GetValidTypeName() -> llvm::StringRef {
 // declared class names and type references to provide an unpredictable order in
 // the generated output.
 auto SourceGen::ClassGenState::BuildClassAndTypeNames(
-    SourceGen& gen, int num_classes, int num_types,
+    SourceGen& gen, int num_classes, int num_types, int max_refs_per_class,
     const TypeUseParams& type_use_params) -> void {
   // Initially get the sequence of class names without shuffling so we can
   // compute our type name pool from them prior to any shuffling.
@@ -210,15 +215,30 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   // class names until there is some remainder of names needed.
   int num_declared_types =
       num_types * type_use_params.declared_types_weight / type_weight_sum;
-  for ([[maybe_unused]] auto _ : llvm::seq(num_declared_types / num_classes)) {
+  int full_copies = num_declared_types / num_classes;
+  int remainder = num_declared_types % num_classes;
+
+  // Cap the references to each class so that `GetValidTypeName` finds a valid
+  // type for any shuffle. A class becomes a valid type after its field types
+  // are chosen, so references to it can only go on its own return and
+  // parameter types, or in a later class. The last class defined has only its
+  // own, and each class has at least `max_refs_per_class` return types. The
+  // fixed types below replace any references the cap removes, so the pool's
+  // spellings, and with them the byte count, don't depend on the shuffle.
+  if (full_copies >= max_refs_per_class) {
+    full_copies = max_refs_per_class;
+    remainder = 0;
+  }
+
+  for ([[maybe_unused]] auto _ : llvm::seq(full_copies)) {
     llvm::append_range(type_names_, class_names_);
   }
   // Now append the remainder number of class names. This is where the class
   // names being un-shuffled is essential. We're going to have one extra
   // reference to some fraction of the class names and we want that to be a
   // stable subset.
-  type_names_.append(class_names_.begin(),
-                     class_names_.begin() + (num_declared_types % num_classes));
+  type_names_.append(class_names_.begin(), class_names_.begin() + remainder);
+  num_declared_types = full_copies * num_classes + remainder;
   CARBON_CHECK(static_cast<int>(type_names_.size()) == num_declared_types);
 
   // Use each fixed type weight to append the expected number of copies of that
@@ -366,6 +386,10 @@ auto SourceGen::GenApiFileDenseDecls(int target_lines,
   CARBON_CHECK(class_gen_state.private_method_param_counts().empty());
   CARBON_CHECK(class_gen_state.class_names().empty());
   CARBON_CHECK(class_gen_state.type_names().empty());
+  // The identifier lengths in each name pool don't depend on the seed, so
+  // emitting every name keeps the byte count seed-independent.
+  CARBON_CHECK(class_gen_state.member_names().empty());
+  CARBON_CHECK(class_gen_state.param_names().empty());
 
   return source.TakeStr();
 }

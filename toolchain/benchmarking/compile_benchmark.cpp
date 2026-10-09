@@ -298,15 +298,36 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
   double total_lines = 0.0;
   double total_tokens = 0.0;
 
+  ssize_t first_bytes = 0;
+  ssize_t first_lines = 0;
+
   for (auto _ : llvm::seq(num_files)) {
     sources.push_back(bench.gen().GenApiFileDenseDecls(
         target_lines, SourceGen::DenseDeclParams{}));
     const auto& source = sources.back();
-    total_bytes += source.size();
-    total_lines += llvm::count(source, '\n');
+    ssize_t bytes = source.size();
+    ssize_t lines = llvm::count(source, '\n');
+
+    total_bytes += bytes;
+    total_lines += lines;
     if constexpr (L == Lang::Carbon) {
       total_tokens += carbon_compile_helper.GetTokenizedBuffer(source).size();
     }
+
+    // The generator varies each file's content but not its size, which keeps
+    // results comparable across files and runs.
+    if (sources.size() == 1) {
+      first_bytes = bytes;
+      first_lines = lines;
+      continue;
+    }
+
+    CARBON_CHECK(bytes == first_bytes,
+                 "Generated file {0} has {1} bytes but file 0 has {2}.",
+                 sources.size() - 1, bytes, first_bytes);
+    CARBON_CHECK(lines == first_lines,
+                 "Generated file {0} has {1} lines but file 0 has {2}.",
+                 sources.size() - 1, lines, first_lines);
   }
 
   state.counters["Bytes"] =

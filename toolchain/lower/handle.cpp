@@ -13,7 +13,6 @@
 #include "llvm/Support/Casting.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
-#include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/inst.h"
@@ -256,14 +255,22 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 
+// Returns how the function being lowered returns its result, as determined
+// when its signature was lowered.
+static auto GetReturnKind(FunctionContext& context) -> ReturnKind {
+  const auto& function_info = context.specific_file_context().GetFunctionInfo(
+      context.specific_sem_ir_function_id(), context.specific_id());
+  CARBON_CHECK(function_info, "Lowering body of undeclared function");
+  return function_info->return_kind;
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Return /*inst*/) -> void {
   // The 'Run()' entry point does not need to specify a return type, but
   // the C runtime and system ABI expects the entry point to return an `int`.
   // In this situation we modify the lowered IR to return `0`
   // with the expected LLVM type that corresponds to the `int` type.
-  if (SemIR::IsEntryPoint(context.specific_sem_ir(),
-                          context.specific_sem_ir_function_id())) {
+  if (GetReturnKind(context) == ReturnKind::EntryPointInt32) {
     context.builder().CreateRet(context.builder().getInt32(0));
     return;
   }
@@ -276,63 +283,46 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
       SemIR::GetExprCategory(context.sem_ir(), inst.expr_id,
                              &context.specific_sem_ir(), context.specific_id());
   context.AddEnumToCurrentFingerprint(expr_cat);
-  switch (expr_cat) {
-    case SemIR::ExprCategory::EphemeralRef:
-    case SemIR::ExprCategory::DurableRef:
-      // Reference return.
-      context.builder().CreateRet(context.GetValue(inst.expr_id));
-      return;
 
-    case SemIR::ExprCategory::Value:
-      // Return of a `returned var`.
-    case SemIR::ExprCategory::ReprInitializing:
-    case SemIR::ExprCategory::InPlaceInitializing:
-      // Initializing return.
-      break;
-
-    case SemIR::ExprCategory::Mixed:
-    case SemIR::ExprCategory::RefTagged:
-    case SemIR::ExprCategory::NotExpr:
-    case SemIR::ExprCategory::Error:
-    case SemIR::ExprCategory::Pattern:
-    case SemIR::ExprCategory::Dependent:
-      CARBON_FATAL("Unexpected category {0} for `return` expression {1}",
-                   expr_cat, context.sem_ir().insts().Get(inst.expr_id));
-  }
-
-  auto result_type = context.GetTypeIdOfInst(inst.expr_id);
-  switch (context.GetInitRepr(result_type).kind) {
-    case SemIR::InitRepr::None:
+  auto return_kind = GetReturnKind(context);
+  context.AddEnumToCurrentFingerprint(return_kind);
+  switch (return_kind) {
+    case ReturnKind::None:
       // Nothing to return.
       context.builder().CreateRetVoid();
       return;
-    case SemIR::InitRepr::InPlace:
-      CARBON_CHECK(context.GetValueRepr(result_type).repr.kind ==
-                       SemIR::ValueRepr::Pointer,
-                   "TODO: Add support for ReturnExpr with custom value repr");
-      // TODO: find a way to avoid the redundant call to GetInitRepr inside
-      // InitializeStorage.
-      context.InitializeStorage(result_type, inst.dest_id, inst.expr_id);
-      context.builder().CreateRetVoid();
+
+    case ReturnKind::ByReference:
+      // Return a pointer: either the address of a reference, or the value
+      // representation of a value of a type with a pointer (or pointer-like
+      // custom) value representation.
+      context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;
-    case SemIR::InitRepr::ByCopy: {
+
+    case ReturnKind::ByCopy: {
       auto* value = context.GetValue(inst.expr_id);
       if (expr_cat == SemIR::ExprCategory::InPlaceInitializing) {
-        value =
-            context.builder().CreateLoad(context.GetType(result_type), value);
+        value = context.builder().CreateLoad(
+            context.GetType(context.GetTypeIdOfInst(inst.expr_id)), value);
       }
       context.builder().CreateRet(value);
       return;
     }
-    case SemIR::InitRepr::Abstract:
-      CARBON_FATAL("Lowering return of abstract type {0}",
-                   result_type.file->types().GetAsInst(result_type.type_id));
-    case SemIR::InitRepr::Incomplete:
-      CARBON_FATAL("Lowering return of incomplete type {0}",
-                   result_type.file->types().GetAsInst(result_type.type_id));
-    case SemIR::InitRepr::Dependent:
-      CARBON_FATAL("Lowering return of dependent type {0}",
-                   result_type.file->types().GetAsInst(result_type.type_id));
+
+    case ReturnKind::InPlace: {
+      auto result_type = context.GetTypeIdOfInst(inst.expr_id);
+      CARBON_CHECK(context.GetValueRepr(result_type).repr.kind ==
+                       SemIR::ValueRepr::Pointer,
+                   "TODO: Add support for ReturnExpr with custom value repr");
+      context.InitializeStorage(result_type, inst.dest_id, inst.expr_id);
+      context.builder().CreateRetVoid();
+      return;
+    }
+
+    case ReturnKind::EntryPointInt32:
+      CARBON_FATAL(
+          "`return` with expression in entry point without a return "
+          "type");
   }
 }
 
