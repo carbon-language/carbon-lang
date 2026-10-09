@@ -1211,14 +1211,6 @@ static auto TryFinishGeneric(ImportRefResolver& resolver,
       GetOrAddLocalSpecific(resolver, import_generic.self_specific_id,
                             specific_data, local_generic_id);
 
-  // `ErrorInst::InstId` is a concrete constant, so it can't occur in a
-  // generic eval block.
-  for (auto inst_id : definition_block) {
-    if (inst_id == SemIR::ErrorInst::InstId) {
-      local_generic.definition_block_id = SemIR::InstBlockId::Error;
-      return true;
-    }
-  }
   if (import_generic.definition_block_id.has_value()) {
     local_generic.definition_block_id = ResolveLocalEvalBlock(
         resolver, import_generic.definition_block_id, definition_block,

@@ -806,10 +806,6 @@ struct InstBlockId : public IdBase<InstBlockId> {
   // An ID for unreachable code.
   static const InstBlockId Unreachable;
 
-  // An ID that indicates an unrecoverable error was encountered while building
-  // this inst block.
-  static const InstBlockId Error;
-
   using IdBase::IdBase;
 
   // The instruction ID type that should be used to refer to elements of this
@@ -826,7 +822,6 @@ inline constexpr InstBlockId InstBlockId::Imports = InstBlockId(3);
 inline constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(4);
 inline constexpr InstBlockId InstBlockId::Unreachable =
     InstBlockId(NoneIndex - 1);
-inline constexpr InstBlockId InstBlockId::Error = InstBlockId(NoneIndex - 2);
 inline constexpr std::array<InstBlockId, 5> InstBlockId::ReservedIds = {
     Empty, Exports, Generated, Imports, GlobalInit};
 

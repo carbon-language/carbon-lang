@@ -25,9 +25,14 @@ class Middle(T: type) {
 
 // --- fail_use.carbon
 
-// The specific error is not relevant; we just need importing an inst in
-// the generic's definition block to fail, in order to test error recovery
-// during generic import.
+// This tests a situation in which an error occurs while importing a member of
+// a generic's definition block. That shouldn't be possible: if the imported
+// generic is valid in its source file, importing it shouldn't result in any
+// errors. However, this TODO (and at least one other TODO as of this writing)
+// can be triggered when importing locally-valid Carbon code. This is a
+// regression test to validate that we don't crash when that happens.
+// Consequently, this test can be removed if this TODO is resolved and there are
+// no other ways of triggering an error while importing a valid generic.
 
 // CHECK:STDERR: fail_use.carbon:[[@LINE+6]]:1: in import [InImport]
 // CHECK:STDERR: middle.carbon:3:10: in file included here [InCppInclude]
