@@ -45,7 +45,7 @@ let greater: Ordering = Ordering.Greater;
 let inc: Ordering = Ordering.Incomparable;
 //@dump-sem-ir-end
 
-// --- local_var.carbon
+// --- destroy.carbon
 library "[[@TEST_NAME]]";
 
 choice Ordering {
@@ -54,16 +54,10 @@ choice Ordering {
   Greater
 }
 
-choice Always {
-  Sunny
-}
-
-fn MakeOrdering() -> Ordering;
-fn MakeAlways() -> Always;
+fn Make() -> Ordering;
 
 fn F() {
-  var _: Ordering = MakeOrdering();
-  var _: Always = MakeAlways();
+  var _: Ordering = Make();
 }
 
 // --- fail_no_alternative_construct.carbon
