@@ -247,6 +247,9 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
 
 // Converts an expression in a form position for use as a form.
 //
+// Form positions include return-forms (following `->?`) and form binding
+// patterns.
+//
 // Note that the right-hand side of a `->` return type declaration is normally
 // a type expression, not a form, and should be handled by `ReturnExprAsForm`.
 // It's only a form if it begins with a primitive form keyword: `val`, `ref`,
