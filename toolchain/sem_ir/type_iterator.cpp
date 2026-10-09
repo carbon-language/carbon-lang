@@ -131,6 +131,7 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
 
     case AssociatedEntityType::Kind:
     case BoolType::Kind:
+    case BoundMethodType::Kind:
     case CharLiteralType::Kind:
     case CppFunctionPointerType::Kind:
     case CppOverloadSetType::Kind:
