@@ -313,6 +313,9 @@ static auto TryFindValueInRewriteConstraints(
   // grouped together, as in ResolveFacetTypeRewriteConstraints(), and limited
   // to just the `ImplWitnessAccess` entries, then a binary search may work
   // here.
+  //
+  // TODO: Use the identified facet type so we can find rewrites from named
+  // constraints too. Then we don't need to SubstPeriodSelf below anymore.
   for (const auto& rewrite : context.declared_facet_types()
                                  .Get(access_self_declared_facet_type_id)
                                  .rewrite_constraints) {

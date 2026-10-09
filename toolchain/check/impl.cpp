@@ -394,16 +394,18 @@ auto AddImpl(Context& context, const SemIR::Impl& impl,
   return impl_id;
 }
 
-// Replace IdentifiedWitness that refers to the current impl with a new
-// ImplSelfWitness, preventing further evaluation of any ImplWitnessAccess
-// containing it.
-class SubstWithImplSelfWitness : public SubstIdentifiedWitnessesCallbacks {
+// Substitute the impl's ImplWitness for any IdentifiedWitness that refers to
+// the current impl's interface, as well as any ImplSelfWitness which always
+// implicitly refers to the current impl.
+class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
  public:
-  SubstWithImplSelfWitness(Context* context, SemIR::LocId loc_id,
-                           const SemIR::Impl* impl)
+  SubstWithImplWitness(Context* context, const SemIR::Impl* impl,
+                       SemIR::InstId impl_witness_id)
       : SubstIdentifiedWitnessesCallbacks(context),
-        loc_id_(loc_id),
-        impl_(impl) {}
+        impl_(impl),
+        impl_witness_id_(impl_witness_id) {
+    CARBON_CHECK(impl_witness_id.has_value());
+  }
 
   auto ReplaceIdentified(SemIR::IdentifiedWitness witness)
       -> SemIR::InstId override {
@@ -418,28 +420,21 @@ class SubstWithImplSelfWitness : public SubstIdentifiedWitnessesCallbacks {
     if (impl_->interface != witness_interface) {
       return SemIR::InstId::None;
     }
-
-    auto const_id = EvalOrAddInst<SemIR::ImplSelfWitness>(
-        context(), loc_id_,
-        {.type_id = GetSingletonType(context(), SemIR::WitnessType::TypeInstId),
-         .period_self = impl_->self_id,
-         .specific_interface_id =
-             context().specific_interfaces().Add(impl_->interface)});
-    return context().constant_values().GetInstId(const_id);
+    return impl_witness_id_;
   }
 
   auto ReplaceImplSelfWitness(SemIR::ImplSelfWitness witness)
       -> SemIR::InstId override {
-    // ImplSelfWitness is only introduced via the impl decl, and should have
-    // been replaced already when building the witness table from the impl decl.
-    // Notwithstanding the fact that we then can re-introduce some through this
-    // class, those won't be passed back to the class here.
-    CARBON_FATAL("found unexpected ImplSelfWitness {0}", witness);
+    CARBON_CHECK(context().constant_values().Get(impl_->self_id) ==
+                 context().constant_values().Get(witness.period_self));
+    CARBON_CHECK(context().specific_interfaces().Get(
+                     witness.specific_interface_id) == impl_->interface);
+    return impl_witness_id_;
   }
 
  private:
-  SemIR::LocId loc_id_;
   const SemIR::Impl* impl_;
+  SemIR::InstId impl_witness_id_;
 };
 
 auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
@@ -518,30 +513,20 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       continue;
     }
 
-    // The LHS of the rewrite contains an ImplSelfWitness that could be replaced
-    // with ImplWitness, however that would resolve the ImplWitnessAccess that
+    // The LHS of the rewrite contains a witness that could be replaced with
+    // ImplWitness, however that would resolve the ImplWitnessAccess that
     // contains it, and try to access the very element of the witness table that
     // we are setting. That results in a diagnostic for accessing the table
     // entry before it's set. So we just leave it be.
     //
-    // The RHS of the rewrite typically won't contain any witnesses for the
-    // current impl, as rewrite resolution replaced any references to an
-    // associated constant with the value of that associated constant. However
-    // it is possible in erroneous situations like `impl as Z where .Z2 = .Z1`
-    // where `.Z1` is never given a value. We don't want to produce another
-    // error here, but we also don't want `.Z1` to do an impl lookup. So we
-    // substitute the IdentifiedWitness with an ImplSelfWitness, which indicates
-    // that we know it points to the current impl but that impl is not ready
-    // yet. While that creates a bit of a weird situation with an
-    // ImplSelfWitness in the witness table, it ensures the access will never
-    // resolve, which is what we want.
-    //
-    // TODO: In the future, when we allow rewrites inside the body of the impl
-    // definition, we may run into this situation in non-erroneous conditions,
-    // and want to substitute the ImplSelfWitness out of the witness table once
-    // we have a value known for the associated constant being accessed with the
-    // witness.
-    SubstWithImplSelfWitness callbacks(&context, loc_id, &impl);
+    // The RHS of the rewrite may also contain ImplSelfWitness for the current
+    // impl. Usually they are gone already, as early rewrite replacement and
+    // rewrite resolution replace any references to an associated constant with
+    // the value of that associated constant. However FacetValues using `.Self`
+    // may encode such witnesses, and it is also possible when an associated
+    // constant is used from the impl declaration but is not set in the
+    // declaration.
+    SubstWithImplWitness callbacks(&context, &impl, witness_inst_id);
     rewrite.rhs =
         SubstIdentifiedWitnesses(context, loc_id, rewrite.rhs, callbacks);
 
@@ -834,45 +819,6 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
   // TODO: Diagnose if any declarations in the impl are not in used_decl_ids.
 }
 
-// Substitute the impl's ImplWitness for any IdentifiedWitness that refers to
-// the current impl's interface, as well as any ImplSelfWitness which always
-// implicitly refers to the current impl.
-class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
- public:
-  SubstWithImplWitness(Context* context, const SemIR::Impl* impl)
-      : SubstIdentifiedWitnessesCallbacks(context), impl_(impl) {
-    CARBON_CHECK(impl_->witness_id.has_value());
-  }
-
-  auto ReplaceIdentified(SemIR::IdentifiedWitness witness)
-      -> SemIR::InstId override {
-    auto impl_self = context().constant_values().Get(impl_->self_id);
-    auto witness_self =
-        context().constant_values().Get(witness.query_self_inst_id);
-    if (impl_self != witness_self) {
-      return SemIR::InstId::None;
-    }
-    auto witness_interface = context().specific_interfaces().Get(
-        witness.query_specific_interface_id);
-    if (impl_->interface != witness_interface) {
-      return SemIR::InstId::None;
-    }
-    return impl_->witness_id;
-  }
-
-  auto ReplaceImplSelfWitness(SemIR::ImplSelfWitness witness)
-      -> SemIR::InstId override {
-    CARBON_CHECK(context().constant_values().Get(impl_->self_id) ==
-                 context().constant_values().Get(witness.period_self));
-    CARBON_CHECK(context().specific_interfaces().Get(
-                     witness.specific_interface_id) == impl_->interface);
-    return impl_->witness_id;
-  }
-
- private:
-  const SemIR::Impl* impl_;
-};
-
 auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                                 SemIR::Impl& impl,
                                 SemIR::TypeInstId full_constraint_id,
@@ -892,7 +838,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
     // This replaces both IdentifiedWitness and ImplSelfWitness referring to
     // this impl with the impl's ImplWitness. That causes any access through the
     // witness to resolve to the value from the impl's witness table.
-    SubstWithImplWitness callbacks(&context, &impl);
+    SubstWithImplWitness callbacks(&context, &impl, impl.witness_id);
     req = SubstIdentifiedWitnesses(context, loc_id, req, callbacks);
 
     if (req.self_facet_value == self_const_id &&
@@ -930,7 +876,7 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
     // This replaces both IdentifiedWitness and ImplSelfWitness referring to
     // this impl with the impl's ImplWitness. That causes any access through the
     // witness to resolve to the value from the impl's witness table.
-    SubstWithImplWitness callbacks(&context, &impl);
+    SubstWithImplWitness callbacks(&context, &impl, impl.witness_id);
     auto subst_equiv =
         SubstIdentifiedWitnesses(context, loc_id, equiv, callbacks);
 
