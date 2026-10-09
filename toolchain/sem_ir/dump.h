@@ -25,6 +25,9 @@ auto Dump(const File& file) -> std::string;
 auto Dump(const File& file, RawBundleId bundle_id) -> std::string;
 auto Dump(const File& file, GeneratedFunctionId generated_function_id)
     -> std::string;
+auto Dump(const File& file, ClangDeclId clang_decl_id) -> std::string;
+auto Dump(const File& file, ClangDeclSignatureId clang_decl_signature_id)
+    -> std::string;
 auto Dump(const File& file, ClassId class_id) -> std::string;
 auto Dump(const File& file, ConstantId const_id) -> std::string;
 auto Dump(const File& file, CppOverloadSetId overload_set_id) -> std::string;
