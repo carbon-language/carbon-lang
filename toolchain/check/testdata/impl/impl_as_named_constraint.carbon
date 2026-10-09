@@ -285,7 +285,7 @@ constraint Y {
 // CHECK:STDERR:
 impl () as Y {}
 
-// --- member_access_in_extend_require.carbon
+// --- fail_todo_member_access_in_extend_require.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let X: type; }
@@ -304,6 +304,10 @@ constraint GivesI {
 // - Deduces for Self which tries to convert Self to type
 // - Requires the type of Self to be complete, and its type is GivesI
 // - Forms the self-specfic for GivesI's extend require....we have a loop.
+// CHECK:STDERR: fail_todo_member_access_in_extend_require.carbon:[[@LINE+4]]:1: error: constraint `GivesI where .(I.X) = ()` being implemented requires that `T.(I.X)` implements `J` [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR: impl forall [T: type] T as GivesI where .X = () {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T: type] T as GivesI where .X = () {}
 
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon

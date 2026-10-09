@@ -69,7 +69,9 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl_id) -> void;
 // made invalid.
 auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                                 SemIR::Impl& impl,
-                                SemIR::TypeInstId full_constraint_id) -> void;
+                                SemIR::TypeInstId full_constraint_id,
+                                SemIR::IdentifiedFacetTypeId identified_id)
+    -> void;
 
 // Sets all unset members of the witness for `impl` to the error instruction and
 // sets the witness id in the `Impl` to an error.
@@ -99,7 +101,7 @@ auto CheckConstraintIsFacetType(Context& context, SemIR::LocId loc_id,
 // diagnostic and returns `None`.
 auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
-                                SemIR::TypeInstId constraint_id)
+                                SemIR::TypeInstId full_constraint_id)
     -> SemIR::IdentifiedFacetTypeId;
 
 // Given a specific for the impl, returns the specific interface that the impl
