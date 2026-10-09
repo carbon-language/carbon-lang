@@ -572,7 +572,7 @@ fn F() {
   () as N({});
 }
 
-// --- todo_fail_require_with_mismatching_rewrite_constraint.carbon
+// --- fail_require_with_mismatching_rewrite_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T: type) {
@@ -587,13 +587,14 @@ constraint N {
 impl {} as Z(()) where .X = {} {}
 
 fn F() {
-  // TODO: Should fail, but we're currently checking the requirements of `N`
-  // rather than of the identified facet type of `N` (which would include the
-  // require decl's requirements).
+  // CHECK:STDERR: fail_require_with_mismatching_rewrite_constraint.carbon:[[@LINE+4]]:3: error: cannot convert type `()` into type implementing `N` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   () as N;
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR:
   () as N;
 }
 
-// --- todo_fail_require_with_mismatching_rewrite_constraint_period_self.carbon
+// --- fail_require_with_mismatching_rewrite_constraint_period_self.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T: type) {
@@ -608,9 +609,10 @@ constraint N(T: type) {
 impl {} as Z(()) where .X = () {}
 
 fn F() {
-  // TODO: Should fail, but we're currently checking the requirements of `N`
-  // rather than of the identified facet type of `N` (which would include the
-  // require decl's requirements).
+  // CHECK:STDERR: fail_require_with_mismatching_rewrite_constraint_period_self.carbon:[[@LINE+4]]:3: error: cannot convert type `()` into type implementing `N({})` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   () as N({});
+  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR:
   () as N({});
 }
 
