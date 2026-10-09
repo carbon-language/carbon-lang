@@ -181,8 +181,9 @@ fn InstanceCallFail() {
 // CHECK:STDOUT:       %return.param_patt.loc4_23.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_23 (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc4_23.2 (constants.%return.param_patt)]
 // CHECK:STDOUT:       %return.patt.loc4_20.1: @ImplicitAs.WithSelf.Convert.%pattern_type.loc4_23 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc4_23.1, %Dest.ref [symbolic = %return.patt.loc4_20.2 (constants.%return.patt)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, @ImplicitAs.%Dest.loc3_26.2 [symbolic = %Dest (constants.%Dest)]
-// CHECK:STDOUT:       %.loc4_23.2: Core.Form = init_form %Dest.ref [symbolic = %.loc4_23.1 (constants.%.184)]
+// CHECK:STDOUT:       %.loc4_23.2: type = specific_constant @ImplicitAs.%Dest.loc3_26.2, @ImplicitAs(constants.%Dest) [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:       %Dest.ref: type = name_ref Dest, %.loc4_23.2 [symbolic = %Dest (constants.%Dest)]
+// CHECK:STDOUT:       %.loc4_23.3: Core.Form = init_form %Dest.ref [symbolic = %.loc4_23.1 (constants.%.184)]
 // CHECK:STDOUT:       %self.param: @ImplicitAs.WithSelf.Convert.%Self.as_type.loc4_14.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc4_14.1: type = splice_block %.loc4_14.3 [symbolic = %Self.as_type.loc4_14.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc4_14.2: @ImplicitAs.WithSelf.Convert.%ImplicitAs.type (%ImplicitAs.type.3aa) = specific_constant @ImplicitAs.%Self.loc3_34.1, @ImplicitAs(constants.%Dest) [symbolic = %Self (constants.%Self)]

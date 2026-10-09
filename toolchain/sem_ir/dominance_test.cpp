@@ -478,5 +478,82 @@ TEST_F(DominanceSpecificSpliceTest, SplicedUseInSpecificIsNotDominated) {
   EXPECT_THAT(Verify(), HasSubstr("not dominated by any evaluation"));
 }
 
+TEST_F(DominanceTest, SpecificInstDominatedByEvaluation) {
+  auto generic_id = AddGeneric();
+  auto specific_id =
+      file().specifics().GetOrAdd(generic_id, InstBlockId::Empty);
+  auto value_id = AddValue();
+  auto specific_inst_id =
+      AddNonConstInst(SpecificInst{.type_id = TypeType::TypeId,
+                                   .inst_id = value_id,
+                                   .specific_id = specific_id});
+  AddFunction({AddBlock({value_id, specific_inst_id, AddReturn()})});
+
+  EXPECT_THAT(Verify(), IsEmpty());
+}
+
+TEST_F(DominanceTest, SpecificInstNotDominated) {
+  auto generic_id = AddGeneric();
+  auto specific_id =
+      file().specifics().GetOrAdd(generic_id, InstBlockId::Empty);
+  auto value_id = AddValue();
+  auto specific_inst_id =
+      AddNonConstInst(SpecificInst{.type_id = TypeType::TypeId,
+                                   .inst_id = value_id,
+                                   .specific_id = specific_id});
+  AddFunction({AddBlock({specific_inst_id, value_id, AddReturn()})});
+
+  EXPECT_THAT(Verify(), HasSubstr("not dominated by any evaluation"));
+}
+
+// A generic function whose body uses an instruction that has a symbolic
+// constant value in the generic, and resolves to `specific_value_id` in the
+// specific.
+class DominanceSpecificConstantOperandTest : public DominanceTest {
+ protected:
+  auto MakeSymbolicInGeneric(GenericId generic_id) -> InstId {
+    auto unattached_id = AddInst(
+        BoolLiteral{.type_id = TypeType::TypeId, .value = BoolValue(false)});
+    file().constant_values().Set(
+        unattached_id, file().constant_values().AddSymbolicConstant(
+                           {.inst_id = unattached_id,
+                            .generic_id = GenericId::None,
+                            .index = GenericInstIndex::None,
+                            .dependence = ConstantDependence::Template}));
+
+    auto inst_id = AddInst(
+        BoolLiteral{.type_id = TypeType::TypeId, .value = BoolValue(false)});
+    file().constant_values().Set(
+        inst_id,
+        file().constant_values().AddSymbolicConstant(
+            {.inst_id = unattached_id,
+             .generic_id = generic_id,
+             .index = GenericInstIndex(GenericInstIndex::Declaration, 0),
+             .dependence = ConstantDependence::Template}));
+    return inst_id;
+  }
+};
+
+TEST_F(DominanceSpecificConstantOperandTest, ConstantInSpecificIsExempt) {
+  auto generic_id = AddGeneric(AddBlock({AddConstant()}));
+  auto sym_id = MakeSymbolicInGeneric(generic_id);
+  AddFunction({AddBlock({AddUse(sym_id), AddReturn()})}, generic_id);
+
+  EXPECT_THAT(Verify(), IsEmpty());
+}
+
+TEST_F(DominanceSpecificConstantOperandTest,
+       NonConstantInSpecificRequiresDominance) {
+  // `sym_id` is a symbolic constant in the generic, so using it before its
+  // evaluation passes generic verification, but in the specific it resolves to
+  // a non-constant value, so `GetConstantValueInSpecific` requires its
+  // evaluation to dominate the use.
+  auto generic_id = AddGeneric(AddBlock({AddValue()}));
+  auto sym_id = MakeSymbolicInGeneric(generic_id);
+  AddFunction({AddBlock({AddUse(sym_id), sym_id, AddReturn()})}, generic_id);
+
+  EXPECT_THAT(Verify(), HasSubstr("not dominated by any evaluation"));
+}
+
 }  // namespace
 }  // namespace Carbon::SemIR

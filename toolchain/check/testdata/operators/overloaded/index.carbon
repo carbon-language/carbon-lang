@@ -301,8 +301,9 @@ fn F() {
 // CHECK:STDOUT:       %return.param_patt.loc5_44.1: @IndexWith.WithSelf.At.%pattern_type.loc5_44 (%pattern_type.946) = out_param_pattern [symbolic = %return.param_patt.loc5_44.2 (constants.%return.param_patt)]
 // CHECK:STDOUT:       %return.patt.loc5_41.1: @IndexWith.WithSelf.At.%pattern_type.loc5_44 (%pattern_type.946) = return_slot_pattern %return.param_patt.loc5_44.1, %ElementType.ref [symbolic = %return.patt.loc5_41.2 (constants.%return.patt)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %ElementType.ref: type = name_ref ElementType, @IndexWith.%ElementType.loc4_53.2 [symbolic = %ElementType (constants.%ElementType)]
-// CHECK:STDOUT:       %.loc5_44.2: Core.Form = init_form %ElementType.ref [symbolic = %.loc5_44.1 (constants.%.822)]
+// CHECK:STDOUT:       %.loc5_44.2: type = specific_constant @IndexWith.%ElementType.loc4_53.2, @IndexWith(constants.%SubscriptType, constants.%ElementType) [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:       %ElementType.ref: type = name_ref ElementType, %.loc5_44.2 [symbolic = %ElementType (constants.%ElementType)]
+// CHECK:STDOUT:       %.loc5_44.3: Core.Form = init_form %ElementType.ref [symbolic = %.loc5_44.1 (constants.%.822)]
 // CHECK:STDOUT:       %self.param: @IndexWith.WithSelf.At.%Self.as_type.loc5_9.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_9.1: type = splice_block %.loc5_9.3 [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:         %.loc5_9.2: @IndexWith.WithSelf.At.%IndexWith.type (%IndexWith.type.a54) = specific_constant @IndexWith.%Self.loc4_61.1, @IndexWith(constants.%SubscriptType, constants.%ElementType) [symbolic = %Self (constants.%Self)]
@@ -312,7 +313,10 @@ fn F() {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @IndexWith.WithSelf.At.%Self.as_type.loc5_9.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %subscript.param: @IndexWith.WithSelf.At.%SubscriptType (%SubscriptType) = value_param call_param1
-// CHECK:STDOUT:       %SubscriptType.ref: type = name_ref SubscriptType, @IndexWith.%SubscriptType.loc4_34.2 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:       %.loc5_26.1: type = splice_block %SubscriptType.ref [symbolic = %SubscriptType (constants.%SubscriptType)] {
+// CHECK:STDOUT:         %.loc5_26.2: type = specific_constant @IndexWith.%SubscriptType.loc4_34.2, @IndexWith(constants.%SubscriptType, constants.%ElementType) [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:         %SubscriptType.ref: type = name_ref SubscriptType, %.loc5_26.2 [symbolic = %SubscriptType (constants.%SubscriptType)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %subscript: @IndexWith.WithSelf.At.%SubscriptType (%SubscriptType) = wrapper_binding subscript, %subscript.param
 // CHECK:STDOUT:       %return.param: ref @IndexWith.WithSelf.At.%ElementType (%ElementType) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @IndexWith.WithSelf.At.%ElementType (%ElementType) = return_slot %return.param

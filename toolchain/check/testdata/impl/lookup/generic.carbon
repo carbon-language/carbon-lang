@@ -262,7 +262,10 @@ fn G(x: A) {
 // CHECK:STDOUT:       %self.patt.loc9_15.1: @T.as.HasF.impl.F.%pattern_type (%pattern_type.51d) = wrapper_binding_pattern self, %self.param_patt.loc9_15.1 [symbolic = %self.patt.loc9_15.2 (constants.%self.patt.4d9)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @T.as.HasF.impl.F.%T (%T) = value_param call_param0
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @T.as.HasF.impl.%T.ref [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc9_15.1: type = splice_block %Self.ref [symbolic = %T (constants.%T)] {
+// CHECK:STDOUT:         %.loc9_15.2: type = specific_constant @T.as.HasF.impl.%T.ref, @T.as.HasF.impl(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc9_15.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @T.as.HasF.impl.F.%T (%T) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %HasF.impl_witness_table = impl_witness_table (%T.as.HasF.impl.F.decl), @T.as.HasF.impl [concrete]
@@ -576,11 +579,15 @@ fn G(x: A) {
 // CHECK:STDOUT:       %return.param_patt.loc9_18.1: @ptr.as.HasF.impl.F.%pattern_type (%pattern_type.4f4) = out_param_pattern [symbolic = %return.param_patt.loc9_18.2 (constants.%return.param_patt.27f)]
 // CHECK:STDOUT:       %return.patt.loc9_14.1: @ptr.as.HasF.impl.F.%pattern_type (%pattern_type.4f4) = return_slot_pattern %return.param_patt.loc9_18.1, %ptr.loc9_18 [symbolic = %return.patt.loc9_14.2 (constants.%return.patt.d67)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @ptr.as.HasF.impl.%T.loc8_15.2 [symbolic = %T (constants.%T.67d)]
+// CHECK:STDOUT:       %.loc9_17: type = specific_constant @ptr.as.HasF.impl.%T.loc8_15.2, @ptr.as.HasF.impl(constants.%T.67d) [symbolic = %T (constants.%T.67d)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc9_17 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:       %ptr.loc9_18: type = ptr_type %T.ref [symbolic = %ptr.loc9_8 (constants.%ptr.e8f)]
 // CHECK:STDOUT:       %.loc9_18.2: Core.Form = init_form %ptr.loc9_18 [symbolic = %.loc9_18.1 (constants.%.cb6)]
 // CHECK:STDOUT:       %self.param: @ptr.as.HasF.impl.F.%ptr.loc9_8 (%ptr.e8f) = value_param call_param0
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @ptr.as.HasF.impl.%ptr.loc8_24.2 [symbolic = %ptr.loc9_8 (constants.%ptr.e8f)]
+// CHECK:STDOUT:       %.loc9_8.1: type = splice_block %Self.ref [symbolic = %ptr.loc9_8 (constants.%ptr.e8f)] {
+// CHECK:STDOUT:         %.loc9_8.2: type = specific_constant @ptr.as.HasF.impl.%ptr.loc8_24.2, @ptr.as.HasF.impl(constants.%T.67d) [symbolic = %ptr.loc9_8 (constants.%ptr.e8f)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc9_8.2 [symbolic = %ptr.loc9_8 (constants.%ptr.e8f)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @ptr.as.HasF.impl.F.%ptr.loc9_8 (%ptr.e8f) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %return.param: ref @ptr.as.HasF.impl.F.%ptr.loc9_8 (%ptr.e8f) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @ptr.as.HasF.impl.F.%ptr.loc9_8 (%ptr.e8f) = return_slot %return.param
@@ -910,7 +917,10 @@ fn G(x: A) {
 // CHECK:STDOUT:       %self.patt.loc11_15.1: @C.as.HasF.impl.F.%pattern_type (%pattern_type.ebe) = wrapper_binding_pattern self, %self.param_patt.loc11_15.1 [symbolic = %self.patt.loc11_15.2 (constants.%self.patt.f56)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @C.as.HasF.impl.F.%C (%C.1d0) = value_param call_param0
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @C.as.HasF.impl.%C.loc10_26.2 [symbolic = %C (constants.%C.1d0)]
+// CHECK:STDOUT:       %.loc11_15.1: type = splice_block %Self.ref [symbolic = %C (constants.%C.1d0)] {
+// CHECK:STDOUT:         %.loc11_15.2: type = specific_constant @C.as.HasF.impl.%C.loc10_26.2, @C.as.HasF.impl(constants.%T) [symbolic = %C (constants.%C.1d0)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc11_15.2 [symbolic = %C (constants.%C.1d0)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @C.as.HasF.impl.F.%C (%C.1d0) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %HasF.impl_witness_table = impl_witness_table (%C.as.HasF.impl.F.decl), @C.as.HasF.impl [concrete]
@@ -1526,7 +1536,10 @@ fn G(x: A) {
 // CHECK:STDOUT:       %self.patt.loc13_15.1: @T.as.HasF.impl.F.%pattern_type (%pattern_type.51d) = wrapper_binding_pattern self, %self.param_patt.loc13_15.1 [symbolic = %self.patt.loc13_15.2 (constants.%self.patt.4d9)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @T.as.HasF.impl.F.%T (%T) = value_param call_param0
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @T.as.HasF.impl.%T.ref [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc13_15.1: type = splice_block %Self.ref [symbolic = %T (constants.%T)] {
+// CHECK:STDOUT:         %.loc13_15.2: type = specific_constant @T.as.HasF.impl.%T.ref, @T.as.HasF.impl(constants.%T, constants.%U) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc13_15.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @T.as.HasF.impl.F.%T (%T) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %HasF.impl_witness_table = impl_witness_table (), @T.as.HasF.impl [concrete]
@@ -1762,7 +1775,10 @@ fn G(x: A) {
 // CHECK:STDOUT:       %self.patt.loc9_15.1: @T.as.HasF.impl.F.%pattern_type (%pattern_type.51d) = wrapper_binding_pattern self, %self.param_patt.loc9_15.1 [symbolic = %self.patt.loc9_15.2 (constants.%self.patt.4d9)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %self.param: @T.as.HasF.impl.F.%T (%T) = value_param call_param0
-// CHECK:STDOUT:       %Self.ref: type = name_ref Self, @T.as.HasF.impl.%T.ref.loc8_23 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc9_15.1: type = splice_block %Self.ref [symbolic = %T (constants.%T)] {
+// CHECK:STDOUT:         %.loc9_15.2: type = specific_constant @T.as.HasF.impl.%T.ref.loc8_23, @T.as.HasF.impl(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %Self.ref: type = name_ref Self, %.loc9_15.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @T.as.HasF.impl.F.%T (%T) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %HasF.impl_witness_table = impl_witness_table (%T.as.HasF.impl.F.decl), @T.as.HasF.impl [concrete]

@@ -200,10 +200,11 @@ struct WrapInstForSpecificResult {
 };
 
 // Given a potentially generic instruction `inst_id`, this returns an inst ID
-// whose constant value is the same as the substituted constant value of
-// `inst_id` in `specific_id`. If the result is not `inst_id` itself, it will be
-// a newly created inst whose location is `loc_id`. If `specific_id` is `None`,
-// it is treated as the self-specific, so `inst_id` is passed through unchanged.
+// whose type and constant value are the same as the substituted type and
+// constant value of `inst_id` in `specific_id`. If the result is not `inst_id`
+// itself, it will be a newly created inst whose location is `loc_id`. If
+// `specific_id` is `None`, it is treated as the self-specific, so `inst_id` is
+// passed through unchanged.
 //
 // This also returns the type ID of the result, as a convenience for the caller.
 auto WrapInstForSpecific(Context& context, SemIR::LocId loc_id,

@@ -267,7 +267,8 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.as_type.loc5_18.1: type = facet_access_type @J.%Self.loc4_22.1 [symbolic = %Self.as_type.loc5_18.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %I.ref: %I.type.335 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @J.%T.loc4_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc5: type = specific_constant @J.%T.loc4_14.2, @J(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc5 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %I.type.loc5_27.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc5_27.2 (constants.%I.type.3fe)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc5: type = specific_constant @J.WithSelf.Self.as_type.impls.I.type.require.%I.type.loc5_27.1, @J.WithSelf.Self.as_type.impls.I.type.require(constants.%T, constants.%Self.ad7) [symbolic = %I.type (constants.%I.type.3fe)]
@@ -635,7 +636,8 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.as_type.loc5_18.1: type = facet_access_type @J.%Self.loc4_23.1 [symbolic = %Self.as_type.loc5_18.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %I.ref: %I.type.335 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @J.%T.loc4_15.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc5: type = specific_constant @J.%T.loc4_15.2, @J(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc5 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %I.type.loc5_27.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc5_27.2 (constants.%I.type.3fe)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc5: type = specific_constant @J.WithSelf.Self.as_type.impls.I.type.require.%I.type.loc5_27.1, @J.WithSelf.Self.as_type.impls.I.type.require(constants.%T, constants.%Self.22b) [symbolic = %I.type (constants.%I.type.3fe)]
@@ -1031,7 +1033,8 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.as_type.loc15_18.1: type = facet_access_type @N.%Self.loc14_23.1 [symbolic = %Self.as_type.loc15_18.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %I.ref: %I.type.335 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @N.%T.loc14_15.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc15: type = specific_constant @N.%T.loc14_15.2, @N(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc15 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %I.type.loc15_27.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc15_27.2 (constants.%I.type.3fe)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc15: type = specific_constant @N.WithSelf.Self.as_type.impls.I.type.require.%I.type.loc15_27.1, @N.WithSelf.Self.as_type.impls.I.type.require(constants.%T, constants.%Self.22b) [symbolic = %I.type (constants.%I.type.3fe)]
@@ -1727,7 +1730,8 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.as_type.loc10_18.1: type = facet_access_type @N.%Self.loc9_23.1 [symbolic = %Self.as_type.loc10_18.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %I.ref: %I.type.335 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @N.%T.loc9_15.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc10: type = specific_constant @N.%T.loc9_15.2, @N(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc10 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %I.type.loc10_27.1: type = facet_type <@I, @I(constants.%T)> [symbolic = %I.type.loc10_27.2 (constants.%I.type.3fe)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc10: type = specific_constant @N.WithSelf.Self.as_type.impls.I.type.require.%I.type.loc10_27.1, @N.WithSelf.Self.as_type.impls.I.type.require(constants.%T, constants.%Self.22b) [symbolic = %I.type (constants.%I.type.3fe)]
@@ -2274,7 +2278,8 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %Self.as_type.loc8_18.1: type = facet_access_type @N.%Self.loc7_23.1 [symbolic = %Self.as_type.loc8_18.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %J.ref: %J.type.23c = name_ref J, file.%J.decl [concrete = constants.%J.generic]
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @N.%T.loc7_15.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc8: type = specific_constant @N.%T.loc7_15.2, @N(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc8 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %J.type.loc8_27.1: type = facet_type <@J, @J(constants.%T)> [symbolic = %J.type.loc8_27.2 (constants.%J.type.5c8)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.loc8: type = specific_constant @N.WithSelf.Self.as_type.impls.J.type.require.%J.type.loc8_27.1, @N.WithSelf.Self.as_type.impls.J.type.require(constants.%T, constants.%Self.22b) [symbolic = %J.type (constants.%J.type.5c8)]

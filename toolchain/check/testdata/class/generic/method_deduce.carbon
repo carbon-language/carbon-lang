@@ -302,7 +302,8 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:       %return.param_patt.loc19_35.1: @Class.Get.%pattern_type (%pattern_type.eee) = out_param_pattern [symbolic = %return.param_patt.loc19_35.2 (constants.%return.param_patt.a41)]
 // CHECK:STDOUT:       %return.patt.loc19_27.1: @Class.Get.%pattern_type (%pattern_type.eee) = return_slot_pattern %return.param_patt.loc19_35.1, %.loc19_35.4 [symbolic = %return.patt.loc19_27.2 (constants.%return.patt.453)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc18_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc19_31: type = specific_constant @Class.%T.loc18_14.2, @Class(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc19_31 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %U.ref.loc19_34: type = name_ref U, %U.loc19_19.2 [symbolic = %U.loc19_19.1 (constants.%U)]
 // CHECK:STDOUT:       %.loc19_35.3: %tuple.type.693 = tuple_literal (%T.ref, %U.ref.loc19_34) [symbolic = %tuple (constants.%tuple.fa2)]
 // CHECK:STDOUT:       %.loc19_35.4: type = converted %.loc19_35.3, constants.%tuple.type.a5e [symbolic = %tuple.type (constants.%tuple.type.a5e)]
@@ -322,13 +323,17 @@ fn CallMethodSelfDeduce(c: Class(A)) -> A {
 // CHECK:STDOUT:       %return.param_patt.loc20_49.1: @Class.GetNoDeduce.%pattern_type.loc20_49 (%pattern_type.eee) = out_param_pattern [symbolic = %return.param_patt.loc20_49.2 (constants.%return.param_patt.a41)]
 // CHECK:STDOUT:       %return.patt.loc20_41.1: @Class.GetNoDeduce.%pattern_type.loc20_49 (%pattern_type.eee) = return_slot_pattern %return.param_patt.loc20_49.1, %.loc20_49.4 [symbolic = %return.patt.loc20_41.2 (constants.%return.patt.453)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref.loc20_45: type = name_ref T, @Class.%T.loc18_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc20_45: type = specific_constant @Class.%T.loc18_14.2, @Class(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref.loc20_45: type = name_ref T, %.loc20_45 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:       %U.ref.loc20_48: type = name_ref U, %U.loc20_33.2 [symbolic = %U.loc20_33.1 (constants.%U)]
 // CHECK:STDOUT:       %.loc20_49.3: %tuple.type.693 = tuple_literal (%T.ref.loc20_45, %U.ref.loc20_48) [symbolic = %tuple (constants.%tuple.fa2)]
 // CHECK:STDOUT:       %.loc20_49.4: type = converted %.loc20_49.3, constants.%tuple.type.a5e [symbolic = %tuple.type (constants.%tuple.type.a5e)]
 // CHECK:STDOUT:       %.loc20_49.5: Core.Form = init_form %.loc20_49.4 [symbolic = %.loc20_49.2 (constants.%.f18)]
 // CHECK:STDOUT:       %x.param: @Class.GetNoDeduce.%T (%T) = value_param call_param0
-// CHECK:STDOUT:       %T.ref.loc20_21: type = name_ref T, @Class.%T.loc18_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc20_21.1: type = splice_block %T.ref.loc20_21 [symbolic = %T (constants.%T)] {
+// CHECK:STDOUT:         %.loc20_21.2: type = specific_constant @Class.%T.loc18_14.2, @Class(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %T.ref.loc20_21: type = name_ref T, %.loc20_21.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %x: @Class.GetNoDeduce.%T (%T) = wrapper_binding x, %x.param
 // CHECK:STDOUT:       %.loc20_35.1: type = splice_block %.loc20_35.2 [concrete = type] {
 // CHECK:STDOUT:         %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]

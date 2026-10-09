@@ -271,9 +271,10 @@ fn G() {
 // CHECK:STDOUT:       %x.patt.loc8_16.1: @C.as.I.impl.F.loc8_24.1.%pattern_type (%pattern_type.d0f) = wrapper_binding_pattern x, %x.param_patt.loc8_16.1 [symbolic = %x.patt.loc8_16.2 (constants.%x.patt.bce)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @C.as.I.impl.F.loc8_24.1.%C.loc8_21.1 (%C.6b1ed7.2) = value_param call_param0
-// CHECK:STDOUT:       %.loc8: type = splice_block %C.loc8_21.2 [symbolic = %C.loc8_21.1 (constants.%C.6b1ed7.2)] {
+// CHECK:STDOUT:       %.loc8_21: type = splice_block %C.loc8_21.2 [symbolic = %C.loc8_21.1 (constants.%C.6b1ed7.2)] {
 // CHECK:STDOUT:         %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
-// CHECK:STDOUT:         %Y.ref: %empty_tuple.type = name_ref Y, @C.as.I.impl.%Y.loc7_15.2 [symbolic = %Y (constants.%Y)]
+// CHECK:STDOUT:         %.loc8_20: %empty_tuple.type = specific_constant @C.as.I.impl.%Y.loc7_15.2, @C.as.I.impl(constants.%Y) [symbolic = %Y (constants.%Y)]
+// CHECK:STDOUT:         %Y.ref: %empty_tuple.type = name_ref Y, %.loc8_20 [symbolic = %Y (constants.%Y)]
 // CHECK:STDOUT:         %C.loc8_21.2: type = class_type @C, @C(constants.%Y) [symbolic = %C.loc8_21.1 (constants.%C.6b1ed7.2)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %x: @C.as.I.impl.F.loc8_24.1.%C.loc8_21.1 (%C.6b1ed7.2) = wrapper_binding x, %x.param
