@@ -204,13 +204,18 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
           .pattern_block_id = pattern_block_id};
 }
 
+struct BuildImplDeclResult {
+  SemIR::ImplId impl_id;
+  SemIR::InstId impl_decl_id;
+  SemIR::TypeInstId full_constraint_type_inst_id;
+  SemIR::IdentifiedFacetTypeId identified_id;
+};
+
 // Build an ImplDecl describing the signature of an impl. This handles the
 // common logic shared by impl forward declarations and impl definitions. It
 // also sets the `definition_id` on the Impl structure.
 static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
-                          bool has_definition)
-    -> std::tuple<SemIR::ImplId, SemIR::InstId, SemIR::TypeInstId,
-                  SemIR::IdentifiedFacetTypeId> {
+                          bool has_definition) -> BuildImplDeclResult {
   auto [constraint_node, constraint_id] =
       context.node_stack().PopExprWithNodeId();
   auto [self_type_node, self_type_inst_id] =
