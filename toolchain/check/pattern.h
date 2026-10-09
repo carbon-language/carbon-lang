@@ -111,8 +111,8 @@ auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
 auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                      SemIR::NameId name_id,
                      SemIR::ExprRegionId type_expr_region_id,
-                     SemIR::TypeId type_id, ParamPatternKind kind)
-    -> SemIR::InstId;
+                     SemIR::TypeId type_id, ParamPatternKind kind,
+                     SemIR::InstId default_value_expr_id) -> SemIR::InstId;
 
 }  // namespace Carbon::Check
 

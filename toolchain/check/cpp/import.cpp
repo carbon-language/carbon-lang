@@ -1579,7 +1579,7 @@ static auto MakeParamPattern(
   }
 
   return {AddParamPattern(context, param_loc_id, name_id, type_expr_region_id,
-                          type_id, param_info.kind),
+                          type_id, param_info.kind, SemIR::InstId::None),
           type_inst_id};
 }
 

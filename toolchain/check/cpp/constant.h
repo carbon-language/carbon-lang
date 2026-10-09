@@ -27,6 +27,10 @@ auto MapConstantToAPValue(Context& context, SemIR::InstId const_inst_id,
                           clang::QualType param_type)
     -> std::optional<clang::APValue>;
 
+// Converts a Carbon constant instruction to an `Expr*`.
+auto ConvertArgToExpr(Context& context, SemIR::InstId arg_inst_id,
+                      clang::QualType param_type) -> clang::Expr*;
+
 // Attempt to evaluate a C++ constexpr variable as a Carbon constant.
 auto EvalCppVarDecl(Context& context, SemIR::LocId loc_id,
                     const clang::VarDecl* var_decl, SemIR::TypeId type_id)
