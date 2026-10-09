@@ -15,6 +15,12 @@ fn PrintStr(msg: str) {
     ++i;
   }
 }
-
+fn PrintBool(x: bool) {
+  if (x) {
+    PrintStr("true");
+  } else {
+    PrintStr("false");
+  }
+}
 // TODO: Change this to a global constant once they are fully supported.
 fn EOF() -> i32 { return -1; }
