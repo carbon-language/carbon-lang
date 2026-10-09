@@ -228,15 +228,16 @@ static auto GetRequiredImplsFromConstraint(
     SemIR::ConstantId query_self_const_id,
     SemIR::ConstantId query_facet_type_const_id, bool diagnose)
     -> std::optional<llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl>> {
-  auto facet_type_inst_id =
-      context.types().GetTypeInstIdForTypeConstantId(query_facet_type_const_id);
   auto identified_id = RequireIdentifiedFacetType(
-      context, loc_id, query_self_const_id, facet_type_inst_id,
+      context, loc_id, query_self_const_id,
+      context.types().GetTypeIdForTypeConstantId(query_facet_type_const_id),
       [&](auto& builder) {
         CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Context,
-                          "facet type {0} can not be identified", InstIdAsType);
+                          "facet type {0} can not be identified",
+                          SemIR::TypeId);
         builder.Context(loc_id, ImplLookupInUnidentifiedFacetType,
-                        facet_type_inst_id);
+                        context.types().GetTypeIdForTypeConstantId(
+                            query_facet_type_const_id));
       },
       diagnose);
   if (!identified_id.has_value()) {
@@ -372,8 +373,7 @@ static auto CollectFacetWitnessSources(
           context.impl_lookup_no_symbolic_final_lookups();
       ++no_symbolic_final_lookups;
       auto identified_id = TryToIdentifyFacetType(
-          context, loc_id, facet_const_id,
-          context.types().GetTypeInstId(type_id), allow_partially_identified);
+          context, loc_id, facet_const_id, type_id, allow_partially_identified);
       --no_symbolic_final_lookups;
 
       if (identified_id.has_value()) {
@@ -452,7 +452,7 @@ static auto CollectFacetWitnessSources(
       // always have a FacetType in `facet_type_const_id`.
       auto identified_id = TryToIdentifyFacetType(
           context, loc_id, canon_self_const_id,
-          context.types().GetTypeInstIdForTypeConstantId(facet_type_const_id),
+          context.types().GetTypeIdForTypeConstantId(facet_type_const_id),
           /*allow_partially_identified=*/true);
       if (identified_id.has_value()) {
         witnesses.push_back({.facet_const_id = canon_self_const_id,
@@ -1353,14 +1353,12 @@ auto MakeWitnessesForPeriodSelfTypeWithoutLookup(Context& context,
       context.constant_values().GetInst(period_self).type_id();
 
   auto identified_period_self_type_id = RequireIdentifiedFacetType(
-      context, loc_id, facet_value,
-      context.types().GetTypeInstId(period_self_type_id),
-      [&](auto& /*builder*/) {
-        // The facet type of `.Self` may refer to generic interfaces that use
-        // `.Self` in their arguments. And when `.Self` is replaced by
-        // `facet_value`, we may fail with a monomorphization error. We pass it
-        // along without adding additional context.
-      });
+      context, loc_id, facet_value, period_self_type_id,
+      // The facet type of `.Self` may refer to generic interfaces that use
+      // `.Self` in their arguments. And when `.Self` is replaced by
+      // `facet_value`, we may fail with a monomorphization error. We pass it
+      // along without adding additional context.
+      [&](auto& /*builder*/) {});
   if (!identified_period_self_type_id.has_value()) {
     return SemIR::InstBlockIdOrError::MakeError();
   }

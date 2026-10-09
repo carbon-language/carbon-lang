@@ -454,6 +454,9 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
          .specific_id = self_specific_id});
   }
 
+  // An `impl as` statement has exactly one extended interface, and the rewrites
+  // in the IdentifiedFacetType only contains rewrites into extended interfaces.
+  // So we don't need to filter them any further here.
   for (auto rewrite : identified.rewrites()) {
     auto access = context.constant_values().GetInstAs<SemIR::ImplWitnessAccess>(
         rewrite.lhs);
@@ -833,7 +836,9 @@ static auto SubstImplSelfWitnesses(Context& context, SemIR::LocId loc_id,
 
 auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                                 SemIR::Impl& impl,
-                                SemIR::TypeInstId full_constraint_id) -> void {
+                                SemIR::TypeInstId full_constraint_id,
+                                SemIR::IdentifiedFacetTypeId identified_id)
+    -> void {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
   }
@@ -849,28 +854,10 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
   auto self_const_id =
       GetCanonicalFacet(context, context.constant_values().Get(impl.self_id));
 
-  // We already identified the `impl.self_id` as the canonical
-  // `full_constraint_id`, so this should just be a cache lookup and can't fail.
-  //
-  // This is critical because the identification constructs specifics in named
-  // constraints which may refer back to the impl itself through access of an
-  // associated constant. Those references back to the impl need to be
-  // represented as `ImplSelfWitness` which can only be done inside the impl
-  // declaration. It is too late to form those specifics here, we need to find
-  // the specifics formed during the impl declaration.
-  //
-  // TODO: Consider a function that just forms the key and returns the ID for an
-  // already-identified facet type? Or plumb through the IdentifiedFacetType?
-  auto identified_id = TryToIdentifyFacetType(
-      context, loc_id, context.constant_values().Get(impl.self_id),
-      context.constant_values().GetConstantTypeInstId(
-          context.types().GetAsTypeInstId(full_constraint_id)),
-      /*allow_partially_identified=*/false);
-  CARBON_CHECK(identified_id.has_value());
   const auto& identified = context.identified_facet_types().Get(identified_id);
   for (auto req : identified.required_impls()) {
     if (req.self_facet_value == self_const_id &&
-        req.specific_interface == identified.impl_as_target_interface()) {
+        req.specific_interface == impl.interface) {
       // This is what the impl is implementing, so it's not already satisfied.
       continue;
     }
@@ -1002,21 +989,18 @@ auto CheckConstraintIsFacetType(Context& context, SemIR::LocId loc_id,
 
 auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
-                                SemIR::TypeInstId constraint_id)
+                                SemIR::TypeInstId full_constraint_id)
     -> SemIR::IdentifiedFacetTypeId {
-  auto canon_constraint_id =
-      context.constant_values().GetConstantTypeInstId(constraint_id);
-  if (canon_constraint_id == SemIR::ErrorInst::TypeInstId) {
-    return SemIR::IdentifiedFacetTypeId::None;
-  }
   auto identified_id = RequireIdentifiedFacetType(
-      context, SemIR::LocId(constraint_id),
-      context.constant_values().Get(self_id), canon_constraint_id,
+      context, SemIR::LocId(full_constraint_id),
+      context.constant_values().Get(self_id),
+      context.types().GetTypeIdForTypeInstId(full_constraint_id),
       [&](auto& builder) {
         CARBON_DIAGNOSTIC(ImplOfUnidentifiedFacetType, Context,
                           "facet type {0} cannot be identified in `impl as`",
                           InstIdAsType);
-        builder.Context(loc_id, ImplOfUnidentifiedFacetType, constraint_id);
+        builder.Context(loc_id, ImplOfUnidentifiedFacetType,
+                        full_constraint_id);
       });
   if (!identified_id.has_value()) {
     return SemIR::IdentifiedFacetTypeId::None;
