@@ -86,6 +86,52 @@ fn F(c: C) ->? form(val C) {
   return c;
 }
 
+// --- ref_return_class.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+
+fn F() -> ref C;
+
+fn G() {
+  F();
+}
+
+// --- val_return_class.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+
+fn F() ->? form(val C);
+
+fn G() {
+  F();
+}
+
+// --- ref_return_class_generic.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+
+interface I {
+  fn F(self) -> ref C;
+}
+
+fn G[T: I](x: T) {
+  x.F();
+}
+
+class D {
+  var p: C*;
+  impl as I {
+    fn F(self) -> ref C { return *self.p; }
+  }
+}
+
+fn H(d: D) {
+  G(d);
+}
+
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'ref_form_param.carbon'
 // CHECK:STDOUT: source_filename = "ref_form_param.carbon"
@@ -383,4 +429,116 @@ fn F(c: C) ->? form(val C) {
 // CHECK:STDOUT: !98 = !DILocalVariable(arg: 1, scope: !97, type: !53)
 // CHECK:STDOUT: !103 = !DILocation(line: 7, column: 3, scope: !97)
 // CHECK:STDOUT: !104 = !{!98}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
+// CHECK:STDOUT: ; ModuleID = 'ref_return_class.carbon'
+// CHECK:STDOUT: source_filename = "ref_return_class.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare ptr @_CF.Main()
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !107 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %F.call = call ptr @_CF.Main(), !dbg !108
+// CHECK:STDOUT:   ret void, !dbg !109
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.dbg.cu = !{!106}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !23 = !{null}
+// CHECK:STDOUT: !24 = !DISubroutineType(types: !23)
+// CHECK:STDOUT: !105 = !DIFile(filename: "ref_return_class.carbon", directory: "")
+// CHECK:STDOUT: !106 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !105, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !107 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !105, line: 7, type: !24, spFlags: DISPFlagDefinition, unit: !106)
+// CHECK:STDOUT: !108 = !DILocation(line: 8, column: 3, scope: !107)
+// CHECK:STDOUT: !109 = !DILocation(line: 7, column: 1, scope: !107)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
+// CHECK:STDOUT: ; ModuleID = 'val_return_class.carbon'
+// CHECK:STDOUT: source_filename = "val_return_class.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare ptr @_CF.Main()
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !112 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %F.call = call ptr @_CF.Main(), !dbg !113
+// CHECK:STDOUT:   ret void, !dbg !114
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.dbg.cu = !{!111}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !23 = !{null}
+// CHECK:STDOUT: !24 = !DISubroutineType(types: !23)
+// CHECK:STDOUT: !110 = !DIFile(filename: "val_return_class.carbon", directory: "")
+// CHECK:STDOUT: !111 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !110, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !112 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !110, line: 7, type: !24, spFlags: DISPFlagDefinition, unit: !111)
+// CHECK:STDOUT: !113 = !DILocation(line: 8, column: 3, scope: !112)
+// CHECK:STDOUT: !114 = !DILocation(line: 7, column: 1, scope: !112)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
+// CHECK:STDOUT: ; ModuleID = 'ref_return_class_generic.carbon'
+// CHECK:STDOUT: source_filename = "ref_return_class_generic.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define ptr @"_CF.D.Main:I.Main"(ptr %self) #0 !dbg !119 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc16_39.1.p = getelementptr inbounds nuw { ptr }, ptr %self, i32 0, i32 0, !dbg !124
+// CHECK:STDOUT:   %.loc16_39.2 = load ptr, ptr %.loc16_39.1.p, align 8, !dbg !124
+// CHECK:STDOUT:   ret ptr %.loc16_39.2, !dbg !126
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define void @_CH.Main(ptr %d) #0 !dbg !128 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   call void @_CG.Main.c3fdce5fe96ec8d5(ptr %d), !dbg !132
+// CHECK:STDOUT:   ret void, !dbg !133
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CG.Main.c3fdce5fe96ec8d5(ptr %x) #0 !dbg !135 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %I.WithSelf.F.call = call ptr @"_CF.D.Main:I.Main"(ptr %x), !dbg !138
+// CHECK:STDOUT:   ret void, !dbg !139
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.dbg.cu = !{!116}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !53 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !95 = !{!53, !53}
+// CHECK:STDOUT: !96 = !DISubroutineType(types: !95)
+// CHECK:STDOUT: !115 = !DIFile(filename: "ref_return_class_generic.carbon", directory: "")
+// CHECK:STDOUT: !116 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !115, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !117 = !{null, !53}
+// CHECK:STDOUT: !118 = !DISubroutineType(types: !117)
+// CHECK:STDOUT: !119 = distinct !DISubprogram(name: "F", linkageName: "_CF.D.Main:I.Main", scope: null, file: !115, line: 16, type: !96, spFlags: DISPFlagDefinition, unit: !116, retainedNodes: !127)
+// CHECK:STDOUT: !120 = !DILocalVariable(arg: 1, scope: !119, type: !53)
+// CHECK:STDOUT: !124 = !DILocation(line: 16, column: 35, scope: !119)
+// CHECK:STDOUT: !126 = !DILocation(line: 16, column: 27, scope: !119)
+// CHECK:STDOUT: !127 = !{!120}
+// CHECK:STDOUT: !128 = distinct !DISubprogram(name: "H", linkageName: "_CH.Main", scope: null, file: !115, line: 20, type: !118, spFlags: DISPFlagDefinition, unit: !116, retainedNodes: !134)
+// CHECK:STDOUT: !129 = !DILocalVariable(arg: 1, scope: !128, type: !53)
+// CHECK:STDOUT: !132 = !DILocation(line: 21, column: 3, scope: !128)
+// CHECK:STDOUT: !133 = !DILocation(line: 20, column: 1, scope: !128)
+// CHECK:STDOUT: !134 = !{!129}
+// CHECK:STDOUT: !135 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main.c3fdce5fe96ec8d5", scope: null, file: !115, line: 9, type: !118, spFlags: DISPFlagDefinition, unit: !116, retainedNodes: !140)
+// CHECK:STDOUT: !136 = !DILocalVariable(arg: 1, scope: !135, type: !53)
+// CHECK:STDOUT: !138 = !DILocation(line: 10, column: 3, scope: !135)
+// CHECK:STDOUT: !139 = !DILocation(line: 9, column: 1, scope: !135)
+// CHECK:STDOUT: !140 = !{!136}
 // CHECK:STDOUT:
