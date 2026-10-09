@@ -36,7 +36,7 @@ class FactoryIsMethod {
 
 inline Cpp '''
 void CallFactoryIsMethod() {
-  // CHECK:STDERR: fail_factory_is_method.carbon:[[@LINE+13]]:27: error: no matching constructor for initialization of 'Carbon::FactoryIsMethod' [CppInteropParseError]
+  // CHECK:STDERR: fail_factory_is_method.carbon:[[@LINE+13]]:27: error: no matching constructor for initialization of 'Carbon::FactoryIsMethod' (aka 'Carbon::Main::FactoryIsMethod') [CppInteropParseError]
   // CHECK:STDERR:    24 |   Carbon::FactoryIsMethod a(42);
   // CHECK:STDERR:       |                           ^ ~~
   // CHECK:STDERR: fail_factory_is_method.carbon:[[@LINE-9]]:23: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const FactoryIsMethod' for 1st argument [CppInteropParseNote]
@@ -64,7 +64,7 @@ class FactoryDoesntReturnSelf {
 
 inline Cpp '''
 void CallFactoryDoesntReturnSelf() {
-  // CHECK:STDERR: fail_factory_doesnt_return_self.carbon:[[@LINE+13]]:35: error: no matching constructor for initialization of 'Carbon::FactoryDoesntReturnSelf' [CppInteropParseError]
+  // CHECK:STDERR: fail_factory_doesnt_return_self.carbon:[[@LINE+13]]:35: error: no matching constructor for initialization of 'Carbon::FactoryDoesntReturnSelf' (aka 'Carbon::Main::FactoryDoesntReturnSelf') [CppInteropParseError]
   // CHECK:STDERR:    24 |   Carbon::FactoryDoesntReturnSelf a(42);
   // CHECK:STDERR:       |                                   ^ ~~
   // CHECK:STDERR: fail_factory_doesnt_return_self.carbon:[[@LINE-9]]:31: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const FactoryDoesntReturnSelf' for 1st argument [CppInteropParseNote]
@@ -92,7 +92,7 @@ class FactoryReturnsByRef {
 
 inline Cpp '''
 void CallFactoryReturnsByRef() {
-  // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE+13]]:31: error: no matching constructor for initialization of 'Carbon::FactoryReturnsByRef' [CppInteropParseError]
+  // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE+13]]:31: error: no matching constructor for initialization of 'Carbon::FactoryReturnsByRef' (aka 'Carbon::Main::FactoryReturnsByRef') [CppInteropParseError]
   // CHECK:STDERR:    24 |   Carbon::FactoryReturnsByRef a(42);
   // CHECK:STDERR:       |                               ^ ~~
   // CHECK:STDERR: fail_factory_returns_by_ref.carbon:[[@LINE-9]]:27: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const FactoryReturnsByRef' for 1st argument [CppInteropParseNote]
@@ -126,7 +126,7 @@ class GenericConstructor {
 
 inline Cpp '''
 void CallGenericConstructor() {
-  // CHECK:STDERR: fail_todo_call_generic_constructor.carbon:[[@LINE+13]]:30: error: no matching constructor for initialization of 'Carbon::GenericConstructor' [CppInteropParseError]
+  // CHECK:STDERR: fail_todo_call_generic_constructor.carbon:[[@LINE+13]]:30: error: no matching constructor for initialization of 'Carbon::GenericConstructor' (aka 'Carbon::Main::GenericConstructor') [CppInteropParseError]
   // CHECK:STDERR:    30 |   Carbon::GenericConstructor b(0);
   // CHECK:STDERR:       |                              ^ ~
   // CHECK:STDERR: fail_todo_call_generic_constructor.carbon:[[@LINE-15]]:26: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'int' to 'const GenericConstructor' for 1st argument [CppInteropParseNote]

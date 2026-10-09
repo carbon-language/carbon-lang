@@ -14,6 +14,7 @@
 // CHECK:STDOUT: TranslationUnitDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc>
 // CHECK:STDOUT: |-EmptyDecl {{0x[a-f0-9]+}} <<carbon Cpp imports>:1:1> col:1
 // CHECK:STDOUT: |-NamespaceDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> referenced Carbon external-linkage
+// CHECK:STDOUT: | `-NamespaceDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> Main external-linkage
 
 // --- thunk_with_args_and_return.carbon
 
@@ -22,23 +23,23 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 fn F(i: i32) -> i32 {
-// CHECK:STDOUT: | `-FunctionDecl {{0x[a-f0-9]+}} <thunk_with_args_and_return.carbon:[[@LINE-1]]:21> col:21 used F 'int (int)' inline internal-linkage
-// CHECK:STDOUT: |   |-ParmVarDecl {{0x[a-f0-9]+}} <col:21> col:21 used 'int'
-// CHECK:STDOUT: |   |-CompoundStmt {{0x[a-f0-9]+}} <col:21>
-// CHECK:STDOUT: |   | |-DeclStmt {{0x[a-f0-9]+}} <col:21>
-// CHECK:STDOUT: |   | | `-VarDecl {{0x[a-f0-9]+}} <col:21> col:21 used return_storage 'int' nrvo
-// CHECK:STDOUT: |   | |-CallExpr {{0x[a-f0-9]+}} <col:21> 'void'
-// CHECK:STDOUT: |   | | |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:21> 'void (*)(const int &, const int &)' <FunctionToPointerDecay>
-// CHECK:STDOUT: |   | | | `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'void (const int &, const int &)' Function {{0x[a-f0-9]+}} 'F__carbon_thunk' 'void (const int &, const int &)'
-// CHECK:STDOUT: |   | | |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:21> 'const int' lvalue <NoOp>
-// CHECK:STDOUT: |   | | | `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'int' lvalue ParmVar {{0x[a-f0-9]+}} depth 0 index 0 'int'
-// CHECK:STDOUT: |   | | `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:21> 'const int' lvalue <NoOp>
-// CHECK:STDOUT: |   | |   `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'int' lvalue Var {{0x[a-f0-9]+}} 'return_storage' 'int'
-// CHECK:STDOUT: |   | `-ReturnStmt {{0x[a-f0-9]+}} <col:21> nrvo_candidate(Var {{0x[a-f0-9]+}} 'return_storage' 'int')
-// CHECK:STDOUT: |   |   `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:21> 'int' <LValueToRValue>
-// CHECK:STDOUT: |   |     `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'int' lvalue Var {{0x[a-f0-9]+}} 'return_storage' 'int'
-// CHECK:STDOUT: |   |-AlwaysInlineAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit always_inline
-// CHECK:STDOUT: |   `-InternalLinkageAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit
+// CHECK:STDOUT: |   `-FunctionDecl {{0x[a-f0-9]+}} <thunk_with_args_and_return.carbon:[[@LINE-1]]:21> col:21 used F 'int (int)' inline internal-linkage
+// CHECK:STDOUT: |     |-ParmVarDecl {{0x[a-f0-9]+}} <col:21> col:21 used 'int'
+// CHECK:STDOUT: |     |-CompoundStmt {{0x[a-f0-9]+}} <col:21>
+// CHECK:STDOUT: |     | |-DeclStmt {{0x[a-f0-9]+}} <col:21>
+// CHECK:STDOUT: |     | | `-VarDecl {{0x[a-f0-9]+}} <col:21> col:21 used return_storage 'int' nrvo
+// CHECK:STDOUT: |     | |-CallExpr {{0x[a-f0-9]+}} <col:21> 'void'
+// CHECK:STDOUT: |     | | |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:21> 'void (*)(const int &, const int &)' <FunctionToPointerDecay>
+// CHECK:STDOUT: |     | | | `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'void (const int &, const int &)' Function {{0x[a-f0-9]+}} 'F__carbon_thunk' 'void (const int &, const int &)'
+// CHECK:STDOUT: |     | | |-ImplicitCastExpr {{0x[a-f0-9]+}} <col:21> 'const int' lvalue <NoOp>
+// CHECK:STDOUT: |     | | | `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'int' lvalue ParmVar {{0x[a-f0-9]+}} depth 0 index 0 'int'
+// CHECK:STDOUT: |     | | `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:21> 'const int' lvalue <NoOp>
+// CHECK:STDOUT: |     | |   `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'int' lvalue Var {{0x[a-f0-9]+}} 'return_storage' 'int'
+// CHECK:STDOUT: |     | `-ReturnStmt {{0x[a-f0-9]+}} <col:21> nrvo_candidate(Var {{0x[a-f0-9]+}} 'return_storage' 'int')
+// CHECK:STDOUT: |     |   `-ImplicitCastExpr {{0x[a-f0-9]+}} <col:21> 'int' <LValueToRValue>
+// CHECK:STDOUT: |     |     `-DeclRefExpr {{0x[a-f0-9]+}} <col:21> 'int' lvalue Var {{0x[a-f0-9]+}} 'return_storage' 'int'
+// CHECK:STDOUT: |     |-AlwaysInlineAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit always_inline
+// CHECK:STDOUT: |     `-InternalLinkageAttr {{0x[a-f0-9]+}} <<invalid sloc>> Implicit
 // CHECK:STDOUT: |-FunctionDecl {{0x[a-f0-9]+}} <line:39:1, line:41:1> line:39:5 in thunk_with_args_and_return.carbon hidden G 'int (int)' external-linkage
 // CHECK:STDOUT: | |-ParmVarDecl {{0x[a-f0-9]+}} <col:7, col:11> col:11 in thunk_with_args_and_return.carbon hidden used i 'int'
 // CHECK:STDOUT: | `-CompoundStmt {{0x[a-f0-9]+}} <col:14, line:41:1>

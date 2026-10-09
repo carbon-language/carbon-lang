@@ -113,7 +113,7 @@ class RefMethodConstLValueClass {
 
 inline Cpp '''
 void RefMethodConstLValue(const Carbon::RefMethodConstLValueClass& c) {
-  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE+7]]:3: error: 'this' argument to member function 'M' has type 'const Carbon::RefMethodConstLValueClass', but function is not marked const [CppInteropParseError]
+  // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE+7]]:3: error: 'this' argument to member function 'M' has type 'const Carbon::RefMethodConstLValueClass' (aka 'const Carbon::Main::RefMethodConstLValueClass'), but function is not marked const [CppInteropParseError]
   // CHECK:STDERR:    17 |   c.M();
   // CHECK:STDERR:       |   ^
   // CHECK:STDERR: fail_ref_method_const_lvalue.carbon:[[@LINE-8]]:17: note: 'M' declared here [CppInteropParseNote]

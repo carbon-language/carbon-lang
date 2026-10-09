@@ -55,41 +55,41 @@ void delete_new_Base() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon5FinalC2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main5FinalC2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon5FinalD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main5FinalD2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon4BaseC2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main4BaseC2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon5FinalD0Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main5FinalD0Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon4BaseD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main4BaseD2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon4BaseD0Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main4BaseD0Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN1AC2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTVN6Carbon5FinalE = comdat any
+// CHECK:STDOUT: $_ZTVN6Carbon4Main5FinalE = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTVN6Carbon4BaseE = comdat any
+// CHECK:STDOUT: $_ZTVN6Carbon4Main4BaseE = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTIN6Carbon5FinalE = comdat any
+// CHECK:STDOUT: $_ZTIN6Carbon4Main5FinalE = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTSN6Carbon5FinalE = comdat any
+// CHECK:STDOUT: $_ZTSN6Carbon4Main5FinalE = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTIN6Carbon4BaseE = comdat any
+// CHECK:STDOUT: $_ZTIN6Carbon4Main4BaseE = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTSN6Carbon4BaseE = comdat any
+// CHECK:STDOUT: $_ZTSN6Carbon4Main4BaseE = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_ZTV1A = available_externally constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTI1A, ptr @__cxa_pure_virtual, ptr @__cxa_pure_virtual, ptr @_ZNK1A1FEv] }, align 8
-// CHECK:STDOUT: @_ZTVN6Carbon5FinalE = linkonce_odr dso_local constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTIN6Carbon5FinalE, ptr @_ZN6Carbon5FinalD2Ev, ptr @_ZN6Carbon5FinalD0Ev, ptr @_ZNK6Carbon5Final1FEv] }, comdat, align 8
-// CHECK:STDOUT: @_ZTVN6Carbon4BaseE = linkonce_odr dso_local constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTIN6Carbon4BaseE, ptr @_ZN6Carbon4BaseD2Ev, ptr @_ZN6Carbon4BaseD0Ev, ptr @_ZNK6Carbon4Base1FEv] }, comdat, align 8
+// CHECK:STDOUT: @_ZTVN6Carbon4Main5FinalE = linkonce_odr dso_local constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTIN6Carbon4Main5FinalE, ptr @_ZN6Carbon4Main5FinalD2Ev, ptr @_ZN6Carbon4Main5FinalD0Ev, ptr @_ZNK6Carbon4Main5Final1FEv] }, comdat, align 8
+// CHECK:STDOUT: @_ZTVN6Carbon4Main4BaseE = linkonce_odr dso_local constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTIN6Carbon4Main4BaseE, ptr @_ZN6Carbon4Main4BaseD2Ev, ptr @_ZN6Carbon4Main4BaseD0Ev, ptr @_ZNK6Carbon4Main4Base1FEv] }, comdat, align 8
 // CHECK:STDOUT: @_ZTI1A = external constant ptr
-// CHECK:STDOUT: @_ZTIN6Carbon5FinalE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon5FinalE, ptr @_ZTI1A }, comdat, align 8
+// CHECK:STDOUT: @_ZTIN6Carbon4Main5FinalE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon4Main5FinalE, ptr @_ZTI1A }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv120__si_class_type_infoE = external global [0 x ptr]
-// CHECK:STDOUT: @_ZTSN6Carbon5FinalE = linkonce_odr dso_local constant [16 x i8] c"N6Carbon5FinalE\00", comdat, align 1
-// CHECK:STDOUT: @_ZTIN6Carbon4BaseE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon4BaseE, ptr @_ZTI1A }, comdat, align 8
-// CHECK:STDOUT: @_ZTSN6Carbon4BaseE = linkonce_odr dso_local constant [15 x i8] c"N6Carbon4BaseE\00", comdat, align 1
+// CHECK:STDOUT: @_ZTSN6Carbon4Main5FinalE = linkonce_odr dso_local constant [21 x i8] c"N6Carbon4Main5FinalE\00", comdat, align 1
+// CHECK:STDOUT: @_ZTIN6Carbon4Main4BaseE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon4Main4BaseE, ptr @_ZTI1A }, comdat, align 8
+// CHECK:STDOUT: @_ZTSN6Carbon4Main4BaseE = linkonce_odr dso_local constant [20 x i8] c"N6Carbon4Main4BaseE\00", comdat, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_Z16delete_new_Finalv() #0 {
@@ -97,14 +97,14 @@ void delete_new_Base() {
 // CHECK:STDOUT:   %p = alloca ptr, align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p) #8
 // CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #10
-// CHECK:STDOUT:   call void @_ZN6Carbon5FinalC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %call) #8
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %call) #8
 // CHECK:STDOUT:   store ptr %call, ptr %p, align 8, !tbaa !4
 // CHECK:STDOUT:   %0 = load ptr, ptr %p, align 8, !tbaa !4
 // CHECK:STDOUT:   %isnull = icmp eq ptr %0, null
 // CHECK:STDOUT:   br i1 %isnull, label %delete.end, label %delete.notnull
 // CHECK:STDOUT:
 // CHECK:STDOUT: delete.notnull:                                   ; preds = %entry
-// CHECK:STDOUT:   call void @_ZN6Carbon5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %0) #8
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %0) #8
 // CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %0, i64 noundef 8) #11
 // CHECK:STDOUT:   br label %delete.end
 // CHECK:STDOUT:
@@ -120,18 +120,18 @@ void delete_new_Base() {
 // CHECK:STDOUT: declare noundef nonnull ptr @_Znwm(i64 noundef) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon5FinalC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main5FinalC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !4
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN1AC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this1) #8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon5FinalE, i64 16), ptr %this1, align 8, !tbaa !8
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon4Main5FinalE, i64 16), ptr %this1, align 8, !tbaa !8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !4
@@ -153,7 +153,7 @@ void delete_new_Base() {
 // CHECK:STDOUT:   %p = alloca ptr, align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %p) #8
 // CHECK:STDOUT:   %call = call noalias noundef nonnull ptr @_Znwm(i64 noundef 8) #10
-// CHECK:STDOUT:   call void @_ZN6Carbon4BaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %call) #8
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main4BaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %call) #8
 // CHECK:STDOUT:   store ptr %call, ptr %p, align 8, !tbaa !6
 // CHECK:STDOUT:   %0 = load ptr, ptr %p, align 8, !tbaa !6
 // CHECK:STDOUT:   %isnull = icmp eq ptr %0, null
@@ -172,13 +172,13 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4BaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main4BaseC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !6
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @_ZN1AC2Ev(ptr noundef nonnull align 8 dereferenceable(8) %this1) #8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon4BaseE, i64 16), ptr %this1, align 8, !tbaa !8
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon4Main4BaseE, i64 16), ptr %this1, align 8, !tbaa !8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -304,18 +304,18 @@ void delete_new_Base() {
 // CHECK:STDOUT: declare void @_ZNK1A1FEv(ptr noundef nonnull align 8 dereferenceable(8)) unnamed_addr #9
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon5FinalD0Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main5FinalD0Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !4
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   call void @_ZN6Carbon5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main5FinalD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
 // CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %this1, i64 noundef 8) #11
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZNK6Carbon5Final1FEv(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #5 align 2 {
+// CHECK:STDOUT: define internal void @_ZNK6Carbon4Main5Final1FEv(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #5 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !4
@@ -325,30 +325,30 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4BaseD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main4BaseD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !6
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon4BaseE, i64 16), ptr %this1, align 8, !tbaa !8
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon4Main4BaseE, i64 16), ptr %this1, align 8, !tbaa !8
 // CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.Base.Main"(ptr noundef nonnull align 8 dereferenceable(8) %this1)
 // CHECK:STDOUT:   call void @_ZN1AD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4BaseD0Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main4BaseD0Ev(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !6
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   call void @_ZN6Carbon4BaseD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main4BaseD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8) %this1) #8
 // CHECK:STDOUT:   call void @_ZdlPvm(ptr noundef %this1, i64 noundef 8) #11
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZNK6Carbon4Base1FEv(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #5 align 2 {
+// CHECK:STDOUT: define internal void @_ZNK6Carbon4Main4Base1FEv(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #5 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !6
@@ -371,9 +371,9 @@ void delete_new_Base() {
 // CHECK:STDOUT: declare void @_ZN1AD2Ev(ptr noundef nonnull align 8 dead_on_return(8) dereferenceable(8)) unnamed_addr #7
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_ZN6Carbon5FinalD2Ev, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN6Carbon4Main5FinalD2Ev, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @__cxa_pure_virtual, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_ZN6Carbon4BaseD2Ev, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN6Carbon4Main4BaseD2Ev, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_ZN1AC2Ev, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_ZN1AD2Ev, { 1, 0 }
 // CHECK:STDOUT:
@@ -397,9 +397,9 @@ void delete_new_Base() {
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
 // CHECK:STDOUT: !2 = !{!"any pointer", !1, i64 0}
-// CHECK:STDOUT: !3 = !{!"p1 _ZTSN6Carbon5FinalE", !2, i64 0}
+// CHECK:STDOUT: !3 = !{!"p1 _ZTSN6Carbon4Main5FinalE", !2, i64 0}
 // CHECK:STDOUT: !4 = !{!3, !3, i64 0}
-// CHECK:STDOUT: !5 = !{!"p1 _ZTSN6Carbon4BaseE", !2, i64 0}
+// CHECK:STDOUT: !5 = !{!"p1 _ZTSN6Carbon4Main4BaseE", !2, i64 0}
 // CHECK:STDOUT: !6 = !{!5, !5, i64 0}
 // CHECK:STDOUT: !7 = !{!"vtable pointer", !0, i64 0}
 // CHECK:STDOUT: !8 = !{!7, !7, i64 0}

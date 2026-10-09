@@ -105,7 +105,7 @@ void CallEnclosingF() {
   // is to test a generic function within an enclosing generic scope.
   //
   Carbon::EnclosingB b;
-  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:5: error: no member named 'MemberF' in 'Carbon::EnclosingA<int>' [CppInteropParseError]
+  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:5: error: no member named 'MemberF' in 'Carbon::Main::EnclosingA<int>' [CppInteropParseError]
   // CHECK:STDERR:    23 |   b.MemberF(1, 2);
   // CHECK:STDERR:       |   ~ ^
   // CHECK:STDERR:

@@ -9,6 +9,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclContextInternals.h"
 #include "clang/AST/Mangle.h"
 #include "clang/Basic/DiagnosticParse.h"
 #include "clang/Basic/FileManager.h"
@@ -271,43 +272,61 @@ auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
         clang::SourceLocation(), identifier, /*PrevDecl=*/nullptr,
         /*Nested=*/false);
     decl_context->addDecl(carbon_cpp_namespace);
-
-    // We provide custom lookup results within this namespace.
-    carbon_cpp_namespace->setHasExternalVisibleStorage();
   }
 
-  // Register this file's package scope as corresponding to the `Carbon`
-  // namespace in C++.
-  // TODO: For mangling purposes, include the package as a sub-namespace.
-  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(carbon_cpp_namespace);
-  auto clang_decl_id = context_->clang_decls().Add(
-      {.key = key, .inst_id = SemIR::Namespace::PackageInstId});
-  context_->name_scopes()
-      .Get(SemIR::NameScopeId::Package)
-      .set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/false);
+  // We provide custom lookup results within this namespace.
+  carbon_cpp_namespace->getPrimaryContext()->setHasExternalVisibleStorage();
+
+  // Create or find the sub-namespace for this file's package, which is used as
+  // the parent `DeclContext` for package-scope entities so that the package
+  // name is included in C++ mangled names.
+  auto& package_scope =
+      context_->name_scopes().Get(SemIR::NameScopeId::Package);
+  auto package_name = context_->names().GetIRBaseName(package_scope.name_id());
+  auto* package_identifier = &ast_context.Idents.get(package_name);
+  auto* package_cpp_namespace = ExportPackageNamespaceToCpp(
+      *context_, carbon_cpp_namespace, package_identifier);
+
+  // Register this file's package scope as corresponding to the package
+  // sub-namespace in C++, and also map the `Carbon` namespace itself to the
+  // package scope so that C++ lookups in `Carbon` find package-scope entities
+  // directly (and do not find the current package name).
+  auto package_key =
+      SemIR::ClangDeclKey::ForNonFunctionDecl(package_cpp_namespace);
+  auto package_clang_decl_id = context_->clang_decls().Add(
+      {.key = package_key, .inst_id = SemIR::Namespace::PackageInstId});
+  package_scope.set_clang_decl_context_id(package_clang_decl_id,
+                                          /*is_cpp_scope=*/false);
+
+  auto carbon_key =
+      SemIR::ClangDeclKey::ForNonFunctionDecl(carbon_cpp_namespace);
+  context_->clang_decls().Add(
+      {.key = carbon_key, .inst_id = SemIR::Namespace::PackageInstId});
 }
 
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
     const clang::DeclContext* /*OriginalDC*/) -> bool {
-  // Find the Carbon declaration corresponding to this Clang declaration.
-  auto* decl = cast<clang::Decl>(
-      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
-  if (isa<clang::FunctionDecl>(decl)) {
-    // Functions don't meaningfully have visible decls, but bail out early since
-    // we can't form a `ClangDeclKey` for a function in the abstract.
+  auto clang_decl = GetCarbonOwnedDecl(decl_context);
+  if (!clang_decl) {
     return false;
   }
-  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
-  auto decl_id = context_->clang_decls().LookupId(key);
-  if (!decl_id.has_value()) {
-    return false;
-  }
-  auto clang_decl = context_->clang_decls().Get(decl_id);
-  if (clang_decl.is_imported) {
-    // This is imported from C++, presumably from a Clang AST file, so it's not
-    // our responsibility to provide its name lookup results.
-    return false;
+
+  auto* primary_context =
+      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext());
+  if (auto* lookup_map = primary_context->getLookupPtr()) {
+    if (auto it = lookup_map->find(decl_name);
+        it != lookup_map->end() && !it->second.isNull()) {
+      // We already exported declarations for this name, and may have been
+      // asked again after `completeVisibleDeclsMap` re-enabled external
+      // visible storage. Mark external lookup complete without re-exporting.
+      //
+      // Note that this only sets that there are no external decls from an AST
+      // file, despite its name. External visible decls already added by other
+      // AST sources, such as this one, are retained.
+      SetNoExternalVisibleDeclsForName(primary_context, decl_name);
+      return true;
+    }
   }
 
   llvm::SmallVector<Check::LookupScope> lookup_scopes;
@@ -316,7 +335,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   // here - completeness should've been checked by clang before this point.
   if (!AppendLookupScopesForConstant(
           *context_, SemIR::LocId::None,
-          context_->constant_values().Get(clang_decl.inst_id),
+          context_->constant_values().Get(clang_decl->inst_id),
           SemIR::ConstantId::None, /*extended_scope=*/false, &lookup_scopes)) {
     return false;
   }
@@ -335,6 +354,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
       break;
     }
     default:
+      SetNoExternalVisibleDeclsForName(primary_context, decl_name);
       return false;
   }
 
@@ -342,18 +362,26 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
 
   // `required=false` so Carbon doesn't diagnose a failure, let Clang diagnose
   // it or even SFINAE.
-  LookupResult result =
-      LookupQualifiedName(*context_, SemIR::LocId::None, name_id, lookup_scopes,
-                          /*required=*/false);
+  LookupResult result = LookupQualifiedName(*context_, GetCurrentCppLocId(),
+                                            name_id, lookup_scopes,
+                                            /*required=*/false);
   if (!result.scope_result.is_found()) {
+    // Avoid caching a negative lookup, as a declaration with this name may be
+    // added in Carbon later.
+    if (auto* lookup_map = primary_context->getLookupPtr()) {
+      if (auto it = lookup_map->find(decl_name);
+          it != lookup_map->end() && it->second.isNull()) {
+        lookup_map->erase(it);
+      }
+    }
     return false;
   }
 
   // Map the found Carbon entity to a Clang NamedDecl.
   CARBON_KIND_SWITCH(MapInstIdToClangDeclOrType(result)) {
-    case CARBON_KIND(clang::NamedDecl* clang_decl): {
-      if (clang_decl) {
-        SetExternalVisibleDeclsForName(decl_context, decl_name, {clang_decl});
+    case CARBON_KIND(clang::NamedDecl* mapped_decl): {
+      if (mapped_decl) {
+        SetExternalVisibleDeclsForName(decl_context, decl_name, {mapped_decl});
         return true;
       } else {
         SetNoExternalVisibleDeclsForName(decl_context, decl_name);

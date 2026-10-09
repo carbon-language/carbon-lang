@@ -469,6 +469,7 @@ cc_library(
     hdrs = ["read_only_ast_source.h"],
     deps = [
         "//toolchain/sem_ir:file",
+        "@llvm-project//clang:ast",
         "@llvm-project//clang:sema",
     ],
 )

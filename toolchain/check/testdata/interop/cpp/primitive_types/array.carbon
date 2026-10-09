@@ -73,10 +73,10 @@ fn F() -> array(C, 5)*;
 
 inline Cpp '''
 void G() {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:33: error: subscript of pointer to incomplete type 'Carbon::C' [CppInteropParseError]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:33: error: subscript of pointer to incomplete type 'Carbon::Main::C' [CppInteropParseError]
   // CHECK:STDERR:    22 |   Carbon::C *p = &(*Carbon::F())[0];
   // CHECK:STDERR:       |                   ~~~~~~~~~~~~~~^
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-9]]:8: note: forward declaration of 'Carbon::C' [CppInteropParseNote]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-9]]:8: note: forward declaration of 'Carbon::Main::C' [CppInteropParseNote]
   // CHECK:STDERR:     9 | class C;
   // CHECK:STDERR:       |        ^
   // CHECK:STDERR:

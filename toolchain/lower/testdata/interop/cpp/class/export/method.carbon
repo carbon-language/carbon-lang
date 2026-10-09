@@ -69,17 +69,17 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::A" = type {}
+// CHECK:STDOUT: %"class.Carbon::Main::A" = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon1AD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main1AD2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_Z5CallFv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ref.tmp = alloca %"class.Carbon::A", align 1
+// CHECK:STDOUT:   %ref.tmp = alloca %"class.Carbon::Main::A", align 1
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #4
-// CHECK:STDOUT:   call void @_ZNK6Carbon1A1FEv(ptr noundef nonnull align 1 %ref.tmp)
-// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 1 %ref.tmp) #4
+// CHECK:STDOUT:   call void @_ZNK6Carbon4Main1A1FEv(ptr noundef nonnull align 1 %ref.tmp)
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %ref.tmp) #4
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -88,7 +88,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZNK6Carbon1A1FEv(ptr noundef nonnull align 1 %this) #2 align 2 {
+// CHECK:STDOUT: define internal void @_ZNK6Carbon4Main1A1FEv(ptr noundef nonnull align 1 %this) #2 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !51
@@ -98,7 +98,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !51
@@ -183,7 +183,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: !47 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !48 = !{!"omnipotent char", !47, i64 0}
 // CHECK:STDOUT: !49 = !{!"any pointer", !48, i64 0}
-// CHECK:STDOUT: !50 = !{!"p1 _ZTSN6Carbon1AE", !49, i64 0}
+// CHECK:STDOUT: !50 = !{!"p1 _ZTSN6Carbon4Main1AE", !49, i64 0}
 // CHECK:STDOUT: !51 = !{!50, !50, i64 0}
 // CHECK:STDOUT: !52 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !53 = !{i32 7, !"PIE Level", i32 2}
@@ -198,17 +198,17 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::ArgsA" = type {}
+// CHECK:STDOUT: %"class.Carbon::Main::ArgsA" = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon5ArgsAD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main5ArgsAD2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local noundef i32 @_Z9CallArgsFv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ref.tmp = alloca %"class.Carbon::ArgsA", align 1
+// CHECK:STDOUT:   %ref.tmp = alloca %"class.Carbon::Main::ArgsA", align 1
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #4
-// CHECK:STDOUT:   %call = call noundef i32 @_ZNK6Carbon5ArgsA1FEi(ptr noundef nonnull align 1 %ref.tmp, i32 noundef 123)
-// CHECK:STDOUT:   call void @_ZN6Carbon5ArgsAD2Ev(ptr noundef nonnull align 1 %ref.tmp) #4
+// CHECK:STDOUT:   %call = call noundef i32 @_ZNK6Carbon4Main5ArgsA1FEi(ptr noundef nonnull align 1 %ref.tmp, i32 noundef 123)
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main5ArgsAD2Ev(ptr noundef nonnull align 1 %ref.tmp) #4
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #4
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
@@ -217,7 +217,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal noundef i32 @_ZNK6Carbon5ArgsA1FEi(ptr noundef nonnull align 1 %this, i32 noundef %0) #2 align 2 {
+// CHECK:STDOUT: define internal noundef i32 @_ZNK6Carbon4Main5ArgsA1FEi(ptr noundef nonnull align 1 %this, i32 noundef %0) #2 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca i32, align 4
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
@@ -231,7 +231,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon5ArgsAD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main5ArgsAD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !102
@@ -344,7 +344,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: !96 = distinct !DISubprogram(name: "CallCallF", linkageName: "_CCallCallF.Main", scope: null, file: !58, line: 18, type: !66, spFlags: DISPFlagDefinition, unit: !59)
 // CHECK:STDOUT: !99 = !DILocation(line: 18, column: 32, scope: !96)
 // CHECK:STDOUT: !100 = !DILocation(line: 18, column: 25, scope: !96)
-// CHECK:STDOUT: !101 = !{!"p1 _ZTSN6Carbon5ArgsAE", !49, i64 0}
+// CHECK:STDOUT: !101 = !{!"p1 _ZTSN6Carbon4Main5ArgsAE", !49, i64 0}
 // CHECK:STDOUT: !102 = !{!101, !101, i64 0}
 // CHECK:STDOUT: !103 = !{!55, !55, i64 0}
 // CHECK:STDOUT:
@@ -357,12 +357,12 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_Z11CallStaticFv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN6Carbon7StaticA1FEv()
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main7StaticA1FEv()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6Carbon7StaticA1FEv() #1 align 2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon4Main7StaticA1FEv() #1 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF__carbon_thunk.StaticA.Main()
 // CHECK:STDOUT:   ret void

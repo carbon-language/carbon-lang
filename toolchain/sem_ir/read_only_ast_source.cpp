@@ -4,9 +4,70 @@
 
 #include "toolchain/sem_ir/read_only_ast_source.h"
 
+#include <optional>
+
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclBase.h"
+#include "clang/AST/DeclContextInternals.h"
+
 namespace Carbon::SemIR {
 
 char ReadOnlyASTSource::id;
+
+auto ReadOnlyASTSource::GetCarbonOwnedDecl(
+    const clang::DeclContext* decl_context) const -> std::optional<ClangDecl> {
+  auto* decl = cast<clang::Decl>(
+      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
+  if (isa<clang::FunctionDecl>(decl)) {
+    // Functions don't meaningfully have visible decls, but bail out early since
+    // we can't form a `ClangDeclKey` for a function in the abstract.
+    return std::nullopt;
+  }
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
+  auto decl_id = sem_ir_.clang_decls().LookupId(key);
+  if (!decl_id.has_value()) {
+    return std::nullopt;
+  }
+  auto clang_decl = sem_ir_.clang_decls().Get(decl_id);
+  if (clang_decl.is_imported) {
+    // This is imported from C++, presumably from a Clang AST file, so it's not
+    // our responsibility to provide its name lookup results.
+    return std::nullopt;
+  }
+  return clang_decl;
+}
+
+auto ReadOnlyASTSource::completeVisibleDeclsMap(
+    const clang::DeclContext* decl_context) -> void {
+  if (!GetCarbonOwnedDecl(decl_context)) {
+    return;
+  }
+
+  // `ASTReader::completeVisibleDeclsMap` unconditionally clears external
+  // visible storage, even for DeclContexts it does not own. Restore it for
+  // Carbon-owned DeclContexts so future lookups continue to query us.
+  auto* primary_context =
+      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext());
+  primary_context->setHasExternalVisibleStorage(true);
+
+  if (auto* lookup_map = primary_context->getLookupPtr();
+      lookup_map && !lookup_map->empty()) {
+    // `setHasExternalVisibleStorage(true)` sets
+    // `NeedToReconcileExternalVisibleStorage`, which would otherwise mark all
+    // already-resolved entries as needing another external lookup. Trigger
+    // reconciliation now and clear `hasExternalDecls` on all existing entries
+    // so we don't re-export or re-diagnose them.
+    //
+    // Note that this only clears out external decls from an AST file, despite
+    // its name. External visible decls already added by other AST sources, such
+    // as this one, are retained.
+    SetNoExternalVisibleDeclsForName(primary_context,
+                                     lookup_map->begin()->first);
+    for (auto& [_, decls] : *lookup_map) {
+      decls.removeExternalDecls();
+    }
+  }
+}
 
 // Get the field offset for each field in a class.
 //
