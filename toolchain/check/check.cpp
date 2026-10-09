@@ -107,28 +107,22 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
   const auto& packaging = unit_info.parse_tree().packaging_decl();
   PackageNameId file_package_id =
       packaging ? packaging->names.package_id : PackageNameId::None;
-  const auto import_key = GetImportKey(unit_info, file_package_id, import);
 
   // True if the import has `Main` as the package name, even if it comes from
   // the file's packaging (diagnostics may differentiate).
-  bool is_explicit_main = import_key.first == MainPackageName;
+  bool is_explicit_main =
+      GetImportKey(unit_info, file_package_id, import).first == MainPackageName;
 
   // Explicit imports need more validation than implicit ones. We try to do
   // these in an order of imports that should be removed, followed by imports
   // that might be valid with syntax fixes.
   if (explicit_import_map) {
-    // Diagnose redundant imports.
-    if (auto insert_result =
-            explicit_import_map->Insert(import_key, import.node_id);
-        !insert_result.is_inserted()) {
-      CARBON_DIAGNOSTIC(RepeatedImport, Error,
-                        "library imported more than once");
-      CARBON_DIAGNOSTIC(FirstImported, Note, "first import here");
-      unit_info.emitter.Build(import.node_id, RepeatedImport)
-          .Note(insert_result.value(), FirstImported)
-          .Emit();
-      return;
-    }
+    auto emit_import_current_package_by_name = [&] {
+      CARBON_DIAGNOSTIC(
+          ImportCurrentPackageByName, Error,
+          "imports from the current package must omit the package name");
+      unit_info.emitter.Emit(import.node_id, ImportCurrentPackageByName);
+    };
 
     // True if the file's package is implicitly `Main` (by omitting an explicit
     // package name).
@@ -176,11 +170,11 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
     if (!is_import_implicit_current_package) {
       // Diagnose explicit imports of the same package that use the package
       // name.
-      if (is_same_package || (is_file_implicit_main && is_explicit_main)) {
-        CARBON_DIAGNOSTIC(
-            ImportCurrentPackageByName, Error,
-            "imports from the current package must omit the package name");
-        unit_info.emitter.Emit(import.node_id, ImportCurrentPackageByName);
+      if (is_same_package) {
+        emit_import_current_package_by_name();
+        import.package_id = PackageNameId::None;
+      } else if (is_file_implicit_main && is_explicit_main) {
+        emit_import_current_package_by_name();
         return;
       }
 
@@ -192,12 +186,29 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
         return;
       }
     }
+
+    // Diagnose redundant imports after any recovery so that explicit and
+    // implicit imports of the same current-package library are treated as the
+    // same import.
+    if (auto insert_result = explicit_import_map->Insert(
+            GetImportKey(unit_info, file_package_id, import), import.node_id);
+        !insert_result.is_inserted()) {
+      CARBON_DIAGNOSTIC(RepeatedImport, Error,
+                        "library imported more than once");
+      CARBON_DIAGNOSTIC(FirstImported, Note, "first import here");
+      unit_info.emitter.Build(import.node_id, RepeatedImport)
+          .Note(insert_result.value(), FirstImported)
+          .Emit();
+      return;
+    }
   } else if (is_explicit_main) {
     // An implicit import with an explicit `Main` occurs when a `package` rule
     // has bad syntax, which will have been diagnosed when building the API map.
     // As a consequence, we return silently.
     return;
   }
+
+  const auto import_key = GetImportKey(unit_info, file_package_id, import);
 
   // Get the package imports, or create them if this is the first.
   auto create_imports = [&]() -> int32_t {
