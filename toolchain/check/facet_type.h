@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_CHECK_FACET_TYPE_H_
 
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -73,6 +74,58 @@ auto GetConstantFacetValueForTypeAndInterface(
 // and its non-type operands recursively. Any use of a symbolic facet may have a
 // type with an arbitrary facet type (including a `where` expression).
 auto FindWhere(Context& context, SemIR::ConstantId const_id) -> bool;
+
+// Replace all IdentifiedWitnesses with LookupImplWitnesses, which will evaluate
+// and perform an impl lookup. If part of an ImplWitnessAccess, the result may
+// replace the access and witness with the value of an associated constant from
+// an impl.
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::IdentifiedFacetType::RequiredImpl req)
+    -> SemIR::IdentifiedFacetType::RequiredImpl;
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::IdentifiedFacetType::Rewrite rewrite)
+    -> SemIR::IdentifiedFacetType::Rewrite;
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::SpecificInterface interface)
+    -> SemIR::SpecificInterface;
+
+class SubstIdentifiedWitnessesCallbacks {
+ public:
+  explicit SubstIdentifiedWitnessesCallbacks(Context* context)
+      : context_(context) {}
+
+  auto context() const -> Context& { return *context_; }
+
+  // Callback to return an InstId to use in place of the IdentifiedWitness. If
+  // it returns None, the substitution will replace it with a LookupImplWitness
+  // which will be evaluated to perform an impl lookup.
+  virtual auto ReplaceIdentified(SemIR::IdentifiedWitness witness)
+      -> SemIR::InstId = 0;
+
+  // Callback to return an InstId to use in place of the ImplSelfWitness. If it
+  // returns None, the ImplSelfWitness will be left in place.
+  virtual auto ReplaceImplSelfWitness(SemIR::ImplSelfWitness witness)
+      -> SemIR::InstId = 0;
+
+ private:
+  Context* context_;
+};
+
+// Replace all IdentifiedWitnesses based on the behaviour of a callback that is
+// run as each witness is visited. Also gives the opportunity to replace
+// ImplSelfWitness in the same substitution pass.
+auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                              SemIR::IdentifiedFacetType::RequiredImpl req,
+                              SubstIdentifiedWitnessesCallbacks& callbacks)
+    -> SemIR::IdentifiedFacetType::RequiredImpl;
+auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                              SemIR::IdentifiedFacetType::Equivalent equiv,
+                              SubstIdentifiedWitnessesCallbacks& callbacks)
+    -> SemIR::IdentifiedFacetType::Equivalent;
+auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                              SemIR::ConstantId const_id,
+                              SubstIdentifiedWitnessesCallbacks& callbacks)
+    -> SemIR::ConstantId;
 
 }  // namespace Carbon::Check
 

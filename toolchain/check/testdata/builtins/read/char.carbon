@@ -32,11 +32,11 @@ fn Main() {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.9d9: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %ReadChar.type.fc4: type = fn_type @ReadChar.loc4 [concrete]
 // CHECK:STDOUT:   %ReadChar.c25: %ReadChar.type.fc4 = struct_value () [concrete]
-// CHECK:STDOUT:   %n.patt: %pattern_type.6b6 = value_binding_pattern n [concrete]
-// CHECK:STDOUT:   %m.patt: %pattern_type.6b6 = value_binding_pattern m [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.9d9 = value_binding_pattern n [concrete]
+// CHECK:STDOUT:   %m.patt: %pattern_type.9d9 = value_binding_pattern m [concrete]
 // CHECK:STDOUT:   %ReadChar.type.490: type = fn_type @ReadChar.1 [concrete]
 // CHECK:STDOUT:   %ReadChar.3b5: %ReadChar.type.490 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -62,7 +62,7 @@ fn Main() {
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %n: %i32 = wrapper_binding n, %.loc8_32.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = value_binding_pattern n [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %n.patt: %pattern_type.9d9 = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %ReadChar.ref.loc9: %ReadChar.type.490 = name_ref ReadChar, imports.%Core.ReadChar [concrete = constants.%ReadChar.3b5]
@@ -72,7 +72,7 @@ fn Main() {
 // CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %m: %i32 = wrapper_binding m, %.loc9_37.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %m.patt: %pattern_type.6b6 = value_binding_pattern m [concrete = constants.%m.patt]
+// CHECK:STDOUT:     %m.patt: %pattern_type.9d9 = value_binding_pattern m [concrete = constants.%m.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

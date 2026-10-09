@@ -34,16 +34,16 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [symbolic]
-// CHECK:STDOUT:   %pattern_type.36e: type = pattern_type %Class [symbolic]
-// CHECK:STDOUT:   %self.param_patt: %pattern_type.36e = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt: %pattern_type.36e = wrapper_binding_pattern self, %self.param_patt [symbolic]
+// CHECK:STDOUT:   %pattern_type.f4e: type = pattern_type %Class [symbolic]
+// CHECK:STDOUT:   %self.param_patt: %pattern_type.f4e = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt: %pattern_type.f4e = wrapper_binding_pattern self, %self.param_patt [symbolic]
 // CHECK:STDOUT:   %n.param_patt: %pattern_type.51d = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %n.patt: %pattern_type.51d = wrapper_binding_pattern n, %n.param_patt [symbolic]
 // CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F, @Class(%T) [symbolic]
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.a [symbolic]
-// CHECK:STDOUT:   %require_complete.4d9: <witness> = require_complete_type %Class [symbolic]
+// CHECK:STDOUT:   %require_complete.2a6: <witness> = require_complete_type %Class [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -69,8 +69,8 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:     %T.loc15_14.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_14.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [symbolic = constants.%Class.F] {
-// CHECK:STDOUT:     %self.param_patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.36e) = value_param_pattern [symbolic = %self.param_patt.loc17 (constants.%self.param_patt)]
-// CHECK:STDOUT:     %self.patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.36e) = wrapper_binding_pattern self, %self.param_patt.loc20 [symbolic = %self.patt.loc17 (constants.%self.patt)]
+// CHECK:STDOUT:     %self.param_patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.f4e) = value_param_pattern [symbolic = %self.param_patt.loc17 (constants.%self.param_patt)]
+// CHECK:STDOUT:     %self.patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.f4e) = wrapper_binding_pattern self, %self.param_patt.loc20 [symbolic = %self.patt.loc17 (constants.%self.patt)]
 // CHECK:STDOUT:     %n.param_patt.loc20: @Class.F.%pattern_type.loc17_15 (%pattern_type.51d) = value_param_pattern [symbolic = %n.param_patt.loc17 (constants.%n.param_patt)]
 // CHECK:STDOUT:     %n.patt.loc20: @Class.F.%pattern_type.loc17_15 (%pattern_type.51d) = wrapper_binding_pattern n, %n.param_patt.loc20 [symbolic = %n.patt.loc17 (constants.%n.patt)]
 // CHECK:STDOUT:   } {
@@ -109,8 +109,8 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc15_14.2 [symbolic = %T.loc15_14.1 (constants.%T)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %Class.F.decl: @Class.%Class.F.type (%Class.F.type) = fn_decl @Class.F [symbolic = @Class.%Class.F (constants.%Class.F)] {
-// CHECK:STDOUT:       %self.param_patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.36e) = value_param_pattern [symbolic = %self.param_patt.loc17 (constants.%self.param_patt)]
-// CHECK:STDOUT:       %self.patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.36e) = wrapper_binding_pattern self, %self.param_patt.loc20 [symbolic = %self.patt.loc17 (constants.%self.patt)]
+// CHECK:STDOUT:       %self.param_patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.f4e) = value_param_pattern [symbolic = %self.param_patt.loc17 (constants.%self.param_patt)]
+// CHECK:STDOUT:       %self.patt.loc20: @Class.F.%pattern_type.loc17_8 (%pattern_type.f4e) = wrapper_binding_pattern self, %self.param_patt.loc20 [symbolic = %self.patt.loc17 (constants.%self.patt)]
 // CHECK:STDOUT:       %n.param_patt.loc20: @Class.F.%pattern_type.loc17_15 (%pattern_type.51d) = value_param_pattern [symbolic = %n.param_patt.loc17 (constants.%n.param_patt)]
 // CHECK:STDOUT:       %n.patt.loc20: @Class.F.%pattern_type.loc17_15 (%pattern_type.51d) = wrapper_binding_pattern n, %n.param_patt.loc20 [symbolic = %n.patt.loc17 (constants.%n.patt)]
 // CHECK:STDOUT:     } {
@@ -138,15 +138,15 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT: generic fn @Class.F(@Class.%T.loc15_14.2: type) {
 // CHECK:STDOUT:   %T.loc17: type = symbolic_binding T, 0 [symbolic = %T.loc17 (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc17) [symbolic = %Class (constants.%Class)]
-// CHECK:STDOUT:   %pattern_type.loc17_8: type = pattern_type %Class [symbolic = %pattern_type.loc17_8 (constants.%pattern_type.36e)]
-// CHECK:STDOUT:   %self.param_patt.loc17: @Class.F.%pattern_type.loc17_8 (%pattern_type.36e) = value_param_pattern [symbolic = %self.param_patt.loc17 (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt.loc17: @Class.F.%pattern_type.loc17_8 (%pattern_type.36e) = wrapper_binding_pattern self, %self.param_patt.loc17 [symbolic = %self.patt.loc17 (constants.%self.patt)]
+// CHECK:STDOUT:   %pattern_type.loc17_8: type = pattern_type %Class [symbolic = %pattern_type.loc17_8 (constants.%pattern_type.f4e)]
+// CHECK:STDOUT:   %self.param_patt.loc17: @Class.F.%pattern_type.loc17_8 (%pattern_type.f4e) = value_param_pattern [symbolic = %self.param_patt.loc17 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc17: @Class.F.%pattern_type.loc17_8 (%pattern_type.f4e) = wrapper_binding_pattern self, %self.param_patt.loc17 [symbolic = %self.patt.loc17 (constants.%self.patt)]
 // CHECK:STDOUT:   %pattern_type.loc17_15: type = pattern_type %T.loc17 [symbolic = %pattern_type.loc17_15 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %n.param_patt.loc17: @Class.F.%pattern_type.loc17_15 (%pattern_type.51d) = value_param_pattern [symbolic = %n.param_patt.loc17 (constants.%n.param_patt)]
 // CHECK:STDOUT:   %n.patt.loc17: @Class.F.%pattern_type.loc17_15 (%pattern_type.51d) = wrapper_binding_pattern n, %n.param_patt.loc17 [symbolic = %n.patt.loc17 (constants.%n.patt)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc20_28: <witness> = require_complete_type %Class [symbolic = %require_complete.loc20_28 (constants.%require_complete.4d9)]
+// CHECK:STDOUT:   %require_complete.loc20_28: <witness> = require_complete_type %Class [symbolic = %require_complete.loc20_28 (constants.%require_complete.2a6)]
 // CHECK:STDOUT:   %require_complete.loc20_42: <witness> = require_complete_type %T.loc17 [symbolic = %require_complete.loc20_42 (constants.%require_complete.944)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%self.param.loc20: @Class.F.%Class (%Class), %n.param.loc20: @Class.F.%T.loc17 (%T)) {
@@ -172,7 +172,7 @@ fn Class(T: type).F(unused self, unused n: T) {}
 // CHECK:STDOUT: specific @Class.F(constants.%T) {
 // CHECK:STDOUT:   %T.loc17 => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
-// CHECK:STDOUT:   %pattern_type.loc17_8 => constants.%pattern_type.36e
+// CHECK:STDOUT:   %pattern_type.loc17_8 => constants.%pattern_type.f4e
 // CHECK:STDOUT:   %self.param_patt.loc17 => constants.%self.param_patt
 // CHECK:STDOUT:   %self.patt.loc17 => constants.%self.patt
 // CHECK:STDOUT:   %pattern_type.loc17_15 => constants.%pattern_type.51d

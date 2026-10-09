@@ -364,9 +364,10 @@ fn F(unused generic U: I & J where .I1 impls K) {}
 impl forall [T: type] T as J {}
 
 fn G(generic T: I where .I1 impls K) {
-  // Replaces `.Self` with `T`, which converts `T` to `I & J`. Doing so has to
-  // invent a witness for `J`, and this tests we do so without losing the
-  // information that `.I1 impls K`.
+  // Replaces `.Self` in the type of `U` with `T`, which converts `T` to
+  // `I & J`. Doing so has to invent a witness for `J` and form a new
+  // FacetValue, and this tests we do so without losing the information that
+  // `.I1 impls K`.
   F(T);
 }
 

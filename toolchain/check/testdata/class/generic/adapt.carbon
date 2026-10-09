@@ -135,9 +135,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.1d0: type = class_type @C, @C(%T.67d) [symbolic]
+// CHECK:STDOUT:   %C.6bc: type = class_type @C, @C(%T.67d) [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T.67d [symbolic]
-// CHECK:STDOUT:   %C.elem.4d5: type = unbound_element_type %C.1d0, %T.67d [symbolic]
+// CHECK:STDOUT:   %C.elem.24f: type = unbound_element_type %C.6bc, %T.67d [symbolic]
 // CHECK:STDOUT:   %struct_type.x.0c5: type = struct_type {.x: %T.67d} [symbolic]
 // CHECK:STDOUT:   %complete_type.735: <witness> = complete_type_witness %struct_type.x.0c5 [symbolic]
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [concrete]
@@ -146,31 +146,31 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %C.3b7: type = class_type @C, @C(%i32) [concrete]
+// CHECK:STDOUT:   %C.64f: type = class_type @C, @C(%i32) [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
-// CHECK:STDOUT:   %C.elem.29b: type = unbound_element_type %C.3b7, %i32 [concrete]
-// CHECK:STDOUT:   %struct_type.x.a15: type = struct_type {.x: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.0c6: <witness> = complete_type_witness %struct_type.x.a15 [concrete]
+// CHECK:STDOUT:   %C.elem.f1a: type = unbound_element_type %C.64f, %i32 [concrete]
+// CHECK:STDOUT:   %struct_type.x.d18: type = struct_type {.x: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.67a: <witness> = complete_type_witness %struct_type.x.d18 [concrete]
 // CHECK:STDOUT:   %pattern_type.e90: type = pattern_type %Adapter [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
+// CHECK:STDOUT:   %.55c: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.9d9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.13f: %pattern_type.9d9 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.a79: %pattern_type.9d9 = return_slot_pattern %return.param_patt.13f, %i32 [concrete]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.b51: <witness> = impl_witness imports.%Copy.impl_witness_table.8d2, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.3f6: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.4f6: %Int.as.Copy.impl.Op.type.3f6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.b51) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.d84: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cca: %Int.as.Copy.impl.Op.type.d84 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.0ff: <witness> = impl_witness imports.%Copy.impl_witness_table.f74, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a63: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.617: %Int.as.Copy.impl.Op.type.a63 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.0ff) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.bc1: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.481: type = fn_type_with_self_type %Copy.WithSelf.Op.type.bc1, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.617, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -182,8 +182,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.dfa: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.d84) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.cca)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.f74 = impl_witness_table (%Core.import_ref.dfa), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -207,11 +207,11 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc12 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9d9 = out_param_pattern [concrete = constants.%return.param_patt.13f]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9d9 = return_slot_pattern %return.param_patt, %i32.loc12 [concrete = constants.%return.patt.a79]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32.loc12 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32.loc12 [concrete = constants.%.55c]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [concrete = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = wrapper_binding a, %a.param
@@ -226,20 +226,20 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_10.1 [symbolic = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc4_10.1) [symbolic = %C (constants.%C.1d0)]
-// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T.loc4_10.1 [symbolic = %C.elem (constants.%C.elem.4d5)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc4_10.1) [symbolic = %C (constants.%C.6bc)]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T.loc4_10.1 [symbolic = %C.elem (constants.%C.elem.24f)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc4_10.1 (%T.67d)} [symbolic = %struct_type.x (constants.%struct_type.x.0c5)]
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %field_decl: @C.%C.elem (%C.elem.4d5) = field_decl x, element0, %T.ref in [concrete] {
+// CHECK:STDOUT:     %field_decl: @C.%C.elem (%C.elem.24f) = field_decl x, element0, %T.ref in [concrete] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_10.2 [symbolic = %T.loc4_10.1 (constants.%T.67d)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness constants.%struct_type.x.0c5 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.1d0
+// CHECK:STDOUT:     .Self = constants.%C.6bc
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %field_decl
 // CHECK:STDOUT:   }
@@ -248,9 +248,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: class @Adapter {
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.3b7]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.64f]
 // CHECK:STDOUT:   adapt_decl %C [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x.a15 [concrete = constants.%complete_type.0c6]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x.d18 [concrete = constants.%complete_type.67a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -263,13 +263,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %i32.loc13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.3b7]
-// CHECK:STDOUT:   %.loc13_13.1: %C.3b7 = as_compatible %a.ref
-// CHECK:STDOUT:   %.loc13_13.2: %C.3b7 = converted %a.ref, %.loc13_13.1
-// CHECK:STDOUT:   %x.ref: %C.elem.29b = name_ref x, @C.%field_decl [concrete = @C.%field_decl]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.64f]
+// CHECK:STDOUT:   %.loc13_13.1: %C.64f = as_compatible %a.ref
+// CHECK:STDOUT:   %.loc13_13.2: %C.64f = converted %a.ref, %.loc13_13.1
+// CHECK:STDOUT:   %x.ref: %C.elem.f1a = name_ref x, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc13_23.1: ref %i32 = class_element_access %.loc13_13.2, element0
 // CHECK:STDOUT:   %.loc13_23.2: %i32 = acquire_value %.loc13_23.1
-// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0: %.481 = impl_witness_access constants.%Copy.impl_witness.0ff, element0 [concrete = constants.%Int.as.Copy.impl.Op.617]
 // CHECK:STDOUT:   %bound_method.loc13_23.1: <bound method> = bound_method %.loc13_23.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc13_23.2: <bound method> = bound_method %.loc13_23.2, %specific_fn
@@ -288,10 +288,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %C => constants.%C.3b7
-// CHECK:STDOUT:   %C.elem => constants.%C.elem.29b
-// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.a15
-// CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.0c6
+// CHECK:STDOUT:   %C => constants.%C.64f
+// CHECK:STDOUT:   %C.elem => constants.%C.elem.f1a
+// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.d18
+// CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.67a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_adapt_specific_type.carbon
@@ -311,34 +311,34 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %struct_type.x.0c5: type = struct_type {.x: %T.67d} [symbolic]
 // CHECK:STDOUT:   %complete_type.735: <witness> = complete_type_witness %struct_type.x.0c5 [symbolic]
-// CHECK:STDOUT:   %C.1d0: type = class_type @C, @C(%T.67d) [symbolic]
+// CHECK:STDOUT:   %C.6bc: type = class_type @C, @C(%T.67d) [symbolic]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %C.elem.4d5: type = unbound_element_type %C.1d0, %T.67d [symbolic]
+// CHECK:STDOUT:   %C.elem.24f: type = unbound_element_type %C.6bc, %T.67d [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T.67d [symbolic]
-// CHECK:STDOUT:   %C.3b7: type = class_type @C, @C(%i32) [concrete]
-// CHECK:STDOUT:   %struct_type.x.a15: type = struct_type {.x: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.0c6: <witness> = complete_type_witness %struct_type.x.a15 [concrete]
-// CHECK:STDOUT:   %C.elem.29b: type = unbound_element_type %C.3b7, %i32 [concrete]
+// CHECK:STDOUT:   %C.64f: type = class_type @C, @C(%i32) [concrete]
+// CHECK:STDOUT:   %struct_type.x.d18: type = struct_type {.x: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.67a: <witness> = complete_type_witness %struct_type.x.d18 [concrete]
+// CHECK:STDOUT:   %C.elem.f1a: type = unbound_element_type %C.64f, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.e90: type = pattern_type %Adapter [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
+// CHECK:STDOUT:   %.55c: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.9d9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.13f: %pattern_type.9d9 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.a79: %pattern_type.9d9 = return_slot_pattern %return.param_patt.13f, %i32 [concrete]
 // CHECK:STDOUT:   %ImportedAccess.type: type = fn_type @ImportedAccess [concrete]
 // CHECK:STDOUT:   %ImportedAccess: %ImportedAccess.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.b51: <witness> = impl_witness imports.%Copy.impl_witness_table.8d2, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.3f6: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.4f6: %Int.as.Copy.impl.Op.type.3f6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.b51) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.d84: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cca: %Int.as.Copy.impl.Op.type.d84 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.0ff: <witness> = impl_witness imports.%Copy.impl_witness_table.f74, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a63: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.617: %Int.as.Copy.impl.Op.type.a63 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.0ff) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.bc1: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.481: type = fn_type_with_self_type %Copy.WithSelf.Op.type.bc1, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.617, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -352,17 +352,17 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.7e3: <witness> = import_ref Main//adapt_specific_type, loc6_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.735)]
-// CHECK:STDOUT:   %Main.import_ref.189 = import_ref Main//adapt_specific_type, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.21b: @C.%C.elem (%C.elem.4d5) = import_ref Main//adapt_specific_type, loc5_8, loaded [concrete = %field_decl]
+// CHECK:STDOUT:   %Main.import_ref.f48 = import_ref Main//adapt_specific_type, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.024: @C.%C.elem (%C.elem.24f) = import_ref Main//adapt_specific_type, loc5_8, loaded [concrete = %field_decl]
 // CHECK:STDOUT:   %Main.import_ref.b3b: type = import_ref Main//adapt_specific_type, loc4_10, loaded [symbolic = @C.%T (constants.%T.67d)]
-// CHECK:STDOUT:   %Main.import_ref.9e9: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [concrete = constants.%complete_type.0c6]
+// CHECK:STDOUT:   %Main.import_ref.cc1: <witness> = import_ref Main//adapt_specific_type, loc10_1, loaded [concrete = constants.%complete_type.67a]
 // CHECK:STDOUT:   %Main.import_ref.58b = import_ref Main//adapt_specific_type, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Main.import_ref.57f = import_ref Main//adapt_specific_type, loc5_10, unloaded
-// CHECK:STDOUT:   %field_decl: @C.%C.elem (%C.elem.4d5) = field_decl x, element0, %Main.import_ref.57f in [concrete] {}
+// CHECK:STDOUT:   %field_decl: @C.%C.elem (%C.elem.24f) = field_decl x, element0, %Main.import_ref.57f in [concrete] {}
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.dfa: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.d84) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.cca)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.f74 = impl_witness_table (%Core.import_ref.dfa), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -378,11 +378,11 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %ImportedAccess.decl: %ImportedAccess.type = fn_decl @ImportedAccess [concrete = constants.%ImportedAccess] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc6 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9d9 = out_param_pattern [concrete = constants.%return.param_patt.13f]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9d9 = return_slot_pattern %return.param_patt, %i32.loc6 [concrete = constants.%return.patt.a79]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32.loc6 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32.loc6 [concrete = constants.%.55c]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = wrapper_binding a, %a.param
@@ -392,7 +392,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapter [from "adapt_specific_type.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.9e9
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.cc1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.58b
@@ -404,8 +404,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.1d0)]
-// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T [symbolic = %C.elem (constants.%C.elem.4d5)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.6bc)]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T [symbolic = %C.elem (constants.%C.elem.24f)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T (%T.67d)} [symbolic = %struct_type.x (constants.%struct_type.x.0c5)]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type (constants.%complete_type.735)]
 // CHECK:STDOUT:
@@ -413,8 +413,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     complete_type_witness = imports.%Main.import_ref.7e3
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.189
-// CHECK:STDOUT:     .x = imports.%Main.import_ref.21b
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.f48
+// CHECK:STDOUT:     .x = imports.%Main.import_ref.024
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -423,13 +423,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, imports.%Main.C [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %i32.loc7: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.3b7]
-// CHECK:STDOUT:   %.loc7_13.1: %C.3b7 = as_compatible %a.ref
-// CHECK:STDOUT:   %.loc7_13.2: %C.3b7 = converted %a.ref, %.loc7_13.1
-// CHECK:STDOUT:   %x.ref: %C.elem.29b = name_ref x, imports.%Main.import_ref.21b [concrete = imports.%field_decl]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.64f]
+// CHECK:STDOUT:   %.loc7_13.1: %C.64f = as_compatible %a.ref
+// CHECK:STDOUT:   %.loc7_13.2: %C.64f = converted %a.ref, %.loc7_13.1
+// CHECK:STDOUT:   %x.ref: %C.elem.f1a = name_ref x, imports.%Main.import_ref.024 [concrete = imports.%field_decl]
 // CHECK:STDOUT:   %.loc7_23.1: ref %i32 = class_element_access %.loc7_13.2, element0
 // CHECK:STDOUT:   %.loc7_23.2: %i32 = acquire_value %.loc7_23.1
-// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0: %.481 = impl_witness_access constants.%Copy.impl_witness.0ff, element0 [concrete = constants.%Int.as.Copy.impl.Op.617]
 // CHECK:STDOUT:   %bound_method.loc7_23.1: <bound method> = bound_method %.loc7_23.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_23.2: <bound method> = bound_method %.loc7_23.2, %specific_fn
@@ -448,10 +448,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %C => constants.%C.3b7
-// CHECK:STDOUT:   %C.elem => constants.%C.elem.29b
-// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.a15
-// CHECK:STDOUT:   %complete_type => constants.%complete_type.0c6
+// CHECK:STDOUT:   %C => constants.%C.64f
+// CHECK:STDOUT:   %C.elem => constants.%C.elem.f1a
+// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.d18
+// CHECK:STDOUT:   %complete_type => constants.%complete_type.67a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_extend_adapt_specific_type.carbon
@@ -464,9 +464,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.1d0: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %C.6bc: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %C.elem.4d5: type = unbound_element_type %C.1d0, %T [symbolic]
+// CHECK:STDOUT:   %C.elem.24f: type = unbound_element_type %C.6bc, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.x.0c5: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.735: <witness> = complete_type_witness %struct_type.x.0c5 [symbolic]
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [concrete]
@@ -474,19 +474,19 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %C.3b7: type = class_type @C, @C(%i32) [concrete]
+// CHECK:STDOUT:   %C.64f: type = class_type @C, @C(%i32) [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
-// CHECK:STDOUT:   %C.elem.29b: type = unbound_element_type %C.3b7, %i32 [concrete]
-// CHECK:STDOUT:   %struct_type.x.a15: type = struct_type {.x: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.0c6: <witness> = complete_type_witness %struct_type.x.a15 [concrete]
+// CHECK:STDOUT:   %C.elem.f1a: type = unbound_element_type %C.64f, %i32 [concrete]
+// CHECK:STDOUT:   %struct_type.x.d18: type = struct_type {.x: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.67a: <witness> = complete_type_witness %struct_type.x.d18 [concrete]
 // CHECK:STDOUT:   %pattern_type.e90: type = pattern_type %Adapter [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:   %.795f: Core.Form = init_form %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
+// CHECK:STDOUT:   %.55c: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.9d9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.13f: %pattern_type.9d9 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.a79: %pattern_type.9d9 = return_slot_pattern %return.param_patt.13f, %i32 [concrete]
 // CHECK:STDOUT:   %Access.type: type = fn_type @Access [concrete]
 // CHECK:STDOUT:   %Access: %Access.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
@@ -525,11 +525,11 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Access.decl: %Access.type = fn_decl @Access [concrete = constants.%Access] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9d9 = out_param_pattern [concrete = constants.%return.param_patt.13f]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9d9 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.a79]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32 [concrete = constants.%.795f]
+// CHECK:STDOUT:     %.loc12: Core.Form = init_form %i32 [concrete = constants.%.55c]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, file.%Adapter.decl [concrete = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = wrapper_binding a, %a.param
@@ -544,20 +544,20 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc4_10.1 [symbolic = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc4_10.1) [symbolic = %C (constants.%C.1d0)]
-// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T.loc4_10.1 [symbolic = %C.elem (constants.%C.elem.4d5)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc4_10.1) [symbolic = %C (constants.%C.6bc)]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T.loc4_10.1 [symbolic = %C.elem (constants.%C.elem.24f)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc4_10.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.0c5)]
 // CHECK:STDOUT:   %complete_type.loc6_1.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %field_decl: @C.%C.elem (%C.elem.4d5) = field_decl x, element0, %T.ref in [concrete] {
+// CHECK:STDOUT:     %field_decl: @C.%C.elem (%C.elem.24f) = field_decl x, element0, %T.ref in [concrete] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc4_10.2 [symbolic = %T.loc4_10.1 (constants.%T)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc6_1.1: <witness> = complete_type_witness constants.%struct_type.x.0c5 [symbolic = %complete_type.loc6_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.1d0
+// CHECK:STDOUT:     .Self = constants.%C.6bc
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %field_decl
 // CHECK:STDOUT:   }
@@ -566,9 +566,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: class @Adapter {
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.3b7]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.64f]
 // CHECK:STDOUT:   adapt_decl %C [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x.a15 [concrete = constants.%complete_type.0c6]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x.d18 [concrete = constants.%complete_type.67a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -581,8 +581,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: fn @Access(%a.param: %Adapter) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: %C.elem.29b = name_ref x, @C.%field_decl [concrete = @C.%field_decl]
-// CHECK:STDOUT:   %.loc21_11.1: %C.3b7 = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x.ref: %C.elem.f1a = name_ref x, @C.%field_decl [concrete = @C.%field_decl]
+// CHECK:STDOUT:   %.loc21_11.1: %C.64f = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc21_11.2: %i32 = class_element_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -598,10 +598,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %C => constants.%C.3b7
-// CHECK:STDOUT:   %C.elem => constants.%C.elem.29b
-// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.a15
-// CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.0c6
+// CHECK:STDOUT:   %C => constants.%C.64f
+// CHECK:STDOUT:   %C.elem => constants.%C.elem.f1a
+// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.d18
+// CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.67a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- extend_adapt_specific_type_library.carbon
@@ -614,9 +614,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.1d0: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %C.6bc: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %C.elem.4d5: type = unbound_element_type %C.1d0, %T [symbolic]
+// CHECK:STDOUT:   %C.elem.24f: type = unbound_element_type %C.6bc, %T [symbolic]
 // CHECK:STDOUT:   %struct_type.x.0c5: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.735: <witness> = complete_type_witness %struct_type.x.0c5 [symbolic]
 // CHECK:STDOUT:   %Adapter: type = class_type @Adapter [concrete]
@@ -624,12 +624,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %C.3b7: type = class_type @C, @C(%i32) [concrete]
+// CHECK:STDOUT:   %C.64f: type = class_type @C, @C(%i32) [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
-// CHECK:STDOUT:   %C.elem.29b: type = unbound_element_type %C.3b7, %i32 [concrete]
-// CHECK:STDOUT:   %struct_type.x.a15: type = struct_type {.x: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.0c6: <witness> = complete_type_witness %struct_type.x.a15 [concrete]
+// CHECK:STDOUT:   %C.elem.f1a: type = unbound_element_type %C.64f, %i32 [concrete]
+// CHECK:STDOUT:   %struct_type.x.d18: type = struct_type {.x: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.67a: <witness> = complete_type_witness %struct_type.x.d18 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -666,20 +666,20 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc7_10.1 [symbolic = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc7_10.1) [symbolic = %C (constants.%C.1d0)]
-// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T.loc7_10.1 [symbolic = %C.elem (constants.%C.elem.4d5)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc7_10.1) [symbolic = %C (constants.%C.6bc)]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T.loc7_10.1 [symbolic = %C.elem (constants.%C.elem.24f)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T.loc7_10.1 (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.0c5)]
 // CHECK:STDOUT:   %complete_type.loc9_1.2: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %field_decl: @C.%C.elem (%C.elem.4d5) = field_decl x, element0, %T.ref in [concrete] {
+// CHECK:STDOUT:     %field_decl: @C.%C.elem (%C.elem.24f) = field_decl x, element0, %T.ref in [concrete] {
 // CHECK:STDOUT:       %T.ref: type = name_ref T, %T.loc7_10.2 [symbolic = %T.loc7_10.1 (constants.%T)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type.loc9_1.1: <witness> = complete_type_witness constants.%struct_type.x.0c5 [symbolic = %complete_type.loc9_1.2 (constants.%complete_type.735)]
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc9_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.1d0
+// CHECK:STDOUT:     .Self = constants.%C.6bc
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:     .x = %field_decl
 // CHECK:STDOUT:   }
@@ -688,9 +688,9 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: class @Adapter {
 // CHECK:STDOUT:   %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.3b7]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.64f]
 // CHECK:STDOUT:   adapt_decl %C [concrete]
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x.a15 [concrete = constants.%complete_type.0c6]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x.d18 [concrete = constants.%complete_type.67a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -710,10 +710,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %C => constants.%C.3b7
-// CHECK:STDOUT:   %C.elem => constants.%C.elem.29b
-// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.a15
-// CHECK:STDOUT:   %complete_type.loc9_1.2 => constants.%complete_type.0c6
+// CHECK:STDOUT:   %C => constants.%C.64f
+// CHECK:STDOUT:   %C.elem => constants.%C.elem.f1a
+// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.d18
+// CHECK:STDOUT:   %complete_type.loc9_1.2 => constants.%complete_type.67a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_import_extend_adapt_specific_type.carbon
@@ -730,22 +730,22 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %struct_type.x.0c5: type = struct_type {.x: %T} [symbolic]
 // CHECK:STDOUT:   %complete_type.735: <witness> = complete_type_witness %struct_type.x.0c5 [symbolic]
-// CHECK:STDOUT:   %C.1d0: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %C.6bc: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %C.elem.4d5: type = unbound_element_type %C.1d0, %T [symbolic]
+// CHECK:STDOUT:   %C.elem.24f: type = unbound_element_type %C.6bc, %T [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
-// CHECK:STDOUT:   %C.3b7: type = class_type @C, @C(%i32) [concrete]
-// CHECK:STDOUT:   %struct_type.x.a15: type = struct_type {.x: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.0c6: <witness> = complete_type_witness %struct_type.x.a15 [concrete]
-// CHECK:STDOUT:   %C.elem.29b: type = unbound_element_type %C.3b7, %i32 [concrete]
+// CHECK:STDOUT:   %C.64f: type = class_type @C, @C(%i32) [concrete]
+// CHECK:STDOUT:   %struct_type.x.d18: type = struct_type {.x: %i32} [concrete]
+// CHECK:STDOUT:   %complete_type.67a: <witness> = complete_type_witness %struct_type.x.d18 [concrete]
+// CHECK:STDOUT:   %C.elem.f1a: type = unbound_element_type %C.64f, %i32 [concrete]
 // CHECK:STDOUT:   %pattern_type.e90: type = pattern_type %Adapter [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:   %.795f: Core.Form = init_form %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
+// CHECK:STDOUT:   %.55c: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.9d9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.13f: %pattern_type.9d9 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.a79: %pattern_type.9d9 = return_slot_pattern %return.param_patt.13f, %i32 [concrete]
 // CHECK:STDOUT:   %ImportedAccess.type: type = fn_type @ImportedAccess [concrete]
 // CHECK:STDOUT:   %ImportedAccess: %ImportedAccess.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
@@ -762,15 +762,15 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.7e3: <witness> = import_ref Main//extend_adapt_specific_type_library, loc9_1, loaded [symbolic = @C.%complete_type (constants.%complete_type.735)]
-// CHECK:STDOUT:   %Main.import_ref.189 = import_ref Main//extend_adapt_specific_type_library, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.21b: @C.%C.elem (%C.elem.4d5) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [concrete = %field_decl]
+// CHECK:STDOUT:   %Main.import_ref.f48 = import_ref Main//extend_adapt_specific_type_library, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.024: @C.%C.elem (%C.elem.24f) = import_ref Main//extend_adapt_specific_type_library, loc8_8, loaded [concrete = %field_decl]
 // CHECK:STDOUT:   %Main.import_ref.b3b: type = import_ref Main//extend_adapt_specific_type_library, loc7_10, loaded [symbolic = @C.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.9e9: <witness> = import_ref Main//extend_adapt_specific_type_library, loc13_1, loaded [concrete = constants.%complete_type.0c6]
+// CHECK:STDOUT:   %Main.import_ref.cc1: <witness> = import_ref Main//extend_adapt_specific_type_library, loc13_1, loaded [concrete = constants.%complete_type.67a]
 // CHECK:STDOUT:   %Main.import_ref.58b = import_ref Main//extend_adapt_specific_type_library, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.6b2392.2: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [concrete = constants.%C.3b7]
+// CHECK:STDOUT:   %Main.import_ref.52b4a1.2: type = import_ref Main//extend_adapt_specific_type_library, loc12_21, loaded [concrete = constants.%C.64f]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Main.import_ref.57f = import_ref Main//extend_adapt_specific_type_library, loc8_10, unloaded
-// CHECK:STDOUT:   %field_decl: @C.%C.elem (%C.elem.4d5) = field_decl x, element0, %Main.import_ref.57f in [concrete] {}
+// CHECK:STDOUT:   %field_decl: @C.%C.elem (%C.elem.24f) = field_decl x, element0, %Main.import_ref.57f in [concrete] {}
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -786,11 +786,11 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %ImportedAccess.decl: %ImportedAccess.type = fn_decl @ImportedAccess [concrete = constants.%ImportedAccess] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.e90 = value_param_pattern [concrete = constants.%a.param_patt]
 // CHECK:STDOUT:     %a.patt: %pattern_type.e90 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9d9 = out_param_pattern [concrete = constants.%return.param_patt.13f]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9d9 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.a79]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32 [concrete = constants.%.795f]
+// CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32 [concrete = constants.%.55c]
 // CHECK:STDOUT:     %a.param: %Adapter = value_param call_param0
 // CHECK:STDOUT:     %Adapter.ref: type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter]
 // CHECK:STDOUT:     %a: %Adapter = wrapper_binding a, %a.param
@@ -800,12 +800,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Adapter [from "extend_adapt_specific_type_library.carbon"] {
-// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.9e9
+// CHECK:STDOUT:   complete_type_witness = imports.%Main.import_ref.cc1
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.58b
 // CHECK:STDOUT:   .x = <poisoned>
-// CHECK:STDOUT:   extend imports.%Main.import_ref.6b2392.2
+// CHECK:STDOUT:   extend imports.%Main.import_ref.52b4a1.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @C(imports.%Main.import_ref.b3b: type) [from "extend_adapt_specific_type_library.carbon"] {
@@ -814,8 +814,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T [symbolic = %require_complete (constants.%require_complete.944)]
-// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.1d0)]
-// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T [symbolic = %C.elem (constants.%C.elem.4d5)]
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T) [symbolic = %C (constants.%C.6bc)]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %T [symbolic = %C.elem (constants.%C.elem.24f)]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: @C.%T (%T)} [symbolic = %struct_type.x (constants.%struct_type.x.0c5)]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %struct_type.x [symbolic = %complete_type (constants.%complete_type.735)]
 // CHECK:STDOUT:
@@ -823,16 +823,16 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     complete_type_witness = imports.%Main.import_ref.7e3
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.189
-// CHECK:STDOUT:     .x = imports.%Main.import_ref.21b
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.f48
+// CHECK:STDOUT:     .x = imports.%Main.import_ref.024
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ImportedAccess(%a.param: %Adapter) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %Adapter = name_ref a, %a
-// CHECK:STDOUT:   %x.ref: %C.elem.29b = name_ref x, imports.%Main.import_ref.21b [concrete = imports.%field_decl]
-// CHECK:STDOUT:   %.loc15_11.1: %C.3b7 = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x.ref: %C.elem.f1a = name_ref x, imports.%Main.import_ref.024 [concrete = imports.%field_decl]
+// CHECK:STDOUT:   %.loc15_11.1: %C.64f = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc15_11.2: %i32 = class_element_access <error>, element0 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -848,10 +848,10 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %C => constants.%C.3b7
-// CHECK:STDOUT:   %C.elem => constants.%C.elem.29b
-// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.a15
-// CHECK:STDOUT:   %complete_type => constants.%complete_type.0c6
+// CHECK:STDOUT:   %C => constants.%C.64f
+// CHECK:STDOUT:   %C.elem => constants.%C.elem.f1a
+// CHECK:STDOUT:   %struct_type.x => constants.%struct_type.x.d18
+// CHECK:STDOUT:   %complete_type => constants.%complete_type.67a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- adapt_generic_type.carbon
@@ -864,7 +864,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %Adapter.type: type = generic_class_type @Adapter [concrete]
 // CHECK:STDOUT:   %Adapter.generic: %Adapter.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Adapter.359: type = class_type @Adapter, @Adapter(%T.67d) [symbolic]
+// CHECK:STDOUT:   %Adapter.086: type = class_type @Adapter, @Adapter(%T.67d) [symbolic]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T.67d [symbolic]
 // CHECK:STDOUT:   %complete_type.1aa: <witness> = complete_type_witness %T.67d [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -872,29 +872,29 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Adapter.0d1: type = class_type @Adapter, @Adapter(%i32) [concrete]
-// CHECK:STDOUT:   %pattern_type.493: type = pattern_type %Adapter.0d1 [concrete]
-// CHECK:STDOUT:   %a.param_patt: %pattern_type.493 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.493 = wrapper_binding_pattern a, %a.param_patt [concrete]
-// CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
+// CHECK:STDOUT:   %Adapter.78c: type = class_type @Adapter, @Adapter(%i32) [concrete]
+// CHECK:STDOUT:   %pattern_type.fd8: type = pattern_type %Adapter.78c [concrete]
+// CHECK:STDOUT:   %a.param_patt: %pattern_type.fd8 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.fd8 = wrapper_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %.55c: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.9d9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.13f: %pattern_type.9d9 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.a79: %pattern_type.9d9 = return_slot_pattern %return.param_patt.13f, %i32 [concrete]
 // CHECK:STDOUT:   %Convert.type: type = fn_type @Convert [concrete]
 // CHECK:STDOUT:   %Convert: %Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
-// CHECK:STDOUT:   %complete_type.e42: <witness> = complete_type_witness %i32 [concrete]
+// CHECK:STDOUT:   %complete_type.71c: <witness> = complete_type_witness %i32 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.b51: <witness> = impl_witness imports.%Copy.impl_witness_table.8d2, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.3f6: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.4f6: %Int.as.Copy.impl.Op.type.3f6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.b51) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.d84: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cca: %Int.as.Copy.impl.Op.type.d84 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.0ff: <witness> = impl_witness imports.%Copy.impl_witness_table.f74, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a63: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.617: %Int.as.Copy.impl.Op.type.a63 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.0ff) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.bc1: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.481: type = fn_type_with_self_type %Copy.WithSelf.Op.type.bc1, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.617, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -906,8 +906,8 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.dfa: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.d84) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.cca)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.f74 = impl_witness_table (%Core.import_ref.dfa), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -927,20 +927,20 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     %T.loc4_16.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_16.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Convert.decl: %Convert.type = fn_decl @Convert [concrete = constants.%Convert] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.493 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.493 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc8_32 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.fd8 = value_param_pattern [concrete = constants.%a.param_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.fd8 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9d9 = out_param_pattern [concrete = constants.%return.param_patt.13f]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9d9 = return_slot_pattern %return.param_patt, %i32.loc8_32 [concrete = constants.%return.patt.a79]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc8_32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc8_32: Core.Form = init_form %i32.loc8_32 [concrete = constants.%.795]
-// CHECK:STDOUT:     %a.param: %Adapter.0d1 = value_param call_param0
-// CHECK:STDOUT:     %.loc8_26: type = splice_block %Adapter [concrete = constants.%Adapter.0d1] {
+// CHECK:STDOUT:     %.loc8_32: Core.Form = init_form %i32.loc8_32 [concrete = constants.%.55c]
+// CHECK:STDOUT:     %a.param: %Adapter.78c = value_param call_param0
+// CHECK:STDOUT:     %.loc8_26: type = splice_block %Adapter [concrete = constants.%Adapter.78c] {
 // CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, file.%Adapter.decl [concrete = constants.%Adapter.generic]
 // CHECK:STDOUT:       %i32.loc8_23: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [concrete = constants.%Adapter.0d1]
+// CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [concrete = constants.%Adapter.78c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %Adapter.0d1 = wrapper_binding a, %a.param
+// CHECK:STDOUT:     %a: %Adapter.78c = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -961,18 +961,18 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     complete_type_witness = %complete_type.loc6_1.1
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Adapter.359
+// CHECK:STDOUT:     .Self = constants.%Adapter.086
 // CHECK:STDOUT:     .T = <poisoned>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Convert(%a.param: %Adapter.0d1) -> out %return.param: %i32 {
+// CHECK:STDOUT: fn @Convert(%a.param: %Adapter.78c) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: %Adapter.0d1 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: %Adapter.78c = name_ref a, %a
 // CHECK:STDOUT:   %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc9_12.1: %i32 = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc9_12.2: %i32 = converted %a.ref, %.loc9_12.1
-// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0: %.481 = impl_witness_access constants.%Copy.impl_witness.0ff, element0 [concrete = constants.%Int.as.Copy.impl.Op.617]
 // CHECK:STDOUT:   %bound_method.loc9_12.1: <bound method> = bound_method %.loc9_12.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc9_12.2: <bound method> = bound_method %.loc9_12.2, %specific_fn
@@ -991,7 +991,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.e42
+// CHECK:STDOUT:   %complete_type.loc6_1.2 => constants.%complete_type.71c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_adapt_generic_type.carbon
@@ -1010,37 +1010,37 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Adapter.0d1: type = class_type @Adapter, @Adapter(%i32) [concrete]
-// CHECK:STDOUT:   %pattern_type.493: type = pattern_type %Adapter.0d1 [concrete]
-// CHECK:STDOUT:   %a.param_patt.fdb: %pattern_type.493 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt.41c: %pattern_type.493 = wrapper_binding_pattern a, %a.param_patt.fdb [concrete]
-// CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
+// CHECK:STDOUT:   %Adapter.78c: type = class_type @Adapter, @Adapter(%i32) [concrete]
+// CHECK:STDOUT:   %pattern_type.fd8: type = pattern_type %Adapter.78c [concrete]
+// CHECK:STDOUT:   %a.param_patt.0c4: %pattern_type.fd8 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %a.patt.49a: %pattern_type.fd8 = wrapper_binding_pattern a, %a.param_patt.0c4 [concrete]
+// CHECK:STDOUT:   %.55c: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.9d9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.13f: %pattern_type.9d9 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.a79: %pattern_type.9d9 = return_slot_pattern %return.param_patt.13f, %i32 [concrete]
 // CHECK:STDOUT:   %ImportedConvert.type: type = fn_type @ImportedConvert [concrete]
 // CHECK:STDOUT:   %ImportedConvert: %ImportedConvert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32.builtin: type = int_type signed, %int_32 [concrete]
 // CHECK:STDOUT:   %complete_type.f8a: <witness> = complete_type_witness %i32.builtin [concrete]
-// CHECK:STDOUT:   %complete_type.e42: <witness> = complete_type_witness %i32 [concrete]
+// CHECK:STDOUT:   %complete_type.71c: <witness> = complete_type_witness %i32 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.b51: <witness> = impl_witness imports.%Copy.impl_witness_table.8d2, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.3f6: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.4f6: %Int.as.Copy.impl.Op.type.3f6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.b51) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.d84: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cca: %Int.as.Copy.impl.Op.type.d84 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.0ff: <witness> = impl_witness imports.%Copy.impl_witness_table.f74, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a63: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.617: %Int.as.Copy.impl.Op.type.a63 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.0ff) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.bc1: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.481: type = fn_type_with_self_type %Copy.WithSelf.Op.type.bc1, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.617, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.cdf: <witness> = complete_type_witness %struct_type.n [concrete]
-// CHECK:STDOUT:   %Adapter.347: type = class_type @Adapter, @Adapter(%C) [concrete]
-// CHECK:STDOUT:   %pattern_type.5db: type = pattern_type %Adapter.347 [concrete]
-// CHECK:STDOUT:   %a.param_patt.95b: %pattern_type.5db = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt.1fc: %pattern_type.5db = wrapper_binding_pattern a, %a.param_patt.95b [concrete]
+// CHECK:STDOUT:   %complete_type.26a: <witness> = complete_type_witness %struct_type.n [concrete]
+// CHECK:STDOUT:   %Adapter.6d5: type = class_type @Adapter, @Adapter(%C) [concrete]
+// CHECK:STDOUT:   %pattern_type.957: type = pattern_type %Adapter.6d5 [concrete]
+// CHECK:STDOUT:   %a.param_patt.bc5: %pattern_type.957 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %a.patt.aa8: %pattern_type.957 = wrapper_binding_pattern a, %a.param_patt.bc5 [concrete]
 // CHECK:STDOUT:   %ImportedConvertLocal.type: type = fn_type @ImportedConvertLocal [concrete]
 // CHECK:STDOUT:   %ImportedConvertLocal: %ImportedConvertLocal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %complete_type.c1f: <witness> = complete_type_witness %C [concrete]
@@ -1056,12 +1056,12 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.80d: <witness> = import_ref Main//adapt_generic_type, loc6_1, loaded [symbolic = @Adapter.%complete_type (constants.%complete_type.1aa)]
-// CHECK:STDOUT:   %Main.import_ref.b12 = import_ref Main//adapt_generic_type, inst{{[0-9A-F]+}} [no loc], unloaded
+// CHECK:STDOUT:   %Main.import_ref.0e3 = import_ref Main//adapt_generic_type, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3b: type = import_ref Main//adapt_generic_type, loc4_16, loaded [symbolic = @Adapter.%T (constants.%T.67d)]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.dfa: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.d84) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.cca)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.f74 = impl_witness_table (%Core.import_ref.dfa), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1076,39 +1076,39 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %ImportedConvert.decl: %ImportedConvert.type = fn_decl @ImportedConvert [concrete = constants.%ImportedConvert] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.493 = value_param_pattern [concrete = constants.%a.param_patt.fdb]
-// CHECK:STDOUT:     %a.patt: %pattern_type.493 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.41c]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc6_40 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.fd8 = value_param_pattern [concrete = constants.%a.param_patt.0c4]
+// CHECK:STDOUT:     %a.patt: %pattern_type.fd8 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.49a]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9d9 = out_param_pattern [concrete = constants.%return.param_patt.13f]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9d9 = return_slot_pattern %return.param_patt, %i32.loc6_40 [concrete = constants.%return.patt.a79]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc6_40: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6_40: Core.Form = init_form %i32.loc6_40 [concrete = constants.%.795]
-// CHECK:STDOUT:     %a.param: %Adapter.0d1 = value_param call_param0
-// CHECK:STDOUT:     %.loc6_34: type = splice_block %Adapter [concrete = constants.%Adapter.0d1] {
+// CHECK:STDOUT:     %.loc6_40: Core.Form = init_form %i32.loc6_40 [concrete = constants.%.55c]
+// CHECK:STDOUT:     %a.param: %Adapter.78c = value_param call_param0
+// CHECK:STDOUT:     %.loc6_34: type = splice_block %Adapter [concrete = constants.%Adapter.78c] {
 // CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter.generic]
 // CHECK:STDOUT:       %i32.loc6_31: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [concrete = constants.%Adapter.0d1]
+// CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%i32) [concrete = constants.%Adapter.78c]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %Adapter.0d1 = wrapper_binding a, %a.param
+// CHECK:STDOUT:     %a: %Adapter.78c = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %ImportedConvertLocal.decl: %ImportedConvertLocal.type = fn_decl @ImportedConvertLocal [concrete = constants.%ImportedConvertLocal] {
-// CHECK:STDOUT:     %a.param_patt: %pattern_type.5db = value_param_pattern [concrete = constants.%a.param_patt.95b]
-// CHECK:STDOUT:     %a.patt: %pattern_type.5db = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.1fc]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:     %a.param_patt: %pattern_type.957 = value_param_pattern [concrete = constants.%a.param_patt.bc5]
+// CHECK:STDOUT:     %a.patt: %pattern_type.957 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt.aa8]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.9d9 = out_param_pattern [concrete = constants.%return.param_patt.13f]
+// CHECK:STDOUT:     %return.patt: %pattern_type.9d9 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.a79]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc14_43: Core.Form = init_form %i32 [concrete = constants.%.795]
-// CHECK:STDOUT:     %a.param: %Adapter.347 = value_param call_param0
-// CHECK:STDOUT:     %.loc14_37: type = splice_block %Adapter [concrete = constants.%Adapter.347] {
+// CHECK:STDOUT:     %.loc14_43: Core.Form = init_form %i32 [concrete = constants.%.55c]
+// CHECK:STDOUT:     %a.param: %Adapter.6d5 = value_param call_param0
+// CHECK:STDOUT:     %.loc14_37: type = splice_block %Adapter [concrete = constants.%Adapter.6d5] {
 // CHECK:STDOUT:       %Adapter.ref: %Adapter.type = name_ref Adapter, imports.%Main.Adapter [concrete = constants.%Adapter.generic]
 // CHECK:STDOUT:       %C.ref.loc14: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%C) [concrete = constants.%Adapter.347]
+// CHECK:STDOUT:       %Adapter: type = class_type @Adapter, @Adapter(constants.%C) [concrete = constants.%Adapter.6d5]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %a: %Adapter.347 = wrapper_binding a, %a.param
+// CHECK:STDOUT:     %a: %Adapter.6d5 = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1126,7 +1126,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:     complete_type_witness = imports.%Main.import_ref.80d
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Main.import_ref.b12
+// CHECK:STDOUT:     .Self = imports.%Main.import_ref.0e3
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1134,7 +1134,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %field_decl: %C.elem = field_decl n, element0, %i32 in [concrete] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type.cdf]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.n [concrete = constants.%complete_type.26a]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1142,13 +1142,13 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   .n = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ImportedConvert(%a.param: %Adapter.0d1) -> out %return.param: %i32 {
+// CHECK:STDOUT: fn @ImportedConvert(%a.param: %Adapter.78c) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: %Adapter.0d1 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: %Adapter.78c = name_ref a, %a
 // CHECK:STDOUT:   %i32.loc7: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc7_12.1: %i32 = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc7_12.2: %i32 = converted %a.ref, %.loc7_12.1
-// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0: %.481 = impl_witness_access constants.%Copy.impl_witness.0ff, element0 [concrete = constants.%Int.as.Copy.impl.Op.617]
 // CHECK:STDOUT:   %bound_method.loc7_12.1: <bound method> = bound_method %.loc7_12.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc7_12.2: <bound method> = bound_method %.loc7_12.2, %specific_fn
@@ -1156,16 +1156,16 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @ImportedConvertLocal(%a.param: %Adapter.347) -> out %return.param: %i32 {
+// CHECK:STDOUT: fn @ImportedConvertLocal(%a.param: %Adapter.6d5) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %a.ref: %Adapter.347 = name_ref a, %a
+// CHECK:STDOUT:   %a.ref: %Adapter.6d5 = name_ref a, %a
 // CHECK:STDOUT:   %C.ref.loc15: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %.loc15_13.1: %C = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc15_13.2: %C = converted %a.ref, %.loc15_13.1
 // CHECK:STDOUT:   %n.ref: %C.elem = name_ref n, @C.%field_decl [concrete = @C.%field_decl]
 // CHECK:STDOUT:   %.loc15_18.1: ref %i32 = class_element_access %.loc15_13.2, element0
 // CHECK:STDOUT:   %.loc15_18.2: %i32 = acquire_value %.loc15_18.1
-// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0: %.481 = impl_witness_access constants.%Copy.impl_witness.0ff, element0 [concrete = constants.%Int.as.Copy.impl.Op.617]
 // CHECK:STDOUT:   %bound_method.loc15_18.1: <bound method> = bound_method %.loc15_18.2, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc15_18.2: <bound method> = bound_method %.loc15_18.2, %specific_fn
@@ -1184,7 +1184,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %complete_type => constants.%complete_type.e42
+// CHECK:STDOUT:   %complete_type => constants.%complete_type.71c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Adapter(constants.%C) {
@@ -1192,7 +1192,7 @@ fn ImportedConvertLocal(a: Adapter(C)) -> i32 {
 // CHECK:STDOUT:   %T => constants.%C
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.cdf
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.26a
 // CHECK:STDOUT:   %complete_type => constants.%complete_type.c1f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
