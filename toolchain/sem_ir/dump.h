@@ -8,8 +8,8 @@
 // invoked. The debugger should do namespace resolution automatically. For
 // example:
 //
-// - lldb: `expr Dump(tokens, id)`
-// - gdb: `call Dump(tokens, id)`
+// - lldb: `dump file id`
+// - gdb: `call Dump(file, id)`
 //
 // When adding a new ID type, if it corresponds to a collection in `File`, also
 // update the following places:
