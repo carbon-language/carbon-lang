@@ -8,7 +8,7 @@
 // invoked. The debugger should do namespace resolution automatically. For
 // example:
 //
-// - lldb: `expr Dump(context, id)`
+// - lldb: `dump context id`
 // - gdb: `call Dump(context, id)`
 
 #ifndef NDEBUG

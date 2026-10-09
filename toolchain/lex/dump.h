@@ -8,7 +8,7 @@
 // invoked. The debugger should do namespace resolution automatically. For
 // example:
 //
-// - lldb: `expr Dump(tokens, id)`
+// - lldb: `dump tokens id`
 // - gdb: `call Dump(tokens, id)`
 //
 // The `DumpNoNewline` functions are helpers that exclude a trailing newline.
