@@ -10,9 +10,6 @@
 //
 // - lldb: `dump tree id`
 // - gdb: `call Dump(tree, id)`
-//
-// The `DumpNoNewline` functions are helpers that exclude a trailing newline.
-// They're intended to be composed by `Dump` function implementations.
 
 #ifndef CARBON_TOOLCHAIN_PARSE_DUMP_H_
 #define CARBON_TOOLCHAIN_PARSE_DUMP_H_
