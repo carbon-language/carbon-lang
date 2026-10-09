@@ -10,6 +10,14 @@
 //
 // - lldb: `expr Dump(tokens, id)`
 // - gdb: `call Dump(tokens, id)`
+//
+// When adding a new ID type, if it corresponds to a collection in `File`, also
+// update the following places:
+// - Add a `Dump` function in this header and the corresponding cpp file.
+// - Add a corresponding `Dump` function in `toolchain/check/dump.cpp`.
+// - Add a `Make<NewIdType>` function in `toolchain/sem_ir/dump.cpp`.
+// - Add the `Make<NewIdType>` function to the `id_types` map in
+//   `scripts/lldbinit.py`.
 
 #ifndef CARBON_TOOLCHAIN_SEM_IR_DUMP_H_
 #define CARBON_TOOLCHAIN_SEM_IR_DUMP_H_

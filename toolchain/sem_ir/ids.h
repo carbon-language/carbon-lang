@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// When adding a new ID type, consider adding utilities to aid debugging. See
+// the comment in `toolchain/sem_ir/dump.h` for details.
+
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 
