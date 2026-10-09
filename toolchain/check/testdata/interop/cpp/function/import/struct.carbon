@@ -661,14 +661,14 @@ fn F() {
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.b09: %Default.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.b09) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.cfe: %T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.4da: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.b09) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.79f: %T.as_type.as.DefaultOrUnformed.impl.Op.type.4da = struct_value () [symbolic]
 // CHECK:STDOUT:   %InNamespaceStruct.Op.type: type = fn_type @InNamespaceStruct.Op [concrete]
 // CHECK:STDOUT:   %InNamespaceStruct.Op: %InNamespaceStruct.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.85f: <witness> = custom_witness (%InNamespaceStruct.Op), @Default [concrete]
 // CHECK:STDOUT:   %Default.facet.598: %Default.type = facet_value %InNamespaceStruct, (%custom_witness.85f) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.d48: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.598) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %InNamespaceStruct, (%DefaultOrUnformed.impl_witness.d48) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.d85: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.598) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %InNamespaceStruct, (%DefaultOrUnformed.impl_witness.d85) [concrete]
 // CHECK:STDOUT:   %self.param_patt.75b: %pattern_type.d3e = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.b0d: %pattern_type.d3e = wrapper_binding_pattern self, %self.param_patt.75b [concrete]
 // CHECK:STDOUT:   %InNamespaceStruct.cpp_destructor.type: type = fn_type @InNamespaceStruct.cpp_destructor [concrete]
@@ -696,8 +696,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.c2f: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.cfe)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.c2f), @T.as_type.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.288: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.4da) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.79f)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.288), @T.as_type.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %InNamespaceStruct.cpp_destructor.decl: %InNamespaceStruct.cpp_destructor.type = fn_decl @InNamespaceStruct.cpp_destructor [concrete = constants.%InNamespaceStruct.cpp_destructor] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -724,7 +724,7 @@ fn F() {
 // CHECK:STDOUT:   %addr: %ptr.f55 = addr_of %.loc8
 // CHECK:STDOUT:   %foo_in_namespace__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_in_namespace__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %x.var: ref %InNamespaceStruct = var_storage %x.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%InNamespaceStruct, (constants.%DefaultOrUnformed.impl_witness.d48) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%InNamespaceStruct, (constants.%DefaultOrUnformed.impl_witness.d85) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc10_40.1: %DefaultOrUnformed.type = converted constants.%InNamespaceStruct, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc10_40.1 [concrete = constants.%InNamespaceStruct]
 // CHECK:STDOUT:   %.loc10_40.2: type = converted %.loc10_40.1, %as_type [concrete = constants.%InNamespaceStruct]
@@ -822,14 +822,14 @@ fn F() {
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.b09: %Default.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.b09) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.cfe: %T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.4da: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.b09) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.79f: %T.as_type.as.DefaultOrUnformed.impl.Op.type.4da = struct_value () [symbolic]
 // CHECK:STDOUT:   %OuterStruct.Op.type: type = fn_type @OuterStruct.Op [concrete]
 // CHECK:STDOUT:   %OuterStruct.Op: %OuterStruct.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.9b4: <witness> = custom_witness (%OuterStruct.Op), @Default [concrete]
 // CHECK:STDOUT:   %Default.facet.e09: %Default.type = facet_value %OuterStruct, (%custom_witness.9b4) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.219: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.e09) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %OuterStruct, (%DefaultOrUnformed.impl_witness.219) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.e0b: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.e09) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %OuterStruct, (%DefaultOrUnformed.impl_witness.e0b) [concrete]
 // CHECK:STDOUT:   %self.param_patt.e6d: %pattern_type.e34 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.f0c: %pattern_type.e34 = wrapper_binding_pattern self, %self.param_patt.e6d [concrete]
 // CHECK:STDOUT:   %OuterStruct.cpp_destructor.type: type = fn_type @OuterStruct.cpp_destructor [concrete]
@@ -853,8 +853,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.c2f: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.cfe)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.c2f), @T.as_type.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.288: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.4da) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.79f)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.288), @T.as_type.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %OuterStruct.cpp_destructor.decl: %OuterStruct.cpp_destructor.type = fn_decl @OuterStruct.cpp_destructor [concrete = constants.%OuterStruct.cpp_destructor] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -881,7 +881,7 @@ fn F() {
 // CHECK:STDOUT:   %addr: %ptr.d74 = addr_of %.loc8
 // CHECK:STDOUT:   %foo_in_outer__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_in_outer__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %x.var: ref %OuterStruct = var_storage %x.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%OuterStruct, (constants.%DefaultOrUnformed.impl_witness.219) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%OuterStruct, (constants.%DefaultOrUnformed.impl_witness.e0b) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc9_32.1: %DefaultOrUnformed.type = converted constants.%OuterStruct, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc9_32.1 [concrete = constants.%OuterStruct]
 // CHECK:STDOUT:   %.loc9_32.2: type = converted %.loc9_32.1, %as_type [concrete = constants.%OuterStruct]

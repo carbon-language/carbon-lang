@@ -241,8 +241,8 @@ fn F() {
 // CHECK:STDOUT:   %PublicDestructor.val: %PublicDestructor = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Self: %Destroy.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.0ce: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%Self) [symbolic]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.9cd: %Destroy.WithSelf.SubobjectDestroy.type.0ce = struct_value () [symbolic]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.050: type = fn_type @Destroy.WithSelf.SubobjectDestroy, @Destroy.WithSelf(%Self) [symbolic]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.824: %Destroy.WithSelf.SubobjectDestroy.type.050 = struct_value () [symbolic]
 // CHECK:STDOUT:   %self.param_patt.5ea: %pattern_type.bdc = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.81d: %pattern_type.bdc = wrapper_binding_pattern self, %self.param_patt.5ea [concrete]
 // CHECK:STDOUT:   %PublicDestructor.cpp_destructor.type: type = fn_type @PublicDestructor.cpp_destructor [concrete]
@@ -285,7 +285,7 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %PublicDestructor.decl: type = class_decl @PublicDestructor [concrete = constants.%PublicDestructor] {} {}
 // CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.0ce = fn_decl @Destroy.WithSelf.SubobjectDestroy [symbolic = @Destroy.WithSelf.%Destroy.WithSelf.SubobjectDestroy (constants.%Destroy.WithSelf.SubobjectDestroy.9cd)] {} {}
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.050 = fn_decl @Destroy.WithSelf.SubobjectDestroy [symbolic = @Destroy.WithSelf.%Destroy.WithSelf.SubobjectDestroy (constants.%Destroy.WithSelf.SubobjectDestroy.824)] {} {}
 // CHECK:STDOUT:   %PublicDestructor.cpp_destructor.decl: %PublicDestructor.cpp_destructor.type = fn_decl @PublicDestructor.cpp_destructor [concrete = constants.%PublicDestructor.cpp_destructor] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.bdc = ref_param_pattern [concrete = constants.%self.param_patt.5ea]
 // CHECK:STDOUT:     %self.patt: %pattern_type.bdc = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.81d]

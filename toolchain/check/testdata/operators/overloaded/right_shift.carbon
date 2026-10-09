@@ -45,28 +45,28 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %RightShiftWith.type.d7e: type = facet_type <@RightShiftWith, @RightShiftWith(%C)> [concrete]
+// CHECK:STDOUT:   %RightShiftWith.type.2f7: type = facet_type <@RightShiftWith, @RightShiftWith(%C)> [concrete]
 // CHECK:STDOUT:   %RightShiftWith.impl_witness: <witness> = impl_witness @C.as.RightShiftWith.impl.%RightShiftWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftWith.impl.Op.type: type = fn_type @C.as.RightShiftWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftWith.impl.Op: %C.as.RightShiftWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %RightShiftWith.facet: %RightShiftWith.type.d7e = facet_value %C, (%RightShiftWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %RightShiftWith.WithSelf.Op.type.502: type = fn_type @RightShiftWith.WithSelf.Op, @RightShiftWith.WithSelf(%C, %RightShiftWith.facet) [concrete]
-// CHECK:STDOUT:   %RightShiftAssignWith.type.245: type = facet_type <@RightShiftAssignWith, @RightShiftAssignWith(%C)> [concrete]
+// CHECK:STDOUT:   %RightShiftWith.facet.da5: %RightShiftWith.type.2f7 = facet_value %C, (%RightShiftWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %RightShiftWith.WithSelf.Op.type.235: type = fn_type @RightShiftWith.WithSelf.Op, @RightShiftWith.WithSelf(%C, %RightShiftWith.facet.da5) [concrete]
+// CHECK:STDOUT:   %RightShiftAssignWith.type.967: type = facet_type <@RightShiftAssignWith, @RightShiftAssignWith(%C)> [concrete]
 // CHECK:STDOUT:   %RightShiftAssignWith.impl_witness: <witness> = impl_witness @C.as.RightShiftAssignWith.impl.%RightShiftAssignWith.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.type: type = fn_type @C.as.RightShiftAssignWith.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op: %C.as.RightShiftAssignWith.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %RightShiftAssignWith.facet: %RightShiftAssignWith.type.245 = facet_value %C, (%RightShiftAssignWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %RightShiftAssignWith.WithSelf.Op.type.e82: type = fn_type @RightShiftAssignWith.WithSelf.Op, @RightShiftAssignWith.WithSelf(%C, %RightShiftAssignWith.facet) [concrete]
-// CHECK:STDOUT:   %.1d1: type = fn_type_with_self_type %RightShiftWith.WithSelf.Op.type.502, %RightShiftWith.facet [concrete]
+// CHECK:STDOUT:   %RightShiftAssignWith.facet: %RightShiftAssignWith.type.967 = facet_value %C, (%RightShiftAssignWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %RightShiftAssignWith.WithSelf.Op.type.961: type = fn_type @RightShiftAssignWith.WithSelf.Op, @RightShiftAssignWith.WithSelf(%C, %RightShiftAssignWith.facet) [concrete]
+// CHECK:STDOUT:   %.300: type = fn_type_with_self_type %RightShiftWith.WithSelf.Op.type.235, %RightShiftWith.facet.da5 [concrete]
 // CHECK:STDOUT:   %ptr.00e: type = ptr_type %C [concrete]
-// CHECK:STDOUT:   %.22a: type = fn_type_with_self_type %RightShiftAssignWith.WithSelf.Op.type.e82, %RightShiftAssignWith.facet [concrete]
+// CHECK:STDOUT:   %.e4d: type = fn_type_with_self_type %RightShiftAssignWith.WithSelf.Op.type.961, %RightShiftAssignWith.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param: %C, %b.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem1: %.1d1 = impl_witness_access constants.%RightShiftWith.impl_witness, element1 [concrete = constants.%C.as.RightShiftWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.300 = impl_witness_access constants.%RightShiftWith.impl_witness, element1 [concrete = constants.%C.as.RightShiftWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.RightShiftWith.impl.Op.call: init %C to %.loc30_26.1 = call %bound_method(%a.ref, %b.ref)
@@ -78,7 +78,7 @@ fn TestAssign(a: C*, b: C) {
 // CHECK:STDOUT:   %a.ref: %ptr.00e = name_ref a, %a
 // CHECK:STDOUT:   %.loc38: ref %C = deref %a.ref
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %impl.elem0: %.22a = impl_witness_access constants.%RightShiftAssignWith.impl_witness, element0 [concrete = constants.%C.as.RightShiftAssignWith.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.e4d = impl_witness_access constants.%RightShiftAssignWith.impl_witness, element0 [concrete = constants.%C.as.RightShiftAssignWith.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc38, %impl.elem0
 // CHECK:STDOUT:   %C.as.RightShiftAssignWith.impl.Op.call: init %empty_tuple.type = call %bound_method(%.loc38, %b.ref)
 // CHECK:STDOUT:   <elided>

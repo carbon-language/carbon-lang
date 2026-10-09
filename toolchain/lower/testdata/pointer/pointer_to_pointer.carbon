@@ -37,20 +37,20 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT:   %.loc17_12 = load ptr, ptr %c.var, align 8, !dbg !42
 // CHECK:STDOUT:   %.loc17_11.2 = load ptr, ptr %.loc17_12, align 8, !dbg !43
 // CHECK:STDOUT:   %.loc17_10.2 = load i32, ptr %.loc17_11.2, align 4, !dbg !44
-// CHECK:STDOUT:   call void @"_CSelfDestruct.c36b1dfc1a44331c:core.Destroy.Core"(ptr %c.var), !dbg !38
-// CHECK:STDOUT:   call void @"_CSelfDestruct.d088c7eb746488be:core.Destroy.Core"(ptr %b.var), !dbg !34
-// CHECK:STDOUT:   call void @"_CSelfDestruct.c36b1dfc1a44331c:core.Destroy.Core"(ptr %_.var), !dbg !31
+// CHECK:STDOUT:   call void @"_CSelfDestruct.5c59b53ed53bf7d7:core.Destroy.Core"(ptr %c.var), !dbg !38
+// CHECK:STDOUT:   call void @"_CSelfDestruct.1feff81df232a20a:core.Destroy.Core"(ptr %b.var), !dbg !34
+// CHECK:STDOUT:   call void @"_CSelfDestruct.5c59b53ed53bf7d7:core.Destroy.Core"(ptr %_.var), !dbg !31
 // CHECK:STDOUT:   ret i32 %.loc17_10.2, !dbg !45
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.c36b1dfc1a44331c:core.Destroy.Core"(ptr %self) #0 !dbg !47 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.5c59b53ed53bf7d7:core.Destroy.Core"(ptr %self) #0 !dbg !47 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.d088c7eb746488be:core.Destroy.Core"(ptr %self) #0 !dbg !51 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.1feff81df232a20a:core.Destroy.Core"(ptr %self) #0 !dbg !51 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !53
 // CHECK:STDOUT: }
@@ -59,7 +59,7 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @"_CSelfDestruct.c36b1dfc1a44331c:core.Destroy.Core", { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @"_CSelfDestruct.5c59b53ed53bf7d7:core.Destroy.Core", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
@@ -89,11 +89,11 @@ fn F(p: i32**) -> i32 {
 // CHECK:STDOUT: !44 = !DILocation(line: 17, column: 10, scope: !26)
 // CHECK:STDOUT: !45 = !DILocation(line: 17, column: 3, scope: !26)
 // CHECK:STDOUT: !46 = !{!27}
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.c36b1dfc1a44331c:core.Destroy.Core", scope: null, file: !18, line: 16, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !50)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.5c59b53ed53bf7d7:core.Destroy.Core", scope: null, file: !18, line: 16, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !50)
 // CHECK:STDOUT: !48 = !DILocalVariable(arg: 1, scope: !47, type: !21)
 // CHECK:STDOUT: !49 = !DILocation(line: 16, column: 3, scope: !47)
 // CHECK:STDOUT: !50 = !{!48}
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.d088c7eb746488be:core.Destroy.Core", scope: null, file: !18, line: 15, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !54)
+// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.1feff81df232a20a:core.Destroy.Core", scope: null, file: !18, line: 15, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !54)
 // CHECK:STDOUT: !52 = !DILocalVariable(arg: 1, scope: !51, type: !21)
 // CHECK:STDOUT: !53 = !DILocation(line: 15, column: 3, scope: !51)
 // CHECK:STDOUT: !54 = !{!52}

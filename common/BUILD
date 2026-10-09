@@ -405,6 +405,12 @@ cc_test(
 )
 
 cc_library(
+    name = "increment_scope",
+    hdrs = ["increment_scope.h"],
+    deps = [":check"],
+)
+
+cc_library(
     name = "init_llvm",
     srcs = ["init_llvm.cpp"],
     hdrs = ["init_llvm.h"],
