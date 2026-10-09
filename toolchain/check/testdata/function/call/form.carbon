@@ -262,6 +262,51 @@ fn F() ->? form(val i32) {
 }
 //@dump-sem-ir-end
 
+// --- ref_return_class.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+
+//@dump-sem-ir-begin
+fn F() -> ref C;
+//@dump-sem-ir-end
+
+fn G() {
+  //@dump-sem-ir-begin
+  F();
+  //@dump-sem-ir-end
+}
+
+// --- val_return_class.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+
+//@dump-sem-ir-begin
+fn F() ->? form(val C);
+//@dump-sem-ir-end
+
+fn G() {
+  //@dump-sem-ir-begin
+  F();
+  //@dump-sem-ir-end
+}
+
+// --- ref_return_class_generic.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+
+interface I {
+  fn F(self) -> ref C;
+}
+
+fn G[T: I](x: T) {
+  //@dump-sem-ir-begin
+  x.F();
+  //@dump-sem-ir-end
+}
+
 // --- fail_return_form_not_form.carbon
 library "[[@TEST_NAME]]";
 
@@ -773,6 +818,133 @@ fn G() {
 // CHECK:STDOUT:   %.loc5_11.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.8e8]
 // CHECK:STDOUT:   %.loc5_11.2: %i32 = converted %int_1, %.loc5_11.1 [concrete = constants.%int_1.8e8]
 // CHECK:STDOUT:   return %.loc5_11.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- ref_return_class.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %.723: Core.Form = ref_form %C [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %.af6: %pattern_type = ref_return_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type = return_slot_pattern %.af6, %C [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %.loc6_11.1: %pattern_type = ref_return_pattern [concrete = constants.%.af6]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %.loc6_11.1, %.loc6_11.3 [concrete = constants.%return.patt]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc6_11.2: Core.Form = ref_form %C.ref [concrete = constants.%.723]
+// CHECK:STDOUT:     %.loc6_11.3: type = type_component_of %.loc6_11.2 [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc6_11.4: ref %C = ref_return
+// CHECK:STDOUT:     %return: ref %C = return_slot %.loc6_11.4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> ref %C;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F.call: ref %C = call %F.ref()
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- val_return_class.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %.fbb: Core.Form = value_form %C [concrete]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %C [concrete]
+// CHECK:STDOUT:   %.483: %pattern_type = value_return_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type = return_slot_pattern %.483, %C [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %.loc6_17.1: %pattern_type = value_return_pattern [concrete = constants.%.483]
+// CHECK:STDOUT:     %return.patt: %pattern_type = return_slot_pattern %.loc6_17.1, %.loc6_17.3 [concrete = constants.%return.patt]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc6_17.2: Core.Form = value_form %C.ref [concrete = constants.%.fbb]
+// CHECK:STDOUT:     %.loc6_17.3: type = type_component_of %.loc6_17.2 [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc6_17.4: %C = value_return
+// CHECK:STDOUT:     %return: %C = return_slot %.loc6_17.4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() -> val %C;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F.call: %C = call %F.ref()
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- ref_return_class_generic.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
+// CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
+// CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T: %I.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.b3a: type = pattern_type %T.as_type [symbolic]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.b3a = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt: %pattern_type.b3a = wrapper_binding_pattern x, %x.param_patt [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.F.type.eae: type = fn_type @I.WithSelf.F, @I.WithSelf(%T) [symbolic]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T, @I [symbolic]
+// CHECK:STDOUT:   %.b94: type = fn_type_with_self_type %I.WithSelf.F.type.eae, %T [symbolic]
+// CHECK:STDOUT:   %impl.elem0: %.b94 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @I.WithSelf.F(%T) [symbolic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @G(%T.loc9_7.2: %I.type) {
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%T.loc9_7.1) [symbolic = %I.WithSelf.F.type (constants.%I.WithSelf.F.type.eae)]
+// CHECK:STDOUT:   %.loc11_4: type = fn_type_with_self_type %I.WithSelf.F.type, %T.loc9_7.1 [symbolic = %.loc11_4 (constants.%.b94)]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc9_7.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
+// CHECK:STDOUT:   %impl.elem0.loc11_4.2: @G.%.loc11_4 (%.b94) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %specific_impl_fn.loc11_4.2: <specific function> = specific_impl_function %impl.elem0.loc11_4.2, @I.WithSelf.F(%T.loc9_7.1) [symbolic = %specific_impl_fn.loc11_4.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%x.param: @G.%T.as_type.loc9_15.1 (%T.as_type)) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %x.ref: @G.%T.as_type.loc9_15.1 (%T.as_type) = name_ref x, %x
+// CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
+// CHECK:STDOUT:     %impl.elem0.loc11_4.1: @G.%.loc11_4 (%.b94) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %bound_method.loc11_4: <bound method> = bound_method %x.ref, %impl.elem0.loc11_4.1
+// CHECK:STDOUT:     %.loc11_7.1: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc9_7.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc11_7.2: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc9_7.1 (constants.%T)]
+// CHECK:STDOUT:     %specific_impl_fn.loc11_4.1: <specific function> = specific_impl_function %impl.elem0.loc11_4.1, @I.WithSelf.F(constants.%T) [symbolic = %specific_impl_fn.loc11_4.2 (constants.%specific_impl_fn)]
+// CHECK:STDOUT:     %bound_method.loc11_7: <bound method> = bound_method %x.ref, %specific_impl_fn.loc11_4.1
+// CHECK:STDOUT:     %I.WithSelf.F.call: ref %C = call %bound_method.loc11_7(%x.ref)
+// CHECK:STDOUT:     <elided>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @G(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc9_7.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc9_7.1 => constants.%T
+// CHECK:STDOUT:   %T.as_type.loc9_15.1 => constants.%T.as_type
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.b3a
+// CHECK:STDOUT:   %x.param_patt.loc9_13.2 => constants.%x.param_patt
+// CHECK:STDOUT:   %x.patt.loc9_13.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- form_generic_return.carbon

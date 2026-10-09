@@ -456,7 +456,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstBlockId inst_block_id)
 LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
   RawStringOstream out;
   out << DumpInstSummary(file, inst_id);
-  if (!inst_id.has_value()) {
+  if (inst_id == InstId::None || inst_id == InstId::InitTombstone ||
+      inst_id == InstId::ImplWitnessTablePlaceholder) {
     return out.TakeStr();
   }
 
