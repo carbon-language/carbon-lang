@@ -278,10 +278,18 @@ constraint N {
 }
 
 class C;
+// TODO: Since these errors have the same location, it would be nice to omit
+// the first one. Once rewrites can be done in the impl defn body, these errors
+// won't always have the same location (with the location being the decl)
+// though.
+// CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE+11]]:1: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
+// CHECK:STDERR: impl C as N {}
+// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR:
 // CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE+7]]:1: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: impl C as N {}
 // CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE-12]]:7: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE-20]]:7: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:   let I1: type;
 // CHECK:STDERR:       ^~~~~~~~
 // CHECK:STDERR:
