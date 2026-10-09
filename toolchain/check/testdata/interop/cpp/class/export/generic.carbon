@@ -84,7 +84,7 @@ class ClassWithMethod(T: type) {
 inline Cpp '''
 void FMethodCall() {
   Carbon::ClassWithMethod<int> c;
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:5: error: no member named 'M' in 'Carbon::ClassWithMethod<int>' [CppInteropParseError]
+  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+4]]:5: error: no member named 'M' in 'Carbon::Main::ClassWithMethod<int>' [CppInteropParseError]
   // CHECK:STDERR:    19 |   c.M();
   // CHECK:STDERR:       |   ~ ^
   // CHECK:STDERR:

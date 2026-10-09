@@ -55,3 +55,33 @@ namespace A = Carbon::N;
 Carbon::M::C *pmc;
 Carbon::N::C *pnc = pmc;
 ''';
+
+// --- fail_current_package_not_in_carbon.carbon
+package SelfPkg;
+import Cpp;
+
+class C {}
+
+inline Cpp '''
+Carbon::C* p;
+// CHECK:STDERR: fail_current_package_not_in_carbon.carbon:[[@LINE+4]]:25: error: expected namespace name [CppInteropParseError]
+// CHECK:STDERR:    12 | namespace Bad = Carbon::SelfPkg;
+// CHECK:STDERR:       |                 ~~~~~~~~^
+// CHECK:STDERR:
+namespace Bad = Carbon::SelfPkg;
+''';
+
+// --- fail_main_package_not_in_carbon.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class C {}
+
+inline Cpp '''
+Carbon::C* p;
+// CHECK:STDERR: fail_main_package_not_in_carbon.carbon:[[@LINE+4]]:25: error: expected namespace name [CppInteropParseError]
+// CHECK:STDERR:    12 | namespace Bad = Carbon::Main;
+// CHECK:STDERR:       |                 ~~~~~~~~^
+// CHECK:STDERR:
+namespace Bad = Carbon::Main;
+''';

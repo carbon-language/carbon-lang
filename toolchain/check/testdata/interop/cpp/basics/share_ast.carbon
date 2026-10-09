@@ -65,3 +65,38 @@ fn CallAIndirect() -> i32 {
 fn CallB() -> i32 {
   return Cpp.GetB();
 }
+
+// --- pkg_a.carbon
+package PkgA;
+import Cpp inline '''
+template <typename T> void Accept(T) {}
+''';
+
+class SameName {}
+
+fn TestPkgA(s: SameName) {
+  Cpp.Accept(s);
+}
+
+// --- pkg_b.carbon
+package PkgB;
+import Cpp inline '''
+template <typename T> void Accept(T) {}
+''';
+
+class SameName {}
+
+fn TestPkgB(s: SameName) {
+  Cpp.Accept(s);
+}
+
+// --- use_both_packages.carbon
+library "[[@TEST_NAME]]";
+import PkgA;
+import PkgB;
+import Cpp inline '''
+// SameName in PkgA and PkgB have distinct C++ DeclContexts (Carbon::PkgA vs
+// Carbon::PkgB), so overloading on them in C++ succeeds.
+void OverloadByPackage(Carbon::PkgA::SameName*) {}
+void OverloadByPackage(Carbon::PkgB::SameName*) {}
+''';
