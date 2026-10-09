@@ -500,14 +500,14 @@ inline constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 // embedding pointers directly into the storage of SemIR as part of an
 // instruction.
 struct ClangDeclId : public IdBase<ClangDeclId> {
-  static constexpr llvm::StringLiteral Label = "clang_decl_id";
+  static constexpr llvm::StringLiteral Label = "clang_decl";
 
   using IdBase::IdBase;
 };
 
 // The ID of a `ClangDeclSignature`.
 struct ClangDeclSignatureId : public IdBase<ClangDeclSignatureId> {
-  static constexpr llvm::StringLiteral Label = "clang_decl_signature_id";
+  static constexpr llvm::StringLiteral Label = "clang_decl_signature";
 
   using IdBase::IdBase;
 };

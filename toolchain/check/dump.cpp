@@ -55,6 +55,18 @@ LLVM_DUMP_METHOD static auto Dump(
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::ClangDeclId clang_decl_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), clang_decl_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(
+    const Context& context, SemIR::ClangDeclSignatureId clang_decl_signature_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), clang_decl_signature_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
                                   SemIR::ClassId class_id) -> std::string {
   return SemIR::Dump(context.sem_ir(), class_id);
 }
