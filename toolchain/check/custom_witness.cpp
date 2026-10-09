@@ -186,6 +186,7 @@ static auto IsBuiltinWithTrivialDestruction(Context& context,
                                             SemIR::InstId inst_id) -> bool {
   CARBON_KIND_SWITCH(context.insts().Get(inst_id)) {
     case SemIR::BoolType::Kind:
+    case SemIR::BoundMethodType::Kind:
     case SemIR::CppFunctionPointerType::Kind:
     case SemIR::FacetType::Kind:
     case SemIR::FloatType::Kind:
