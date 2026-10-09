@@ -478,7 +478,11 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
             class_info
                 .GetStructTypeFields(context.sem_ir(), class_type.specific_id)
                 .drop_while([](SemIR::StructTypeField struct_field) {
-                  return struct_field.name_id == SemIR::NameId::Vptr;
+                  // The vptr and a choice's discriminant aren't named members,
+                  // and are trivially destructible.
+                  return struct_field.name_id == SemIR::NameId::Vptr ||
+                         struct_field.name_id ==
+                             SemIR::NameId::ChoiceDiscriminant;
                 }));
         return;
       }
