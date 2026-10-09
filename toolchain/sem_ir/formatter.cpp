@@ -55,13 +55,14 @@ static auto GetTentativeScopes(const SemIR::File& sem_ir)
 
 Formatter::Formatter(
     const File* sem_ir, const SemIR::ShortFileNameStore* short_file_names,
-    const SemIR::GetInstNamersStore& inst_namers,
+    const SemIR::GetInstNamersStore* inst_namers,
     Parse::GetTreeAndSubtreesFn get_tree_and_subtrees,
     const FixedSizeValueStore<CheckIRId, bool>* include_ir_in_dumps,
     bool use_dump_sem_ir_ranges)
     : sem_ir_(sem_ir),
       short_file_names_(short_file_names),
-      inst_namer_(inst_namers.Get(sem_ir->check_ir_id())()),
+      inst_namers_(inst_namers),
+      inst_namer_(inst_namers->Get(sem_ir->check_ir_id())()),
       get_tree_and_subtrees_(get_tree_and_subtrees),
       include_ir_in_dumps_(include_ir_in_dumps),
       use_dump_sem_ir_ranges_(use_dump_sem_ir_ranges),
@@ -646,12 +647,19 @@ auto Formatter::FormatSpecificRegion(const Generic& generic,
     IndentLabel();
     out() << "!" << region_name << ":\n";
   }
+  auto [import_ir_id, generic_block_id] = generic.GetEvalBlock(region);
+  const auto* generic_ir = import_ir_id == ImportIRId::Local
+                               ? sem_ir_
+                               : sem_ir_->import_irs().Get(import_ir_id).sem_ir;
+  llvm::ArrayRef<SemIR::InstId> generic_block =
+      generic_ir->inst_blocks().GetOrEmpty(generic_block_id);
+
   for (auto [generic_inst_id, specific_inst_id] : llvm::zip_longest(
-           sem_ir_->inst_blocks().GetOrEmpty(generic.GetEvalBlock(region)),
+           generic_block,
            sem_ir_->inst_blocks().GetOrEmpty(specific.GetValueBlock(region)))) {
     Indent();
     if (generic_inst_id) {
-      FormatName(*generic_inst_id);
+      FormatNameFromIR(*generic_ir, *generic_inst_id);
     } else {
       out() << "<missing>";
     }
@@ -741,6 +749,19 @@ auto Formatter::FormatGenericStart(llvm::StringRef entity_kind,
   if (generic.definition_block_id.has_value()) {
     IndentLabel();
     out() << "!definition:\n";
+    if (generic.definition_ir_id.has_value() &&
+        generic.definition_ir_id != SemIR::ImportIRId::Local) {
+      const auto* import_ir =
+          sem_ir_->import_irs().Get(generic.definition_ir_id).sem_ir;
+      auto eval_block =
+          import_ir->inst_blocks().GetOrEmpty(generic.definition_block_id);
+      for (auto eval_inst_id : eval_block) {
+        Indent();
+        FormatNameFromIR(*import_ir, eval_inst_id);
+        out() << "\n";
+      }
+      return;
+    }
     FormatCodeBlock(generic.definition_block_id);
   }
 }
@@ -1761,6 +1782,19 @@ auto Formatter::FormatName(InstId id) -> void {
   out() << inst_namer_.GetNameFor(scope_, id);
 }
 
+auto Formatter::FormatNameFromIR(const SemIR::File& import_ir, InstId inst_id)
+    -> void {
+  if (&import_ir != sem_ir_) {
+    auto import_file_name = short_file_names_->Get(import_ir.check_ir_id());
+    const SemIR::InstNamer& foreign_inst_namer =
+        inst_namers_->Get(import_ir.check_ir_id())();
+    out() << "$" << import_file_name
+          << foreign_inst_namer.GetNameFor(InstNamer::ScopeId::None, inst_id);
+  } else {
+    FormatName(inst_id);
+  }
+}
+
 auto Formatter::FormatName(SpecificId id) -> void {
   const auto& specific = sem_ir_->specifics().Get(id);
   FormatName(specific.generic_id);
@@ -1789,8 +1823,8 @@ auto Formatter::FormatConstant(ConstantId id) -> void {
     return;
   }
 
-  auto inst_id = GetInstWithConstantValue(*sem_ir_, id);
-  FormatName(inst_id);
+  auto [ir, inst_id] = GetInstWithConstantValue(*sem_ir_, id);
+  FormatNameFromIR(*ir, inst_id);
 
   // For an attached constant, also list the unattached constant.
   if (id.is_symbolic() && sem_ir_->constant_values()

@@ -123,11 +123,10 @@ class EvalContext {
   // Gets the local constant value of the specified source instruction in the
   // current evaluation context.
   auto GetConstantValue(SemIR::InstId source_inst_id) -> SemIR::ConstantId {
-    auto const_id = source_constant_values().GetAttached(source_inst_id);
-
     // While evaluating a function, map from local non-constant instructions to
     // their earlier-evaluated values.
-    if (!const_id.is_constant()) {
+    if (auto const_id = source_constant_values().GetAttached(source_inst_id);
+        !const_id.is_constant()) {
       if (local_eval_info_) {
         if (auto local = local_eval_info_->locals->Lookup(source_inst_id)) {
           return local.value();
@@ -136,16 +135,23 @@ class EvalContext {
       return const_id;
     }
 
-    return GetConstantValueInSpecific(local_ir(), local_specific_id_,
-                                      source_ir(), source_inst_id)
-        .second;
+    auto [ir, const_id] = GetConstantValueInSpecific(
+        local_ir(), local_specific_id_, source_ir(), source_inst_id);
+    if (ir != &local_ir()) {
+      return ImportId(context(), import_ir_id_, const_id);
+    }
+    return const_id;
   }
 
   // Gets the type of the specified instruction in this context.
   auto GetTypeOfInst(SemIR::InstId source_inst_id) -> SemIR::TypeId {
-    return GetTypeOfInstInSpecific(local_ir(), local_specific_id_, *source_ir_,
-                                   source_inst_id)
-        .second;
+    auto [ir, type_id] = GetTypeOfInstInSpecific(local_ir(), local_specific_id_,
+                                                 *source_ir_, source_inst_id);
+    if (ir != &local_ir()) {
+      return SemIR::TypeId::ForTypeConstant(
+          ImportId(context(), import_ir_id_, type_id.AsConstantId()));
+    }
+    return type_id;
   }
 
   auto source_ir() -> const SemIR::File& { return *source_ir_; }
@@ -3702,14 +3708,16 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                              SemIR::GenericInstIndex::Region region) -> void {
   auto generic_id = context.specifics().Get(specific_id).generic_id;
   const auto& generic = context.generics().Get(generic_id);
-  auto eval_block_id = generic.GetEvalBlock(region);
-  auto eval_block = context.inst_blocks().Get(eval_block_id);
+
+  auto [block_ir_id, block_id] = generic.GetEvalBlock(region);
+  EvalContext eval_context(&context, loc_id, specific_id, block_ir_id);
+  auto source_eval_block = eval_context.source_inst_blocks().Get(block_id);
 
   // Allocate the value block and store it back onto the specific, so that our
   // in-progress results are visible.
   auto& specific = context.specifics().Get(specific_id);
   auto value_block_id =
-      context.inst_blocks().AddUninitialized(eval_block.size());
+      context.inst_blocks().AddUninitialized(source_eval_block.size());
   auto value_block = context.inst_blocks().GetMutable(value_block_id);
   for (auto& inst_id : value_block) {
     inst_id = SemIR::InstId::None;
@@ -3747,8 +3755,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                             0);
   }
 
-  EvalContext eval_context(&context, loc_id, specific_id);
-
   Diagnostics::ContextScope diagnostic_context(
       &context.emitter(), [&](auto& builder) {
         CARBON_DIAGNOSTIC_LABEL(ResolvingSpecificHere,
@@ -3761,12 +3767,13 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   // so nothing should be added to any generic we're in the middle of checking.
   auto num_tracked_insts = context.generic_region_stack().num_tracked_insts();
 
-  for (auto [i, inst_id, result_id] :
-       llvm::enumerate(eval_block, value_block)) {
-    auto const_id = TryEvalInstInContext(eval_context, inst_id,
-                                         context.insts().Get(inst_id));
+  for (auto [i, source_inst_id, result_id] :
+       llvm::enumerate(source_eval_block, value_block)) {
+    auto const_id =
+        TryEvalInstInContext(eval_context, source_inst_id,
+                             eval_context.source_insts().Get(source_inst_id));
     CARBON_CHECK(const_id.has_value(), "Failed to evaluate {0} in eval block",
-                 context.insts().Get(inst_id));
+                 eval_context.source_insts().Get(source_inst_id));
     if (const_id == SemIR::ErrorInst::ConstantId) {
       specific.SetHasError(region);
     }

@@ -177,7 +177,7 @@ fn G(c: C) {
 // CHECK:STDOUT:   %Main.F = import_ref Main//extend_impl_library, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e59c42.2: %I.type = import_ref Main//extend_impl_library, loc4_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//extend_impl_library, loc4_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.c77: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.eae) = import_ref Main//extend_impl_library, loc5_9, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.4b1)]
+// CHECK:STDOUT:   %Main.import_ref.c77: $extend_impl_library@I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.eae) = import_ref Main//extend_impl_library, loc5_9, loaded [symbolic = $extend_impl_library@I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.4b1)]
 // CHECK:STDOUT:   %Main.import_ref.62f: <witness> = import_ref Main//extend_impl_library, loc9_20, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.5dc: type = import_ref Main//extend_impl_library, loc9_15, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.c3f793.2: type = import_ref Main//extend_impl_library, loc9_18, loaded [concrete = constants.%I.type]
@@ -246,24 +246,24 @@ fn G(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.eae
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.4b1
+// CHECK:STDOUT:   $extend_impl_library@I.WithSelf.%Self => constants.%Self
+// CHECK:STDOUT:   $extend_impl_library@I.WithSelf.%I.WithSelf.F.type => constants.%I.WithSelf.F.type.eae
+// CHECK:STDOUT:   $extend_impl_library@I.WithSelf.%I.WithSelf.F => constants.%I.WithSelf.F.4b1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%C) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%C
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.d60
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.4ab
+// CHECK:STDOUT:   $extend_impl_library@I.WithSelf.%Self => constants.%C
+// CHECK:STDOUT:   $extend_impl_library@I.WithSelf.%I.WithSelf.F.type => constants.%I.WithSelf.F.type.d60
+// CHECK:STDOUT:   $extend_impl_library@I.WithSelf.%I.WithSelf.F => constants.%I.WithSelf.F.4ab
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.925
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.a51
+// CHECK:STDOUT:   $extend_impl_library@I.WithSelf.%Self => constants.%I.facet
+// CHECK:STDOUT:   $extend_impl_library@I.WithSelf.%I.WithSelf.F.type => constants.%I.WithSelf.F.type.925
+// CHECK:STDOUT:   $extend_impl_library@I.WithSelf.%I.WithSelf.F => constants.%I.WithSelf.F.a51
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

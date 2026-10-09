@@ -365,6 +365,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %D: type = class_type @D, @D(%N) [symbolic]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %Self.dda: %I.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self.frozen.3a0: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %I.WithSelf.F.type.eae: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self.dda) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.4b1: %I.WithSelf.F.type.eae = struct_value () [symbolic]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
@@ -386,7 +387,6 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %pattern_type.c5c: type = pattern_type %C.790 [symbolic]
 // CHECK:STDOUT:   %c.param_patt.a95: %pattern_type.c5c = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %c.patt.501: %pattern_type.c5c = wrapper_binding_pattern c, %c.param_patt.a95 [symbolic]
-// CHECK:STDOUT:   %.Self.frozen.3a0: %I.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %I.WithSelf.F.type.df7: type = fn_type @I.WithSelf.F, @I.WithSelf(%.Self.frozen.3a0) [symbolic_self]
 // CHECK:STDOUT:   %I.WithSelf.F.c96: %I.WithSelf.F.type.df7 = struct_value () [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen.3a0 [symbolic_self]
@@ -435,14 +435,14 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %Main.import_ref.f32: %I.assoc_type = import_ref Main//impl_def, loc16_12, loaded [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %Main.import_ref.7e3 = import_ref Main//impl_def, loc24_20, unloaded
 // CHECK:STDOUT:   %Main.Assoc: %Y.type = import_ref Main//impl_def, Assoc, loaded [concrete = %Assoc]
-// CHECK:STDOUT:   %Main.F: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.eae) = import_ref Main//impl_def, F, loaded [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.4b1)]
+// CHECK:STDOUT:   %Main.F: $impl_def@I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type.eae) = import_ref Main//impl_def, F, loaded [symbolic = $impl_def@I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F.4b1)]
+// CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//impl_def, loc15_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e73 = import_ref Main//impl_def, loc8_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.28a = import_ref Main//impl_def, loc4_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.3fc: <witness> = import_ref Main//impl_def, loc13_1, loaded [concrete = constants.%complete_type.782]
 // CHECK:STDOUT:   %Main.import_ref.80f = import_ref Main//impl_def, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.65b: %Z.type = import_ref Main//impl_def, loc11_10, loaded [symbolic = @C.%V (constants.%V)]
 // CHECK:STDOUT:   %Main.import_ref.e59c42.2: %I.type = import_ref Main//impl_def, loc15_13, loaded [symbolic = constants.%Self.dda]
-// CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//impl_def, loc15_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.d73: %Y.type = import_ref Main//impl_def, loc16_12, loaded [concrete = %Assoc]
 // CHECK:STDOUT:   %Assoc: %Y.type = assoc_const_decl @Assoc [concrete] {}
 // CHECK:STDOUT:   %Main.import_ref.397: <witness> = import_ref Main//impl_def, loc5_30, loaded [symbolic = @T.as.Y.impl.%Y.impl_witness (constants.%Y.impl_witness.28b)]
@@ -671,9 +671,9 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self.dda) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self.dda
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.eae
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.4b1
+// CHECK:STDOUT:   $impl_def@I.WithSelf.%Self => constants.%Self.dda
+// CHECK:STDOUT:   $impl_def@I.WithSelf.%I.WithSelf.F.type => constants.%I.WithSelf.F.type.eae
+// CHECK:STDOUT:   $impl_def@I.WithSelf.%I.WithSelf.F => constants.%I.WithSelf.F.4b1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.013) {
@@ -709,9 +709,9 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%.Self.frozen.3a0) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%.Self.frozen.3a0
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.df7
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.c96
+// CHECK:STDOUT:   $impl_def@I.WithSelf.%Self => constants.%.Self.frozen.3a0
+// CHECK:STDOUT:   $impl_def@I.WithSelf.%I.WithSelf.F.type => constants.%I.WithSelf.F.type.df7
+// CHECK:STDOUT:   $impl_def@I.WithSelf.%I.WithSelf.F => constants.%I.WithSelf.F.c96
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @T.as.Y.impl(constants.%T) {
@@ -765,9 +765,9 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet.871) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%I.facet.871
-// CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.e74
-// CHECK:STDOUT:   %I.WithSelf.F => constants.%I.WithSelf.F.55f
+// CHECK:STDOUT:   $impl_def@I.WithSelf.%Self => constants.%I.facet.871
+// CHECK:STDOUT:   $impl_def@I.WithSelf.%I.WithSelf.F.type => constants.%I.WithSelf.F.type.e74
+// CHECK:STDOUT:   $impl_def@I.WithSelf.%I.WithSelf.F => constants.%I.WithSelf.F.55f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%I.facet.871) {

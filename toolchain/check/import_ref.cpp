@@ -683,13 +683,29 @@ static auto GetLocalConstantId(ImportRefResolver& resolver,
   return resolver.GetLocalConstantValueOrPush(inst_id);
 }
 
+// TODO: Find a way to avoid the recursive cycle caused by the call to
+// `ImportRefResolver::Resolve` inside `GetLocalConstantId`.
+// NOLINTBEGIN(misc-no-recursion)
+
 // Returns the ConstantId for an imported ConstantId. Adds unresolved
 // constants to the resolver's work stack.
 static auto GetLocalConstantId(ImportRefResolver& resolver,
                                SemIR::ConstantId const_id)
     -> SemIR::ConstantId {
-  return GetLocalConstantId(
-      resolver, GetInstWithConstantValue(resolver.import_ir(), const_id));
+  auto [other_import_ir, import_inst_id] =
+      GetInstWithConstantValue(resolver.import_ir(), const_id);
+  if (other_import_ir != &resolver.import_ir()) {
+    // TODO: Revise `ImportRefResolver` to be able to resolve multiple import
+    // IRs, so that we can use `resolver` for this. That will avoid creating
+    // a recursive cycle, and fix the code duplication between this function and
+    // `ImportRefResolver::ResolveConstant`.
+    auto other_import_ir_id =
+        GetOrAddImportIR(resolver.local_context(), other_import_ir);
+    ImportRefResolver indirect_resolver(&resolver.local_context(),
+                                        other_import_ir_id);
+    return indirect_resolver.Resolve(import_inst_id);
+  }
+  return GetLocalConstantId(resolver, import_inst_id);
 }
 
 // Returns the local constant InstId for an imported InstId.
@@ -969,7 +985,8 @@ static auto ImportIncompleteGeneric(ImportContext& context,
   return context.local_generics().Add(
       {.decl_id = decl_id,
        .bindings_id = SemIR::InstBlockId::None,
-       .self_specific_id = SemIR::SpecificId::None});
+       .self_specific_id = SemIR::SpecificId::None,
+       .definition_ir_id = SemIR::ImportIRId::None});
 }
 
 namespace {
@@ -1256,11 +1273,6 @@ static auto TryFinishGeneric(ImportRefResolver& resolver,
 
   auto specific_data =
       GetLocalIncompleteSpecificData(resolver, import_generic.self_specific_id);
-  llvm::SmallVector<SemIR::InstId> definition_block;
-  if (import_generic.definition_block_id.has_value()) {
-    definition_block =
-        GetLocalInstBlockContents(resolver, import_generic.definition_block_id);
-  }
 
   if (resolver.HasNewWork()) {
     return false;
@@ -1275,10 +1287,19 @@ static auto TryFinishGeneric(ImportRefResolver& resolver,
                             specific_data, local_generic_id);
 
   if (import_generic.definition_block_id.has_value()) {
-    local_generic.definition_block_id = ResolveLocalEvalBlock(
-        resolver, import_generic.definition_block_id, definition_block,
-        local_generic_id, SemIR::GenericInstIndex::Region::Definition);
+    local_generic.definition_block_id = import_generic.definition_block_id;
+    if (import_generic.definition_ir_id.has_value()) {
+      const auto* definition_ir = resolver.import_ir()
+                                      .import_irs()
+                                      .Get(import_generic.definition_ir_id)
+                                      .sem_ir;
+      local_generic.definition_ir_id =
+          GetOrAddImportIR(resolver.local_context(), definition_ir);
+    } else {
+      local_generic.definition_ir_id = resolver.import_ir_id();
+    }
   }
+
   return true;
 }
 
@@ -5109,9 +5130,19 @@ auto ImportRefResolver::Resolve(SemIR::InstId inst_id) -> SemIR::ConstantId {
   return constant_id;
 }
 
+// NOLINTEND(misc-no-recursion)
+
 auto ImportRefResolver::ResolveConstant(SemIR::ConstantId import_const_id)
     -> SemIR::ConstantId {
-  return Resolve(GetInstWithConstantValue(import_ir(), import_const_id));
+  auto [other_import_ir, import_inst_id] =
+      GetInstWithConstantValue(import_ir(), import_const_id);
+  if (other_import_ir != &import_ir()) {
+    auto other_import_ir_id =
+        GetOrAddImportIR(local_context(), other_import_ir);
+    ImportRefResolver indirect_resolver(&local_context(), other_import_ir_id);
+    return indirect_resolver.Resolve(import_inst_id);
+  }
+  return Resolve(import_inst_id);
 }
 
 auto ImportRefResolver::ResolveType(SemIR::TypeId import_type_id)

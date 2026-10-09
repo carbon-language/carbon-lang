@@ -105,6 +105,11 @@ static auto HasCompatibleImportedInstKind(InstKind imported_kind,
   if (imported_kind == local_kind) {
     return true;
   }
+  if (imported_kind == LookupImplWitness::Kind) {
+    // A LookupImplWitness is a placeholder; many different inst kinds can
+    // be substituted for it.
+    return true;
+  }
   if (imported_kind == ImportDecl::Kind && local_kind == Namespace::Kind) {
     // Namespace node kinds should be a superset of ImportDecl node kinds.
     static_assert(

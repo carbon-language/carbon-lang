@@ -127,12 +127,12 @@ class Class(U: type) {
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.6b0: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_0.5c6, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
@@ -157,7 +157,7 @@ class Class(U: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.import_ref.e47: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2)]
+// CHECK:STDOUT:   %Core.import_ref.e47: $int.2@Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = $int.2@Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f53 = impl_witness_table (%Core.import_ref.e47), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -291,8 +291,6 @@ class Class(U: type) {
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
@@ -331,6 +329,8 @@ class Class(U: type) {
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
@@ -348,11 +348,11 @@ class Class(U: type) {
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Main.import_ref.e4b: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6) = import_ref Main//foo, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2)]
+// CHECK:STDOUT:   %Main.import_ref.e4b: $int.2@Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6) = import_ref Main//foo, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = $int.2@Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f53 = impl_witness_table (%Main.import_ref.e4b), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//foo, loc4_14, loaded [symbolic = @Class.%T.1 (constants.%T)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T)]
-// CHECK:STDOUT:   %Main.import_ref.bfd1: <witness> = import_ref Main//foo, loc9_1, loaded [concrete = constants.%complete_type.31e]
+// CHECK:STDOUT:   %Main.import_ref.bfd: <witness> = import_ref Main//foo, loc9_1, loaded [concrete = constants.%complete_type.31e]
 // CHECK:STDOUT:   %Main.import_ref.5a3 = import_ref Main//foo, inst{{[0-9A-F]+}} [no loc], unloaded
 // CHECK:STDOUT:   %Main.import_ref.227 = import_ref Main//foo, loc7_8, unloaded
 // CHECK:STDOUT:   %Main.import_ref.cd2 = import_ref Main//foo, loc8_17, unloaded
@@ -423,13 +423,13 @@ class Class(U: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.275)]
-// CHECK:STDOUT:   %CompleteClass.elem: type = unbound_element_type %CompleteClass, constants.%i32 [symbolic = %CompleteClass.elem (constants.%CompleteClass.elem.99d)]
-// CHECK:STDOUT:   %CompleteClass.F.type: type = fn_type @CompleteClass.F, @CompleteClass(%T) [symbolic = %CompleteClass.F.type (constants.%CompleteClass.F.type.356)]
-// CHECK:STDOUT:   %CompleteClass.F: @CompleteClass.%CompleteClass.F.type (%CompleteClass.F.type.356) = struct_value () [symbolic = %CompleteClass.F (constants.%CompleteClass.F.bdf)]
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.elem
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F.type
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     complete_type_witness = imports.%Main.import_ref.bfd1
+// CHECK:STDOUT:     complete_type_witness = imports.%Main.import_ref.bfd
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .Self = imports.%Main.import_ref.5a3
@@ -471,10 +471,10 @@ class Class(U: type) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.275
-// CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.99d
-// CHECK:STDOUT:   %CompleteClass.F.type => constants.%CompleteClass.F.type.356
-// CHECK:STDOUT:   %CompleteClass.F => constants.%CompleteClass.F.bdf
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass => constants.%CompleteClass.275
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.elem => constants.%CompleteClass.elem.99d
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F.type => constants.%CompleteClass.F.type.356
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F => constants.%CompleteClass.F.bdf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass.F(constants.%T) {}
@@ -484,10 +484,10 @@ class Class(U: type) {
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.09c
-// CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.1e9
-// CHECK:STDOUT:   %CompleteClass.F.type => constants.%CompleteClass.F.type.901
-// CHECK:STDOUT:   %CompleteClass.F => constants.%CompleteClass.F.0d9
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass => constants.%CompleteClass.09c
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.elem => constants.%CompleteClass.elem.1e9
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F.type => constants.%CompleteClass.F.type.901
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F => constants.%CompleteClass.F.0d9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- use_foo.carbon = $use_foo
@@ -532,8 +532,6 @@ class Class(U: type) {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.1: type = fn_type @SubobjectDestroy.WithSelf.Op.loc6_3.1 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.1: %SubobjectDestroy.WithSelf.Op.type.6870fd.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
@@ -551,15 +549,17 @@ class Class(U: type) {
 // CHECK:STDOUT:   %UseField.type: type = fn_type @UseField [concrete]
 // CHECK:STDOUT:   %UseField: %UseField.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -577,16 +577,16 @@ class Class(U: type) {
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T.67d)]
 // CHECK:STDOUT:   %Main.import_ref.bfd: <witness> = import_ref Main//foo, loc9_1, loaded [concrete = constants.%complete_type.31e]
 // CHECK:STDOUT:   %Main.import_ref.5a3 = import_ref Main//foo, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.14b: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.99d) = import_ref Main//foo, loc7_8, loaded [concrete = %field_decl]
-// CHECK:STDOUT:   %Main.import_ref.928: @CompleteClass.%CompleteClass.F.type (%CompleteClass.F.type.356) = import_ref Main//foo, loc8_17, loaded [symbolic = @CompleteClass.%CompleteClass.F (constants.%CompleteClass.F.bdf)]
+// CHECK:STDOUT:   %Main.import_ref.14b: $foo@CompleteClass.%CompleteClass.elem (%CompleteClass.elem.99d) = import_ref Main//foo, loc7_8, loaded [concrete = %field_decl]
+// CHECK:STDOUT:   %Main.import_ref.928: $foo@CompleteClass.%CompleteClass.F.type (%CompleteClass.F.type.356) = import_ref Main//foo, loc8_17, loaded [symbolic = $foo@CompleteClass.%CompleteClass.F (constants.%CompleteClass.F.bdf)]
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T.67d)]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %Core.import_ref.74d: $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.736 = import_ref Main//foo, loc7_10, unloaded
-// CHECK:STDOUT:   %field_decl: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.99d) = field_decl n, element0, %Main.import_ref.736 in [concrete] {}
+// CHECK:STDOUT:   %field_decl: $foo@CompleteClass.%CompleteClass.elem (%CompleteClass.elem.99d) = field_decl n, element0, %Main.import_ref.736 in [concrete] {}
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.72f: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.a1d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.3c1)]
+// CHECK:STDOUT:   %Core.import_ref.72f: $int.2@Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.a1d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = $int.2@Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.3c1)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.f44 = impl_witness_table (%Core.import_ref.72f), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -626,10 +626,10 @@ class Class(U: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.275)]
-// CHECK:STDOUT:   %CompleteClass.elem: type = unbound_element_type %CompleteClass, constants.%i32 [symbolic = %CompleteClass.elem (constants.%CompleteClass.elem.99d)]
-// CHECK:STDOUT:   %CompleteClass.F.type: type = fn_type @CompleteClass.F, @CompleteClass(%T) [symbolic = %CompleteClass.F.type (constants.%CompleteClass.F.type.356)]
-// CHECK:STDOUT:   %CompleteClass.F: @CompleteClass.%CompleteClass.F.type (%CompleteClass.F.type.356) = struct_value () [symbolic = %CompleteClass.F (constants.%CompleteClass.F.bdf)]
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.elem
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F.type
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%Main.import_ref.bfd
@@ -747,10 +747,10 @@ class Class(U: type) {
 // CHECK:STDOUT:   %T => constants.%T.67d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.275
-// CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.99d
-// CHECK:STDOUT:   %CompleteClass.F.type => constants.%CompleteClass.F.type.356
-// CHECK:STDOUT:   %CompleteClass.F => constants.%CompleteClass.F.bdf
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass => constants.%CompleteClass.275
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.elem => constants.%CompleteClass.elem.99d
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F.type => constants.%CompleteClass.F.type.356
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F => constants.%CompleteClass.F.bdf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass.F(constants.%T.67d) {}
@@ -760,10 +760,10 @@ class Class(U: type) {
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.09c
-// CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.1e9
-// CHECK:STDOUT:   %CompleteClass.F.type => constants.%CompleteClass.F.type.901
-// CHECK:STDOUT:   %CompleteClass.F => constants.%CompleteClass.F.0d9
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass => constants.%CompleteClass.09c
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.elem => constants.%CompleteClass.elem.1e9
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F.type => constants.%CompleteClass.F.type.901
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F => constants.%CompleteClass.F.0d9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass.F(constants.%i32) {
@@ -813,8 +813,6 @@ class Class(U: type) {
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.1: type = fn_type @SubobjectDestroy.WithSelf.Op.loc14_3.1 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.1: %SubobjectDestroy.WithSelf.Op.type.6870fd.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
@@ -829,6 +827,8 @@ class Class(U: type) {
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.766: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.e3b) [concrete]
 // CHECK:STDOUT:   %Destroy.facet.336: %Destroy.type = facet_value %CompleteClass.860, (%DestroyImpl.impl_witness.766, %custom_witness.b80ef6.3) [concrete]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.826: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet.336) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -845,16 +845,16 @@ class Class(U: type) {
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.1: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T.67d)]
 // CHECK:STDOUT:   %Main.import_ref.bfd: <witness> = import_ref Main//foo, loc9_1, loaded [concrete = constants.%complete_type.31e]
 // CHECK:STDOUT:   %Main.import_ref.5a3 = import_ref Main//foo, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.14b: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.99d) = import_ref Main//foo, loc7_8, loaded [concrete = %field_decl]
+// CHECK:STDOUT:   %Main.import_ref.14b: $foo@CompleteClass.%CompleteClass.elem (%CompleteClass.elem.99d) = import_ref Main//foo, loc7_8, loaded [concrete = %field_decl]
 // CHECK:STDOUT:   %Main.import_ref.cd2 = import_ref Main//foo, loc8_17, unloaded
 // CHECK:STDOUT:   %Main.import_ref.b3bc94.2: type = import_ref Main//foo, loc6_22, loaded [symbolic = @CompleteClass.%T (constants.%T.67d)]
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
-// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %Core.import_ref.74d: $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = $destroy@T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Main.import_ref.736 = import_ref Main//foo, loc7_10, unloaded
-// CHECK:STDOUT:   %field_decl: @CompleteClass.%CompleteClass.elem (%CompleteClass.elem.99d) = field_decl n, element0, %Main.import_ref.736 in [concrete] {}
+// CHECK:STDOUT:   %field_decl: $foo@CompleteClass.%CompleteClass.elem (%CompleteClass.elem.99d) = field_decl n, element0, %Main.import_ref.736 in [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -875,10 +875,10 @@ class Class(U: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass: type = class_type @CompleteClass, @CompleteClass(%T) [symbolic = %CompleteClass (constants.%CompleteClass.275)]
-// CHECK:STDOUT:   %CompleteClass.elem: type = unbound_element_type %CompleteClass, constants.%i32 [symbolic = %CompleteClass.elem (constants.%CompleteClass.elem.99d)]
-// CHECK:STDOUT:   %CompleteClass.F.type: type = fn_type @CompleteClass.F, @CompleteClass(%T) [symbolic = %CompleteClass.F.type (constants.%CompleteClass.F.type.356)]
-// CHECK:STDOUT:   %CompleteClass.F: @CompleteClass.%CompleteClass.F.type (%CompleteClass.F.type.356) = struct_value () [symbolic = %CompleteClass.F (constants.%CompleteClass.F.bdf)]
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.elem
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F.type
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     complete_type_witness = imports.%Main.import_ref.bfd
@@ -958,10 +958,10 @@ class Class(U: type) {
 // CHECK:STDOUT:   %T => constants.%T.67d
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.275
-// CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.99d
-// CHECK:STDOUT:   %CompleteClass.F.type => constants.%CompleteClass.F.type.356
-// CHECK:STDOUT:   %CompleteClass.F => constants.%CompleteClass.F.bdf
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass => constants.%CompleteClass.275
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.elem => constants.%CompleteClass.elem.99d
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F.type => constants.%CompleteClass.F.type.356
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F => constants.%CompleteClass.F.bdf
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass.F(constants.%T.67d) {}
@@ -971,10 +971,10 @@ class Class(U: type) {
 // CHECK:STDOUT:   %T => constants.%ptr.a17
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.860
-// CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.609
-// CHECK:STDOUT:   %CompleteClass.F.type => constants.%CompleteClass.F.type.b6d
-// CHECK:STDOUT:   %CompleteClass.F => constants.%CompleteClass.F.f0c
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass => constants.%CompleteClass.860
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.elem => constants.%CompleteClass.elem.609
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F.type => constants.%CompleteClass.F.type.b6d
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F => constants.%CompleteClass.F.f0c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CompleteClass(constants.%i32) {
@@ -982,10 +982,10 @@ class Class(U: type) {
 // CHECK:STDOUT:   %T => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %CompleteClass => constants.%CompleteClass.09c
-// CHECK:STDOUT:   %CompleteClass.elem => constants.%CompleteClass.elem.1e9
-// CHECK:STDOUT:   %CompleteClass.F.type => constants.%CompleteClass.F.type.901
-// CHECK:STDOUT:   %CompleteClass.F => constants.%CompleteClass.F.0d9
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass => constants.%CompleteClass.09c
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.elem => constants.%CompleteClass.elem.1e9
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F.type => constants.%CompleteClass.F.type.901
+// CHECK:STDOUT:   $foo@CompleteClass.%CompleteClass.F => constants.%CompleteClass.F.0d9
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_foo.impl.carbon = $fail_foo.impl

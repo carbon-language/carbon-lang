@@ -78,10 +78,10 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %f_ref.var_patt: %pattern_type.1c1 = var_pattern %f_ref.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.5f6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.5c0: %T.as.DefaultOrUnformed.impl.Op.type.5f6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.c8a: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%struct_type.f) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %struct_type.f, (%DefaultOrUnformed.impl_witness.c8a) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.5f6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.5c0: %T.as.DefaultOrUnformed.impl.Op.type.5f6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.3f8: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%struct_type.f) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.11c: %T.as.DefaultOrUnformed.impl.Op.type.3f8 = struct_value () [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.specific_fn: <specific function> = specific_function %T.as.DefaultOrUnformed.impl.Op.11c, @T.as.DefaultOrUnformed.impl.Op(%struct_type.f) [concrete]
@@ -94,7 +94,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.DefaultOrUnformed: type = import_ref Core//prelude/parts/default, DefaultOrUnformed, loaded [concrete = constants.%DefaultOrUnformed.type]
-// CHECK:STDOUT:   %Core.import_ref.002: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.5f6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.5c0)]
+// CHECK:STDOUT:   %Core.import_ref.002: $default@T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.5f6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = $default@T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.5c0)]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.002), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -221,13 +221,13 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %UseEmpty: %UseEmpty.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Basic.type: type = facet_type <@Basic> [concrete]
 // CHECK:STDOUT:   %Self.a33: %Basic.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %Basic.WithSelf.F.type: type = fn_type @Basic.WithSelf.F, @Basic.WithSelf(%Self.a33) [symbolic]
-// CHECK:STDOUT:   %Basic.WithSelf.F: %Basic.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.7fe: type = pattern_type %Basic.type [concrete]
 // CHECK:STDOUT:   %e.param_patt.7a3: %pattern_type.7fe = value_param_pattern [concrete]
 // CHECK:STDOUT:   %e.patt.8fd: %pattern_type.7fe = wrapper_binding_pattern e, %e.param_patt.7a3 [concrete]
 // CHECK:STDOUT:   %UseBasic.type: type = fn_type @UseBasic [concrete]
 // CHECK:STDOUT:   %UseBasic: %UseBasic.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Basic.WithSelf.F.type: type = fn_type @Basic.WithSelf.F, @Basic.WithSelf(%Self.a33) [symbolic]
+// CHECK:STDOUT:   %Basic.WithSelf.F: %Basic.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.type: type = facet_type <@ForwardDeclared> [concrete]
 // CHECK:STDOUT:   %Self.603: %ForwardDeclared.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.type: type = fn_type @ForwardDeclared.WithSelf.F, @ForwardDeclared.WithSelf(%Self.603) [symbolic]
@@ -255,12 +255,12 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %addr: %ptr.b71 = addr_of %.594 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.20f: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f12: %ptr.as.Copy.impl.Op.type.20f = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.2cb: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%ForwardDeclared.type) [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.b71, (%Copy.impl_witness.2cb) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.b85: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.e1b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.b85, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.20f: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f12: %ptr.as.Copy.impl.Op.type.20f = struct_value () [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.a6d: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%ForwardDeclared.type) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f22: %ptr.as.Copy.impl.Op.type.a6d = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.bound: <bound method> = bound_method %addr, %ptr.as.Copy.impl.Op.f22 [concrete]
@@ -283,8 +283,8 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Main.import_ref.864: %Basic.assoc_type = import_ref Main//a, loc9_9, loaded [concrete = constants.%assoc1.453]
 // CHECK:STDOUT:   %Main.T.e1d = import_ref Main//a, T, unloaded
 // CHECK:STDOUT:   %Main.F.153 = import_ref Main//a, F, unloaded
-// CHECK:STDOUT:   %Main.import_ref.316a0d.2: %Basic.type = import_ref Main//a, loc7_17, loaded [symbolic = constants.%Self.a33]
 // CHECK:STDOUT:   %Main.import_ref.eb6 = import_ref Main//a, loc7_17, unloaded
+// CHECK:STDOUT:   %Main.import_ref.316a0d.2: %Basic.type = import_ref Main//a, loc7_17, loaded [symbolic = constants.%Self.a33]
 // CHECK:STDOUT:   %Main.import_ref.825: %ForwardDeclared.assoc_type = import_ref Main//a, loc16_8, loaded [concrete = constants.%assoc0.096]
 // CHECK:STDOUT:   %Main.import_ref.e7e: %ForwardDeclared.assoc_type = import_ref Main//a, loc17_9, loaded [concrete = constants.%assoc1.bea]
 // CHECK:STDOUT:   %Main.T.c9b = import_ref Main//a, T, unloaded
@@ -297,7 +297,7 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   %Main.import_ref.1d3 = import_ref Main//a, loc17_9, unloaded
 // CHECK:STDOUT:   %f_ref.var: ref %struct_type.f = var_storage constants.%f_ref.var_patt [concrete]
 // CHECK:STDOUT:   %Core.Copy: type = import_ref Core//prelude/parts/copy, Copy, loaded [concrete = constants.%Copy.type]
-// CHECK:STDOUT:   %Core.import_ref.06a: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.20f) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.f12)]
+// CHECK:STDOUT:   %Core.import_ref.06a: $copy@ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.20f) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = $copy@ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.f12)]
 // CHECK:STDOUT:   %Copy.impl_witness_table.fb0 = impl_witness_table (%Core.import_ref.06a), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -400,13 +400,13 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @Basic.WithSelf.F(imports.%Main.import_ref.316a0d.2: %Basic.type) [from "a.carbon"] {
-// CHECK:STDOUT:   fn;
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: fn @UseBasic(%e.param: %Basic.type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @Basic.WithSelf.F(imports.%Main.import_ref.316a0d.2: %Basic.type) [from "a.carbon"] {
+// CHECK:STDOUT:   fn;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ForwardDeclared.WithSelf.F(imports.%Main.import_ref.a75fa2.2: %ForwardDeclared.type) [from "a.carbon"] {
@@ -438,18 +438,18 @@ var f: ForwardDeclared* = &f_ref.f;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Basic.WithSelf(constants.%Self.a33) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self.a33
-// CHECK:STDOUT:   %Basic.WithSelf.F.type => constants.%Basic.WithSelf.F.type
-// CHECK:STDOUT:   %Basic.WithSelf.F => constants.%Basic.WithSelf.F
+// CHECK:STDOUT:   $a@Basic.WithSelf.%Self => constants.%Self.a33
+// CHECK:STDOUT:   $a@Basic.WithSelf.%Basic.WithSelf.F.type => constants.%Basic.WithSelf.F.type
+// CHECK:STDOUT:   $a@Basic.WithSelf.%Basic.WithSelf.F => constants.%Basic.WithSelf.F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Basic.WithSelf.F(constants.%Self.a33) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclared.WithSelf(constants.%Self.603) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self.603
-// CHECK:STDOUT:   %ForwardDeclared.WithSelf.F.type => constants.%ForwardDeclared.WithSelf.F.type
-// CHECK:STDOUT:   %ForwardDeclared.WithSelf.F => constants.%ForwardDeclared.WithSelf.F
+// CHECK:STDOUT:   $a@ForwardDeclared.WithSelf.%Self => constants.%Self.603
+// CHECK:STDOUT:   $a@ForwardDeclared.WithSelf.%ForwardDeclared.WithSelf.F.type => constants.%ForwardDeclared.WithSelf.F.type
+// CHECK:STDOUT:   $a@ForwardDeclared.WithSelf.%ForwardDeclared.WithSelf.F => constants.%ForwardDeclared.WithSelf.F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ForwardDeclared.WithSelf.F(constants.%Self.603) {}

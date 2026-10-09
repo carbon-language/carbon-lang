@@ -158,6 +158,8 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %Add.type: type = facet_type <@Add> [concrete]
 // CHECK:STDOUT:   %Self: %Add.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %.63f: <witness> = impl_self_witness %C, @Add [concrete]
+// CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness @C.as.Add.impl.%Add.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Add.WithSelf.Op.type.e98: type = fn_type @Add.WithSelf.Op, @Add.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %Add.WithSelf.Op.4db: %Add.WithSelf.Op.type.e98 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
@@ -169,8 +171,6 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:   %.719: Core.Form = init_form %Self.as_type [symbolic]
 // CHECK:STDOUT:   %other.param_patt.03b: %pattern_type.78d = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %other.patt.bc5: %pattern_type.78d = wrapper_binding_pattern other, %other.param_patt.03b [symbolic]
-// CHECK:STDOUT:   %.63f: <witness> = impl_self_witness %C, @Add [concrete]
-// CHECK:STDOUT:   %Add.impl_witness: <witness> = impl_witness @C.as.Add.impl.%Add.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt.303: %pattern_type.98b = value_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.36a: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt.303 [concrete]
@@ -204,10 +204,10 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.1fd: %Add.assoc_type = import_ref Main//a, loc5_35, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.Op: @Add.WithSelf.%Add.WithSelf.Op.type (%Add.WithSelf.Op.type.e98) = import_ref Main//a, Op, loaded [symbolic = @Add.WithSelf.%Add.WithSelf.Op (constants.%Add.WithSelf.Op.4db)]
-// CHECK:STDOUT:   %Main.import_ref.9e12ee.2: %Add.type = import_ref Main//a, loc4_15, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.Op: $a@Add.WithSelf.%Add.WithSelf.Op.type (%Add.WithSelf.Op.type.e98) = import_ref Main//a, Op, loaded [symbolic = $a@Add.WithSelf.%Add.WithSelf.Op (constants.%Add.WithSelf.Op.4db)]
 // CHECK:STDOUT:   %Main.import_ref.6b4 = import_ref Main//a, loc4_15, unloaded
-// CHECK:STDOUT:   %Main.import_ref.4c8: @Add.WithSelf.%Add.WithSelf.Op.type (%Add.WithSelf.Op.type.e98) = import_ref Main//a, loc5_35, loaded [symbolic = @Add.WithSelf.%Add.WithSelf.Op (constants.%Add.WithSelf.Op.4db)]
+// CHECK:STDOUT:   %Main.import_ref.9e12ee.2: %Add.type = import_ref Main//a, loc4_15, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.4c8: $a@Add.WithSelf.%Add.WithSelf.Op.type (%Add.WithSelf.Op.type.e98) = import_ref Main//a, loc5_35, loaded [symbolic = $a@Add.WithSelf.%Add.WithSelf.Op (constants.%Add.WithSelf.Op.4db)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -340,9 +340,9 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Add.WithSelf.Op.type => constants.%Add.WithSelf.Op.type.e98
-// CHECK:STDOUT:   %Add.WithSelf.Op => constants.%Add.WithSelf.Op.4db
+// CHECK:STDOUT:   $a@Add.WithSelf.%Self => constants.%Self
+// CHECK:STDOUT:   $a@Add.WithSelf.%Add.WithSelf.Op.type => constants.%Add.WithSelf.Op.type.e98
+// CHECK:STDOUT:   $a@Add.WithSelf.%Add.WithSelf.Op => constants.%Add.WithSelf.Op.4db
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.WithSelf.Op(constants.%Self) {
@@ -360,9 +360,9 @@ fn F(x: C, y: C) -> C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.WithSelf(constants.%Add.facet) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Add.facet
-// CHECK:STDOUT:   %Add.WithSelf.Op.type => constants.%Add.WithSelf.Op.type.dd6
-// CHECK:STDOUT:   %Add.WithSelf.Op => constants.%Add.WithSelf.Op.0b4
+// CHECK:STDOUT:   $a@Add.WithSelf.%Self => constants.%Add.facet
+// CHECK:STDOUT:   $a@Add.WithSelf.%Add.WithSelf.Op.type => constants.%Add.WithSelf.Op.type.dd6
+// CHECK:STDOUT:   $a@Add.WithSelf.%Add.WithSelf.Op => constants.%Add.WithSelf.Op.0b4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Add.WithSelf.Op(constants.%Add.facet) {

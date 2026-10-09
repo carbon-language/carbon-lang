@@ -372,8 +372,12 @@ LLVM_DUMP_METHOD auto Dump(const File& file, GenericId generic_id)
     out << "\ngeneric decl block: " << Dump(file, generic.decl_block_id);
   }
   if (generic.definition_block_id.has_value()) {
+    const File* definition_ir = &file;
+    if (generic.definition_ir_id.has_value()) {
+      definition_ir = file.import_irs().Get(generic.definition_ir_id).sem_ir;
+    }
     out << "\ngeneric definition block: "
-        << Dump(file, generic.definition_block_id);
+        << Dump(*definition_ir, generic.definition_block_id);
   }
   return out.TakeStr();
 }

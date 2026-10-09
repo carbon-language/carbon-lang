@@ -257,7 +257,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:   %Main.Op = import_ref Main//included_with_range, Op, unloaded
 // CHECK:STDOUT:   %Main.import_ref.e59c42.2: %I.type = import_ref Main//included_with_range, loc7_13, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//included_with_range, loc7_13, unloaded
-// CHECK:STDOUT:   %Main.import_ref.f01: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.019) = import_ref Main//included_with_range, loc8_14, loaded [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.58d)]
+// CHECK:STDOUT:   %Main.import_ref.f01: $included_with_range@I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.019) = import_ref Main//included_with_range, loc8_14, loaded [symbolic = $included_with_range@I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.58d)]
 // CHECK:STDOUT:   %Main.import_ref.62f: <witness> = import_ref Main//included_with_range, loc13_15, loaded [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.335: type = import_ref Main//included_with_range, loc13_8, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.c3f: type = import_ref Main//included_with_range, loc13_13, loaded [concrete = constants.%I.type]
@@ -330,9 +330,9 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.019
-// CHECK:STDOUT:   %I.WithSelf.Op => constants.%I.WithSelf.Op.58d
+// CHECK:STDOUT:   $included_with_range@I.WithSelf.%Self => constants.%Self
+// CHECK:STDOUT:   $included_with_range@I.WithSelf.%I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.019
+// CHECK:STDOUT:   $included_with_range@I.WithSelf.%I.WithSelf.Op => constants.%I.WithSelf.Op.58d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.Op(constants.%Self) {
@@ -345,9 +345,9 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.5f6
-// CHECK:STDOUT:   %I.WithSelf.Op => constants.%I.WithSelf.Op.ca6
+// CHECK:STDOUT:   $included_with_range@I.WithSelf.%Self => constants.%I.facet
+// CHECK:STDOUT:   $included_with_range@I.WithSelf.%I.WithSelf.Op.type => constants.%I.WithSelf.Op.type.5f6
+// CHECK:STDOUT:   $included_with_range@I.WithSelf.%I.WithSelf.Op => constants.%I.WithSelf.Op.ca6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_excluded.carbon = $import_excluded
@@ -383,7 +383,7 @@ fn F(c: C) { c.(I.Op)(); }
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Main.import_ref.d1e: %I.assoc_type = import_ref Main//excluded_with_range, loc6_14, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.import_ref.f01: @I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.019) = import_ref Main//excluded_with_range, loc6_14, loaded [symbolic = @I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.58d)]
+// CHECK:STDOUT:   %Main.import_ref.f01: $excluded_with_range@I.WithSelf.%I.WithSelf.Op.type (%I.WithSelf.Op.type.019) = import_ref Main//excluded_with_range, loc6_14, loaded [symbolic = $excluded_with_range@I.WithSelf.%I.WithSelf.Op (constants.%I.WithSelf.Op.58d)]
 // CHECK:STDOUT:   %Main.import_ref.341: %C.as.I.impl.Op.type = import_ref Main//excluded_with_range, loc12_24, loaded [concrete = constants.%C.as.I.impl.Op]
 // CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (%Main.import_ref.341), @C.as.I.impl [concrete]
 // CHECK:STDOUT: }

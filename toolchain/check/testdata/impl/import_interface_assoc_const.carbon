@@ -1835,9 +1835,9 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %IF.type: type = facet_type <@IF> [concrete]
 // CHECK:STDOUT:   %Self: %IF.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %.Self.frozen: %IF.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %IF.WithSelf.F.type.1fd: type = fn_type @IF.WithSelf.F, @IF.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %IF.WithSelf.F.9f7: %IF.WithSelf.F.type.1fd = struct_value () [symbolic]
-// CHECK:STDOUT:   %.Self.frozen: %IF.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %IF.WithSelf.F.type.84d: type = fn_type @IF.WithSelf.F, @IF.WithSelf(%.Self.frozen) [symbolic_self]
 // CHECK:STDOUT:   %IF.WithSelf.F.b54: %IF.WithSelf.F.type.84d = struct_value () [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen [symbolic_self]
@@ -1865,10 +1865,10 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.IF: type = import_ref Main//interface_with_function, IF, loaded [concrete = constants.%IF.type]
 // CHECK:STDOUT:   %Main.import_ref.ad5: %IF.assoc_type = import_ref Main//interface_with_function, loc3_22, loaded [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %Main.F: @IF.WithSelf.%IF.WithSelf.F.type (%IF.WithSelf.F.type.1fd) = import_ref Main//interface_with_function, F, loaded [symbolic = @IF.WithSelf.%IF.WithSelf.F (constants.%IF.WithSelf.F.9f7)]
-// CHECK:STDOUT:   %Main.import_ref.541dfe.2: %IF.type = import_ref Main//interface_with_function, loc3_14, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.F: $interface_with_function@IF.WithSelf.%IF.WithSelf.F.type (%IF.WithSelf.F.type.1fd) = import_ref Main//interface_with_function, F, loaded [symbolic = $interface_with_function@IF.WithSelf.%IF.WithSelf.F (constants.%IF.WithSelf.F.9f7)]
 // CHECK:STDOUT:   %Main.import_ref.942 = import_ref Main//interface_with_function, loc3_14, unloaded
-// CHECK:STDOUT:   %Main.import_ref.18d: @IF.WithSelf.%IF.WithSelf.F.type (%IF.WithSelf.F.type.1fd) = import_ref Main//interface_with_function, loc3_22, loaded [symbolic = @IF.WithSelf.%IF.WithSelf.F (constants.%IF.WithSelf.F.9f7)]
+// CHECK:STDOUT:   %Main.import_ref.541dfe.2: %IF.type = import_ref Main//interface_with_function, loc3_14, loaded [symbolic = constants.%Self]
+// CHECK:STDOUT:   %Main.import_ref.18d: $interface_with_function@IF.WithSelf.%IF.WithSelf.F.type (%IF.WithSelf.F.type.1fd) = import_ref Main//interface_with_function, loc3_22, loaded [symbolic = $interface_with_function@IF.WithSelf.%IF.WithSelf.F (constants.%IF.WithSelf.F.9f7)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1939,27 +1939,27 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %IF.WithSelf.F.type => constants.%IF.WithSelf.F.type.1fd
-// CHECK:STDOUT:   %IF.WithSelf.F => constants.%IF.WithSelf.F.9f7
+// CHECK:STDOUT:   $interface_with_function@IF.WithSelf.%Self => constants.%Self
+// CHECK:STDOUT:   $interface_with_function@IF.WithSelf.%IF.WithSelf.F.type => constants.%IF.WithSelf.F.type.1fd
+// CHECK:STDOUT:   $interface_with_function@IF.WithSelf.%IF.WithSelf.F => constants.%IF.WithSelf.F.9f7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF.WithSelf.F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF.WithSelf(constants.%.Self.frozen) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%.Self.frozen
-// CHECK:STDOUT:   %IF.WithSelf.F.type => constants.%IF.WithSelf.F.type.84d
-// CHECK:STDOUT:   %IF.WithSelf.F => constants.%IF.WithSelf.F.b54
+// CHECK:STDOUT:   $interface_with_function@IF.WithSelf.%Self => constants.%.Self.frozen
+// CHECK:STDOUT:   $interface_with_function@IF.WithSelf.%IF.WithSelf.F.type => constants.%IF.WithSelf.F.type.84d
+// CHECK:STDOUT:   $interface_with_function@IF.WithSelf.%IF.WithSelf.F => constants.%IF.WithSelf.F.b54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF.WithSelf(constants.%.Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF.WithSelf(constants.%IF.facet.636) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%IF.facet.636
-// CHECK:STDOUT:   %IF.WithSelf.F.type => constants.%IF.WithSelf.F.type.aa8
-// CHECK:STDOUT:   %IF.WithSelf.F => constants.%IF.WithSelf.F.083
+// CHECK:STDOUT:   $interface_with_function@IF.WithSelf.%Self => constants.%IF.facet.636
+// CHECK:STDOUT:   $interface_with_function@IF.WithSelf.%IF.WithSelf.F.type => constants.%IF.WithSelf.F.type.aa8
+// CHECK:STDOUT:   $interface_with_function@IF.WithSelf.%IF.WithSelf.F => constants.%IF.WithSelf.F.083
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IF.WithSelf.F(constants.%IF.facet.636) {}

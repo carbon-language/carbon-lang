@@ -358,7 +358,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9ad11e.2: %NonInstance.type = import_ref Main//lib, loc3_23, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.61e = import_ref Main//lib, loc3_23, unloaded
-// CHECK:STDOUT:   %Main.import_ref.825: @NonInstance.WithSelf.%NonInstance.WithSelf.F.type (%NonInstance.WithSelf.F.type.669) = import_ref Main//lib, loc4_9, loaded [symbolic = @NonInstance.WithSelf.%NonInstance.WithSelf.F (constants.%NonInstance.WithSelf.F.7f7)]
+// CHECK:STDOUT:   %Main.import_ref.825: $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F.type (%NonInstance.WithSelf.F.type.669) = import_ref Main//lib, loc4_9, loaded [symbolic = $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F (constants.%NonInstance.WithSelf.F.7f7)]
 // CHECK:STDOUT:   %Main.import_ref.29e: <witness> = import_ref Main//lib, loc7_30, loaded [concrete = constants.%NonInstance.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.c9a: type = import_ref Main//lib, loc7_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.282: type = import_ref Main//lib, loc7_18, loaded [concrete = constants.%NonInstance.type]
@@ -414,18 +414,18 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type.669
-// CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F.7f7
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%Self => constants.%Self
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type.669
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F.7f7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf.F(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf(constants.%NonInstance.facet) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%NonInstance.facet
-// CHECK:STDOUT:   %NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type.d0e
-// CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F.036
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%Self => constants.%NonInstance.facet
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type.d0e
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F.036
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_non-instance.carbon = $fail_import_non-instance
@@ -462,7 +462,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9ad11e.2: %NonInstance.type = import_ref Main//lib, loc3_23, loaded [symbolic = constants.%Self.002]
 // CHECK:STDOUT:   %Main.import_ref.61e = import_ref Main//lib, loc3_23, unloaded
-// CHECK:STDOUT:   %Main.import_ref.825: @NonInstance.WithSelf.%NonInstance.WithSelf.F.type (%NonInstance.WithSelf.F.type) = import_ref Main//lib, loc4_9, loaded [symbolic = @NonInstance.WithSelf.%NonInstance.WithSelf.F (constants.%NonInstance.WithSelf.F)]
+// CHECK:STDOUT:   %Main.import_ref.825: $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F.type (%NonInstance.WithSelf.F.type) = import_ref Main//lib, loc4_9, loaded [symbolic = $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F (constants.%NonInstance.WithSelf.F)]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -513,9 +513,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf(constants.%Self.002) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self.002
-// CHECK:STDOUT:   %NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type
-// CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%Self => constants.%Self.002
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf.F(constants.%Self.002) {}
@@ -555,7 +555,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Main.F = import_ref Main//lib, F, unloaded
 // CHECK:STDOUT:   %Main.import_ref.9ad11e.2: %NonInstance.type = import_ref Main//lib, loc3_23, loaded [symbolic = constants.%Self.002]
 // CHECK:STDOUT:   %Main.import_ref.61e = import_ref Main//lib, loc3_23, unloaded
-// CHECK:STDOUT:   %Main.import_ref.825: @NonInstance.WithSelf.%NonInstance.WithSelf.F.type (%NonInstance.WithSelf.F.type) = import_ref Main//lib, loc4_9, loaded [symbolic = @NonInstance.WithSelf.%NonInstance.WithSelf.F (constants.%NonInstance.WithSelf.F)]
+// CHECK:STDOUT:   %Main.import_ref.825: $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F.type (%NonInstance.WithSelf.F.type) = import_ref Main//lib, loc4_9, loaded [symbolic = $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F (constants.%NonInstance.WithSelf.F)]
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -608,9 +608,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf(constants.%Self.002) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self.002
-// CHECK:STDOUT:   %NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type
-// CHECK:STDOUT:   %NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%Self => constants.%Self.002
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F.type => constants.%NonInstance.WithSelf.F.type
+// CHECK:STDOUT:   $lib@NonInstance.WithSelf.%NonInstance.WithSelf.F => constants.%NonInstance.WithSelf.F
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @NonInstance.WithSelf.F(constants.%Self.002) {}
@@ -664,7 +664,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
 // CHECK:STDOUT:   %Main.import_ref.a85b8b.2: %Instance.type = import_ref Main//lib, loc11_20, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.2cd = import_ref Main//lib, loc11_20, unloaded
-// CHECK:STDOUT:   %Main.import_ref.fa6: @Instance.WithSelf.%Instance.WithSelf.G.type (%Instance.WithSelf.G.type.080) = import_ref Main//lib, loc12_13, loaded [symbolic = @Instance.WithSelf.%Instance.WithSelf.G (constants.%Instance.WithSelf.G.074)]
+// CHECK:STDOUT:   %Main.import_ref.fa6: $lib@Instance.WithSelf.%Instance.WithSelf.G.type (%Instance.WithSelf.G.type.080) = import_ref Main//lib, loc12_13, loaded [symbolic = $lib@Instance.WithSelf.%Instance.WithSelf.G (constants.%Instance.WithSelf.G.074)]
 // CHECK:STDOUT:   %Main.import_ref.9a5: <witness> = import_ref Main//lib, loc15_27, loaded [concrete = constants.%Instance.impl_witness]
 // CHECK:STDOUT:   %Main.import_ref.c9a: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.fd3: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
@@ -765,9 +765,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Instance.WithSelf.G.type => constants.%Instance.WithSelf.G.type.080
-// CHECK:STDOUT:   %Instance.WithSelf.G => constants.%Instance.WithSelf.G.074
+// CHECK:STDOUT:   $lib@Instance.WithSelf.%Self => constants.%Self
+// CHECK:STDOUT:   $lib@Instance.WithSelf.%Instance.WithSelf.G.type => constants.%Instance.WithSelf.G.type.080
+// CHECK:STDOUT:   $lib@Instance.WithSelf.%Instance.WithSelf.G => constants.%Instance.WithSelf.G.074
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance.WithSelf.G(constants.%Self) {
@@ -780,9 +780,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance.WithSelf(constants.%Instance.facet) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Instance.facet
-// CHECK:STDOUT:   %Instance.WithSelf.G.type => constants.%Instance.WithSelf.G.type.8ce
-// CHECK:STDOUT:   %Instance.WithSelf.G => constants.%Instance.WithSelf.G.88e
+// CHECK:STDOUT:   $lib@Instance.WithSelf.%Self => constants.%Instance.facet
+// CHECK:STDOUT:   $lib@Instance.WithSelf.%Instance.WithSelf.G.type => constants.%Instance.WithSelf.G.type.8ce
+// CHECK:STDOUT:   $lib@Instance.WithSelf.%Instance.WithSelf.G => constants.%Instance.WithSelf.G.88e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_import_instance.carbon = $fail_import_instance
@@ -817,7 +817,7 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:   %Main.G = import_ref Main//lib, G, unloaded
 // CHECK:STDOUT:   %Main.import_ref.a85b8b.2: %Instance.type = import_ref Main//lib, loc11_20, loaded [symbolic = constants.%Self]
 // CHECK:STDOUT:   %Main.import_ref.2cd = import_ref Main//lib, loc11_20, unloaded
-// CHECK:STDOUT:   %Main.import_ref.fa6: @Instance.WithSelf.%Instance.WithSelf.G.type (%Instance.WithSelf.G.type) = import_ref Main//lib, loc12_13, loaded [symbolic = @Instance.WithSelf.%Instance.WithSelf.G (constants.%Instance.WithSelf.G)]
+// CHECK:STDOUT:   %Main.import_ref.fa6: $lib@Instance.WithSelf.%Instance.WithSelf.G.type (%Instance.WithSelf.G.type) = import_ref Main//lib, loc12_13, loaded [symbolic = $lib@Instance.WithSelf.%Instance.WithSelf.G (constants.%Instance.WithSelf.G)]
 // CHECK:STDOUT:   %Main.import_ref.fa7 = import_ref Main//lib, loc15_27, unloaded
 // CHECK:STDOUT:   %Main.import_ref.c9a: type = import_ref Main//lib, loc15_13, loaded [concrete = constants.%struct_type.i]
 // CHECK:STDOUT:   %Main.import_ref.fd3: type = import_ref Main//lib, loc15_18, loaded [concrete = constants.%Instance.type]
@@ -871,9 +871,9 @@ fn InstanceCallImportFail() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Instance.WithSelf.G.type => constants.%Instance.WithSelf.G.type
-// CHECK:STDOUT:   %Instance.WithSelf.G => constants.%Instance.WithSelf.G
+// CHECK:STDOUT:   $lib@Instance.WithSelf.%Self => constants.%Self
+// CHECK:STDOUT:   $lib@Instance.WithSelf.%Instance.WithSelf.G.type => constants.%Instance.WithSelf.G.type
+// CHECK:STDOUT:   $lib@Instance.WithSelf.%Instance.WithSelf.G => constants.%Instance.WithSelf.G
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Instance.WithSelf.G(constants.%Self) {
