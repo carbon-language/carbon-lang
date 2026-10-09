@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_SEM_IR_CPP_DOMAIN_H_
 
 #include <memory>
+#include <utility>
 
 #include "common/check.h"
 #include "common/map.h"
@@ -16,6 +17,8 @@
 namespace clang {
 class CodeGenerator;
 class CompilerInstance;
+class DeclContext;
+class IdentifierInfo;
 class Module;
 class NamespaceDecl;
 class Parser;
@@ -68,8 +71,16 @@ class CppDomain {
   auto header_modules() -> llvm::StringMap<clang::Module*>& {
     return header_modules_;
   }
-  auto package_namespaces() -> llvm::StringMap<clang::NamespaceDecl*>& {
-    return package_namespaces_;
+  auto carbon_namespace() const -> clang::NamespaceDecl* {
+    return carbon_namespace_;
+  }
+  auto set_carbon_namespace(clang::NamespaceDecl* carbon_namespace) -> void {
+    carbon_namespace_ = carbon_namespace;
+  }
+  auto namespaces()
+      -> Map<std::pair<clang::DeclContext*, clang::IdentifierInfo*>,
+             clang::NamespaceDecl*>& {
+    return namespaces_;
   }
 
  private:
@@ -78,7 +89,10 @@ class CppDomain {
   Map<CheckIRId, clang::CodeGenerator*> code_generators_;
   Map<CheckIRId, clang::Module*> modules_;
   llvm::StringMap<clang::Module*> header_modules_;
-  llvm::StringMap<clang::NamespaceDecl*> package_namespaces_;
+  clang::NamespaceDecl* carbon_namespace_ = nullptr;
+  Map<std::pair<clang::DeclContext*, clang::IdentifierInfo*>,
+      clang::NamespaceDecl*>
+      namespaces_;
   llvm::LLVMContext* llvm_context_ = nullptr;
 };
 
