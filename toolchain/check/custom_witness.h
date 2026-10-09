@@ -67,12 +67,6 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::SpecificInterface query_specific_interface,
                          bool build_witness) -> std::optional<SemIR::InstId>;
 
-auto LookupSelfDestructWitness(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterface query_specific_interface, bool build_witness)
-    -> std::optional<SemIR::InstId>;
-
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CUSTOM_WITNESS_H_

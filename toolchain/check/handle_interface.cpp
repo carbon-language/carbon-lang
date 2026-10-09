@@ -370,7 +370,6 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId node_id)
       case SemIR::CoreInterface::MulWith:
       case SemIR::CoreInterface::Negate:
       case SemIR::CoreInterface::OrderedWith:
-      case SemIR::CoreInterface::SelfDestruct:
       case SemIR::CoreInterface::SubAssignWith:
       case SemIR::CoreInterface::SubWith:
       case SemIR::CoreInterface::Unknown:

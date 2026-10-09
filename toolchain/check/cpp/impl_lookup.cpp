@@ -634,10 +634,6 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::SubobjectDestroy:
       return BuildCppSubobjectDestroyWitness(
           context, loc_id, query_self_const_id, query_specific_interface);
-    case SemIR::CoreInterface::SelfDestruct:
-      return LookupSelfDestructWitness(context, loc_id, query_self_const_id,
-                                       query_specific_interface, true)
-          .value_or(SemIR::ErrorInst::InstId);
 
     case SemIR::CoreInterface::CppRangeForIterate:
       return BuildCppRangeForIterateWitness(

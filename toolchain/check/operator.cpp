@@ -106,12 +106,11 @@ auto BuildUnaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
 
 auto BuildSelfDestructCall(Context& context, SemIR::InstId object_id)
     -> SemIR::InstId {
-  // TODO: Call a function instead of a unary operator.
-  return BuildUnaryOperator(context,
-                            context.insts().GetLocIdForDesugaring(object_id),
-                            {.interface_name = CoreIdentifier::SelfDestruct,
-                             .op_name = CoreIdentifier::Op},
-                            object_id);
+  auto loc_id = context.insts().GetLocIdForDesugaring(object_id);
+  return PerformCall(
+      context, loc_id,
+      LookupNameInCore(context, loc_id, CoreIdentifier::SelfDestruct),
+      {object_id}, /*is_desugared=*/true);
 }
 
 auto BuildBinaryOperator(Context& context, SemIR::LocId loc_id, Operator op,
