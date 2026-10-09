@@ -1051,6 +1051,9 @@ static auto GetLocalGenericId(ImportContext& context,
     case CARBON_KIND(SemIR::FunctionType fn_type): {
       return context.local_functions().Get(fn_type.function_id).generic_id;
     }
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      return context.local_classes().Get(class_type.class_id).generic_id;
+    }
     case CARBON_KIND(SemIR::GenericClassType class_type): {
       return context.local_classes().Get(class_type.class_id).generic_id;
     }

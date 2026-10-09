@@ -12,8 +12,11 @@
 // --- generic_with_nested.carbon
 package P library "generic_with_nested";
 
+class X {};
+
 class C(T: type) {
   class Nested {
+    var x: X;
   }
 }
 
