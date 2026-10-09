@@ -222,31 +222,6 @@ static auto FindAndDiagnoseImplLookupCycle(
   return false;
 }
 
-// Gets the set of `SpecificInterface`s that are required by a facet type
-// (as a constant value), and any special requirements.
-static auto GetRequiredImplsFromConstraint(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::ConstantId query_facet_type_const_id, bool diagnose)
-    -> std::optional<llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl>> {
-  auto identified_id = RequireIdentifiedFacetType(
-      context, loc_id, query_self_const_id,
-      context.types().GetTypeIdForTypeConstantId(query_facet_type_const_id),
-      [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Context,
-                          "facet type {0} can not be identified",
-                          SemIR::TypeId);
-        builder.Context(loc_id, ImplLookupInUnidentifiedFacetType,
-                        context.types().GetTypeIdForTypeConstantId(
-                            query_facet_type_const_id));
-      },
-      diagnose);
-  if (!identified_id.has_value()) {
-    return std::nullopt;
-  }
-  return context.identified_facet_types().Get(identified_id).required_impls();
-}
-
 static auto TreatImplAsFinal(Context& context, const SemIR::Impl& impl)
     -> bool {
   // Lookups for the impl inside its own definition treat the impl as final.
@@ -491,91 +466,42 @@ static auto CollectFacetWitnessSources(
   return witnesses;
 }
 
-// Given a query `orig_inst_self` and `orig_interface`, try find a matching
-// witness from impl lookup to use for the query.
-static auto TryFindMatchingWitnessFromImplLookup(
-    llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls,
-    llvm::ArrayRef<SemIR::InstId> found_witness_inst_ids,
-    SemIR::ConstantId orig_const_self, SemIR::SpecificInterface orig_interface)
-    -> SemIR::InstId {
-  for (auto [req_impl, found_witness_inst_id] :
-       llvm::zip_equal(req_impls, found_witness_inst_ids)) {
-    auto [req_const_self, req_interface] = req_impl;
-    if (req_const_self == orig_const_self && req_interface == orig_interface) {
-      return found_witness_inst_id;
-    }
-  }
-  return SemIR::InstId::None;
-}
+class SubstMatchingWitnessesFromImplLookup
+    : public SubstIdentifiedWitnessesCallbacks {
+ public:
+  explicit SubstMatchingWitnessesFromImplLookup(
+      Context* context,
+      llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls,
+      llvm::ArrayRef<SemIR::InstId> found_witness_inst_ids)
+      : SubstIdentifiedWitnessesCallbacks(context),
+        req_impls_(req_impls),
+        found_witness_inst_ids_(found_witness_inst_ids) {}
 
-static auto VerifyQueryFacetTypeConstraints(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::ConstantId query_facet_type_const_id,
-    llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls,
-    llvm::ArrayRef<SemIR::InstId> witness_inst_ids) -> bool {
-  // TODO: Get the rewrites and equality constraints from the
-  // IdentifiedFacetType so that we also find and verify requirements from named
-  // constraints.
-  const auto& declared_facet_type = context.declared_facet_types().Get(
-      context.constant_values()
-          .GetInstAs<SemIR::FacetType>(query_facet_type_const_id)
-          .declared_facet_type_id);
-
-  if (!declared_facet_type.rewrite_constraints.empty()) {
-    auto rebuild = [&](SemIR::Inst new_inst) -> SemIR::InstId {
-      // When rebuilding a witness where `.Self` was replaced, use a witness we
-      // found in impl lookup instead of performing impl lookup again.
-      if (auto lookup = new_inst.TryAs<SemIR::LookupImplWitness>()) {
-        auto witness = TryFindMatchingWitnessFromImplLookup(
-            req_impls, witness_inst_ids,
-            context.constant_values().Get(lookup->query_self_inst_id),
-            context.specific_interfaces().Get(
-                lookup->query_specific_interface_id));
-        if (witness.has_value()) {
-          return witness;
-        }
-      }
-
-      return SemIR::InstId::None;
-    };
-
-    for (const auto& rewrite : declared_facet_type.rewrite_constraints) {
-      // Replace `.Self` in rewrite constraints with the query self in order to
-      // find the provided values of rewrite constraints from the query. This
-      // includes replacing `.Self` in LookupImplWitness instructions.
-      //
-      // When we have found a witness in impl lookup for the query in a
-      // LookupImplWitness insts, we need to use that witness directly instead
-      // of rebuilding (and reevaluating) the LookupImplWitness which will
-      // execute another impl lookup.
-
-      auto lhs_id = context.constant_values().GetInstId(SubstPeriodSelf(
-          context, loc_id, context.constant_values().Get(rewrite.lhs_id),
-          query_self_const_id, rebuild));
-      auto rhs_id = context.constant_values().GetInstId(SubstPeriodSelf(
-          context, loc_id, context.constant_values().Get(rewrite.rhs_id),
-          query_self_const_id, rebuild));
-
-      if (lhs_id != rhs_id) {
-        // TODO: Provide a diagnostic note and location for which rewrite
-        // constraint was not satisfied, if a diagnostic is going to be
-        // displayed for the LookupImplWitness() failure. This may require
-        // plumbing through a callback that lets us add a Note to another
-        // diagnostic.
-        return false;
+  auto ReplaceIdentified(SemIR::IdentifiedWitness witness)
+      -> SemIR::InstId override {
+    for (auto [req_impl, found_witness_inst_id] :
+         llvm::zip_equal(req_impls_, found_witness_inst_ids_)) {
+      auto [req_const_self, req_interface] = req_impl;
+      if (req_const_self ==
+              context().constant_values().Get(witness.query_self_inst_id) &&
+          req_interface == context().specific_interfaces().Get(
+                               witness.query_specific_interface_id)) {
+        return found_witness_inst_id;
       }
     }
+    return SemIR::InstId::None;
   }
 
-  // TODO: Validate that the witnesses satisfy the other requirements in the
-  // `declared_facet_type`.
-  if (declared_facet_type.other_requirements) {
-    return false;
+  auto ReplaceImplSelfWitness(SemIR::ImplSelfWitness /*witness*/)
+      -> SemIR::InstId override {
+    // ImplSelfWitnesses should only appear in impl decls and are all replaced.
+    CARBON_FATAL();
   }
 
-  return true;
-}
+ private:
+  llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls_;
+  llvm::ArrayRef<SemIR::InstId> found_witness_inst_ids_;
+};
 
 // Returns whether the query is concrete, it is false if the self type or
 // interface specifics have a symbolic dependency.
@@ -928,19 +854,40 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
         query_facet_type_const_id));
   }
 
-  auto req_impls_from_constraint =
-      GetRequiredImplsFromConstraint(context, loc_id, query_self_const_id,
-                                     query_facet_type_const_id, diagnose);
-  if (!req_impls_from_constraint.has_value()) {
+  // This IdentifiedFacetType holds all the requirements that the impl lookup is
+  // trying to satisfy. On success, each `X impls Y` requirement in here will
+  // result in a witness being returned that provides the `impls` relationship.
+  // Each equivalent requirement must be verified to be true in order to
+  // succeed, and all rewrite requirements are treated as equivalent
+  // requirements here, since we're doing lookup not defining an `impl` witness.
+  auto required_identified_id = RequireIdentifiedFacetType(
+      context, loc_id, query_self_const_id,
+      context.types().GetTypeIdForTypeConstantId(query_facet_type_const_id),
+      [&](auto& builder) {
+        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Context,
+                          "facet type {0} can not be identified",
+                          SemIR::TypeId);
+        builder.Context(loc_id, ImplLookupInUnidentifiedFacetType,
+                        context.types().GetTypeIdForTypeConstantId(
+                            query_facet_type_const_id));
+      },
+      diagnose);
+  if (!required_identified_id.has_value()) {
     return SemIR::InstBlockIdOrError::MakeError();
   }
-  if (req_impls_from_constraint->empty()) {
+
+  const auto& required_identified =
+      context.identified_facet_types().Get(required_identified_id);
+  if (required_identified.required_impls().empty()) {
+    CARBON_CHECK(required_identified.equivalents().empty());
+    CARBON_CHECK(required_identified.rewrites().empty());
+    // Nothing to do, return an empty success result.
     return SemIR::InstBlockId::Empty;
   }
   // These RequiredImpls have IdentifiedWitnesses in them initially. We will
   // replace those with real witnesses as we process them.
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> req_impls(
-      *req_impls_from_constraint);
+      required_identified.required_impls());
 
   // Find all the facets in the query and their witnesses.
   auto witness_sources = CollectFacetWitnessSources(
@@ -1036,14 +983,48 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
     return SemIR::InstBlockId::None;
   }
 
-  // Verify rewrite constraints in the query constraint are satisfied after
-  // applying the rewrites from the found witnesses.
+  // Verify all equivalent requirements in the query constraint are satisfied.
+  // We apply the witnesses that we've found to those requirements in order to
+  // compare them without causing redundant and cyclic impl lookups.
   //
   // Note that the `req_impls` have all had their IdentifiedWitnesses replaced
   // by real witnesses by this point.
-  if (!VerifyQueryFacetTypeConstraints(context, loc_id, query_self_const_id,
-                                       query_facet_type_const_id, req_impls,
-                                       result_witness_ids)) {
+  SubstMatchingWitnessesFromImplLookup subst_witnesses_callbacks(
+      &context, req_impls, result_witness_ids);
+  for (auto equiv : required_identified.equivalents()) {
+    equiv = SubstIdentifiedWitnesses(context, loc_id, equiv,
+                                     subst_witnesses_callbacks);
+    if (equiv.lhs != equiv.rhs) {
+      // TODO: Provide a diagnostic note and location for which rewrite
+      // constraint was not satisfied, if a diagnostic is going to be
+      // displayed for the LookupImplWitness() failure. This may require
+      // plumbing through a callback that lets us add a Note to another
+      // diagnostic.
+      return SemIR::InstBlockId::None;
+    }
+  }
+  for (auto rewrite : required_identified.rewrites()) {
+    // Rewrites are treated as equivalent requirements in impl lookup.
+    SemIR::IdentifiedFacetType::Equivalent equiv = {.lhs = rewrite.lhs,
+                                                    .rhs = rewrite.rhs};
+    equiv = SubstIdentifiedWitnesses(context, loc_id, equiv,
+                                     subst_witnesses_callbacks);
+    if (equiv.lhs != equiv.rhs) {
+      // TODO: Provide a diagnostic note and location for which rewrite
+      // constraint was not satisfied, if a diagnostic is going to be
+      // displayed for the LookupImplWitness() failure. This may require
+      // plumbing through a callback that lets us add a Note to another
+      // diagnostic.
+      return SemIR::InstBlockId::None;
+    }
+  }
+  // TODO: Collect equality constraints into the IdentifiedFacetType. Then this
+  // goes away.
+  if (context.declared_facet_types()
+          .Get(context.constant_values()
+                   .GetInstAs<SemIR::FacetType>(query_facet_type_const_id)
+                   .declared_facet_type_id)
+          .other_requirements) {
     return SemIR::InstBlockId::None;
   }
 
