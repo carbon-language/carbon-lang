@@ -217,7 +217,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.3f0: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [concrete]
+// CHECK:STDOUT:   %AdaptWithBaseAndFields.elem.63a: type = unbound_element_type %AdaptWithBaseAndFields, %i32 [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -252,7 +252,7 @@ class AdaptWithBaseAndFields {
 // CHECK:STDOUT: class @AdaptWithBaseAndFields {
 // CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
 // CHECK:STDOUT:   %.loc7: %AdaptWithBaseAndFields.elem.8fd = base_decl %Base.ref, element<none> [concrete]
-// CHECK:STDOUT:   %field_decl: %AdaptWithBaseAndFields.elem.3f0 = field_decl n, element<none>, %i32 in [concrete] {
+// CHECK:STDOUT:   %field_decl: %AdaptWithBaseAndFields.elem.63a = field_decl n, element<none>, %i32 in [concrete] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc16_10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]

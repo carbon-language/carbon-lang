@@ -193,7 +193,7 @@ interface Z {
   }
 }
 
-// --- todo_fail_impl_mismatch_named_constraint_rewrites.carbon
+// --- fail_impl_mismatch_named_constraint_rewrites.carbon
 library "[[@TEST_NAME]]";
 
 interface Z { let Z0: type; }
@@ -206,6 +206,9 @@ fn G() {
   class C {}
   // .Z0 has the wrong type for M.
   impl C as Z where .Z0 = () {}
-  // TODO: Converting C to M should fail since the rewrite constraints are incompatible.
+  // CHECK:STDERR: fail_impl_mismatch_named_constraint_rewrites.carbon:[[@LINE+4]]:3: error: cannot convert type `C` into type implementing `M` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   C as M;
+  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR:
   C as M;
 }

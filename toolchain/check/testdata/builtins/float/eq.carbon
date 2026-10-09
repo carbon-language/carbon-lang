@@ -53,16 +53,16 @@ fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.84c: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Eq.type: type = fn_type @Eq [concrete]
 // CHECK:STDOUT:   %Eq: %Eq.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.dc1, %b.param: %f64.dc1) -> out %return.param: bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.84c, %b.param: %f64.84c) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Eq.ref: %Eq.type = name_ref Eq, file.%Eq.decl [concrete = constants.%Eq]
-// CHECK:STDOUT:   %a.ref: %f64.dc1 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %f64.dc1 = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: %f64.84c = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.84c = name_ref b, %b
 // CHECK:STDOUT:   %Eq.call: init bool = call %Eq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Eq.call
 // CHECK:STDOUT: }

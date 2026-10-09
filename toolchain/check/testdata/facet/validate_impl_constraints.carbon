@@ -54,7 +54,7 @@ fn G(generic T: I where .Self impls N) {
   F(T);
 }
 
-// --- todo_fail_where_impls_tests_associated_constant_of_generic_type_non_final_impl.carbon
+// --- fail_where_impls_tests_associated_constant_of_generic_type_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
 class C(U: type) {}
@@ -78,8 +78,13 @@ fn G(generic T: L) {
   // `(C(T) as M).M0` concretely, so we don't know that it is `{}` and we can't
   // convert assuming it is.
   //
-  // TODO: This should fail. The rewrite constraint from `M0IsStruct` is not
-  // being checked.
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_non_final_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C(.Self) impls M0IsStruct` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_non_final_impl.carbon:[[@LINE-10]]:21: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: type where C(.Self) impls M0IsStruct) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   F(T);
 }
 
@@ -106,7 +111,7 @@ fn G(generic T: L) {
   F(T);
 }
 
-// --- todo_fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon
+// --- fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon
 library "[[@TEST_NAME]]";
 
 class C(U: type) {}
@@ -128,11 +133,17 @@ fn F(unused generic U: type where C(.Self) impls M0IsStruct) {}
 fn G(generic T: L) {
   // F requires .M0 = {}, but the final impl provides .M0 = ().
   //
-  // TODO: This should fail.
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C(.Self) impls M0IsStruct` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_type_type_differs.carbon:[[@LINE-8]]:21: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: type where C(.Self) impls M0IsStruct) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   F(T);
 }
 
-// --- todo_fail_where_impls_tests_associated_constant_of_generic_interface_non_final_impl.carbon
+// --- fail_where_impls_tests_associated_constant_of_generic_interface_non_final_impl.carbon
 library "[[@TEST_NAME]]";
 
 class C {}
@@ -156,7 +167,13 @@ fn G(generic T: L) {
   // `(C as M(T)).M0` concretely, so we don't know that it is `{}` and we can't
   // convert assuming it is.
   //
-  // TODO: This should fail.
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_non_final_impl.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C impls M0IsStruct(.Self)` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_non_final_impl.carbon:[[@LINE-10]]:21: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: type where C impls M0IsStruct(.Self)) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   F(T);
 }
 
@@ -183,7 +200,7 @@ fn G(generic T: L) {
   F(T);
 }
 
-// --- todo_fail_where_impls_tests_associated_constant_of_generic_interface_type_differs.carbon
+// --- fail_where_impls_tests_associated_constant_of_generic_interface_type_differs.carbon
 library "[[@TEST_NAME]]";
 
 class C {}
@@ -206,6 +223,13 @@ fn G(generic T: L) {
   // F requires that .M0 = {} but the final impl provides that .M0 = ().
   //
   // TODO: This should fail.
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_type_differs.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `L` into type implementing `type where C impls M0IsStruct(.Self)` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T);
+  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_where_impls_tests_associated_constant_of_generic_interface_type_differs.carbon:[[@LINE-9]]:21: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(unused generic U: type where C impls M0IsStruct(.Self)) {}
+  // CHECK:STDERR:                     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
   F(T);
 }
 
@@ -364,9 +388,10 @@ fn F(unused generic U: I & J where .I1 impls K) {}
 impl forall [T: type] T as J {}
 
 fn G(generic T: I where .I1 impls K) {
-  // Replaces `.Self` with `T`, which converts `T` to `I & J`. Doing so has to
-  // invent a witness for `J`, and this tests we do so without losing the
-  // information that `.I1 impls K`.
+  // Replaces `.Self` in the type of `U` with `T`, which converts `T` to
+  // `I & J`. Doing so has to invent a witness for `J` and form a new
+  // FacetValue, and this tests we do so without losing the information that
+  // `.I1 impls K`.
   F(T);
 }
 

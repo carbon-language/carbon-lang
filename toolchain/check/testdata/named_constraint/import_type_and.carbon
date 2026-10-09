@@ -42,11 +42,11 @@ fn F(generic _: N) {}
 // CHECK:STDOUT:   %Self.as_type.138: type = facet_access_type %Self.d87 [symbolic]
 // CHECK:STDOUT:   %BitAndWith.type.a06: type = generic_interface_type @BitAndWith [concrete]
 // CHECK:STDOUT:   %BitAndWith.generic: %BitAndWith.type.a06 = struct_value () [concrete]
-// CHECK:STDOUT:   %BitAndWith.type.411: type = facet_type <@BitAndWith, @BitAndWith(type)> [concrete]
+// CHECK:STDOUT:   %BitAndWith.type.7f7: type = facet_type <@BitAndWith, @BitAndWith(type)> [concrete]
 // CHECK:STDOUT:   %BitAndWith.impl_witness: <witness> = impl_witness imports.%BitAndWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.411 = facet_value type, (%BitAndWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.0cf: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
-// CHECK:STDOUT:   %.85c: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.0cf, %BitAndWith.facet [concrete]
+// CHECK:STDOUT:   %BitAndWith.facet: %BitAndWith.type.7f7 = facet_value type, (%BitAndWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %BitAndWith.WithSelf.Op.type.1a6: type = fn_type @BitAndWith.WithSelf.Op, @BitAndWith.WithSelf(type, %BitAndWith.facet) [concrete]
+// CHECK:STDOUT:   %.b4e: type = fn_type_with_self_type %BitAndWith.WithSelf.Op.type.1a6, %BitAndWith.facet [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.type: type = fn_type @type.as.BitAndWith.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op: %type.as.BitAndWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.BitAndWith.impl.Op.bound: <bound method> = bound_method %Y.type, %type.as.BitAndWith.impl.Op [concrete]
@@ -110,7 +110,7 @@ fn F(generic _: N) {}
 // CHECK:STDOUT:     %Self.as_type.loc9_11.1: type = facet_access_type @N.%Self [symbolic = %Self.as_type.loc9_11.2 (constants.%Self.as_type.138)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:     %impl.elem0: %.85c = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
+// CHECK:STDOUT:     %impl.elem0: %.b4e = impl_witness_access constants.%BitAndWith.impl_witness, element0 [concrete = constants.%type.as.BitAndWith.impl.Op]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %Y.ref, %impl.elem0 [concrete = constants.%type.as.BitAndWith.impl.Op.bound]
 // CHECK:STDOUT:     %type.as.BitAndWith.impl.Op.call: init type = call %bound_method(%Y.ref, %Z.ref) [concrete = constants.%facet_type]
 // CHECK:STDOUT:   }
@@ -175,7 +175,7 @@ fn F(generic _: N) {}
 // CHECK:STDOUT:   %Main.import_ref.e73 = import_ref Main//import, loc5_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.28a = import_ref Main//import, loc4_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5f6: type = import_ref Main//import, loc9_11, loaded [symbolic = @N.WithSelf.Self.as_type.impls.facet_type.require.%Self.as_type (constants.%Self.as_type.190)]
-// CHECK:STDOUT:   %Main.import_ref.9fd: init type = import_ref Main//import, loc9_19, loaded [concrete = constants.%facet_type]
+// CHECK:STDOUT:   %Main.import_ref.ff1: init type = import_ref Main//import, loc9_19, loaded [concrete = constants.%facet_type]
 // CHECK:STDOUT:   %Main.import_ref.423e3a.2: %N.type = import_ref Main//import, loc7_14, loaded [symbolic = constants.%Self.f45]
 // CHECK:STDOUT:   %Main.import_ref.364 = import_ref Main//import, loc7_14, unloaded
 // CHECK:STDOUT: }
@@ -224,7 +224,7 @@ fn F(generic _: N) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @N.WithSelf.Self.as_type.impls.facet_type.require {
-// CHECK:STDOUT:     require imports.%Main.import_ref.5f6 impls imports.%Main.import_ref.9fd
+// CHECK:STDOUT:     require imports.%Main.import_ref.5f6 impls imports.%Main.import_ref.ff1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

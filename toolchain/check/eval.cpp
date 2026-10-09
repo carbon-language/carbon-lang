@@ -684,8 +684,8 @@ static auto GetConstantValue(EvalContext& eval_context,
   if (args_id == specific.args_id) {
     return specific_id;
   }
-  return eval_context.context().specifics().GetOrAdd(specific.generic_id,
-                                                     args_id);
+  return eval_context.context().specifics().GetOrAdd(
+      specific.generic_id, args_id, specific.identified);
 }
 
 static auto GetConstantValue(EvalContext& eval_context,
@@ -3588,6 +3588,26 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
         builder.Context(loc_id, ResolvingSpecificHere, specific_id);
       });
 
+  // The `declaring_impl_decls` is a global state that modifies the evaluation
+  // of LookupImplWitness. As a global state, it should only affect new
+  // instructions introduced during a given state. When we are evaluating for a
+  // specific, we are resolving existing instructions in the eval block for a
+  // generic. The global state should not apply to anything done while resolving
+  // a specific.
+  auto declaring = std::exchange(context.declaring_impl_decls(), {});
+
+  // The `eval_lookup_to_identified_witness` is also a global state that
+  // modifies the evaluation of LookupImplWitness. We don't want to apply that
+  // state to existing instructions in eval blocks, unless we are resolving a
+  // specific that is marked as `identified`. In that case, the specific is
+  // being formed as part of identification and the global state does apply.
+  // Otherwise, it should not affect anything done while resolving a specific.
+  int32_t eval_identified = 0;
+  if (!specific.identified) {
+    eval_identified =
+        std::exchange(context.eval_lookup_to_identified_witness(), 0);
+  }
+
   for (auto [i, inst_id, result_id] :
        llvm::enumerate(eval_block, value_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
@@ -3598,6 +3618,13 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
       specific.SetHasError(region);
     }
     result_id = context.constant_values().GetInstId(const_id);
+  }
+
+  CARBON_CHECK(context.declaring_impl_decls().empty());
+  context.declaring_impl_decls() = std::move(declaring);
+  if (!specific.identified) {
+    CARBON_CHECK(context.eval_lookup_to_identified_witness() == 0);
+    context.eval_lookup_to_identified_witness() = eval_identified;
   }
 }
 

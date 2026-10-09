@@ -39,15 +39,15 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %Negate.impl_witness: <witness> = impl_witness @C.as.Negate.impl.%Negate.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.Negate.impl.Op.type: type = fn_type @C.as.Negate.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.Negate.impl.Op: %C.as.Negate.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Negate.facet: %Negate.type = facet_value %C, (%Negate.impl_witness) [concrete]
-// CHECK:STDOUT:   %Negate.WithSelf.Op.type.f63: type = fn_type @Negate.WithSelf.Op, @Negate.WithSelf(%Negate.facet) [concrete]
-// CHECK:STDOUT:   %.7cd: type = fn_type_with_self_type %Negate.WithSelf.Op.type.f63, %Negate.facet [concrete]
+// CHECK:STDOUT:   %Negate.facet.895: %Negate.type = facet_value %C, (%Negate.impl_witness) [concrete]
+// CHECK:STDOUT:   %Negate.WithSelf.Op.type.0a3: type = fn_type @Negate.WithSelf.Op, @Negate.WithSelf(%Negate.facet.895) [concrete]
+// CHECK:STDOUT:   %.64f: type = fn_type_with_self_type %Negate.WithSelf.Op.type.0a3, %Negate.facet.895 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem1: %.7cd = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%C.as.Negate.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.64f = impl_witness_access constants.%Negate.impl_witness, element1 [concrete = constants.%C.as.Negate.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.Negate.impl.Op.call: init %C to %.loc27_20.1 = call %bound_method(%a.ref)

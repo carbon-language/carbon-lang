@@ -176,7 +176,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %A.type: type = generic_class_type @A.loc12 [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
-// CHECK:STDOUT:   %A.47a: type = class_type @A.loc12, @A.loc12(%T) [symbolic]
+// CHECK:STDOUT:   %A.98c: type = class_type @A.loc12, @A.loc12(%T) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -219,7 +219,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%A.47a
+// CHECK:STDOUT:     .Self = constants.%A.98c
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -249,7 +249,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   %N.bd9: %T = symbolic_binding N, 1 [symbolic]
 // CHECK:STDOUT:   %B.type.7937a9.2: type = generic_class_type @B.loc14 [concrete]
 // CHECK:STDOUT:   %B.generic.60ca48.2: %B.type.7937a9.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %B.2b1: type = class_type @B.loc14, @B.loc14(%T, %N.bd9) [symbolic]
+// CHECK:STDOUT:   %B.5f7: type = class_type @B.loc14, @B.loc14(%T, %N.bd9) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -322,7 +322,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%B.2b1
+// CHECK:STDOUT:     .Self = constants.%B.5f7
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -357,7 +357,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   %U: %A = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %C.type.a601fe.2: type = generic_class_type @C.loc14 [concrete]
 // CHECK:STDOUT:   %C.generic.4b4597.2: %C.type.a601fe.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %C.394: type = class_type @C.loc14, @C.loc14(%T, %U) [symbolic]
+// CHECK:STDOUT:   %C.361: type = class_type @C.loc14, @C.loc14(%T, %U) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -429,7 +429,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.394
+// CHECK:STDOUT:     .Self = constants.%C.361
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -463,7 +463,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   %T.37f: %A = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %D.type.ff75f2.2: type = generic_class_type @D.loc14 [concrete]
 // CHECK:STDOUT:   %D.generic.7223e9.2: %D.type.ff75f2.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %D.ad0: type = class_type @D.loc14, @D.loc14(%T.37f) [symbolic]
+// CHECK:STDOUT:   %D.5e0: type = class_type @D.loc14, @D.loc14(%T.37f) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -527,7 +527,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%D.ad0
+// CHECK:STDOUT:     .Self = constants.%D.5e0
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -555,7 +555,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %E.type.0b1ef1.2: type = generic_class_type @E.loc12 [concrete]
 // CHECK:STDOUT:   %E.generic.5469ef.2: %E.type.0b1ef1.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %E.7de02e.2: type = class_type @E.loc12, @E.loc12(%U) [symbolic]
+// CHECK:STDOUT:   %E.27c00d.2: type = class_type @E.loc12, @E.loc12(%U) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -611,7 +611,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%E.7de02e.2
+// CHECK:STDOUT:     .Self = constants.%E.27c00d.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

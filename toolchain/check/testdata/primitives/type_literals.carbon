@@ -295,41 +295,41 @@ var test_str: str = ();
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %i8: type = class_type @Int, @Int(%int_8) [concrete]
-// CHECK:STDOUT:   %pattern_type.0cf: type = pattern_type %i8 [concrete]
-// CHECK:STDOUT:   %test_i8.patt: %pattern_type.0cf = ref_binding_pattern test_i8 [concrete]
-// CHECK:STDOUT:   %test_i8.var_patt: %pattern_type.0cf = var_pattern %test_i8.patt [concrete]
+// CHECK:STDOUT:   %pattern_type.9d8: type = pattern_type %i8 [concrete]
+// CHECK:STDOUT:   %test_i8.patt: %pattern_type.9d8 = ref_binding_pattern test_i8 [concrete]
+// CHECK:STDOUT:   %test_i8.var_patt: %pattern_type.9d8 = var_pattern %test_i8.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.53a: %T.as.DefaultOrUnformed.impl.Op.type.150 = struct_value () [symbolic]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.cce: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%i8) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.479: %DefaultOrUnformed.type = facet_value %i8, (%DefaultOrUnformed.impl_witness.cce) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.5f6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.5c0: %T.as.DefaultOrUnformed.impl.Op.type.5f6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.5e3: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%i8) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.762: %DefaultOrUnformed.type = facet_value %i8, (%DefaultOrUnformed.impl_witness.5e3) [concrete]
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %i16: type = class_type @Int, @Int(%int_16) [concrete]
-// CHECK:STDOUT:   %pattern_type.203: type = pattern_type %i16 [concrete]
-// CHECK:STDOUT:   %test_i16.patt: %pattern_type.203 = ref_binding_pattern test_i16 [concrete]
-// CHECK:STDOUT:   %test_i16.var_patt: %pattern_type.203 = var_pattern %test_i16.patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.eb9: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%i16) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.495: %DefaultOrUnformed.type = facet_value %i16, (%DefaultOrUnformed.impl_witness.eb9) [concrete]
+// CHECK:STDOUT:   %pattern_type.cbf: type = pattern_type %i16 [concrete]
+// CHECK:STDOUT:   %test_i16.patt: %pattern_type.cbf = ref_binding_pattern test_i16 [concrete]
+// CHECK:STDOUT:   %test_i16.var_patt: %pattern_type.cbf = var_pattern %test_i16.patt [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.76a: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%i16) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.fc8: %DefaultOrUnformed.type = facet_value %i16, (%DefaultOrUnformed.impl_witness.76a) [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %test_i32.patt: %pattern_type.6b6 = ref_binding_pattern test_i32 [concrete]
-// CHECK:STDOUT:   %test_i32.var_patt: %pattern_type.6b6 = var_pattern %test_i32.patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.850: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%i32) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.eb2: %DefaultOrUnformed.type = facet_value %i32, (%DefaultOrUnformed.impl_witness.850) [concrete]
+// CHECK:STDOUT:   %pattern_type.9d9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %test_i32.patt: %pattern_type.9d9 = ref_binding_pattern test_i32 [concrete]
+// CHECK:STDOUT:   %test_i32.var_patt: %pattern_type.9d9 = var_pattern %test_i32.patt [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.bc8: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%i32) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.212: %DefaultOrUnformed.type = facet_value %i32, (%DefaultOrUnformed.impl_witness.bc8) [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
-// CHECK:STDOUT:   %pattern_type.f57: type = pattern_type %i64 [concrete]
-// CHECK:STDOUT:   %test_i64.patt: %pattern_type.f57 = ref_binding_pattern test_i64 [concrete]
-// CHECK:STDOUT:   %test_i64.var_patt: %pattern_type.f57 = var_pattern %test_i64.patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.a6b: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%i64) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.c05: %DefaultOrUnformed.type = facet_value %i64, (%DefaultOrUnformed.impl_witness.a6b) [concrete]
+// CHECK:STDOUT:   %pattern_type.6d9: type = pattern_type %i64 [concrete]
+// CHECK:STDOUT:   %test_i64.patt: %pattern_type.6d9 = ref_binding_pattern test_i64 [concrete]
+// CHECK:STDOUT:   %test_i64.var_patt: %pattern_type.6d9 = var_pattern %test_i64.patt [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.bdb: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%i64) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.ba3: %DefaultOrUnformed.type = facet_value %i64, (%DefaultOrUnformed.impl_witness.bdb) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.cc8: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.150) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.53a)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.cc8), @T.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.002: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.5f6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.5c0)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.002), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -337,57 +337,57 @@ var test_str: str = ();
 // CHECK:STDOUT:   %i8: type = type_literal constants.%i8 [concrete = constants.%i8]
 // CHECK:STDOUT:   %test_i8: ref %i8 = wrapper_binding test_i8, %test_i8.var [concrete = %test_i8.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_i8.patt: %pattern_type.0cf = ref_binding_pattern test_i8 [concrete = constants.%test_i8.patt]
-// CHECK:STDOUT:     %test_i8.var_patt: %pattern_type.0cf = var_pattern %test_i8.patt [concrete = constants.%test_i8.var_patt]
+// CHECK:STDOUT:     %test_i8.patt: %pattern_type.9d8 = ref_binding_pattern test_i8 [concrete = constants.%test_i8.patt]
+// CHECK:STDOUT:     %test_i8.var_patt: %pattern_type.9d8 = var_pattern %test_i8.patt [concrete = constants.%test_i8.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i16.var: ref %i16 = var_storage %test_i16.var_patt [concrete]
 // CHECK:STDOUT:   %i16: type = type_literal constants.%i16 [concrete = constants.%i16]
 // CHECK:STDOUT:   %test_i16: ref %i16 = wrapper_binding test_i16, %test_i16.var [concrete = %test_i16.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_i16.patt: %pattern_type.203 = ref_binding_pattern test_i16 [concrete = constants.%test_i16.patt]
-// CHECK:STDOUT:     %test_i16.var_patt: %pattern_type.203 = var_pattern %test_i16.patt [concrete = constants.%test_i16.var_patt]
+// CHECK:STDOUT:     %test_i16.patt: %pattern_type.cbf = ref_binding_pattern test_i16 [concrete = constants.%test_i16.patt]
+// CHECK:STDOUT:     %test_i16.var_patt: %pattern_type.cbf = var_pattern %test_i16.patt [concrete = constants.%test_i16.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i32.var: ref %i32 = var_storage %test_i32.var_patt [concrete]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %test_i32: ref %i32 = wrapper_binding test_i32, %test_i32.var [concrete = %test_i32.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_i32.patt: %pattern_type.6b6 = ref_binding_pattern test_i32 [concrete = constants.%test_i32.patt]
-// CHECK:STDOUT:     %test_i32.var_patt: %pattern_type.6b6 = var_pattern %test_i32.patt [concrete = constants.%test_i32.var_patt]
+// CHECK:STDOUT:     %test_i32.patt: %pattern_type.9d9 = ref_binding_pattern test_i32 [concrete = constants.%test_i32.patt]
+// CHECK:STDOUT:     %test_i32.var_patt: %pattern_type.9d9 = var_pattern %test_i32.patt [concrete = constants.%test_i32.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_i64.var: ref %i64 = var_storage %test_i64.var_patt [concrete]
 // CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
 // CHECK:STDOUT:   %test_i64: ref %i64 = wrapper_binding test_i64, %test_i64.var [concrete = %test_i64.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_i64.patt: %pattern_type.f57 = ref_binding_pattern test_i64 [concrete = constants.%test_i64.patt]
-// CHECK:STDOUT:     %test_i64.var_patt: %pattern_type.f57 = var_pattern %test_i64.patt [concrete = constants.%test_i64.var_patt]
+// CHECK:STDOUT:     %test_i64.patt: %pattern_type.6d9 = ref_binding_pattern test_i64 [concrete = constants.%test_i64.patt]
+// CHECK:STDOUT:     %test_i64.var_patt: %pattern_type.6d9 = var_pattern %test_i64.patt [concrete = constants.%test_i64.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc4: %DefaultOrUnformed.type = facet_value constants.%i8, (constants.%DefaultOrUnformed.impl_witness.cce) [concrete = constants.%DefaultOrUnformed.facet.479]
-// CHECK:STDOUT:   %.loc4_16.1: %DefaultOrUnformed.type = converted constants.%i8, %DefaultOrUnformed.facet.loc4 [concrete = constants.%DefaultOrUnformed.facet.479]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc4: %DefaultOrUnformed.type = facet_value constants.%i8, (constants.%DefaultOrUnformed.impl_witness.5e3) [concrete = constants.%DefaultOrUnformed.facet.762]
+// CHECK:STDOUT:   %.loc4_16.1: %DefaultOrUnformed.type = converted constants.%i8, %DefaultOrUnformed.facet.loc4 [concrete = constants.%DefaultOrUnformed.facet.762]
 // CHECK:STDOUT:   %as_type.loc4: type = facet_access_type %.loc4_16.1 [concrete = constants.%i8]
 // CHECK:STDOUT:   %.loc4_16.2: type = converted %.loc4_16.1, %as_type.loc4 [concrete = constants.%i8]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc4: init %i8 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
 // CHECK:STDOUT:   assign file.%test_i8.var, %T.as.DefaultOrUnformed.impl.Op.call.loc4
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc5: %DefaultOrUnformed.type = facet_value constants.%i16, (constants.%DefaultOrUnformed.impl_witness.eb9) [concrete = constants.%DefaultOrUnformed.facet.495]
-// CHECK:STDOUT:   %.loc5_18.1: %DefaultOrUnformed.type = converted constants.%i16, %DefaultOrUnformed.facet.loc5 [concrete = constants.%DefaultOrUnformed.facet.495]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc5: %DefaultOrUnformed.type = facet_value constants.%i16, (constants.%DefaultOrUnformed.impl_witness.76a) [concrete = constants.%DefaultOrUnformed.facet.fc8]
+// CHECK:STDOUT:   %.loc5_18.1: %DefaultOrUnformed.type = converted constants.%i16, %DefaultOrUnformed.facet.loc5 [concrete = constants.%DefaultOrUnformed.facet.fc8]
 // CHECK:STDOUT:   %as_type.loc5: type = facet_access_type %.loc5_18.1 [concrete = constants.%i16]
 // CHECK:STDOUT:   %.loc5_18.2: type = converted %.loc5_18.1, %as_type.loc5 [concrete = constants.%i16]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc5: init %i16 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
 // CHECK:STDOUT:   assign file.%test_i16.var, %T.as.DefaultOrUnformed.impl.Op.call.loc5
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc6: %DefaultOrUnformed.type = facet_value constants.%i32, (constants.%DefaultOrUnformed.impl_witness.850) [concrete = constants.%DefaultOrUnformed.facet.eb2]
-// CHECK:STDOUT:   %.loc6_18.1: %DefaultOrUnformed.type = converted constants.%i32, %DefaultOrUnformed.facet.loc6 [concrete = constants.%DefaultOrUnformed.facet.eb2]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc6: %DefaultOrUnformed.type = facet_value constants.%i32, (constants.%DefaultOrUnformed.impl_witness.bc8) [concrete = constants.%DefaultOrUnformed.facet.212]
+// CHECK:STDOUT:   %.loc6_18.1: %DefaultOrUnformed.type = converted constants.%i32, %DefaultOrUnformed.facet.loc6 [concrete = constants.%DefaultOrUnformed.facet.212]
 // CHECK:STDOUT:   %as_type.loc6: type = facet_access_type %.loc6_18.1 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc6_18.2: type = converted %.loc6_18.1, %as_type.loc6 [concrete = constants.%i32]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc6: init %i32 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
 // CHECK:STDOUT:   assign file.%test_i32.var, %T.as.DefaultOrUnformed.impl.Op.call.loc6
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc7: %DefaultOrUnformed.type = facet_value constants.%i64, (constants.%DefaultOrUnformed.impl_witness.a6b) [concrete = constants.%DefaultOrUnformed.facet.c05]
-// CHECK:STDOUT:   %.loc7_18.1: %DefaultOrUnformed.type = converted constants.%i64, %DefaultOrUnformed.facet.loc7 [concrete = constants.%DefaultOrUnformed.facet.c05]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc7: %DefaultOrUnformed.type = facet_value constants.%i64, (constants.%DefaultOrUnformed.impl_witness.bdb) [concrete = constants.%DefaultOrUnformed.facet.ba3]
+// CHECK:STDOUT:   %.loc7_18.1: %DefaultOrUnformed.type = converted constants.%i64, %DefaultOrUnformed.facet.loc7 [concrete = constants.%DefaultOrUnformed.facet.ba3]
 // CHECK:STDOUT:   %as_type.loc7: type = facet_access_type %.loc7_18.1 [concrete = constants.%i64]
 // CHECK:STDOUT:   %.loc7_18.2: type = converted %.loc7_18.1, %as_type.loc7 [concrete = constants.%i64]
 // CHECK:STDOUT:   <elided>
@@ -402,41 +402,41 @@ var test_str: str = ();
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
-// CHECK:STDOUT:   %pattern_type.186: type = pattern_type %u8 [concrete]
-// CHECK:STDOUT:   %test_u8.patt: %pattern_type.186 = ref_binding_pattern test_u8 [concrete]
-// CHECK:STDOUT:   %test_u8.var_patt: %pattern_type.186 = var_pattern %test_u8.patt [concrete]
+// CHECK:STDOUT:   %pattern_type.156: type = pattern_type %u8 [concrete]
+// CHECK:STDOUT:   %test_u8.patt: %pattern_type.156 = ref_binding_pattern test_u8 [concrete]
+// CHECK:STDOUT:   %test_u8.var_patt: %pattern_type.156 = var_pattern %test_u8.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.53a: %T.as.DefaultOrUnformed.impl.Op.type.150 = struct_value () [symbolic]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.6cd: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%u8) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.38a: %DefaultOrUnformed.type = facet_value %u8, (%DefaultOrUnformed.impl_witness.6cd) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.5f66: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.5c0: %T.as.DefaultOrUnformed.impl.Op.type.5f66 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.81f: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%u8) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.6cd: %DefaultOrUnformed.type = facet_value %u8, (%DefaultOrUnformed.impl_witness.81f) [concrete]
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
 // CHECK:STDOUT:   %u16: type = class_type @UInt, @UInt(%int_16) [concrete]
-// CHECK:STDOUT:   %pattern_type.17c: type = pattern_type %u16 [concrete]
-// CHECK:STDOUT:   %test_u16.patt: %pattern_type.17c = ref_binding_pattern test_u16 [concrete]
-// CHECK:STDOUT:   %test_u16.var_patt: %pattern_type.17c = var_pattern %test_u16.patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.f5f: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%u16) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.ecd: %DefaultOrUnformed.type = facet_value %u16, (%DefaultOrUnformed.impl_witness.f5f) [concrete]
+// CHECK:STDOUT:   %pattern_type.a75: type = pattern_type %u16 [concrete]
+// CHECK:STDOUT:   %test_u16.patt: %pattern_type.a75 = ref_binding_pattern test_u16 [concrete]
+// CHECK:STDOUT:   %test_u16.var_patt: %pattern_type.a75 = var_pattern %test_u16.patt [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.715: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%u16) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.d45: %DefaultOrUnformed.type = facet_value %u16, (%DefaultOrUnformed.impl_witness.715) [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.668: type = pattern_type %u32 [concrete]
-// CHECK:STDOUT:   %test_u32.patt: %pattern_type.668 = ref_binding_pattern test_u32 [concrete]
-// CHECK:STDOUT:   %test_u32.var_patt: %pattern_type.668 = var_pattern %test_u32.patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.217: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%u32) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.a81: %DefaultOrUnformed.type = facet_value %u32, (%DefaultOrUnformed.impl_witness.217) [concrete]
+// CHECK:STDOUT:   %pattern_type.cf4: type = pattern_type %u32 [concrete]
+// CHECK:STDOUT:   %test_u32.patt: %pattern_type.cf4 = ref_binding_pattern test_u32 [concrete]
+// CHECK:STDOUT:   %test_u32.var_patt: %pattern_type.cf4 = var_pattern %test_u32.patt [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.828: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%u32) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.07f: %DefaultOrUnformed.type = facet_value %u32, (%DefaultOrUnformed.impl_witness.828) [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
-// CHECK:STDOUT:   %pattern_type.b35: type = pattern_type %u64 [concrete]
-// CHECK:STDOUT:   %test_u64.patt: %pattern_type.b35 = ref_binding_pattern test_u64 [concrete]
-// CHECK:STDOUT:   %test_u64.var_patt: %pattern_type.b35 = var_pattern %test_u64.patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.19e: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%u64) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.2f6: %DefaultOrUnformed.type = facet_value %u64, (%DefaultOrUnformed.impl_witness.19e) [concrete]
+// CHECK:STDOUT:   %pattern_type.878: type = pattern_type %u64 [concrete]
+// CHECK:STDOUT:   %test_u64.patt: %pattern_type.878 = ref_binding_pattern test_u64 [concrete]
+// CHECK:STDOUT:   %test_u64.var_patt: %pattern_type.878 = var_pattern %test_u64.patt [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.13a: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%u64) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.36c: %DefaultOrUnformed.type = facet_value %u64, (%DefaultOrUnformed.impl_witness.13a) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.cc8: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.150) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.53a)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.cc8), @T.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.002: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.5f66) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.5c0)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.002), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -444,57 +444,57 @@ var test_str: str = ();
 // CHECK:STDOUT:   %u8: type = type_literal constants.%u8 [concrete = constants.%u8]
 // CHECK:STDOUT:   %test_u8: ref %u8 = wrapper_binding test_u8, %test_u8.var [concrete = %test_u8.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_u8.patt: %pattern_type.186 = ref_binding_pattern test_u8 [concrete = constants.%test_u8.patt]
-// CHECK:STDOUT:     %test_u8.var_patt: %pattern_type.186 = var_pattern %test_u8.patt [concrete = constants.%test_u8.var_patt]
+// CHECK:STDOUT:     %test_u8.patt: %pattern_type.156 = ref_binding_pattern test_u8 [concrete = constants.%test_u8.patt]
+// CHECK:STDOUT:     %test_u8.var_patt: %pattern_type.156 = var_pattern %test_u8.patt [concrete = constants.%test_u8.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u16.var: ref %u16 = var_storage %test_u16.var_patt [concrete]
 // CHECK:STDOUT:   %u16: type = type_literal constants.%u16 [concrete = constants.%u16]
 // CHECK:STDOUT:   %test_u16: ref %u16 = wrapper_binding test_u16, %test_u16.var [concrete = %test_u16.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_u16.patt: %pattern_type.17c = ref_binding_pattern test_u16 [concrete = constants.%test_u16.patt]
-// CHECK:STDOUT:     %test_u16.var_patt: %pattern_type.17c = var_pattern %test_u16.patt [concrete = constants.%test_u16.var_patt]
+// CHECK:STDOUT:     %test_u16.patt: %pattern_type.a75 = ref_binding_pattern test_u16 [concrete = constants.%test_u16.patt]
+// CHECK:STDOUT:     %test_u16.var_patt: %pattern_type.a75 = var_pattern %test_u16.patt [concrete = constants.%test_u16.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u32.var: ref %u32 = var_storage %test_u32.var_patt [concrete]
 // CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %test_u32: ref %u32 = wrapper_binding test_u32, %test_u32.var [concrete = %test_u32.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_u32.patt: %pattern_type.668 = ref_binding_pattern test_u32 [concrete = constants.%test_u32.patt]
-// CHECK:STDOUT:     %test_u32.var_patt: %pattern_type.668 = var_pattern %test_u32.patt [concrete = constants.%test_u32.var_patt]
+// CHECK:STDOUT:     %test_u32.patt: %pattern_type.cf4 = ref_binding_pattern test_u32 [concrete = constants.%test_u32.patt]
+// CHECK:STDOUT:     %test_u32.var_patt: %pattern_type.cf4 = var_pattern %test_u32.patt [concrete = constants.%test_u32.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %test_u64.var: ref %u64 = var_storage %test_u64.var_patt [concrete]
 // CHECK:STDOUT:   %u64: type = type_literal constants.%u64 [concrete = constants.%u64]
 // CHECK:STDOUT:   %test_u64: ref %u64 = wrapper_binding test_u64, %test_u64.var [concrete = %test_u64.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_u64.patt: %pattern_type.b35 = ref_binding_pattern test_u64 [concrete = constants.%test_u64.patt]
-// CHECK:STDOUT:     %test_u64.var_patt: %pattern_type.b35 = var_pattern %test_u64.patt [concrete = constants.%test_u64.var_patt]
+// CHECK:STDOUT:     %test_u64.patt: %pattern_type.878 = ref_binding_pattern test_u64 [concrete = constants.%test_u64.patt]
+// CHECK:STDOUT:     %test_u64.var_patt: %pattern_type.878 = var_pattern %test_u64.patt [concrete = constants.%test_u64.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc4: %DefaultOrUnformed.type = facet_value constants.%u8, (constants.%DefaultOrUnformed.impl_witness.6cd) [concrete = constants.%DefaultOrUnformed.facet.38a]
-// CHECK:STDOUT:   %.loc4_16.1: %DefaultOrUnformed.type = converted constants.%u8, %DefaultOrUnformed.facet.loc4 [concrete = constants.%DefaultOrUnformed.facet.38a]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc4: %DefaultOrUnformed.type = facet_value constants.%u8, (constants.%DefaultOrUnformed.impl_witness.81f) [concrete = constants.%DefaultOrUnformed.facet.6cd]
+// CHECK:STDOUT:   %.loc4_16.1: %DefaultOrUnformed.type = converted constants.%u8, %DefaultOrUnformed.facet.loc4 [concrete = constants.%DefaultOrUnformed.facet.6cd]
 // CHECK:STDOUT:   %as_type.loc4: type = facet_access_type %.loc4_16.1 [concrete = constants.%u8]
 // CHECK:STDOUT:   %.loc4_16.2: type = converted %.loc4_16.1, %as_type.loc4 [concrete = constants.%u8]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc4: init %u8 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
 // CHECK:STDOUT:   assign file.%test_u8.var, %T.as.DefaultOrUnformed.impl.Op.call.loc4
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc5: %DefaultOrUnformed.type = facet_value constants.%u16, (constants.%DefaultOrUnformed.impl_witness.f5f) [concrete = constants.%DefaultOrUnformed.facet.ecd]
-// CHECK:STDOUT:   %.loc5_18.1: %DefaultOrUnformed.type = converted constants.%u16, %DefaultOrUnformed.facet.loc5 [concrete = constants.%DefaultOrUnformed.facet.ecd]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc5: %DefaultOrUnformed.type = facet_value constants.%u16, (constants.%DefaultOrUnformed.impl_witness.715) [concrete = constants.%DefaultOrUnformed.facet.d45]
+// CHECK:STDOUT:   %.loc5_18.1: %DefaultOrUnformed.type = converted constants.%u16, %DefaultOrUnformed.facet.loc5 [concrete = constants.%DefaultOrUnformed.facet.d45]
 // CHECK:STDOUT:   %as_type.loc5: type = facet_access_type %.loc5_18.1 [concrete = constants.%u16]
 // CHECK:STDOUT:   %.loc5_18.2: type = converted %.loc5_18.1, %as_type.loc5 [concrete = constants.%u16]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc5: init %u16 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
 // CHECK:STDOUT:   assign file.%test_u16.var, %T.as.DefaultOrUnformed.impl.Op.call.loc5
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc6: %DefaultOrUnformed.type = facet_value constants.%u32, (constants.%DefaultOrUnformed.impl_witness.217) [concrete = constants.%DefaultOrUnformed.facet.a81]
-// CHECK:STDOUT:   %.loc6_18.1: %DefaultOrUnformed.type = converted constants.%u32, %DefaultOrUnformed.facet.loc6 [concrete = constants.%DefaultOrUnformed.facet.a81]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc6: %DefaultOrUnformed.type = facet_value constants.%u32, (constants.%DefaultOrUnformed.impl_witness.828) [concrete = constants.%DefaultOrUnformed.facet.07f]
+// CHECK:STDOUT:   %.loc6_18.1: %DefaultOrUnformed.type = converted constants.%u32, %DefaultOrUnformed.facet.loc6 [concrete = constants.%DefaultOrUnformed.facet.07f]
 // CHECK:STDOUT:   %as_type.loc6: type = facet_access_type %.loc6_18.1 [concrete = constants.%u32]
 // CHECK:STDOUT:   %.loc6_18.2: type = converted %.loc6_18.1, %as_type.loc6 [concrete = constants.%u32]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc6: init %u32 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
 // CHECK:STDOUT:   assign file.%test_u32.var, %T.as.DefaultOrUnformed.impl.Op.call.loc6
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc7: %DefaultOrUnformed.type = facet_value constants.%u64, (constants.%DefaultOrUnformed.impl_witness.19e) [concrete = constants.%DefaultOrUnformed.facet.2f6]
-// CHECK:STDOUT:   %.loc7_18.1: %DefaultOrUnformed.type = converted constants.%u64, %DefaultOrUnformed.facet.loc7 [concrete = constants.%DefaultOrUnformed.facet.2f6]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc7: %DefaultOrUnformed.type = facet_value constants.%u64, (constants.%DefaultOrUnformed.impl_witness.13a) [concrete = constants.%DefaultOrUnformed.facet.36c]
+// CHECK:STDOUT:   %.loc7_18.1: %DefaultOrUnformed.type = converted constants.%u64, %DefaultOrUnformed.facet.loc7 [concrete = constants.%DefaultOrUnformed.facet.36c]
 // CHECK:STDOUT:   %as_type.loc7: type = facet_access_type %.loc7_18.1 [concrete = constants.%u64]
 // CHECK:STDOUT:   %.loc7_18.2: type = converted %.loc7_18.1, %as_type.loc7 [concrete = constants.%u64]
 // CHECK:STDOUT:   <elided>
@@ -508,104 +508,104 @@ var test_str: str = ();
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_16: Core.IntLiteral = int_value 16 [concrete]
-// CHECK:STDOUT:   %f16.907: type = class_type @Float, @Float(%int_16) [concrete]
-// CHECK:STDOUT:   %pattern_type.7cc: type = pattern_type %f16.907 [concrete]
-// CHECK:STDOUT:   %test_f16.patt: %pattern_type.7cc = ref_binding_pattern test_f16 [concrete]
-// CHECK:STDOUT:   %test_f16.var_patt: %pattern_type.7cc = var_pattern %test_f16.patt [concrete]
+// CHECK:STDOUT:   %f16.d54: type = class_type @Float, @Float(%int_16) [concrete]
+// CHECK:STDOUT:   %pattern_type.648: type = pattern_type %f16.d54 [concrete]
+// CHECK:STDOUT:   %test_f16.patt: %pattern_type.648 = ref_binding_pattern test_f16 [concrete]
+// CHECK:STDOUT:   %test_f16.var_patt: %pattern_type.648 = var_pattern %test_f16.patt [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.150: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.53a: %T.as.DefaultOrUnformed.impl.Op.type.150 = struct_value () [symbolic]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.4bf: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%f16.907) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.121: %DefaultOrUnformed.type = facet_value %f16.907, (%DefaultOrUnformed.impl_witness.4bf) [concrete]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.5f6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.5c0: %T.as.DefaultOrUnformed.impl.Op.type.5f6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.b5e: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%f16.d54) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.da5: %DefaultOrUnformed.type = facet_value %f16.d54, (%DefaultOrUnformed.impl_witness.b5e) [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %f32.c73: type = class_type @Float, @Float(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.240: type = pattern_type %f32.c73 [concrete]
-// CHECK:STDOUT:   %test_f32.patt: %pattern_type.240 = ref_binding_pattern test_f32 [concrete]
-// CHECK:STDOUT:   %test_f32.var_patt: %pattern_type.240 = var_pattern %test_f32.patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.5f2: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%f32.c73) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.2a2: %DefaultOrUnformed.type = facet_value %f32.c73, (%DefaultOrUnformed.impl_witness.5f2) [concrete]
+// CHECK:STDOUT:   %f32.2d9: type = class_type @Float, @Float(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.afb: type = pattern_type %f32.2d9 [concrete]
+// CHECK:STDOUT:   %test_f32.patt: %pattern_type.afb = ref_binding_pattern test_f32 [concrete]
+// CHECK:STDOUT:   %test_f32.var_patt: %pattern_type.afb = var_pattern %test_f32.patt [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.dc1: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%f32.2d9) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.165: %DefaultOrUnformed.type = facet_value %f32.2d9, (%DefaultOrUnformed.impl_witness.dc1) [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
-// CHECK:STDOUT:   %pattern_type.fb7: type = pattern_type %f64.dc1 [concrete]
-// CHECK:STDOUT:   %test_f64.patt: %pattern_type.fb7 = ref_binding_pattern test_f64 [concrete]
-// CHECK:STDOUT:   %test_f64.var_patt: %pattern_type.fb7 = var_pattern %test_f64.patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.70d: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%f64.dc1) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.806: %DefaultOrUnformed.type = facet_value %f64.dc1, (%DefaultOrUnformed.impl_witness.70d) [concrete]
+// CHECK:STDOUT:   %f64.84c: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %pattern_type.39b: type = pattern_type %f64.84c [concrete]
+// CHECK:STDOUT:   %test_f64.patt: %pattern_type.39b = ref_binding_pattern test_f64 [concrete]
+// CHECK:STDOUT:   %test_f64.var_patt: %pattern_type.39b = var_pattern %test_f64.patt [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.597: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%f64.84c) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.c7b: %DefaultOrUnformed.type = facet_value %f64.84c, (%DefaultOrUnformed.impl_witness.597) [concrete]
 // CHECK:STDOUT:   %int_128: Core.IntLiteral = int_value 128 [concrete]
-// CHECK:STDOUT:   %f128.e39: type = class_type @Float, @Float(%int_128) [concrete]
-// CHECK:STDOUT:   %pattern_type.847: type = pattern_type %f128.e39 [concrete]
-// CHECK:STDOUT:   %test_f128.patt: %pattern_type.847 = ref_binding_pattern test_f128 [concrete]
-// CHECK:STDOUT:   %test_f128.var_patt: %pattern_type.847 = var_pattern %test_f128.patt [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.0bf: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%f128.e39) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.624: %DefaultOrUnformed.type = facet_value %f128.e39, (%DefaultOrUnformed.impl_witness.0bf) [concrete]
+// CHECK:STDOUT:   %f128.6f5: type = class_type @Float, @Float(%int_128) [concrete]
+// CHECK:STDOUT:   %pattern_type.009: type = pattern_type %f128.6f5 [concrete]
+// CHECK:STDOUT:   %test_f128.patt: %pattern_type.009 = ref_binding_pattern test_f128 [concrete]
+// CHECK:STDOUT:   %test_f128.var_patt: %pattern_type.009 = var_pattern %test_f128.patt [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.3c0: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%f128.6f5) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.d7e: %DefaultOrUnformed.type = facet_value %f128.6f5, (%DefaultOrUnformed.impl_witness.3c0) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.cc8: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.150) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.53a)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.cc8), @T.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.002: @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op.type (%T.as.DefaultOrUnformed.impl.Op.type.5f6) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as.DefaultOrUnformed.impl.%T.as.DefaultOrUnformed.impl.Op (constants.%T.as.DefaultOrUnformed.impl.Op.5c0)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.856 = impl_witness_table (%Core.import_ref.002), @T.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %test_f16.var: ref %f16.907 = var_storage %test_f16.var_patt [concrete]
-// CHECK:STDOUT:   %f16: type = type_literal constants.%f16.907 [concrete = constants.%f16.907]
-// CHECK:STDOUT:   %test_f16: ref %f16.907 = wrapper_binding test_f16, %test_f16.var [concrete = %test_f16.var]
+// CHECK:STDOUT:   %test_f16.var: ref %f16.d54 = var_storage %test_f16.var_patt [concrete]
+// CHECK:STDOUT:   %f16: type = type_literal constants.%f16.d54 [concrete = constants.%f16.d54]
+// CHECK:STDOUT:   %test_f16: ref %f16.d54 = wrapper_binding test_f16, %test_f16.var [concrete = %test_f16.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_f16.patt: %pattern_type.7cc = ref_binding_pattern test_f16 [concrete = constants.%test_f16.patt]
-// CHECK:STDOUT:     %test_f16.var_patt: %pattern_type.7cc = var_pattern %test_f16.patt [concrete = constants.%test_f16.var_patt]
+// CHECK:STDOUT:     %test_f16.patt: %pattern_type.648 = ref_binding_pattern test_f16 [concrete = constants.%test_f16.patt]
+// CHECK:STDOUT:     %test_f16.var_patt: %pattern_type.648 = var_pattern %test_f16.patt [concrete = constants.%test_f16.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_f32.var: ref %f32.c73 = var_storage %test_f32.var_patt [concrete]
-// CHECK:STDOUT:   %f32: type = type_literal constants.%f32.c73 [concrete = constants.%f32.c73]
-// CHECK:STDOUT:   %test_f32: ref %f32.c73 = wrapper_binding test_f32, %test_f32.var [concrete = %test_f32.var]
+// CHECK:STDOUT:   %test_f32.var: ref %f32.2d9 = var_storage %test_f32.var_patt [concrete]
+// CHECK:STDOUT:   %f32: type = type_literal constants.%f32.2d9 [concrete = constants.%f32.2d9]
+// CHECK:STDOUT:   %test_f32: ref %f32.2d9 = wrapper_binding test_f32, %test_f32.var [concrete = %test_f32.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_f32.patt: %pattern_type.240 = ref_binding_pattern test_f32 [concrete = constants.%test_f32.patt]
-// CHECK:STDOUT:     %test_f32.var_patt: %pattern_type.240 = var_pattern %test_f32.patt [concrete = constants.%test_f32.var_patt]
+// CHECK:STDOUT:     %test_f32.patt: %pattern_type.afb = ref_binding_pattern test_f32 [concrete = constants.%test_f32.patt]
+// CHECK:STDOUT:     %test_f32.var_patt: %pattern_type.afb = var_pattern %test_f32.patt [concrete = constants.%test_f32.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_f64.var: ref %f64.dc1 = var_storage %test_f64.var_patt [concrete]
-// CHECK:STDOUT:   %f64: type = type_literal constants.%f64.dc1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %test_f64: ref %f64.dc1 = wrapper_binding test_f64, %test_f64.var [concrete = %test_f64.var]
+// CHECK:STDOUT:   %test_f64.var: ref %f64.84c = var_storage %test_f64.var_patt [concrete]
+// CHECK:STDOUT:   %f64: type = type_literal constants.%f64.84c [concrete = constants.%f64.84c]
+// CHECK:STDOUT:   %test_f64: ref %f64.84c = wrapper_binding test_f64, %test_f64.var [concrete = %test_f64.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_f64.patt: %pattern_type.fb7 = ref_binding_pattern test_f64 [concrete = constants.%test_f64.patt]
-// CHECK:STDOUT:     %test_f64.var_patt: %pattern_type.fb7 = var_pattern %test_f64.patt [concrete = constants.%test_f64.var_patt]
+// CHECK:STDOUT:     %test_f64.patt: %pattern_type.39b = ref_binding_pattern test_f64 [concrete = constants.%test_f64.patt]
+// CHECK:STDOUT:     %test_f64.var_patt: %pattern_type.39b = var_pattern %test_f64.patt [concrete = constants.%test_f64.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %test_f128.var: ref %f128.e39 = var_storage %test_f128.var_patt [concrete]
-// CHECK:STDOUT:   %f128: type = type_literal constants.%f128.e39 [concrete = constants.%f128.e39]
-// CHECK:STDOUT:   %test_f128: ref %f128.e39 = wrapper_binding test_f128, %test_f128.var [concrete = %test_f128.var]
+// CHECK:STDOUT:   %test_f128.var: ref %f128.6f5 = var_storage %test_f128.var_patt [concrete]
+// CHECK:STDOUT:   %f128: type = type_literal constants.%f128.6f5 [concrete = constants.%f128.6f5]
+// CHECK:STDOUT:   %test_f128: ref %f128.6f5 = wrapper_binding test_f128, %test_f128.var [concrete = %test_f128.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %test_f128.patt: %pattern_type.847 = ref_binding_pattern test_f128 [concrete = constants.%test_f128.patt]
-// CHECK:STDOUT:     %test_f128.var_patt: %pattern_type.847 = var_pattern %test_f128.patt [concrete = constants.%test_f128.var_patt]
+// CHECK:STDOUT:     %test_f128.patt: %pattern_type.009 = ref_binding_pattern test_f128 [concrete = constants.%test_f128.patt]
+// CHECK:STDOUT:     %test_f128.var_patt: %pattern_type.009 = var_pattern %test_f128.patt [concrete = constants.%test_f128.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc4: %DefaultOrUnformed.type = facet_value constants.%f16.907, (constants.%DefaultOrUnformed.impl_witness.4bf) [concrete = constants.%DefaultOrUnformed.facet.121]
-// CHECK:STDOUT:   %.loc4_18.1: %DefaultOrUnformed.type = converted constants.%f16.907, %DefaultOrUnformed.facet.loc4 [concrete = constants.%DefaultOrUnformed.facet.121]
-// CHECK:STDOUT:   %as_type.loc4: type = facet_access_type %.loc4_18.1 [concrete = constants.%f16.907]
-// CHECK:STDOUT:   %.loc4_18.2: type = converted %.loc4_18.1, %as_type.loc4 [concrete = constants.%f16.907]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc4: %DefaultOrUnformed.type = facet_value constants.%f16.d54, (constants.%DefaultOrUnformed.impl_witness.b5e) [concrete = constants.%DefaultOrUnformed.facet.da5]
+// CHECK:STDOUT:   %.loc4_18.1: %DefaultOrUnformed.type = converted constants.%f16.d54, %DefaultOrUnformed.facet.loc4 [concrete = constants.%DefaultOrUnformed.facet.da5]
+// CHECK:STDOUT:   %as_type.loc4: type = facet_access_type %.loc4_18.1 [concrete = constants.%f16.d54]
+// CHECK:STDOUT:   %.loc4_18.2: type = converted %.loc4_18.1, %as_type.loc4 [concrete = constants.%f16.d54]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc4: init %f16.907 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc4: init %f16.d54 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.1()
 // CHECK:STDOUT:   assign file.%test_f16.var, %T.as.DefaultOrUnformed.impl.Op.call.loc4
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc5: %DefaultOrUnformed.type = facet_value constants.%f32.c73, (constants.%DefaultOrUnformed.impl_witness.5f2) [concrete = constants.%DefaultOrUnformed.facet.2a2]
-// CHECK:STDOUT:   %.loc5_18.1: %DefaultOrUnformed.type = converted constants.%f32.c73, %DefaultOrUnformed.facet.loc5 [concrete = constants.%DefaultOrUnformed.facet.2a2]
-// CHECK:STDOUT:   %as_type.loc5: type = facet_access_type %.loc5_18.1 [concrete = constants.%f32.c73]
-// CHECK:STDOUT:   %.loc5_18.2: type = converted %.loc5_18.1, %as_type.loc5 [concrete = constants.%f32.c73]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc5: %DefaultOrUnformed.type = facet_value constants.%f32.2d9, (constants.%DefaultOrUnformed.impl_witness.dc1) [concrete = constants.%DefaultOrUnformed.facet.165]
+// CHECK:STDOUT:   %.loc5_18.1: %DefaultOrUnformed.type = converted constants.%f32.2d9, %DefaultOrUnformed.facet.loc5 [concrete = constants.%DefaultOrUnformed.facet.165]
+// CHECK:STDOUT:   %as_type.loc5: type = facet_access_type %.loc5_18.1 [concrete = constants.%f32.2d9]
+// CHECK:STDOUT:   %.loc5_18.2: type = converted %.loc5_18.1, %as_type.loc5 [concrete = constants.%f32.2d9]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc5: init %f32.c73 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc5: init %f32.2d9 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.2()
 // CHECK:STDOUT:   assign file.%test_f32.var, %T.as.DefaultOrUnformed.impl.Op.call.loc5
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc6: %DefaultOrUnformed.type = facet_value constants.%f64.dc1, (constants.%DefaultOrUnformed.impl_witness.70d) [concrete = constants.%DefaultOrUnformed.facet.806]
-// CHECK:STDOUT:   %.loc6_18.1: %DefaultOrUnformed.type = converted constants.%f64.dc1, %DefaultOrUnformed.facet.loc6 [concrete = constants.%DefaultOrUnformed.facet.806]
-// CHECK:STDOUT:   %as_type.loc6: type = facet_access_type %.loc6_18.1 [concrete = constants.%f64.dc1]
-// CHECK:STDOUT:   %.loc6_18.2: type = converted %.loc6_18.1, %as_type.loc6 [concrete = constants.%f64.dc1]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc6: %DefaultOrUnformed.type = facet_value constants.%f64.84c, (constants.%DefaultOrUnformed.impl_witness.597) [concrete = constants.%DefaultOrUnformed.facet.c7b]
+// CHECK:STDOUT:   %.loc6_18.1: %DefaultOrUnformed.type = converted constants.%f64.84c, %DefaultOrUnformed.facet.loc6 [concrete = constants.%DefaultOrUnformed.facet.c7b]
+// CHECK:STDOUT:   %as_type.loc6: type = facet_access_type %.loc6_18.1 [concrete = constants.%f64.84c]
+// CHECK:STDOUT:   %.loc6_18.2: type = converted %.loc6_18.1, %as_type.loc6 [concrete = constants.%f64.84c]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc6: init %f64.dc1 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc6: init %f64.84c = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.3()
 // CHECK:STDOUT:   assign file.%test_f64.var, %T.as.DefaultOrUnformed.impl.Op.call.loc6
-// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc7: %DefaultOrUnformed.type = facet_value constants.%f128.e39, (constants.%DefaultOrUnformed.impl_witness.0bf) [concrete = constants.%DefaultOrUnformed.facet.624]
-// CHECK:STDOUT:   %.loc7_20.1: %DefaultOrUnformed.type = converted constants.%f128.e39, %DefaultOrUnformed.facet.loc7 [concrete = constants.%DefaultOrUnformed.facet.624]
-// CHECK:STDOUT:   %as_type.loc7: type = facet_access_type %.loc7_20.1 [concrete = constants.%f128.e39]
-// CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_20.1, %as_type.loc7 [concrete = constants.%f128.e39]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet.loc7: %DefaultOrUnformed.type = facet_value constants.%f128.6f5, (constants.%DefaultOrUnformed.impl_witness.3c0) [concrete = constants.%DefaultOrUnformed.facet.d7e]
+// CHECK:STDOUT:   %.loc7_20.1: %DefaultOrUnformed.type = converted constants.%f128.6f5, %DefaultOrUnformed.facet.loc7 [concrete = constants.%DefaultOrUnformed.facet.d7e]
+// CHECK:STDOUT:   %as_type.loc7: type = facet_access_type %.loc7_20.1 [concrete = constants.%f128.6f5]
+// CHECK:STDOUT:   %.loc7_20.2: type = converted %.loc7_20.1, %as_type.loc7 [concrete = constants.%f128.6f5]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc7: init %f128.e39 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.4()
+// CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.call.loc7: init %f128.6f5 = call %T.as.DefaultOrUnformed.impl.Op.specific_fn.4()
 // CHECK:STDOUT:   assign file.%test_f128.var, %T.as.DefaultOrUnformed.impl.Op.call.loc7
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -618,11 +618,11 @@ var test_str: str = ();
 // CHECK:STDOUT:   %pattern_type.2ff: type = pattern_type %char [concrete]
 // CHECK:STDOUT:   %test_char.patt: %pattern_type.2ff = value_binding_pattern test_char [concrete]
 // CHECK:STDOUT:   %.b9b: Core.CharLiteral = char_value U+0063 [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.e81: type = facet_type <@ImplicitAs, @ImplicitAs(%char)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.d06: type = facet_type <@ImplicitAs, @ImplicitAs(%char)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.e81 = facet_value Core.CharLiteral, (%ImplicitAs.impl_witness) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.a04: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%char, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %.601: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.a04, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.d06 = facet_value Core.CharLiteral, (%ImplicitAs.impl_witness) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.6cf: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%char, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.929: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.6cf, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.type: type = fn_type @Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert: %Core.CharLiteral.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %.b9b, %Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
@@ -635,7 +635,7 @@ var test_str: str = ();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %impl.elem0: %.601 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %impl.elem0: %.929 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method @__global_init.%.loc5, %impl.elem0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %char = call %bound_method(@__global_init.%.loc5) [concrete = constants.%int_99]
 // CHECK:STDOUT:   %.loc5_23.1: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_99]
@@ -662,12 +662,12 @@ var test_str: str = ();
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
-// CHECK:STDOUT:   %ptr.093: type = ptr_type %u8 [concrete]
+// CHECK:STDOUT:   %ptr.fe2: type = ptr_type %u8 [concrete]
 // CHECK:STDOUT:   %pattern_type.adf: type = pattern_type %str.3d4 [concrete]
 // CHECK:STDOUT:   %test_str.patt: %pattern_type.adf = value_binding_pattern test_str [concrete]
-// CHECK:STDOUT:   %str.16f: %ptr.093 = string_literal "Test" [concrete]
+// CHECK:STDOUT:   %str.d0d: %ptr.fe2 = string_literal "Test" [concrete]
 // CHECK:STDOUT:   %int_4: %u64 = int_value 4 [concrete]
-// CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.16f, %int_4) [concrete]
+// CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.d0d, %int_4) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -680,7 +680,7 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %str: %ptr.093 = string_literal "Test" [concrete = constants.%str.16f]
+// CHECK:STDOUT:   %str: %ptr.fe2 = string_literal "Test" [concrete = constants.%str.d0d]
 // CHECK:STDOUT:   %int_4: %u64 = int_value 4 [concrete = constants.%int_4]
 // CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str, %int_4) [concrete = constants.%String.val]
 // CHECK:STDOUT:   <elided>
@@ -698,8 +698,8 @@ var test_str: str = ();
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.f3e: <witness> = impl_witness imports.%Copy.impl_witness_table.aa5 [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.f3e) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.571: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.39e: type = fn_type_with_self_type %Copy.WithSelf.Op.type.571, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.ca9: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.cd2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ca9, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.bound: <bound method> = bound_method %i32, %type.as.Copy.impl.Op [concrete]
@@ -723,7 +723,7 @@ var test_str: str = ();
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %.39e = impl_witness_access constants.%Copy.impl_witness.f3e, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:   %impl.elem0: %.cd2 = impl_witness_access constants.%Copy.impl_witness.f3e, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %i32, %impl.elem0 [concrete = constants.%type.as.Copy.impl.Op.bound]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.call: init type = call %bound_method(%i32) [concrete = constants.%i32]
 // CHECK:STDOUT:   assign file.%test_type.var, %type.as.Copy.impl.Op.call
