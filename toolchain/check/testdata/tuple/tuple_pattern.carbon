@@ -67,16 +67,28 @@ library "[[@TEST_NAME]]";
 let (x: {}, y: {}) = ({}, {});
 //@dump-sem-ir-end
 
-// --- fail_in_class.carbon
+// --- fail_in_class_var.carbon
 
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+4]]:20: error: found tuple pattern in class `var` decl [FieldWithTuplePattern]
+  // CHECK:STDERR: fail_in_class_var.carbon:[[@LINE+4]]:7: error: found tuple pattern in class member var declaration [FieldWithTuplePattern]
   // CHECK:STDERR:   var (x: {}, y: {});
-  // CHECK:STDERR:                    ^
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~
   // CHECK:STDERR:
   var (x: {}, y: {});
+}
+
+// --- fail_in_class_let.carbon
+
+library "[[@TEST_NAME]]";
+
+class C {
+  // CHECK:STDERR: fail_in_class_let.carbon:[[@LINE+4]]:7: error: found tuple pattern in class member let declaration [FieldWithTuplePattern]
+  // CHECK:STDERR:   let (x: {}, y: {}) = ({}, {});
+  // CHECK:STDERR:       ^~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  let (x: {}, y: {}) = ({}, {});
 }
 
 // --- fail_initializer_mismatch.carbon
