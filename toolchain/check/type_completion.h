@@ -77,7 +77,7 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 // the middle of being defined.
 auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
                             SemIR::ConstantId self_const_id,
-                            SemIR::TypeInstId facet_type_inst_id,
+                            SemIR::TypeId facet_type_type_id,
                             bool allow_partially_identified)
     -> SemIR::IdentifiedFacetTypeId;
 
@@ -96,7 +96,7 @@ auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
 // TODO: Remove `diagnose` and split into `TryIdentifyFacetType`.
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
-                                SemIR::TypeInstId facet_type_inst_id,
+                                SemIR::TypeId facet_type_type_id,
                                 DiagnosticContextFn diagnostic_context,
                                 bool diagnose = true)
     -> SemIR::IdentifiedFacetTypeId;
