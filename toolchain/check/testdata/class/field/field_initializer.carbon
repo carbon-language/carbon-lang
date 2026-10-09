@@ -84,6 +84,49 @@ class Class {
 
 var C: Class = {};
 
+// --- fail_field_initializer_incomplete_type.carbon
+library "[[@TEST_NAME]]";
+
+class Class {
+  // CHECK:STDERR: fail_field_initializer_incomplete_type.carbon:[[@LINE+7]]:14: error: binding pattern has incomplete type `Class` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR:   var field: Class = 0;
+  // CHECK:STDERR:              ^~~~~
+  // CHECK:STDERR: fail_field_initializer_incomplete_type.carbon:[[@LINE-4]]:1: note: class is incomplete within its definition [ClassIncompleteWithinDefinition]
+  // CHECK:STDERR: class Class {
+  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR:
+  var field: Class = 0;
+}
+
+var C: Class = {};
+
+// --- fail_field_initializer_abstract_type.carbon
+library "[[@TEST_NAME]]";
+
+abstract class Abstract {}
+
+class Class {
+  // CHECK:STDERR: fail_field_initializer_abstract_type.carbon:[[@LINE+7]]:14: error: binding pattern has abstract type `Abstract` in `var` pattern [AbstractTypeInVarPattern]
+  // CHECK:STDERR:   var field: Abstract = {};
+  // CHECK:STDERR:              ^~~~~~~~
+  // CHECK:STDERR: fail_field_initializer_abstract_type.carbon:[[@LINE-6]]:1: note: class was declared abstract here [ClassAbstractHere]
+  // CHECK:STDERR: abstract class Abstract {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  var field: Abstract = {};
+}
+
+// --- fail_field_initializer_undeclared_type.carbon
+library "[[@TEST_NAME]]";
+
+class Class {
+  // CHECK:STDERR: fail_field_initializer_undeclared_type.carbon:[[@LINE+4]]:14: error: name `Undeclared` not found [NameNotFound]
+  // CHECK:STDERR:   var field: Undeclared = 0;
+  // CHECK:STDERR:              ^~~~~~~~~~
+  // CHECK:STDERR:
+  var field: Undeclared = 0;
+}
+
 // CHECK:STDOUT: --- field_initializer.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
