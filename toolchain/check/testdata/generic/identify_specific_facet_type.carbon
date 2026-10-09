@@ -87,7 +87,7 @@ constraint S(N: Core.IntLiteral) {
 fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z2 impls Y) {}
 
 fn G(generic T: Y) {
-  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE+13]]:3: error: facet type `S(-1) where .(CanFailToMonomorphize(-1).Z2) impls Y` can not be identified [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE+13]]:3: error: constructed invalid specific for `S(N) where .(CanFailToMonomorphize(N).Z2) impls Y` from argument [SubstitutingGenericParamType]
   // CHECK:STDERR:   F(-1, T);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-18]]:24: note: `CanFailToMonomorphize(N)` evaluates to incomplete type `CanFailToMonomorphize(-1)` [IncompleteTypeInMonomorphization]

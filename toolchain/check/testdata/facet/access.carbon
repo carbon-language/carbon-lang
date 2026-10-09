@@ -295,7 +295,7 @@ fn G(generic AB: A & B where .X = () and .Y = {}) -> AB.Y {
   return {};
 }
 
-// --- fail_todo_access_constant_through_named_constraint.carbon
+// --- access_constant_through_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface A { let X: type; }
@@ -305,15 +305,6 @@ constraint N {
 }
 
 fn F(generic AA: N) {
-  // TODO: The identified facet type `N` includes `A` and should provide a
-  // same-type constraint `A.X == ()` which would allow this conversion.
-  // CHECK:STDERR: fail_todo_access_constant_through_named_constraint.carbon:[[@LINE+7]]:3: error: cannot convert expression of type `()` to `AA.(A.X)` with `as` [ConversionFailure]
-  // CHECK:STDERR:   () as AA.X;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_access_constant_through_named_constraint.carbon:[[@LINE+4]]:3: note: type `()` does not implement interface `Core.As(AA.(A.X))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   () as AA.X;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR:
   () as AA.X;
 }
 

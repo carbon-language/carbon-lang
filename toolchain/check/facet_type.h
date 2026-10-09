@@ -88,6 +88,9 @@ auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
 auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
                                  SemIR::SpecificInterface interface)
     -> SemIR::SpecificInterface;
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::ConstantId const_id)
+    -> SemIR::ConstantId;
 
 class SubstIdentifiedWitnessesCallbacks {
  public:

@@ -671,6 +671,18 @@ auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
   return {.interface_id = interface.interface_id, .specific_id = specific_id};
 }
 
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::ConstantId const_id)
+    -> SemIR::ConstantId {
+  if (context.eval_lookup_to_identified_witness()) {
+    return const_id;
+  }
+  EvaluateSubstCallbacks callbacks(&context, loc_id);
+  auto inst_id = context.constant_values().GetInstId(const_id);
+  inst_id = SubstInst(context, inst_id, callbacks);
+  return context.constant_values().Get(inst_id);
+}
+
 auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
                               SemIR::IdentifiedFacetType::RequiredImpl req,
                               SubstIdentifiedWitnessesCallbacks& callbacks)
