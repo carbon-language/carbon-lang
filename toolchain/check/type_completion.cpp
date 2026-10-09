@@ -1028,6 +1028,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> extends;
   llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> impls;
   llvm::SmallVector<SemIR::IdentifiedFacetType::Rewrite> rewrites;
+  llvm::SmallVector<SemIR::IdentifiedFacetType::Equivalent> equivalents;
 
   while (!work.empty()) {
     SelfImplsFacetType next_impls = work.pop_back_val();
@@ -1074,8 +1075,19 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
           rewrites, llvm::map_range(declared_facet_type.rewrite_constraints,
                                     rewrite_as_constants));
     } else {
-      // TODO: Store the rewrites as equality constraints.
+      auto rewrite_as_constants =
+          [&](auto rewrite) -> SemIR::IdentifiedFacetType::Equivalent {
+        return {context.constant_values().Get(
+                    GetImplWitnessAccessWithoutSubstitution(context,
+                                                            rewrite.lhs_id)),
+                context.constant_values().Get(rewrite.rhs_id)};
+      };
+      llvm::append_range(
+          equivalents, llvm::map_range(declared_facet_type.rewrite_constraints,
+                                       rewrite_as_constants));
     }
+    // TODO: Store equivalent constraints from the `declared_facet_type` once
+    // they exist.
 
     if (declared_facet_type.extend_named_constraints.empty() &&
         declared_facet_type.self_impls_named_constraints.empty() &&
@@ -1263,9 +1275,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  // TODO: Process other kinds of requirements.
   return context.identified_facet_types().Add(
-      {key, partially_identified, extends, impls, rewrites});
+      {key, partially_identified, extends, impls, rewrites, equivalents});
 }
 
 auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,

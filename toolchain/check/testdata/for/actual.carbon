@@ -388,10 +388,10 @@ fn Read(generic y: Core.IntLiteral) {
 // CHECK:STDOUT:       %return.param: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_72.1 (%Optional.0de) = out_param call_param2
 // CHECK:STDOUT:       %return: ref @IntRange.as.Iterate.impl.Next.%Optional.loc11_72.1 (%Optional.0de) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Iterate.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant.loc9_87.2, %impl_witness_assoc_constant.loc9_87.1, %IntRange.as.Iterate.impl.NewCursor.decl, %IntRange.as.Iterate.impl.Next.decl), @IntRange.as.Iterate.impl [concrete]
+// CHECK:STDOUT:     %Iterate.impl_witness_table = impl_witness_table (%impl_witness_assoc_constant.loc9_87.1, %impl_witness_assoc_constant.loc9_87.2, %IntRange.as.Iterate.impl.NewCursor.decl, %IntRange.as.Iterate.impl.Next.decl), @IntRange.as.Iterate.impl [concrete]
 // CHECK:STDOUT:     %Iterate.impl_witness.loc9_87.1: <witness> = impl_witness %Iterate.impl_witness_table, @IntRange.as.Iterate.impl(constants.%N) [symbolic = %Iterate.impl_witness.loc9_87.2 (constants.%Iterate.impl_witness)]
-// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.1: %Destroy.type = impl_witness_assoc_constant constants.%Destroy.facet.ce5 [symbolic = %Destroy.facet.loc9_54.1 (constants.%Destroy.facet.ce5)]
-// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.2: %facet_type.f48 = impl_witness_assoc_constant constants.%facet_value [symbolic = %facet_value.loc9_85.1 (constants.%facet_value)]
+// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.1: %facet_type.f48 = impl_witness_assoc_constant constants.%facet_value [symbolic = %facet_value.loc9_85.1 (constants.%facet_value)]
+// CHECK:STDOUT:     %impl_witness_assoc_constant.loc9_87.2: %Destroy.type = impl_witness_assoc_constant constants.%Destroy.facet.ce5 [symbolic = %Destroy.facet.loc9_54.1 (constants.%Destroy.facet.ce5)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
 // CHECK:STDOUT:     .N = <poisoned>

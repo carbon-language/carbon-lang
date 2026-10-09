@@ -706,6 +706,28 @@ auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
 }
 
 auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                              SemIR::IdentifiedFacetType::Equivalent equiv,
+                              SubstIdentifiedWitnessesCallbacks& callbacks)
+    -> SemIR::IdentifiedFacetType::Equivalent {
+  // SubstIdentifiedWitnesses allows the caller to cleverly replace witnesses
+  // coming from identify with their own. If we do this in the middle of
+  // identify, it means there is another caller waiting for identify and they
+  // may also want to do their own replacements. This would be problematic! But
+  // since during identify we only create specifics, and resolving them through
+  // eval should not end up here, we make note of that.
+  CARBON_CHECK(!context.eval_lookup_to_identified_witness(),
+               "SubstIdentifiedWitnesses called during identify");
+
+  EvaluateSubstCallbacks subst_callbacks(&context, loc_id, &callbacks);
+  auto lhs_inst_id = SubstInst(
+      context, context.constant_values().GetInstId(equiv.lhs), subst_callbacks);
+  auto rhs_inst_id = SubstInst(
+      context, context.constant_values().GetInstId(equiv.rhs), subst_callbacks);
+  return {context.constant_values().Get(lhs_inst_id),
+          context.constant_values().Get(rhs_inst_id)};
+}
+
+auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
                               SemIR::ConstantId const_id,
                               SubstIdentifiedWitnessesCallbacks& callbacks)
     -> SemIR::ConstantId {

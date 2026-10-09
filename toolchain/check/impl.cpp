@@ -882,12 +882,6 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
     return;
   }
 
-  // TODO: Check other kinds of constraints too: rewrites into targets other
-  // than `Self.(TargetInterface.__)` and same-type constraints. Consider maybe
-  // building a facet type that just excludes anything about the impl-as target
-  // interface, and then just perform lookup of Self as that facet type, so we
-  // don't have to re-implement all of the validation of impl lookup?
-
   // The IdentifiedFacetType canonicalizes the self facets, so we do the same
   // for comparing with it.
   auto self_const_id =
@@ -918,19 +912,43 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                         "implements `{2}`",
                         SemIR::DeclaredFacetTypeId, InstIdAsConstant,
                         SemIR::SpecificInterface);
+      auto facet_type = context.insts().GetAs<SemIR::FacetType>(
+          context.constant_values().GetConstantInstId(full_constraint_id));
       context.emitter().Emit(
           loc_id, IdentifiedRequireImplsNotImplemented,
-          context.insts()
-              .GetAs<SemIR::FacetType>(
-                  context.constant_values().GetConstantInstId(
-                      full_constraint_id))
-              .declared_facet_type_id,
+          facet_type.declared_facet_type_id,
           context.constant_values().GetInstId(req.self_facet_value),
           req.specific_interface);
     }
     if (!result.has_value() || result.has_error_value()) {
       FillImplWitnessWithErrors(context, impl);
       return;
+    }
+  }
+
+  for (auto equiv : identified.equivalents()) {
+    // This replaces both IdentifiedWitness and ImplSelfWitness referring to
+    // this impl with the impl's ImplWitness. That causes any access through the
+    // witness to resolve to the value from the impl's witness table.
+    SubstWithImplWitness callbacks(&context, &impl);
+    auto subst_equiv =
+        SubstIdentifiedWitnesses(context, loc_id, equiv, callbacks);
+
+    if (subst_equiv.lhs != subst_equiv.rhs) {
+      CARBON_DIAGNOSTIC(IdentifiedRequireImplsNotEquivalent, Error,
+                        "constraint {0} being implemented requires that {1} "
+                        "equals {2}; found {3} and {4}",
+                        SemIR::DeclaredFacetTypeId, InstIdAsConstant,
+                        InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
+      auto facet_type = context.insts().GetAs<SemIR::FacetType>(
+          context.constant_values().GetConstantInstId(full_constraint_id));
+      context.emitter().Emit(
+          loc_id, IdentifiedRequireImplsNotEquivalent,
+          facet_type.declared_facet_type_id,
+          context.constant_values().GetInstId(equiv.lhs),
+          context.constant_values().GetInstId(equiv.rhs),
+          context.constant_values().GetInstId(subst_equiv.lhs),
+          context.constant_values().GetInstId(subst_equiv.rhs));
     }
   }
 
