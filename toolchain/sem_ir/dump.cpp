@@ -646,6 +646,13 @@ LLVM_DUMP_METHOD static auto MakeGeneratedFunctionId(int id)
     -> GeneratedFunctionId {
   return GeneratedFunctionId(id);
 }
+LLVM_DUMP_METHOD static auto MakeClangDeclId(int id) -> ClangDeclId {
+  return ClangDeclId(id);
+}
+LLVM_DUMP_METHOD static auto MakeClangDeclSignatureId(int id)
+    -> ClangDeclSignatureId {
+  return ClangDeclSignatureId(id);
+}
 LLVM_DUMP_METHOD static auto MakeClassId(int id) -> ClassId {
   return ClassId(id);
 }
