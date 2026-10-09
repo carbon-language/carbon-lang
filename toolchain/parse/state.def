@@ -1375,6 +1375,8 @@ CARBON_PARSE_STATE(ExprPattern)
 // ^~~~~~~~~~~~~~~~~~~~~~
 // template/generic _: <...>
 // ^~~~~~~~~~~~~~~~~~~
+// template/generic self: <...>
+// ^~~~~~~~~~~~~~~~~~~~~~
 //   1. Expr
 //   2. BindingPatternFinishAsGeneric
 //
