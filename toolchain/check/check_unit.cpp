@@ -608,13 +608,19 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
 auto CheckUnit::CheckImpls() -> void { ValidateImplsInFile(context_); }
 
 auto CheckUnit::FinishRun() -> void {
+  // Finalizes the C++ portion of the compilation, allowing any pending C++
+  // template instantiations to complete Carbon types and generate required
+  // thunks or function calls.
+  FinalizeCppAstFragment(context_);
+
   CheckRequiredDeclarations();
   CheckRequiredDefinitions();
   CheckPoisonedConcreteImplLookupQueries();
   CheckImpls();
 
-  // Finalizes the C++ portion of the compilation.
-  FinishAst(context_);
+  // Disconnects AST generation from the context before popping the file-level
+  // scope and destroying the context.
+  DisconnectCppAst(context_);
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());

@@ -1038,7 +1038,7 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
   ParseInjectedTokens(*cpp_context);
 }
 
-auto FinishAst(Context& context) -> void {
+auto FinalizeCppAstFragment(Context& context) -> void {
   if (!context.cpp_context()) {
     return;
   }
@@ -1064,6 +1064,12 @@ auto FinishAst(Context& context) -> void {
   FlushDiagnosticConsumer(
       *context.cpp_context()->sema().getDiagnostics().getClient());
   context.emitter().Flush();
+}
+
+auto DisconnectCppAst(Context& context) -> void {
+  if (!context.cpp_context()) {
+    return;
+  }
 
   // Remove the `CarbonExternalASTSource` installed in `GenerateAst` and
   // replace it with a `ReadOnlyASTSource`. This is necessary because

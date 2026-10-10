@@ -52,9 +52,14 @@ auto GenerateAst(Context& context,
 auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
                              llvm::StringRef source_code) -> void;
 
-// Finishes AST generation for the given checking context. Performs end of file
-// steps such as template instantiation and warning on unused declarations.
-auto FinishAst(Context& context) -> void;
+// Finalizes the C++ AST fragment for the given checking context. Performs end
+// of file steps such as template instantiation and warning on unused
+// declarations.
+auto FinalizeCppAstFragment(Context& context) -> void;
+
+// Disconnects C++ AST generation from the given checking context at the end of
+// checking.
+auto DisconnectCppAst(Context& context) -> void;
 
 // Finalizes a C++ domain at the end of checking all files.
 auto FinalizeCppDomain(SemIR::CppDomain& domain) -> void;
