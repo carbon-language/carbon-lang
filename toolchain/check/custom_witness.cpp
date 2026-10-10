@@ -18,6 +18,7 @@
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
+#include "toolchain/check/interface.h"
 #include "toolchain/check/member_access.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/operator.h"
@@ -567,10 +568,7 @@ static auto MakeDestroyOpFunction(Context& context, SemIR::LocId loc_id,
 static auto MakeSubobjectDestroyOpFunction(
     Context& context, SemIR::LocId loc_id, SemIR::TypeId self_type_id,
     SemIR::InterfaceId interface_id, DestroyFormat format) -> SemIR::InstId {
-  // TODO: replace with `CoreIdentifier::Op` when `require impls` adds a witness
-  // table entry.
-  auto name_id =
-      context.core_identifiers().AddNameId(CoreIdentifier::SubobjectDestroy);
+  auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
   const auto& interface = context.interfaces().Get(interface_id);
   auto specific_interface = MakeCoreSpecificInterface(
       context, loc_id, interface_id, interface.generic_id, {});
@@ -627,9 +625,10 @@ static auto MakeSubobjectDestroyOpFunction(
 static auto MakeDestroySelfDestructFunction(
     Context& context, SemIR::LocId loc_id, SemIR::TypeId self_type_id,
     SemIR::InterfaceId interface_id, SemIR::InstId op_id,
-    [[maybe_unused]] SemIR::InstId subobject_destroy_id) -> SemIR::InstId {
-  auto name_id =
-      context.core_identifiers().AddNameId(CoreIdentifier::SelfDestruct);
+    SemIR::InstId subobject_destroy_id) -> SemIR::InstId {
+  // TODO: revert to CoreIdentifier::SelfDestruct when `require impls` adds a
+  // witness table entry.
+  auto name_id = context.core_identifiers().AddNameId(CoreIdentifier::Op);
   const auto& interface = context.interfaces().Get(interface_id);
   auto specific_interface = MakeCoreSpecificInterface(
       context, loc_id, interface_id, interface.generic_id, {});
@@ -897,36 +896,105 @@ auto BuildPrimitiveCopyWitness(
                             query_specific_interface, {op_id});
 }
 
-auto BuildDestroyWitness(Context& context, SemIR::LocId loc_id,
-                         SemIR::TypeId self_type_id,
-                         SemIR::ConstantId query_self_const_id,
-                         SemIR::SpecificInterface query_specific_interface,
-                         SemIR::InstId subobject_destroy_fn_id)
-    -> SemIR::InstId {
-  auto interface =
-      context.interfaces().Get(query_specific_interface.interface_id);
-  auto assoc_entities =
-      context.inst_blocks().Get(interface.associated_entities_id);
-  CARBON_CHECK(assoc_entities.size() == 3,
-               "{} only has {} associated functions",
-               context.names().GetAsStringIfIdentifier(interface.name_id),
-               assoc_entities.size());
+// Returns the custom witness to use for destruction of the given type. See
+// `LookupCustomWitness`.
+static auto LookupDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface, bool build_witness)
+    -> std::optional<SemIR::InstId> {
+  if (!build_witness || query_self_const_id.is_symbolic()) {
+    // The type can be destroyed, but we shouldn't make a witness right now.
+    return SemIR::InstId::None;
+  }
 
-  auto op_id = MakeDestroyOpFunction(context, loc_id, self_type_id,
-                                     query_specific_interface.interface_id);
-
-  auto self_destruct_fn_id = MakeDestroySelfDestructFunction(
-      context, loc_id, self_type_id, query_specific_interface.interface_id,
-      op_id, subobject_destroy_fn_id);
-
+  auto self_type_id = GetFacetAccessType(
+      context, context.constant_values().GetInstId(query_self_const_id));
   return BuildCustomWitness(
       context, loc_id, query_self_const_id, query_specific_interface,
-      {op_id, subobject_destroy_fn_id, self_destruct_fn_id});
+      MakeDestroyOpFunction(context, loc_id, self_type_id,
+                            query_specific_interface.interface_id));
 }
 
-// Builds and returns a custom witness that performs the specified kind of
-// destruction for the given type.
-static auto BuildCarbonDestroyWitness(
+static auto GetCustomWitnessOp(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface,
+    CoreIdentifier core_interface) -> SemIR::InstId {
+  auto core_interface_id = GetCoreInterfaceId(context, loc_id, core_interface);
+  auto witness_id =
+      LookupImplWitness(context, loc_id, query_self_const_id,
+                        GetInterfaceType(context, core_interface_id,
+                                         query_specific_interface.specific_id)
+                            .AsConstantId());
+  if (witness_id.has_error_value()) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  if (!witness_id.has_value()) {
+    return SemIR::InstId::None;
+  }
+
+  auto witness = context.insts().Get(
+      context.inst_blocks().Get(witness_id.inst_block_id())[0]);
+  CARBON_KIND_SWITCH(witness) {
+    case CARBON_KIND(SemIR::CustomWitness custom_witness): {
+      auto assoc_entities =
+          context.inst_blocks().Get(custom_witness.elements_id);
+      return assoc_entities[0];
+    }
+    case CARBON_KIND([[maybe_unused]] SemIR::LookupImplWitness impl_witness): {
+      return SemIR::InstId::None;
+    }
+    case SemIR::ErrorInst::Kind:
+      return SemIR::ErrorInst::InstId;
+    default: {
+      CARBON_FATAL("unexpected {} instance {} ", witness.kind(), witness);
+    }
+  }
+}
+
+auto LookupSelfDestructWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface, bool build_witness)
+    -> std::optional<SemIR::InstId> {
+  if (!build_witness || query_self_const_id.is_symbolic()) {
+    return SemIR::InstId::None;
+  }
+
+  auto self_type_id = GetFacetAccessType(
+      context, context.constant_values().GetInstId(query_self_const_id));
+
+  auto subobject_destroy_op_id = GetCustomWitnessOp(
+      context, loc_id, query_self_const_id, query_specific_interface,
+      CoreIdentifier::SubobjectDestroy);
+
+  // This type can't be destroyed.
+  if (!subobject_destroy_op_id.has_value() ||
+      subobject_destroy_op_id == SemIR::ErrorInst::InstId) {
+    return std::nullopt;
+  }
+
+  auto destroy_op_id =
+      GetCustomWitnessOp(context, loc_id, query_self_const_id,
+                         query_specific_interface, CoreIdentifier::Destroy);
+  CARBON_CHECK(destroy_op_id.has_value(),
+               "`Destroy` should always be implmented");
+
+  auto op_id = MakeDestroySelfDestructFunction(
+      context, loc_id, self_type_id, query_specific_interface.interface_id,
+      destroy_op_id, subobject_destroy_op_id);
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface, {op_id});
+}
+
+// Builds a custom witness for the `SubobjectDestroy` interface.
+//
+// `op_id` refers to the synthesised `SubobjectDestroy.Op` and is generated
+// differently based on whether the specific is a Carbon type or a C++ type.
+static auto BuildSubobjectDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterface query_specific_interface, DestroyFormat format)
@@ -935,42 +1003,39 @@ static auto BuildCarbonDestroyWitness(
 
   auto self_type_id = GetFacetAccessType(
       context, context.constant_values().GetInstId(query_self_const_id));
-  auto subobject_destroy_op_id = MakeSubobjectDestroyOpFunction(
+  auto op_id = MakeSubobjectDestroyOpFunction(
       context, loc_id, self_type_id, query_specific_interface.interface_id,
       format);
-  return BuildDestroyWitness(context, loc_id, self_type_id, query_self_const_id,
-                             query_specific_interface, subobject_destroy_op_id);
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface, op_id);
 }
 
-// Returns the custom witness to use for destruction of the given type. See
-// `LookupCustomWitness`.
-static auto LookupDestroyWitness(
+auto BuildTrivialSubobjectDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
+  return BuildSubobjectDestroyWitness(context, loc_id, query_self_const_id,
+                                      query_specific_interface,
+                                      DestroyFormat::Trivial);
+}
+
+static auto LookupSubobjectDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterface query_specific_interface, bool build_witness)
     -> std::optional<SemIR::InstId> {
+  if (!build_witness || query_self_const_id.is_symbolic()) {
+    return SemIR::InstId::None;
+  }
+
   auto format = CanDestroyType(context, loc_id, query_self_const_id,
                                query_specific_interface);
   if (format == DestroyFormat::NoDestroy) {
     return std::nullopt;
   }
 
-  if (!build_witness || query_self_const_id.is_symbolic()) {
-    // The type can be destroyed, but we shouldn't make a witness right now.
-    return SemIR::InstId::None;
-  }
-
-  return BuildCarbonDestroyWitness(context, loc_id, query_self_const_id,
-                                   query_specific_interface, format);
-}
-
-auto BuildTrivialDestroyWitness(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
-  return BuildCarbonDestroyWitness(context, loc_id, query_self_const_id,
-                                   query_specific_interface,
-                                   DestroyFormat::Trivial);
+  return BuildSubobjectDestroyWitness(context, loc_id, query_self_const_id,
+                                      query_specific_interface, format);
 }
 
 static auto MakeIntFitsInWitness(
@@ -1157,6 +1222,13 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface, build_witness);
+    case SemIR::CoreInterface::SelfDestruct:
+      return LookupSelfDestructWitness(context, loc_id, query_self_const_id,
+                                       query_specific_interface, build_witness);
+    case SemIR::CoreInterface::SubobjectDestroy:
+      return LookupSubobjectDestroyWitness(context, loc_id, query_self_const_id,
+                                           query_specific_interface,
+                                           build_witness);
     case SemIR::CoreInterface::AddAssignWith:
     case SemIR::CoreInterface::AddWith:
     case SemIR::CoreInterface::Copy:

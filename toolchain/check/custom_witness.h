@@ -41,7 +41,7 @@ auto MakeBuiltinOperatorFunction(Context& context, SemIR::LocId loc_id,
     -> SemIR::InstId;
 
 // Builds a witness that the given type is trivially destroyable.
-auto BuildTrivialDestroyWitness(
+auto BuildTrivialSubobjectDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId;
@@ -67,16 +67,11 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
                          SemIR::SpecificInterface query_specific_interface,
                          bool build_witness) -> std::optional<SemIR::InstId>;
 
-// Builds a witness for the `Destroy` interface.
-//
-// `op_id` refers to the synthesised `Destroy.Op` and is generated differently
-// based on whether the specific is a Carbon type or a C++ type.
-auto BuildDestroyWitness(Context& context, SemIR::LocId loc_id,
-                         SemIR::TypeId self_type_id,
-                         SemIR::ConstantId query_self_const_id,
-                         SemIR::SpecificInterface query_specific_interface,
-                         SemIR::InstId subobject_destroy_fn_id)
-    -> SemIR::InstId;
+auto LookupSelfDestructWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface, bool build_witness)
+    -> std::optional<SemIR::InstId>;
 
 }  // namespace Carbon::Check
 
