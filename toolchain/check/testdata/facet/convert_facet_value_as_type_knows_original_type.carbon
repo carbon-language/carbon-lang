@@ -299,11 +299,11 @@ fn F[A: J, B: A](x: C(A, B)) {
 // CHECK:STDOUT:   %B: %A.as_type = symbolic_binding B, 1 [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%A, %B) [symbolic]
-// CHECK:STDOUT:   %pattern_type.bac: type = pattern_type %C [symbolic]
-// CHECK:STDOUT:   %x.param_patt: %pattern_type.bac = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %pattern_type.f93: type = pattern_type %C [symbolic]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.f93 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %x.patt.843041.2: %pattern_type.bac = wrapper_binding_pattern x, %x.param_patt [symbolic]
+// CHECK:STDOUT:   %x.patt.7882fe.2: %pattern_type.f93 = wrapper_binding_pattern x, %x.param_patt [symbolic]
 // CHECK:STDOUT:   %G.specific_fn: <specific function> = specific_function %G, @G(%A, %B) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -334,8 +334,8 @@ fn F[A: J, B: A](x: C(A, B)) {
 // CHECK:STDOUT:   %B.patt.loc25_13.2 => constants.%B.patt
 // CHECK:STDOUT:   %B.loc25_13.1 => constants.%B
 // CHECK:STDOUT:   %C.loc25_27.1 => constants.%C
-// CHECK:STDOUT:   %pattern_type.loc25_19 => constants.%pattern_type.bac
+// CHECK:STDOUT:   %pattern_type.loc25_19 => constants.%pattern_type.f93
 // CHECK:STDOUT:   %x.param_patt.loc25_19.2 => constants.%x.param_patt
-// CHECK:STDOUT:   %x.patt.loc25_19.2 => constants.%x.patt.843041.2
+// CHECK:STDOUT:   %x.patt.loc25_19.2 => constants.%x.patt.7882fe.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

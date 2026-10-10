@@ -232,10 +232,10 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
       if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
         return GetOrExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
                                         callee_function->function_id);
-      } else if (auto generic_class =
-                     context_->insts().TryGetAs<SemIR::GenericClassType>(
+      } else if (auto param_class_type =
+                     context_->insts().TryGetAs<SemIR::ParameterizedClassType>(
                          type_inst_id)) {
-        return ExportGenericClassToCpp(*context_, *generic_class);
+        return ExportParameterizedClassToCpp(*context_, *param_class_type);
       }
 
       return nullptr;

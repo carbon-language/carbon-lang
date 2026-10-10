@@ -66,13 +66,13 @@ fn G(a: A(B)) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CF.Main.a6a60dfee2d7d273(ptr %x) #0 !dbg !32 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8"(ptr %x), !dbg !35
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.9463a6f5dd24cd9f"(ptr %x), !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !38
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8"(ptr %self) #0 !dbg !40 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8"(ptr %self), !dbg !45
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.9463a6f5dd24cd9f"(ptr %self) #0 !dbg !40 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.9463a6f5dd24cd9f"(ptr %self), !dbg !45
 // CHECK:STDOUT:   ret ptr %1, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,7 +101,7 @@ fn G(a: A(B)) {
 // CHECK:STDOUT: !37 = !DISubroutineType(types: !36)
 // CHECK:STDOUT: !38 = !DILocation(line: 17, column: 1, scope: !32)
 // CHECK:STDOUT: !39 = !{!33}
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.06ad18aa23ecf9a8", scope: null, file: !18, line: 12, type: !37, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !47)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.A.5d7343568c0b5715.Main:As.00d5ad878904f3d1.Core.9463a6f5dd24cd9f", scope: null, file: !18, line: 12, type: !37, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !47)
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !40, type: !22)
 // CHECK:STDOUT: !45 = !DILocation(line: 13, column: 12, scope: !40)
 // CHECK:STDOUT: !46 = !DILocation(line: 13, column: 5, scope: !40)

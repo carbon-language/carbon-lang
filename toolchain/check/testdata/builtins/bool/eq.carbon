@@ -50,20 +50,20 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Eq.type: type = fn_type @Eq [concrete]
 // CHECK:STDOUT:   %Eq: %Eq.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.type: type = parameterized_class_name_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
-// CHECK:STDOUT:   %C.ac4: type = class_type @C, @C(%true) [concrete]
-// CHECK:STDOUT:   %pattern_type.2ef: type = pattern_type %C.ac4 [concrete]
+// CHECK:STDOUT:   %C.c92: type = class_type @C, @C(%true) [concrete]
+// CHECK:STDOUT:   %pattern_type.186: type = pattern_type %C.c92 [concrete]
 // CHECK:STDOUT:   %True.type: type = fn_type @True [concrete]
 // CHECK:STDOUT:   %True: %True.type = struct_value () [concrete]
-// CHECK:STDOUT:   %a.patt.8de: %pattern_type.2ef = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt: %pattern_type.2ef = var_pattern %a.patt.8de [concrete]
+// CHECK:STDOUT:   %a.patt.0f8: %pattern_type.186 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.186 = var_pattern %a.patt.0f8 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %a.var: ref %C.ac4 = var_storage %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc12_24.1: type = splice_block %C.loc12 [concrete = constants.%C.ac4] {
+// CHECK:STDOUT:   %a.var: ref %C.c92 = var_storage %a.var_patt [concrete]
+// CHECK:STDOUT:   %.loc12_24.1: type = splice_block %C.loc12 [concrete = constants.%C.c92] {
 // CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %Eq.ref.loc12: %Eq.type = name_ref Eq, %Eq.decl [concrete = constants.%Eq]
 // CHECK:STDOUT:     %true.loc12_13: bool = bool_literal true [concrete = constants.%true]
@@ -71,20 +71,20 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %Eq.call.loc12: init bool = call %Eq.ref.loc12(%true.loc12_13, %true.loc12_19) [concrete = constants.%true]
 // CHECK:STDOUT:     %.loc12_24.2: bool = value_of_initializer %Eq.call.loc12 [concrete = constants.%true]
 // CHECK:STDOUT:     %.loc12_24.3: bool = converted %Eq.call.loc12, %.loc12_24.2 [concrete = constants.%true]
-// CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%true) [concrete = constants.%C.ac4]
+// CHECK:STDOUT:     %C.loc12: type = class_type @C, @C(constants.%true) [concrete = constants.%C.c92]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.ac4 = wrapper_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %C.c92 = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.2ef = ref_binding_pattern a [concrete = constants.%a.patt.8de]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.2ef = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.186 = ref_binding_pattern a [concrete = constants.%a.patt.0f8]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.186 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %True.ref.loc12: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
-// CHECK:STDOUT:   %.loc12: ref %C.ac4 = splice_block file.%a.var [concrete = file.%a.var] {}
-// CHECK:STDOUT:   %True.call.loc12: init %C.ac4 to %.loc12 = call %True.ref.loc12()
+// CHECK:STDOUT:   %.loc12: ref %C.c92 = splice_block file.%a.var [concrete = file.%a.var] {}
+// CHECK:STDOUT:   %True.call.loc12: init %C.c92 to %.loc12 = call %True.ref.loc12()
 // CHECK:STDOUT:   assign file.%a.var, %True.call.loc12
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -93,11 +93,11 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.type: type = parameterized_class_name_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
-// CHECK:STDOUT:   %C.ac4: type = class_type @C, @C(%true) [concrete]
-// CHECK:STDOUT:   %pattern_type.2ef: type = pattern_type %C.ac4 [concrete]
+// CHECK:STDOUT:   %C.c92: type = class_type @C, @C(%true) [concrete]
+// CHECK:STDOUT:   %pattern_type.186: type = pattern_type %C.c92 [concrete]
 // CHECK:STDOUT:   %True.type: type = fn_type @True [concrete]
 // CHECK:STDOUT:   %True: %True.type = struct_value () [concrete]
 // CHECK:STDOUT:   %EqWith.type.539: type = facet_type <@EqWith, @EqWith(bool)> [concrete]
@@ -108,8 +108,8 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:   %bool.as.EqWith.impl.Equal.type: type = fn_type @bool.as.EqWith.impl.Equal [concrete]
 // CHECK:STDOUT:   %bool.as.EqWith.impl.Equal: %bool.as.EqWith.impl.Equal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %bool.as.EqWith.impl.Equal.bound.e7c: <bound method> = bound_method %true, %bool.as.EqWith.impl.Equal [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.2ef = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt: %pattern_type.2ef = var_pattern %a.patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.186 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt: %pattern_type.186 = var_pattern %a.patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -119,8 +119,8 @@ var d: C(false == false) = True();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %a.var: ref %C.ac4 = var_storage %a.var_patt [concrete]
-// CHECK:STDOUT:   %.loc10_22.1: type = splice_block %C.loc10 [concrete = constants.%C.ac4] {
+// CHECK:STDOUT:   %a.var: ref %C.c92 = var_storage %a.var_patt [concrete]
+// CHECK:STDOUT:   %.loc10_22.1: type = splice_block %C.loc10 [concrete = constants.%C.c92] {
 // CHECK:STDOUT:     %C.ref.loc10: %C.type = name_ref C, %C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %true.loc10_10: bool = bool_literal true [concrete = constants.%true]
 // CHECK:STDOUT:     %true.loc10_18: bool = bool_literal true [concrete = constants.%true]
@@ -129,20 +129,20 @@ var d: C(false == false) = True();
 // CHECK:STDOUT:     %bool.as.EqWith.impl.Equal.call.loc10: init bool = call %bound_method.loc10(%true.loc10_10, %true.loc10_18) [concrete = constants.%true]
 // CHECK:STDOUT:     %.loc10_22.2: bool = value_of_initializer %bool.as.EqWith.impl.Equal.call.loc10 [concrete = constants.%true]
 // CHECK:STDOUT:     %.loc10_22.3: bool = converted %bool.as.EqWith.impl.Equal.call.loc10, %.loc10_22.2 [concrete = constants.%true]
-// CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%true) [concrete = constants.%C.ac4]
+// CHECK:STDOUT:     %C.loc10: type = class_type @C, @C(constants.%true) [concrete = constants.%C.c92]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: ref %C.ac4 = wrapper_binding a, %a.var [concrete = %a.var]
+// CHECK:STDOUT:   %a: ref %C.c92 = wrapper_binding a, %a.var [concrete = %a.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.2ef = ref_binding_pattern a [concrete = constants.%a.patt]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.2ef = var_pattern %a.patt [concrete = constants.%a.var_patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.186 = ref_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.186 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %True.ref.loc10: %True.type = name_ref True, file.%True.decl [concrete = constants.%True]
-// CHECK:STDOUT:   %.loc10: ref %C.ac4 = splice_block file.%a.var [concrete = file.%a.var] {}
-// CHECK:STDOUT:   %True.call.loc10: init %C.ac4 to %.loc10 = call %True.ref.loc10()
+// CHECK:STDOUT:   %.loc10: ref %C.c92 = splice_block file.%a.var [concrete = file.%a.var] {}
+// CHECK:STDOUT:   %True.call.loc10: init %C.c92 to %.loc10 = call %True.ref.loc10()
 // CHECK:STDOUT:   assign file.%a.var, %True.call.loc10
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

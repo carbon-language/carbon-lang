@@ -119,7 +119,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     class_info.generic_id = BuildGenericDecl(context, class_decl_id);
     class_decl.class_id = context.classes().Add(class_info);
     if (class_info.has_parameters()) {
-      class_decl.type_id = GetGenericClassType(
+      class_decl.type_id = GetParameterizedClassType(
           context, class_decl.class_id, context.scope_stack().PeekSpecificId());
     }
   } else {
@@ -458,7 +458,7 @@ auto HandleParseNode(Context& context, Parse::FriendDeclId node_id) -> bool {
       context.constant_values().Get(access_scope_inst_id));
   CARBON_KIND_SWITCH(access_scope_inst) {
     case SemIR::ClassType::Kind:
-    case SemIR::GenericClassType::Kind:
+    case SemIR::ParameterizedClassType::Kind:
       break;
     default:
       CARBON_DIAGNOSTIC(FriendNotAllowedInScope, Error,
@@ -479,7 +479,7 @@ auto HandleParseNode(Context& context, Parse::FriendDeclId node_id) -> bool {
       [[fallthrough]];
     }
     case SemIR::ClassType::Kind:
-    case SemIR::GenericClassType::Kind:
+    case SemIR::ParameterizedClassType::Kind:
     case SemIR::FacetType::Kind:
       break;
     default: {

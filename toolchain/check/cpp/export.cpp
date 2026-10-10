@@ -235,13 +235,14 @@ static auto ExportClassSpecificToCpp(Context& context, SemIR::LocId loc_id,
     return cast<clang::ClassTemplateSpecializationDecl>(clang_decl->decl());
   }
 
-  // Ensure the generic class is exported, and get its `ClassTemplateDecl`.
-  auto generic_class_type_id = GetGenericClassType(context, class_type.class_id,
-                                                   SemIR::SpecificId::None);
-  auto generic_class_type =
-      context.types().GetAs<SemIR::GenericClassType>(generic_class_type_id);
+  // Ensure the parameterized class is exported, and get its
+  // `ClassTemplateDecl`.
+  auto param_class_type_id = GetParameterizedClassType(
+      context, class_type.class_id, SemIR::SpecificId::None);
+  auto param_class_type =
+      context.types().GetAs<SemIR::ParameterizedClassType>(param_class_type_id);
   auto* class_template_decl =
-      ExportGenericClassToCpp(context, generic_class_type);
+      ExportParameterizedClassToCpp(context, param_class_type);
   if (!class_template_decl) {
     return nullptr;
   }
@@ -406,11 +407,11 @@ static auto MakeSpecificForTemplateArgs(
   return MakeSpecific(context, loc_id, generic_id, specific_arg_ids);
 }
 
-auto ExportGenericClassToCpp(Context& context,
-                             SemIR::GenericClassType generic_class_type)
+auto ExportParameterizedClassToCpp(
+    Context& context, SemIR::ParameterizedClassType param_class_type)
     -> clang::ClassTemplateDecl* {
   // Use existing export if possible.
-  const auto& class_info = context.classes().Get(generic_class_type.class_id);
+  const auto& class_info = context.classes().Get(param_class_type.class_id);
   auto decl_id = class_info.first_decl_id();
   if (const auto* clang_decl = context.clang_decls().Lookup(decl_id)) {
     return cast<clang::ClassTemplateDecl>(clang_decl->decl());

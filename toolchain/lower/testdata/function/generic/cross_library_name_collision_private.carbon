@@ -82,30 +82,30 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @main() #0 !dbg !27 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Lib1CallF.call = call i32 @_CLib1CallF.Main.4d6ceefeb7f772f4(i32 1, i32 2), !dbg !28
-// CHECK:STDOUT:   %Lib2CallF.call = call i32 @_CLib2CallF.Main.4d6ceefeb7f772f4(i32 1, i32 2), !dbg !33
+// CHECK:STDOUT:   %Lib1CallF.call = call i32 @_CLib1CallF.Main.2aef1d52a6e1f957(i32 1, i32 2), !dbg !28
+// CHECK:STDOUT:   %Lib2CallF.call = call i32 @_CLib2CallF.Main.2aef1d52a6e1f957(i32 1, i32 2), !dbg !33
 // CHECK:STDOUT:   ret i32 0, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b) #0 !dbg !37 {
-// CHECK:STDOUT:   %1 = call i32 @_CF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b), !dbg !46
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib1CallF.Main.2aef1d52a6e1f957(i32 %a, i32 %b) #0 !dbg !37 {
+// CHECK:STDOUT:   %1 = call i32 @_CF.Main.2aef1d52a6e1f957(i32 %a, i32 %b), !dbg !46
 // CHECK:STDOUT:   ret i32 %1, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CLib2CallF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b) #0 !dbg !49 {
-// CHECK:STDOUT:   %1 = call i32 @_CF.Main.4d6ceefeb7f772f4(i32 %a, i32 %b), !dbg !58
+// CHECK:STDOUT: define linkonce_odr i32 @_CLib2CallF.Main.2aef1d52a6e1f957(i32 %a, i32 %b) #0 !dbg !49 {
+// CHECK:STDOUT:   %1 = call i32 @_CF.Main.2aef1d52a6e1f957(i32 %a, i32 %b), !dbg !58
 // CHECK:STDOUT:   ret i32 %1, !dbg !59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.4d6ceefeb7f772f4(i32 %a, i32 %_) #0 !dbg !61 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.2aef1d52a6e1f957(i32 %a, i32 %_) #0 !dbg !61 {
 // CHECK:STDOUT:   ret i32 %a, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_CF.Main.4d6ceefeb7f772f4, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CF.Main.2aef1d52a6e1f957, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
@@ -127,19 +127,19 @@ fn Run() {
 // CHECK:STDOUT: !30 = !DISubroutineType(types: !29)
 // CHECK:STDOUT: !33 = !DILocation(line: 11, column: 16, scope: !27)
 // CHECK:STDOUT: !36 = !DILocation(line: 9, column: 1, scope: !27)
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "Lib1CallF", linkageName: "_CLib1CallF.Main.4d6ceefeb7f772f4", scope: null, file: !18, line: 8, type: !30, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !48)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "Lib1CallF", linkageName: "_CLib1CallF.Main.2aef1d52a6e1f957", scope: null, file: !18, line: 8, type: !30, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !48)
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !37, type: !24)
 // CHECK:STDOUT: !39 = !DILocalVariable(arg: 2, scope: !37, type: !24)
 // CHECK:STDOUT: !46 = !DILocation(line: 9, column: 10, scope: !37)
 // CHECK:STDOUT: !47 = !DILocation(line: 9, column: 3, scope: !37)
 // CHECK:STDOUT: !48 = !{!38, !39}
-// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "Lib2CallF", linkageName: "_CLib2CallF.Main.4d6ceefeb7f772f4", scope: null, file: !20, line: 11, type: !30, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !60)
+// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "Lib2CallF", linkageName: "_CLib2CallF.Main.2aef1d52a6e1f957", scope: null, file: !20, line: 11, type: !30, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !60)
 // CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !49, type: !24)
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 2, scope: !49, type: !24)
 // CHECK:STDOUT: !58 = !DILocation(line: 12, column: 10, scope: !49)
 // CHECK:STDOUT: !59 = !DILocation(line: 12, column: 3, scope: !49)
 // CHECK:STDOUT: !60 = !{!50, !51}
-// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.4d6ceefeb7f772f4", scope: null, file: !18, line: 4, type: !30, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !70)
+// CHECK:STDOUT: !61 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.2aef1d52a6e1f957", scope: null, file: !18, line: 4, type: !30, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !70)
 // CHECK:STDOUT: !62 = !DILocalVariable(arg: 1, scope: !61, type: !24)
 // CHECK:STDOUT: !63 = !DILocalVariable(arg: 2, scope: !61, type: !24)
 // CHECK:STDOUT: !69 = !DILocation(line: 5, column: 3, scope: !61)

@@ -1370,14 +1370,14 @@ impl C as Y {}
 // CHECK:STDOUT:   %pattern_type.6cb: type = pattern_type %I.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.6cb = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %I.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.type: type = parameterized_class_name_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
-// CHECK:STDOUT:   %C.fde: type = class_type @C, @C(%T) [symbolic]
+// CHECK:STDOUT:   %C.1de: type = class_type @C, @C(%T) [symbolic]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %D, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %C.c62: type = class_type @C, @C(%I.facet) [concrete]
-// CHECK:STDOUT:   %pattern_type.91a: type = pattern_type %C.c62 [concrete]
-// CHECK:STDOUT:   %x.param_patt: %pattern_type.91a = value_param_pattern [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.91a = wrapper_binding_pattern x, %x.param_patt [concrete]
+// CHECK:STDOUT:   %C.a8d: type = class_type @C, @C(%I.facet) [concrete]
+// CHECK:STDOUT:   %pattern_type.39f: type = pattern_type %C.a8d [concrete]
+// CHECK:STDOUT:   %x.param_patt: %pattern_type.39f = value_param_pattern [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.39f = wrapper_binding_pattern x, %x.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic]
@@ -1416,18 +1416,18 @@ impl C as Y {}
 // CHECK:STDOUT:     %T.loc6_10.2: %I.type = symbolic_binding T, 0 [symbolic = %T.loc6_10.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc8: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.91a = value_param_pattern [concrete = constants.%x.param_patt]
-// CHECK:STDOUT:     %x.patt: %pattern_type.91a = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.39f = value_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.39f = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param.loc8: %C.c62 = value_param call_param0
-// CHECK:STDOUT:     %.loc8_12.1: type = splice_block %C.loc8 [concrete = constants.%C.c62] {
+// CHECK:STDOUT:     %x.param.loc8: %C.a8d = value_param call_param0
+// CHECK:STDOUT:     %.loc8_12.1: type = splice_block %C.loc8 [concrete = constants.%C.a8d] {
 // CHECK:STDOUT:       %C.ref.loc8: %C.type = name_ref C, file.%C.decl.loc6 [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %D.ref.loc8: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:       %I.facet.loc8: %I.type = facet_value %D.ref.loc8, (constants.%I.impl_witness) [concrete = constants.%I.facet]
 // CHECK:STDOUT:       %.loc8_12.2: %I.type = converted %D.ref.loc8, %I.facet.loc8 [concrete = constants.%I.facet]
-// CHECK:STDOUT:       %C.loc8: type = class_type @C, @C(constants.%I.facet) [concrete = constants.%C.c62]
+// CHECK:STDOUT:       %C.loc8: type = class_type @C, @C(constants.%I.facet) [concrete = constants.%C.a8d]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x.loc8: %C.c62 = wrapper_binding x, %x.param.loc8
+// CHECK:STDOUT:     %x.loc8: %C.a8d = wrapper_binding x, %x.param.loc8
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %I.decl.loc10: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @D.as.I.impl [concrete] {} {
@@ -1445,18 +1445,18 @@ impl C as Y {}
 // CHECK:STDOUT:     %T.loc12: %I.type = symbolic_binding T, 0 [symbolic = %T.loc6_10.1 (constants.%T)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc14: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %x.param_patt: %pattern_type.91a = value_param_pattern [concrete = constants.%x.param_patt]
-// CHECK:STDOUT:     %x.patt: %pattern_type.91a = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.param_patt: %pattern_type.39f = value_param_pattern [concrete = constants.%x.param_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.39f = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.param.loc14: %C.c62 = value_param call_param0
-// CHECK:STDOUT:     %.loc14_19.1: type = splice_block %C.loc14 [concrete = constants.%C.c62] {
+// CHECK:STDOUT:     %x.param.loc14: %C.a8d = value_param call_param0
+// CHECK:STDOUT:     %.loc14_19.1: type = splice_block %C.loc14 [concrete = constants.%C.a8d] {
 // CHECK:STDOUT:       %C.ref.loc14: %C.type = name_ref C, file.%C.decl.loc6 [concrete = constants.%C.generic]
 // CHECK:STDOUT:       %D.ref.loc14: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:       %I.facet.loc14: %I.type = facet_value %D.ref.loc14, (constants.%I.impl_witness) [concrete = constants.%I.facet]
 // CHECK:STDOUT:       %.loc14_19.2: %I.type = converted %D.ref.loc14, %I.facet.loc14 [concrete = constants.%I.facet]
-// CHECK:STDOUT:       %C.loc14: type = class_type @C, @C(constants.%I.facet) [concrete = constants.%C.c62]
+// CHECK:STDOUT:       %C.loc14: type = class_type @C, @C(constants.%I.facet) [concrete = constants.%C.a8d]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %x.loc14: %C.c62 = wrapper_binding x, %x.param.loc14
+// CHECK:STDOUT:     %x.loc14: %C.a8d = wrapper_binding x, %x.param.loc14
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1499,11 +1499,11 @@ impl C as Y {}
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.fde
+// CHECK:STDOUT:     .Self = constants.%C.1de
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F(%x.param.loc14: %C.c62) {
+// CHECK:STDOUT: fn @F(%x.param.loc14: %C.a8d) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
