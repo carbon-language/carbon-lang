@@ -7,14 +7,21 @@
 #include <filesystem>
 #include <string>
 
+#include "clang/Basic/DiagnosticDriver.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Driver/CreateInvocationFromArgs.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/Utils.h"
 #include "common/string_helpers.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/TargetParser/SubtargetFeature.h"
+#include "llvm/TargetParser/Triple.h"
 
 namespace Carbon {
 
@@ -50,21 +57,18 @@ auto ClangDriverDiagnosticConsumer::HandleDiagnostic(
   }
 }
 
-auto BuildClangInvocation(Diagnostics::Consumer& consumer,
-                          llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
-                          const InstallPaths& install_paths,
-                          llvm::StringRef target_str,
-                          llvm::ArrayRef<llvm::StringRef> extra_args)
+static auto BuildClangInvocationImpl(
+    clang::DiagnosticConsumer& diagnostics_consumer, bool allow_extra_inputs,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+    const InstallPaths& install_paths, llvm::StringRef target_str,
+    llvm::ArrayRef<llvm::StringRef> extra_args)
     -> std::unique_ptr<clang::CompilerInvocation> {
-  Diagnostics::ErrorTrackingConsumer error_tracker(consumer);
-  Diagnostics::NoLocEmitter emitter(&error_tracker);
-
-  ClangDriverDiagnosticConsumer diagnostics_consumer(&emitter);
-
   llvm::SmallVector<std::string> args;
   args.push_back("--start-no-unused-arguments");
   AppendDefaultClangArgs(install_paths, target_str, args);
-  args.push_back("--end-no-unused-arguments");
+  if (!allow_extra_inputs) {
+    args.push_back("--end-no-unused-arguments");
+  }
   args.append({
       llvm::formatv("--target={0}", target_str).str(),
 
@@ -74,6 +78,36 @@ auto BuildClangInvocation(Diagnostics::Consumer& consumer,
       "c++",
       IncludesFileName,
   });
+
+  llvm::SmallVector<llvm::StringRef> filtered_extra_args;
+  if (allow_extra_inputs) {
+    // Reset `-x none` so any trailing inputs in `extra_args` are classified by
+    // their own file extensions.
+    args.append({"-x", "none"});
+    // Strip driver flags that conflict with the synthetic C++ syntax-only
+    // invocation used to extract target options from full compile/link command
+    // lines.
+    filtered_extra_args.reserve(extra_args.size());
+    for (size_t i = 0; i < extra_args.size(); ++i) {
+      llvm::StringRef arg = extra_args[i];
+      if (arg == "--") {
+        filtered_extra_args.append(extra_args.begin() + i, extra_args.end());
+        break;
+      }
+      if (arg == "-###" || arg.starts_with("-std=") || arg == "-ansi") {
+        continue;
+      }
+      if (arg == "-o") {
+        ++i;
+        continue;
+      }
+      if (arg.starts_with("-o")) {
+        continue;
+      }
+      filtered_extra_args.push_back(arg);
+    }
+    extra_args = filtered_extra_args;
+  }
 
   // The clang driver inconveniently wants an array of `const char*`, so convert
   // the arguments.
@@ -88,28 +122,93 @@ auto BuildClangInvocation(Diagnostics::Consumer& consumer,
       clang::CompilerInstance::createDiagnostics(*fs, driver_diag_opts,
                                                  &diagnostics_consumer,
                                                  /*ShouldOwnClient=*/false));
+  if (allow_extra_inputs) {
+    driver_diags->setIgnoreAllWarnings(true);
+  }
 
   // Ask the driver to process the arguments and build a corresponding clang
   // frontend invocation.
-  auto invocation =
-      clang::createInvocation(cstr_args, {.Diags = driver_diags, .VFS = fs});
+  auto invocation = clang::createInvocation(
+      cstr_args,
+      {.Diags = driver_diags, .VFS = fs, .RecoverOnError = allow_extra_inputs});
 
   // If Clang produced an error, throw away its invocation.
-  if (error_tracker.seen_error()) {
+  if (!invocation || driver_diags->hasErrorOccurred()) {
     return nullptr;
   }
 
-  if (invocation) {
-    // Track submodule visibility in the preprocessor and Sema.
-    invocation->getLangOpts().Modules = true;
-    invocation->getLangOpts().ModulesLocalVisibility = true;
+  // Validate the target options (such as `-march` / `-mcpu`) and compute the
+  // canonicalized target feature list in `invocation->getTargetOpts()`.
+  llvm::IntrusiveRefCntPtr<clang::TargetInfo> target_info(
+      clang::TargetInfo::CreateTargetInfo(*driver_diags,
+                                          invocation->getTargetOpts()));
 
-    // Do not emit Clang's name and version as the creator of the output file.
-    invocation->getCodeGenOpts().EmitVersionIdentMetadata = false;
-    invocation->getCodeGenOpts().DiscardValueNames = false;
+  // `TargetInfo::CreateTargetInfo` expands Clang-level feature aliases into
+  // `TargetOptions::Features`, but passes unknown `+feature`/`-feature`
+  // entries through to the backend where `MCSubtargetInfo` only prints a raw
+  // stderr warning. Validate that every canonicalized backend feature is
+  // recognized by the target's `MCSubtargetInfo` when the target is registered.
+  std::string target_error;
+  llvm::Triple triple(invocation->getTargetOpts().Triple);
+  if (const llvm::Target* target =
+          llvm::TargetRegistry::lookupTarget(triple, target_error)) {
+    std::unique_ptr<llvm::MCSubtargetInfo> subtarget_info(
+        target->createMCSubtargetInfo(triple, /*CPU=*/"", /*Features=*/""));
+    if (subtarget_info) {
+      llvm::ArrayRef<llvm::SubtargetFeatureKV> valid_features =
+          subtarget_info->getAllProcessorFeatures();
+      const auto& features =
+          target_info ? invocation->getTargetOpts().Features
+                      : invocation->getTargetOpts().FeaturesAsWritten;
+      for (llvm::StringRef feature : features) {
+        llvm::StringRef name = llvm::SubtargetFeatures::StripFlag(feature);
+        auto it = llvm::lower_bound(valid_features, name);
+        if (it == valid_features.end() || llvm::StringRef(it->key()) != name) {
+          driver_diags->Report(clang::diag::err_drv_unsupported_option_argument)
+              << "-target-feature" << feature;
+        }
+      }
+    }
   }
 
+  if (!target_info || driver_diags->hasErrorOccurred()) {
+    return nullptr;
+  }
+
+  // Track submodule visibility in the preprocessor and Sema.
+  invocation->getLangOpts().Modules = true;
+  invocation->getLangOpts().ModulesLocalVisibility = true;
+
+  // Do not emit Clang's name and version as the creator of the output file.
+  invocation->getCodeGenOpts().EmitVersionIdentMetadata = false;
+  invocation->getCodeGenOpts().DiscardValueNames = false;
+
   return invocation;
+}
+
+auto BuildClangInvocation(Diagnostics::Consumer& consumer,
+                          llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                          const InstallPaths& install_paths,
+                          llvm::StringRef target_str,
+                          llvm::ArrayRef<llvm::StringRef> extra_args,
+                          bool allow_extra_inputs)
+    -> std::unique_ptr<clang::CompilerInvocation> {
+  Diagnostics::NoLocEmitter emitter(&consumer);
+  ClangDriverDiagnosticConsumer diagnostics_consumer(&emitter);
+  return BuildClangInvocationImpl(diagnostics_consumer, allow_extra_inputs,
+                                  std::move(fs), install_paths, target_str,
+                                  extra_args);
+}
+
+auto BuildClangInvocation(llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> fs,
+                          const InstallPaths& install_paths,
+                          llvm::StringRef target_str,
+                          llvm::ArrayRef<llvm::StringRef> extra_args)
+    -> std::unique_ptr<clang::CompilerInvocation> {
+  clang::IgnoringDiagConsumer diagnostics_consumer;
+  return BuildClangInvocationImpl(diagnostics_consumer,
+                                  /*allow_extra_inputs=*/true, std::move(fs),
+                                  install_paths, target_str, extra_args);
 }
 
 auto AppendDefaultClangArgs(const InstallPaths& install_paths,

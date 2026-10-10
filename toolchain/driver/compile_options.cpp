@@ -497,13 +497,18 @@ auto CompileOptions::BuildClangInvocation(DriverEnv& driver_env)
     -> ErrorOr<std::shared_ptr<clang::CompilerInvocation>> {
   // TODO: Move this into `BuildClangInvocation` when it can accept an
   // optimization level.
-  llvm::SmallVector<llvm::StringRef> all_clang_args = {
-      // Propagate our optimization level to Clang as a default. This can be
-      // overridden by Clang arguments, but doing so will only have an effect
-      // if those arguments affect Clang's IR, not its pass pipeline.
-      CompileOptions::GetClangOptimizationFlag(opt_level),
-  };
-  all_clang_args.append(clang_args);
+  llvm::SmallVector<std::string> codegen_clang_args =
+      codegen_options->GetClangArgs();
+  llvm::SmallVector<llvm::StringRef> all_clang_args;
+  all_clang_args.reserve(1 + clang_args.size() + codegen_clang_args.size());
+  // Propagate our optimization level to Clang as a default. This can be
+  // overridden by Clang arguments, but doing so will only have an effect
+  // if those arguments affect Clang's IR, not its pass pipeline.
+  all_clang_args.push_back(CompileOptions::GetClangOptimizationFlag(opt_level));
+  all_clang_args.append(clang_args.begin(), clang_args.end());
+  for (llvm::StringRef arg : codegen_clang_args) {
+    all_clang_args.push_back(arg);
+  }
   auto clang_invocation = Carbon::BuildClangInvocation(
       *driver_env.consumer, driver_env.fs, *driver_env.installation,
       codegen_options->target, all_clang_args);

@@ -75,14 +75,22 @@ struct ConfigDataEntry {
 // If there are any errors setting up Clang, this will diagnose them using
 // `driver_env.consumer` and return `false`. If successful, returns `true`.
 static auto ComputeClangConfig(DriverEnv& driver_env,
-                               llvm::StringRef target_str,
+                               const CodegenOptions& codegen_options,
                                llvm::SmallVectorImpl<ConfigDataEntry>& data)
     -> bool {
+  llvm::SmallVector<std::string> codegen_clang_args =
+      codegen_options.GetClangArgs();
+  llvm::SmallVector<llvm::StringRef> extra_args(codegen_clang_args.begin(),
+                                                codegen_clang_args.end());
+
   // Build a library invocation of Clang in order to query its header search
   // paths.
-  std::shared_ptr clang_invocation =
-      BuildClangInvocation(*driver_env.consumer, driver_env.fs,
-                           *driver_env.installation, target_str, {});
+  std::shared_ptr clang_invocation = BuildClangInvocation(
+      *driver_env.consumer, driver_env.fs, *driver_env.installation,
+      codegen_options.target, extra_args);
+  if (!clang_invocation) {
+    return false;
+  }
   clang_invocation->getFrontendOpts().DisableFree = false;
 
   // Setup up a driver-style diagnostic engine for the compiler invocation and
@@ -106,7 +114,8 @@ static auto ComputeClangConfig(DriverEnv& driver_env,
     CARBON_DIAGNOSTIC(ConfigFailedToSetupTarget, Error,
                       "unable to setup the requested target `{0}`",
                       std::string);
-    driver_env.emitter.Emit(ConfigFailedToSetupTarget, target_str.str());
+    driver_env.emitter.Emit(ConfigFailedToSetupTarget,
+                            codegen_options.target.str());
     return false;
   }
 
@@ -215,8 +224,7 @@ auto ConfigSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
 
   // Compute and print Clang's config entries if we can. This will have been
   // diagnosed while computing, so just track if we hit errors.
-  result &=
-      ComputeClangConfig(driver_env, options_.codegen_options.target, data);
+  result &= ComputeClangConfig(driver_env, options_.codegen_options, data);
 
   llvm::sort(data, [](const ConfigDataEntry& lhs, const ConfigDataEntry& rhs) {
     return lhs.key < rhs.key;
