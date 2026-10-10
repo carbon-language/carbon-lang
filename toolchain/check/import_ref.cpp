@@ -180,6 +180,9 @@ class ImportContext {
   auto import_constant_values() -> const SemIR::ConstantValueStore& {
     return import_ir().constant_values();
   }
+  auto import_custom_layouts() -> const SemIR::CustomLayoutStore& {
+    return import_ir().custom_layouts();
+  }
   auto import_entity_names() -> const SemIR::EntityNameStore& {
     return import_ir().entity_names();
   }
@@ -267,6 +270,9 @@ class ImportContext {
   auto local_vtables() -> SemIR::VtableStore& { return local_ir().vtables(); }
   auto local_constant_values() -> SemIR::ConstantValueStore& {
     return local_ir().constant_values();
+  }
+  auto local_custom_layouts() -> SemIR::CustomLayoutStore& {
+    return local_ir().custom_layouts();
   }
   auto local_entity_names() -> SemIR::EntityNameStore& {
     return local_ir().entity_names();
@@ -2328,6 +2334,41 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::CppOverloadSetValue inst)
     -> ResolveResult {
   return HandleUnsupportedCppOverloadSet(resolver, inst.overload_set_id);
+}
+
+static auto TryResolveTypedInst(ImportRefResolver& resolver,
+                                SemIR::CustomLayoutType inst) -> ResolveResult {
+  CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
+  auto orig_fields = resolver.import_struct_type_fields().Get(inst.fields_id);
+  llvm::SmallVector<SemIR::TypeInstId> field_type_inst_ids;
+  field_type_inst_ids.reserve(orig_fields.size());
+  for (auto field : orig_fields) {
+    field_type_inst_ids.push_back(
+        GetLocalTypeInstId(resolver, field.type_inst_id));
+  }
+  if (resolver.HasNewWork()) {
+    return ResolveResult::Retry();
+  }
+
+  // Prepare a vector of fields for CustomLayoutType.
+  llvm::SmallVector<SemIR::StructTypeField> new_fields;
+  new_fields.reserve(orig_fields.size());
+  for (auto [orig_field, field_type_inst_id] :
+       llvm::zip_equal(orig_fields, field_type_inst_ids)) {
+    auto name_id = GetLocalNameId(resolver, orig_field.name_id);
+    new_fields.push_back(
+        {.name_id = name_id, .type_inst_id = field_type_inst_id});
+  }
+
+  auto orig_layout = resolver.import_custom_layouts().Get(inst.layout_id);
+  auto new_layout_id =
+      resolver.local_custom_layouts().AddCanonical(orig_layout);
+
+  return ResolveResult::Deduplicated<SemIR::CustomLayoutType>(
+      resolver, {.type_id = SemIR::TypeType::TypeId,
+                 .fields_id = resolver.local_struct_type_fields().AddCanonical(
+                     new_fields),
+                 .layout_id = new_layout_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -4675,6 +4716,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::CppOverloadSetValue inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::CustomLayoutType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::CustomWitness inst): {
