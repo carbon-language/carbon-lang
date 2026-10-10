@@ -628,7 +628,7 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::Default:
       return BuildDefaultWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface);
-    case SemIR::CoreInterface::Destroy:
+    case SemIR::CoreInterface::DestroyImpl:
       return BuildCppDestroyWitness(context, loc_id, query_self_const_id,
                                     query_specific_interface);
     case SemIR::CoreInterface::SubobjectDestroy:

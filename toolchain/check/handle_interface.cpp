@@ -345,7 +345,7 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId node_id)
 
   if (context.sem_ir().package_id() == PackageNameId::Core) {
     switch (interface_info.core_interface) {
-      case SemIR::CoreInterface::Destroy:
+      case SemIR::CoreInterface::DestroyImpl:
         return ValidateCoreDestroy(context, node_id,
                                    interface_info.associated_entities_id);
       case SemIR::CoreInterface::SubobjectDestroy:

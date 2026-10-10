@@ -17,10 +17,10 @@
 package Core library "too_few_assoc_functions_declared";
 
 // CHECK:STDERR: fail_too_few_assoc_functions_declared.carbon:[[@LINE+4]]:1: error: semantics TODO: `interface `Core.Destroy` needs exactly 1 associated function` [SemanticsTodo]
-// CHECK:STDERR: interface Destroy {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: interface DestroyImpl {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-interface Destroy {
+interface DestroyImpl {
 }
 
 // --- fail_too_many_assoc_functions_declared.carbon
@@ -28,19 +28,19 @@ interface Destroy {
 package Core library "too_many_assoc_functions_declared";
 
 // CHECK:STDERR: fail_too_many_assoc_functions_declared.carbon:[[@LINE+4]]:1: error: semantics TODO: `interface `Core.Destroy` needs exactly 1 associated function` [SemanticsTodo]
-// CHECK:STDERR: interface Destroy {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: interface DestroyImpl {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
-interface Destroy {
+interface DestroyImpl {
   fn Op(ref self);
-  fn Extra(ref self) {}
+  fn Extra(unused ref self) {}
 }
 
 // --- fail_op_associated_type.carbon
 
 package Core library "op_associated_type";
 
-interface Destroy {
+interface DestroyImpl {
   // CHECK:STDERR: fail_op_associated_type.carbon:[[@LINE+4]]:7: error: semantics TODO: `associated entity must be a method` [SemanticsTodo]
   // CHECK:STDERR:   let Op: type;
   // CHECK:STDERR:       ^~~~~~~~
@@ -52,7 +52,7 @@ interface Destroy {
 
 package Core library "op_wrong_name";
 
-interface Destroy {
+interface DestroyImpl {
   // CHECK:STDERR: fail_op_wrong_name.carbon:[[@LINE+4]]:3: error: semantics TODO: `associated function #1 must be named `Op`` [SemanticsTodo]
   // CHECK:STDERR:   final fn SubobjectDestroy(ref self) {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -64,7 +64,7 @@ interface Destroy {
 
 package Core library "op_no_params";
 
-interface Destroy {
+interface DestroyImpl {
   // CHECK:STDERR: fail_op_no_params.carbon:[[@LINE+4]]:3: error: semantics TODO: `associated function must have exactly 1 parameter` [SemanticsTodo]
   // CHECK:STDERR:   fn Op();
   // CHECK:STDERR:   ^~~~~~~~
@@ -76,7 +76,7 @@ interface Destroy {
 
 package Core library "op_two_params";
 
-interface Destroy {
+interface DestroyImpl {
   // CHECK:STDERR: fail_op_two_params.carbon:[[@LINE+4]]:3: error: semantics TODO: `associated function must have exactly 1 parameter` [SemanticsTodo]
   // CHECK:STDERR:   fn Op(ref self, x: Self);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
@@ -90,7 +90,7 @@ package Core library "op_param_not_self";
 
 class C {}
 
-interface Destroy {
+interface DestroyImpl {
   // CHECK:STDERR: fail_op_param_not_self.carbon:[[@LINE+4]]:3: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
   // CHECK:STDERR:   fn Op(c: C);
   // CHECK:STDERR:   ^~~~~~~~~~~~
@@ -102,7 +102,7 @@ interface Destroy {
 
 package Core library "op_param_is_generic";
 
-interface Destroy {
+interface DestroyImpl {
   // CHECK:STDERR: fail_op_param_is_generic.carbon:[[@LINE+4]]:3: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
   // CHECK:STDERR:   fn Op[T: type](ref c: T);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
@@ -114,7 +114,7 @@ interface Destroy {
 
 package Core library "op_self_param_not_reference";
 
-interface Destroy {
+interface DestroyImpl {
   // CHECK:STDERR: fail_op_self_param_not_reference.carbon:[[@LINE+4]]:3: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
   // CHECK:STDERR:   fn Op(self);
   // CHECK:STDERR:   ^~~~~~~~~~~~
@@ -126,7 +126,7 @@ interface Destroy {
 
 package Core library "op_explicit_self_type";
 
-interface Destroy {
+interface DestroyImpl {
   // CHECK:STDERR: fail_op_explicit_self_type.carbon:[[@LINE+4]]:3: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
   // CHECK:STDERR:   fn Op(ref s: Self);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
@@ -138,7 +138,7 @@ interface Destroy {
 
 package Core library "op_final";
 
-interface Destroy {
+interface DestroyImpl {
   // CHECK:STDERR: fail_op_final.carbon:[[@LINE+4]]:3: error: semantics TODO: `associated function must not have an interface modifier` [SemanticsTodo]
   // CHECK:STDERR:   final fn Op(unused ref self) {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -150,7 +150,7 @@ interface Destroy {
 
 package Core library "op_default";
 
-interface Destroy {
+interface DestroyImpl {
   // CHECK:STDERR: fail_op_default.carbon:[[@LINE+4]]:3: error: semantics TODO: `associated function must not have an interface modifier` [SemanticsTodo]
   // CHECK:STDERR:   default fn Op(unused ref self) {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

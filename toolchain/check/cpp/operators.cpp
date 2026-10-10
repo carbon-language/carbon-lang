@@ -40,7 +40,7 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     -> std::optional<clang::OverloadedOperatorKind> {
   switch (interface_name) {
       // Unary operators.
-    case CoreIdentifier::Destroy:
+    case CoreIdentifier::DestroyImpl:
     case CoreIdentifier::SubobjectDestroy:
     case CoreIdentifier::SelfDestruct:
     case CoreIdentifier::As:

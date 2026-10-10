@@ -14,7 +14,8 @@ interface SubobjectDestroy {
   fn Op(ref self);
 }
 
-interface Destroy {
+// TODO: rename to `Destroy` when `require impls` adds a witness table entry.
+interface DestroyImpl {
   // TODO: uncomment when `require impls` adds a witness table entry.
   // require impls SubobjectDestroy;
 
@@ -22,12 +23,14 @@ interface Destroy {
   fn Op(ref self);
 }
 
+alias Destroy = SubobjectDestroy & DestroyImpl;
+
 // TODO: uncomment when `require impls` adds a witness table entry.
 // impl forall [T: SubobjectDestroy] partial T as Destroy {
 //   alias Op = T.Op;
 // }
 
-fn SelfDestruct[T: SubobjectDestroy & Destroy](ref t: T) {
-    t.(Destroy.Op)();
+fn SelfDestruct[T: Destroy](ref t: T) {
+    t.(DestroyImpl.Op)();
     t.(SubobjectDestroy.Op)();
 }

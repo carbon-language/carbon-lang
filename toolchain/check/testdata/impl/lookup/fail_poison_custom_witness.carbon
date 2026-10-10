@@ -18,7 +18,8 @@ interface SubobjectDestroy {
   fn Op(ref self);
 }
 
-interface Destroy {
+// TODO: rename to `Destroy` when `require impls` adds a witness table entry.
+interface DestroyImpl {
   // TODO: uncomment when `require impls` adds a witness table entry.
   // require impls SubobjectDestroy;
 
@@ -26,27 +27,17 @@ interface Destroy {
   fn Op(ref self);
 }
 
+
 // TODO: uncomment when `require impls` adds a witness table entry.
 // impl forall [T: SubobjectDestroy] partial T as Destroy {
 //   alias Op = T.Op;
 // }
 
-impl forall [T: type] T as Destroy {
+impl forall [T: type] T as DestroyImpl {
   fn Op(unused ref self) {}
 }
 
-// TODO: move `SelfDestruct.Op` to `Destroy.SelfDestruct`
-// when `require impls` adds a witness table entry.
-interface SelfDestruct {
-  fn Op(ref self);
-}
-
-impl forall [T: SubobjectDestroy & Destroy] T as SelfDestruct {
-  fn Op(ref self) {
-    self.(Destroy.Op)();
-    self.(SubobjectDestroy.Op)();
-  }
-}
+fn SelfDestruct[T: DestroyImpl](unused ref t: T) {}
 
 // --- fail_poison_custom_witness.carbon
 
@@ -62,13 +53,13 @@ struct A {
 };
 ''';
 
-// CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE+8]]:1: error: found `impl` for Cpp.A as Destroy, which has a custom witness [PoisonedImplLookupCustomResult]
+// CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE+8]]:1: error: found `impl` for Cpp.A as DestroyImpl, which has a custom witness [PoisonedImplLookupCustomResult]
 // CHECK:STDERR: class B {
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE-14]]:1: in import [InImport]
-// CHECK:STDERR: destroy.carbon:35:1: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
-// CHECK:STDERR: impl forall [T: type] T as Destroy {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: destroy.carbon:23:1: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
+// CHECK:STDERR: impl forall [T: type] T as DestroyImpl {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 class B {
   extend base: Cpp.A;
