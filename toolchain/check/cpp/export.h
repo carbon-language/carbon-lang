@@ -41,14 +41,14 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
 auto ExportAndCompleteClassToCpp(Context& context, SemIR::ClassType class_type)
     -> clang::TagDecl*;
 
-// Exports a generic Carbon class into C++ as a templated class.
+// Exports a parameterized Carbon class into C++ as a templated class.
 //
-// If the generic class has already been exported, returns the existing
+// If the parameterized class has already been exported, returns the existing
 // C++ class template.  Otherwise, creates a new C++ class template and
 // returns it. Returns nullptr if the class could not be exported and an
 // error was diagnosed.
-auto ExportGenericClassToCpp(Context& context,
-                             SemIR::GenericClassType generic_class_type)
+auto ExportParameterizedClassToCpp(
+    Context& context, SemIR::ParameterizedClassType param_class_type)
     -> clang::ClassTemplateDecl*;
 
 // Creates a C++ class template specialization for a generic Carbon

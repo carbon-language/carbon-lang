@@ -214,19 +214,19 @@ extern alias C = Class;
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %A.type: type = generic_class_type @A [concrete]
+// CHECK:STDOUT:   %A.type: type = parameterized_class_name_type @A [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %A.940: type = class_type @A, @A(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %A.d44: type = class_type @A, @A(%empty_struct_type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, %A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:   %.loc7_14: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc7_15: type = converted %.loc7_14, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %A: type = class_type @A, @A(constants.%empty_struct_type) [concrete = constants.%A.940]
-// CHECK:STDOUT:   %a: type = alias_binding a, %A [concrete = constants.%A.940]
+// CHECK:STDOUT:   %A: type = class_type @A, @A(constants.%empty_struct_type) [concrete = constants.%A.d44]
+// CHECK:STDOUT:   %a: type = alias_binding a, %A [concrete = constants.%A.d44]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

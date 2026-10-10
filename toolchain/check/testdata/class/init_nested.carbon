@@ -34,12 +34,12 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Inner: type = class_type @Inner [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Inner.elem: type = unbound_element_type %Inner, %i32 [concrete]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete]
-// CHECK:STDOUT:   %complete_type.7b9: <witness> = complete_type_witness %struct_type.a.b [concrete]
+// CHECK:STDOUT:   %complete_type.7eb: <witness> = complete_type_witness %struct_type.a.b [concrete]
 // CHECK:STDOUT:   %.ffb: Core.Form = init_form %Inner [concrete]
 // CHECK:STDOUT:   %pattern_type.dfc: type = pattern_type %Inner [concrete]
 // CHECK:STDOUT:   %return.param_patt.4dd: %pattern_type.dfc = out_param_pattern [concrete]
@@ -105,7 +105,7 @@ fn MakeOuter() -> Outer {
 // CHECK:STDOUT:   %field_decl.loc17: %Inner.elem = field_decl b, element1, %i32.loc17 in [concrete] {
 // CHECK:STDOUT:     %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.7b9]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.a.b [concrete = constants.%complete_type.7eb]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:

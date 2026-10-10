@@ -1020,21 +1020,6 @@ struct FunctionTypeWithSelfType {
   InstId self_id;
 };
 
-// The type of the name of a generic class. The corresponding value is an empty
-// `StructValue`.
-struct GenericClassType {
-  // This is only ever created as a constant, so doesn't have a location.
-  static constexpr auto Kind =
-      InstKind::GenericClassType.Define<Parse::NoneNodeId>(
-          {.ir_name = "generic_class_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::WheneverPossible});
-
-  TypeId type_id;
-  ClassId class_id;
-  SpecificId enclosing_specific_id;
-};
-
 // The type of the name of a generic interface. The corresponding value is an
 // empty `StructValue`.
 struct GenericInterfaceType {
@@ -1604,6 +1589,21 @@ struct OutParamPattern {
 
   TypeId type_id;
   NameId pretty_name_id;
+};
+
+// The type of the name of a parameterized class. The corresponding value is an
+// empty `StructValue`.
+struct ParameterizedClassType {
+  // This is only ever created as a constant, so doesn't have a location.
+  static constexpr auto Kind =
+      InstKind::ParameterizedClassType.Define<Parse::NoneNodeId>(
+          {.ir_name = "parameterized_class_name_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  ClassId class_id;
+  SpecificId enclosing_specific_id;
 };
 
 // Indicates `partial` on a type, such as `partial MyClass`.

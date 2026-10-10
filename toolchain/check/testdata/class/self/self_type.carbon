@@ -35,13 +35,13 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:   %self.param_patt.c01: %pattern_type.f15 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.1f6: %pattern_type.f15 = wrapper_binding_pattern self, %self.param_patt.c01 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.795: Core.Form = init_form %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %return.param_patt.a9a: %pattern_type.6b6 = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt.a9a, %i32 [concrete]
+// CHECK:STDOUT:   %.4e1: Core.Form = init_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.df9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %return.param_patt.973: %pattern_type.df9 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.a21: %pattern_type.df9 = return_slot_pattern %return.param_patt.973, %i32 [concrete]
 // CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F [concrete]
 // CHECK:STDOUT:   %Class.F: %Class.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.d76: Core.Form = init_form %Class [concrete]
@@ -103,11 +103,11 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f15 = value_param_pattern [concrete = constants.%self.param_patt.c01]
 // CHECK:STDOUT:     %self.patt: %pattern_type.f15 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.1f6]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc25 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.df9 = out_param_pattern [concrete = constants.%return.param_patt.973]
+// CHECK:STDOUT:     %return.patt: %pattern_type.df9 = return_slot_pattern %return.param_patt, %i32.loc25 [concrete = constants.%return.patt.a21]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc25: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc25: Core.Form = init_form %i32.loc25 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc25: Core.Form = init_form %i32.loc25 [concrete = constants.%.4e1]
 // CHECK:STDOUT:     %self.param.loc25: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc25: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %self.loc25: %Class = wrapper_binding self, %self.param.loc25
@@ -120,11 +120,11 @@ fn Class.F(self) -> i32 {
 // CHECK:STDOUT:   %Class.F.decl: %Class.F.type = fn_decl @Class.F [concrete = constants.%Class.F] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.f15 = value_param_pattern [concrete = constants.%self.param_patt.c01]
 // CHECK:STDOUT:     %self.patt: %pattern_type.f15 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.1f6]
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt.a9a]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32.loc25 [concrete = constants.%return.patt.e1b]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.df9 = out_param_pattern [concrete = constants.%return.param_patt.973]
+// CHECK:STDOUT:     %return.patt: %pattern_type.df9 = return_slot_pattern %return.param_patt, %i32.loc25 [concrete = constants.%return.patt.a21]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32.loc16 [concrete = constants.%.795]
+// CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32.loc16 [concrete = constants.%.4e1]
 // CHECK:STDOUT:     %self.param.loc16: %Class = value_param call_param0
 // CHECK:STDOUT:     %Self.ref.loc16: type = name_ref Self, constants.%Class [concrete = constants.%Class]
 // CHECK:STDOUT:     %self.loc16: %Class = wrapper_binding self, %self.param.loc16

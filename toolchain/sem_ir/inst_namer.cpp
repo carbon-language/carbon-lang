@@ -1174,7 +1174,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.overload_set_id, ".type");
       return;
     }
-    case CARBON_KIND(GenericClassType inst): {
+    case CARBON_KIND(ParameterizedClassType inst): {
       AddEntityNameAndMaybePush(inst.class_id, ".type");
       return;
     }
@@ -1439,7 +1439,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
           AddEntityNameAndMaybePush(class_ty.class_id, ".val");
           break;
         }
-        case CARBON_KIND(GenericClassType generic_class_ty): {
+        case CARBON_KIND(ParameterizedClassType generic_class_ty): {
           AddEntityNameAndMaybePush(generic_class_ty.class_id, ".generic");
           break;
         }

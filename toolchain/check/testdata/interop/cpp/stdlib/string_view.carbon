@@ -86,10 +86,10 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
-// CHECK:STDOUT:   %ptr.093: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %str.f81: %ptr.093 = string_literal "hello" [concrete]
+// CHECK:STDOUT:   %ptr.045: type = ptr_type %u8 [concrete]
+// CHECK:STDOUT:   %str.6c2: %ptr.045 = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete]
-// CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.f81, %int_5) [concrete]
+// CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.6c2, %int_5) [concrete]
 // CHECK:STDOUT:   %pattern_type.adf: type = pattern_type %str.3d4 [concrete]
 // CHECK:STDOUT:   %ptr.e6f: type = ptr_type %str.3d4 [concrete]
 // CHECK:STDOUT:   %Consume__carbon_thunk.type: type = fn_type @Consume__carbon_thunk [concrete]
@@ -142,7 +142,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Consume.ref: %Consume.cpp_overload_set.type = name_ref Consume, imports.%Consume.cpp_overload_set.value [concrete = constants.%Consume.cpp_overload_set.value]
-// CHECK:STDOUT:   %str: %ptr.093 = string_literal "hello" [concrete = constants.%str.f81]
+// CHECK:STDOUT:   %str: %ptr.045 = string_literal "hello" [concrete = constants.%str.6c2]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str, %int_5) [concrete = constants.%String.val]
 // CHECK:STDOUT:   %.loc8: ref %str.3d4 = value_as_ref %String.val

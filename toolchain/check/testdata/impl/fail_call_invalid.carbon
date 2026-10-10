@@ -45,26 +45,26 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %Simple.assoc_type: type = assoc_entity_type @Simple [concrete]
 // CHECK:STDOUT:   %assoc0: %Simple.assoc_type = assoc_entity element0, @Simple.WithSelf.%Simple.WithSelf.G.decl [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.e1f: <witness> = impl_self_witness %i32, @Simple [concrete]
+// CHECK:STDOUT:   %.a60: <witness> = impl_self_witness %i32, @Simple [concrete]
 // CHECK:STDOUT:   %Simple.impl_witness: <witness> = impl_witness @i32.as.Simple.impl.%Simple.impl_witness_table [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.type.321a2c.1: type = fn_type @i32.as.Simple.impl.G.loc24_25.1 [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.d407b2.1: %i32.as.Simple.impl.G.type.321a2c.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Simple.facet: %Simple.type = facet_value %i32, (%Simple.impl_witness) [concrete]
-// CHECK:STDOUT:   %Simple.WithSelf.G.type.b93: type = fn_type @Simple.WithSelf.G, @Simple.WithSelf(%Simple.facet) [concrete]
-// CHECK:STDOUT:   %Simple.WithSelf.G.551: %Simple.WithSelf.G.type.b93 = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %self.param_patt.049: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.aab: %pattern_type.6b6 = wrapper_binding_pattern self, %self.param_patt.049 [concrete]
+// CHECK:STDOUT:   %Simple.WithSelf.G.type.5d9: type = fn_type @Simple.WithSelf.G, @Simple.WithSelf(%Simple.facet) [concrete]
+// CHECK:STDOUT:   %Simple.WithSelf.G.f1a: %Simple.WithSelf.G.type.5d9 = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.df9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %self.param_patt.349: %pattern_type.df9 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.420: %pattern_type.df9 = wrapper_binding_pattern self, %self.param_patt.349 [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.type.321a2c.2: type = fn_type @i32.as.Simple.impl.G.loc24_25.2 [concrete]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.d407b2.2: %i32.as.Simple.impl.G.type.321a2c.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %n.param_patt: %pattern_type.6b6 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %n.patt: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt [concrete]
+// CHECK:STDOUT:   %n.param_patt: %pattern_type.df9 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.df9 = wrapper_binding_pattern n, %n.param_patt [concrete]
 // CHECK:STDOUT:   %InstanceCall.type: type = fn_type @InstanceCall [concrete]
 // CHECK:STDOUT:   %InstanceCall: %InstanceCall.type = struct_value () [concrete]
-// CHECK:STDOUT:   %.029: type = fn_type_with_self_type %Simple.WithSelf.G.type.b93, %Simple.facet [concrete]
+// CHECK:STDOUT:   %.f45: type = fn_type_with_self_type %Simple.WithSelf.G.type.5d9, %Simple.facet [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -89,10 +89,10 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19: <witness> = impl_self_witness @i32.as.Simple.impl.%i32, @Simple [concrete = constants.%.e1f]
+// CHECK:STDOUT:   %.loc19: <witness> = impl_self_witness @i32.as.Simple.impl.%i32, @Simple [concrete = constants.%.a60]
 // CHECK:STDOUT:   %InstanceCall.decl: %InstanceCall.type = fn_decl @InstanceCall [concrete = constants.%InstanceCall] {
-// CHECK:STDOUT:     %n.param_patt: %pattern_type.6b6 = value_param_pattern [concrete = constants.%n.param_patt]
-// CHECK:STDOUT:     %n.patt: %pattern_type.6b6 = wrapper_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %n.param_patt: %pattern_type.df9 = value_param_pattern [concrete = constants.%n.param_patt]
+// CHECK:STDOUT:     %n.patt: %pattern_type.df9 = wrapper_binding_pattern n, %n.param_patt [concrete = constants.%n.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %n.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
@@ -138,8 +138,8 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:     %self: <error> = wrapper_binding self, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.decl.loc24_25.2: %i32.as.Simple.impl.G.type.321a2c.2 = fn_decl @i32.as.Simple.impl.G.loc24_25.2 [concrete = constants.%i32.as.Simple.impl.G.d407b2.2] {
-// CHECK:STDOUT:     %.1: %pattern_type.6b6 = specific_constant constants.%self.param_patt.049, @Simple.WithSelf.G(constants.%Simple.facet) [concrete = constants.%self.param_patt.049]
-// CHECK:STDOUT:     %self.patt: %pattern_type.6b6 = wrapper_binding_pattern self, %.1 [concrete = constants.%self.patt.aab]
+// CHECK:STDOUT:     %.1: %pattern_type.df9 = specific_constant constants.%self.param_patt.349, @Simple.WithSelf.G(constants.%Simple.facet) [concrete = constants.%self.param_patt.349]
+// CHECK:STDOUT:     %self.patt: %pattern_type.df9 = wrapper_binding_pattern self, %.1 [concrete = constants.%self.patt.420]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: %i32 = value_param call_param0
 // CHECK:STDOUT:     %self: %i32 = wrapper_binding self, %self.param
@@ -179,7 +179,7 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n
 // CHECK:STDOUT:   %Simple.ref: type = name_ref Simple, file.%Simple.decl [concrete = constants.%Simple.type]
 // CHECK:STDOUT:   %G.ref.loc28_12: %Simple.assoc_type = name_ref G, @Simple.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.029 = impl_witness_access constants.%Simple.impl_witness, element0 [concrete = constants.%i32.as.Simple.impl.G.d407b2.2]
+// CHECK:STDOUT:   %impl.elem0: %.f45 = impl_witness_access constants.%Simple.impl_witness, element0 [concrete = constants.%i32.as.Simple.impl.G.d407b2.2]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %n.ref, %impl.elem0
 // CHECK:STDOUT:   %G.ref.loc28_16: %i32.as.Simple.impl.G.type.321a2c.1 = name_ref G, @i32.as.Simple.impl.%i32.as.Simple.impl.G.decl.loc24_25.1 [concrete = constants.%i32.as.Simple.impl.G.d407b2.1]
 // CHECK:STDOUT:   %i32.as.Simple.impl.G.bound: <bound method> = bound_method %n.ref, %G.ref.loc28_16
@@ -205,15 +205,15 @@ fn InstanceCall(n: i32) {
 // CHECK:STDOUT: specific @Simple.WithSelf(constants.%Simple.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Simple.facet
-// CHECK:STDOUT:   %Simple.WithSelf.G.type => constants.%Simple.WithSelf.G.type.b93
-// CHECK:STDOUT:   %Simple.WithSelf.G => constants.%Simple.WithSelf.G.551
+// CHECK:STDOUT:   %Simple.WithSelf.G.type => constants.%Simple.WithSelf.G.type.5d9
+// CHECK:STDOUT:   %Simple.WithSelf.G => constants.%Simple.WithSelf.G.f1a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.WithSelf.G(constants.%Simple.facet) {
 // CHECK:STDOUT:   %Self => constants.%Simple.facet
 // CHECK:STDOUT:   %Self.as_type.loc16_8.1 => constants.%i32
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.6b6
-// CHECK:STDOUT:   %self.param_patt.loc16_8.2 => constants.%self.param_patt.049
-// CHECK:STDOUT:   %self.patt.loc16_8.2 => constants.%self.patt.aab
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.df9
+// CHECK:STDOUT:   %self.param_patt.loc16_8.2 => constants.%self.param_patt.349
+// CHECK:STDOUT:   %self.patt.loc16_8.2 => constants.%self.patt.420
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -58,23 +58,23 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT:   %require_complete.e98: <witness> = require_complete_type %Empty_where.type.696 [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %Empty.type.39c: type = facet_type <@Empty, @Empty(%i32)> [concrete]
-// CHECK:STDOUT:   %.Self.frozen.869: %Empty.type.39c = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %Empty.assoc_type.22b: type = assoc_entity_type @Empty, @Empty(%i32) [concrete]
-// CHECK:STDOUT:   %assoc0.023: %Empty.assoc_type.22b = assoc_entity element0, @Empty.WithSelf.%A [concrete]
-// CHECK:STDOUT:   %.Self.frozen.as_type.941: type = facet_access_type %.Self.frozen.869 [symbolic_self]
-// CHECK:STDOUT:   %Empty.lookup_impl_witness.635: <witness> = lookup_impl_witness %.Self.frozen.869, @Empty, @Empty(%i32) [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0.31d: type = impl_witness_access %Empty.lookup_impl_witness.635, element0 [symbolic_self]
-// CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %.Self.98b: %Empty.type.39c = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %Empty.lookup_impl_witness.4f6: <witness> = lookup_impl_witness %.Self.98b, @Empty, @Empty(%i32) [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0.f25: type = impl_witness_access %Empty.lookup_impl_witness.4f6, element0 [symbolic_self]
-// CHECK:STDOUT:   %Empty_where.type.944: type = facet_type <@Empty, @Empty(%i32) where %impl.elem0.f25 = %ptr.d08> [concrete]
-// CHECK:STDOUT:   %pattern_type.12c: type = pattern_type %Empty_where.type.944 [concrete]
-// CHECK:STDOUT:   %U.param_patt.a6a: %pattern_type.12c = value_param_pattern [concrete]
-// CHECK:STDOUT:   %complete_type.c56: <witness> = complete_type_witness %Empty.type.39c [concrete]
-// CHECK:STDOUT:   %U.patt.a008b4.2: %pattern_type.12c = wrapper_binding_pattern U, %U.param_patt.a6a [concrete]
-// CHECK:STDOUT:   %complete_type.c21: <witness> = complete_type_witness %Empty_where.type.944 [concrete]
+// CHECK:STDOUT:   %Empty.type.2b9: type = facet_type <@Empty, @Empty(%i32)> [concrete]
+// CHECK:STDOUT:   %.Self.frozen.0d7: %Empty.type.2b9 = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %Empty.assoc_type.f19: type = assoc_entity_type @Empty, @Empty(%i32) [concrete]
+// CHECK:STDOUT:   %assoc0.25e: %Empty.assoc_type.f19 = assoc_entity element0, @Empty.WithSelf.%A [concrete]
+// CHECK:STDOUT:   %.Self.frozen.as_type.bde: type = facet_access_type %.Self.frozen.0d7 [symbolic_self]
+// CHECK:STDOUT:   %Empty.lookup_impl_witness.8c3: <witness> = lookup_impl_witness %.Self.frozen.0d7, @Empty, @Empty(%i32) [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0.efd: type = impl_witness_access %Empty.lookup_impl_witness.8c3, element0 [symbolic_self]
+// CHECK:STDOUT:   %ptr.49e: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %.Self.4e1: %Empty.type.2b9 = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %Empty.lookup_impl_witness.ff0: <witness> = lookup_impl_witness %.Self.4e1, @Empty, @Empty(%i32) [symbolic_self]
+// CHECK:STDOUT:   %impl.elem0.4fd: type = impl_witness_access %Empty.lookup_impl_witness.ff0, element0 [symbolic_self]
+// CHECK:STDOUT:   %Empty_where.type.26d: type = facet_type <@Empty, @Empty(%i32) where %impl.elem0.4fd = %ptr.49e> [concrete]
+// CHECK:STDOUT:   %pattern_type.723: type = pattern_type %Empty_where.type.26d [concrete]
+// CHECK:STDOUT:   %U.param_patt.cf1: %pattern_type.723 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %complete_type.6bd: <witness> = complete_type_witness %Empty.type.2b9 [concrete]
+// CHECK:STDOUT:   %U.patt.2035f6.2: %pattern_type.723 = wrapper_binding_pattern U, %U.param_patt.cf1 [concrete]
+// CHECK:STDOUT:   %complete_type.482: <witness> = complete_type_witness %Empty_where.type.26d [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -178,26 +178,26 @@ fn G(U: Empty(i32) where .A = i32*) {
 // CHECK:STDOUT: specific @H(constants.%i32, bool) {
 // CHECK:STDOUT:   %T.patt.loc21_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc21_15.1 => constants.%i32
-// CHECK:STDOUT:   %Empty.type.loc21_40.1 => constants.%Empty.type.39c
-// CHECK:STDOUT:   %.Self.frozen.loc21_42.1 => constants.%.Self.frozen.869
-// CHECK:STDOUT:   %require_complete.loc21_48 => constants.%complete_type.c56
-// CHECK:STDOUT:   %.Self.frozen.as_type => constants.%.Self.frozen.as_type.941
-// CHECK:STDOUT:   %Empty.assoc_type => constants.%Empty.assoc_type.22b
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.023
-// CHECK:STDOUT:   %Empty.lookup_impl_witness.loc21_48.1 => constants.%Empty.lookup_impl_witness.635
-// CHECK:STDOUT:   %impl.elem0.loc21_48.1 => constants.%impl.elem0.31d
-// CHECK:STDOUT:   %ptr.loc21_54.1 => constants.%ptr.d08
-// CHECK:STDOUT:   %.Self => constants.%.Self.98b
-// CHECK:STDOUT:   %Empty.lookup_impl_witness.loc21_48.2 => constants.%Empty.lookup_impl_witness.4f6
-// CHECK:STDOUT:   %impl.elem0.loc21_48.2 => constants.%impl.elem0.f25
-// CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.944
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.12c
-// CHECK:STDOUT:   %U.param_patt.loc21_31.2 => constants.%U.param_patt.a6a
-// CHECK:STDOUT:   %U.patt.loc21_31.2 => constants.%U.patt.a008b4.2
+// CHECK:STDOUT:   %Empty.type.loc21_40.1 => constants.%Empty.type.2b9
+// CHECK:STDOUT:   %.Self.frozen.loc21_42.1 => constants.%.Self.frozen.0d7
+// CHECK:STDOUT:   %require_complete.loc21_48 => constants.%complete_type.6bd
+// CHECK:STDOUT:   %.Self.frozen.as_type => constants.%.Self.frozen.as_type.bde
+// CHECK:STDOUT:   %Empty.assoc_type => constants.%Empty.assoc_type.f19
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.25e
+// CHECK:STDOUT:   %Empty.lookup_impl_witness.loc21_48.1 => constants.%Empty.lookup_impl_witness.8c3
+// CHECK:STDOUT:   %impl.elem0.loc21_48.1 => constants.%impl.elem0.efd
+// CHECK:STDOUT:   %ptr.loc21_54.1 => constants.%ptr.49e
+// CHECK:STDOUT:   %.Self => constants.%.Self.4e1
+// CHECK:STDOUT:   %Empty.lookup_impl_witness.loc21_48.2 => constants.%Empty.lookup_impl_witness.ff0
+// CHECK:STDOUT:   %impl.elem0.loc21_48.2 => constants.%impl.elem0.4fd
+// CHECK:STDOUT:   %Empty_where.type => constants.%Empty_where.type.26d
+// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.723
+// CHECK:STDOUT:   %U.param_patt.loc21_31.2 => constants.%U.param_patt.cf1
+// CHECK:STDOUT:   %U.patt.loc21_31.2 => constants.%U.patt.2035f6.2
 // CHECK:STDOUT:   %V.patt.loc21_73.2 => constants.%V.patt
 // CHECK:STDOUT:   %V.loc21_73.1 => bool
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc21_31 => constants.%complete_type.c21
+// CHECK:STDOUT:   %require_complete.loc21_31 => constants.%complete_type.482
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

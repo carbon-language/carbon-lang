@@ -382,9 +382,9 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
                             .is_desugared = SemIR::BoolValue::From(false)},
           SemIR::TypeInstId::None);
     }
-    case CARBON_KIND(SemIR::GenericClassType generic_class): {
-      return PerformCallToGenericClass(context, loc_id, generic_class.class_id,
-                                       generic_class.enclosing_specific_id,
+    case CARBON_KIND(SemIR::ParameterizedClassType param_class): {
+      return PerformCallToGenericClass(context, loc_id, param_class.class_id,
+                                       param_class.enclosing_specific_id,
                                        arg_ids);
     }
     case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
