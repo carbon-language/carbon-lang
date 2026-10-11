@@ -7,6 +7,19 @@
 
 namespace Carbon::Parse {
 
+// Returns true if `kind` is a token that can follow a variable binding name
+// when the `:` and type are erroneously omitted.
+static auto CanFollowOmittedTypeInVar(Lex::TokenKind kind) -> bool {
+  return kind.IsOneOf(
+             {Lex::TokenKind::Equal, Lex::TokenKind::EqualGreater,
+              Lex::TokenKind::Semi, Lex::TokenKind::Comma,
+              Lex::TokenKind::CloseParen, Lex::TokenKind::CloseCurlyBrace,
+              Lex::TokenKind::CloseSquareBracket, Lex::TokenKind::Identifier,
+              Lex::TokenKind::SelfTypeIdentifier, Lex::TokenKind::Auto,
+              Lex::TokenKind::Type, Lex::TokenKind::In, Lex::TokenKind::If}) ||
+         kind.is_sized_type_literal();
+}
+
 auto HandlePattern(Context& context) -> void {
   auto state = context.PopState();
   switch (context.PositionKind()) {
@@ -47,10 +60,21 @@ auto HandlePattern(Context& context) -> void {
           state.binding_context, state.ambient_precedence);
       break;
     default:
-      if ((context.PositionKind().is_word() &&
-           context.PositionKind(Lookahead::NextToken)
-               .is_binding_pattern_operator()) ||
-          state.in_field_shorthand_pattern) {
+      if (context.PositionKind().is_word()) {
+        auto next_kind = context.PositionKind(Lookahead::NextToken);
+        if (next_kind.is_binding_pattern_operator() ||
+            (state.in_var_pattern &&
+             context.PositionKind().IsOneOf(
+                 {Lex::TokenKind::Identifier, Lex::TokenKind::Underscore}) &&
+             CanFollowOmittedTypeInVar(next_kind))) {
+          context.PushStateForPattern(
+              StateKind::BindingPattern, state.in_var_pattern,
+              state.in_unused_pattern, state.in_field_shorthand_pattern,
+              state.binding_context, state.ambient_precedence);
+          break;
+        }
+      }
+      if (state.in_field_shorthand_pattern) {
         context.PushStateForPattern(
             StateKind::BindingPattern, state.in_var_pattern,
             state.in_unused_pattern, state.in_field_shorthand_pattern,

@@ -15,6 +15,10 @@ class C {
   // CHECK:STDERR:
   var;
 
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:11: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
+  // CHECK:STDERR:   var name;
+  // CHECK:STDERR:           ^
+  // CHECK:STDERR:
   var name;
 
   // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:7: error: expected pattern [ExpectedPattern]
@@ -35,7 +39,7 @@ class C {
   // CHECK:STDERR:
   var name:;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
   // CHECK:STDERR:   var name C;
   // CHECK:STDERR:            ^
   // CHECK:STDERR:
@@ -49,7 +53,7 @@ class C {
 
   var self: C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+4]]:12: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
   // CHECK:STDERR:   var name name: C;
   // CHECK:STDERR:            ^~~~
   // CHECK:STDERR:
@@ -72,8 +76,11 @@ class C {
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
 // CHECK:STDOUT:   │ ├─VariableDecl ';'
 // CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'name'
-// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'name'
+// CHECK:STDOUT:   │ │ │   ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ │   ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern 'name' has_error
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
 // CHECK:STDOUT:   │ ├─VariableDecl ';'
 // CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │ │ ╭─InvalidParse ':' has_error
@@ -91,9 +98,12 @@ class C {
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
 // CHECK:STDOUT:   │ ├─VariableDecl ';'
 // CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'name'
-// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
-// CHECK:STDOUT:   │ ├─VariableDecl ';' has_error
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'name'
+// CHECK:STDOUT:   │ │ │   ├─InvalidParse 'C' has_error
+// CHECK:STDOUT:   │ │ │   ├─InvalidParse 'C' has_error
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern 'name' has_error
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
 // CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'name'
 // CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
@@ -109,9 +119,12 @@ class C {
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableDecl ';'
 // CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
-// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'name'
-// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
-// CHECK:STDOUT:   │ ├─VariableDecl ';' has_error
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'name'
+// CHECK:STDOUT:   │ │ │   ├─InvalidParse 'name' has_error
+// CHECK:STDOUT:   │ │ │   ├─InvalidParse 'name' has_error
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern 'name' has_error
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
 // CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'name'
 // CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':'

@@ -72,6 +72,12 @@ auto GetFirstBindingNameFromPatternId(const File& sem_ir, InstId pattern_id)
       return EntityNameId::None;
     }
 
+    // Skip subpatterns that do not introduce a binding (such as an expression
+    // pattern or an error) so tuple patterns continue searching later elements.
+    if (inst.IsOneOf<ExprPattern, ErrorInst>()) {
+      continue;
+    }
+
     auto [name_id, entity_name_id] = GetBoundEntityName(sem_ir, inst);
     CARBON_CHECK(entity_name_id.has_value(), "Unhandled pattern inst kind {0}",
                  inst);
