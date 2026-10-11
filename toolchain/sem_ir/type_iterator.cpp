@@ -141,11 +141,11 @@ auto TypeIterator::ProcessType(InstId inst_id) -> std::optional<Step> {
     case FormType::Kind:
     case FunctionType::Kind:
     case FunctionTypeWithSelfType::Kind:
-    case GenericClassType::Kind:
     case GenericInterfaceType::Kind:
     case GenericNamedConstraintType::Kind:
     case IntLiteralType::Kind:
     case NamespaceType::Kind:
+    case ParameterizedClassType::Kind:
     case RequireSpecificDefinitionType::Kind:
     case UnboundElementType::Kind:
     case VtableType::Kind:

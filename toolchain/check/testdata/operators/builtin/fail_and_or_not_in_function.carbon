@@ -174,7 +174,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %B.patt: %pattern_type = symbolic_binding_pattern B, 0 [symbolic]
 // CHECK:STDOUT:   %B.a76: bool = symbolic_binding B, 0 [symbolic]
-// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.type: type = parameterized_class_name_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C, @C(%B.a76) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
