@@ -49,12 +49,12 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (type) [concrete]
 // CHECK:STDOUT:   %tuple.ad8: %tuple.type = tuple_value (type) [concrete]
 // CHECK:STDOUT:   %pattern_type.ddf: type = pattern_type %tuple.type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.ddf = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %T: %tuple.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.d26: %pattern_type.ddf = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.198: %tuple.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %HoldsType.type: type = generic_class_type @HoldsType [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %HoldsType.generic: %HoldsType.type = struct_value () [concrete]
-// CHECK:STDOUT:   %HoldsType.4fb: type = class_type @HoldsType, @HoldsType(%T) [symbolic]
+// CHECK:STDOUT:   %HoldsType.4fb: type = class_type @HoldsType, @HoldsType(%T.198) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %RuntimeConvertFrom: type = class_type @RuntimeConvertFrom [concrete]
@@ -78,7 +78,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %RuntimeConvertTo.val: %RuntimeConvertTo = struct_value () [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT:   %tuple.elem0: type = tuple_access %T, element0 [symbolic]
+// CHECK:STDOUT:   %tuple.elem0: type = tuple_access %T.198, element0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.251: type = pattern_type %tuple.elem0 [symbolic]
 // CHECK:STDOUT:   %A.patt.ee4: %pattern_type.251 = symbolic_binding_pattern A, 1 [symbolic]
 // CHECK:STDOUT:   %A: %tuple.elem0 = symbolic_binding A, 1 [symbolic]
@@ -103,64 +103,28 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   %x.param_patt.726: %pattern_type.a09 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %x.patt.b9c: %pattern_type.a09 = wrapper_binding_pattern x, %x.param_patt.726 [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
-// CHECK:STDOUT:   %self.param_patt.52f: %pattern_type.a96 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.4b1: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt.52f [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc40_19.1 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc40_19.1 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.afb: %pattern_type.c10 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.a97: %pattern_type.c10 = wrapper_binding_pattern self, %self.param_patt.afb [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc40_19.2 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc40_19.2 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc40_19.2 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %DestroyImpl.WithSelf.Op.type.b77747.2: type = fn_type @DestroyImpl.WithSelf.Op.loc40_19.2 [concrete]
+// CHECK:STDOUT:   %DestroyImpl.WithSelf.Op.25aa57.2: %DestroyImpl.WithSelf.Op.type.b77747.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.2cb555.2: <witness> = custom_witness (%DestroyImpl.WithSelf.Op.25aa57.2), @DestroyImpl [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc40_19.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %RuntimeConvertTo, (%custom_witness.2cb555.2, %custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%facet_value) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .ImplicitAs = %Core.ImplicitAs
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.ImplicitAs: %ImplicitAs.type.0ff = import_ref Core//prelude/parts/as, ImplicitAs, loaded [concrete = constants.%ImplicitAs.generic]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc40_19.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.1] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.a96 = ref_param_pattern [concrete = constants.%self.param_patt.52f]
-// CHECK:STDOUT:     %self.patt: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4b1]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %empty_struct_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %empty_struct_type = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc40_19.1 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.a96 = ref_param_pattern [concrete = constants.%self.param_patt.52f]
-// CHECK:STDOUT:     %self.patt: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4b1]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %empty_struct_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %empty_struct_type = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc40_19.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.c10 = ref_param_pattern [concrete = constants.%self.param_patt.afb]
-// CHECK:STDOUT:     %self.patt: %pattern_type.c10 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a97]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %RuntimeConvertTo = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %RuntimeConvertTo = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc40_19.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.c10 = ref_param_pattern [concrete = constants.%self.param_patt.afb]
-// CHECK:STDOUT:     %self.patt: %pattern_type.c10 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a97]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %RuntimeConvertTo = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %RuntimeConvertTo = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -174,7 +138,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %HoldsType.decl: %HoldsType.type = class_decl @HoldsType [concrete = constants.%HoldsType.generic] {
-// CHECK:STDOUT:     %T.patt.loc17_18.1: %pattern_type.ddf = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc17_18.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc17_18.1: %pattern_type.ddf = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc17_18.2 (constants.%T.patt.d26)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc17_27.1: type = splice_block %.loc17_27.3 [concrete = constants.%tuple.type] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -182,7 +146,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:       %.loc17_27.2: %tuple.type = tuple_literal (%.loc17_21) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:       %.loc17_27.3: type = converted %.loc17_27.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc17_18.2: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc17_18.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc17_18.2: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc17_18.1 (constants.%T.198)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RuntimeConvertFrom.decl: type = class_decl @RuntimeConvertFrom [concrete = constants.%RuntimeConvertFrom] {} {}
 // CHECK:STDOUT:   %RuntimeConvertTo.decl: type = class_decl @RuntimeConvertTo [concrete = constants.%RuntimeConvertTo] {} {}
@@ -195,7 +159,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @RuntimeConvertFrom.as.ImplicitAs.impl.%RuntimeConvertFrom.ref, @ImplicitAs, @ImplicitAs(constants.%RuntimeConvertTo) [concrete = constants.%.291]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc27_7.1: %pattern_type.ddf = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_7.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc27_7.1: %pattern_type.ddf = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_7.2 (constants.%T.patt.d26)]
 // CHECK:STDOUT:     %A.patt.loc27_35.1: @F.%pattern_type.loc27_35 (%pattern_type.251) = symbolic_binding_pattern A, 1 [symbolic = %A.patt.loc27_35.2 (constants.%A.patt.ee4)]
 // CHECK:STDOUT:     %x.param_patt.loc27_50.1: @F.%pattern_type.loc27_50 (%pattern_type.ec9) = value_param_pattern [symbolic = %x.param_patt.loc27_50.2 (constants.%x.param_patt.741)]
 // CHECK:STDOUT:     %x.patt.loc27_50.1: @F.%pattern_type.loc27_50 (%pattern_type.ec9) = wrapper_binding_pattern x, %x.param_patt.loc27_50.1 [symbolic = %x.patt.loc27_50.2 (constants.%x.patt.991)]
@@ -206,10 +170,10 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:       %.loc27_16.2: %tuple.type = tuple_literal (%.loc27_10) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:       %.loc27_16.3: type = converted %.loc27_16.2, constants.%tuple.type [concrete = constants.%tuple.type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc27_7.2: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc27_7.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc27_7.2: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc27_7.1 (constants.%T.198)]
 // CHECK:STDOUT:     %.loc27_38: type = splice_block %tuple.elem0.loc27_38.2 [symbolic = %tuple.elem0.loc27_38.1 (constants.%tuple.elem0)] {
 // CHECK:STDOUT:       %.Self.frozen.loc27_35: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %T.ref.loc27_37: %tuple.type = name_ref T, %T.loc27_7.2 [symbolic = %T.loc27_7.1 (constants.%T)]
+// CHECK:STDOUT:       %T.ref.loc27_37: %tuple.type = name_ref T, %T.loc27_7.2 [symbolic = %T.loc27_7.1 (constants.%T.198)]
 // CHECK:STDOUT:       %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:       %tuple.elem0.loc27_38.2: type = tuple_access %T.ref.loc27_37, element0 [symbolic = %tuple.elem0.loc27_38.1 (constants.%tuple.elem0)]
 // CHECK:STDOUT:     }
@@ -217,8 +181,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:     %x.param: @F.%HoldsType.loc27_63.1 (%HoldsType.4fb) = value_param call_param0
 // CHECK:STDOUT:     %.loc27_63: type = splice_block %HoldsType.loc27_63.2 [symbolic = %HoldsType.loc27_63.1 (constants.%HoldsType.4fb)] {
 // CHECK:STDOUT:       %HoldsType.ref: %HoldsType.type = name_ref HoldsType, file.%HoldsType.decl [concrete = constants.%HoldsType.generic]
-// CHECK:STDOUT:       %T.ref.loc27_62: %tuple.type = name_ref T, %T.loc27_7.2 [symbolic = %T.loc27_7.1 (constants.%T)]
-// CHECK:STDOUT:       %HoldsType.loc27_63.2: type = class_type @HoldsType, @HoldsType(constants.%T) [symbolic = %HoldsType.loc27_63.1 (constants.%HoldsType.4fb)]
+// CHECK:STDOUT:       %T.ref.loc27_62: %tuple.type = name_ref T, %T.loc27_7.2 [symbolic = %T.loc27_7.1 (constants.%T.198)]
+// CHECK:STDOUT:       %HoldsType.loc27_63.2: type = class_type @HoldsType, @HoldsType(constants.%T.198) [symbolic = %HoldsType.loc27_63.1 (constants.%HoldsType.4fb)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %x: @F.%HoldsType.loc27_63.1 (%HoldsType.4fb) = wrapper_binding x, %x.param
 // CHECK:STDOUT:   }
@@ -271,8 +235,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @HoldsType(%T.loc17_18.2: %tuple.type) {
-// CHECK:STDOUT:   %T.patt.loc17_18.2: %pattern_type.ddf = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc17_18.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc17_18.1: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc17_18.1 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc17_18.2: %pattern_type.ddf = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc17_18.2 (constants.%T.patt.d26)]
+// CHECK:STDOUT:   %T.loc17_18.1: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc17_18.1 (constants.%T.198)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -310,8 +274,8 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc27_7.2: %tuple.type, %A.loc27_35.2: @F.%tuple.elem0.loc27_38.1 (%tuple.elem0)) {
-// CHECK:STDOUT:   %T.patt.loc27_7.2: %pattern_type.ddf = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_7.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc27_7.1: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc27_7.1 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc27_7.2: %pattern_type.ddf = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc27_7.2 (constants.%T.patt.d26)]
+// CHECK:STDOUT:   %T.loc27_7.1: %tuple.type = symbolic_binding T, 0 [symbolic = %T.loc27_7.1 (constants.%T.198)]
 // CHECK:STDOUT:   %tuple.elem0.loc27_38.1: type = tuple_access %T.loc27_7.1, element0 [symbolic = %tuple.elem0.loc27_38.1 (constants.%tuple.elem0)]
 // CHECK:STDOUT:   %pattern_type.loc27_35: type = pattern_type %tuple.elem0.loc27_38.1 [symbolic = %pattern_type.loc27_35 (constants.%pattern_type.251)]
 // CHECK:STDOUT:   %A.patt.loc27_35.2: @F.%pattern_type.loc27_35 (%pattern_type.251) = symbolic_binding_pattern A, 1 [symbolic = %A.patt.loc27_35.2 (constants.%A.patt.ee4)]
@@ -353,44 +317,34 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT:     %.loc40_19.5: %empty_tuple.type = call %F.specific_fn(%holds_to.ref)
 // CHECK:STDOUT:     %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc40_19.6: %empty_tuple.type = converted %.loc40_19.5, %empty_tuple [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc40_19.3, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
-// CHECK:STDOUT:     %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc40_19.3)
+// CHECK:STDOUT:     %facet_value.loc40_19.1: %facet_type = facet_value constants.%RuntimeConvertTo, (constants.%custom_witness.2cb555.2, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
+// CHECK:STDOUT:     %.loc40_19.7: %facet_type = converted constants.%RuntimeConvertTo, %facet_value.loc40_19.1 [concrete = constants.%facet_value]
+// CHECK:STDOUT:     %facet_value.loc40_19.2: %facet_type = facet_value constants.%RuntimeConvertTo, (constants.%custom_witness.2cb555.2, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
+// CHECK:STDOUT:     %.loc40_19.8: %facet_type = converted constants.%RuntimeConvertTo, %facet_value.loc40_19.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:     %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%facet_value) [concrete = constants.%SelfDestruct.specific_fn]
+// CHECK:STDOUT:     %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc40_19.3)
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc40_19.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyImpl.WithSelf.Op.loc40_19.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc40_19.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @DestroyImpl.WithSelf.Op.loc40_19.2(%self.param: ref %RuntimeConvertTo) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc40_19.1(%self.param: ref %empty_struct_type) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.1(%self.param)
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.1(%self.param)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc40_19.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc40_19.2(%self.param: ref %RuntimeConvertTo) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc40_19.2(%self.param: ref %RuntimeConvertTo) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc40_19.2(%self.param: ref %RuntimeConvertTo) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc40_19.2(%self.param: ref %RuntimeConvertTo) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @HoldsType(constants.%T) {
-// CHECK:STDOUT:   %T.patt.loc17_18.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc17_18.1 => constants.%T
+// CHECK:STDOUT: specific @HoldsType(constants.%T.198) {
+// CHECK:STDOUT:   %T.patt.loc17_18.2 => constants.%T.patt.d26
+// CHECK:STDOUT:   %T.loc17_18.1 => constants.%T.198
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(constants.%T, constants.%A) {
-// CHECK:STDOUT:   %T.patt.loc27_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc27_7.1 => constants.%T
+// CHECK:STDOUT: specific @F(constants.%T.198, constants.%A) {
+// CHECK:STDOUT:   %T.patt.loc27_7.2 => constants.%T.patt.d26
+// CHECK:STDOUT:   %T.loc27_7.1 => constants.%T.198
 // CHECK:STDOUT:   %tuple.elem0.loc27_38.1 => constants.%tuple.elem0
 // CHECK:STDOUT:   %pattern_type.loc27_35 => constants.%pattern_type.251
 // CHECK:STDOUT:   %A.patt.loc27_35.2 => constants.%A.patt.ee4
@@ -402,7 +356,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @HoldsType(constants.%tuple.eb2) {
-// CHECK:STDOUT:   %T.patt.loc17_18.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.patt.loc17_18.2 => constants.%T.patt.d26
 // CHECK:STDOUT:   %T.loc17_18.1 => constants.%tuple.eb2
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -414,7 +368,7 @@ fn G(holds_to: HoldsType((RuntimeConvertTo, )), generic from: RuntimeConvertFrom
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%tuple.eb2, <error>) {
-// CHECK:STDOUT:   %T.patt.loc27_7.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.patt.loc27_7.2 => constants.%T.patt.d26
 // CHECK:STDOUT:   %T.loc27_7.1 => constants.%tuple.eb2
 // CHECK:STDOUT:   %tuple.elem0.loc27_38.1 => constants.%RuntimeConvertTo
 // CHECK:STDOUT:   %pattern_type.loc27_35 => constants.%pattern_type.c10

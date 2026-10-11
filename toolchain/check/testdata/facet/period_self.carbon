@@ -235,7 +235,7 @@ interface I(T: Core.Destroy) {}
 // TODO: Implied constraints that `.Self` impls `Core.Destroy` are satisfied by
 // the `&` expression.
 //
-// CHECK:STDERR: fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE+7]]:39: error: cannot convert type `.Self` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE+7]]:39: error: cannot convert type `.Self` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: fn F(unused generic U: Core.Destroy & I(.Self)) {}
 // CHECK:STDERR:                                       ^~~~~~~~
 // CHECK:STDERR: fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE-8]]:13: note: initializing generic parameter `T` declared here [InitializingGenericParam]

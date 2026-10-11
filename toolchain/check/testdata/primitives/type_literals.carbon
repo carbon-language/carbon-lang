@@ -95,7 +95,7 @@ var test_i12: i12;
 // CHECK:STDERR: fail_iN_bad_width.carbon:[[@LINE+7]]:23: error: binding pattern has incomplete type `i1000000000` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var test_i1000000000: i1000000000;
 // CHECK:STDERR:                       ^~~~~~~~~~~
-// CHECK:STDERR: min_prelude/parts/int.carbon:11:9: note: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
+// CHECK:STDERR: min_prelude/parts/int.carbon:13:9: note: integer type width of 1000000000 is greater than the maximum supported width of 8388608 [IntWidthTooLarge]
 // CHECK:STDERR:   adapt MakeInt(N);
 // CHECK:STDERR:         ^~~~~~~~~~
 // CHECK:STDERR:
