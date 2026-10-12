@@ -608,15 +608,28 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
 auto CheckUnit::CheckImpls() -> void { ValidateImplsInFile(context_); }
 
 auto CheckUnit::FinishRun() -> void {
-  // Finalizes the C++ portion of the compilation, allowing any pending C++
-  // template instantiations to complete Carbon types and generate required
-  // thunks or function calls.
-  FinalizeCppAstFragment(context_);
+  auto required_definitions_before_finalization = std::size_t{0};
+  auto required_definitions_after_finalization = std::size_t{0};
+  do {
+    CheckRequiredDeclarations();
+    CheckRequiredDefinitions();
+    CheckPoisonedConcreteImplLookupQueries();
+    CheckImpls();
 
-  CheckRequiredDeclarations();
-  CheckRequiredDefinitions();
-  CheckPoisonedConcreteImplLookupQueries();
-  CheckImpls();
+    required_definitions_before_finalization =
+        context_.definitions_required_by_decl().size() +
+        context_.definitions_required_by_use().size();
+
+    // Finalizes the C++ portion of the compilation, allowing any pending C++
+    // template instantiations to complete Carbon types and generate required
+    // thunks or function calls.
+    FinalizeCppAstFragment(context_);
+
+    required_definitions_after_finalization =
+        context_.definitions_required_by_decl().size() +
+        context_.definitions_required_by_use().size();
+  } while (required_definitions_before_finalization <
+           required_definitions_after_finalization);
 
   // Disconnects AST generation from the context before popping the file-level
   // scope and destroying the context.
