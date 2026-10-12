@@ -4,6 +4,7 @@
 
 #include "toolchain/check/struct.h"
 
+#include "common/map.h"
 #include "toolchain/check/context.h"
 #include "toolchain/diagnostics/format_providers.h"
 

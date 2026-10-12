@@ -843,105 +843,59 @@ auto MatchContext::DoPreWork(State state, SemIR::StructPattern struct_pattern,
     return;
   }
 
-  auto scrutinee = context_.insts().GetWithLocId(scrutinee_id);
-
+  // TODO: Handle `_` fields in the pattern struct. If the final field is `_`,
+  // then number of fields in the expected type will be less than, or equal to,
+  // the number of fields in the scrutinee. Unmatched fields in the scrutinee
+  // should be discarded.
   auto expected_type_id = GetScrutineeTypeInSpecific(context_, entry.pattern_id,
                                                      specific_id_stack_.back());
 
-  auto expected_type_inst = context_.types().GetTypeInstId(expected_type_id);
+  // TODO: This conversion is required to convert a StructLiteral into a
+  // StructValue, because a StructLiteral scrutinee will produce a
+  // StructAccess inst with a `Mixed` expression category, which can fail when
+  // performing type conversions on fields (E.g., let {.a = b: i32} = {.a = 1}
+  // needs to convert the IntLiteral `1` to an i32). If we can compute the
+  // category of a StructAccess, where the struct being accessed as a `Mixed`
+  // category, then we should be able to remove this conversion.
+  scrutinee_id = ConvertToValueOrRefOfType(
+      context_, SemIR::LocId(entry.pattern_id), scrutinee_id, expected_type_id);
+
+  if (scrutinee_id == SemIR::ErrorInst::InstId) {
+    return;
+  }
+
+  auto scrutinee = context_.insts().GetWithLocId(scrutinee_id);
 
   auto pattern_struct_type_inst =
-      context_.insts().TryGetAs<SemIR::StructType>(expected_type_inst);
+      context_.types().GetAs<SemIR::StructType>(expected_type_id);
 
   auto pattern_struct_fields =
-      context_.struct_type_fields().Get(pattern_struct_type_inst->fields_id);
+      context_.struct_type_fields().Get(pattern_struct_type_inst.fields_id);
 
-  auto scrutinee_type_id = SemIR::GetTypeOfInstInSpecific(
-      context_.sem_ir(), specific_id_stack_.back(), scrutinee_id);
+  auto scrutinee_struct_type_inst = context_.insts().GetAs<SemIR::StructType>(
+      context_.types().GetTypeInstId(scrutinee.inst.type_id()));
 
-  SemIR::InstId converted_scrutinee_id =
-      ConvertToValueOrRefOfType(context_, SemIR::LocId(entry.pattern_id),
-                                scrutinee_id, scrutinee_type_id);
-
-  llvm::ArrayRef<Carbon::SemIR::StructTypeField> scrutinee_struct_fields;
-
-  if (auto scrutinee_literal = scrutinee.inst.TryAs<SemIR::StructLiteral>()) {
-    auto scrutinee_literal_type_inst =
-        context_.types().GetTypeInstId(scrutinee_literal->type_id);
-
-    auto scrutinee_struct_type_inst =
-        context_.insts().TryGetAs<SemIR::StructType>(
-            scrutinee_literal_type_inst);
-
-    scrutinee_struct_fields = context_.struct_type_fields().Get(
-        scrutinee_struct_type_inst->fields_id);
-  } else {
-    if (auto scrutinee_value = context_.insts().TryGetAs<SemIR::StructValue>(
-            converted_scrutinee_id)) {
-      auto scrutinee_value_type_inst =
-          context_.types().GetTypeInstId(scrutinee_value->type_id);
-
-      auto scrutinee_struct_type_inst =
-          context_.insts().TryGetAs<SemIR::StructType>(
-              scrutinee_value_type_inst);
-
-      scrutinee_struct_fields = context_.struct_type_fields().Get(
-          scrutinee_struct_type_inst->fields_id);
-    } else {
-      auto scrutinee_type =
-          context_.types().GetAs<SemIR::StructType>(expected_type_id);
-
-      scrutinee_struct_fields =
-          context_.struct_type_fields().Get(scrutinee_type.fields_id);
-    }
-  }
+  auto scrutinee_struct_fields =
+      context_.struct_type_fields().Get(scrutinee_struct_type_inst.fields_id);
 
   llvm::SmallVector<SemIR::InstId> field_access_insts;
   field_access_insts.reserve(subpattern_ids.size());
 
-  Set<SemIR::NameId> pattern_field_names;
-  pattern_field_names.GrowForInsertCount(scrutinee_struct_fields.size());
-
+  // TODO: This loop is O(m*n) for the number of fields in the
+  // pattern/scrutinee. The nested looping should be removed once struct field
+  // lookup is improved (see related TODO in PerformActionHelper in
+  // member_access.cpp)
   for (auto field : pattern_struct_fields) {
-    bool field_found = false;
     for (auto [i, s_field] : llvm::enumerate(scrutinee_struct_fields)) {
       if (field.name_id == s_field.name_id) {
         field_access_insts.push_back(GetOrAddInst<SemIR::StructAccess>(
             context_, scrutinee.loc_id,
             {.type_id =
                  context_.types().GetTypeIdForTypeInstId(s_field.type_inst_id),
-             .struct_id = converted_scrutinee_id,
+             .struct_id = scrutinee_id,
              .index = SemIR::ElementIndex(i)}));
-        field_found = true;
         break;
       }
-    }
-    if (field_found) {
-      pattern_field_names.Insert(field.name_id);
-    } else {
-      CARBON_DIAGNOSTIC(StructPatternNoMatchingField, Error,
-                        "type {0} does not have a member `{1}`", TypeOfInstId,
-                        SemIR::NameId);
-      context_.emitter().Emit(scrutinee_id, StructPatternNoMatchingField,
-                              scrutinee_id, field.name_id);
-      return;
-    }
-  }
-
-  // TODO: Unmatched fields should be discarded once trailing `_` fields
-  // are implemented for struct patterns
-  for (auto field : scrutinee_struct_fields) {
-    auto result = pattern_field_names.Insert(field.name_id);
-    if (result.is_inserted()) {
-      CARBON_DIAGNOSTIC(
-          StructPatternUnhandledField, Error,
-          "scrutinee field `.{0}` not matched by provided pattern",
-          SemIR::NameId);
-      // NOTE: This diagnosis currently only effects matches against a
-      // struct literal. Other cases are caught during type conversion
-      // before pattern matching starts.
-      context_.emitter().Emit(scrutinee_id, StructPatternUnhandledField,
-                              field.name_id);
     }
   }
   for (auto [subpattern_id, subscrutinee_id] :
