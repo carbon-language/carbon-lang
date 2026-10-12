@@ -85,7 +85,7 @@ auto HandleLambdaAfterParams(Context& context) -> void {
     context.PushState(state, StateKind::LambdaBody);
     context.PushState(StateKind::FunctionReturnTypeFinish);
     context.ConsumeAndDiscard();
-    context.PushStateForExpr(PrecedenceGroup::ForType());
+    context.PushState(StateKind::ReturnTypeOrFormExpr);
   } else if (context.PositionIs(Lex::TokenKind::MinusGreaterQuestion)) {
     // Has return form.
     context.PushState(state, StateKind::LambdaBody);
