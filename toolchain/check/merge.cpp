@@ -610,10 +610,10 @@ static auto FillPrevEntityInfo(Context& context,
     prev_entity_id = class_type->class_id;
     prev_type_id = SemIR::TypeId::None;
     prev_import_ir_id = import_ir_inst.ir_id();
-  } else if (auto generic_class_type =
-                 context.types().TryGetAs<SemIR::GenericClassType>(
+  } else if (auto param_class_type =
+                 context.types().TryGetAs<SemIR::ParameterizedClassType>(
                      decl_val.type_id())) {
-    prev_entity_id = generic_class_type->class_id;
+    prev_entity_id = param_class_type->class_id;
     prev_type_id = SemIR::TypeId::None;
     prev_import_ir_id = import_ir_inst.ir_id();
   }
