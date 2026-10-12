@@ -98,7 +98,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 0, !dbg !17
 // CHECK:STDOUT:   store ptr @array.loc13_50.15, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !17
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %_.var, i32 0, i32 8, !dbg !17
-// CHECK:STDOUT:   store ptr getelementptr inbounds ([3 x i32], ptr @array.loc13_50.15, i32 1), ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !17
+// CHECK:STDOUT:   store ptr getelementptr inbounds (i8, ptr @array.loc13_50.15, i64 12), ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !17
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !20
 // CHECK:STDOUT:   call void @"_CSelfDestruct.022f2f6eb6531e95:core.Destroy.Core"(ptr @array), !dbg !18
 // CHECK:STDOUT:   call void @"_CSelfDestruct.9e47f6d7a7c1f630:core.Destroy.Core"(ptr %_.var), !dbg !17
@@ -157,7 +157,7 @@ fn InitNontrivialDtor() {
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %.loc18_36.3.temp, i32 0, i32 0, !dbg !45
 // CHECK:STDOUT:   store ptr @array.loc13_50.15, ptr %initializer_list.initializer_list.call.init_list.begin, align 8, !dbg !45
 // CHECK:STDOUT:   %initializer_list.initializer_list.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %.loc18_36.3.temp, i32 0, i32 8, !dbg !45
-// CHECK:STDOUT:   store ptr getelementptr inbounds ([3 x i32], ptr @array.loc13_50.15, i32 1), ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !45
+// CHECK:STDOUT:   store ptr getelementptr inbounds (i8, ptr @array.loc13_50.15, i64 12), ptr %initializer_list.initializer_list.call.init_list.end, align 8, !dbg !45
 // CHECK:STDOUT:   call void @_ZN11vector_likeC1ESt16initializer_listIiE.carbon_thunk._(ptr %.loc18_36.3.temp, ptr %_.var), !dbg !44
 // CHECK:STDOUT:   call void @_CWithinLifetime.Main(), !dbg !47
 // CHECK:STDOUT:   call void @"_CSelfDestruct.9e47f6d7a7c1f630:core.Destroy.Core"(ptr %.loc18_36.3.temp), !dbg !45

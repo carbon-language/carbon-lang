@@ -158,7 +158,7 @@ var a: i32 = 1;
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define ptr @_CGetE.Main() #0 !dbg !53 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr getelementptr inbounds nuw ({ i32, i32 }, ptr @_Cd.Main, i32 0, i32 1), !dbg !56
+// CHECK:STDOUT:   ret ptr getelementptr inbounds nuw (i8, ptr @_Cd.Main, i64 4), !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind

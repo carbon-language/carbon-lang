@@ -74,7 +74,7 @@ fn Test() {
 // CHECK:STDOUT:   %MakePointerPointer.call.init_list.begin = getelementptr inbounds nuw [16 x i8], ptr %.loc25_53.1.temp, i32 0, i32 0, !dbg !21
 // CHECK:STDOUT:   store ptr @array.loc25_52.18, ptr %MakePointerPointer.call.init_list.begin, align 8, !dbg !21
 // CHECK:STDOUT:   %MakePointerPointer.call.init_list.end = getelementptr inbounds nuw [16 x i8], ptr %.loc25_53.1.temp, i32 0, i32 8, !dbg !21
-// CHECK:STDOUT:   store ptr getelementptr inbounds ([4 x i32], ptr @array.loc25_52.18, i32 1), ptr %MakePointerPointer.call.init_list.end, align 8, !dbg !21
+// CHECK:STDOUT:   store ptr getelementptr inbounds (i8, ptr @array.loc25_52.18, i64 16), ptr %MakePointerPointer.call.init_list.end, align 8, !dbg !21
 // CHECK:STDOUT:   call void @_CTakePointerPointer.Main(ptr %.loc25_53.1.temp), !dbg !23
 // CHECK:STDOUT:   call void @"_CSelfDestruct.f2bbdd6ca1ad449b:core.Destroy.Core"(ptr %.loc25_53.1.temp), !dbg !21
 // CHECK:STDOUT:   call void @"_CSelfDestruct.88ad3a558ba7d35d:core.Destroy.Core"(ptr @array), !dbg !22
