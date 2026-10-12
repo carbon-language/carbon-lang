@@ -227,8 +227,9 @@ static auto EmitAsConstant(ConstantContext& context,
   };
   auto no_wrap_flags =
       llvm::GEPNoWrapFlags::inBounds() | llvm::GEPNoWrapFlags::noUnsignedWrap();
-  return llvm::ConstantExpr::getGetElementPtr(aggr_type, aggr_addr, indexes,
-                                              no_wrap_flags);
+  return llvm::ConstantExpr::getGetElementPtr(
+      context.llvm_module().getDataLayout(), aggr_type, aggr_addr, indexes,
+      no_wrap_flags);
 }
 
 template <typename InstT>

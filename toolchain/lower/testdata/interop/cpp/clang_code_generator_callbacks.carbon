@@ -76,11 +76,13 @@ void f2() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
+// CHECK:STDOUT: %struct.S = type { i32 }
+// CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN2t24funcEv = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN2t3IiE1iE = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: @a = external global [10 x i8], align 1
+// CHECK:STDOUT: @a = external global [10 x %struct.S], align 1
 // CHECK:STDOUT: @b = dso_local global ptr @a, align 8
 // CHECK:STDOUT: @_ZN2t3IiE1iE = linkonce_odr dso_local global i32 0, comdat, align 4
 // CHECK:STDOUT: @_ZTV2t1 = dso_local constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI2t1, ptr @_ZN2t12f1Ev] }, align 8

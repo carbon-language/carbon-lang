@@ -168,7 +168,7 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CW.Main() #0 !dbg !49 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_24 = load i32, ptr getelementptr inbounds nuw ({ i32, i32 }, ptr @_Cv.Main, i32 0, i32 1), align 4, !dbg !52
+// CHECK:STDOUT:   %.loc7_24 = load i32, ptr getelementptr inbounds nuw (i8, ptr @_Cv.Main, i64 4), align 4, !dbg !52
 // CHECK:STDOUT:   ret i32 %.loc7_24, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -182,7 +182,7 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CZ.Main() #0 !dbg !59 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_24 = load i32, ptr getelementptr inbounds nuw ({ i32, i32 }, ptr @_Cz.Main, i32 0, i32 1), align 4, !dbg !62
+// CHECK:STDOUT:   %.loc10_24 = load i32, ptr getelementptr inbounds nuw (i8, ptr @_Cz.Main, i64 4), align 4, !dbg !62
 // CHECK:STDOUT:   ret i32 %.loc10_24, !dbg !63
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
