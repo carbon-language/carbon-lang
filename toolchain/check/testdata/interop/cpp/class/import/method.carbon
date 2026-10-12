@@ -512,17 +512,17 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %a.patt.623a16.1: %pattern_type.6b6 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt.207d5f.1: %pattern_type.6b6 = var_pattern %a.patt.623a16.1 [concrete]
+// CHECK:STDOUT:   %pattern_type.df9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %a.patt.de527d.1: %pattern_type.df9 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt.ae6fea.1: %pattern_type.df9 = var_pattern %a.patt.de527d.1 [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.cpp_overload_set.type: type = cpp_overload_set_type @NoRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.cpp_overload_set.value: %NoRefQualifier.F.cpp_overload_set.type = cpp_overload_set_value @NoRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.8cce43.1: type = fn_type @F__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a92106.1: %F__carbon_thunk.type.8cce43.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.f00: type = pattern_type %ptr.d08 [concrete]
-// CHECK:STDOUT:   %b.patt.9fb99a.1: %pattern_type.f00 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:   %b.var_patt.dede8c.1: %pattern_type.f00 = var_pattern %b.patt.9fb99a.1 [concrete]
+// CHECK:STDOUT:   %ptr.49e: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.50c: type = pattern_type %ptr.49e [concrete]
+// CHECK:STDOUT:   %b.patt.ce1d78.1: %pattern_type.50c = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt.9e5b66.1: %pattern_type.50c = var_pattern %b.patt.ce1d78.1 [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.type.8b6eff.2: type = fn_type @NoRefQualifier.F.2 [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.dbb5f5.2: %NoRefQualifier.F.type.8b6eff.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
@@ -532,24 +532,24 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.1: type = fn_type @SubobjectDestroy.WithSelf.Op.loc9 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.1: %SubobjectDestroy.WithSelf.Op.type.6870fd.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %facet_value.2cc: %facet_type = facet_value %ptr.d08, (%custom_witness.2cb555.1, %custom_witness.b80ef6.1) [concrete]
+// CHECK:STDOUT:   %facet_value.abc: %facet_type = facet_value %ptr.49e, (%custom_witness.2cb555.1, %custom_witness.b80ef6.1) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.WithSelf.Op.type.b77747.2: type = fn_type @DestroyImpl.WithSelf.Op.loc8 [concrete]
 // CHECK:STDOUT:   %DestroyImpl.WithSelf.Op.25aa57.2: %DestroyImpl.WithSelf.Op.type.b77747.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.2cb555.2: <witness> = custom_witness (%DestroyImpl.WithSelf.Op.25aa57.2), @DestroyImpl [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc8 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %facet_value.3d7: %facet_type = facet_value %i32, (%custom_witness.2cb555.2, %custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %facet_value.911: %facet_type = facet_value %i32, (%custom_witness.2cb555.2, %custom_witness.b80ef6.2) [concrete]
 // CHECK:STDOUT:   %WithRefQualifier: type = class_type @WithRefQualifier [concrete]
 // CHECK:STDOUT:   %ptr.90c: type = ptr_type %WithRefQualifier [concrete]
-// CHECK:STDOUT:   %a.patt.623a16.2: %pattern_type.6b6 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt.207d5f.2: %pattern_type.6b6 = var_pattern %a.patt.623a16.2 [concrete]
+// CHECK:STDOUT:   %a.patt.de527d.2: %pattern_type.df9 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt.ae6fea.2: %pattern_type.df9 = var_pattern %a.patt.de527d.2 [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.cpp_overload_set.type: type = cpp_overload_set_type @WithRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.cpp_overload_set.value: %WithRefQualifier.F.cpp_overload_set.type = cpp_overload_set_value @WithRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.8cce43.2: type = fn_type @F__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a92106.2: %F__carbon_thunk.type.8cce43.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %b.patt.9fb99a.2: %pattern_type.f00 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:   %b.var_patt.dede8c.2: %pattern_type.f00 = var_pattern %b.patt.9fb99a.2 [concrete]
+// CHECK:STDOUT:   %b.patt.ce1d78.2: %pattern_type.50c = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt.9e5b66.2: %pattern_type.50c = var_pattern %b.patt.ce1d78.2 [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.type.8b6eff.2: type = fn_type @WithRefQualifier.F.2 [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.dbb5f5.2: %WithRefQualifier.F.type.8b6eff.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -590,43 +590,43 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete = constants.%a.patt.623a16.1]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete = constants.%a.var_patt.207d5f.1]
+// CHECK:STDOUT:     %a.patt: %pattern_type.df9 = ref_binding_pattern a [concrete = constants.%a.patt.de527d.1]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.df9 = var_pattern %a.patt [concrete = constants.%a.var_patt.ae6fea.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %ptr.d08 = var_storage %b.var_patt
+// CHECK:STDOUT:   %b.var: ref %ptr.49e = var_storage %b.var_patt
 // CHECK:STDOUT:   %p.ref: %ptr.f7d = name_ref p, %p
 // CHECK:STDOUT:   %.loc9_25: ref %NoRefQualifier = deref %p.ref
 // CHECK:STDOUT:   %F.ref.loc9: %NoRefQualifier.F.cpp_overload_set.type = name_ref F, imports.%NoRefQualifier.F.cpp_overload_set.value [concrete = constants.%NoRefQualifier.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %.loc9_25, %F.ref.loc9
-// CHECK:STDOUT:   %NoRefQualifier.F.call: init %ptr.d08 = call imports.%NoRefQualifier.F.decl.89ec3d.2(%.loc9_25)
+// CHECK:STDOUT:   %NoRefQualifier.F.call: init %ptr.49e = call imports.%NoRefQualifier.F.decl.89ec3d.2(%.loc9_25)
 // CHECK:STDOUT:   assign %b.var, %NoRefQualifier.F.call
-// CHECK:STDOUT:   %.loc9_20: type = splice_block %ptr.loc9 [concrete = constants.%ptr.d08] {
+// CHECK:STDOUT:   %.loc9_20: type = splice_block %ptr.loc9 [concrete = constants.%ptr.49e] {
 // CHECK:STDOUT:     %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %i32.loc9 [concrete = constants.%ptr.d08]
+// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %i32.loc9 [concrete = constants.%ptr.49e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %ptr.d08 = wrapper_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %ptr.49e = wrapper_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.1]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.1]
+// CHECK:STDOUT:     %b.patt: %pattern_type.50c = ref_binding_pattern b [concrete = constants.%b.patt.ce1d78.1]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.50c = var_pattern %b.patt [concrete = constants.%b.var_patt.9e5b66.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc9_3.1: %facet_type = facet_value constants.%ptr.d08, (constants.%custom_witness.2cb555.1, constants.%custom_witness.b80ef6.1) [concrete = constants.%facet_value.2cc]
-// CHECK:STDOUT:   %.loc9_3.1: %facet_type = converted constants.%ptr.d08, %facet_value.loc9_3.1 [concrete = constants.%facet_value.2cc]
-// CHECK:STDOUT:   %facet_value.loc9_3.2: %facet_type = facet_value constants.%ptr.d08, (constants.%custom_witness.2cb555.1, constants.%custom_witness.b80ef6.1) [concrete = constants.%facet_value.2cc]
-// CHECK:STDOUT:   %.loc9_3.2: %facet_type = converted constants.%ptr.d08, %facet_value.loc9_3.2 [concrete = constants.%facet_value.2cc]
+// CHECK:STDOUT:   %facet_value.loc9_3.1: %facet_type = facet_value constants.%ptr.49e, (constants.%custom_witness.2cb555.1, constants.%custom_witness.b80ef6.1) [concrete = constants.%facet_value.abc]
+// CHECK:STDOUT:   %.loc9_3.1: %facet_type = converted constants.%ptr.49e, %facet_value.loc9_3.1 [concrete = constants.%facet_value.abc]
+// CHECK:STDOUT:   %facet_value.loc9_3.2: %facet_type = facet_value constants.%ptr.49e, (constants.%custom_witness.2cb555.1, constants.%custom_witness.b80ef6.1) [concrete = constants.%facet_value.abc]
+// CHECK:STDOUT:   %.loc9_3.2: %facet_type = converted constants.%ptr.49e, %facet_value.loc9_3.2 [concrete = constants.%facet_value.abc]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc9: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%b.var)
-// CHECK:STDOUT:   %facet_value.loc8_3.1: %facet_type = facet_value constants.%i32, (constants.%custom_witness.2cb555.2, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.3d7]
-// CHECK:STDOUT:   %.loc8_3.1: %facet_type = converted constants.%i32, %facet_value.loc8_3.1 [concrete = constants.%facet_value.3d7]
-// CHECK:STDOUT:   %facet_value.loc8_3.2: %facet_type = facet_value constants.%i32, (constants.%custom_witness.2cb555.2, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.3d7]
-// CHECK:STDOUT:   %.loc8_3.2: %facet_type = converted constants.%i32, %facet_value.loc8_3.2 [concrete = constants.%facet_value.3d7]
+// CHECK:STDOUT:   %facet_value.loc8_3.1: %facet_type = facet_value constants.%i32, (constants.%custom_witness.2cb555.2, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.911]
+// CHECK:STDOUT:   %.loc8_3.1: %facet_type = converted constants.%i32, %facet_value.loc8_3.1 [concrete = constants.%facet_value.911]
+// CHECK:STDOUT:   %facet_value.loc8_3.2: %facet_type = facet_value constants.%i32, (constants.%custom_witness.2cb555.2, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.911]
+// CHECK:STDOUT:   %.loc8_3.2: %facet_type = converted constants.%i32, %facet_value.loc8_3.2 [concrete = constants.%facet_value.911]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc8: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyImpl.WithSelf.Op.loc9(%self.param: ref %ptr.d08) = "no_op";
+// CHECK:STDOUT: fn @DestroyImpl.WithSelf.Op.loc9(%self.param: ref %ptr.49e) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9(%self.param: ref %ptr.d08) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc9(%self.param: ref %ptr.49e) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyImpl.WithSelf.Op.loc8(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
@@ -643,35 +643,35 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete = constants.%a.patt.623a16.2]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete = constants.%a.var_patt.207d5f.2]
+// CHECK:STDOUT:     %a.patt: %pattern_type.df9 = ref_binding_pattern a [concrete = constants.%a.patt.de527d.2]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.df9 = var_pattern %a.patt [concrete = constants.%a.var_patt.ae6fea.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %ptr.d08 = var_storage %b.var_patt
+// CHECK:STDOUT:   %b.var: ref %ptr.49e = var_storage %b.var_patt
 // CHECK:STDOUT:   %p.ref: %ptr.90c = name_ref p, %p
 // CHECK:STDOUT:   %.loc16_25: ref %WithRefQualifier = deref %p.ref
 // CHECK:STDOUT:   %F.ref.loc16: %WithRefQualifier.F.cpp_overload_set.type = name_ref F, imports.%WithRefQualifier.F.cpp_overload_set.value [concrete = constants.%WithRefQualifier.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %.loc16_25, %F.ref.loc16
-// CHECK:STDOUT:   %WithRefQualifier.F.call: init %ptr.d08 = call imports.%WithRefQualifier.F.decl.89ec3d.2(%.loc16_25)
+// CHECK:STDOUT:   %WithRefQualifier.F.call: init %ptr.49e = call imports.%WithRefQualifier.F.decl.89ec3d.2(%.loc16_25)
 // CHECK:STDOUT:   assign %b.var, %WithRefQualifier.F.call
-// CHECK:STDOUT:   %.loc16_20: type = splice_block %ptr.loc16 [concrete = constants.%ptr.d08] {
+// CHECK:STDOUT:   %.loc16_20: type = splice_block %ptr.loc16 [concrete = constants.%ptr.49e] {
 // CHECK:STDOUT:     %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %i32.loc16 [concrete = constants.%ptr.d08]
+// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %i32.loc16 [concrete = constants.%ptr.49e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %ptr.d08 = wrapper_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %ptr.49e = wrapper_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.2]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.2]
+// CHECK:STDOUT:     %b.patt: %pattern_type.50c = ref_binding_pattern b [concrete = constants.%b.patt.ce1d78.2]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.50c = var_pattern %b.patt [concrete = constants.%b.var_patt.9e5b66.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc16_3.1: %facet_type = facet_value constants.%ptr.d08, (constants.%custom_witness.2cb555.1, constants.%custom_witness.b80ef6.1) [concrete = constants.%facet_value.2cc]
-// CHECK:STDOUT:   %.loc16_3.1: %facet_type = converted constants.%ptr.d08, %facet_value.loc16_3.1 [concrete = constants.%facet_value.2cc]
-// CHECK:STDOUT:   %facet_value.loc16_3.2: %facet_type = facet_value constants.%ptr.d08, (constants.%custom_witness.2cb555.1, constants.%custom_witness.b80ef6.1) [concrete = constants.%facet_value.2cc]
-// CHECK:STDOUT:   %.loc16_3.2: %facet_type = converted constants.%ptr.d08, %facet_value.loc16_3.2 [concrete = constants.%facet_value.2cc]
+// CHECK:STDOUT:   %facet_value.loc16_3.1: %facet_type = facet_value constants.%ptr.49e, (constants.%custom_witness.2cb555.1, constants.%custom_witness.b80ef6.1) [concrete = constants.%facet_value.abc]
+// CHECK:STDOUT:   %.loc16_3.1: %facet_type = converted constants.%ptr.49e, %facet_value.loc16_3.1 [concrete = constants.%facet_value.abc]
+// CHECK:STDOUT:   %facet_value.loc16_3.2: %facet_type = facet_value constants.%ptr.49e, (constants.%custom_witness.2cb555.1, constants.%custom_witness.b80ef6.1) [concrete = constants.%facet_value.abc]
+// CHECK:STDOUT:   %.loc16_3.2: %facet_type = converted constants.%ptr.49e, %facet_value.loc16_3.2 [concrete = constants.%facet_value.abc]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc16: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%b.var)
-// CHECK:STDOUT:   %facet_value.loc15_3.1: %facet_type = facet_value constants.%i32, (constants.%custom_witness.2cb555.2, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.3d7]
-// CHECK:STDOUT:   %.loc15_3.1: %facet_type = converted constants.%i32, %facet_value.loc15_3.1 [concrete = constants.%facet_value.3d7]
-// CHECK:STDOUT:   %facet_value.loc15_3.2: %facet_type = facet_value constants.%i32, (constants.%custom_witness.2cb555.2, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.3d7]
-// CHECK:STDOUT:   %.loc15_3.2: %facet_type = converted constants.%i32, %facet_value.loc15_3.2 [concrete = constants.%facet_value.3d7]
+// CHECK:STDOUT:   %facet_value.loc15_3.1: %facet_type = facet_value constants.%i32, (constants.%custom_witness.2cb555.2, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.911]
+// CHECK:STDOUT:   %.loc15_3.1: %facet_type = converted constants.%i32, %facet_value.loc15_3.1 [concrete = constants.%facet_value.911]
+// CHECK:STDOUT:   %facet_value.loc15_3.2: %facet_type = facet_value constants.%i32, (constants.%custom_witness.2cb555.2, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.911]
+// CHECK:STDOUT:   %.loc15_3.2: %facet_type = converted constants.%i32, %facet_value.loc15_3.2 [concrete = constants.%facet_value.911]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc15: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%a.var)
 // CHECK:STDOUT:   <elided>

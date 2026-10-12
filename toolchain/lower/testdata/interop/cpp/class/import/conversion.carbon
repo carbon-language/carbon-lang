@@ -380,7 +380,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !133
 // CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK4IntBcviEv.carbon_thunk._(ptr %b), !dbg !133
 // CHECK:STDOUT:   store i32 %__carbon_thunk.call, ptr %a.var, align 4, !dbg !133
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.3b18dc1d3d647932(ptr %a.var), !dbg !133
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %a.var), !dbg !133
 // CHECK:STDOUT:   ret void, !dbg !138
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -405,7 +405,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.3b18dc1d3d647932(ptr %t) #0 !dbg !148 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %t) #0 !dbg !148 {
 // CHECK:STDOUT:   ret void, !dbg !153
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -451,7 +451,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: !143 = !DILocation(line: 16, column: 27, scope: !140)
 // CHECK:STDOUT: !146 = !DILocation(line: 15, column: 1, scope: !140)
 // CHECK:STDOUT: !147 = !{!141}
-// CHECK:STDOUT: !148 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3b18dc1d3d647932", scope: null, file: !10, line: 26, type: !137, spFlags: DISPFlagDefinition, unit: !127, retainedNodes: !154)
+// CHECK:STDOUT: !148 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.0aefc5da911f5051", scope: null, file: !10, line: 26, type: !137, spFlags: DISPFlagDefinition, unit: !127, retainedNodes: !154)
 // CHECK:STDOUT: !149 = !DILocalVariable(arg: 1, scope: !148, type: !20)
 // CHECK:STDOUT: !153 = !DILocation(line: 26, column: 1, scope: !148)
 // CHECK:STDOUT: !154 = !{!149}

@@ -95,7 +95,7 @@ fn Run() {
 // CHECK:STDOUT:   %I.WithSelf.F.call = call i32 @"_CF.Y.Main:I.Main"(), !dbg !36
 // CHECK:STDOUT:   store i32 %I.WithSelf.F.call, ptr %.loc38_20.1.temp, align 4, !dbg !36
 // CHECK:STDOUT:   %.loc38_20.3 = load i32, ptr %.loc38_20.1.temp, align 4, !dbg !36
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.3b18dc1d3d647932(ptr %.loc38_20.1.temp), !dbg !36
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %.loc38_20.1.temp), !dbg !36
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -108,7 +108,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.3b18dc1d3d647932(ptr %t) #0 !dbg !50 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %t) #0 !dbg !50 {
 // CHECK:STDOUT:   ret void, !dbg !55
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -159,7 +159,7 @@ fn Run() {
 // CHECK:STDOUT: !44 = !DILocalVariable(arg: 1, scope: !43, type: !7)
 // CHECK:STDOUT: !48 = !DILocation(line: 30, column: 1, scope: !43)
 // CHECK:STDOUT: !49 = !{!44}
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3b18dc1d3d647932", scope: null, file: !42, line: 30, type: !40, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !56)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.0aefc5da911f5051", scope: null, file: !42, line: 30, type: !40, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !56)
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !6)
 // CHECK:STDOUT: !55 = !DILocation(line: 30, column: 1, scope: !50)
 // CHECK:STDOUT: !56 = !{!51}

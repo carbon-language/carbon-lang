@@ -28,12 +28,12 @@ fn Main() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Main: %Main.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %b.patt: %pattern_type.6b6 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:   %b.var_patt: %pattern_type.6b6 = var_pattern %b.patt [concrete]
+// CHECK:STDOUT:   %pattern_type.df9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.df9 = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt: %pattern_type.df9 = var_pattern %b.patt [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
@@ -78,8 +78,8 @@ fn Main() {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = wrapper_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.6b6 = ref_binding_pattern b [concrete = constants.%b.patt]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.6b6 = var_pattern %b.patt [concrete = constants.%b.var_patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.df9 = ref_binding_pattern b [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.df9 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %facet_value.loc20_3.1: %facet_type = facet_value constants.%i32, (constants.%custom_witness.2cb, constants.%custom_witness.b80) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc20_3.1: %facet_type = converted constants.%i32, %facet_value.loc20_3.1 [concrete = constants.%facet_value]

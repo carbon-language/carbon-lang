@@ -57,7 +57,7 @@ fn Run() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_15.1.temp), !dbg !32
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc22_14.2.temp), !dbg !33
 // CHECK:STDOUT:   call void @_CMake.A.Main.a6a60dfee2d7d273(ptr %.loc22_15.1.temp, ptr @B.val.loc6_16), !dbg !32
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dcc63690ca923f1f(ptr %.loc22_15.1.temp), !dbg !32
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.00dc6045c4db572a(ptr %.loc22_15.1.temp), !dbg !32
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.c8fa36f2e394941a(ptr @B.val), !dbg !33
 // CHECK:STDOUT:   ret i32 0, !dbg !34
 // CHECK:STDOUT: }
@@ -71,7 +71,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.d32110776493a13a:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !39 {
+// CHECK:STDOUT: define weak_odr void @"_COp.2aabb88f4646c69b:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !39 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_15.1.field = getelementptr inbounds nuw { {} }, ptr %self, i32 0, i32 0, !dbg !41
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.c8fa36f2e394941a(ptr %.loc22_15.1.field), !dbg !41
@@ -87,14 +87,14 @@ fn Run() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define linkonce_odr void @_CMake.A.Main.a6a60dfee2d7d273(ptr sret({ {} }) %return, ptr %v) #0 !dbg !43 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.b3e.field = getelementptr inbounds nuw { {} }, ptr %return, i32 0, i32 0, !dbg !49
-// CHECK:STDOUT:   call void @"_COp.B.Main:Copy.Core"(ptr %.b3e.field, ptr %v), !dbg !48
+// CHECK:STDOUT:   %.8c2.field = getelementptr inbounds nuw { {} }, ptr %return, i32 0, i32 0, !dbg !49
+// CHECK:STDOUT:   call void @"_COp.B.Main:Copy.Core"(ptr %.8c2.field, ptr %v), !dbg !48
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.dcc63690ca923f1f(ptr %t) #0 !dbg !52 {
-// CHECK:STDOUT:   call void @"_COp.d32110776493a13a:core.SubobjectDestroy.Core"(ptr %t), !dbg !56
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.00dc6045c4db572a(ptr %t) #0 !dbg !52 {
+// CHECK:STDOUT:   call void @"_COp.2aabb88f4646c69b:core.SubobjectDestroy.Core"(ptr %t), !dbg !56
 // CHECK:STDOUT:   ret void, !dbg !57
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -138,7 +138,7 @@ fn Run() {
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !35, type: !16)
 // CHECK:STDOUT: !37 = !DILocation(line: 22, column: 3, scope: !35)
 // CHECK:STDOUT: !38 = !{!36}
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Op", linkageName: "_COp.d32110776493a13a:core.SubobjectDestroy.Core", scope: null, file: !14, line: 22, type: !23, spFlags: DISPFlagDefinition, unit: !15, retainedNodes: !42)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "Op", linkageName: "_COp.2aabb88f4646c69b:core.SubobjectDestroy.Core", scope: null, file: !14, line: 22, type: !23, spFlags: DISPFlagDefinition, unit: !15, retainedNodes: !42)
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !39, type: !16)
 // CHECK:STDOUT: !41 = !DILocation(line: 22, column: 3, scope: !39)
 // CHECK:STDOUT: !42 = !{!40}
@@ -148,7 +148,7 @@ fn Run() {
 // CHECK:STDOUT: !49 = !DILocation(line: 13, column: 12, scope: !43)
 // CHECK:STDOUT: !50 = !DILocation(line: 13, column: 5, scope: !43)
 // CHECK:STDOUT: !51 = !{!44}
-// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.dcc63690ca923f1f", scope: null, file: !6, line: 26, type: !23, spFlags: DISPFlagDefinition, unit: !15, retainedNodes: !58)
+// CHECK:STDOUT: !52 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.00dc6045c4db572a", scope: null, file: !6, line: 26, type: !23, spFlags: DISPFlagDefinition, unit: !15, retainedNodes: !58)
 // CHECK:STDOUT: !53 = !DILocalVariable(arg: 1, scope: !52, type: !16)
 // CHECK:STDOUT: !56 = !DILocation(line: 28, column: 5, scope: !52)
 // CHECK:STDOUT: !57 = !DILocation(line: 26, column: 1, scope: !52)

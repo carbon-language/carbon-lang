@@ -91,7 +91,7 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %MyInt.9fc: type = class_type @MyInt, @MyInt(%int_64) [concrete]
+// CHECK:STDOUT:   %MyInt.e99: type = class_type @MyInt, @MyInt(%int_64) [concrete]
 // CHECK:STDOUT:   %Double.type: type = fn_type @Double [concrete]
 // CHECK:STDOUT:   %Double: %Double.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double, @Double(%int_64) [concrete]
@@ -101,12 +101,12 @@ var n: Int(64) = MakeFromClass(FromLiteral(64) as OtherInt);
 // CHECK:STDOUT:   %Main.Double: %Double.type = import_ref Main//generic_impl, Double, loaded [concrete = constants.%Double]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @CallImportedDouble(%n.param: %MyInt.9fc) -> out %return.param: %MyInt.9fc {
+// CHECK:STDOUT: fn @CallImportedDouble(%n.param: %MyInt.e99) -> out %return.param: %MyInt.e99 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Double.ref: %Double.type = name_ref Double, imports.%Main.Double [concrete = constants.%Double]
-// CHECK:STDOUT:   %n.ref: %MyInt.9fc = name_ref n, %n
+// CHECK:STDOUT:   %n.ref: %MyInt.e99 = name_ref n, %n
 // CHECK:STDOUT:   %Double.specific_fn: <specific function> = specific_function %Double.ref, @Double(constants.%int_64) [concrete = constants.%Double.specific_fn]
-// CHECK:STDOUT:   %Double.call: init %MyInt.9fc = call %Double.specific_fn(%n.ref)
+// CHECK:STDOUT:   %Double.call: init %MyInt.e99 = call %Double.specific_fn(%n.ref)
 // CHECK:STDOUT:   return %Double.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

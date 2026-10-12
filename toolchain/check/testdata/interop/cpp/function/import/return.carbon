@@ -204,7 +204,7 @@ fn Var() {
 // CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_value.69a: %facet_type = facet_value %ptr.00a, (%custom_witness.2cb555.1, %custom_witness.b80ef6.1) [concrete]
-// CHECK:STDOUT:   %MaybeUnformed.79d: type = class_type @MaybeUnformed, @MaybeUnformed(%facet_value.69a) [concrete]
+// CHECK:STDOUT:   %MaybeUnformed.6e0: type = class_type @MaybeUnformed, @MaybeUnformed(%facet_value.69a) [concrete]
 // CHECK:STDOUT:   %.a7d: type = maybe_unformed_type %ptr.00a [concrete]
 // CHECK:STDOUT:   %pattern_type.af6: type = pattern_type %Cpp.nullptr_t [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type.af6 = ref_binding_pattern c [concrete]
@@ -267,13 +267,13 @@ fn Var() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyImpl.WithSelf.Op.loc11_3.1(%self.param: ref %.a7d) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @DestroyImpl.WithSelf.Op.loc11_3.2(%self.param: ref %MaybeUnformed.79d) = "no_op";
+// CHECK:STDOUT: fn @DestroyImpl.WithSelf.Op.loc11_3.2(%self.param: ref %MaybeUnformed.6e0) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DestroyImpl.WithSelf.Op.loc11_3.3(%self.param: ref %Cpp.nullptr_t) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11_3.1(%self.param: ref %.a7d) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11_3.2(%self.param: ref %MaybeUnformed.79d) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11_3.2(%self.param: ref %MaybeUnformed.6e0) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11_3.3(%self.param: ref %Cpp.nullptr_t) = "no_op";
 // CHECK:STDOUT:
@@ -282,22 +282,22 @@ fn Var() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
-// CHECK:STDOUT:   %UInt.type: type = generic_class_type @UInt [concrete]
+// CHECK:STDOUT:   %UInt.type: type = parameterized_class_name_type @UInt [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
-// CHECK:STDOUT:   %.1e3: Core.Form = init_form %u8 [concrete]
-// CHECK:STDOUT:   %pattern_type.186: type = pattern_type %u8 [concrete]
-// CHECK:STDOUT:   %return.param_patt.4c9: %pattern_type.186 = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.c50: %pattern_type.186 = return_slot_pattern %return.param_patt.4c9, %u8 [concrete]
+// CHECK:STDOUT:   %.05c: Core.Form = init_form %u8 [concrete]
+// CHECK:STDOUT:   %pattern_type.fdd: type = pattern_type %u8 [concrete]
+// CHECK:STDOUT:   %return.param_patt.edd: %pattern_type.fdd = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.5ab: %pattern_type.fdd = return_slot_pattern %return.param_patt.edd, %u8 [concrete]
 // CHECK:STDOUT:   %GetU8.type: type = fn_type @GetU8 [concrete]
 // CHECK:STDOUT:   %GetU8: %GetU8.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ReturnU8.cpp_overload_set.type: type = cpp_overload_set_type @ReturnU8.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ReturnU8.cpp_overload_set.value: %ReturnU8.cpp_overload_set.type = cpp_overload_set_value @ReturnU8.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ptr: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %pattern_type.015: type = pattern_type %ptr [concrete]
-// CHECK:STDOUT:   %return.param_patt.d05: %pattern_type.015 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt.f47: %pattern_type.015 = wrapper_binding_pattern r#return, %return.param_patt.d05 [concrete]
+// CHECK:STDOUT:   %pattern_type.69e: type = pattern_type %ptr [concrete]
+// CHECK:STDOUT:   %return.param_patt.177: %pattern_type.69e = value_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.90c: %pattern_type.69e = wrapper_binding_pattern r#return, %return.param_patt.177 [concrete]
 // CHECK:STDOUT:   %ReturnU8__carbon_thunk.type: type = fn_type @ReturnU8__carbon_thunk [concrete]
 // CHECK:STDOUT:   %ReturnU8__carbon_thunk: %ReturnU8__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -315,8 +315,8 @@ fn Var() {
 // CHECK:STDOUT:   %Core.UInt: %UInt.type = import_ref Core//prelude/types/uint, UInt, loaded [concrete = constants.%UInt.generic]
 // CHECK:STDOUT:   %ReturnU8.cpp_overload_set.value: %ReturnU8.cpp_overload_set.type = cpp_overload_set_value @ReturnU8.cpp_overload_set [concrete = constants.%ReturnU8.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnU8__carbon_thunk.decl: %ReturnU8__carbon_thunk.type = fn_decl @ReturnU8__carbon_thunk [concrete = constants.%ReturnU8__carbon_thunk] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.015 = value_param_pattern [concrete = constants.%return.param_patt.d05]
-// CHECK:STDOUT:     %return.patt: %pattern_type.015 = wrapper_binding_pattern r#return, %return.param_patt [concrete = constants.%return.patt.f47]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.69e = value_param_pattern [concrete = constants.%return.param_patt.177]
+// CHECK:STDOUT:     %return.patt: %pattern_type.69e = wrapper_binding_pattern r#return, %return.param_patt [concrete = constants.%return.patt.90c]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %return.param: %ptr = value_param call_param0
 // CHECK:STDOUT:     %.1: type = splice_block constants.%ptr [concrete = constants.%ptr] {
@@ -339,11 +339,11 @@ fn Var() {
 // CHECK:STDOUT:     import Cpp inline
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %GetU8.decl: %GetU8.type = fn_decl @GetU8 [concrete = constants.%GetU8] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.186 = out_param_pattern [concrete = constants.%return.param_patt.4c9]
-// CHECK:STDOUT:     %return.patt: %pattern_type.186 = return_slot_pattern %return.param_patt, %u8 [concrete = constants.%return.patt.c50]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.fdd = out_param_pattern [concrete = constants.%return.param_patt.edd]
+// CHECK:STDOUT:     %return.patt: %pattern_type.fdd = return_slot_pattern %return.param_patt, %u8 [concrete = constants.%return.patt.5ab]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %u8: type = type_literal constants.%u8 [concrete = constants.%u8]
-// CHECK:STDOUT:     %.loc8_15: Core.Form = init_form %u8 [concrete = constants.%.1e3]
+// CHECK:STDOUT:     %.loc8_15: Core.Form = init_form %u8 [concrete = constants.%.05c]
 // CHECK:STDOUT:     %return.param: ref %u8 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %u8 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -372,16 +372,16 @@ fn Var() {
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Var: %Var.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %UInt.type: type = generic_class_type @UInt [concrete]
+// CHECK:STDOUT:   %UInt.type: type = parameterized_class_name_type @UInt [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
 // CHECK:STDOUT:   %u32: type = class_type @UInt, @UInt(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.668: type = pattern_type %u32 [concrete]
-// CHECK:STDOUT:   %my_u32.patt: %pattern_type.668 = ref_binding_pattern my_u32 [concrete]
-// CHECK:STDOUT:   %my_u32.var_patt: %pattern_type.668 = var_pattern %my_u32.patt [concrete]
+// CHECK:STDOUT:   %pattern_type.d0c: type = pattern_type %u32 [concrete]
+// CHECK:STDOUT:   %my_u32.patt: %pattern_type.d0c = ref_binding_pattern my_u32 [concrete]
+// CHECK:STDOUT:   %my_u32.var_patt: %pattern_type.d0c = var_pattern %my_u32.patt [concrete]
 // CHECK:STDOUT:   %ReturnU32.cpp_overload_set.type: type = cpp_overload_set_type @ReturnU32.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %ReturnU32.cpp_overload_set.value: %ReturnU32.cpp_overload_set.type = cpp_overload_set_value @ReturnU32.cpp_overload_set [concrete]
-// CHECK:STDOUT:   %return.param_patt: %pattern_type.668 = out_param_pattern [concrete]
-// CHECK:STDOUT:   %return.patt: %pattern_type.668 = return_slot_pattern %return.param_patt, %u32 [concrete]
+// CHECK:STDOUT:   %return.param_patt: %pattern_type.d0c = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.d0c = return_slot_pattern %return.param_patt, %u32 [concrete]
 // CHECK:STDOUT:   %ReturnU32.type: type = fn_type @ReturnU32 [concrete]
 // CHECK:STDOUT:   %ReturnU32: %ReturnU32.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
@@ -411,8 +411,8 @@ fn Var() {
 // CHECK:STDOUT:   %Core.UInt: %UInt.type = import_ref Core//prelude/types/uint, UInt, loaded [concrete = constants.%UInt.generic]
 // CHECK:STDOUT:   %ReturnU32.cpp_overload_set.value: %ReturnU32.cpp_overload_set.type = cpp_overload_set_value @ReturnU32.cpp_overload_set [concrete = constants.%ReturnU32.cpp_overload_set.value]
 // CHECK:STDOUT:   %ReturnU32.decl: %ReturnU32.type = fn_decl @ReturnU32 [concrete = constants.%ReturnU32] {
-// CHECK:STDOUT:     %return.param_patt: %pattern_type.668 = out_param_pattern [concrete = constants.%return.param_patt]
-// CHECK:STDOUT:     %return.patt: %pattern_type.668 = return_slot_pattern %return.param_patt, %u32.2 [concrete = constants.%return.patt]
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.d0c = out_param_pattern [concrete = constants.%return.param_patt]
+// CHECK:STDOUT:     %return.patt: %pattern_type.d0c = return_slot_pattern %return.param_patt, %u32.2 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %int_32: Core.IntLiteral = int_value 32 [concrete = constants.%int_32]
 // CHECK:STDOUT:     %u32.1: type = class_type @UInt, @UInt(constants.%int_32) [concrete = constants.%u32]
@@ -446,8 +446,8 @@ fn Var() {
 // CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
 // CHECK:STDOUT:   %my_u32: ref %u32 = wrapper_binding my_u32, %my_u32.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %my_u32.patt: %pattern_type.668 = ref_binding_pattern my_u32 [concrete = constants.%my_u32.patt]
-// CHECK:STDOUT:     %my_u32.var_patt: %pattern_type.668 = var_pattern %my_u32.patt [concrete = constants.%my_u32.var_patt]
+// CHECK:STDOUT:     %my_u32.patt: %pattern_type.d0c = ref_binding_pattern my_u32 [concrete = constants.%my_u32.patt]
+// CHECK:STDOUT:     %my_u32.var_patt: %pattern_type.d0c = var_pattern %my_u32.patt [concrete = constants.%my_u32.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %facet_value.loc9_3.1: %facet_type = facet_value constants.%u32, (constants.%custom_witness.2cb, constants.%custom_witness.b80) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc9_3.1: %facet_type = converted constants.%u32, %facet_value.loc9_3.1 [concrete = constants.%facet_value]

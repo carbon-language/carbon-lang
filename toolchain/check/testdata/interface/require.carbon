@@ -619,12 +619,12 @@ interface Z(T: type) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Y.type: type = facet_type <@Y> [concrete]
-// CHECK:STDOUT:   %C.type: type = generic_class_type @C [concrete]
+// CHECK:STDOUT:   %C.type: type = parameterized_class_name_type @C [concrete]
 // CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %Self.cb6: %Z.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.cb6 [symbolic]
-// CHECK:STDOUT:   %C.b5f: type = class_type @C, @C(%Self.as_type) [symbolic]
+// CHECK:STDOUT:   %C.5b5: type = class_type @C, @C(%Self.as_type) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -643,7 +643,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:     %Self.ref: %Z.type = name_ref Self, @Z.%Self [symbolic = %Self (constants.%Self.cb6)]
 // CHECK:STDOUT:     %Self.as_type.loc9_17.1: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc9_17.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc9: type = converted %Self.ref, %Self.as_type.loc9_17.1 [symbolic = %Self.as_type.loc9_17.2 (constants.%Self.as_type)]
-// CHECK:STDOUT:     %C.loc9_17.1: type = class_type @C, @C(constants.%Self.as_type) [symbolic = %C.loc9_17.2 (constants.%C.b5f)]
+// CHECK:STDOUT:     %C.loc9_17.1: type = class_type @C, @C(constants.%Self.as_type) [symbolic = %C.loc9_17.2 (constants.%C.5b5)]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -664,7 +664,7 @@ interface Z(T: type) {
 // CHECK:STDOUT: generic require @Z.WithSelf.C.impls.Y.type.require(@Z.%Self: %Z.type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.cb6)]
 // CHECK:STDOUT:   %Self.as_type.loc9_17.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc9_17.2 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %C.loc9_17.2: type = class_type @C, @C(%Self.as_type.loc9_17.2) [symbolic = %C.loc9_17.2 (constants.%C.b5f)]
+// CHECK:STDOUT:   %C.loc9_17.2: type = class_type @C, @C(%Self.as_type.loc9_17.2) [symbolic = %C.loc9_17.2 (constants.%C.5b5)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.cb6) {}
@@ -672,7 +672,7 @@ interface Z(T: type) {
 // CHECK:STDOUT: specific @Z.WithSelf.C.impls.Y.type.require(constants.%Self.cb6) {
 // CHECK:STDOUT:   %Self => constants.%Self.cb6
 // CHECK:STDOUT:   %Self.as_type.loc9_17.2 => constants.%Self.as_type
-// CHECK:STDOUT:   %C.loc9_17.2 => constants.%C.b5f
+// CHECK:STDOUT:   %C.loc9_17.2 => constants.%C.5b5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- require_impls_where.carbon
