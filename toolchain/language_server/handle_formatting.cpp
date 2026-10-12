@@ -30,6 +30,10 @@ auto HandleFormatting(
         on_done) -> void {
   auto* file = context.LookupFile(params.textDocument.uri.file());
   if (!file) {
+    on_done(llvm::make_error<clang::clangd::LSPError>(
+        llvm::formatv("Unknown textDocument `{0}`",
+                      params.textDocument.uri.file()),
+        clang::clangd::ErrorCode::InvalidParams));
     return;
   }
   if (file->is_test_file()) {
