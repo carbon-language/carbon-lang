@@ -632,7 +632,11 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> bool {
 }
 
 auto CheckUnit::FinishRun() -> void {
-  for (auto do_resolution_checks = true; do_resolution_checks;) {
+  auto do_resolution_checks = true;
+  auto num_resolution_check_cycles = 0;
+  constexpr auto max_resolution_check_cycles = 10;
+  while (do_resolution_checks &&
+         ++num_resolution_check_cycles < max_resolution_check_cycles) {
     // Finalizes the C++ portion of the compilation, allowing any pending C++
     // template instantiations to complete Carbon types and generate required
     // thunks or function calls.
@@ -641,6 +645,14 @@ auto CheckUnit::FinishRun() -> void {
     do_resolution_checks = CheckRequiredDefinitions();
     do_resolution_checks |= CheckPoisonedConcreteImplLookupQueries();
     do_resolution_checks |= ImportFinalImplsWithImplInFile(context_);
+  }
+
+  if (num_resolution_check_cycles == max_resolution_check_cycles) {
+    context_.TODO(
+        SemIR::LocId(*(context_.sem_ir().parse_tree().postorder().begin())),
+        llvm::formatv(
+            "maximum depth for bidirectional Carbon/C++ interop is {}",
+            max_resolution_check_cycles));
   }
 
   // This only emits diagnostics, so it never creates work for the loop above.
