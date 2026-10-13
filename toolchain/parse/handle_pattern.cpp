@@ -7,6 +7,61 @@
 
 namespace Carbon::Parse {
 
+// Returns true if `kind` is a token that can follow a variable binding name
+// when the `:` and type are erroneously omitted.
+static auto CanFollowOmittedTypeInVar(Lex::TokenKind kind) -> bool {
+  switch (kind) {
+    case Lex::TokenKind::Equal:
+    case Lex::TokenKind::EqualGreater:
+    case Lex::TokenKind::Semi:
+    case Lex::TokenKind::Comma:
+    case Lex::TokenKind::CloseParen:
+    case Lex::TokenKind::CloseCurlyBrace:
+    case Lex::TokenKind::CloseSquareBracket:
+    case Lex::TokenKind::Identifier:
+    case Lex::TokenKind::SelfTypeIdentifier:
+    case Lex::TokenKind::Auto:
+    case Lex::TokenKind::Type:
+    case Lex::TokenKind::In:
+    case Lex::TokenKind::If:
+      return true;
+    default:
+      return kind.is_sized_type_literal();
+  }
+}
+
+// Returns true if the current token is a binding name in a `var` pattern whose
+// `:` and type were erroneously omitted.
+static auto IsOmittedTypeVarBinding(Context& context, bool in_var_pattern)
+    -> bool {
+  if (!in_var_pattern) {
+    return false;
+  }
+  switch (context.PositionKind()) {
+    case Lex::TokenKind::Identifier:
+    case Lex::TokenKind::Underscore:
+      return CanFollowOmittedTypeInVar(
+          context.PositionKind(Lookahead::NextToken));
+    default:
+      return false;
+  }
+}
+
+// Returns true if the current position starts a binding pattern that is not
+// identified by a leading modifier keyword or `self`.
+static auto IsUnintroducedBindingPattern(Context& context,
+                                         const Context::State& state) -> bool {
+  if (state.in_field_shorthand_pattern) {
+    return true;
+  }
+  if (!context.PositionKind().is_word()) {
+    return false;
+  }
+  return context.PositionKind(Lookahead::NextToken)
+             .is_binding_pattern_operator() ||
+         IsOmittedTypeVarBinding(context, state.in_var_pattern);
+}
+
 auto HandlePattern(Context& context) -> void {
   auto state = context.PopState();
   switch (context.PositionKind()) {
@@ -47,10 +102,7 @@ auto HandlePattern(Context& context) -> void {
           state.binding_context, state.ambient_precedence);
       break;
     default:
-      if ((context.PositionKind().is_word() &&
-           context.PositionKind(Lookahead::NextToken)
-               .is_binding_pattern_operator()) ||
-          state.in_field_shorthand_pattern) {
+      if (IsUnintroducedBindingPattern(context, state)) {
         context.PushStateForPattern(
             StateKind::BindingPattern, state.in_var_pattern,
             state.in_unused_pattern, state.in_field_shorthand_pattern,
