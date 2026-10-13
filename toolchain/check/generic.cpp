@@ -128,25 +128,18 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   // constant.
   auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
       -> SemIR::InstId override {
-    auto const_inst_id = SemIR::InstId::None;
-    auto dependence = SemIR::ConstantDependence::None;
-    if (orig_inst_id == SemIR::ErrorInst::InstId) {
-      const_inst_id = SemIR::ErrorInst::InstId;
-      dependence = SemIR::ConstantDependence::None;
-    } else {
-      auto& orig_symbolic_const =
-          context().constant_values().GetSymbolicConstant(
-              context().constant_values().Get(orig_inst_id));
-      const_inst_id = orig_symbolic_const.inst_id;
-      dependence = orig_symbolic_const.dependence;
-    }
+    auto& orig_symbolic_const = context().constant_values().GetSymbolicConstant(
+        context().constant_values().Get(orig_inst_id));
+    auto const_inst_id = orig_symbolic_const.inst_id;
+    auto dependence = orig_symbolic_const.dependence;
 
     // We might already have an instruction in the eval block if a transitive
     // operand of this instruction has the same constant value.
     auto result = constants_in_generic_.Insert(const_inst_id, [&] {
       // TODO: Add a function on `Context` to add the instruction without
       // inserting it into the dependent instructions list or computing a
-      // constant value for it.
+      // constant value for it. See also the corresponding TODO in
+      // `ReuseUnchanged`.
       auto inst_id = context().sem_ir().insts().AddInNoBlock(
           SemIR::LocIdAndInst::RuntimeVerified(context().sem_ir(), loc_id_,
                                                new_inst));
@@ -161,27 +154,38 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
     auto inst = context().insts().Get(orig_inst_id);
 
-    if (orig_inst_id != SemIR::ErrorInst::InstId) {
-      auto const_id = context().constant_values().Get(orig_inst_id);
-      const auto& symbolic =
-          context().constant_values().GetSymbolicConstant(const_id);
-      // Template actions are inserted into the eval block directly, instead of
-      // adding a new instruction, in `AddTemplateActionToEvalBlock`. This means
-      // any instruction that is symbolic because it contains a template action
-      // as an operand would Rebuild that operand with the same instruction.
-      // Then the dependent instruction would be reused unchanged.
-      bool is_template =
-          symbolic.dependence == SemIR::ConstantDependence::Template;
-
-      CARBON_CHECK(
-          is_template || (inst.IsOneOf<SemIR::SymbolicBinding,
-                                       SemIR::SymbolicBindingPattern>()),
-          "Instruction {0} has symbolic constant value but no symbolic "
-          "operands",
-          inst);
+    // Reuse `ErrorInst::InstId` in the eval block rather than rebuilding it.
+    // TODO: can we do this for all instructions?
+    if (orig_inst_id == SemIR::ErrorInst::InstId) {
+      auto result = constants_in_generic_.Insert(orig_inst_id, [&] {
+        // TODO: Add a function on `Context` to add the instruction without
+        // inserting it into the dependent instructions list. See also the
+        // corresponding TODO in `Rebuild`.
+        AddGenericConstantInstToEvalBlock(context(), orig_inst_id, orig_inst_id,
+                                          SemIR::ConstantDependence::None);
+        return orig_inst_id;
+      });
+      return result.value();
     }
+
+    auto const_id = context().constant_values().Get(orig_inst_id);
+    const auto& symbolic =
+        context().constant_values().GetSymbolicConstant(const_id);
+    // Template actions are inserted into the eval block directly, instead of
+    // adding a new instruction, in `AddTemplateActionToEvalBlock`. This means
+    // any instruction that is symbolic because it contains a template action
+    // as an operand would Rebuild that operand with the same instruction.
+    // Then the dependent instruction would be reused unchanged.
+    bool is_template =
+        symbolic.dependence == SemIR::ConstantDependence::Template;
+
+    CARBON_CHECK(is_template || (inst.IsOneOf<SemIR::SymbolicBinding,
+                                              SemIR::SymbolicBindingPattern>()),
+                 "Instruction {0} has symbolic constant value but no symbolic "
+                 "operands",
+                 inst);
+
     // Rebuild the instruction anyway so that it's included in the eval block.
-    // TODO: Can we just reuse the instruction in this case?
     return Rebuild(orig_inst_id, inst);
   }
 
