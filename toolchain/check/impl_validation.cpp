@@ -466,11 +466,7 @@ static auto ValidateImplsForInterface(Context& context,
   }
 }
 
-// For each `impl` seen in this file, ensure that we import every available
-// `final impl` for the same interface, so that we can to check for
-// diagnostics about the relationship between them and the `impl`s in this
-// file.
-static auto ImportFinalImplsWithImplInFile(Context& context) -> bool {
+auto ImportFinalImplsWithImplInFile(Context& context) -> bool {
   struct InterfaceToImport {
     SemIR::ImportIRId ir_id;
     SemIR::InterfaceId interface_id;
@@ -546,16 +542,18 @@ static auto ImportFinalImplsWithImplInFile(Context& context) -> bool {
   llvm::sort(impls_to_import);
   llvm::unique(impls_to_import);
 
+  auto imported_new_impl = false;
   for (auto [ir_id, import_impl_id] : impls_to_import) {
-    ImportImpl(context, ir_id, import_impl_id);
+    if (ImportImpl(context, ir_id, import_impl_id) ==
+        ImportImplResult::NewlyImported) {
+      imported_new_impl = true;
+    }
   }
 
-  return !impls_to_import.empty();
+  return imported_new_impl;
 }
 
-auto ValidateImplsInFile(Context& context) -> bool {
-  auto imported_interface_or_impl = ImportFinalImplsWithImplInFile(context);
-
+auto ValidateImplsInFile(Context& context) -> void {
   // Collect all of the impls sorted into contiguous segments by their
   // interface. We only need to compare impls within each such segment. We don't
   // keep impls with an Error in them, as they may be missing other values
@@ -590,8 +588,6 @@ auto ValidateImplsInFile(Context& context) -> bool {
 
     ValidateImplsForInterface(context, {segment_begin, segment_end});
   }
-
-  return imported_interface_or_impl;
 }
 
 }  // namespace Carbon::Check

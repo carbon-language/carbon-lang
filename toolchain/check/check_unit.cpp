@@ -11,7 +11,6 @@
 
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Sema/Sema.h"
-#include "common/growing_range.h"
 #include "common/pretty_stack_trace_function.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -460,7 +459,14 @@ auto CheckUnit::CheckRequiredDefinitions() -> bool {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
   auto resolution_occurred = false;
-  for (SemIR::InstId decl_inst_id : context_.definitions_required_by_decl()) {
+
+  // Only check declarations added since the previous call, so that each one is
+  // diagnosed at most once.
+  auto decl_inst_ids =
+      llvm::ArrayRef(context_.definitions_required_by_decl())
+          .drop_front(num_checked_definitions_required_by_decl_);
+  num_checked_definitions_required_by_decl_ += decl_inst_ids.size();
+  for (SemIR::InstId decl_inst_id : decl_inst_ids) {
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -501,8 +507,14 @@ auto CheckUnit::CheckRequiredDefinitions() -> bool {
     }
   }
 
-  for (auto [loc, specific_id] :
-       GrowingRange(context_.definitions_required_by_use())) {
+  // Only check uses added since the previous call, so that each one is
+  // diagnosed at most once. Resolving a definition can add more uses, which
+  // this loop also checks.
+  auto& uses = context_.definitions_required_by_use();
+  for (; num_checked_definitions_required_by_use_ < uses.size();
+       ++num_checked_definitions_required_by_use_) {
+    // Copy the use, because resolving a definition can add to `uses`.
+    auto [loc, specific_id] = uses[num_checked_definitions_required_by_use_];
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
     switch (ResolveSpecificDefinition(context_, loc, specific_id)) {
@@ -619,8 +631,6 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> bool {
   return found_difference;
 }
 
-auto CheckUnit::CheckImpls() -> bool { return ValidateImplsInFile(context_); }
-
 auto CheckUnit::FinishRun() -> void {
   for (auto do_resolution_checks = true; do_resolution_checks;) {
     // Finalizes the C++ portion of the compilation, allowing any pending C++
@@ -630,12 +640,17 @@ auto CheckUnit::FinishRun() -> void {
 
     do_resolution_checks = CheckRequiredDefinitions();
     do_resolution_checks |= CheckPoisonedConcreteImplLookupQueries();
-    do_resolution_checks |= CheckImpls();
+    do_resolution_checks |= ImportFinalImplsWithImplInFile(context_);
   }
 
   // This only emits diagnostics, so it never creates work for the loop above.
   // Running it after the loop also covers functions added during the loop.
   CheckRequiredDeclarations();
+
+  // Validate `impl`s once, after the loop has imported every `final impl` that
+  // they need to be checked against. Validating on each pass would repeat the
+  // same diagnostics.
+  ValidateImplsInFile(context_);
 
   // Disconnects AST generation from the context before popping the file-level
   // scope and destroying the context.

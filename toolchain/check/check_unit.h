@@ -183,8 +183,6 @@ class CheckUnit {
   // same witnesses.
   [[nodiscard]] auto CheckPoisonedConcreteImplLookupQueries() -> bool;
 
-  // Look for `impl` declarations that are invalid.
-  [[nodiscard]] auto CheckImpls() -> bool;
 
   // Does work after processing the parse tree, such as finishing the IR and
   // checking for missing contents.

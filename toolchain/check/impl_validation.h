@@ -9,11 +9,17 @@
 
 namespace Carbon::Check {
 
+// Called after typechecking the full file. For each `impl` seen in this file,
+// ensures that we import every available `final impl` for the same interface,
+// so that `ValidateImplsInFile` can check for diagnostics about the
+// relationship between them and the `impl`s in this file. Returns `true` if
+// this imported an `impl` that had not been imported before.
+[[nodiscard]] auto ImportFinalImplsWithImplInFile(Context& context) -> bool;
+
 // Called after typechecking the full file to diagnose any `impl` declarations
 // that are invalid because they are in wrong file or overlap with other `impl`
-// declarations incorrectly. Returns `true` if an interface or `impl` was
-// imported.
-auto ValidateImplsInFile(Context& context) -> bool;
+// declarations incorrectly.
+auto ValidateImplsInFile(Context& context) -> void;
 
 }  // namespace Carbon::Check
 
