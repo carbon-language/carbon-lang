@@ -572,10 +572,11 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
   llvm::SaveAndRestore function_scope(scope_, inst_namer_.GetScopeFor(id));
 
   // The return type might not have been deduced if checking stopped early.
-  FormatFunctionSignature(
-      fn.call_params_id, fn.call_param_ranges.return_begin(),
-      fn.has_undeduced_return_type() ? InstId::None
-                                     : fn.GetDeclaredReturnForm(*sem_ir_));
+  FormatFunctionSignature(fn.call_params_id,
+                          fn.call_param_ranges.return_begin(),
+                          fn.has_pending_deduced_return_type()
+                              ? InstId::None
+                              : fn.GetDeclaredReturnForm(*sem_ir_));
   if (fn.has_deduced_return_type) {
     out() << " [deduced]";
   }

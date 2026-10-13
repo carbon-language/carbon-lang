@@ -87,7 +87,7 @@ fn F(b: bool) -> auto {
     // CHECK:STDERR:     ^~~~~~~~~~~~
     return true;
   }
-  // CHECK:STDERR: fail_return_before_returned_var.carbon:[[@LINE+4]]:19: note: return type deduced as `i32` here [ReturnTypeDeducedHere]
+  // CHECK:STDERR: fail_return_before_returned_var.carbon:[[@LINE+4]]:19: note: return type deduced as `i32` [ReturnTypeDeducedAs]
   // CHECK:STDERR:   returned var r: i32 = 0;
   // CHECK:STDERR:                   ^~~
   // CHECK:STDERR:

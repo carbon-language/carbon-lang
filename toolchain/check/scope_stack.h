@@ -202,7 +202,7 @@ class ScopeStack {
     SemIR::InstId splice_id;
     // The `ReturnExpr` instruction. Its destination is set once the return
     // type is known.
-    SemIR::InstId return_id;
+    SemIR::InstId return_inst_id;
   };
 
   // Adds a `return` statement in the current function whose initialization is

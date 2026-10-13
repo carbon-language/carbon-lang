@@ -70,7 +70,7 @@ struct FunctionFields {
   // lifetime of the function. The exception is a function with a deduced return
   // type: its `Call` parameters, parameter pattern block and return
   // information are extended once, when the return type is deduced. See
-  // `has_undeduced_return_type`.
+  // `has_pending_deduced_return_type`.
 
   // This block consists of references to the `*ParamPattern` insts that
   // represent the function's `Call` parameters. The "`Call` parameters" are the
@@ -185,7 +185,7 @@ struct FunctionFields {
 
   // Whether the function's return type is deduced from its body, as in
   // `-> auto`. Until the return type is deduced, the function has no return
-  // information; see `has_undeduced_return_type`.
+  // information; see `has_pending_deduced_return_type`.
   bool has_deduced_return_type = false;
 
   // The `self` parameter pattern, if any. This is the first pattern in
@@ -335,7 +335,7 @@ struct Function : public EntityWithParamsBase,
   // function's declaration and the end of its body, or its first `returned
   // var`. In this state, the function has no return information, and
   // querying its return type or form is an error.
-  auto has_undeduced_return_type() const -> bool {
+  auto has_pending_deduced_return_type() const -> bool {
     return has_deduced_return_type && !return_form_inst_id.has_value();
   }
 

@@ -30,8 +30,8 @@ library "[[@TEST_NAME]]";
 import library "lib";
 
 //@dump-sem-ir-begin
-fn H() -> i32 { return F(); }
-fn I() -> i32 { return C.G(); }
+fn I() -> i32 { return F(); }
+fn J() -> i32 { return C.G(); }
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: --- use.carbon
@@ -44,12 +44,12 @@ fn I() -> i32 { return C.G(); }
 // CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.e1b: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete]
-// CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
-// CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
-// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
-// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.type: type = fn_type @I [concrete]
 // CHECK:STDOUT:   %I: %I.type = struct_value () [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %J.type: type = fn_type @J [concrete]
+// CHECK:STDOUT:   %J: %J.type = struct_value () [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %C.G.type: type = fn_type @C.G [concrete]
 // CHECK:STDOUT:   %C.G: %C.G.type = struct_value () [concrete]
@@ -62,7 +62,7 @@ fn I() -> i32 { return C.G(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {
+// CHECK:STDOUT:   %I.decl: %I.type = fn_decl @I [concrete = constants.%I] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -71,7 +71,7 @@ fn I() -> i32 { return C.G(); }
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %I.decl: %I.type = fn_decl @I [concrete = constants.%I] {
+// CHECK:STDOUT:   %J.decl: %J.type = fn_decl @J [concrete = constants.%J] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.6b6 = out_param_pattern [concrete = constants.%return.param_patt]
 // CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.e1b]
 // CHECK:STDOUT:   } {
@@ -82,14 +82,14 @@ fn I() -> i32 { return C.G(); }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @H() -> out %return.param: %i32 {
+// CHECK:STDOUT: fn @I() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
 // CHECK:STDOUT:   %F.call: init %i32 = call %F.ref()
 // CHECK:STDOUT:   return %F.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @I() -> out %return.param: %i32 {
+// CHECK:STDOUT: fn @J() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %C.ref: type = name_ref C, imports.%Main.C [concrete = constants.%C]
 // CHECK:STDOUT:   %G.ref: %C.G.type = name_ref G, imports.%Main.import_ref.341 [concrete = constants.%C.G]

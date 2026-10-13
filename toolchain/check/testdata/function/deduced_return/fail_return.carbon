@@ -17,27 +17,28 @@ fn F(b: bool) -> auto {
   if (b) {
     return 1 as i32;
   }
-  // CHECK:STDERR: fail_mismatch.carbon:[[@LINE+7]]:10: error: `return` of type `bool` does not match earlier `return` of type `i32` [DeducedReturnTypeMismatch]
+  // CHECK:STDERR: fail_mismatch.carbon:[[@LINE+7]]:10: error: deducded return type `bool` does not match return type deduced earlier [DeducedReturnTypeMismatch]
   // CHECK:STDERR:   return true;
   // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR: fail_mismatch.carbon:[[@LINE-5]]:12: note: return type deduced as `i32` here [ReturnTypeDeducedHere]
+  // CHECK:STDERR: fail_mismatch.carbon:[[@LINE-5]]:12: note: return type previously deduced as `i32` here [DeducedReturnTypeMismatchPrevious]
   // CHECK:STDERR:     return 1 as i32;
   // CHECK:STDERR:            ^~~~~~~~
   // CHECK:STDERR:
   return true;
 }
 
-// --- fail_mismatch_literal.carbon
+// --- fail_todo_mismatch_int_vs_int_literal.carbon
 library "[[@TEST_NAME]]";
 
 fn F(b: bool) -> auto {
   if (b) {
     return 1 as i32;
   }
-  // CHECK:STDERR: fail_mismatch_literal.carbon:[[@LINE+7]]:10: error: `return` of type `Core.IntLiteral` does not match earlier `return` of type `i32` [DeducedReturnTypeMismatch]
+  // TODO: This should work once we use CommonType in return type deduction.
+  // CHECK:STDERR: fail_todo_mismatch_int_vs_int_literal.carbon:[[@LINE+7]]:10: error: deducded return type `Core.IntLiteral` does not match return type deduced earlier [DeducedReturnTypeMismatch]
   // CHECK:STDERR:   return 0;
   // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_mismatch_literal.carbon:[[@LINE-5]]:12: note: return type deduced as `i32` here [ReturnTypeDeducedHere]
+  // CHECK:STDERR: fail_todo_mismatch_int_vs_int_literal.carbon:[[@LINE-6]]:12: note: return type previously deduced as `i32` here [DeducedReturnTypeMismatchPrevious]
   // CHECK:STDERR:     return 1 as i32;
   // CHECK:STDERR:            ^~~~~~~~
   // CHECK:STDERR:

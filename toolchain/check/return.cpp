@@ -15,10 +15,6 @@
 
 namespace Carbon::Check {
 
-// Notes the location from which a function's return type was deduced.
-CARBON_DIAGNOSTIC(ReturnTypeDeducedHere, Note,
-                  "return type deduced as {0} here", SemIR::TypeId);
-
 // Gets the ID of the function that lexically encloses the current location.
 static auto GetCurrentFunctionIdForReturn(Context& context)
     -> SemIR::FunctionId {
@@ -105,8 +101,8 @@ struct ConvertedReturnExpr {
 };
 }  // namespace
 
-// Converts the operand of a `return` statement to the declared return form of
-// `function`, which must have a declared or deduced return type.
+// Converts the operand of a `return` statement to the return form of
+// `function`, which is required to have been declared or deduced already.
 static auto ConvertReturnExpr(Context& context, SemIR::LocId loc_id,
                               const SemIR::Function& function,
                               SemIR::InstId expr_id) -> ConvertedReturnExpr {
@@ -185,9 +181,9 @@ static auto ConvertReturnExpr(Context& context, SemIR::LocId loc_id,
 }
 
 // Builds a `return` statement in a function whose return type has not been
-// deduced yet. Control flow and cleanups are built now, but the conversion of
-// the returned expression to the return type is deferred until the return type
-// is known; see `CompletePendingReturns`.
+// deduced yet. Immediately builds control flow and cleanups, but defers the
+// conversion of the returned expression to the return type until the return
+// type is known; see `CompletePendingReturns`.
 static auto BuildPendingReturn(Context& context, SemIR::LocId loc_id,
                                SemIR::InstId expr_id) -> void {
   // The conversion will be spliced in here. Until then, this placeholder is an
@@ -201,8 +197,9 @@ static auto BuildPendingReturn(Context& context, SemIR::LocId loc_id,
   auto return_id = AddReturnInstWithCleanups(
       context, loc_id,
       SemIR::ReturnExpr{.expr_id = splice_id, .dest_id = SemIR::InstId::None});
-  context.scope_stack().AddPendingReturn(
-      {.expr_id = expr_id, .splice_id = splice_id, .return_id = return_id});
+  context.scope_stack().AddPendingReturn({.expr_id = expr_id,
+                                          .splice_id = splice_id,
+                                          .return_inst_id = return_id});
 }
 
 // Completes the `return` statements built by `BuildPendingReturn` in the
@@ -220,26 +217,30 @@ static auto CompletePendingReturns(Context& context,
   // of return type, so point out where it came from.
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](DiagnosticBuilder& builder) {
-        builder.Note(function.return_type_inst_id, ReturnTypeDeducedHere,
-                     context.types().GetTypeIdForTypeInstId(
-                         function.return_type_inst_id));
+        // TODO: Track the instruction the return type was deduced for and use
+        // TypeOfInstId to preserve sugar.
+        CARBON_DIAGNOSTIC(ReturnTypeDeducedAs, Note,
+                          "return type deduced as {0}", InstIdAsType);
+        builder.Note(function.return_type_inst_id, ReturnTypeDeducedAs,
+                     function.return_type_inst_id);
       });
 
-  for (auto [expr_id, splice_id, return_id] : pending_returns) {
-    auto loc_id = SemIR::LocId(return_id);
+  for (const auto& pending_return : pending_returns) {
+    auto loc_id = SemIR::LocId(pending_return.return_inst_id);
 
     // Convert in a separate block that we splice in place of the placeholder,
     // with its own cleanup scope for any temporaries.
     context.inst_block_stack().Push();
     context.scope_stack().PushForSameRegion(
         ScopeStack::CleanupScopeKind::Owned);
-    auto converted = ConvertReturnExpr(context, loc_id, function, expr_id);
+    auto converted =
+        ConvertReturnExpr(context, loc_id, function, pending_return.expr_id);
     AddAndDiscardScopeCleanups(context);
     context.scope_stack().Pop();
     auto block_id = context.inst_block_stack().Pop();
 
     ReplaceInstBeforeConstantUse(
-        context, splice_id,
+        context, pending_return.splice_id,
         SemIR::SpliceBlock{
             .type_id = context.insts().Get(converted.expr_id).type_id(),
             .block_id = block_id,
@@ -247,9 +248,11 @@ static auto CompletePendingReturns(Context& context,
     if (converted.dest_id.has_value()) {
       // The `return` statement has no type or constant value, and nothing
       // refers to it, so it's safe to replace it.
-      auto return_inst = context.insts().GetAs<SemIR::ReturnExpr>(return_id);
+      auto return_inst = context.insts().GetAs<SemIR::ReturnExpr>(
+          pending_return.return_inst_id);
       return_inst.dest_id = converted.dest_id;
-      ReplaceInstBeforeConstantUse(context, return_id, return_inst);
+      ReplaceInstBeforeConstantUse(context, pending_return.return_inst_id,
+                                   return_inst);
     }
   }
 }
@@ -258,7 +261,8 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
                          Parse::NodeId type_node, SemIR::TypeId type_id,
                          SemIR::InstId bind_id, SemIR::NameId name_id) -> void {
   auto function_id = GetCurrentFunctionIdForReturn(context);
-  if (context.functions().Get(function_id).has_undeduced_return_type()) {
+  auto& function = context.functions().Get(function_id);
+  if (function.has_pending_deduced_return_type()) {
     // In a function with a deduced return type, the first `returned var`
     // determines the return type, and any earlier `return`s are converted to
     // it.
@@ -266,7 +270,6 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
     CompletePendingReturns(context, function_id);
   }
 
-  auto& function = context.functions().Get(function_id);
   auto return_type_id = function.GetDeclaredReturnType(context.sem_ir());
 
   // A `returned var` requires an explicit return type.
@@ -320,7 +323,7 @@ auto BuildReturnWithNoExpr(Context& context, SemIR::LocId loc_id) -> void {
   CARBON_DIAGNOSTIC(ReturnStatementMissingExpr, Error, "missing return value");
 
   // `-> auto` requires a returned value, just like an explicit return type.
-  if (function.has_undeduced_return_type()) {
+  if (function.has_pending_deduced_return_type()) {
     auto diag = context.emitter().Build(loc_id, ReturnStatementMissingExpr);
     NoteReturnTypeIsDeduced(diag, function);
     diag.Emit();
@@ -344,7 +347,7 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
   const auto& function = GetCurrentFunctionForReturn(context);
   auto returned_var_id = GetCurrentReturnedVar(context);
 
-  if (function.has_undeduced_return_type()) {
+  if (function.has_pending_deduced_return_type()) {
     // Declaring a `returned var` would have deduced the return type.
     CARBON_CHECK(!returned_var_id.has_value());
     BuildPendingReturn(context, loc_id, expr_id);
@@ -391,9 +394,9 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
     returned_var_id = SemIR::ErrorInst::InstId;
   }
 
-  if (function.has_undeduced_return_type()) {
+  if (function.has_pending_deduced_return_type()) {
     // Declaring a `returned var` would have deduced the return type, so we
-    // diagnosed above. Treat this as returning an erroneous value.
+    // diagnosed above, and `returned_var_id` is `ErrorInst::InstId`.
     BuildPendingReturn(context, node_id, returned_var_id);
     return;
   }
@@ -412,7 +415,7 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
 auto DeduceReturnTypeAtEndOfBody(Context& context,
                                  SemIR::FunctionId function_id) -> bool {
   const auto& function = context.functions().Get(function_id);
-  CARBON_CHECK(function.has_undeduced_return_type());
+  CARBON_CHECK(function.has_pending_deduced_return_type());
   auto pending_returns = context.scope_stack().PeekPendingReturns();
   auto decl_loc_id = SemIR::LocId(function.latest_decl_id());
 
@@ -439,14 +442,16 @@ auto DeduceReturnTypeAtEndOfBody(Context& context,
       first_expr_id = pending.expr_id;
       return_type_id = type_id;
     } else if (type_id != return_type_id) {
-      CARBON_DIAGNOSTIC(DeducedReturnTypeMismatch, Error,
-                        "`return` of type {0} does not match earlier `return` "
-                        "of type {1}",
-                        TypeOfInstId, TypeOfInstId);
+      CARBON_DIAGNOSTIC(
+          DeducedReturnTypeMismatch, Error,
+          "deducded return type {0} does not match return type deduced earlier",
+          TypeOfInstId);
+      CARBON_DIAGNOSTIC(DeducedReturnTypeMismatchPrevious, Note,
+                        "return type previously deduced as {0} here",
+                        TypeOfInstId);
       context.emitter()
-          .Build(pending.expr_id, DeducedReturnTypeMismatch, pending.expr_id,
-                 first_expr_id)
-          .Note(first_expr_id, ReturnTypeDeducedHere, return_type_id)
+          .Build(pending.expr_id, DeducedReturnTypeMismatch, pending.expr_id)
+          .Note(first_expr_id, DeducedReturnTypeMismatchPrevious, first_expr_id)
           .Emit();
       return_type_id = SemIR::ErrorInst::TypeId;
       break;

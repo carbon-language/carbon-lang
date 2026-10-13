@@ -176,7 +176,7 @@ auto Function::GetBuiltinFunctionKind(const File& file) const
 
 auto Function::GetDeclaredReturnType(const File& file,
                                      SpecificId specific_id) const -> TypeId {
-  CARBON_CHECK(!has_undeduced_return_type(),
+  CARBON_CHECK(!has_pending_deduced_return_type(),
                "Querying return type of function before it is deduced");
   if (!return_type_inst_id.has_value()) {
     return TypeId::None;
@@ -187,7 +187,7 @@ auto Function::GetDeclaredReturnType(const File& file,
 
 auto Function::GetDeclaredReturnForm(const File& file,
                                      SpecificId specific_id) const -> InstId {
-  CARBON_CHECK(!has_undeduced_return_type(),
+  CARBON_CHECK(!has_pending_deduced_return_type(),
                "Querying return form of function before it is deduced");
   if (!return_form_inst_id.has_value()) {
     // Treat as equivalent to `-> ()`.

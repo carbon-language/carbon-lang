@@ -253,7 +253,7 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   // We can't call a function before its return type is known. This happens for
   // a function with a deduced return type that is called from within its own
   // body, or from the body of a class member function that precedes it.
-  if (callee.has_undeduced_return_type()) {
+  if (callee.has_pending_deduced_return_type()) {
     CARBON_DIAGNOSTIC(CallBeforeReturnTypeDeduced, Error,
                       "call to `{0}` before its return type is deduced",
                       SemIR::NameId);

@@ -438,7 +438,7 @@ auto CheckFunctionDefinitionSignature(Context& context,
 auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
                           SemIR::LocId loc_id, SemIR::TypeId type_id) -> void {
   auto& function = context.functions().Get(function_id);
-  CARBON_CHECK(function.has_undeduced_return_type());
+  CARBON_CHECK(function.has_pending_deduced_return_type());
 
   // A function with a deduced return type can't be redeclared, so there is only
   // one declaration to complete.
@@ -493,7 +493,7 @@ auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
   function.return_type_inst_id = form.type_component_inst_id;
   function.return_form_inst_id = form.form_inst_id;
   function.return_pattern_id = return_pattern_id;
-  CARBON_CHECK(!function.has_undeduced_return_type());
+  CARBON_CHECK(!function.has_pending_deduced_return_type());
 
   if (type_id != SemIR::ErrorInst::TypeId) {
     auto return_call_param = SemIR::InstId::None;
@@ -730,11 +730,9 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
 
 auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
                                  SemIR::FunctionId function_id) -> void {
-  bool is_end_reachable = IsCurrentPositionReachable(context);
-
   // If the return type is deduced and we've not seen a `returned var`, the
   // return type is determined by the `return` statements in the body.
-  if (context.functions().Get(function_id).has_undeduced_return_type() &&
+  if (context.functions().Get(function_id).has_pending_deduced_return_type() &&
       !DeduceReturnTypeAtEndOfBody(context, function_id)) {
     // There are no `return` statements, which has already been diagnosed.
     return;
@@ -742,7 +740,7 @@ auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
 
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
-  if (is_end_reachable) {
+  if (IsCurrentPositionReachable(context)) {
     if (context.functions().Get(function_id).return_form_inst_id.has_value()) {
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
