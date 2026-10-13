@@ -267,11 +267,18 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   }
 
   auto specific_interface = SemIR::SpecificInterface::None;
-  if (full_constraint_type_inst_id != SemIR::ErrorInst::InstId) {
+  if (full_constraint_type_inst_id != SemIR::ErrorInst::TypeInstId) {
     const auto& identified =
         context.identified_facet_types().Get(identified_id);
-    specific_interface = EvaluateIdentifiedWitnesses(
+    auto eval_interface = EvaluateIdentifiedWitnesses(
         context, node_id, identified.impl_as_target_interface());
+    // TODO: Add a method to SpecificStore to do this operation.
+    if (!(eval_interface.specific_id.has_value() &&
+          context.specifics().Get(eval_interface.specific_id).HasError())) {
+      specific_interface = eval_interface;
+    } else {
+      full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
+    }
   }
 
   // Store an instruction in the decl's eval block that contains the target
