@@ -492,6 +492,10 @@ static auto CheckConcreteValue(EvalContext& eval_context, SemIR::InstId inst_id)
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::MetaInstId inst_id, Phase* phase)
     -> SemIR::MetaInstId {
+  if (!inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
+
   Phase inner_phase = Phase::Concrete;
   if (auto const_inst_id =
           GetConstantValue(eval_context, SemIR::InstId(inst_id), &inner_phase);
@@ -1096,8 +1100,12 @@ static auto PerformArrayIndex(EvalContext& eval_context, SemIR::ArrayIndex inst)
   // regardless of whether the array itself is constant.
   const auto& index_val = eval_context.ints().Get(index->int_id);
   auto aggregate_type_id = eval_context.GetTypeOfInst(inst.array_id);
-  if (auto array_type =
-          eval_context.types().TryGetAs<SemIR::ArrayType>(aggregate_type_id)) {
+  // The array operand may have a type that adapts an array type, such as
+  // `Core.Array`.
+  if (auto array_type = eval_context.types().TryGetAs<SemIR::ArrayType>(
+          eval_context.types()
+              .GetTransitiveUnqualifiedAdaptedType(aggregate_type_id)
+              .first)) {
     if (auto bound = eval_context.insts().TryGetAs<SemIR::IntValue>(
             array_type->bound_id)) {
       // This awkward call to `getZExtValue` is a workaround for APInt not
@@ -1286,6 +1294,22 @@ static auto PerformCharLiteralSubChar(Context& context, SemIR::InstId lhs_id,
   int32_t result = lhs.value.index - rhs.value.index;
   return MakeIntResult(context, dest_type_id, /*is_signed=*/true,
                        llvm::APInt(32, result, /*isSigned=*/true));
+}
+
+// Forms a constant array type as an evaluation result. Requires that
+// `element_type_id` and `bound_id` are constant.
+static auto MakeArrayTypeResult(Context& context, SemIR::LocId loc_id,
+                                SemIR::InstId element_type_id,
+                                SemIR::InstId bound_id, Phase phase)
+    -> SemIR::ConstantId {
+  auto result = SemIR::ArrayType{
+      .type_id = SemIR::TypeType::TypeId,
+      .bound_id = bound_id,
+      .element_type_inst_id = context.types().GetAsTypeInstId(element_type_id)};
+  if (!ValidateArrayType(context, loc_id, result)) {
+    return SemIR::ErrorInst::ConstantId;
+  }
+  return MakeConstantResult(context, result, phase);
 }
 
 // Forms a constant int type as an evaluation result. Requires that width_id is
@@ -2654,6 +2678,11 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
           phase);
     }
 
+    case SemIR::BuiltinFunctionKind::ArrayMakeType: {
+      return MakeArrayTypeResult(context, loc_id, arg_ids[0], arg_ids[1],
+                                 phase);
+    }
+
     case SemIR::BuiltinFunctionKind::FormMakeType: {
       return context.constant_values().Get(SemIR::FormType::TypeInstId);
     }
@@ -3559,6 +3588,14 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
         builder.Context(loc_id, ResolvingSpecificHere, specific_id);
       });
 
+  // The `declaring_impl_decls` is a global state that modifies the evaluation
+  // of LookupImplWitness. As a global state, it should only affect new
+  // instructions introduced during a given state. When we are evaluating for a
+  // specific, we are resolving existing instructions in the eval block for a
+  // generic. The global state should not apply to anything done while resolving
+  // a specific.
+  auto declaring = std::exchange(context.declaring_impl_decls(), {});
+
   for (auto [i, inst_id, result_id] :
        llvm::enumerate(eval_block, value_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
@@ -3570,6 +3607,9 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
     }
     result_id = context.constant_values().GetInstId(const_id);
   }
+
+  CARBON_CHECK(context.declaring_impl_decls().empty());
+  context.declaring_impl_decls() = std::move(declaring);
 }
 
 // Information about the function call we are currently executing. Unlike

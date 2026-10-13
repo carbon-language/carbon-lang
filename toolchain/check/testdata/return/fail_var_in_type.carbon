@@ -27,7 +27,7 @@ fn Six() -> x { return 6; }
 // CHECK:STDOUT:   %x.patt: %pattern_type.9a5 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT:   %x.var_patt: %pattern_type.9a5 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]

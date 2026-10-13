@@ -13,12 +13,15 @@
 // --- fail_error_in_identifying_require_facet_type.carbon
 library "[[@TEST_NAME]]";
 
-// Identification tries to form the specific interface `K(array(i32, -1))` which
+// Unlike `array(T, N)`, this fails eagerly on an invalid bound.
+fn Array(T: type, N: Core.IntLiteral) -> type = "array.make_type";
+
+// Identification tries to form the specific interface `K(Array(i32, -1))` which
 // is invalid, so the impl as a whole is invalid.
 
 interface K(T: type) {}
 constraint L(N: i32) {
-  require impls K(array(i32, N));
+  require impls K(Array(i32, N));
 }
 constraint J(N: i32) {
   require impls L(N);
@@ -28,7 +31,7 @@ constraint J(N: i32) {
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE-9]]:30: note: array bound of -1 is negative [ArrayBoundNegative]
-// CHECK:STDERR:   require impls K(array(i32, N));
+// CHECK:STDERR:   require impls K(Array(i32, N));
 // CHECK:STDERR:                              ^
 // CHECK:STDERR:
 impl {} as J(-1) {}
@@ -36,19 +39,22 @@ impl {} as J(-1) {}
 // --- fail_error_in_identifying_extend_require_facet_type.carbon
 library "[[@TEST_NAME]]";
 
-// Identification tries to form the specific interface `K(array(i32, -1))` which
+// Unlike `array(T, N)`, this fails eagerly on an invalid bound.
+fn Array(T: type, N: Core.IntLiteral) -> type = "array.make_type";
+
+// Identification tries to form the specific interface `K(Array(i32, -1))` which
 // is invalid, so the impl as a whole is invalid.
 
 interface K(T: type) {}
 constraint J(N: i32) {
-  extend require impls K(array(i32, N));
+  extend require impls K(Array(i32, N));
 }
 
 // CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+7]]:1: error: facet type `J(-1)` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
 // CHECK:STDERR: impl {} as J(-1) {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE-6]]:24: note: array bound of -1 is negative [ArrayBoundNegative]
-// CHECK:STDERR:   extend require impls K(array(i32, N));
+// CHECK:STDERR:   extend require impls K(Array(i32, N));
 // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 impl {} as J(-1) {}
@@ -56,9 +62,12 @@ impl {} as J(-1) {}
 // --- fail_monomorphization_during_period_self_substitution.carbon
 library "[[@TEST_NAME]]";
 
+// Unlike `array(T, N)`, this fails eagerly on an invalid bound.
+fn Array(T: type, N: Core.IntLiteral) -> type = "array.make_type";
+
 interface Y {}
 interface CanFailToMonomorphize(N: Core.IntLiteral) {
-  let Z1: array((), N);
+  let Z1: Array((), N);
   let Z2: type;
 }
 
@@ -85,7 +94,7 @@ fn G(generic T: Y) {
   // CHECK:STDERR:   extend require impls CanFailToMonomorphize(N);
   // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-26]]:21: note: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR:   let Z1: array((), N);
+  // CHECK:STDERR:   let Z1: Array((), N);
   // CHECK:STDERR:                     ^
   // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-12]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z2 impls Y) {}
@@ -97,13 +106,16 @@ fn G(generic T: Y) {
 // --- fail_monomorphization_identify_in_call.carbon
 library "[[@TEST_NAME]]";
 
+// Unlike `array(T, N)`, this fails eagerly on an invalid bound.
+fn Array(T: type, N: Core.IntLiteral) -> type = "array.make_type";
+
 interface Y {}
 interface Z {
   let Z1: type;
 }
 
 constraint S(N: Core.IntLiteral) {
-  extend require impls Z where .Z1 = array((), N);
+  extend require impls Z where .Z1 = Array((), N);
 }
 
 fn F(generic N: Core.IntLiteral, generic _: S(N)) {}
@@ -113,7 +125,7 @@ fn G(generic T: Z) {
   // CHECK:STDERR:   F(-1, T);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_monomorphization_identify_in_call.carbon:[[@LINE-9]]:24: note: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR:   extend require impls Z where .Z1 = array((), N);
+  // CHECK:STDERR:   extend require impls Z where .Z1 = Array((), N);
   // CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_monomorphization_identify_in_call.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn F(generic N: Core.IntLiteral, generic _: S(N)) {}
@@ -125,6 +137,9 @@ fn G(generic T: Z) {
 // --- fail_monomorphization_during_deduction_in_call.carbon
 library "[[@TEST_NAME]]";
 
+// Unlike `array(T, N)`, this fails eagerly on an invalid bound.
+fn Array(T: type, N: Core.IntLiteral) -> type = "array.make_type";
+
 interface Y {}
 interface Z {
   let Z1: type;
@@ -134,17 +149,17 @@ constraint S(N: Core.IntLiteral) {
   extend require impls Z;
 }
 
-fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z1 = array((), N)) {}
+fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z1 = Array((), N)) {}
 
 fn G(generic T: Z) {
-  // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE+10]]:3: error: constructed invalid specific for `S(N) where .(Z.Z1) = array((), N)` from argument [SubstitutingGenericParamType]
+  // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE+10]]:3: error: constructed invalid specific for `S(N) where .(Z.Z1) = <builtin array((), N)>` from argument [SubstitutingGenericParamType]
   // CHECK:STDERR:   F(-1, T);
   // CHECK:STDERR:   ^~~~~~~~
   // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE-6]]:42: note: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR: fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z1 = array((), N)) {}
+  // CHECK:STDERR: fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z1 = Array((), N)) {}
   // CHECK:STDERR:                                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z1 = array((), N)) {}
+  // CHECK:STDERR: fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z1 = Array((), N)) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
   F(-1, T);

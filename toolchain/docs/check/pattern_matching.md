@@ -288,7 +288,7 @@ enum by having separate node kinds `IdentifierNameMaybeBeforeSignature` and
 `IdentifierNameNotBeforeSignature`.
 
 If the parameterized name is a name qualifier (such as the first part of
-`Foo(X:! i32).Bar(y: i32)`), the node immediately after it will be the qualifier
+`Foo(X: i32).Bar(y: i32)`), the node immediately after it will be the qualifier
 node. As of this writing, we bifurcate qualifier nodes into
 `NameQualifierWithParams` and `NameQualifierWithoutParams`, much like we do with
 identifier names, but we don't actually use that information, and instead use
@@ -320,7 +320,7 @@ arguments and parameters).
 For example, consider this function:
 
 ```carbon
-fn F(T:! type, U:! type) -> Core.String;
+fn F(T: type, U: type) -> Core.String;
 ```
 
 The `Call` instruction is a runtime-phase operation, so it notionally runs after

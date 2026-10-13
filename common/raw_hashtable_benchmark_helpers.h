@@ -79,9 +79,8 @@ struct LowZeroBitInt {
   constexpr auto operator<=>(const LowZeroBitInt& rhs) const
       -> std::strong_ordering = default;
 
-  friend auto CarbonHashValue(const LowZeroBitInt& value, uint64_t seed)
-      -> HashCode {
-    return HashValue(value.shifted_value, seed);
+  friend auto CarbonHashValue(const LowZeroBitInt& value) -> HashCode {
+    return HashValue(value.shifted_value);
   }
 
   template <typename H>

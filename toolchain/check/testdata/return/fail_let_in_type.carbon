@@ -50,7 +50,7 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type.9a5 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Six.type: type = fn_type @Six [concrete]

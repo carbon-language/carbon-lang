@@ -246,8 +246,6 @@ def main() -> None:
             "--draft",
             "--label",
             "proposal",
-            "--label",
-            "proposal draft",
             "--repo",
             "carbon-language/carbon-lang",
             "--title",

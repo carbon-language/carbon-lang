@@ -26,6 +26,7 @@
 #include "toolchain/sem_ir/dump.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -421,7 +422,19 @@ struct Worklist {
   }
 
   auto Add(FunctionId function_id) -> void {
-    AddEntity(sem_ir->functions().Get(function_id));
+    const auto& function = sem_ir->functions().Get(function_id);
+    if (!function.name_id.has_value()) {
+      auto [canonical_ir, canonical_decl_id] =
+          GetCanonicalFileAndInstId(sem_ir, function.first_decl_id());
+      llvm::SaveAndRestore in_file(sem_ir, canonical_ir);
+      AddPackage(NameScopeId::Package);
+      AddLibrary(canonical_ir);
+      // TODO: Find a more stable way to assign fingerprints to unnamed
+      // functions.
+      AddInteger(canonical_decl_id.index);
+      return;
+    }
+    AddEntity(function);
   }
 
   auto Add(CppOverloadSetId cpp_overload_set_id) -> void {

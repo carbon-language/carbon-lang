@@ -25,14 +25,14 @@
 
 namespace Carbon::Check {
 
-// Map a Carbon name into a C++ name.
+// Map a Carbon name into a C++ name. An overload set is only imported by
+// looking up an identifier in C++, so its name is always an identifier.
 static auto GetCppName(Context& context, SemIR::NameId name_id)
     -> clang::DeclarationName {
-  // TODO: Some special names should probably use different formatting. In
-  // particular, NameId::CppOperator should probably map back to a
-  // CXXOperatorName.
-  auto name_str = context.names().GetFormatted(name_id);
-  return clang::DeclarationName(&context.ast_context().Idents.get(name_str));
+  auto* identifier_info = GetClangIdentifierInfo(context, name_id);
+  CARBON_CHECK(identifier_info, "non-identifier overload set name {0}",
+               name_id);
+  return clang::DeclarationName(identifier_info);
 }
 
 // Adds the given overload candidates to the candidate set.

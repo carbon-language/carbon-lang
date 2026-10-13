@@ -21,10 +21,14 @@ principle can help achieve consistency across those multiple designs.
 Note that these principles seek to establish both the approaches the project
 wants to pursue, as well as those we want to exclude.
 
+-   [All APIs are library APIs](library_apis_only.md)
 -   [Errors are values](error_handling.md)
+-   [File concatenation](file_concatenation.md)
 -   [Information accumulation](information_accumulation.md)
 -   [Low context-sensitivity](low_context_sensitivity.md)
--   [Prefer providing only one way to do a given thing](one_way.md)
+-   [Namespace cleanliness](namespace_cleanliness.md)
 -   [One static open extension mechanism](static_open_extension.md)
+-   [Prefer providing only one way to do a given thing](one_way.md)
+-   [Progressive disclosure](progressive_disclosure.md)
+-   [Safety strategy](safety_strategy.md)
 -   [Success criteria](success_criteria.md)
--   [File concatenation](file_concatenation.md)

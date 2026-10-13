@@ -305,15 +305,15 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %custom_witness.d0d: <witness> = custom_witness (%Copyable.Op), @Copy.1 [concrete]
 // CHECK:STDOUT:   %Copy.facet.07e: %Copy.type.bd0 = facet_value %Copyable, (%custom_witness.d0d) [concrete]
 // CHECK:STDOUT:   %Copy.specific_fn: <specific function> = specific_function %Copy, @Copy.loc6(%Copy.facet.07e) [concrete]
-// CHECK:STDOUT:   %Wrap.993: type = class_type @Wrap, @Wrap(%Copy.facet.07e) [concrete]
-// CHECK:STDOUT:   %ptr.fa1: type = ptr_type %Wrap.993 [concrete]
-// CHECK:STDOUT:   %Copy.impl_witness.8c2: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%Wrap.993) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.085: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Wrap.993) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.a0b: %ptr.as.Copy.impl.Op.type.085 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet.13d: %Copy.type.bd0 = facet_value %ptr.fa1, (%Copy.impl_witness.8c2) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.c10: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.13d) [concrete]
-// CHECK:STDOUT:   %.85e: type = fn_type_with_self_type %Copy.WithSelf.Op.type.c10, %Copy.facet.13d [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.a0b, @ptr.as.Copy.impl.Op(%Wrap.993) [concrete]
+// CHECK:STDOUT:   %Wrap.e2b: type = class_type @Wrap, @Wrap(%Copy.facet.07e) [concrete]
+// CHECK:STDOUT:   %ptr.3ab: type = ptr_type %Wrap.e2b [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.4cb: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%Wrap.e2b) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.cbd: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Wrap.e2b) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.fca: %ptr.as.Copy.impl.Op.type.cbd = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet.221: %Copy.type.bd0 = facet_value %ptr.3ab, (%Copy.impl_witness.4cb) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.933: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.221) [concrete]
+// CHECK:STDOUT:   %.7ba: type = fn_type_with_self_type %Copy.WithSelf.Op.type.933, %Copy.facet.221 [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.fca, @ptr.as.Copy.impl.Op(%Wrap.e2b) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -336,14 +336,14 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   return %Copy.call to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @EqualWitnesses(%p.param: %ptr.fa1) -> out %return.param: %ptr.fa1 {
+// CHECK:STDOUT: fn @EqualWitnesses(%p.param: %ptr.3ab) -> out %return.param: %ptr.3ab {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %p.ref: %ptr.fa1 = name_ref p, %p
-// CHECK:STDOUT:   %impl.elem0: %.85e = impl_witness_access constants.%Copy.impl_witness.8c2, element0 [concrete = constants.%ptr.as.Copy.impl.Op.a0b]
+// CHECK:STDOUT:   %p.ref: %ptr.3ab = name_ref p, %p
+// CHECK:STDOUT:   %impl.elem0: %.7ba = impl_witness_access constants.%Copy.impl_witness.4cb, element0 [concrete = constants.%ptr.as.Copy.impl.Op.fca]
 // CHECK:STDOUT:   %bound_method.loc20_10.1: <bound method> = bound_method %p.ref, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Wrap.993) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Wrap.e2b) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc20_10.2: <bound method> = bound_method %p.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.fa1 = call %bound_method.loc20_10.2(%p.ref)
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.3ab = call %bound_method.loc20_10.2(%p.ref)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

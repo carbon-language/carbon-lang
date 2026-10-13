@@ -48,7 +48,7 @@ jobs:
               - 'WORKSPACE'
               - 'bazel/**'
               - 'github_tools/**'
-              - 'proposal/scripts/**'
+              - 'proposals/scripts/**'
               - 'scripts/**'
 
             # Here we only want the `proposal` label when a *new* file is added
@@ -111,12 +111,12 @@ jobs:
 
       # Note that this is not a path-based label, but an *author* based label,
       # and it applies orthogonally to the others.
-      - id: automated
+      - id: bot
         if:
           contains(fromJSON('["CarbonInfraBot", "dependabot"]'),
           github.event.pull_request.user.login)
         run: |
-          gh pr edit "${PR}" --add-label "automated" --repo carbon-language/carbon-lang
+          gh pr edit "${PR}" --add-label "bot" --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}

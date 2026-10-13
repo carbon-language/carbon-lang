@@ -67,7 +67,11 @@ static auto BranchAndStartLoopBody(Context& context, Parse::NodeId node_id,
       {.break_target = loop_exit_id,
        .break_depth = context.scope_stack().cleanup_scope_depth(),
        .continue_target = loop_header_id,
-       .continue_depth = continue_depth});
+       .continue_depth = continue_depth,
+       .return_scope_decl_id =
+           context.scope_stack().IsInFunctionScope()
+               ? context.scope_stack().GetReturnScopeDeclId()
+               : SemIR::InstId::None});
 }
 
 // Finishes emitting the body for a `while`-like loop. Adds a back-edge to the
@@ -218,20 +222,15 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   auto loop_header_id = StartLoopHeader(context, start_node_id);
   auto continue_depth = context.scope_stack().ambient_cleanup_scope_depth();
 
-  // Call `<range>.(Iterate.Next)(&cursor)`.
-  auto cursor_type_inst_id = context.types().GetTypeInstId(cursor_type_id);
-  auto cursor_addr_id = AddInst<SemIR::AddrOf>(
-      context, node_id,
-      {.type_id = GetPointerType(context, cursor_type_inst_id),
-       .lvalue_id = cursor_var_id});
-  // A range that implements neither fails both lookups; reporting the second
-  // would say the same thing about the same expression a second time.
+  // Call `<range>.(Iterate.Next)(ref cursor)`.
+  // Don't diagnose if the call to `Iterate.NewCursor` failed, since this call
+  // will likely also fail for the same reason.
   // TODO: We should only perform the impl lookup once.
   auto element_id =
       BuildBinaryOperator(context, node_id,
                           {.interface_name = CoreIdentifier::Iterate,
                            .op_name = CoreIdentifier::Next},
-                          range_id, cursor_addr_id,
+                          range_id, cursor_var_id,
                           /*diagnose=*/cursor_id != SemIR::ErrorInst::InstId);
   // We need to convert away from an initializing expression in order to call
   // `HasValue` and then separately pattern-match against the element.
@@ -276,7 +275,9 @@ auto HandleParseNode(Context& context, Parse::ForStatementId node_id) -> bool {
 auto HandleParseNode(Context& context, Parse::BreakStatementStartId node_id)
     -> bool {
   auto& stack = context.break_continue_stack();
-  if (stack.empty()) {
+  if (stack.empty() || !context.scope_stack().IsInFunctionScope() ||
+      stack.back().return_scope_decl_id !=
+          context.scope_stack().GetReturnScopeDeclId()) {
     CARBON_DIAGNOSTIC(BreakOutsideLoop, Error,
                       "`break` can only be used in a loop");
     context.emitter().Emit(node_id, BreakOutsideLoop);
@@ -301,7 +302,9 @@ auto HandleParseNode(Context& /*context*/, Parse::BreakStatementId /*node_id*/)
 auto HandleParseNode(Context& context, Parse::ContinueStatementStartId node_id)
     -> bool {
   auto& stack = context.break_continue_stack();
-  if (stack.empty()) {
+  if (stack.empty() || !context.scope_stack().IsInFunctionScope() ||
+      stack.back().return_scope_decl_id !=
+          context.scope_stack().GetReturnScopeDeclId()) {
     CARBON_DIAGNOSTIC(ContinueOutsideLoop, Error,
                       "`continue` can only be used in a loop");
     context.emitter().Emit(node_id, ContinueOutsideLoop);

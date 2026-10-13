@@ -10,6 +10,7 @@
 #include "common/raw_hashtable_benchmark_helpers.h"
 #include "common/set.h"
 #include "llvm/ADT/DenseSet.h"
+#include "testing/base/benchmark_helpers.h"
 
 namespace Carbon {
 namespace {
@@ -204,7 +205,7 @@ static void BM_SetContainsHitPtr(benchmark::State& state) {
         // We block optimizing `i` as that has proven both more effective at
         // blocking the loop from being optimized away and avoiding disruption
         // of the generated code that we're benchmarking.
-        benchmark::DoNotOptimize(i);
+        Testing::DoNotOptimize(i);
 
         bool result = s.BenchContains(lookup_keys[i]);
         CARBON_DCHECK(result);
@@ -234,7 +235,7 @@ static void BM_SetContainsMissPtr(benchmark::State& state) {
   RunLoopInRandomLayout(state, [&] {
     while (state.KeepRunningBatch(lookup_keys_size)) {
       for (ssize_t i = 0; i < lookup_keys_size;) {
-        benchmark::DoNotOptimize(i);
+        Testing::DoNotOptimize(i);
 
         bool result = s.BenchContains(lookup_keys[i]);
         CARBON_DCHECK(!result);
@@ -272,7 +273,7 @@ static void BM_SetLookupHitPtr(benchmark::State& state) {
   RunLoopInRandomLayout(state, [&] {
     while (state.KeepRunningBatch(lookup_keys_size)) {
       for (ssize_t i = 0; i < lookup_keys_size;) {
-        benchmark::DoNotOptimize(i);
+        Testing::DoNotOptimize(i);
 
         bool result = s.BenchLookup(lookup_keys[i]);
         CARBON_DCHECK(result);
@@ -314,7 +315,7 @@ static void BM_SetEraseInsertHitPtr(benchmark::State& state) {
   RunLoopInRandomLayout(state, [&] {
     while (state.KeepRunningBatch(lookup_keys_size)) {
       for (ssize_t i = 0; i < lookup_keys_size;) {
-        benchmark::DoNotOptimize(i);
+        Testing::DoNotOptimize(i);
 
         s.BenchErase(lookup_keys[i]);
         benchmark::ClobberMemory();
@@ -373,7 +374,7 @@ static void BM_SetInsertSeq(benchmark::State& state) {
   ssize_t i = 0;
   RunLoopInRandomLayout(state, [&] {
     for (auto _ : state) {
-      benchmark::DoNotOptimize(i);
+      Testing::DoNotOptimize(i);
 
       SetWrapperT s;
       for (auto k : keys) {
@@ -444,7 +445,7 @@ static void BM_SetIterate(benchmark::State& state) {
         // the entries can be optimized away.
         sum += ValueToBool(k);
       });
-      benchmark::DoNotOptimize(sum);
+      Testing::DoNotOptimize(sum);
     }
   });
 
