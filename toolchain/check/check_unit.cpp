@@ -19,6 +19,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
@@ -648,11 +649,24 @@ auto CheckUnit::FinishRun() -> void {
   }
 
   if (num_resolution_check_cycles == max_resolution_check_cycles) {
+    // Point at the code that queued the next C++ instantiation, because that
+    // is what needed another pass. If nothing is queued, point at the top of
+    // the file.
+    auto loc_id =
+        SemIR::LocId(*(context_.sem_ir().parse_tree().postorder().begin()));
+    auto* cpp_context = context_.cpp_context();
+    if (cpp_context && !cpp_context->sema().PendingInstantiations.empty()) {
+      loc_id = AddImportIRInst(
+          context_.sem_ir(),
+          cpp_context->sema().PendingInstantiations.front().second);
+    }
     context_.TODO(
-        SemIR::LocId(*(context_.sem_ir().parse_tree().postorder().begin())),
-        llvm::formatv(
-            "maximum depth for bidirectional Carbon/C++ interop is {}",
-            max_resolution_check_cycles));
+        loc_id, llvm::formatv(
+                    "maximum depth for bidirectional Carbon/C++ interop is {}",
+                    max_resolution_check_cycles));
+    if (cpp_context) {
+      cpp_context->sema().PendingInstantiations.clear();
+    }
   }
 
   // This only emits diagnostics, so it never creates work for the loop above.
