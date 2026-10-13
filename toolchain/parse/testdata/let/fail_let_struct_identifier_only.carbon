@@ -21,7 +21,7 @@ let {s};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 's'
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '}' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '}' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern 's' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern 's' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   ├─LetDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''

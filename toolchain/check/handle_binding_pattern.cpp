@@ -42,9 +42,11 @@ static auto GetLeafBindingPatternInstKind(Parse::NodeKind node_kind,
     case Parse::NodeKind::CompileTimeBindingPattern:
       return SemIR::InstKind::SymbolicBindingPattern;
     case Parse::NodeKind::LetBindingPattern:
+    case Parse::NodeKind::StructPatternFieldLetBindingPattern:
       return is_ref ? SemIR::InstKind::RefBindingPattern
                     : SemIR::InstKind::ValueBindingPattern;
     case Parse::NodeKind::VarBindingPattern:
+    case Parse::NodeKind::StructPatternFieldVarBindingPattern:
       return SemIR::InstKind::RefBindingPattern;
     default:
       CARBON_FATAL("Unexpected node kind: {0}", node_kind);
@@ -421,7 +423,9 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
     case FullPatternStack::Kind::ExplicitParamList: {
       bool is_deduced = context.full_pattern_stack().CurrentKind() ==
                         FullPatternStack::Kind::ImplicitParamList;
-      bool is_var = node_kind == Parse::NodeKind::VarBindingPattern;
+      bool is_var =
+          node_kind == Parse::NodeKind::VarBindingPattern ||
+          node_kind == Parse::NodeKind::StructPatternFieldVarBindingPattern;
       if (!IsValidParamForIntroducer(context, node_id, name_id, introducer.kind,
                                      is_generic, is_deduced, is_var)) {
         if (name_id != SemIR::NameId::Underscore) {
@@ -435,7 +439,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
       // Using `AsConcreteType` here causes `fn F[var self: Self]();`
       // to fail since `Self` is an incomplete type.
-      if (node_kind == Parse::NodeKind::VarBindingPattern) {
+      if (is_var) {
         auto [unqualified_type_id, qualifiers] =
             context.types().GetUnqualifiedTypeAndQualifiers(
                 type_expr.type_component_id);
@@ -463,6 +467,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         // enclosing `var` pattern is), or it's a compile-time binding pattern
         // (because then it's not passed to the `Call` inst).
         case Parse::NodeKind::LetBindingPattern:
+        case Parse::NodeKind::StructPatternFieldLetBindingPattern:
         case Parse::NodeKind::FormBindingPattern: {
           auto param_pattern_id = SemIR::InstId::None;
           auto pattern_type_id =
@@ -497,6 +502,7 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
           break;
         }
         case Parse::NodeKind::VarBindingPattern:
+        case Parse::NodeKind::StructPatternFieldVarBindingPattern:
           result_inst_id = make_binding_pattern(SemIR::RefBindingPattern::Kind);
           break;
         case Parse::NodeKind::CompileTimeBindingPattern:
@@ -506,6 +512,20 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         default:
           CARBON_FATAL("Unexpected node kind {0}", node_kind);
       }
+
+      if (node_kind == Parse::NodeKind::StructPatternFieldLetBindingPattern ||
+          node_kind == Parse::NodeKind::StructPatternFieldVarBindingPattern) {
+        auto type_inst_id =
+            context.types().GetTypeInstId(type_expr.type_component_id);
+
+        context.struct_type_fields_stack().AppendToTop(
+            {.name_id = name_id, .type_inst_id = type_inst_id});
+
+        // Put the name node back on the stack for inspection when handling the
+        // struct pattern.
+        context.node_stack().Push(name_node, name_id);
+      }
+
       context.node_stack().Push(node_id, result_inst_id);
       break;
     }
@@ -523,7 +543,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
         builder.Context(type_expr.node_id, IncompleteTypeInBindingDecl,
                         type_expr.inst_id);
       };
-      if (node_kind == Parse::NodeKind::VarBindingPattern) {
+      if (node_kind == Parse::NodeKind::VarBindingPattern ||
+          node_kind == Parse::NodeKind::StructPatternFieldVarBindingPattern) {
         if (!RequireConcreteType(
                 context, type_expr.type_component_id, type_expr.node_id,
                 incomplete_diagnostic_context, abstract_diagnostic_context)) {
@@ -539,7 +560,8 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
 
       auto binding_pattern_id = make_binding_pattern(
           GetLeafBindingPatternInstKind(node_kind, is_ref));
-      if (node_kind == Parse::NodeKind::VarBindingPattern) {
+      if (node_kind == Parse::NodeKind::VarBindingPattern ||
+          node_kind == Parse::NodeKind::StructPatternFieldVarBindingPattern) {
         CARBON_CHECK(!is_generic);
 
         if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Returned)) {
@@ -553,6 +575,18 @@ static auto HandleAnyBindingPattern(Context& context, Parse::NodeId node_id,
               context, introducer.modifier_node_id(ModifierOrder::Decl),
               type_expr.node_id, type_expr.type_component_id, bind_id, name_id);
         }
+      }
+      if (node_kind == Parse::NodeKind::StructPatternFieldLetBindingPattern ||
+          node_kind == Parse::NodeKind::StructPatternFieldVarBindingPattern) {
+        auto type_inst_id =
+            context.types().GetTypeInstId(type_expr.type_component_id);
+
+        context.struct_type_fields_stack().AppendToTop(
+            {.name_id = name_id, .type_inst_id = type_inst_id});
+
+        // Put the name node back on the stack for inspection when handling the
+        // struct pattern.
+        context.node_stack().Push(name_node, name_id);
       }
       context.node_stack().Push(node_id, binding_pattern_id);
       break;
@@ -576,6 +610,22 @@ auto HandleParseNode(Context& context, Parse::LetBindingPatternId node_id)
   return HandleAnyBindingPattern(context, node_id,
                                  Parse::NodeKind::LetBindingPattern,
                                  Parse::NodeKind::BindingPatternTypeStart);
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::StructPatternFieldLetBindingPatternId node_id)
+    -> bool {
+  return HandleAnyBindingPattern(
+      context, node_id, Parse::NodeKind::StructPatternFieldLetBindingPattern,
+      Parse::NodeKind::BindingPatternTypeStart);
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::StructPatternFieldVarBindingPatternId node_id)
+    -> bool {
+  return HandleAnyBindingPattern(
+      context, node_id, Parse::NodeKind::StructPatternFieldVarBindingPattern,
+      Parse::NodeKind::BindingPatternTypeStart);
 }
 
 auto HandleParseNode(Context& context, Parse::SelfBindingPatternId node_id)
