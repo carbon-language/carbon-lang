@@ -114,6 +114,12 @@ cc_test(
 )
 
 cc_library(
+    name = "checked_save_and_restore",
+    hdrs = ["checked_save_and_restore.h"],
+    deps = [":check"],
+)
+
+cc_library(
     name = "concepts",
     hdrs = ["concepts.h"],
 )
@@ -695,12 +701,6 @@ sh_test(
         # The `$$` is repeated for Bazel escaping of `$`.
         "--benchmark_filter=^[^/]*/[1-9][0-9]{0,2}(/[0-9]+)?$$",
     ],
-)
-
-cc_library(
-    name = "set_and_restore",
-    hdrs = ["set_and_restore.h"],
-    deps = [":check"],
 )
 
 cc_library(

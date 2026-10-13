@@ -9,11 +9,10 @@
 #include <optional>
 #include <utility>
 
+#include "common/checked_save_and_restore.h"
 #include "common/raw_string_ostream.h"
-#include "common/set_and_restore.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/ConvertUTF.h"
-#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
@@ -3577,8 +3576,8 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   }
   specific.SetValueBlock(region, value_block_id);
 
-  SetAndRestore access_context(context.access_context(),
-                               FindAccessContext(context, generic));
+  CheckedSaveAndRestore access_context(context.access_context(),
+                                       FindAccessContext(context, generic));
 
   // The `declaring_impl_decls` is a global state that modifies the evaluation
   // of LookupImplWitness. As a global state, it should only affect new
@@ -3586,7 +3585,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   // specific, we are resolving existing instructions in the eval block for a
   // generic. The global state should not apply to anything done while resolving
   // a specific.
-  SetAndRestore declaring(context.declaring_impl_decls(), {});
+  CheckedSaveAndRestore declaring(context.declaring_impl_decls(), {});
 
   EvalContext eval_context(&context, loc_id, specific_id);
 

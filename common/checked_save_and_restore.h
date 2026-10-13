@@ -2,8 +2,10 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_COMMON_SET_AND_RESTORE_H_
-#define CARBON_COMMON_SET_AND_RESTORE_H_
+#ifndef CARBON_COMMON_CHECKED_SAVE_AND_RESTORE_H_
+#define CARBON_COMMON_CHECKED_SAVE_AND_RESTORE_H_
+
+#include <utility>
 
 #include "common/check.h"
 
@@ -16,14 +18,14 @@ namespace Carbon {
 // The value must be copyable in order to compare with the new value at the time
 // the SetAndRestore is destroyed.
 template <typename T>
-class [[nodiscard]] SetAndRestore {
+class [[nodiscard]] CheckedSaveAndRestore {
  public:
-  SetAndRestore(T& var, const T& new_value)
+  CheckedSaveAndRestore(T& var, const T& new_value)
       : var_(&var),
         new_value_(new_value),
         orig_value_(std::exchange(var, new_value_)) {}
 
-  ~SetAndRestore() {
+  ~CheckedSaveAndRestore() {
     CARBON_CHECK(*var_ == new_value_);
     *var_ = std::move(orig_value_);
   }
@@ -35,10 +37,10 @@ class [[nodiscard]] SetAndRestore {
 };
 
 template <typename T>
-SetAndRestore(T&, const T&) -> SetAndRestore<T>;
+CheckedSaveAndRestore(T&, const T&) -> CheckedSaveAndRestore<T>;
 template <typename T>
-SetAndRestore(T&, T&&) -> SetAndRestore<T>;
+CheckedSaveAndRestore(T&, T&&) -> CheckedSaveAndRestore<T>;
 
 }  // namespace Carbon
 
-#endif  // CARBON_COMMON_SET_AND_RESTORE_H_
+#endif  // CARBON_COMMON_CHECKED_SAVE_AND_RESTORE_H_
