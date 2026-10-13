@@ -706,7 +706,7 @@ class Stringifier {
     step_stack_->Push(fn_name, " in ", inst.self_id, ">");
   }
 
-  auto StringifyInst(InstId /*inst_id*/, GenericClassType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, ParameterizedClassType inst) -> void {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
     *out_ << "<type of ";
     step_stack_->Push(StepStack::QualifiedNameItem{class_info.parent_scope_id,

@@ -85,8 +85,8 @@ git_override(
     build_file_content = "# empty",
     # We pin to specific upstream commits and try to track top-of-tree
     # reasonably closely rather than pinning to a specific release.
-    # HEAD as of 2026-09-25.
-    commit = "6ec87e7ec4b3ca6f665a02e05d0e5fe9c37cd6cc",
+    # HEAD as of 2026-10-08.
+    commit = "b08e005995ed29a2f89aa9a3f599a9d45db65523",
     patch_cmds = ["echo \"module(name='llvm-raw')\" > MODULE.bazel"],
     patch_strip = 1,
     patches = [

@@ -122,9 +122,10 @@ static auto ScopesMatch(Context& context, const SemIR::Impl& new_impl,
         }
         return ImplRedeclType::Mismatch;
       }
-      case CARBON_KIND(SemIR::GenericClassType new_scope): {
+      case CARBON_KIND(SemIR::ParameterizedClassType new_scope): {
         if (auto prev_scope =
-                context.insts().TryGetAs<SemIR::GenericClassType>(prev_id)) {
+                context.insts().TryGetAs<SemIR::ParameterizedClassType>(
+                    prev_id)) {
           if (new_scope.class_id == prev_scope->class_id) {
             return ImplRedeclType::ValidRedecl;
           }

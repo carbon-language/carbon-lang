@@ -56,7 +56,7 @@ fn F(){
 // CHECK:STDOUT:   %pattern_type.dab: type = pattern_type Core.FloatLiteral [concrete]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [concrete]
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
+// CHECK:STDOUT:   %Float.type: type = parameterized_class_name_type @Float [concrete]
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
