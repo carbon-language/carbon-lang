@@ -191,8 +191,8 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
         // type, but the specific also contains the callable's type which is one
         // of these.
         CARBON_KIND_SWITCH(context.types().GetAsInst(type.type_id)) {
-          case CARBON_KIND(SemIR::GenericClassType class_type): {
-            auto class_id = class_type.class_id;
+          case CARBON_KIND(SemIR::ParameterizedClassType param_class_type): {
+            auto class_id = param_class_type.class_id;
             auto inst_id = context.classes().Get(class_id).first_owning_decl_id;
             if (IsSameLibrary(context, inst_id)) {
               return true;

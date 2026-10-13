@@ -11,10 +11,7 @@ the grammar in this repository actually produces rather than whatever an editor
 looked like when someone last took a screenshot by hand.
 
 The SVG holds the source as text rather than as outlines, so whatever displays
-it lays the text out and draws the glyphs; nothing here rasterizes. Colors are
-VS Code's Dark+. A scope the theme does not style resolves outward through the
-scope stack, which is what makes a string's quotes take the string color and a
-comment's `//` take the comment color.
+it lays the text out and draws the glyphs; nothing here rasterizes.
 """
 
 __copyright__ = """
@@ -24,9 +21,11 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
+import html
+import itertools
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Iterator, Optional
 
 import tmlanguage
 
@@ -36,39 +35,97 @@ _GRAMMAR_PATH = (
     Path(__file__).resolve().parents[1] / "vscode" / "carbon.tmLanguage.json"
 )
 
-# VS Code's Dark+, keyed by the selectors the theme itself uses. Matching is by
-# longest dotted prefix, as a real theme does, so this stays correct for any
-# grammar rather than only the scope names in use today.
-_THEME = {
-    "comment": "#6a9955",
-    "constant.character.escape": "#d7ba7d",
-    "constant.language": "#569cd6",
-    "constant.numeric": "#b5cea8",
-    "entity.name.function": "#dcdcaa",
-    "entity.name.namespace": "#4ec9b0",
-    "entity.name.tag": "#569cd6",
-    "entity.name.type": "#4ec9b0",
-    "keyword.control": "#c586c0",
-    "keyword.operator": "#d4d4d4",
-    "keyword.other": "#569cd6",
-    "meta.embedded": "#d4d4d4",
-    "storage.modifier": "#569cd6",
-    "storage.type": "#569cd6",
-    "string": "#ce9178",
-    "support.class": "#4ec9b0",
-    "support.function": "#dcdcaa",
-    "support.type": "#4ec9b0",
-    "support.type.property-name": "#9cdcfe",
-    "support.variable": "#9cdcfe",
-    "variable.language": "#569cd6",
-    "variable.other": "#9cdcfe",
-    "variable.other.enummember": "#4fc1ff",
-    "variable.parameter": "#9cdcfe",
+# A theme built for this grammar rather than taken from an editor. Each family
+# of related scopes gets one color, and bold, italic, and underline distinguish
+# the scopes within a family. Every scope the grammar picks from context renders
+# differently, so a change to what it scopes is visible in the rendering. Scopes
+# that follow from the spelling alone, such as a bracket's shape, can share a
+# rendering, since the text already shows them. A scope with no entry of its own
+# takes its family's. The colors are Catppuccin Mocha's.
+_COLORS = {
+    "comment": "#7f849c",
+    "punctuation.definition.comment": "#7f849c",
+    "keyword.other.directive": "#7f849c",
+    "storage": "#cba6f7",
+    "constant.language": "#cba6f7",
+    "keyword.control": "#f38ba8",
+    "keyword.operator": "#94e2d5",
+    "keyword.other": "#94e2d5",
+    "punctuation": "#74c7ec",
+    "entity.name.type": "#f9e2af",
+    "support.type": "#f9e2af",
+    "support.class": "#f9e2af",
+    "entity.other.inherited-class": "#f9e2af",
+    "entity.name.namespace": "#f5e0dc",
+    "entity.name.scope-resolution": "#f5e0dc",
+    "entity.name.tag": "#f5e0dc",
+    "entity.name.function": "#89b4fa",
+    "support.function": "#89b4fa",
+    "variable": "#cdd6f4",
+    # Members of something else: a field or other member read through `.` or
+    # `->`, and a choice's alternatives.
+    "variable.other.property": "#eba0ac",
+    "variable.other.enummember": "#eba0ac",
+    "string": "#a6e3a1",
+    "constant.character.escape": "#f5c2e7",
+    "constant.numeric": "#fab387",
+    # Inline C++ is highlighted by the C++ grammar, so here it gets the color of
+    # unscoped text.
+    "meta.embedded": "#a6adc8",
 }
 
-_BACKGROUND = "#1f1f1f"
-_FOREGROUND = "#d4d4d4"
-_GUTTER = "#6e7681"
+# A theme resolves the font style separately from the color, so a scope takes
+# its color from its family and its style from its own entry. An empty style
+# clears one an enclosing scope set, which keeps an escape non-italic inside an
+# italic single-quoted string.
+_STYLES = {
+    "comment": "italic",
+    "punctuation.definition.comment": "",
+    "keyword.other.directive": "bold",
+    "storage.modifier": "italic",
+    "constant.language": "bold",
+    "keyword.other": "italic",
+    "keyword.operator.type.pointer": "bold",
+    "punctuation.terminator": "bold",
+    "punctuation.definition.string": "italic",
+    "punctuation.definition.raw-identifier": "bold italic",
+    "support.type": "italic",
+    "support.class": "bold",
+    "entity.name.type.class": "bold italic",
+    "entity.other.inherited-class": "underline",
+    "entity.name.namespace.library": "bold",
+    "entity.name.scope-resolution": "bold italic",
+    "entity.name.tag": "italic",
+    "entity.name.function.definition": "bold",
+    "entity.name.function.member": "italic",
+    "support.function": "bold italic",
+    "variable.parameter": "italic",
+    "variable.language": "bold",
+    "variable.other.constant": "bold italic",
+    "variable.other.property": "italic",
+    "variable.other.enummember": "bold",
+    "string.quoted.single": "italic",
+    "string.quoted.triple": "bold",
+    "constant.character.escape": "",
+    "constant.numeric.hex": "italic",
+    "constant.numeric.binary": "bold",
+    "constant.numeric.octal": "bold italic",
+    "meta.embedded": "italic",
+}
+
+# The four font styles a theme can name, as SVG presentation attributes.
+_STYLE_ATTRS = {
+    "italic": ' font-style="italic"',
+    "bold": ' font-weight="bold"',
+    "underline": ' text-decoration="underline"',
+    "strikethrough": ' text-decoration="line-through"',
+}
+
+_BACKGROUND = "#1e1e2e"
+# Unscoped text. It is dimmer than any scope's color, so text the grammar misses
+# stands out.
+_FOREGROUND = "#a6adc8"
+_GUTTER = "#6c7086"
 # Whatever monospace font the viewer has: nothing can be fetched, because
 # GitHub serves SVG under `default-src 'none'` and a web font would be blocked.
 # The text simply flows, so the font's own metrics lay each line out.
@@ -84,55 +141,56 @@ _DESCENT = 5
 _PAD = 12
 
 
-def _color_for(scopes: list[str]) -> str:
-    """Resolves a scope stack to a color, innermost scope first.
+def _select(table: dict[str, str], scopes: list[str], default: str) -> str:
+    """Resolves a scope stack against one table, innermost scope first.
 
-    Within a scope the longest matching prefix wins, so that a selector such as
-    `variable.other.enummember` beats `variable.other`. A scope the theme does
-    not style resolves outward to its enclosing scope, which is what gives a
-    string's quotes the string color.
+    Within a scope the longest matching prefix wins, so a selector such as
+    `keyword.other.directive` beats `keyword.other`. A scope the table names at
+    no prefix falls back to its enclosing scope, as a theme does.
     """
     for scope in reversed(scopes):
-        parts = scope.split(".")
-        for end in range(len(parts), 0, -1):
-            color = _THEME.get(".".join(parts[:end]))
-            if color:
-                return color
-    return _FOREGROUND
+        while scope:
+            if scope in table:
+                return table[scope]
+            scope = scope.rpartition(".")[0]
+    return default
 
 
-def _escape(text: str) -> str:
-    """Escapes source text for an SVG text node, as one would for HTML."""
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+def _span_for(scopes: list[str]) -> str:
+    """Resolves a scope stack to the attributes its `tspan` carries."""
+    attrs = "".join(
+        _STYLE_ATTRS[word]
+        for word in _select(_STYLES, scopes, "").split()
+        if word in _STYLE_ATTRS
+    )
+    return f'fill="{_select(_COLORS, scopes, _FOREGROUND)}"{attrs}'
 
 
-def _runs(colors: list[str]) -> list[tuple[int, int, str]]:
-    """Merges a per-character color list into `(start, end, color)` runs."""
-    runs: list[tuple[int, int, str]] = []
-    for index, color in enumerate(colors):
-        if runs and runs[-1][2] == color:
-            runs[-1] = (runs[-1][0], index + 1, color)
-        else:
-            runs.append((index, index + 1, color))
-    return runs
+def _runs(spans: list[str]) -> Iterator[tuple[int, int, str]]:
+    """Merges a per-character attribute list into `(start, end, attrs)` runs."""
+    end = 0
+    for attrs, run in itertools.groupby(spans):
+        start, end = end, end + len(list(run))
+        yield start, end, attrs
 
 
 def render(grammar: tmlanguage.Grammar, source: str) -> str:
     """Renders a Carbon source as a standalone SVG document."""
     lines = tmlanguage.split_lines(source)
-    colored = [[_FOREGROUND] * len(line) for line in lines]
+    plain = f'fill="{_FOREGROUND}"'
+    styled = [[plain] * len(line) for line in lines]
     for token in tmlanguage.tokenize(grammar, source):
-        color = _color_for(token.scopes)
-        row = colored[token.line]
+        attrs = _span_for(token.scopes)
+        row = styled[token.line]
         # A token runs one past the line, over the newline it was tokenized
-        # with, and there is no column there to color.
+        # with, and there is no column there to style.
         for column in range(token.start, min(token.end, len(row))):
-            row[column] = color
+            row[column] = attrs
 
     # Trailing blank lines would only pad the bottom of the image.
     while lines and not lines[-1].strip():
         lines.pop()
-        colored.pop()
+        styled.pop()
 
     digits = len(str(len(lines))) if lines else 1
     longest = max((len(line) for line in lines), default=0)
@@ -155,8 +213,9 @@ def render(grammar: tmlanguage.Grammar, source: str) -> str:
         spans = [
             f'<tspan fill="{_GUTTER}">{str(linenum + 1).rjust(digits)} </tspan>'
         ] + [
-            f'<tspan fill="{color}">{_escape(linetext[start:end])}</tspan>'
-            for start, end, color in _runs(colored[linenum])
+            f"<tspan {attrs}>"
+            f"{html.escape(linetext[start:end], quote=False)}</tspan>"
+            for start, end, attrs in _runs(styled[linenum])
         ]
         out.append(
             f'<text style="white-space:pre" x="{_PAD}" y="{baseline}">'

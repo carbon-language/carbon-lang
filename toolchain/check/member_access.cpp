@@ -125,6 +125,13 @@ auto GetHighestAllowedAccess(Context& context,
               SemIR::NameScopeId::AllowHighestAccessLevel) {
         return SemIR::AccessKind::Private;
       }
+      auto& access_context_scope =
+          context.name_scopes().Get(access_context_scope_id);
+      auto access_const_id =
+          context.constant_values().Get(access_context_scope.inst_id());
+      if (class_info.friend_scopes.Lookup(access_const_id)) {
+        return SemIR::AccessKind::Private;
+      }
 
       const auto& scope = context.name_scopes().Get(access_context_scope_id);
       access_context_scope_id = scope.parent_scope_id();

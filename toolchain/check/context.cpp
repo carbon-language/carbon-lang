@@ -79,8 +79,7 @@ auto Context::VerifyOnFinish() const -> void {
 
 #ifndef NDEBUG
   if (auto verify = sem_ir_->Verify(); !verify.ok()) {
-    CARBON_FATAL("{0}Built invalid semantics IR: {1}\n", sem_ir_,
-                 verify.error());
+    CARBON_FATAL("Built invalid SemIR: {1}\n", verify.error());
   }
 #endif
 }

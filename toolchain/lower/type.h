@@ -5,6 +5,8 @@
 #ifndef CARBON_TOOLCHAIN_LOWER_TYPE_H_
 #define CARBON_TOOLCHAIN_LOWER_TYPE_H_
 
+#include <cstdint>
+
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/IR/DebugInfoMetadata.h"
@@ -21,6 +23,23 @@ struct FunctionInContext {
   FileContext* context;
   SemIR::FunctionId function_id;
   SemIR::SpecificId specific_id;
+};
+
+// How a lowered function returns its result.
+enum class ReturnKind : uint8_t {
+  // The function returns `void`, either because it has no return type or
+  // because the returned value has no representation.
+  None,
+  // The function is the entry point, which returns an `i32` exit code even
+  // though it has no declared return type.
+  EntryPointInt32,
+  // The function returns the result by copy, as an LLVM return value.
+  ByCopy,
+  // The function returns a pointer to the result, as an LLVM return value.
+  ByReference,
+  // The function initializes the result in a caller-provided `sret` parameter
+  // and returns `void`.
+  InPlace,
 };
 
 // Information used to build a FunctionInfo in FileContext.
@@ -46,6 +65,9 @@ struct FunctionTypeInfo {
   // When `return_param_id` is not `None`, the corresponding lowered parameter
   // should be given an `sret` attribute with this type.
   llvm::Type* sret_type = nullptr;
+
+  // How the lowered function returns its result.
+  ReturnKind return_kind = ReturnKind::None;
 
   // Whether the function type information is inexact, because some component
   // type was incomplete.

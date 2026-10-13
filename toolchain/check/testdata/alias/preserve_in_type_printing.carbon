@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/array.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -31,8 +31,9 @@ fn G() -> A* { return; }
 // CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+2]]:11-18: note: return type of function is `const A*` [ReturnTypeHereNote]
 // CHECK:STDERR:
 fn H() -> const A* { return; }
+// TODO: Preserve type sugar in generic arguments, such as for `Core.Array`.
 // CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+3]]:26-32: error: missing return value [ReturnStatementMissingExpr]
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+2]]:11-22: note: return type of function is `array(A, 42)` [ReturnTypeHereNote]
+// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+2]]:11-22: note: return type of function is `array(C, 42)` [ReturnTypeHereNote]
 // CHECK:STDERR:
 fn I() -> array(A, 42) { return; }
 

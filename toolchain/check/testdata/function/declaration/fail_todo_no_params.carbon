@@ -47,7 +47,7 @@ fn A[] -> ();
 library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+4]]:1-7: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+2]]:6-7: error: semantics TODO: `HandleTerseBodyArrow` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_arrow_body.carbon:[[@LINE+2]]:1-10: error: semantics TODO: `HandleFunctionTerseDefinition` [SemanticsTodo]
 // CHECK:STDERR:
 fn A => 0;
 

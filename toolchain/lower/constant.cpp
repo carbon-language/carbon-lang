@@ -182,15 +182,14 @@ static auto EmitAsConstant(ConstantContext& context, SemIR::TupleValue inst)
     -> llvm::Constant* {
   // TODO: Add an ArrayValue instruction and stop using TupleValues to represent
   // array constants.
-  if (context.sem_ir().types().Is<SemIR::ArrayType>(inst.type_id)) {
-    return EmitAggregateConstant<llvm::ConstantArray>(
-        context, inst.elements_id,
-        cast<llvm::ArrayType>(context.GetType(inst.type_id)));
+  auto* llvm_type = context.GetType(inst.type_id);
+  if (auto* array_type = dyn_cast<llvm::ArrayType>(llvm_type)) {
+    return EmitAggregateConstant<llvm::ConstantArray>(context, inst.elements_id,
+                                                      array_type);
   }
 
   return EmitAggregateConstant<llvm::ConstantStruct>(
-      context, inst.elements_id,
-      cast<llvm::StructType>(context.GetType(inst.type_id)));
+      context, inst.elements_id, cast<llvm::StructType>(llvm_type));
 }
 
 static auto EmitAsConstant(ConstantContext& context, SemIR::AddrOf inst)
@@ -228,8 +227,9 @@ static auto EmitAsConstant(ConstantContext& context,
   };
   auto no_wrap_flags =
       llvm::GEPNoWrapFlags::inBounds() | llvm::GEPNoWrapFlags::noUnsignedWrap();
-  return llvm::ConstantExpr::getGetElementPtr(aggr_type, aggr_addr, indexes,
-                                              no_wrap_flags);
+  return llvm::ConstantExpr::getGetElementPtr(
+      context.llvm_module().getDataLayout(), aggr_type, aggr_addr, indexes,
+      no_wrap_flags);
 }
 
 template <typename InstT>

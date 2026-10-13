@@ -355,6 +355,7 @@ cc_library(
         ":typed_insts",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "@llvm-project//clang:ast",
     ],
     # Always link dump methods so they are callable from a debugger
     # even though they are never called.
@@ -470,6 +471,7 @@ cc_library(
     hdrs = ["read_only_ast_source.h"],
     deps = [
         "//toolchain/sem_ir:file",
+        "@llvm-project//clang:ast",
         "@llvm-project//clang:sema",
     ],
 )

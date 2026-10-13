@@ -43,6 +43,9 @@ struct FunctionInfo {
   // The lowered function declaration.
   llvm::Function* llvm_function;
 
+  // How the lowered function returns its result.
+  ReturnKind return_kind;
+
   // Whether the function type information is inexact, because some component
   // type was incomplete. If this is set, the function should not be used to
   // emit a definition or a call.

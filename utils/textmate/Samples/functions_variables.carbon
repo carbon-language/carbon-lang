@@ -28,6 +28,7 @@ generic a: T = b;
 a: A in some_list;
 var a: T;
 let b: T;
+let unused c: T = d;
 binding: T;
 generic binding: T;
 var
@@ -50,3 +51,17 @@ r#class
 r#if
 r#i32
 var r#var: i32 = r#class;
+
+// --- member access through a pointer
+
+p->field;
+p->Method(a);
+p->0;
+(*p).field;
+t.0.1;
+q.value()->size();
+
+// --- builtin function definitions
+
+fn Add(a: i32, b: i32) -> i32 = "int.sadd";
+fn Bits(n: IntLiteral) -> type = "int.make_type_signed";

@@ -284,7 +284,7 @@ you would look for a `struct` definition that uses `"assoc_const_decl"` as its
 `ir_name`. In this case, this is the `AssociatedConstantDecl` instruction:
 
 ```cpp
-// An associated constant declaration in an interface, such as `let T:! type;`.
+// An associated constant declaration in an interface, such as `let T: type;`.
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
       InstKind::AssociatedConstantDecl.Define<Parse::NodeId>(
@@ -300,7 +300,7 @@ corresponds to the type written between the `:` and the `=`. In the example
 above, that type is `i32`. The other arguments to the instruction are written
 after the `ir_name` -- in this example the `name_id` is `N`. From this we find
 that the instruction corresponds to an associated constant declaration in an
-interface like `let N:! i32;`.
+interface like `let N: i32;`.
 
 In fact, the notation after the `:` records not just the instruction's type, but
 also some information about its category, and the storage argument if it's an

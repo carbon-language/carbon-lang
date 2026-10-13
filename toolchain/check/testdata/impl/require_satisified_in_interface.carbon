@@ -272,12 +272,15 @@ fn F(generic T: C) {
 // --- fail_impl_requires_itself_cycle_with_monomorphization_error.carbon
 library "[[@TEST_NAME]]";
 
+// Unlike `array(T, N)`, this fails eagerly on an invalid bound.
+fn Array(T: type, N: Core.IntLiteral) -> type = "array.make_type";
+
 class W(T: type) {
   adapt {};
 }
 
 interface A(N: Core.IntLiteral) {
-  fn AA() -> W(array((), N));
+  fn AA() -> W(Array((), N));
 }
 interface B(N: Core.IntLiteral) {
   require impls A(N);
@@ -287,7 +290,7 @@ interface C(N: Core.IntLiteral) {
 }
 
 impl forall [N: Core.IntLiteral, T: B(N)] T as A(N) {
-  fn AA() -> W(array((), N)) { return {} as W(array((), N)); }
+  fn AA() -> W(Array((), N)) { return {} as W(Array((), N)); }
 }
 
 impl forall [N: Core.IntLiteral, T: C(N)] T as B(N) {

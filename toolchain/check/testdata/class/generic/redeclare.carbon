@@ -85,7 +85,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %Generic.type: type = generic_class_type @Generic [concrete]
+// CHECK:STDOUT:   %Generic.type: type = parameterized_class_name_type @Generic [concrete]
 // CHECK:STDOUT:   %Generic.generic: %Generic.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Generic: type = class_type @Generic, @Generic(%T) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -154,9 +154,9 @@ class E(U: type) {}
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %A.type: type = generic_class_type @A.loc8 [concrete]
+// CHECK:STDOUT:   %A.type: type = parameterized_class_name_type @A.loc8 [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
-// CHECK:STDOUT:   %A.47a: type = class_type @A.loc8, @A.loc8(%T) [symbolic]
+// CHECK:STDOUT:   %A.44f: type = class_type @A.loc8, @A.loc8(%T) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -199,7 +199,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%A.47a
+// CHECK:STDOUT:     .Self = constants.%A.44f
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -219,17 +219,17 @@ class E(U: type) {}
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %N.patt.3a1: %pattern_type.9ef = symbolic_binding_pattern N, 0 [symbolic]
 // CHECK:STDOUT:   %N.37f: %A = symbolic_binding N, 0 [symbolic]
-// CHECK:STDOUT:   %B.type.7937a9.1: type = generic_class_type @B.loc6 [concrete]
-// CHECK:STDOUT:   %B.generic.60ca48.1: %B.type.7937a9.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %B.type.7c49ec.1: type = parameterized_class_name_type @B.loc6 [concrete]
+// CHECK:STDOUT:   %B.generic.4b73a1.1: %B.type.7c49ec.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %N.patt.9f0: %pattern_type.51d = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %N.bd9: %T = symbolic_binding N, 1 [symbolic]
-// CHECK:STDOUT:   %B.type.7937a9.2: type = generic_class_type @B.loc10 [concrete]
-// CHECK:STDOUT:   %B.generic.60ca48.2: %B.type.7937a9.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %B.2b1: type = class_type @B.loc10, @B.loc10(%T, %N.bd9) [symbolic]
+// CHECK:STDOUT:   %B.type.7c49ec.2: type = parameterized_class_name_type @B.loc10 [concrete]
+// CHECK:STDOUT:   %B.generic.4b73a1.2: %B.type.7c49ec.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %B.e85: type = class_type @B.loc10, @B.loc10(%T, %N.bd9) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -247,7 +247,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %B.decl.loc6: %B.type.7937a9.1 = class_decl @B.loc6 [concrete = constants.%B.generic.60ca48.1] {
+// CHECK:STDOUT:   %B.decl.loc6: %B.type.7c49ec.1 = class_decl @B.loc6 [concrete = constants.%B.generic.4b73a1.1] {
 // CHECK:STDOUT:     %N.patt.loc6_10.1: %pattern_type.9ef = symbolic_binding_pattern N, 0 [symbolic = %N.patt.loc6_10.2 (constants.%N.patt.3a1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6: type = splice_block %A.ref [concrete = constants.%A] {
@@ -256,7 +256,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_10.2: %A = symbolic_binding N, 0 [symbolic = %N.loc6_10.1 (constants.%N.37f)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B.decl.loc10: %B.type.7937a9.2 = class_decl @B.loc10 [concrete = constants.%B.generic.60ca48.2] {
+// CHECK:STDOUT:   %B.decl.loc10: %B.type.7c49ec.2 = class_decl @B.loc10 [concrete = constants.%B.generic.4b73a1.2] {
 // CHECK:STDOUT:     %T.patt.loc10_10.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %N.patt.loc10_19.1: @B.loc10.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern N, 1 [symbolic = %N.patt.loc10_19.2 (constants.%N.patt.9f0)]
 // CHECK:STDOUT:   } {
@@ -302,7 +302,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%B.2b1
+// CHECK:STDOUT:     .Self = constants.%B.e85
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -330,14 +330,14 @@ class E(U: type) {}
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %C.type.a601fe.1: type = generic_class_type @C.loc6 [concrete]
-// CHECK:STDOUT:   %C.generic.4b4597.1: %C.type.a601fe.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.type.7a6f96.1: type = parameterized_class_name_type @C.loc6 [concrete]
+// CHECK:STDOUT:   %C.generic.e6debf.1: %C.type.7a6f96.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %U.patt: %pattern_type.9ef = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %U: %A = symbolic_binding U, 1 [symbolic]
-// CHECK:STDOUT:   %C.type.a601fe.2: type = generic_class_type @C.loc10 [concrete]
-// CHECK:STDOUT:   %C.generic.4b4597.2: %C.type.a601fe.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %C.394: type = class_type @C.loc10, @C.loc10(%T, %U) [symbolic]
+// CHECK:STDOUT:   %C.type.7a6f96.2: type = parameterized_class_name_type @C.loc10 [concrete]
+// CHECK:STDOUT:   %C.generic.e6debf.2: %C.type.7a6f96.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %C.989: type = class_type @C.loc10, @C.loc10(%T, %U) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -355,7 +355,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %C.decl.loc6: %C.type.a601fe.1 = class_decl @C.loc6 [concrete = constants.%C.generic.4b4597.1] {
+// CHECK:STDOUT:   %C.decl.loc6: %C.type.7a6f96.1 = class_decl @C.loc6 [concrete = constants.%C.generic.e6debf.1] {
 // CHECK:STDOUT:     %T.patt.loc6_10.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_12.1: type = splice_block %.loc6_12.2 [concrete = type] {
@@ -364,7 +364,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_10.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %C.decl.loc10: %C.type.a601fe.2 = class_decl @C.loc10 [concrete = constants.%C.generic.4b4597.2] {
+// CHECK:STDOUT:   %C.decl.loc10: %C.type.7a6f96.2 = class_decl @C.loc10 [concrete = constants.%C.generic.e6debf.2] {
 // CHECK:STDOUT:     %T.patt.loc10_10.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:     %U.patt.loc10_19.1: %pattern_type.9ef = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc10_19.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
@@ -409,7 +409,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%C.394
+// CHECK:STDOUT:     .Self = constants.%C.989
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -436,14 +436,14 @@ class E(U: type) {}
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %D.type.ff75f2.1: type = generic_class_type @D.loc6 [concrete]
-// CHECK:STDOUT:   %D.generic.7223e9.1: %D.type.ff75f2.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %D.type.0f59a4.1: type = parameterized_class_name_type @D.loc6 [concrete]
+// CHECK:STDOUT:   %D.generic.f4a710.1: %D.type.0f59a4.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.9ef: type = pattern_type %A [concrete]
 // CHECK:STDOUT:   %T.patt.3a1: %pattern_type.9ef = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.37f: %A = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %D.type.ff75f2.2: type = generic_class_type @D.loc10 [concrete]
-// CHECK:STDOUT:   %D.generic.7223e9.2: %D.type.ff75f2.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %D.ad0: type = class_type @D.loc10, @D.loc10(%T.37f) [symbolic]
+// CHECK:STDOUT:   %D.type.0f59a4.2: type = parameterized_class_name_type @D.loc10 [concrete]
+// CHECK:STDOUT:   %D.generic.f4a710.2: %D.type.0f59a4.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %D.598: type = class_type @D.loc10, @D.loc10(%T.37f) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -461,7 +461,7 @@ class E(U: type) {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %D.decl.loc6: %D.type.ff75f2.1 = class_decl @D.loc6 [concrete = constants.%D.generic.7223e9.1] {
+// CHECK:STDOUT:   %D.decl.loc6: %D.type.0f59a4.1 = class_decl @D.loc6 [concrete = constants.%D.generic.f4a710.1] {
 // CHECK:STDOUT:     %T.patt.loc6_10.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_10.2 (constants.%T.patt.3a0)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_12.1: type = splice_block %.loc6_12.2 [concrete = type] {
@@ -470,7 +470,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc6_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc6_10.1 (constants.%T.67d)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %D.decl.loc10: %D.type.ff75f2.2 = class_decl @D.loc10 [concrete = constants.%D.generic.7223e9.2] {
+// CHECK:STDOUT:   %D.decl.loc10: %D.type.0f59a4.2 = class_decl @D.loc10 [concrete = constants.%D.generic.f4a710.2] {
 // CHECK:STDOUT:     %T.patt.loc10_10.1: %pattern_type.9ef = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc10_10.2 (constants.%T.patt.3a1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc10: type = splice_block %A.ref [concrete = constants.%A] {
@@ -507,7 +507,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%D.ad0
+// CHECK:STDOUT:     .Self = constants.%D.598
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -529,13 +529,13 @@ class E(U: type) {}
 // CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %E.type.0b1ef1.1: type = generic_class_type @E.loc4 [concrete]
-// CHECK:STDOUT:   %E.generic.5469ef.1: %E.type.0b1ef1.1 = struct_value () [concrete]
+// CHECK:STDOUT:   %E.type.d96618.1: type = parameterized_class_name_type @E.loc4 [concrete]
+// CHECK:STDOUT:   %E.generic.a02b8a.1: %E.type.d96618.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %U.patt: %pattern_type = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
-// CHECK:STDOUT:   %E.type.0b1ef1.2: type = generic_class_type @E.loc8 [concrete]
-// CHECK:STDOUT:   %E.generic.5469ef.2: %E.type.0b1ef1.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %E.7de02e.2: type = class_type @E.loc8, @E.loc8(%U) [symbolic]
+// CHECK:STDOUT:   %E.type.d96618.2: type = parameterized_class_name_type @E.loc8 [concrete]
+// CHECK:STDOUT:   %E.generic.a02b8a.2: %E.type.d96618.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %E.4c5e95.2: type = class_type @E.loc8, @E.loc8(%U) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT: }
@@ -553,7 +553,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     .E = %E.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %E.decl.loc4: %E.type.0b1ef1.1 = class_decl @E.loc4 [concrete = constants.%E.generic.5469ef.1] {
+// CHECK:STDOUT:   %E.decl.loc4: %E.type.d96618.1 = class_decl @E.loc4 [concrete = constants.%E.generic.a02b8a.1] {
 // CHECK:STDOUT:     %T.patt.loc4_10.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_10.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4_12.1: type = splice_block %.loc4_12.2 [concrete = type] {
@@ -562,7 +562,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc4_10.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %E.decl.loc8: %E.type.0b1ef1.2 = class_decl @E.loc8 [concrete = constants.%E.generic.5469ef.2] {
+// CHECK:STDOUT:   %E.decl.loc8: %E.type.d96618.2 = class_decl @E.loc8 [concrete = constants.%E.generic.a02b8a.2] {
 // CHECK:STDOUT:     %U.patt.loc8_10.1: %pattern_type = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc8_10.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc8_12.1: type = splice_block %.loc8_12.2 [concrete = type] {
@@ -591,7 +591,7 @@ class E(U: type) {}
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%E.7de02e.2
+// CHECK:STDOUT:     .Self = constants.%E.4c5e95.2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
