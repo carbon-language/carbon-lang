@@ -698,6 +698,12 @@ sh_test(
 )
 
 cc_library(
+    name = "set_and_restore",
+    hdrs = ["set_and_restore.h"],
+    deps = [":check"],
+)
+
+cc_library(
     name = "string_helpers",
     srcs = ["string_helpers.cpp"],
     hdrs = ["string_helpers.h"],

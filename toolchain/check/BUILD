@@ -167,6 +167,7 @@ cc_library(
         "//common:ostream",
         "//common:raw_string_ostream",
         "//common:set",
+        "//common:set_and_restore",
         "//common:vlog",
         "//toolchain/base:canonical_value_store",
         "//toolchain/base:index_base",
