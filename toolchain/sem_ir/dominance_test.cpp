@@ -506,10 +506,10 @@ TEST_F(DominanceTest, SpecificInstNotDominated) {
   EXPECT_THAT(Verify(), HasSubstr("not dominated by any evaluation"));
 }
 
-// A generic function whose body uses an instruction that has a symbolic
-// constant value in the generic, and resolves to `specific_value_id` in the
-// specific.
-class DominanceSpecificConstantOperandTest : public DominanceTest {
+// A generic function whose body uses an instruction that has a template
+// symbolic constant value in the generic, which resolves to the first entry of
+// the specific's declaration value block when checked in the specific.
+class DominanceOperandConstantInSpecificTest : public DominanceTest {
  protected:
   auto MakeSymbolicInGeneric(GenericId generic_id) -> InstId {
     auto unattached_id = AddInst(
@@ -534,21 +534,23 @@ class DominanceSpecificConstantOperandTest : public DominanceTest {
   }
 };
 
-TEST_F(DominanceSpecificConstantOperandTest, ConstantInSpecificIsExempt) {
+TEST_F(DominanceOperandConstantInSpecificTest, ConstantInSpecificIsExempt) {
+  // `sym_id` is a symbolic constant in the generic and is constant in the
+  // specific, so using it before its evaluation passes verification in both.
   auto generic_id = AddGeneric(AddBlock({AddConstant()}));
   auto sym_id = MakeSymbolicInGeneric(generic_id);
-  AddFunction({AddBlock({AddUse(sym_id), AddReturn()})}, generic_id);
+  AddFunction({AddBlock({AddUse(sym_id), sym_id, AddReturn()})}, generic_id);
 
   EXPECT_THAT(Verify(), IsEmpty());
 }
 
-TEST_F(DominanceSpecificConstantOperandTest,
+TEST_F(DominanceOperandConstantInSpecificTest,
        NonConstantInSpecificRequiresDominance) {
   // `sym_id` is a symbolic constant in the generic, so using it before its
   // evaluation passes generic verification, but in the specific it resolves to
-  // a non-constant value, so `GetConstantValueInSpecific` requires its
-  // evaluation to dominate the use.
-  auto generic_id = AddGeneric(AddBlock({AddValue()}));
+  // a non-constant value (represented by `InstId::None` in the value block), so
+  // we require its evaluation to dominate the use.
+  auto generic_id = AddGeneric(AddBlock({InstId::None}));
   auto sym_id = MakeSymbolicInGeneric(generic_id);
   AddFunction({AddBlock({AddUse(sym_id), sym_id, AddReturn()})}, generic_id);
 
