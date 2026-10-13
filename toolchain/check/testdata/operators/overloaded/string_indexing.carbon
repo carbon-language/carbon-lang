@@ -124,12 +124,12 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.4d2: %str.as.IndexWith.impl.At.type.93e = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.248: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1af, @Core.IntLiteral.as.ImplicitAs.impl.353(%int_64) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.77d = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.248) [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness.c85: <witness> = impl_witness imports.%IndexWith.impl_witness_table, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness.c85: <witness> = impl_witness imports.%IndexWith.impl_witness_table.d79, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.type.eb8: type = fn_type @str.as.IndexWith.impl.At, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.4b3: %str.as.IndexWith.impl.At.type.eb8 = struct_value () [concrete]
-// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.385 = facet_value %str.3d4, (%IndexWith.impl_witness.c85) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.61e: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(Core.IntLiteral, %IndexWith.facet) [concrete]
-// CHECK:STDOUT:   %.ca2: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.61e, %IndexWith.facet [concrete]
+// CHECK:STDOUT:   %IndexWith.facet.831: %IndexWith.type.385 = facet_value %str.3d4, (%IndexWith.impl_witness.c85) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.61e: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(Core.IntLiteral, %IndexWith.facet.831) [concrete]
+// CHECK:STDOUT:   %.ca2: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.61e, %IndexWith.facet.831 [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.bound: <bound method> = bound_method %String.val, %str.as.IndexWith.impl.At.4b3 [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.specific_fn: <specific function> = specific_function %str.as.IndexWith.impl.At.4b3, @str.as.IndexWith.impl.At(%ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %String.val, %str.as.IndexWith.impl.At.specific_fn [concrete]
@@ -142,7 +142,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.c1f = import_ref Core//prelude/types/string, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.de6: @str.as.IndexWith.impl.%str.as.IndexWith.impl.At.type (%str.as.IndexWith.impl.At.type.93e) = import_ref Core//prelude/types/string, loc{{\d+_\d+}}, loaded [symbolic = @str.as.IndexWith.impl.%str.as.IndexWith.impl.At (constants.%str.as.IndexWith.impl.At.4d2)]
-// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.c1f, %Core.import_ref.de6), @str.as.IndexWith.impl [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness_table.d79 = impl_witness_table (%Core.import_ref.c1f, %Core.import_ref.de6), @str.as.IndexWith.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.c9d = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1af = impl_witness_table (%Core.import_ref.c9d), @Core.IntLiteral.as.ImplicitAs.impl.353 [concrete]
 // CHECK:STDOUT: }
