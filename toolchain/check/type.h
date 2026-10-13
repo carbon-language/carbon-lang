@@ -82,8 +82,8 @@ auto GetFunctionTypeWithSelfType(Context& context,
 // Gets a generic class type, which is the type of a name of a generic class,
 // such as the type of `Vector` given `class Vector(T: type)`. The returned
 // type will be complete.
-auto GetGenericClassType(Context& context, SemIR::ClassId class_id,
-                         SemIR::SpecificId enclosing_specific_id)
+auto GetParameterizedClassType(Context& context, SemIR::ClassId class_id,
+                               SemIR::SpecificId enclosing_specific_id)
     -> SemIR::TypeId;
 
 // Gets a generic interface type, which is the type of a name of a generic

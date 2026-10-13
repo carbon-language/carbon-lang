@@ -147,25 +147,25 @@ are examples of character literals for each specific type:
 
 `let allowed: Char8 = 'a'`
 
-In this example, the character literal `’a’` corresponds to the Unicode code
+In this example, the character literal `'a'` corresponds to the Unicode code
 point `97`, which is within the valid range of `Char8` since `97` is less than
 or equal to `0x7F`.
 
 -   `Char16`: The character literal represents a Unicode code point that can be
     represented within 16 bits. Here’s an example:
 
-`let smiley: Char16 = ‘\u{1F600}’`
+`let smiley: Char16 = '\u{1F600}'`
 
-The character literal `’\u{1F600}’` represents the smiley face emoji, which has
+The character literal `'\u{1F600}'` represents the smiley face emoji, which has
 the Unicode code point `128512`. Since `128512` can be represented within 16
 bits, it can be assigned to a variable of type `Char16`.
 
 -   `Char32`: This character type allows the representation of Unicode code
     points within 32 bits. Here’s an example:
 
-`let musicalNote: Char32 = ‘🎵’`
+`let musicalNote: Char32 = '🎵'`
 
-In this case, the character literal `’🎵’` corresponds to the musical note emoji
+In this case, the character literal `'🎵'` corresponds to the musical note emoji
 with the Unicode code point `127925`. Since `127925` falls within the range that
 can be represented by `Char32`, it can be assigned to a variable of type
 `Char32`.

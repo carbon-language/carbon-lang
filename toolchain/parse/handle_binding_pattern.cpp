@@ -26,6 +26,7 @@ static auto ResolveBindingPhase(Context& context, Context::State& state,
                                 std::optional<Lex::TokenIndex> template_token,
                                 std::optional<Lex::TokenIndex> generic_token,
                                 std::optional<Lex::TokenIndex> runtime_token,
+                                std::optional<Lex::TokenIndex> self_token,
                                 bool& redundant_modifier) -> bool {
   // `template`/`generic` force a generic binding, `runtime` forces a runtime
   // binding, and otherwise the context's default applies.
@@ -35,7 +36,11 @@ static auto ResolveBindingPhase(Context& context, Context::State& state,
   } else if (runtime_token) {
     resolved_generic = false;
   } else {
-    resolved_generic = state.binding_context != BindingContext::ExplicitParam;
+    // For `self`, the default is always `runtime` so that `[ref self]` is
+    // diagnosed for being in the wrong place, not for being a generic ref
+    // binding.
+    resolved_generic =
+        state.binding_context != BindingContext::ExplicitParam && !self_token;
   }
 
   // A form binding's phase is fixed, so phase keywords don't apply to it, and
@@ -157,6 +162,7 @@ auto HandleBindingPattern(Context& context) -> void {
 
   auto token_kind = context.PositionKind();
   if (!token_kind.is_binding_pattern_operator()) {
+    // TODO: We should allow omitting the type in a generic `self` binding.
     if (self_token && !template_token && !generic_token && !runtime_token) {
       // A `self` binding may omit its type; checking supplies the implicit
       // `Self` type. There is no type node, so this produces a
@@ -186,22 +192,9 @@ auto HandleBindingPattern(Context& context) -> void {
   bool is_form = token_kind == Lex::TokenKind::ColonQuestion;
 
   bool redundant_modifier = false;
-  bool resolved_generic =
-      ResolveBindingPhase(context, state, is_form, template_token,
-                          generic_token, runtime_token, redundant_modifier);
-
-  // `self` is always a runtime receiver binding; its phase never comes from the
-  // enclosing context's default. Forcing runtime here means that a misplaced
-  // `self` (in a deduced `[]` list or a compile-time entity's parameters, where
-  // the default would otherwise be generic) is reported by `check` as a
-  // misplaced `self` — the relevant error — rather than also producing a
-  // `ref`-on-generic error from that default.
-  //
-  // TODO: This is wrong: it rejects `fn F(template self: Self)` and treats
-  // `fn F(generic self: Self)` as being non-generic.
-  if (self_token) {
-    resolved_generic = false;
-  }
+  bool resolved_generic = ResolveBindingPhase(
+      context, state, is_form, template_token, generic_token, runtime_token,
+      self_token, redundant_modifier);
 
   // `template` and `ref` wrap the binding name, and each is only meaningful on
   // a particular kind of binding: `template` on a generic binding, and `ref` on
