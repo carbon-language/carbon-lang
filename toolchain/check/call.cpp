@@ -253,10 +253,15 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
 
   // We can't call a function before its return type is known. This happens for
   // a function with a deduced return type that is called from within its own
-  // body, or from the body of a class member function that precedes it.
-  if (callee.has_pending_deduced_return_type()) {
+  // body, or from the body of a class member function that precedes it. Within
+  // a generic function's body, after its return type is deduced, it can still
+  // only be called with its own generic parameters as arguments. And when a
+  // generic function is instantiated, the instantiation can't call the same
+  // specific before reaching the point where its return type is deduced.
+  if (!ResolveReturnTypeInSpecific(context, loc_id, callee,
+                                   *callee_specific_id)) {
     CARBON_DIAGNOSTIC(CallBeforeReturnTypeDeduced, Error,
-                      "call to `{0}` before its return type is deduced",
+                      "call to `{0}` before its return type is known",
                       SemIR::NameId);
     CARBON_DIAGNOSTIC_LABEL(
         ReturnTypeDeducedFromDefinition, Info,
@@ -266,11 +271,6 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
         .Attach(callee.latest_decl_id(), ReturnTypeDeducedFromDefinition,
                 callee.name_id)
         .Emit();
-    return SemIR::ErrorInst::InstId;
-  }
-  if (callee.has_deduced_return_type() && callee_specific_id->has_value()) {
-    // TODO: Resolve the specific definition to determine the return type.
-    context.TODO(loc_id, "call to generic function with deduced return type");
     return SemIR::ErrorInst::InstId;
   }
 

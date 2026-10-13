@@ -546,6 +546,50 @@ auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
   }
 }
 
+auto ResolveReturnTypeInSpecific(Context& context, SemIR::LocId loc_id,
+                                 const SemIR::Function& function,
+                                 SemIR::SpecificId specific_id) -> bool {
+  if (function.has_pending_deduced_return_type()) {
+    return false;
+  }
+
+  // A declared return type is known once the declaration of the specific is
+  // resolved.
+  if (!function.has_deduced_return_type() || !specific_id.has_value()) {
+    return true;
+  }
+
+  // So is a deduced return type that doesn't depend on the generic's
+  // parameters. Otherwise, the return type and the return pattern were created
+  // within the definition of the generic, and are computed by its eval block.
+  auto pattern_const_id =
+      context.constant_values().Get(function.return_pattern_id);
+  if (!pattern_const_id.is_symbolic()) {
+    return true;
+  }
+
+  if (!ResolveSpecificDefinition(context, loc_id, specific_id)) {
+    // We're within the definition of the function, after its return type was
+    // deduced. In the self specific, the return type is just the deduced type,
+    // but we can't compute it for any other specific until the definition is
+    // complete.
+    return specific_id ==
+           context.generics().GetSelfSpecific(function.generic_id);
+  }
+
+  // If we're in the middle of resolving the definition of this specific, its
+  // eval block is only partially evaluated. `SetDeducedReturnType` creates the
+  // return pattern after the return type and form, so if the return pattern
+  // has a value, the instantiation has reached the point where the return type
+  // was deduced.
+  //
+  // Note that a pattern never evaluates to `NotConstant`, so this can only mean
+  // that we haven't reached it yet.
+  return SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
+                                           function.return_pattern_id) !=
+         SemIR::ConstantId::NotConstant;
+}
+
 auto StartFunctionSignature(Context& context) -> void {
   context.scope_stack().PushForDeclName();
   context.inst_block_stack().Push();
