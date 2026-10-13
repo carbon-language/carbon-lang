@@ -171,6 +171,7 @@ auto FileContext::LowerDefinitions() -> void {
         .unused_param_indices =
             std::move(function_type_info.unused_param_indices),
         .llvm_function = llvm_function,
+        .return_kind = function_type_info.return_kind,
         .inexact = function_type_info.inexact};
     functions_.Set(global_ctor_id, function_info);
 
@@ -462,6 +463,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
            .unused_param_indices =
                std::move(function_type_info.unused_param_indices),
            .llvm_function = llvm_function,
+           .return_kind = function_type_info.return_kind,
            .inexact = function_type_info.inexact}};
 }
 

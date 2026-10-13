@@ -37,28 +37,28 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %X.type: type = generic_class_type @X [concrete]
+// CHECK:STDOUT:   %X.type: type = parameterized_class_name_type @X [concrete]
 // CHECK:STDOUT:   %X.generic: %X.type = struct_value () [concrete]
 // CHECK:STDOUT:   %IsLarge.type: type = cpp_type_template_type IsLarge [concrete]
 // CHECK:STDOUT:   %IsLarge.template: %IsLarge.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Small: type = class_type @Small [concrete]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete]
-// CHECK:STDOUT:   %X.541: type = class_type @X, @X(%false) [concrete]
-// CHECK:STDOUT:   %X.Make.type.243: type = fn_type @X.Make, @X(%false) [concrete]
-// CHECK:STDOUT:   %X.Make.d05: %X.Make.type.243 = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.26c: type = pattern_type %X.541 [concrete]
-// CHECK:STDOUT:   %x1.patt: %pattern_type.26c = ref_binding_pattern x1 [concrete]
-// CHECK:STDOUT:   %x1.var_patt: %pattern_type.26c = var_pattern %x1.patt [concrete]
-// CHECK:STDOUT:   %X.Make.specific_fn.932: <specific function> = specific_function %X.Make.d05, @X.Make(%false) [concrete]
+// CHECK:STDOUT:   %X.c23: type = class_type @X, @X(%false) [concrete]
+// CHECK:STDOUT:   %X.Make.type.36b: type = fn_type @X.Make, @X(%false) [concrete]
+// CHECK:STDOUT:   %X.Make.c99: %X.Make.type.36b = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.5cf: type = pattern_type %X.c23 [concrete]
+// CHECK:STDOUT:   %x1.patt: %pattern_type.5cf = ref_binding_pattern x1 [concrete]
+// CHECK:STDOUT:   %x1.var_patt: %pattern_type.5cf = var_pattern %x1.patt [concrete]
+// CHECK:STDOUT:   %X.Make.specific_fn.0c6: <specific function> = specific_function %X.Make.c99, @X.Make(%false) [concrete]
 // CHECK:STDOUT:   %Large: type = class_type @Large [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
-// CHECK:STDOUT:   %X.7b4: type = class_type @X, @X(%true) [concrete]
-// CHECK:STDOUT:   %X.Make.type.4b0: type = fn_type @X.Make, @X(%true) [concrete]
-// CHECK:STDOUT:   %X.Make.42d: %X.Make.type.4b0 = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.795: type = pattern_type %X.7b4 [concrete]
-// CHECK:STDOUT:   %x2.patt: %pattern_type.795 = ref_binding_pattern x2 [concrete]
-// CHECK:STDOUT:   %x2.var_patt: %pattern_type.795 = var_pattern %x2.patt [concrete]
-// CHECK:STDOUT:   %X.Make.specific_fn.8a7: <specific function> = specific_function %X.Make.42d, @X.Make(%true) [concrete]
+// CHECK:STDOUT:   %X.83b: type = class_type @X, @X(%true) [concrete]
+// CHECK:STDOUT:   %X.Make.type.a19: type = fn_type @X.Make, @X(%true) [concrete]
+// CHECK:STDOUT:   %X.Make.7a1: %X.Make.type.a19 = struct_value () [concrete]
+// CHECK:STDOUT:   %pattern_type.a65: type = pattern_type %X.83b [concrete]
+// CHECK:STDOUT:   %x2.patt: %pattern_type.a65 = ref_binding_pattern x2 [concrete]
+// CHECK:STDOUT:   %x2.var_patt: %pattern_type.a65 = var_pattern %x2.patt [concrete]
+// CHECK:STDOUT:   %X.Make.specific_fn.a3b: <specific function> = specific_function %X.Make.7a1, @X.Make(%true) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -74,35 +74,35 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %x1.var: ref %X.541 = var_storage %x1.var_patt [concrete]
-// CHECK:STDOUT:   %.loc11: type = splice_block %X.loc11 [concrete = constants.%X.541] {
+// CHECK:STDOUT:   %x1.var: ref %X.c23 = var_storage %x1.var_patt [concrete]
+// CHECK:STDOUT:   %.loc11: type = splice_block %X.loc11 [concrete = constants.%X.c23] {
 // CHECK:STDOUT:     %X.ref.loc11: %X.type = name_ref X, %X.decl [concrete = constants.%X.generic]
 // CHECK:STDOUT:     %Cpp.ref.loc11_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %IsLarge.ref.loc11: %IsLarge.type = name_ref IsLarge, imports.%IsLarge.template [concrete = constants.%IsLarge.template]
 // CHECK:STDOUT:     %Cpp.ref.loc11_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Small.ref: type = name_ref Small, imports.%Small.decl [concrete = constants.%Small]
 // CHECK:STDOUT:     %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:     %X.loc11: type = class_type @X, @X(constants.%false) [concrete = constants.%X.541]
+// CHECK:STDOUT:     %X.loc11: type = class_type @X, @X(constants.%false) [concrete = constants.%X.c23]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x1: ref %X.541 = wrapper_binding x1, %x1.var [concrete = %x1.var]
+// CHECK:STDOUT:   %x1: ref %X.c23 = wrapper_binding x1, %x1.var [concrete = %x1.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x1.patt: %pattern_type.26c = ref_binding_pattern x1 [concrete = constants.%x1.patt]
-// CHECK:STDOUT:     %x1.var_patt: %pattern_type.26c = var_pattern %x1.patt [concrete = constants.%x1.var_patt]
+// CHECK:STDOUT:     %x1.patt: %pattern_type.5cf = ref_binding_pattern x1 [concrete = constants.%x1.patt]
+// CHECK:STDOUT:     %x1.var_patt: %pattern_type.5cf = var_pattern %x1.patt [concrete = constants.%x1.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x2.var: ref %X.7b4 = var_storage %x2.var_patt [concrete]
-// CHECK:STDOUT:   %.loc12: type = splice_block %X.loc12 [concrete = constants.%X.7b4] {
+// CHECK:STDOUT:   %x2.var: ref %X.83b = var_storage %x2.var_patt [concrete]
+// CHECK:STDOUT:   %.loc12: type = splice_block %X.loc12 [concrete = constants.%X.83b] {
 // CHECK:STDOUT:     %X.ref.loc12: %X.type = name_ref X, %X.decl [concrete = constants.%X.generic]
 // CHECK:STDOUT:     %Cpp.ref.loc12_11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %IsLarge.ref.loc12: %IsLarge.type = name_ref IsLarge, imports.%IsLarge.template [concrete = constants.%IsLarge.template]
 // CHECK:STDOUT:     %Cpp.ref.loc12_23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Large.ref: type = name_ref Large, imports.%Large.decl [concrete = constants.%Large]
 // CHECK:STDOUT:     %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:     %X.loc12: type = class_type @X, @X(constants.%true) [concrete = constants.%X.7b4]
+// CHECK:STDOUT:     %X.loc12: type = class_type @X, @X(constants.%true) [concrete = constants.%X.83b]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x2: ref %X.7b4 = wrapper_binding x2, %x2.var [concrete = %x2.var]
+// CHECK:STDOUT:   %x2: ref %X.83b = wrapper_binding x2, %x2.var [concrete = %x2.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x2.patt: %pattern_type.795 = ref_binding_pattern x2 [concrete = constants.%x2.patt]
-// CHECK:STDOUT:     %x2.var_patt: %pattern_type.795 = var_pattern %x2.patt [concrete = constants.%x2.var_patt]
+// CHECK:STDOUT:     %x2.patt: %pattern_type.a65 = ref_binding_pattern x2 [concrete = constants.%x2.patt]
+// CHECK:STDOUT:     %x2.var_patt: %pattern_type.a65 = var_pattern %x2.patt [concrete = constants.%x2.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -110,21 +110,21 @@ var x2: X(Cpp.IsLarge(Cpp.Large)) = X(true).Make();
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %X.ref.loc11: %X.type = name_ref X, file.%X.decl [concrete = constants.%X.generic]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:   %X.loc11: type = class_type @X, @X(constants.%false) [concrete = constants.%X.541]
-// CHECK:STDOUT:   %.loc11_45: %X.Make.type.243 = specific_constant @X.%X.Make.decl, @X(constants.%false) [concrete = constants.%X.Make.d05]
-// CHECK:STDOUT:   %Make.ref.loc11: %X.Make.type.243 = name_ref Make, %.loc11_45 [concrete = constants.%X.Make.d05]
-// CHECK:STDOUT:   %X.Make.specific_fn.loc11: <specific function> = specific_function %Make.ref.loc11, @X.Make(constants.%false) [concrete = constants.%X.Make.specific_fn.932]
-// CHECK:STDOUT:   %.loc11_1: ref %X.541 = splice_block file.%x1.var [concrete = file.%x1.var] {}
-// CHECK:STDOUT:   %X.Make.call.loc11: init %X.541 to %.loc11_1 = call %X.Make.specific_fn.loc11()
+// CHECK:STDOUT:   %X.loc11: type = class_type @X, @X(constants.%false) [concrete = constants.%X.c23]
+// CHECK:STDOUT:   %.loc11_45: %X.Make.type.36b = specific_constant @X.%X.Make.decl, @X(constants.%false) [concrete = constants.%X.Make.c99]
+// CHECK:STDOUT:   %Make.ref.loc11: %X.Make.type.36b = name_ref Make, %.loc11_45 [concrete = constants.%X.Make.c99]
+// CHECK:STDOUT:   %X.Make.specific_fn.loc11: <specific function> = specific_function %Make.ref.loc11, @X.Make(constants.%false) [concrete = constants.%X.Make.specific_fn.0c6]
+// CHECK:STDOUT:   %.loc11_1: ref %X.c23 = splice_block file.%x1.var [concrete = file.%x1.var] {}
+// CHECK:STDOUT:   %X.Make.call.loc11: init %X.c23 to %.loc11_1 = call %X.Make.specific_fn.loc11()
 // CHECK:STDOUT:   assign file.%x1.var, %X.Make.call.loc11
 // CHECK:STDOUT:   %X.ref.loc12: %X.type = name_ref X, file.%X.decl [concrete = constants.%X.generic]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %X.loc12: type = class_type @X, @X(constants.%true) [concrete = constants.%X.7b4]
-// CHECK:STDOUT:   %.loc12_44: %X.Make.type.4b0 = specific_constant @X.%X.Make.decl, @X(constants.%true) [concrete = constants.%X.Make.42d]
-// CHECK:STDOUT:   %Make.ref.loc12: %X.Make.type.4b0 = name_ref Make, %.loc12_44 [concrete = constants.%X.Make.42d]
-// CHECK:STDOUT:   %X.Make.specific_fn.loc12: <specific function> = specific_function %Make.ref.loc12, @X.Make(constants.%true) [concrete = constants.%X.Make.specific_fn.8a7]
-// CHECK:STDOUT:   %.loc12_1: ref %X.7b4 = splice_block file.%x2.var [concrete = file.%x2.var] {}
-// CHECK:STDOUT:   %X.Make.call.loc12: init %X.7b4 to %.loc12_1 = call %X.Make.specific_fn.loc12()
+// CHECK:STDOUT:   %X.loc12: type = class_type @X, @X(constants.%true) [concrete = constants.%X.83b]
+// CHECK:STDOUT:   %.loc12_44: %X.Make.type.a19 = specific_constant @X.%X.Make.decl, @X(constants.%true) [concrete = constants.%X.Make.7a1]
+// CHECK:STDOUT:   %Make.ref.loc12: %X.Make.type.a19 = name_ref Make, %.loc12_44 [concrete = constants.%X.Make.7a1]
+// CHECK:STDOUT:   %X.Make.specific_fn.loc12: <specific function> = specific_function %Make.ref.loc12, @X.Make(constants.%true) [concrete = constants.%X.Make.specific_fn.a3b]
+// CHECK:STDOUT:   %.loc12_1: ref %X.83b = splice_block file.%x2.var [concrete = file.%x2.var] {}
+// CHECK:STDOUT:   %X.Make.call.loc12: init %X.83b to %.loc12_1 = call %X.Make.specific_fn.loc12()
 // CHECK:STDOUT:   assign file.%x2.var, %X.Make.call.loc12
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

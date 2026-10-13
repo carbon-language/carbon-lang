@@ -82,6 +82,8 @@ Example usage:
 
     # The set of "Make" functions in dump.cpp.
     id_types = {
+        "clang_decl": "SemIR::MakeClangDeclId",
+        "clang_decl_signature": "SemIR::MakeClangDeclSignatureId",
         "class": "SemIR::MakeClassId",
         "constant": "SemIR::MakeConstantId",
         "constraint": "SemIR::MakeNamedConstraintId",
