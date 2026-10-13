@@ -8,7 +8,7 @@
 // invoked. The debugger should do namespace resolution automatically. For
 // example:
 //
-// - lldb: `expr Dump(context, id)`
+// - lldb: `dump context id`
 // - gdb: `call Dump(context, id)`
 
 #ifndef NDEBUG
@@ -52,6 +52,18 @@ LLVM_DUMP_METHOD static auto Dump(
     const Context& context, SemIR::GeneratedFunctionId generated_function_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), generated_function_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::ClangDeclId clang_decl_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), clang_decl_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(
+    const Context& context, SemIR::ClangDeclSignatureId clang_decl_signature_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), clang_decl_signature_id);
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,

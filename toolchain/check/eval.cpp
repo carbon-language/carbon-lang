@@ -492,6 +492,10 @@ static auto CheckConcreteValue(EvalContext& eval_context, SemIR::InstId inst_id)
 static auto GetConstantValue(EvalContext& eval_context,
                              SemIR::MetaInstId inst_id, Phase* phase)
     -> SemIR::MetaInstId {
+  if (!inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
+
   Phase inner_phase = Phase::Concrete;
   if (auto const_inst_id =
           GetConstantValue(eval_context, SemIR::InstId(inst_id), &inner_phase);

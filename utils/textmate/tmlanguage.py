@@ -234,30 +234,42 @@ def _append_capture_tokens(
     group's text takes on top of `scopes`; group `"0"` is the whole match. The
     tokens tile the match with no gaps: text not covered by a listed group is
     still appended, under `scopes` alone.
+
+    Groups nest, so the scopes do too: text inside `((//)(@x))` carries the
+    scope of group 1 and then the scope of whichever of 2 and 3 covers it.
+    Enclosing groups have the lower number, which is what puts them lower in
+    the stack.
     """
     if not captures:
         _append_token(tokens, linenum, match.start(), match.end(), scopes)
         return
-    pos = match.start()
+    spans = []
     for group in range((match.re.groups or 0) + 1):
         spec = captures.get(str(group))
-        # Skip a group the grammar does not name, one that did not
-        # participate in the match (`start` is then -1), and one that lies
-        # behind text already appended, since tokens come out in order.
-        if spec is None or match.start(group) < pos:
+        start, end = match.span(group)
+        # Skip a group the grammar does not name, one that did not participate
+        # in the match, whose `start` is then -1, and one that matched empty.
+        if spec is None or start < 0 or start == end:
             continue
-        if match.start(group) == match.end(group):
-            continue
-        _append_token(tokens, linenum, pos, match.start(group), scopes)
+        spans.append((start, end, spec["name"]))
+    edges = sorted(
+        {match.start(), match.end()}.union(
+            point for start, end, _ in spans for point in (start, end)
+        )
+    )
+    for start, end in zip(edges, edges[1:]):
         _append_token(
             tokens,
             linenum,
-            match.start(group),
-            match.end(group),
-            scopes + [spec["name"]],
+            start,
+            end,
+            scopes
+            + [
+                name
+                for span_start, span_end, name in spans
+                if span_start <= start and end <= span_end
+            ],
         )
-        pos = match.end(group)
-    _append_token(tokens, linenum, pos, match.end(), scopes)
 
 
 def _push_scope(

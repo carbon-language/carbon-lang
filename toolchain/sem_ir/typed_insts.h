@@ -1020,21 +1020,6 @@ struct FunctionTypeWithSelfType {
   InstId self_id;
 };
 
-// The type of the name of a generic class. The corresponding value is an empty
-// `StructValue`.
-struct GenericClassType {
-  // This is only ever created as a constant, so doesn't have a location.
-  static constexpr auto Kind =
-      InstKind::GenericClassType.Define<Parse::NoneNodeId>(
-          {.ir_name = "generic_class_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::WheneverPossible});
-
-  TypeId type_id;
-  ClassId class_id;
-  SpecificId enclosing_specific_id;
-};
-
 // The type of the name of a generic interface. The corresponding value is an
 // empty `StructValue`.
 struct GenericInterfaceType {
@@ -1088,7 +1073,7 @@ struct ImplDecl {
 struct ImplSelfWitness {
   static constexpr auto Kind = InstKind::ImplSelfWitness.Define<Parse::NodeId>(
       {.ir_name = "impl_self_witness",
-       .constant_kind = InstConstantKind::Always,
+       .constant_kind = InstConstantKind::Conditional,
        .is_lowered = false});
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
@@ -1302,6 +1287,9 @@ struct InitializeAction {
     TypeInstId target_type_inst_id;
     // The storage for the initialization.
     MetaInstId storage_id;
+    // Block of pending instructions that `storage_id` depends on. This is
+    // always an `InstValue` that references a `SpliceBlock`.
+    MetaInstId storage_access_block_id;
     // Whether this is required to be an in-place initialization.
     BoolValue in_place;
   };
@@ -1601,6 +1589,21 @@ struct OutParamPattern {
 
   TypeId type_id;
   NameId pretty_name_id;
+};
+
+// The type of the name of a parameterized class. The corresponding value is an
+// empty `StructValue`.
+struct ParameterizedClassType {
+  // This is only ever created as a constant, so doesn't have a location.
+  static constexpr auto Kind =
+      InstKind::ParameterizedClassType.Define<Parse::NoneNodeId>(
+          {.ir_name = "parameterized_class_name_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  ClassId class_id;
+  SpecificId enclosing_specific_id;
 };
 
 // Indicates `partial` on a type, such as `partial MyClass`.

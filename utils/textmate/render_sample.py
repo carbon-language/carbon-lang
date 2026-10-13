@@ -36,10 +36,12 @@ _GRAMMAR_PATH = (
 )
 
 # A theme built for this grammar rather than taken from an editor. Each family
-# of related scopes gets one color, and bold and italic distinguish the scopes
-# within a family, so every scope the grammar emits renders differently and a
-# change to what it scopes is visible in the rendering. A scope with no entry of
-# its own takes its family's. The colors are Catppuccin Mocha's.
+# of related scopes gets one color, and bold, italic, and underline distinguish
+# the scopes within a family. Every scope the grammar picks from context renders
+# differently, so a change to what it scopes is visible in the rendering. Scopes
+# that follow from the spelling alone, such as a bracket's shape, can share a
+# rendering, since the text already shows them. A scope with no entry of its own
+# takes its family's. The colors are Catppuccin Mocha's.
 _COLORS = {
     "comment": "#7f849c",
     "punctuation.definition.comment": "#7f849c",
@@ -53,10 +55,17 @@ _COLORS = {
     "entity.name.type": "#f9e2af",
     "support.type": "#f9e2af",
     "support.class": "#f9e2af",
+    "entity.other.inherited-class": "#f9e2af",
     "entity.name.namespace": "#f5e0dc",
+    "entity.name.scope-resolution": "#f5e0dc",
     "entity.name.tag": "#f5e0dc",
     "entity.name.function": "#89b4fa",
+    "support.function": "#89b4fa",
     "variable": "#cdd6f4",
+    # Members of something else: a field or other member read through `.` or
+    # `->`, and a choice's alternatives.
+    "variable.other.property": "#eba0ac",
+    "variable.other.enummember": "#eba0ac",
     "string": "#a6e3a1",
     "constant.character.escape": "#f5c2e7",
     "constant.numeric": "#fab387",
@@ -76,14 +85,25 @@ _STYLES = {
     "storage.modifier": "italic",
     "constant.language": "bold",
     "keyword.other": "italic",
+    "keyword.operator.type.pointer": "bold",
     "punctuation.terminator": "bold",
     "punctuation.definition.string": "italic",
     "punctuation.definition.raw-identifier": "bold italic",
     "support.type": "italic",
     "support.class": "bold",
+    "entity.name.type.class": "bold italic",
+    "entity.other.inherited-class": "underline",
+    "entity.name.namespace.library": "bold",
+    "entity.name.scope-resolution": "bold italic",
     "entity.name.tag": "italic",
+    "entity.name.function.definition": "bold",
+    "entity.name.function.member": "italic",
+    "support.function": "bold italic",
     "variable.parameter": "italic",
     "variable.language": "bold",
+    "variable.other.constant": "bold italic",
+    "variable.other.property": "italic",
+    "variable.other.enummember": "bold",
     "string.quoted.single": "italic",
     "string.quoted.triple": "bold",
     "constant.character.escape": "",

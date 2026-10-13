@@ -402,28 +402,27 @@ fn F() {
 
 // As above for `forall`, which wants a `[` rather than a `(`.
 
-// CHECK:STDERR: fail_missing_open_square_after_forall.carbon:[[@LINE+7]]:21: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
-// CHECK:STDERR: impl forall T:! type] X as Y {
-// CHECK:STDERR:                     ^
+// CHECK:STDERR: fail_missing_open_square_after_forall.carbon:[[@LINE+7]]:20: error: closing symbol without a corresponding opening symbol [UnmatchedClosing]
+// CHECK:STDERR: impl forall T: type] X as Y {
+// CHECK:STDERR:                    ^
 // CHECK:STDERR: fail_missing_open_square_after_forall.carbon:[[@LINE+4]]:13: note: possibly missing `[` here [PossiblyMissingBracketHere]
-// CHECK:STDERR: impl forall T:! type] X as Y {
+// CHECK:STDERR: impl forall T: type] X as Y {
 // CHECK:STDERR:             ^
 // CHECK:STDERR:
-impl forall T:! type] X as Y {
+impl forall T: type] X as Y {
 // CHECK:STDOUT:   - { index:  1, kind:               "Impl", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "impl", has_leading_space: true }
 // CHECK:STDOUT:   - { index:  2, kind:             "Forall", line: {{ *}}[[@LINE-2]], column:  6, indent: 1, spelling: "forall", has_leading_space: true }
-// CHECK:STDOUT:   - { index:  3, kind:  "OpenSquareBracket", line: {{ *}}[[@LINE-3]], column: 12, indent: 1, spelling: "[", closing_token: 8, has_leading_space: true, recovery: true }
+// CHECK:STDOUT:   - { index:  3, kind:  "OpenSquareBracket", line: {{ *}}[[@LINE-3]], column: 12, indent: 1, spelling: "[", closing_token: 7, has_leading_space: true, recovery: true }
 // CHECK:STDOUT:   - { index:  4, kind:         "Identifier", line: {{ *}}[[@LINE-4]], column: 13, indent: 1, spelling: "T", identifier: 0 }
 // CHECK:STDOUT:   - { index:  5, kind:              "Colon", line: {{ *}}[[@LINE-5]], column: 14, indent: 1, spelling: ":" }
-// CHECK:STDOUT:   - { index:  6, kind:            "Exclaim", line: {{ *}}[[@LINE-6]], column: 15, indent: 1, spelling: "!" }
-// CHECK:STDOUT:   - { index:  7, kind:               "Type", line: {{ *}}[[@LINE-7]], column: 17, indent: 1, spelling: "type", has_leading_space: true }
-// CHECK:STDOUT:   - { index:  8, kind: "CloseSquareBracket", line: {{ *}}[[@LINE-8]], column: 21, indent: 1, spelling: "]", opening_token: 3 }
-// CHECK:STDOUT:   - { index:  9, kind:         "Identifier", line: {{ *}}[[@LINE-9]], column: 23, indent: 1, spelling: "X", identifier: 1, has_leading_space: true }
-// CHECK:STDOUT:   - { index: 10, kind:                 "As", line: {{ *}}[[@LINE-10]], column: 25, indent: 1, spelling: "as", has_leading_space: true }
-// CHECK:STDOUT:   - { index: 11, kind:         "Identifier", line: {{ *}}[[@LINE-11]], column: 28, indent: 1, spelling: "Y", identifier: 2, has_leading_space: true }
-// CHECK:STDOUT:   - { index: 12, kind:     "OpenCurlyBrace", line: {{ *}}[[@LINE-12]], column: 30, indent: 1, spelling: "{", closing_token: 13, has_leading_space: true }
+// CHECK:STDOUT:   - { index:  6, kind:               "Type", line: {{ *}}[[@LINE-6]], column: 16, indent: 1, spelling: "type", has_leading_space: true }
+// CHECK:STDOUT:   - { index:  7, kind: "CloseSquareBracket", line: {{ *}}[[@LINE-7]], column: 20, indent: 1, spelling: "]", opening_token: 3 }
+// CHECK:STDOUT:   - { index:  8, kind:         "Identifier", line: {{ *}}[[@LINE-8]], column: 22, indent: 1, spelling: "X", identifier: 1, has_leading_space: true }
+// CHECK:STDOUT:   - { index:  9, kind:                 "As", line: {{ *}}[[@LINE-9]], column: 24, indent: 1, spelling: "as", has_leading_space: true }
+// CHECK:STDOUT:   - { index: 10, kind:         "Identifier", line: {{ *}}[[@LINE-10]], column: 27, indent: 1, spelling: "Y", identifier: 2, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 11, kind:     "OpenCurlyBrace", line: {{ *}}[[@LINE-11]], column: 29, indent: 1, spelling: "{", closing_token: 12, has_leading_space: true }
 }
-// CHECK:STDOUT:   - { index: 13, kind:    "CloseCurlyBrace", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "}", opening_token: 12, has_leading_space: true }
+// CHECK:STDOUT:   - { index: 12, kind:    "CloseCurlyBrace", line: {{ *}}[[@LINE-1]], column:  1, indent: 1, spelling: "}", opening_token: 11, has_leading_space: true }
 
 // --- fail_missing_brace_after_if.carbon
 // CHECK:STDOUT: - filename: fail_missing_brace_after_if.carbon

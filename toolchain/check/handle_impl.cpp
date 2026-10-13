@@ -268,8 +268,8 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   // are applied to the impl.
   //
   // We can use ImplSelfWitness for this because it contains a
-  // SpecificInterfaceId operand, and it has a constant_kind of `Always` so it
-  // never evaluates to some other type of inst.
+  // SpecificInterfaceId operand, and it always evaluates an inst of the same
+  // kind so we don't lose the operand.
   //
   // TODO: We could avoid the extra indirection through a SpecificInterfaceId if
   // we introduced a new instruction with a SpecificId operand instead of

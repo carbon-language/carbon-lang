@@ -62,6 +62,8 @@ class PendingBlock {
     return inst_id;
   }
 
+  auto AddInstId(SemIR::InstId inst_id) { insts_.push_back(inst_id); }
+
   template <typename InstT, typename LocT>
     requires(std::convertible_to<LocT, SemIR::LocId>)
   auto AddInstWithCleanup(LocT loc_id, InstT inst) -> SemIR::InstId {
@@ -79,6 +81,15 @@ class PendingBlock {
     }
     insts_.clear();
     AddPendingCleanups();
+  }
+
+  // Consume the pending instructions and return them as an inst block.
+  // Pending cleanups must be empty when this is called.
+  auto TakeAsInstBlock() -> SemIR::InstBlockId {
+    CARBON_CHECK(cleanups_.empty());
+    auto inst_block = context_->inst_blocks().Add(insts_);
+    insts_.clear();
+    return inst_block;
   }
 
   // Replace the instruction at target_id with the instructions in this block.

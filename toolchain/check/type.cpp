@@ -241,11 +241,11 @@ auto GetFunctionTypeWithSelfType(Context& context,
       context, interface_function_type_id, self_id);
 }
 
-auto GetGenericClassType(Context& context, SemIR::ClassId class_id,
-                         SemIR::SpecificId enclosing_specific_id)
+auto GetParameterizedClassType(Context& context, SemIR::ClassId class_id,
+                               SemIR::SpecificId enclosing_specific_id)
     -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::GenericClassType>(context, class_id,
-                                                      enclosing_specific_id);
+  return GetCompleteTypeImpl<SemIR::ParameterizedClassType>(
+      context, class_id, enclosing_specific_id);
 }
 
 auto GetGenericInterfaceType(Context& context, SemIR::InterfaceId interface_id,

@@ -291,10 +291,13 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
         context, loc_id, callee.return_pattern_id, *callee_specific_id);
     if (arg_type_id == SemIR::ErrorInst::TypeId) {
       return_type_id = SemIR::ErrorInst::TypeId;
-    } else if (SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id)
+    } else if (callee.call_param_ranges.return_size() > 0 &&
+               SemIR::InitRepr::ForType(context.sem_ir(), arg_type_id)
                    .MightBeInPlace()) {
       // Tentatively use storage for a temporary as the return argument.
       // This will be replaced if necessary when we perform initialization.
+      // Only do this if the callee has a return parameter to receive it;
+      // functions that return by reference or by value don't.
       return_arg_id = AddInst<SemIR::TemporaryStorage>(
           context, loc_id, {.type_id = arg_type_id});
     }
@@ -403,9 +406,9 @@ static auto PerformCallToNonFunction(Context& context, SemIR::LocId loc_id,
                             .is_desugared = SemIR::BoolValue::From(false)},
           SemIR::TypeInstId::None);
     }
-    case CARBON_KIND(SemIR::GenericClassType generic_class): {
-      return PerformCallToGenericClass(context, loc_id, generic_class.class_id,
-                                       generic_class.enclosing_specific_id,
+    case CARBON_KIND(SemIR::ParameterizedClassType param_class): {
+      return PerformCallToGenericClass(context, loc_id, param_class.class_id,
+                                       param_class.enclosing_specific_id,
                                        arg_ids);
     }
     case CARBON_KIND(SemIR::GenericInterfaceType generic_interface): {
