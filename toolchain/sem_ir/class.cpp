@@ -73,9 +73,9 @@ auto Class::GetStructTypeFields(const File& sem_ir,
 
 auto GetAsCarbonOwnedClass(const File& sem_ir, const clang::TagDecl* tag_decl)
     -> std::optional<std::pair<SemIR::TypeId, SemIR::ClassType>> {
-  // Quickly check whether we could possibly own this class.
-  // TODO: Once we multiplex with the ASTReader, handle
-  // ASTReader::completeVisibleDeclsMap setting this to `false`.
+  // Quickly check whether we could possibly own this class. Carbon-owned
+  // classes always have external visible storage (preserved across
+  // `ASTReader::completeVisibleDeclsMap` by `ReadOnlyASTSource`).
   if (!tag_decl->hasExternalVisibleStorage()) {
     return std::nullopt;
   }
