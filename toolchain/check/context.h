@@ -320,8 +320,8 @@ class Context {
     return declaring_impl_decls_;
   }
 
-  auto eval_lookup_to_identified_witness() -> int32_t& {
-    return eval_lookup_to_identified_witness_;
+  auto eval_impl_lookup_to_identified_witness() -> int32_t& {
+    return eval_impl_lookup_to_identified_witness_;
   }
 
   // Data about a form expression.
@@ -647,7 +647,7 @@ class Context {
   // redirecting them to form IdentifiedWitness instructions. The caller to
   // identify must replace any IdentifiedWitness instructions in the
   // IdentifiedFacetType before using the values there.
-  int32_t eval_lookup_to_identified_witness_ = 0;
+  int32_t eval_impl_lookup_to_identified_witness_ = 0;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

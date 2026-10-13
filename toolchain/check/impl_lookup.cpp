@@ -1130,7 +1130,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
   // If the lookup is due to `.Self` substitution while identifying a facet
   // type, the witness is preserved as an IdentifiedWitness for the caller to
   // decide what to do with.
-  if (context.eval_lookup_to_identified_witness()) {
+  if (context.eval_impl_lookup_to_identified_witness()) {
     return EvalOrAddInst<SemIR::IdentifiedWitness>(
         context, loc_id,
         {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),

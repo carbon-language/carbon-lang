@@ -999,7 +999,8 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
   // their own witnesses in place of executing impl lookup. It means all values
   // in IdentifiedFacetType need to have their IdentifiedWitnesses replaced
   // before they are used, though.
-  IncrementScope identifying_scope(context.eval_lookup_to_identified_witness());
+  IncrementScope identifying_scope(
+      context.eval_impl_lookup_to_identified_witness());
 
   {
     auto subst_id = SubstPeriodSelf(context, loc_id, facet_type_const_id,

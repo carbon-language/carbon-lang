@@ -623,7 +623,7 @@ class EvaluateSubstCallbacks : public SubstInstCallbacks {
 auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
                                  SemIR::IdentifiedFacetType::RequiredImpl req)
     -> SemIR::IdentifiedFacetType::RequiredImpl {
-  if (context.eval_lookup_to_identified_witness()) {
+  if (context.eval_impl_lookup_to_identified_witness()) {
     return req;
   }
   EvaluateSubstCallbacks callbacks(&context, loc_id);
@@ -639,7 +639,7 @@ auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
 auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
                                  SemIR::IdentifiedFacetType::Rewrite rewrite)
     -> SemIR::IdentifiedFacetType::Rewrite {
-  if (context.eval_lookup_to_identified_witness()) {
+  if (context.eval_impl_lookup_to_identified_witness()) {
     return rewrite;
   }
   EvaluateSubstCallbacks callbacks(&context, loc_id);
@@ -654,7 +654,7 @@ auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
 auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
                                  SemIR::SpecificInterface interface)
     -> SemIR::SpecificInterface {
-  if (context.eval_lookup_to_identified_witness()) {
+  if (context.eval_impl_lookup_to_identified_witness()) {
     return interface;
   }
   EvaluateSubstCallbacks callbacks(&context, loc_id);
@@ -681,7 +681,7 @@ auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
   // may also want to do their own replacements. This would be problematic! But
   // since during identify we only create specifics, and resolving them through
   // eval should not end up here, we make note of that.
-  CARBON_CHECK(!context.eval_lookup_to_identified_witness(),
+  CARBON_CHECK(!context.eval_impl_lookup_to_identified_witness(),
                "SubstIdentifiedWitnesses called during identify");
 
   EvaluateSubstCallbacks subst_callbacks(&context, loc_id, &callbacks);
@@ -715,7 +715,7 @@ auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
   // may also want to do their own replacements. This would be problematic! But
   // since during identify we only create specifics, and resolving them through
   // eval should not end up here, we make note of that.
-  CARBON_CHECK(!context.eval_lookup_to_identified_witness(),
+  CARBON_CHECK(!context.eval_impl_lookup_to_identified_witness(),
                "SubstIdentifiedWitnesses called during identify");
 
   EvaluateSubstCallbacks subst_callbacks(&context, loc_id, &callbacks);

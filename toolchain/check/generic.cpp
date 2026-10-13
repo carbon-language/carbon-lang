@@ -732,7 +732,7 @@ static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
   }
   auto args_id = context.inst_blocks().AddCanonical(arg_ids);
   // Self specifics are not created as part of identifying a facet type.
-  CARBON_CHECK(!context.eval_lookup_to_identified_witness());
+  CARBON_CHECK(!context.eval_impl_lookup_to_identified_witness());
   return context.specifics().GetOrAdd(generic_id, args_id, false);
 }
 
