@@ -45,6 +45,21 @@ let greater: Ordering = Ordering.Greater;
 let inc: Ordering = Ordering.Incomparable;
 //@dump-sem-ir-end
 
+// --- destroy.carbon
+library "[[@TEST_NAME]]";
+
+choice Ordering {
+  Less,
+  Equivalent,
+  Greater
+}
+
+fn Make() -> Ordering;
+
+fn F() {
+  var _: Ordering = Make();
+}
+
 // --- fail_no_alternative_construct.carbon
 library "[[@TEST_NAME]]";
 
