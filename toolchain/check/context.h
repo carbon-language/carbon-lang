@@ -314,6 +314,7 @@ class Context {
   struct DeclaringImplDecl {
     SemIR::ConstantId self_id;
     SemIR::SpecificInterface specific_interface;
+    auto operator==(const DeclaringImplDecl& rhs) const -> bool = default;
   };
   auto declaring_impl_decls() -> llvm::SmallVector<DeclaringImplDecl>& {
     return declaring_impl_decls_;
