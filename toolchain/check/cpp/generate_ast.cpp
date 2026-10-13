@@ -1043,19 +1043,6 @@ auto FinalizeCppAstFragment(Context& context) -> void {
     return;
   }
 
-  // Leave the module we entered to encapsulate the contents of this Carbon
-  // file.
-  auto end_loc_id =
-      SemIR::LocId(*(context.sem_ir().parse_tree().postorder().end() - 1));
-  // Shuffle the end of file location back by one character to work around a
-  // Clang bug: if we give Clang the end-of-file location, it will replace the
-  // location with the include location without checking whether the file was
-  // actually included, and then crash because it picked an invalid location!
-  // There is always at least one token in a file with a `Cpp` import, so this
-  // location adjustment is safe.
-  LeaveModule(*context.cpp_context(),
-              GetCppLocation(context, end_loc_id).getLocWithOffset(-1));
-
   // Finalize the per-Context AST fragment. The final ActOnEndOfTranslationUnit
   // call for the CppDomain is performed in FinalizeCppDomain once all files
   // sharing the domain have been checked.
@@ -1070,6 +1057,24 @@ auto DisconnectCppAst(Context& context) -> void {
   if (!context.cpp_context()) {
     return;
   }
+
+  // Leave the module we entered to encapsulate the contents of this Carbon
+  // file. This happens here rather than in `FinalizeCppAstFragment`, because
+  // that can run more than once for a file, but the module is only entered
+  // once.
+  auto end_loc_id =
+      SemIR::LocId(*(context.sem_ir().parse_tree().postorder().end() - 1));
+  // Shuffle the end of file location back by one character to work around a
+  // Clang bug: if we give Clang the end-of-file location, it will replace the
+  // location with the include location without checking whether the file was
+  // actually included, and then crash because it picked an invalid location!
+  // There is always at least one token in a file with a `Cpp` import, so this
+  // location adjustment is safe.
+  LeaveModule(*context.cpp_context(),
+              GetCppLocation(context, end_loc_id).getLocWithOffset(-1));
+  FlushDiagnosticConsumer(
+      *context.cpp_context()->sema().getDiagnostics().getClient());
+  context.emitter().Flush();
 
   // Remove the `CarbonExternalASTSource` installed in `GenerateAst` and
   // replace it with a `ReadOnlyASTSource`. This is necessary because
