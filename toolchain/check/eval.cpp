@@ -3579,6 +3579,9 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   CheckedSaveAndRestore access_context(context.access_context(),
                                        FindAccessContext(context, generic));
 
+  // TODO: There are now 3 things being set-and-restored. Can this be refactored
+  // to make this a more clear pattern?
+
   // The `declaring_impl_decls` is a global state that modifies the evaluation
   // of LookupImplWitness. As a global state, it should only affect new
   // instructions introduced during a given state. When we are evaluating for a
