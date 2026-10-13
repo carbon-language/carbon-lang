@@ -9,7 +9,7 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/function/import/function_ptr.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function/import/function_ptr.carbon
-// CHECK:STDERR: error: calling function with incomplete return type 'C' [CppInteropParseError]
+// CHECK:STDERR: error: calling function with incomplete return type 'Incomplete' [CppInteropParseError]
 
 // --- simple_callback.h
 
@@ -127,9 +127,9 @@ fn F() {
 
 // --- forward_decl.h
 
-class C;
+class Incomplete;
 
-using CallbackType = C (*)();
+using CallbackType = Incomplete (*)();
 
 auto ReturnCallback() -> CallbackType;
 
@@ -148,8 +148,8 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./forward_decl.h:2:7: note: forward declaration of 'C' [CppInteropParseNote]
-// CHECK:STDERR:     2 | class C;
+// CHECK:STDERR: ./forward_decl.h:2:7: note: forward declaration of 'Incomplete' [CppInteropParseNote]
+// CHECK:STDERR:     2 | class Incomplete;
 // CHECK:STDERR:       |       ^
 import Cpp library "forward_decl.h";
 
@@ -158,12 +158,12 @@ fn F() {
   // CHECK:STDERR:   Cpp.ReturnCallback()();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+9]]:3: error: function returns incomplete type `Cpp.C` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+9]]:3: error: function returns incomplete type `Cpp.Incomplete` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:   Cpp.ReturnCallback()();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./forward_decl.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class C;
+  // CHECK:STDERR: class Incomplete;
   // CHECK:STDERR:       ^
   // CHECK:STDERR: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR:
