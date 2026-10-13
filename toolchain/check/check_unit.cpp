@@ -456,9 +456,10 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
   }
 }
 
-auto CheckUnit::CheckRequiredDefinitions() -> void {
+auto CheckUnit::CheckRequiredDefinitions() -> bool {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
+  auto resolution_occurred = false;
   for (SemIR::InstId decl_inst_id : context_.definitions_required_by_decl()) {
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
@@ -504,28 +505,39 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
        GrowingRange(context_.definitions_required_by_use())) {
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
-    if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
-      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
-                        "use of undefined generic function");
-      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinitionHere, Note,
-                        "generic function declared here");
-      auto generic_decl_id =
-          context_.generics()
-              .Get(context_.specifics().Get(specific_id).generic_id)
-              .decl_id;
-      emitter_.Build(loc, MissingGenericFunctionDefinition)
-          .Note(generic_decl_id, MissingGenericFunctionDefinitionHere)
-          .Emit();
+    switch (ResolveSpecificDefinition(context_, loc, specific_id)) {
+      case DefinitionResolution::NewlyResolved:
+        resolution_occurred = true;
+        break;
+      case DefinitionResolution::PreviouslyResolved:
+        break;
+      case DefinitionResolution::NotDefinedYet: {
+        CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
+                          "use of undefined generic function");
+        CARBON_DIAGNOSTIC(MissingGenericFunctionDefinitionHere, Note,
+                          "generic function declared here");
+        auto generic_decl_id =
+            context_.generics()
+                .Get(context_.specifics().Get(specific_id).generic_id)
+                .decl_id;
+        emitter_.Build(loc, MissingGenericFunctionDefinition)
+            .Note(generic_decl_id, MissingGenericFunctionDefinitionHere)
+            .Emit();
+        break;
+      }
     }
   }
+
+  return resolution_occurred;
 }
 
-auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
+auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> bool {
   // Impl lookup can generate instructions (via deduce) which we don't use, as
   // we're only generating diagnostics here, so we catch and discard them.
   context_.inst_block_stack().Push();
   auto poisoned_queries =
       std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
+  auto found_difference = false;
   for (const auto& poison : poisoned_queries) {
     auto found_witness_id = EvalLookupSingleFinalWitness(
         context_, poison.loc_id, poison.query, SemIR::InstId::None,
@@ -537,6 +549,7 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
       continue;
     }
     if (found_witness_id != poison.witness_id) {
+      found_difference = true;
       auto witness_to_impl_id = [&](SemIR::ConstantId witness_id) {
         auto inst = context_.constant_values().GetInst(witness_id);
         CARBON_KIND_SWITCH(inst) {
@@ -603,33 +616,26 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
     }
   }
   context_.inst_block_stack().PopAndDiscard();
+  return found_difference;
 }
 
-auto CheckUnit::CheckImpls() -> void { ValidateImplsInFile(context_); }
+auto CheckUnit::CheckImpls() -> bool { return ValidateImplsInFile(context_); }
 
 auto CheckUnit::FinishRun() -> void {
-  auto required_definitions_before_finalization = std::size_t{0};
-  auto required_definitions_after_finalization = std::size_t{0};
-  do {
-    CheckRequiredDeclarations();
-    CheckRequiredDefinitions();
-    CheckPoisonedConcreteImplLookupQueries();
-    CheckImpls();
-
-    required_definitions_before_finalization =
-        context_.definitions_required_by_decl().size() +
-        context_.definitions_required_by_use().size();
-
+  for (auto do_resolution_checks = true; do_resolution_checks;) {
     // Finalizes the C++ portion of the compilation, allowing any pending C++
     // template instantiations to complete Carbon types and generate required
     // thunks or function calls.
     FinalizeCppAstFragment(context_);
 
-    required_definitions_after_finalization =
-        context_.definitions_required_by_decl().size() +
-        context_.definitions_required_by_use().size();
-  } while (required_definitions_before_finalization <
-           required_definitions_after_finalization);
+    do_resolution_checks = CheckRequiredDefinitions();
+    do_resolution_checks |= CheckPoisonedConcreteImplLookupQueries();
+    do_resolution_checks |= CheckImpls();
+  }
+
+  // This only emits diagnostics, so it never creates work for the loop above.
+  // Running it after the loop also covers functions added during the loop.
+  CheckRequiredDeclarations();
 
   // Disconnects AST generation from the context before popping the file-level
   // scope and destroying the context.

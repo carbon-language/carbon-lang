@@ -11,8 +11,9 @@ namespace Carbon::Check {
 
 // Called after typechecking the full file to diagnose any `impl` declarations
 // that are invalid because they are in wrong file or overlap with other `impl`
-// declarations incorrectly.
-auto ValidateImplsInFile(Context& context) -> void;
+// declarations incorrectly. Returns `true` if an interface or `impl` was
+// imported.
+auto ValidateImplsInFile(Context& context) -> bool;
 
 }  // namespace Carbon::Check
 
