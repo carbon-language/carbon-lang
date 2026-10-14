@@ -165,7 +165,7 @@ class SourceGen::ClassGenState {
   // `Make` function, or the fixed type's value expression.
   auto ProduceValue(llvm::StringRef type, llvm::raw_ostream& os) -> void {
     if (class_name_set_.Contains(type)) {
-      os << type << (is_cpp_ ? "::Make()" : ".Make()");
+      os << type << (is_cpp_ ? "()" : ".Make()");
     } else {
       os << fixed_value_.Lookup(type).value();
     }
@@ -248,8 +248,8 @@ class SourceGen::ClassGenState {
   llvm::SmallVector<PredicateField> predicate_fields_;
 
   llvm::SmallVector<llvm::StringRef> class_names_;
-  // Field names have their own pool because Carbon's `Make` spells each field
-  // name a second time.
+  // Field names have their own pool because `Make` spells each field name a
+  // second time.
   llvm::SmallVector<llvm::StringRef> decl_names_;
   llvm::SmallVector<llvm::StringRef> field_names_;
   llvm::SmallVector<llvm::StringRef> param_names_;
@@ -268,7 +268,8 @@ class SourceGen::ClassGenState {
 
   bool is_cpp_;
   // Whether the file has any bodies. Then each class also gets a `Make`
-  // function, a `Checksum` method, and a `tag` field.
+  // function (a default constructor in C++), a `Checksum` method, and a `tag`
+  // field.
   bool has_bodies_;
   TypePool decl_type_pool_;
   TypePool inline_param_pool_;
@@ -458,7 +459,7 @@ auto SourceGen::ClassGenState::BuildTypePool(
     remainder = 0;
   }
 
-  for ([[maybe_unused]] auto _ : llvm::seq(full_copies)) {
+  for (auto _ : llvm::seq(full_copies)) {
     for (llvm::StringRef name : class_names_) {
       append_use(name);
     }
@@ -481,7 +482,7 @@ auto SourceGen::ClassGenState::BuildTypePool(
       continue;
     }
     int num_fixed_type = num_types * fixed_type_weight.weight / type_weight_sum;
-    for ([[maybe_unused]] auto _ : llvm::seq(num_fixed_type)) {
+    for (auto _ : llvm::seq(num_fixed_type)) {
       append_use(fixed_spelling(fixed_type_weight));
     }
   }
@@ -725,7 +726,9 @@ static auto EstimateAvgClassDefLines(SourceGen::ClassParams params) -> double {
   }
 
   // `Make` and `Checksum` each have a blank line, a comment line, a signature
-  // line, a return line, and a closing brace line.
+  // line, a return line, and a closing brace line. A C++ constructor puts its
+  // initializers and empty body on one line, so this overestimates C++ by a
+  // line.
   if (has_bodies) {
     avg += 10.0;
   }
@@ -776,7 +779,7 @@ auto SourceGen::GenApiFileDenseDecls(int target_lines,
 
   auto class_gen_state = ClassGenState(*this, num_classes, params.class_params,
                                        params.type_use_params);
-  for ([[maybe_unused]] auto _ : llvm::seq(num_classes)) {
+  for (auto _ : llvm::seq(num_classes)) {
     source << "\n";
     GenerateClassDef(params.class_params, class_gen_state, source);
   }
@@ -866,7 +869,7 @@ auto SourceGen::GetSingleLengthIdentifiers(int length, int number)
 
   if (static_cast<int>(idents.size()) < number) {
     idents.reserve(number);
-    for ([[maybe_unused]] auto _ : llvm::seq<int>(idents.size(), number)) {
+    for (auto _ : llvm::seq<int>(idents.size(), number)) {
       auto ident_storage =
           llvm::MutableArrayRef(reinterpret_cast<char*>(storage_.Allocate(
                                     /*Size=*/length, /*Alignment=*/1)),
@@ -977,7 +980,7 @@ auto SourceGen::AppendUniqueIdentifiers(
     unique_idents.GrowForInsertCount(count - number);
 
     // Generate the needed number of identifiers.
-    for ([[maybe_unused]] auto _ : llvm::seq<int>(count, number)) {
+    for (auto _ : llvm::seq<int>(count, number)) {
       // Allocate stable storage for the identifier so we can form stable
       // `StringRef`s to it.
       auto ident_storage =
@@ -1319,7 +1322,7 @@ auto SourceGen::GenerateFunctionDecl(ClassGenState& state, llvm::StringRef name,
   UniqueIdentifierPopper unique_param_names(*this, state.param_names());
   llvm::SmallVector<TypedName> params;
   params.reserve(param_count);
-  for ([[maybe_unused]] auto _ : llvm::seq(param_count)) {
+  for (auto _ : llvm::seq(param_count)) {
     params.push_back(
         {.name = unique_param_names.Pop(), .type = state.GetDeclType().name});
   }
@@ -1357,7 +1360,7 @@ auto SourceGen::GenerateInlineFunctionDef(ClassGenState& state,
   llvm::SmallVector<llvm::StringRef> consumers;
   params.reserve(param_count);
   consumers.reserve(param_count);
-  for ([[maybe_unused]] auto _ : llvm::seq(param_count)) {
+  for (auto _ : llvm::seq(param_count)) {
     llvm::StringRef param = unique_param_names.Pop();
     ClassGenState::TypeUse type = state.GetInlineParamType();
     params.push_back({.name = param, .type = type.name});
@@ -1462,24 +1465,31 @@ auto SourceGen::GenerateForwarder(llvm::StringRef name,
 }
 
 // Generates a class's `Make` function, which returns a value of the class with
-// every field initialized. A class-typed field calls an earlier class's `Make`,
-// so these calls never recurse.
+// every field initialized. C++ classes idiomatically initialize with a
+// constructor, so C++ gets a default constructor with the same initializers. A
+// class-typed field calls an earlier class's `Make`, so these calls never
+// recurse.
 auto SourceGen::GenerateMakeFunction(ClassGenState& state,
                                      llvm::StringRef class_name,
                                      llvm::ArrayRef<TypedName> fields,
                                      llvm::raw_ostream& os) -> void {
   os << "  // TODO: make better comment text\n";
-  os << "  " << (IsCpp() ? "static auto " : "fn ") << "Make() -> " << class_name
-     << " {\n";
-  os << "    return {";
-  llvm::ListSeparator sep;
-  os << sep << (IsCpp() ? "0" : ".tag = 0");
-  for (const TypedName& field : fields) {
-    os << sep;
-    // Carbon uses designated initializers; C++ uses positional aggregate init.
-    if (!IsCpp()) {
-      os << "." << field.name << " = ";
+  if (IsCpp()) {
+    os << "  " << class_name << "()\n";
+    os << "      : tag(0)";
+    for (const TypedName& field : fields) {
+      os << ", " << field.name << "(";
+      state.ProduceValue(field.type, os);
+      os << ")";
     }
+    os << " {}\n";
+    return;
+  }
+
+  os << "  fn Make() -> " << class_name << " {\n";
+  os << "    return {.tag = 0";
+  for (const TypedName& field : fields) {
+    os << ", ." << field.name << " = ";
     state.ProduceValue(field.type, os);
   }
   os << "};\n  }\n";
@@ -1519,7 +1529,7 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
   // by collecting them before inserting that type into the valid set.
   llvm::SmallVector<llvm::StringRef> field_type_names;
   field_type_names.reserve(params.private_field_decls);
-  for ([[maybe_unused]] auto _ : llvm::seq(params.private_field_decls)) {
+  for (auto _ : llvm::seq(params.private_field_decls)) {
     field_type_names.push_back(state.GetFieldType().name);
   }
 
@@ -1534,14 +1544,14 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
       *this, state.accessed_field_names(), &state.class_name_set());
   llvm::SmallVector<TypedName> getter_fields;
   getter_fields.reserve(params.inline_getters);
-  for ([[maybe_unused]] auto _ : llvm::seq(params.inline_getters)) {
+  for (auto _ : llvm::seq(params.inline_getters)) {
     getter_fields.push_back(
         {.name = unique_accessed_names.Pop(),
          .type = state.getter_field_types().pop_back_val()});
   }
   llvm::SmallVector<std::pair<TypedName, llvm::StringRef>> predicate_fields;
   predicate_fields.reserve(params.inline_predicates);
-  for ([[maybe_unused]] auto _ : llvm::seq(params.inline_predicates)) {
+  for (auto _ : llvm::seq(params.inline_predicates)) {
     ClassGenState::PredicateField field =
         state.predicate_fields().pop_back_val();
     predicate_fields.push_back(
@@ -1558,21 +1568,21 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
                                              state.inline_function_names());
 
   llvm::ListSeparator line_sep("\n");
-  for ([[maybe_unused]] auto _ : llvm::seq(params.public_function_decls)) {
+  for (auto _ : llvm::seq(params.public_function_decls)) {
     os << line_sep;
     GenerateFunctionDecl(state, unique_member_names.Pop(), /*is_private=*/false,
                          /*is_method=*/false,
                          state.public_function_param_counts().pop_back_val(),
                          /*indent=*/"  ", os);
   }
-  for ([[maybe_unused]] auto _ : llvm::seq(params.inline_function_defs)) {
+  for (auto _ : llvm::seq(params.inline_function_defs)) {
     os << line_sep;
     GenerateInlineFunctionDef(
         state, unique_inline_names.Pop(),
         state.inline_function_param_counts().pop_back_val(),
         state.local_counts().pop_back_val(), /*indent=*/"  ", os);
   }
-  for ([[maybe_unused]] auto _ : llvm::seq(params.public_method_decls)) {
+  for (auto _ : llvm::seq(params.public_method_decls)) {
     os << line_sep;
     GenerateFunctionDecl(state, unique_member_names.Pop(), /*is_private=*/false,
                          /*is_method=*/true,
@@ -1599,15 +1609,14 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
   };
   llvm::SmallVector<Forwarder> forwarders;
   forwarders.reserve(params.inline_forwarders);
-  for ([[maybe_unused]] auto _ : llvm::seq(params.inline_forwarders)) {
+  for (auto _ : llvm::seq(params.inline_forwarders)) {
     Forwarder& forwarder = forwarders.emplace_back();
     forwarder.name = unique_forwarder_names.Pop();
     // Exclude class names so that a parameter can't shadow a class in the
     // signature.
     UniqueIdentifierPopper unique_param_names(
         *this, state.forwarder_param_names(), &state.class_name_set());
-    for ([[maybe_unused]] auto _ :
-         llvm::seq(state.forwarder_param_counts().pop_back_val())) {
+    for (auto _ : llvm::seq(state.forwarder_param_counts().pop_back_val())) {
       forwarder.params.push_back({.name = unique_param_names.Pop(),
                                   .type = state.GetForwardType().name});
     }
@@ -1623,14 +1632,14 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
     line_sep = llvm::ListSeparator("\n");
   }
 
-  for ([[maybe_unused]] auto _ : llvm::seq(params.private_function_decls)) {
+  for (auto _ : llvm::seq(params.private_function_decls)) {
     os << line_sep;
     GenerateFunctionDecl(state, unique_member_names.Pop(), /*is_private=*/true,
                          /*is_method=*/false,
                          state.private_function_param_counts().pop_back_val(),
                          /*indent=*/"  ", os);
   }
-  for ([[maybe_unused]] auto _ : llvm::seq(params.private_method_decls)) {
+  for (auto _ : llvm::seq(params.private_method_decls)) {
     os << line_sep;
     GenerateFunctionDecl(state, unique_member_names.Pop(), /*is_private=*/true,
                          /*is_method=*/true,
@@ -1660,9 +1669,8 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
     fields.push_back(field);
   }
 
-  // With bodies, C++ puts `Make` and the fields in a public section. Public
-  // fields make the class an aggregate, which `Make` initializes with a braced
-  // list. Without bodies, the fields stay private.
+  // With bodies, C++ puts `Make` and `Checksum` in a second public section,
+  // followed by a private section for the fields.
   bool has_bodies = state.has_bodies();
   if (IsCpp() && has_bodies) {
     os << "\n public:\n";
@@ -1675,10 +1683,14 @@ auto SourceGen::GenerateClassDef(const ClassParams& params,
     GenerateMakeFunction(state, name, fields, os);
     os << line_sep;
     GenerateChecksumFunction(os);
+    if (IsCpp()) {
+      os << "\n private:\n";
+      line_sep = llvm::ListSeparator("\n");
+    }
   }
 
   os << line_sep;
-  // `tag` comes first, matching its position in C++ `Make`.
+  // `tag` comes first, matching its position in `Make`.
   if (has_bodies) {
     os << (IsCpp() ? "  int tag;\n" : "  private var tag: i32;\n");
   }

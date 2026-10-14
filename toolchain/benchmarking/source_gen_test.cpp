@@ -85,7 +85,7 @@ TEST(SourceGenTest, Identifiers) {
   // Check that repeated calls are different in interesting ways, but have the
   // exact same total bytes.
   ssize_t idents_size_sum = SumSizes(idents);
-  for ([[maybe_unused]] auto _ : llvm::seq(10)) {
+  for (auto _ : llvm::seq(10)) {
     auto idents2 = gen.GetShuffledIdentifiers(1000);
     EXPECT_THAT(idents2, SizeIs(1000));
     // Should be (at least) a different shuffle of identifiers.
@@ -487,6 +487,15 @@ TEST(SourceGenTest, GenApiFileDenseDeclsInlineBodies) {
   EXPECT_THAT(source, HasSubstr(".Checksum()"));
   EXPECT_THAT(source, HasSubstr(".Make()"));
   EXPECT_THAT(source, HasSubstr("Impl("));
+}
+
+// C++ initializes a class with a default constructor in place of `Make`, which
+// leaves the fields private.
+TEST(SourceGenTest, GenApiFileDenseDeclsInlineBodiesCpp) {
+  SourceGen gen(SourceGen::Language::Cpp);
+  std::string source = gen.GenApiFileDenseDecls(2000, InlineBodiesParams());
+  EXPECT_THAT(source, HasSubstr("()\n      : tag(0)"));
+  EXPECT_THAT(source, HasSubstr("\n private:\n  int tag;\n"));
 }
 
 // Many large bodies and few other declarations.
