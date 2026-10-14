@@ -36,6 +36,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
     -   [Interface extension](#interface-extension)
         -   [`extend require` with named constraints](#extend-require-with-named-constraints)
+        -   [Extending interfaces with primary functions and anonymous aliases](#extending-interfaces-with-primary-functions-and-anonymous-aliases)
         -   [Diamond dependency issue](#diamond-dependency-issue)
     -   [Use case: detecting unreachable matches](#use-case-detecting-unreachable-matches)
 -   [Adapting types](#adapting-types)
@@ -47,6 +48,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Use case: Accessing interface names](#use-case-accessing-interface-names)
 -   [Associated constants](#associated-constants)
     -   [Associated functions](#associated-functions)
+        -   [Primary interface functions](#primary-interface-functions)
+        -   [Abbreviated `impl` declarations](#abbreviated-impl-declarations)
 -   [Associated facets](#associated-facets)
 -   [Parameterized interfaces](#parameterized-interfaces)
     -   [Parameterized named constraints](#parameterized-named-constraints)
@@ -279,7 +282,7 @@ An impl may be defined inline inside the type definition:
 class Point_Inline {
   var x: f64;
   var y: f64;
-  impl as Vector {
+  impl Self as Vector {
     // In this scope, the `Self` keyword is an
     // alias for `Point_Inline`.
     fn Add(self, b: Self) -> Self {
@@ -301,7 +304,7 @@ the type's API:
 class Point_Extend {
   var x: f64;
   var y: f64;
-  extend impl as Vector {
+  extend impl Self as Vector {
     fn Add(self, b: Self) -> Self {
       return {.x = self.x + b.x, .y = self.y + b.y};
     }
@@ -444,7 +447,7 @@ class Point_ExtendForward {
   // Forward declaration in class definition using `extend`.
   // Signals that you should look in the definition of
   // `Vector` since those methods are included in this type.
-  extend impl as Vector;
+  extend impl Self as Vector;
 }
 
 // Definition outside class definition does not.
@@ -474,11 +477,11 @@ To implement more than one interface when defining a type, simply include an
 class Point_2Extend {
   var x: f64;
   var y: f64;
-  extend impl as Vector {
+  extend impl Self as Vector {
     fn Add(self, b: Self) -> Self { ... }
     fn Scale(self, v: f64) -> Self { ... }
   }
-  extend impl as Drawable {
+  extend impl Self as Drawable {
     fn Draw(self) { ... }
   }
 }
@@ -500,11 +503,11 @@ experience.
 ```carbon
 class Player {
   var name: String;
-  extend impl as Icon {
+  extend impl Self as Icon {
     fn Name(self) -> String { return self.name; }
     // ...
   }
-  extend impl as GameUnit {
+  extend impl Self as GameUnit {
     // Possible syntax options for defining
     // `GameUnit.Name` as the same as `Icon.Name`:
     alias Name = Icon.Name;
@@ -529,10 +532,10 @@ that have a name in common:
 
 ```carbon
 class GameBoard {
-  extend impl as Drawable {
+  extend impl Self as Drawable {
     fn Draw(self) { ... }
   }
-  extend impl as EndOfGame {
+  extend impl Self as EndOfGame {
     // ❌ Error: `GameBoard` has two methods named `Draw`.
     fn Draw(self) { ... }
     fn Winner(self, player: i32) { ... }
@@ -558,7 +561,7 @@ class Point_ReuseMethodInImpl {
   }
   // No `extend`, so other members of `Vector` are not
   // part of `Point_ReuseMethodInImpl`'s API.
-  impl as Vector {
+  impl Self as Vector {
     // Syntax TBD:
     alias Add = Point_ReuseMethodInImpl.Add;
     fn Scale(self, v: f64) -> Self {
@@ -574,7 +577,7 @@ class Point_IncludeMethodFromImpl {
   var y: f64;
   // No `extend`, so members of `Vector` are not
   // part of `Point_IncludeMethodFromImpl`'s API.
-  impl as Vector {
+  impl Self as Vector {
     fn Add(self, b: Self) -> Self {
       return {.x = self.x + b.x, .y = self.y + b.y};
     }
@@ -817,7 +820,7 @@ implementing `Vector`, and a function that takes a `GeneralPoint` and calls
 
 ```carbon
 class GeneralPoint(C: Numeric) {
-  impl as Vector { ... }
+  impl Self as Vector { ... }
   fn Get(self, i: i32) -> C;
 }
 
@@ -1088,13 +1091,13 @@ interface I {
 }
 ```
 
-Then a type implementing `I` would have `impl as I` with definitions for `X`,
-`Y`, and `Z`, as in:
+Then a type implementing `I` would have `impl Self as I` with definitions for
+`X`, `Y`, and `Z`, as in:
 
 ```carbon
 class ImplementsI {
   // ...
-  impl as I {
+  impl Self as I {
     X { ... }
     Y { ... }
     Z { ... }
@@ -1266,10 +1269,10 @@ fn PrintThenDraw[T: Printable & Renderable](x: T) {
 
 class Sprite {
   // ...
-  extend impl as Printable {
+  extend impl Self as Printable {
     fn Print(self) { ... }
   }
-  extend impl as Renderable {
+  extend impl Self as Renderable {
     fn Center(self) -> (i32, i32) { ... }
     fn Draw(self) { ... }
   }
@@ -1392,8 +1395,8 @@ fn DoAdvanceAndEquals[T: Iterable](x: T) {
 }
 
 class Iota {
-  extend impl as Iterable { fn Advance(self) { ... } }
-  extend impl as Equatable { fn Equals(self, rhs: Self) -> bool { ... } }
+  extend impl Self as Iterable { fn Advance(self) { ... } }
+  extend impl Self as Equatable { fn Equals(self, rhs: Self) -> bool { ... } }
 }
 var x: Iota;
 DoAdvanceAndEquals(x);
@@ -1463,7 +1466,7 @@ obviating the need to implement `Equatable` itself:
 
 ```carbon
 class Song {
-  extend impl as Hashable {
+  extend impl Self as Hashable {
     fn Hash(self) -> u64 { ... }
     fn Equals(self, rhs: Self) -> bool { ... }
   }
@@ -1542,15 +1545,12 @@ when implementing the containing interface. This requires writing at least two
 `impl`s to implement the containing interface. When the two interfaces are
 tightly coupled, it's possible to have one interface gain the members of and
 _provide_ an implementation for the other interface instead, with
-`extend impl as`.
+`extend impl Self as`.
 
-Just as when used in a class, the implied `Self` between `extend impl` and `as`
-must be omitted.
-
-When an interface `B` contains `extend impl as A`, implementing `B` will require
-writing an implementation of all members of `A` inside the `impl` of `B`. And
-anything that implements `B` will implicitly also implement `A`, using the
-definitions from the `impl` of `B`. Here is an example:
+When an interface `B` contains `extend impl Self as A`, implementing `B` will
+require writing an implementation of all members of `A` inside the `impl` of
+`B`. And anything that implements `B` will implicitly also implement `A`, using
+the definitions from the `impl` of `B`. Here is an example:
 
 ```carbon
 interface A {
@@ -1560,7 +1560,7 @@ interface A {
 }
 
 interface B {
-  extend impl as A;
+  extend impl Self as A;
   fn H();
 }
 ```
@@ -1582,7 +1582,7 @@ impl forall [U: B] U as A {
 ```
 
 The implied `impl` definition can be made `final` by writing the reference to
-`A` as `extend final impl as A`.
+`A` as `extend final impl Self as A`.
 
 Note that this is supported only in an `interface` and not in a named
 [`constraint`](#named-constraints).
@@ -1611,7 +1611,7 @@ interface PreferredConversion {
 
 The `extend` modifier on `require` makes sense with the same meaning inside a
 [`constraint`](#named-constraints) definition, and so is also supported (unlike
-`extend impl as`).
+`extend impl Self as`).
 
 ```carbon
 interface Media {
@@ -1646,7 +1646,7 @@ constraint:
 
 ```carbon
 class Song {
-  extend impl as Combined {
+  extend impl Self as Combined {
     fn Play(self) { ... }
     fn Run(self) { ... }
   }
@@ -1657,10 +1657,10 @@ This is equivalent to implementing the required interfaces directly:
 
 ```carbon
 class Song {
-  extend impl as Media {
+  extend impl Self as Media {
     fn Play(self) { ... }
   }
-  extend impl as Job {
+  extend impl Self as Job {
     fn Run(self) { ... }
   }
 }
@@ -1694,6 +1694,64 @@ interface MovieCodec {
 }
 ```
 
+#### Extending interfaces with primary functions and anonymous aliases
+
+When an `interface` or `constraint` extends an interface `I` that has a
+[primary function](#primary-interface-functions):
+
+-   `extend require impls I`: The primary function of `I` is aliased into the
+    extending scope under its qualified name `I` (`alias I = I.I;`). It does
+    not become the primary function of the extending `interface` or
+    `constraint`. This allows a constraint or interface to extend multiple
+    interfaces with primary functions (for example, both `AddWith(Self)` and
+    `SubWith(Self)`) without their primary functions colliding. If a scope
+    extends multiple instantiations of the same parameterized interface (such as
+    `AddWith(Self)` and `AddWith(Other)`), the conflicting `AddWith` names from
+    `extend` are dropped unless explicitly disambiguated with an `alias`.
+-   `extend impl Self as I` (or `extend final impl Self as I`) in `interface J`:
+    The primary function of `I` is copied into `J` as `J`'s primary function
+    (taking the qualified name `J`), and the generated blanket `impl` of `I`
+    forwards `I`'s primary function to `J`'s primary function:
+
+    ```carbon
+    interface I {
+      fn (self);
+    }
+
+    interface J {
+      extend impl Self as I;
+    }
+    // Equivalent to:
+    // interface J {
+    //   fn (self);
+    // }
+    // impl forall [U: J] U as I fn (self) = U.impl(J.J);
+    ```
+
+    An interface `J` cannot use `extend impl Self as` for multiple interfaces
+    that have primary functions, because their unnamed primary functions would
+    conflict in `J`.
+
+An `interface` or `constraint` may also declare at most one _anonymous `alias`_
+by omitting the alias name before `=`:
+
+```carbon
+constraint Add {
+  extend require impls AddWith(Self) where .Result = Self;
+  alias = AddWith(Self).AddWith;
+}
+```
+
+Like a [primary function](#primary-interface-functions), an anonymous `alias`
+implicitly takes the name of the enclosing `interface` or `constraint` for
+qualified member lookup only (such as `x.Add(y)`, `x.(Add.Add)(y)`, or
+`(T as Add).Add(x, y)`), and is never found by unqualified name lookup.
+Implementing a named constraint uses the constraint's names, and supports
+[abbreviated `impl` syntax](#abbreviated-impl-declarations) when the constraint
+has a primary function by way of an anonymous `alias` (as in
+`impl fn Add(self, other: Self) -> Self { ... }` or
+`impl T as Add fn (self, other: Self) -> Self { ... }`).
+
 #### Diamond dependency issue
 
 > **TODO:** Update this section to reflect the changes in
@@ -1726,8 +1784,8 @@ interface.
 
 ```carbon
 class MyEdgeListIncidenceGraph {
-  extend impl as IncidenceGraph { ... }
-  extend impl as EdgeListGraph { ... }
+  extend impl Self as IncidenceGraph { ... }
+  extend impl Self as EdgeListGraph { ... }
 }
 ```
 
@@ -1740,13 +1798,13 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```carbon
     class MyEdgeListIncidenceGraph {
-      extend impl as IncidenceGraph {
+      extend impl Self as IncidenceGraph {
         fn Source(self, e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn Target(self, e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn OutEdges(ref self, u: VertexDescriptor)
             -> (EdgeIterator, EdgeIterator) { ... }
       }
-      extend impl as EdgeListGraph {
+      extend impl Self as EdgeListGraph {
         fn Edges(ref self) -> (EdgeIterator, EdgeIterator) { ... }
       }
     }
@@ -1757,12 +1815,12 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```carbon
     class MyEdgeListIncidenceGraph {
-      extend impl as IncidenceGraph {
+      extend impl Self as IncidenceGraph {
         fn Source(self, e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn OutEdges(ref self, u: VertexDescriptor)
             -> (EdgeIterator, EdgeIterator) { ... }
       }
-      extend impl as EdgeListGraph {
+      extend impl Self as EdgeListGraph {
         fn Target(self, e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn Edges(ref self) -> (EdgeIterator, EdgeIterator) { ... }
       }
@@ -1773,12 +1831,12 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```carbon
     class MyEdgeListIncidenceGraph {
-      extend impl as Graph {
+      extend impl Self as Graph {
         fn Source(self, e: EdgeDescriptor) -> VertexDescriptor { ... }
         fn Target(self, e: EdgeDescriptor) -> VertexDescriptor { ... }
       }
-      extend impl as IncidenceGraph { ... }
-      extend impl as EdgeListGraph { ... }
+      extend impl Self as IncidenceGraph { ... }
+      extend impl Self as EdgeListGraph { ... }
     }
     ```
 
@@ -1786,8 +1844,8 @@ though could be defined in the `impl` block of `IncidenceGraph`,
 
     ```carbon
     class MyEdgeListIncidenceGraph {
-      extend impl as IncidenceGraph { ... }
-      extend impl as EdgeListGraph { ... }
+      extend impl Self as IncidenceGraph { ... }
+      extend impl Self as EdgeListGraph { ... }
     }
     impl MyEdgeListIncidenceGraph as Graph {
       fn Source(self, e: EdgeDescriptor) -> VertexDescriptor { ... }
@@ -1835,22 +1893,22 @@ interface Ordered {
   fn Less(self, rhs: Self) -> bool;
 }
 class Song {
-  extend impl as Printable { fn Print(self) { ... } }
+  extend impl Self as Printable { fn Print(self) { ... } }
 }
 class SongByTitle {
   adapt Song;
-  extend impl as Ordered {
+  extend impl Self as Ordered {
     fn Less(self, rhs: Self) -> bool { ... }
   }
 }
 class FormattedSong {
   adapt Song;
-  extend impl as Printable { fn Print(self) { ... } }
+  extend impl Self as Printable { fn Print(self) { ... } }
 }
 class FormattedSongByTitle {
   adapt Song;
-  extend impl as Printable = FormattedSong;
-  extend impl as Ordered = SongByTitle;
+  extend impl Self as Printable = FormattedSong;
+  extend impl Self as Ordered = SongByTitle;
 }
 ```
 
@@ -1879,7 +1937,7 @@ A user of this type will provide specific values for the key and value types:
 
 ```carbon
 class Song {
-  extend impl as Hashable { ... }
+  extend impl Self as Hashable { ... }
   // ...
 }
 
@@ -1897,12 +1955,12 @@ of `Song` that implement `Hashable`:
 ```carbon
 class PlayableSong {
   adapt Song;
-  extend impl as Hashable = Song;
-  extend impl as Media { ... }
+  extend impl Self as Hashable = Song;
+  extend impl Self as Media { ... }
 }
 class SongHashedByTitle {
   adapt Song;
-  extend impl as Hashable { ... }
+  extend impl Self as Hashable { ... }
 }
 ```
 
@@ -1930,19 +1988,19 @@ along with `impl` lookup:
 
 ```carbon
 class Song {
-  extend impl as Hashable { ... }
-  extend impl as Printable { ... }
+  extend impl Self as Hashable { ... }
+  extend impl Self as Printable { ... }
 }
 
 class SongByArtist {
   extend adapt Song;
 
   // Add an implementation of a new interface
-  extend impl as Ordered { ... }
+  extend impl Self as Ordered { ... }
 
   // Replace an existing implementation of an interface
   // with an alternative.
-  extend impl as Hashable { ... }
+  extend impl Self as Hashable { ... }
 }
 ```
 
@@ -1980,7 +2038,7 @@ class SongRenderToPrintDriver {
   // Avoid name conflict with new `Print`
   // function by implementing the `Printable`
   // interface without `extend`.
-  impl as Printable = Song;
+  impl Self as Printable = Song;
 
   // Make the `Print` function from `Printable`
   // available under the name `PrintToScreen`.
@@ -2008,7 +2066,7 @@ import SongLib;
 
 class Song {
   extend adapt SongLib.Song;
-  extend impl as CompareLib.Comparable { ... }
+  extend impl Self as CompareLib.Comparable { ... }
 }
 // Or, to keep the names from CompareLib.Comparable out of Song's API:
 class Song {
@@ -2018,7 +2076,7 @@ impl Song as CompareLib.Comparable { ... }
 // Or, equivalently:
 class Song {
   extend adapt SongLib.Song;
-  impl as CompareLib.Comparable { ... }
+  impl Self as CompareLib.Comparable { ... }
 }
 ```
 
@@ -2038,8 +2096,8 @@ CompareLib.Sort((song,));
 Let's say we want to provide a possible implementation of an interface for use
 by types for which that implementation would be appropriate. We can do that by
 defining an adapter implementing the interface that is parameterized on the type
-it is adapting. That impl may then be pulled in using the `impl as ... = ...;`
-syntax.
+it is adapting. That impl may then be pulled in using the `impl Self as ... =
+...;` syntax.
 
 For example, given an interface `Comparable` for deciding which value is
 smaller:
@@ -2059,7 +2117,7 @@ interface Difference {
 }
 class ComparableFromDifference(T: Difference) {
   adapt T;
-  extend impl as Comparable {
+  extend impl Self as Comparable {
     fn Less(self, rhs: Self) -> bool {
       return (self as T).Sub(rhs) < 0;
     }
@@ -2067,12 +2125,12 @@ class ComparableFromDifference(T: Difference) {
 }
 class IntWrapper {
   var x: i32;
-  impl as Difference {
+  impl Self as Difference {
     fn Sub(self, rhs: Self) -> i32 {
       return left.x - right.x;
     }
   }
-  impl as Comparable = ComparableFromDifference(IntWrapper);
+  impl Self as Comparable = ComparableFromDifference(IntWrapper);
 }
 ```
 
@@ -2083,7 +2141,7 @@ use to the adapter instead:
 class ComparableFromDifferenceFn
     (T: type, Difference: fnty(T, T)->i32) {
   adapt T;
-  extend impl as Comparable {
+  extend impl Self as Comparable {
     fn Less(self, rhs: Self) -> bool {
       return Difference(self as T, rhs as T) < 0;
     }
@@ -2094,7 +2152,7 @@ class IntWrapper {
   fn Difference(left: Self, right: Self) {
     return left.x - right.x;
   }
-  impl as Comparable =
+  impl Self as Comparable =
       ComparableFromDifferenceFn(IntWrapper, Difference);
 }
 ```
@@ -2124,7 +2182,7 @@ class ByReal {
   // Complex numbers are not generally comparable,
   // but this comparison function is useful for some
   // method implementations.
-  extend impl as Comparable {
+  extend impl Self as Comparable {
     fn Less(self, that: Self) -> bool {
       return self.Real() < that.Real();
     }
@@ -2163,7 +2221,7 @@ methods in the interface.
 ```carbon
 class DrawInWindow {
   adapt Window;
-  extend impl as DrawingContext = Window;
+  extend impl Self as DrawingContext = Window;
 }
 fn Render(w: Window) {
   let d: DrawInWindow = w as DrawInWindow;
@@ -2224,12 +2282,15 @@ _associated-constant-decl_ ::= `default` `let` _identifier_ `:` _expression_ =
 _expression_ `;`
 
 An implementation of an interface specifies values for associated constants with
-a [`where` clause](#where-constraints). For example, implementations of
-`NSpacePoint` for different types might have different values for `N`:
+a [`where` clause](#where-constraints), or by deduction from the primary
+function signature in an
+[abbreviated `impl` declaration](#abbreviated-impl-declarations). For example,
+implementations of `NSpacePoint` for different types might have different values
+for `N`:
 
 ```carbon
 class Point2D {
-  extend impl as NSpacePoint where .N = 2 {
+  extend impl Self as NSpacePoint where .N = 2 {
     fn Get(ref self, i: i32) -> f64 { ... }
     fn Set(ref self, i: i32, value: f64) { ... }
     fn SetAll(ref self, value: Array(f64, 2)) { ... }
@@ -2237,7 +2298,7 @@ class Point2D {
 }
 
 class Point3D {
-  extend impl as NSpacePoint where .N = 3 {
+  extend impl Self as NSpacePoint where .N = 3 {
     fn Get(ref self, i: i32) -> f64 { ... }
     fn Set(ref self, i: i32, value: f64) { ... }
     fn SetAll(ref self, value: Array(f64, 3)) { ... }
@@ -2302,7 +2363,7 @@ interface DeserializeFromString {
 class MySerializableType {
   var i: i32;
 
-  extend impl as DeserializeFromString {
+  extend impl Self as DeserializeFromString {
     fn Deserialize(serialized: String) -> Self {
       return {.i = StringToInt(serialized)};
     }
@@ -2336,7 +2397,7 @@ interface Interface {
 }
 
 class Class {
-  extend impl as Interface { fn Method(unused self) {} }
+  extend impl Self as Interface { fn Method(unused self) {} }
 }
 
 fn Fn(value: Class) {
@@ -2370,6 +2431,162 @@ fn PrintWidgets(s: slice(Widget)) {
 
 Note that `Self` is in deducible position, but not directly the type of any
 argument.
+
+#### Primary interface functions
+
+An `interface` may contain at most one unnamed `fn` declaration, which omits the
+function name between `fn` and its parameter list:
+
+```carbon
+interface AddWith(U: type) {
+  default let Result: type = Self;
+  fn (self, other: U) -> Result;
+}
+```
+
+This function is the _primary function_ of the interface:
+
+-   It implicitly takes the name of the enclosing `interface` for qualified
+    member lookup (such as `x.AddWith(y)`, `Self.AddWith(x, y)`,
+    `x.(AddWith(U).AddWith)(y)`, `(T as AddWith(U)).AddWith(x, y)`, or
+    `AddWith(U).AddWith(x, y)`).
+-   Its implicit name is never found by unqualified name lookup in any scope,
+    including inside the `interface`, an extending `interface`, `constraint`, or
+    `class`, or an `impl`. Within those scopes, the unqualified name of the
+    interface refers to the interface itself rather than the function. To call
+    or reference the primary function, use qualified member lookup (such as
+    `self.AddWith(other)` in a class that extends the implementation,
+    `self.(AddWith(U).AddWith)(other)` in a non-extending `impl`, or
+    `Self.AddWith`).
+
+In an `impl` of an interface with a primary function, at most one `fn`
+declaration may omit its name to implement the primary function, or it may
+explicitly write the interface's name (`fn AddWith(self, other: U) -> Self`).
+
+#### Abbreviated `impl` declarations
+
+An `impl` declaration (including `extend impl` and `final impl`) may omit the
+`{` ... `}` braces and follow the facet type directly with a `fn` declaration or
+definition:
+
+-   Omitting the function name after `fn` (`impl <SelfType> as <FacetType> fn
+    (...)`) implements the [primary function](#primary-interface-functions) of
+    the interface or named constraint.
+-   Specifying a function name after `fn` (`impl <SelfType> as <FacetType> fn
+    Name(...)`) implements the associated function `Name` of the interface or
+    named constraint (such as `fn Equal` in `EqWith`, `fn Compare` in
+    `OrderedWith`, `fn Convert` in `As` and `ImplicitAs`, or the explicit name
+    of a primary function). That member must be a function and must be the only
+    non-defaulted member of the interface or named constraint (aside from
+    members satisfied by a `where` clause or deduced from the signature).
+
+Within a `class` (or `interface`), `impl fn` provides a shorthand for an
+abbreviated `impl` for `Self`. Given `impl fn X.Y.Z(...)` (where the name has
+one or more dot-separated components, each potentially including arguments):
+
+-   If the `X.Y.Z` formation names an interface (or a named constraint with a
+    primary function, such as `Printable`, `Core.Add`, or `Core.MulWith`), it
+    must have a [primary function](#primary-interface-functions), and `impl fn
+    X.Y.Z(...)` is the same as `impl Self as X.Y.Z fn (...)` (so `impl fn
+    X(...)` is `impl Self as X fn (...)` and `impl fn Core.Add(...)` is `impl
+    Self as Core.Add fn (...)`).
+-   If `X.Y.Z` has more than one component and names a function member `Z` of an
+    interface `X.Y` (such as `Comparable.Less`, `Core.Eq.Equal`,
+    `Core.Ordered.Compare`, `Core.As(i32).Convert`, or
+    `Core.ImplicitAs.Convert`), the last component (`Z`) is moved to the
+    function name after `fn`: `impl Self as X.Y fn Z(...)` (so `impl fn
+    X.Y(...)` is `impl Self as X fn Y(...)` and `impl fn Core.Eq.Equal(...)` is
+    `impl Self as Core.Eq fn Equal(...)`). That member `Z` must be a function
+    and must be the only non-defaulted member of the interface `X.Y` (aside from
+    members that can be deduced from the signature).
+
+```carbon
+class Point {
+  var x: f32;
+  var y: f32;
+
+  impl fn Core.Add(self, other: Self) -> Self {
+    return {.x = self.x + other.x, .y = self.y + other.y};
+  }
+  impl fn Core.MulWith(self, scale: like f32) -> Self {
+    return {.x = self.x * scale, .y = self.y * scale};
+  }
+  impl fn Core.Eq.Equal(self, other: Self) -> bool {
+    return self.x == other.x and self.y == other.y;
+  }
+}
+```
+
+Abbreviated `impl` syntax is allowed when all other requirements of the
+interface or named constraint are satisfied by defaults, a `where` clause on
+the `impl`, or deduction from the function's signature.
+
+In an abbreviated `impl` declaration (`impl <SelfType> as <FacetType> fn ...`
+or its `impl fn ...` shorthand), omitted interface arguments and unassigned
+associated constants are deduced by matching the `impl`'s `fn` signature against
+the interface function's signature:
+
+-   When a parameterized interface's argument list `(U, ...)` is omitted (for
+    example, `impl fn Core.MulWith(self, scale: f32) -> Self`, `impl fn
+    Core.Call(self, x: f64) -> f64`, `impl fn Core.ImplicitAs.Convert(self) ->
+    StringView`, or `impl Point as Core.AddWith fn (self, other: Point) ->
+    Point`), the omitted interface arguments are deduced by matching the
+    parameter types and return type of the `impl`'s `fn` signature against the
+    interface's `fn` signature. Every omitted interface parameter must be
+    determined by the signature (or have a default). Interface arguments may
+    also be written explicitly on the interface (such as `impl fn
+    Core.As(bool).Convert(self) -> bool` or
+    `impl f32 as Core.MulWith(Point) fn (self, p: Point) -> Point`).
+-   In the `fn` parameter list of an abbreviated `impl`, a parameter's type may
+    be written [`like`](#like-operator-for-implicit-conversions) `T` (such as
+    `impl fn Core.MulWith(self, scale: like f32) -> Self`). When matched against
+    an omitted interface parameter `U: type`, `U` is deduced as `like T` (so
+    `impl fn Core.MulWith(self, scale: like f32) -> Self` is equivalent to `impl
+    Self as Core.MulWith(like f32) fn (self, scale: f32) -> Self`), while within
+    the function signature and body the parameter (`scale`) has type `T`
+    (`f32`).
+-   Any non-`final` associated constants declared by the interface itself
+    (including those with `default` values, such as `Result` in `Core.AddWith`)
+    that appear in deducible positions of the implemented function's signature
+    in the interface are deduced from the `impl`'s `fn` signature. For example,
+    in `impl Point as Core.AddWith fn (self, other: Point) -> Point`, matching
+    `-> Point` against `-> Result` deduces `.Result = Point` without an explicit
+    `where .Result = Point` clause.
+-   Omitting the `->` return type clause on the `impl`'s `fn` signature is
+    treated as `-> ()` for deduction, so matching an omitted return clause
+    against `-> Result` deduces `.Result = ()` (as in
+    `impl Func(Arg) as Core.Call fn (self, arg: Arg)`). Return type deduction
+    (`-> auto` or `=> expr`) cannot be used to deduce an interface argument or
+    associated constant.
+-   Associated constants belonging to a required interface (such as
+    `Bind(T).Result` in `BindToValue(T)`) are not defined by the `impl` of the
+    extending interface; the `impl`'s `fn` signature must match the value
+    established by the implementation of the required interface.
+-   An abbreviated `impl` may include a `where` clause before `fn` to specify
+    associated constants that do not appear in the implemented function's
+    signature. If an associated constant is both specified in a `where` clause
+    and deduced from the `fn` signature, the two values must match.
+-   Because deduced interface arguments and associated constants belong to the
+    `impl`, they cannot depend on generic parameters of the `fn` itself (though
+    they may depend on `forall` parameters of the `impl` or enclosing generic
+    parameters).
+-   An abbreviated `impl` ending in `;` (such as
+    `impl fn Core.AddWith(self, other: Point) -> Point;`) defines the `impl`
+    (performing the same interface argument and associated constant deduction)
+    and forward-declares its function for
+    [out-of-line definition](#declaring-implementations). By contrast,
+    `impl Self as Core.AddWith(Point);` (without `fn`) forward-declares the
+    `impl` itself.
+-   Signature deduction only occurs in the abbreviated `impl ... fn ...` (and
+    `impl fn ...`) forms. When `{` ... `}` braces are used on an `impl`,
+    interface arguments must be written on the interface and associated
+    constants must be specified with a `where` constraint or use their defaults.
+-   In a class-scope `impl` that specifies an explicit type before `as` other
+    than `Self` (such as `impl f32 as Core.MulWith fn (self, p: Point) -> Point`
+    inside `class Point`), `Self` after `as` refers to the `impl`'s self type
+    (`f32`) rather than the enclosing class (`Point`). To prevent confusion with
+    the enclosing class, using `Self` anywhere after `as` in a class-scope
+    `impl` whose explicit self type is not `Self` is an error.
 
 > **TODO:** Document rules on where associated function implementations can be
 > declared, as adopted in
@@ -2410,7 +2627,7 @@ class DynamicArray(T: type) {
   fn Remove(ref self, pos: IteratorType);
 
   // Set the associated facet `ElementType` to `T`.
-  extend impl as StackAssociatedFacet where .ElementType = T {
+  extend impl Self as StackAssociatedFacet where .ElementType = T {
     fn Push(ref self, value: ElementType) {
       self.Insert(self.End(), value);
     }
@@ -2431,7 +2648,8 @@ class DynamicArray(T: type) {
 
 The keyword `Self` can be used after the `as` in an `impl` declaration as a
 shorthand for the type being implemented, including in the `where` clause
-specifying the values of associated facets, as in:
+specifying the values of associated facets and in the `fn` signature of an
+[abbreviated `impl` declaration](#abbreviated-impl-declarations), as in:
 
 ```carbon
 impl VeryLongTypeName as Add
@@ -2441,11 +2659,22 @@ impl VeryLongTypeName as Add
 }
 ```
 
+When an `impl` declaration inside a `class` definition specifies an explicit
+type before `as` other than `Self` (such as `impl f32 as MulWith(Vec2)` inside
+`class Vec2`), `Self` after `as` would refer to that explicit type (`f32`)
+rather than the enclosing class (`Vec2`). To prevent confusion with the
+enclosing class, using `Self` in the facet type or abbreviated `fn` signature of
+a class-scope `impl` whose explicit self type is not `Self` is an error; the
+enclosing class name must be written explicitly instead.
+
 > **Alternatives considered:** See
 > [other syntax options considered in #731 for specifying associated facets](/proposals/p000731-generics-details-2-adapters-associated-types-parameterized-interfaces.md#syntax-for-associated-constants).
-> In particular, it was deemed that
-> [Swift's approach of inferring an associated facet from method signatures in the impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
-> was unneeded complexity.
+> In particular, it was deemed in #731 that
+> [Swift's approach of inferring an associated facet across arbitrary method signatures in a braced impl](https://docs.swift.org/swift-book/LanguageGuide/Generics.html#ID190)
+> was unneeded complexity, though
+> [#7896](/proposals/p007896-abbreviated-interface-and-impl-syntax.md) later
+> introduced deduction from the single function signature in an
+> [abbreviated `impl` declaration](#abbreviated-impl-declarations).
 
 The definition of the `StackAssociatedFacet` is sufficient for writing a
 checked-generic function that operates on anything implementing that interface,
@@ -2493,9 +2722,9 @@ interface Container {
 
 class DynamicArray(T: type) {
   ...
-  extend impl as Container {
+  extend impl Self as Container {
     class IteratorType {
-      extend impl as Iterator { ... }
+      extend impl Self as Iterator { ... }
     }
     ...
   }
@@ -2538,7 +2767,7 @@ considered different interfaces, with distinct implementations.
 class Produce {
   var fruit: DynamicArray(Fruit);
   var veggie: DynamicArray(Veggie);
-  extend impl as StackParameterized(Fruit) {
+  extend impl Self as StackParameterized(Fruit) {
     fn Push(ref self, value: Fruit) {
       self.fruit.Push(value);
     }
@@ -2549,7 +2778,7 @@ class Produce {
       return self.fruit.IsEmpty();
     }
   }
-  extend impl as StackParameterized(Veggie) {
+  extend impl Self as StackParameterized(Veggie) {
     fn Push(ref self, value: Veggie) {
       self.veggie.Push(value);
     }
@@ -2628,9 +2857,9 @@ class Complex {
   var imag: f64;
   // Can implement this interface more than once
   // as long as it has different arguments.
-  extend impl as EqWith(f64) { ... }
-  // Same as: impl as EqWith(Complex) { ... }
-  extend impl as EqWith(Self) { ... }
+  extend impl Self as EqWith(f64) { ... }
+  // Same as: impl Complex as EqWith(Complex) { ... }
+  extend impl Self as EqWith(Self) { ... }
 }
 ```
 
@@ -2668,8 +2897,8 @@ interface Map(FromType: type, ToType: type) {
   fn Map(ref self, needle: FromType) -> Optional(ToType);
 }
 class Bijection(FromType: type, ToType: type) {
-  extend impl as Map(FromType, ToType) { ... }
-  extend impl as Map(ToType, FromType) { ... }
+  extend impl Self as Map(FromType, ToType) { ... }
+  extend impl Self as Map(ToType, FromType) { ... }
 }
 // ❌ Error: Bijection has two different impl definitions of
 // interface Map(String, String)
@@ -2682,11 +2911,11 @@ interface twice:
 
 ```carbon
 class Bijection(FromType: type, ToType: type) {
-  extend impl as Map(FromType, ToType) { ... }
+  extend impl Self as Map(FromType, ToType) { ... }
 }
 class ReverseLookup(FromType: type, ToType: type) {
   adapt Bijection(FromType, ToType);
-  extend impl as Map(ToType, FromType) { ... }
+  extend impl Self as Map(ToType, FromType) { ... }
 }
 ```
 
@@ -2784,7 +3013,7 @@ binary operator:
 
 And there are two positions that `where` can be written:
 
--   At the end of an `impl as` declaration, before the body of the impl.
+-   At the end of an `impl` declaration, before the body of the impl.
 
     ```carbon
     impl Class as Interface where .A = i32 { ... }
@@ -4115,8 +4344,8 @@ Used as:
 
 ```carbon
 class Song { ... }
-class SongByArtist { adapt Song; impl as Ordered { ... } }
-class SongByTitle { adapt Song; impl as Ordered { ... } }
+class SongByArtist { adapt Song; impl Self as Ordered { ... } }
+class SongByTitle { adapt Song; impl Self as Ordered { ... } }
 let s1: Song = ...;
 let s2: Song = ...;
 assert(CombinedLess(s1, s2, SongByArtist, SongByTitle) == True);
@@ -4156,7 +4385,7 @@ class ThenCompare(
       T: type,
       ... each CompareT: CompatibleWith(T) & Ordered) {
   adapt T;
-  extend impl as Ordered {
+  extend impl Self as Ordered {
     fn Compare(self, rhs: Self) -> CompareResult {
       ... block {
         let result: CompareResult =
@@ -4221,7 +4450,7 @@ interface DefaultConstructible {
 
 // Classes are "sized" by default.
 class Name {
-  extend impl as DefaultConstructible {
+  extend impl Self as DefaultConstructible {
     fn Default() -> Self { ... }
   }
   ...
@@ -4407,14 +4636,14 @@ This can be done lexically in the class's scope:
 
 ```carbon
 class Vector(T: type) {
-  impl as Iterable where .ElementType = T {
+  impl Self as Iterable where .ElementType = T {
     ...
   }
 }
 ```
 
-This is equivalent to naming the implementing type between `impl` and `as`,
-though this form is not allowed after `extend`:
+This is equivalent to naming the implementing type explicitly instead of `Self`
+between `impl` and `as`, though only `Self` is allowed after `extend`:
 
 ```carbon
 class Vector(T: type) {
@@ -4439,8 +4668,8 @@ implemented, with or without `extend`:
 
 ```carbon
 class HashMap(KeyT: Hashable, ValueT: type) {
-  extend impl as Has(KeyT) { ... }
-  impl as Contains(HashSet(KeyT)) { ... }
+  extend impl Self as Has(KeyT) { ... }
+  impl Self as Contains(HashSet(KeyT)) { ... }
 }
 ```
 
@@ -4491,12 +4720,12 @@ impl forall [T: Printable] Vector(T) as Printable {
 }
 ```
 
-Note that no `forall` clause or type may be specified when declaring an `impl`
-with the [`extend`](#extend-impl) keyword:
+Note that no `forall` clause or type other than `Self` may be specified when
+declaring an `impl` with the [`extend`](#extend-impl) keyword:
 
 ```carbon
 class Array(T: type, template N: i64) {
-  // ❌ Illegal: nothing allowed before `as` after `extend impl`:
+  // ❌ Illegal: only `Self` allowed before `as` after `extend impl`:
   extend impl forall [P: Printable] Array(P, N) as Printable { ... }
 }
 ```
@@ -4643,7 +4872,7 @@ add the `i32` to the `BigInt` value.
 
 ```carbon
 class BigInt {
-  impl forall [T: ImplicitAs(i32)] as AddTo(T) { ... }
+  impl forall [T: ImplicitAs(i32)] Self as AddTo(T) { ... }
 }
 // Or out-of-line:
 impl forall [T: ImplicitAs(i32)] BigInt as AddTo(T) { ... }
@@ -4703,8 +4932,9 @@ impl Foo(?, i32) as Bar(String, ?)
 To get a uniform representation across different `impl` definitions, before type
 parameters are replaced the declarations are normalized as follows:
 
--   For `impl` declarations that are lexically inline in a class definition, the
-    type is added between the `impl` and `as` keywords if the type is left out.
+-   For `impl` declarations that are lexically inline in a class definition,
+    `Self` is replaced with the class type (or for `impl fn`, `Self as` is added
+    with `Self` replaced by the class type).
 -   Pointer types `T*` are replaced with `Ptr(T)`.
 -   The `extend` keyword is removed, if present.
 -   The `forall` clause introducing type parameters is removed, if present.
@@ -4772,12 +5002,10 @@ fn F(generic T: type) {
   impl A as X {}
 
   class D {
-    // Accepted; anchored by the name `D`.
-    impl D as Z {}
-    // Accepted; anchored by implied `Self` which resolves to the name `D`.
-    impl as Z {}
     // Accepted; anchored by `Self` which resolves to the name `D`.
     impl Self as Z {}
+    // Accepted; anchored by implied `Self` which resolves to the name `D`.
+    impl fn Z(self) {}
   }
 
   class E {
@@ -5269,21 +5497,17 @@ call to a generic function, such as using an operator:
 // Interface defining the behavior of the prefix-* operator
 interface Deref {
   let Result: type;
-  fn Op(self) -> Result;
+  fn (self) -> Result;
 }
 
 // Types implementing `Deref`
 class Ptr(T: type) {
   ...
-  impl as Deref where .Result = T {
-    fn Op(self) -> Result { ... }
-  }
+  impl fn Deref(self) -> T { ... }
 }
 class Optional(T: type) {
   ...
-  impl as Deref where .Result = T {
-    fn Op(self) -> Result { ... }
-  }
+  impl fn Deref(self) -> T { ... }
 }
 
 fn F[T: type](x: T) {
@@ -5293,7 +5517,7 @@ fn F[T: type](x: T) {
 
 The concern is the possibility of specializing `Optional(T) as Deref` or
 `Ptr(T) as Deref` for a more specific `T` means that the compiler can't assume
-anything about the return type of `Deref.Op` calls. This means `F` would in
+anything about the return type of `Deref.Deref` calls. This means `F` would in
 practice have to add a constraint, which is both verbose and exposes what should
 be implementation details:
 
@@ -5311,20 +5535,16 @@ To mark an impl as not able to be specialized, prefix it with the keyword
 class Ptr(T: type) {
   ...
   // Note: added `final`
-  final impl as Deref where .Result = T {
-    fn Op(self) -> Result { ... }
-  }
+  final impl fn Deref(self) -> T { ... }
 }
 class Optional(T: type) {
   ...
   // Note: added `final`
-  final impl as Deref where .Result = T {
-    fn Op(self) -> Result { ... }
-  }
+  final impl fn Deref(self) -> T { ... }
 }
 
-// ❌ Illegal: impl Ptr(i32) as Deref { ... }
-// ❌ Illegal: impl Optional(i32) as Deref { ... }
+// ❌ Illegal: impl Ptr(i32) as Deref fn (self) -> i32 { ... }
+// ❌ Illegal: impl Optional(i32) as Deref fn (self) -> i32 { ... }
 ```
 
 > **TODO:** Update the following passage to reflect the relaxed overlap rule
@@ -5547,7 +5767,7 @@ An incomplete `C` cannot be used in the following contexts:
 
 -   ❌ `T: C` ... `T.X` where `T` is a checked binding.
 -   ❌ `T: C where `... where `T` is a checked binding.
--   ❌ `class `...` { extend impl as C; }`
+-   ❌ `class `...` { extend impl Self as C; }`
 -   ❌ `interface `...` { extend require impls C; }` or
     `constraint `...` { extend require impls C; }`
     -   An `extend` declaration requires the target scope to be complete. See
@@ -5568,14 +5788,21 @@ The declaration of an interface implementation consists of:
 -   the keyword introducer `impl`,
 -   an optional `forall` followed by a deduced parameter list in square brackets
     `[`...`]`,
--   an optional type, including an optional
+-   a type, including an optional
     [argument list](#parameterized-types),
 -   the keyword `as`, and
 -   a [facet type](#facet-types), including an optional
     [argument list](#parameterized-interfaces) and
     [`where` clause](#where-constraints) assigning
     [associated constants](#associated-constants) including
-    [associated facets](#associated-facets).
+    [associated facets](#associated-facets),
+
+or, in a `class` or `interface` scope, the
+[`impl fn` shorthand](#abbreviated-impl-declarations) (`impl fn X.Y.Z(...)`,
+which is equivalent to `impl Self as X.Y.Z fn (...)` when `X.Y.Z` names an
+interface or named constraint with a primary function, and to `impl Self as X.Y
+fn Z(...)` when `X.Y.Z` has more than one component and names a function member
+`Z` of `X.Y`).
 
 An `impl` declaration is associated with the scope it is first declared in, and
 can only be redeclared in that scope, matching all other declarations. To
@@ -5586,12 +5813,12 @@ way, except with parentheses around the name of the `impl`, as in:
 ```carbon
 class X {
   // Forward declaration that `X impls Y`:
-  impl as Y;
+  impl Self as Y;
 }
 
 // Definition of the `impl` that `X impls Y`
 // that was forward declared in `X`:
-impl X.(as Y) { ... }
+impl X.(Self as Y) { ... }
 ```
 
 More generally, in a `class` scope
@@ -5605,18 +5832,21 @@ class __X__ {
 is redeclared `impl __X__.(__Y__)` outside of that `class` scope. Here `__X__`
 is whatever sequence of tokens appears in that position in the `class`
 declaration, and `__Y__` is the sequence of tokens in the `impl` declaration.
-These declarations are matched syntactically, and anything in `__Y__` is
-interpreted as if it appeared in the scope of `__X__` like it was first
-declared.
+These declarations are matched as described in the
+[matching redeclarations section](#matching-redeclarations), and anything in
+`__Y__` is interpreted as if it appeared in the scope of `__X__` like it was
+first declared.
 
-**Note:** The type before the `as` is required except in class scope, where it
-defaults to `Self` as described in the
-[matching redeclarations section](#matching-redeclarations).
+**Note:** When `as` is written in an `impl` declaration, the type before `as` is
+required (in `class` or `interface` scope, write `Self` before `as`, or use
+[`impl fn`](#abbreviated-impl-declarations) for a single-function implementation
+for `Self`).
 
 **Note:** The `extend` keyword, when present, is not part of the `impl`
-declaration. It precedes the `impl` declaration in class scope. When the
-`extend` keyword is present, the `forall` and type clauses before the `as`
-keyword must be omitted.
+declaration. It precedes the `impl` declaration in `class` or `interface` scope.
+When the `extend` keyword is present, the `forall` clause must be omitted and
+the type before `as` must be `Self` (`extend impl Self as ...` or `extend impl
+fn ...`).
 
 An implementation of an interface for a type may be forward declared, subject to
 these rules:
@@ -5671,7 +5901,7 @@ And for class-scope `impl` members:
 
 ```carbon
 class Class {
-  impl as Interface {
+  impl Self as Interface {
     fn F();
     fn G();
   }
@@ -5679,10 +5909,82 @@ class Class {
 
 // ✅︎ OK
 fn Class.(Self as Interface).F() {}
-
-// ✅︎ Rewritten to `Self as Interface`.
-fn Class.(as Interface).G() {}
+fn Class.(Self as Interface).G() {}
 ```
+
+For an interface with a [primary function](#primary-interface-functions) or
+another single required function, its implementation can be defined out-of-line
+using either an abbreviated `impl` definition or a standalone `fn` definition:
+
+-   When the `impl` or its function is forward-declared in a class (`impl fn
+    Core.AddWith(self, other: like OtherType) -> MyType;`, `impl fn
+    Core.Eq.Equal(self, other: Self) -> bool;`, or `impl Self as
+    Core.AddWith(like OtherType);`), it can be defined out-of-line using an
+    [abbreviated `impl` definition](#abbreviated-impl-declarations) by
+    re-entering the class scope with `Class.(...)`, provided any deduced
+    interface arguments and associated constants match the first declaration.
+    Specifically, `impl fn Class.(X.Y.Z)(...) { ... }` is equivalent to `impl
+    Class.(Self as X.Y.Z) fn (...) { ... }` when `X.Y.Z` names an interface (or
+    named constraint) with a primary function, and to `impl Class.(Self as X.Y)
+    fn Z(...) { ... }` when `X.Y.Z` has more than one component and names a
+    function member `Z` of `X.Y`. Consistent with
+    [compound member access](/docs/design/expressions/member_access.md#compound-member-access),
+    parentheses around `.(X.Y.Z)` are required to separate `Class` from
+    package-qualified interface names such as `Core.Copy` or `Core.Eq.Equal`:
+
+    ```carbon
+    class MyType {
+      impl fn Core.Copy(self) -> Self;
+      impl fn Core.AddWith(self, other: like OtherType) -> MyType;
+      impl fn Core.Eq.Equal(self, other: Self) -> bool;
+    }
+
+    impl fn MyType.(Core.Copy)(self) -> Self { ... }
+    impl fn MyType.(Core.AddWith)(
+        self, other: like OtherType) -> MyType { ... }
+    impl fn MyType.(Core.Eq.Equal)(self, other: Self) -> bool { ... }
+
+    // Or equivalently:
+    // impl MyType.(Self as Core.Copy) fn (self) -> Self { ... }
+    // impl MyType.(Self as Core.AddWith)
+    //     fn (self, other: like OtherType) -> MyType { ... }
+    // impl MyType.(Self as Core.Eq)
+    //     fn Equal(self, other: Self) -> bool { ... }
+    ```
+
+-   When an abbreviated `impl` defines the `impl` and forward-declares its
+    function (`impl fn Core.SubWith(self, other: OtherType) -> MyType;`), or
+    when the function is forward-declared inside a braced `impl`, the function
+    can also be defined out-of-line using a standalone `fn` definition that
+    names the function (using `.InterfaceName` for a primary function):
+
+    ```carbon
+    class MyType {
+      impl fn Core.SubWith(self, other: OtherType) -> MyType;
+    }
+
+    fn MyType.(Self as Core.SubWith(OtherType)).SubWith(
+        self, other: OtherType) -> MyType { ... }
+
+    // For a file-scope `impl`:
+    impl MyType as Core.SubWith
+        fn (self, other: OtherType) -> MyType;
+
+    fn (MyType as Core.SubWith(OtherType)).SubWith(
+        self, other: OtherType) -> MyType { ... }
+    ```
+
+-   Similarly, an out-of-line definition of an `interface`'s `default` primary
+    function explicitly specifies `.InterfaceName`:
+
+    ```carbon
+    interface Core.AddWith(U: type) {
+      default let Result: type = Self;
+      default fn (self, other: U) -> Result;
+    }
+
+    fn Core.AddWith(U: type).AddWith(self, other: U) -> Result { ... }
+    ```
 
 > References:
 >
@@ -5704,33 +6006,36 @@ Named declarations (such as interfaces and named constraints) follow the general
 two declarations declare the same entity if they have the same scope and the
 same name, and two owned declarations differ if the sequence of tokens following
 the introducer keyword and optional scope up to the semicolon or open brace is
-different.
+different. For a [primary interface function](#primary-interface-functions)
+declared without a name inside an `interface` or `impl`, its effective name for
+redeclaration matching is the interface's name, and an out-of-line `fn`
+definition matches it by explicitly specifying that name.
 
-Two `impl` declarations declare the same entity if the portion of the
-declaration from the introducer keyword until the `;` or `{` does not differ,
-except that an omitted type before `as` is normalized by inserting `Self` before
-`as` (inside the parentheses when redeclared outside of its `class` scope)
-before looking for and comparing with a previous declaration.
+Two `impl` declarations declare the same entity if, after rewriting
+[`impl fn` declarations](#abbreviated-impl-declarations) (`impl fn X.Y.Z(...)`
+and `impl fn Class.(X.Y.Z)(...)`) to their equivalent `impl Self as ... fn ...`
+and `impl Class.(Self as ...) fn ...` forms and filling in any interface
+arguments (including `like` modifiers) deduced from an abbreviated `impl`'s `fn`
+signature, the portion of the declaration from the introducer keyword until the
+`;`, `{`, or `fn` does not differ.
 For example:
 
 ```carbon
 class A {
   // First impl declaration is equivalent
-  // to `impl Self as As(i32);`
-  impl as As(i32);
+  // to `impl Self as Core.As(i32) fn Convert(self) -> i32;`
+  impl fn Core.As(i32).Convert(self) -> i32;
 
-  // Second impl declaration.
-  impl Self as As(bool);
+  // Second impl declaration is equivalent
+  // to `impl Self as Core.AddWith(like f32) fn (self, s: f32) -> Self;`
+  impl fn Core.AddWith(self, s: like f32) -> Self;
 }
 
 // Redeclaration of the first impl declaration.
-impl A.(Self as As(i32)) { ... }
+impl fn A.(Core.As(i32).Convert)(self) -> i32 { ... }
 
-// Since this is equivalent to
-// `impl A.(Self as As(bool)) { ... }`, is a
-// valid redeclaration of the second impl
-// declaration.
-impl A.(as As(bool)) { ... }
+// Redeclaration of the second impl declaration.
+impl A.(Self as Core.AddWith) fn (self, s: like f32) -> Self { ... }
 ```
 
 > References:
@@ -5738,7 +6043,7 @@ impl A.(as As(bool)) { ... }
 > -   [Proposal #3763: "Matching redeclarations"](/proposals/p003763-matching-redeclarations.md#proposal),
 >     including section:
 >     -   ["`impl` declarations"](/proposals/p003763-matching-redeclarations.md#impl-declarations)
-> -   ["Optional `Self` before `as`" in proposal #5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#optional-self-before-as)
+> -   [Proposal #5366: "The name of an `impl` in `class` scope"](/proposals/p005366-the-name-of-an-impl-in-class-scope.md)
 
 #### `impl` members vs `interface` members
 
@@ -5838,7 +6143,7 @@ class MyClass {
   // Inline definition of previously declared impl.
   // Note: no need to repeat assignments to associated
   // constants.
-  impl as Interface1 where _ { }
+  impl Self as Interface1 where _ { }
 
   // Inline extending definition of previously declared
   // impl.
@@ -5847,23 +6152,22 @@ class MyClass {
   // Note: allowed even though `MyClass` is incomplete.
   // Note: allowed but not required to repeat `where`
   // clause.
-  extend impl as Interface3 where .T3 = f32 { }
+  extend impl Self as Interface3 where .T3 = f32 { }
 
   // Extending redeclaration of previously declared
   // impl. Every extending implementation must be
   // declared in the class definition.
-  extend impl as Interface4 where _;
+  extend impl Self as Interface4 where _;
 
   // Inline forward declaration of implementation.
   impl MyClass as Interface5 where .T5 = u64;
-  // or: impl as Interface5 where .T5 = u64;
+  // or: impl Self as Interface5 where .T5 = u64;
 
   // Forward declaration of extending implementation.
-  extend impl as Interface6 where .T6 = u8;
+  extend impl Self as Interface6 where .T6 = u8;
   // *Not*:
   //   extend impl MyClass as Interface6 where .T6 = u8;
-  // No optional type after `extend impl`, it must be
-  // followed immediately by `as`
+  // The type after `extend impl` must be `Self`.
 }
 
 // It would be legal to move the following definitions
@@ -5877,7 +6181,7 @@ impl MyClass.(MyClass as Interface5 where _) { }
 // Definition of previously declared extending
 // implementations.
 impl MyClass as Interface4 where _ { }
-impl MyClass.(as Interface6 where _) { }
+impl MyClass.(Self as Interface6 where _) { }
 ```
 
 ### Example of declaring interfaces with cyclic references
@@ -6139,7 +6443,7 @@ interface TotalOrder {
 }
 
 class String {
-  extend impl as TotalOrder {
+  extend impl Self as TotalOrder {
     fn TotalLess(self, right: Self) -> bool { ... }
     // ❌ Illegal: May not provide definition of final
     //             method `TotalGreater`.
@@ -6468,12 +6772,12 @@ to overload the unary `-` operator:
 // Unary `-`.
 interface Negate {
   default let Result: type = Self;
-  fn Op(self) -> Result;
+  fn (self) -> Result;
 }
 ```
 
 Expressions using operators are rewritten into calls to these interface methods.
-For example, `-x` would be rewritten to `x.(Negate.Op)()`.
+For example, `-x` would be rewritten to `x.(Negate.Negate)()`.
 
 The interfaces and rewrites used for a given operator may be found in the
 [expressions design](/docs/design/expressions/README.md).
@@ -6507,7 +6811,7 @@ _type_ of the right-hand operand instead of its _value_. Consider
 // Binary `*`.
 interface MulWith(U: type) {
   default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+  fn (self, other: U) -> Result;
 }
 ```
 
@@ -6519,7 +6823,7 @@ var right: f64 = ...;
 var result: auto = left * right;
 // Equivalent to:
 var equivalent: left.(MulWith(f64).Result)
-    = left.(MulWith(f64).Op)(right);
+    = left.(MulWith(f64).MulWith)(right);
 ```
 
 Note that if the types of the two operands are different, then swapping the
@@ -6536,7 +6840,7 @@ interface OrderedWith(U: type) {
 
 class ReverseComparison(T: type, U: OrderedWith(T)) {
   adapt T;
-  extend impl as OrderedWith(U) {
+  extend impl Self as OrderedWith(U) {
     fn Compare(self, u: U) -> Ordering {
       match (u.Compare(self)) {
         case .Less         => return .Greater;
@@ -6550,7 +6854,7 @@ class ReverseComparison(T: type, U: OrderedWith(T)) {
 
 impl SongByTitle as OrderedWith(SongTitle) { ... }
 impl SongTitle as OrderedWith(SongByTitle)
-    = ReverseComparison(SongTitle, SongByTitle);
+     = ReverseComparison(SongTitle, SongByTitle);
 ```
 
 In some cases the reverse operation may not be defined. For example, a library
@@ -6608,10 +6912,8 @@ class Meters {
 }
 // "Implementation One"
 impl Meters as MulWith(f64)
-    where .Result = Meters {
-  fn Op(self, other: f64) -> Result {
-    return self.Scale(other);
-  }
+    fn (self, other: f64) -> Meters {
+  return self.Scale(other);
 }
 ```
 
@@ -6637,12 +6939,10 @@ conversion. The implementation is for types that implement the
 ```carbon
 // "Implementation Two"
 impl forall [T: ImplicitAs(f64)]
-    Meters as MulWith(T) where .Result = Meters {
-  fn Op(self, other: T) -> Result {
-    // Carbon will implicitly convert `other` from type
-    // `T` to `f64` to perform this call.
-    return self.((Meters as MulWith(f64)).Op)(other);
-  }
+    Meters as MulWith(T) fn (self, other: T) -> Meters {
+  // Carbon will implicitly convert `other` from type
+  // `T` to `f64` to perform this call.
+  return self.((Meters as MulWith(f64)).MulWith)(other);
 }
 // ✅ Allowed: uses `Meters as MulWith(T)` impl
 //             with `T == f32` since `f32 impls ImplicitAs(f64)`.
@@ -6654,18 +6954,22 @@ the unparameterized impl when there is an exact match.
 
 To reduce the boilerplate needed to support these implicit conversions when
 defining operator overloads, Carbon has the `like` operator. This operator can
-only be used in the type or facet type part of an `impl` declaration, as part of
-a forward declaration or definition, in a place of a type.
+only be used in the type or facet type part of an `impl` declaration (or on a
+parameter type in an
+[abbreviated `impl` declaration](#abbreviated-impl-declarations) to deduce a
+`like` interface argument), as part of a forward declaration or definition, in a
+place of a type.
 
 ```carbon
 // Notice `f64` has been replaced by `like f64`
 // compared to "implementation one" above.
-impl Meters as MulWith(like f64)
-    where .Result = Meters {
-  fn Op(self, other: f64) -> Result {
-    return self.Scale(other);
-  }
+impl Meters as MulWith
+    fn (self, other: like f64) -> Meters {
+  return self.Scale(other);
 }
+// Or with the interface argument written explicitly:
+// impl Meters as MulWith(like f64)
+//     fn (self, other: f64) -> Meters { ... }
 ```
 
 This `impl` definition actually defines two implementations. The first is the
@@ -6696,11 +7000,9 @@ main `impl` definition, which will trigger implicit conversions according to
 In this example, there are two uses of `like`, producing three implementations
 
 ```carbon
-impl like Meters as MulWith(like f64)
-    where .Result = Meters {
-  fn Op(self, other: f64) -> Result {
-    return self.Scale(other);
-  }
+impl like Meters as MulWith
+    fn (self, other: like f64) -> Meters {
+  return self.Scale(other);
 }
 ```
 
@@ -6708,12 +7010,10 @@ is equivalent to "implementation one", "implementation two", and:
 
 ```carbon
 impl forall [T: ImplicitAs(Meters)]
-    T as MulWith(f64) where .Result = Meters {
-  fn Op(self, other: f64) -> Result {
-    // Will implicitly convert `self` to `Meters` in
-    // order to match the signature of this `Op` method.
-    return self.((Meters as MulWith(f64)).Op)(other);
-  }
+    T as MulWith(f64) fn (self, other: f64) -> Meters {
+  // Will implicitly convert `self` to `Meters` in
+  // order to match the signature of this `MulWith` method.
+  return self.((Meters as MulWith(f64)).MulWith)(other);
 }
 ```
 
@@ -6840,8 +7140,8 @@ class HashMap(
   private var buckets: DynArray((KeyT, ValueT));
 
   // Class parameters may be used in interfaces implemented.
-  extend impl as Container where .ElementType = (KeyT, ValueT);
-  impl as OrderedWith(HashMap(KeyT, ValueT));
+  extend impl Self as Container where .ElementType = (KeyT, ValueT);
+  impl Self as OrderedWith(HashMap(KeyT, ValueT));
 }
 ```
 
@@ -7172,3 +7472,4 @@ and
 -   [#7140: Orphan rule for scopes](https://github.com/carbon-language/carbon-lang/pull/7140)
 -   [Issue #7606: Should associated function names be callable?](https://github.com/carbon-language/carbon-lang/issues/7606)
 -   [#7697: Updates to member access](https://github.com/carbon-language/carbon-lang/pull/7697)
+-   [#7896: Abbreviated `interface` and `impl` syntax](https://github.com/carbon-language/carbon-lang/pull/7896)

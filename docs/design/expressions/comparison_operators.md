@@ -276,11 +276,9 @@ class Path {
   private var path: String;
   private fn CanonicalPath(self) -> String;
 
-  impl as Eq {
-    fn Equal(self, other: Self) -> bool {
-      return (self.drive, self.CanonicalPath()) ==
-             (other.drive, other.CanonicalPath());
-    }
+  impl fn Eq.Equal(self, other: Self) -> bool {
+    return (self.drive, self.CanonicalPath()) ==
+           (other.drive, other.CanonicalPath());
   }
 }
 ```
@@ -297,10 +295,8 @@ class MyInt {
   fn Value(self) -> i32 { return self.value; }
 }
 impl i32 as ImplicitAs(MyInt);
-impl like MyInt as EqWith(like MyInt) {
-  fn Equal(self, other: Self) -> bool {
-    return self.Value() == other.Value();
-  }
+impl like MyInt as EqWith fn Equal(self, other: like MyInt) -> bool {
+  return self.Value() == other.Value();
 }
 fn CompareBothWays(a: MyInt, b: i32, c: MyInt) -> bool {
   // OK, calls above implementation three times.
@@ -399,10 +395,8 @@ class MyWidget {
   fn Size(self) -> i32 { return self.width * self.height; }
 
   // Widgets are normally ordered by size.
-  impl as Ordered {
-    fn Compare(self, other: Self) -> Ordering {
-      return self.Size().(Ordered.Compare)(other.Size());
-    }
+  impl fn Ordered.Compare(self, other: Self) -> Ordering {
+    return self.Size().(Ordered.Compare)(other.Size());
   }
 }
 fn F(a: MyWidget, b: MyWidget) -> bool {
@@ -420,10 +414,9 @@ fn ReverseOrdering(o: Ordering) -> Ordering {
   return Ordering.Equivalent.(Ordered.Compare)(o);
 }
 impl like MyInt as OrderedWith(like MyFloat);
-impl like MyFloat as OrderedWith(like MyInt) {
-  fn Compare(self, other: Self) -> Ordering {
-    return Reverse(other.(OrderedWith(Self).Compare)(self));
-  }
+impl like MyFloat as OrderedWith
+    fn Compare(self, other: like MyInt) -> Ordering {
+  return ReverseOrdering(other.(OrderedWith(Self).Compare)(self));
 }
 ```
 

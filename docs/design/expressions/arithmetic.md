@@ -220,7 +220,7 @@ following family of interfaces:
 // Unary `-`.
 interface Negate {
   default let Result: type = Self;
-  fn Op(self) -> Result;
+  fn (self) -> Result;
 }
 ```
 
@@ -228,10 +228,11 @@ interface Negate {
 // Binary `+`.
 interface AddWith(U: type) {
   default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+  fn (self, other: U) -> Result;
 }
 constraint Add {
-  extend AddWith(Self) where .Result = Self;
+  extend require impls AddWith(Self) where .Result = Self;
+  alias = AddWith(Self).AddWith;
 }
 ```
 
@@ -239,10 +240,11 @@ constraint Add {
 // Binary `-`.
 interface SubWith(U: type) {
   default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+  fn (self, other: U) -> Result;
 }
 constraint Sub {
-  extend SubWith(Self) where .Result = Self;
+  extend require impls SubWith(Self) where .Result = Self;
+  alias = SubWith(Self).SubWith;
 }
 ```
 
@@ -250,10 +252,11 @@ constraint Sub {
 // Binary `*`.
 interface MulWith(U: type) {
   default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+  fn (self, other: U) -> Result;
 }
 constraint Mul {
-  extend MulWith(Self) where .Result = Self;
+  extend require impls MulWith(Self) where .Result = Self;
+  alias = MulWith(Self).MulWith;
 }
 ```
 
@@ -261,10 +264,11 @@ constraint Mul {
 // Binary `/`.
 interface DivWith(U: type) {
   default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+  fn (self, other: U) -> Result;
 }
 constraint Div {
-  extend DivWith(Self) where .Result = Self;
+  extend require impls DivWith(Self) where .Result = Self;
+  alias = DivWith(Self).DivWith;
 }
 ```
 
@@ -272,21 +276,22 @@ constraint Div {
 // Binary `%`.
 interface ModWith(U: type) {
   default let Result: type = Self;
-  fn Op(self, other: U) -> Result;
+  fn (self, other: U) -> Result;
 }
 constraint Mod {
-  extend ModWith(Self) where .Result = Self;
+  extend require impls ModWith(Self) where .Result = Self;
+  alias = ModWith(Self).ModWith;
 }
 ```
 
 Given `x: T` and `y: U`:
 
--   The expression `-x` is rewritten to `x.(Negate.Op)()`.
--   The expression `x + y` is rewritten to `x.(AddWith(U).Op)(y)`.
--   The expression `x - y` is rewritten to `x.(SubWith(U).Op)(y)`.
--   The expression `x * y` is rewritten to `x.(MulWith(U).Op)(y)`.
--   The expression `x / y` is rewritten to `x.(DivWith(U).Op)(y)`.
--   The expression `x % y` is rewritten to `x.(ModWith(U).Op)(y)`.
+-   The expression `-x` is rewritten to `x.(Negate.Negate)()`.
+-   The expression `x + y` is rewritten to `x.(AddWith(U).AddWith)(y)`.
+-   The expression `x - y` is rewritten to `x.(SubWith(U).SubWith)(y)`.
+-   The expression `x * y` is rewritten to `x.(MulWith(U).MulWith)(y)`.
+-   The expression `x / y` is rewritten to `x.(DivWith(U).DivWith)(y)`.
+-   The expression `x % y` is rewritten to `x.(ModWith(U).ModWith)(y)`.
 
 Implementations of these interfaces are provided for built-in types as necessary
 to give the semantics described above.
@@ -320,3 +325,5 @@ to give the semantics described above.
     [#6710: `char` redesign](https://github.com/carbon-language/carbon-lang/pull/6710)
 -   Proposal
     [#7314: `CharLiteral` difference should be an `IntLiteral`](https://github.com/carbon-language/carbon-lang/pull/7314)
+-   Proposal
+    [#7896: Abbreviated `interface` and `impl` syntax](https://github.com/carbon-language/carbon-lang/pull/7896)
