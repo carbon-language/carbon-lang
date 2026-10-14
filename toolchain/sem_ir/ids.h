@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// When adding a new ID type, consider adding utilities to aid debugging. See
+// the comment in `toolchain/sem_ir/dump.h` for details.
+
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 
@@ -497,14 +500,14 @@ inline constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 // embedding pointers directly into the storage of SemIR as part of an
 // instruction.
 struct ClangDeclId : public IdBase<ClangDeclId> {
-  static constexpr llvm::StringLiteral Label = "clang_decl_id";
+  static constexpr llvm::StringLiteral Label = "clang_decl";
 
   using IdBase::IdBase;
 };
 
 // The ID of a `ClangDeclSignature`.
 struct ClangDeclSignatureId : public IdBase<ClangDeclSignatureId> {
-  static constexpr llvm::StringLiteral Label = "clang_decl_signature_id";
+  static constexpr llvm::StringLiteral Label = "clang_decl_signature";
 
   using IdBase::IdBase;
 };

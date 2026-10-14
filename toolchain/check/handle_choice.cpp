@@ -92,7 +92,7 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionStartId node_id)
       class_decl_id, SemIR::NameId::None, class_info.parent_scope_id);
   class_decl.class_id = context.classes().Add(class_info);
   if (class_info.has_parameters()) {
-    class_decl.type_id = GetGenericClassType(
+    class_decl.type_id = GetParameterizedClassType(
         context, class_decl.class_id, context.scope_stack().PeekSpecificId());
   }
 

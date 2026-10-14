@@ -1020,21 +1020,6 @@ struct FunctionTypeWithSelfType {
   InstId self_id;
 };
 
-// The type of the name of a generic class. The corresponding value is an empty
-// `StructValue`.
-struct GenericClassType {
-  // This is only ever created as a constant, so doesn't have a location.
-  static constexpr auto Kind =
-      InstKind::GenericClassType.Define<Parse::NoneNodeId>(
-          {.ir_name = "generic_class_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::WheneverPossible});
-
-  TypeId type_id;
-  ClassId class_id;
-  SpecificId enclosing_specific_id;
-};
-
 // The type of the name of a generic interface. The corresponding value is an
 // empty `StructValue`.
 struct GenericInterfaceType {
@@ -1096,6 +1081,27 @@ struct ImplSelfWitness {
   InstId period_self;
   // The interface of the impl being declared.
   SpecificInterfaceId specific_interface_id;
+};
+
+// A witness that was modified while identifying a facet type and replacing a
+// `.Self` facet in a LookupImplWitness. It contains the operands from the
+// LookupImplWitness that resolved to it, and they can be used to reconstruct a
+// LookupImplWitness and replay the resulting lookup if desired. This witness
+// exists to give the caller of identify the choice to replace the witness with
+// an instruction of its choice instead of always evaluating and performing impl
+// lookup.
+struct IdentifiedWitness {
+  static constexpr auto Kind =
+      InstKind::IdentifiedWitness.Define<Parse::NodeId>(
+          {.ir_name = "identified_witness",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  // Always the type of the builtin `WitnessType` singleton instruction.
+  TypeId type_id;
+  // The self facet and interface of the impl lookup query.
+  InstId query_self_inst_id;
+  SpecificInterfaceId query_specific_interface_id;
 };
 
 // A witness that a type implements an interface.
@@ -1435,7 +1441,7 @@ struct LookupImplWitness {
 
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
-  // The self type (or facet value) and interface of the impl lookup query.
+  // The self facet and interface of the impl lookup query.
   InstId query_self_inst_id;
   SpecificInterfaceId query_specific_interface_id;
 };
@@ -1604,6 +1610,21 @@ struct OutParamPattern {
 
   TypeId type_id;
   NameId pretty_name_id;
+};
+
+// The type of the name of a parameterized class. The corresponding value is an
+// empty `StructValue`.
+struct ParameterizedClassType {
+  // This is only ever created as a constant, so doesn't have a location.
+  static constexpr auto Kind =
+      InstKind::ParameterizedClassType.Define<Parse::NoneNodeId>(
+          {.ir_name = "parameterized_class_name_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  ClassId class_id;
+  SpecificId enclosing_specific_id;
 };
 
 // Indicates `partial` on a type, such as `partial MyClass`.
@@ -2640,10 +2661,10 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplWitness`, `CustomWitness`,  `ImplSelfWitness`, and
-// `LookupImplWitness` instructions. The latter will evaluate at some point
-// during specific computation into one of first two, and their types should not
-// change in the process.
+// The type of witness instructions: `ImplWitness`, `CustomWitness`,
+// `ImplSelfWitness`, `IdentifiedWitness`, and `LookupImplWitness`. A
+// `LookupImplWitness` can evaluate into any of the other witness inst kinds,
+// and their types should not change in the process.
 //
 // Also the type of `RequireCompleteType` instructions.
 //

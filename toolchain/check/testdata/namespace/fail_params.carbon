@@ -57,9 +57,9 @@ fn D(unused T: type).F() {}
 // CHECK:STDOUT:   %T.67db0b.1: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %I.type.335: type = generic_interface_type @I [concrete]
 // CHECK:STDOUT:   %I.generic: %I.type.335 = struct_value () [concrete]
-// CHECK:STDOUT:   %I.type.3fe: type = facet_type <@I, @I(%T.67db0b.1)> [symbolic]
-// CHECK:STDOUT:   %Self: %I.type.3fe = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %U: %I.type.3fe = symbolic_binding U, 1 [symbolic]
+// CHECK:STDOUT:   %I.type.184: type = facet_type <@I, @I(%T.67db0b.1)> [symbolic]
+// CHECK:STDOUT:   %Self: %I.type.184 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %U: %I.type.184 = symbolic_binding U, 1 [symbolic]
 // CHECK:STDOUT:   %T.67db0b.2: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type.eb3: type = fn_type @F.loc46 [concrete]
 // CHECK:STDOUT:   %F.708: %F.type.eb3 = struct_value () [concrete]
@@ -106,13 +106,13 @@ fn D(unused T: type).F() {}
 // CHECK:STDOUT:     %.loc36_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %T.loc36: type = symbolic_binding T, 0 [symbolic = constants.%T.67db0b.1]
-// CHECK:STDOUT:   %.loc36_28: type = splice_block %I.type [symbolic = constants.%I.type.3fe] {
+// CHECK:STDOUT:   %.loc36_28: type = splice_block %I.type [symbolic = constants.%I.type.184] {
 // CHECK:STDOUT:     %.Self.frozen.loc36_23: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %I.ref: %I.type.335 = name_ref I, %I.decl [concrete = constants.%I.generic]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc36 [symbolic = constants.%T.67db0b.1]
-// CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%T.67db0b.1)> [symbolic = constants.%I.type.3fe]
+// CHECK:STDOUT:     %I.type: type = facet_type <@I, @I(constants.%T.67db0b.1)> [symbolic = constants.%I.type.184]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %U: %I.type.3fe = symbolic_binding U, 1 [symbolic = constants.%U]
+// CHECK:STDOUT:   %U: %I.type.184 = symbolic_binding U, 1 [symbolic = constants.%U]
 // CHECK:STDOUT:   %C: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %D: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %F.decl.loc46: %F.type.eb3 = fn_decl @F.loc46 [concrete = constants.%F.708] {} {
@@ -129,11 +129,11 @@ fn D(unused T: type).F() {}
 // CHECK:STDOUT:   %T.loc30_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc30_14.1 (constants.%T.67db0b.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc30_14.1)> [symbolic = %I.type (constants.%I.type.3fe)]
-// CHECK:STDOUT:   %Self.loc30_22.2: @I.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self.loc30_22.2 (constants.%Self)]
+// CHECK:STDOUT:   %I.type: type = facet_type <@I, @I(%T.loc30_14.1)> [symbolic = %I.type (constants.%I.type.184)]
+// CHECK:STDOUT:   %Self.loc30_22.2: @I.%I.type (%I.type.184) = symbolic_binding Self, 1 [symbolic = %Self.loc30_22.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc30_22.1: @I.%I.type (%I.type.3fe) = symbolic_binding Self, 1 [symbolic = %Self.loc30_22.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc30_22.1: @I.%I.type (%I.type.184) = symbolic_binding Self, 1 [symbolic = %Self.loc30_22.2 (constants.%Self)]
 // CHECK:STDOUT:     %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

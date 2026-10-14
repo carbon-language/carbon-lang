@@ -91,6 +91,11 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   // Check for instructions for which we already have a mapping into the eval
   // block, and substitute them with the instructions in the eval block.
   auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
+    if (inst_id == SemIR::ErrorInst::InstId) {
+      // Force `ErrorInst` to be forwarded to `ReuseUnchanged`, so that it gets
+      // added to the eval block despite not being symbolic.
+      return SubstResult::SubstOperandsSkipType;
+    }
     auto const_id = context().constant_values().Get(inst_id);
     if (!const_id.has_value()) {
       // An unloaded import ref should never contain anything we need to
@@ -148,6 +153,17 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   auto ReuseUnchanged(SemIR::InstId orig_inst_id) -> SemIR::InstId override {
     auto inst = context().insts().Get(orig_inst_id);
 
+    // Reuse `ErrorInst::InstId` in the eval block rather than rebuilding it.
+    // TODO: can we do this for all instructions?
+    if (orig_inst_id == SemIR::ErrorInst::InstId) {
+      auto result = constants_in_generic_.Insert(orig_inst_id, [&] {
+        AddGenericConstantInstToEvalBlock(context(), orig_inst_id, orig_inst_id,
+                                          SemIR::ConstantDependence::None);
+        return orig_inst_id;
+      });
+      return result.value();
+    }
+
     auto const_id = context().constant_values().Get(orig_inst_id);
     const auto& symbolic =
         context().constant_values().GetSymbolicConstant(const_id);
@@ -166,7 +182,6 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
         inst);
 
     // Rebuild the instruction anyway so that it's included in the eval block.
-    // TODO: Can we just reuse the instruction in this case?
     return Rebuild(orig_inst_id, inst);
   }
 
@@ -230,10 +245,12 @@ static auto AddGenericTypeToEvalBlock(Context& context, SemIR::LocId loc_id,
 // Adds instructions to compute the substituted value of `inst_id` in each
 // specific into the eval block for the current generic region. Returns the
 // instruction within the eval block that computes the substituted constant.
+// `inst_id` must be a symbolic constant, or `ErrorInst::InstId`.
 static auto AddGenericConstantInstToEvalBlock(Context& context,
                                               SemIR::InstId inst_id)
     -> SemIR::InstId {
-  CARBON_CHECK(context.constant_values().Get(inst_id).is_symbolic(),
+  CARBON_CHECK(context.constant_values().Get(inst_id).is_symbolic() ||
+                   inst_id == SemIR::ErrorInst::InstId,
                "Adding generic constant {0} with non-symbolic value {1}",
                context.insts().Get(inst_id),
                context.constant_values().Get(inst_id));
@@ -244,9 +261,10 @@ static auto AddGenericConstantInstToEvalBlock(Context& context,
   auto callbacks = RebuildGenericConstantInEvalBlockCallbacks(
       &context, SemIR::LocId(inst_id));
   auto new_inst_id = SubstInst(context, const_inst_id, callbacks);
-  CARBON_CHECK(new_inst_id != const_inst_id,
-               "No substitutions performed for generic constant {0}",
-               context.insts().Get(inst_id));
+  CARBON_CHECK(
+      new_inst_id != const_inst_id || new_inst_id == SemIR::ErrorInst::InstId,
+      "No substitutions performed for generic constant {0}",
+      context.insts().Get(inst_id));
   return new_inst_id;
 }
 
@@ -698,18 +716,21 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
 }
 
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
-                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id)
-    -> SemIR::SpecificId {
-  auto specific_id = context.specifics().GetOrAdd(generic_id, args_id);
+                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id,
+                  bool make_identified_specific) -> SemIR::SpecificId {
+  auto specific_id = context.specifics().GetOrAdd(generic_id, args_id,
+                                                  make_identified_specific);
   ResolveSpecificDecl(context, loc_id, specific_id);
   return specific_id;
 }
 
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
                   SemIR::GenericId generic_id,
-                  llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId {
+                  llvm::ArrayRef<SemIR::InstId> args,
+                  bool make_identified_specific) -> SemIR::SpecificId {
   auto args_id = context.inst_blocks().AddCanonical(args);
-  return MakeSpecific(context, loc_id, generic_id, args_id);
+  return MakeSpecific(context, loc_id, generic_id, args_id,
+                      make_identified_specific);
 }
 
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
@@ -728,7 +749,9 @@ static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
     arg_ids.push_back(context.constant_values().GetConstantInstId(arg_id));
   }
   auto args_id = context.inst_blocks().AddCanonical(arg_ids);
-  return context.specifics().GetOrAdd(generic_id, args_id);
+  // Self specifics are not created as part of identifying a facet type.
+  CARBON_CHECK(!context.eval_impl_lookup_to_identified_witness());
+  return context.specifics().GetOrAdd(generic_id, args_id, false);
 }
 
 auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
@@ -855,7 +878,8 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                                SemIR::GenericId generic_without_self_id,
                                SemIR::GenericId generic_with_self_id,
                                SemIR::SpecificId specific_without_self_id,
-                               SemIR::ConstantId self_facet)
+                               SemIR::ConstantId self_facet,
+                               bool make_identified_specific)
     -> SemIR::SpecificId {
   ValidateGenericWithoutAndWithSelfMatch(context, generic_without_self_id,
                                          generic_with_self_id,
@@ -880,15 +904,16 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
     args.push_back(self_facet_inst_id);
   }
 
-  auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args);
+  auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args,
+                                  make_identified_specific);
   ResolveSpecificDefinition(context, loc_id, specific_id);
   return specific_id;
 }
 
 auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
                            SemIR::SpecificId specific_id,
-                           SemIR::GenericId target_generic_id)
-    -> SemIR::SpecificId {
+                           SemIR::GenericId target_generic_id,
+                           bool make_identified_specific) -> SemIR::SpecificId {
   if (!specific_id.has_value()) {
     const auto& target_generic = context.generics().Get(target_generic_id);
     auto target_bindings =
@@ -911,7 +936,8 @@ auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
   }
 
   auto args_id = context.specifics().GetArgsOrEmpty(specific_id);
-  return MakeSpecific(context, loc_id, target_generic_id, args_id);
+  return MakeSpecific(context, loc_id, target_generic_id, args_id,
+                      make_identified_specific);
 }
 
 auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id)
