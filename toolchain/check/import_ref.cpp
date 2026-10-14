@@ -5321,9 +5321,15 @@ auto ImportImplsFromApiFile(Context& context) -> void {
 }
 
 auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
-                SemIR::ImplId impl_id) -> void {
+                SemIR::ImplId impl_id) -> ImportImplResult {
+  // Resolving an impl that was already imported, whether directly or through a
+  // different IR, finds the existing local impl instead of adding a new one.
+  auto num_local_impls = context.impls().size();
   ImportRefResolver resolver(&context, import_ir_id);
   resolver.Resolve(resolver.import_impls().Get(impl_id).first_decl_id());
+  return context.impls().size() > num_local_impls
+             ? ImportImplResult::NewlyImported
+             : ImportImplResult::PreviouslyImported;
 }
 
 auto ImportInterface(Context& context, SemIR::ImportIRId import_ir_id,
