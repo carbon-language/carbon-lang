@@ -54,7 +54,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: define i32 @main() #0 !dbg !47 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %EnclosingTemplate.call = call i32 @_CEnclosingTemplate.Main.d82ccacf0414a2bc(), !dbg !50
-// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.4d6ceefeb7f772f4(i32 %EnclosingTemplate.call), !dbg !51
+// CHECK:STDOUT:   %F.call = call i32 @_CF.Main.2aef1d52a6e1f957(i32 %EnclosingTemplate.call), !dbg !51
 // CHECK:STDOUT:   ret i32 %F.call, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -67,16 +67,16 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.405.temp = alloca { i32 }, align 4, !dbg !58
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.405.temp), !dbg !58
 // CHECK:STDOUT:   call void @_CMake.S.Main(ptr %.405.temp), !dbg !58
-// CHECK:STDOUT:   %.d45.n = getelementptr inbounds nuw { i32 }, ptr %.405.temp, i32 0, i32 0, !dbg !61
-// CHECK:STDOUT:   %.5ea = load i32, ptr %.d45.n, align 4, !dbg !61
-// CHECK:STDOUT:   %Local.call = call i32 @"_CLocal:enclosed.d82ccacf0414a2bc"(i32 %.5ea), !dbg !62
+// CHECK:STDOUT:   %.35c.n = getelementptr inbounds nuw { i32 }, ptr %.405.temp, i32 0, i32 0, !dbg !61
+// CHECK:STDOUT:   %.fd0 = load i32, ptr %.35c.n, align 4, !dbg !61
+// CHECK:STDOUT:   %Local.call = call i32 @"_CLocal:enclosed.d82ccacf0414a2bc"(i32 %.fd0), !dbg !62
 // CHECK:STDOUT:   ret i32 %Local.call, !dbg !63
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.4d6ceefeb7f772f4(i32 %y) #0 !dbg !64 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.Main.2aef1d52a6e1f957(i32 %y) #0 !dbg !64 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %G.call = call i32 @"_CG:enclosed.4d6ceefeb7f772f4"(i32 %y), !dbg !70
+// CHECK:STDOUT:   %G.call = call i32 @"_CG:enclosed.2aef1d52a6e1f957"(i32 %y), !dbg !70
 // CHECK:STDOUT:   ret i32 %G.call, !dbg !71
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -90,7 +90,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @"_CG:enclosed.4d6ceefeb7f772f4"(i32 %x) #0 !dbg !81 {
+// CHECK:STDOUT: define linkonce_odr i32 @"_CG:enclosed.2aef1d52a6e1f957"(i32 %x) #0 !dbg !81 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !87
 // CHECK:STDOUT: }
@@ -125,7 +125,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !61 = !DILocation(line: 27, column: 16, scope: !55)
 // CHECK:STDOUT: !62 = !DILocation(line: 27, column: 10, scope: !55)
 // CHECK:STDOUT: !63 = !DILocation(line: 27, column: 3, scope: !55)
-// CHECK:STDOUT: !64 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.4d6ceefeb7f772f4", scope: null, file: !34, line: 30, type: !53, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !72)
+// CHECK:STDOUT: !64 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.2aef1d52a6e1f957", scope: null, file: !34, line: 30, type: !53, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !72)
 // CHECK:STDOUT: !65 = !DILocalVariable(arg: 1, scope: !64, type: !36)
 // CHECK:STDOUT: !70 = !DILocation(line: 32, column: 10, scope: !64)
 // CHECK:STDOUT: !71 = !DILocation(line: 32, column: 3, scope: !64)
@@ -134,7 +134,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !74 = !DILocalVariable(arg: 1, scope: !73, type: !36)
 // CHECK:STDOUT: !79 = !DILocation(line: 25, column: 5, scope: !73)
 // CHECK:STDOUT: !80 = !{!74}
-// CHECK:STDOUT: !81 = distinct !DISubprogram(name: "G", linkageName: "_CG:enclosed.4d6ceefeb7f772f4", scope: null, file: !34, line: 31, type: !53, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !88)
+// CHECK:STDOUT: !81 = distinct !DISubprogram(name: "G", linkageName: "_CG:enclosed.2aef1d52a6e1f957", scope: null, file: !34, line: 31, type: !53, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !88)
 // CHECK:STDOUT: !82 = !DILocalVariable(arg: 1, scope: !81, type: !36)
 // CHECK:STDOUT: !87 = !DILocation(line: 31, column: 21, scope: !81)
 // CHECK:STDOUT: !88 = !{!82}
