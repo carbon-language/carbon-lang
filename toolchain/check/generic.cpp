@@ -92,8 +92,8 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
   // block, and substitute them with the instructions in the eval block.
   auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
     if (inst_id == SemIR::ErrorInst::InstId) {
-      // Force rebuilding `ErrorInst` so that it gets added to the eval block
-      // despite not being symbolic.
+      // Force `ErrorInst` to be forwarded to `ReuseUnchanged`, so that it gets
+      // added to the eval block despite not being symbolic.
       return SubstResult::SubstOperandsSkipType;
     }
     auto const_id = context().constant_values().Get(inst_id);
@@ -138,8 +138,7 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
     auto result = constants_in_generic_.Insert(const_inst_id, [&] {
       // TODO: Add a function on `Context` to add the instruction without
       // inserting it into the dependent instructions list or computing a
-      // constant value for it. See also the corresponding TODO in
-      // `ReuseUnchanged`.
+      // constant value for it.
       auto inst_id = context().sem_ir().insts().AddInNoBlock(
           SemIR::LocIdAndInst::RuntimeVerified(context().sem_ir(), loc_id_,
                                                new_inst));
@@ -158,9 +157,6 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
     // TODO: can we do this for all instructions?
     if (orig_inst_id == SemIR::ErrorInst::InstId) {
       auto result = constants_in_generic_.Insert(orig_inst_id, [&] {
-        // TODO: Add a function on `Context` to add the instruction without
-        // inserting it into the dependent instructions list. See also the
-        // corresponding TODO in `Rebuild`.
         AddGenericConstantInstToEvalBlock(context(), orig_inst_id, orig_inst_id,
                                           SemIR::ConstantDependence::None);
         return orig_inst_id;
