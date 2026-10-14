@@ -184,7 +184,6 @@ class CheckUnit {
   // same witnesses.
   [[nodiscard]] auto CheckPoisonedConcreteImplLookupQueries() -> bool;
 
-
   // Does work after processing the parse tree, such as finishing the IR and
   // checking for missing contents.
   auto FinishRun() -> void;
