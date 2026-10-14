@@ -684,8 +684,8 @@ static auto GetConstantValue(EvalContext& eval_context,
   if (args_id == specific.args_id) {
     return specific_id;
   }
-  return eval_context.context().specifics().GetOrAdd(specific.generic_id,
-                                                     args_id);
+  return eval_context.context().specifics().GetOrAdd(
+      specific.generic_id, args_id, specific.identified);
 }
 
 static auto GetConstantValue(EvalContext& eval_context,
@@ -3579,6 +3579,9 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   CheckedSaveAndRestore access_context(context.access_context(),
                                        FindAccessContext(context, generic));
 
+  // TODO: There are now 3 things being set-and-restored. Can this be refactored
+  // to make this a more clear pattern?
+
   // The `declaring_impl_decls` is a global state that modifies the evaluation
   // of LookupImplWitness. As a global state, it should only affect new
   // instructions introduced during a given state. When we are evaluating for a
@@ -3586,6 +3589,18 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   // generic. The global state should not apply to anything done while resolving
   // a specific.
   CheckedSaveAndRestore declaring(context.declaring_impl_decls(), {});
+
+  // The `eval_impl_lookup_to_identified_witness` is also a global state that
+  // modifies the evaluation of LookupImplWitness. We don't want to apply that
+  // state to existing instructions in eval blocks, unless we are resolving a
+  // specific that is marked as `identified`. In that case, the specific is
+  // being formed as part of identification and the global state does apply.
+  // Otherwise, it should not affect anything done while resolving a specific.
+  std::optional<CheckedSaveAndRestore<int32_t>> eval_identified;
+  if (!specific.identified) {
+    eval_identified.emplace(context.eval_impl_lookup_to_identified_witness(),
+                            0);
+  }
 
   EvalContext eval_context(&context, loc_id, specific_id);
 

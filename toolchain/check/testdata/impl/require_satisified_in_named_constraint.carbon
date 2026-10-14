@@ -134,3 +134,84 @@ impl () as Z(B);
 impl () as N(A) {}
 
 impl () as Z(B) {}
+
+// --- require_non_extended_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface Z { let Z1: type; }
+
+constraint N {
+  extend require impls Y;
+  require impls Z where .Z1 = ();
+}
+
+impl () as N;
+
+// Match the requirement.
+impl () as Z where .Z1 = ();
+
+impl () as N {}
+
+impl () as Z where .Z1 = () {}
+
+// --- fail_require_non_extended_rewrite_wrong_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Y {}
+interface Z { let Z1: type; }
+
+constraint N {
+  extend require impls Y;
+  require impls Z where .Z1 = ();
+}
+
+impl () as N;
+
+// Wrong type for the requirement.
+impl () as Z where .Z1 = {};
+
+// CHECK:STDERR: fail_require_non_extended_rewrite_wrong_type.carbon:[[@LINE+8]]:1: error: constraint `N` being implemented requires that `().(Z.Z1)` equals `()`; found `{}` and `()` [IdentifiedRequireImplsNotEquivalent]
+// CHECK:STDERR: impl () as N {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR:
+// CHECK:STDERR: fail_require_non_extended_rewrite_wrong_type.carbon:[[@LINE-6]]:1: error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR: impl () as Z where .Z1 = {};
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as N {}
+
+impl () as Z where .Z1 = () {}
+
+// --- require_non_extended_rewrite_same_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+
+constraint N {
+  // Extend Z without a rewrite.
+  extend require impls Z;
+  // But require `.Z1` is () anyway.
+  require impls Z where .Z1 = ();
+}
+
+impl () as N where .Z1 = () {}
+
+// --- fail_require_non_extended_rewrite_same_interface_wrong_type.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+
+constraint N {
+  // Extend Z without a rewrite.
+  extend require impls Z;
+  // But require .Z1 is () anyway.
+  require impls Z where .Z1 = ();
+}
+
+// Wrong type for `.Z1`.
+// CHECK:STDERR: fail_require_non_extended_rewrite_same_interface_wrong_type.carbon:[[@LINE+4]]:1: error: constraint `N where .(Z.Z1) = {}` being implemented requires that `().(Z.Z1)` equals `()`; found `{}` and `()` [IdentifiedRequireImplsNotEquivalent]
+// CHECK:STDERR: impl () as N where .Z1 = {} {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
+impl () as N where .Z1 = {} {}

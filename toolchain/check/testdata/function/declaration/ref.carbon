@@ -47,15 +47,15 @@ fn F() -> (ref i32);
 // CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.ae1: Core.Form = ref_form %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.df9: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %.f28: %pattern_type.df9 = ref_return_pattern [concrete]
-// CHECK:STDOUT:   %return.patt: %pattern_type.df9 = return_slot_pattern %.f28, %i32 [concrete]
+// CHECK:STDOUT:   %.30e: Core.Form = ref_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %.b71: %pattern_type.d94 = ref_return_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.d94 = return_slot_pattern %.b71, %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.df9 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.d94 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -75,11 +75,11 @@ fn F() -> (ref i32);
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc4_11.1: %pattern_type.df9 = ref_return_pattern [concrete = constants.%.f28]
-// CHECK:STDOUT:     %return.patt: %pattern_type.df9 = return_slot_pattern %.loc4_11.1, %.loc4_11.3 [concrete = constants.%return.patt]
+// CHECK:STDOUT:     %.loc4_11.1: %pattern_type.d94 = ref_return_pattern [concrete = constants.%.b71]
+// CHECK:STDOUT:     %return.patt: %pattern_type.d94 = return_slot_pattern %.loc4_11.1, %.loc4_11.3 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc4_11.2: Core.Form = ref_form %i32 [concrete = constants.%.ae1]
+// CHECK:STDOUT:     %.loc4_11.2: Core.Form = ref_form %i32 [concrete = constants.%.30e]
 // CHECK:STDOUT:     %.loc4_11.3: type = type_component_of %.loc4_11.2 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4_11.4: ref %i32 = ref_return
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %.loc4_11.4
@@ -96,7 +96,7 @@ fn F() -> (ref i32);
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %x: ref %i32 = wrapper_binding x, %F.call
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.df9 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.d94 = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

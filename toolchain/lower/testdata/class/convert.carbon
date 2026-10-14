@@ -45,7 +45,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: @IntWrapper.val.loc14_3.1 = internal constant { i32 } { i32 42 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.d727653b20be66f9.Core"(ptr %self) #0 !dbg !30 {
+// CHECK:STDOUT: define i32 @"_CConvert.IntWrapper.Main:ImplicitAs.55456748a8a2eb70.Core"(ptr %self) #0 !dbg !30 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc8_40.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !35
 // CHECK:STDOUT:   %.loc8_40.2 = load i32, ptr %.loc8_40.1.n, align 4, !dbg !35
@@ -65,17 +65,17 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %w.var), !dbg !44
 // CHECK:STDOUT:   %.loc14_31.3.n = getelementptr inbounds nuw { i32 }, ptr %w.var, i32 0, i32 0, !dbg !45
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc14_3.1, i64 4, i1 false), !dbg !44
-// CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.d727653b20be66f9.Core"(ptr %w.var), !dbg !47
+// CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.55456748a8a2eb70.Core"(ptr %w.var), !dbg !47
 // CHECK:STDOUT:   call void @_CConsume.Main(i32 %IntWrapper.as.ImplicitAs.impl.Convert.call), !dbg !48
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.82482df454fd115e(ptr %w.var), !dbg !44
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.bca7988aa43d3b33(ptr %w.var), !dbg !44
 // CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.8aa07e9a9e75fb3b:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !50 {
+// CHECK:STDOUT: define weak_odr void @"_COp.4d465ab19434f81c:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !50 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc14_3.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !52
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc14_3.1.n), !dbg !52
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %.loc14_3.1.n), !dbg !52
 // CHECK:STDOUT:   ret void, !dbg !52
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -83,7 +83,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: define weak_odr void @"_COp.aecc0ff76a42614a:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !54 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc14_3.1.n = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !56
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc14_3.1.n), !dbg !56
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %.loc14_3.1.n), !dbg !56
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -94,18 +94,18 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.82482df454fd115e(ptr %t) #0 !dbg !58 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.bca7988aa43d3b33(ptr %t) #0 !dbg !58 {
 // CHECK:STDOUT:   call void @"_COp.aecc0ff76a42614a:core.SubobjectDestroy.Core"(ptr %t), !dbg !62
 // CHECK:STDOUT:   ret void, !dbg !63
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %t) #0 !dbg !65 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %t) #0 !dbg !65 {
 // CHECK:STDOUT:   ret void, !dbg !70
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.7f8dce37f94a83bf, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.dc5658e0ac74b2aa, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -128,7 +128,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: !27 = !DISubroutineType(types: !26)
 // CHECK:STDOUT: !28 = !{null, !21}
 // CHECK:STDOUT: !29 = !DISubroutineType(types: !28)
-// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.IntWrapper.Main:ImplicitAs.d727653b20be66f9.Core", scope: null, file: !18, line: 8, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !37)
+// CHECK:STDOUT: !30 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.IntWrapper.Main:ImplicitAs.55456748a8a2eb70.Core", scope: null, file: !18, line: 8, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !37)
 // CHECK:STDOUT: !31 = !DILocalVariable(arg: 1, scope: !30, type: !21)
 // CHECK:STDOUT: !35 = !DILocation(line: 8, column: 36, scope: !30)
 // CHECK:STDOUT: !36 = !DILocation(line: 8, column: 29, scope: !30)
@@ -143,7 +143,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: !47 = !DILocation(line: 15, column: 11, scope: !43)
 // CHECK:STDOUT: !48 = !DILocation(line: 15, column: 3, scope: !43)
 // CHECK:STDOUT: !49 = !DILocation(line: 13, column: 1, scope: !43)
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Op", linkageName: "_COp.8aa07e9a9e75fb3b:core.SubobjectDestroy.Core", scope: null, file: !18, line: 14, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !53)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Op", linkageName: "_COp.4d465ab19434f81c:core.SubobjectDestroy.Core", scope: null, file: !18, line: 14, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !53)
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !21)
 // CHECK:STDOUT: !52 = !DILocation(line: 14, column: 3, scope: !50)
 // CHECK:STDOUT: !53 = !{!51}
@@ -151,12 +151,12 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: !55 = !DILocalVariable(arg: 1, scope: !54, type: !21)
 // CHECK:STDOUT: !56 = !DILocation(line: 14, column: 3, scope: !54)
 // CHECK:STDOUT: !57 = !{!55}
-// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.82482df454fd115e", scope: null, file: !10, line: 30, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !64)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.bca7988aa43d3b33", scope: null, file: !10, line: 30, type: !29, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !64)
 // CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !58, type: !21)
 // CHECK:STDOUT: !62 = !DILocation(line: 32, column: 5, scope: !58)
 // CHECK:STDOUT: !63 = !DILocation(line: 30, column: 1, scope: !58)
 // CHECK:STDOUT: !64 = !{!59}
-// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8dce37f94a83bf", scope: null, file: !10, line: 30, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !71)
+// CHECK:STDOUT: !65 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.dc5658e0ac74b2aa", scope: null, file: !10, line: 30, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !71)
 // CHECK:STDOUT: !66 = !DILocalVariable(arg: 1, scope: !65, type: !20)
 // CHECK:STDOUT: !70 = !DILocation(line: 30, column: 1, scope: !65)
 // CHECK:STDOUT: !71 = !{!66}

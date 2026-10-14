@@ -116,7 +116,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !42 = !{null, !2, !2}
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
 // CHECK:STDOUT: !45 = !{!39}
-// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.61f6ad3c44ea60b1.Core:Int.9452f4c51951679b.Core:AddAssignWith.bdff52c0a09c17c8.Core.f4e2976a9e250481", scope: null, file: !37, line: 331, type: !43, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !61)
+// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !37, line: 331, type: !43, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !61)
 // CHECK:STDOUT: !55 = !DILocalVariable(arg: 1, scope: !54, type: !2)
 // CHECK:STDOUT: !56 = !DILocalVariable(arg: 2, scope: !54, type: !2)
 // CHECK:STDOUT: !61 = !{!55, !56}

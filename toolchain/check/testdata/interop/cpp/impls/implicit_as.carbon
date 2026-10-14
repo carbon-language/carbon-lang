@@ -426,14 +426,14 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.273: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.5b5: %T.as_type.as.DestroyImpl.impl.Op.type.273 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %Dest.Op.type: type = fn_type @Dest.Op [concrete]
 // CHECK:STDOUT:   %Dest.Op: %Dest.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.1: <witness> = custom_witness (%Dest.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.ffa: %SubobjectDestroy.type = facet_value %Dest, (%custom_witness.5760f4.1) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.7de: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ffa) [concrete]
-// CHECK:STDOUT:   %facet_value.84b: %facet_type = facet_value %Dest, (%DestroyImpl.impl_witness.7de, %custom_witness.5760f4.1) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.771: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ffa) [concrete]
+// CHECK:STDOUT:   %facet_value.ea6: %facet_type = facet_value %Dest, (%DestroyImpl.impl_witness.771, %custom_witness.5760f4.1) [concrete]
 // CHECK:STDOUT:   %NonConstConversion.689: type = class_type @NonConstConversion.1 [concrete]
 // CHECK:STDOUT:   %Dest__carbon_thunk.type.eb4c5e.2: type = fn_type @Dest__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %Dest__carbon_thunk.c8e433.2: %Dest__carbon_thunk.type.eb4c5e.2 = struct_value () [concrete]
@@ -449,8 +449,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %Dest2.Op: %Dest2.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.2: <witness> = custom_witness (%Dest2.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.377: %SubobjectDestroy.type = facet_value %Dest2, (%custom_witness.5760f4.2) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.fc3: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.377) [concrete]
-// CHECK:STDOUT:   %facet_value.253: %facet_type = facet_value %Dest2, (%DestroyImpl.impl_witness.fc3, %custom_witness.5760f4.2) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.db5: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.377) [concrete]
+// CHECK:STDOUT:   %facet_value.6c3: %facet_type = facet_value %Dest2, (%DestroyImpl.impl_witness.db5, %custom_witness.5760f4.2) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -469,8 +469,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.688: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.273) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.5b5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.688), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %NonConstConversion.decl: type = class_decl @NonConstConversion.1 [concrete = constants.%NonConstConversion.689] {} {}
 // CHECK:STDOUT:   %Dest__carbon_thunk.decl.a8fbc1.2: %Dest__carbon_thunk.type.eb4c5e.2 = fn_decl @Dest__carbon_thunk.2 [concrete = constants.%Dest__carbon_thunk.c8e433.2] {
 // CHECK:STDOUT:     <elided>
@@ -504,10 +504,10 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc8_21.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc8_21.6: %facet_type = converted constants.%Dest, %facet_value.loc8_21.1 [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %facet_value.loc8_21.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc8_21.7: %facet_type = converted constants.%Dest, %facet_value.loc8_21.2 [concrete = constants.%facet_value.84b]
+// CHECK:STDOUT:   %facet_value.loc8_21.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc8_21.6: %facet_type = converted constants.%Dest, %facet_value.loc8_21.1 [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %facet_value.loc8_21.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc8_21.7: %facet_type = converted constants.%Dest, %facet_value.loc8_21.2 [concrete = constants.%facet_value.ea6]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc8_21.4)
 // CHECK:STDOUT:   <elided>
@@ -531,10 +531,10 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc14_21.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc14_21.6: %facet_type = converted constants.%Dest, %facet_value.loc14_21.1 [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %facet_value.loc14_21.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc14_21.7: %facet_type = converted constants.%Dest, %facet_value.loc14_21.2 [concrete = constants.%facet_value.84b]
+// CHECK:STDOUT:   %facet_value.loc14_21.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc14_21.6: %facet_type = converted constants.%Dest, %facet_value.loc14_21.1 [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %facet_value.loc14_21.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc14_21.7: %facet_type = converted constants.%Dest, %facet_value.loc14_21.2 [concrete = constants.%facet_value.ea6]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc14_21.4)
 // CHECK:STDOUT:   <elided>
@@ -560,10 +560,10 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.a68 = value_binding_pattern _ [concrete = constants.%_.patt.ff1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc20_22.1: %facet_type = facet_value constants.%Dest2, (constants.%DestroyImpl.impl_witness.fc3, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.253]
-// CHECK:STDOUT:   %.loc20_22.7: %facet_type = converted constants.%Dest2, %facet_value.loc20_22.1 [concrete = constants.%facet_value.253]
-// CHECK:STDOUT:   %facet_value.loc20_22.2: %facet_type = facet_value constants.%Dest2, (constants.%DestroyImpl.impl_witness.fc3, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.253]
-// CHECK:STDOUT:   %.loc20_22.8: %facet_type = converted constants.%Dest2, %facet_value.loc20_22.2 [concrete = constants.%facet_value.253]
+// CHECK:STDOUT:   %facet_value.loc20_22.1: %facet_type = facet_value constants.%Dest2, (constants.%DestroyImpl.impl_witness.db5, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.6c3]
+// CHECK:STDOUT:   %.loc20_22.7: %facet_type = converted constants.%Dest2, %facet_value.loc20_22.1 [concrete = constants.%facet_value.6c3]
+// CHECK:STDOUT:   %facet_value.loc20_22.2: %facet_type = facet_value constants.%Dest2, (constants.%DestroyImpl.impl_witness.db5, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.6c3]
+// CHECK:STDOUT:   %.loc20_22.8: %facet_type = converted constants.%Dest2, %facet_value.loc20_22.2 [concrete = constants.%facet_value.6c3]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc20_22.5)
 // CHECK:STDOUT:   <elided>
@@ -620,14 +620,14 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.273: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.5b5: %T.as_type.as.DestroyImpl.impl.Op.type.273 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %InaccessibleConstructor.Op.type: type = fn_type @InaccessibleConstructor.Op [concrete]
 // CHECK:STDOUT:   %InaccessibleConstructor.Op: %InaccessibleConstructor.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.1: <witness> = custom_witness (%InaccessibleConstructor.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.6bb: %SubobjectDestroy.type = facet_value %InaccessibleConstructor, (%custom_witness.5760f4.1) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.4ab: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.6bb) [concrete]
-// CHECK:STDOUT:   %facet_value.7b8: %facet_type = facet_value %InaccessibleConstructor, (%DestroyImpl.impl_witness.4ab, %custom_witness.5760f4.1) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.8e4: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.6bb) [concrete]
+// CHECK:STDOUT:   %facet_value.b81: %facet_type = facet_value %InaccessibleConstructor, (%DestroyImpl.impl_witness.8e4, %custom_witness.5760f4.1) [concrete]
 // CHECK:STDOUT:   %InaccessibleConversion: type = class_type @InaccessibleConversion [concrete]
 // CHECK:STDOUT:   %Dest: type = class_type @Dest [concrete]
 // CHECK:STDOUT:   %pattern_type.b72: type = pattern_type %Dest [concrete]
@@ -639,8 +639,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %Dest.Op: %Dest.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.2: <witness> = custom_witness (%Dest.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.ffa: %SubobjectDestroy.type = facet_value %Dest, (%custom_witness.5760f4.2) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.7de: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ffa) [concrete]
-// CHECK:STDOUT:   %facet_value.84b: %facet_type = facet_value %Dest, (%DestroyImpl.impl_witness.7de, %custom_witness.5760f4.2) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.771: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ffa) [concrete]
+// CHECK:STDOUT:   %facet_value.ea6: %facet_type = facet_value %Dest, (%DestroyImpl.impl_witness.771, %custom_witness.5760f4.2) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -658,8 +658,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.688: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.273) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.5b5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.688), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %InaccessibleConversion.decl: type = class_decl @InaccessibleConversion [concrete = constants.%InaccessibleConversion] {} {}
 // CHECK:STDOUT:   %Dest.decl: type = class_decl @Dest [concrete = constants.%Dest] {} {}
 // CHECK:STDOUT:   %Dest__carbon_thunk.decl: %Dest__carbon_thunk.type = fn_decl @Dest__carbon_thunk [concrete = constants.%Dest__carbon_thunk] {
@@ -689,10 +689,10 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.824 = value_binding_pattern _ [concrete = constants.%_.patt.f1f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc16_40.1: %facet_type = facet_value constants.%InaccessibleConstructor, (constants.%DestroyImpl.impl_witness.4ab, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.7b8]
-// CHECK:STDOUT:   %.loc16_40.7: %facet_type = converted constants.%InaccessibleConstructor, %facet_value.loc16_40.1 [concrete = constants.%facet_value.7b8]
-// CHECK:STDOUT:   %facet_value.loc16_40.2: %facet_type = facet_value constants.%InaccessibleConstructor, (constants.%DestroyImpl.impl_witness.4ab, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.7b8]
-// CHECK:STDOUT:   %.loc16_40.8: %facet_type = converted constants.%InaccessibleConstructor, %facet_value.loc16_40.2 [concrete = constants.%facet_value.7b8]
+// CHECK:STDOUT:   %facet_value.loc16_40.1: %facet_type = facet_value constants.%InaccessibleConstructor, (constants.%DestroyImpl.impl_witness.8e4, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.b81]
+// CHECK:STDOUT:   %.loc16_40.7: %facet_type = converted constants.%InaccessibleConstructor, %facet_value.loc16_40.1 [concrete = constants.%facet_value.b81]
+// CHECK:STDOUT:   %facet_value.loc16_40.2: %facet_type = facet_value constants.%InaccessibleConstructor, (constants.%DestroyImpl.impl_witness.8e4, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.b81]
+// CHECK:STDOUT:   %.loc16_40.8: %facet_type = converted constants.%InaccessibleConstructor, %facet_value.loc16_40.2 [concrete = constants.%facet_value.b81]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc16_40.5)
 // CHECK:STDOUT:   <elided>
@@ -716,10 +716,10 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc30_21.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc30_21.6: %facet_type = converted constants.%Dest, %facet_value.loc30_21.1 [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %facet_value.loc30_21.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc30_21.7: %facet_type = converted constants.%Dest, %facet_value.loc30_21.2 [concrete = constants.%facet_value.84b]
+// CHECK:STDOUT:   %facet_value.loc30_21.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc30_21.6: %facet_type = converted constants.%Dest, %facet_value.loc30_21.1 [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %facet_value.loc30_21.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc30_21.7: %facet_type = converted constants.%Dest, %facet_value.loc30_21.2 [concrete = constants.%facet_value.ea6]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc30_21.4)
 // CHECK:STDOUT:   <elided>
@@ -857,14 +857,14 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.273: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.5b5: %T.as_type.as.DestroyImpl.impl.Op.type.273 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %IntConstructor.Op.type: type = fn_type @IntConstructor.Op [concrete]
 // CHECK:STDOUT:   %IntConstructor.Op: %IntConstructor.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.576: <witness> = custom_witness (%IntConstructor.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.b3e: %SubobjectDestroy.type = facet_value %IntConstructor.372, (%custom_witness.576) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.dcc: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.b3e) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %IntConstructor.372, (%DestroyImpl.impl_witness.dcc, %custom_witness.576) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.1d9: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.b3e) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %IntConstructor.372, (%DestroyImpl.impl_witness.1d9, %custom_witness.576) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -878,8 +878,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.688: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.273) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.5b5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.688), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @IntConstructor.loc6(%i.param: %i32) {
@@ -900,9 +900,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.c4e = value_binding_pattern _ [concrete = constants.%_.patt.151]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc8_31.1: %facet_type = facet_value constants.%IntConstructor.372, (constants.%DestroyImpl.impl_witness.dcc, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc8_31.1: %facet_type = facet_value constants.%IntConstructor.372, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc8_31.6: %facet_type = converted constants.%IntConstructor.372, %facet_value.loc8_31.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc8_31.2: %facet_type = facet_value constants.%IntConstructor.372, (constants.%DestroyImpl.impl_witness.dcc, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc8_31.2: %facet_type = facet_value constants.%IntConstructor.372, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc8_31.7: %facet_type = converted constants.%IntConstructor.372, %facet_value.loc8_31.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc8_31.4)
@@ -926,14 +926,14 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.273: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.5b5: %T.as_type.as.DestroyImpl.impl.Op.type.273 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %IntConstructor.Op.type: type = fn_type @IntConstructor.Op [concrete]
 // CHECK:STDOUT:   %IntConstructor.Op: %IntConstructor.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.576: <witness> = custom_witness (%IntConstructor.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.b3e: %SubobjectDestroy.type = facet_value %IntConstructor, (%custom_witness.576) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.dcc: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.b3e) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %IntConstructor, (%DestroyImpl.impl_witness.dcc, %custom_witness.576) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.1d9: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.b3e) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %IntConstructor, (%DestroyImpl.impl_witness.1d9, %custom_witness.576) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -947,8 +947,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.688: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.273) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.5b5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.688), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @IntConstructorTest(%u.param: %u32) {
@@ -970,9 +970,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.c4e = value_binding_pattern _ [concrete = constants.%_.patt.151]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc19_31.1: %facet_type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.dcc, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc19_31.1: %facet_type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc19_31.7: %facet_type = converted constants.%IntConstructor, %facet_value.loc19_31.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc19_31.2: %facet_type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.dcc, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc19_31.2: %facet_type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc19_31.8: %facet_type = converted constants.%IntConstructor, %facet_value.loc19_31.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc19_31.5)
@@ -994,14 +994,14 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.273: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.5b5: %T.as_type.as.DestroyImpl.impl.Op.type.273 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultConstructor.Op.type: type = fn_type @DefaultConstructor.Op [concrete]
 // CHECK:STDOUT:   %DefaultConstructor.Op: %DefaultConstructor.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.576: <witness> = custom_witness (%DefaultConstructor.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.243: %SubobjectDestroy.type = facet_value %DefaultConstructor, (%custom_witness.576) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.ef7: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.243) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %DefaultConstructor, (%DestroyImpl.impl_witness.ef7, %custom_witness.576) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.a71: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.243) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %DefaultConstructor, (%DestroyImpl.impl_witness.a71, %custom_witness.576) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1015,8 +1015,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.688: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.273) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.5b5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.688), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @DefaultConstructorTest() {
@@ -1037,9 +1037,9 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.be4 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc9_36.1: %facet_type = facet_value constants.%DefaultConstructor, (constants.%DestroyImpl.impl_witness.ef7, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc9_36.1: %facet_type = facet_value constants.%DefaultConstructor, (constants.%DestroyImpl.impl_witness.a71, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc9_36.7: %facet_type = converted constants.%DefaultConstructor, %facet_value.loc9_36.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc9_36.2: %facet_type = facet_value constants.%DefaultConstructor, (constants.%DestroyImpl.impl_witness.ef7, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc9_36.2: %facet_type = facet_value constants.%DefaultConstructor, (constants.%DestroyImpl.impl_witness.a71, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc9_36.8: %facet_type = converted constants.%DefaultConstructor, %facet_value.loc9_36.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc9_36.5)
@@ -1063,23 +1063,23 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %ptr.2ff: type = ptr_type %Two [concrete]
 // CHECK:STDOUT:   %Two__carbon_thunk.type: type = fn_type @Two__carbon_thunk [concrete]
 // CHECK:STDOUT:   %Two__carbon_thunk: %Two__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.cb7: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.6b0: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.c7c: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f5e: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.c7c = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.e87: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1af, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3e5: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.186: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3e5 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.cb7 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.e87) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.ac8: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %.208: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.ac8, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a5f: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.186 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.186, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
-// CHECK:STDOUT:   %bound_method.67d: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_1.874: %i32 = int_value 1 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.094: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.186 [concrete]
-// CHECK:STDOUT:   %bound_method.ca1: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_2.92b: %i32 = int_value 2 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.282: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.3bd: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_1.68a: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.8a6: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
+// CHECK:STDOUT:   %bound_method.a55: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_2.2e0: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %ThreeWithDefault: type = class_type @ThreeWithDefault [concrete]
 // CHECK:STDOUT:   %pattern_type.248: type = pattern_type %ThreeWithDefault [concrete]
 // CHECK:STDOUT:   %_.patt.368: %pattern_type.248 = value_binding_pattern _ [concrete]
@@ -1091,26 +1091,26 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %tuple.2d5: %tuple.type.37f = tuple_value (%int_1.5b8, %int_2.ecc, %int_3.1ba) [concrete]
 // CHECK:STDOUT:   %ThreeWithDefault__carbon_thunk.type.0fdb2f.2: type = fn_type @ThreeWithDefault__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %ThreeWithDefault__carbon_thunk.d9686c.2: %ThreeWithDefault__carbon_thunk.type.0fdb2f.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.d7b: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.186 [concrete]
-// CHECK:STDOUT:   %bound_method.690: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_3.0aa: %i32 = int_value 3 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.b3c: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
+// CHECK:STDOUT:   %bound_method.fb0: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_3.9f3: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.273: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.5b5: %T.as_type.as.DestroyImpl.impl.Op.type.273 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %ThreeWithDefault.Op.type: type = fn_type @ThreeWithDefault.Op [concrete]
 // CHECK:STDOUT:   %ThreeWithDefault.Op: %ThreeWithDefault.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.1: <witness> = custom_witness (%ThreeWithDefault.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.45f: %SubobjectDestroy.type = facet_value %ThreeWithDefault, (%custom_witness.5760f4.1) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.d50: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.45f) [concrete]
-// CHECK:STDOUT:   %facet_value.c7c: %facet_type = facet_value %ThreeWithDefault, (%DestroyImpl.impl_witness.d50, %custom_witness.5760f4.1) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.e7f: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.45f) [concrete]
+// CHECK:STDOUT:   %facet_value.3f3: %facet_type = facet_value %ThreeWithDefault, (%DestroyImpl.impl_witness.e7f, %custom_witness.5760f4.1) [concrete]
 // CHECK:STDOUT:   %Two.Op.type: type = fn_type @Two.Op [concrete]
 // CHECK:STDOUT:   %Two.Op: %Two.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.2: <witness> = custom_witness (%Two.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.485: %SubobjectDestroy.type = facet_value %Two, (%custom_witness.5760f4.2) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.521: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.485) [concrete]
-// CHECK:STDOUT:   %facet_value.18b: %facet_type = facet_value %Two, (%DestroyImpl.impl_witness.521, %custom_witness.5760f4.2) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.c1c: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.485) [concrete]
+// CHECK:STDOUT:   %facet_value.6ce: %facet_type = facet_value %Two, (%DestroyImpl.impl_witness.c1c, %custom_witness.5760f4.2) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1125,8 +1125,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.7e0: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.c7c) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f5e)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1af = impl_witness_table (%Core.import_ref.7e0), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e47: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f53 = impl_witness_table (%Core.import_ref.e47), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %ThreeWithDefault.decl: type = class_decl @ThreeWithDefault [concrete = constants.%ThreeWithDefault] {} {}
 // CHECK:STDOUT:   %ThreeWithDefault__carbon_thunk.decl.3a914c.1: %ThreeWithDefault__carbon_thunk.type.0fdb2f.1 = fn_decl @ThreeWithDefault__carbon_thunk.1 [concrete = constants.%ThreeWithDefault__carbon_thunk.d9686c.1] {
 // CHECK:STDOUT:     <elided>
@@ -1138,8 +1138,8 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.688: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.273) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.5b5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.688), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ImplicitConvert() {
@@ -1148,20 +1148,20 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %int_2.loc8: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc8_25.1: %tuple.type.f94 = tuple_literal (%int_1.loc8, %int_2.loc8) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:   %.loc8_25.2: ref %Two = temporary_storage
-// CHECK:STDOUT:   %impl.elem0.loc8_21: %.208 = impl_witness_access constants.%ImplicitAs.impl_witness.e87, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.186]
-// CHECK:STDOUT:   %bound_method.loc8_21.1: <bound method> = bound_method %int_1.loc8, %impl.elem0.loc8_21 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a5f]
+// CHECK:STDOUT:   %impl.elem0.loc8_21: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc8_21.1: <bound method> = bound_method %int_1.loc8, %impl.elem0.loc8_21 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.282]
 // CHECK:STDOUT:   %specific_fn.loc8_21: <specific function> = specific_function %impl.elem0.loc8_21, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_21.2: <bound method> = bound_method %int_1.loc8, %specific_fn.loc8_21 [concrete = constants.%bound_method.67d]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8_21: init %i32 = call %bound_method.loc8_21.2(%int_1.loc8) [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %.loc8_21.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8_21 [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %.loc8_21.2: %i32 = converted %int_1.loc8, %.loc8_21.1 [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %impl.elem0.loc8_24: %.208 = impl_witness_access constants.%ImplicitAs.impl_witness.e87, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.186]
-// CHECK:STDOUT:   %bound_method.loc8_24.1: <bound method> = bound_method %int_2.loc8, %impl.elem0.loc8_24 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.094]
+// CHECK:STDOUT:   %bound_method.loc8_21.2: <bound method> = bound_method %int_1.loc8, %specific_fn.loc8_21 [concrete = constants.%bound_method.3bd]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8_21: init %i32 = call %bound_method.loc8_21.2(%int_1.loc8) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc8_21.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8_21 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc8_21.2: %i32 = converted %int_1.loc8, %.loc8_21.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %impl.elem0.loc8_24: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc8_24.1: <bound method> = bound_method %int_2.loc8, %impl.elem0.loc8_24 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.8a6]
 // CHECK:STDOUT:   %specific_fn.loc8_24: <specific function> = specific_function %impl.elem0.loc8_24, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc8_24.2: <bound method> = bound_method %int_2.loc8, %specific_fn.loc8_24 [concrete = constants.%bound_method.ca1]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8_24: init %i32 = call %bound_method.loc8_24.2(%int_2.loc8) [concrete = constants.%int_2.92b]
-// CHECK:STDOUT:   %.loc8_24.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8_24 [concrete = constants.%int_2.92b]
-// CHECK:STDOUT:   %.loc8_24.2: %i32 = converted %int_2.loc8, %.loc8_24.1 [concrete = constants.%int_2.92b]
+// CHECK:STDOUT:   %bound_method.loc8_24.2: <bound method> = bound_method %int_2.loc8, %specific_fn.loc8_24 [concrete = constants.%bound_method.a55]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8_24: init %i32 = call %bound_method.loc8_24.2(%int_2.loc8) [concrete = constants.%int_2.2e0]
+// CHECK:STDOUT:   %.loc8_24.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc8_24 [concrete = constants.%int_2.2e0]
+// CHECK:STDOUT:   %.loc8_24.2: %i32 = converted %int_2.loc8, %.loc8_24.1 [concrete = constants.%int_2.2e0]
 // CHECK:STDOUT:   %addr.loc8: %ptr.2ff = addr_of %.loc8_25.2
 // CHECK:STDOUT:   %Two__carbon_thunk.call: init %empty_tuple.type = call imports.%Two__carbon_thunk.decl(%.loc8_21.2, %.loc8_24.2, %addr.loc8)
 // CHECK:STDOUT:   %.loc8_25.3: init %Two to %.loc8_25.2 = mark_in_place_init %Two__carbon_thunk.call
@@ -1180,20 +1180,20 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %int_2.loc10: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc10_38.1: %tuple.type.f94 = tuple_literal (%int_1.loc10, %int_2.loc10) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:   %.loc10_38.2: ref %ThreeWithDefault = temporary_storage
-// CHECK:STDOUT:   %impl.elem0.loc10_34: %.208 = impl_witness_access constants.%ImplicitAs.impl_witness.e87, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.186]
-// CHECK:STDOUT:   %bound_method.loc10_34.1: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a5f]
+// CHECK:STDOUT:   %impl.elem0.loc10_34: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc10_34.1: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.282]
 // CHECK:STDOUT:   %specific_fn.loc10_34: <specific function> = specific_function %impl.elem0.loc10_34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_34.2: <bound method> = bound_method %int_1.loc10, %specific_fn.loc10_34 [concrete = constants.%bound_method.67d]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_34: init %i32 = call %bound_method.loc10_34.2(%int_1.loc10) [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %.loc10_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_34 [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %.loc10_34.2: %i32 = converted %int_1.loc10, %.loc10_34.1 [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %impl.elem0.loc10_37: %.208 = impl_witness_access constants.%ImplicitAs.impl_witness.e87, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.186]
-// CHECK:STDOUT:   %bound_method.loc10_37.1: <bound method> = bound_method %int_2.loc10, %impl.elem0.loc10_37 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.094]
+// CHECK:STDOUT:   %bound_method.loc10_34.2: <bound method> = bound_method %int_1.loc10, %specific_fn.loc10_34 [concrete = constants.%bound_method.3bd]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_34: init %i32 = call %bound_method.loc10_34.2(%int_1.loc10) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc10_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_34 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc10_34.2: %i32 = converted %int_1.loc10, %.loc10_34.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %impl.elem0.loc10_37: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc10_37.1: <bound method> = bound_method %int_2.loc10, %impl.elem0.loc10_37 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.8a6]
 // CHECK:STDOUT:   %specific_fn.loc10_37: <specific function> = specific_function %impl.elem0.loc10_37, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_37.2: <bound method> = bound_method %int_2.loc10, %specific_fn.loc10_37 [concrete = constants.%bound_method.ca1]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_37: init %i32 = call %bound_method.loc10_37.2(%int_2.loc10) [concrete = constants.%int_2.92b]
-// CHECK:STDOUT:   %.loc10_37.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_37 [concrete = constants.%int_2.92b]
-// CHECK:STDOUT:   %.loc10_37.2: %i32 = converted %int_2.loc10, %.loc10_37.1 [concrete = constants.%int_2.92b]
+// CHECK:STDOUT:   %bound_method.loc10_37.2: <bound method> = bound_method %int_2.loc10, %specific_fn.loc10_37 [concrete = constants.%bound_method.a55]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_37: init %i32 = call %bound_method.loc10_37.2(%int_2.loc10) [concrete = constants.%int_2.2e0]
+// CHECK:STDOUT:   %.loc10_37.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_37 [concrete = constants.%int_2.2e0]
+// CHECK:STDOUT:   %.loc10_37.2: %i32 = converted %int_2.loc10, %.loc10_37.1 [concrete = constants.%int_2.2e0]
 // CHECK:STDOUT:   %addr.loc10: %ptr.3ae = addr_of %.loc10_38.2
 // CHECK:STDOUT:   %ThreeWithDefault__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%ThreeWithDefault__carbon_thunk.decl.3a914c.1(%.loc10_34.2, %.loc10_37.2, %addr.loc10)
 // CHECK:STDOUT:   %.loc10_38.3: init %ThreeWithDefault to %.loc10_38.2 = mark_in_place_init %ThreeWithDefault__carbon_thunk.call.loc10
@@ -1213,27 +1213,27 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %.loc12_41.1: %tuple.type.37f = tuple_literal (%int_1.loc12, %int_2.loc12, %int_3) [concrete = constants.%tuple.2d5]
 // CHECK:STDOUT:   %.loc12_41.2: ref %ThreeWithDefault = temporary_storage
-// CHECK:STDOUT:   %impl.elem0.loc12_34: %.208 = impl_witness_access constants.%ImplicitAs.impl_witness.e87, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.186]
-// CHECK:STDOUT:   %bound_method.loc12_34.1: <bound method> = bound_method %int_1.loc12, %impl.elem0.loc12_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a5f]
+// CHECK:STDOUT:   %impl.elem0.loc12_34: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc12_34.1: <bound method> = bound_method %int_1.loc12, %impl.elem0.loc12_34 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.282]
 // CHECK:STDOUT:   %specific_fn.loc12_34: <specific function> = specific_function %impl.elem0.loc12_34, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_34.2: <bound method> = bound_method %int_1.loc12, %specific_fn.loc12_34 [concrete = constants.%bound_method.67d]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_34: init %i32 = call %bound_method.loc12_34.2(%int_1.loc12) [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %.loc12_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_34 [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %.loc12_34.2: %i32 = converted %int_1.loc12, %.loc12_34.1 [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %impl.elem0.loc12_37: %.208 = impl_witness_access constants.%ImplicitAs.impl_witness.e87, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.186]
-// CHECK:STDOUT:   %bound_method.loc12_37.1: <bound method> = bound_method %int_2.loc12, %impl.elem0.loc12_37 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.094]
+// CHECK:STDOUT:   %bound_method.loc12_34.2: <bound method> = bound_method %int_1.loc12, %specific_fn.loc12_34 [concrete = constants.%bound_method.3bd]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_34: init %i32 = call %bound_method.loc12_34.2(%int_1.loc12) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc12_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_34 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc12_34.2: %i32 = converted %int_1.loc12, %.loc12_34.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %impl.elem0.loc12_37: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc12_37.1: <bound method> = bound_method %int_2.loc12, %impl.elem0.loc12_37 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.8a6]
 // CHECK:STDOUT:   %specific_fn.loc12_37: <specific function> = specific_function %impl.elem0.loc12_37, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_37.2: <bound method> = bound_method %int_2.loc12, %specific_fn.loc12_37 [concrete = constants.%bound_method.ca1]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_37: init %i32 = call %bound_method.loc12_37.2(%int_2.loc12) [concrete = constants.%int_2.92b]
-// CHECK:STDOUT:   %.loc12_37.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_37 [concrete = constants.%int_2.92b]
-// CHECK:STDOUT:   %.loc12_37.2: %i32 = converted %int_2.loc12, %.loc12_37.1 [concrete = constants.%int_2.92b]
-// CHECK:STDOUT:   %impl.elem0.loc12_40: %.208 = impl_witness_access constants.%ImplicitAs.impl_witness.e87, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.186]
-// CHECK:STDOUT:   %bound_method.loc12_40.1: <bound method> = bound_method %int_3, %impl.elem0.loc12_40 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.d7b]
+// CHECK:STDOUT:   %bound_method.loc12_37.2: <bound method> = bound_method %int_2.loc12, %specific_fn.loc12_37 [concrete = constants.%bound_method.a55]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_37: init %i32 = call %bound_method.loc12_37.2(%int_2.loc12) [concrete = constants.%int_2.2e0]
+// CHECK:STDOUT:   %.loc12_37.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_37 [concrete = constants.%int_2.2e0]
+// CHECK:STDOUT:   %.loc12_37.2: %i32 = converted %int_2.loc12, %.loc12_37.1 [concrete = constants.%int_2.2e0]
+// CHECK:STDOUT:   %impl.elem0.loc12_40: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc12_40.1: <bound method> = bound_method %int_3, %impl.elem0.loc12_40 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.b3c]
 // CHECK:STDOUT:   %specific_fn.loc12_40: <specific function> = specific_function %impl.elem0.loc12_40, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc12_40.2: <bound method> = bound_method %int_3, %specific_fn.loc12_40 [concrete = constants.%bound_method.690]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_40: init %i32 = call %bound_method.loc12_40.2(%int_3) [concrete = constants.%int_3.0aa]
-// CHECK:STDOUT:   %.loc12_40.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_40 [concrete = constants.%int_3.0aa]
-// CHECK:STDOUT:   %.loc12_40.2: %i32 = converted %int_3, %.loc12_40.1 [concrete = constants.%int_3.0aa]
+// CHECK:STDOUT:   %bound_method.loc12_40.2: <bound method> = bound_method %int_3, %specific_fn.loc12_40 [concrete = constants.%bound_method.fb0]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_40: init %i32 = call %bound_method.loc12_40.2(%int_3) [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %.loc12_40.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc12_40 [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %.loc12_40.2: %i32 = converted %int_3, %.loc12_40.1 [concrete = constants.%int_3.9f3]
 // CHECK:STDOUT:   %addr.loc12: %ptr.3ae = addr_of %.loc12_41.2
 // CHECK:STDOUT:   %ThreeWithDefault__carbon_thunk.call.loc12: init %empty_tuple.type = call imports.%ThreeWithDefault__carbon_thunk.decl.3a914c.2(%.loc12_34.2, %.loc12_37.2, %.loc12_40.2, %addr.loc12)
 // CHECK:STDOUT:   %.loc12_41.3: init %ThreeWithDefault to %.loc12_41.2 = mark_in_place_init %ThreeWithDefault__carbon_thunk.call.loc12
@@ -1248,22 +1248,22 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc12: %pattern_type.248 = value_binding_pattern _ [concrete = constants.%_.patt.368]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc12_41.1: %facet_type = facet_value constants.%ThreeWithDefault, (constants.%DestroyImpl.impl_witness.d50, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.c7c]
-// CHECK:STDOUT:   %.loc12_41.7: %facet_type = converted constants.%ThreeWithDefault, %facet_value.loc12_41.1 [concrete = constants.%facet_value.c7c]
-// CHECK:STDOUT:   %facet_value.loc12_41.2: %facet_type = facet_value constants.%ThreeWithDefault, (constants.%DestroyImpl.impl_witness.d50, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.c7c]
-// CHECK:STDOUT:   %.loc12_41.8: %facet_type = converted constants.%ThreeWithDefault, %facet_value.loc12_41.2 [concrete = constants.%facet_value.c7c]
+// CHECK:STDOUT:   %facet_value.loc12_41.1: %facet_type = facet_value constants.%ThreeWithDefault, (constants.%DestroyImpl.impl_witness.e7f, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.3f3]
+// CHECK:STDOUT:   %.loc12_41.7: %facet_type = converted constants.%ThreeWithDefault, %facet_value.loc12_41.1 [concrete = constants.%facet_value.3f3]
+// CHECK:STDOUT:   %facet_value.loc12_41.2: %facet_type = facet_value constants.%ThreeWithDefault, (constants.%DestroyImpl.impl_witness.e7f, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.3f3]
+// CHECK:STDOUT:   %.loc12_41.8: %facet_type = converted constants.%ThreeWithDefault, %facet_value.loc12_41.2 [concrete = constants.%facet_value.3f3]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc12: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%.loc12_41.5)
-// CHECK:STDOUT:   %facet_value.loc10_38.1: %facet_type = facet_value constants.%ThreeWithDefault, (constants.%DestroyImpl.impl_witness.d50, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.c7c]
-// CHECK:STDOUT:   %.loc10_38.7: %facet_type = converted constants.%ThreeWithDefault, %facet_value.loc10_38.1 [concrete = constants.%facet_value.c7c]
-// CHECK:STDOUT:   %facet_value.loc10_38.2: %facet_type = facet_value constants.%ThreeWithDefault, (constants.%DestroyImpl.impl_witness.d50, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.c7c]
-// CHECK:STDOUT:   %.loc10_38.8: %facet_type = converted constants.%ThreeWithDefault, %facet_value.loc10_38.2 [concrete = constants.%facet_value.c7c]
+// CHECK:STDOUT:   %facet_value.loc10_38.1: %facet_type = facet_value constants.%ThreeWithDefault, (constants.%DestroyImpl.impl_witness.e7f, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.3f3]
+// CHECK:STDOUT:   %.loc10_38.7: %facet_type = converted constants.%ThreeWithDefault, %facet_value.loc10_38.1 [concrete = constants.%facet_value.3f3]
+// CHECK:STDOUT:   %facet_value.loc10_38.2: %facet_type = facet_value constants.%ThreeWithDefault, (constants.%DestroyImpl.impl_witness.e7f, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.3f3]
+// CHECK:STDOUT:   %.loc10_38.8: %facet_type = converted constants.%ThreeWithDefault, %facet_value.loc10_38.2 [concrete = constants.%facet_value.3f3]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc10: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%.loc10_38.5)
-// CHECK:STDOUT:   %facet_value.loc8_25.1: %facet_type = facet_value constants.%Two, (constants.%DestroyImpl.impl_witness.521, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.18b]
-// CHECK:STDOUT:   %.loc8_25.7: %facet_type = converted constants.%Two, %facet_value.loc8_25.1 [concrete = constants.%facet_value.18b]
-// CHECK:STDOUT:   %facet_value.loc8_25.2: %facet_type = facet_value constants.%Two, (constants.%DestroyImpl.impl_witness.521, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.18b]
-// CHECK:STDOUT:   %.loc8_25.8: %facet_type = converted constants.%Two, %facet_value.loc8_25.2 [concrete = constants.%facet_value.18b]
+// CHECK:STDOUT:   %facet_value.loc8_25.1: %facet_type = facet_value constants.%Two, (constants.%DestroyImpl.impl_witness.c1c, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.6ce]
+// CHECK:STDOUT:   %.loc8_25.7: %facet_type = converted constants.%Two, %facet_value.loc8_25.1 [concrete = constants.%facet_value.6ce]
+// CHECK:STDOUT:   %facet_value.loc8_25.2: %facet_type = facet_value constants.%Two, (constants.%DestroyImpl.impl_witness.c1c, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.6ce]
+// CHECK:STDOUT:   %.loc8_25.8: %facet_type = converted constants.%Two, %facet_value.loc8_25.2 [concrete = constants.%facet_value.6ce]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc8: init %empty_tuple.type = call %SelfDestruct.specific_fn.3(%.loc8_25.5)
 // CHECK:STDOUT:   <elided>
@@ -1414,39 +1414,39 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %NonAggregate__carbon_thunk.type.841a40.2: type = fn_type @NonAggregate__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %NonAggregate__carbon_thunk.24a208.2: %NonAggregate__carbon_thunk.type.841a40.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.cb7: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.6b0: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.c7c: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f5e: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.c7c = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.e87: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1af, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3e5: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.186: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3e5 = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.cb7 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.e87) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.ac8: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %.208: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.ac8, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a5f: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.186 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.186, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
-// CHECK:STDOUT:   %bound_method.67d: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_1.874: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.282: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.3bd: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_1.68a: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_2.ecc: Core.IntLiteral = int_value 2 [concrete]
 // CHECK:STDOUT:   %tuple.type.f94: type = tuple_type (Core.IntLiteral, Core.IntLiteral) [concrete]
 // CHECK:STDOUT:   %tuple.ad8: %tuple.type.f94 = tuple_value (%int_1.5b8, %int_2.ecc) [concrete]
 // CHECK:STDOUT:   %NonAggregate__carbon_thunk.type.841a40.3: type = fn_type @NonAggregate__carbon_thunk.3 [concrete]
 // CHECK:STDOUT:   %NonAggregate__carbon_thunk.24a208.3: %NonAggregate__carbon_thunk.type.841a40.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.094: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.186 [concrete]
-// CHECK:STDOUT:   %bound_method.ca1: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_2.92b: %i32 = int_value 2 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.8a6: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
+// CHECK:STDOUT:   %bound_method.a55: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_2.2e0: %i32 = int_value 2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.273: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.5b5: %T.as_type.as.DestroyImpl.impl.Op.type.273 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %NonAggregate.Op.type: type = fn_type @NonAggregate.Op [concrete]
 // CHECK:STDOUT:   %NonAggregate.Op: %NonAggregate.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.576: <witness> = custom_witness (%NonAggregate.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.6e1: %SubobjectDestroy.type = facet_value %NonAggregate, (%custom_witness.576) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.13a: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.6e1) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %NonAggregate, (%DestroyImpl.impl_witness.13a, %custom_witness.576) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.c3e: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.6e1) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %NonAggregate, (%DestroyImpl.impl_witness.c3e, %custom_witness.576) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1465,15 +1465,15 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.7e0: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.c7c) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f5e)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1af = impl_witness_table (%Core.import_ref.7e0), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e47: @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f53 = impl_witness_table (%Core.import_ref.e47), @Core.IntLiteral.as.ImplicitAs.impl [concrete]
 // CHECK:STDOUT:   %NonAggregate__carbon_thunk.decl.356ec9.3: %NonAggregate__carbon_thunk.type.841a40.3 = fn_decl @NonAggregate__carbon_thunk.3 [concrete = constants.%NonAggregate__carbon_thunk.24a208.3] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.688: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.273) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.5b5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.688), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InitFromStruct() {
@@ -1497,13 +1497,13 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %int_1.loc9: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %.loc9_32.1: %tuple.type.985 = tuple_literal (%int_1.loc9) [concrete = constants.%tuple.378]
 // CHECK:STDOUT:   %.loc9_32.2: ref %NonAggregate = temporary_storage
-// CHECK:STDOUT:   %impl.elem0.loc9: %.208 = impl_witness_access constants.%ImplicitAs.impl_witness.e87, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.186]
-// CHECK:STDOUT:   %bound_method.loc9_30.1: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a5f]
+// CHECK:STDOUT:   %impl.elem0.loc9: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc9_30.1: <bound method> = bound_method %int_1.loc9, %impl.elem0.loc9 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.282]
 // CHECK:STDOUT:   %specific_fn.loc9: <specific function> = specific_function %impl.elem0.loc9, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc9_30.2: <bound method> = bound_method %int_1.loc9, %specific_fn.loc9 [concrete = constants.%bound_method.67d]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9: init %i32 = call %bound_method.loc9_30.2(%int_1.loc9) [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %.loc9_30.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %.loc9_30.2: %i32 = converted %int_1.loc9, %.loc9_30.1 [concrete = constants.%int_1.874]
+// CHECK:STDOUT:   %bound_method.loc9_30.2: <bound method> = bound_method %int_1.loc9, %specific_fn.loc9 [concrete = constants.%bound_method.3bd]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9: init %i32 = call %bound_method.loc9_30.2(%int_1.loc9) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc9_30.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc9 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc9_30.2: %i32 = converted %int_1.loc9, %.loc9_30.1 [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %addr.loc9: %ptr.f81 = addr_of %.loc9_32.2
 // CHECK:STDOUT:   %NonAggregate__carbon_thunk.call.loc9: init %empty_tuple.type = call imports.%NonAggregate__carbon_thunk.decl.356ec9.2(%.loc9_30.2, %addr.loc9)
 // CHECK:STDOUT:   %.loc9_32.3: init %NonAggregate to %.loc9_32.2 = mark_in_place_init %NonAggregate__carbon_thunk.call.loc9
@@ -1522,20 +1522,20 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]
 // CHECK:STDOUT:   %.loc10_34.1: %tuple.type.f94 = tuple_literal (%int_1.loc10, %int_2) [concrete = constants.%tuple.ad8]
 // CHECK:STDOUT:   %.loc10_34.2: ref %NonAggregate = temporary_storage
-// CHECK:STDOUT:   %impl.elem0.loc10_30: %.208 = impl_witness_access constants.%ImplicitAs.impl_witness.e87, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.186]
-// CHECK:STDOUT:   %bound_method.loc10_30.1: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10_30 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.a5f]
+// CHECK:STDOUT:   %impl.elem0.loc10_30: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc10_30.1: <bound method> = bound_method %int_1.loc10, %impl.elem0.loc10_30 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.282]
 // CHECK:STDOUT:   %specific_fn.loc10_30: <specific function> = specific_function %impl.elem0.loc10_30, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_30.2: <bound method> = bound_method %int_1.loc10, %specific_fn.loc10_30 [concrete = constants.%bound_method.67d]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_30: init %i32 = call %bound_method.loc10_30.2(%int_1.loc10) [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %.loc10_30.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_30 [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %.loc10_30.2: %i32 = converted %int_1.loc10, %.loc10_30.1 [concrete = constants.%int_1.874]
-// CHECK:STDOUT:   %impl.elem0.loc10_33: %.208 = impl_witness_access constants.%ImplicitAs.impl_witness.e87, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.186]
-// CHECK:STDOUT:   %bound_method.loc10_33.1: <bound method> = bound_method %int_2, %impl.elem0.loc10_33 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.094]
+// CHECK:STDOUT:   %bound_method.loc10_30.2: <bound method> = bound_method %int_1.loc10, %specific_fn.loc10_30 [concrete = constants.%bound_method.3bd]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_30: init %i32 = call %bound_method.loc10_30.2(%int_1.loc10) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc10_30.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_30 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc10_30.2: %i32 = converted %int_1.loc10, %.loc10_30.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %impl.elem0.loc10_33: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc10_33.1: <bound method> = bound_method %int_2, %impl.elem0.loc10_33 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.8a6]
 // CHECK:STDOUT:   %specific_fn.loc10_33: <specific function> = specific_function %impl.elem0.loc10_33, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_33.2: <bound method> = bound_method %int_2, %specific_fn.loc10_33 [concrete = constants.%bound_method.ca1]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_33: init %i32 = call %bound_method.loc10_33.2(%int_2) [concrete = constants.%int_2.92b]
-// CHECK:STDOUT:   %.loc10_33.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_33 [concrete = constants.%int_2.92b]
-// CHECK:STDOUT:   %.loc10_33.2: %i32 = converted %int_2, %.loc10_33.1 [concrete = constants.%int_2.92b]
+// CHECK:STDOUT:   %bound_method.loc10_33.2: <bound method> = bound_method %int_2, %specific_fn.loc10_33 [concrete = constants.%bound_method.a55]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_33: init %i32 = call %bound_method.loc10_33.2(%int_2) [concrete = constants.%int_2.2e0]
+// CHECK:STDOUT:   %.loc10_33.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10_33 [concrete = constants.%int_2.2e0]
+// CHECK:STDOUT:   %.loc10_33.2: %i32 = converted %int_2, %.loc10_33.1 [concrete = constants.%int_2.2e0]
 // CHECK:STDOUT:   %addr.loc10: %ptr.f81 = addr_of %.loc10_34.2
 // CHECK:STDOUT:   %NonAggregate__carbon_thunk.call.loc10: init %empty_tuple.type = call imports.%NonAggregate__carbon_thunk.decl.356ec9.3(%.loc10_30.2, %.loc10_33.2, %addr.loc10)
 // CHECK:STDOUT:   %.loc10_34.3: init %NonAggregate to %.loc10_34.2 = mark_in_place_init %NonAggregate__carbon_thunk.call.loc10
@@ -1550,21 +1550,21 @@ fn InitFromStruct() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc10: %pattern_type.273 = value_binding_pattern _ [concrete = constants.%_.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc10_34.1: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.13a, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc10_34.1: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.c3e, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc10_34.7: %facet_type = converted constants.%NonAggregate, %facet_value.loc10_34.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc10_34.2: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.13a, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc10_34.2: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.c3e, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc10_34.8: %facet_type = converted constants.%NonAggregate, %facet_value.loc10_34.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc10: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%.loc10_34.5)
-// CHECK:STDOUT:   %facet_value.loc9_32.1: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.13a, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc9_32.1: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.c3e, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc9_32.7: %facet_type = converted constants.%NonAggregate, %facet_value.loc9_32.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc9_32.2: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.13a, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc9_32.2: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.c3e, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc9_32.8: %facet_type = converted constants.%NonAggregate, %facet_value.loc9_32.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc9: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%.loc9_32.5)
-// CHECK:STDOUT:   %facet_value.loc8_30.1: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.13a, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc8_30.1: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.c3e, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc8_30.7: %facet_type = converted constants.%NonAggregate, %facet_value.loc8_30.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc8_30.2: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.13a, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc8_30.2: %facet_type = facet_value constants.%NonAggregate, (constants.%DestroyImpl.impl_witness.c3e, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc8_30.8: %facet_type = converted constants.%NonAggregate, %facet_value.loc8_30.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc8: init %empty_tuple.type = call %SelfDestruct.specific_fn.3(%.loc8_30.5)

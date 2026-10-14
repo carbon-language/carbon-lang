@@ -127,7 +127,7 @@ class DominanceTestFile {
                                      .bindings_id = InstBlockId::Empty,
                                      .self_specific_id = SpecificId::None});
     auto specific_id =
-        file_.specifics().GetOrAdd(generic_id, InstBlockId::Empty);
+        file_.specifics().GetOrAdd(generic_id, InstBlockId::Empty, false);
     file_.specifics()
         .Get(specific_id)
         .SetValueBlock(GenericInstIndex::Declaration, value_block_id);

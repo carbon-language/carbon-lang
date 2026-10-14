@@ -142,14 +142,14 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.273: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.5b5: %T.as_type.as.DestroyImpl.impl.Op.type.273 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %Dest.Op.type: type = fn_type @Dest.Op [concrete]
 // CHECK:STDOUT:   %Dest.Op: %Dest.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.1: <witness> = custom_witness (%Dest.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.ffa: %SubobjectDestroy.type = facet_value %Dest, (%custom_witness.5760f4.1) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.7de: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ffa) [concrete]
-// CHECK:STDOUT:   %facet_value.84b: %facet_type = facet_value %Dest, (%DestroyImpl.impl_witness.7de, %custom_witness.5760f4.1) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.771: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ffa) [concrete]
+// CHECK:STDOUT:   %facet_value.ea6: %facet_type = facet_value %Dest, (%DestroyImpl.impl_witness.771, %custom_witness.5760f4.1) [concrete]
 // CHECK:STDOUT:   %Source2: type = class_type @Source2 [concrete]
 // CHECK:STDOUT:   %Dest2: type = class_type @Dest2 [concrete]
 // CHECK:STDOUT:   %ptr.0db: type = ptr_type %Source2 [concrete]
@@ -160,8 +160,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest2.Op: %Dest2.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.2: <witness> = custom_witness (%Dest2.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.377: %SubobjectDestroy.type = facet_value %Dest2, (%custom_witness.5760f4.2) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.fc3: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.377) [concrete]
-// CHECK:STDOUT:   %facet_value.253: %facet_type = facet_value %Dest2, (%DestroyImpl.impl_witness.fc3, %custom_witness.5760f4.2) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.db5: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.377) [concrete]
+// CHECK:STDOUT:   %facet_value.6c3: %facet_type = facet_value %Dest2, (%DestroyImpl.impl_witness.db5, %custom_witness.5760f4.2) [concrete]
 // CHECK:STDOUT:   %ExplicitConstructor: type = class_type @ExplicitConstructor [concrete]
 // CHECK:STDOUT:   %ptr.5f6: type = ptr_type %Source [concrete]
 // CHECK:STDOUT:   %ptr.44f: type = ptr_type %ExplicitConstructor [concrete]
@@ -171,8 +171,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ExplicitConstructor.Op: %ExplicitConstructor.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.3: <witness> = custom_witness (%ExplicitConstructor.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.7f0: %SubobjectDestroy.type = facet_value %ExplicitConstructor, (%custom_witness.5760f4.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.ba2: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.7f0) [concrete]
-// CHECK:STDOUT:   %facet_value.65f: %facet_type = facet_value %ExplicitConstructor, (%DestroyImpl.impl_witness.ba2, %custom_witness.5760f4.3) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.f27: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.7f0) [concrete]
+// CHECK:STDOUT:   %facet_value.24a: %facet_type = facet_value %ExplicitConstructor, (%DestroyImpl.impl_witness.f27, %custom_witness.5760f4.3) [concrete]
 // CHECK:STDOUT:   %ExplicitConversion: type = class_type @ExplicitConversion [concrete]
 // CHECK:STDOUT:   %Dest__carbon_thunk.type.eb4c5e.2: type = fn_type @Dest__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %Dest__carbon_thunk.c8e433.2: %Dest__carbon_thunk.type.eb4c5e.2 = struct_value () [concrete]
@@ -195,8 +195,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.688: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.273) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.5b5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.688), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Source2.decl: type = class_decl @Source2 [concrete = constants.%Source2] {} {}
 // CHECK:STDOUT:   %Dest2.decl: type = class_decl @Dest2 [concrete = constants.%Dest2] {} {}
 // CHECK:STDOUT:   %Dest2__carbon_thunk.decl: %Dest2__carbon_thunk.type = fn_decl @Dest2__carbon_thunk [concrete = constants.%Dest2__carbon_thunk] {
@@ -229,10 +229,10 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc8_5.2: init %Dest to %.loc8_5.1 = mark_in_place_init %Dest__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_5.3: init %Dest = converted %s.ref, %.loc8_5.2
 // CHECK:STDOUT:   %.loc8_5.4: ref %Dest = temporary %.loc8_5.1, %.loc8_5.3
-// CHECK:STDOUT:   %facet_value.loc8_5.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc8_5.5: %facet_type = converted constants.%Dest, %facet_value.loc8_5.1 [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %facet_value.loc8_5.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc8_5.6: %facet_type = converted constants.%Dest, %facet_value.loc8_5.2 [concrete = constants.%facet_value.84b]
+// CHECK:STDOUT:   %facet_value.loc8_5.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc8_5.5: %facet_type = converted constants.%Dest, %facet_value.loc8_5.1 [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %facet_value.loc8_5.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc8_5.6: %facet_type = converted constants.%Dest, %facet_value.loc8_5.2 [concrete = constants.%facet_value.ea6]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc8_5.4)
 // CHECK:STDOUT:   <elided>
@@ -251,10 +251,10 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc14_5.2: init %Dest2 to %.loc14_5.1 = mark_in_place_init %Dest2__carbon_thunk.call
 // CHECK:STDOUT:   %.loc14_5.3: init %Dest2 = converted %s.ref, %.loc14_5.2
 // CHECK:STDOUT:   %.loc14_5.4: ref %Dest2 = temporary %.loc14_5.1, %.loc14_5.3
-// CHECK:STDOUT:   %facet_value.loc14_5.1: %facet_type = facet_value constants.%Dest2, (constants.%DestroyImpl.impl_witness.fc3, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.253]
-// CHECK:STDOUT:   %.loc14_5.5: %facet_type = converted constants.%Dest2, %facet_value.loc14_5.1 [concrete = constants.%facet_value.253]
-// CHECK:STDOUT:   %facet_value.loc14_5.2: %facet_type = facet_value constants.%Dest2, (constants.%DestroyImpl.impl_witness.fc3, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.253]
-// CHECK:STDOUT:   %.loc14_5.6: %facet_type = converted constants.%Dest2, %facet_value.loc14_5.2 [concrete = constants.%facet_value.253]
+// CHECK:STDOUT:   %facet_value.loc14_5.1: %facet_type = facet_value constants.%Dest2, (constants.%DestroyImpl.impl_witness.db5, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.6c3]
+// CHECK:STDOUT:   %.loc14_5.5: %facet_type = converted constants.%Dest2, %facet_value.loc14_5.1 [concrete = constants.%facet_value.6c3]
+// CHECK:STDOUT:   %facet_value.loc14_5.2: %facet_type = facet_value constants.%Dest2, (constants.%DestroyImpl.impl_witness.db5, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.6c3]
+// CHECK:STDOUT:   %.loc14_5.6: %facet_type = converted constants.%Dest2, %facet_value.loc14_5.2 [concrete = constants.%facet_value.6c3]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc14_5.4)
 // CHECK:STDOUT:   <elided>
@@ -273,10 +273,10 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc20_5.2: init %ExplicitConstructor to %.loc20_5.1 = mark_in_place_init %ExplicitConstructor__carbon_thunk.call
 // CHECK:STDOUT:   %.loc20_5.3: init %ExplicitConstructor = converted %s.ref, %.loc20_5.2
 // CHECK:STDOUT:   %.loc20_5.4: ref %ExplicitConstructor = temporary %.loc20_5.1, %.loc20_5.3
-// CHECK:STDOUT:   %facet_value.loc20_5.1: %facet_type = facet_value constants.%ExplicitConstructor, (constants.%DestroyImpl.impl_witness.ba2, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.65f]
-// CHECK:STDOUT:   %.loc20_5.5: %facet_type = converted constants.%ExplicitConstructor, %facet_value.loc20_5.1 [concrete = constants.%facet_value.65f]
-// CHECK:STDOUT:   %facet_value.loc20_5.2: %facet_type = facet_value constants.%ExplicitConstructor, (constants.%DestroyImpl.impl_witness.ba2, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.65f]
-// CHECK:STDOUT:   %.loc20_5.6: %facet_type = converted constants.%ExplicitConstructor, %facet_value.loc20_5.2 [concrete = constants.%facet_value.65f]
+// CHECK:STDOUT:   %facet_value.loc20_5.1: %facet_type = facet_value constants.%ExplicitConstructor, (constants.%DestroyImpl.impl_witness.f27, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.24a]
+// CHECK:STDOUT:   %.loc20_5.5: %facet_type = converted constants.%ExplicitConstructor, %facet_value.loc20_5.1 [concrete = constants.%facet_value.24a]
+// CHECK:STDOUT:   %facet_value.loc20_5.2: %facet_type = facet_value constants.%ExplicitConstructor, (constants.%DestroyImpl.impl_witness.f27, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.24a]
+// CHECK:STDOUT:   %.loc20_5.6: %facet_type = converted constants.%ExplicitConstructor, %facet_value.loc20_5.2 [concrete = constants.%facet_value.24a]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc20_5.4)
 // CHECK:STDOUT:   <elided>
@@ -293,10 +293,10 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc26_5.2: init %Dest to %.loc26_5.1 = mark_in_place_init %Dest__carbon_thunk.call
 // CHECK:STDOUT:   %.loc26_5.3: init %Dest = converted %s.ref, %.loc26_5.2
 // CHECK:STDOUT:   %.loc26_5.4: ref %Dest = temporary %.loc26_5.1, %.loc26_5.3
-// CHECK:STDOUT:   %facet_value.loc26_5.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc26_5.5: %facet_type = converted constants.%Dest, %facet_value.loc26_5.1 [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %facet_value.loc26_5.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc26_5.6: %facet_type = converted constants.%Dest, %facet_value.loc26_5.2 [concrete = constants.%facet_value.84b]
+// CHECK:STDOUT:   %facet_value.loc26_5.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc26_5.5: %facet_type = converted constants.%Dest, %facet_value.loc26_5.1 [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %facet_value.loc26_5.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc26_5.6: %facet_type = converted constants.%Dest, %facet_value.loc26_5.2 [concrete = constants.%facet_value.ea6]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc26_5.4)
 // CHECK:STDOUT:   <elided>
@@ -318,14 +318,14 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.273: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.5b5: %T.as_type.as.DestroyImpl.impl.Op.type.273 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %ConditionallyExplicit.Op.type.83af6e.1: type = fn_type @ConditionallyExplicit.Op.1 [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.Op.4dca31.1: %ConditionallyExplicit.Op.type.83af6e.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.1: <witness> = custom_witness (%ConditionallyExplicit.Op.4dca31.1), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.474: %SubobjectDestroy.type = facet_value %ConditionallyExplicit.3cd, (%custom_witness.5760f4.1) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.315: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.474) [concrete]
-// CHECK:STDOUT:   %facet_value.696: %facet_type = facet_value %ConditionallyExplicit.3cd, (%DestroyImpl.impl_witness.315, %custom_witness.5760f4.1) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.5a2: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.474) [concrete]
+// CHECK:STDOUT:   %facet_value.397: %facet_type = facet_value %ConditionallyExplicit.3cd, (%DestroyImpl.impl_witness.5a2, %custom_witness.5760f4.1) [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.9d4: type = class_type @ConditionallyExplicit.2 [concrete]
 // CHECK:STDOUT:   %ptr.4c0: type = ptr_type %ConditionallyExplicit.9d4 [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.type.c9ab94.2: type = fn_type @ConditionallyExplicit__carbon_thunk.2 [concrete]
@@ -334,8 +334,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %ConditionallyExplicit.Op.4dca31.2: %ConditionallyExplicit.Op.type.83af6e.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.2: <witness> = custom_witness (%ConditionallyExplicit.Op.4dca31.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.451: %SubobjectDestroy.type = facet_value %ConditionallyExplicit.9d4, (%custom_witness.5760f4.2) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.db5: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.451) [concrete]
-// CHECK:STDOUT:   %facet_value.68c: %facet_type = facet_value %ConditionallyExplicit.9d4, (%DestroyImpl.impl_witness.db5, %custom_witness.5760f4.2) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.d74: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.451) [concrete]
+// CHECK:STDOUT:   %facet_value.6c0: %facet_type = facet_value %ConditionallyExplicit.9d4, (%DestroyImpl.impl_witness.d74, %custom_witness.5760f4.2) [concrete]
 // CHECK:STDOUT:   %Dest: type = class_type @Dest [concrete]
 // CHECK:STDOUT:   %pattern_type.b72: type = pattern_type %Dest [concrete]
 // CHECK:STDOUT:   %_.patt.664: %pattern_type.b72 = value_binding_pattern _ [concrete]
@@ -346,8 +346,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %Dest.Op: %Dest.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.5760f4.3: <witness> = custom_witness (%Dest.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.ffa: %SubobjectDestroy.type = facet_value %Dest, (%custom_witness.5760f4.3) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.7de: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ffa) [concrete]
-// CHECK:STDOUT:   %facet_value.84b: %facet_type = facet_value %Dest, (%DestroyImpl.impl_witness.7de, %custom_witness.5760f4.3) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.771: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ffa) [concrete]
+// CHECK:STDOUT:   %facet_value.ea6: %facet_type = facet_value %Dest, (%DestroyImpl.impl_witness.771, %custom_witness.5760f4.3) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -365,8 +365,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.688: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.273) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.5b5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.688), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %ConditionallyExplicit.decl.6ab: type = class_decl @ConditionallyExplicit.2 [concrete = constants.%ConditionallyExplicit.9d4] {} {}
 // CHECK:STDOUT:   %ConditionallyExplicit__carbon_thunk.decl.761528.2: %ConditionallyExplicit__carbon_thunk.type.c9ab94.2 = fn_decl @ConditionallyExplicit__carbon_thunk.2 [concrete = constants.%ConditionallyExplicit__carbon_thunk.924633.2] {
 // CHECK:STDOUT:     <elided>
@@ -412,16 +412,16 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc9_5.2: init %ConditionallyExplicit.3cd to %.loc9_5.1 = mark_in_place_init %ConditionallyExplicit__carbon_thunk.call.loc9
 // CHECK:STDOUT:   %.loc9_5.3: init %ConditionallyExplicit.3cd = converted %s.ref.loc9, %.loc9_5.2
 // CHECK:STDOUT:   %.loc9_5.4: ref %ConditionallyExplicit.3cd = temporary %.loc9_5.1, %.loc9_5.3
-// CHECK:STDOUT:   %facet_value.loc9_5.1: %facet_type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%DestroyImpl.impl_witness.315, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.696]
-// CHECK:STDOUT:   %.loc9_5.5: %facet_type = converted constants.%ConditionallyExplicit.3cd, %facet_value.loc9_5.1 [concrete = constants.%facet_value.696]
-// CHECK:STDOUT:   %facet_value.loc9_5.2: %facet_type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%DestroyImpl.impl_witness.315, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.696]
-// CHECK:STDOUT:   %.loc9_5.6: %facet_type = converted constants.%ConditionallyExplicit.3cd, %facet_value.loc9_5.2 [concrete = constants.%facet_value.696]
+// CHECK:STDOUT:   %facet_value.loc9_5.1: %facet_type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%DestroyImpl.impl_witness.5a2, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.397]
+// CHECK:STDOUT:   %.loc9_5.5: %facet_type = converted constants.%ConditionallyExplicit.3cd, %facet_value.loc9_5.1 [concrete = constants.%facet_value.397]
+// CHECK:STDOUT:   %facet_value.loc9_5.2: %facet_type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%DestroyImpl.impl_witness.5a2, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.397]
+// CHECK:STDOUT:   %.loc9_5.6: %facet_type = converted constants.%ConditionallyExplicit.3cd, %facet_value.loc9_5.2 [concrete = constants.%facet_value.397]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc9: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%.loc9_5.4)
-// CHECK:STDOUT:   %facet_value.loc8_43.1: %facet_type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%DestroyImpl.impl_witness.315, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.696]
-// CHECK:STDOUT:   %.loc8_43.7: %facet_type = converted constants.%ConditionallyExplicit.3cd, %facet_value.loc8_43.1 [concrete = constants.%facet_value.696]
-// CHECK:STDOUT:   %facet_value.loc8_43.2: %facet_type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%DestroyImpl.impl_witness.315, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.696]
-// CHECK:STDOUT:   %.loc8_43.8: %facet_type = converted constants.%ConditionallyExplicit.3cd, %facet_value.loc8_43.2 [concrete = constants.%facet_value.696]
+// CHECK:STDOUT:   %facet_value.loc8_43.1: %facet_type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%DestroyImpl.impl_witness.5a2, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.397]
+// CHECK:STDOUT:   %.loc8_43.7: %facet_type = converted constants.%ConditionallyExplicit.3cd, %facet_value.loc8_43.1 [concrete = constants.%facet_value.397]
+// CHECK:STDOUT:   %facet_value.loc8_43.2: %facet_type = facet_value constants.%ConditionallyExplicit.3cd, (constants.%DestroyImpl.impl_witness.5a2, constants.%custom_witness.5760f4.1) [concrete = constants.%facet_value.397]
+// CHECK:STDOUT:   %.loc8_43.8: %facet_type = converted constants.%ConditionallyExplicit.3cd, %facet_value.loc8_43.2 [concrete = constants.%facet_value.397]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc8: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%.loc8_43.5)
 // CHECK:STDOUT:   <elided>
@@ -440,10 +440,10 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc15_5.2: init %ConditionallyExplicit.9d4 to %.loc15_5.1 = mark_in_place_init %ConditionallyExplicit__carbon_thunk.call
 // CHECK:STDOUT:   %.loc15_5.3: init %ConditionallyExplicit.9d4 = converted %s.ref, %.loc15_5.2
 // CHECK:STDOUT:   %.loc15_5.4: ref %ConditionallyExplicit.9d4 = temporary %.loc15_5.1, %.loc15_5.3
-// CHECK:STDOUT:   %facet_value.loc15_5.1: %facet_type = facet_value constants.%ConditionallyExplicit.9d4, (constants.%DestroyImpl.impl_witness.db5, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.68c]
-// CHECK:STDOUT:   %.loc15_5.5: %facet_type = converted constants.%ConditionallyExplicit.9d4, %facet_value.loc15_5.1 [concrete = constants.%facet_value.68c]
-// CHECK:STDOUT:   %facet_value.loc15_5.2: %facet_type = facet_value constants.%ConditionallyExplicit.9d4, (constants.%DestroyImpl.impl_witness.db5, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.68c]
-// CHECK:STDOUT:   %.loc15_5.6: %facet_type = converted constants.%ConditionallyExplicit.9d4, %facet_value.loc15_5.2 [concrete = constants.%facet_value.68c]
+// CHECK:STDOUT:   %facet_value.loc15_5.1: %facet_type = facet_value constants.%ConditionallyExplicit.9d4, (constants.%DestroyImpl.impl_witness.d74, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.6c0]
+// CHECK:STDOUT:   %.loc15_5.5: %facet_type = converted constants.%ConditionallyExplicit.9d4, %facet_value.loc15_5.1 [concrete = constants.%facet_value.6c0]
+// CHECK:STDOUT:   %facet_value.loc15_5.2: %facet_type = facet_value constants.%ConditionallyExplicit.9d4, (constants.%DestroyImpl.impl_witness.d74, constants.%custom_witness.5760f4.2) [concrete = constants.%facet_value.6c0]
+// CHECK:STDOUT:   %.loc15_5.6: %facet_type = converted constants.%ConditionallyExplicit.9d4, %facet_value.loc15_5.2 [concrete = constants.%facet_value.6c0]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc15_5.4)
 // CHECK:STDOUT:   <elided>
@@ -476,16 +476,16 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc22_5.2: init %Dest to %.loc22_5.1 = mark_in_place_init %Dest__carbon_thunk.call.loc22
 // CHECK:STDOUT:   %.loc22_5.3: init %Dest = converted %s.ref.loc22, %.loc22_5.2
 // CHECK:STDOUT:   %.loc22_5.4: ref %Dest = temporary %.loc22_5.1, %.loc22_5.3
-// CHECK:STDOUT:   %facet_value.loc22_5.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc22_5.5: %facet_type = converted constants.%Dest, %facet_value.loc22_5.1 [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %facet_value.loc22_5.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc22_5.6: %facet_type = converted constants.%Dest, %facet_value.loc22_5.2 [concrete = constants.%facet_value.84b]
+// CHECK:STDOUT:   %facet_value.loc22_5.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc22_5.5: %facet_type = converted constants.%Dest, %facet_value.loc22_5.1 [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %facet_value.loc22_5.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc22_5.6: %facet_type = converted constants.%Dest, %facet_value.loc22_5.2 [concrete = constants.%facet_value.ea6]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc22: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%.loc22_5.4)
-// CHECK:STDOUT:   %facet_value.loc21_21.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc21_21.6: %facet_type = converted constants.%Dest, %facet_value.loc21_21.1 [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %facet_value.loc21_21.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc21_21.7: %facet_type = converted constants.%Dest, %facet_value.loc21_21.2 [concrete = constants.%facet_value.84b]
+// CHECK:STDOUT:   %facet_value.loc21_21.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc21_21.6: %facet_type = converted constants.%Dest, %facet_value.loc21_21.1 [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %facet_value.loc21_21.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc21_21.7: %facet_type = converted constants.%Dest, %facet_value.loc21_21.2 [concrete = constants.%facet_value.ea6]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call.loc21: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%.loc21_21.4)
 // CHECK:STDOUT:   <elided>
@@ -502,10 +502,10 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %.loc28_5.2: init %Dest to %.loc28_5.1 = mark_in_place_init %Dest__carbon_thunk.call
 // CHECK:STDOUT:   %.loc28_5.3: init %Dest = converted %s.ref, %.loc28_5.2
 // CHECK:STDOUT:   %.loc28_5.4: ref %Dest = temporary %.loc28_5.1, %.loc28_5.3
-// CHECK:STDOUT:   %facet_value.loc28_5.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc28_5.5: %facet_type = converted constants.%Dest, %facet_value.loc28_5.1 [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %facet_value.loc28_5.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.84b]
-// CHECK:STDOUT:   %.loc28_5.6: %facet_type = converted constants.%Dest, %facet_value.loc28_5.2 [concrete = constants.%facet_value.84b]
+// CHECK:STDOUT:   %facet_value.loc28_5.1: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc28_5.5: %facet_type = converted constants.%Dest, %facet_value.loc28_5.1 [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %facet_value.loc28_5.2: %facet_type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.3) [concrete = constants.%facet_value.ea6]
+// CHECK:STDOUT:   %.loc28_5.6: %facet_type = converted constants.%Dest, %facet_value.loc28_5.2 [concrete = constants.%facet_value.ea6]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc28_5.4)
 // CHECK:STDOUT:   <elided>
@@ -530,14 +530,14 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.273: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.5b5: %T.as_type.as.DestroyImpl.impl.Op.type.273 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %Dest.Op.type: type = fn_type @Dest.Op [concrete]
 // CHECK:STDOUT:   %Dest.Op: %Dest.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.576: <witness> = custom_witness (%Dest.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.ffa: %SubobjectDestroy.type = facet_value %Dest.980, (%custom_witness.576) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.7de: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ffa) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %Dest.980, (%DestroyImpl.impl_witness.7de, %custom_witness.576) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.771: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ffa) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %Dest.980, (%DestroyImpl.impl_witness.771, %custom_witness.576) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -557,8 +557,8 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.688: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.273) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.5b5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.688), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @ConstructorExplicit(%s.param: %Source) {
@@ -594,9 +594,9 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc21_21.1: %facet_type = facet_value constants.%Dest.980, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc21_21.1: %facet_type = facet_value constants.%Dest.980, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc21_21.6: %facet_type = converted constants.%Dest.980, %facet_value.loc21_21.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc21_21.2: %facet_type = facet_value constants.%Dest.980, (constants.%DestroyImpl.impl_witness.7de, constants.%custom_witness.576) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc21_21.2: %facet_type = facet_value constants.%Dest.980, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.576) [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %.loc21_21.7: %facet_type = converted constants.%Dest.980, %facet_value.loc21_21.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc21_21.4)

@@ -38,9 +38,9 @@ fn CallF() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !28
 // CHECK:STDOUT:   store i32 0, ptr %n.var, align 4, !dbg !28
 // CHECK:STDOUT:   %.loc22_14 = load i32, ptr %n.var, align 4, !dbg !31
-// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.2aef1d52a6e1f957(ptr %c.var, i32 %.loc22_14), !dbg !30
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %n.var), !dbg !28
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.a4388806629063ea(ptr %c.var), !dbg !26
+// CHECK:STDOUT:   %C.F.call = call i32 @_CF.C.Main.2fad9574e050607e(ptr %c.var, i32 %.loc22_14), !dbg !30
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %n.var), !dbg !28
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.38e0a41f1f1b0274(ptr %c.var), !dbg !26
 // CHECK:STDOUT:   ret i32 %C.F.call, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -51,18 +51,18 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.2aef1d52a6e1f957(ptr %self, i32 %x) #0 !dbg !40 {
+// CHECK:STDOUT: define linkonce_odr i32 @_CF.C.Main.2fad9574e050607e(ptr %self, i32 %x) #0 !dbg !40 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %t) #0 !dbg !50 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %t) #0 !dbg !50 {
 // CHECK:STDOUT:   ret void, !dbg !55
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.a4388806629063ea(ptr %t) #0 !dbg !57 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.38e0a41f1f1b0274(ptr %t) #0 !dbg !57 {
 // CHECK:STDOUT:   ret void, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,16 +96,16 @@ fn CallF() -> i32 {
 // CHECK:STDOUT: !37 = !{null, !32}
 // CHECK:STDOUT: !38 = !DISubroutineType(types: !37)
 // CHECK:STDOUT: !39 = !DILocation(line: 22, column: 3, scope: !23)
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.2aef1d52a6e1f957", scope: null, file: !18, line: 14, type: !34, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !49)
+// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "F", linkageName: "_CF.C.Main.2fad9574e050607e", scope: null, file: !18, line: 14, type: !34, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !49)
 // CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !40, type: !32)
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 2, scope: !40, type: !20)
 // CHECK:STDOUT: !48 = !DILocation(line: 15, column: 5, scope: !40)
 // CHECK:STDOUT: !49 = !{!41, !42}
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8dce37f94a83bf", scope: null, file: !10, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !56)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.dc5658e0ac74b2aa", scope: null, file: !10, line: 30, type: !36, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !56)
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !20)
 // CHECK:STDOUT: !55 = !DILocation(line: 30, column: 1, scope: !50)
 // CHECK:STDOUT: !56 = !{!51}
-// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.a4388806629063ea", scope: null, file: !10, line: 30, type: !38, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !63)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.38e0a41f1f1b0274", scope: null, file: !10, line: 30, type: !38, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !63)
 // CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !57, type: !32)
 // CHECK:STDOUT: !62 = !DILocation(line: 30, column: 1, scope: !57)
 // CHECK:STDOUT: !63 = !{!58}

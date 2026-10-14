@@ -91,7 +91,7 @@ constraint GivesI {
 // CHECK:STDERR:
 impl forall [T: type] T as GivesI where .X impls J {}
 
-// --- fail_todo_rewrite_and_impls_in_named_constraint.carbon
+// --- rewrite_and_impls_in_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let X: type; }
@@ -105,10 +105,6 @@ constraint GivesI {
 impl () as J {}
 
 // The rewrite from `extend` is inherited and should satisfy that `.X impls J`.
-// CHECK:STDERR: fail_todo_rewrite_and_impls_in_named_constraint.carbon:[[@LINE+4]]:1: error: constraint `GivesI` being implemented requires that `T.(I.X)` implements `J` [IdentifiedRequireImplsNotImplemented]
-// CHECK:STDERR: impl forall [T: type] T as GivesI {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
 impl forall [T: type] T as GivesI {}
 
 // --- fail_rewrite_and_impls_in_named_constraint_missing_impl.carbon
@@ -123,7 +119,7 @@ constraint GivesI {
 }
 
 // .X does not impl J.
-// CHECK:STDERR: fail_rewrite_and_impls_in_named_constraint_missing_impl.carbon:[[@LINE+4]]:1: error: constraint `GivesI` being implemented requires that `T.(I.X)` implements `J` [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR: fail_rewrite_and_impls_in_named_constraint_missing_impl.carbon:[[@LINE+4]]:1: error: constraint `GivesI` being implemented requires that `()` implements `J` [IdentifiedRequireImplsNotImplemented]
 // CHECK:STDERR: impl forall [T: type] T as GivesI {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
