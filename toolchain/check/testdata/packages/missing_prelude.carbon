@@ -628,20 +628,20 @@ let n: type = i32;
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
 // CHECK:STDOUT:   %N.patt.9f0: %pattern_type.51d = symbolic_binding_pattern N, 1 [symbolic]
 // CHECK:STDOUT:   %N: %T = symbolic_binding N, 1 [symbolic]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Int.a4d: type = class_type @Int, @Int(%T, %N) [symbolic]
+// CHECK:STDOUT:   %Int.11d: type = class_type @Int, @Int(%T, %N) [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %pattern_type.dc0: type = pattern_type Core.IntLiteral [concrete]
 // CHECK:STDOUT:   %N.patt.94a: %pattern_type.dc0 = symbolic_binding_pattern N, 1 [symbolic]
-// CHECK:STDOUT:   %Int.382: type = class_type @Int, @Int(Core.IntLiteral, %int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.0c6: type = pattern_type %Int.382 [concrete]
-// CHECK:STDOUT:   %n.patt: %pattern_type.0c6 = value_binding_pattern n [concrete]
+// CHECK:STDOUT:   %Int.880: type = class_type @Int, @Int(Core.IntLiteral, %int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.a5a: type = pattern_type %Int.880 [concrete]
+// CHECK:STDOUT:   %n.patt: %pattern_type.a5a = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %Int.val: %Int.382 = struct_value () [concrete]
-// CHECK:STDOUT:   %.d67: ref %Int.382 = temporary invalid, %Int.val [concrete]
+// CHECK:STDOUT:   %Int.val: %Int.880 = struct_value () [concrete]
+// CHECK:STDOUT:   %.f39: ref %Int.880 = temporary invalid, %Int.val [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -664,15 +664,15 @@ let n: type = i32;
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %N.loc6_28.2: @Int.%T.loc6_12.1 (%T) = symbolic_binding N, 1 [symbolic = %N.loc6_28.1 (constants.%N)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8_15.1: ref %Int.382 = temporary_storage
-// CHECK:STDOUT:   %.loc8_15.2: init %Int.382 to %.loc8_15.1 = class_init () [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc8_15.3: init %Int.382 = converted @__global_init.%.loc8, %.loc8_15.2 [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc8_15.4: ref %Int.382 = temporary %.loc8_15.1, %.loc8_15.3 [concrete = constants.%.d67]
-// CHECK:STDOUT:   %.loc8_15.5: %Int.382 = acquire_value %.loc8_15.4 [concrete = constants.%Int.val]
-// CHECK:STDOUT:   %.loc8_8: type = type_literal constants.%Int.382 [concrete = constants.%Int.382]
-// CHECK:STDOUT:   %n: %Int.382 = wrapper_binding n, %.loc8_15.5
+// CHECK:STDOUT:   %.loc8_15.1: ref %Int.880 = temporary_storage
+// CHECK:STDOUT:   %.loc8_15.2: init %Int.880 to %.loc8_15.1 = class_init () [concrete = constants.%Int.val]
+// CHECK:STDOUT:   %.loc8_15.3: init %Int.880 = converted @__global_init.%.loc8, %.loc8_15.2 [concrete = constants.%Int.val]
+// CHECK:STDOUT:   %.loc8_15.4: ref %Int.880 = temporary %.loc8_15.1, %.loc8_15.3 [concrete = constants.%.f39]
+// CHECK:STDOUT:   %.loc8_15.5: %Int.880 = acquire_value %.loc8_15.4 [concrete = constants.%Int.val]
+// CHECK:STDOUT:   %.loc8_8: type = type_literal constants.%Int.880 [concrete = constants.%Int.880]
+// CHECK:STDOUT:   %n: %Int.880 = wrapper_binding n, %.loc8_15.5
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.0c6 = value_binding_pattern n [concrete = constants.%n.patt]
+// CHECK:STDOUT:     %n.patt: %pattern_type.a5a = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -690,7 +690,7 @@ let n: type = i32;
 // CHECK:STDOUT:     complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = constants.%Int.a4d
+// CHECK:STDOUT:     .Self = constants.%Int.11d
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -95,8 +95,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     // lookups into that interface with `.Self` so we identify it with `.Self`.
     auto identified_id = TryToIdentifyFacetType(
         context, node_id, context.constant_values().Get(period_self),
-        context.types().GetTypeInstId(period_self_type_id),
-        /*allow_partially_identified=*/false);
+        period_self_type_id, /*allow_partially_identified=*/false);
     if (identified_id.has_value()) {
       const auto& identified =
           context.identified_facet_types().Get(identified_id);
