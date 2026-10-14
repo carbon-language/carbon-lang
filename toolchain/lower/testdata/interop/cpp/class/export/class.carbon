@@ -276,7 +276,7 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.LayoutA.Main"(ptr %self) #4 !dbg !53 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.85599f2612153fa4(ptr %self), !dbg !55
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.1f31c9e4f410b8f8(ptr %self), !dbg !55
 // CHECK:STDOUT:   ret void, !dbg !55
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -284,9 +284,9 @@ fn G() {
 // CHECK:STDOUT: define weak_odr void @"_COp.bcaf2cdf8ceef459:core.SubobjectDestroy.Core"(ptr %self) #5 !dbg !57 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_20.1.y = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 1, !dbg !59
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %.loc6_20.1.y), !dbg !59
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc6_20.1.y), !dbg !59
 // CHECK:STDOUT:   %.loc6_20.4.x = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 0, !dbg !59
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.008e0b30cf994e40(ptr %.loc6_20.4.x), !dbg !59
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.39f93332b5bec0ba(ptr %.loc6_20.4.x), !dbg !59
 // CHECK:STDOUT:   ret void, !dbg !59
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -294,9 +294,9 @@ fn G() {
 // CHECK:STDOUT: define weak_odr void @"_COp.5a318796badc8ab7:core.SubobjectDestroy.Core"(ptr %self) #5 !dbg !63 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_20.1.y = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 1, !dbg !65
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %.loc6_20.1.y), !dbg !65
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc6_20.1.y), !dbg !65
 // CHECK:STDOUT:   %.loc6_20.4.x = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %self, i32 0, i32 0, !dbg !65
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.008e0b30cf994e40(ptr %.loc6_20.4.x), !dbg !65
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.39f93332b5bec0ba(ptr %.loc6_20.4.x), !dbg !65
 // CHECK:STDOUT:   ret void, !dbg !65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -311,7 +311,7 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.LayoutB.Main"(ptr %self) #4 !dbg !71 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.13b987b68cdabcf8(ptr %self), !dbg !73
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.561b9a7fb948b353(ptr %self), !dbg !73
 // CHECK:STDOUT:   ret void, !dbg !73
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -319,9 +319,9 @@ fn G() {
 // CHECK:STDOUT: define weak_odr void @"_COp.4ce1b6d4ba1896e6:core.SubobjectDestroy.Core"(ptr %self) #5 !dbg !75 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc11_15.1.b = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 1, !dbg !77
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %.loc11_15.1.b), !dbg !77
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc11_15.1.b), !dbg !77
 // CHECK:STDOUT:   %.loc11_15.4.a = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 0, !dbg !77
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.85599f2612153fa4(ptr %.loc11_15.4.a), !dbg !77
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.1f31c9e4f410b8f8(ptr %.loc11_15.4.a), !dbg !77
 // CHECK:STDOUT:   ret void, !dbg !77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -329,9 +329,9 @@ fn G() {
 // CHECK:STDOUT: define weak_odr void @"_COp.98b9397038fd95a2:core.SubobjectDestroy.Core"(ptr %self) #5 !dbg !79 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc11_15.1.b = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 1, !dbg !81
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %.loc11_15.1.b), !dbg !81
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc11_15.1.b), !dbg !81
 // CHECK:STDOUT:   %.loc11_15.4.a = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 0, !dbg !81
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.85599f2612153fa4(ptr %.loc11_15.4.a), !dbg !81
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.1f31c9e4f410b8f8(ptr %.loc11_15.4.a), !dbg !81
 // CHECK:STDOUT:   ret void, !dbg !81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -346,7 +346,7 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.LayoutC.Main"(ptr %self) #4 !dbg !87 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.a3d0eb1409d25a29(ptr %self), !dbg !89
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b603ad389327c391(ptr %self), !dbg !89
 // CHECK:STDOUT:   ret void, !dbg !89
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -354,9 +354,9 @@ fn G() {
 // CHECK:STDOUT: define weak_odr void @"_COp.a8fdcf51a1dcdb3b:core.SubobjectDestroy.Core"(ptr %self) #5 !dbg !91 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc16_15.1.c = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 1, !dbg !93
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %.loc16_15.1.c), !dbg !93
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc16_15.1.c), !dbg !93
 // CHECK:STDOUT:   %.loc16_15.4.base = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 0, !dbg !93
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.85599f2612153fa4(ptr %.loc16_15.4.base), !dbg !93
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.1f31c9e4f410b8f8(ptr %.loc16_15.4.base), !dbg !93
 // CHECK:STDOUT:   ret void, !dbg !93
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -364,9 +364,9 @@ fn G() {
 // CHECK:STDOUT: define weak_odr void @"_COp.bb6bd82e06513595:core.SubobjectDestroy.Core"(ptr %self) #5 !dbg !95 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc16_15.1.c = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 1, !dbg !97
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %.loc16_15.1.c), !dbg !97
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc16_15.1.c), !dbg !97
 // CHECK:STDOUT:   %.loc16_15.4.base = getelementptr inbounds nuw { <{ ptr, i32 }>, i32 }, ptr %self, i32 0, i32 0, !dbg !97
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.85599f2612153fa4(ptr %.loc16_15.4.base), !dbg !97
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.1f31c9e4f410b8f8(ptr %.loc16_15.4.base), !dbg !97
 // CHECK:STDOUT:   ret void, !dbg !97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -379,38 +379,38 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.85599f2612153fa4(ptr %t) #5 !dbg !103 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.1f31c9e4f410b8f8(ptr %t) #5 !dbg !103 {
 // CHECK:STDOUT:   call void @"_COp.5a318796badc8ab7:core.SubobjectDestroy.Core"(ptr %t), !dbg !107
 // CHECK:STDOUT:   ret void, !dbg !108
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %t) #5 !dbg !110 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %t) #5 !dbg !110 {
 // CHECK:STDOUT:   ret void, !dbg !115
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.008e0b30cf994e40(ptr %t) #5 !dbg !117 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.39f93332b5bec0ba(ptr %t) #5 !dbg !117 {
 // CHECK:STDOUT:   ret void, !dbg !122
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.13b987b68cdabcf8(ptr %t) #5 !dbg !124 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.561b9a7fb948b353(ptr %t) #5 !dbg !124 {
 // CHECK:STDOUT:   call void @"_COp.98b9397038fd95a2:core.SubobjectDestroy.Core"(ptr %t), !dbg !128
 // CHECK:STDOUT:   ret void, !dbg !129
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.a3d0eb1409d25a29(ptr %t) #5 !dbg !131 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b603ad389327c391(ptr %t) #5 !dbg !131 {
 // CHECK:STDOUT:   call void @"_COp.bb6bd82e06513595:core.SubobjectDestroy.Core"(ptr %t), !dbg !135
 // CHECK:STDOUT:   ret void, !dbg !136
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN6Carbon7LayoutAD2Ev, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.85599f2612153fa4, { 4, 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.0aefc5da911f5051, { 5, 4, 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.008e0b30cf994e40, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.1f31c9e4f410b8f8, { 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.7f8dce37f94a83bf, { 5, 4, 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.39f93332b5bec0ba, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -491,28 +491,28 @@ fn G() {
 // CHECK:STDOUT: !100 = !DILocalVariable(arg: 1, scope: !99, type: !50)
 // CHECK:STDOUT: !101 = !DILocation(line: 23, column: 1, scope: !99)
 // CHECK:STDOUT: !102 = !{!100}
-// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.85599f2612153fa4", scope: null, file: !27, line: 26, type: !52, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !109)
+// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.1f31c9e4f410b8f8", scope: null, file: !27, line: 30, type: !52, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !109)
 // CHECK:STDOUT: !104 = !DILocalVariable(arg: 1, scope: !103, type: !50)
-// CHECK:STDOUT: !107 = !DILocation(line: 28, column: 5, scope: !103)
-// CHECK:STDOUT: !108 = !DILocation(line: 26, column: 1, scope: !103)
+// CHECK:STDOUT: !107 = !DILocation(line: 32, column: 5, scope: !103)
+// CHECK:STDOUT: !108 = !DILocation(line: 30, column: 1, scope: !103)
 // CHECK:STDOUT: !109 = !{!104}
-// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.0aefc5da911f5051", scope: null, file: !27, line: 26, type: !61, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !116)
+// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8dce37f94a83bf", scope: null, file: !27, line: 30, type: !61, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !116)
 // CHECK:STDOUT: !111 = !DILocalVariable(arg: 1, scope: !110, type: !37)
-// CHECK:STDOUT: !115 = !DILocation(line: 26, column: 1, scope: !110)
+// CHECK:STDOUT: !115 = !DILocation(line: 30, column: 1, scope: !110)
 // CHECK:STDOUT: !116 = !{!111}
-// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.008e0b30cf994e40", scope: null, file: !27, line: 26, type: !52, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !123)
+// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.39f93332b5bec0ba", scope: null, file: !27, line: 30, type: !52, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !123)
 // CHECK:STDOUT: !118 = !DILocalVariable(arg: 1, scope: !117, type: !50)
-// CHECK:STDOUT: !122 = !DILocation(line: 26, column: 1, scope: !117)
+// CHECK:STDOUT: !122 = !DILocation(line: 30, column: 1, scope: !117)
 // CHECK:STDOUT: !123 = !{!118}
-// CHECK:STDOUT: !124 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.13b987b68cdabcf8", scope: null, file: !27, line: 26, type: !52, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !130)
+// CHECK:STDOUT: !124 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.561b9a7fb948b353", scope: null, file: !27, line: 30, type: !52, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !130)
 // CHECK:STDOUT: !125 = !DILocalVariable(arg: 1, scope: !124, type: !50)
-// CHECK:STDOUT: !128 = !DILocation(line: 28, column: 5, scope: !124)
-// CHECK:STDOUT: !129 = !DILocation(line: 26, column: 1, scope: !124)
+// CHECK:STDOUT: !128 = !DILocation(line: 32, column: 5, scope: !124)
+// CHECK:STDOUT: !129 = !DILocation(line: 30, column: 1, scope: !124)
 // CHECK:STDOUT: !130 = !{!125}
-// CHECK:STDOUT: !131 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.a3d0eb1409d25a29", scope: null, file: !27, line: 26, type: !52, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !137)
+// CHECK:STDOUT: !131 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b603ad389327c391", scope: null, file: !27, line: 30, type: !52, spFlags: DISPFlagDefinition, unit: !49, retainedNodes: !137)
 // CHECK:STDOUT: !132 = !DILocalVariable(arg: 1, scope: !131, type: !50)
-// CHECK:STDOUT: !135 = !DILocation(line: 28, column: 5, scope: !131)
-// CHECK:STDOUT: !136 = !DILocation(line: 26, column: 1, scope: !131)
+// CHECK:STDOUT: !135 = !DILocation(line: 32, column: 5, scope: !131)
+// CHECK:STDOUT: !136 = !DILocation(line: 30, column: 1, scope: !131)
 // CHECK:STDOUT: !137 = !{!132}
 // CHECK:STDOUT: !138 = !{!"p1 _ZTSN6Carbon7LayoutAE", !2, i64 0}
 // CHECK:STDOUT: !139 = !{!138, !138, i64 0}
@@ -548,7 +548,7 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.FieldC.Main"(ptr %self) #1 !dbg !146 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.a7d998e4934cf12b(ptr %self), !dbg !148
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.c653f16f7741e1df(ptr %self), !dbg !148
 // CHECK:STDOUT:   ret void, !dbg !148
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -556,9 +556,9 @@ fn G() {
 // CHECK:STDOUT: define weak_odr void @"_COp.1e8be051c65833cb:core.SubobjectDestroy.Core"(ptr %self) #2 !dbg !150 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !152
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %.loc6_14.1.b), !dbg !152
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc6_14.1.b), !dbg !152
 // CHECK:STDOUT:   %.loc6_14.4.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !152
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %.loc6_14.4.a), !dbg !152
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc6_14.4.a), !dbg !152
 // CHECK:STDOUT:   ret void, !dbg !152
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -566,9 +566,9 @@ fn G() {
 // CHECK:STDOUT: define weak_odr void @"_COp.718874c3c75b803e:core.SubobjectDestroy.Core"(ptr %self) #2 !dbg !154 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_14.1.b = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 1, !dbg !156
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %.loc6_14.1.b), !dbg !156
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc6_14.1.b), !dbg !156
 // CHECK:STDOUT:   %.loc6_14.4.a = getelementptr inbounds nuw { i32, i32 }, ptr %self, i32 0, i32 0, !dbg !156
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %.loc6_14.4.a), !dbg !156
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %.loc6_14.4.a), !dbg !156
 // CHECK:STDOUT:   ret void, !dbg !156
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -581,18 +581,18 @@ fn G() {
 // CHECK:STDOUT:   %.loc19_34.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 1, !dbg !160
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @FieldC.val.loc19_3.1, i64 8, i1 false), !dbg !159
 // CHECK:STDOUT:   call void @_Z1FRN6Carbon6FieldCE(ptr %c.var), !dbg !164
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.a7d998e4934cf12b(ptr %c.var), !dbg !159
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.c653f16f7741e1df(ptr %c.var), !dbg !159
 // CHECK:STDOUT:   ret void, !dbg !165
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.a7d998e4934cf12b(ptr %t) #2 !dbg !166 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.c653f16f7741e1df(ptr %t) #2 !dbg !166 {
 // CHECK:STDOUT:   call void @"_COp.718874c3c75b803e:core.SubobjectDestroy.Core"(ptr %t), !dbg !170
 // CHECK:STDOUT:   ret void, !dbg !171
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %t) #2 !dbg !173 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %t) #2 !dbg !173 {
 // CHECK:STDOUT:   ret void, !dbg !178
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -603,8 +603,8 @@ fn G() {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.a7d998e4934cf12b, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.0aefc5da911f5051, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.c653f16f7741e1df, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.7f8dce37f94a83bf, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { alwaysinline nounwind }
@@ -661,13 +661,13 @@ fn G() {
 // CHECK:STDOUT: !160 = !DILocation(line: 19, column: 19, scope: !158)
 // CHECK:STDOUT: !164 = !DILocation(line: 20, column: 3, scope: !158)
 // CHECK:STDOUT: !165 = !DILocation(line: 18, column: 1, scope: !158)
-// CHECK:STDOUT: !166 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.a7d998e4934cf12b", scope: null, file: !27, line: 26, type: !52, spFlags: DISPFlagDefinition, unit: !145, retainedNodes: !172)
+// CHECK:STDOUT: !166 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c653f16f7741e1df", scope: null, file: !27, line: 30, type: !52, spFlags: DISPFlagDefinition, unit: !145, retainedNodes: !172)
 // CHECK:STDOUT: !167 = !DILocalVariable(arg: 1, scope: !166, type: !50)
-// CHECK:STDOUT: !170 = !DILocation(line: 28, column: 5, scope: !166)
-// CHECK:STDOUT: !171 = !DILocation(line: 26, column: 1, scope: !166)
+// CHECK:STDOUT: !170 = !DILocation(line: 32, column: 5, scope: !166)
+// CHECK:STDOUT: !171 = !DILocation(line: 30, column: 1, scope: !166)
 // CHECK:STDOUT: !172 = !{!167}
-// CHECK:STDOUT: !173 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.0aefc5da911f5051", scope: null, file: !27, line: 26, type: !61, spFlags: DISPFlagDefinition, unit: !145, retainedNodes: !179)
+// CHECK:STDOUT: !173 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8dce37f94a83bf", scope: null, file: !27, line: 30, type: !61, spFlags: DISPFlagDefinition, unit: !145, retainedNodes: !179)
 // CHECK:STDOUT: !174 = !DILocalVariable(arg: 1, scope: !173, type: !37)
-// CHECK:STDOUT: !178 = !DILocation(line: 26, column: 1, scope: !173)
+// CHECK:STDOUT: !178 = !DILocation(line: 30, column: 1, scope: !173)
 // CHECK:STDOUT: !179 = !{!174}
 // CHECK:STDOUT:

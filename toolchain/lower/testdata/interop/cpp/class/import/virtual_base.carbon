@@ -127,7 +127,7 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT:   %_.var = alloca [40 x i8], align 8, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !29
 // CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk.(ptr %_.var), !dbg !30
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b8eb1478124d8637(ptr %_.var), !dbg !29
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.29eaa4a6f69f5ec2(ptr %_.var), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -135,57 +135,50 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: define internal void @_ZN1DC1Ev.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !56
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !56
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !52
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !52
 // CHECK:STDOUT:   call void @_ZN1DC1Ev(ptr noundef nonnull align 8 dereferenceable(32) %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp:thunk:DestroyImpl.3fa0d47c65c1134d.Core:DestroyImpl.Core"(ptr %self) #2 !dbg !33 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !35
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CAccessD.Main(ptr %d) #0 !dbg !37 {
+// CHECK:STDOUT: define i32 @_CAccessD.Main(ptr %d) #0 !dbg !33 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_11.1.d = getelementptr inbounds nuw [40 x i8], ptr %d, i32 0, i32 28, !dbg !42
-// CHECK:STDOUT:   %.loc16_11.2 = load i32, ptr %.loc16_11.1.d, align 4, !dbg !42
-// CHECK:STDOUT:   ret i32 %.loc16_11.2, !dbg !43
+// CHECK:STDOUT:   %.loc16_11.1.d = getelementptr inbounds nuw [40 x i8], ptr %d, i32 0, i32 28, !dbg !38
+// CHECK:STDOUT:   %.loc16_11.2 = load i32, ptr %.loc16_11.1.d, align 4, !dbg !38
+// CHECK:STDOUT:   ret i32 %.loc16_11.2, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
+// CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b8eb1478124d8637(ptr %t) #0 !dbg !45 {
-// CHECK:STDOUT:   call void @"_COp:thunk:DestroyImpl.3fa0d47c65c1134d.Core:DestroyImpl.Core"(ptr %t), !dbg !48
-// CHECK:STDOUT:   ret void, !dbg !50
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.29eaa4a6f69f5ec2(ptr %t) #0 !dbg !41 {
+// CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1DC1Ev(ptr noundef nonnull align 8 dereferenceable(32) %this) unnamed_addr #4 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1DC1Ev(ptr noundef nonnull align 8 dereferenceable(32) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !56
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !52
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   %0 = getelementptr inbounds i8, ptr %this1, i64 32
 // CHECK:STDOUT:   call void @_ZN1AC2Ev(ptr noundef nonnull align 4 dereferenceable(4) %0)
 // CHECK:STDOUT:   call void @_ZN1BC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %this1, ptr noundef getelementptr inbounds nuw (i8, ptr @_ZTT1D, i64 8))
 // CHECK:STDOUT:   %1 = getelementptr inbounds i8, ptr %this1, i64 16
 // CHECK:STDOUT:   call void @_ZN1CC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %1, ptr noundef getelementptr inbounds nuw (i8, ptr @_ZTT1D, i64 16))
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTV1D, i64 24), ptr %this1, align 8, !tbaa !58
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTV1D, i64 24), ptr %this1, align 8, !tbaa !54
 // CHECK:STDOUT:   %add.ptr = getelementptr inbounds i8, ptr %this1, i64 16
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTV1D, i64 48), ptr %add.ptr, align 8, !tbaa !58
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-24, 0) (i8, ptr @_ZTV1D, i64 48), ptr %add.ptr, align 8, !tbaa !54
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1AC2Ev(ptr noundef nonnull align 4 dereferenceable(4)) unnamed_addr #5
+// CHECK:STDOUT: declare void @_ZN1AC2Ev(ptr noundef nonnull align 4 dereferenceable(4)) unnamed_addr #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1BC2Ev(ptr noundef nonnull align 8 dereferenceable(12), ptr noundef) unnamed_addr #5
+// CHECK:STDOUT: declare void @_ZN1BC2Ev(ptr noundef nonnull align 8 dereferenceable(12), ptr noundef) unnamed_addr #4
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_ZN1CC2Ev(ptr noundef nonnull align 8 dereferenceable(12), ptr noundef) unnamed_addr #5
+// CHECK:STDOUT: declare void @_ZN1CC2Ev(ptr noundef nonnull align 8 dereferenceable(12), ptr noundef) unnamed_addr #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr inttoptr (i64 32 to ptr), { 1, 0 }
@@ -196,14 +189,13 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { alwaysinline nounwind }
-// CHECK:STDOUT: attributes #3 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
-// CHECK:STDOUT: attributes #4 = { inlinehint mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #5 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
+// CHECK:STDOUT: attributes #3 = { inlinehint mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #4 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!19}
-// CHECK:STDOUT: !llvm.module.flags = !{!59, !60, !61, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!64}
+// CHECK:STDOUT: !llvm.module.flags = !{!55, !56, !57, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!60}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -222,31 +214,26 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: !29 = !DILocation(line: 11, column: 3, scope: !28)
 // CHECK:STDOUT: !30 = !DILocation(line: 11, column: 18, scope: !28)
 // CHECK:STDOUT: !32 = !DILocation(line: 6, column: 1, scope: !28)
-// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:DestroyImpl.3fa0d47c65c1134d.Core:DestroyImpl.Core", scope: null, file: !18, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !36)
+// CHECK:STDOUT: !33 = distinct !DISubprogram(name: "AccessD", linkageName: "_CAccessD.Main", scope: null, file: !18, line: 14, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !40)
 // CHECK:STDOUT: !34 = !DILocalVariable(arg: 1, scope: !33, type: !23)
-// CHECK:STDOUT: !35 = !DILocation(line: 0, scope: !33)
-// CHECK:STDOUT: !36 = !{!34}
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "AccessD", linkageName: "_CAccessD.Main", scope: null, file: !18, line: 14, type: !27, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !44)
-// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !37, type: !23)
-// CHECK:STDOUT: !42 = !DILocation(line: 16, column: 10, scope: !37)
-// CHECK:STDOUT: !43 = !DILocation(line: 16, column: 3, scope: !37)
-// CHECK:STDOUT: !44 = !{!38}
-// CHECK:STDOUT: !45 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b8eb1478124d8637", scope: null, file: !10, line: 26, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !51)
-// CHECK:STDOUT: !46 = !DILocalVariable(arg: 1, scope: !45, type: !23)
-// CHECK:STDOUT: !48 = !DILocation(line: 27, column: 5, scope: !45)
-// CHECK:STDOUT: !50 = !DILocation(line: 26, column: 1, scope: !45)
-// CHECK:STDOUT: !51 = !{!46}
-// CHECK:STDOUT: !52 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !53 = !{!"omnipotent char", !52, i64 0}
-// CHECK:STDOUT: !54 = !{!"any pointer", !53, i64 0}
-// CHECK:STDOUT: !55 = !{!"p1 _ZTS1D", !54, i64 0}
-// CHECK:STDOUT: !56 = !{!55, !55, i64 0}
-// CHECK:STDOUT: !57 = !{!"vtable pointer", !52, i64 0}
-// CHECK:STDOUT: !58 = !{!57, !57, i64 0}
-// CHECK:STDOUT: !59 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !60 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !61 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !62 = !{!"int", !53, i64 0}
-// CHECK:STDOUT: !63 = !{!"__libc_errno", !62, i64 0}
-// CHECK:STDOUT: !64 = !{!63, !62, i64 0}
+// CHECK:STDOUT: !38 = !DILocation(line: 16, column: 10, scope: !33)
+// CHECK:STDOUT: !39 = !DILocation(line: 16, column: 3, scope: !33)
+// CHECK:STDOUT: !40 = !{!34}
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.29eaa4a6f69f5ec2", scope: null, file: !10, line: 30, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !47)
+// CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !41, type: !23)
+// CHECK:STDOUT: !46 = !DILocation(line: 30, column: 1, scope: !41)
+// CHECK:STDOUT: !47 = !{!42}
+// CHECK:STDOUT: !48 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !49 = !{!"omnipotent char", !48, i64 0}
+// CHECK:STDOUT: !50 = !{!"any pointer", !49, i64 0}
+// CHECK:STDOUT: !51 = !{!"p1 _ZTS1D", !50, i64 0}
+// CHECK:STDOUT: !52 = !{!51, !51, i64 0}
+// CHECK:STDOUT: !53 = !{!"vtable pointer", !48, i64 0}
+// CHECK:STDOUT: !54 = !{!53, !53, i64 0}
+// CHECK:STDOUT: !55 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !56 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !57 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !58 = !{!"int", !49, i64 0}
+// CHECK:STDOUT: !59 = !{!"__libc_errno", !58, i64 0}
+// CHECK:STDOUT: !60 = !{!59, !58, i64 0}
 // CHECK:STDOUT:

@@ -27,8 +27,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !28
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %x.var), !dbg !26
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !28
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.bd8971525d62ef81(ptr %_.var), !dbg !28
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.bd8971525d62ef81(ptr %x.var), !dbg !26
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.cd6aa98e8d0958d3(ptr %_.var), !dbg !28
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.cd6aa98e8d0958d3(ptr %x.var), !dbg !26
 // CHECK:STDOUT:   ret i32 0, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -36,13 +36,13 @@ fn Run() -> i32 {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.bd8971525d62ef81(ptr %t) #0 !dbg !35 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.cd6aa98e8d0958d3(ptr %t) #0 !dbg !35 {
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.bd8971525d62ef81, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.cd6aa98e8d0958d3, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -65,8 +65,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !32 = !{null, !31}
 // CHECK:STDOUT: !33 = !DISubroutineType(types: !32)
 // CHECK:STDOUT: !34 = !DILocation(line: 16, column: 3, scope: !23)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.bd8971525d62ef81", scope: null, file: !10, line: 26, type: !33, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !41)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.cd6aa98e8d0958d3", scope: null, file: !10, line: 30, type: !33, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !41)
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !35, type: !31)
-// CHECK:STDOUT: !40 = !DILocation(line: 26, column: 1, scope: !35)
+// CHECK:STDOUT: !40 = !DILocation(line: 30, column: 1, scope: !35)
 // CHECK:STDOUT: !41 = !{!36}
 // CHECK:STDOUT:

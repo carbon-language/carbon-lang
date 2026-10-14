@@ -45,9 +45,9 @@ fn M() {
 // CHECK:STDOUT:   store ptr poison, ptr %ptr_i8.var, align 8, !dbg !50
 // CHECK:STDOUT:   %.loc23_5 = load ptr, ptr %ptr_i8.var, align 8, !dbg !52
 // CHECK:STDOUT:   %F.call.loc23 = call ptr @_CF.Main.c0480b580588c73f(ptr %.loc23_5), !dbg !53
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.48914ea11ffa7b46(ptr %ptr_i8.var), !dbg !50
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.373ee65cc5e0fcdf(ptr %ptr_f64.var), !dbg !46
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.008e0b30cf994e40(ptr %ptr_i32.var), !dbg !39
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.611e1d5593a8abfd(ptr %ptr_i8.var), !dbg !50
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.81b4e30e2d9fb9f0(ptr %ptr_f64.var), !dbg !46
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.39f93332b5bec0ba(ptr %ptr_i32.var), !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -61,17 +61,17 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.48914ea11ffa7b46(ptr %t) #0 !dbg !81 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.611e1d5593a8abfd(ptr %t) #0 !dbg !81 {
 // CHECK:STDOUT:   ret void, !dbg !86
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.373ee65cc5e0fcdf(ptr %t) #0 !dbg !88 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.81b4e30e2d9fb9f0(ptr %t) #0 !dbg !88 {
 // CHECK:STDOUT:   ret void, !dbg !93
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.008e0b30cf994e40(ptr %t) #0 !dbg !95 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.39f93332b5bec0ba(ptr %t) #0 !dbg !95 {
 // CHECK:STDOUT:   ret void, !dbg !100
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -112,16 +112,16 @@ fn M() {
 // CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !57, type: !43)
 // CHECK:STDOUT: !63 = !DILocation(line: 14, column: 3, scope: !57)
 // CHECK:STDOUT: !64 = !{!58}
-// CHECK:STDOUT: !81 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.48914ea11ffa7b46", scope: null, file: !28, line: 26, type: !55, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !87)
+// CHECK:STDOUT: !81 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.611e1d5593a8abfd", scope: null, file: !28, line: 30, type: !55, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !87)
 // CHECK:STDOUT: !82 = !DILocalVariable(arg: 1, scope: !81, type: !43)
-// CHECK:STDOUT: !86 = !DILocation(line: 26, column: 1, scope: !81)
+// CHECK:STDOUT: !86 = !DILocation(line: 30, column: 1, scope: !81)
 // CHECK:STDOUT: !87 = !{!82}
-// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.373ee65cc5e0fcdf", scope: null, file: !28, line: 26, type: !55, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !94)
+// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.81b4e30e2d9fb9f0", scope: null, file: !28, line: 30, type: !55, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !94)
 // CHECK:STDOUT: !89 = !DILocalVariable(arg: 1, scope: !88, type: !43)
-// CHECK:STDOUT: !93 = !DILocation(line: 26, column: 1, scope: !88)
+// CHECK:STDOUT: !93 = !DILocation(line: 30, column: 1, scope: !88)
 // CHECK:STDOUT: !94 = !{!89}
-// CHECK:STDOUT: !95 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.008e0b30cf994e40", scope: null, file: !28, line: 26, type: !55, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !101)
+// CHECK:STDOUT: !95 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.39f93332b5bec0ba", scope: null, file: !28, line: 30, type: !55, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !101)
 // CHECK:STDOUT: !96 = !DILocalVariable(arg: 1, scope: !95, type: !43)
-// CHECK:STDOUT: !100 = !DILocation(line: 26, column: 1, scope: !95)
+// CHECK:STDOUT: !100 = !DILocation(line: 30, column: 1, scope: !95)
 // CHECK:STDOUT: !101 = !{!96}
 // CHECK:STDOUT:

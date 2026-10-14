@@ -65,12 +65,12 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, ptr %.loc12_18.2.temp, align 8, !dbg !17
 // CHECK:STDOUT:   %.loc12_18.4 = load ptr, ptr %.loc12_18.2.temp, align 8, !dbg !17
 // CHECK:STDOUT:   call void @_Z7TakePtrPi(ptr %.loc12_18.4), !dbg !18
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0619dbe115b8e121(ptr %.loc12_18.2.temp), !dbg !17
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.bfcbbee76b5431ee(ptr %.loc12_18.2.temp), !dbg !17
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.Copy.impl.Op.call = call ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr poison), !dbg !19
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc14_22.1.temp), !dbg !19
 // CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.Copy.impl.Op.call, ptr %.loc14_22.1.temp, align 8, !dbg !19
 // CHECK:STDOUT:   call void @_Z11TakeNullptrDn.carbon_thunk._(ptr %.loc14_22.1.temp), !dbg !20
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.01b8087b6f13b645(ptr %.loc14_22.1.temp), !dbg !19
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7d5b7fd9e2a5b0c1(ptr %.loc14_22.1.temp), !dbg !19
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -104,7 +104,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   store ptr %Cpp.nullptr_t.as.Copy.impl.Op.call.loc22, ptr %a.var, align 8, !dbg !30
 // CHECK:STDOUT:   %.loc23 = load ptr, ptr %a.var, align 8, !dbg !33
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.Copy.impl.Op.call.loc23 = call ptr @"_COp.NullptrT.CppCompat.Core:Copy.Core"(ptr %.loc23), !dbg !33
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.01b8087b6f13b645(ptr %a.var), !dbg !30
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7d5b7fd9e2a5b0c1(ptr %a.var), !dbg !30
 // CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.Copy.impl.Op.call.loc23, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -116,7 +116,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk.(ptr %a.var), !dbg !39
 // CHECK:STDOUT:   %.loc28_10 = load ptr, ptr %a.var, align 8, !dbg !41
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.2611ccfc72f0db62.Core.d727653b20be66f9"(ptr %.loc28_10), !dbg !42
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.01b8087b6f13b645(ptr %a.var), !dbg !38
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7d5b7fd9e2a5b0c1(ptr %a.var), !dbg !38
 // CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -139,7 +139,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT:   call void @_Z13ReturnNullptrv.carbon_thunk.(ptr %.loc32_28.1.temp), !dbg !46
 // CHECK:STDOUT:   %.loc32_28.4 = load ptr, ptr %.loc32_28.1.temp, align 8, !dbg !46
 // CHECK:STDOUT:   %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.2611ccfc72f0db62.Core.d727653b20be66f9"(ptr %.loc32_28.4), !dbg !47
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.01b8087b6f13b645(ptr %.loc32_28.1.temp), !dbg !46
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7d5b7fd9e2a5b0c1(ptr %.loc32_28.1.temp), !dbg !46
 // CHECK:STDOUT:   ret ptr %Cpp.nullptr_t.as.ImplicitAs.impl.Convert.call, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -160,12 +160,12 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.0619dbe115b8e121(ptr %t) #0 !dbg !62 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.bfcbbee76b5431ee(ptr %t) #0 !dbg !62 {
 // CHECK:STDOUT:   ret void, !dbg !67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.01b8087b6f13b645(ptr %t) #0 !dbg !69 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7d5b7fd9e2a5b0c1(ptr %t) #0 !dbg !69 {
 // CHECK:STDOUT:   ret void, !dbg !74
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -183,7 +183,7 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @"_CConvert.NullptrT.CppCompat.Core:ImplicitAs.2611ccfc72f0db62.Core.d727653b20be66f9", { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 4, 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.01b8087b6f13b645, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.7d5b7fd9e2a5b0c1, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -238,13 +238,13 @@ fn ConvertNullptrConstant() -> Core.Optional(i32*) {
 // CHECK:STDOUT: !59 = !DILocation(line: 52, column: 7, scope: !53)
 // CHECK:STDOUT: !60 = !{!54}
 // CHECK:STDOUT: !61 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.0619dbe115b8e121", scope: null, file: !61, line: 30, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !68)
+// CHECK:STDOUT: !62 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.bfcbbee76b5431ee", scope: null, file: !61, line: 34, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !68)
 // CHECK:STDOUT: !63 = !DILocalVariable(arg: 1, scope: !62, type: !9)
-// CHECK:STDOUT: !67 = !DILocation(line: 30, column: 1, scope: !62)
+// CHECK:STDOUT: !67 = !DILocation(line: 34, column: 1, scope: !62)
 // CHECK:STDOUT: !68 = !{!63}
-// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.01b8087b6f13b645", scope: null, file: !61, line: 30, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !75)
+// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7d5b7fd9e2a5b0c1", scope: null, file: !61, line: 34, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !75)
 // CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !69, type: !9)
-// CHECK:STDOUT: !74 = !DILocation(line: 30, column: 1, scope: !69)
+// CHECK:STDOUT: !74 = !DILocation(line: 34, column: 1, scope: !69)
 // CHECK:STDOUT: !75 = !{!70}
 // CHECK:STDOUT: !76 = !DIFile(filename: "{{.*}}/prelude/types/optional.carbon", directory: "")
 // CHECK:STDOUT: !77 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.0176148a5c50a958", scope: null, file: !76, line: 30, type: !15, spFlags: DISPFlagDefinition, unit: !5)

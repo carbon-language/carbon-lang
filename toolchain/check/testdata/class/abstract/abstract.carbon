@@ -176,7 +176,7 @@ fn F() {
   // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+7]]:28: error: cannot convert type `Abstract` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   let unused l: Abstract = {};
   // CHECK:STDERR:                            ^~
-  // CHECK:STDERR: {{.*}}/prelude/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: {{.*}}/prelude/destroy.carbon:34:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -199,7 +199,7 @@ fn F() {
   // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+7]]:28: error: cannot convert type `Derived` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   let unused l: Abstract = {.base = {}} as Derived;
   // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: {{.*}}/prelude/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: {{.*}}/prelude/destroy.carbon:34:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:

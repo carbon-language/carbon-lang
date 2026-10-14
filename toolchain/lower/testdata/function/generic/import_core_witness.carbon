@@ -56,7 +56,7 @@ fn Run() {
 // CHECK:STDOUT:   %1 = alloca i32, align 4, !dbg !17
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !17
 // CHECK:STDOUT:   store i32 0, ptr %1, align 4, !dbg !17
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %1), !dbg !17
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %1), !dbg !17
 // CHECK:STDOUT:   ret void, !dbg !21
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -64,7 +64,7 @@ fn Run() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %t) #0 !dbg !23 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %t) #0 !dbg !23 {
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -93,8 +93,8 @@ fn Run() {
 // CHECK:STDOUT: !20 = !DISubroutineType(types: !19)
 // CHECK:STDOUT: !21 = !DILocation(line: 4, column: 1, scope: !16)
 // CHECK:STDOUT: !22 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.0aefc5da911f5051", scope: null, file: !22, line: 30, type: !20, spFlags: DISPFlagDefinition, unit: !8, retainedNodes: !29)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8dce37f94a83bf", scope: null, file: !22, line: 34, type: !20, spFlags: DISPFlagDefinition, unit: !8, retainedNodes: !29)
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !23, type: !6)
-// CHECK:STDOUT: !28 = !DILocation(line: 30, column: 1, scope: !23)
+// CHECK:STDOUT: !28 = !DILocation(line: 34, column: 1, scope: !23)
 // CHECK:STDOUT: !29 = !{!24}
 // CHECK:STDOUT:

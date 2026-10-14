@@ -498,6 +498,7 @@ fn G(generic N: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %pattern_type.735: type = pattern_type %facet_type [concrete]
 // CHECK:STDOUT:   %T.patt.20a: %pattern_type.735 = symbolic_binding_pattern T, 0 [symbolic]
@@ -548,12 +549,18 @@ fn G(generic N: i32) {
 // CHECK:STDOUT:   %specific_impl_fn.c1a: <specific function> = specific_impl_function %impl.elem0.dc3, @DefaultOrUnformed.WithSelf.Op(%DefaultOrUnformed.facet.c2f) [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.08c: <witness> = lookup_impl_witness %Array.2fc, @DestroyImpl [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness.fff: <witness> = lookup_impl_witness %Array.2fc, @SubobjectDestroy [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.273: %SubobjectDestroy.type = facet_value %Array.2fc, (%SubobjectDestroy.lookup_impl_witness.fff) [symbolic]
+// CHECK:STDOUT:   %.a76: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.273) [symbolic]
 // CHECK:STDOUT:   %facet_value.8c6: %facet_type = facet_value %Array.2fc, (%DestroyImpl.lookup_impl_witness.08c, %SubobjectDestroy.lookup_impl_witness.fff) [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.089: <witness> = lookup_impl_witness %struct_type.a, @DestroyImpl [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness.770: <witness> = lookup_impl_witness %struct_type.a, @SubobjectDestroy [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.ccd: %SubobjectDestroy.type = facet_value %struct_type.a, (%SubobjectDestroy.lookup_impl_witness.770) [symbolic]
+// CHECK:STDOUT:   %.c01: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.ccd) [symbolic]
 // CHECK:STDOUT:   %facet_value.e16: %facet_type = facet_value %struct_type.a, (%DestroyImpl.lookup_impl_witness.089, %SubobjectDestroy.lookup_impl_witness.770) [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.d6c: <witness> = lookup_impl_witness %tuple.type.273, @DestroyImpl [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness.421: <witness> = lookup_impl_witness %tuple.type.273, @SubobjectDestroy [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.d33: %SubobjectDestroy.type = facet_value %tuple.type.273, (%SubobjectDestroy.lookup_impl_witness.421) [symbolic]
+// CHECK:STDOUT:   %.797: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.d33) [symbolic]
 // CHECK:STDOUT:   %facet_value.d0c: %facet_type = facet_value %tuple.type.273, (%DestroyImpl.lookup_impl_witness.d6c, %SubobjectDestroy.lookup_impl_witness.421) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
@@ -588,6 +595,8 @@ fn G(generic N: i32) {
 // CHECK:STDOUT:   %specific_impl_fn.255: <specific function> = specific_impl_function %impl.elem0.c0e, @DefaultOrUnformed.WithSelf.Op(%DefaultOrUnformed.facet.7f1) [symbolic]
 // CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.efc: <witness> = lookup_impl_witness %Array.a68, @DestroyImpl [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness.7c9: <witness> = lookup_impl_witness %Array.a68, @SubobjectDestroy [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.405: %SubobjectDestroy.type = facet_value %Array.a68, (%SubobjectDestroy.lookup_impl_witness.7c9) [symbolic]
+// CHECK:STDOUT:   %.70b: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.405) [symbolic]
 // CHECK:STDOUT:   %facet_value.31c: %facet_type = facet_value %Array.a68, (%DestroyImpl.lookup_impl_witness.efc, %SubobjectDestroy.lookup_impl_witness.7c9) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -640,16 +649,22 @@ fn G(generic N: i32) {
 // CHECK:STDOUT:   %.loc8_28.4: type = fn_type_with_self_type %DefaultOrUnformed.WithSelf.Op.type.loc8, %DefaultOrUnformed.facet.loc8_28.2 [symbolic = %.loc8_28.4 (constants.%.b37)]
 // CHECK:STDOUT:   %impl.elem0.loc8_28.2: @F.%.loc8_28.4 (%.b37) = impl_witness_access %DefaultOrUnformed.lookup_impl_witness.loc8, element0 [symbolic = %impl.elem0.loc8_28.2 (constants.%impl.elem0.dc3)]
 // CHECK:STDOUT:   %specific_impl_fn.loc8_28.2: <specific function> = specific_impl_function %impl.elem0.loc8_28.2, @DefaultOrUnformed.WithSelf.Op(%DefaultOrUnformed.facet.loc8_28.2) [symbolic = %specific_impl_fn.loc8_28.2 (constants.%specific_impl_fn.c1a)]
-// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.loc8: <witness> = lookup_impl_witness %Array.loc8_27.2, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness.loc8 (constants.%DestroyImpl.lookup_impl_witness.08c)]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness.loc8: <witness> = lookup_impl_witness %Array.loc8_27.2, @SubobjectDestroy [symbolic = %SubobjectDestroy.lookup_impl_witness.loc8 (constants.%SubobjectDestroy.lookup_impl_witness.fff)]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.loc8: %SubobjectDestroy.type = facet_value %Array.loc8_27.2, (%SubobjectDestroy.lookup_impl_witness.loc8) [symbolic = %SubobjectDestroy.facet.loc8 (constants.%SubobjectDestroy.facet.273)]
+// CHECK:STDOUT:   %.loc8_3.4: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.loc8) [symbolic = %.loc8_3.4 (constants.%.a76)]
+// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.loc8: <witness> = lookup_impl_witness %Array.loc8_27.2, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness.loc8 (constants.%DestroyImpl.lookup_impl_witness.08c)]
 // CHECK:STDOUT:   %facet_value.loc8_3.3: %facet_type = facet_value %Array.loc8_27.2, (%DestroyImpl.lookup_impl_witness.loc8, %SubobjectDestroy.lookup_impl_witness.loc8) [symbolic = %facet_value.loc8_3.3 (constants.%facet_value.8c6)]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.loc7: <witness> = lookup_impl_witness %struct_type.a.loc7_23.2, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness.loc7 (constants.%DestroyImpl.lookup_impl_witness.089)]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness.loc7: <witness> = lookup_impl_witness %struct_type.a.loc7_23.2, @SubobjectDestroy [symbolic = %SubobjectDestroy.lookup_impl_witness.loc7 (constants.%SubobjectDestroy.lookup_impl_witness.770)]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.loc7: %SubobjectDestroy.type = facet_value %struct_type.a.loc7_23.2, (%SubobjectDestroy.lookup_impl_witness.loc7) [symbolic = %SubobjectDestroy.facet.loc7 (constants.%SubobjectDestroy.facet.ccd)]
+// CHECK:STDOUT:   %.loc7_3.3: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.loc7) [symbolic = %.loc7_3.3 (constants.%.c01)]
+// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.loc7: <witness> = lookup_impl_witness %struct_type.a.loc7_23.2, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness.loc7 (constants.%DestroyImpl.lookup_impl_witness.089)]
 // CHECK:STDOUT:   %facet_value.loc7_3.3: %facet_type = facet_value %struct_type.a.loc7_23.2, (%DestroyImpl.lookup_impl_witness.loc7, %SubobjectDestroy.lookup_impl_witness.loc7) [symbolic = %facet_value.loc7_3.3 (constants.%facet_value.e16)]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.loc6: <witness> = lookup_impl_witness %tuple.type, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness.loc6 (constants.%DestroyImpl.lookup_impl_witness.d6c)]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness.loc6: <witness> = lookup_impl_witness %tuple.type, @SubobjectDestroy [symbolic = %SubobjectDestroy.lookup_impl_witness.loc6 (constants.%SubobjectDestroy.lookup_impl_witness.421)]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.loc6: %SubobjectDestroy.type = facet_value %tuple.type, (%SubobjectDestroy.lookup_impl_witness.loc6) [symbolic = %SubobjectDestroy.facet.loc6 (constants.%SubobjectDestroy.facet.d33)]
+// CHECK:STDOUT:   %.loc6_3.4: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.loc6) [symbolic = %.loc6_3.4 (constants.%.797)]
+// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness.loc6: <witness> = lookup_impl_witness %tuple.type, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness.loc6 (constants.%DestroyImpl.lookup_impl_witness.d6c)]
 // CHECK:STDOUT:   %facet_value.loc6_3.3: %facet_type = facet_value %tuple.type, (%DestroyImpl.lookup_impl_witness.loc6, %SubobjectDestroy.lookup_impl_witness.loc6) [symbolic = %facet_value.loc6_3.3 (constants.%facet_value.d0c)]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:
@@ -765,8 +780,10 @@ fn G(generic N: i32) {
 // CHECK:STDOUT:   %.loc14_30.4: type = fn_type_with_self_type %DefaultOrUnformed.WithSelf.Op.type, %DefaultOrUnformed.facet.loc14_30.2 [symbolic = %.loc14_30.4 (constants.%.a6a)]
 // CHECK:STDOUT:   %impl.elem0.loc14_30.2: @G.%.loc14_30.4 (%.a6a) = impl_witness_access %DefaultOrUnformed.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_30.2 (constants.%impl.elem0.c0e)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_30.2: <specific function> = specific_impl_function %impl.elem0.loc14_30.2, @DefaultOrUnformed.WithSelf.Op(%DefaultOrUnformed.facet.loc14_30.2) [symbolic = %specific_impl_fn.loc14_30.2 (constants.%specific_impl_fn.255)]
-// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness: <witness> = lookup_impl_witness %Array.loc14_29.2, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness (constants.%DestroyImpl.lookup_impl_witness.efc)]
 // CHECK:STDOUT:   %SubobjectDestroy.lookup_impl_witness: <witness> = lookup_impl_witness %Array.loc14_29.2, @SubobjectDestroy [symbolic = %SubobjectDestroy.lookup_impl_witness (constants.%SubobjectDestroy.lookup_impl_witness.7c9)]
+// CHECK:STDOUT:   %SubobjectDestroy.facet: %SubobjectDestroy.type = facet_value %Array.loc14_29.2, (%SubobjectDestroy.lookup_impl_witness) [symbolic = %SubobjectDestroy.facet (constants.%SubobjectDestroy.facet.405)]
+// CHECK:STDOUT:   %.loc14_3.4: require_specific_def_type = require_specific_def @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet) [symbolic = %.loc14_3.4 (constants.%.70b)]
+// CHECK:STDOUT:   %DestroyImpl.lookup_impl_witness: <witness> = lookup_impl_witness %Array.loc14_29.2, @DestroyImpl [symbolic = %DestroyImpl.lookup_impl_witness (constants.%DestroyImpl.lookup_impl_witness.efc)]
 // CHECK:STDOUT:   %facet_value.loc14_3.3: %facet_type = facet_value %Array.loc14_29.2, (%DestroyImpl.lookup_impl_witness, %SubobjectDestroy.lookup_impl_witness) [symbolic = %facet_value.loc14_3.3 (constants.%facet_value.31c)]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:

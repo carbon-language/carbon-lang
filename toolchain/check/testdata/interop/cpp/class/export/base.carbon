@@ -87,7 +87,7 @@ struct VirtualDestructor {
 // CHECK:STDERR: fail_abstract.carbon:[[@LINE+7]]:1: error: cannot convert type `AbstractWithVdtor` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: abstract class AbstractWithVdtor {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: min_prelude/parts/destroy.carbon:26:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -120,7 +120,7 @@ import Cpp;
 // CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+7]]:1: error: cannot convert type `AbstractNonvirtualDtor` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: abstract class AbstractNonvirtualDtor {}
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: min_prelude/parts/destroy.carbon:26:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -141,7 +141,7 @@ import Cpp;
 // CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor_but_virtual_fns.carbon:[[@LINE+7]]:1: error: cannot convert type `AbstractWithMethodNoVptr` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: abstract class AbstractWithMethodNoVptr {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: min_prelude/parts/destroy.carbon:26:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -165,7 +165,7 @@ import Cpp;
 // CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+7]]:1: error: cannot convert type `AbstractWithMethod` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: abstract class AbstractWithMethod {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: min_prelude/parts/destroy.carbon:26:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
@@ -195,7 +195,7 @@ import Cpp;
 // CHECK:STDERR: fail_todo_abstract_method_overridden_in_cpp.carbon:[[@LINE+7]]:1: error: cannot convert type `AbstractToOverride` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
 // CHECK:STDERR: abstract class AbstractToOverride {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: min_prelude/parts/destroy.carbon:26:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
 // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:

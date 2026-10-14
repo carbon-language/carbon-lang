@@ -412,7 +412,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT:   %SimpleReturnValue.call = call i32 @_Z17SimpleReturnValueii(i32 3, i32 4), !dbg !80
 // CHECK:STDOUT:   store i32 %SimpleReturnValue.call, ptr %value.var, align 4, !dbg !79
 // CHECK:STDOUT:   %.loc14 = load i32, ptr %value.var, align 4, !dbg !81
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %value.var), !dbg !74
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %value.var), !dbg !74
 // CHECK:STDOUT:   ret i32 %.loc14, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -458,7 +458,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.0aefc5da911f5051(ptr %t) #0 !dbg !83 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7f8dce37f94a83bf(ptr %t) #0 !dbg !83 {
 // CHECK:STDOUT:   ret void, !dbg !88
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -505,9 +505,9 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !80 = !DILocation(line: 13, column: 11, scope: !68)
 // CHECK:STDOUT: !81 = !DILocation(line: 14, column: 10, scope: !68)
 // CHECK:STDOUT: !82 = !DILocation(line: 14, column: 3, scope: !68)
-// CHECK:STDOUT: !83 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.0aefc5da911f5051", scope: null, file: !10, line: 26, type: !61, spFlags: DISPFlagDefinition, unit: !56, retainedNodes: !89)
+// CHECK:STDOUT: !83 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8dce37f94a83bf", scope: null, file: !10, line: 30, type: !61, spFlags: DISPFlagDefinition, unit: !56, retainedNodes: !89)
 // CHECK:STDOUT: !84 = !DILocalVariable(arg: 1, scope: !83, type: !57)
-// CHECK:STDOUT: !88 = !DILocation(line: 26, column: 1, scope: !83)
+// CHECK:STDOUT: !88 = !DILocation(line: 30, column: 1, scope: !83)
 // CHECK:STDOUT: !89 = !{!84}
 // CHECK:STDOUT: !90 = !{!30, !30, i64 0}
 // CHECK:STDOUT:

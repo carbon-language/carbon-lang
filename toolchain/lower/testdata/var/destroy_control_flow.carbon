@@ -164,16 +164,18 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !56
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %b.var, ptr align 1 @Destructible.val.loc6_3.1, i64 0, i1 false), !dbg !56
 // CHECK:STDOUT:   call void @_CUse.Main(ptr %b.var), !dbg !60
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %b.var), !dbg !56
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %b.var), !dbg !56
 // CHECK:STDOUT:   br label %if.else, !dbg !61
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %if.then, %entry
 // CHECK:STDOUT:   call void @_CUse.Main(ptr %a.var), !dbg !64
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %a.var), !dbg !49
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %a.var), !dbg !49
 // CHECK:STDOUT:   ret void, !dbg !65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CUse.Main(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp:thunk:DestroyImpl.4a8993846ac47976.Core:Destructible.Main:DestroyImpl.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
@@ -182,7 +184,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %t) #0 !dbg !67 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %t) #0 !dbg !67 {
+// CHECK:STDOUT:   call void @"_COp:thunk:DestroyImpl.4a8993846ac47976.Core:Destructible.Main:DestroyImpl.Core"(ptr %t), !dbg !70
 // CHECK:STDOUT:   ret void, !dbg !72
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -190,7 +193,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: uselistorder ptr @_CUse.Main, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6020646c48bccc1e, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.f8de890abec9a19e, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -217,9 +220,10 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !64 = !DILocation(line: 12, column: 3, scope: !46)
 // CHECK:STDOUT: !65 = !DILocation(line: 5, column: 1, scope: !46)
 // CHECK:STDOUT: !66 = !{!47}
-// CHECK:STDOUT: !67 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6020646c48bccc1e", scope: null, file: !28, line: 26, type: !38, spFlags: DISPFlagDefinition, unit: !45, retainedNodes: !73)
+// CHECK:STDOUT: !67 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f8de890abec9a19e", scope: null, file: !28, line: 30, type: !38, spFlags: DISPFlagDefinition, unit: !45, retainedNodes: !73)
 // CHECK:STDOUT: !68 = !DILocalVariable(arg: 1, scope: !67, type: !36)
-// CHECK:STDOUT: !72 = !DILocation(line: 26, column: 1, scope: !67)
+// CHECK:STDOUT: !70 = !DILocation(line: 31, column: 5, scope: !67)
+// CHECK:STDOUT: !72 = !DILocation(line: 30, column: 1, scope: !67)
 // CHECK:STDOUT: !73 = !{!68}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -243,23 +247,25 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !86
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %b.var, ptr align 1 @Destructible.val.loc6_3.1, i64 0, i1 false), !dbg !86
 // CHECK:STDOUT:   call void @_CUse.Main(ptr %b.var), !dbg !90
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %b.var), !dbg !86
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %b.var), !dbg !86
 // CHECK:STDOUT:   br label %if.done, !dbg !91
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !92
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @Destructible.val.loc6_3.1, i64 0, i1 false), !dbg !92
 // CHECK:STDOUT:   call void @_CUse.Main(ptr %c.var), !dbg !96
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %c.var), !dbg !92
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %c.var), !dbg !92
 // CHECK:STDOUT:   br label %if.done, !dbg !91
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.done:                                          ; preds = %if.else, %if.then
 // CHECK:STDOUT:   call void @_CUse.Main(ptr %a.var), !dbg !99
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %a.var), !dbg !79
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %a.var), !dbg !79
 // CHECK:STDOUT:   ret void, !dbg !100
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CUse.Main(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp:thunk:DestroyImpl.4a8993846ac47976.Core:Destructible.Main:DestroyImpl.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
@@ -268,7 +274,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %t) #0 !dbg !102 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %t) #0 !dbg !102 {
+// CHECK:STDOUT:   call void @"_COp:thunk:DestroyImpl.4a8993846ac47976.Core:Destructible.Main:DestroyImpl.Core"(ptr %t), !dbg !105
 // CHECK:STDOUT:   ret void, !dbg !107
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -276,7 +283,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: uselistorder ptr @_CUse.Main, { 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6020646c48bccc1e, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.f8de890abec9a19e, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -305,9 +312,10 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !99 = !DILocation(line: 15, column: 3, scope: !76)
 // CHECK:STDOUT: !100 = !DILocation(line: 5, column: 1, scope: !76)
 // CHECK:STDOUT: !101 = !{!77}
-// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6020646c48bccc1e", scope: null, file: !28, line: 26, type: !38, spFlags: DISPFlagDefinition, unit: !75, retainedNodes: !108)
+// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f8de890abec9a19e", scope: null, file: !28, line: 30, type: !38, spFlags: DISPFlagDefinition, unit: !75, retainedNodes: !108)
 // CHECK:STDOUT: !103 = !DILocalVariable(arg: 1, scope: !102, type: !36)
-// CHECK:STDOUT: !107 = !DILocation(line: 26, column: 1, scope: !102)
+// CHECK:STDOUT: !105 = !DILocation(line: 31, column: 5, scope: !102)
+// CHECK:STDOUT: !107 = !DILocation(line: 30, column: 1, scope: !102)
 // CHECK:STDOUT: !108 = !{!103}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -330,16 +338,18 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !121
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %b.var, ptr align 1 @Destructible.val.loc6_3.1, i64 0, i1 false), !dbg !121
 // CHECK:STDOUT:   call void @_CUse.Main(ptr %b.var), !dbg !125
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %b.var), !dbg !121
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %a.var), !dbg !114
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %b.var), !dbg !121
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %a.var), !dbg !114
 // CHECK:STDOUT:   ret void, !dbg !126
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %entry
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %a.var), !dbg !114
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %a.var), !dbg !114
 // CHECK:STDOUT:   ret void, !dbg !127
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CUse.Main(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp:thunk:DestroyImpl.4a8993846ac47976.Core:Destructible.Main:DestroyImpl.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
@@ -348,7 +358,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %t) #0 !dbg !129 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %t) #0 !dbg !129 {
+// CHECK:STDOUT:   call void @"_COp:thunk:DestroyImpl.4a8993846ac47976.Core:Destructible.Main:DestroyImpl.Core"(ptr %t), !dbg !132
 // CHECK:STDOUT:   ret void, !dbg !134
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -356,7 +367,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: uselistorder ptr @_CUse.Main, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6020646c48bccc1e, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.f8de890abec9a19e, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -382,9 +393,10 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !126 = !DILocation(line: 11, column: 5, scope: !111)
 // CHECK:STDOUT: !127 = !DILocation(line: 5, column: 1, scope: !111)
 // CHECK:STDOUT: !128 = !{!112}
-// CHECK:STDOUT: !129 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6020646c48bccc1e", scope: null, file: !28, line: 26, type: !38, spFlags: DISPFlagDefinition, unit: !110, retainedNodes: !135)
+// CHECK:STDOUT: !129 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f8de890abec9a19e", scope: null, file: !28, line: 30, type: !38, spFlags: DISPFlagDefinition, unit: !110, retainedNodes: !135)
 // CHECK:STDOUT: !130 = !DILocalVariable(arg: 1, scope: !129, type: !36)
-// CHECK:STDOUT: !134 = !DILocation(line: 26, column: 1, scope: !129)
+// CHECK:STDOUT: !132 = !DILocation(line: 31, column: 5, scope: !129)
+// CHECK:STDOUT: !134 = !DILocation(line: 30, column: 1, scope: !129)
 // CHECK:STDOUT: !135 = !{!130}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -418,21 +430,23 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !158
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @Destructible.val.loc6_3.1, i64 0, i1 false), !dbg !158
 // CHECK:STDOUT:   call void @_CUse.Main(ptr %c.var), !dbg !162
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %c.var), !dbg !158
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %b.var), !dbg !151
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %c.var), !dbg !158
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %b.var), !dbg !151
 // CHECK:STDOUT:   br label %while.done, !dbg !163
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %while.body
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %b.var), !dbg !151
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %b.var), !dbg !151
 // CHECK:STDOUT:   br label %while.cond, !dbg !164
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %if.then, %while.cond
 // CHECK:STDOUT:   call void @_CUse.Main(ptr %a.var), !dbg !167
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %a.var), !dbg !141
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %a.var), !dbg !141
 // CHECK:STDOUT:   ret void, !dbg !168
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CUse.Main(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp:thunk:DestroyImpl.4a8993846ac47976.Core:Destructible.Main:DestroyImpl.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
@@ -441,7 +455,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %t) #0 !dbg !170 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %t) #0 !dbg !170 {
+// CHECK:STDOUT:   call void @"_COp:thunk:DestroyImpl.4a8993846ac47976.Core:Destructible.Main:DestroyImpl.Core"(ptr %t), !dbg !173
 // CHECK:STDOUT:   ret void, !dbg !175
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -449,7 +464,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: uselistorder ptr @_CUse.Main, { 4, 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6020646c48bccc1e, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.f8de890abec9a19e, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -481,9 +496,10 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !167 = !DILocation(line: 18, column: 3, scope: !138)
 // CHECK:STDOUT: !168 = !DILocation(line: 5, column: 1, scope: !138)
 // CHECK:STDOUT: !169 = !{!139}
-// CHECK:STDOUT: !170 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6020646c48bccc1e", scope: null, file: !28, line: 26, type: !38, spFlags: DISPFlagDefinition, unit: !137, retainedNodes: !176)
+// CHECK:STDOUT: !170 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f8de890abec9a19e", scope: null, file: !28, line: 30, type: !38, spFlags: DISPFlagDefinition, unit: !137, retainedNodes: !176)
 // CHECK:STDOUT: !171 = !DILocalVariable(arg: 1, scope: !170, type: !36)
-// CHECK:STDOUT: !175 = !DILocation(line: 26, column: 1, scope: !170)
+// CHECK:STDOUT: !173 = !DILocation(line: 31, column: 5, scope: !170)
+// CHECK:STDOUT: !175 = !DILocation(line: 30, column: 1, scope: !170)
 // CHECK:STDOUT: !176 = !{!171}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -517,21 +533,23 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !199
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 %c.var, ptr align 1 @Destructible.val.loc6_3.1, i64 0, i1 false), !dbg !199
 // CHECK:STDOUT:   call void @_CUse.Main(ptr %c.var), !dbg !203
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %c.var), !dbg !199
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %b.var), !dbg !192
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %c.var), !dbg !199
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %b.var), !dbg !192
 // CHECK:STDOUT:   br label %while.cond, !dbg !204
 // CHECK:STDOUT:
 // CHECK:STDOUT: if.else:                                          ; preds = %while.body
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %b.var), !dbg !192
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %b.var), !dbg !192
 // CHECK:STDOUT:   br label %while.cond, !dbg !205
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.cond
 // CHECK:STDOUT:   call void @_CUse.Main(ptr %a.var), !dbg !208
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %a.var), !dbg !182
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %a.var), !dbg !182
 // CHECK:STDOUT:   ret void, !dbg !209
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CUse.Main(ptr)
+// CHECK:STDOUT:
+// CHECK:STDOUT: declare void @"_COp:thunk:DestroyImpl.4a8993846ac47976.Core:Destructible.Main:DestroyImpl.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
@@ -540,7 +558,8 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6020646c48bccc1e(ptr %t) #0 !dbg !211 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f8de890abec9a19e(ptr %t) #0 !dbg !211 {
+// CHECK:STDOUT:   call void @"_COp:thunk:DestroyImpl.4a8993846ac47976.Core:Destructible.Main:DestroyImpl.Core"(ptr %t), !dbg !214
 // CHECK:STDOUT:   ret void, !dbg !216
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -548,7 +567,7 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: uselistorder ptr @_CUse.Main, { 4, 3, 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.memcpy.p0.p0.i64, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6020646c48bccc1e, { 3, 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.f8de890abec9a19e, { 3, 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -580,8 +599,9 @@ fn WhileContinue(cond: bool) {
 // CHECK:STDOUT: !208 = !DILocation(line: 18, column: 3, scope: !179)
 // CHECK:STDOUT: !209 = !DILocation(line: 5, column: 1, scope: !179)
 // CHECK:STDOUT: !210 = !{!180}
-// CHECK:STDOUT: !211 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6020646c48bccc1e", scope: null, file: !28, line: 26, type: !38, spFlags: DISPFlagDefinition, unit: !178, retainedNodes: !217)
+// CHECK:STDOUT: !211 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f8de890abec9a19e", scope: null, file: !28, line: 30, type: !38, spFlags: DISPFlagDefinition, unit: !178, retainedNodes: !217)
 // CHECK:STDOUT: !212 = !DILocalVariable(arg: 1, scope: !211, type: !36)
-// CHECK:STDOUT: !216 = !DILocation(line: 26, column: 1, scope: !211)
+// CHECK:STDOUT: !214 = !DILocation(line: 31, column: 5, scope: !211)
+// CHECK:STDOUT: !216 = !DILocation(line: 30, column: 1, scope: !211)
 // CHECK:STDOUT: !217 = !{!212}
 // CHECK:STDOUT:
