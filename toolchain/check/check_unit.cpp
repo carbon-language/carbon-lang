@@ -11,7 +11,6 @@
 
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Sema/Sema.h"
-#include "common/growing_range.h"
 #include "common/pretty_stack_trace_function.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -20,6 +19,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
@@ -456,10 +456,18 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
   }
 }
 
-auto CheckUnit::CheckRequiredDefinitions() -> void {
+auto CheckUnit::CheckRequiredDefinitions() -> bool {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
-  for (SemIR::InstId decl_inst_id : context_.definitions_required_by_decl()) {
+  auto resolution_occurred = false;
+
+  // Only check declarations added since the previous call, so that each one is
+  // diagnosed at most once.
+  auto decl_inst_ids =
+      llvm::ArrayRef(context_.definitions_required_by_decl())
+          .drop_front(num_checked_definitions_required_by_decl_);
+  num_checked_definitions_required_by_decl_ += decl_inst_ids.size();
+  for (SemIR::InstId decl_inst_id : decl_inst_ids) {
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -500,32 +508,49 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
     }
   }
 
-  for (auto [loc, specific_id] :
-       GrowingRange(context_.definitions_required_by_use())) {
+  // Only check uses added since the previous call, so that each one is
+  // diagnosed at most once. Resolving a definition can add more uses, which
+  // this loop also checks.
+  auto& uses = context_.definitions_required_by_use();
+  for (; num_checked_definitions_required_by_use_ < uses.size();
+       ++num_checked_definitions_required_by_use_) {
+    // Copy the use, because resolving a definition can add to `uses`.
+    auto [loc, specific_id] = uses[num_checked_definitions_required_by_use_];
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
-    if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
-      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
-                        "use of undefined generic function");
-      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinitionHere, Note,
-                        "generic function declared here");
-      auto generic_decl_id =
-          context_.generics()
-              .Get(context_.specifics().Get(specific_id).generic_id)
-              .decl_id;
-      emitter_.Build(loc, MissingGenericFunctionDefinition)
-          .Note(generic_decl_id, MissingGenericFunctionDefinitionHere)
-          .Emit();
+    switch (ResolveSpecificDefinition(context_, loc, specific_id)) {
+      case DefinitionResolution::NewlyResolved:
+        resolution_occurred = true;
+        break;
+      case DefinitionResolution::PreviouslyResolved:
+        break;
+      case DefinitionResolution::NotDefinedYet: {
+        CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
+                          "use of undefined generic function");
+        CARBON_DIAGNOSTIC(MissingGenericFunctionDefinitionHere, Note,
+                          "generic function declared here");
+        auto generic_decl_id =
+            context_.generics()
+                .Get(context_.specifics().Get(specific_id).generic_id)
+                .decl_id;
+        emitter_.Build(loc, MissingGenericFunctionDefinition)
+            .Note(generic_decl_id, MissingGenericFunctionDefinitionHere)
+            .Emit();
+        break;
+      }
     }
   }
+
+  return resolution_occurred;
 }
 
-auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
+auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> bool {
   // Impl lookup can generate instructions (via deduce) which we don't use, as
   // we're only generating diagnostics here, so we catch and discard them.
   context_.inst_block_stack().Push();
   auto poisoned_queries =
       std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
+  auto found_difference = false;
   for (const auto& poison : poisoned_queries) {
     auto found_witness_id = EvalLookupSingleFinalWitness(
         context_, poison.loc_id, poison.query, SemIR::InstId::None,
@@ -537,6 +562,7 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
       continue;
     }
     if (found_witness_id != poison.witness_id) {
+      found_difference = true;
       auto witness_to_impl_id = [&](SemIR::ConstantId witness_id) {
         auto inst = context_.constant_values().GetInst(witness_id);
         CARBON_KIND_SWITCH(inst) {
@@ -603,20 +629,54 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
     }
   }
   context_.inst_block_stack().PopAndDiscard();
+  return found_difference;
 }
 
-auto CheckUnit::CheckImpls() -> void { ValidateImplsInFile(context_); }
-
 auto CheckUnit::FinishRun() -> void {
-  // Finalizes the C++ portion of the compilation, allowing any pending C++
-  // template instantiations to complete Carbon types and generate required
-  // thunks or function calls.
-  FinalizeCppAstFragment(context_);
+  auto do_resolution_checks = true;
+  auto num_resolution_check_cycles = 0;
+  constexpr auto max_resolution_check_cycles = 10;
+  while (do_resolution_checks &&
+         ++num_resolution_check_cycles < max_resolution_check_cycles) {
+    // Finalizes the C++ portion of the compilation, allowing any pending C++
+    // template instantiations to complete Carbon types and generate required
+    // thunks or function calls.
+    FinalizeCppAstFragment(context_);
 
+    do_resolution_checks = CheckRequiredDefinitions();
+    do_resolution_checks |= CheckPoisonedConcreteImplLookupQueries();
+    do_resolution_checks |= ImportFinalImplsWithImplInFile(context_);
+  }
+
+  if (num_resolution_check_cycles == max_resolution_check_cycles) {
+    // Point at the code that queued the next C++ instantiation, because that
+    // is what needed another pass. If nothing is queued, point at the top of
+    // the file.
+    auto loc_id =
+        SemIR::LocId(*(context_.sem_ir().parse_tree().postorder().begin()));
+    auto* cpp_context = context_.cpp_context();
+    if (cpp_context && !cpp_context->sema().PendingInstantiations.empty()) {
+      loc_id = AddImportIRInst(
+          context_.sem_ir(),
+          cpp_context->sema().PendingInstantiations.front().second);
+    }
+    context_.TODO(
+        loc_id, llvm::formatv(
+                    "maximum depth for bidirectional Carbon/C++ interop is {}",
+                    max_resolution_check_cycles));
+    if (cpp_context) {
+      cpp_context->sema().PendingInstantiations.clear();
+    }
+  }
+
+  // This only emits diagnostics, so it never creates work for the loop above.
+  // Running it after the loop also covers functions added during the loop.
   CheckRequiredDeclarations();
-  CheckRequiredDefinitions();
-  CheckPoisonedConcreteImplLookupQueries();
-  CheckImpls();
+
+  // Validate `impl`s once, after the loop has imported every `final impl` that
+  // they need to be checked against. Validating on each pass would repeat the
+  // same diagnostics.
+  ValidateImplsInFile(context_);
 
   // Disconnects AST generation from the context before popping the file-level
   // scope and destroying the context.

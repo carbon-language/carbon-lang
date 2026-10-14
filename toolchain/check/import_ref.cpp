@@ -888,6 +888,40 @@ static auto GetLocalCanonicalObserveBlockId(
   return context.local_observe_blocks().Add(contents);
 }
 
+// Gets the local type instructions for the fields in an imported
+// `StructTypeFieldsId`. This may add new work to `resolver`.
+static auto GetLocalStructTypeFieldTypeInstIds(
+    ImportRefResolver& resolver, SemIR::StructTypeFieldsId import_fields_id)
+    -> llvm::SmallVector<SemIR::TypeInstId> {
+  auto orig_fields = resolver.import_struct_type_fields().Get(import_fields_id);
+  llvm::SmallVector<SemIR::TypeInstId> field_type_inst_ids;
+  field_type_inst_ids.reserve(orig_fields.size());
+  for (auto field : orig_fields) {
+    field_type_inst_ids.push_back(
+        GetLocalTypeInstId(resolver, field.type_inst_id));
+  }
+  return field_type_inst_ids;
+}
+
+// Gets a local canonical `StructTypeFieldsId` corresponding to an imported one
+// whose field types were already imported by
+// GetLocalStructTypeFieldTypeInstIds.
+static auto GetLocalCanonicalStructTypeFieldsId(
+    ImportContext& context, SemIR::StructTypeFieldsId import_fields_id,
+    llvm::ArrayRef<SemIR::TypeInstId> field_type_inst_ids)
+    -> SemIR::StructTypeFieldsId {
+  auto orig_fields = context.import_struct_type_fields().Get(import_fields_id);
+  llvm::SmallVector<SemIR::StructTypeField> new_fields;
+  new_fields.reserve(orig_fields.size());
+  for (auto [orig_field, field_type_inst_id] :
+       llvm::zip_equal(orig_fields, field_type_inst_ids)) {
+    auto name_id = GetLocalNameId(context, orig_field.name_id);
+    new_fields.push_back(
+        {.name_id = name_id, .type_inst_id = field_type_inst_id});
+  }
+  return context.local_struct_type_fields().AddCanonical(new_fields);
+}
+
 // Gets a local instruction block containing ImportRefs referring to the
 // instructions in the specified imported instruction block.
 static auto GetLocalImportRefInstBlock(ImportContext& context,
@@ -1056,6 +1090,9 @@ static auto GetLocalGenericId(ImportContext& context,
   CARBON_KIND_SWITCH(inst) {
     case CARBON_KIND(SemIR::FunctionType fn_type): {
       return context.local_functions().Get(fn_type.function_id).generic_id;
+    }
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      return context.local_classes().Get(class_type.class_id).generic_id;
     }
     case CARBON_KIND(SemIR::ParameterizedClassType class_type): {
       return context.local_classes().Get(class_type.class_id).generic_id;
@@ -2340,25 +2377,10 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::CustomLayoutType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
-  auto orig_fields = resolver.import_struct_type_fields().Get(inst.fields_id);
-  llvm::SmallVector<SemIR::TypeInstId> field_type_inst_ids;
-  field_type_inst_ids.reserve(orig_fields.size());
-  for (auto field : orig_fields) {
-    field_type_inst_ids.push_back(
-        GetLocalTypeInstId(resolver, field.type_inst_id));
-  }
+  auto field_type_inst_ids =
+      GetLocalStructTypeFieldTypeInstIds(resolver, inst.fields_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
-  }
-
-  // Prepare a vector of fields for CustomLayoutType.
-  llvm::SmallVector<SemIR::StructTypeField> new_fields;
-  new_fields.reserve(orig_fields.size());
-  for (auto [orig_field, field_type_inst_id] :
-       llvm::zip_equal(orig_fields, field_type_inst_ids)) {
-    auto name_id = GetLocalNameId(resolver, orig_field.name_id);
-    new_fields.push_back(
-        {.name_id = name_id, .type_inst_id = field_type_inst_id});
   }
 
   auto orig_layout = resolver.import_custom_layouts().Get(inst.layout_id);
@@ -2367,8 +2389,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
   return ResolveResult::Deduplicated<SemIR::CustomLayoutType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,
-                 .fields_id = resolver.local_struct_type_fields().AddCanonical(
-                     new_fields),
+                 .fields_id = GetLocalCanonicalStructTypeFieldsId(
+                     resolver, inst.fields_id, field_type_inst_ids),
                  .layout_id = new_layout_id});
 }
 
@@ -4415,31 +4437,16 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::StructType inst) -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
-  auto orig_fields = resolver.import_struct_type_fields().Get(inst.fields_id);
-  llvm::SmallVector<SemIR::TypeInstId> field_type_inst_ids;
-  field_type_inst_ids.reserve(orig_fields.size());
-  for (auto field : orig_fields) {
-    field_type_inst_ids.push_back(
-        GetLocalTypeInstId(resolver, field.type_inst_id));
-  }
+  auto field_type_inst_ids =
+      GetLocalStructTypeFieldTypeInstIds(resolver, inst.fields_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
-  // Prepare a vector of fields for GetStructType.
-  llvm::SmallVector<SemIR::StructTypeField> new_fields;
-  new_fields.reserve(orig_fields.size());
-  for (auto [orig_field, field_type_inst_id] :
-       llvm::zip_equal(orig_fields, field_type_inst_ids)) {
-    auto name_id = GetLocalNameId(resolver, orig_field.name_id);
-    new_fields.push_back(
-        {.name_id = name_id, .type_inst_id = field_type_inst_id});
-  }
-
   return ResolveResult::Deduplicated<SemIR::StructType>(
       resolver, {.type_id = SemIR::TypeType::TypeId,
-                 .fields_id = resolver.local_struct_type_fields().AddCanonical(
-                     new_fields)});
+                 .fields_id = GetLocalCanonicalStructTypeFieldsId(
+                     resolver, inst.fields_id, field_type_inst_ids)});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -5282,9 +5289,15 @@ auto ImportImplsFromApiFile(Context& context) -> void {
 }
 
 auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
-                SemIR::ImplId impl_id) -> void {
+                SemIR::ImplId impl_id) -> ImportImplResult {
+  // Resolving an impl that was already imported, whether directly or through a
+  // different IR, finds the existing local impl instead of adding a new one.
+  auto num_local_impls = context.impls().size();
   ImportRefResolver resolver(&context, import_ir_id);
   resolver.Resolve(resolver.import_impls().Get(impl_id).first_decl_id());
+  return context.impls().size() > num_local_impls
+             ? ImportImplResult::NewlyImported
+             : ImportImplResult::PreviouslyImported;
 }
 
 auto ImportInterface(Context& context, SemIR::ImportIRId import_ir_id,

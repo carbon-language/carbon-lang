@@ -157,6 +157,7 @@ cc_library(
         ":node_stack",
         "//common:array_stack",
         "//common:check",
+        "//common:checked_save_and_restore",
         "//common:concepts",
         "//common:emplace_by_calling",
         "//common:enum_mask_base",

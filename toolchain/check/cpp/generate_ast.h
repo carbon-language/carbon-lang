@@ -54,7 +54,8 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
 
 // Finalizes the C++ AST fragment for the given checking context. Performs end
 // of file steps such as template instantiation and warning on unused
-// declarations.
+// declarations. This may be called more than once for the same context, to
+// perform template instantiations that later Carbon checking requires.
 auto FinalizeCppAstFragment(Context& context) -> void;
 
 // Disconnects C++ AST generation from the given checking context at the end of
