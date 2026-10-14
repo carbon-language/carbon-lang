@@ -301,7 +301,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !28 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !36 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !90 = !DIFile(filename: "initialize_dependent_target_from_literal.carbon", directory: "")
 // CHECK:STDOUT: !91 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !90, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -315,7 +315,7 @@ fn Run() {
 // CHECK:STDOUT: !100 = !{null, !36}
 // CHECK:STDOUT: !101 = !DISubroutineType(types: !100)
 // CHECK:STDOUT: !102 = !DILocation(line: 4, column: 1, scope: !97)
-// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8dce37f94a83bf", scope: null, file: !28, line: 30, type: !101, spFlags: DISPFlagDefinition, unit: !91, retainedNodes: !109)
+// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8dce37f94a83bf", scope: null, file: !26, line: 30, type: !101, spFlags: DISPFlagDefinition, unit: !91, retainedNodes: !109)
 // CHECK:STDOUT: !104 = !DILocalVariable(arg: 1, scope: !103, type: !36)
 // CHECK:STDOUT: !108 = !DILocation(line: 30, column: 1, scope: !103)
 // CHECK:STDOUT: !109 = !{!104}
@@ -357,7 +357,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !28 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !36 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !92 = !{null}
 // CHECK:STDOUT: !93 = !DISubroutineType(types: !92)
@@ -373,7 +373,7 @@ fn Run() {
 // CHECK:STDOUT: !118 = !DILocation(line: 5, column: 3, scope: !115)
 // CHECK:STDOUT: !121 = !DILocation(line: 4, column: 1, scope: !115)
 // CHECK:STDOUT: !122 = !{!116}
-// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8dce37f94a83bf", scope: null, file: !28, line: 30, type: !101, spFlags: DISPFlagDefinition, unit: !111, retainedNodes: !129)
+// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8dce37f94a83bf", scope: null, file: !26, line: 30, type: !101, spFlags: DISPFlagDefinition, unit: !111, retainedNodes: !129)
 // CHECK:STDOUT: !124 = !DILocalVariable(arg: 1, scope: !123, type: !36)
 // CHECK:STDOUT: !128 = !DILocation(line: 30, column: 1, scope: !123)
 // CHECK:STDOUT: !129 = !{!124}
@@ -523,7 +523,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !28 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !39 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !92 = !{null}
 // CHECK:STDOUT: !93 = !DISubroutineType(types: !92)
@@ -571,21 +571,21 @@ fn Run() {
 // CHECK:STDOUT: !178 = !DILocation(line: 8, column: 38, scope: !174)
 // CHECK:STDOUT: !179 = !DILocation(line: 8, column: 21, scope: !174)
 // CHECK:STDOUT: !181 = !DILocation(line: 7, column: 1, scope: !174)
-// CHECK:STDOUT: !182 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.157177753e89b93b", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !188)
+// CHECK:STDOUT: !182 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.157177753e89b93b", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !188)
 // CHECK:STDOUT: !183 = !DILocalVariable(arg: 1, scope: !182, type: !39)
 // CHECK:STDOUT: !187 = !DILocation(line: 30, column: 1, scope: !182)
 // CHECK:STDOUT: !188 = !{!183}
-// CHECK:STDOUT: !189 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f25f869461c69a42", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !195)
+// CHECK:STDOUT: !189 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f25f869461c69a42", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !195)
 // CHECK:STDOUT: !190 = !DILocalVariable(arg: 1, scope: !189, type: !39)
 // CHECK:STDOUT: !193 = !DILocation(line: 32, column: 5, scope: !189)
 // CHECK:STDOUT: !194 = !DILocation(line: 30, column: 1, scope: !189)
 // CHECK:STDOUT: !195 = !{!190}
-// CHECK:STDOUT: !196 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.51593dd79e483bf2", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !202)
+// CHECK:STDOUT: !196 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.51593dd79e483bf2", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !202)
 // CHECK:STDOUT: !197 = !DILocalVariable(arg: 1, scope: !196, type: !39)
 // CHECK:STDOUT: !200 = !DILocation(line: 32, column: 5, scope: !196)
 // CHECK:STDOUT: !201 = !DILocation(line: 30, column: 1, scope: !196)
 // CHECK:STDOUT: !202 = !{!197}
-// CHECK:STDOUT: !203 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4f4ba9aadbf89b35", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !209)
+// CHECK:STDOUT: !203 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4f4ba9aadbf89b35", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !131, retainedNodes: !209)
 // CHECK:STDOUT: !204 = !DILocalVariable(arg: 1, scope: !203, type: !39)
 // CHECK:STDOUT: !208 = !DILocation(line: 30, column: 1, scope: !203)
 // CHECK:STDOUT: !209 = !{!204}
@@ -802,7 +802,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !28 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !39 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !92 = !{null}
 // CHECK:STDOUT: !93 = !DISubroutineType(types: !92)
@@ -867,40 +867,40 @@ fn Run() {
 // CHECK:STDOUT: !268 = !DILocation(line: 9, column: 41, scope: !263)
 // CHECK:STDOUT: !269 = !DILocation(line: 9, column: 50, scope: !263)
 // CHECK:STDOUT: !271 = !DILocation(line: 8, column: 1, scope: !263)
-// CHECK:STDOUT: !272 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.157177753e89b93b", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !278)
+// CHECK:STDOUT: !272 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.157177753e89b93b", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !278)
 // CHECK:STDOUT: !273 = !DILocalVariable(arg: 1, scope: !272, type: !39)
 // CHECK:STDOUT: !277 = !DILocation(line: 30, column: 1, scope: !272)
 // CHECK:STDOUT: !278 = !{!273}
-// CHECK:STDOUT: !279 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.8f3ff415a52b6074", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !285)
+// CHECK:STDOUT: !279 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.8f3ff415a52b6074", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !285)
 // CHECK:STDOUT: !280 = !DILocalVariable(arg: 1, scope: !279, type: !39)
 // CHECK:STDOUT: !283 = !DILocation(line: 32, column: 5, scope: !279)
 // CHECK:STDOUT: !284 = !DILocation(line: 30, column: 1, scope: !279)
 // CHECK:STDOUT: !285 = !{!280}
-// CHECK:STDOUT: !286 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4f4ba9aadbf89b35", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !292)
+// CHECK:STDOUT: !286 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4f4ba9aadbf89b35", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !292)
 // CHECK:STDOUT: !287 = !DILocalVariable(arg: 1, scope: !286, type: !39)
 // CHECK:STDOUT: !291 = !DILocation(line: 30, column: 1, scope: !286)
 // CHECK:STDOUT: !292 = !{!287}
-// CHECK:STDOUT: !293 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3bff6e0435e271d9", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !299)
+// CHECK:STDOUT: !293 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3bff6e0435e271d9", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !299)
 // CHECK:STDOUT: !294 = !DILocalVariable(arg: 1, scope: !293, type: !39)
 // CHECK:STDOUT: !297 = !DILocation(line: 32, column: 5, scope: !293)
 // CHECK:STDOUT: !298 = !DILocation(line: 30, column: 1, scope: !293)
 // CHECK:STDOUT: !299 = !{!294}
-// CHECK:STDOUT: !300 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b0bd3cb86a29be0f", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !306)
+// CHECK:STDOUT: !300 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b0bd3cb86a29be0f", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !306)
 // CHECK:STDOUT: !301 = !DILocalVariable(arg: 1, scope: !300, type: !39)
 // CHECK:STDOUT: !304 = !DILocation(line: 32, column: 5, scope: !300)
 // CHECK:STDOUT: !305 = !DILocation(line: 30, column: 1, scope: !300)
 // CHECK:STDOUT: !306 = !{!301}
-// CHECK:STDOUT: !307 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f39bc00baefc19f7", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !313)
+// CHECK:STDOUT: !307 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f39bc00baefc19f7", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !313)
 // CHECK:STDOUT: !308 = !DILocalVariable(arg: 1, scope: !307, type: !39)
 // CHECK:STDOUT: !311 = !DILocation(line: 32, column: 5, scope: !307)
 // CHECK:STDOUT: !312 = !DILocation(line: 30, column: 1, scope: !307)
 // CHECK:STDOUT: !313 = !{!308}
-// CHECK:STDOUT: !314 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.d6a2c0ae6e2a8dc6", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !320)
+// CHECK:STDOUT: !314 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.d6a2c0ae6e2a8dc6", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !320)
 // CHECK:STDOUT: !315 = !DILocalVariable(arg: 1, scope: !314, type: !39)
 // CHECK:STDOUT: !318 = !DILocation(line: 32, column: 5, scope: !314)
 // CHECK:STDOUT: !319 = !DILocation(line: 30, column: 1, scope: !314)
 // CHECK:STDOUT: !320 = !{!315}
-// CHECK:STDOUT: !321 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ea7538185e170824", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !327)
+// CHECK:STDOUT: !321 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ea7538185e170824", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !211, retainedNodes: !327)
 // CHECK:STDOUT: !322 = !DILocalVariable(arg: 1, scope: !321, type: !39)
 // CHECK:STDOUT: !325 = !DILocation(line: 32, column: 5, scope: !321)
 // CHECK:STDOUT: !326 = !DILocation(line: 30, column: 1, scope: !321)
@@ -1145,7 +1145,7 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !28 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !36 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !39 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !132 = !{!39}
@@ -1173,12 +1173,12 @@ fn Run() {
 // CHECK:STDOUT: !434 = !DILocation(line: 16, column: 15, scope: !431)
 // CHECK:STDOUT: !435 = !DILocation(line: 15, column: 11, scope: !431)
 // CHECK:STDOUT: !436 = !DILocation(line: 15, column: 4, scope: !431)
-// CHECK:STDOUT: !437 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.d632e39f4e4d486f", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !413, retainedNodes: !443)
+// CHECK:STDOUT: !437 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.d632e39f4e4d486f", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !413, retainedNodes: !443)
 // CHECK:STDOUT: !438 = !DILocalVariable(arg: 1, scope: !437, type: !39)
 // CHECK:STDOUT: !441 = !DILocation(line: 32, column: 5, scope: !437)
 // CHECK:STDOUT: !442 = !DILocation(line: 30, column: 1, scope: !437)
 // CHECK:STDOUT: !443 = !{!438}
-// CHECK:STDOUT: !444 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.0e17f98602283fc4", scope: null, file: !28, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !413, retainedNodes: !450)
+// CHECK:STDOUT: !444 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.0e17f98602283fc4", scope: null, file: !26, line: 30, type: !137, spFlags: DISPFlagDefinition, unit: !413, retainedNodes: !450)
 // CHECK:STDOUT: !445 = !DILocalVariable(arg: 1, scope: !444, type: !39)
 // CHECK:STDOUT: !449 = !DILocation(line: 30, column: 1, scope: !444)
 // CHECK:STDOUT: !450 = !{!445}

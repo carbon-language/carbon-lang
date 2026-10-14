@@ -277,7 +277,7 @@ fn GetRefs() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !8 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !4 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !18 = !DIFile(filename: "pass_references.carbon", directory: "")
 // CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -306,7 +306,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !49 = !DILocation(line: 16, column: 1, scope: !30)
 // CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp", scope: null, file: !18, line: 5, type: !27, spFlags: DISPFlagDefinition, unit: !19)
 // CHECK:STDOUT: !52 = !DILocation(line: 5, column: 7, scope: !50)
-// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !8, line: 9, type: !27, spFlags: DISPFlagDefinition, unit: !19)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !4, line: 9, type: !27, spFlags: DISPFlagDefinition, unit: !19)
 // CHECK:STDOUT: !56 = !DILocation(line: 9, column: 28, scope: !53)
 // CHECK:STDOUT: !57 = !DILocation(line: 9, column: 21, scope: !53)
 // CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4b5a8e5468961661", scope: null, file: !10, line: 30, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !64)
@@ -505,7 +505,7 @@ fn GetRefs() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !8 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !4 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !21 = !{null}
@@ -547,7 +547,7 @@ fn GetRefs() {
 // CHECK:STDOUT: !107 = !DILocation(line: 17, column: 1, scope: !88)
 // CHECK:STDOUT: !108 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp", scope: null, file: !86, line: 5, type: !27, spFlags: DISPFlagDefinition, unit: !87)
 // CHECK:STDOUT: !110 = !DILocation(line: 5, column: 7, scope: !108)
-// CHECK:STDOUT: !111 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !8, line: 9, type: !27, spFlags: DISPFlagDefinition, unit: !87)
+// CHECK:STDOUT: !111 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !4, line: 9, type: !27, spFlags: DISPFlagDefinition, unit: !87)
 // CHECK:STDOUT: !114 = !DILocation(line: 9, column: 28, scope: !111)
 // CHECK:STDOUT: !115 = !DILocation(line: 9, column: 21, scope: !111)
 // CHECK:STDOUT: !116 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4b5a8e5468961661", scope: null, file: !10, line: 30, type: !25, spFlags: DISPFlagDefinition, unit: !87, retainedNodes: !122)

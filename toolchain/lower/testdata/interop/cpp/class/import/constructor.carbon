@@ -362,7 +362,7 @@ fn Four() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !8 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !4 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !21 = !{null}
 // CHECK:STDOUT: !22 = !DISubroutineType(types: !21)
@@ -393,7 +393,7 @@ fn Four() {
 // CHECK:STDOUT: !65 = !DIFile(filename: "./default.h", directory: "")
 // CHECK:STDOUT: !66 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp", scope: null, file: !65, line: 4, type: !60, spFlags: DISPFlagDefinition, unit: !58)
 // CHECK:STDOUT: !67 = !DILocation(line: 4, column: 3, scope: !66)
-// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !8, line: 9, type: !60, spFlags: DISPFlagDefinition, unit: !58)
+// CHECK:STDOUT: !68 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !4, line: 9, type: !60, spFlags: DISPFlagDefinition, unit: !58)
 // CHECK:STDOUT: !71 = !DILocation(line: 9, column: 28, scope: !68)
 // CHECK:STDOUT: !72 = !DILocation(line: 9, column: 21, scope: !68)
 // CHECK:STDOUT: !73 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4b5a8e5468961661", scope: null, file: !10, line: 30, type: !25, spFlags: DISPFlagDefinition, unit: !58, retainedNodes: !79)
@@ -535,7 +535,7 @@ fn Four() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !8 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !4 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
 // CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !21 = !{null}
 // CHECK:STDOUT: !22 = !DISubroutineType(types: !21)
@@ -566,10 +566,10 @@ fn Four() {
 // CHECK:STDOUT: !96 = !DILocation(line: 2, column: 8, scope: !95)
 // CHECK:STDOUT: !97 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.f7ca6602362234ee.Core:ExplicitlyDefaultedDefault.Cpp", scope: null, file: !94, line: 7, type: !60, spFlags: DISPFlagDefinition, unit: !81)
 // CHECK:STDOUT: !98 = !DILocation(line: 7, column: 3, scope: !97)
-// CHECK:STDOUT: !99 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.c20bae04b665a8c9", scope: null, file: !8, line: 9, type: !60, spFlags: DISPFlagDefinition, unit: !81)
+// CHECK:STDOUT: !99 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.c20bae04b665a8c9", scope: null, file: !4, line: 9, type: !60, spFlags: DISPFlagDefinition, unit: !81)
 // CHECK:STDOUT: !102 = !DILocation(line: 9, column: 28, scope: !99)
 // CHECK:STDOUT: !103 = !DILocation(line: 9, column: 21, scope: !99)
-// CHECK:STDOUT: !104 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.055ae7235dade271", scope: null, file: !8, line: 9, type: !60, spFlags: DISPFlagDefinition, unit: !81)
+// CHECK:STDOUT: !104 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.055ae7235dade271", scope: null, file: !4, line: 9, type: !60, spFlags: DISPFlagDefinition, unit: !81)
 // CHECK:STDOUT: !107 = !DILocation(line: 9, column: 28, scope: !104)
 // CHECK:STDOUT: !108 = !DILocation(line: 9, column: 21, scope: !104)
 // CHECK:STDOUT: !109 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.e9effd990e40dc04", scope: null, file: !10, line: 30, type: !25, spFlags: DISPFlagDefinition, unit: !81, retainedNodes: !115)

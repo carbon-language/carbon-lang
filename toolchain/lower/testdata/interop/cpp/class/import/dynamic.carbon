@@ -250,7 +250,7 @@ fn DoThing() {
 // CHECK:STDOUT: !4 = !{!3, !3, i64 0}
 // CHECK:STDOUT: !7 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !8 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !33 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !31 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !39 = !DIFile(filename: "dynamic_base_from_cpp.carbon", directory: "")
 // CHECK:STDOUT: !40 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !39, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !42 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -297,12 +297,12 @@ fn DoThing() {
 // CHECK:STDOUT: !88 = !DILocation(line: 32, column: 11, scope: !82)
 // CHECK:STDOUT: !89 = !DILocation(line: 32, column: 3, scope: !82)
 // CHECK:STDOUT: !90 = !DILocation(line: 30, column: 1, scope: !82)
-// CHECK:STDOUT: !91 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f7d9dc56e12ad759", scope: null, file: !33, line: 30, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !97)
+// CHECK:STDOUT: !91 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f7d9dc56e12ad759", scope: null, file: !31, line: 30, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !97)
 // CHECK:STDOUT: !92 = !DILocalVariable(arg: 1, scope: !91, type: !42)
 // CHECK:STDOUT: !95 = !DILocation(line: 32, column: 5, scope: !91)
 // CHECK:STDOUT: !96 = !DILocation(line: 30, column: 1, scope: !91)
 // CHECK:STDOUT: !97 = !{!92}
-// CHECK:STDOUT: !98 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3589a9f3c68e3550", scope: null, file: !33, line: 30, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !104)
+// CHECK:STDOUT: !98 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3589a9f3c68e3550", scope: null, file: !31, line: 30, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !104)
 // CHECK:STDOUT: !99 = !DILocalVariable(arg: 1, scope: !98, type: !42)
 // CHECK:STDOUT: !103 = !DILocation(line: 30, column: 1, scope: !98)
 // CHECK:STDOUT: !104 = !{!99}

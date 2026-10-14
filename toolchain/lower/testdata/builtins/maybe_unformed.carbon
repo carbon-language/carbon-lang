@@ -176,7 +176,7 @@ fn PassAdapterBool() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !28 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !34 = !DIFile(filename: "maybe_unformed.carbon", directory: "")
 // CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !36 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -228,15 +228,15 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: !93 = !DILocation(line: 55, column: 19, scope: !92)
 // CHECK:STDOUT: !94 = !DILocation(line: 55, column: 3, scope: !92)
 // CHECK:STDOUT: !95 = !DILocation(line: 54, column: 1, scope: !92)
-// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.1f5b381b8e380168", scope: null, file: !28, line: 30, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !102)
+// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.1f5b381b8e380168", scope: null, file: !26, line: 30, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !102)
 // CHECK:STDOUT: !97 = !DILocalVariable(arg: 1, scope: !96, type: !39)
 // CHECK:STDOUT: !101 = !DILocation(line: 30, column: 1, scope: !96)
 // CHECK:STDOUT: !102 = !{!97}
-// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.bb303082242a6a41", scope: null, file: !28, line: 30, type: !38, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !109)
+// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.bb303082242a6a41", scope: null, file: !26, line: 30, type: !38, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !109)
 // CHECK:STDOUT: !104 = !DILocalVariable(arg: 1, scope: !103, type: !36)
 // CHECK:STDOUT: !108 = !DILocation(line: 30, column: 1, scope: !103)
 // CHECK:STDOUT: !109 = !{!104}
-// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b1d505fcd1f92840", scope: null, file: !28, line: 30, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !116)
+// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b1d505fcd1f92840", scope: null, file: !26, line: 30, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !116)
 // CHECK:STDOUT: !111 = !DILocalVariable(arg: 1, scope: !110, type: !39)
 // CHECK:STDOUT: !115 = !DILocation(line: 30, column: 1, scope: !110)
 // CHECK:STDOUT: !116 = !{!111}

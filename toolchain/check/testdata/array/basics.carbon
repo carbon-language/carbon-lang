@@ -84,7 +84,7 @@ class Incomplete;
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE+17]]:8: error: binding pattern has incomplete type `array(Incomplete, 1)` in name binding declaration [IncompleteTypeInBindingDecl]
 // CHECK:STDERR: var a: array(Incomplete, 1);
 // CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: min_prelude/parts/array.carbon:12:3: note: `<builtin array(T, N)>` evaluates to incomplete type `<builtin array(Incomplete, 1)>` [IncompleteTypeInMonomorphization]
+// CHECK:STDERR: min_prelude/parts/array.carbon:13:3: note: `<builtin array(T, N)>` evaluates to incomplete type `<builtin array(Incomplete, 1)>` [IncompleteTypeInMonomorphization]
 // CHECK:STDERR:   adapt MakeArray(T, N);
 // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR: fail_incomplete_element.carbon:[[@LINE-8]]:1: note: class was forward declared here [ClassForwardDeclaredHere]

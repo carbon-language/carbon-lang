@@ -278,7 +278,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !10 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_unsigned)
-// CHECK:STDOUT: !28 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !34 = !DIFile(filename: "import_ints.carbon", directory: "")
 // CHECK:STDOUT: !35 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !34, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !38 = !DIBasicType(name: "int", size: 8, encoding: DW_ATE_signed)
@@ -321,19 +321,19 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !87 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !34, type: !43, spFlags: DISPFlagDefinition, unit: !35)
 // CHECK:STDOUT: !88 = !DILocation(line: 14, column: 1, scope: !87)
 // CHECK:STDOUT: !89 = !DILocation(line: 0, scope: !87)
-// CHECK:STDOUT: !90 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.050bb5efb446e6a5", scope: null, file: !28, line: 30, type: !60, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !96)
+// CHECK:STDOUT: !90 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.050bb5efb446e6a5", scope: null, file: !26, line: 30, type: !60, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !96)
 // CHECK:STDOUT: !91 = !DILocalVariable(arg: 1, scope: !90, type: !39)
 // CHECK:STDOUT: !95 = !DILocation(line: 30, column: 1, scope: !90)
 // CHECK:STDOUT: !96 = !{!91}
-// CHECK:STDOUT: !97 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.1844bb587c95aba0", scope: null, file: !28, line: 30, type: !62, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !103)
+// CHECK:STDOUT: !97 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.1844bb587c95aba0", scope: null, file: !26, line: 30, type: !62, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !103)
 // CHECK:STDOUT: !98 = !DILocalVariable(arg: 1, scope: !97, type: !38)
 // CHECK:STDOUT: !102 = !DILocation(line: 30, column: 1, scope: !97)
 // CHECK:STDOUT: !103 = !{!98}
-// CHECK:STDOUT: !104 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c720bc10bd2c6ca0", scope: null, file: !28, line: 30, type: !67, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !110)
+// CHECK:STDOUT: !104 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c720bc10bd2c6ca0", scope: null, file: !26, line: 30, type: !67, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !110)
 // CHECK:STDOUT: !105 = !DILocalVariable(arg: 1, scope: !104, type: !41)
 // CHECK:STDOUT: !109 = !DILocation(line: 30, column: 1, scope: !104)
 // CHECK:STDOUT: !110 = !{!105}
-// CHECK:STDOUT: !111 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.1367c3db554e90f6", scope: null, file: !28, line: 30, type: !69, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !117)
+// CHECK:STDOUT: !111 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.1367c3db554e90f6", scope: null, file: !26, line: 30, type: !69, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !117)
 // CHECK:STDOUT: !112 = !DILocalVariable(arg: 1, scope: !111, type: !10)
 // CHECK:STDOUT: !116 = !DILocation(line: 30, column: 1, scope: !111)
 // CHECK:STDOUT: !117 = !{!112}
@@ -451,8 +451,8 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !24 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
-// CHECK:STDOUT: !28 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !22 = !DIFile(filename: "min_prelude/parts/default.carbon", directory: "")
+// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !42 = !{null}
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
 // CHECK:STDOUT: !44 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -482,10 +482,10 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !150 = !DIFile(filename: "./struct.h", directory: "")
 // CHECK:STDOUT: !151 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.eed9ddf3aaac414a.Core:X.Cpp", scope: null, file: !150, line: 2, type: !140, spFlags: DISPFlagDefinition, unit: !138)
 // CHECK:STDOUT: !152 = !DILocation(line: 2, column: 8, scope: !151)
-// CHECK:STDOUT: !153 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1", scope: null, file: !24, line: 9, type: !140, spFlags: DISPFlagDefinition, unit: !138)
+// CHECK:STDOUT: !153 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1", scope: null, file: !22, line: 9, type: !140, spFlags: DISPFlagDefinition, unit: !138)
 // CHECK:STDOUT: !156 = !DILocation(line: 9, column: 28, scope: !153)
 // CHECK:STDOUT: !157 = !DILocation(line: 9, column: 21, scope: !153)
-// CHECK:STDOUT: !158 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.db7cec99954a350c", scope: null, file: !28, line: 30, type: !54, spFlags: DISPFlagDefinition, unit: !138, retainedNodes: !164)
+// CHECK:STDOUT: !158 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.db7cec99954a350c", scope: null, file: !26, line: 30, type: !54, spFlags: DISPFlagDefinition, unit: !138, retainedNodes: !164)
 // CHECK:STDOUT: !159 = !DILocalVariable(arg: 1, scope: !158, type: !44)
 // CHECK:STDOUT: !163 = !DILocation(line: 30, column: 1, scope: !158)
 // CHECK:STDOUT: !164 = !{!159}
@@ -576,7 +576,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !28 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
+// CHECK:STDOUT: !26 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !42 = !{null}
 // CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
 // CHECK:STDOUT: !44 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
@@ -609,7 +609,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !188 = !DILocation(line: 21, column: 3, scope: !184)
 // CHECK:STDOUT: !189 = !DILocation(line: 20, column: 1, scope: !184)
 // CHECK:STDOUT: !190 = !{!185}
-// CHECK:STDOUT: !191 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6ba2dd5b95e0fe1b", scope: null, file: !28, line: 30, type: !54, spFlags: DISPFlagDefinition, unit: !170, retainedNodes: !197)
+// CHECK:STDOUT: !191 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6ba2dd5b95e0fe1b", scope: null, file: !26, line: 30, type: !54, spFlags: DISPFlagDefinition, unit: !170, retainedNodes: !197)
 // CHECK:STDOUT: !192 = !DILocalVariable(arg: 1, scope: !191, type: !44)
 // CHECK:STDOUT: !196 = !DILocation(line: 30, column: 1, scope: !191)
 // CHECK:STDOUT: !197 = !{!192}
