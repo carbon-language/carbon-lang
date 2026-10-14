@@ -860,8 +860,8 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   // trying to satisfy. On success, each `X impls Y` requirement in here will
   // result in a witness being returned that provides the `impls` relationship.
   // Each equivalent requirement must be verified to be true in order to
-  // succeed, and all rewrite requirements are treated as equivalent
-  // requirements here, since we're doing lookup not defining an `impl` witness.
+  // succeed. Since we're doing impl lookup and not defining an `impl` witness,
+  // we treat all rewrite requirements as equivalent requirements.
   auto required_identified_id = RequireIdentifiedFacetType(
       context, loc_id, query_self_const_id,
       context.types().GetTypeIdForTypeConstantId(query_facet_type_const_id),
