@@ -1057,7 +1057,10 @@ static auto GetLocalGenericId(ImportContext& context,
     case CARBON_KIND(SemIR::FunctionType fn_type): {
       return context.local_functions().Get(fn_type.function_id).generic_id;
     }
-    case CARBON_KIND(SemIR::GenericClassType class_type): {
+    case CARBON_KIND(SemIR::ClassType class_type): {
+      return context.local_classes().Get(class_type.class_id).generic_id;
+    }
+    case CARBON_KIND(SemIR::ParameterizedClassType class_type): {
       return context.local_classes().Get(class_type.class_id).generic_id;
     }
     case CARBON_KIND(SemIR::GenericInterfaceType interface_type): {
@@ -1422,7 +1425,7 @@ static auto GetLocalNameScopeIdImpl(ImportRefResolver& resolver,
       auto type_inst =
           resolver.local_types().GetAsInst(name_scope_inst.type_id());
       CARBON_KIND_SWITCH(type_inst) {
-        case CARBON_KIND(SemIR::GenericClassType inst): {
+        case CARBON_KIND(SemIR::ParameterizedClassType inst): {
           return resolver.local_classes().Get(inst.class_id).scope_id;
         }
         case CARBON_KIND(SemIR::GenericInterfaceType inst): {
@@ -2099,7 +2102,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     auto import_specific_id = SemIR::SpecificId::None;
     if (import_class.has_parameters()) {
       auto import_generic_class_type =
-          resolver.import_types().GetAs<SemIR::GenericClassType>(inst.type_id);
+          resolver.import_types().GetAs<SemIR::ParameterizedClassType>(
+              inst.type_id);
       import_specific_id = import_generic_class_type.enclosing_specific_id;
       specific_data = GetLocalSpecificData(resolver, import_specific_id);
     } else {
@@ -2146,7 +2150,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 
     // Finalize class_decl_id's contents and constant value.
     if (import_class.has_parameters()) {
-      class_decl.type_id = GetGenericClassType(
+      class_decl.type_id = GetParameterizedClassType(
           resolver.local_context(), class_decl.class_id, local_specific_id);
       // Write the class ID into the ClassDecl.
       class_const_id =
@@ -2185,7 +2189,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       class_id = class_type->class_id;
     } else {
       auto generic_class_type =
-          resolver.local_types().GetAs<SemIR::GenericClassType>(
+          resolver.local_types().GetAs<SemIR::ParameterizedClassType>(
               class_const_inst.type_id());
       class_id = generic_class_type.class_id;
     }
@@ -2269,7 +2273,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Done(class_const_id);
   } else {
     auto generic_class_type =
-        resolver.local_types().GetAs<SemIR::GenericClassType>(
+        resolver.local_types().GetAs<SemIR::ParameterizedClassType>(
             class_const_inst.type_id());
     auto specific_id =
         GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
@@ -2860,7 +2864,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     class_id = class_const_inst.As<SemIR::ClassType>().class_id;
   } else {
     auto generic_class_type =
-        resolver.local_types().GetAs<SemIR::GenericClassType>(
+        resolver.local_types().GetAs<SemIR::ParameterizedClassType>(
             class_const_inst.type_id());
     class_id = generic_class_type.class_id;
   }
@@ -2938,7 +2942,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::GenericClassType inst) -> ResolveResult {
+                                SemIR::ParameterizedClassType inst)
+    -> ResolveResult {
   CARBON_CHECK(inst.type_id == SemIR::TypeType::TypeId);
   auto class_val_id = GetLocalConstantInstId(
       resolver,
@@ -2947,8 +2952,8 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
     return ResolveResult::Retry();
   }
   auto class_val = resolver.local_insts().Get(class_val_id);
-  CARBON_CHECK(
-      resolver.local_types().Is<SemIR::GenericClassType>(class_val.type_id()));
+  CARBON_CHECK(resolver.local_types().Is<SemIR::ParameterizedClassType>(
+      class_val.type_id()));
   return ResolveResult::Done(
       resolver.local_types().GetConstantId(class_val.type_id()));
 }
@@ -4757,7 +4762,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::FunctionTypeWithSelfType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
-    case CARBON_KIND(SemIR::GenericClassType inst): {
+    case CARBON_KIND(SemIR::ParameterizedClassType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::GenericInterfaceType inst): {

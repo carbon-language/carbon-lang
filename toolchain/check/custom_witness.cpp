@@ -186,6 +186,7 @@ static auto IsBuiltinWithTrivialDestruction(Context& context,
                                             SemIR::InstId inst_id) -> bool {
   CARBON_KIND_SWITCH(context.insts().Get(inst_id)) {
     case SemIR::BoolType::Kind:
+    case SemIR::BoundMethodType::Kind:
     case SemIR::CppFunctionPointerType::Kind:
     case SemIR::FacetType::Kind:
     case SemIR::FloatType::Kind:
@@ -478,7 +479,11 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
             class_info
                 .GetStructTypeFields(context.sem_ir(), class_type.specific_id)
                 .drop_while([](SemIR::StructTypeField struct_field) {
-                  return struct_field.name_id == SemIR::NameId::Vptr;
+                  // The vptr and a choice's discriminant aren't named members,
+                  // and are trivially destructible.
+                  return struct_field.name_id == SemIR::NameId::Vptr ||
+                         struct_field.name_id ==
+                             SemIR::NameId::ChoiceDiscriminant;
                 }));
         return;
       }

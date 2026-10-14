@@ -26,11 +26,11 @@ fn F() {
 // CHECK:STDOUT: ; ModuleID = 'basic.carbon'
 // CHECK:STDOUT: source_filename = "basic.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @VehicleType.val.025 = internal constant { i2 } zeroinitializer
-// CHECK:STDOUT: @VehicleType.val.a72 = internal constant { i2 } { i2 1 }
-// CHECK:STDOUT: @VehicleType.val.471 = internal constant { i2 } { i2 -2 }
-// CHECK:STDOUT: @VehicleType.val.a72.loc15_6.10 = internal constant { i2 } { i2 1 }
-// CHECK:STDOUT: @VehicleType.val.025.loc14_7.10 = internal constant { i2 } zeroinitializer
+// CHECK:STDOUT: @VehicleType.val.bfd = internal constant { i2 } zeroinitializer
+// CHECK:STDOUT: @VehicleType.val.855 = internal constant { i2 } { i2 1 }
+// CHECK:STDOUT: @VehicleType.val.27d = internal constant { i2 } { i2 -2 }
+// CHECK:STDOUT: @VehicleType.val.855.loc15_6.10 = internal constant { i2 } { i2 1 }
+// CHECK:STDOUT: @VehicleType.val.bfd.loc14_7.10 = internal constant { i2 } zeroinitializer
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind

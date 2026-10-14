@@ -550,7 +550,7 @@ fn RefReturn() -> ref;
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │   ╭─LambdaIntroducer 'fn'
 // CHECK:STDOUT:   │ │   │   ╭─UnsignedIntTypeLiteral 'u32'
-// CHECK:STDOUT:   │ │   │ ╭─PrefixOperatorRef 'ref'
+// CHECK:STDOUT:   │ │   │ ╭─RefPrimitiveForm 'ref'
 // CHECK:STDOUT:   │ │   ├─ReturnType '->'
 // CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '=>'
 // CHECK:STDOUT:   │ │ ├─IntLiteral '0'

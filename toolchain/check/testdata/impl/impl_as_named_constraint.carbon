@@ -285,7 +285,7 @@ constraint Y {
 // CHECK:STDERR:
 impl () as Y {}
 
-// --- member_access_in_extend_require.carbon
+// --- fail_todo_member_access_in_extend_require.carbon
 library "[[@TEST_NAME]]";
 
 interface I { let X: type; }
@@ -304,7 +304,49 @@ constraint GivesI {
 // - Deduces for Self which tries to convert Self to type
 // - Requires the type of Self to be complete, and its type is GivesI
 // - Forms the self-specfic for GivesI's extend require....we have a loop.
+// CHECK:STDERR: fail_todo_member_access_in_extend_require.carbon:[[@LINE+4]]:1: error: constraint `GivesI where .(I.X) = ()` being implemented requires that `T.(I.X)` implements `J` [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR: impl forall [T: type] T as GivesI where .X = () {}
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR:
 impl forall [T: type] T as GivesI where .X = () {}
+
+// --- require_specific_used_in_impl_as_then_outside.carbon
+library "[[@TEST_NAME]]";
+
+interface I { let X: type; }
+interface J {}
+interface K {}
+
+class C {}
+impl C as J {}
+impl C as K {}
+
+class D {}
+impl D as J {}
+
+constraint GivesI {
+  extend require impls I where .X impls J;
+}
+
+match_first {
+  impl () as I where .X = C {}
+  // Never selected for `() as I`. Declaring this impl forms the specific of
+  // the require in `GivesI` with `Self = ()`, where `.X` refers to this
+  // impl. The require's specific must not permanently encode that decision
+  // into future uses though.
+  impl () as GivesI where .X = D {}
+}
+
+fn F(generic _: GivesI where .X impls K) {}
+
+fn G() {
+  // Reuses the specific of the require in `GivesI` with `Self = ()`. The
+  // `.X` should perform a fresh impl lookup here and should resolve to `C`. If
+  // the specific encoded the attachment to the second impl instead, it may
+  // resolve to `D` (which doesn't impl `K`) or it may not resolve beyond the
+  // symbolic `.X` at all.
+  F(());
+}
 
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:

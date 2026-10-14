@@ -302,9 +302,10 @@ class TypeCompleter {
     requires(InstT::Kind.template IsAnyOf<
              SemIR::AssociatedEntityType, SemIR::CppOverloadSetType,
              SemIR::CppTemplateNameType, SemIR::FunctionType,
-             SemIR::FunctionTypeWithSelfType, SemIR::GenericClassType,
-             SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
-             SemIR::InstType, SemIR::UnboundElementType, SemIR::WhereExpr>())
+             SemIR::FunctionTypeWithSelfType, SemIR::GenericInterfaceType,
+             SemIR::GenericNamedConstraintType, SemIR::InstType,
+             SemIR::ParameterizedClassType, SemIR::UnboundElementType,
+             SemIR::WhereExpr>())
   auto BuildInfoForInst(SemIR::TypeId /*type_id*/, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     // These types have no runtime operations, so we use an empty value
@@ -961,16 +962,17 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 // error is encountered or diagnosed.
 static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
                               SemIR::ConstantId initial_self_const_id,
-                              SemIR::TypeInstId facet_type_inst_id,
+                              SemIR::ConstantId facet_type_const_id,
                               bool allow_partially_identified, bool diagnose)
     -> SemIR::IdentifiedFacetTypeId {
-  if (facet_type_inst_id == SemIR::ErrorInst::InstId) {
+  if (facet_type_const_id == SemIR::ErrorInst::ConstantId) {
     return SemIR::IdentifiedFacetTypeId::None;
   }
 
-  auto declared_facet_type_id = context.insts()
-                                    .GetAs<SemIR::FacetType>(facet_type_inst_id)
-                                    .declared_facet_type_id;
+  auto declared_facet_type_id =
+      context.constant_values()
+          .GetInstAs<SemIR::FacetType>(facet_type_const_id)
+          .declared_facet_type_id;
 
   // While partially identified facet types end up in the store of
   // IdentifiedFacetTypes, we don't try to construct a key to look for them
@@ -991,7 +993,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
     auto subst_id = SubstPeriodSelfInFacetType(
         context, loc_id,
         context.constant_values().GetInstId(initial_self_const_id),
-        context.types().GetAsTypeInstId(facet_type_inst_id));
+        context.types().GetTypeInstIdForTypeConstantId(facet_type_const_id));
     declared_facet_type_id = context.insts()
                                  .GetAs<SemIR::FacetType>(subst_id)
                                  .declared_facet_type_id;
@@ -1250,22 +1252,24 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
 auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
                             SemIR::ConstantId self_const_id,
-                            SemIR::TypeInstId facet_type_inst_id,
+                            SemIR::TypeId facet_type_type_id,
                             bool allow_partially_identified)
     -> SemIR::IdentifiedFacetTypeId {
-  return IdentifyFacetType(context, loc_id, self_const_id, facet_type_inst_id,
+  return IdentifyFacetType(context, loc_id, self_const_id,
+                           facet_type_type_id.AsConstantId(),
                            allow_partially_identified,
                            /*diagnose=*/false);
 }
 
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
-                                SemIR::TypeInstId facet_type_inst_id,
+                                SemIR::TypeId facet_type_type_id,
                                 DiagnosticContextFn diagnostic_context,
                                 bool diagnose) -> SemIR::IdentifiedFacetTypeId {
   CARBON_CHECK(diagnostic_context);
   Diagnostics::ContextScope scope(&context.emitter(), diagnostic_context);
-  return IdentifyFacetType(context, loc_id, self_const_id, facet_type_inst_id,
+  return IdentifyFacetType(context, loc_id, self_const_id,
+                           facet_type_type_id.AsConstantId(),
                            /*allow_partially_identified=*/false, diagnose);
 }
 
