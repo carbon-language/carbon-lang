@@ -77,7 +77,8 @@ struct Specific : Printable<Specific> {
       out << ", " << region << "_block_id: " << id << ", " << region
           << "_has_error: " << has_error;
     };
-    out << "{generic: " << generic_id << ", args: " << args_id;
+    out << "{generic: " << generic_id << ", args: " << args_id
+        << ", identified: " << identified;
     print_block("decl", decl_block_id, decl_block_has_error);
     print_block("definition", definition_block_id, definition_block_has_error);
     out << "}";
@@ -127,6 +128,9 @@ struct Specific : Printable<Specific> {
   GenericId generic_id;
   // Argument values, corresponding to the bindings in `Generic::bindings_id`.
   InstBlockId args_id;
+  // A boolean value: whether the specific is formed as part of identifying a
+  // facet type.
+  int32_t identified [[clang::require_explicit_initialization]];
 
   // The following members are set when the corresponding region of the specific
   // is resolved.
@@ -155,7 +159,8 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   // and argument list. Returns the ID of the specific. The argument IDs must be
   // for instructions in the constant block, and must be a canonical instruction
   // block ID.
-  auto GetOrAdd(GenericId generic_id, InstBlockId args_id) -> SpecificId;
+  auto GetOrAdd(GenericId generic_id, InstBlockId args_id, bool identified)
+      -> SpecificId;
 
   // Gets the specific with the given ID.
   auto Get(SpecificId specific_id) const -> const Specific& {
@@ -172,6 +177,12 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
   auto GetArgsOrEmpty(SpecificId specific_id) const -> InstBlockId {
     return specific_id.has_value() ? Get(specific_id).args_id
                                    : InstBlockId::Empty;
+  }
+
+  // Gets whether the specific has an error in either block. If `Empty` or
+  // `None` is passed, the result would always be false.
+  auto HasError(SpecificId specific_id) const -> bool {
+    return specific_id.has_value() ? Get(specific_id).HasError() : false;
   }
 
   // These are to support printable structures, and are not guaranteed.

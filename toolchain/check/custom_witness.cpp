@@ -479,7 +479,11 @@ static auto MakeSubobjectDestroyOpBody(Context& context, SemIR::LocId loc_id,
             class_info
                 .GetStructTypeFields(context.sem_ir(), class_type.specific_id)
                 .drop_while([](SemIR::StructTypeField struct_field) {
-                  return struct_field.name_id == SemIR::NameId::Vptr;
+                  // The vptr and a choice's discriminant aren't named members,
+                  // and are trivially destructible.
+                  return struct_field.name_id == SemIR::NameId::Vptr ||
+                         struct_field.name_id ==
+                             SemIR::NameId::ChoiceDiscriminant;
                 }));
         return;
       }
@@ -801,7 +805,7 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
     LoadImportRef(context, assoc_entity_id);
     update_interface_with_self_specific_id(assoc_entity_id);
     CARBON_CHECK(
-        !context.specifics().Get(interface_with_self_specific_id).HasError());
+        !context.specifics().HasError(interface_with_self_specific_id));
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), interface_with_self_specific_id,

@@ -48,10 +48,10 @@ fn G() -> i32 { return F(0 as i32); }
 // CHECK:STDOUT:   %return.param_patt.bf4475.2: %pattern_type.2c66b4.2 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.f44: %pattern_type.2c66b4.2 = return_slot_pattern %return.param_patt.bf4475.2, %T.as_type [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.d9c: <witness> = lookup_impl_witness %T.f84, @Copy [symbolic]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.c85f21.2: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.f84) [symbolic]
-// CHECK:STDOUT:   %.c29: type = fn_type_with_self_type %Copy.WithSelf.Op.type.c85f21.2, %T.f84 [symbolic]
-// CHECK:STDOUT:   %impl.elem0.bd2: %.c29 = impl_witness_access %Copy.lookup_impl_witness.d9c, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.e2a: <specific function> = specific_impl_function %impl.elem0.bd2, @Copy.WithSelf.Op(%T.f84) [symbolic]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d2f9c3.2: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.f84) [symbolic]
+// CHECK:STDOUT:   %.8bf: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d2f9c3.2, %T.f84 [symbolic]
+// CHECK:STDOUT:   %impl.elem0.bb5: %.8bf = impl_witness_access %Copy.lookup_impl_witness.d9c, element0 [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.2ac: <specific function> = specific_impl_function %impl.elem0.bb5, @Copy.WithSelf.Op(%T.f84) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -104,21 +104,21 @@ fn G() -> i32 { return F(0 as i32); }
 // CHECK:STDOUT:   %.loc4_43.4: Core.Form = init_form %T.as_type.loc4_23.1 [symbolic = %.loc4_43.4 (constants.%.1ce700.2)]
 // CHECK:STDOUT:   %return.param_patt.loc4_43.2: @F.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc4_43.2 (constants.%return.param_patt.bf4475.2)]
 // CHECK:STDOUT:   %return.patt.loc4_43.2: @F.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc4_43.2, %T.as_type.loc4_23.1 [symbolic = %return.patt.loc4_43.2 (constants.%return.patt.f44)]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc4_7.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.c85f21.2)]
-// CHECK:STDOUT:   %.loc4_43.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc4_7.1 [symbolic = %.loc4_43.5 (constants.%.c29)]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc4_7.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
+// CHECK:STDOUT:   %.loc4_43.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc4_7.1 [symbolic = %.loc4_43.5 (constants.%.8bf)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc4_7.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c)]
-// CHECK:STDOUT:   %impl.elem0.loc4_43.2: @F.%.loc4_43.5 (%.c29) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc4_43.2 (constants.%impl.elem0.bd2)]
-// CHECK:STDOUT:   %specific_impl_fn.loc4_43.2: <specific function> = specific_impl_function %impl.elem0.loc4_43.2, @Copy.WithSelf.Op(%T.loc4_7.1) [symbolic = %specific_impl_fn.loc4_43.2 (constants.%specific_impl_fn.e2a)]
+// CHECK:STDOUT:   %impl.elem0.loc4_43.2: @F.%.loc4_43.5 (%.8bf) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc4_43.2 (constants.%impl.elem0.bb5)]
+// CHECK:STDOUT:   %specific_impl_fn.loc4_43.2: <specific function> = specific_impl_function %impl.elem0.loc4_43.2, @Copy.WithSelf.Op(%T.loc4_7.1) [symbolic = %specific_impl_fn.loc4_43.2 (constants.%specific_impl_fn.2ac)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @F.%T.as_type.loc4_23.1 (%T.as_type)) -> out %return.param: @F.%T.as_type.loc4_23.1 (%T.as_type) [deduced] {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @F.%T.as_type.loc4_23.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %.loc4_44: init @F.%T.as_type.loc4_23.1 (%T.as_type) = splice_block %Copy.WithSelf.Op.call {
-// CHECK:STDOUT:       %impl.elem0.loc4_43.1: @F.%.loc4_43.5 (%.c29) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c, element0 [symbolic = %impl.elem0.loc4_43.2 (constants.%impl.elem0.bd2)]
+// CHECK:STDOUT:       %impl.elem0.loc4_43.1: @F.%.loc4_43.5 (%.8bf) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c, element0 [symbolic = %impl.elem0.loc4_43.2 (constants.%impl.elem0.bb5)]
 // CHECK:STDOUT:       %bound_method.loc4_43.1: <bound method> = bound_method %x.ref, %impl.elem0.loc4_43.1
 // CHECK:STDOUT:       %.loc4_43.1: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T.loc4_7.1 (constants.%T.f84)]
 // CHECK:STDOUT:       %.loc4_43.2: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T.loc4_7.1 (constants.%T.f84)]
-// CHECK:STDOUT:       %specific_impl_fn.loc4_43.1: <specific function> = specific_impl_function %impl.elem0.loc4_43.1, @Copy.WithSelf.Op(constants.%T.f84) [symbolic = %specific_impl_fn.loc4_43.2 (constants.%specific_impl_fn.e2a)]
+// CHECK:STDOUT:       %specific_impl_fn.loc4_43.1: <specific function> = specific_impl_function %impl.elem0.loc4_43.1, @Copy.WithSelf.Op(constants.%T.f84) [symbolic = %specific_impl_fn.loc4_43.2 (constants.%specific_impl_fn.2ac)]
 // CHECK:STDOUT:       %bound_method.loc4_43.2: <bound method> = bound_method %x.ref, %specific_impl_fn.loc4_43.1
 // CHECK:STDOUT:       %.loc4_43.3: ref @F.%T.as_type.loc4_23.1 (%T.as_type) = splice_block %return.param {}
 // CHECK:STDOUT:       %Copy.WithSelf.Op.call: init @F.%T.as_type.loc4_23.1 (%T.as_type) to %.loc4_43.3 = call %bound_method.loc4_43.2(%x.ref)

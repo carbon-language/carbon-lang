@@ -314,9 +314,14 @@ class Context {
   struct DeclaringImplDecl {
     SemIR::ConstantId self_id;
     SemIR::SpecificInterface specific_interface;
+    auto operator==(const DeclaringImplDecl& rhs) const -> bool = default;
   };
   auto declaring_impl_decls() -> llvm::SmallVector<DeclaringImplDecl>& {
     return declaring_impl_decls_;
+  }
+
+  auto eval_impl_lookup_to_identified_witness() -> int32_t& {
+    return eval_impl_lookup_to_identified_witness_;
   }
 
   // Data about a form expression.
@@ -636,6 +641,13 @@ class Context {
   // `C as I`, an impl lookup query for `C as I` or `.Self as I` should find
   // that impl being declared (even though it does not yet exist).
   llvm::SmallVector<DeclaringImplDecl> declaring_impl_decls_;
+
+  // Tracks if we are currently identifying a facet type, which causes
+  // LookupImplWitness instructions to not resolve to final witnesses by
+  // redirecting them to form IdentifiedWitness instructions. The caller to
+  // identify must replace any IdentifiedWitness instructions in the
+  // IdentifiedFacetType before using the values there.
+  int32_t eval_impl_lookup_to_identified_witness_ = 0;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

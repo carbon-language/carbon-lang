@@ -55,12 +55,15 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
 static auto HandleReturnSpecifier(Context& context,
                                   Parse::AnyReturnSpecifierId node_id) -> bool {
   auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
-  // `-> T` provides a type expression, whereas `-> ref T` and `->? F`
-  // provide a form.
+  // `-> T` provides a type expression, whereas `-> val T`, `-> ref T`,
+  // `-> var T`, and `->? F` provide a form.
+  auto expr_kind = context.parse_tree().node_kind(expr_node_id);
+  bool is_primitive_form = expr_kind == Parse::ValPrimitiveFormId::Kind ||
+                           expr_kind == Parse::RefPrimitiveFormId::Kind ||
+                           expr_kind == Parse::VarPrimitiveFormId::Kind;
   bool is_return_type =
       context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind &&
-      context.parse_tree().node_kind(expr_node_id) !=
-          Parse::RefPrimitiveFormId::Kind;
+      !is_primitive_form;
   if (is_return_type && context.parse_tree().node_kind(expr_node_id) ==
                             Parse::NodeKind::AutoTypeLiteral) {
     // `-> auto`: the return type is deduced from the function body, so there is
