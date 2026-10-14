@@ -548,8 +548,8 @@ TEST_F(DominanceOperandConstantInSpecificTest,
        NonConstantInSpecificRequiresDominance) {
   // `sym_id` is a symbolic constant in the generic, so using it before its
   // evaluation passes generic verification, but in the specific it resolves to
-  // a non-constant value (represented by `InstId::None` in the value block), so
-  // we require its evaluation to dominate the use.
+  // a non-constant value (represented by `InstId::None` in the value block
+  // below), so we require its evaluation to dominate the use.
   auto generic_id = AddGeneric(AddBlock({InstId::None}));
   auto sym_id = MakeSymbolicInGeneric(generic_id);
   AddFunction({AddBlock({AddUse(sym_id), sym_id, AddReturn()})}, generic_id);
