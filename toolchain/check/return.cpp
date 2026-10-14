@@ -444,7 +444,7 @@ auto DeduceReturnTypeAtEndOfBody(Context& context,
     } else if (type_id != return_type_id) {
       CARBON_DIAGNOSTIC(
           DeducedReturnTypeMismatch, Error,
-          "deducded return type {0} does not match return type deduced earlier",
+          "deduced return type {0} does not match return type deduced earlier",
           TypeOfInstId);
       CARBON_DIAGNOSTIC(DeducedReturnTypeMismatchPrevious, Note,
                         "return type previously deduced as {0} here",
