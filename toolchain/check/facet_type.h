@@ -119,6 +119,10 @@ auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
                               SubstIdentifiedWitnessesCallbacks& callbacks)
     -> SemIR::IdentifiedFacetType::RequiredImpl;
 auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                              SemIR::IdentifiedFacetType::Equivalent equiv,
+                              SubstIdentifiedWitnessesCallbacks& callbacks)
+    -> SemIR::IdentifiedFacetType::Equivalent;
+auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
                               SemIR::ConstantId const_id,
                               SubstIdentifiedWitnessesCallbacks& callbacks)
     -> SemIR::ConstantId;
