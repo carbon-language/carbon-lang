@@ -683,6 +683,9 @@ auto Formatter::FormatSpecific(SpecificId id, const Specific& specific)
   out() << "specific ";
   FormatName(id);
   out() << " ";
+  if (specific.identified) {
+    out() << "[identified] ";
+  }
 
   OpenBrace();
   FormatSpecificRegion(generic, specific, GenericInstIndex::Region::Declaration,
