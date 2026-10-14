@@ -114,6 +114,12 @@ cc_test(
 )
 
 cc_library(
+    name = "checked_save_and_restore",
+    hdrs = ["checked_save_and_restore.h"],
+    deps = [":check"],
+)
+
+cc_library(
     name = "concepts",
     hdrs = ["concepts.h"],
 )
@@ -402,6 +408,12 @@ cc_test(
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "increment_scope",
+    hdrs = ["increment_scope.h"],
+    deps = [":check"],
 )
 
 cc_library(

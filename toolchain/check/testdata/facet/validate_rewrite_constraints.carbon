@@ -1058,7 +1058,7 @@ fn G(generic T: I where .X = NI({}), generic U: J where .Y = ()) {
   F(T, U);
 }
 
-// --- todo_fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_callee_access.carbon
+// --- fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_callee_access.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -1076,7 +1076,9 @@ fn G(generic T: I where .X = NI({}), generic U: I where .Y = ()) {
   // The caller's `U` has type `I where .Y = ()` but the callee wants something
   // of type `I where .Y = {}`.
   //
-  // TODO: This should fail.
+  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_callee_access.carbon:[[@LINE+3]]:3-9: error: cannot convert type `U` that implements `I where .(I.Y) = ()` into type implementing `NI({})` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_callee_access.carbon:[[@LINE-7]]:53-58: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR:
   F(T, U);
 }
 

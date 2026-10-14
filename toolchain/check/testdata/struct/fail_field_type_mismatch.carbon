@@ -25,9 +25,9 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete]
-// CHECK:STDOUT:   %pattern_type.8d6: type = pattern_type %struct_type.a [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.8d6 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:   %x.var_patt: %pattern_type.8d6 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:   %pattern_type.243: type = pattern_type %struct_type.a [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.243 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.243 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: Core.FloatLiteral} [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.b = struct_value (%float) [concrete]
@@ -55,8 +55,8 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.8d6 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.8d6 = var_pattern %x.patt [concrete = constants.%x.var_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.243 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.243 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

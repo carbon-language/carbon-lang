@@ -9,10 +9,10 @@
 #include <optional>
 #include <utility>
 
+#include "common/checked_save_and_restore.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/Support/ConvertUTF.h"
-#include "llvm/Support/SaveAndRestore.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/base/int.h"
 #include "toolchain/base/kind_switch.h"
@@ -684,8 +684,8 @@ static auto GetConstantValue(EvalContext& eval_context,
   if (args_id == specific.args_id) {
     return specific_id;
   }
-  return eval_context.context().specifics().GetOrAdd(specific.generic_id,
-                                                     args_id);
+  return eval_context.context().specifics().GetOrAdd(
+      specific.generic_id, args_id, specific.identified);
 }
 
 static auto GetConstantValue(EvalContext& eval_context,
@@ -3540,20 +3540,21 @@ auto TryEvalInstUnsafe(Context& context, SemIR::InstId inst_id,
   return TryEvalInstInContext(eval_context, inst_id, inst);
 }
 
-// Update `context.access_context` to the type of the innermost enclosing type
-// scope of the generic.
-static auto SetAccessContext(Context& context, const SemIR::Generic& generic) {
+// Finds the scope to use for `context.access_context`, representing the
+// innermost enclosing type scope of the generic.
+static auto FindAccessContext(Context& context, const SemIR::Generic& generic)
+    -> SemIR::NameScopeId {
   auto function_decl =
       context.insts().TryGetAs<SemIR::FunctionDecl>(generic.decl_id);
   if (!function_decl || !function_decl->function_id.has_value()) {
-    return;
+    return context.access_context();
   }
   const auto& function = context.functions().Get(function_decl->function_id);
   if (!function.parent_scope_id.has_value()) {
-    return;
+    return context.access_context();
   }
 
-  context.access_context() = function.parent_scope_id;
+  return function.parent_scope_id;
 }
 
 auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
@@ -3563,7 +3564,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   const auto& generic = context.generics().Get(generic_id);
   auto eval_block_id = generic.GetEvalBlock(region);
   auto eval_block = context.inst_blocks().Get(eval_block_id);
-  llvm::SaveAndRestore access_context(context.access_context());
 
   // Allocate the value block and store it back onto the specific, so that our
   // in-progress results are visible.
@@ -3576,7 +3576,31 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   }
   specific.SetValueBlock(region, value_block_id);
 
-  SetAccessContext(context, generic);
+  CheckedSaveAndRestore access_context(context.access_context(),
+                                       FindAccessContext(context, generic));
+
+  // TODO: There are now 3 things being set-and-restored. Can this be refactored
+  // to make this a more clear pattern?
+
+  // The `declaring_impl_decls` is a global state that modifies the evaluation
+  // of LookupImplWitness. As a global state, it should only affect new
+  // instructions introduced during a given state. When we are evaluating for a
+  // specific, we are resolving existing instructions in the eval block for a
+  // generic. The global state should not apply to anything done while resolving
+  // a specific.
+  CheckedSaveAndRestore declaring(context.declaring_impl_decls(), {});
+
+  // The `eval_impl_lookup_to_identified_witness` is also a global state that
+  // modifies the evaluation of LookupImplWitness. We don't want to apply that
+  // state to existing instructions in eval blocks, unless we are resolving a
+  // specific that is marked as `identified`. In that case, the specific is
+  // being formed as part of identification and the global state does apply.
+  // Otherwise, it should not affect anything done while resolving a specific.
+  std::optional<CheckedSaveAndRestore<int32_t>> eval_identified;
+  if (!specific.identified) {
+    eval_identified.emplace(context.eval_impl_lookup_to_identified_witness(),
+                            0);
+  }
 
   EvalContext eval_context(&context, loc_id, specific_id);
 
@@ -3587,14 +3611,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
                                        SemIR::SpecificId);
         builder.Attach(loc_id, ResolvingSpecificHere, specific_id);
       });
-
-  // The `declaring_impl_decls` is a global state that modifies the evaluation
-  // of LookupImplWitness. As a global state, it should only affect new
-  // instructions introduced during a given state. When we are evaluating for a
-  // specific, we are resolving existing instructions in the eval block for a
-  // generic. The global state should not apply to anything done while resolving
-  // a specific.
-  auto declaring = std::exchange(context.declaring_impl_decls(), {});
 
   for (auto [i, inst_id, result_id] :
        llvm::enumerate(eval_block, value_block)) {
@@ -3607,9 +3623,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
     }
     result_id = context.constant_values().GetInstId(const_id);
   }
-
-  CARBON_CHECK(context.declaring_impl_decls().empty());
-  context.declaring_impl_decls() = std::move(declaring);
 }
 
 // Information about the function call we are currently executing. Unlike

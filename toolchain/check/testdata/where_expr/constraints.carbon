@@ -127,14 +127,14 @@ import library "state_constraints";
 class C {}
 impl C as J {}
 
-fn EmptyStruct(generic Y: J where .Self == {});
+fn EmptyStruct(unused generic Y: J where .Self == {}) {}
 
 // TODO: Should report that `C` does not meeet the `==` constraint. Right
 // now there is no support for `==` constraints so it rejects it as an
 // "other currently unsupported constraint."
 fn NotEmptyStruct() {
   // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE+3]]:3-16: error: cannot convert type `C` into type implementing `J where...` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE-7]]:24-45: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fail_todo_enforce_equality_constraint.carbon:[[@LINE-7]]:31-52: note: initializing generic parameter `Y` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   EmptyStruct(C);
 }

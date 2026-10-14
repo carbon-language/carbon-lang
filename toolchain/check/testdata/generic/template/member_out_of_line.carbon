@@ -53,13 +53,13 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %.184: Core.Form = init_form %T [template]
 // CHECK:STDOUT:   %return.param_patt.41d: %pattern_type.51d = out_param_pattern [template]
 // CHECK:STDOUT:   %return.patt.b39: %pattern_type.51d = return_slot_pattern %return.param_patt.41d, %T [template]
-// CHECK:STDOUT:   %Class.F.type.7757bb.1: type = fn_type @Class.F.loc6, @Class(%T) [template]
-// CHECK:STDOUT:   %Class.F.da5837.1: %Class.F.type.7757bb.1 = struct_value () [template]
-// CHECK:STDOUT:   %pattern_type.347: type = pattern_type %Class [template]
-// CHECK:STDOUT:   %self.param_patt: %pattern_type.347 = value_param_pattern [template]
-// CHECK:STDOUT:   %self.patt: %pattern_type.347 = wrapper_binding_pattern self, %self.param_patt [template]
-// CHECK:STDOUT:   %Class.G.type.130abf.1: type = fn_type @Class.G.loc7, @Class(%T) [template]
-// CHECK:STDOUT:   %Class.G.91f761.1: %Class.G.type.130abf.1 = struct_value () [template]
+// CHECK:STDOUT:   %Class.F.type.30a249.1: type = fn_type @Class.F.loc6, @Class(%T) [template]
+// CHECK:STDOUT:   %Class.F.4883b3.1: %Class.F.type.30a249.1 = struct_value () [template]
+// CHECK:STDOUT:   %pattern_type.28f: type = pattern_type %Class [template]
+// CHECK:STDOUT:   %self.param_patt: %pattern_type.28f = value_param_pattern [template]
+// CHECK:STDOUT:   %self.patt: %pattern_type.28f = wrapper_binding_pattern self, %self.param_patt [template]
+// CHECK:STDOUT:   %Class.G.type.f7c942.1: type = fn_type @Class.G.loc7, @Class(%T) [template]
+// CHECK:STDOUT:   %Class.G.05f5b3.1: %Class.G.type.f7c942.1 = struct_value () [template]
 // CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [template]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T [template]
 // CHECK:STDOUT:   %struct_type.n: type = struct_type {.n: %T} [template]
@@ -88,8 +88,8 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %.cd79f1.2: Core.Form = init_form %.5372ba.3 [template]
 // CHECK:STDOUT:   %return.param_patt.2e9ac5.2: %pattern_type.fcb8f3.3 = out_param_pattern [template]
 // CHECK:STDOUT:   %return.patt.7fc6a1.2: %pattern_type.fcb8f3.3 = return_slot_pattern %return.param_patt.2e9ac5.2, %.5372ba.3 [template]
-// CHECK:STDOUT:   %Class.F.type.7757bb.2: type = fn_type @Class.F.loc14, @Class(%T) [template]
-// CHECK:STDOUT:   %Class.F.da5837.2: %Class.F.type.7757bb.2 = struct_value () [template]
+// CHECK:STDOUT:   %Class.F.type.30a249.2: type = fn_type @Class.F.loc14, @Class(%T) [template]
+// CHECK:STDOUT:   %Class.F.4883b3.2: %Class.F.type.30a249.2 = struct_value () [template]
 // CHECK:STDOUT:   %require_complete.cb0614.1: <witness> = require_complete_type %.5372ba.1 [template]
 // CHECK:STDOUT:   %require_complete.cb0614.2: <witness> = require_complete_type %.5372ba.2 [template]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (<instruction>) [concrete]
@@ -101,9 +101,9 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %pattern_type.fcb8f3.4: type = pattern_type %.5372ba.4 [template]
 // CHECK:STDOUT:   %return.param_patt.2e9ac5.3: %pattern_type.fcb8f3.4 = out_param_pattern [template]
 // CHECK:STDOUT:   %return.patt.7fc6a1.3: %pattern_type.fcb8f3.4 = return_slot_pattern %return.param_patt.2e9ac5.3, %.5372ba.4 [template]
-// CHECK:STDOUT:   %Class.G.type.130abf.2: type = fn_type @Class.G.loc21, @Class(%T) [template]
-// CHECK:STDOUT:   %Class.G.91f761.2: %Class.G.type.130abf.2 = struct_value () [template]
-// CHECK:STDOUT:   %require_complete.56b: <witness> = require_complete_type %Class [template]
+// CHECK:STDOUT:   %Class.G.type.f7c942.2: type = fn_type @Class.G.loc21, @Class(%T) [template]
+// CHECK:STDOUT:   %Class.G.05f5b3.2: %Class.G.type.f7c942.2 = struct_value () [template]
+// CHECK:STDOUT:   %require_complete.ac0: <witness> = require_complete_type %Class [template]
 // CHECK:STDOUT:   %require_complete.cb0614.3: <witness> = require_complete_type %.5372ba.4 [template]
 // CHECK:STDOUT:   %.237: type = type_of_inst @Class.G.loc21.%.loc22_14.3 [template]
 // CHECK:STDOUT:   %.f96: %.237 = splice_inst @Class.G.loc21.%.loc22_14.3 [template]
@@ -120,7 +120,7 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc5_23.2: type = symbolic_binding T, 0, template [template = %T.loc5_23.1 (constants.%T)]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.F.decl: %Class.F.type.7757bb.2 = fn_decl @Class.F.loc14 [template = constants.%Class.F.da5837.2] {
+// CHECK:STDOUT:   %Class.F.decl: %Class.F.type.30a249.2 = fn_decl @Class.F.loc14 [template = constants.%Class.F.4883b3.2] {
 // CHECK:STDOUT:     %n.param_patt.loc14_31.1: @Class.F.loc14.%pattern_type.loc14_31 (%pattern_type.fcb8f3.1) = value_param_pattern [template = %n.param_patt.loc14_31.2 (constants.%n.param_patt.110b44.1)]
 // CHECK:STDOUT:     %n.patt.loc14_31.1: @Class.F.loc14.%pattern_type.loc14_31 (%pattern_type.fcb8f3.1) = wrapper_binding_pattern n, %n.param_patt.loc14_31.1 [template = %n.patt.loc14_31.2 (constants.%n.patt.9e3e22.1)]
 // CHECK:STDOUT:     %return.param_patt.loc14_42.1: @Class.F.loc14.%pattern_type.loc14_42 (%pattern_type.fcb8f3.2) = out_param_pattern [template = %return.param_patt.loc14_42.2 (constants.%return.param_patt.2e9ac5.1)]
@@ -147,9 +147,9 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:     %return.param: ref @Class.F.loc14.%.loc14_42.5 (%.5372ba.2) = out_param call_param1
 // CHECK:STDOUT:     %return: ref @Class.F.loc14.%.loc14_42.5 (%.5372ba.2) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.G.decl: %Class.G.type.130abf.2 = fn_decl @Class.G.loc21 [template = constants.%Class.G.91f761.2] {
-// CHECK:STDOUT:     %self.param_patt.loc21_30.1: @Class.G.loc21.%pattern_type.loc21_30 (%pattern_type.347) = value_param_pattern [template = %self.param_patt.loc21_30.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:     %self.patt.loc21_30.1: @Class.G.loc21.%pattern_type.loc21_30 (%pattern_type.347) = wrapper_binding_pattern self, %self.param_patt.loc21_30.1 [template = %self.patt.loc21_30.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %Class.G.decl: %Class.G.type.f7c942.2 = fn_decl @Class.G.loc21 [template = constants.%Class.G.05f5b3.2] {
+// CHECK:STDOUT:     %self.param_patt.loc21_30.1: @Class.G.loc21.%pattern_type.loc21_30 (%pattern_type.28f) = value_param_pattern [template = %self.param_patt.loc21_30.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:     %self.patt.loc21_30.1: @Class.G.loc21.%pattern_type.loc21_30 (%pattern_type.28f) = wrapper_binding_pattern self, %self.param_patt.loc21_30.1 [template = %self.patt.loc21_30.2 (constants.%self.patt)]
 // CHECK:STDOUT:     %return.param_patt.loc21_40.1: @Class.G.loc21.%pattern_type.loc21_40 (%pattern_type.fcb8f3.4) = out_param_pattern [template = %return.param_patt.loc21_40.2 (constants.%return.param_patt.2e9ac5.3)]
 // CHECK:STDOUT:     %return.patt.loc21_36.1: @Class.G.loc21.%pattern_type.loc21_40 (%pattern_type.fcb8f3.4) = return_slot_pattern %return.param_patt.loc21_40.1, %.loc21_40.9 [template = %return.patt.loc21_36.2 (constants.%return.patt.7fc6a1.3)]
 // CHECK:STDOUT:   } {
@@ -179,10 +179,10 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %T.loc5_23.1: type = symbolic_binding T, 0, template [template = %T.loc5_23.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F.loc6, @Class(%T.loc5_23.1) [template = %Class.F.type (constants.%Class.F.type.7757bb.1)]
-// CHECK:STDOUT:   %Class.F: @Class.%Class.F.type (%Class.F.type.7757bb.1) = struct_value () [template = %Class.F (constants.%Class.F.da5837.1)]
-// CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G.loc7, @Class(%T.loc5_23.1) [template = %Class.G.type (constants.%Class.G.type.130abf.1)]
-// CHECK:STDOUT:   %Class.G: @Class.%Class.G.type (%Class.G.type.130abf.1) = struct_value () [template = %Class.G (constants.%Class.G.91f761.1)]
+// CHECK:STDOUT:   %Class.F.type: type = fn_type @Class.F.loc6, @Class(%T.loc5_23.1) [template = %Class.F.type (constants.%Class.F.type.30a249.1)]
+// CHECK:STDOUT:   %Class.F: @Class.%Class.F.type (%Class.F.type.30a249.1) = struct_value () [template = %Class.F (constants.%Class.F.4883b3.1)]
+// CHECK:STDOUT:   %Class.G.type: type = fn_type @Class.G.loc7, @Class(%T.loc5_23.1) [template = %Class.G.type (constants.%Class.G.type.f7c942.1)]
+// CHECK:STDOUT:   %Class.G: @Class.%Class.G.type (%Class.G.type.f7c942.1) = struct_value () [template = %Class.G (constants.%Class.G.05f5b3.1)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc5_23.1 [template = %require_complete (constants.%require_complete.944)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc5_23.1) [template = %Class (constants.%Class)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.loc5_23.1 [template = %Class.elem (constants.%Class.elem)]
@@ -190,7 +190,7 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %complete_type.loc9_1.2: <witness> = complete_type_witness %struct_type.n [template = %complete_type.loc9_1.2 (constants.%complete_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
-// CHECK:STDOUT:     %Class.F.decl: @Class.%Class.F.type (%Class.F.type.7757bb.1) = fn_decl @Class.F.loc6 [template = @Class.%Class.F (constants.%Class.F.da5837.1)] {
+// CHECK:STDOUT:     %Class.F.decl: @Class.%Class.F.type (%Class.F.type.30a249.1) = fn_decl @Class.F.loc6 [template = @Class.%Class.F (constants.%Class.F.4883b3.1)] {
 // CHECK:STDOUT:       %n.param_patt.loc6_9.1: @Class.F.loc6.%pattern_type (%pattern_type.51d) = value_param_pattern [template = %n.param_patt.loc6_9.2 (constants.%n.param_patt.fb2)]
 // CHECK:STDOUT:       %n.patt.loc6_9.1: @Class.F.loc6.%pattern_type (%pattern_type.51d) = wrapper_binding_pattern n, %n.param_patt.loc6_9.1 [template = %n.patt.loc6_9.2 (constants.%n.patt.955)]
 // CHECK:STDOUT:       %return.param_patt.loc6_17.1: @Class.F.loc6.%pattern_type (%pattern_type.51d) = out_param_pattern [template = %return.param_patt.loc6_17.2 (constants.%return.param_patt.41d)]
@@ -204,9 +204,9 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:       %return.param: ref @Class.F.loc6.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.F.loc6.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Class.G.decl: @Class.%Class.G.type (%Class.G.type.130abf.1) = fn_decl @Class.G.loc7 [template = @Class.%Class.G (constants.%Class.G.91f761.1)] {
-// CHECK:STDOUT:       %self.param_patt.loc7_8.1: @Class.G.loc7.%pattern_type.loc7_8 (%pattern_type.347) = value_param_pattern [template = %self.param_patt.loc7_8.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:       %self.patt.loc7_8.1: @Class.G.loc7.%pattern_type.loc7_8 (%pattern_type.347) = wrapper_binding_pattern self, %self.param_patt.loc7_8.1 [template = %self.patt.loc7_8.2 (constants.%self.patt)]
+// CHECK:STDOUT:     %Class.G.decl: @Class.%Class.G.type (%Class.G.type.f7c942.1) = fn_decl @Class.G.loc7 [template = @Class.%Class.G (constants.%Class.G.05f5b3.1)] {
+// CHECK:STDOUT:       %self.param_patt.loc7_8.1: @Class.G.loc7.%pattern_type.loc7_8 (%pattern_type.28f) = value_param_pattern [template = %self.param_patt.loc7_8.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:       %self.patt.loc7_8.1: @Class.G.loc7.%pattern_type.loc7_8 (%pattern_type.28f) = wrapper_binding_pattern self, %self.param_patt.loc7_8.1 [template = %self.patt.loc7_8.2 (constants.%self.patt)]
 // CHECK:STDOUT:       %return.param_patt.loc7_17.1: @Class.G.loc7.%pattern_type.loc7_17 (%pattern_type.51d) = out_param_pattern [template = %return.param_patt.loc7_17.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:       %return.patt.loc7_14.1: @Class.G.loc7.%pattern_type.loc7_17 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc7_17.1, %T.ref [template = %return.patt.loc7_14.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
@@ -251,9 +251,9 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT: generic fn @Class.G.loc7(@Class.%T.loc5_23.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0, template [template = %T (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T) [template = %Class (constants.%Class)]
-// CHECK:STDOUT:   %pattern_type.loc7_8: type = pattern_type %Class [template = %pattern_type.loc7_8 (constants.%pattern_type.347)]
-// CHECK:STDOUT:   %self.param_patt.loc7_8.2: @Class.G.loc7.%pattern_type.loc7_8 (%pattern_type.347) = value_param_pattern [template = %self.param_patt.loc7_8.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt.loc7_8.2: @Class.G.loc7.%pattern_type.loc7_8 (%pattern_type.347) = wrapper_binding_pattern self, %self.param_patt.loc7_8.2 [template = %self.patt.loc7_8.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %pattern_type.loc7_8: type = pattern_type %Class [template = %pattern_type.loc7_8 (constants.%pattern_type.28f)]
+// CHECK:STDOUT:   %self.param_patt.loc7_8.2: @Class.G.loc7.%pattern_type.loc7_8 (%pattern_type.28f) = value_param_pattern [template = %self.param_patt.loc7_8.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc7_8.2: @Class.G.loc7.%pattern_type.loc7_8 (%pattern_type.28f) = wrapper_binding_pattern self, %self.param_patt.loc7_8.2 [template = %self.patt.loc7_8.2 (constants.%self.patt)]
 // CHECK:STDOUT:   %.loc7_17.1: Core.Form = init_form %T [template = %.loc7_17.1 (constants.%.184)]
 // CHECK:STDOUT:   %pattern_type.loc7_17: type = pattern_type %T [template = %pattern_type.loc7_17 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %return.param_patt.loc7_17.2: @Class.G.loc7.%pattern_type.loc7_17 (%pattern_type.51d) = out_param_pattern [template = %return.param_patt.loc7_17.2 (constants.%return.param_patt.41d)]
@@ -300,9 +300,9 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT: generic fn @Class.G.loc21(%T.loc21_20: type) {
 // CHECK:STDOUT:   %T.loc21_30: type = symbolic_binding T, 0, template [template = %T.loc21_30 (constants.%T)]
 // CHECK:STDOUT:   %Class: type = class_type @Class, @Class(%T.loc21_30) [template = %Class (constants.%Class)]
-// CHECK:STDOUT:   %pattern_type.loc21_30: type = pattern_type %Class [template = %pattern_type.loc21_30 (constants.%pattern_type.347)]
-// CHECK:STDOUT:   %self.param_patt.loc21_30.2: @Class.G.loc21.%pattern_type.loc21_30 (%pattern_type.347) = value_param_pattern [template = %self.param_patt.loc21_30.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt.loc21_30.2: @Class.G.loc21.%pattern_type.loc21_30 (%pattern_type.347) = wrapper_binding_pattern self, %self.param_patt.loc21_30.2 [template = %self.patt.loc21_30.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %pattern_type.loc21_30: type = pattern_type %Class [template = %pattern_type.loc21_30 (constants.%pattern_type.28f)]
+// CHECK:STDOUT:   %self.param_patt.loc21_30.2: @Class.G.loc21.%pattern_type.loc21_30 (%pattern_type.28f) = value_param_pattern [template = %self.param_patt.loc21_30.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc21_30.2: @Class.G.loc21.%pattern_type.loc21_30 (%pattern_type.28f) = wrapper_binding_pattern self, %self.param_patt.loc21_30.2 [template = %self.patt.loc21_30.2 (constants.%self.patt)]
 // CHECK:STDOUT:   %.loc21_40.1: <instruction> = access_member_action %T.ref, U [template]
 // CHECK:STDOUT:   %.loc21_40.2: type = type_of_inst %.loc21_40.1 [template = %.loc21_40.2 (constants.%.eff391.4)]
 // CHECK:STDOUT:   %.loc21_40.3: @Class.G.loc21.%.loc21_40.2 (%.eff391.4) = splice_inst %.loc21_40.1 [template = %.loc21_40.3 (constants.%.b66113.4)]
@@ -314,7 +314,7 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %return.patt.loc21_36.2: @Class.G.loc21.%pattern_type.loc21_40 (%pattern_type.fcb8f3.4) = return_slot_pattern %return.param_patt.loc21_40.2, %.loc21_40.5 [template = %return.patt.loc21_36.2 (constants.%return.patt.7fc6a1.3)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc21_30: <witness> = require_complete_type %Class [template = %require_complete.loc21_30 (constants.%require_complete.56b)]
+// CHECK:STDOUT:   %require_complete.loc21_30: <witness> = require_complete_type %Class [template = %require_complete.loc21_30 (constants.%require_complete.ac0)]
 // CHECK:STDOUT:   %require_complete.loc21_36: <witness> = require_complete_type %.loc21_40.5 [template = %require_complete.loc21_36 (constants.%require_complete.cb0614.3)]
 // CHECK:STDOUT:   %.loc22_14.3: <instruction> = access_member_action %self.ref, n [template]
 // CHECK:STDOUT:   %.loc22_14.4: type = type_of_inst %.loc22_14.3 [template = %.loc22_14.4 (constants.%.237)]
@@ -338,10 +338,10 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:   %T.loc5_23.1 => constants.%T
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %Class.F.type => constants.%Class.F.type.7757bb.1
-// CHECK:STDOUT:   %Class.F => constants.%Class.F.da5837.1
-// CHECK:STDOUT:   %Class.G.type => constants.%Class.G.type.130abf.1
-// CHECK:STDOUT:   %Class.G => constants.%Class.G.91f761.1
+// CHECK:STDOUT:   %Class.F.type => constants.%Class.F.type.30a249.1
+// CHECK:STDOUT:   %Class.F => constants.%Class.F.4883b3.1
+// CHECK:STDOUT:   %Class.G.type => constants.%Class.G.type.f7c942.1
+// CHECK:STDOUT:   %Class.G => constants.%Class.G.05f5b3.1
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.944
 // CHECK:STDOUT:   %Class => constants.%Class
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem
@@ -362,7 +362,7 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT: specific @Class.G.loc7(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
-// CHECK:STDOUT:   %pattern_type.loc7_8 => constants.%pattern_type.347
+// CHECK:STDOUT:   %pattern_type.loc7_8 => constants.%pattern_type.28f
 // CHECK:STDOUT:   %self.param_patt.loc7_8.2 => constants.%self.param_patt
 // CHECK:STDOUT:   %self.patt.loc7_8.2 => constants.%self.patt
 // CHECK:STDOUT:   %.loc7_17.1 => constants.%.184
@@ -395,7 +395,7 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT: specific @Class.G.loc21(constants.%T) {
 // CHECK:STDOUT:   %T.loc21_30 => constants.%T
 // CHECK:STDOUT:   %Class => constants.%Class
-// CHECK:STDOUT:   %pattern_type.loc21_30 => constants.%pattern_type.347
+// CHECK:STDOUT:   %pattern_type.loc21_30 => constants.%pattern_type.28f
 // CHECK:STDOUT:   %self.param_patt.loc21_30.2 => constants.%self.param_patt
 // CHECK:STDOUT:   %self.patt.loc21_30.2 => constants.%self.patt
 // CHECK:STDOUT:   %.loc21_40.1 => constants.%.9af
