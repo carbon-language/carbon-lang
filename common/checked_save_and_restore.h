@@ -30,6 +30,10 @@ class [[nodiscard]] CheckedSaveAndRestore {
     *var_ = std::move(orig_value_);
   }
 
+  CheckedSaveAndRestore(const CheckedSaveAndRestore&) = delete;
+  auto operator=(const CheckedSaveAndRestore&)
+      -> CheckedSaveAndRestore& = delete;
+
  private:
   T* var_;
   T new_value_;
