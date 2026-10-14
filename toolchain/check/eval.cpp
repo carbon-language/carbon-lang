@@ -3579,7 +3579,7 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   CheckedSaveAndRestore access_context(context.access_context(),
                                        FindAccessContext(context, generic));
 
-  // TODO: There are now 3 things being set-and-restored. Can this be refactored
+  // TODO: There are now 4 things being set-and-restored. Can this be refactored
   // to make this a more clear pattern?
 
   // The `declaring_impl_decls` is a global state that modifies the evaluation
@@ -3589,6 +3589,12 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
   // generic. The global state should not apply to anything done while resolving
   // a specific.
   CheckedSaveAndRestore declaring(context.declaring_impl_decls(), {});
+
+  // The `impl_lookup_no_symbolic_final_lookups` is also a global stat that
+  // modifies the evaluation of LookupImplWitness. So should not be applied to
+  // specifics.
+  CheckedSaveAndRestore no_final(
+      context.impl_lookup_no_symbolic_final_lookups(), 0);
 
   // The `eval_impl_lookup_to_identified_witness` is also a global state that
   // modifies the evaluation of LookupImplWitness. We don't want to apply that
