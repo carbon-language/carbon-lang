@@ -98,7 +98,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT:   call void @_Z6make_av.carbon_thunk.(ptr %a.var), !dbg !54
 // CHECK:STDOUT:   %.loc6_11.1.b = getelementptr inbounds nuw [8 x i8], ptr %a.var, i32 0, i32 4, !dbg !56
 // CHECK:STDOUT:   %.loc6_11.2 = load i32, ptr %.loc6_11.1.b, align 4, !dbg !56
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core"(ptr %a.var), !dbg !53
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.40d7b7e27255374c(ptr %a.var), !dbg !53
 // CHECK:STDOUT:   ret i32 %.loc6_11.2, !dbg !57
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -106,30 +106,29 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: define internal void @_Z6make_av.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !64
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !64
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !67
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !67
 // CHECK:STDOUT:   %call = call i64 @_Z6make_av()
 // CHECK:STDOUT:   store i64 %call, ptr %0, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core"(ptr %self) #0 !dbg !58 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !60
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.40d7b7e27255374c(ptr %t) #0 !dbg !58 {
+// CHECK:STDOUT:   ret void, !dbg !63
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local i64 @_Z6make_av() #3 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca %struct.A, align 4
 // CHECK:STDOUT:   %a = getelementptr inbounds nuw %struct.A, ptr %retval, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !66
+// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !69
 // CHECK:STDOUT:   %b = getelementptr inbounds nuw %struct.A, ptr %retval, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !67
+// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !70
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
 // CHECK:STDOUT: }
@@ -153,6 +152,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: !9 = !{!8, !7, i64 0}
 // CHECK:STDOUT: !10 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !11 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !34 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !42 = !DIFile(filename: "use_a.carbon", directory: "")
 // CHECK:STDOUT: !43 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !42, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT: !44 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
@@ -166,16 +166,16 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: !54 = !DILocation(line: 5, column: 18, scope: !50)
 // CHECK:STDOUT: !56 = !DILocation(line: 6, column: 10, scope: !50)
 // CHECK:STDOUT: !57 = !DILocation(line: 6, column: 3, scope: !50)
-// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core", scope: null, file: !42, line: 5, type: !49, spFlags: DISPFlagDefinition, unit: !43, retainedNodes: !61)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.40d7b7e27255374c", scope: null, file: !34, line: 30, type: !49, spFlags: DISPFlagDefinition, unit: !43, retainedNodes: !64)
 // CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !58, type: !47)
-// CHECK:STDOUT: !60 = !DILocation(line: 5, column: 3, scope: !58)
-// CHECK:STDOUT: !61 = !{!59}
-// CHECK:STDOUT: !62 = !{!"any pointer", !6, i64 0}
-// CHECK:STDOUT: !63 = !{!"p1 _ZTS1A", !62, i64 0}
-// CHECK:STDOUT: !64 = !{!63, !63, i64 0}
-// CHECK:STDOUT: !65 = !{!"_ZTS1A", !7, i64 0, !7, i64 4}
-// CHECK:STDOUT: !66 = !{!65, !7, i64 0}
-// CHECK:STDOUT: !67 = !{!65, !7, i64 4}
+// CHECK:STDOUT: !63 = !DILocation(line: 30, column: 1, scope: !58)
+// CHECK:STDOUT: !64 = !{!59}
+// CHECK:STDOUT: !65 = !{!"any pointer", !6, i64 0}
+// CHECK:STDOUT: !66 = !{!"p1 _ZTS1A", !65, i64 0}
+// CHECK:STDOUT: !67 = !{!66, !66, i64 0}
+// CHECK:STDOUT: !68 = !{!"_ZTS1A", !7, i64 0, !7, i64 4}
+// CHECK:STDOUT: !69 = !{!68, !7, i64 0}
+// CHECK:STDOUT: !70 = !{!68, !7, i64 4}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_b.carbon'
@@ -188,45 +188,44 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: $_Z6make_bv = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CTest.Main() #0 !dbg !70 {
+// CHECK:STDOUT: define i32 @_CTest.Main() #0 !dbg !73 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %b.var = alloca [8 x i8], align 4, !dbg !73
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !73
-// CHECK:STDOUT:   call void @_Z6make_bv.carbon_thunk.(ptr %b.var), !dbg !74
-// CHECK:STDOUT:   %.loc6_11.1.x = getelementptr inbounds nuw [8 x i8], ptr %b.var, i32 0, i32 0, !dbg !76
-// CHECK:STDOUT:   %.loc6_11.2 = load i32, ptr %.loc6_11.1.x, align 4, !dbg !76
-// CHECK:STDOUT:   call void @"_CSelfDestruct.d4378aa76ca99c88:core.Destroy.Core"(ptr %b.var), !dbg !73
-// CHECK:STDOUT:   ret i32 %.loc6_11.2, !dbg !77
+// CHECK:STDOUT:   %b.var = alloca [8 x i8], align 4, !dbg !76
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !76
+// CHECK:STDOUT:   call void @_Z6make_bv.carbon_thunk.(ptr %b.var), !dbg !77
+// CHECK:STDOUT:   %.loc6_11.1.x = getelementptr inbounds nuw [8 x i8], ptr %b.var, i32 0, i32 0, !dbg !79
+// CHECK:STDOUT:   %.loc6_11.2 = load i32, ptr %.loc6_11.1.x, align 4, !dbg !79
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.06b9e4d544a9c2e1(ptr %b.var), !dbg !76
+// CHECK:STDOUT:   ret i32 %.loc6_11.2, !dbg !80
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal void @_Z6make_bv.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !83
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !83
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !89
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !89
 // CHECK:STDOUT:   %call = call i64 @_Z6make_bv()
 // CHECK:STDOUT:   store i64 %call, ptr %0, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.d4378aa76ca99c88:core.Destroy.Core"(ptr %self) #0 !dbg !78 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !80
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.06b9e4d544a9c2e1(ptr %t) #0 !dbg !81 {
+// CHECK:STDOUT:   ret void, !dbg !86
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local i64 @_Z6make_bv() #3 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca %struct.B, align 4
 // CHECK:STDOUT:   %x = getelementptr inbounds nuw %struct.B, ptr %retval, i32 0, i32 0
-// CHECK:STDOUT:   store i32 3, ptr %x, align 4, !tbaa !85
+// CHECK:STDOUT:   store i32 3, ptr %x, align 4, !tbaa !91
 // CHECK:STDOUT:   %y = getelementptr inbounds nuw %struct.B, ptr %retval, i32 0, i32 1
-// CHECK:STDOUT:   store i32 4, ptr %y, align 4, !tbaa !86
+// CHECK:STDOUT:   store i32 4, ptr %y, align 4, !tbaa !92
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
 // CHECK:STDOUT: }
@@ -236,7 +235,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!69}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!72}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !10, !11}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!9}
 // CHECK:STDOUT:
@@ -250,29 +249,30 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: !9 = !{!8, !7, i64 0}
 // CHECK:STDOUT: !10 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !11 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !34 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !44 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !45 = !{!44}
 // CHECK:STDOUT: !46 = !DISubroutineType(types: !45)
 // CHECK:STDOUT: !47 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !48 = !{null, !47}
 // CHECK:STDOUT: !49 = !DISubroutineType(types: !48)
-// CHECK:STDOUT: !62 = !{!"any pointer", !6, i64 0}
-// CHECK:STDOUT: !68 = !DIFile(filename: "use_b.carbon", directory: "")
-// CHECK:STDOUT: !69 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !68, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !70 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !68, line: 4, type: !46, spFlags: DISPFlagDefinition, unit: !69)
-// CHECK:STDOUT: !73 = !DILocation(line: 5, column: 3, scope: !70)
-// CHECK:STDOUT: !74 = !DILocation(line: 5, column: 18, scope: !70)
-// CHECK:STDOUT: !76 = !DILocation(line: 6, column: 10, scope: !70)
-// CHECK:STDOUT: !77 = !DILocation(line: 6, column: 3, scope: !70)
-// CHECK:STDOUT: !78 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.d4378aa76ca99c88:core.Destroy.Core", scope: null, file: !68, line: 5, type: !49, spFlags: DISPFlagDefinition, unit: !69, retainedNodes: !81)
-// CHECK:STDOUT: !79 = !DILocalVariable(arg: 1, scope: !78, type: !47)
-// CHECK:STDOUT: !80 = !DILocation(line: 5, column: 3, scope: !78)
-// CHECK:STDOUT: !81 = !{!79}
-// CHECK:STDOUT: !82 = !{!"p1 _ZTS1B", !62, i64 0}
-// CHECK:STDOUT: !83 = !{!82, !82, i64 0}
-// CHECK:STDOUT: !84 = !{!"_ZTS1B", !7, i64 0, !7, i64 4}
-// CHECK:STDOUT: !85 = !{!84, !7, i64 0}
-// CHECK:STDOUT: !86 = !{!84, !7, i64 4}
+// CHECK:STDOUT: !65 = !{!"any pointer", !6, i64 0}
+// CHECK:STDOUT: !71 = !DIFile(filename: "use_b.carbon", directory: "")
+// CHECK:STDOUT: !72 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !71, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !73 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !71, line: 4, type: !46, spFlags: DISPFlagDefinition, unit: !72)
+// CHECK:STDOUT: !76 = !DILocation(line: 5, column: 3, scope: !73)
+// CHECK:STDOUT: !77 = !DILocation(line: 5, column: 18, scope: !73)
+// CHECK:STDOUT: !79 = !DILocation(line: 6, column: 10, scope: !73)
+// CHECK:STDOUT: !80 = !DILocation(line: 6, column: 3, scope: !73)
+// CHECK:STDOUT: !81 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.06b9e4d544a9c2e1", scope: null, file: !34, line: 30, type: !49, spFlags: DISPFlagDefinition, unit: !72, retainedNodes: !87)
+// CHECK:STDOUT: !82 = !DILocalVariable(arg: 1, scope: !81, type: !47)
+// CHECK:STDOUT: !86 = !DILocation(line: 30, column: 1, scope: !81)
+// CHECK:STDOUT: !87 = !{!82}
+// CHECK:STDOUT: !88 = !{!"p1 _ZTS1B", !65, i64 0}
+// CHECK:STDOUT: !89 = !{!88, !88, i64 0}
+// CHECK:STDOUT: !90 = !{!"_ZTS1B", !7, i64 0, !7, i64 4}
+// CHECK:STDOUT: !91 = !{!90, !7, i64 0}
+// CHECK:STDOUT: !92 = !{!90, !7, i64 4}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'use_both.carbon'
@@ -288,74 +288,72 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: $_Z6make_bv = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CTestA.Main() #0 !dbg !89 {
+// CHECK:STDOUT: define i32 @_CTestA.Main() #0 !dbg !95 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a.var = alloca [8 x i8], align 4, !dbg !92
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !92
-// CHECK:STDOUT:   call void @_Z6make_av.carbon_thunk.(ptr %a.var), !dbg !93
-// CHECK:STDOUT:   %.loc7_11.1.b = getelementptr inbounds nuw [8 x i8], ptr %a.var, i32 0, i32 4, !dbg !95
-// CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.b, align 4, !dbg !95
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core"(ptr %a.var), !dbg !92
-// CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !96
+// CHECK:STDOUT:   %a.var = alloca [8 x i8], align 4, !dbg !98
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !98
+// CHECK:STDOUT:   call void @_Z6make_av.carbon_thunk.(ptr %a.var), !dbg !99
+// CHECK:STDOUT:   %.loc7_11.1.b = getelementptr inbounds nuw [8 x i8], ptr %a.var, i32 0, i32 4, !dbg !101
+// CHECK:STDOUT:   %.loc7_11.2 = load i32, ptr %.loc7_11.1.b, align 4, !dbg !101
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.40d7b7e27255374c(ptr %a.var), !dbg !98
+// CHECK:STDOUT:   ret i32 %.loc7_11.2, !dbg !102
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal void @_Z6make_av.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !64
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !64
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !67
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !67
 // CHECK:STDOUT:   %call = call i64 @_Z6make_av()
 // CHECK:STDOUT:   store i64 %call, ptr %0, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core"(ptr %self) #0 !dbg !97 {
+// CHECK:STDOUT: define i32 @_CTestB.Main() #0 !dbg !103 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !99
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CTestB.Main() #0 !dbg !101 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %b.var = alloca [8 x i8], align 4, !dbg !104
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !104
-// CHECK:STDOUT:   call void @_Z6make_bv.carbon_thunk.(ptr %b.var), !dbg !105
-// CHECK:STDOUT:   %.loc12_11.1.x = getelementptr inbounds nuw [8 x i8], ptr %b.var, i32 0, i32 0, !dbg !107
-// CHECK:STDOUT:   %.loc12_11.2 = load i32, ptr %.loc12_11.1.x, align 4, !dbg !107
-// CHECK:STDOUT:   call void @"_CSelfDestruct.d4378aa76ca99c88:core.Destroy.Core"(ptr %b.var), !dbg !104
-// CHECK:STDOUT:   ret i32 %.loc12_11.2, !dbg !108
+// CHECK:STDOUT:   %b.var = alloca [8 x i8], align 4, !dbg !106
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b.var), !dbg !106
+// CHECK:STDOUT:   call void @_Z6make_bv.carbon_thunk.(ptr %b.var), !dbg !107
+// CHECK:STDOUT:   %.loc12_11.1.x = getelementptr inbounds nuw [8 x i8], ptr %b.var, i32 0, i32 0, !dbg !109
+// CHECK:STDOUT:   %.loc12_11.2 = load i32, ptr %.loc12_11.1.x, align 4, !dbg !109
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.06b9e4d544a9c2e1(ptr %b.var), !dbg !106
+// CHECK:STDOUT:   ret i32 %.loc12_11.2, !dbg !110
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal void @_Z6make_bv.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !83
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !83
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !89
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !89
 // CHECK:STDOUT:   %call = call i64 @_Z6make_bv()
 // CHECK:STDOUT:   store i64 %call, ptr %0, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.d4378aa76ca99c88:core.Destroy.Core"(ptr %self) #0 !dbg !109 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !111
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.40d7b7e27255374c(ptr %t) #0 !dbg !111 {
+// CHECK:STDOUT:   ret void, !dbg !116
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.06b9e4d544a9c2e1(ptr %t) #0 !dbg !118 {
+// CHECK:STDOUT:   ret void, !dbg !123
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local i64 @_Z6make_av() #3 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca %struct.A.34, align 4
 // CHECK:STDOUT:   %a = getelementptr inbounds nuw %struct.A.34, ptr %retval, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !66
+// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !69
 // CHECK:STDOUT:   %b = getelementptr inbounds nuw %struct.A.34, ptr %retval, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !67
+// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !70
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
 // CHECK:STDOUT: }
@@ -365,9 +363,9 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca %struct.B.35, align 4
 // CHECK:STDOUT:   %x = getelementptr inbounds nuw %struct.B.35, ptr %retval, i32 0, i32 0
-// CHECK:STDOUT:   store i32 3, ptr %x, align 4, !tbaa !85
+// CHECK:STDOUT:   store i32 3, ptr %x, align 4, !tbaa !91
 // CHECK:STDOUT:   %y = getelementptr inbounds nuw %struct.B.35, ptr %retval, i32 0, i32 1
-// CHECK:STDOUT:   store i32 4, ptr %y, align 4, !tbaa !86
+// CHECK:STDOUT:   store i32 4, ptr %y, align 4, !tbaa !92
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
 // CHECK:STDOUT: }
@@ -380,7 +378,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!88}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!94}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !10, !11}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!9}
 // CHECK:STDOUT:
@@ -394,43 +392,44 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: !9 = !{!8, !7, i64 0}
 // CHECK:STDOUT: !10 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !11 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !34 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !44 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !45 = !{!44}
 // CHECK:STDOUT: !46 = !DISubroutineType(types: !45)
 // CHECK:STDOUT: !47 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !48 = !{null, !47}
 // CHECK:STDOUT: !49 = !DISubroutineType(types: !48)
-// CHECK:STDOUT: !62 = !{!"any pointer", !6, i64 0}
-// CHECK:STDOUT: !63 = !{!"p1 _ZTS1A", !62, i64 0}
-// CHECK:STDOUT: !64 = !{!63, !63, i64 0}
-// CHECK:STDOUT: !65 = !{!"_ZTS1A", !7, i64 0, !7, i64 4}
-// CHECK:STDOUT: !66 = !{!65, !7, i64 0}
-// CHECK:STDOUT: !67 = !{!65, !7, i64 4}
-// CHECK:STDOUT: !82 = !{!"p1 _ZTS1B", !62, i64 0}
-// CHECK:STDOUT: !83 = !{!82, !82, i64 0}
-// CHECK:STDOUT: !84 = !{!"_ZTS1B", !7, i64 0, !7, i64 4}
-// CHECK:STDOUT: !85 = !{!84, !7, i64 0}
-// CHECK:STDOUT: !86 = !{!84, !7, i64 4}
-// CHECK:STDOUT: !87 = !DIFile(filename: "use_both.carbon", directory: "")
-// CHECK:STDOUT: !88 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !87, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !89 = distinct !DISubprogram(name: "TestA", linkageName: "_CTestA.Main", scope: null, file: !87, line: 5, type: !46, spFlags: DISPFlagDefinition, unit: !88)
-// CHECK:STDOUT: !92 = !DILocation(line: 6, column: 3, scope: !89)
-// CHECK:STDOUT: !93 = !DILocation(line: 6, column: 18, scope: !89)
-// CHECK:STDOUT: !95 = !DILocation(line: 7, column: 10, scope: !89)
-// CHECK:STDOUT: !96 = !DILocation(line: 7, column: 3, scope: !89)
-// CHECK:STDOUT: !97 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core", scope: null, file: !87, line: 6, type: !49, spFlags: DISPFlagDefinition, unit: !88, retainedNodes: !100)
-// CHECK:STDOUT: !98 = !DILocalVariable(arg: 1, scope: !97, type: !47)
-// CHECK:STDOUT: !99 = !DILocation(line: 6, column: 3, scope: !97)
-// CHECK:STDOUT: !100 = !{!98}
-// CHECK:STDOUT: !101 = distinct !DISubprogram(name: "TestB", linkageName: "_CTestB.Main", scope: null, file: !87, line: 10, type: !46, spFlags: DISPFlagDefinition, unit: !88)
-// CHECK:STDOUT: !104 = !DILocation(line: 11, column: 3, scope: !101)
-// CHECK:STDOUT: !105 = !DILocation(line: 11, column: 18, scope: !101)
-// CHECK:STDOUT: !107 = !DILocation(line: 12, column: 10, scope: !101)
-// CHECK:STDOUT: !108 = !DILocation(line: 12, column: 3, scope: !101)
-// CHECK:STDOUT: !109 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.d4378aa76ca99c88:core.Destroy.Core", scope: null, file: !87, line: 11, type: !49, spFlags: DISPFlagDefinition, unit: !88, retainedNodes: !112)
-// CHECK:STDOUT: !110 = !DILocalVariable(arg: 1, scope: !109, type: !47)
-// CHECK:STDOUT: !111 = !DILocation(line: 11, column: 3, scope: !109)
-// CHECK:STDOUT: !112 = !{!110}
+// CHECK:STDOUT: !65 = !{!"any pointer", !6, i64 0}
+// CHECK:STDOUT: !66 = !{!"p1 _ZTS1A", !65, i64 0}
+// CHECK:STDOUT: !67 = !{!66, !66, i64 0}
+// CHECK:STDOUT: !68 = !{!"_ZTS1A", !7, i64 0, !7, i64 4}
+// CHECK:STDOUT: !69 = !{!68, !7, i64 0}
+// CHECK:STDOUT: !70 = !{!68, !7, i64 4}
+// CHECK:STDOUT: !88 = !{!"p1 _ZTS1B", !65, i64 0}
+// CHECK:STDOUT: !89 = !{!88, !88, i64 0}
+// CHECK:STDOUT: !90 = !{!"_ZTS1B", !7, i64 0, !7, i64 4}
+// CHECK:STDOUT: !91 = !{!90, !7, i64 0}
+// CHECK:STDOUT: !92 = !{!90, !7, i64 4}
+// CHECK:STDOUT: !93 = !DIFile(filename: "use_both.carbon", directory: "")
+// CHECK:STDOUT: !94 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !93, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !95 = distinct !DISubprogram(name: "TestA", linkageName: "_CTestA.Main", scope: null, file: !93, line: 5, type: !46, spFlags: DISPFlagDefinition, unit: !94)
+// CHECK:STDOUT: !98 = !DILocation(line: 6, column: 3, scope: !95)
+// CHECK:STDOUT: !99 = !DILocation(line: 6, column: 18, scope: !95)
+// CHECK:STDOUT: !101 = !DILocation(line: 7, column: 10, scope: !95)
+// CHECK:STDOUT: !102 = !DILocation(line: 7, column: 3, scope: !95)
+// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "TestB", linkageName: "_CTestB.Main", scope: null, file: !93, line: 10, type: !46, spFlags: DISPFlagDefinition, unit: !94)
+// CHECK:STDOUT: !106 = !DILocation(line: 11, column: 3, scope: !103)
+// CHECK:STDOUT: !107 = !DILocation(line: 11, column: 18, scope: !103)
+// CHECK:STDOUT: !109 = !DILocation(line: 12, column: 10, scope: !103)
+// CHECK:STDOUT: !110 = !DILocation(line: 12, column: 3, scope: !103)
+// CHECK:STDOUT: !111 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.40d7b7e27255374c", scope: null, file: !34, line: 30, type: !49, spFlags: DISPFlagDefinition, unit: !94, retainedNodes: !117)
+// CHECK:STDOUT: !112 = !DILocalVariable(arg: 1, scope: !111, type: !47)
+// CHECK:STDOUT: !116 = !DILocation(line: 30, column: 1, scope: !111)
+// CHECK:STDOUT: !117 = !{!112}
+// CHECK:STDOUT: !118 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.06b9e4d544a9c2e1", scope: null, file: !34, line: 30, type: !49, spFlags: DISPFlagDefinition, unit: !94, retainedNodes: !124)
+// CHECK:STDOUT: !119 = !DILocalVariable(arg: 1, scope: !118, type: !47)
+// CHECK:STDOUT: !123 = !DILocation(line: 30, column: 1, scope: !118)
+// CHECK:STDOUT: !124 = !{!119}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic_lib.carbon'
@@ -446,36 +445,29 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: define internal void @_Z6make_av.carbon_thunk.(ptr noundef %return) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !64
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !64
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !67
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !67
 // CHECK:STDOUT:   %call = call i64 @_Z6make_av()
 // CHECK:STDOUT:   store i64 %call, ptr %0, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core"(ptr %self) #1 !dbg !115 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !117
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local i64 @_Z6make_av() #2 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local i64 @_Z6make_av() #1 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca %struct.A.38, align 4
 // CHECK:STDOUT:   %a = getelementptr inbounds nuw %struct.A.38, ptr %retval, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !66
+// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !69
 // CHECK:STDOUT:   %b = getelementptr inbounds nuw %struct.A.38, ptr %retval, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !67
+// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !70
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #1 = { nounwind }
-// CHECK:STDOUT: attributes #2 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #1 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!114}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!126}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !10, !11}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!9}
 // CHECK:STDOUT:
@@ -489,21 +481,14 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: !9 = !{!8, !7, i64 0}
 // CHECK:STDOUT: !10 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !11 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !47 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !48 = !{null, !47}
-// CHECK:STDOUT: !49 = !DISubroutineType(types: !48)
-// CHECK:STDOUT: !62 = !{!"any pointer", !6, i64 0}
-// CHECK:STDOUT: !63 = !{!"p1 _ZTS1A", !62, i64 0}
-// CHECK:STDOUT: !64 = !{!63, !63, i64 0}
-// CHECK:STDOUT: !65 = !{!"_ZTS1A", !7, i64 0, !7, i64 4}
-// CHECK:STDOUT: !66 = !{!65, !7, i64 0}
-// CHECK:STDOUT: !67 = !{!65, !7, i64 4}
-// CHECK:STDOUT: !113 = !DIFile(filename: "generic_lib.carbon", directory: "")
-// CHECK:STDOUT: !114 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !113, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !115 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core", scope: null, file: !113, line: 5, type: !49, spFlags: DISPFlagDefinition, unit: !114, retainedNodes: !118)
-// CHECK:STDOUT: !116 = !DILocalVariable(arg: 1, scope: !115, type: !47)
-// CHECK:STDOUT: !117 = !DILocation(line: 5, column: 3, scope: !115)
-// CHECK:STDOUT: !118 = !{!116}
+// CHECK:STDOUT: !65 = !{!"any pointer", !6, i64 0}
+// CHECK:STDOUT: !66 = !{!"p1 _ZTS1A", !65, i64 0}
+// CHECK:STDOUT: !67 = !{!66, !66, i64 0}
+// CHECK:STDOUT: !68 = !{!"_ZTS1A", !7, i64 0, !7, i64 4}
+// CHECK:STDOUT: !69 = !{!68, !7, i64 0}
+// CHECK:STDOUT: !70 = !{!68, !7, i64 4}
+// CHECK:STDOUT: !125 = !DIFile(filename: "generic_lib.carbon", directory: "")
+// CHECK:STDOUT: !126 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !125, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'no_cpp_imports.carbon'
@@ -516,47 +501,50 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: $_Z6make_av = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CCallGeneric.Main() #0 !dbg !121 {
+// CHECK:STDOUT: define i32 @_CCallGeneric.Main() #0 !dbg !129 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %MakeA.call = call i32 @_CMakeA.Main.084a2801e0f5d754({} zeroinitializer), !dbg !124
-// CHECK:STDOUT:   ret i32 %MakeA.call, !dbg !127
+// CHECK:STDOUT:   %MakeA.call = call i32 @_CMakeA.Main.084a2801e0f5d754({} zeroinitializer), !dbg !132
+// CHECK:STDOUT:   ret i32 %MakeA.call, !dbg !135
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr i32 @_CMakeA.Main.084a2801e0f5d754({} %x) #0 !dbg !128 {
-// CHECK:STDOUT:   %1 = alloca [8 x i8], align 4, !dbg !133
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !133
-// CHECK:STDOUT:   call void @_Z6make_av.carbon_thunk.(ptr %1), !dbg !134
-// CHECK:STDOUT:   %b = getelementptr inbounds nuw [8 x i8], ptr %1, i32 0, i32 4, !dbg !136
-// CHECK:STDOUT:   %2 = load i32, ptr %b, align 4, !dbg !136
-// CHECK:STDOUT:   call void @"_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core"(ptr %1), !dbg !133
-// CHECK:STDOUT:   ret i32 %2, !dbg !137
+// CHECK:STDOUT: define linkonce_odr i32 @_CMakeA.Main.084a2801e0f5d754({} %x) #0 !dbg !136 {
+// CHECK:STDOUT:   %1 = alloca [8 x i8], align 4, !dbg !141
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %1), !dbg !141
+// CHECK:STDOUT:   call void @_Z6make_av.carbon_thunk.(ptr %1), !dbg !142
+// CHECK:STDOUT:   %b = getelementptr inbounds nuw [8 x i8], ptr %1, i32 0, i32 4, !dbg !144
+// CHECK:STDOUT:   %2 = load i32, ptr %b, align 4, !dbg !144
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.40d7b7e27255374c(ptr %1), !dbg !141
+// CHECK:STDOUT:   ret i32 %2, !dbg !145
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
 // CHECK:STDOUT: define internal void @_Z6make_av.carbon_thunk.(ptr noundef %return) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !64
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !64
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !67
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !67
 // CHECK:STDOUT:   %call = call i64 @_Z6make_av()
 // CHECK:STDOUT:   store i64 %call, ptr %0, align 4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_CSelfDestruct.f2cd4feee22137a3:core.Destroy.Core"(ptr)
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.40d7b7e27255374c(ptr %t) #0 !dbg !147 {
+// CHECK:STDOUT:   ret void, !dbg !152
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local i64 @_Z6make_av() #3 comdat {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca %struct.A.41, align 4
 // CHECK:STDOUT:   %a = getelementptr inbounds nuw %struct.A.41, ptr %retval, i32 0, i32 0
-// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !66
+// CHECK:STDOUT:   store i32 1, ptr %a, align 4, !tbaa !69
 // CHECK:STDOUT:   %b = getelementptr inbounds nuw %struct.A.41, ptr %retval, i32 0, i32 1
-// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !67
+// CHECK:STDOUT:   store i32 2, ptr %b, align 4, !tbaa !70
 // CHECK:STDOUT:   %0 = load i64, ptr %retval, align 4
 // CHECK:STDOUT:   ret i64 %0
 // CHECK:STDOUT: }
@@ -566,7 +554,7 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: attributes #2 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!120}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!128}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3, !4, !10, !11}
 // CHECK:STDOUT: !llvm.errno.tbaa = !{!9}
 // CHECK:STDOUT:
@@ -580,29 +568,36 @@ fn CallGeneric() -> i32 {
 // CHECK:STDOUT: !9 = !{!8, !7, i64 0}
 // CHECK:STDOUT: !10 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !11 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !34 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !44 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !45 = !{!44}
 // CHECK:STDOUT: !46 = !DISubroutineType(types: !45)
 // CHECK:STDOUT: !47 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !62 = !{!"any pointer", !6, i64 0}
-// CHECK:STDOUT: !63 = !{!"p1 _ZTS1A", !62, i64 0}
-// CHECK:STDOUT: !64 = !{!63, !63, i64 0}
-// CHECK:STDOUT: !65 = !{!"_ZTS1A", !7, i64 0, !7, i64 4}
-// CHECK:STDOUT: !66 = !{!65, !7, i64 0}
-// CHECK:STDOUT: !67 = !{!65, !7, i64 4}
-// CHECK:STDOUT: !113 = !DIFile(filename: "generic_lib.carbon", directory: "")
-// CHECK:STDOUT: !119 = !DIFile(filename: "no_cpp_imports.carbon", directory: "")
-// CHECK:STDOUT: !120 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !119, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !121 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.Main", scope: null, file: !119, line: 4, type: !46, spFlags: DISPFlagDefinition, unit: !120)
-// CHECK:STDOUT: !124 = !DILocation(line: 5, column: 10, scope: !121)
-// CHECK:STDOUT: !125 = !{!44, !47}
-// CHECK:STDOUT: !126 = !DISubroutineType(types: !125)
-// CHECK:STDOUT: !127 = !DILocation(line: 5, column: 3, scope: !121)
-// CHECK:STDOUT: !128 = distinct !DISubprogram(name: "MakeA", linkageName: "_CMakeA.Main.084a2801e0f5d754", scope: null, file: !113, line: 4, type: !126, spFlags: DISPFlagDefinition, unit: !120, retainedNodes: !138)
-// CHECK:STDOUT: !129 = !DILocalVariable(arg: 1, scope: !128, type: !47)
-// CHECK:STDOUT: !133 = !DILocation(line: 5, column: 3, scope: !128)
-// CHECK:STDOUT: !134 = !DILocation(line: 5, column: 18, scope: !128)
-// CHECK:STDOUT: !136 = !DILocation(line: 6, column: 10, scope: !128)
-// CHECK:STDOUT: !137 = !DILocation(line: 6, column: 3, scope: !128)
-// CHECK:STDOUT: !138 = !{!129}
+// CHECK:STDOUT: !48 = !{null, !47}
+// CHECK:STDOUT: !49 = !DISubroutineType(types: !48)
+// CHECK:STDOUT: !65 = !{!"any pointer", !6, i64 0}
+// CHECK:STDOUT: !66 = !{!"p1 _ZTS1A", !65, i64 0}
+// CHECK:STDOUT: !67 = !{!66, !66, i64 0}
+// CHECK:STDOUT: !68 = !{!"_ZTS1A", !7, i64 0, !7, i64 4}
+// CHECK:STDOUT: !69 = !{!68, !7, i64 0}
+// CHECK:STDOUT: !70 = !{!68, !7, i64 4}
+// CHECK:STDOUT: !125 = !DIFile(filename: "generic_lib.carbon", directory: "")
+// CHECK:STDOUT: !127 = !DIFile(filename: "no_cpp_imports.carbon", directory: "")
+// CHECK:STDOUT: !128 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !127, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !129 = distinct !DISubprogram(name: "CallGeneric", linkageName: "_CCallGeneric.Main", scope: null, file: !127, line: 4, type: !46, spFlags: DISPFlagDefinition, unit: !128)
+// CHECK:STDOUT: !132 = !DILocation(line: 5, column: 10, scope: !129)
+// CHECK:STDOUT: !133 = !{!44, !47}
+// CHECK:STDOUT: !134 = !DISubroutineType(types: !133)
+// CHECK:STDOUT: !135 = !DILocation(line: 5, column: 3, scope: !129)
+// CHECK:STDOUT: !136 = distinct !DISubprogram(name: "MakeA", linkageName: "_CMakeA.Main.084a2801e0f5d754", scope: null, file: !125, line: 4, type: !134, spFlags: DISPFlagDefinition, unit: !128, retainedNodes: !146)
+// CHECK:STDOUT: !137 = !DILocalVariable(arg: 1, scope: !136, type: !47)
+// CHECK:STDOUT: !141 = !DILocation(line: 5, column: 3, scope: !136)
+// CHECK:STDOUT: !142 = !DILocation(line: 5, column: 18, scope: !136)
+// CHECK:STDOUT: !144 = !DILocation(line: 6, column: 10, scope: !136)
+// CHECK:STDOUT: !145 = !DILocation(line: 6, column: 3, scope: !136)
+// CHECK:STDOUT: !146 = !{!137}
+// CHECK:STDOUT: !147 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.40d7b7e27255374c", scope: null, file: !34, line: 30, type: !49, spFlags: DISPFlagDefinition, unit: !128, retainedNodes: !153)
+// CHECK:STDOUT: !148 = !DILocalVariable(arg: 1, scope: !147, type: !47)
+// CHECK:STDOUT: !152 = !DILocation(line: 30, column: 1, scope: !147)
+// CHECK:STDOUT: !153 = !{!148}
 // CHECK:STDOUT:

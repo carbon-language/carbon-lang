@@ -505,18 +505,20 @@ fn F() {
 // CHECK:STDOUT:   %foo.cpp_overload_set.type: type = cpp_overload_set_type @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %foo.cpp_overload_set.value: %foo.cpp_overload_set.type = cpp_overload_set_value @foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %X: type = class_type @X [concrete]
-// CHECK:STDOUT:   %pattern_type.b98: type = pattern_type %X [concrete]
 // CHECK:STDOUT:   %ptr.614: type = ptr_type %X [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk.type: type = fn_type @foo__carbon_thunk [concrete]
 // CHECK:STDOUT:   %foo__carbon_thunk: %foo__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.3ec: %pattern_type.b98 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.200: %pattern_type.b98 = wrapper_binding_pattern self, %self.param_patt.3ec [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %X.cpp_destructor.type: type = fn_type @X.cpp_destructor [concrete]
 // CHECK:STDOUT:   %X.cpp_destructor: %X.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc8 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc8 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.1d5: <witness> = custom_witness (%X.cpp_destructor), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.c4b: %SubobjectDestroy.type = facet_value %X, (%custom_witness.1d5) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.c08: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.c4b) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %X, (%DestroyImpl.impl_witness.c08, %custom_witness.1d5) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -530,21 +532,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %X.cpp_destructor.decl: %X.cpp_destructor.type = fn_decl @X.cpp_destructor [concrete = constants.%X.cpp_destructor] {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:   }
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc8 [concrete = constants.%Destroy.WithSelf.Op.403] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.b98 = ref_param_pattern [concrete = constants.%self.param_patt.3ec]
-// CHECK:STDOUT:     %self.patt: %pattern_type.b98 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.200]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %X = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %X = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
@@ -556,18 +545,13 @@ fn F() {
 // CHECK:STDOUT:   %foo__carbon_thunk.call: init %empty_tuple.type = call imports.%foo__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %.loc8_11.2: init %X to %.loc8_11.1 = mark_in_place_init %foo__carbon_thunk.call
 // CHECK:STDOUT:   %.loc8_11.3: ref %X = temporary %.loc8_11.1, %.loc8_11.2
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc8_11.3, constants.%Destroy.WithSelf.SelfDestruct.db3
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc8_11.3)
+// CHECK:STDOUT:   %facet_value.loc8_11.1: %facet_type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.c08, constants.%custom_witness.1d5) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc8_11.4: %facet_type = converted constants.%X, %facet_value.loc8_11.1 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc8_11.2: %facet_type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.c08, constants.%custom_witness.1d5) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc8_11.5: %facet_type = converted constants.%X, %facet_value.loc8_11.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc8(%self.param: ref %X) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc8(%self.param: ref %X) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
-// CHECK:STDOUT:   %X.cpp_destructor.call: init %empty_tuple.type = call imports.%X.cpp_destructor.decl(%self.param)
-// CHECK:STDOUT:   return
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc8_11.3)
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- import_special_name_call_escpaed.carbon

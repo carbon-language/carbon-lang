@@ -1050,13 +1050,30 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
   ParseInjectedTokens(*cpp_context);
 }
 
-auto FinishAst(Context& context) -> void {
+auto FinalizeCppAstFragment(Context& context) -> void {
+  if (!context.cpp_context()) {
+    return;
+  }
+
+  // Finalize the per-Context AST fragment. The final ActOnEndOfTranslationUnit
+  // call for the CppDomain is performed in FinalizeCppDomain once all files
+  // sharing the domain have been checked.
+  context.cpp_context()->sema().ActOnEndOfTranslationUnitFragment(
+      clang::TUFragmentKind::Normal);
+  FlushDiagnosticConsumer(
+      *context.cpp_context()->sema().getDiagnostics().getClient());
+  context.emitter().Flush();
+}
+
+auto DisconnectCppAst(Context& context) -> void {
   if (!context.cpp_context()) {
     return;
   }
 
   // Leave the module we entered to encapsulate the contents of this Carbon
-  // file.
+  // file. This happens here rather than in `FinalizeCppAstFragment`, because
+  // that can run more than once for a file, but the module is only entered
+  // once.
   auto end_loc_id =
       SemIR::LocId(*(context.sem_ir().parse_tree().postorder().end() - 1));
   // Shuffle the end of file location back by one character to work around a
@@ -1067,12 +1084,6 @@ auto FinishAst(Context& context) -> void {
   // location adjustment is safe.
   LeaveModule(*context.cpp_context(),
               GetCppLocation(context, end_loc_id).getLocWithOffset(-1));
-
-  // Finalize the per-Context AST fragment. The final ActOnEndOfTranslationUnit
-  // call for the CppDomain is performed in FinalizeCppDomain once all files
-  // sharing the domain have been checked.
-  context.cpp_context()->sema().ActOnEndOfTranslationUnitFragment(
-      clang::TUFragmentKind::Normal);
   FlushDiagnosticConsumer(
       *context.cpp_context()->sema().getDiagnostics().getClient());
   context.emitter().Flush();

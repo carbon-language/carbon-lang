@@ -412,7 +412,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT:   %SimpleReturnValue.call = call i32 @_Z17SimpleReturnValueii(i32 3, i32 4), !dbg !80
 // CHECK:STDOUT:   store i32 %SimpleReturnValue.call, ptr %value.var, align 4, !dbg !79
 // CHECK:STDOUT:   %.loc14 = load i32, ptr %value.var, align 4, !dbg !81
-// CHECK:STDOUT:   call void @"_CSelfDestruct.72395be3dbbe8946:core.Destroy.Core"(ptr %value.var), !dbg !74
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %value.var), !dbg !74
 // CHECK:STDOUT:   ret i32 %.loc14, !dbg !82
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -427,8 +427,8 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: define internal void @_Z13NoReturnValueii.carbon_thunk._(i32 noundef %a) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.addr = alloca i32, align 4
-// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !87
-// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !87
+// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !90
+// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !90
 // CHECK:STDOUT:   call void @_Z13NoReturnValueii(i32 noundef %0, i32 noundef 2)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -446,22 +446,21 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: define internal noundef i32 @_Z17SimpleReturnValueii.carbon_thunk._(i32 noundef %a) #1 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.addr = alloca i32, align 4
-// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !87
-// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !87
+// CHECK:STDOUT:   store i32 %a, ptr %a.addr, align 4, !tbaa !90
+// CHECK:STDOUT:   %0 = load i32, ptr %a.addr, align 4, !tbaa !90
 // CHECK:STDOUT:   %call = call noundef i32 @_Z17SimpleReturnValueii(i32 noundef %0, i32 noundef 2)
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare noundef i32 @_Z17SimpleReturnValueii(i32 noundef, i32 noundef) #2
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.72395be3dbbe8946:core.Destroy.Core"(ptr %self) #0 !dbg !83 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !85
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %t) #0 !dbg !83 {
+// CHECK:STDOUT:   ret void, !dbg !88
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_Z13NoReturnValueii, { 2, 1, 0 }
@@ -478,6 +477,7 @@ fn MyF() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !10 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
 // CHECK:STDOUT: !25 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !26 = !{i32 7, !"PIE Level", i32 2}
 // CHECK:STDOUT: !27 = !{i32 7, !"uwtable", i32 2}
@@ -505,9 +505,9 @@ fn MyF() -> i32 {
 // CHECK:STDOUT: !80 = !DILocation(line: 13, column: 11, scope: !68)
 // CHECK:STDOUT: !81 = !DILocation(line: 14, column: 10, scope: !68)
 // CHECK:STDOUT: !82 = !DILocation(line: 14, column: 3, scope: !68)
-// CHECK:STDOUT: !83 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.72395be3dbbe8946:core.Destroy.Core", scope: null, file: !55, line: 11, type: !61, spFlags: DISPFlagDefinition, unit: !56, retainedNodes: !86)
+// CHECK:STDOUT: !83 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.dc5658e0ac74b2aa", scope: null, file: !10, line: 30, type: !61, spFlags: DISPFlagDefinition, unit: !56, retainedNodes: !89)
 // CHECK:STDOUT: !84 = !DILocalVariable(arg: 1, scope: !83, type: !57)
-// CHECK:STDOUT: !85 = !DILocation(line: 11, column: 3, scope: !83)
-// CHECK:STDOUT: !86 = !{!84}
-// CHECK:STDOUT: !87 = !{!30, !30, i64 0}
+// CHECK:STDOUT: !88 = !DILocation(line: 30, column: 1, scope: !83)
+// CHECK:STDOUT: !89 = !{!84}
+// CHECK:STDOUT: !90 = !{!30, !30, i64 0}
 // CHECK:STDOUT:

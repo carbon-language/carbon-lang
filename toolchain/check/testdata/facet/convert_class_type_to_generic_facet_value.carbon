@@ -451,18 +451,18 @@ fn G() {
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.e46 = facet_value %ImplsGeneric, (%Generic.impl_witness) [concrete]
 // CHECK:STDOUT:   %Generic.WithSelf.F.type.ae1: type = fn_type @Generic.WithSelf.F, @Generic.WithSelf(%GenericParam, %Generic.facet) [concrete]
 // CHECK:STDOUT:   %Generic.WithSelf.F.946: %Generic.WithSelf.F.type.ae1 = struct_value () [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
-// CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %Generic.type.6735e0.2: type = facet_type <@Generic, @Generic(%T)> [symbolic]
+// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %Generic.type.6735e0.2: type = facet_type <@Generic, @Generic(%T.67d)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.2af: type = pattern_type %Generic.type.6735e0.2 [symbolic]
 // CHECK:STDOUT:   %U.patt.adf: %pattern_type.2af = symbolic_binding_pattern U, 1 [symbolic]
 // CHECK:STDOUT:   %U: %Generic.type.6735e0.2 = symbolic_binding U, 1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T [symbolic]
+// CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T.67d [symbolic]
 // CHECK:STDOUT:   %t.param_patt.513: %pattern_type.51d = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %t.patt.c64: %pattern_type.51d = wrapper_binding_pattern t, %t.param_patt.513 [symbolic]
 // CHECK:STDOUT:   %CallGenericMethod.type: type = fn_type @CallGenericMethod [concrete]
 // CHECK:STDOUT:   %CallGenericMethod: %CallGenericMethod.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T [symbolic]
+// CHECK:STDOUT:   %require_complete.944: <witness> = require_complete_type %T.67d [symbolic]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -474,63 +474,31 @@ fn G() {
 // CHECK:STDOUT:   %t.patt.89c: %pattern_type.485 = wrapper_binding_pattern t, %t.param_patt.4d1 [concrete]
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet) [concrete]
 // CHECK:STDOUT:   %.b65: ref %GenericParam = temporary invalid, %GenericParam.val [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
-// CHECK:STDOUT:   %self.param_patt.52f: %pattern_type.a96 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.4b1: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt.52f [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc18_38.1 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc18_38.1 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.320: %pattern_type.485 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.c61: %pattern_type.485 = wrapper_binding_pattern self, %self.param_patt.320 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc18_38.2 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc18_38.2 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc18_38.2 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.b65, %Destroy.WithSelf.SelfDestruct.db3fdb.2 [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc18_38.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.376: %SubobjectDestroy.type = facet_value %GenericParam, (%custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.f88: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.376) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %GenericParam, (%DestroyImpl.impl_witness.f88, %custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%facet_value) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc18_38.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.1] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.a96 = ref_param_pattern [concrete = constants.%self.param_patt.52f]
-// CHECK:STDOUT:     %self.patt: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4b1]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %empty_struct_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %empty_struct_type = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc18_38.1 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.a96 = ref_param_pattern [concrete = constants.%self.param_patt.52f]
-// CHECK:STDOUT:     %self.patt: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4b1]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %empty_struct_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %empty_struct_type = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc18_38.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.485 = ref_param_pattern [concrete = constants.%self.param_patt.320]
-// CHECK:STDOUT:     %self.patt: %pattern_type.485 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.c61]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %GenericParam = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %GenericParam = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc18_38.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.485 = ref_param_pattern [concrete = constants.%self.param_patt.320]
-// CHECK:STDOUT:     %self.patt: %pattern_type.485 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.c61]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %GenericParam = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %GenericParam = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -562,7 +530,7 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc11: <witness> = impl_self_witness @ImplsGeneric.as.Generic.impl.%ImplsGeneric.ref, @Generic, @Generic(constants.%GenericParam) [concrete = constants.%.f1b]
 // CHECK:STDOUT:   %CallGenericMethod.decl: %CallGenericMethod.type = fn_decl @CallGenericMethod [concrete = constants.%CallGenericMethod] {
-// CHECK:STDOUT:     %T.patt.loc15_23.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_23.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %T.patt.loc15_23.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_23.2 (constants.%T.patt.3a0)]
 // CHECK:STDOUT:     %U.patt.loc15_47.1: @CallGenericMethod.%pattern_type.loc15_47 (%pattern_type.2af) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc15_47.2 (constants.%U.patt.adf)]
 // CHECK:STDOUT:     %t.param_patt.loc15_69.1: @CallGenericMethod.%pattern_type.loc15_69 (%pattern_type.51d) = value_param_pattern [symbolic = %t.param_patt.loc15_69.2 (constants.%t.param_patt.513)]
 // CHECK:STDOUT:     %t.patt.loc15_69.1: @CallGenericMethod.%pattern_type.loc15_69 (%pattern_type.51d) = wrapper_binding_pattern t, %t.param_patt.loc15_69.1 [symbolic = %t.patt.loc15_69.2 (constants.%t.patt.c64)]
@@ -571,17 +539,17 @@ fn G() {
 // CHECK:STDOUT:       %.Self.frozen.loc15_23: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc15_25.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc15_23.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_23.1 (constants.%T)]
+// CHECK:STDOUT:     %T.loc15_23.2: type = symbolic_binding T, 0 [symbolic = %T.loc15_23.1 (constants.%T.67d)]
 // CHECK:STDOUT:     %.loc15_58: type = splice_block %Generic.type.loc15_58.2 [symbolic = %Generic.type.loc15_58.1 (constants.%Generic.type.6735e0.2)] {
 // CHECK:STDOUT:       %.Self.frozen.loc15_47: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.30d = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
-// CHECK:STDOUT:       %T.ref.loc15_57: type = name_ref T, %T.loc15_23.2 [symbolic = %T.loc15_23.1 (constants.%T)]
-// CHECK:STDOUT:       %Generic.type.loc15_58.2: type = facet_type <@Generic, @Generic(constants.%T)> [symbolic = %Generic.type.loc15_58.1 (constants.%Generic.type.6735e0.2)]
+// CHECK:STDOUT:       %T.ref.loc15_57: type = name_ref T, %T.loc15_23.2 [symbolic = %T.loc15_23.1 (constants.%T.67d)]
+// CHECK:STDOUT:       %Generic.type.loc15_58.2: type = facet_type <@Generic, @Generic(constants.%T.67d)> [symbolic = %Generic.type.loc15_58.1 (constants.%Generic.type.6735e0.2)]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %U.loc15_47.2: @CallGenericMethod.%Generic.type.loc15_58.1 (%Generic.type.6735e0.2) = symbolic_binding U, 1 [symbolic = %U.loc15_47.1 (constants.%U)]
-// CHECK:STDOUT:     %t.param: @CallGenericMethod.%T.loc15_23.1 (%T) = value_param call_param0
-// CHECK:STDOUT:     %T.ref.loc15_71: type = name_ref T, %T.loc15_23.2 [symbolic = %T.loc15_23.1 (constants.%T)]
-// CHECK:STDOUT:     %t: @CallGenericMethod.%T.loc15_23.1 (%T) = wrapper_binding t, %t.param
+// CHECK:STDOUT:     %t.param: @CallGenericMethod.%T.loc15_23.1 (%T.67d) = value_param call_param0
+// CHECK:STDOUT:     %T.ref.loc15_71: type = name_ref T, %T.loc15_23.2 [symbolic = %T.loc15_23.1 (constants.%T.67d)]
+// CHECK:STDOUT:     %t: @CallGenericMethod.%T.loc15_23.1 (%T.67d) = wrapper_binding t, %t.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
@@ -648,8 +616,8 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @CallGenericMethod(%T.loc15_23.2: type, %U.loc15_47.2: @CallGenericMethod.%Generic.type.loc15_58.1 (%Generic.type.6735e0.2)) {
-// CHECK:STDOUT:   %T.patt.loc15_23.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_23.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc15_23.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_23.1 (constants.%T)]
+// CHECK:STDOUT:   %T.patt.loc15_23.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc15_23.2 (constants.%T.patt.3a0)]
+// CHECK:STDOUT:   %T.loc15_23.1: type = symbolic_binding T, 0 [symbolic = %T.loc15_23.1 (constants.%T.67d)]
 // CHECK:STDOUT:   %Generic.type.loc15_58.1: type = facet_type <@Generic, @Generic(%T.loc15_23.1)> [symbolic = %Generic.type.loc15_58.1 (constants.%Generic.type.6735e0.2)]
 // CHECK:STDOUT:   %pattern_type.loc15_47: type = pattern_type %Generic.type.loc15_58.1 [symbolic = %pattern_type.loc15_47 (constants.%pattern_type.2af)]
 // CHECK:STDOUT:   %U.patt.loc15_47.2: @CallGenericMethod.%pattern_type.loc15_47 (%pattern_type.2af) = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc15_47.2 (constants.%U.patt.adf)]
@@ -661,7 +629,7 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.loc15_23.1 [symbolic = %require_complete (constants.%require_complete.944)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%t.param: @CallGenericMethod.%T.loc15_23.1 (%T)) {
+// CHECK:STDOUT:   fn(%t.param: @CallGenericMethod.%T.loc15_23.1 (%T.67d)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -682,31 +650,18 @@ fn G() {
 // CHECK:STDOUT:   %.loc18_38.2: ref %GenericParam = temporary %.loc18_36.2, %.loc18_38.1 [concrete = constants.%.b65]
 // CHECK:STDOUT:   %.loc18_38.3: %GenericParam = acquire_value %.loc18_38.2 [concrete = constants.%GenericParam.val]
 // CHECK:STDOUT:   %CallGenericMethod.call: init %empty_tuple.type = call %CallGenericMethod.specific_fn(%.loc18_38.3)
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call constants.%Destroy.WithSelf.SelfDestruct.bound(constants.%.b65)
+// CHECK:STDOUT:   %facet_value.loc18_38.1: %facet_type = facet_value constants.%GenericParam, (constants.%DestroyImpl.impl_witness.f88, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc18_38.4: %facet_type = converted constants.%GenericParam, %facet_value.loc18_38.1 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc18_38.2: %facet_type = facet_value constants.%GenericParam, (constants.%DestroyImpl.impl_witness.f88, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc18_38.5: %facet_type = converted constants.%GenericParam, %facet_value.loc18_38.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%facet_value) [concrete = constants.%SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc18_38.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc18_38.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc18_38.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_38.1(%self.param: ref %empty_struct_type) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc18_38.1(%self.param: ref %empty_struct_type) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.1(%self.param)
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.1(%self.param)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc18_38.2(%self.param: ref %GenericParam) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18_38.2(%self.param: ref %GenericParam) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc18_38.2(%self.param: ref %GenericParam) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc18_38.2(%self.param: ref %GenericParam) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic(constants.%Scalar) {
 // CHECK:STDOUT:   %Scalar.patt.loc4_25.2 => constants.%Scalar.patt
@@ -750,14 +705,14 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.WithSelf.F(constants.%GenericParam, constants.%Generic.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Generic(constants.%T) {
+// CHECK:STDOUT: specific @Generic(constants.%T.67d) {
 // CHECK:STDOUT:   %Scalar.patt.loc4_25.2 => constants.%Scalar.patt
-// CHECK:STDOUT:   %Scalar.loc4_25.1 => constants.%T
+// CHECK:STDOUT:   %Scalar.loc4_25.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @CallGenericMethod(constants.%T, constants.%U) {
-// CHECK:STDOUT:   %T.patt.loc15_23.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc15_23.1 => constants.%T
+// CHECK:STDOUT: specific @CallGenericMethod(constants.%T.67d, constants.%U) {
+// CHECK:STDOUT:   %T.patt.loc15_23.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.loc15_23.1 => constants.%T.67d
 // CHECK:STDOUT:   %Generic.type.loc15_58.1 => constants.%Generic.type.6735e0.2
 // CHECK:STDOUT:   %pattern_type.loc15_47 => constants.%pattern_type.2af
 // CHECK:STDOUT:   %U.patt.loc15_47.2 => constants.%U.patt.adf
@@ -768,7 +723,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CallGenericMethod(constants.%GenericParam, constants.%Generic.facet) {
-// CHECK:STDOUT:   %T.patt.loc15_23.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.patt.loc15_23.2 => constants.%T.patt.3a0
 // CHECK:STDOUT:   %T.loc15_23.1 => constants.%GenericParam
 // CHECK:STDOUT:   %Generic.type.loc15_58.1 => constants.%Generic.type.e46
 // CHECK:STDOUT:   %pattern_type.loc15_47 => constants.%pattern_type.905
