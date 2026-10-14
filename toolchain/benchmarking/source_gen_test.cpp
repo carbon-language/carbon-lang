@@ -465,62 +465,80 @@ TEST_P(GenApiFileDenseDeclsParamsTest, OnlyFields) {
 
 // Bodies read class-typed parameters through `Checksum`, and return class
 // values through `Make`.
-TEST(SourceGenTest, GenApiFileDenseDeclsInlineBodies) {
-  SourceGen::DenseDeclParams params = {
-      .class_params = {.inline_function_defs = 3,
-                       .max_body_locals = 4,
-                       .inline_getters = 2,
-                       .inline_predicates = 2,
-                       .inline_forwarders = 2}};
-  for (SourceGen::Language language :
-       {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
-    ExpectSeedIndependentSize(language, /*target_lines=*/2000, params,
-                              /*num_seeds=*/16);
-  }
+static auto InlineBodiesParams() -> SourceGen::DenseDeclParams {
+  return {.class_params = {.inline_function_defs = 3,
+                           .max_body_locals = 4,
+                           .inline_getters = 2,
+                           .inline_predicates = 2,
+                           .inline_forwarders = 2}};
+}
 
+TEST_P(GenApiFileDenseDeclsParamsTest, InlineBodies) {
+  SourceGen::DenseDeclParams params = InlineBodiesParams();
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(2000, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(2000, params)));
+}
+
+TEST(SourceGenTest, GenApiFileDenseDeclsInlineBodies) {
   SourceGen gen;
-  std::string source = gen.GenApiFileDenseDecls(2000, params);
+  std::string source = gen.GenApiFileDenseDecls(2000, InlineBodiesParams());
   EXPECT_THAT(source, HasSubstr("acc = acc + "));
   EXPECT_THAT(source, HasSubstr(".Checksum()"));
   EXPECT_THAT(source, HasSubstr(".Make()"));
   EXPECT_THAT(source, HasSubstr("Impl("));
 }
 
-TEST(SourceGenTest, GenApiFileDenseDeclsInlineBodiesWithVariedParams) {
-  llvm::SmallVector<SourceGen::DenseDeclParams, 0> param_set;
-  // Many large bodies and few other declarations.
-  param_set.push_back({.class_params = {.public_function_decls = 1,
-                                        .public_method_decls = 1,
-                                        .private_function_decls = 0,
-                                        .private_method_decls = 0,
-                                        .private_field_decls = 4,
-                                        .inline_function_defs = 8,
-                                        .max_body_locals = 12}});
-  // Many fields, which `Make` initializes, often with an earlier class's
-  // `Make`.
-  param_set.push_back({.class_params = {.public_function_decls = 1,
-                                        .public_method_decls = 1,
-                                        .private_function_decls = 0,
-                                        .private_method_decls = 0,
-                                        .private_field_decls = 24,
-                                        .inline_function_defs = 2,
-                                        .max_body_locals = 3}});
-  // Many getters and predicates, and no other fields.
-  param_set.push_back({.class_params = {.private_field_decls = 0,
-                                        .inline_getters = 8,
-                                        .inline_predicates = 8}});
-  // Many forwarders with many parameters, which can have class types.
-  param_set.push_back(
-      {.class_params = {.inline_forwarders = 8,
-                        .inline_forwarder_params = {.max_params = 8}}});
+// Many large bodies and few other declarations.
+TEST_P(GenApiFileDenseDeclsParamsTest, LargeInlineBodies) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 4,
+                       .inline_function_defs = 8,
+                       .max_body_locals = 12}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
 
-  for (const SourceGen::DenseDeclParams& params : param_set) {
-    for (SourceGen::Language language :
-         {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
-      ExpectSeedIndependentSize(language, /*target_lines=*/3000, params,
-                                /*num_seeds=*/24);
-    }
-  }
+// Many fields, which `Make` initializes, often with an earlier class's
+// `Make`.
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyFieldsToMake) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 24,
+                       .inline_function_defs = 2,
+                       .max_body_locals = 3}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Many getters and predicates, and no other fields.
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyGettersAndPredicates) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.private_field_decls = 0,
+                       .inline_getters = 8,
+                       .inline_predicates = 8}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Many forwarders with many parameters, which can have class types.
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyForwarders) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.inline_forwarders = 8,
+                       .inline_forwarder_params = {.max_params = 8}}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
 }
 
 // Locals and parameters draw from the same identifiers of each length, and C++
