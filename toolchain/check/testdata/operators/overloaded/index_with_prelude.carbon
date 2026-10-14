@@ -112,6 +112,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %pattern_type.ea5: type = pattern_type %SubscriptType.f8f [concrete]
 // CHECK:STDOUT:   %subscript.param_patt.5ee: %pattern_type.ea5 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %subscript.patt.32e: %pattern_type.ea5 = wrapper_binding_pattern subscript, %subscript.param_patt.5ee [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.type.841: type = generic_interface_type @IndirectIndexWith [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.generic: %IndirectIndexWith.type.841 = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.facet.bd0: %IndexWith.type.a14 = facet_value %C, (%IndexWith.impl_witness.ae9) [concrete]
 // CHECK:STDOUT:   %IndexWith.WithSelf.At.type.a20: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%SubscriptType.f8f, %IndexWith.facet.bd0) [concrete]
 // CHECK:STDOUT:   %.4d0: Core.Form = init_form %ElementType [concrete]
@@ -135,6 +137,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .IndexWith = %Core.IndexWith
+// CHECK:STDOUT:     .IndirectIndexWith = %Core.IndirectIndexWith
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -143,6 +146,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Core.import_ref.fc2: type = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [concrete = %ElementType]
 // CHECK:STDOUT:   %Core.import_ref.6b6e53.2 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %ElementType: type = assoc_const_decl @ElementType.1 [concrete] {}
+// CHECK:STDOUT:   %Core.IndirectIndexWith: %IndirectIndexWith.type.841 = import_ref Core//prelude/operators/index, IndirectIndexWith, loaded [concrete = constants.%IndirectIndexWith.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -340,6 +344,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %s.patt: %pattern_type.8b4 = value_binding_pattern s [concrete]
 // CHECK:STDOUT:   %tuple.adf: %tuple.type.748 = tuple_value (%empty_tuple.4db, %empty_tuple.4db) [concrete]
 // CHECK:STDOUT:   %e.patt: %pattern_type.98b = value_binding_pattern e [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.type.841: type = generic_interface_type @IndirectIndexWith [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.generic: %IndirectIndexWith.type.841 = struct_value () [concrete]
 // CHECK:STDOUT:   %.12a: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.e67, %IndexWith.facet.5f1 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -347,6 +353,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .IndexWith = %Core.IndexWith
 // CHECK:STDOUT:     .IntLiteral = %Core.IntLiteral
+// CHECK:STDOUT:     .IndirectIndexWith = %Core.IndirectIndexWith
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -356,6 +363,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Core.IntLiteral: type = import_ref Core//prelude/types/int_literal, IntLiteral, loaded [concrete = Core.IntLiteral]
 // CHECK:STDOUT:   %Core.import_ref.6b6e53.2 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %ElementType: type = assoc_const_decl @ElementType [concrete] {}
+// CHECK:STDOUT:   %Core.IndirectIndexWith: %IndirectIndexWith.type.841 = import_ref Core//prelude/operators/index, IndirectIndexWith, loaded [concrete = constants.%IndirectIndexWith.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -531,6 +539,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %pattern_type.ea5: type = pattern_type %SubscriptType.f8f [concrete]
 // CHECK:STDOUT:   %subscript.param_patt.5ee: %pattern_type.ea5 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %subscript.patt.32e: %pattern_type.ea5 = wrapper_binding_pattern subscript, %subscript.param_patt.5ee [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.type.841: type = generic_interface_type @IndirectIndexWith [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.generic: %IndirectIndexWith.type.841 = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.facet.bd0: %IndexWith.type.a14 = facet_value %C, (%IndexWith.impl_witness.ae9) [concrete]
 // CHECK:STDOUT:   %.4d0: Core.Form = init_form %ElementType [concrete]
 // CHECK:STDOUT:   %pattern_type.67c: type = pattern_type %ElementType [concrete]
@@ -550,6 +560,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .IndexWith = %Core.IndexWith
+// CHECK:STDOUT:     .IndirectIndexWith = %Core.IndirectIndexWith
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
@@ -558,6 +569,7 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %Core.import_ref.fc2: type = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [concrete = %ElementType]
 // CHECK:STDOUT:   %Core.import_ref.6b6e53.2 = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %ElementType: type = assoc_const_decl @ElementType.1 [concrete] {}
+// CHECK:STDOUT:   %Core.IndirectIndexWith: %IndirectIndexWith.type.841 = import_ref Core//prelude/operators/index, IndirectIndexWith, loaded [concrete = constants.%IndirectIndexWith.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -708,6 +720,8 @@ let x: i32 = c[0];
 // CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.type.841: type = generic_interface_type @IndirectIndexWith [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.generic: %IndirectIndexWith.type.841 = struct_value () [concrete]
 // CHECK:STDOUT:   %IndexWith.type.df6: type = generic_interface_type @IndexWith [concrete]
 // CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.df6 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -715,11 +729,13 @@ let x: i32 = c[0];
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .IndirectIndexWith = %Core.IndirectIndexWith
 // CHECK:STDOUT:     .IndexWith = %Core.IndexWith
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/types/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %Core.IndirectIndexWith: %IndirectIndexWith.type.841 = import_ref Core//prelude/operators/index, IndirectIndexWith, loaded [concrete = constants.%IndirectIndexWith.generic]
 // CHECK:STDOUT:   %Core.IndexWith: %IndexWith.type.df6 = import_ref Core//prelude/operators/index, IndexWith, loaded [concrete = constants.%IndexWith.generic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -16,28 +16,32 @@ package Core library "[[@TEST_NAME]]";
 
 class IndexWith {}
 
+class IndirectIndexWith {}
+
 // --- fail_wrong_index_with.carbon
 
 library "[[@TEST_NAME]]";
 
 import Core library "core_wrong_index_with";
 
+//@dump-sem-ir-begin
+// CHECK:STDERR: fail_wrong_index_with.carbon:[[@LINE+4]]:10-13: error: value of type `type` is not callable [CallToNonCallable]
+// CHECK:STDERR:
 // CHECK:STDERR: fail_wrong_index_with.carbon:[[@LINE+2]]:10-13: error: value of type `type` is not callable [CallToNonCallable]
 // CHECK:STDERR:
 fn F() { 0[1]; }
-// CHECK:STDERR: fail_wrong_index_with.carbon:[[@LINE+2]]:1: error: missing `//@dump-sem-ir-begin` to match `//@dump-sem-ir-end` [DumpSemIRRangeMissingBegin]
-// CHECK:STDERR:
 //@dump-sem-ir-end
 
 // --- fail_missing_index_with.carbon
 
 library "[[@TEST_NAME]]";
 
+//@dump-sem-ir-begin
+// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+4]]:10-13: error: name `Core.IndirectIndexWith` implicitly referenced here, but not found [CoreNameNotFound]
+// CHECK:STDERR:
 // CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+2]]:10-13: error: name `Core.IndexWith` implicitly referenced here, but not found [CoreNameNotFound]
 // CHECK:STDERR:
 fn F() { 0[1]; }
-// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+2]]:1: error: missing `//@dump-sem-ir-begin` to match `//@dump-sem-ir-end` [DumpSemIRRangeMissingBegin]
-// CHECK:STDERR:
 //@dump-sem-ir-end
 
 // --- core_wrong_arg_count.carbon
@@ -46,6 +50,11 @@ package Core library "[[@TEST_NAME]]";
 
 interface IndexWith(SubscriptType: type, ElementType: type) {
   fn At(self, subscript: SubscriptType) -> ElementType;
+}
+
+interface IndirectIndexWith(SubscriptType: type) {
+  let ElementType: type;
+  fn Ref(self, subscript: SubscriptType) -> ref ElementType;
 }
 
 
@@ -75,3 +84,45 @@ fn F() {
 }
 
 
+// CHECK:STDOUT: --- fail_wrong_index_with.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_missing_index_with.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
