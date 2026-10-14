@@ -39,15 +39,15 @@ fn TestOp(a: C) -> C {
 // CHECK:STDOUT:   %BitComplement.impl_witness: <witness> = impl_witness @C.as.BitComplement.impl.%BitComplement.impl_witness_table [concrete]
 // CHECK:STDOUT:   %C.as.BitComplement.impl.Op.type: type = fn_type @C.as.BitComplement.impl.Op [concrete]
 // CHECK:STDOUT:   %C.as.BitComplement.impl.Op: %C.as.BitComplement.impl.Op.type = struct_value () [concrete]
-// CHECK:STDOUT:   %BitComplement.facet: %BitComplement.type = facet_value %C, (%BitComplement.impl_witness) [concrete]
-// CHECK:STDOUT:   %BitComplement.WithSelf.Op.type.47c: type = fn_type @BitComplement.WithSelf.Op, @BitComplement.WithSelf(%BitComplement.facet) [concrete]
-// CHECK:STDOUT:   %.71a: type = fn_type_with_self_type %BitComplement.WithSelf.Op.type.47c, %BitComplement.facet [concrete]
+// CHECK:STDOUT:   %BitComplement.facet.ce7: %BitComplement.type = facet_value %C, (%BitComplement.impl_witness) [concrete]
+// CHECK:STDOUT:   %BitComplement.WithSelf.Op.type.10d: type = fn_type @BitComplement.WithSelf.Op, @BitComplement.WithSelf(%BitComplement.facet.ce7) [concrete]
+// CHECK:STDOUT:   %.b45: type = fn_type_with_self_type %BitComplement.WithSelf.Op.type.10d, %BitComplement.facet.ce7 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestOp(%a.param: %C) -> out %return.param: %C {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %C = name_ref a, %a
-// CHECK:STDOUT:   %impl.elem1: %.71a = impl_witness_access constants.%BitComplement.impl_witness, element1 [concrete = constants.%C.as.BitComplement.impl.Op]
+// CHECK:STDOUT:   %impl.elem1: %.b45 = impl_witness_access constants.%BitComplement.impl_witness, element1 [concrete = constants.%C.as.BitComplement.impl.Op]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %a.ref, %impl.elem1
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %C.as.BitComplement.impl.Op.call: init %C to %.loc27_20.1 = call %bound_method(%a.ref)

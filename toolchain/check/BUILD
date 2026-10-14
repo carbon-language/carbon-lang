@@ -163,6 +163,7 @@ cc_library(
         "//common:enum_mask_base",
         "//common:find",
         "//common:growing_range",
+        "//common:increment_scope",
         "//common:map",
         "//common:move_only",
         "//common:ostream",

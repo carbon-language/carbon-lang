@@ -761,6 +761,10 @@ class Stringifier {
             sem_ir_->insts().TryGetAs<ImplSelfWitness>(witness_inst_id)) {
       specific_interface = sem_ir_->specific_interfaces().Get(
           self_witness->specific_interface_id);
+    } else if (auto id_witness = sem_ir_->insts().TryGetAs<IdentifiedWitness>(
+                   witness_inst_id)) {
+      specific_interface = sem_ir_->specific_interfaces().Get(
+          id_witness->query_specific_interface_id);
     } else {
       auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
       specific_interface = sem_ir_->specific_interfaces().Get(
@@ -818,6 +822,18 @@ class Stringifier {
       if (!is_period_self) {
         step_stack_->PushInstId(self_witness->period_self);
       }
+    } else if (auto lookup = sem_ir_->insts().TryGetAs<IdentifiedWitness>(
+                   witness_inst_id)) {
+      bool is_period_self = false;
+      if (auto sym_name = sem_ir_->insts().TryGetAs<SymbolicBinding>(
+              lookup->query_self_inst_id)) {
+        auto name_id =
+            sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
+        is_period_self = (name_id == NameId::PeriodSelf);
+      }
+      if (!is_period_self) {
+        step_stack_->PushInstId(lookup->query_self_inst_id);
+      }
     } else if (auto lookup = sem_ir_->insts().TryGetAs<LookupImplWitness>(
                    witness_inst_id)) {
       bool is_period_self = false;
@@ -859,6 +875,12 @@ class Stringifier {
 
   auto StringifyInst(InstId /*inst_id*/, IntValue inst) -> void {
     sem_ir_->ints().Get(inst.int_id).print(*out_, /*isSigned=*/true);
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, IdentifiedWitness inst) -> void {
+    step_stack_->Push(
+        inst.query_self_inst_id, " as ",
+        sem_ir_->specific_interfaces().Get(inst.query_specific_interface_id));
   }
 
   auto StringifyInst(InstId /*inst_id*/, LookupImplWitness inst) -> void {
