@@ -358,12 +358,15 @@ static auto CollectFacetWitnessSources(
       //
       // TODO: This prevents some legitimate code from working, as we can't find
       // some witnesses that involve concrete associated constants from a
-      // symbolic facet. We could consider another approach: When we identify
-      // and replace `.Self` with `facet_const_id` in each constraint in its
-      // facet type, remove that constraint from the type of `facet_const_id`.
-      // Then each cycle back through to `facet_const_id` will have a smaller
-      // type until it runs out of constraints. See for example the
-      // fail_todo_concrete_access_witness_m_in_impls_constraint.carbon test.
+      // symbolic facet, and this can cause us to form incorrect specifics. See
+      // for example the test:
+      // fail_todo_specific_resolves_final_impl_while_collecting_witnesses.carbon.
+      //
+      // We could consider another approach: When we identify and replace
+      // `.Self` with `facet_const_id` in each constraint in its facet type,
+      // remove that constraint from the type of `facet_const_id`. Then each
+      // cycle back through to `facet_const_id` will have a smaller type until
+      // it runs out of constraints.
       {
         IncrementScope inc(context.impl_lookup_no_symbolic_final_lookups());
         req = EvaluateIdentifiedWitnesses(context, loc_id, req);

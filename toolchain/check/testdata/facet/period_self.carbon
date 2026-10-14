@@ -399,6 +399,42 @@ interface Z(T: Y) {}
 // converting it to `Y`.
 fn F(generic T: L where .W impls Y and .Self impls Z(.W) and .Self impls M, a: T.W) -> () { return a; }
 
+// --- fail_todo_specific_resolves_final_impl_while_collecting_witnesses.carbon
+library "[[@TEST_NAME]]";
+
+interface L { let L1: type; }
+
+interface M {}
+final impl forall [T: M] T as L where .L1 = () {}
+
+interface Y { let Y1: L; }
+class C(U: Y, v: U.Y1.L1) {
+  // The type `U.Y1.L1` remains symbolic here, since we don't know that `U.Y1`
+  // impls `M` and can't use the `final impl` above. So `C1` is a symbolic type
+  // in the self specific.
+  alias C1 = U.Y1.L1;
+}
+
+// When we form the specific `C(T, ())` for the return type, we replace `U`
+// with `T` which knows that `.Y1 impls M`. This means `T.Y1.L1 = ()` so
+// `C(T, ()).C1 = ()`.
+//
+// However while forming that specific we must convert `T` to `Y` which does
+// the lookup `T as Y`. This identifies the type of `T` to collect witnesses
+// (like `.Y1 impls M`). But we also collect the witness
+// `C(.Self, ()) impls M` which forms the specific `C(T, ())`.
+//
+// During the collection of witnesses, we prevent cycles by preventing witnesses
+// that are substituted to replace `.Self` from evaluating. That means the
+// specific `C(T, ())` is formed without being able to use the `final impl` to
+// resolve the access of `C(T, ()).C1` which would remain symbolic.
+//
+// This creates a bug in the toolchain since the specific is now wrong and we're
+// unable to get the concrete value of `C(T, ()).C1`.
+fn F(generic T: Y where .Y1 impls M and C(.Self, ()) impls M) -> C(T, ()).C1 {
+  return ();
+}
+
 // --- concrete_access_witness_m_in_extend_constraint.carbon
 library "[[@TEST_NAME]]";
 
