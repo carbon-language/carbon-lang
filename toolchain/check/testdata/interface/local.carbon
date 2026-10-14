@@ -35,8 +35,8 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.4d0: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %self.param_patt.199: %pattern_type.4d0 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.206: %pattern_type.4d0 = wrapper_binding_pattern self, %self.param_patt.199 [symbolic]
-// CHECK:STDOUT:   %I.WithSelf.G.type.f46: type = fn_type @I.WithSelf.G, @I.WithSelf(%Self) [symbolic]
-// CHECK:STDOUT:   %I.WithSelf.G.7b3: %I.WithSelf.G.type.f46 = struct_value () [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.G.type.9a6: type = fn_type @I.WithSelf.G, @I.WithSelf(%Self) [symbolic]
+// CHECK:STDOUT:   %I.WithSelf.G.25f: %I.WithSelf.G.type.9a6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.assoc_type: type = assoc_entity_type @I [concrete]
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, @I.WithSelf.%I.WithSelf.G.decl [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -48,9 +48,9 @@ fn F() {
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.type: type = fn_type @empty_tuple.type.as.I.impl.G [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G: %empty_tuple.type.as.I.impl.G.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %empty_tuple.type, (%I.impl_witness) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.G.type.6fe: type = fn_type @I.WithSelf.G, @I.WithSelf(%I.facet) [concrete]
-// CHECK:STDOUT:   %I.WithSelf.G.9e3: %I.WithSelf.G.type.6fe = struct_value () [concrete]
-// CHECK:STDOUT:   %.da7: type = fn_type_with_self_type %I.WithSelf.G.type.6fe, %I.facet [concrete]
+// CHECK:STDOUT:   %I.WithSelf.G.type.83e: type = fn_type @I.WithSelf.G, @I.WithSelf(%I.facet) [concrete]
+// CHECK:STDOUT:   %I.WithSelf.G.7ef: %I.WithSelf.G.type.83e = struct_value () [concrete]
+// CHECK:STDOUT:   %.81a: type = fn_type_with_self_type %I.WithSelf.G.type.83e, %I.facet [concrete]
 // CHECK:STDOUT:   %empty_tuple.type.as.I.impl.G.bound: <bound method> = bound_method %empty_tuple, %empty_tuple.type.as.I.impl.G [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -66,7 +66,7 @@ fn F() {
 // CHECK:STDOUT:   %I.WithSelf.decl = interface_with_self_decl @I [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %I.WithSelf.G.decl: @I.WithSelf.%I.WithSelf.G.type (%I.WithSelf.G.type.f46) = fn_decl @I.WithSelf.G [symbolic = @I.WithSelf.%I.WithSelf.G (constants.%I.WithSelf.G.7b3)] {
+// CHECK:STDOUT:   %I.WithSelf.G.decl: @I.WithSelf.%I.WithSelf.G.type (%I.WithSelf.G.type.9a6) = fn_decl @I.WithSelf.G [symbolic = @I.WithSelf.%I.WithSelf.G (constants.%I.WithSelf.G.25f)] {
 // CHECK:STDOUT:     %self.param_patt.loc17_10.1: @I.WithSelf.G.%pattern_type (%pattern_type.4d0) = value_param_pattern [symbolic = %self.param_patt.loc17_10.2 (constants.%self.param_patt.199)]
 // CHECK:STDOUT:     %self.patt.loc17_10.1: @I.WithSelf.G.%pattern_type (%pattern_type.4d0) = wrapper_binding_pattern self, %self.param_patt.loc17_10.1 [symbolic = %self.patt.loc17_10.2 (constants.%self.patt.206)]
 // CHECK:STDOUT:   } {
@@ -118,7 +118,7 @@ fn F() {
 // CHECK:STDOUT:   %.loc22_4.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %I.ref: type = name_ref I, %I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %G.ref: %I.assoc_type = name_ref G, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:   %impl.elem0: %.da7 = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.I.impl.G]
+// CHECK:STDOUT:   %impl.elem0: %.81a = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%empty_tuple.type.as.I.impl.G]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc22_4.1, %impl.elem0 [concrete = constants.%empty_tuple.type.as.I.impl.G.bound]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc22_4.2: %empty_tuple.type = converted %.loc22_4.1, %empty_tuple [concrete = constants.%empty_tuple]
@@ -144,8 +144,8 @@ fn F() {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %I.WithSelf.G.type => constants.%I.WithSelf.G.type.f46
-// CHECK:STDOUT:   %I.WithSelf.G => constants.%I.WithSelf.G.7b3
+// CHECK:STDOUT:   %I.WithSelf.G.type => constants.%I.WithSelf.G.type.9a6
+// CHECK:STDOUT:   %I.WithSelf.G => constants.%I.WithSelf.G.25f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.G(constants.%Self) {
@@ -159,8 +159,8 @@ fn F() {
 // CHECK:STDOUT: specific @I.WithSelf(constants.%I.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%I.facet
-// CHECK:STDOUT:   %I.WithSelf.G.type => constants.%I.WithSelf.G.type.6fe
-// CHECK:STDOUT:   %I.WithSelf.G => constants.%I.WithSelf.G.9e3
+// CHECK:STDOUT:   %I.WithSelf.G.type => constants.%I.WithSelf.G.type.83e
+// CHECK:STDOUT:   %I.WithSelf.G => constants.%I.WithSelf.G.7ef
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.G(constants.%I.facet) {

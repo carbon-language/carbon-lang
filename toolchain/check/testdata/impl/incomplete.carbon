@@ -585,14 +585,14 @@ interface B {
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %.b2e: <witness> = impl_self_witness %.Self, @J [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.4f1: type = impl_witness_access %.b2e, element0 [symbolic_self]
-// CHECK:STDOUT:   %J_where.type: type = facet_type <@J where .Self impls @Incomplete and %impl.elem0.4f1 = %empty_tuple.type> [concrete]
+// CHECK:STDOUT:   %J_where.type.297: type = facet_type <@J where .Self impls @Incomplete and %impl.elem0.4f1 = %empty_tuple.type> [concrete]
 // CHECK:STDOUT:   %.ffd: <witness> = impl_self_witness %C, @J [concrete]
 // CHECK:STDOUT:   %J.impl_witness: <witness> = impl_witness @C.as.J.impl.%J.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.d08: %Incomplete.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %.f0c: <witness> = impl_self_witness %C, @Incomplete [concrete]
 // CHECK:STDOUT:   %Incomplete.impl_witness: <witness> = impl_witness @C.as.Incomplete.impl.%Incomplete.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Incomplete.facet: %Incomplete.type = facet_value %C, (%Incomplete.impl_witness) [concrete]
-// CHECK:STDOUT:   %J.facet: %J.type = facet_value %C, (%J.impl_witness) [concrete]
+// CHECK:STDOUT:   %J.facet.0da: %J.type = facet_value %C, (%J.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -629,7 +629,7 @@ interface B {
 // CHECK:STDOUT:     %impls.loc8_25.2 = requirement_impls %.loc8_19.2, %Incomplete.ref.loc8 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc8_46.2: type = impl_witness_access constants.%.b2e, element0 [symbolic_self = constants.%impl.elem0.4f1]
 // CHECK:STDOUT:     %rewrite.loc8_49.2 = requirement_rewrite %impl.elem0.loc8_46.2, %.loc8_52.2 [concrete]
-// CHECK:STDOUT:     %.loc8_13: type = where_expr [concrete = constants.%J_where.type] {
+// CHECK:STDOUT:     %.loc8_13: type = where_expr [concrete = constants.%J_where.type.297] {
 // CHECK:STDOUT:       %base_facet_type.loc8 = requirement_base_facet_type %J.ref.loc8 [concrete]
 // CHECK:STDOUT:       %impls.loc8_25.2 = requirement_impls %.loc8_19.2, %Incomplete.ref.loc8 [concrete]
 // CHECK:STDOUT:       %rewrite.loc8_49.2 = requirement_rewrite %impl.elem0.loc8_46.2, %.loc8_52.2 [concrete]
@@ -667,7 +667,7 @@ interface B {
 // CHECK:STDOUT:     %impls.loc13_25.2 = requirement_impls %.loc13_19.2, %Incomplete.ref.loc13 [concrete]
 // CHECK:STDOUT:     %impl.elem0.loc13_46.2: type = impl_witness_access constants.%.b2e, element0 [symbolic_self = constants.%impl.elem0.4f1]
 // CHECK:STDOUT:     %rewrite.loc13_49.2 = requirement_rewrite %impl.elem0.loc13_46.2, %.loc13_52.2 [concrete]
-// CHECK:STDOUT:     %.loc13_13: type = where_expr [concrete = constants.%J_where.type] {
+// CHECK:STDOUT:     %.loc13_13: type = where_expr [concrete = constants.%J_where.type.297] {
 // CHECK:STDOUT:       %base_facet_type.loc13 = requirement_base_facet_type %J.ref.loc13 [concrete]
 // CHECK:STDOUT:       %impls.loc13_25.2 = requirement_impls %.loc13_19.2, %Incomplete.ref.loc13 [concrete]
 // CHECK:STDOUT:       %rewrite.loc13_49.2 = requirement_rewrite %impl.elem0.loc13_46.2, %.loc13_52.2 [concrete]
@@ -747,7 +747,7 @@ interface B {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J.WithSelf(constants.%J.facet) {
+// CHECK:STDOUT: specific @J.WithSelf(constants.%J.facet.0da) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1125,11 +1125,11 @@ interface B {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.b43) {
+// CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.b43) [identified] {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.WithSelf.Self.as_type.impls.Z.type.require(constants.%Self.b43) {
+// CHECK:STDOUT: specific @Y.WithSelf.Self.as_type.impls.Z.type.require(constants.%Self.b43) [identified] {
 // CHECK:STDOUT:   %Self => constants.%Self.b43
 // CHECK:STDOUT:   %Self.as_type.loc6_11.2 => constants.%Self.as_type.ace
 // CHECK:STDOUT: }

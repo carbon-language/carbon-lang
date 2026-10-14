@@ -55,7 +55,7 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT:   %Interface.WithSelf.F.type: type = fn_type @Interface.WithSelf.F, @Interface.WithSelf(%Self.3ce) [symbolic]
 // CHECK:STDOUT:   %Interface.WithSelf.F: %Interface.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface [concrete]
-// CHECK:STDOUT:   %assoc0.baa: %Interface.assoc_type = assoc_entity element0, @Interface.WithSelf.%Interface.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0.b3c: %Interface.assoc_type = assoc_entity element0, @Interface.WithSelf.%Interface.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.WithSelf.%T [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -119,7 +119,7 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %Interface.WithSelf.F.decl: @Interface.WithSelf.%Interface.WithSelf.F.type (%Interface.WithSelf.F.type) = fn_decl @Interface.WithSelf.F [symbolic = @Interface.WithSelf.%Interface.WithSelf.F (constants.%Interface.WithSelf.F)] {} {}
-// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.WithSelf.F.decl [concrete = constants.%assoc0.baa]
+// CHECK:STDOUT:   %assoc0: %Interface.assoc_type = assoc_entity element0, %Interface.WithSelf.F.decl [concrete = constants.%assoc0.b3c]
 // CHECK:STDOUT:   %T: type = assoc_const_decl @T [concrete] {
 // CHECK:STDOUT:     %assoc1: %Interface.assoc_type = assoc_entity element1, @Interface.WithSelf.%T [concrete = constants.%assoc1]
 // CHECK:STDOUT:   }
@@ -151,7 +151,7 @@ fn G(generic U: Different) -> U.(Interface.T);
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Interface.ref.loc14: type = name_ref Interface, file.%Interface.decl [concrete = constants.%Interface.type]
-// CHECK:STDOUT:   %F.ref: %Interface.assoc_type = name_ref F, @Interface.WithSelf.%assoc0 [concrete = constants.%assoc0.baa]
+// CHECK:STDOUT:   %F.ref: %Interface.assoc_type = name_ref F, @Interface.WithSelf.%assoc0 [concrete = constants.%assoc0.b3c]
 // CHECK:STDOUT:   %v.var: ref <error> = var_storage %v.var_patt [concrete = <error>]
 // CHECK:STDOUT:   assign %v.var, <error>
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {

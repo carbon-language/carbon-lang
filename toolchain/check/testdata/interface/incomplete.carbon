@@ -432,12 +432,12 @@ interface A(T: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %A.type.55a: type = generic_interface_type @A [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type.55a = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.acd: type = facet_type <@A, @A(%T)> [symbolic]
-// CHECK:STDOUT:   %Self: %A.type.acd = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %A.type.fa0: type = facet_type <@A, @A(%T)> [symbolic]
+// CHECK:STDOUT:   %Self: %A.type.fa0 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.0aa: type = facet_type <@A, @A(%empty_struct_type)> [concrete]
+// CHECK:STDOUT:   %A.type.ae6: type = facet_type <@A, @A(%empty_struct_type)> [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -460,11 +460,11 @@ interface A(T: type) {
 // CHECK:STDOUT:   %T.loc3_14.1: type = symbolic_binding T, 0 [symbolic = %T.loc3_14.1 (constants.%T)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %A.type: type = facet_type <@A, @A(%T.loc3_14.1)> [symbolic = %A.type (constants.%A.type.acd)]
-// CHECK:STDOUT:   %Self.loc3_22.2: @A.%A.type (%A.type.acd) = symbolic_binding Self, 1 [symbolic = %Self.loc3_22.2 (constants.%Self)]
+// CHECK:STDOUT:   %A.type: type = facet_type <@A, @A(%T.loc3_14.1)> [symbolic = %A.type (constants.%A.type.fa0)]
+// CHECK:STDOUT:   %Self.loc3_22.2: @A.%A.type (%A.type.fa0) = symbolic_binding Self, 1 [symbolic = %Self.loc3_22.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc3_22.1: @A.%A.type (%A.type.acd) = symbolic_binding Self, 1 [symbolic = %Self.loc3_22.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc3_22.1: @A.%A.type (%A.type.fa0) = symbolic_binding Self, 1 [symbolic = %Self.loc3_22.2 (constants.%Self)]
 // CHECK:STDOUT:     %A.WithSelf.decl = interface_with_self_decl @A [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
@@ -475,7 +475,7 @@ interface A(T: type) {
 // CHECK:STDOUT:       %A.ref: %A.type.55a = name_ref A, file.%A.decl [concrete = constants.%A.generic]
 // CHECK:STDOUT:       %.loc11_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:       %.loc11_28: type = converted %.loc11_27, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %A.type.loc11_28: type = facet_type <@A, @A(constants.%empty_struct_type)> [concrete = constants.%A.type.0aa]
+// CHECK:STDOUT:       %A.type.loc11_28: type = facet_type <@A, @A(constants.%empty_struct_type)> [concrete = constants.%A.type.ae6]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -488,10 +488,10 @@ interface A(T: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic require @A.WithSelf.Self.as_type.impls.A.type.require(@A.%T.loc3_14.2: type, @A.%Self.loc3_22.1: @A.%A.type (%A.type.acd)) {
+// CHECK:STDOUT: generic require @A.WithSelf.Self.as_type.impls.A.type.require(@A.%T.loc3_14.2: type, @A.%Self.loc3_22.1: @A.%A.type (%A.type.fa0)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %A.type.loc11_18: type = facet_type <@A, @A(%T)> [symbolic = %A.type.loc11_18 (constants.%A.type.acd)]
-// CHECK:STDOUT:   %Self: @A.WithSelf.Self.as_type.impls.A.type.require.%A.type.loc11_18 (%A.type.acd) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %A.type.loc11_18: type = facet_type <@A, @A(%T)> [symbolic = %A.type.loc11_18 (constants.%A.type.fa0)]
+// CHECK:STDOUT:   %Self: @A.WithSelf.Self.as_type.impls.A.type.require.%A.type.loc11_18 (%A.type.fa0) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc11_18.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc11_18.2 (constants.%Self.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -509,7 +509,7 @@ interface A(T: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.Self.as_type.impls.A.type.require(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %A.type.loc11_18 => constants.%A.type.acd
+// CHECK:STDOUT:   %A.type.loc11_18 => constants.%A.type.fa0
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc11_18.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
