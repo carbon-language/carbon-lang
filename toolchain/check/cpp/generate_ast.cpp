@@ -305,15 +305,19 @@ auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
 }
 
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
-    const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
-    const clang::DeclContext* /*OriginalDC*/) -> bool {
-  auto clang_decl = GetCarbonOwnedDecl(decl_context);
+    const clang::DeclContext* const_decl_context,
+    clang::DeclarationName decl_name, const clang::DeclContext* /*OriginalDC*/)
+    -> bool {
+  // Clang expects us to modify the DeclContext but passes it as `const`.
+  // TODO: Fix clang to pass in a mutable DeclContext.
+  auto* decl_context = const_cast<clang::DeclContext*>(const_decl_context);
+
+  auto clang_decl = GetCarbonOwnedDeclAsLookupContext(decl_context);
   if (!clang_decl) {
     return false;
   }
 
-  auto* primary_context =
-      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext());
+  auto* primary_context = decl_context->getPrimaryContext();
   if (auto* lookup_map = primary_context->getLookupPtr()) {
     if (auto it = lookup_map->find(decl_name);
         it != lookup_map->end() && !it->second.isNull()) {
@@ -397,8 +401,8 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
       auto loc = GetCppLocation(
           *context_, SemIR::LocId(result.scope_result.target_inst_id()));
       auto* typedef_decl = clang::TypedefDecl::Create(
-          ast_context, const_cast<clang::DeclContext*>(decl_context), loc, loc,
-          identifier, ast_context.getTrivialTypeSourceInfo(type, loc));
+          ast_context, decl_context, loc, loc, identifier,
+          ast_context.getTrivialTypeSourceInfo(type, loc));
       if (isa<clang::CXXRecordDecl>(decl_context)) {
         typedef_decl->setAccess(
             MapToCppAccess(result.scope_result.access_kind()));
