@@ -18,6 +18,10 @@ interface SubobjectDestroy {
   fn Op(ref self);
 }
 
+impl forall [T: type] T as SubobjectDestroy {
+  fn Op(unused ref self) {}
+}
+
 // TODO: rename to `Destroy` when `require impls` adds a witness table entry.
 interface DestroyImpl {
   // TODO: uncomment when `require impls` adds a witness table entry.
@@ -27,15 +31,14 @@ interface DestroyImpl {
   fn Op(ref self);
 }
 
+impl forall [T: SubobjectDestroy] T as DestroyImpl {
+  fn Op(ref self) = "no_op";
+}
 
 // TODO: uncomment when `require impls` adds a witness table entry.
 // impl forall [T: SubobjectDestroy] partial T as Destroy {
 //   alias Op = T.Op;
 // }
-
-impl forall [T: type] T as DestroyImpl {
-  fn Op(unused ref self) {}
-}
 
 fn SelfDestruct[T: DestroyImpl](unused ref t: T) {}
 
@@ -53,13 +56,13 @@ struct A {
 };
 ''';
 
-// CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE+8]]:1: error: found `impl` for Cpp.A as DestroyImpl, which has a custom witness [PoisonedImplLookupCustomResult]
+// CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE+8]]:1: error: found `impl` for Cpp.A as SubobjectDestroy, which has a custom witness [PoisonedImplLookupCustomResult]
 // CHECK:STDERR: class B {
 // CHECK:STDERR: ^~~~~~~~~
 // CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE-14]]:1: in import [InImport]
-// CHECK:STDERR: destroy.carbon:23:1: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
-// CHECK:STDERR: impl forall [T: type] T as DestroyImpl {
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: destroy.carbon:8:1: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
+// CHECK:STDERR: impl forall [T: type] T as SubobjectDestroy {
+// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // CHECK:STDERR:
 class B {
   extend base: Cpp.A;

@@ -247,19 +247,6 @@ static auto BuildDefaultWitness(
                             query_specific_interface, {fn_id});
 }
 
-static auto BuildCppDestroyWitness(
-    Context& context, SemIR::LocId loc_id,
-    SemIR::ConstantId query_self_const_id,
-    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
-  auto self_type_id = GetFacetAccessType(
-      context, context.constant_values().GetInstId(query_self_const_id));
-  auto op_id = MakeBuiltinOperatorFunction(
-      context, loc_id, {self_type_id}, SemIR::TypeId::None, CoreIdentifier::Op,
-      SemIR::BuiltinFunctionKind::NoOp, query_specific_interface.interface_id);
-  return BuildCustomWitness(context, loc_id, query_self_const_id,
-                            query_specific_interface, {op_id});
-}
-
 static auto BuildCppSubobjectDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -628,9 +615,6 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::Default:
       return BuildDefaultWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface);
-    case SemIR::CoreInterface::DestroyImpl:
-      return BuildCppDestroyWitness(context, loc_id, query_self_const_id,
-                                    query_specific_interface);
     case SemIR::CoreInterface::SubobjectDestroy:
       return BuildCppSubobjectDestroyWitness(
           context, loc_id, query_self_const_id, query_specific_interface);

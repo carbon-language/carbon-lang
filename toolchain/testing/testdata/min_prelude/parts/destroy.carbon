@@ -23,6 +23,10 @@ interface DestroyImpl {
   fn Op(ref self);
 }
 
+impl forall [T: SubobjectDestroy] T as DestroyImpl {
+  fn Op(ref self) = "no_op";
+}
+
 alias Destroy = SubobjectDestroy & DestroyImpl;
 
 // TODO: uncomment when `require impls` adds a witness table entry.

@@ -18,10 +18,14 @@ interface SubobjectDestroy {
   fn Op(ref self);
 }
 
-interface Destroy {
+interface DestroyImpl {
   require impls SubobjectDestroy;
 
   fn Op(ref self);
+}
+
+impl forall [T: SubobjectDestroy] T as DestroyImpl {
+  fn Op(ref self) = "no_op";
 }
 
 // --- fail_todo_require_impls_for_impl_in_class.carbon
@@ -29,11 +33,11 @@ interface Destroy {
 import Core library "prelude/destroy";
 
 class NonTrivialDestroy {
-  // CHECK:STDERR: fail_todo_require_impls_for_impl_in_class.carbon:[[@LINE+4]]:3: error: interface `Destroy` being implemented requires that `NonTrivialDestroy` implements `Core.SubobjectDestroy` [InterfaceRequireImplsNotImplemented]
-  // CHECK:STDERR:   impl as Core.Destroy {
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_require_impls_for_impl_in_class.carbon:[[@LINE+4]]:3: error: interface `DestroyImpl` being implemented requires that `NonTrivialDestroy` implements `Core.SubobjectDestroy` [InterfaceRequireImplsNotImplemented]
+  // CHECK:STDERR:   impl as Core.DestroyImpl {
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
   // CHECK:STDERR:
-  impl as Core.Destroy {
+  impl as Core.DestroyImpl {
     fn Op(unused ref self) {}
   }
 }
