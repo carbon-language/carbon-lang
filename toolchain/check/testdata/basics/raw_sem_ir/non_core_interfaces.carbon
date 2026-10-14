@@ -202,18 +202,12 @@ fn HasRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, 
 // CHECK:STDOUT:     import_ir50000002: {decl_id: inst50000010, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
 // CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir50000002, inst_id: inst60000010}
-// CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir50000002, inst_id: inst60000010}
-// CHECK:STDOUT:     import_ir_inst2: {ir_id: import_ir50000002, inst_id: inst60000015}
-// CHECK:STDOUT:     import_ir_inst3: {ir_id: import_ir50000002, inst_id: inst60000019}
-// CHECK:STDOUT:     import_ir_inst4: {ir_id: import_ir50000002, inst_id: inst6000001D}
-// CHECK:STDOUT:     import_ir_inst5: {ir_id: import_ir50000002, inst_id: inst60000017}
-// CHECK:STDOUT:     import_ir_inst6: {ir_id: import_ir50000002, inst_id: inst6000001C}
-// CHECK:STDOUT:     import_ir_inst7: {ir_id: import_ir50000002, inst_id: inst60000012}
-// CHECK:STDOUT:     import_ir_inst8: {ir_id: import_ir50000002, inst_id: inst60000012}
-// CHECK:STDOUT:     import_ir_inst9: {ir_id: import_ir50000002, inst_id: inst60000017}
-// CHECK:STDOUT:     import_ir_instA: {ir_id: import_ir50000002, inst_id: inst60000017}
-// CHECK:STDOUT:     import_ir_instB: {ir_id: import_ir50000002, inst_id: inst6000001C}
-// CHECK:STDOUT:     import_ir_instC: {ir_id: import_ir50000002, inst_id: inst6000001C}
+// CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir50000002, inst_id: inst60000015}
+// CHECK:STDOUT:     import_ir_inst2: {ir_id: import_ir50000002, inst_id: inst60000019}
+// CHECK:STDOUT:     import_ir_inst3: {ir_id: import_ir50000002, inst_id: inst6000001D}
+// CHECK:STDOUT:     import_ir_inst4: {ir_id: import_ir50000002, inst_id: inst60000017}
+// CHECK:STDOUT:     import_ir_inst5: {ir_id: import_ir50000002, inst_id: inst6000001C}
+// CHECK:STDOUT:     import_ir_inst6: {ir_id: import_ir50000002, inst_id: inst60000012}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
@@ -403,12 +397,12 @@ fn HasRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, 
 // CHECK:STDOUT:     inst50000026:    {kind: FacetType, arg0: declared_facet_type50000002, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000027:    {kind: InterfaceWithSelfDecl, arg0: interface50000001}
 // CHECK:STDOUT:     inst50000028:    {kind: SymbolicBinding, arg0: entity_name50000003, arg1: inst<none>, type: type(inst50000026)}
-// CHECK:STDOUT:     inst50000029:    {kind: ImportRefLoaded, arg0: import_ir_inst3, arg1: entity_name<none>, type: type(inst5000003C)}
-// CHECK:STDOUT:     inst5000002A:    {kind: ImportRefLoaded, arg0: import_ir_inst4, arg1: entity_name<none>, type: type(inst5000003C)}
-// CHECK:STDOUT:     inst5000002B:    {kind: ImportRefUnloaded, arg0: import_ir_inst5, arg1: entity_name50000004}
-// CHECK:STDOUT:     inst5000002C:    {kind: ImportRefUnloaded, arg0: import_ir_inst6, arg1: entity_name50000005}
-// CHECK:STDOUT:     inst5000002D:    {kind: ImportRefLoaded, arg0: import_ir_inst7, arg1: entity_name<none>, type: type(inst50000026)}
-// CHECK:STDOUT:     inst5000002E:    {kind: ImportRefUnloaded, arg0: import_ir_inst8, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst50000029:    {kind: ImportRefLoaded, arg0: import_ir_inst2, arg1: entity_name<none>, type: type(inst5000003C)}
+// CHECK:STDOUT:     inst5000002A:    {kind: ImportRefLoaded, arg0: import_ir_inst3, arg1: entity_name<none>, type: type(inst5000003C)}
+// CHECK:STDOUT:     inst5000002B:    {kind: ImportRefUnloaded, arg0: import_ir_inst4, arg1: entity_name50000004}
+// CHECK:STDOUT:     inst5000002C:    {kind: ImportRefUnloaded, arg0: import_ir_inst5, arg1: entity_name50000005}
+// CHECK:STDOUT:     inst5000002D:    {kind: ImportRefLoaded, arg0: import_ir_inst6, arg1: entity_name<none>, type: type(inst50000026)}
+// CHECK:STDOUT:     inst5000002E:    {kind: ImportRefUnloaded, arg0: import_ir_inst6, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst5000002F:    {kind: NameRef, arg0: name6, arg1: inst50000024, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000030:    {kind: PatternType, arg0: inst50000026, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000031:    {kind: SymbolicBindingPattern, arg0: entity_name50000007, type: type(inst50000030)}
@@ -423,7 +417,7 @@ fn HasRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, 
 // CHECK:STDOUT:     inst5000003A:    {kind: FacetAccessType, arg0: inst50000036, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000003B:    {kind: Converted, arg0: inst50000037, arg1: inst50000038, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000003C:    {kind: AssociatedEntityType, arg0: interface50000001, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst5000003D:    {kind: ImportRefLoaded, arg0: import_ir_inst9, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst5000003D:    {kind: ImportRefLoaded, arg0: import_ir_inst4, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst5000003E:    {kind: AssociatedEntity, arg0: element0, arg1: inst5000003D, type: type(inst5000003C)}
 // CHECK:STDOUT:     inst5000003F:    {kind: NameRef, arg0: name2, arg1: inst50000029, type: type(inst5000003C)}
 // CHECK:STDOUT:     inst50000040:    {kind: LookupImplWitness, arg0: inst50000035, arg1: specific_interface50000000, type: type(inst(WitnessType))}
@@ -445,7 +439,7 @@ fn HasRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, 
 // CHECK:STDOUT:     inst50000050:    {kind: NameRef, arg0: name5, arg1: inst50000034, type: type(inst50000026)}
 // CHECK:STDOUT:     inst50000051:    {kind: FacetAccessType, arg0: inst50000050, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000052:    {kind: Converted, arg0: inst50000050, arg1: inst50000051, type: type(TypeType)}
-// CHECK:STDOUT:     inst50000053:    {kind: ImportRefLoaded, arg0: import_ir_instB, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst50000053:    {kind: ImportRefLoaded, arg0: import_ir_inst5, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000054:    {kind: AssociatedEntity, arg0: element1, arg1: inst50000053, type: type(inst5000003C)}
 // CHECK:STDOUT:     inst50000055:    {kind: NameRef, arg0: name3, arg1: inst5000002A, type: type(inst5000003C)}
 // CHECK:STDOUT:     inst50000056:    {kind: LookupImplWitness, arg0: inst50000035, arg1: specific_interface50000000, type: type(inst(WitnessType))}

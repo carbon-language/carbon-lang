@@ -40,303 +40,262 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     import_ir78000007: {decl_id: inst78000010, is_export: false}
 // CHECK:STDOUT:   import_ir_insts:
 // CHECK:STDOUT:     import_ir_inst0: {ir_id: import_ir78000004, inst_id: inst70000010}
-// CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir78000004, inst_id: inst70000010}
-// CHECK:STDOUT:     import_ir_inst2: {ir_id: import_ir78000004, inst_id: inst70000015}
-// CHECK:STDOUT:     import_ir_inst3: {ir_id: import_ir78000004, inst_id: inst7000003D}
-// CHECK:STDOUT:     import_ir_inst4: {ir_id: import_ir78000004, inst_id: inst70000035}
-// CHECK:STDOUT:     import_ir_inst5: {ir_id: import_ir78000004, inst_id: inst70000012}
-// CHECK:STDOUT:     import_ir_inst6: {ir_id: import_ir78000004, inst_id: inst70000035}
-// CHECK:STDOUT:     import_ir_inst7: {ir_id: import_ir78000004, inst_id: inst7000002C}
-// CHECK:STDOUT:     import_ir_inst8: {ir_id: import_ir78000004, inst_id: inst7000001E}
-// CHECK:STDOUT:     import_ir_inst9: {ir_id: import_ir78000004, inst_id: inst7000002C}
-// CHECK:STDOUT:     import_ir_instA: {ir_id: import_ir78000004, inst_id: inst7000001E}
-// CHECK:STDOUT:     import_ir_instB: {ir_id: import_ir78000004, inst_id: inst7000001D}
-// CHECK:STDOUT:     import_ir_instC: {ir_id: import_ir78000004, inst_id: inst7000002B}
-// CHECK:STDOUT:     import_ir_instD: {ir_id: import_ir78000004, inst_id: inst70000021}
-// CHECK:STDOUT:     import_ir_instE: {ir_id: import_ir78000004, inst_id: inst70000021}
-// CHECK:STDOUT:     import_ir_instF: {ir_id: import_ir78000004, inst_id: inst70000027}
-// CHECK:STDOUT:     import_ir_inst10: {ir_id: import_ir78000004, inst_id: inst70000028}
-// CHECK:STDOUT:     import_ir_inst11: {ir_id: import_ir78000004, inst_id: inst7000002E}
-// CHECK:STDOUT:     import_ir_inst12: {ir_id: import_ir78000004, inst_id: inst70000012}
-// CHECK:STDOUT:     import_ir_inst13: {ir_id: import_ir78000004, inst_id: inst70000017}
-// CHECK:STDOUT:     import_ir_inst14: {ir_id: import_ir78000004, inst_id: inst7000001A}
-// CHECK:STDOUT:     import_ir_inst15: {ir_id: import_ir78000004, inst_id: inst7000001F}
-// CHECK:STDOUT:     import_ir_inst16: {ir_id: import_ir78000004, inst_id: inst70000020}
-// CHECK:STDOUT:     import_ir_inst17: {ir_id: import_ir78000004, inst_id: inst70000023}
-// CHECK:STDOUT:     import_ir_inst18: {ir_id: import_ir78000004, inst_id: inst7000002A}
-// CHECK:STDOUT:     import_ir_inst19: {ir_id: import_ir78000004, inst_id: inst7000002D}
-// CHECK:STDOUT:     import_ir_inst1A: {ir_id: import_ir78000004, inst_id: inst70000030}
-// CHECK:STDOUT:     import_ir_inst1B: {ir_id: import_ir78000004, inst_id: inst7000002C}
-// CHECK:STDOUT:     import_ir_inst1C: {ir_id: import_ir78000004, inst_id: inst7000001E}
-// CHECK:STDOUT:     import_ir_inst1D: {ir_id: import_ir78000004, inst_id: inst70000039}
-// CHECK:STDOUT:     import_ir_inst1E: {ir_id: import_ir78000004, inst_id: inst7000003A}
-// CHECK:STDOUT:     import_ir_inst1F: {ir_id: import_ir78000004, inst_id: inst7000003B}
-// CHECK:STDOUT:     import_ir_inst20: {ir_id: import_ir78000004, inst_id: inst70000012}
-// CHECK:STDOUT:     import_ir_inst21: {ir_id: import_ir78000004, inst_id: inst70000035}
-// CHECK:STDOUT:     import_ir_inst22: {ir_id: import_ir78000004, inst_id: inst70000094}
-// CHECK:STDOUT:     import_ir_inst23: {ir_id: import_ir78000004, inst_id: inst7000008F}
-// CHECK:STDOUT:     import_ir_inst24: {ir_id: import_ir78000004, inst_id: inst700000B3}
-// CHECK:STDOUT:     import_ir_inst25: {ir_id: import_ir78000004, inst_id: inst70000093}
-// CHECK:STDOUT:     import_ir_inst26: {ir_id: import_ir78000004, inst_id: inst700000B3}
-// CHECK:STDOUT:     import_ir_inst27: {ir_id: import_ir78000004, inst_id: inst700000AB}
-// CHECK:STDOUT:     import_ir_inst28: {ir_id: import_ir78000004, inst_id: inst7000009F}
-// CHECK:STDOUT:     import_ir_inst29: {ir_id: import_ir78000004, inst_id: inst700000AB}
-// CHECK:STDOUT:     import_ir_inst2A: {ir_id: import_ir78000004, inst_id: inst7000009F}
-// CHECK:STDOUT:     import_ir_inst2B: {ir_id: import_ir78000004, inst_id: inst7000009E}
-// CHECK:STDOUT:     import_ir_inst2C: {ir_id: import_ir78000004, inst_id: inst700000AA}
-// CHECK:STDOUT:     import_ir_inst2D: {ir_id: import_ir78000004, inst_id: inst700000A2}
-// CHECK:STDOUT:     import_ir_inst2E: {ir_id: import_ir78000004, inst_id: inst700000A2}
-// CHECK:STDOUT:     import_ir_inst2F: {ir_id: import_ir78000004, inst_id: inst700000A6}
-// CHECK:STDOUT:     import_ir_inst30: {ir_id: import_ir78000004, inst_id: inst700000A7}
-// CHECK:STDOUT:     import_ir_inst31: {ir_id: import_ir78000004, inst_id: inst700000AD}
-// CHECK:STDOUT:     import_ir_inst32: {ir_id: import_ir78000004, inst_id: inst70000082}
-// CHECK:STDOUT:     import_ir_inst33: {ir_id: import_ir78000004, inst_id: inst7000009A}
-// CHECK:STDOUT:     import_ir_inst34: {ir_id: import_ir78000004, inst_id: inst7000009B}
-// CHECK:STDOUT:     import_ir_inst35: {ir_id: import_ir78000004, inst_id: inst7000009C}
-// CHECK:STDOUT:     import_ir_inst36: {ir_id: import_ir78000004, inst_id: inst700000A0}
-// CHECK:STDOUT:     import_ir_inst37: {ir_id: import_ir78000004, inst_id: inst700000A1}
-// CHECK:STDOUT:     import_ir_inst38: {ir_id: import_ir78000004, inst_id: inst700000A4}
-// CHECK:STDOUT:     import_ir_inst39: {ir_id: import_ir78000004, inst_id: inst700000A9}
-// CHECK:STDOUT:     import_ir_inst3A: {ir_id: import_ir78000004, inst_id: inst700000AC}
-// CHECK:STDOUT:     import_ir_inst3B: {ir_id: import_ir78000004, inst_id: inst700000AF}
-// CHECK:STDOUT:     import_ir_inst3C: {ir_id: import_ir78000004, inst_id: inst700000DB}
-// CHECK:STDOUT:     import_ir_inst3D: {ir_id: import_ir78000004, inst_id: inst700000D8}
-// CHECK:STDOUT:     import_ir_inst3E: {ir_id: import_ir78000004, inst_id: inst700000BD}
-// CHECK:STDOUT:     import_ir_inst3F: {ir_id: import_ir78000004, inst_id: inst700000C4}
-// CHECK:STDOUT:     import_ir_inst40: {ir_id: import_ir78000004, inst_id: inst700000D0}
-// CHECK:STDOUT:     import_ir_inst41: {ir_id: import_ir78000004, inst_id: inst700000D1}
-// CHECK:STDOUT:     import_ir_inst42: {ir_id: import_ir78000004, inst_id: inst700000D2}
-// CHECK:STDOUT:     import_ir_inst43: {ir_id: import_ir78000004, inst_id: inst700000D3}
-// CHECK:STDOUT:     import_ir_inst44: {ir_id: import_ir78000004, inst_id: inst700000DF}
-// CHECK:STDOUT:     import_ir_inst45: {ir_id: import_ir78000004, inst_id: inst700000AB}
-// CHECK:STDOUT:     import_ir_inst46: {ir_id: import_ir78000004, inst_id: inst7000009F}
-// CHECK:STDOUT:     import_ir_inst47: {ir_id: import_ir78000004, inst_id: inst7000007F}
-// CHECK:STDOUT:     import_ir_inst48: {ir_id: import_ir78000004, inst_id: inst7000008A}
-// CHECK:STDOUT:     import_ir_inst49: {ir_id: import_ir78000004, inst_id: inst7000008D}
-// CHECK:STDOUT:     import_ir_inst4A: {ir_id: import_ir78000004, inst_id: inst70000090}
-// CHECK:STDOUT:     import_ir_inst4B: {ir_id: import_ir78000004, inst_id: inst70000082}
-// CHECK:STDOUT:     import_ir_inst4C: {ir_id: import_ir78000004, inst_id: inst70000081}
-// CHECK:STDOUT:     import_ir_inst4D: {ir_id: import_ir78000004, inst_id: inst70000084}
-// CHECK:STDOUT:     import_ir_inst4E: {ir_id: import_ir78000004, inst_id: inst70000088}
-// CHECK:STDOUT:     import_ir_inst4F: {ir_id: import_ir78000004, inst_id: inst7000008C}
-// CHECK:STDOUT:     import_ir_inst50: {ir_id: import_ir78000004, inst_id: inst70000092}
-// CHECK:STDOUT:     import_ir_inst51: {ir_id: import_ir78000004, inst_id: inst70000096}
-// CHECK:STDOUT:     import_ir_inst52: {ir_id: import_ir78000004, inst_id: inst700000B6}
-// CHECK:STDOUT:     import_ir_inst53: {ir_id: import_ir78000004, inst_id: inst700000B7}
-// CHECK:STDOUT:     import_ir_inst54: {ir_id: import_ir78000004, inst_id: inst700000F1}
-// CHECK:STDOUT:     import_ir_inst55: {ir_id: import_ir78000004, inst_id: inst700000ED}
-// CHECK:STDOUT:     import_ir_inst56: {ir_id: import_ir78000004, inst_id: inst700000EB}
-// CHECK:STDOUT:     import_ir_inst57: {ir_id: import_ir78000004, inst_id: inst700000EC}
-// CHECK:STDOUT:     import_ir_inst58: {ir_id: import_ir78000004, inst_id: inst700000EE}
-// CHECK:STDOUT:     import_ir_inst59: {ir_id: import_ir78000004, inst_id: inst70000110}
-// CHECK:STDOUT:     import_ir_inst5A: {ir_id: import_ir78000004, inst_id: inst7000010C}
-// CHECK:STDOUT:     import_ir_inst5B: {ir_id: import_ir78000004, inst_id: inst7000010A}
-// CHECK:STDOUT:     import_ir_inst5C: {ir_id: import_ir78000004, inst_id: inst7000010B}
-// CHECK:STDOUT:     import_ir_inst5D: {ir_id: import_ir78000004, inst_id: inst7000010D}
-// CHECK:STDOUT:     import_ir_inst5E: {ir_id: import_ir78000004, inst_id: inst7000012F}
-// CHECK:STDOUT:     import_ir_inst5F: {ir_id: import_ir78000004, inst_id: inst7000012B}
-// CHECK:STDOUT:     import_ir_inst60: {ir_id: import_ir78000004, inst_id: inst70000129}
-// CHECK:STDOUT:     import_ir_inst61: {ir_id: import_ir78000004, inst_id: inst7000012A}
-// CHECK:STDOUT:     import_ir_inst62: {ir_id: import_ir78000004, inst_id: inst7000012C}
-// CHECK:STDOUT:     import_ir_inst63: {ir_id: import_ir78000004, inst_id: inst7000014E}
-// CHECK:STDOUT:     import_ir_inst64: {ir_id: import_ir78000004, inst_id: inst7000014A}
-// CHECK:STDOUT:     import_ir_inst65: {ir_id: import_ir78000004, inst_id: inst70000148}
-// CHECK:STDOUT:     import_ir_inst66: {ir_id: import_ir78000004, inst_id: inst70000149}
-// CHECK:STDOUT:     import_ir_inst67: {ir_id: import_ir78000004, inst_id: inst7000014B}
-// CHECK:STDOUT:     import_ir_inst68: {ir_id: import_ir78000004, inst_id: inst7000017A}
-// CHECK:STDOUT:     import_ir_inst69: {ir_id: import_ir78000004, inst_id: inst70000175}
-// CHECK:STDOUT:     import_ir_inst6A: {ir_id: import_ir78000004, inst_id: inst70000196}
-// CHECK:STDOUT:     import_ir_inst6B: {ir_id: import_ir78000004, inst_id: inst70000179}
-// CHECK:STDOUT:     import_ir_inst6C: {ir_id: import_ir78000004, inst_id: inst70000169}
-// CHECK:STDOUT:     import_ir_inst6D: {ir_id: import_ir78000004, inst_id: inst70000170}
-// CHECK:STDOUT:     import_ir_inst6E: {ir_id: import_ir78000004, inst_id: inst70000173}
-// CHECK:STDOUT:     import_ir_inst6F: {ir_id: import_ir78000004, inst_id: inst70000176}
-// CHECK:STDOUT:     import_ir_inst70: {ir_id: import_ir78000004, inst_id: inst7000016C}
-// CHECK:STDOUT:     import_ir_inst71: {ir_id: import_ir78000004, inst_id: inst7000016B}
-// CHECK:STDOUT:     import_ir_inst72: {ir_id: import_ir78000004, inst_id: inst7000016E}
-// CHECK:STDOUT:     import_ir_inst73: {ir_id: import_ir78000004, inst_id: inst70000172}
-// CHECK:STDOUT:     import_ir_inst74: {ir_id: import_ir78000004, inst_id: inst70000178}
-// CHECK:STDOUT:     import_ir_inst75: {ir_id: import_ir78000004, inst_id: inst7000017C}
-// CHECK:STDOUT:     import_ir_inst76: {ir_id: import_ir78000004, inst_id: inst70000196}
-// CHECK:STDOUT:     import_ir_inst77: {ir_id: import_ir78000004, inst_id: inst7000018E}
-// CHECK:STDOUT:     import_ir_inst78: {ir_id: import_ir78000004, inst_id: inst70000182}
-// CHECK:STDOUT:     import_ir_inst79: {ir_id: import_ir78000004, inst_id: inst7000018E}
-// CHECK:STDOUT:     import_ir_inst7A: {ir_id: import_ir78000004, inst_id: inst70000182}
-// CHECK:STDOUT:     import_ir_inst7B: {ir_id: import_ir78000004, inst_id: inst70000181}
-// CHECK:STDOUT:     import_ir_inst7C: {ir_id: import_ir78000004, inst_id: inst7000018D}
-// CHECK:STDOUT:     import_ir_inst7D: {ir_id: import_ir78000004, inst_id: inst70000185}
-// CHECK:STDOUT:     import_ir_inst7E: {ir_id: import_ir78000004, inst_id: inst70000185}
-// CHECK:STDOUT:     import_ir_inst7F: {ir_id: import_ir78000004, inst_id: inst70000189}
-// CHECK:STDOUT:     import_ir_inst80: {ir_id: import_ir78000004, inst_id: inst7000018A}
-// CHECK:STDOUT:     import_ir_inst81: {ir_id: import_ir78000004, inst_id: inst70000190}
-// CHECK:STDOUT:     import_ir_inst82: {ir_id: import_ir78000004, inst_id: inst7000016C}
-// CHECK:STDOUT:     import_ir_inst83: {ir_id: import_ir78000004, inst_id: inst7000017E}
-// CHECK:STDOUT:     import_ir_inst84: {ir_id: import_ir78000004, inst_id: inst7000017F}
-// CHECK:STDOUT:     import_ir_inst85: {ir_id: import_ir78000004, inst_id: inst70000183}
-// CHECK:STDOUT:     import_ir_inst86: {ir_id: import_ir78000004, inst_id: inst70000184}
-// CHECK:STDOUT:     import_ir_inst87: {ir_id: import_ir78000004, inst_id: inst70000187}
-// CHECK:STDOUT:     import_ir_inst88: {ir_id: import_ir78000004, inst_id: inst7000018C}
-// CHECK:STDOUT:     import_ir_inst89: {ir_id: import_ir78000004, inst_id: inst7000018F}
-// CHECK:STDOUT:     import_ir_inst8A: {ir_id: import_ir78000004, inst_id: inst70000192}
-// CHECK:STDOUT:     import_ir_inst8B: {ir_id: import_ir78000004, inst_id: inst7000018E}
-// CHECK:STDOUT:     import_ir_inst8C: {ir_id: import_ir78000004, inst_id: inst70000182}
-// CHECK:STDOUT:     import_ir_inst8D: {ir_id: import_ir78000004, inst_id: inst70000199}
-// CHECK:STDOUT:     import_ir_inst8E: {ir_id: import_ir78000004, inst_id: inst7000019A}
-// CHECK:STDOUT:     import_ir_inst8F: {ir_id: import_ir78000004, inst_id: inst7000019D}
-// CHECK:STDOUT:     import_ir_inst90: {ir_id: import_ir78000004, inst_id: inst700001A7}
-// CHECK:STDOUT:     import_ir_inst91: {ir_id: import_ir78000004, inst_id: inst700001A3}
-// CHECK:STDOUT:     import_ir_inst92: {ir_id: import_ir78000004, inst_id: inst700001A1}
-// CHECK:STDOUT:     import_ir_inst93: {ir_id: import_ir78000004, inst_id: inst700001A2}
-// CHECK:STDOUT:     import_ir_inst94: {ir_id: import_ir78000004, inst_id: inst700001A4}
-// CHECK:STDOUT:     import_ir_inst95: {ir_id: import_ir78000004, inst_id: inst700001C4}
-// CHECK:STDOUT:     import_ir_inst96: {ir_id: import_ir78000004, inst_id: inst700001C0}
-// CHECK:STDOUT:     import_ir_inst97: {ir_id: import_ir78000004, inst_id: inst700001BE}
-// CHECK:STDOUT:     import_ir_inst98: {ir_id: import_ir78000004, inst_id: inst700001BF}
-// CHECK:STDOUT:     import_ir_inst99: {ir_id: import_ir78000004, inst_id: inst700001C1}
-// CHECK:STDOUT:     import_ir_inst9A: {ir_id: import_ir78000004, inst_id: inst70000204}
-// CHECK:STDOUT:     import_ir_inst9B: {ir_id: import_ir78000004, inst_id: inst700001FF}
-// CHECK:STDOUT:     import_ir_inst9C: {ir_id: import_ir78000004, inst_id: inst70000227}
-// CHECK:STDOUT:     import_ir_inst9D: {ir_id: import_ir78000004, inst_id: inst70000203}
-// CHECK:STDOUT:     import_ir_inst9E: {ir_id: import_ir78000004, inst_id: inst70000227}
-// CHECK:STDOUT:     import_ir_inst9F: {ir_id: import_ir78000004, inst_id: inst7000021F}
-// CHECK:STDOUT:     import_ir_instA0: {ir_id: import_ir78000004, inst_id: inst70000213}
-// CHECK:STDOUT:     import_ir_instA1: {ir_id: import_ir78000004, inst_id: inst7000021F}
-// CHECK:STDOUT:     import_ir_instA2: {ir_id: import_ir78000004, inst_id: inst70000213}
-// CHECK:STDOUT:     import_ir_instA3: {ir_id: import_ir78000004, inst_id: inst70000212}
-// CHECK:STDOUT:     import_ir_instA4: {ir_id: import_ir78000004, inst_id: inst7000021E}
-// CHECK:STDOUT:     import_ir_instA5: {ir_id: import_ir78000004, inst_id: inst70000216}
-// CHECK:STDOUT:     import_ir_instA6: {ir_id: import_ir78000004, inst_id: inst70000216}
-// CHECK:STDOUT:     import_ir_instA7: {ir_id: import_ir78000004, inst_id: inst7000021A}
-// CHECK:STDOUT:     import_ir_instA8: {ir_id: import_ir78000004, inst_id: inst7000021B}
-// CHECK:STDOUT:     import_ir_instA9: {ir_id: import_ir78000004, inst_id: inst70000221}
-// CHECK:STDOUT:     import_ir_instAA: {ir_id: import_ir78000004, inst_id: inst700001E1}
-// CHECK:STDOUT:     import_ir_instAB: {ir_id: import_ir78000004, inst_id: inst700001E8}
-// CHECK:STDOUT:     import_ir_instAC: {ir_id: import_ir78000004, inst_id: inst7000020C}
-// CHECK:STDOUT:     import_ir_instAD: {ir_id: import_ir78000004, inst_id: inst7000020D}
-// CHECK:STDOUT:     import_ir_instAE: {ir_id: import_ir78000004, inst_id: inst7000020E}
-// CHECK:STDOUT:     import_ir_instAF: {ir_id: import_ir78000004, inst_id: inst7000020F}
-// CHECK:STDOUT:     import_ir_instB0: {ir_id: import_ir78000004, inst_id: inst70000210}
-// CHECK:STDOUT:     import_ir_instB1: {ir_id: import_ir78000004, inst_id: inst70000214}
-// CHECK:STDOUT:     import_ir_instB2: {ir_id: import_ir78000004, inst_id: inst70000215}
-// CHECK:STDOUT:     import_ir_instB3: {ir_id: import_ir78000004, inst_id: inst70000218}
-// CHECK:STDOUT:     import_ir_instB4: {ir_id: import_ir78000004, inst_id: inst7000021D}
-// CHECK:STDOUT:     import_ir_instB5: {ir_id: import_ir78000004, inst_id: inst70000220}
-// CHECK:STDOUT:     import_ir_instB6: {ir_id: import_ir78000004, inst_id: inst70000223}
-// CHECK:STDOUT:     import_ir_instB7: {ir_id: import_ir78000004, inst_id: inst70000262}
-// CHECK:STDOUT:     import_ir_instB8: {ir_id: import_ir78000004, inst_id: inst7000025F}
-// CHECK:STDOUT:     import_ir_instB9: {ir_id: import_ir78000004, inst_id: inst70000232}
-// CHECK:STDOUT:     import_ir_instBA: {ir_id: import_ir78000004, inst_id: inst70000238}
-// CHECK:STDOUT:     import_ir_instBB: {ir_id: import_ir78000004, inst_id: inst7000023C}
-// CHECK:STDOUT:     import_ir_instBC: {ir_id: import_ir78000004, inst_id: inst7000023D}
-// CHECK:STDOUT:     import_ir_instBD: {ir_id: import_ir78000004, inst_id: inst7000023E}
-// CHECK:STDOUT:     import_ir_instBE: {ir_id: import_ir78000004, inst_id: inst7000023F}
-// CHECK:STDOUT:     import_ir_instBF: {ir_id: import_ir78000004, inst_id: inst70000244}
-// CHECK:STDOUT:     import_ir_instC0: {ir_id: import_ir78000004, inst_id: inst7000024E}
-// CHECK:STDOUT:     import_ir_instC1: {ir_id: import_ir78000004, inst_id: inst70000257}
-// CHECK:STDOUT:     import_ir_instC2: {ir_id: import_ir78000004, inst_id: inst70000258}
-// CHECK:STDOUT:     import_ir_instC3: {ir_id: import_ir78000004, inst_id: inst70000259}
-// CHECK:STDOUT:     import_ir_instC4: {ir_id: import_ir78000004, inst_id: inst7000025A}
-// CHECK:STDOUT:     import_ir_instC5: {ir_id: import_ir78000004, inst_id: inst70000266}
-// CHECK:STDOUT:     import_ir_instC6: {ir_id: import_ir78000004, inst_id: inst7000021F}
-// CHECK:STDOUT:     import_ir_instC7: {ir_id: import_ir78000004, inst_id: inst70000213}
-// CHECK:STDOUT:     import_ir_instC8: {ir_id: import_ir78000004, inst_id: inst700001DF}
-// CHECK:STDOUT:     import_ir_instC9: {ir_id: import_ir78000004, inst_id: inst700001E5}
-// CHECK:STDOUT:     import_ir_instCA: {ir_id: import_ir78000004, inst_id: inst700001FA}
-// CHECK:STDOUT:     import_ir_instCB: {ir_id: import_ir78000004, inst_id: inst700001FC}
-// CHECK:STDOUT:     import_ir_instCC: {ir_id: import_ir78000004, inst_id: inst70000200}
-// CHECK:STDOUT:     import_ir_instCD: {ir_id: import_ir78000004, inst_id: inst700001E1}
-// CHECK:STDOUT:     import_ir_instCE: {ir_id: import_ir78000004, inst_id: inst700001E8}
-// CHECK:STDOUT:     import_ir_instCF: {ir_id: import_ir78000004, inst_id: inst700001E0}
-// CHECK:STDOUT:     import_ir_instD0: {ir_id: import_ir78000004, inst_id: inst700001E2}
-// CHECK:STDOUT:     import_ir_instD1: {ir_id: import_ir78000004, inst_id: inst700001E7}
-// CHECK:STDOUT:     import_ir_instD2: {ir_id: import_ir78000004, inst_id: inst700001EA}
-// CHECK:STDOUT:     import_ir_instD3: {ir_id: import_ir78000004, inst_id: inst700001F0}
-// CHECK:STDOUT:     import_ir_instD4: {ir_id: import_ir78000004, inst_id: inst700001F3}
-// CHECK:STDOUT:     import_ir_instD5: {ir_id: import_ir78000004, inst_id: inst700001F7}
-// CHECK:STDOUT:     import_ir_instD6: {ir_id: import_ir78000004, inst_id: inst700001FB}
-// CHECK:STDOUT:     import_ir_instD7: {ir_id: import_ir78000004, inst_id: inst70000202}
-// CHECK:STDOUT:     import_ir_instD8: {ir_id: import_ir78000004, inst_id: inst70000206}
-// CHECK:STDOUT:     import_ir_instD9: {ir_id: import_ir78000004, inst_id: inst7000022A}
-// CHECK:STDOUT:     import_ir_instDA: {ir_id: import_ir78000004, inst_id: inst7000022B}
-// CHECK:STDOUT:     import_ir_instDB: {ir_id: import_ir78000004, inst_id: inst700002A7}
-// CHECK:STDOUT:     import_ir_instDC: {ir_id: import_ir78000004, inst_id: inst700002A2}
-// CHECK:STDOUT:     import_ir_instDD: {ir_id: import_ir78000004, inst_id: inst700002CE}
-// CHECK:STDOUT:     import_ir_instDE: {ir_id: import_ir78000004, inst_id: inst700002A6}
-// CHECK:STDOUT:     import_ir_instDF: {ir_id: import_ir78000004, inst_id: inst700002CE}
-// CHECK:STDOUT:     import_ir_instE0: {ir_id: import_ir78000004, inst_id: inst700002C6}
-// CHECK:STDOUT:     import_ir_instE1: {ir_id: import_ir78000004, inst_id: inst700002BA}
-// CHECK:STDOUT:     import_ir_instE2: {ir_id: import_ir78000004, inst_id: inst700002C6}
-// CHECK:STDOUT:     import_ir_instE3: {ir_id: import_ir78000004, inst_id: inst700002BA}
-// CHECK:STDOUT:     import_ir_instE4: {ir_id: import_ir78000004, inst_id: inst700002B9}
-// CHECK:STDOUT:     import_ir_instE5: {ir_id: import_ir78000004, inst_id: inst700002C5}
-// CHECK:STDOUT:     import_ir_instE6: {ir_id: import_ir78000004, inst_id: inst700002BD}
-// CHECK:STDOUT:     import_ir_instE7: {ir_id: import_ir78000004, inst_id: inst700002BD}
-// CHECK:STDOUT:     import_ir_instE8: {ir_id: import_ir78000004, inst_id: inst700002C1}
-// CHECK:STDOUT:     import_ir_instE9: {ir_id: import_ir78000004, inst_id: inst700002C2}
-// CHECK:STDOUT:     import_ir_instEA: {ir_id: import_ir78000004, inst_id: inst700002C8}
-// CHECK:STDOUT:     import_ir_instEB: {ir_id: import_ir78000004, inst_id: inst70000279}
-// CHECK:STDOUT:     import_ir_instEC: {ir_id: import_ir78000004, inst_id: inst7000027F}
-// CHECK:STDOUT:     import_ir_instED: {ir_id: import_ir78000004, inst_id: inst70000286}
-// CHECK:STDOUT:     import_ir_instEE: {ir_id: import_ir78000004, inst_id: inst700002B1}
-// CHECK:STDOUT:     import_ir_instEF: {ir_id: import_ir78000004, inst_id: inst700002B2}
-// CHECK:STDOUT:     import_ir_instF0: {ir_id: import_ir78000004, inst_id: inst700002B3}
-// CHECK:STDOUT:     import_ir_instF1: {ir_id: import_ir78000004, inst_id: inst700002B4}
-// CHECK:STDOUT:     import_ir_instF2: {ir_id: import_ir78000004, inst_id: inst700002B5}
-// CHECK:STDOUT:     import_ir_instF3: {ir_id: import_ir78000004, inst_id: inst700002B6}
-// CHECK:STDOUT:     import_ir_instF4: {ir_id: import_ir78000004, inst_id: inst700002B7}
-// CHECK:STDOUT:     import_ir_instF5: {ir_id: import_ir78000004, inst_id: inst700002BB}
-// CHECK:STDOUT:     import_ir_instF6: {ir_id: import_ir78000004, inst_id: inst700002BC}
-// CHECK:STDOUT:     import_ir_instF7: {ir_id: import_ir78000004, inst_id: inst700002BF}
-// CHECK:STDOUT:     import_ir_instF8: {ir_id: import_ir78000004, inst_id: inst700002C4}
-// CHECK:STDOUT:     import_ir_instF9: {ir_id: import_ir78000004, inst_id: inst700002C7}
-// CHECK:STDOUT:     import_ir_instFA: {ir_id: import_ir78000004, inst_id: inst700002CA}
-// CHECK:STDOUT:     import_ir_instFB: {ir_id: import_ir78000004, inst_id: inst7000031C}
-// CHECK:STDOUT:     import_ir_instFC: {ir_id: import_ir78000004, inst_id: inst70000319}
-// CHECK:STDOUT:     import_ir_instFD: {ir_id: import_ir78000004, inst_id: inst700002D9}
-// CHECK:STDOUT:     import_ir_instFE: {ir_id: import_ir78000004, inst_id: inst700002DE}
-// CHECK:STDOUT:     import_ir_instFF: {ir_id: import_ir78000004, inst_id: inst700002E2}
-// CHECK:STDOUT:     import_ir_inst100: {ir_id: import_ir78000004, inst_id: inst700002E3}
-// CHECK:STDOUT:     import_ir_inst101: {ir_id: import_ir78000004, inst_id: inst700002E4}
-// CHECK:STDOUT:     import_ir_inst102: {ir_id: import_ir78000004, inst_id: inst700002E5}
-// CHECK:STDOUT:     import_ir_inst103: {ir_id: import_ir78000004, inst_id: inst700002EA}
-// CHECK:STDOUT:     import_ir_inst104: {ir_id: import_ir78000004, inst_id: inst700002F2}
-// CHECK:STDOUT:     import_ir_inst105: {ir_id: import_ir78000004, inst_id: inst700002F6}
-// CHECK:STDOUT:     import_ir_inst106: {ir_id: import_ir78000004, inst_id: inst700002F7}
-// CHECK:STDOUT:     import_ir_inst107: {ir_id: import_ir78000004, inst_id: inst700002F8}
-// CHECK:STDOUT:     import_ir_inst108: {ir_id: import_ir78000004, inst_id: inst700002F9}
-// CHECK:STDOUT:     import_ir_inst109: {ir_id: import_ir78000004, inst_id: inst700002FE}
-// CHECK:STDOUT:     import_ir_inst10A: {ir_id: import_ir78000004, inst_id: inst70000308}
-// CHECK:STDOUT:     import_ir_inst10B: {ir_id: import_ir78000004, inst_id: inst70000311}
-// CHECK:STDOUT:     import_ir_inst10C: {ir_id: import_ir78000004, inst_id: inst70000312}
-// CHECK:STDOUT:     import_ir_inst10D: {ir_id: import_ir78000004, inst_id: inst70000313}
-// CHECK:STDOUT:     import_ir_inst10E: {ir_id: import_ir78000004, inst_id: inst70000314}
-// CHECK:STDOUT:     import_ir_inst10F: {ir_id: import_ir78000004, inst_id: inst70000320}
-// CHECK:STDOUT:     import_ir_inst110: {ir_id: import_ir78000004, inst_id: inst700002C6}
-// CHECK:STDOUT:     import_ir_inst111: {ir_id: import_ir78000004, inst_id: inst700002BA}
-// CHECK:STDOUT:     import_ir_inst112: {ir_id: import_ir78000004, inst_id: inst70000277}
-// CHECK:STDOUT:     import_ir_inst113: {ir_id: import_ir78000004, inst_id: inst7000027D}
-// CHECK:STDOUT:     import_ir_inst114: {ir_id: import_ir78000004, inst_id: inst70000283}
-// CHECK:STDOUT:     import_ir_inst115: {ir_id: import_ir78000004, inst_id: inst7000029C}
-// CHECK:STDOUT:     import_ir_inst116: {ir_id: import_ir78000004, inst_id: inst7000029E}
-// CHECK:STDOUT:     import_ir_inst117: {ir_id: import_ir78000004, inst_id: inst700002A3}
-// CHECK:STDOUT:     import_ir_inst118: {ir_id: import_ir78000004, inst_id: inst70000279}
-// CHECK:STDOUT:     import_ir_inst119: {ir_id: import_ir78000004, inst_id: inst7000027F}
-// CHECK:STDOUT:     import_ir_inst11A: {ir_id: import_ir78000004, inst_id: inst70000286}
-// CHECK:STDOUT:     import_ir_inst11B: {ir_id: import_ir78000004, inst_id: inst70000278}
-// CHECK:STDOUT:     import_ir_inst11C: {ir_id: import_ir78000004, inst_id: inst7000027A}
-// CHECK:STDOUT:     import_ir_inst11D: {ir_id: import_ir78000004, inst_id: inst7000027E}
-// CHECK:STDOUT:     import_ir_inst11E: {ir_id: import_ir78000004, inst_id: inst70000280}
-// CHECK:STDOUT:     import_ir_inst11F: {ir_id: import_ir78000004, inst_id: inst70000285}
-// CHECK:STDOUT:     import_ir_inst120: {ir_id: import_ir78000004, inst_id: inst70000288}
-// CHECK:STDOUT:     import_ir_inst121: {ir_id: import_ir78000004, inst_id: inst7000028F}
-// CHECK:STDOUT:     import_ir_inst122: {ir_id: import_ir78000004, inst_id: inst70000292}
-// CHECK:STDOUT:     import_ir_inst123: {ir_id: import_ir78000004, inst_id: inst70000295}
-// CHECK:STDOUT:     import_ir_inst124: {ir_id: import_ir78000004, inst_id: inst70000299}
-// CHECK:STDOUT:     import_ir_inst125: {ir_id: import_ir78000004, inst_id: inst7000029D}
-// CHECK:STDOUT:     import_ir_inst126: {ir_id: import_ir78000004, inst_id: inst700002A5}
-// CHECK:STDOUT:     import_ir_inst127: {ir_id: import_ir78000004, inst_id: inst700002A9}
-// CHECK:STDOUT:     import_ir_inst128: {ir_id: import_ir78000004, inst_id: inst700002D1}
-// CHECK:STDOUT:     import_ir_inst129: {ir_id: import_ir78000004, inst_id: inst700002D2}
+// CHECK:STDOUT:     import_ir_inst1: {ir_id: import_ir78000004, inst_id: inst70000015}
+// CHECK:STDOUT:     import_ir_inst2: {ir_id: import_ir78000004, inst_id: inst7000003D}
+// CHECK:STDOUT:     import_ir_inst3: {ir_id: import_ir78000004, inst_id: inst70000035}
+// CHECK:STDOUT:     import_ir_inst4: {ir_id: import_ir78000004, inst_id: inst70000012}
+// CHECK:STDOUT:     import_ir_inst5: {ir_id: import_ir78000004, inst_id: inst7000002C}
+// CHECK:STDOUT:     import_ir_inst6: {ir_id: import_ir78000004, inst_id: inst7000001E}
+// CHECK:STDOUT:     import_ir_inst7: {ir_id: import_ir78000004, inst_id: inst7000001D}
+// CHECK:STDOUT:     import_ir_inst8: {ir_id: import_ir78000004, inst_id: inst7000002B}
+// CHECK:STDOUT:     import_ir_inst9: {ir_id: import_ir78000004, inst_id: inst70000021}
+// CHECK:STDOUT:     import_ir_instA: {ir_id: import_ir78000004, inst_id: inst70000027}
+// CHECK:STDOUT:     import_ir_instB: {ir_id: import_ir78000004, inst_id: inst70000028}
+// CHECK:STDOUT:     import_ir_instC: {ir_id: import_ir78000004, inst_id: inst7000002E}
+// CHECK:STDOUT:     import_ir_instD: {ir_id: import_ir78000004, inst_id: inst70000017}
+// CHECK:STDOUT:     import_ir_instE: {ir_id: import_ir78000004, inst_id: inst7000001A}
+// CHECK:STDOUT:     import_ir_instF: {ir_id: import_ir78000004, inst_id: inst7000001F}
+// CHECK:STDOUT:     import_ir_inst10: {ir_id: import_ir78000004, inst_id: inst70000020}
+// CHECK:STDOUT:     import_ir_inst11: {ir_id: import_ir78000004, inst_id: inst70000023}
+// CHECK:STDOUT:     import_ir_inst12: {ir_id: import_ir78000004, inst_id: inst7000002A}
+// CHECK:STDOUT:     import_ir_inst13: {ir_id: import_ir78000004, inst_id: inst7000002D}
+// CHECK:STDOUT:     import_ir_inst14: {ir_id: import_ir78000004, inst_id: inst70000030}
+// CHECK:STDOUT:     import_ir_inst15: {ir_id: import_ir78000004, inst_id: inst70000039}
+// CHECK:STDOUT:     import_ir_inst16: {ir_id: import_ir78000004, inst_id: inst7000003A}
+// CHECK:STDOUT:     import_ir_inst17: {ir_id: import_ir78000004, inst_id: inst7000003B}
+// CHECK:STDOUT:     import_ir_inst18: {ir_id: import_ir78000004, inst_id: inst70000094}
+// CHECK:STDOUT:     import_ir_inst19: {ir_id: import_ir78000004, inst_id: inst7000008F}
+// CHECK:STDOUT:     import_ir_inst1A: {ir_id: import_ir78000004, inst_id: inst700000B3}
+// CHECK:STDOUT:     import_ir_inst1B: {ir_id: import_ir78000004, inst_id: inst70000093}
+// CHECK:STDOUT:     import_ir_inst1C: {ir_id: import_ir78000004, inst_id: inst700000AB}
+// CHECK:STDOUT:     import_ir_inst1D: {ir_id: import_ir78000004, inst_id: inst7000009F}
+// CHECK:STDOUT:     import_ir_inst1E: {ir_id: import_ir78000004, inst_id: inst7000009E}
+// CHECK:STDOUT:     import_ir_inst1F: {ir_id: import_ir78000004, inst_id: inst700000AA}
+// CHECK:STDOUT:     import_ir_inst20: {ir_id: import_ir78000004, inst_id: inst700000A2}
+// CHECK:STDOUT:     import_ir_inst21: {ir_id: import_ir78000004, inst_id: inst700000A6}
+// CHECK:STDOUT:     import_ir_inst22: {ir_id: import_ir78000004, inst_id: inst700000A7}
+// CHECK:STDOUT:     import_ir_inst23: {ir_id: import_ir78000004, inst_id: inst700000AD}
+// CHECK:STDOUT:     import_ir_inst24: {ir_id: import_ir78000004, inst_id: inst70000082}
+// CHECK:STDOUT:     import_ir_inst25: {ir_id: import_ir78000004, inst_id: inst7000009A}
+// CHECK:STDOUT:     import_ir_inst26: {ir_id: import_ir78000004, inst_id: inst7000009B}
+// CHECK:STDOUT:     import_ir_inst27: {ir_id: import_ir78000004, inst_id: inst7000009C}
+// CHECK:STDOUT:     import_ir_inst28: {ir_id: import_ir78000004, inst_id: inst700000A0}
+// CHECK:STDOUT:     import_ir_inst29: {ir_id: import_ir78000004, inst_id: inst700000A1}
+// CHECK:STDOUT:     import_ir_inst2A: {ir_id: import_ir78000004, inst_id: inst700000A4}
+// CHECK:STDOUT:     import_ir_inst2B: {ir_id: import_ir78000004, inst_id: inst700000A9}
+// CHECK:STDOUT:     import_ir_inst2C: {ir_id: import_ir78000004, inst_id: inst700000AC}
+// CHECK:STDOUT:     import_ir_inst2D: {ir_id: import_ir78000004, inst_id: inst700000AF}
+// CHECK:STDOUT:     import_ir_inst2E: {ir_id: import_ir78000004, inst_id: inst700000DB}
+// CHECK:STDOUT:     import_ir_inst2F: {ir_id: import_ir78000004, inst_id: inst700000D8}
+// CHECK:STDOUT:     import_ir_inst30: {ir_id: import_ir78000004, inst_id: inst700000BD}
+// CHECK:STDOUT:     import_ir_inst31: {ir_id: import_ir78000004, inst_id: inst700000C4}
+// CHECK:STDOUT:     import_ir_inst32: {ir_id: import_ir78000004, inst_id: inst700000D0}
+// CHECK:STDOUT:     import_ir_inst33: {ir_id: import_ir78000004, inst_id: inst700000D1}
+// CHECK:STDOUT:     import_ir_inst34: {ir_id: import_ir78000004, inst_id: inst700000D2}
+// CHECK:STDOUT:     import_ir_inst35: {ir_id: import_ir78000004, inst_id: inst700000D3}
+// CHECK:STDOUT:     import_ir_inst36: {ir_id: import_ir78000004, inst_id: inst700000DF}
+// CHECK:STDOUT:     import_ir_inst37: {ir_id: import_ir78000004, inst_id: inst7000007F}
+// CHECK:STDOUT:     import_ir_inst38: {ir_id: import_ir78000004, inst_id: inst7000008A}
+// CHECK:STDOUT:     import_ir_inst39: {ir_id: import_ir78000004, inst_id: inst7000008D}
+// CHECK:STDOUT:     import_ir_inst3A: {ir_id: import_ir78000004, inst_id: inst70000090}
+// CHECK:STDOUT:     import_ir_inst3B: {ir_id: import_ir78000004, inst_id: inst70000081}
+// CHECK:STDOUT:     import_ir_inst3C: {ir_id: import_ir78000004, inst_id: inst70000084}
+// CHECK:STDOUT:     import_ir_inst3D: {ir_id: import_ir78000004, inst_id: inst70000088}
+// CHECK:STDOUT:     import_ir_inst3E: {ir_id: import_ir78000004, inst_id: inst7000008C}
+// CHECK:STDOUT:     import_ir_inst3F: {ir_id: import_ir78000004, inst_id: inst70000092}
+// CHECK:STDOUT:     import_ir_inst40: {ir_id: import_ir78000004, inst_id: inst70000096}
+// CHECK:STDOUT:     import_ir_inst41: {ir_id: import_ir78000004, inst_id: inst700000B6}
+// CHECK:STDOUT:     import_ir_inst42: {ir_id: import_ir78000004, inst_id: inst700000B7}
+// CHECK:STDOUT:     import_ir_inst43: {ir_id: import_ir78000004, inst_id: inst700000F1}
+// CHECK:STDOUT:     import_ir_inst44: {ir_id: import_ir78000004, inst_id: inst700000ED}
+// CHECK:STDOUT:     import_ir_inst45: {ir_id: import_ir78000004, inst_id: inst700000EB}
+// CHECK:STDOUT:     import_ir_inst46: {ir_id: import_ir78000004, inst_id: inst700000EC}
+// CHECK:STDOUT:     import_ir_inst47: {ir_id: import_ir78000004, inst_id: inst700000EE}
+// CHECK:STDOUT:     import_ir_inst48: {ir_id: import_ir78000004, inst_id: inst70000110}
+// CHECK:STDOUT:     import_ir_inst49: {ir_id: import_ir78000004, inst_id: inst7000010C}
+// CHECK:STDOUT:     import_ir_inst4A: {ir_id: import_ir78000004, inst_id: inst7000010A}
+// CHECK:STDOUT:     import_ir_inst4B: {ir_id: import_ir78000004, inst_id: inst7000010B}
+// CHECK:STDOUT:     import_ir_inst4C: {ir_id: import_ir78000004, inst_id: inst7000010D}
+// CHECK:STDOUT:     import_ir_inst4D: {ir_id: import_ir78000004, inst_id: inst7000012F}
+// CHECK:STDOUT:     import_ir_inst4E: {ir_id: import_ir78000004, inst_id: inst7000012B}
+// CHECK:STDOUT:     import_ir_inst4F: {ir_id: import_ir78000004, inst_id: inst70000129}
+// CHECK:STDOUT:     import_ir_inst50: {ir_id: import_ir78000004, inst_id: inst7000012A}
+// CHECK:STDOUT:     import_ir_inst51: {ir_id: import_ir78000004, inst_id: inst7000012C}
+// CHECK:STDOUT:     import_ir_inst52: {ir_id: import_ir78000004, inst_id: inst7000014E}
+// CHECK:STDOUT:     import_ir_inst53: {ir_id: import_ir78000004, inst_id: inst7000014A}
+// CHECK:STDOUT:     import_ir_inst54: {ir_id: import_ir78000004, inst_id: inst70000148}
+// CHECK:STDOUT:     import_ir_inst55: {ir_id: import_ir78000004, inst_id: inst70000149}
+// CHECK:STDOUT:     import_ir_inst56: {ir_id: import_ir78000004, inst_id: inst7000014B}
+// CHECK:STDOUT:     import_ir_inst57: {ir_id: import_ir78000004, inst_id: inst7000017A}
+// CHECK:STDOUT:     import_ir_inst58: {ir_id: import_ir78000004, inst_id: inst70000175}
+// CHECK:STDOUT:     import_ir_inst59: {ir_id: import_ir78000004, inst_id: inst70000196}
+// CHECK:STDOUT:     import_ir_inst5A: {ir_id: import_ir78000004, inst_id: inst70000179}
+// CHECK:STDOUT:     import_ir_inst5B: {ir_id: import_ir78000004, inst_id: inst70000169}
+// CHECK:STDOUT:     import_ir_inst5C: {ir_id: import_ir78000004, inst_id: inst70000170}
+// CHECK:STDOUT:     import_ir_inst5D: {ir_id: import_ir78000004, inst_id: inst70000173}
+// CHECK:STDOUT:     import_ir_inst5E: {ir_id: import_ir78000004, inst_id: inst70000176}
+// CHECK:STDOUT:     import_ir_inst5F: {ir_id: import_ir78000004, inst_id: inst7000016C}
+// CHECK:STDOUT:     import_ir_inst60: {ir_id: import_ir78000004, inst_id: inst7000016B}
+// CHECK:STDOUT:     import_ir_inst61: {ir_id: import_ir78000004, inst_id: inst7000016E}
+// CHECK:STDOUT:     import_ir_inst62: {ir_id: import_ir78000004, inst_id: inst70000172}
+// CHECK:STDOUT:     import_ir_inst63: {ir_id: import_ir78000004, inst_id: inst70000178}
+// CHECK:STDOUT:     import_ir_inst64: {ir_id: import_ir78000004, inst_id: inst7000017C}
+// CHECK:STDOUT:     import_ir_inst65: {ir_id: import_ir78000004, inst_id: inst7000018E}
+// CHECK:STDOUT:     import_ir_inst66: {ir_id: import_ir78000004, inst_id: inst70000182}
+// CHECK:STDOUT:     import_ir_inst67: {ir_id: import_ir78000004, inst_id: inst70000181}
+// CHECK:STDOUT:     import_ir_inst68: {ir_id: import_ir78000004, inst_id: inst7000018D}
+// CHECK:STDOUT:     import_ir_inst69: {ir_id: import_ir78000004, inst_id: inst70000185}
+// CHECK:STDOUT:     import_ir_inst6A: {ir_id: import_ir78000004, inst_id: inst70000189}
+// CHECK:STDOUT:     import_ir_inst6B: {ir_id: import_ir78000004, inst_id: inst7000018A}
+// CHECK:STDOUT:     import_ir_inst6C: {ir_id: import_ir78000004, inst_id: inst70000190}
+// CHECK:STDOUT:     import_ir_inst6D: {ir_id: import_ir78000004, inst_id: inst7000017E}
+// CHECK:STDOUT:     import_ir_inst6E: {ir_id: import_ir78000004, inst_id: inst7000017F}
+// CHECK:STDOUT:     import_ir_inst6F: {ir_id: import_ir78000004, inst_id: inst70000183}
+// CHECK:STDOUT:     import_ir_inst70: {ir_id: import_ir78000004, inst_id: inst70000184}
+// CHECK:STDOUT:     import_ir_inst71: {ir_id: import_ir78000004, inst_id: inst70000187}
+// CHECK:STDOUT:     import_ir_inst72: {ir_id: import_ir78000004, inst_id: inst7000018C}
+// CHECK:STDOUT:     import_ir_inst73: {ir_id: import_ir78000004, inst_id: inst7000018F}
+// CHECK:STDOUT:     import_ir_inst74: {ir_id: import_ir78000004, inst_id: inst70000192}
+// CHECK:STDOUT:     import_ir_inst75: {ir_id: import_ir78000004, inst_id: inst70000199}
+// CHECK:STDOUT:     import_ir_inst76: {ir_id: import_ir78000004, inst_id: inst7000019A}
+// CHECK:STDOUT:     import_ir_inst77: {ir_id: import_ir78000004, inst_id: inst7000019D}
+// CHECK:STDOUT:     import_ir_inst78: {ir_id: import_ir78000004, inst_id: inst700001A7}
+// CHECK:STDOUT:     import_ir_inst79: {ir_id: import_ir78000004, inst_id: inst700001A3}
+// CHECK:STDOUT:     import_ir_inst7A: {ir_id: import_ir78000004, inst_id: inst700001A1}
+// CHECK:STDOUT:     import_ir_inst7B: {ir_id: import_ir78000004, inst_id: inst700001A2}
+// CHECK:STDOUT:     import_ir_inst7C: {ir_id: import_ir78000004, inst_id: inst700001A4}
+// CHECK:STDOUT:     import_ir_inst7D: {ir_id: import_ir78000004, inst_id: inst700001C4}
+// CHECK:STDOUT:     import_ir_inst7E: {ir_id: import_ir78000004, inst_id: inst700001C0}
+// CHECK:STDOUT:     import_ir_inst7F: {ir_id: import_ir78000004, inst_id: inst700001BE}
+// CHECK:STDOUT:     import_ir_inst80: {ir_id: import_ir78000004, inst_id: inst700001BF}
+// CHECK:STDOUT:     import_ir_inst81: {ir_id: import_ir78000004, inst_id: inst700001C1}
+// CHECK:STDOUT:     import_ir_inst82: {ir_id: import_ir78000004, inst_id: inst70000204}
+// CHECK:STDOUT:     import_ir_inst83: {ir_id: import_ir78000004, inst_id: inst700001FF}
+// CHECK:STDOUT:     import_ir_inst84: {ir_id: import_ir78000004, inst_id: inst70000227}
+// CHECK:STDOUT:     import_ir_inst85: {ir_id: import_ir78000004, inst_id: inst70000203}
+// CHECK:STDOUT:     import_ir_inst86: {ir_id: import_ir78000004, inst_id: inst7000021F}
+// CHECK:STDOUT:     import_ir_inst87: {ir_id: import_ir78000004, inst_id: inst70000213}
+// CHECK:STDOUT:     import_ir_inst88: {ir_id: import_ir78000004, inst_id: inst70000212}
+// CHECK:STDOUT:     import_ir_inst89: {ir_id: import_ir78000004, inst_id: inst7000021E}
+// CHECK:STDOUT:     import_ir_inst8A: {ir_id: import_ir78000004, inst_id: inst70000216}
+// CHECK:STDOUT:     import_ir_inst8B: {ir_id: import_ir78000004, inst_id: inst7000021A}
+// CHECK:STDOUT:     import_ir_inst8C: {ir_id: import_ir78000004, inst_id: inst7000021B}
+// CHECK:STDOUT:     import_ir_inst8D: {ir_id: import_ir78000004, inst_id: inst70000221}
+// CHECK:STDOUT:     import_ir_inst8E: {ir_id: import_ir78000004, inst_id: inst700001E1}
+// CHECK:STDOUT:     import_ir_inst8F: {ir_id: import_ir78000004, inst_id: inst700001E8}
+// CHECK:STDOUT:     import_ir_inst90: {ir_id: import_ir78000004, inst_id: inst7000020C}
+// CHECK:STDOUT:     import_ir_inst91: {ir_id: import_ir78000004, inst_id: inst7000020D}
+// CHECK:STDOUT:     import_ir_inst92: {ir_id: import_ir78000004, inst_id: inst7000020E}
+// CHECK:STDOUT:     import_ir_inst93: {ir_id: import_ir78000004, inst_id: inst7000020F}
+// CHECK:STDOUT:     import_ir_inst94: {ir_id: import_ir78000004, inst_id: inst70000210}
+// CHECK:STDOUT:     import_ir_inst95: {ir_id: import_ir78000004, inst_id: inst70000214}
+// CHECK:STDOUT:     import_ir_inst96: {ir_id: import_ir78000004, inst_id: inst70000215}
+// CHECK:STDOUT:     import_ir_inst97: {ir_id: import_ir78000004, inst_id: inst70000218}
+// CHECK:STDOUT:     import_ir_inst98: {ir_id: import_ir78000004, inst_id: inst7000021D}
+// CHECK:STDOUT:     import_ir_inst99: {ir_id: import_ir78000004, inst_id: inst70000220}
+// CHECK:STDOUT:     import_ir_inst9A: {ir_id: import_ir78000004, inst_id: inst70000223}
+// CHECK:STDOUT:     import_ir_inst9B: {ir_id: import_ir78000004, inst_id: inst70000262}
+// CHECK:STDOUT:     import_ir_inst9C: {ir_id: import_ir78000004, inst_id: inst7000025F}
+// CHECK:STDOUT:     import_ir_inst9D: {ir_id: import_ir78000004, inst_id: inst70000232}
+// CHECK:STDOUT:     import_ir_inst9E: {ir_id: import_ir78000004, inst_id: inst70000238}
+// CHECK:STDOUT:     import_ir_inst9F: {ir_id: import_ir78000004, inst_id: inst7000023C}
+// CHECK:STDOUT:     import_ir_instA0: {ir_id: import_ir78000004, inst_id: inst7000023D}
+// CHECK:STDOUT:     import_ir_instA1: {ir_id: import_ir78000004, inst_id: inst7000023E}
+// CHECK:STDOUT:     import_ir_instA2: {ir_id: import_ir78000004, inst_id: inst7000023F}
+// CHECK:STDOUT:     import_ir_instA3: {ir_id: import_ir78000004, inst_id: inst70000244}
+// CHECK:STDOUT:     import_ir_instA4: {ir_id: import_ir78000004, inst_id: inst7000024E}
+// CHECK:STDOUT:     import_ir_instA5: {ir_id: import_ir78000004, inst_id: inst70000257}
+// CHECK:STDOUT:     import_ir_instA6: {ir_id: import_ir78000004, inst_id: inst70000258}
+// CHECK:STDOUT:     import_ir_instA7: {ir_id: import_ir78000004, inst_id: inst70000259}
+// CHECK:STDOUT:     import_ir_instA8: {ir_id: import_ir78000004, inst_id: inst7000025A}
+// CHECK:STDOUT:     import_ir_instA9: {ir_id: import_ir78000004, inst_id: inst70000266}
+// CHECK:STDOUT:     import_ir_instAA: {ir_id: import_ir78000004, inst_id: inst700001DF}
+// CHECK:STDOUT:     import_ir_instAB: {ir_id: import_ir78000004, inst_id: inst700001E5}
+// CHECK:STDOUT:     import_ir_instAC: {ir_id: import_ir78000004, inst_id: inst700001FA}
+// CHECK:STDOUT:     import_ir_instAD: {ir_id: import_ir78000004, inst_id: inst700001FC}
+// CHECK:STDOUT:     import_ir_instAE: {ir_id: import_ir78000004, inst_id: inst70000200}
+// CHECK:STDOUT:     import_ir_instAF: {ir_id: import_ir78000004, inst_id: inst700001E0}
+// CHECK:STDOUT:     import_ir_instB0: {ir_id: import_ir78000004, inst_id: inst700001E2}
+// CHECK:STDOUT:     import_ir_instB1: {ir_id: import_ir78000004, inst_id: inst700001E7}
+// CHECK:STDOUT:     import_ir_instB2: {ir_id: import_ir78000004, inst_id: inst700001EA}
+// CHECK:STDOUT:     import_ir_instB3: {ir_id: import_ir78000004, inst_id: inst700001F0}
+// CHECK:STDOUT:     import_ir_instB4: {ir_id: import_ir78000004, inst_id: inst700001F3}
+// CHECK:STDOUT:     import_ir_instB5: {ir_id: import_ir78000004, inst_id: inst700001F7}
+// CHECK:STDOUT:     import_ir_instB6: {ir_id: import_ir78000004, inst_id: inst700001FB}
+// CHECK:STDOUT:     import_ir_instB7: {ir_id: import_ir78000004, inst_id: inst70000202}
+// CHECK:STDOUT:     import_ir_instB8: {ir_id: import_ir78000004, inst_id: inst70000206}
+// CHECK:STDOUT:     import_ir_instB9: {ir_id: import_ir78000004, inst_id: inst7000022A}
+// CHECK:STDOUT:     import_ir_instBA: {ir_id: import_ir78000004, inst_id: inst7000022B}
+// CHECK:STDOUT:     import_ir_instBB: {ir_id: import_ir78000004, inst_id: inst700002A7}
+// CHECK:STDOUT:     import_ir_instBC: {ir_id: import_ir78000004, inst_id: inst700002A2}
+// CHECK:STDOUT:     import_ir_instBD: {ir_id: import_ir78000004, inst_id: inst700002CE}
+// CHECK:STDOUT:     import_ir_instBE: {ir_id: import_ir78000004, inst_id: inst700002A6}
+// CHECK:STDOUT:     import_ir_instBF: {ir_id: import_ir78000004, inst_id: inst700002C6}
+// CHECK:STDOUT:     import_ir_instC0: {ir_id: import_ir78000004, inst_id: inst700002BA}
+// CHECK:STDOUT:     import_ir_instC1: {ir_id: import_ir78000004, inst_id: inst700002B9}
+// CHECK:STDOUT:     import_ir_instC2: {ir_id: import_ir78000004, inst_id: inst700002C5}
+// CHECK:STDOUT:     import_ir_instC3: {ir_id: import_ir78000004, inst_id: inst700002BD}
+// CHECK:STDOUT:     import_ir_instC4: {ir_id: import_ir78000004, inst_id: inst700002C1}
+// CHECK:STDOUT:     import_ir_instC5: {ir_id: import_ir78000004, inst_id: inst700002C2}
+// CHECK:STDOUT:     import_ir_instC6: {ir_id: import_ir78000004, inst_id: inst700002C8}
+// CHECK:STDOUT:     import_ir_instC7: {ir_id: import_ir78000004, inst_id: inst70000279}
+// CHECK:STDOUT:     import_ir_instC8: {ir_id: import_ir78000004, inst_id: inst7000027F}
+// CHECK:STDOUT:     import_ir_instC9: {ir_id: import_ir78000004, inst_id: inst70000286}
+// CHECK:STDOUT:     import_ir_instCA: {ir_id: import_ir78000004, inst_id: inst700002B1}
+// CHECK:STDOUT:     import_ir_instCB: {ir_id: import_ir78000004, inst_id: inst700002B2}
+// CHECK:STDOUT:     import_ir_instCC: {ir_id: import_ir78000004, inst_id: inst700002B3}
+// CHECK:STDOUT:     import_ir_instCD: {ir_id: import_ir78000004, inst_id: inst700002B4}
+// CHECK:STDOUT:     import_ir_instCE: {ir_id: import_ir78000004, inst_id: inst700002B5}
+// CHECK:STDOUT:     import_ir_instCF: {ir_id: import_ir78000004, inst_id: inst700002B6}
+// CHECK:STDOUT:     import_ir_instD0: {ir_id: import_ir78000004, inst_id: inst700002B7}
+// CHECK:STDOUT:     import_ir_instD1: {ir_id: import_ir78000004, inst_id: inst700002BB}
+// CHECK:STDOUT:     import_ir_instD2: {ir_id: import_ir78000004, inst_id: inst700002BC}
+// CHECK:STDOUT:     import_ir_instD3: {ir_id: import_ir78000004, inst_id: inst700002BF}
+// CHECK:STDOUT:     import_ir_instD4: {ir_id: import_ir78000004, inst_id: inst700002C4}
+// CHECK:STDOUT:     import_ir_instD5: {ir_id: import_ir78000004, inst_id: inst700002C7}
+// CHECK:STDOUT:     import_ir_instD6: {ir_id: import_ir78000004, inst_id: inst700002CA}
+// CHECK:STDOUT:     import_ir_instD7: {ir_id: import_ir78000004, inst_id: inst7000031C}
+// CHECK:STDOUT:     import_ir_instD8: {ir_id: import_ir78000004, inst_id: inst70000319}
+// CHECK:STDOUT:     import_ir_instD9: {ir_id: import_ir78000004, inst_id: inst700002D9}
+// CHECK:STDOUT:     import_ir_instDA: {ir_id: import_ir78000004, inst_id: inst700002DE}
+// CHECK:STDOUT:     import_ir_instDB: {ir_id: import_ir78000004, inst_id: inst700002E2}
+// CHECK:STDOUT:     import_ir_instDC: {ir_id: import_ir78000004, inst_id: inst700002E3}
+// CHECK:STDOUT:     import_ir_instDD: {ir_id: import_ir78000004, inst_id: inst700002E4}
+// CHECK:STDOUT:     import_ir_instDE: {ir_id: import_ir78000004, inst_id: inst700002E5}
+// CHECK:STDOUT:     import_ir_instDF: {ir_id: import_ir78000004, inst_id: inst700002EA}
+// CHECK:STDOUT:     import_ir_instE0: {ir_id: import_ir78000004, inst_id: inst700002F2}
+// CHECK:STDOUT:     import_ir_instE1: {ir_id: import_ir78000004, inst_id: inst700002F6}
+// CHECK:STDOUT:     import_ir_instE2: {ir_id: import_ir78000004, inst_id: inst700002F7}
+// CHECK:STDOUT:     import_ir_instE3: {ir_id: import_ir78000004, inst_id: inst700002F8}
+// CHECK:STDOUT:     import_ir_instE4: {ir_id: import_ir78000004, inst_id: inst700002F9}
+// CHECK:STDOUT:     import_ir_instE5: {ir_id: import_ir78000004, inst_id: inst700002FE}
+// CHECK:STDOUT:     import_ir_instE6: {ir_id: import_ir78000004, inst_id: inst70000308}
+// CHECK:STDOUT:     import_ir_instE7: {ir_id: import_ir78000004, inst_id: inst70000311}
+// CHECK:STDOUT:     import_ir_instE8: {ir_id: import_ir78000004, inst_id: inst70000312}
+// CHECK:STDOUT:     import_ir_instE9: {ir_id: import_ir78000004, inst_id: inst70000313}
+// CHECK:STDOUT:     import_ir_instEA: {ir_id: import_ir78000004, inst_id: inst70000314}
+// CHECK:STDOUT:     import_ir_instEB: {ir_id: import_ir78000004, inst_id: inst70000320}
+// CHECK:STDOUT:     import_ir_instEC: {ir_id: import_ir78000004, inst_id: inst70000277}
+// CHECK:STDOUT:     import_ir_instED: {ir_id: import_ir78000004, inst_id: inst7000027D}
+// CHECK:STDOUT:     import_ir_instEE: {ir_id: import_ir78000004, inst_id: inst70000283}
+// CHECK:STDOUT:     import_ir_instEF: {ir_id: import_ir78000004, inst_id: inst7000029C}
+// CHECK:STDOUT:     import_ir_instF0: {ir_id: import_ir78000004, inst_id: inst7000029E}
+// CHECK:STDOUT:     import_ir_instF1: {ir_id: import_ir78000004, inst_id: inst700002A3}
+// CHECK:STDOUT:     import_ir_instF2: {ir_id: import_ir78000004, inst_id: inst70000278}
+// CHECK:STDOUT:     import_ir_instF3: {ir_id: import_ir78000004, inst_id: inst7000027A}
+// CHECK:STDOUT:     import_ir_instF4: {ir_id: import_ir78000004, inst_id: inst7000027E}
+// CHECK:STDOUT:     import_ir_instF5: {ir_id: import_ir78000004, inst_id: inst70000280}
+// CHECK:STDOUT:     import_ir_instF6: {ir_id: import_ir78000004, inst_id: inst70000285}
+// CHECK:STDOUT:     import_ir_instF7: {ir_id: import_ir78000004, inst_id: inst70000288}
+// CHECK:STDOUT:     import_ir_instF8: {ir_id: import_ir78000004, inst_id: inst7000028F}
+// CHECK:STDOUT:     import_ir_instF9: {ir_id: import_ir78000004, inst_id: inst70000292}
+// CHECK:STDOUT:     import_ir_instFA: {ir_id: import_ir78000004, inst_id: inst70000295}
+// CHECK:STDOUT:     import_ir_instFB: {ir_id: import_ir78000004, inst_id: inst70000299}
+// CHECK:STDOUT:     import_ir_instFC: {ir_id: import_ir78000004, inst_id: inst7000029D}
+// CHECK:STDOUT:     import_ir_instFD: {ir_id: import_ir78000004, inst_id: inst700002A5}
+// CHECK:STDOUT:     import_ir_instFE: {ir_id: import_ir78000004, inst_id: inst700002A9}
+// CHECK:STDOUT:     import_ir_instFF: {ir_id: import_ir78000004, inst_id: inst700002D1}
+// CHECK:STDOUT:     import_ir_inst100: {ir_id: import_ir78000004, inst_id: inst700002D2}
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
@@ -691,31 +650,31 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst78000059:    {kind: FacetType, arg0: declared_facet_type78000001, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800005A:    {kind: InterfaceWithSelfDecl, arg0: interface78000000}
 // CHECK:STDOUT:     inst7800005B:    {kind: SymbolicBinding, arg0: entity_name78000004, arg1: inst<none>, type: type(inst78000059)}
-// CHECK:STDOUT:     inst7800005C:    {kind: ImportRefLoaded, arg0: import_ir_inst3, arg1: entity_name<none>, type: type(inst78000083)}
-// CHECK:STDOUT:     inst7800005D:    {kind: ImportRefUnloaded, arg0: import_ir_inst4, arg1: entity_name78000005}
-// CHECK:STDOUT:     inst7800005E:    {kind: ImportRefLoaded, arg0: import_ir_inst5, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst7800005C:    {kind: ImportRefLoaded, arg0: import_ir_inst2, arg1: entity_name<none>, type: type(inst78000083)}
+// CHECK:STDOUT:     inst7800005D:    {kind: ImportRefUnloaded, arg0: import_ir_inst3, arg1: entity_name78000005}
+// CHECK:STDOUT:     inst7800005E:    {kind: ImportRefLoaded, arg0: import_ir_inst4, arg1: entity_name<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst7800005F:    {kind: FunctionDecl, arg0: function78000001, arg1: inst_block_empty, type: type(symbolic_constant7800001F)}
 // CHECK:STDOUT:     inst78000060:    {kind: FunctionType, arg0: function78000001, arg1: specific78000001, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000061:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant7800001F)}
 // CHECK:STDOUT:     inst78000062:    {kind: FacetAccessType, arg0: inst7800005B, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000063:    {kind: PatternType, arg0: inst78000062, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000064:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant78000023)}
-// CHECK:STDOUT:     inst78000065:    {kind: ImportRefLoaded, arg0: import_ir_inst7, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
+// CHECK:STDOUT:     inst78000065:    {kind: ImportRefLoaded, arg0: import_ir_inst5, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
 // CHECK:STDOUT:     inst78000066:    {kind: ReturnSlotPattern, arg0: inst78000064, arg1: inst<none>, type: type(symbolic_constant78000023)}
 // CHECK:STDOUT:     inst78000067:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant78000023)}
-// CHECK:STDOUT:     inst78000068:    {kind: ImportRefLoaded, arg0: import_ir_inst8, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
+// CHECK:STDOUT:     inst78000068:    {kind: ImportRefLoaded, arg0: import_ir_inst6, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
 // CHECK:STDOUT:     inst78000069:    {kind: WrapperBindingPattern, arg0: entity_name78000007, arg1: inst78000067, type: type(symbolic_constant78000023)}
-// CHECK:STDOUT:     inst7800006A:    {kind: ImportRefLoaded, arg0: import_ir_inst9, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
+// CHECK:STDOUT:     inst7800006A:    {kind: ImportRefLoaded, arg0: import_ir_inst5, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
 // CHECK:STDOUT:     inst7800006B:    {kind: InitForm, arg0: inst78000062, type: type(inst(FormType))}
-// CHECK:STDOUT:     inst7800006C:    {kind: ImportRefLoaded, arg0: import_ir_instA, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
-// CHECK:STDOUT:     inst7800006D:    {kind: ImportRefLoaded, arg0: import_ir_instB, arg1: entity_name<none>, type: type(symbolic_constant78000028)}
-// CHECK:STDOUT:     inst7800006E:    {kind: ImportRefLoaded, arg0: import_ir_instC, arg1: entity_name<none>, type: type(symbolic_constant78000028)}
-// CHECK:STDOUT:     inst7800006F:    {kind: ImportRefLoaded, arg0: import_ir_instD, arg1: entity_name<none>, type: type(symbolic_constant78000028)}
-// CHECK:STDOUT:     inst78000070:    {kind: ImportRefLoaded, arg0: import_ir_instE, arg1: entity_name<none>, type: type(symbolic_constant78000028)}
-// CHECK:STDOUT:     inst78000071:    {kind: ImportRefLoaded, arg0: import_ir_instF, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst78000072:    {kind: ImportRefLoaded, arg0: import_ir_inst10, arg1: entity_name<none>, type: type(inst(FormType))}
-// CHECK:STDOUT:     inst78000073:    {kind: ImportRefLoaded, arg0: import_ir_inst11, arg1: entity_name<none>, type: type(symbolic_constant78000028)}
-// CHECK:STDOUT:     inst78000074:    {kind: ImportRefLoaded, arg0: import_ir_inst12, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst7800006C:    {kind: ImportRefLoaded, arg0: import_ir_inst6, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
+// CHECK:STDOUT:     inst7800006D:    {kind: ImportRefLoaded, arg0: import_ir_inst7, arg1: entity_name<none>, type: type(symbolic_constant78000028)}
+// CHECK:STDOUT:     inst7800006E:    {kind: ImportRefLoaded, arg0: import_ir_inst8, arg1: entity_name<none>, type: type(symbolic_constant78000028)}
+// CHECK:STDOUT:     inst7800006F:    {kind: ImportRefLoaded, arg0: import_ir_inst9, arg1: entity_name<none>, type: type(symbolic_constant78000028)}
+// CHECK:STDOUT:     inst78000070:    {kind: ImportRefLoaded, arg0: import_ir_inst9, arg1: entity_name<none>, type: type(symbolic_constant78000028)}
+// CHECK:STDOUT:     inst78000071:    {kind: ImportRefLoaded, arg0: import_ir_instA, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst78000072:    {kind: ImportRefLoaded, arg0: import_ir_instB, arg1: entity_name<none>, type: type(inst(FormType))}
+// CHECK:STDOUT:     inst78000073:    {kind: ImportRefLoaded, arg0: import_ir_instC, arg1: entity_name<none>, type: type(symbolic_constant78000028)}
+// CHECK:STDOUT:     inst78000074:    {kind: ImportRefLoaded, arg0: import_ir_inst4, arg1: entity_name<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst78000075:    {kind: SymbolicBinding, arg0: entity_name78000004, arg1: inst<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst78000076:    {kind: FacetAccessType, arg0: inst78000075, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000077:    {kind: PatternType, arg0: inst78000076, type: type(TypeType)}
@@ -724,23 +683,23 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst7800007A:    {kind: InitForm, arg0: inst78000076, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst7800007B:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant7800003A)}
 // CHECK:STDOUT:     inst7800007C:    {kind: ReturnSlotPattern, arg0: inst7800007B, arg1: inst<none>, type: type(symbolic_constant7800003A)}
-// CHECK:STDOUT:     inst7800007D:    {kind: ImportRefLoaded, arg0: import_ir_inst1B, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
-// CHECK:STDOUT:     inst7800007E:    {kind: ImportRefLoaded, arg0: import_ir_inst1C, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
+// CHECK:STDOUT:     inst7800007D:    {kind: ImportRefLoaded, arg0: import_ir_inst5, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
+// CHECK:STDOUT:     inst7800007E:    {kind: ImportRefLoaded, arg0: import_ir_inst6, arg1: entity_name<none>, type: type(symbolic_constant78000023)}
 // CHECK:STDOUT:     inst7800007F:    {kind: SymbolicBinding, arg0: entity_name78000004, arg1: inst<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst78000080:    {kind: FunctionType, arg0: function78000001, arg1: specific78000003, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000081:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant78000043)}
-// CHECK:STDOUT:     inst78000082:    {kind: ImportRefUnloaded, arg0: import_ir_inst20, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst78000082:    {kind: ImportRefUnloaded, arg0: import_ir_inst4, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst78000083:    {kind: AssociatedEntityType, arg0: interface78000000, arg1: specific<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst78000084:    {kind: ImportRefLoaded, arg0: import_ir_inst21, arg1: entity_name<none>, type: type(symbolic_constant78000025)}
+// CHECK:STDOUT:     inst78000084:    {kind: ImportRefLoaded, arg0: import_ir_inst3, arg1: entity_name<none>, type: type(symbolic_constant78000025)}
 // CHECK:STDOUT:     inst78000085:    {kind: AssociatedEntity, arg0: element0, arg1: inst78000084, type: type(inst78000083)}
 // CHECK:STDOUT:     inst78000086:    {kind: LookupImplWitness, arg0: inst7800001E, arg1: specific_interface78000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst78000087:    {kind: ImportRefUnloaded, arg0: import_ir_inst22, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst78000087:    {kind: ImportRefUnloaded, arg0: import_ir_inst18, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst78000088:    {kind: ImplDecl, arg0: impl78000000, arg1: inst_block_empty}
 // CHECK:STDOUT:     inst78000089:    {kind: SymbolicBinding, arg0: entity_name78000001, arg1: inst<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst7800008A:    {kind: FacetAccessType, arg0: inst78000089, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800008B:    {kind: ConstType, arg0: inst7800008A, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800008C:    {kind: ImplSelfWitness, arg0: inst7800008B, arg1: specific_interface78000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst7800008D:    {kind: ImportRefUnloaded, arg0: import_ir_inst24, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst7800008D:    {kind: ImportRefUnloaded, arg0: import_ir_inst1A, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst7800008E:    {kind: ImplWitnessTable, arg0: inst_block78000025, arg1: impl78000000}
 // CHECK:STDOUT:     inst7800008F:    {kind: ImplWitness, arg0: inst7800008E, arg1: specific78000004, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst78000090:    {kind: FunctionDecl, arg0: function78000002, arg1: inst_block_empty, type: type(symbolic_constant7800004D)}
@@ -750,22 +709,22 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst78000094:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant78000050)}
 // CHECK:STDOUT:     inst78000095:    {kind: PatternType, arg0: inst78000059, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000096:    {kind: SymbolicBindingPattern, arg0: entity_name78000001, type: type(inst78000095)}
-// CHECK:STDOUT:     inst78000097:    {kind: ImportRefLoaded, arg0: import_ir_inst27, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
+// CHECK:STDOUT:     inst78000097:    {kind: ImportRefLoaded, arg0: import_ir_inst1C, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
 // CHECK:STDOUT:     inst78000098:    {kind: ReturnSlotPattern, arg0: inst78000094, arg1: inst<none>, type: type(symbolic_constant78000050)}
 // CHECK:STDOUT:     inst78000099:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant78000050)}
-// CHECK:STDOUT:     inst7800009A:    {kind: ImportRefLoaded, arg0: import_ir_inst28, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
+// CHECK:STDOUT:     inst7800009A:    {kind: ImportRefLoaded, arg0: import_ir_inst1D, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
 // CHECK:STDOUT:     inst7800009B:    {kind: WrapperBindingPattern, arg0: entity_name78000007, arg1: inst78000099, type: type(symbolic_constant78000050)}
-// CHECK:STDOUT:     inst7800009C:    {kind: ImportRefLoaded, arg0: import_ir_inst29, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
+// CHECK:STDOUT:     inst7800009C:    {kind: ImportRefLoaded, arg0: import_ir_inst1C, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
 // CHECK:STDOUT:     inst7800009D:    {kind: InitForm, arg0: inst7800008B, type: type(inst(FormType))}
-// CHECK:STDOUT:     inst7800009E:    {kind: ImportRefLoaded, arg0: import_ir_inst2A, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
-// CHECK:STDOUT:     inst7800009F:    {kind: ImportRefLoaded, arg0: import_ir_inst2B, arg1: entity_name<none>, type: type(symbolic_constant78000056)}
-// CHECK:STDOUT:     inst780000A0:    {kind: ImportRefLoaded, arg0: import_ir_inst2C, arg1: entity_name<none>, type: type(symbolic_constant78000056)}
-// CHECK:STDOUT:     inst780000A1:    {kind: ImportRefLoaded, arg0: import_ir_inst2D, arg1: entity_name<none>, type: type(symbolic_constant78000056)}
-// CHECK:STDOUT:     inst780000A2:    {kind: ImportRefLoaded, arg0: import_ir_inst2E, arg1: entity_name<none>, type: type(symbolic_constant78000056)}
-// CHECK:STDOUT:     inst780000A3:    {kind: ImportRefLoaded, arg0: import_ir_inst2F, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000A4:    {kind: ImportRefLoaded, arg0: import_ir_inst30, arg1: entity_name<none>, type: type(inst(FormType))}
-// CHECK:STDOUT:     inst780000A5:    {kind: ImportRefLoaded, arg0: import_ir_inst31, arg1: entity_name<none>, type: type(symbolic_constant78000056)}
-// CHECK:STDOUT:     inst780000A6:    {kind: ImportRefLoaded, arg0: import_ir_inst32, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst7800009E:    {kind: ImportRefLoaded, arg0: import_ir_inst1D, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
+// CHECK:STDOUT:     inst7800009F:    {kind: ImportRefLoaded, arg0: import_ir_inst1E, arg1: entity_name<none>, type: type(symbolic_constant78000056)}
+// CHECK:STDOUT:     inst780000A0:    {kind: ImportRefLoaded, arg0: import_ir_inst1F, arg1: entity_name<none>, type: type(symbolic_constant78000056)}
+// CHECK:STDOUT:     inst780000A1:    {kind: ImportRefLoaded, arg0: import_ir_inst20, arg1: entity_name<none>, type: type(symbolic_constant78000056)}
+// CHECK:STDOUT:     inst780000A2:    {kind: ImportRefLoaded, arg0: import_ir_inst20, arg1: entity_name<none>, type: type(symbolic_constant78000056)}
+// CHECK:STDOUT:     inst780000A3:    {kind: ImportRefLoaded, arg0: import_ir_inst21, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000A4:    {kind: ImportRefLoaded, arg0: import_ir_inst22, arg1: entity_name<none>, type: type(inst(FormType))}
+// CHECK:STDOUT:     inst780000A5:    {kind: ImportRefLoaded, arg0: import_ir_inst23, arg1: entity_name<none>, type: type(symbolic_constant78000056)}
+// CHECK:STDOUT:     inst780000A6:    {kind: ImportRefLoaded, arg0: import_ir_inst24, arg1: entity_name<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst780000A7:    {kind: SymbolicBinding, arg0: entity_name78000001, arg1: inst<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst780000A8:    {kind: FacetAccessType, arg0: inst780000A7, type: type(TypeType)}
 // CHECK:STDOUT:     inst780000A9:    {kind: ConstType, arg0: inst780000A8, type: type(TypeType)}
@@ -783,11 +742,11 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst780000B5:    {kind: SpecificImplFunction, arg0: inst780000B4, arg1: specific78000006, type: type(inst(SpecificFunctionType))}
 // CHECK:STDOUT:     inst780000B6:    {kind: PatternType, arg0: inst7800008A, type: type(TypeType)}
 // CHECK:STDOUT:     inst780000B7:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant78000078)}
-// CHECK:STDOUT:     inst780000B8:    {kind: ImportRefLoaded, arg0: import_ir_inst3C, arg1: entity_name<none>, type: type(symbolic_constant78000078)}
+// CHECK:STDOUT:     inst780000B8:    {kind: ImportRefLoaded, arg0: import_ir_inst2E, arg1: entity_name<none>, type: type(symbolic_constant78000078)}
 // CHECK:STDOUT:     inst780000B9:    {kind: ReturnSlotPattern, arg0: inst780000B7, arg1: inst<none>, type: type(symbolic_constant78000078)}
 // CHECK:STDOUT:     inst780000BA:    {kind: InitForm, arg0: inst7800008A, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst780000BB:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant78000078)}
-// CHECK:STDOUT:     inst780000BC:    {kind: ImportRefLoaded, arg0: import_ir_inst3D, arg1: entity_name<none>, type: type(symbolic_constant78000078)}
+// CHECK:STDOUT:     inst780000BC:    {kind: ImportRefLoaded, arg0: import_ir_inst2F, arg1: entity_name<none>, type: type(symbolic_constant78000078)}
 // CHECK:STDOUT:     inst780000BD:    {kind: WrapperBindingPattern, arg0: entity_name78000007, arg1: inst780000BB, type: type(symbolic_constant78000078)}
 // CHECK:STDOUT:     inst780000BE:    {kind: RequireCompleteType, arg0: inst7800008A, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst780000BF:    {kind: RequireCompleteType, arg0: inst7800008B, type: type(inst(WitnessType))}
@@ -798,13 +757,13 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst780000C4:    {kind: LookupImplWitness, arg0: inst780000A7, arg1: specific_interface78000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst780000C5:    {kind: ImplWitnessAccess, arg0: inst780000C4, arg1: element0, type: type(symbolic_constant78000089)}
 // CHECK:STDOUT:     inst780000C6:    {kind: SpecificImplFunction, arg0: inst780000C5, arg1: specific78000009, type: type(inst(SpecificFunctionType))}
-// CHECK:STDOUT:     inst780000C7:    {kind: ImportRefLoaded, arg0: import_ir_inst45, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
-// CHECK:STDOUT:     inst780000C8:    {kind: ImportRefLoaded, arg0: import_ir_inst46, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
-// CHECK:STDOUT:     inst780000C9:    {kind: ImportRefLoaded, arg0: import_ir_inst47, arg1: entity_name<none>, type: type(inst78000095)}
-// CHECK:STDOUT:     inst780000CA:    {kind: ImportRefLoaded, arg0: import_ir_inst48, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000CB:    {kind: ImportRefLoaded, arg0: import_ir_inst49, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000CC:    {kind: ImportRefLoaded, arg0: import_ir_inst4A, arg1: entity_name<none>, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000CD:    {kind: ImportRefLoaded, arg0: import_ir_inst4B, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst780000C7:    {kind: ImportRefLoaded, arg0: import_ir_inst1C, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
+// CHECK:STDOUT:     inst780000C8:    {kind: ImportRefLoaded, arg0: import_ir_inst1D, arg1: entity_name<none>, type: type(symbolic_constant78000050)}
+// CHECK:STDOUT:     inst780000C9:    {kind: ImportRefLoaded, arg0: import_ir_inst37, arg1: entity_name<none>, type: type(inst78000095)}
+// CHECK:STDOUT:     inst780000CA:    {kind: ImportRefLoaded, arg0: import_ir_inst38, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000CB:    {kind: ImportRefLoaded, arg0: import_ir_inst39, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000CC:    {kind: ImportRefLoaded, arg0: import_ir_inst3A, arg1: entity_name<none>, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst780000CD:    {kind: ImportRefLoaded, arg0: import_ir_inst24, arg1: entity_name<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst780000CE:    {kind: SymbolicBindingPattern, arg0: entity_name78000001, type: type(inst78000095)}
 // CHECK:STDOUT:     inst780000CF:    {kind: SymbolicBinding, arg0: entity_name78000001, arg1: inst<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst780000D0:    {kind: FacetAccessType, arg0: inst780000CF, type: type(TypeType)}
@@ -813,41 +772,41 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst780000D3:    {kind: ImplWitness, arg0: inst7800008E, arg1: specific7800000A, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst780000D4:    {kind: FunctionType, arg0: function78000002, arg1: specific7800000A, type: type(TypeType)}
 // CHECK:STDOUT:     inst780000D5:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant7800009A)}
-// CHECK:STDOUT:     inst780000D6:    {kind: ImportRefUnloaded, arg0: import_ir_inst54, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst780000D6:    {kind: ImportRefUnloaded, arg0: import_ir_inst43, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst780000D7:    {kind: ImplDecl, arg0: impl78000001, arg1: inst_block_empty}
 // CHECK:STDOUT:     inst780000D8:    {kind: ImplSelfWitness, arg0: inst(BoolType), arg1: specific_interface78000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000D9:    {kind: ImportRefLoaded, arg0: import_ir_inst56, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000DA:    {kind: ImportRefLoaded, arg0: import_ir_inst57, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000DB:    {kind: ImportRefLoaded, arg0: import_ir_inst58, arg1: entity_name<none>, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000DC:    {kind: ImportRefUnloaded, arg0: import_ir_inst59, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst780000D9:    {kind: ImportRefLoaded, arg0: import_ir_inst45, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000DA:    {kind: ImportRefLoaded, arg0: import_ir_inst46, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000DB:    {kind: ImportRefLoaded, arg0: import_ir_inst47, arg1: entity_name<none>, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst780000DC:    {kind: ImportRefUnloaded, arg0: import_ir_inst48, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst780000DD:    {kind: ImplDecl, arg0: impl78000002, arg1: inst_block_empty}
 // CHECK:STDOUT:     inst780000DE:    {kind: ImplSelfWitness, arg0: inst(CharLiteralType), arg1: specific_interface78000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000DF:    {kind: ImportRefLoaded, arg0: import_ir_inst5B, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000E0:    {kind: ImportRefLoaded, arg0: import_ir_inst5C, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000E1:    {kind: ImportRefLoaded, arg0: import_ir_inst5D, arg1: entity_name<none>, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000E2:    {kind: ImportRefUnloaded, arg0: import_ir_inst5E, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst780000DF:    {kind: ImportRefLoaded, arg0: import_ir_inst4A, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000E0:    {kind: ImportRefLoaded, arg0: import_ir_inst4B, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000E1:    {kind: ImportRefLoaded, arg0: import_ir_inst4C, arg1: entity_name<none>, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst780000E2:    {kind: ImportRefUnloaded, arg0: import_ir_inst4D, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst780000E3:    {kind: ImplDecl, arg0: impl78000003, arg1: inst_block_empty}
 // CHECK:STDOUT:     inst780000E4:    {kind: ImplSelfWitness, arg0: inst(FloatLiteralType), arg1: specific_interface78000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000E5:    {kind: ImportRefLoaded, arg0: import_ir_inst60, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000E6:    {kind: ImportRefLoaded, arg0: import_ir_inst61, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000E7:    {kind: ImportRefLoaded, arg0: import_ir_inst62, arg1: entity_name<none>, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000E8:    {kind: ImportRefUnloaded, arg0: import_ir_inst63, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst780000E5:    {kind: ImportRefLoaded, arg0: import_ir_inst4F, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000E6:    {kind: ImportRefLoaded, arg0: import_ir_inst50, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000E7:    {kind: ImportRefLoaded, arg0: import_ir_inst51, arg1: entity_name<none>, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst780000E8:    {kind: ImportRefUnloaded, arg0: import_ir_inst52, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst780000E9:    {kind: ImplDecl, arg0: impl78000004, arg1: inst_block_empty}
 // CHECK:STDOUT:     inst780000EA:    {kind: ImplSelfWitness, arg0: inst(IntLiteralType), arg1: specific_interface78000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000EB:    {kind: ImportRefLoaded, arg0: import_ir_inst65, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000EC:    {kind: ImportRefLoaded, arg0: import_ir_inst66, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000ED:    {kind: ImportRefLoaded, arg0: import_ir_inst67, arg1: entity_name<none>, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000EE:    {kind: ImportRefLoaded, arg0: import_ir_inst68, arg1: entity_name<none>, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst780000EB:    {kind: ImportRefLoaded, arg0: import_ir_inst54, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000EC:    {kind: ImportRefLoaded, arg0: import_ir_inst55, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000ED:    {kind: ImportRefLoaded, arg0: import_ir_inst56, arg1: entity_name<none>, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst780000EE:    {kind: ImportRefLoaded, arg0: import_ir_inst57, arg1: entity_name<none>, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst780000EF:    {kind: ImplDecl, arg0: impl78000005, arg1: inst_block_empty}
 // CHECK:STDOUT:     inst780000F0:    {kind: ImplSelfWitness, arg0: inst7800001E, arg1: specific_interface78000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000F1:    {kind: ImportRefUnloaded, arg0: import_ir_inst6A, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst780000F1:    {kind: ImportRefUnloaded, arg0: import_ir_inst59, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst780000F2:    {kind: ImplWitnessTable, arg0: inst_block78000039, arg1: impl78000005}
 // CHECK:STDOUT:     inst780000F3:    {kind: ImplWitness, arg0: inst780000F2, arg1: specific7800000B, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000F4:    {kind: ImportRefLoaded, arg0: import_ir_inst6C, arg1: entity_name<none>, type: type(inst78000015)}
-// CHECK:STDOUT:     inst780000F5:    {kind: ImportRefLoaded, arg0: import_ir_inst6D, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000F6:    {kind: ImportRefLoaded, arg0: import_ir_inst6E, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780000F7:    {kind: ImportRefLoaded, arg0: import_ir_inst6F, arg1: entity_name<none>, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780000F8:    {kind: ImportRefLoaded, arg0: import_ir_inst70, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000F4:    {kind: ImportRefLoaded, arg0: import_ir_inst5B, arg1: entity_name<none>, type: type(inst78000015)}
+// CHECK:STDOUT:     inst780000F5:    {kind: ImportRefLoaded, arg0: import_ir_inst5C, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000F6:    {kind: ImportRefLoaded, arg0: import_ir_inst5D, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780000F7:    {kind: ImportRefLoaded, arg0: import_ir_inst5E, arg1: entity_name<none>, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst780000F8:    {kind: ImportRefLoaded, arg0: import_ir_inst5F, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst780000F9:    {kind: SymbolicBindingPattern, arg0: entity_name78000001, type: type(inst78000015)}
 // CHECK:STDOUT:     inst780000FA:    {kind: SymbolicBinding, arg0: entity_name78000001, arg1: inst<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst780000FB:    {kind: PointerType, arg0: inst780000FA, type: type(TypeType)}
@@ -857,22 +816,22 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst780000FF:    {kind: FunctionType, arg0: function78000003, arg1: specific7800000B, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000100:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant780000AD)}
 // CHECK:STDOUT:     inst78000101:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant78000007)}
-// CHECK:STDOUT:     inst78000102:    {kind: ImportRefLoaded, arg0: import_ir_inst77, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
+// CHECK:STDOUT:     inst78000102:    {kind: ImportRefLoaded, arg0: import_ir_inst65, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
 // CHECK:STDOUT:     inst78000103:    {kind: ReturnSlotPattern, arg0: inst78000101, arg1: inst<none>, type: type(symbolic_constant78000007)}
 // CHECK:STDOUT:     inst78000104:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant78000007)}
-// CHECK:STDOUT:     inst78000105:    {kind: ImportRefLoaded, arg0: import_ir_inst78, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
+// CHECK:STDOUT:     inst78000105:    {kind: ImportRefLoaded, arg0: import_ir_inst66, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
 // CHECK:STDOUT:     inst78000106:    {kind: WrapperBindingPattern, arg0: entity_name78000007, arg1: inst78000104, type: type(symbolic_constant78000007)}
-// CHECK:STDOUT:     inst78000107:    {kind: ImportRefLoaded, arg0: import_ir_inst79, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
+// CHECK:STDOUT:     inst78000107:    {kind: ImportRefLoaded, arg0: import_ir_inst65, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
 // CHECK:STDOUT:     inst78000108:    {kind: InitForm, arg0: inst7800001E, type: type(inst(FormType))}
-// CHECK:STDOUT:     inst78000109:    {kind: ImportRefLoaded, arg0: import_ir_inst7A, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
-// CHECK:STDOUT:     inst7800010A:    {kind: ImportRefLoaded, arg0: import_ir_inst7B, arg1: entity_name<none>, type: type(symbolic_constant780000B4)}
-// CHECK:STDOUT:     inst7800010B:    {kind: ImportRefLoaded, arg0: import_ir_inst7C, arg1: entity_name<none>, type: type(symbolic_constant780000B4)}
-// CHECK:STDOUT:     inst7800010C:    {kind: ImportRefLoaded, arg0: import_ir_inst7D, arg1: entity_name<none>, type: type(symbolic_constant780000B4)}
-// CHECK:STDOUT:     inst7800010D:    {kind: ImportRefLoaded, arg0: import_ir_inst7E, arg1: entity_name<none>, type: type(symbolic_constant780000B4)}
-// CHECK:STDOUT:     inst7800010E:    {kind: ImportRefLoaded, arg0: import_ir_inst7F, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst7800010F:    {kind: ImportRefLoaded, arg0: import_ir_inst80, arg1: entity_name<none>, type: type(inst(FormType))}
-// CHECK:STDOUT:     inst78000110:    {kind: ImportRefLoaded, arg0: import_ir_inst81, arg1: entity_name<none>, type: type(symbolic_constant780000B4)}
-// CHECK:STDOUT:     inst78000111:    {kind: ImportRefLoaded, arg0: import_ir_inst82, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst78000109:    {kind: ImportRefLoaded, arg0: import_ir_inst66, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
+// CHECK:STDOUT:     inst7800010A:    {kind: ImportRefLoaded, arg0: import_ir_inst67, arg1: entity_name<none>, type: type(symbolic_constant780000B4)}
+// CHECK:STDOUT:     inst7800010B:    {kind: ImportRefLoaded, arg0: import_ir_inst68, arg1: entity_name<none>, type: type(symbolic_constant780000B4)}
+// CHECK:STDOUT:     inst7800010C:    {kind: ImportRefLoaded, arg0: import_ir_inst69, arg1: entity_name<none>, type: type(symbolic_constant780000B4)}
+// CHECK:STDOUT:     inst7800010D:    {kind: ImportRefLoaded, arg0: import_ir_inst69, arg1: entity_name<none>, type: type(symbolic_constant780000B4)}
+// CHECK:STDOUT:     inst7800010E:    {kind: ImportRefLoaded, arg0: import_ir_inst6A, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst7800010F:    {kind: ImportRefLoaded, arg0: import_ir_inst6B, arg1: entity_name<none>, type: type(inst(FormType))}
+// CHECK:STDOUT:     inst78000110:    {kind: ImportRefLoaded, arg0: import_ir_inst6C, arg1: entity_name<none>, type: type(symbolic_constant780000B4)}
+// CHECK:STDOUT:     inst78000111:    {kind: ImportRefLoaded, arg0: import_ir_inst5F, arg1: entity_name<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000112:    {kind: SymbolicBinding, arg0: entity_name78000001, arg1: inst<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000113:    {kind: PointerType, arg0: inst78000112, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000114:    {kind: PatternType, arg0: inst78000113, type: type(TypeType)}
@@ -881,30 +840,30 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst78000117:    {kind: InitForm, arg0: inst78000113, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst78000118:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant780000C6)}
 // CHECK:STDOUT:     inst78000119:    {kind: ReturnSlotPattern, arg0: inst78000118, arg1: inst<none>, type: type(symbolic_constant780000C6)}
-// CHECK:STDOUT:     inst7800011A:    {kind: ImportRefLoaded, arg0: import_ir_inst8B, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
-// CHECK:STDOUT:     inst7800011B:    {kind: ImportRefLoaded, arg0: import_ir_inst8C, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
+// CHECK:STDOUT:     inst7800011A:    {kind: ImportRefLoaded, arg0: import_ir_inst65, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
+// CHECK:STDOUT:     inst7800011B:    {kind: ImportRefLoaded, arg0: import_ir_inst66, arg1: entity_name<none>, type: type(symbolic_constant78000007)}
 // CHECK:STDOUT:     inst7800011C:    {kind: FunctionType, arg0: function78000003, arg1: specific7800000C, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800011D:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant780000CD)}
 // CHECK:STDOUT:     inst7800011E:    {kind: RequireCompleteType, arg0: inst780000FB, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst7800011F:    {kind: ImportRefUnloaded, arg0: import_ir_inst90, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst7800011F:    {kind: ImportRefUnloaded, arg0: import_ir_inst78, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst78000120:    {kind: ImplDecl, arg0: impl78000006, arg1: inst_block_empty}
 // CHECK:STDOUT:     inst78000121:    {kind: ImplSelfWitness, arg0: inst(TypeType), arg1: specific_interface78000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst78000122:    {kind: ImportRefLoaded, arg0: import_ir_inst92, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst78000123:    {kind: ImportRefLoaded, arg0: import_ir_inst93, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst78000124:    {kind: ImportRefLoaded, arg0: import_ir_inst94, arg1: entity_name<none>, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst78000125:    {kind: ImportRefUnloaded, arg0: import_ir_inst95, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst78000122:    {kind: ImportRefLoaded, arg0: import_ir_inst7A, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst78000123:    {kind: ImportRefLoaded, arg0: import_ir_inst7B, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst78000124:    {kind: ImportRefLoaded, arg0: import_ir_inst7C, arg1: entity_name<none>, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst78000125:    {kind: ImportRefUnloaded, arg0: import_ir_inst7D, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst78000126:    {kind: ImplDecl, arg0: impl78000007, arg1: inst_block_empty}
 // CHECK:STDOUT:     inst78000127:    {kind: ImplSelfWitness, arg0: inst7800002B, arg1: specific_interface78000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst78000128:    {kind: ImportRefLoaded, arg0: import_ir_inst97, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst78000129:    {kind: ImportRefLoaded, arg0: import_ir_inst98, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst7800012A:    {kind: ImportRefLoaded, arg0: import_ir_inst99, arg1: entity_name<none>, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst7800012B:    {kind: ImportRefUnloaded, arg0: import_ir_inst9A, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst78000128:    {kind: ImportRefLoaded, arg0: import_ir_inst7F, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst78000129:    {kind: ImportRefLoaded, arg0: import_ir_inst80, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst7800012A:    {kind: ImportRefLoaded, arg0: import_ir_inst81, arg1: entity_name<none>, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst7800012B:    {kind: ImportRefUnloaded, arg0: import_ir_inst82, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst7800012C:    {kind: ImplDecl, arg0: impl78000008, arg1: inst_block_empty}
 // CHECK:STDOUT:     inst7800012D:    {kind: SymbolicBinding, arg0: entity_name78000021, arg1: inst<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst7800012E:    {kind: FacetAccessType, arg0: inst7800012D, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800012F:    {kind: TupleType, arg0: inst_block78000046, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000130:    {kind: ImplSelfWitness, arg0: inst7800012F, arg1: specific_interface78000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst78000131:    {kind: ImportRefUnloaded, arg0: import_ir_inst9C, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst78000131:    {kind: ImportRefUnloaded, arg0: import_ir_inst84, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst78000132:    {kind: ImplWitnessTable, arg0: inst_block78000047, arg1: impl78000008}
 // CHECK:STDOUT:     inst78000133:    {kind: ImplWitness, arg0: inst78000132, arg1: specific7800000E, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst78000134:    {kind: FunctionDecl, arg0: function78000004, arg1: inst_block_empty, type: type(symbolic_constant780000D8)}
@@ -915,23 +874,23 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst78000139:    {kind: TupleType, arg0: inst_block78000049, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800013A:    {kind: TupleValue, arg0: inst_block78000048, type: type(inst78000139)}
 // CHECK:STDOUT:     inst7800013B:    {kind: SymbolicBindingPattern, arg0: entity_name78000021, type: type(inst78000095)}
-// CHECK:STDOUT:     inst7800013C:    {kind: ImportRefLoaded, arg0: import_ir_inst9F, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
+// CHECK:STDOUT:     inst7800013C:    {kind: ImportRefLoaded, arg0: import_ir_inst86, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
 // CHECK:STDOUT:     inst7800013D:    {kind: ReturnSlotPattern, arg0: inst78000138, arg1: inst<none>, type: type(symbolic_constant780000DB)}
 // CHECK:STDOUT:     inst7800013E:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant780000DB)}
-// CHECK:STDOUT:     inst7800013F:    {kind: ImportRefLoaded, arg0: import_ir_instA0, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
+// CHECK:STDOUT:     inst7800013F:    {kind: ImportRefLoaded, arg0: import_ir_inst87, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
 // CHECK:STDOUT:     inst78000140:    {kind: WrapperBindingPattern, arg0: entity_name78000007, arg1: inst7800013E, type: type(symbolic_constant780000DB)}
-// CHECK:STDOUT:     inst78000141:    {kind: ImportRefLoaded, arg0: import_ir_instA1, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
+// CHECK:STDOUT:     inst78000141:    {kind: ImportRefLoaded, arg0: import_ir_inst86, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
 // CHECK:STDOUT:     inst78000142:    {kind: InitForm, arg0: inst7800012F, type: type(inst(FormType))}
-// CHECK:STDOUT:     inst78000143:    {kind: ImportRefLoaded, arg0: import_ir_instA2, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
-// CHECK:STDOUT:     inst78000144:    {kind: ImportRefLoaded, arg0: import_ir_instA3, arg1: entity_name<none>, type: type(symbolic_constant780000E2)}
-// CHECK:STDOUT:     inst78000145:    {kind: ImportRefLoaded, arg0: import_ir_instA4, arg1: entity_name<none>, type: type(symbolic_constant780000E2)}
-// CHECK:STDOUT:     inst78000146:    {kind: ImportRefLoaded, arg0: import_ir_instA5, arg1: entity_name<none>, type: type(symbolic_constant780000E2)}
-// CHECK:STDOUT:     inst78000147:    {kind: ImportRefLoaded, arg0: import_ir_instA6, arg1: entity_name<none>, type: type(symbolic_constant780000E2)}
-// CHECK:STDOUT:     inst78000148:    {kind: ImportRefLoaded, arg0: import_ir_instA7, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst78000149:    {kind: ImportRefLoaded, arg0: import_ir_instA8, arg1: entity_name<none>, type: type(inst(FormType))}
-// CHECK:STDOUT:     inst7800014A:    {kind: ImportRefLoaded, arg0: import_ir_instA9, arg1: entity_name<none>, type: type(symbolic_constant780000E2)}
-// CHECK:STDOUT:     inst7800014B:    {kind: ImportRefLoaded, arg0: import_ir_instAA, arg1: entity_name<none>, type: type(inst78000059)}
-// CHECK:STDOUT:     inst7800014C:    {kind: ImportRefLoaded, arg0: import_ir_instAB, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst78000143:    {kind: ImportRefLoaded, arg0: import_ir_inst87, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
+// CHECK:STDOUT:     inst78000144:    {kind: ImportRefLoaded, arg0: import_ir_inst88, arg1: entity_name<none>, type: type(symbolic_constant780000E2)}
+// CHECK:STDOUT:     inst78000145:    {kind: ImportRefLoaded, arg0: import_ir_inst89, arg1: entity_name<none>, type: type(symbolic_constant780000E2)}
+// CHECK:STDOUT:     inst78000146:    {kind: ImportRefLoaded, arg0: import_ir_inst8A, arg1: entity_name<none>, type: type(symbolic_constant780000E2)}
+// CHECK:STDOUT:     inst78000147:    {kind: ImportRefLoaded, arg0: import_ir_inst8A, arg1: entity_name<none>, type: type(symbolic_constant780000E2)}
+// CHECK:STDOUT:     inst78000148:    {kind: ImportRefLoaded, arg0: import_ir_inst8B, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst78000149:    {kind: ImportRefLoaded, arg0: import_ir_inst8C, arg1: entity_name<none>, type: type(inst(FormType))}
+// CHECK:STDOUT:     inst7800014A:    {kind: ImportRefLoaded, arg0: import_ir_inst8D, arg1: entity_name<none>, type: type(symbolic_constant780000E2)}
+// CHECK:STDOUT:     inst7800014B:    {kind: ImportRefLoaded, arg0: import_ir_inst8E, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst7800014C:    {kind: ImportRefLoaded, arg0: import_ir_inst8F, arg1: entity_name<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst7800014D:    {kind: SymbolicBinding, arg0: entity_name78000001, arg1: inst<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst7800014E:    {kind: FacetAccessType, arg0: inst7800014D, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800014F:    {kind: SymbolicBinding, arg0: entity_name78000021, arg1: inst<none>, type: type(inst78000059)}
@@ -951,11 +910,11 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst7800015D:    {kind: SpecificImplFunction, arg0: inst7800015C, arg1: specific78000010, type: type(inst(SpecificFunctionType))}
 // CHECK:STDOUT:     inst7800015E:    {kind: PatternType, arg0: inst7800012E, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800015F:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant78000109)}
-// CHECK:STDOUT:     inst78000160:    {kind: ImportRefLoaded, arg0: import_ir_instB7, arg1: entity_name<none>, type: type(symbolic_constant78000109)}
+// CHECK:STDOUT:     inst78000160:    {kind: ImportRefLoaded, arg0: import_ir_inst9B, arg1: entity_name<none>, type: type(symbolic_constant78000109)}
 // CHECK:STDOUT:     inst78000161:    {kind: ReturnSlotPattern, arg0: inst7800015F, arg1: inst<none>, type: type(symbolic_constant78000109)}
 // CHECK:STDOUT:     inst78000162:    {kind: InitForm, arg0: inst7800012E, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst78000163:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant78000109)}
-// CHECK:STDOUT:     inst78000164:    {kind: ImportRefLoaded, arg0: import_ir_instB8, arg1: entity_name<none>, type: type(symbolic_constant78000109)}
+// CHECK:STDOUT:     inst78000164:    {kind: ImportRefLoaded, arg0: import_ir_inst9C, arg1: entity_name<none>, type: type(symbolic_constant78000109)}
 // CHECK:STDOUT:     inst78000165:    {kind: WrapperBindingPattern, arg0: entity_name78000007, arg1: inst78000163, type: type(symbolic_constant78000109)}
 // CHECK:STDOUT:     inst78000166:    {kind: RequireCompleteType, arg0: inst7800012E, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst78000167:    {kind: RequireCompleteType, arg0: inst7800012F, type: type(inst(WitnessType))}
@@ -972,15 +931,15 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst78000172:    {kind: LookupImplWitness, arg0: inst7800014F, arg1: specific_interface78000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst78000173:    {kind: ImplWitnessAccess, arg0: inst78000172, arg1: element0, type: type(symbolic_constant78000126)}
 // CHECK:STDOUT:     inst78000174:    {kind: SpecificImplFunction, arg0: inst78000173, arg1: specific78000015, type: type(inst(SpecificFunctionType))}
-// CHECK:STDOUT:     inst78000175:    {kind: ImportRefLoaded, arg0: import_ir_instC6, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
-// CHECK:STDOUT:     inst78000176:    {kind: ImportRefLoaded, arg0: import_ir_instC7, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
-// CHECK:STDOUT:     inst78000177:    {kind: ImportRefLoaded, arg0: import_ir_instC8, arg1: entity_name<none>, type: type(inst78000095)}
-// CHECK:STDOUT:     inst78000178:    {kind: ImportRefLoaded, arg0: import_ir_instC9, arg1: entity_name<none>, type: type(inst78000095)}
-// CHECK:STDOUT:     inst78000179:    {kind: ImportRefLoaded, arg0: import_ir_instCA, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst7800017A:    {kind: ImportRefLoaded, arg0: import_ir_instCB, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst7800017B:    {kind: ImportRefLoaded, arg0: import_ir_instCC, arg1: entity_name<none>, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst7800017C:    {kind: ImportRefLoaded, arg0: import_ir_instCD, arg1: entity_name<none>, type: type(inst78000059)}
-// CHECK:STDOUT:     inst7800017D:    {kind: ImportRefLoaded, arg0: import_ir_instCE, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst78000175:    {kind: ImportRefLoaded, arg0: import_ir_inst86, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
+// CHECK:STDOUT:     inst78000176:    {kind: ImportRefLoaded, arg0: import_ir_inst87, arg1: entity_name<none>, type: type(symbolic_constant780000DB)}
+// CHECK:STDOUT:     inst78000177:    {kind: ImportRefLoaded, arg0: import_ir_instAA, arg1: entity_name<none>, type: type(inst78000095)}
+// CHECK:STDOUT:     inst78000178:    {kind: ImportRefLoaded, arg0: import_ir_instAB, arg1: entity_name<none>, type: type(inst78000095)}
+// CHECK:STDOUT:     inst78000179:    {kind: ImportRefLoaded, arg0: import_ir_instAC, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst7800017A:    {kind: ImportRefLoaded, arg0: import_ir_instAD, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst7800017B:    {kind: ImportRefLoaded, arg0: import_ir_instAE, arg1: entity_name<none>, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst7800017C:    {kind: ImportRefLoaded, arg0: import_ir_inst8E, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst7800017D:    {kind: ImportRefLoaded, arg0: import_ir_inst8F, arg1: entity_name<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst7800017E:    {kind: SymbolicBindingPattern, arg0: entity_name78000001, type: type(inst78000095)}
 // CHECK:STDOUT:     inst7800017F:    {kind: SymbolicBinding, arg0: entity_name78000001, arg1: inst<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst78000180:    {kind: SymbolicBindingPattern, arg0: entity_name78000021, type: type(inst78000095)}
@@ -993,13 +952,13 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst78000187:    {kind: ImplWitness, arg0: inst78000132, arg1: specific78000016, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst78000188:    {kind: FunctionType, arg0: function78000004, arg1: specific78000016, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000189:    {kind: StructValue, arg0: inst_block_empty, type: type(symbolic_constant78000140)}
-// CHECK:STDOUT:     inst7800018A:    {kind: ImportRefUnloaded, arg0: import_ir_instDB, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst7800018A:    {kind: ImportRefUnloaded, arg0: import_ir_instBB, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst7800018B:    {kind: ImplDecl, arg0: impl78000009, arg1: inst_block_empty}
 // CHECK:STDOUT:     inst7800018C:    {kind: SymbolicBinding, arg0: entity_name78000031, arg1: inst<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst7800018D:    {kind: FacetAccessType, arg0: inst7800018C, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800018E:    {kind: TupleType, arg0: inst_block78000062, type: type(TypeType)}
 // CHECK:STDOUT:     inst7800018F:    {kind: ImplSelfWitness, arg0: inst7800018E, arg1: specific_interface78000000, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst78000190:    {kind: ImportRefUnloaded, arg0: import_ir_instDD, arg1: entity_name<none>}
+// CHECK:STDOUT:     inst78000190:    {kind: ImportRefUnloaded, arg0: import_ir_instBD, arg1: entity_name<none>}
 // CHECK:STDOUT:     inst78000191:    {kind: ImplWitnessTable, arg0: inst_block78000063, arg1: impl78000009}
 // CHECK:STDOUT:     inst78000192:    {kind: ImplWitness, arg0: inst78000191, arg1: specific78000017, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst78000193:    {kind: FunctionDecl, arg0: function78000005, arg1: inst_block_empty, type: type(symbolic_constant7800014A)}
@@ -1010,24 +969,24 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst78000198:    {kind: TupleType, arg0: inst_block78000065, type: type(TypeType)}
 // CHECK:STDOUT:     inst78000199:    {kind: TupleValue, arg0: inst_block78000064, type: type(inst78000198)}
 // CHECK:STDOUT:     inst7800019A:    {kind: SymbolicBindingPattern, arg0: entity_name78000031, type: type(inst78000095)}
-// CHECK:STDOUT:     inst7800019B:    {kind: ImportRefLoaded, arg0: import_ir_instE0, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
+// CHECK:STDOUT:     inst7800019B:    {kind: ImportRefLoaded, arg0: import_ir_instBF, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
 // CHECK:STDOUT:     inst7800019C:    {kind: ReturnSlotPattern, arg0: inst78000197, arg1: inst<none>, type: type(symbolic_constant7800014D)}
 // CHECK:STDOUT:     inst7800019D:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant7800014D)}
-// CHECK:STDOUT:     inst7800019E:    {kind: ImportRefLoaded, arg0: import_ir_instE1, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
+// CHECK:STDOUT:     inst7800019E:    {kind: ImportRefLoaded, arg0: import_ir_instC0, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
 // CHECK:STDOUT:     inst7800019F:    {kind: WrapperBindingPattern, arg0: entity_name78000007, arg1: inst7800019D, type: type(symbolic_constant7800014D)}
-// CHECK:STDOUT:     inst780001A0:    {kind: ImportRefLoaded, arg0: import_ir_instE2, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
+// CHECK:STDOUT:     inst780001A0:    {kind: ImportRefLoaded, arg0: import_ir_instBF, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
 // CHECK:STDOUT:     inst780001A1:    {kind: InitForm, arg0: inst7800018E, type: type(inst(FormType))}
-// CHECK:STDOUT:     inst780001A2:    {kind: ImportRefLoaded, arg0: import_ir_instE3, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
-// CHECK:STDOUT:     inst780001A3:    {kind: ImportRefLoaded, arg0: import_ir_instE4, arg1: entity_name<none>, type: type(symbolic_constant78000154)}
-// CHECK:STDOUT:     inst780001A4:    {kind: ImportRefLoaded, arg0: import_ir_instE5, arg1: entity_name<none>, type: type(symbolic_constant78000154)}
-// CHECK:STDOUT:     inst780001A5:    {kind: ImportRefLoaded, arg0: import_ir_instE6, arg1: entity_name<none>, type: type(symbolic_constant78000154)}
-// CHECK:STDOUT:     inst780001A6:    {kind: ImportRefLoaded, arg0: import_ir_instE7, arg1: entity_name<none>, type: type(symbolic_constant78000154)}
-// CHECK:STDOUT:     inst780001A7:    {kind: ImportRefLoaded, arg0: import_ir_instE8, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780001A8:    {kind: ImportRefLoaded, arg0: import_ir_instE9, arg1: entity_name<none>, type: type(inst(FormType))}
-// CHECK:STDOUT:     inst780001A9:    {kind: ImportRefLoaded, arg0: import_ir_instEA, arg1: entity_name<none>, type: type(symbolic_constant78000154)}
-// CHECK:STDOUT:     inst780001AA:    {kind: ImportRefLoaded, arg0: import_ir_instEB, arg1: entity_name<none>, type: type(inst78000059)}
-// CHECK:STDOUT:     inst780001AB:    {kind: ImportRefLoaded, arg0: import_ir_instEC, arg1: entity_name<none>, type: type(inst78000059)}
-// CHECK:STDOUT:     inst780001AC:    {kind: ImportRefLoaded, arg0: import_ir_instED, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst780001A2:    {kind: ImportRefLoaded, arg0: import_ir_instC0, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
+// CHECK:STDOUT:     inst780001A3:    {kind: ImportRefLoaded, arg0: import_ir_instC1, arg1: entity_name<none>, type: type(symbolic_constant78000154)}
+// CHECK:STDOUT:     inst780001A4:    {kind: ImportRefLoaded, arg0: import_ir_instC2, arg1: entity_name<none>, type: type(symbolic_constant78000154)}
+// CHECK:STDOUT:     inst780001A5:    {kind: ImportRefLoaded, arg0: import_ir_instC3, arg1: entity_name<none>, type: type(symbolic_constant78000154)}
+// CHECK:STDOUT:     inst780001A6:    {kind: ImportRefLoaded, arg0: import_ir_instC3, arg1: entity_name<none>, type: type(symbolic_constant78000154)}
+// CHECK:STDOUT:     inst780001A7:    {kind: ImportRefLoaded, arg0: import_ir_instC4, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780001A8:    {kind: ImportRefLoaded, arg0: import_ir_instC5, arg1: entity_name<none>, type: type(inst(FormType))}
+// CHECK:STDOUT:     inst780001A9:    {kind: ImportRefLoaded, arg0: import_ir_instC6, arg1: entity_name<none>, type: type(symbolic_constant78000154)}
+// CHECK:STDOUT:     inst780001AA:    {kind: ImportRefLoaded, arg0: import_ir_instC7, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst780001AB:    {kind: ImportRefLoaded, arg0: import_ir_instC8, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst780001AC:    {kind: ImportRefLoaded, arg0: import_ir_instC9, arg1: entity_name<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst780001AD:    {kind: SymbolicBinding, arg0: entity_name78000001, arg1: inst<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst780001AE:    {kind: FacetAccessType, arg0: inst780001AD, type: type(TypeType)}
 // CHECK:STDOUT:     inst780001AF:    {kind: SymbolicBinding, arg0: entity_name78000021, arg1: inst<none>, type: type(inst78000059)}
@@ -1049,11 +1008,11 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst780001BF:    {kind: SpecificImplFunction, arg0: inst780001BE, arg1: specific78000019, type: type(inst(SpecificFunctionType))}
 // CHECK:STDOUT:     inst780001C0:    {kind: PatternType, arg0: inst7800018D, type: type(TypeType)}
 // CHECK:STDOUT:     inst780001C1:    {kind: OutParamPattern, arg0: name(ReturnSlot), type: type(symbolic_constant78000180)}
-// CHECK:STDOUT:     inst780001C2:    {kind: ImportRefLoaded, arg0: import_ir_instFB, arg1: entity_name<none>, type: type(symbolic_constant78000180)}
+// CHECK:STDOUT:     inst780001C2:    {kind: ImportRefLoaded, arg0: import_ir_instD7, arg1: entity_name<none>, type: type(symbolic_constant78000180)}
 // CHECK:STDOUT:     inst780001C3:    {kind: ReturnSlotPattern, arg0: inst780001C1, arg1: inst<none>, type: type(symbolic_constant78000180)}
 // CHECK:STDOUT:     inst780001C4:    {kind: InitForm, arg0: inst7800018D, type: type(inst(FormType))}
 // CHECK:STDOUT:     inst780001C5:    {kind: ValueParamPattern, arg0: name(SelfValue), type: type(symbolic_constant78000180)}
-// CHECK:STDOUT:     inst780001C6:    {kind: ImportRefLoaded, arg0: import_ir_instFC, arg1: entity_name<none>, type: type(symbolic_constant78000180)}
+// CHECK:STDOUT:     inst780001C6:    {kind: ImportRefLoaded, arg0: import_ir_instD8, arg1: entity_name<none>, type: type(symbolic_constant78000180)}
 // CHECK:STDOUT:     inst780001C7:    {kind: WrapperBindingPattern, arg0: entity_name78000007, arg1: inst780001C5, type: type(symbolic_constant78000180)}
 // CHECK:STDOUT:     inst780001C8:    {kind: RequireCompleteType, arg0: inst7800018D, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst780001C9:    {kind: RequireCompleteType, arg0: inst7800018E, type: type(inst(WitnessType))}
@@ -1076,17 +1035,17 @@ fn Foo[T: type](p: T*) -> (T*, ()) {
 // CHECK:STDOUT:     inst780001DA:    {kind: LookupImplWitness, arg0: inst780001B1, arg1: specific_interface78000000, type: type(inst(WitnessType))}
 // CHECK:STDOUT:     inst780001DB:    {kind: ImplWitnessAccess, arg0: inst780001DA, arg1: element0, type: type(symbolic_constant780001A9)}
 // CHECK:STDOUT:     inst780001DC:    {kind: SpecificImplFunction, arg0: inst780001DB, arg1: specific78000020, type: type(inst(SpecificFunctionType))}
-// CHECK:STDOUT:     inst780001DD:    {kind: ImportRefLoaded, arg0: import_ir_inst110, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
-// CHECK:STDOUT:     inst780001DE:    {kind: ImportRefLoaded, arg0: import_ir_inst111, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
-// CHECK:STDOUT:     inst780001DF:    {kind: ImportRefLoaded, arg0: import_ir_inst112, arg1: entity_name<none>, type: type(inst78000095)}
-// CHECK:STDOUT:     inst780001E0:    {kind: ImportRefLoaded, arg0: import_ir_inst113, arg1: entity_name<none>, type: type(inst78000095)}
-// CHECK:STDOUT:     inst780001E1:    {kind: ImportRefLoaded, arg0: import_ir_inst114, arg1: entity_name<none>, type: type(inst78000095)}
-// CHECK:STDOUT:     inst780001E2:    {kind: ImportRefLoaded, arg0: import_ir_inst115, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780001E3:    {kind: ImportRefLoaded, arg0: import_ir_inst116, arg1: entity_name<none>, type: type(TypeType)}
-// CHECK:STDOUT:     inst780001E4:    {kind: ImportRefLoaded, arg0: import_ir_inst117, arg1: entity_name<none>, type: type(inst(WitnessType))}
-// CHECK:STDOUT:     inst780001E5:    {kind: ImportRefLoaded, arg0: import_ir_inst118, arg1: entity_name<none>, type: type(inst78000059)}
-// CHECK:STDOUT:     inst780001E6:    {kind: ImportRefLoaded, arg0: import_ir_inst119, arg1: entity_name<none>, type: type(inst78000059)}
-// CHECK:STDOUT:     inst780001E7:    {kind: ImportRefLoaded, arg0: import_ir_inst11A, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst780001DD:    {kind: ImportRefLoaded, arg0: import_ir_instBF, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
+// CHECK:STDOUT:     inst780001DE:    {kind: ImportRefLoaded, arg0: import_ir_instC0, arg1: entity_name<none>, type: type(symbolic_constant7800014D)}
+// CHECK:STDOUT:     inst780001DF:    {kind: ImportRefLoaded, arg0: import_ir_instEC, arg1: entity_name<none>, type: type(inst78000095)}
+// CHECK:STDOUT:     inst780001E0:    {kind: ImportRefLoaded, arg0: import_ir_instED, arg1: entity_name<none>, type: type(inst78000095)}
+// CHECK:STDOUT:     inst780001E1:    {kind: ImportRefLoaded, arg0: import_ir_instEE, arg1: entity_name<none>, type: type(inst78000095)}
+// CHECK:STDOUT:     inst780001E2:    {kind: ImportRefLoaded, arg0: import_ir_instEF, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780001E3:    {kind: ImportRefLoaded, arg0: import_ir_instF0, arg1: entity_name<none>, type: type(TypeType)}
+// CHECK:STDOUT:     inst780001E4:    {kind: ImportRefLoaded, arg0: import_ir_instF1, arg1: entity_name<none>, type: type(inst(WitnessType))}
+// CHECK:STDOUT:     inst780001E5:    {kind: ImportRefLoaded, arg0: import_ir_instC7, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst780001E6:    {kind: ImportRefLoaded, arg0: import_ir_instC8, arg1: entity_name<none>, type: type(inst78000059)}
+// CHECK:STDOUT:     inst780001E7:    {kind: ImportRefLoaded, arg0: import_ir_instC9, arg1: entity_name<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst780001E8:    {kind: SymbolicBindingPattern, arg0: entity_name78000001, type: type(inst78000095)}
 // CHECK:STDOUT:     inst780001E9:    {kind: SymbolicBinding, arg0: entity_name78000001, arg1: inst<none>, type: type(inst78000059)}
 // CHECK:STDOUT:     inst780001EA:    {kind: SymbolicBindingPattern, arg0: entity_name78000021, type: type(inst78000095)}
