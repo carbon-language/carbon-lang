@@ -138,7 +138,6 @@ fn Test() {
 }
 
 // --- fail_todo_adl_returns_same_types_mutable.carbon
-// CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon: error: value expression passed to reference parameter [ValueForRefParam]
 // TODO: merge with adl_returns_same_types.carbon when passing.
 library "[[@TEST_NAME]]";
 
@@ -149,12 +148,13 @@ namespace N {
 class MutableRange {
   struct Iterator {};
 public:
-  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+5]]:34: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+5]]:15: error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+4]]:34: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:10:3-29: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33-63: note: initializing generic parameter `R` declared here [InitializingGenericParam]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon: error: value expression passed to reference parameter [ValueForRefParam]
   friend auto begin(MutableRange&) -> Iterator;
+  // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+5]]:15: error: value expression passed to reference parameter [ValueForRefParam]
   // CHECK:STDERR: fail_todo_adl_returns_same_types_mutable.carbon:[[@LINE+4]]:32: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:11:3-27: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33-63: note: initializing generic parameter `R` declared here [InitializingGenericParam]
@@ -198,9 +198,8 @@ import Cpp inline '''c++
 namespace N {
 class MutableRangeWithSentinel {
   struct Iterator {
-    // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+3]]:31: error: unknown type name 'ValueType' [CppInteropParseError]
+    // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+2]]:31: error: unknown type name 'ValueType' [CppInteropParseError]
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon: error: value expression passed to reference parameter [ValueForRefParam]
     auto operator*() const -> ValueType&;
     auto operator++() -> Iterator&;
   };
@@ -210,12 +209,13 @@ class MutableRangeWithSentinel {
     friend auto operator!=(Sentinel, Iterator) -> bool;
   };
 public:
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+5]]:46: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+5]]:15: error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+4]]:46: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:10:3-29: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33-63: note: initializing generic parameter `R` declared here [InitializingGenericParam]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon: error: value expression passed to reference parameter [ValueForRefParam]
   friend auto begin(MutableRangeWithSentinel&) -> Iterator;
+  // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+5]]:15: error: value expression passed to reference parameter [ValueForRefParam]
   // CHECK:STDERR: fail_todo_adl_returns_different_types_mutable.carbon:[[@LINE+4]]:44: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:11:3-27: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33-63: note: initializing generic parameter `R` declared here [InitializingGenericParam]
@@ -230,7 +230,6 @@ fn Test() {
 }
 
 // --- fail_todo_adl_overloads.carbon
-// CHECK:STDERR: fail_todo_adl_overloads.carbon: error: value expression passed to reference parameter [ValueForRefParam]
 library "[[@TEST_NAME]]";
 
 import Core library "cpp_range_for_iterate";
@@ -241,12 +240,13 @@ class MutableAndConstRange {
   struct Iterator {};
   struct ConstIterator {};
 public:
-  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+5]]:42: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+5]]:15: error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+4]]:42: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:10:3-29: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33-63: note: initializing generic parameter `R` declared here [InitializingGenericParam]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_adl_overloads.carbon: error: value expression passed to reference parameter [ValueForRefParam]
   friend auto begin(MutableAndConstRange&) -> Iterator;
+  // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+5]]:15: error: value expression passed to reference parameter [ValueForRefParam]
   // CHECK:STDERR: fail_todo_adl_overloads.carbon:[[@LINE+4]]:40: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:11:3-27: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR: cpp_range_for_iterate.carbon:21:33-63: note: initializing generic parameter `R` declared here [InitializingGenericParam]

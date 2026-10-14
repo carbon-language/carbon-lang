@@ -40,7 +40,7 @@ struct CalleePatternMatchResults {
 // In some circumstances this can add new pattern insts, so the pattern
 // block containing the parameter patterns should still be on top of
 // `context.pattern_block_stack()`.
-auto CalleePatternMatch(Context& context,
+auto CalleePatternMatch(Context& context, SemIR::LocId loc_id,
                         SemIR::InstBlockId implicit_param_patterns_id,
                         SemIR::InstBlockId param_patterns_id,
                         SemIR::InstId return_pattern_id)
@@ -54,7 +54,7 @@ auto CalleePatternMatch(Context& context,
 //
 // As with `CalleePatternMatch`, the pattern block containing the return pattern
 // should be on top of `context.pattern_block_stack()`.
-auto CalleeReturnPatternMatch(Context& context,
+auto CalleeReturnPatternMatch(Context& context, SemIR::LocId loc_id,
                               const CalleePatternMatchResults& param_results,
                               SemIR::InstId return_pattern_id)
     -> CalleePatternMatchResults;
@@ -74,7 +74,7 @@ struct ThunkPatternMatchResults {
 // Given the syntactic parameters and `Call` arguments for the outer part of a
 // thunked function call, computes the corresponding syntactic argument list,
 // suitable for passing to the inner part of the thunked function call.
-auto ThunkPatternMatch(Context& context,
+auto ThunkPatternMatch(Context& context, SemIR::LocId loc_id,
                        llvm::ArrayRef<SemIR::InstId> param_pattern_ids,
                        llvm::ArrayRef<SemIR::InstId> outer_call_args)
     -> ThunkPatternMatchResults;
@@ -84,19 +84,18 @@ auto ThunkPatternMatch(Context& context,
 // be passed to the `Call` inst. `is_desugared` indicates that this call
 // was produced by desugaring, not written as a function call in user code, so
 // arguments to `ref` parameters aren't required to have `ref` tags.
-auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
-                        SemIR::InstId self_pattern_id,
-                        SemIR::InstBlockId param_patterns_id,
-                        SemIR::InstId return_pattern_id,
-                        SemIR::InstId self_arg_id,
-                        llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_arg_id, bool is_desugared)
-    -> SemIR::InstBlockId;
+auto CallerPatternMatch(
+    Context& context, SemIR::LocId loc_id, SemIR::SpecificId specific_id,
+    SemIR::InstId self_pattern_id, SemIR::InstBlockId param_patterns_id,
+    SemIR::InstId return_pattern_id, SemIR::InstId self_arg_id,
+    llvm::ArrayRef<SemIR::InstId> arg_refs, SemIR::InstId return_arg_id,
+    bool is_desugared) -> SemIR::InstBlockId;
 
 // Emits the pattern-match IR for a local pattern matching operation with the
 // given pattern and scrutinee.
-auto LocalPatternMatch(Context& context, SemIR::InstId pattern_id,
-                       SemIR::InstId scrutinee_id) -> void;
+auto LocalPatternMatch(Context& context, SemIR::LocId loc_id,
+                       SemIR::InstId pattern_id, SemIR::InstId scrutinee_id)
+    -> void;
 
 }  // namespace Carbon::Check
 

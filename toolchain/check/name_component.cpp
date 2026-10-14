@@ -51,8 +51,9 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id,
   auto pattern_block_id = SemIR::InstBlockId::None;
   if (param_patterns_id->has_value() ||
       implicit_param_patterns_id->has_value() || has_return_specifier) {
-    auto results = CalleePatternMatch(context, *implicit_param_patterns_id,
-                                      *param_patterns_id, return_pattern_id);
+    auto results =
+        CalleePatternMatch(context, params_node_id, *implicit_param_patterns_id,
+                           *param_patterns_id, return_pattern_id);
     call_param_patterns_id = results.call_param_patterns_id;
     call_params_id = results.call_params_id;
     param_ranges = results.param_ranges;
