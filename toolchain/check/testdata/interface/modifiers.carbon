@@ -230,21 +230,21 @@ interface C {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DefaultFn.type: type = facet_type <@DefaultFn> [concrete]
 // CHECK:STDOUT:   %Self.4f0: %DefaultFn.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type.99d: type = fn_type @DefaultFn.WithSelf.F, @DefaultFn.WithSelf(%Self.4f0) [symbolic]
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type.0dc: type = fn_type @DefaultFn.WithSelf.F, @DefaultFn.WithSelf(%Self.4f0) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F.71b: %DefaultFn.WithSelf.F.type.99d = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F.2e7: %DefaultFn.WithSelf.F.type.0dc = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultFn.assoc_type: type = assoc_entity_type @DefaultFn [concrete]
-// CHECK:STDOUT:   %assoc0.251: %DefaultFn.assoc_type = assoc_entity element0, @DefaultFn.WithSelf.%DefaultFn.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0.bc6: %DefaultFn.assoc_type = assoc_entity element0, @DefaultFn.WithSelf.%DefaultFn.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %DefaultMethod.type: type = facet_type <@DefaultMethod> [concrete]
 // CHECK:STDOUT:   %Self.be0: %DefaultMethod.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.be0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.671: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %self.param_patt.b05: %pattern_type.671 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.c7e: %pattern_type.671 = wrapper_binding_pattern self, %self.param_patt.b05 [symbolic]
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type.5c3: type = fn_type @DefaultMethod.WithSelf.M, @DefaultMethod.WithSelf(%Self.be0) [symbolic]
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.ff1: %DefaultMethod.WithSelf.M.type.5c3 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type.942: type = fn_type @DefaultMethod.WithSelf.M, @DefaultMethod.WithSelf(%Self.be0) [symbolic]
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.fb3: %DefaultMethod.WithSelf.M.type.942 = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultMethod.assoc_type: type = assoc_entity_type @DefaultMethod [concrete]
-// CHECK:STDOUT:   %assoc0.a0f: %DefaultMethod.assoc_type = assoc_entity element0, @DefaultMethod.WithSelf.%DefaultMethod.WithSelf.M.decl [concrete]
+// CHECK:STDOUT:   %assoc0.7ec: %DefaultMethod.assoc_type = assoc_entity element0, @DefaultMethod.WithSelf.%DefaultMethod.WithSelf.M.decl [concrete]
 // CHECK:STDOUT:   %require_complete.09c: <witness> = require_complete_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.8dc: type = pattern_type %DefaultFn.type [concrete]
@@ -252,13 +252,13 @@ interface C {
 // CHECK:STDOUT:   %d: %DefaultFn.type = symbolic_binding d, 0 [symbolic]
 // CHECK:STDOUT:   %CallFn.type: type = fn_type @CallFn [concrete]
 // CHECK:STDOUT:   %CallFn: %CallFn.type = struct_value () [concrete]
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type.0f7: type = fn_type @DefaultFn.WithSelf.F, @DefaultFn.WithSelf(%d) [symbolic]
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F.6f2: %DefaultFn.WithSelf.F.type.0f7 = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type.19e: type = fn_type @DefaultFn.WithSelf.F, @DefaultFn.WithSelf(%d) [symbolic]
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F.a5b: %DefaultFn.WithSelf.F.type.19e = struct_value () [symbolic]
 // CHECK:STDOUT:   %d.as_type: type = facet_access_type %d [symbolic]
 // CHECK:STDOUT:   %DefaultFn.lookup_impl_witness: <witness> = lookup_impl_witness %d, @DefaultFn [symbolic]
-// CHECK:STDOUT:   %.2c3: type = fn_type_with_self_type %DefaultFn.WithSelf.F.type.0f7, %d [symbolic]
-// CHECK:STDOUT:   %impl.elem0.f87: %.2c3 = impl_witness_access %DefaultFn.lookup_impl_witness, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.ba2: <specific function> = specific_impl_function %impl.elem0.f87, @DefaultFn.WithSelf.F(%d) [symbolic]
+// CHECK:STDOUT:   %.19c: type = fn_type_with_self_type %DefaultFn.WithSelf.F.type.19e, %d [symbolic]
+// CHECK:STDOUT:   %impl.elem0.2f3: %.19c = impl_witness_access %DefaultFn.lookup_impl_witness, element0 [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.840: <specific function> = specific_impl_function %impl.elem0.2f3, @DefaultFn.WithSelf.F(%d) [symbolic]
 // CHECK:STDOUT:   %pattern_type.336: type = pattern_type %DefaultMethod.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.336 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %DefaultMethod.type = symbolic_binding T, 0 [symbolic]
@@ -269,14 +269,14 @@ interface C {
 // CHECK:STDOUT:   %CallMethod.type: type = fn_type @CallMethod [concrete]
 // CHECK:STDOUT:   %CallMethod: %CallMethod.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.5bd: <witness> = require_complete_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type.0cf: type = fn_type @DefaultMethod.WithSelf.M, @DefaultMethod.WithSelf(%T) [symbolic]
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.091: %DefaultMethod.WithSelf.M.type.0cf = struct_value () [symbolic]
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type.840: type = fn_type @DefaultMethod.WithSelf.M, @DefaultMethod.WithSelf(%T) [symbolic]
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.d98: %DefaultMethod.WithSelf.M.type.840 = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultMethod.lookup_impl_witness: <witness> = lookup_impl_witness %T, @DefaultMethod [symbolic]
-// CHECK:STDOUT:   %.506: type = fn_type_with_self_type %DefaultMethod.WithSelf.M.type.0cf, %T [symbolic]
-// CHECK:STDOUT:   %impl.elem0.f26: %.506 = impl_witness_access %DefaultMethod.lookup_impl_witness, element0 [symbolic]
+// CHECK:STDOUT:   %.af9: type = fn_type_with_self_type %DefaultMethod.WithSelf.M.type.840, %T [symbolic]
+// CHECK:STDOUT:   %impl.elem0.d8d: %.af9 = impl_witness_access %DefaultMethod.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.382: %pattern_type.70f = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.99e: %pattern_type.70f = wrapper_binding_pattern self, %self.param_patt.382 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.583: <specific function> = specific_impl_function %impl.elem0.f26, @DefaultMethod.WithSelf.M(%T) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.9ab: <specific function> = specific_impl_function %impl.elem0.d8d, @DefaultMethod.WithSelf.M(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -316,8 +316,8 @@ interface C {
 // CHECK:STDOUT:   %DefaultFn.WithSelf.decl = interface_with_self_decl @DefaultFn [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F.decl: @DefaultFn.WithSelf.%DefaultFn.WithSelf.F.type (%DefaultFn.WithSelf.F.type.99d) = fn_decl @DefaultFn.WithSelf.F [symbolic = @DefaultFn.WithSelf.%DefaultFn.WithSelf.F (constants.%DefaultFn.WithSelf.F.71b)] {} {}
-// CHECK:STDOUT:   %assoc0: %DefaultFn.assoc_type = assoc_entity element0, %DefaultFn.WithSelf.F.decl [concrete = constants.%assoc0.251]
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F.decl: @DefaultFn.WithSelf.%DefaultFn.WithSelf.F.type (%DefaultFn.WithSelf.F.type.0dc) = fn_decl @DefaultFn.WithSelf.F [symbolic = @DefaultFn.WithSelf.%DefaultFn.WithSelf.F (constants.%DefaultFn.WithSelf.F.2e7)] {} {}
+// CHECK:STDOUT:   %assoc0: %DefaultFn.assoc_type = assoc_entity element0, %DefaultFn.WithSelf.F.decl [concrete = constants.%assoc0.bc6]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -332,7 +332,7 @@ interface C {
 // CHECK:STDOUT:   %DefaultMethod.WithSelf.decl = interface_with_self_decl @DefaultMethod [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.decl: @DefaultMethod.WithSelf.%DefaultMethod.WithSelf.M.type (%DefaultMethod.WithSelf.M.type.5c3) = fn_decl @DefaultMethod.WithSelf.M [symbolic = @DefaultMethod.WithSelf.%DefaultMethod.WithSelf.M (constants.%DefaultMethod.WithSelf.M.ff1)] {
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.decl: @DefaultMethod.WithSelf.%DefaultMethod.WithSelf.M.type (%DefaultMethod.WithSelf.M.type.942) = fn_decl @DefaultMethod.WithSelf.M [symbolic = @DefaultMethod.WithSelf.%DefaultMethod.WithSelf.M (constants.%DefaultMethod.WithSelf.M.fb3)] {
 // CHECK:STDOUT:     %self.param_patt.loc10_23.1: @DefaultMethod.WithSelf.M.%pattern_type (%pattern_type.671) = value_param_pattern [symbolic = %self.param_patt.loc10_23.2 (constants.%self.param_patt.b05)]
 // CHECK:STDOUT:     %self.patt.loc10_23.1: @DefaultMethod.WithSelf.M.%pattern_type (%pattern_type.671) = wrapper_binding_pattern self, %self.param_patt.loc10_23.1 [symbolic = %self.patt.loc10_23.2 (constants.%self.patt.c7e)]
 // CHECK:STDOUT:   } {
@@ -344,7 +344,7 @@ interface C {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @DefaultMethod.WithSelf.M.%Self.as_type.loc10_23.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %DefaultMethod.assoc_type = assoc_entity element0, %DefaultMethod.WithSelf.M.decl [concrete = constants.%assoc0.a0f]
+// CHECK:STDOUT:   %assoc0: %DefaultMethod.assoc_type = assoc_entity element0, %DefaultMethod.WithSelf.M.decl [concrete = constants.%assoc0.7ec]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -385,20 +385,20 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %d.as_type.loc14_4.2: type = facet_access_type %d.loc13_20.1 [symbolic = %d.as_type.loc14_4.2 (constants.%d.as_type)]
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type: type = fn_type @DefaultFn.WithSelf.F, @DefaultFn.WithSelf(%d.loc13_20.1) [symbolic = %DefaultFn.WithSelf.F.type (constants.%DefaultFn.WithSelf.F.type.0f7)]
-// CHECK:STDOUT:   %.loc14_4.2: type = fn_type_with_self_type %DefaultFn.WithSelf.F.type, %d.loc13_20.1 [symbolic = %.loc14_4.2 (constants.%.2c3)]
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type: type = fn_type @DefaultFn.WithSelf.F, @DefaultFn.WithSelf(%d.loc13_20.1) [symbolic = %DefaultFn.WithSelf.F.type (constants.%DefaultFn.WithSelf.F.type.19e)]
+// CHECK:STDOUT:   %.loc14_4.2: type = fn_type_with_self_type %DefaultFn.WithSelf.F.type, %d.loc13_20.1 [symbolic = %.loc14_4.2 (constants.%.19c)]
 // CHECK:STDOUT:   %DefaultFn.lookup_impl_witness: <witness> = lookup_impl_witness %d.loc13_20.1, @DefaultFn [symbolic = %DefaultFn.lookup_impl_witness (constants.%DefaultFn.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc14_4.2: @CallFn.%.loc14_4.2 (%.2c3) = impl_witness_access %DefaultFn.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.f87)]
-// CHECK:STDOUT:   %specific_impl_fn.loc14_4.2: <specific function> = specific_impl_function %impl.elem0.loc14_4.2, @DefaultFn.WithSelf.F(%d.loc13_20.1) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.ba2)]
+// CHECK:STDOUT:   %impl.elem0.loc14_4.2: @CallFn.%.loc14_4.2 (%.19c) = impl_witness_access %DefaultFn.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.2f3)]
+// CHECK:STDOUT:   %specific_impl_fn.loc14_4.2: <specific function> = specific_impl_function %impl.elem0.loc14_4.2, @DefaultFn.WithSelf.F(%d.loc13_20.1) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.840)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %d.ref: %DefaultFn.type = name_ref d, %d.loc13_20.2 [symbolic = %d.loc13_20.1 (constants.%d)]
 // CHECK:STDOUT:     %d.as_type.loc14_4.1: type = facet_access_type %d.ref [symbolic = %d.as_type.loc14_4.2 (constants.%d.as_type)]
 // CHECK:STDOUT:     %.loc14_4.1: type = converted %d.ref, %d.as_type.loc14_4.1 [symbolic = %d.as_type.loc14_4.2 (constants.%d.as_type)]
-// CHECK:STDOUT:     %F.ref: %DefaultFn.assoc_type = name_ref F, @DefaultFn.WithSelf.%assoc0 [concrete = constants.%assoc0.251]
-// CHECK:STDOUT:     %impl.elem0.loc14_4.1: @CallFn.%.loc14_4.2 (%.2c3) = impl_witness_access constants.%DefaultFn.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.f87)]
-// CHECK:STDOUT:     %specific_impl_fn.loc14_4.1: <specific function> = specific_impl_function %impl.elem0.loc14_4.1, @DefaultFn.WithSelf.F(constants.%d) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.ba2)]
+// CHECK:STDOUT:     %F.ref: %DefaultFn.assoc_type = name_ref F, @DefaultFn.WithSelf.%assoc0 [concrete = constants.%assoc0.bc6]
+// CHECK:STDOUT:     %impl.elem0.loc14_4.1: @CallFn.%.loc14_4.2 (%.19c) = impl_witness_access constants.%DefaultFn.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.2f3)]
+// CHECK:STDOUT:     %specific_impl_fn.loc14_4.1: <specific function> = specific_impl_function %impl.elem0.loc14_4.1, @DefaultFn.WithSelf.F(constants.%d) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.840)]
 // CHECK:STDOUT:     %DefaultFn.WithSelf.F.call: init %empty_tuple.type = call %specific_impl_fn.loc14_4.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -414,21 +414,21 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc17_36.1 [symbolic = %require_complete (constants.%require_complete.5bd)]
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type: type = fn_type @DefaultMethod.WithSelf.M, @DefaultMethod.WithSelf(%T.loc17_16.1) [symbolic = %DefaultMethod.WithSelf.M.type (constants.%DefaultMethod.WithSelf.M.type.0cf)]
-// CHECK:STDOUT:   %.loc18_4: type = fn_type_with_self_type %DefaultMethod.WithSelf.M.type, %T.loc17_16.1 [symbolic = %.loc18_4 (constants.%.506)]
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type: type = fn_type @DefaultMethod.WithSelf.M, @DefaultMethod.WithSelf(%T.loc17_16.1) [symbolic = %DefaultMethod.WithSelf.M.type (constants.%DefaultMethod.WithSelf.M.type.840)]
+// CHECK:STDOUT:   %.loc18_4: type = fn_type_with_self_type %DefaultMethod.WithSelf.M.type, %T.loc17_16.1 [symbolic = %.loc18_4 (constants.%.af9)]
 // CHECK:STDOUT:   %DefaultMethod.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc17_16.1, @DefaultMethod [symbolic = %DefaultMethod.lookup_impl_witness (constants.%DefaultMethod.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc18_4.2: @CallMethod.%.loc18_4 (%.506) = impl_witness_access %DefaultMethod.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0.f26)]
-// CHECK:STDOUT:   %specific_impl_fn.loc18_4.2: <specific function> = specific_impl_function %impl.elem0.loc18_4.2, @DefaultMethod.WithSelf.M(%T.loc17_16.1) [symbolic = %specific_impl_fn.loc18_4.2 (constants.%specific_impl_fn.583)]
+// CHECK:STDOUT:   %impl.elem0.loc18_4.2: @CallMethod.%.loc18_4 (%.af9) = impl_witness_access %DefaultMethod.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0.d8d)]
+// CHECK:STDOUT:   %specific_impl_fn.loc18_4.2: <specific function> = specific_impl_function %impl.elem0.loc18_4.2, @DefaultMethod.WithSelf.M(%T.loc17_16.1) [symbolic = %specific_impl_fn.loc18_4.2 (constants.%specific_impl_fn.9ab)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%t.param: @CallMethod.%T.as_type.loc17_36.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %t.ref: @CallMethod.%T.as_type.loc17_36.1 (%T.as_type) = name_ref t, %t
-// CHECK:STDOUT:     %M.ref: %DefaultMethod.assoc_type = name_ref M, @DefaultMethod.WithSelf.%assoc0 [concrete = constants.%assoc0.a0f]
-// CHECK:STDOUT:     %impl.elem0.loc18_4.1: @CallMethod.%.loc18_4 (%.506) = impl_witness_access constants.%DefaultMethod.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0.f26)]
+// CHECK:STDOUT:     %M.ref: %DefaultMethod.assoc_type = name_ref M, @DefaultMethod.WithSelf.%assoc0 [concrete = constants.%assoc0.7ec]
+// CHECK:STDOUT:     %impl.elem0.loc18_4.1: @CallMethod.%.loc18_4 (%.af9) = impl_witness_access constants.%DefaultMethod.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0.d8d)]
 // CHECK:STDOUT:     %bound_method.loc18_4: <bound method> = bound_method %t.ref, %impl.elem0.loc18_4.1
 // CHECK:STDOUT:     %.loc18_7.1: %DefaultMethod.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc17_16.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc18_7.2: %DefaultMethod.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc17_16.1 (constants.%T)]
-// CHECK:STDOUT:     %specific_impl_fn.loc18_4.1: <specific function> = specific_impl_function %impl.elem0.loc18_4.1, @DefaultMethod.WithSelf.M(constants.%T) [symbolic = %specific_impl_fn.loc18_4.2 (constants.%specific_impl_fn.583)]
+// CHECK:STDOUT:     %specific_impl_fn.loc18_4.1: <specific function> = specific_impl_function %impl.elem0.loc18_4.1, @DefaultMethod.WithSelf.M(constants.%T) [symbolic = %specific_impl_fn.loc18_4.2 (constants.%specific_impl_fn.9ab)]
 // CHECK:STDOUT:     %bound_method.loc18_7: <bound method> = bound_method %t.ref, %specific_impl_fn.loc18_4.1
 // CHECK:STDOUT:     %DefaultMethod.WithSelf.M.call: init %empty_tuple.type = call %bound_method.loc18_7(%t.ref)
 // CHECK:STDOUT:     return
@@ -438,8 +438,8 @@ interface C {
 // CHECK:STDOUT: specific @DefaultFn.WithSelf(constants.%Self.4f0) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self.4f0
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type => constants.%DefaultFn.WithSelf.F.type.99d
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F => constants.%DefaultFn.WithSelf.F.71b
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type => constants.%DefaultFn.WithSelf.F.type.0dc
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F => constants.%DefaultFn.WithSelf.F.2e7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DefaultFn.WithSelf.F(constants.%Self.4f0) {}
@@ -447,8 +447,8 @@ interface C {
 // CHECK:STDOUT: specific @DefaultMethod.WithSelf(constants.%Self.be0) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self.be0
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type => constants.%DefaultMethod.WithSelf.M.type.5c3
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M => constants.%DefaultMethod.WithSelf.M.ff1
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type => constants.%DefaultMethod.WithSelf.M.type.942
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M => constants.%DefaultMethod.WithSelf.M.fb3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DefaultMethod.WithSelf.M(constants.%Self.be0) {
@@ -467,8 +467,8 @@ interface C {
 // CHECK:STDOUT: specific @DefaultFn.WithSelf(constants.%d) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%d
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type => constants.%DefaultFn.WithSelf.F.type.0f7
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F => constants.%DefaultFn.WithSelf.F.6f2
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type => constants.%DefaultFn.WithSelf.F.type.19e
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F => constants.%DefaultFn.WithSelf.F.a5b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DefaultFn.WithSelf.F(constants.%d) {}
@@ -485,8 +485,8 @@ interface C {
 // CHECK:STDOUT: specific @DefaultMethod.WithSelf(constants.%T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%T
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type => constants.%DefaultMethod.WithSelf.M.type.0cf
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M => constants.%DefaultMethod.WithSelf.M.091
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type => constants.%DefaultMethod.WithSelf.M.type.840
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M => constants.%DefaultMethod.WithSelf.M.d98
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @DefaultMethod.WithSelf.M(constants.%T) {
@@ -503,21 +503,21 @@ interface C {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %FinalFn.type: type = facet_type <@FinalFn> [concrete]
 // CHECK:STDOUT:   %Self.49e: %FinalFn.type = symbolic_binding Self, 0 [symbolic]
-// CHECK:STDOUT:   %FinalFn.WithSelf.F.type.2c0: type = fn_type @FinalFn.WithSelf.F, @FinalFn.WithSelf(%Self.49e) [symbolic]
+// CHECK:STDOUT:   %FinalFn.WithSelf.F.type.948: type = fn_type @FinalFn.WithSelf.F, @FinalFn.WithSelf(%Self.49e) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
-// CHECK:STDOUT:   %FinalFn.WithSelf.F.744: %FinalFn.WithSelf.F.type.2c0 = struct_value () [symbolic]
+// CHECK:STDOUT:   %FinalFn.WithSelf.F.91d: %FinalFn.WithSelf.F.type.948 = struct_value () [symbolic]
 // CHECK:STDOUT:   %FinalFn.assoc_type: type = assoc_entity_type @FinalFn [concrete]
-// CHECK:STDOUT:   %assoc0.d6c: %FinalFn.assoc_type = assoc_entity element0, @FinalFn.WithSelf.%FinalFn.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0.1ba: %FinalFn.assoc_type = assoc_entity element0, @FinalFn.WithSelf.%FinalFn.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %FinalMethod.type: type = facet_type <@FinalMethod> [concrete]
 // CHECK:STDOUT:   %Self.e80: %FinalMethod.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.e80 [symbolic]
 // CHECK:STDOUT:   %pattern_type.32b: type = pattern_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %self.param_patt.724: %pattern_type.32b = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.537: %pattern_type.32b = wrapper_binding_pattern self, %self.param_patt.724 [symbolic]
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type.efa: type = fn_type @FinalMethod.WithSelf.M, @FinalMethod.WithSelf(%Self.e80) [symbolic]
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M.68b: %FinalMethod.WithSelf.M.type.efa = struct_value () [symbolic]
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type.1c3: type = fn_type @FinalMethod.WithSelf.M, @FinalMethod.WithSelf(%Self.e80) [symbolic]
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M.a6b: %FinalMethod.WithSelf.M.type.1c3 = struct_value () [symbolic]
 // CHECK:STDOUT:   %FinalMethod.assoc_type: type = assoc_entity_type @FinalMethod [concrete]
-// CHECK:STDOUT:   %assoc0.e67: %FinalMethod.assoc_type = assoc_entity element0, @FinalMethod.WithSelf.%FinalMethod.WithSelf.M.decl [concrete]
+// CHECK:STDOUT:   %assoc0.225: %FinalMethod.assoc_type = assoc_entity element0, @FinalMethod.WithSelf.%FinalMethod.WithSelf.M.decl [concrete]
 // CHECK:STDOUT:   %require_complete.e87: <witness> = require_complete_type %Self.as_type [symbolic]
 // CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %pattern_type.778: type = pattern_type %FinalFn.type [concrete]
@@ -525,13 +525,13 @@ interface C {
 // CHECK:STDOUT:   %d: %FinalFn.type = symbolic_binding d, 0 [symbolic]
 // CHECK:STDOUT:   %CallFn.type: type = fn_type @CallFn [concrete]
 // CHECK:STDOUT:   %CallFn: %CallFn.type = struct_value () [concrete]
-// CHECK:STDOUT:   %FinalFn.WithSelf.F.type.94e: type = fn_type @FinalFn.WithSelf.F, @FinalFn.WithSelf(%d) [symbolic]
-// CHECK:STDOUT:   %FinalFn.WithSelf.F.219: %FinalFn.WithSelf.F.type.94e = struct_value () [symbolic]
+// CHECK:STDOUT:   %FinalFn.WithSelf.F.type.37e: type = fn_type @FinalFn.WithSelf.F, @FinalFn.WithSelf(%d) [symbolic]
+// CHECK:STDOUT:   %FinalFn.WithSelf.F.915: %FinalFn.WithSelf.F.type.37e = struct_value () [symbolic]
 // CHECK:STDOUT:   %d.as_type: type = facet_access_type %d [symbolic]
 // CHECK:STDOUT:   %FinalFn.lookup_impl_witness: <witness> = lookup_impl_witness %d, @FinalFn [symbolic]
-// CHECK:STDOUT:   %.ec4: type = fn_type_with_self_type %FinalFn.WithSelf.F.type.94e, %d [symbolic]
-// CHECK:STDOUT:   %impl.elem0.9ab: %.ec4 = impl_witness_access %FinalFn.lookup_impl_witness, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.e4e: <specific function> = specific_impl_function %impl.elem0.9ab, @FinalFn.WithSelf.F(%d) [symbolic]
+// CHECK:STDOUT:   %.ed7: type = fn_type_with_self_type %FinalFn.WithSelf.F.type.37e, %d [symbolic]
+// CHECK:STDOUT:   %impl.elem0.c34: %.ed7 = impl_witness_access %FinalFn.lookup_impl_witness, element0 [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.d64: <specific function> = specific_impl_function %impl.elem0.c34, @FinalFn.WithSelf.F(%d) [symbolic]
 // CHECK:STDOUT:   %pattern_type.af4: type = pattern_type %FinalMethod.type [concrete]
 // CHECK:STDOUT:   %T.patt: %pattern_type.af4 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: %FinalMethod.type = symbolic_binding T, 0 [symbolic]
@@ -542,14 +542,14 @@ interface C {
 // CHECK:STDOUT:   %CallMethod.type: type = fn_type @CallMethod [concrete]
 // CHECK:STDOUT:   %CallMethod: %CallMethod.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.3b2: <witness> = require_complete_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type.913: type = fn_type @FinalMethod.WithSelf.M, @FinalMethod.WithSelf(%T) [symbolic]
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M.4c6: %FinalMethod.WithSelf.M.type.913 = struct_value () [symbolic]
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type.8df: type = fn_type @FinalMethod.WithSelf.M, @FinalMethod.WithSelf(%T) [symbolic]
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M.417: %FinalMethod.WithSelf.M.type.8df = struct_value () [symbolic]
 // CHECK:STDOUT:   %FinalMethod.lookup_impl_witness: <witness> = lookup_impl_witness %T, @FinalMethod [symbolic]
-// CHECK:STDOUT:   %.e9f: type = fn_type_with_self_type %FinalMethod.WithSelf.M.type.913, %T [symbolic]
-// CHECK:STDOUT:   %impl.elem0.24d: %.e9f = impl_witness_access %FinalMethod.lookup_impl_witness, element0 [symbolic]
+// CHECK:STDOUT:   %.127: type = fn_type_with_self_type %FinalMethod.WithSelf.M.type.8df, %T [symbolic]
+// CHECK:STDOUT:   %impl.elem0.259: %.127 = impl_witness_access %FinalMethod.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %self.param_patt.4d4: %pattern_type.ab8 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.bc8: %pattern_type.ab8 = wrapper_binding_pattern self, %self.param_patt.4d4 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.2e2: <specific function> = specific_impl_function %impl.elem0.24d, @FinalMethod.WithSelf.M(%T) [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.76f: <specific function> = specific_impl_function %impl.elem0.259, @FinalMethod.WithSelf.M(%T) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -589,8 +589,8 @@ interface C {
 // CHECK:STDOUT:   %FinalFn.WithSelf.decl = interface_with_self_decl @FinalFn [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %FinalFn.WithSelf.F.decl: @FinalFn.WithSelf.%FinalFn.WithSelf.F.type (%FinalFn.WithSelf.F.type.2c0) = fn_decl @FinalFn.WithSelf.F [symbolic = @FinalFn.WithSelf.%FinalFn.WithSelf.F (constants.%FinalFn.WithSelf.F.744)] {} {}
-// CHECK:STDOUT:   %assoc0: %FinalFn.assoc_type = assoc_entity element0, %FinalFn.WithSelf.F.decl [concrete = constants.%assoc0.d6c]
+// CHECK:STDOUT:   %FinalFn.WithSelf.F.decl: @FinalFn.WithSelf.%FinalFn.WithSelf.F.type (%FinalFn.WithSelf.F.type.948) = fn_decl @FinalFn.WithSelf.F [symbolic = @FinalFn.WithSelf.%FinalFn.WithSelf.F (constants.%FinalFn.WithSelf.F.91d)] {} {}
+// CHECK:STDOUT:   %assoc0: %FinalFn.assoc_type = assoc_entity element0, %FinalFn.WithSelf.F.decl [concrete = constants.%assoc0.1ba]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -605,7 +605,7 @@ interface C {
 // CHECK:STDOUT:   %FinalMethod.WithSelf.decl = interface_with_self_decl @FinalMethod [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M.decl: @FinalMethod.WithSelf.%FinalMethod.WithSelf.M.type (%FinalMethod.WithSelf.M.type.efa) = fn_decl @FinalMethod.WithSelf.M [symbolic = @FinalMethod.WithSelf.%FinalMethod.WithSelf.M (constants.%FinalMethod.WithSelf.M.68b)] {
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M.decl: @FinalMethod.WithSelf.%FinalMethod.WithSelf.M.type (%FinalMethod.WithSelf.M.type.1c3) = fn_decl @FinalMethod.WithSelf.M [symbolic = @FinalMethod.WithSelf.%FinalMethod.WithSelf.M (constants.%FinalMethod.WithSelf.M.a6b)] {
 // CHECK:STDOUT:     %self.param_patt.loc10_21.1: @FinalMethod.WithSelf.M.%pattern_type (%pattern_type.32b) = value_param_pattern [symbolic = %self.param_patt.loc10_21.2 (constants.%self.param_patt.724)]
 // CHECK:STDOUT:     %self.patt.loc10_21.1: @FinalMethod.WithSelf.M.%pattern_type (%pattern_type.32b) = wrapper_binding_pattern self, %self.param_patt.loc10_21.1 [symbolic = %self.patt.loc10_21.2 (constants.%self.patt.537)]
 // CHECK:STDOUT:   } {
@@ -617,7 +617,7 @@ interface C {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @FinalMethod.WithSelf.M.%Self.as_type.loc10_21.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %assoc0: %FinalMethod.assoc_type = assoc_entity element0, %FinalMethod.WithSelf.M.decl [concrete = constants.%assoc0.e67]
+// CHECK:STDOUT:   %assoc0: %FinalMethod.assoc_type = assoc_entity element0, %FinalMethod.WithSelf.M.decl [concrete = constants.%assoc0.225]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = %Self
@@ -658,20 +658,20 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %d.as_type.loc14_4.2: type = facet_access_type %d.loc13_20.1 [symbolic = %d.as_type.loc14_4.2 (constants.%d.as_type)]
-// CHECK:STDOUT:   %FinalFn.WithSelf.F.type: type = fn_type @FinalFn.WithSelf.F, @FinalFn.WithSelf(%d.loc13_20.1) [symbolic = %FinalFn.WithSelf.F.type (constants.%FinalFn.WithSelf.F.type.94e)]
-// CHECK:STDOUT:   %.loc14_4.2: type = fn_type_with_self_type %FinalFn.WithSelf.F.type, %d.loc13_20.1 [symbolic = %.loc14_4.2 (constants.%.ec4)]
+// CHECK:STDOUT:   %FinalFn.WithSelf.F.type: type = fn_type @FinalFn.WithSelf.F, @FinalFn.WithSelf(%d.loc13_20.1) [symbolic = %FinalFn.WithSelf.F.type (constants.%FinalFn.WithSelf.F.type.37e)]
+// CHECK:STDOUT:   %.loc14_4.2: type = fn_type_with_self_type %FinalFn.WithSelf.F.type, %d.loc13_20.1 [symbolic = %.loc14_4.2 (constants.%.ed7)]
 // CHECK:STDOUT:   %FinalFn.lookup_impl_witness: <witness> = lookup_impl_witness %d.loc13_20.1, @FinalFn [symbolic = %FinalFn.lookup_impl_witness (constants.%FinalFn.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc14_4.2: @CallFn.%.loc14_4.2 (%.ec4) = impl_witness_access %FinalFn.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.9ab)]
-// CHECK:STDOUT:   %specific_impl_fn.loc14_4.2: <specific function> = specific_impl_function %impl.elem0.loc14_4.2, @FinalFn.WithSelf.F(%d.loc13_20.1) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.e4e)]
+// CHECK:STDOUT:   %impl.elem0.loc14_4.2: @CallFn.%.loc14_4.2 (%.ed7) = impl_witness_access %FinalFn.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.c34)]
+// CHECK:STDOUT:   %specific_impl_fn.loc14_4.2: <specific function> = specific_impl_function %impl.elem0.loc14_4.2, @FinalFn.WithSelf.F(%d.loc13_20.1) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.d64)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %d.ref: %FinalFn.type = name_ref d, %d.loc13_20.2 [symbolic = %d.loc13_20.1 (constants.%d)]
 // CHECK:STDOUT:     %d.as_type.loc14_4.1: type = facet_access_type %d.ref [symbolic = %d.as_type.loc14_4.2 (constants.%d.as_type)]
 // CHECK:STDOUT:     %.loc14_4.1: type = converted %d.ref, %d.as_type.loc14_4.1 [symbolic = %d.as_type.loc14_4.2 (constants.%d.as_type)]
-// CHECK:STDOUT:     %F.ref: %FinalFn.assoc_type = name_ref F, @FinalFn.WithSelf.%assoc0 [concrete = constants.%assoc0.d6c]
-// CHECK:STDOUT:     %impl.elem0.loc14_4.1: @CallFn.%.loc14_4.2 (%.ec4) = impl_witness_access constants.%FinalFn.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.9ab)]
-// CHECK:STDOUT:     %specific_impl_fn.loc14_4.1: <specific function> = specific_impl_function %impl.elem0.loc14_4.1, @FinalFn.WithSelf.F(constants.%d) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.e4e)]
+// CHECK:STDOUT:     %F.ref: %FinalFn.assoc_type = name_ref F, @FinalFn.WithSelf.%assoc0 [concrete = constants.%assoc0.1ba]
+// CHECK:STDOUT:     %impl.elem0.loc14_4.1: @CallFn.%.loc14_4.2 (%.ed7) = impl_witness_access constants.%FinalFn.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.c34)]
+// CHECK:STDOUT:     %specific_impl_fn.loc14_4.1: <specific function> = specific_impl_function %impl.elem0.loc14_4.1, @FinalFn.WithSelf.F(constants.%d) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.d64)]
 // CHECK:STDOUT:     %FinalFn.WithSelf.F.call: init %empty_tuple.type = call %specific_impl_fn.loc14_4.1()
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
@@ -687,21 +687,21 @@ interface C {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc17_34.1 [symbolic = %require_complete (constants.%require_complete.3b2)]
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type: type = fn_type @FinalMethod.WithSelf.M, @FinalMethod.WithSelf(%T.loc17_16.1) [symbolic = %FinalMethod.WithSelf.M.type (constants.%FinalMethod.WithSelf.M.type.913)]
-// CHECK:STDOUT:   %.loc18_4: type = fn_type_with_self_type %FinalMethod.WithSelf.M.type, %T.loc17_16.1 [symbolic = %.loc18_4 (constants.%.e9f)]
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type: type = fn_type @FinalMethod.WithSelf.M, @FinalMethod.WithSelf(%T.loc17_16.1) [symbolic = %FinalMethod.WithSelf.M.type (constants.%FinalMethod.WithSelf.M.type.8df)]
+// CHECK:STDOUT:   %.loc18_4: type = fn_type_with_self_type %FinalMethod.WithSelf.M.type, %T.loc17_16.1 [symbolic = %.loc18_4 (constants.%.127)]
 // CHECK:STDOUT:   %FinalMethod.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc17_16.1, @FinalMethod [symbolic = %FinalMethod.lookup_impl_witness (constants.%FinalMethod.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc18_4.2: @CallMethod.%.loc18_4 (%.e9f) = impl_witness_access %FinalMethod.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0.24d)]
-// CHECK:STDOUT:   %specific_impl_fn.loc18_4.2: <specific function> = specific_impl_function %impl.elem0.loc18_4.2, @FinalMethod.WithSelf.M(%T.loc17_16.1) [symbolic = %specific_impl_fn.loc18_4.2 (constants.%specific_impl_fn.2e2)]
+// CHECK:STDOUT:   %impl.elem0.loc18_4.2: @CallMethod.%.loc18_4 (%.127) = impl_witness_access %FinalMethod.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0.259)]
+// CHECK:STDOUT:   %specific_impl_fn.loc18_4.2: <specific function> = specific_impl_function %impl.elem0.loc18_4.2, @FinalMethod.WithSelf.M(%T.loc17_16.1) [symbolic = %specific_impl_fn.loc18_4.2 (constants.%specific_impl_fn.76f)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%t.param: @CallMethod.%T.as_type.loc17_34.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %t.ref: @CallMethod.%T.as_type.loc17_34.1 (%T.as_type) = name_ref t, %t
-// CHECK:STDOUT:     %M.ref: %FinalMethod.assoc_type = name_ref M, @FinalMethod.WithSelf.%assoc0 [concrete = constants.%assoc0.e67]
-// CHECK:STDOUT:     %impl.elem0.loc18_4.1: @CallMethod.%.loc18_4 (%.e9f) = impl_witness_access constants.%FinalMethod.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0.24d)]
+// CHECK:STDOUT:     %M.ref: %FinalMethod.assoc_type = name_ref M, @FinalMethod.WithSelf.%assoc0 [concrete = constants.%assoc0.225]
+// CHECK:STDOUT:     %impl.elem0.loc18_4.1: @CallMethod.%.loc18_4 (%.127) = impl_witness_access constants.%FinalMethod.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0.259)]
 // CHECK:STDOUT:     %bound_method.loc18_4: <bound method> = bound_method %t.ref, %impl.elem0.loc18_4.1
 // CHECK:STDOUT:     %.loc18_7.1: %FinalMethod.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc17_16.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc18_7.2: %FinalMethod.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc17_16.1 (constants.%T)]
-// CHECK:STDOUT:     %specific_impl_fn.loc18_4.1: <specific function> = specific_impl_function %impl.elem0.loc18_4.1, @FinalMethod.WithSelf.M(constants.%T) [symbolic = %specific_impl_fn.loc18_4.2 (constants.%specific_impl_fn.2e2)]
+// CHECK:STDOUT:     %specific_impl_fn.loc18_4.1: <specific function> = specific_impl_function %impl.elem0.loc18_4.1, @FinalMethod.WithSelf.M(constants.%T) [symbolic = %specific_impl_fn.loc18_4.2 (constants.%specific_impl_fn.76f)]
 // CHECK:STDOUT:     %bound_method.loc18_7: <bound method> = bound_method %t.ref, %specific_impl_fn.loc18_4.1
 // CHECK:STDOUT:     %FinalMethod.WithSelf.M.call: init %empty_tuple.type = call %bound_method.loc18_7(%t.ref)
 // CHECK:STDOUT:     return
@@ -711,8 +711,8 @@ interface C {
 // CHECK:STDOUT: specific @FinalFn.WithSelf(constants.%Self.49e) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self.49e
-// CHECK:STDOUT:   %FinalFn.WithSelf.F.type => constants.%FinalFn.WithSelf.F.type.2c0
-// CHECK:STDOUT:   %FinalFn.WithSelf.F => constants.%FinalFn.WithSelf.F.744
+// CHECK:STDOUT:   %FinalFn.WithSelf.F.type => constants.%FinalFn.WithSelf.F.type.948
+// CHECK:STDOUT:   %FinalFn.WithSelf.F => constants.%FinalFn.WithSelf.F.91d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FinalFn.WithSelf.F(constants.%Self.49e) {}
@@ -720,8 +720,8 @@ interface C {
 // CHECK:STDOUT: specific @FinalMethod.WithSelf(constants.%Self.e80) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%Self.e80
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type => constants.%FinalMethod.WithSelf.M.type.efa
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M => constants.%FinalMethod.WithSelf.M.68b
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type => constants.%FinalMethod.WithSelf.M.type.1c3
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M => constants.%FinalMethod.WithSelf.M.a6b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FinalMethod.WithSelf.M(constants.%Self.e80) {
@@ -740,8 +740,8 @@ interface C {
 // CHECK:STDOUT: specific @FinalFn.WithSelf(constants.%d) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%d
-// CHECK:STDOUT:   %FinalFn.WithSelf.F.type => constants.%FinalFn.WithSelf.F.type.94e
-// CHECK:STDOUT:   %FinalFn.WithSelf.F => constants.%FinalFn.WithSelf.F.219
+// CHECK:STDOUT:   %FinalFn.WithSelf.F.type => constants.%FinalFn.WithSelf.F.type.37e
+// CHECK:STDOUT:   %FinalFn.WithSelf.F => constants.%FinalFn.WithSelf.F.915
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FinalFn.WithSelf.F(constants.%d) {}
@@ -758,8 +758,8 @@ interface C {
 // CHECK:STDOUT: specific @FinalMethod.WithSelf(constants.%T) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%T
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type => constants.%FinalMethod.WithSelf.M.type.913
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M => constants.%FinalMethod.WithSelf.M.4c6
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type => constants.%FinalMethod.WithSelf.M.type.8df
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M => constants.%FinalMethod.WithSelf.M.417
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FinalMethod.WithSelf.M(constants.%T) {
@@ -779,8 +779,8 @@ interface C {
 // CHECK:STDOUT:   %.1d8: <witness> = impl_self_witness %C, @DefaultFn [concrete]
 // CHECK:STDOUT:   %DefaultFn.impl_witness: <witness> = impl_witness @C.as.DefaultFn.impl.%DefaultFn.impl_witness_table [concrete]
 // CHECK:STDOUT:   %DefaultFn.facet: %DefaultFn.type = facet_value %C, (%DefaultFn.impl_witness) [concrete]
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type.08a: type = fn_type @DefaultFn.WithSelf.F, @DefaultFn.WithSelf(%DefaultFn.facet) [concrete]
-// CHECK:STDOUT:   %DefaultFn.WithSelf.F.7e6: %DefaultFn.WithSelf.F.type.08a = struct_value () [concrete]
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F.type.01d: type = fn_type @DefaultFn.WithSelf.F, @DefaultFn.WithSelf(%DefaultFn.facet) [concrete]
+// CHECK:STDOUT:   %DefaultFn.WithSelf.F.cef: %DefaultFn.WithSelf.F.type.01d = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -802,7 +802,7 @@ interface C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.DefaultFn.impl: %Self.ref as %DefaultFn.ref {
-// CHECK:STDOUT:   %DefaultFn.impl_witness_table = impl_witness_table (constants.%DefaultFn.WithSelf.F.7e6), @C.as.DefaultFn.impl [concrete]
+// CHECK:STDOUT:   %DefaultFn.impl_witness_table = impl_witness_table (constants.%DefaultFn.WithSelf.F.cef), @C.as.DefaultFn.impl [concrete]
 // CHECK:STDOUT:   %DefaultFn.impl_witness: <witness> = impl_witness %DefaultFn.impl_witness_table [concrete = constants.%DefaultFn.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -845,8 +845,8 @@ interface C {
 // CHECK:STDOUT:   %.3e0: <witness> = impl_self_witness %C, @DefaultMethod [concrete]
 // CHECK:STDOUT:   %DefaultMethod.impl_witness: <witness> = impl_witness @C.as.DefaultMethod.impl.%DefaultMethod.impl_witness_table [concrete]
 // CHECK:STDOUT:   %DefaultMethod.facet: %DefaultMethod.type = facet_value %C, (%DefaultMethod.impl_witness) [concrete]
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type.171: type = fn_type @DefaultMethod.WithSelf.M, @DefaultMethod.WithSelf(%DefaultMethod.facet) [concrete]
-// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.076: %DefaultMethod.WithSelf.M.type.171 = struct_value () [concrete]
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type.524: type = fn_type @DefaultMethod.WithSelf.M, @DefaultMethod.WithSelf(%DefaultMethod.facet) [concrete]
+// CHECK:STDOUT:   %DefaultMethod.WithSelf.M.de4: %DefaultMethod.WithSelf.M.type.524 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -920,7 +920,7 @@ interface C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.DefaultMethod.impl: %Self.ref as %DefaultMethod.ref {
-// CHECK:STDOUT:   %DefaultMethod.impl_witness_table = impl_witness_table (constants.%DefaultMethod.WithSelf.M.076), @C.as.DefaultMethod.impl [concrete]
+// CHECK:STDOUT:   %DefaultMethod.impl_witness_table = impl_witness_table (constants.%DefaultMethod.WithSelf.M.de4), @C.as.DefaultMethod.impl [concrete]
 // CHECK:STDOUT:   %DefaultMethod.impl_witness: <witness> = impl_witness %DefaultMethod.impl_witness_table [concrete = constants.%DefaultMethod.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1275,8 +1275,8 @@ interface C {
 // CHECK:STDOUT:   %.55e: <witness> = impl_self_witness %C, @FinalFn [concrete]
 // CHECK:STDOUT:   %FinalFn.impl_witness: <witness> = impl_witness @C.as.FinalFn.impl.%FinalFn.impl_witness_table [concrete]
 // CHECK:STDOUT:   %FinalFn.facet: %FinalFn.type = facet_value %C, (%FinalFn.impl_witness) [concrete]
-// CHECK:STDOUT:   %FinalFn.WithSelf.F.type.87d: type = fn_type @FinalFn.WithSelf.F, @FinalFn.WithSelf(%FinalFn.facet) [concrete]
-// CHECK:STDOUT:   %FinalFn.WithSelf.F.3f7: %FinalFn.WithSelf.F.type.87d = struct_value () [concrete]
+// CHECK:STDOUT:   %FinalFn.WithSelf.F.type.db5: type = fn_type @FinalFn.WithSelf.F, @FinalFn.WithSelf(%FinalFn.facet) [concrete]
+// CHECK:STDOUT:   %FinalFn.WithSelf.F.0e6: %FinalFn.WithSelf.F.type.db5 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -1298,7 +1298,7 @@ interface C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.FinalFn.impl: %Self.ref as %FinalFn.ref {
-// CHECK:STDOUT:   %FinalFn.impl_witness_table = impl_witness_table (constants.%FinalFn.WithSelf.F.3f7), @C.as.FinalFn.impl [concrete]
+// CHECK:STDOUT:   %FinalFn.impl_witness_table = impl_witness_table (constants.%FinalFn.WithSelf.F.0e6), @C.as.FinalFn.impl [concrete]
 // CHECK:STDOUT:   %FinalFn.impl_witness: <witness> = impl_witness %FinalFn.impl_witness_table [concrete = constants.%FinalFn.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1341,8 +1341,8 @@ interface C {
 // CHECK:STDOUT:   %.864: <witness> = impl_self_witness %C, @FinalMethod [concrete]
 // CHECK:STDOUT:   %FinalMethod.impl_witness: <witness> = impl_witness @C.as.FinalMethod.impl.%FinalMethod.impl_witness_table [concrete]
 // CHECK:STDOUT:   %FinalMethod.facet: %FinalMethod.type = facet_value %C, (%FinalMethod.impl_witness) [concrete]
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type.7a1: type = fn_type @FinalMethod.WithSelf.M, @FinalMethod.WithSelf(%FinalMethod.facet) [concrete]
-// CHECK:STDOUT:   %FinalMethod.WithSelf.M.ed4: %FinalMethod.WithSelf.M.type.7a1 = struct_value () [concrete]
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M.type.8d7: type = fn_type @FinalMethod.WithSelf.M, @FinalMethod.WithSelf(%FinalMethod.facet) [concrete]
+// CHECK:STDOUT:   %FinalMethod.WithSelf.M.9eb: %FinalMethod.WithSelf.M.type.8d7 = struct_value () [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -1416,7 +1416,7 @@ interface C {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @C.as.FinalMethod.impl: %Self.ref as %FinalMethod.ref {
-// CHECK:STDOUT:   %FinalMethod.impl_witness_table = impl_witness_table (constants.%FinalMethod.WithSelf.M.ed4), @C.as.FinalMethod.impl [concrete]
+// CHECK:STDOUT:   %FinalMethod.impl_witness_table = impl_witness_table (constants.%FinalMethod.WithSelf.M.9eb), @C.as.FinalMethod.impl [concrete]
 // CHECK:STDOUT:   %FinalMethod.impl_witness: <witness> = impl_witness %FinalMethod.impl_witness_table [concrete = constants.%FinalMethod.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
