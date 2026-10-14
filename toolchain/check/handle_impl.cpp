@@ -272,9 +272,7 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
         context.identified_facet_types().Get(identified_id);
     auto eval_interface = EvaluateIdentifiedWitnesses(
         context, node_id, identified.impl_as_target_interface());
-    // TODO: Add a method to SpecificStore to do this operation.
-    if (!(eval_interface.specific_id.has_value() &&
-          context.specifics().Get(eval_interface.specific_id).HasError())) {
+    if (!context.specifics().HasError(eval_interface.specific_id)) {
       specific_interface = eval_interface;
     } else {
       full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;

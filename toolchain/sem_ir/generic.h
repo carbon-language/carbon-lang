@@ -179,6 +179,12 @@ class SpecificStore : public Yaml::Printable<SpecificStore> {
                                    : InstBlockId::Empty;
   }
 
+  // Gets whether the specific has an error in either block. If `Empty` or
+  // `None` is passed, the result would always be false.
+  auto HasError(SpecificId specific_id) const -> bool {
+    return specific_id.has_value() ? Get(specific_id).HasError() : false;
+  }
+
   // These are to support printable structures, and are not guaranteed.
   auto OutputYaml() const -> Yaml::OutputMapping {
     return specifics_.OutputYaml();
