@@ -3,12 +3,19 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/form.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/function/call/form.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/function/call/form.carbon
+
+// --- core.carbon
+
+package Core library "[[@TEST_NAME]]";
+
+export import library "prelude/parts/form";
 
 // --- ref_form_param.carbon
 library "[[@TEST_NAME]]";
@@ -60,6 +67,8 @@ fn F(x:? form(ref ()));
 // --- fail_param_form_not_constant.carbon
 library "[[@TEST_NAME]]";
 
+import Core library "form";
+
 fn F() -> Core.Form;
 // CHECK:STDERR: fail_param_form_not_constant.carbon:[[@LINE+4]]:10: error: cannot evaluate form expression [FormExprEvaluationFailure]
 // CHECK:STDERR: fn G(x:? F());
@@ -108,6 +117,8 @@ fn G() {
 // --- form_generic_param.carbon
 library "[[@TEST_NAME]]";
 
+import Core library "form";
+
 fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
 fn G() {
@@ -117,6 +128,8 @@ fn G() {
 
 // --- fail_todo_composite_generic_form.carbon
 library "[[@TEST_NAME]]";
+
+import Core library "core";
 
 fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
@@ -138,6 +151,8 @@ fn G() {
 // --- fail_todo_deduce_generic_form.carbon
 library "[[@TEST_NAME]]";
 
+import Core library "core";
+
 fn F[Fm: Core.Form](v:? Fm);
 
 fn G() {
@@ -154,6 +169,8 @@ fn G() {
 
 // --- fail_form_generic_arg_not_form.carbon
 library "[[@TEST_NAME]]";
+
+import Core library "core";
 
 fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
@@ -174,6 +191,8 @@ fn G() {
 
 // --- fail_form_generic_missing_ref_tag.carbon
 library "[[@TEST_NAME]]";
+
+import Core library "core";
 
 fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
@@ -203,6 +222,8 @@ fn F() {
 
 // --- fail_todo_local_symbolic_form_binding.carbon
 library "[[@TEST_NAME]]";
+
+import Core library "core";
 
 // TODO: this code should fail for a different reason, but right now we don't
 // have a way to write correct code that reaches the TODO we're exercising here.
@@ -326,6 +347,8 @@ fn F() ->? ref i32;
 
 // --- form_generic_return.carbon
 library "[[@TEST_NAME]]";
+
+import Core library "core";
 //@include-in-dumps
 
 fn F(generic Fm: Core.Form, v:? Fm) ->? Fm {
