@@ -48,7 +48,9 @@ impl forall [T: type, Subscript: ImplicitAs(u64)]
 
 impl forall [T: type] Slice(T) as UnformedInit {}
 
-// TODO: convert from `ref array(T, N)` rather than pointer, when that's supported
+// TODO: Convert from `ref array(T, N)` (per the design) rather than a pointer,
+// once conversions can take `self` by reference (probably via the form-generic
+// conversions in #5389).
 impl forall [T: type, N: IntLiteral] array(T, N)* as ImplicitAs(Slice(T)) {
   fn Convert(self: array(T, N)*) -> Slice(T) {
     return Slice(T).Make(&(*self)[0], N);
