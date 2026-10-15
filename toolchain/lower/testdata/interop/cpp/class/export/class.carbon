@@ -101,7 +101,7 @@ fn G() {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define dso_local noundef ptr @_Z4passPN6Carbon1AE(ptr noundef %p) #0 {
+// CHECK:STDOUT: define dso_local noundef ptr @_Z4passPN6Carbon4Main1AE(ptr noundef %p) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %p.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %p, ptr %p.addr, align 8, !tbaa !4
@@ -112,7 +112,7 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_Z4callv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %call = call noundef ptr @_Z4passPN6Carbon1AE(ptr noundef null)
+// CHECK:STDOUT:   %call = call noundef ptr @_Z4passPN6Carbon4Main1AE(ptr noundef null)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -133,7 +133,7 @@ fn G() {
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
 // CHECK:STDOUT: !2 = !{!"any pointer", !1, i64 0}
-// CHECK:STDOUT: !3 = !{!"p1 _ZTSN6Carbon1AE", !2, i64 0}
+// CHECK:STDOUT: !3 = !{!"p1 _ZTSN6Carbon4Main1AE", !2, i64 0}
 // CHECK:STDOUT: !4 = !{!3, !3, i64 0}
 // CHECK:STDOUT: !5 = !{!"int", !1, i64 0}
 // CHECK:STDOUT: !19 = !{i32 7, !"Dwarf Version", i32 5}
@@ -157,23 +157,23 @@ fn G() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::LayoutA" = type <{ ptr, i32 }>
-// CHECK:STDOUT: %"class.Carbon::LayoutB" = type { %"class.Carbon::LayoutA", i32 }
-// CHECK:STDOUT: %"class.Carbon::LayoutC" = type { %"class.Carbon::LayoutA", i32 }
+// CHECK:STDOUT: %"class.Carbon::Main::LayoutA" = type <{ ptr, i32 }>
+// CHECK:STDOUT: %"class.Carbon::Main::LayoutB" = type { %"class.Carbon::Main::LayoutA", i32 }
+// CHECK:STDOUT: %"class.Carbon::Main::LayoutC" = type { %"class.Carbon::Main::LayoutA", i32 }
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon7LayoutAD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main7LayoutAD2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon7LayoutBD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main7LayoutBD2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon7LayoutCD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main7LayoutCD2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_Z1fv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a = alloca %"class.Carbon::LayoutA", align 8
+// CHECK:STDOUT:   %a = alloca %"class.Carbon::Main::LayoutA", align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #5
-// CHECK:STDOUT:   call void @_ZN6CarbonL11CallLayoutAEPNS_7LayoutAE(ptr noundef %a)
-// CHECK:STDOUT:   call void @_ZN6Carbon7LayoutAD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a) #5
+// CHECK:STDOUT:   call void @_ZN6Carbon4MainL11CallLayoutAEPNS0_7LayoutAE(ptr noundef %a)
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main7LayoutAD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a) #5
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #5
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -182,7 +182,7 @@ fn G() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6CarbonL11CallLayoutAEPNS_7LayoutAE(ptr noundef %0) #2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon4MainL11CallLayoutAEPNS0_7LayoutAE(ptr noundef %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !136
@@ -191,7 +191,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon7LayoutAD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main7LayoutAD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !136
@@ -206,16 +206,16 @@ fn G() {
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_Z1gv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %b = alloca %"class.Carbon::LayoutB", align 8
+// CHECK:STDOUT:   %b = alloca %"class.Carbon::Main::LayoutB", align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b) #5
-// CHECK:STDOUT:   call void @_ZN6CarbonL11CallLayoutBEPNS_7LayoutBE(ptr noundef %b)
-// CHECK:STDOUT:   call void @_ZN6Carbon7LayoutBD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %b) #5
+// CHECK:STDOUT:   call void @_ZN6Carbon4MainL11CallLayoutBEPNS0_7LayoutBE(ptr noundef %b)
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main7LayoutBD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %b) #5
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #5
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6CarbonL11CallLayoutBEPNS_7LayoutBE(ptr noundef %0) #2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon4MainL11CallLayoutBEPNS0_7LayoutBE(ptr noundef %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !138
@@ -224,31 +224,31 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon7LayoutBD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main7LayoutBD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !138
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.LayoutB.Main"(ptr noundef nonnull align 8 dereferenceable(16) %this1)
-// CHECK:STDOUT:   %a = getelementptr inbounds nuw %"class.Carbon::LayoutB", ptr %this1, i32 0, i32 0
-// CHECK:STDOUT:   call void @_ZN6Carbon7LayoutAD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a) #5
+// CHECK:STDOUT:   %a = getelementptr inbounds nuw %"class.Carbon::Main::LayoutB", ptr %this1, i32 0, i32 0
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main7LayoutAD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %a) #5
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_Z1hv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c = alloca %"class.Carbon::LayoutC", align 8
+// CHECK:STDOUT:   %c = alloca %"class.Carbon::Main::LayoutC", align 8
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c) #5
-// CHECK:STDOUT:   call void @_ZN6CarbonL11CallLayoutCEPNS_7LayoutCE(ptr noundef %c)
-// CHECK:STDOUT:   call void @_ZN6CarbonL11CallLayoutAEPNS_7LayoutAE(ptr noundef %c)
-// CHECK:STDOUT:   call void @_ZN6Carbon7LayoutCD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %c) #5
+// CHECK:STDOUT:   call void @_ZN6Carbon4MainL11CallLayoutCEPNS0_7LayoutCE(ptr noundef %c)
+// CHECK:STDOUT:   call void @_ZN6Carbon4MainL11CallLayoutAEPNS0_7LayoutAE(ptr noundef %c)
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main7LayoutCD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %c) #5
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %c) #5
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6CarbonL11CallLayoutCEPNS_7LayoutCE(ptr noundef %0) #2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon4MainL11CallLayoutCEPNS0_7LayoutCE(ptr noundef %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !140
@@ -257,13 +257,13 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon7LayoutCD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main7LayoutCD2Ev(ptr noundef nonnull align 8 dead_on_return(16) dereferenceable(16) %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !140
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   call void @"_C__destroy_thunk:thunk.LayoutC.Main"(ptr noundef nonnull align 8 dereferenceable(16) %this1)
-// CHECK:STDOUT:   call void @_ZN6Carbon7LayoutAD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %this1) #5
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main7LayoutAD2Ev(ptr noundef nonnull align 8 dead_on_return(12) dereferenceable(12) %this1) #5
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -433,7 +433,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
-// CHECK:STDOUT: uselistorder ptr @_ZN6Carbon7LayoutAD2Ev, { 2, 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_ZN6Carbon4Main7LayoutAD2Ev, { 2, 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -545,11 +545,11 @@ fn G() {
 // CHECK:STDOUT: !132 = !DILocalVariable(arg: 1, scope: !131, type: !50)
 // CHECK:STDOUT: !133 = !DILocation(line: 23, column: 1, scope: !131)
 // CHECK:STDOUT: !134 = !{!132}
-// CHECK:STDOUT: !135 = !{!"p1 _ZTSN6Carbon7LayoutAE", !2, i64 0}
+// CHECK:STDOUT: !135 = !{!"p1 _ZTSN6Carbon4Main7LayoutAE", !2, i64 0}
 // CHECK:STDOUT: !136 = !{!135, !135, i64 0}
-// CHECK:STDOUT: !137 = !{!"p1 _ZTSN6Carbon7LayoutBE", !2, i64 0}
+// CHECK:STDOUT: !137 = !{!"p1 _ZTSN6Carbon4Main7LayoutBE", !2, i64 0}
 // CHECK:STDOUT: !138 = !{!137, !137, i64 0}
-// CHECK:STDOUT: !139 = !{!"p1 _ZTSN6Carbon7LayoutCE", !2, i64 0}
+// CHECK:STDOUT: !139 = !{!"p1 _ZTSN6Carbon4Main7LayoutCE", !2, i64 0}
 // CHECK:STDOUT: !140 = !{!139, !139, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -558,20 +558,20 @@ fn G() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::FieldC" = type { i32, i32 }
+// CHECK:STDOUT: %"class.Carbon::Main::FieldC" = type { i32, i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: @FieldC.val.loc19_3 = internal constant { i32, i32 } zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define dso_local void @_Z1FRN6Carbon6FieldCE(ptr noundef nonnull align 4 dereferenceable(8) %c) #0 {
+// CHECK:STDOUT: define dso_local void @_Z1FRN6Carbon4Main6FieldCE(ptr noundef nonnull align 4 dereferenceable(8) %c) #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %c.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %c, ptr %c.addr, align 8, !tbaa !11
 // CHECK:STDOUT:   %0 = load ptr, ptr %c.addr, align 8, !tbaa !11, !nonnull !13, !align !14
-// CHECK:STDOUT:   %a = getelementptr inbounds nuw %"class.Carbon::FieldC", ptr %0, i32 0, i32 0
+// CHECK:STDOUT:   %a = getelementptr inbounds nuw %"class.Carbon::Main::FieldC", ptr %0, i32 0, i32 0
 // CHECK:STDOUT:   store i32 12, ptr %a, align 4, !tbaa !15
 // CHECK:STDOUT:   %1 = load ptr, ptr %c.addr, align 8, !tbaa !11, !nonnull !13, !align !14
-// CHECK:STDOUT:   %b = getelementptr inbounds nuw %"class.Carbon::FieldC", ptr %1, i32 0, i32 1
+// CHECK:STDOUT:   %b = getelementptr inbounds nuw %"class.Carbon::Main::FieldC", ptr %1, i32 0, i32 1
 // CHECK:STDOUT:   store i32 34, ptr %b, align 4, !tbaa !16
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -631,7 +631,7 @@ fn G() {
 // CHECK:STDOUT:   %.loc19_34.3.a = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 0, !dbg !169
 // CHECK:STDOUT:   %.loc19_34.6.b = getelementptr inbounds nuw { i32, i32 }, ptr %c.var, i32 0, i32 1, !dbg !169
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %c.var, ptr align 4 @FieldC.val.loc19_3, i64 8, i1 false), !dbg !168
-// CHECK:STDOUT:   call void @_Z1FRN6Carbon6FieldCE(ptr %c.var), !dbg !173
+// CHECK:STDOUT:   call void @_Z1FRN6Carbon4Main6FieldCE(ptr %c.var), !dbg !173
 // CHECK:STDOUT:   call void @"_CSelfDestruct.718874c3c75b803e:core.Destroy.Core"(ptr %c.var), !dbg !168
 // CHECK:STDOUT:   ret void, !dbg !174
 // CHECK:STDOUT: }
@@ -655,9 +655,9 @@ fn G() {
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
 // CHECK:STDOUT: !2 = !{!"any pointer", !1, i64 0}
 // CHECK:STDOUT: !5 = !{!"int", !1, i64 0}
-// CHECK:STDOUT: !10 = !{!"p1 _ZTSN6Carbon6FieldCE", !2, i64 0}
+// CHECK:STDOUT: !10 = !{!"p1 _ZTSN6Carbon4Main6FieldCE", !2, i64 0}
 // CHECK:STDOUT: !11 = !{!10, !10, i64 0}
-// CHECK:STDOUT: !12 = !{!"_ZTSN6Carbon6FieldCE", !5, i64 0, !5, i64 4}
+// CHECK:STDOUT: !12 = !{!"_ZTSN6Carbon4Main6FieldCE", !5, i64 0, !5, i64 4}
 // CHECK:STDOUT: !13 = !{}
 // CHECK:STDOUT: !14 = !{i64 4}
 // CHECK:STDOUT: !15 = !{!12, !5, i64 0}

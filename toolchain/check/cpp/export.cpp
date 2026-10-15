@@ -13,6 +13,7 @@
 #include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
 #include "toolchain/check/cpp/access.h"
+#include "toolchain/check/cpp/context.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
@@ -90,13 +91,35 @@ static auto ExportClassToCppInDeclContext(Context& context,
   return record_decl;
 }
 
+auto ExportPackageNamespaceToCpp(Context& context,
+                                 clang::DeclContext* carbon_namespace,
+                                 clang::IdentifierInfo* package_identifier)
+    -> clang::NamespaceDecl* {
+  auto& package_namespaces =
+      context.cpp_context()->domain().package_namespaces();
+  auto [it, inserted] =
+      package_namespaces.try_emplace(package_identifier->getName(), nullptr);
+  if (inserted) {
+    // TODO: Provide a source location.
+    auto* namespace_decl = clang::NamespaceDecl::Create(
+        context.ast_context(), carbon_namespace, /*Inline=*/false,
+        clang::SourceLocation(), clang::SourceLocation(), package_identifier,
+        /*PrevDecl=*/nullptr, /*Nested=*/false);
+    carbon_namespace->addHiddenDecl(namespace_decl);
+    it->second = namespace_decl;
+  }
+  it->second->getPrimaryContext()->setHasExternalVisibleStorage();
+  return it->second;
+}
+
 auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
                           SemIR::NameScopeId name_scope_id)
     -> clang::DeclContext* {
   llvm::SmallVector<SemIR::NameScopeId> name_scope_ids_to_create;
 
   // Walk through the parent scopes, looking for one that's already mapped into
-  // C++. We already mapped the package scope to ::Carbon, so we must find one.
+  // C++. We already mapped the package scope to ::Carbon::<PackageName>, so we
+  // must find one.
   clang::DeclContext* decl_context = nullptr;
   while (true) {
     // If this name scope was produced by importing a C++ declaration or has
@@ -109,7 +132,16 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
 
     // Otherwise, continue to the parent and create a scope for it first.
     name_scope_ids_to_create.push_back(name_scope_id);
-    name_scope_id = context.name_scopes().Get(name_scope_id).parent_scope_id();
+    const auto& name_scope = context.name_scopes().Get(name_scope_id);
+    if (name_scope.is_imported_package()) {
+      // Imported packages are exported as sub-namespaces of `::Carbon`, not of
+      // the current package's sub-namespace.
+      decl_context =
+          GetClangDeclContextForScope(context, SemIR::NameScopeId::Package)
+              ->getParent();
+      break;
+    }
+    name_scope_id = name_scope.parent_scope_id();
 
     // TODO: What should happen if there's an intervening function scope?
     CARBON_CHECK(
@@ -135,12 +167,17 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
         return nullptr;
       }
 
-      // TODO: Provide a source location.
-      auto* namespace_decl = clang::NamespaceDecl::Create(
-          context.ast_context(), decl_context, false, clang::SourceLocation(),
-          clang::SourceLocation(), identifier_info, nullptr, false);
-      decl_context->addHiddenDecl(namespace_decl);
-      decl_context = namespace_decl;
+      if (name_scope.is_imported_package()) {
+        decl_context =
+            ExportPackageNamespaceToCpp(context, decl_context, identifier_info);
+      } else {
+        // TODO: Provide a source location.
+        auto* namespace_decl = clang::NamespaceDecl::Create(
+            context.ast_context(), decl_context, false, clang::SourceLocation(),
+            clang::SourceLocation(), identifier_info, nullptr, false);
+        decl_context->addHiddenDecl(namespace_decl);
+        decl_context = namespace_decl;
+      }
     } else if (auto class_type =
                    context.insts().TryGetAs<SemIR::ClassType>(const_inst_id)) {
       const auto& class_info = context.classes().Get(class_type->class_id);

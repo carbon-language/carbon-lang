@@ -285,7 +285,7 @@ fn F() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc10_29.3.temp = alloca ptr, align 8, !dbg !60
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc10_29.3.temp), !dbg !60
-// CHECK:STDOUT:   call void @_Z20TakeGenericMethodPtrIN6Carbon1CEEvMT_KFvvE.carbon_thunk._(ptr @.b35), !dbg !61
+// CHECK:STDOUT:   call void @_Z20TakeGenericMethodPtrIN6Carbon4Main1CEEvMT_KFvvE.carbon_thunk._(ptr @.b35), !dbg !61
 // CHECK:STDOUT:   call void @"_CSelfDestruct.659d177172b60c17:core.Destroy.Core"(ptr @.b35), !dbg !60
 // CHECK:STDOUT:   ret void, !dbg !62
 // CHECK:STDOUT: }
@@ -317,7 +317,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
-// CHECK:STDOUT: define internal void @_Z20TakeGenericMethodPtrIN6Carbon1CEEvMT_KFvvE.carbon_thunk._(ptr noundef %ptr) #2 {
+// CHECK:STDOUT: define internal void @_Z20TakeGenericMethodPtrIN6Carbon4Main1CEEvMT_KFvvE.carbon_thunk._(ptr noundef %ptr) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %ptr.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %coerce = alloca { i64, i64 }, align 8
@@ -329,7 +329,7 @@ fn F() {
 // CHECK:STDOUT:   %3 = load i64, ptr %2, align 8
 // CHECK:STDOUT:   %4 = getelementptr inbounds nuw { i64, i64 }, ptr %coerce, i32 0, i32 1
 // CHECK:STDOUT:   %5 = load i64, ptr %4, align 8
-// CHECK:STDOUT:   call void @_Z20TakeGenericMethodPtrIN6Carbon1CEEvMT_KFvvE(i64 %3, i64 %5)
+// CHECK:STDOUT:   call void @_Z20TakeGenericMethodPtrIN6Carbon4Main1CEEvMT_KFvvE(i64 %3, i64 %5)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -342,7 +342,7 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @_Z20TakeGenericMethodPtrIN6Carbon1CEEvMT_KFvvE(i64, i64) #4
+// CHECK:STDOUT: declare void @_Z20TakeGenericMethodPtrIN6Carbon4Main1CEEvMT_KFvvE(i64, i64) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline nounwind }
