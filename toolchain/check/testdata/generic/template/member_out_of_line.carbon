@@ -21,14 +21,14 @@ class Class(template T: type) {
   var n: T;
 }
 
-// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+3]]:30-35: error: type `<pattern for <splice of <cannot stringify inst7800007A: {kind: ConvertToValueAction, arg0: inst78000077, arg1: inst(TypeType), type: type(inst(InstType))}>>>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T>` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+3]]:30-35: error: type `<pattern for <splice of <cannot stringify inst7800007F: {kind: ConvertToValueAction, arg0: inst7800007C, arg1: inst(TypeType), type: type(inst(InstType))}>>>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T>` [RedeclParamDiffersType]
 // CHECK:STDERR: fail_todo_basic.carbon:[[@LINE-6]]:8-11: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR:
 fn Class(template T: type).F(n: T.U) -> T.U {
   return n;
 }
 
-// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+3]]:1-43: error: function redeclaration differs because return type is `<splice of <cannot stringify inst780000D8: {kind: ConvertToValueAction, arg0: inst780000D5, arg1: inst(TypeType), type: type(inst(InstType))}>>` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+3]]:1-43: error: function redeclaration differs because return type is `<splice of <cannot stringify inst780000DF: {kind: ConvertToValueAction, arg0: inst780000DC, arg1: inst(TypeType), type: type(inst(InstType))}>>` [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR: fail_todo_basic.carbon:[[@LINE-12]]:3-18: note: previously declared with return type `T` [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:
 fn Class(template T: type).G(self) -> T.U {
@@ -131,14 +131,16 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:       %.loc14_22.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc14_20: type = symbolic_binding T, 0, template [template = @Class.%T.loc5_23.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref.loc14_41: type = name_ref T, %T.loc14_20 [template = %T.loc14_33 (constants.%T)]
+// CHECK:STDOUT:     %.loc14_41: type = specific_constant %T.loc14_20, @Class(constants.%T) [template = %T.loc14_33 (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc14_41: type = name_ref T, %.loc14_41 [template = %T.loc14_33 (constants.%T)]
 // CHECK:STDOUT:     %.loc14_42.7: type = type_of_inst %.loc14_42.1 [template = %.loc14_42.2 (constants.%.eff391.2)]
 // CHECK:STDOUT:     %.loc14_42.8: @Class.F.loc14.%.loc14_42.2 (%.eff391.2) = splice_inst %.loc14_42.1 [template = %.loc14_42.3 (constants.%.b66113.2)]
 // CHECK:STDOUT:     %.loc14_42.9: type = splice_inst %.loc14_42.4 [template = %.loc14_42.5 (constants.%.5372ba.2)]
 // CHECK:STDOUT:     %.loc14_42.10: Core.Form = init_form %.loc14_42.9 [template = %.loc14_42.6 (constants.%.cd79f1.1)]
 // CHECK:STDOUT:     %n.param: @Class.F.loc14.%.loc14_34.5 (%.5372ba.1) = value_param call_param0
 // CHECK:STDOUT:     %.loc14_34.6: type = splice_block %.loc14_34.9 [template = %.loc14_34.5 (constants.%.5372ba.1)] {
-// CHECK:STDOUT:       %T.ref.loc14_33: type = name_ref T, %T.loc14_20 [template = %T.loc14_33 (constants.%T)]
+// CHECK:STDOUT:       %.loc14_33: type = specific_constant %T.loc14_20, @Class(constants.%T) [template = %T.loc14_33 (constants.%T)]
+// CHECK:STDOUT:       %T.ref.loc14_33: type = name_ref T, %.loc14_33 [template = %T.loc14_33 (constants.%T)]
 // CHECK:STDOUT:       %.loc14_34.7: type = type_of_inst %.loc14_34.1 [template = %.loc14_34.2 (constants.%.eff391.1)]
 // CHECK:STDOUT:       %.loc14_34.8: @Class.F.loc14.%.loc14_34.2 (%.eff391.1) = splice_inst %.loc14_34.1 [template = %.loc14_34.3 (constants.%.b66113.1)]
 // CHECK:STDOUT:       %.loc14_34.9: type = splice_inst %.loc14_34.4 [template = %.loc14_34.5 (constants.%.5372ba.1)]
@@ -158,7 +160,8 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:       %.loc21_22.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc21_20: type = symbolic_binding T, 0, template [template = @Class.%T.loc5_23.1 (constants.%T)]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc21_20 [template = %T.loc21_30 (constants.%T)]
+// CHECK:STDOUT:     %.loc21_39: type = specific_constant %T.loc21_20, @Class(constants.%T) [template = %T.loc21_30 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %.loc21_39 [template = %T.loc21_30 (constants.%T)]
 // CHECK:STDOUT:     %.loc21_40.7: type = type_of_inst %.loc21_40.1 [template = %.loc21_40.2 (constants.%.eff391.4)]
 // CHECK:STDOUT:     %.loc21_40.8: @Class.G.loc21.%.loc21_40.2 (%.eff391.4) = splice_inst %.loc21_40.1 [template = %.loc21_40.3 (constants.%.b66113.4)]
 // CHECK:STDOUT:     %.loc21_40.9: type = splice_inst %.loc21_40.4 [template = %.loc21_40.5 (constants.%.5372ba.4)]
@@ -196,10 +199,14 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:       %return.param_patt.loc6_17.1: @Class.F.loc6.%pattern_type (%pattern_type.51d) = out_param_pattern [template = %return.param_patt.loc6_17.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:       %return.patt.loc6_14.1: @Class.F.loc6.%pattern_type (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc6_17.1, %T.ref.loc6_17 [template = %return.patt.loc6_14.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref.loc6_17: type = name_ref T, @Class.%T.loc5_23.2 [template = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc6_17.2: Core.Form = init_form %T.ref.loc6_17 [template = %.loc6_17.1 (constants.%.184)]
+// CHECK:STDOUT:       %.loc6_17.2: type = specific_constant @Class.%T.loc5_23.2, @Class(constants.%T) [template = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref.loc6_17: type = name_ref T, %.loc6_17.2 [template = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc6_17.3: Core.Form = init_form %T.ref.loc6_17 [template = %.loc6_17.1 (constants.%.184)]
 // CHECK:STDOUT:       %n.param: @Class.F.loc6.%T (%T) = value_param call_param0
-// CHECK:STDOUT:       %T.ref.loc6_11: type = name_ref T, @Class.%T.loc5_23.2 [template = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc6_11.1: type = splice_block %T.ref.loc6_11 [template = %T (constants.%T)] {
+// CHECK:STDOUT:         %.loc6_11.2: type = specific_constant @Class.%T.loc5_23.2, @Class(constants.%T) [template = %T (constants.%T)]
+// CHECK:STDOUT:         %T.ref.loc6_11: type = name_ref T, %.loc6_11.2 [template = %T (constants.%T)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %n: @Class.F.loc6.%T (%T) = wrapper_binding n, %n.param
 // CHECK:STDOUT:       %return.param: ref @Class.F.loc6.%T (%T) = out_param call_param1
 // CHECK:STDOUT:       %return: ref @Class.F.loc6.%T (%T) = return_slot %return.param
@@ -210,8 +217,9 @@ fn Class(template T: type).G(self) -> T.U {
 // CHECK:STDOUT:       %return.param_patt.loc7_17.1: @Class.G.loc7.%pattern_type.loc7_17 (%pattern_type.51d) = out_param_pattern [template = %return.param_patt.loc7_17.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:       %return.patt.loc7_14.1: @Class.G.loc7.%pattern_type.loc7_17 (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc7_17.1, %T.ref [template = %return.patt.loc7_14.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Class.%T.loc5_23.2 [template = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc7_17.2: Core.Form = init_form %T.ref [template = %.loc7_17.1 (constants.%.184)]
+// CHECK:STDOUT:       %.loc7_17.2: type = specific_constant @Class.%T.loc5_23.2, @Class(constants.%T) [template = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc7_17.2 [template = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc7_17.3: Core.Form = init_form %T.ref [template = %.loc7_17.1 (constants.%.184)]
 // CHECK:STDOUT:       %self.param: @Class.G.loc7.%Class (%Class) = value_param call_param0
 // CHECK:STDOUT:       %.loc7_8.1: type = splice_block %Self.ref [template = %Class (constants.%Class)] {
 // CHECK:STDOUT:         %.loc7_8.2: type = specific_constant constants.%Class, @Class(constants.%T) [template = %Class (constants.%Class)]

@@ -2438,8 +2438,8 @@ fn Run() {
 // CHECK:STDOUT:   %A.type: type = parameterized_class_name_type @A [concrete]
 // CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
 // CHECK:STDOUT:   %A.59f: type = class_type @A, @A(%T) [template]
-// CHECK:STDOUT:   %.72e: type = type_of_inst @A.MakeA.%.loc12_20.1 [template]
-// CHECK:STDOUT:   %.41c: %.72e = splice_inst @A.MakeA.%.loc12_20.1 [template]
+// CHECK:STDOUT:   %.23e: type = type_of_inst @A.MakeA.%.loc12_20.1 [template]
+// CHECK:STDOUT:   %.296: %.23e = splice_inst @A.MakeA.%.loc12_20.1 [template]
 // CHECK:STDOUT:   %.5372ba.1: type = splice_inst @A.MakeA.%.loc12_20.4 [template]
 // CHECK:STDOUT:   %.cd79f1.1: Core.Form = init_form %.5372ba.1 [template]
 // CHECK:STDOUT:   %pattern_type.fcb8f3.1: type = pattern_type %.5372ba.1 [template]
@@ -2611,9 +2611,10 @@ fn Run() {
 // CHECK:STDOUT:       %return.patt.loc12_14.1: @A.MakeA.%pattern_type (%pattern_type.fcb8f3.1) = return_slot_pattern %return.param_patt.loc12_20.1, %.loc12_20.9 [template = %return.patt.loc12_14.2 (constants.%return.patt.7fc6a1.1)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %A.ref: %A.type = name_ref A, file.%A.decl [concrete = constants.%A.generic]
-// CHECK:STDOUT:       %T.ref.loc12: type = name_ref T, @A.%T.loc10_19.2 [template = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc12_20.7: type = type_of_inst %.loc12_20.1 [template = %.loc12_20.2 (constants.%.72e)]
-// CHECK:STDOUT:       %.loc12_20.8: @A.MakeA.%.loc12_20.2 (%.72e) = splice_inst %.loc12_20.1 [template = %.loc12_20.3 (constants.%.41c)]
+// CHECK:STDOUT:       %.loc12_19: type = specific_constant @A.%T.loc10_19.2, @A(constants.%T) [template = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref.loc12: type = name_ref T, %.loc12_19 [template = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc12_20.7: type = type_of_inst %.loc12_20.1 [template = %.loc12_20.2 (constants.%.23e)]
+// CHECK:STDOUT:       %.loc12_20.8: @A.MakeA.%.loc12_20.2 (%.23e) = splice_inst %.loc12_20.1 [template = %.loc12_20.3 (constants.%.296)]
 // CHECK:STDOUT:       %.loc12_20.9: type = splice_inst %.loc12_20.4 [template = %.loc12_20.5 (constants.%.5372ba.1)]
 // CHECK:STDOUT:       %.loc12_20.10: Core.Form = init_form %.loc12_20.9 [template = %.loc12_20.6 (constants.%.cd79f1.1)]
 // CHECK:STDOUT:       %return.param: ref @A.MakeA.%.loc12_20.5 (%.5372ba.1) = out_param call_param0
@@ -2634,8 +2635,8 @@ fn Run() {
 // CHECK:STDOUT: generic fn @A.MakeA(@A.%T.loc10_19.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0, template [template = %T (constants.%T)]
 // CHECK:STDOUT:   %.loc12_20.1: <instruction> = call_action (%A.ref, %T.ref.loc12), false [template]
-// CHECK:STDOUT:   %.loc12_20.2: type = type_of_inst %.loc12_20.1 [template = %.loc12_20.2 (constants.%.72e)]
-// CHECK:STDOUT:   %.loc12_20.3: @A.MakeA.%.loc12_20.2 (%.72e) = splice_inst %.loc12_20.1 [template = %.loc12_20.3 (constants.%.41c)]
+// CHECK:STDOUT:   %.loc12_20.2: type = type_of_inst %.loc12_20.1 [template = %.loc12_20.2 (constants.%.23e)]
+// CHECK:STDOUT:   %.loc12_20.3: @A.MakeA.%.loc12_20.2 (%.23e) = splice_inst %.loc12_20.1 [template = %.loc12_20.3 (constants.%.296)]
 // CHECK:STDOUT:   %.loc12_20.4: <instruction> = convert_to_value_action %.loc12_20.8, type [template]
 // CHECK:STDOUT:   %.loc12_20.5: type = splice_inst %.loc12_20.4 [template = %.loc12_20.5 (constants.%.5372ba.1)]
 // CHECK:STDOUT:   %.loc12_20.6: Core.Form = init_form %.loc12_20.5 [template = %.loc12_20.6 (constants.%.cd79f1.1)]
@@ -2659,7 +2660,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() -> out %return.param: @A.MakeA.%.loc12_20.5 (%.5372ba.1) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, @A.%T.loc10_19.2 [template = %T (constants.%T)]
+// CHECK:STDOUT:     %.loc13_22: type = specific_constant @A.%T.loc10_19.2, @A(constants.%T) [template = %T (constants.%T)]
+// CHECK:STDOUT:     %T.ref.loc13: type = name_ref T, %.loc13_22 [template = %T (constants.%T)]
 // CHECK:STDOUT:     %.loc13_23.1: type = type_of_inst %.loc13_23.3 [template = %.loc13_23.4 (constants.%.a08)]
 // CHECK:STDOUT:     %.loc13_23.2: @A.MakeA.%.loc13_23.4 (%.a08) = splice_inst %.loc13_23.3 [template = %.loc13_23.5 (constants.%.5c2)]
 // CHECK:STDOUT:     %.loc13_30.1: type = type_of_inst %.loc13_30.3 [template = %.loc13_30.4 (constants.%.308)]

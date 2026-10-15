@@ -744,19 +744,19 @@ fn F() {
 // CHECK:STDOUT:   %require_complete.d83: <witness> = require_complete_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %y.param_patt.ec0: %pattern_type.2c66b4.2 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %y.patt.d6d: %pattern_type.2c66b4.2 = wrapper_binding_pattern y, %y.param_patt.ec0 [symbolic]
-// CHECK:STDOUT:   %fn.type.d27: type = fn_type @fn.loc6, @fn.loc5(%T.f84) [symbolic]
-// CHECK:STDOUT:   %fn.85b: %fn.type.d27 = struct_value () [symbolic]
+// CHECK:STDOUT:   %fn.type.48e: type = fn_type @fn.loc6, @fn.loc5(%T.f84) [symbolic]
+// CHECK:STDOUT:   %fn.7f4: %fn.type.48e = struct_value () [symbolic]
 // CHECK:STDOUT:   %z.param_patt.b42: %pattern_type.2c66b4.2 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %z.patt.513: %pattern_type.2c66b4.2 = wrapper_binding_pattern z, %z.param_patt.b42 [symbolic]
-// CHECK:STDOUT:   %fn.type.a09: type = fn_type @fn.loc7, @fn.loc6(%T.f84) [symbolic]
-// CHECK:STDOUT:   %fn.ecf: %fn.type.a09 = struct_value () [symbolic]
+// CHECK:STDOUT:   %fn.type.3f9: type = fn_type @fn.loc7, @fn.loc6(%T.f84) [symbolic]
+// CHECK:STDOUT:   %fn.8a9: %fn.type.3f9 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.d9c: <witness> = lookup_impl_witness %T.f84, @Copy [symbolic]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.d2f9c3.2: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.f84) [symbolic]
 // CHECK:STDOUT:   %.8bf: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d2f9c3.2, %T.f84 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.bb5: %.8bf = impl_witness_access %Copy.lookup_impl_witness.d9c, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.2ac: <specific function> = specific_impl_function %impl.elem0.bb5, @Copy.WithSelf.Op(%T.f84) [symbolic]
-// CHECK:STDOUT:   %fn.specific_fn.63f: <specific function> = specific_function %fn.ecf, @fn.loc7(%T.f84) [symbolic]
-// CHECK:STDOUT:   %fn.specific_fn.278: <specific function> = specific_function %fn.85b, @fn.loc6(%T.f84) [symbolic]
+// CHECK:STDOUT:   %fn.specific_fn.127: <specific function> = specific_function %fn.8a9, @fn.loc7(%T.f84) [symbolic]
+// CHECK:STDOUT:   %fn.specific_fn.3ca: <specific function> = specific_function %fn.7f4, @fn.loc6(%T.f84) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
@@ -806,27 +806,27 @@ fn F() {
 // CHECK:STDOUT:   %return.param_patt.5a1: %pattern_type.831 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.c0c: %pattern_type.831 = return_slot_pattern %return.param_patt.5a1, bool [concrete]
 // CHECK:STDOUT:   %fn.specific_fn.c23: <specific function> = specific_function %fn.415, @fn.loc5(%Copy.facet.7af) [concrete]
-// CHECK:STDOUT:   %fn.type.923: type = fn_type @fn.loc6, @fn.loc5(%Copy.facet.95d) [concrete]
-// CHECK:STDOUT:   %fn.793: %fn.type.923 = struct_value () [concrete]
+// CHECK:STDOUT:   %fn.type.7b0: type = fn_type @fn.loc6, @fn.loc5(%Copy.facet.95d) [concrete]
+// CHECK:STDOUT:   %fn.758: %fn.type.7b0 = struct_value () [concrete]
 // CHECK:STDOUT:   %y.param_patt.665: %pattern_type.d94 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %y.patt.e18: %pattern_type.d94 = wrapper_binding_pattern y, %y.param_patt.665 [concrete]
-// CHECK:STDOUT:   %fn.specific_fn.41b: <specific function> = specific_function %fn.793, @fn.loc6(%Copy.facet.95d) [concrete]
+// CHECK:STDOUT:   %fn.specific_fn.2f6: <specific function> = specific_function %fn.758, @fn.loc6(%Copy.facet.95d) [concrete]
 // CHECK:STDOUT:   %complete_type.127: <witness> = complete_type_witness bool [concrete]
-// CHECK:STDOUT:   %fn.type.da6: type = fn_type @fn.loc6, @fn.loc5(%Copy.facet.7af) [concrete]
-// CHECK:STDOUT:   %fn.e2b: %fn.type.da6 = struct_value () [concrete]
+// CHECK:STDOUT:   %fn.type.641: type = fn_type @fn.loc6, @fn.loc5(%Copy.facet.7af) [concrete]
+// CHECK:STDOUT:   %fn.3e7: %fn.type.641 = struct_value () [concrete]
 // CHECK:STDOUT:   %y.param_patt.077: %pattern_type.831 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %y.patt.252: %pattern_type.831 = wrapper_binding_pattern y, %y.param_patt.077 [concrete]
-// CHECK:STDOUT:   %fn.specific_fn.88e: <specific function> = specific_function %fn.e2b, @fn.loc6(%Copy.facet.7af) [concrete]
-// CHECK:STDOUT:   %fn.type.7e4: type = fn_type @fn.loc7, @fn.loc6(%Copy.facet.95d) [concrete]
-// CHECK:STDOUT:   %fn.ea4: %fn.type.7e4 = struct_value () [concrete]
+// CHECK:STDOUT:   %fn.specific_fn.421: <specific function> = specific_function %fn.3e7, @fn.loc6(%Copy.facet.7af) [concrete]
+// CHECK:STDOUT:   %fn.type.8ae: type = fn_type @fn.loc7, @fn.loc6(%Copy.facet.95d) [concrete]
+// CHECK:STDOUT:   %fn.c3f: %fn.type.8ae = struct_value () [concrete]
 // CHECK:STDOUT:   %z.param_patt.896: %pattern_type.d94 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %z.patt.660: %pattern_type.d94 = wrapper_binding_pattern z, %z.param_patt.896 [concrete]
-// CHECK:STDOUT:   %fn.specific_fn.01e: <specific function> = specific_function %fn.ea4, @fn.loc7(%Copy.facet.95d) [concrete]
-// CHECK:STDOUT:   %fn.type.16e: type = fn_type @fn.loc7, @fn.loc6(%Copy.facet.7af) [concrete]
-// CHECK:STDOUT:   %fn.8bf: %fn.type.16e = struct_value () [concrete]
+// CHECK:STDOUT:   %fn.specific_fn.0fa: <specific function> = specific_function %fn.c3f, @fn.loc7(%Copy.facet.95d) [concrete]
+// CHECK:STDOUT:   %fn.type.d03: type = fn_type @fn.loc7, @fn.loc6(%Copy.facet.7af) [concrete]
+// CHECK:STDOUT:   %fn.b92: %fn.type.d03 = struct_value () [concrete]
 // CHECK:STDOUT:   %z.param_patt.a49: %pattern_type.831 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %z.patt.246: %pattern_type.831 = wrapper_binding_pattern z, %z.param_patt.a49 [concrete]
-// CHECK:STDOUT:   %fn.specific_fn.b95: <specific function> = specific_function %fn.8bf, @fn.loc7(%Copy.facet.7af) [concrete]
+// CHECK:STDOUT:   %fn.specific_fn.c7b: <specific function> = specific_function %fn.b92, @fn.loc7(%Copy.facet.7af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.95d) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet.95d [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
@@ -941,27 +941,29 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc5_43.1 [symbolic = %require_complete (constants.%require_complete.d83)]
-// CHECK:STDOUT:   %fn.type: type = fn_type @fn.loc6, @fn.loc5(%T.loc5_27.1) [symbolic = %fn.type (constants.%fn.type.d27)]
-// CHECK:STDOUT:   %fn: @fn.loc5.%fn.type (%fn.type.d27) = struct_value () [symbolic = %fn (constants.%fn.85b)]
-// CHECK:STDOUT:   %fn.specific_fn.loc6_26.2: <specific function> = specific_function %fn, @fn.loc6(%T.loc5_27.1) [symbolic = %fn.specific_fn.loc6_26.2 (constants.%fn.specific_fn.278)]
+// CHECK:STDOUT:   %fn.type: type = fn_type @fn.loc6, @fn.loc5(%T.loc5_27.1) [symbolic = %fn.type (constants.%fn.type.48e)]
+// CHECK:STDOUT:   %fn: @fn.loc5.%fn.type (%fn.type.48e) = struct_value () [symbolic = %fn (constants.%fn.7f4)]
+// CHECK:STDOUT:   %fn.specific_fn.loc6_26.2: <specific function> = specific_function %fn, @fn.loc6(%T.loc5_27.1) [symbolic = %fn.specific_fn.loc6_26.2 (constants.%fn.specific_fn.3ca)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @fn.loc5.%T.as_type.loc5_43.1 (%T.as_type)) -> out %return.param: @fn.loc5.%T.as_type.loc5_43.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %fn.decl: @fn.loc5.%fn.type (%fn.type.d27) = fn_decl @fn.loc6 [symbolic = @fn.loc5.%fn (constants.%fn.85b)] {
+// CHECK:STDOUT:     %fn.decl: @fn.loc5.%fn.type (%fn.type.48e) = fn_decl @fn.loc6 [symbolic = @fn.loc5.%fn (constants.%fn.7f4)] {
 // CHECK:STDOUT:       %y.param_patt.loc6_16.1: @fn.loc6.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %y.param_patt.loc6_16.2 (constants.%y.param_patt.ec0)]
 // CHECK:STDOUT:       %y.patt.loc6_16.1: @fn.loc6.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern y, %y.param_patt.loc6_16.1 [symbolic = %y.patt.loc6_16.2 (constants.%y.patt.d6d)]
 // CHECK:STDOUT:       %return.param_patt.loc6_24.1: @fn.loc6.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc6_24.2 (constants.%return.param_patt.bf4475.2)]
-// CHECK:STDOUT:       %return.patt.loc6_21.1: @fn.loc6.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc6_24.1, %.loc6_24.3 [symbolic = %return.patt.loc6_21.2 (constants.%return.patt.f44)]
+// CHECK:STDOUT:       %return.patt.loc6_21.1: @fn.loc6.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc6_24.1, %.loc6_24.4 [symbolic = %return.patt.loc6_21.2 (constants.%return.patt.f44)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref.loc6_24: %Copy.type = name_ref T, @fn.loc5.%T.loc5_27.2 [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %.loc6_24.3: %Copy.type = specific_constant @fn.loc5.%T.loc5_27.2, @fn.loc5(constants.%T.f84) [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %T.ref.loc6_24: %Copy.type = name_ref T, %.loc6_24.3 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:       %T.as_type.loc6_24: type = facet_access_type %T.ref.loc6_24 [symbolic = %T.as_type.loc6_18.1 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc6_24.3: type = converted %T.ref.loc6_24, %T.as_type.loc6_24 [symbolic = %T.as_type.loc6_18.1 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc6_24.4: Core.Form = init_form %.loc6_24.3 [symbolic = %.loc6_24.2 (constants.%.1ce700.2)]
+// CHECK:STDOUT:       %.loc6_24.4: type = converted %T.ref.loc6_24, %T.as_type.loc6_24 [symbolic = %T.as_type.loc6_18.1 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc6_24.5: Core.Form = init_form %.loc6_24.4 [symbolic = %.loc6_24.2 (constants.%.1ce700.2)]
 // CHECK:STDOUT:       %y.param: @fn.loc6.%T.as_type.loc6_18.1 (%T.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc6_18.1: type = splice_block %.loc6_18.2 [symbolic = %T.as_type.loc6_18.1 (constants.%T.as_type)] {
-// CHECK:STDOUT:         %T.ref.loc6_18: %Copy.type = name_ref T, @fn.loc5.%T.loc5_27.2 [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %.loc6_18.1: type = splice_block %.loc6_18.3 [symbolic = %T.as_type.loc6_18.1 (constants.%T.as_type)] {
+// CHECK:STDOUT:         %.loc6_18.2: %Copy.type = specific_constant @fn.loc5.%T.loc5_27.2, @fn.loc5(constants.%T.f84) [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:         %T.ref.loc6_18: %Copy.type = name_ref T, %.loc6_18.2 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:         %T.as_type.loc6_18.2: type = facet_access_type %T.ref.loc6_18 [symbolic = %T.as_type.loc6_18.1 (constants.%T.as_type)]
-// CHECK:STDOUT:         %.loc6_18.2: type = converted %T.ref.loc6_18, %T.as_type.loc6_18.2 [symbolic = %T.as_type.loc6_18.1 (constants.%T.as_type)]
+// CHECK:STDOUT:         %.loc6_18.3: type = converted %T.ref.loc6_18, %T.as_type.loc6_18.2 [symbolic = %T.as_type.loc6_18.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %y: @fn.loc6.%T.as_type.loc6_18.1 (%T.as_type) = wrapper_binding y, %y.param
 // CHECK:STDOUT:       %return.param: ref @fn.loc6.%T.as_type.loc6_18.1 (%T.as_type) = out_param call_param1
@@ -970,7 +972,7 @@ fn F() {
 // CHECK:STDOUT:     %x.ref: @fn.loc5.%T.as_type.loc5_43.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %.loc10_8.1: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T.loc5_27.1 (constants.%T.f84)]
 // CHECK:STDOUT:     %.loc10_8.2: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T.loc5_27.1 (constants.%T.f84)]
-// CHECK:STDOUT:     %fn.specific_fn.loc6_26.1: <specific function> = specific_function %fn.decl, @fn.loc6(constants.%T.f84) [symbolic = %fn.specific_fn.loc6_26.2 (constants.%fn.specific_fn.278)]
+// CHECK:STDOUT:     %fn.specific_fn.loc6_26.1: <specific function> = specific_function %fn.decl, @fn.loc6(constants.%T.f84) [symbolic = %fn.specific_fn.loc6_26.2 (constants.%fn.specific_fn.3ca)]
 // CHECK:STDOUT:     %.loc5_49.1: ref @fn.loc5.%T.as_type.loc5_43.1 (%T.as_type) = splice_block %return.param {}
 // CHECK:STDOUT:     %fn.call: init @fn.loc5.%T.as_type.loc5_43.1 (%T.as_type) to %.loc5_49.1 = call %fn.specific_fn.loc6_26.1(%x.ref)
 // CHECK:STDOUT:     return %fn.call to %return.param
@@ -989,27 +991,29 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc6_18.1 [symbolic = %require_complete (constants.%require_complete.d83)]
-// CHECK:STDOUT:   %fn.type: type = fn_type @fn.loc7, @fn.loc6(%T) [symbolic = %fn.type (constants.%fn.type.a09)]
-// CHECK:STDOUT:   %fn: @fn.loc6.%fn.type (%fn.type.a09) = struct_value () [symbolic = %fn (constants.%fn.ecf)]
-// CHECK:STDOUT:   %fn.specific_fn.loc7_28.2: <specific function> = specific_function %fn, @fn.loc7(%T) [symbolic = %fn.specific_fn.loc7_28.2 (constants.%fn.specific_fn.63f)]
+// CHECK:STDOUT:   %fn.type: type = fn_type @fn.loc7, @fn.loc6(%T) [symbolic = %fn.type (constants.%fn.type.3f9)]
+// CHECK:STDOUT:   %fn: @fn.loc6.%fn.type (%fn.type.3f9) = struct_value () [symbolic = %fn (constants.%fn.8a9)]
+// CHECK:STDOUT:   %fn.specific_fn.loc7_28.2: <specific function> = specific_function %fn, @fn.loc7(%T) [symbolic = %fn.specific_fn.loc7_28.2 (constants.%fn.specific_fn.127)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%y.param: @fn.loc6.%T.as_type.loc6_18.1 (%T.as_type)) -> out %return.param: @fn.loc6.%T.as_type.loc6_18.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %fn.decl: @fn.loc6.%fn.type (%fn.type.a09) = fn_decl @fn.loc7 [symbolic = @fn.loc6.%fn (constants.%fn.ecf)] {
+// CHECK:STDOUT:     %fn.decl: @fn.loc6.%fn.type (%fn.type.3f9) = fn_decl @fn.loc7 [symbolic = @fn.loc6.%fn (constants.%fn.8a9)] {
 // CHECK:STDOUT:       %z.param_patt.loc7_18.1: @fn.loc7.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %z.param_patt.loc7_18.2 (constants.%z.param_patt.b42)]
 // CHECK:STDOUT:       %z.patt.loc7_18.1: @fn.loc7.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern z, %z.param_patt.loc7_18.1 [symbolic = %z.patt.loc7_18.2 (constants.%z.patt.513)]
 // CHECK:STDOUT:       %return.param_patt.loc7_26.1: @fn.loc7.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc7_26.2 (constants.%return.param_patt.bf4475.2)]
-// CHECK:STDOUT:       %return.patt.loc7_23.1: @fn.loc7.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc7_26.1, %.loc7_26.3 [symbolic = %return.patt.loc7_23.2 (constants.%return.patt.f44)]
+// CHECK:STDOUT:       %return.patt.loc7_23.1: @fn.loc7.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc7_26.1, %.loc7_26.4 [symbolic = %return.patt.loc7_23.2 (constants.%return.patt.f44)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref.loc7_26: %Copy.type = name_ref T, @fn.loc5.%T.loc5_27.2 [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %.loc7_26.3: %Copy.type = specific_constant @fn.loc5.%T.loc5_27.2, @fn.loc5(constants.%T.f84) [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %T.ref.loc7_26: %Copy.type = name_ref T, %.loc7_26.3 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:       %T.as_type.loc7_26: type = facet_access_type %T.ref.loc7_26 [symbolic = %T.as_type.loc7_20.1 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc7_26.3: type = converted %T.ref.loc7_26, %T.as_type.loc7_26 [symbolic = %T.as_type.loc7_20.1 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc7_26.4: Core.Form = init_form %.loc7_26.3 [symbolic = %.loc7_26.2 (constants.%.1ce700.2)]
+// CHECK:STDOUT:       %.loc7_26.4: type = converted %T.ref.loc7_26, %T.as_type.loc7_26 [symbolic = %T.as_type.loc7_20.1 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc7_26.5: Core.Form = init_form %.loc7_26.4 [symbolic = %.loc7_26.2 (constants.%.1ce700.2)]
 // CHECK:STDOUT:       %z.param: @fn.loc7.%T.as_type.loc7_20.1 (%T.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc7_20.1: type = splice_block %.loc7_20.2 [symbolic = %T.as_type.loc7_20.1 (constants.%T.as_type)] {
-// CHECK:STDOUT:         %T.ref.loc7_20: %Copy.type = name_ref T, @fn.loc5.%T.loc5_27.2 [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %.loc7_20.1: type = splice_block %.loc7_20.3 [symbolic = %T.as_type.loc7_20.1 (constants.%T.as_type)] {
+// CHECK:STDOUT:         %.loc7_20.2: %Copy.type = specific_constant @fn.loc5.%T.loc5_27.2, @fn.loc5(constants.%T.f84) [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:         %T.ref.loc7_20: %Copy.type = name_ref T, %.loc7_20.2 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:         %T.as_type.loc7_20.2: type = facet_access_type %T.ref.loc7_20 [symbolic = %T.as_type.loc7_20.1 (constants.%T.as_type)]
-// CHECK:STDOUT:         %.loc7_20.2: type = converted %T.ref.loc7_20, %T.as_type.loc7_20.2 [symbolic = %T.as_type.loc7_20.1 (constants.%T.as_type)]
+// CHECK:STDOUT:         %.loc7_20.3: type = converted %T.ref.loc7_20, %T.as_type.loc7_20.2 [symbolic = %T.as_type.loc7_20.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %z: @fn.loc7.%T.as_type.loc7_20.1 (%T.as_type) = wrapper_binding z, %z.param
 // CHECK:STDOUT:       %return.param: ref @fn.loc7.%T.as_type.loc7_20.1 (%T.as_type) = out_param call_param1
@@ -1018,7 +1022,7 @@ fn F() {
 // CHECK:STDOUT:     %y.ref: @fn.loc6.%T.as_type.loc6_18.1 (%T.as_type) = name_ref y, %y
 // CHECK:STDOUT:     %.loc9_10.1: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:     %.loc9_10.2: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T (constants.%T.f84)]
-// CHECK:STDOUT:     %fn.specific_fn.loc7_28.1: <specific function> = specific_function %fn.decl, @fn.loc7(constants.%T.f84) [symbolic = %fn.specific_fn.loc7_28.2 (constants.%fn.specific_fn.63f)]
+// CHECK:STDOUT:     %fn.specific_fn.loc7_28.1: <specific function> = specific_function %fn.decl, @fn.loc7(constants.%T.f84) [symbolic = %fn.specific_fn.loc7_28.2 (constants.%fn.specific_fn.127)]
 // CHECK:STDOUT:     %.loc6_24.1: ref @fn.loc6.%T.as_type.loc6_18.1 (%T.as_type) = splice_block %return.param {}
 // CHECK:STDOUT:     %fn.call: init @fn.loc6.%T.as_type.loc6_18.1 (%T.as_type) to %.loc6_24.1 = call %fn.specific_fn.loc7_28.1(%y.ref)
 // CHECK:STDOUT:     return %fn.call to %return.param
@@ -1082,9 +1086,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.d83
-// CHECK:STDOUT:   %fn.type => constants.%fn.type.a09
-// CHECK:STDOUT:   %fn => constants.%fn.ecf
-// CHECK:STDOUT:   %fn.specific_fn.loc7_28.2 => constants.%fn.specific_fn.63f
+// CHECK:STDOUT:   %fn.type => constants.%fn.type.3f9
+// CHECK:STDOUT:   %fn => constants.%fn.8a9
+// CHECK:STDOUT:   %fn.specific_fn.loc7_28.2 => constants.%fn.specific_fn.127
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @fn.loc7(constants.%T.f84) {
@@ -1119,9 +1123,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %fn.type => constants.%fn.type.923
-// CHECK:STDOUT:   %fn => constants.%fn.793
-// CHECK:STDOUT:   %fn.specific_fn.loc6_26.2 => constants.%fn.specific_fn.41b
+// CHECK:STDOUT:   %fn.type => constants.%fn.type.7b0
+// CHECK:STDOUT:   %fn => constants.%fn.758
+// CHECK:STDOUT:   %fn.specific_fn.loc6_26.2 => constants.%fn.specific_fn.2f6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @fn.loc5(constants.%Copy.facet.7af) {
@@ -1137,9 +1141,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.127
-// CHECK:STDOUT:   %fn.type => constants.%fn.type.da6
-// CHECK:STDOUT:   %fn => constants.%fn.e2b
-// CHECK:STDOUT:   %fn.specific_fn.loc6_26.2 => constants.%fn.specific_fn.88e
+// CHECK:STDOUT:   %fn.type => constants.%fn.type.641
+// CHECK:STDOUT:   %fn => constants.%fn.3e7
+// CHECK:STDOUT:   %fn.specific_fn.loc6_26.2 => constants.%fn.specific_fn.421
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @fn.loc6(constants.%Copy.facet.95d) {
@@ -1154,9 +1158,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
-// CHECK:STDOUT:   %fn.type => constants.%fn.type.7e4
-// CHECK:STDOUT:   %fn => constants.%fn.ea4
-// CHECK:STDOUT:   %fn.specific_fn.loc7_28.2 => constants.%fn.specific_fn.01e
+// CHECK:STDOUT:   %fn.type => constants.%fn.type.8ae
+// CHECK:STDOUT:   %fn => constants.%fn.c3f
+// CHECK:STDOUT:   %fn.specific_fn.loc7_28.2 => constants.%fn.specific_fn.0fa
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @fn.loc6(constants.%Copy.facet.7af) {
@@ -1171,9 +1175,9 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.127
-// CHECK:STDOUT:   %fn.type => constants.%fn.type.16e
-// CHECK:STDOUT:   %fn => constants.%fn.8bf
-// CHECK:STDOUT:   %fn.specific_fn.loc7_28.2 => constants.%fn.specific_fn.b95
+// CHECK:STDOUT:   %fn.type => constants.%fn.type.d03
+// CHECK:STDOUT:   %fn => constants.%fn.b92
+// CHECK:STDOUT:   %fn.specific_fn.loc7_28.2 => constants.%fn.specific_fn.c7b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @fn.loc7(constants.%Copy.facet.95d) {

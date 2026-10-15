@@ -9,6 +9,7 @@
 #include <utility>
 #include <variant>
 
+#include "common/increment_scope.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/impl_lookup.h"
 #include "toolchain/check/custom_witness.h"
@@ -357,11 +358,10 @@ static auto CollectFacetWitnessSources(
       // Then each cycle back through to `facet_const_id` will have a smaller
       // type until it runs out of constraints. See for example the
       // fail_todo_concrete_access_witness_m_in_impls_constraint.carbon test.
-      //
-      // TODO: Use IncrementScope here.
-      context.impl_lookup_no_symbolic_final_lookups()++;
-      req = EvaluateIdentifiedWitnesses(context, loc_id, req);
-      context.impl_lookup_no_symbolic_final_lookups()--;
+      {
+        IncrementScope inc(context.impl_lookup_no_symbolic_final_lookups());
+        req = EvaluateIdentifiedWitnesses(context, loc_id, req);
+      }
 
       auto final_witness_id = SemIR::InstId::None;
       if (auto facet_value =

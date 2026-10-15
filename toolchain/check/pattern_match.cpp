@@ -1133,6 +1133,39 @@ auto CalleePatternMatch(Context& context,
           .param_ranges = {implicit_end, explicit_end, return_end}};
 }
 
+auto CalleeReturnPatternMatch(Context& context,
+                              const CalleePatternMatchResults& param_results,
+                              SemIR::InstId return_pattern_id)
+    -> CalleePatternMatchResults {
+  CARBON_CHECK(param_results.param_ranges.return_size() == 0);
+  auto call_param_patterns =
+      context.inst_blocks().GetOrEmpty(param_results.call_param_patterns_id);
+  auto call_params =
+      context.inst_blocks().GetOrEmpty(param_results.call_params_id);
+  CARBON_CHECK(call_params.size() == call_param_patterns.size());
+  auto explicit_end = param_results.param_ranges.explicit_end();
+  CARBON_CHECK(static_cast<size_t>(explicit_end.index) == call_params.size());
+
+  CalleeState state = {
+      .index = IndexSource(explicit_end),
+      .call_params = llvm::SmallVector<SemIR::InstId>(call_params.begin(),
+                                                      call_params.end()),
+      .call_param_patterns = llvm::SmallVector<SemIR::InstId>(
+          call_param_patterns.begin(), call_param_patterns.end())};
+  MatchContext match(context);
+  match.Match(&state, {.pattern_id = return_pattern_id,
+                       .work = MatchContext::PreWork{.scrutinee_id =
+                                                         SemIR::InstId::None}});
+  auto return_end = SemIR::CallParamIndex(state.call_params.size());
+  CARBON_CHECK(state.call_params.size() == state.call_param_patterns.size());
+
+  return {.call_param_patterns_id =
+              context.inst_blocks().Add(state.call_param_patterns),
+          .call_params_id = context.inst_blocks().Add(state.call_params),
+          .param_ranges = {param_results.param_ranges.implicit_end(),
+                           explicit_end, return_end}};
+}
+
 auto ThunkPatternMatch(Context& context,
                        llvm::ArrayRef<SemIR::InstId> param_pattern_ids,
                        llvm::ArrayRef<SemIR::InstId> outer_call_args)
