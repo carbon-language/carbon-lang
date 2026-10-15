@@ -8,9 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_prefix_repeat.carbon
 
-// CHECK:STDERR: fail_prefix_repeat.carbon:[[@LINE+4]]:17: error: parentheses are required around this unary `const` operator [UnaryOperatorRequiresParentheses]
-// CHECK:STDERR: fn F() -> const const i32* {
-// CHECK:STDERR:                 ^~~~~
+// CHECK:STDERR: fail_prefix_repeat.carbon:[[@LINE+2]]:17-21: error: parentheses are required around this unary `const` operator [UnaryOperatorRequiresParentheses]
 // CHECK:STDERR:
 fn F() -> const const i32* {
 }

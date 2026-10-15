@@ -35,13 +35,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "declaration.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+8]]:19: error: binding pattern has incomplete type `DeclBar` in name binding declaration [IncompleteTypeInBindingDecl]
-  // CHECK:STDERR:   var unused bar: Cpp.DeclBar;
-  // CHECK:STDERR:                   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+4]]:19-29: error: binding pattern has incomplete type `DeclBar` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR: included from: fail_use_declaration_as_definition.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./declaration.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class DeclBar;
-  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   var unused bar: Cpp.DeclBar;
 }
@@ -235,19 +231,11 @@ class Class1;
 class Generic(x: Core.Copy) {
 }
 
-// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+14]]:19: error: argument to C++ call has incomplete type `Cpp.Class1` [IncompleteTypeInCopyWitness]
-// CHECK:STDERR: fn GenericUse(p2: Generic(Cpp.Class1)) {
-// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE-9]]:7: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: class Class1;
-// CHECK:STDERR:       ^
-// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE-9]]:15: note: initializing generic parameter `x` declared here [InitializingGenericParam]
-// CHECK:STDERR: class Generic(x: Core.Copy) {
-// CHECK:STDERR:               ^~~~~~~~~~~~
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+6]]:19-37: error: argument to C++ call has incomplete type `Cpp.Class1` [IncompleteTypeInCopyWitness]
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE-7]]:7: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE-5]]:15-26: note: initializing generic parameter `x` declared here [InitializingGenericParam]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+4]]:15: warning: binding `p2` unused [UnusedBinding]
-// CHECK:STDERR: fn GenericUse(p2: Generic(Cpp.Class1)) {
-// CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_copy_witness_of_incomplete_class.carbon:[[@LINE+2]]:15-37: warning: binding `p2` unused [UnusedBinding]
 // CHECK:STDERR:
 fn GenericUse(p2: Generic(Cpp.Class1)) {
 }

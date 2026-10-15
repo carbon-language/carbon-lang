@@ -91,7 +91,15 @@ auto ClangDeclKey::Print(llvm::raw_ostream& out) const -> void {
 }
 
 auto ClangDecl::Print(llvm::raw_ostream& out) const -> void {
-  out << "{key: " << key << ", inst_id: " << inst_id << "}";
+  out << "{key: " << key << ", inst_id: " << inst_id;
+  if (specific_id.has_value()) {
+    out << ", specific_id: " << specific_id;
+  }
+  if (var_storage_inst_id.has_value()) {
+    out << ", var_storage_inst_id: " << var_storage_inst_id;
+  }
+  out << ", is_imported: " << (is_imported ? "true" : "false");
+  out << "}";
 }
 
 class ClangDeclStore::KeyContext : public TranslatingKeyContext<KeyContext> {

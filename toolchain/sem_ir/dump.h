@@ -63,6 +63,8 @@ auto Dump(const File& file, RequireImplsBlockId require_impls_block_id)
     -> std::string;
 auto Dump(const File& file, RequireImplsId require_impls_id) -> std::string;
 auto Dump(const File& file, SpecificId specific_id) -> std::string;
+auto Dump(const File& file, const SpecificInterface& specific_interface_id)
+    -> std::string;
 auto Dump(const File& file, SpecificInterfaceId specific_interface_id)
     -> std::string;
 auto Dump(const File& file, StructTypeFieldsId struct_type_fields_id)

@@ -63,9 +63,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_negative_bound.carbon:[[@LINE+4]]:8: error: array bound of -1 is negative [ArrayBoundNegative]
-// CHECK:STDERR: var n: MakeArray(i32, -1);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_negative_bound.carbon:[[@LINE+2]]:8-25: error: array bound of -1 is negative [ArrayBoundNegative]
 // CHECK:STDERR:
 var n: MakeArray(i32, -1);
 
@@ -75,9 +73,7 @@ library "[[@TEST_NAME]]";
 
 import library "types";
 
-// CHECK:STDERR: fail_bound_too_large.carbon:[[@LINE+4]]:8: error: array bound of 18446744073709551616 is too large [ArrayBoundTooLarge]
-// CHECK:STDERR: var n: MakeArray(i32, 0x1_0000_0000_0000_0000);
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bound_too_large.carbon:[[@LINE+2]]:8-46: error: array bound of 18446744073709551616 is too large [ArrayBoundTooLarge]
 // CHECK:STDERR:
 var n: MakeArray(i32, 0x1_0000_0000_0000_0000);
 
@@ -88,9 +84,7 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 fn F(n: Core.IntLiteral) {
-  // CHECK:STDERR: fail_dyn_bound.carbon:[[@LINE+4]]:17: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   var unused a: MakeArray(i32, n);
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_dyn_bound.carbon:[[@LINE+2]]:17-33: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:
   var unused a: MakeArray(i32, n);
 }

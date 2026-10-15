@@ -9,9 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_precedence_and_or.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_precedence_and_or.carbon:[[@LINE+4]]:11: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
-  // CHECK:STDERR:   a and b or c;
-  // CHECK:STDERR:           ^~
+  // CHECK:STDERR: fail_precedence_and_or.carbon:[[@LINE+2]]:11-12: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
   // CHECK:STDERR:
   a and b or c;
 }

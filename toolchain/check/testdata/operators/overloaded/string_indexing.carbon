@@ -14,9 +14,7 @@
 library "[[@TEST_NAME]]";
 
 fn TestLiteralNegativeIndex() {
-  // CHECK:STDERR: fail_literal_negative_index.carbon:[[@LINE+4]]:24: error: index `-1` is negative. [StringAtIndexNegative]
-  // CHECK:STDERR:   let unused c: char = "Test"[-1];
-  // CHECK:STDERR:                        ^~~~~~~~~~
+  // CHECK:STDERR: fail_literal_negative_index.carbon:[[@LINE+2]]:24-33: error: index `-1` is negative. [StringAtIndexNegative]
   // CHECK:STDERR:
   let unused c: char = "Test"[-1];
 }
@@ -25,9 +23,7 @@ fn TestLiteralNegativeIndex() {
 library "[[@TEST_NAME]]";
 
 fn TestLiteralOutOfBounds() {
-  // CHECK:STDERR: fail_literal_out_of_bounds.carbon:[[@LINE+4]]:24: error: string index `4` is out of bounds; string has length 4. [StringAtIndexOutOfBounds]
-  // CHECK:STDERR:   let unused c: char = "Test"[4];
-  // CHECK:STDERR:                        ^~~~~~~~~
+  // CHECK:STDERR: fail_literal_out_of_bounds.carbon:[[@LINE+2]]:24-32: error: string index `4` is out of bounds; string has length 4. [StringAtIndexOutOfBounds]
   // CHECK:STDERR:
   let unused c: char = "Test"[4];
 }
@@ -38,9 +34,7 @@ library "[[@TEST_NAME]]";
 fn TestWrongType() {
   class C{}
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.IndexWith(type)` in type `str` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   "Test"[C];
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_wrong_type.carbon:[[@LINE+2]]:3-11: error: cannot access member of interface `Core.IndexWith(type)` in type `str` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   "Test"[C];
   //@dump-sem-ir-end
@@ -49,21 +43,15 @@ fn TestWrongType() {
 // --- fail_bad_decl.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "string.at" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn At(s: str, index: i64) -> i32 = "string.at";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-34: error: invalid signature for builtin function "string.at" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn At(s: str, index: i64) -> i32 = "string.at";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "string.at" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn At2(s: str) -> char = "string.at";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-24: error: invalid signature for builtin function "string.at" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn At2(s: str) -> char = "string.at";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "string.at" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn At3(s: i32, index: i64) -> char = "string.at";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-36: error: invalid signature for builtin function "string.at" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn At3(s: i32, index: i64) -> char = "string.at";
 

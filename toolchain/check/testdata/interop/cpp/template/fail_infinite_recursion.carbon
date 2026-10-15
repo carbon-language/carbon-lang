@@ -22,9 +22,7 @@ auto ManualMultiply(T x) -> T {
 ''';
 
 fn ManualMultiply[template T: type](p: T*) -> T* {
-    // CHECK:STDERR: fail_infinite_recursion.carbon:[[@LINE+4]]:32: error: semantics TODO: `maximum depth for bidirectional Carbon/C++ interop is 10` [SemanticsTodo]
-    // CHECK:STDERR:     return Cpp.ManualMultiply(p);
-    // CHECK:STDERR:                                ^
+    // CHECK:STDERR: fail_infinite_recursion.carbon:[[@LINE+2]]:32: error: semantics TODO: `maximum depth for bidirectional Carbon/C++ interop is 10` [SemanticsTodo]
     // CHECK:STDERR:
     return Cpp.ManualMultiply(p);
 }

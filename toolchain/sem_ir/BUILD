@@ -336,6 +336,7 @@ cc_library(
         ":absolute_node_ref",
         ":file",
         ":typed_insts",
+        "//common:check",
         "//toolchain/diagnostics:emitter",
         "//toolchain/parse:tree",
         "@llvm-project//clang:basic",

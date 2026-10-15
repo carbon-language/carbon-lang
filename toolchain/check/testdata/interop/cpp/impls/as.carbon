@@ -112,12 +112,8 @@ import Cpp library "conversions.h";
 
 fn ConstructorExplicit(s: Cpp.Source) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+7]]:42: error: cannot implicitly convert expression of type `Source` to `Cpp.ConditionallyExplicit` [ConversionFailure]
-  // CHECK:STDERR:   let _: Cpp.ConditionallyExplicitTrue = s;
-  // CHECK:STDERR:                                          ^
-  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+4]]:42: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ConditionallyExplicit)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   let _: Cpp.ConditionallyExplicitTrue = s;
-  // CHECK:STDERR:                                          ^
+  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+3]]:42: error: cannot implicitly convert expression of type `Source` to `Cpp.ConditionallyExplicit` [ConversionFailure]
+  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+2]]:42: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ConditionallyExplicit)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   let _: Cpp.ConditionallyExplicitTrue = s;
   //@dump-sem-ir-end
@@ -631,9 +627,9 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT:   %self.patt.48a: %pattern_type.b72 = wrapper_binding_pattern self, %self.param_patt.581 [concrete]
 // CHECK:STDOUT:   %Dest.cpp_destructor.type: type = fn_type @Dest.cpp_destructor [concrete]
 // CHECK:STDOUT:   %Dest.cpp_destructor: %Dest.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc21 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc17 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc21 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc17 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -662,7 +658,7 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc21 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc17 [concrete = constants.%Destroy.WithSelf.Op.403] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.b72 = ref_param_pattern [concrete = constants.%self.param_patt.581]
 // CHECK:STDOUT:     %self.patt: %pattern_type.b72 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.48a]
 // CHECK:STDOUT:   } {
@@ -674,9 +670,9 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: fn @ConstructorExplicit(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
-// CHECK:STDOUT:   %.loc15_42: %ConditionallyExplicit.9d4 = converted %s.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc15_13: type = splice_block %ConditionallyExplicitTrue.ref [concrete = constants.%ConditionallyExplicit.9d4] {
-// CHECK:STDOUT:     %Cpp.ref.loc15: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc11_42: %ConditionallyExplicit.9d4 = converted %s.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc11_13: type = splice_block %ConditionallyExplicitTrue.ref [concrete = constants.%ConditionallyExplicit.9d4] {
+// CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ConditionallyExplicitTrue.ref: type = name_ref ConditionallyExplicitTrue, imports.%ConditionallyExplicit.decl.6ab [concrete = constants.%ConditionallyExplicit.9d4]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %_: %ConditionallyExplicit.9d4 = wrapper_binding _, <error> [concrete = <error>]
@@ -689,30 +685,30 @@ fn ConversionExplicit(s: Cpp.ConditionallyExplicitFalse) {
 // CHECK:STDOUT: fn @ConversionExplicit(%s.param: %ConditionallyExplicit.3cd) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %ConditionallyExplicit.3cd = name_ref s, %s
-// CHECK:STDOUT:   %.loc21_21.1: ref %Dest.980 = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.ca8 = addr_of %.loc21_21.1
+// CHECK:STDOUT:   %.loc17_21.1: ref %Dest.980 = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr.ca8 = addr_of %.loc17_21.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(%s.ref, %addr)
-// CHECK:STDOUT:   %.loc21_21.2: init %Dest.980 to %.loc21_21.1 = mark_in_place_init %Dest__carbon_thunk.call
-// CHECK:STDOUT:   %.loc21_21.3: init %Dest.980 = converted %s.ref, %.loc21_21.2
-// CHECK:STDOUT:   %.loc21_21.4: ref %Dest.980 = temporary %.loc21_21.1, %.loc21_21.3
-// CHECK:STDOUT:   %.loc21_21.5: %Dest.980 = acquire_value %.loc21_21.4
-// CHECK:STDOUT:   %.loc21_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
-// CHECK:STDOUT:     %Cpp.ref.loc21: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc17_21.2: init %Dest.980 to %.loc17_21.1 = mark_in_place_init %Dest__carbon_thunk.call
+// CHECK:STDOUT:   %.loc17_21.3: init %Dest.980 = converted %s.ref, %.loc17_21.2
+// CHECK:STDOUT:   %.loc17_21.4: ref %Dest.980 = temporary %.loc17_21.1, %.loc17_21.3
+// CHECK:STDOUT:   %.loc17_21.5: %Dest.980 = acquire_value %.loc17_21.4
+// CHECK:STDOUT:   %.loc17_13: type = splice_block %Dest.ref [concrete = constants.%Dest.980] {
+// CHECK:STDOUT:     %Cpp.ref.loc17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest.980]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %Dest.980 = wrapper_binding _, %.loc21_21.5
+// CHECK:STDOUT:   %_: %Dest.980 = wrapper_binding _, %.loc17_21.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc21_21.4, constants.%Destroy.WithSelf.SelfDestruct.db3
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc21_21.4)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc17_21.4, constants.%Destroy.WithSelf.SelfDestruct.db3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc17_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc21(%self.param: ref %Dest.980) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc17(%self.param: ref %Dest.980) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc21(%self.param: ref %Dest.980) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc17(%self.param: ref %Dest.980) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
 // CHECK:STDOUT:   %Dest.cpp_destructor.call: init %empty_tuple.type = call imports.%Dest.cpp_destructor.decl(%self.param)

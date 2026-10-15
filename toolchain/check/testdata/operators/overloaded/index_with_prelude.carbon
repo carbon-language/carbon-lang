@@ -62,9 +62,7 @@ impl C as Core.IndexWith(SubscriptType) where .ElementType = ElementType {
 }
 
 let c: C = {};
-// CHECK:STDERR: fail_invalid_subscript_type.carbon:[[@LINE+4]]:22: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: let x: ElementType = c[0];
-// CHECK:STDERR:                      ^~~~
+// CHECK:STDERR: fail_invalid_subscript_type.carbon:[[@LINE+2]]:22-25: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR:
 let x: ElementType = c[0];
 
@@ -75,9 +73,7 @@ library "[[@TEST_NAME]]";
 class C { }
 
 let c: C = {};
-// CHECK:STDERR: fail_index_with_not_implemented.carbon:[[@LINE+4]]:14: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
-// CHECK:STDERR: let x: i32 = c[0];
-// CHECK:STDERR:              ^~~~
+// CHECK:STDERR: fail_index_with_not_implemented.carbon:[[@LINE+2]]:14-17: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
 // CHECK:STDERR:
 let x: i32 = c[0];
 

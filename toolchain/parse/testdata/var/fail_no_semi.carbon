@@ -10,13 +10,9 @@
 
 var
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+15]]:26: error: expected pattern [ExpectedPattern]
-// CHECK:STDERR: // CHECK:STDOUT:   (root)
-// CHECK:STDERR:                          ^
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+11]]:26: error: expected pattern [ExpectedPattern]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+11]]:26: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: // CHECK:STDOUT:   (root)
-// CHECK:STDERR:                          ^
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+9]]:26: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
