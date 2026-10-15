@@ -829,6 +829,20 @@ auto TryMergeRedecl(Context& context,
       return false;
     }
   } else if constexpr (IsFunction) {
+    // A function with a deduced return type can only be declared once, by its
+    // definition. Check this before comparing return types, because the return
+    // type of the previous declaration might not be deduced yet.
+    if (entity_info.new_entity.has_deduced_return_type ||
+        prev_entity.has_deduced_return_type) {
+      CARBON_DIAGNOSTIC(DeducedReturnTypeRedecl, Error,
+                        "redeclaration of function with deduced return type");
+      context.emitter()
+          .Build(entity_info.new_entity.latest_decl_id(),
+                 DeducedReturnTypeRedecl)
+          .Note(prev_entity.latest_decl_id(), RedeclPrevDecl)
+          .Emit();
+      return false;
+    }
     if (!CheckFunctionTypeMatches(context, entity_info.new_entity,
                                   prev_entity)) {
       // Mismatch is diagnosed already if found.
