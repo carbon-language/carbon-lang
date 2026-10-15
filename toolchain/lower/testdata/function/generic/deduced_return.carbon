@@ -42,6 +42,19 @@ import library "lib";
 
 fn Use(n: i32) -> (i32, i32) { return Pair(n); }
 
+// --- form.carbon
+library "[[@TEST_NAME]]";
+
+fn RefId[T: type](ref x: T) -> ref auto { return x; }
+fn ValId[T: type](x: T) -> val auto { return x; }
+fn RefIdFromGeneric[T: type](ref x: T) -> ref T { return RefId(ref x); }
+
+fn Use(ref n: i32) -> i32 {
+  let unused p: i32* = &RefIdFromGeneric(ref n);
+  let unused q: i32* = &RefId(ref n);
+  return ValId(n);
+}
+
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'generic.carbon'
 // CHECK:STDOUT: source_filename = "generic.carbon"
@@ -283,4 +296,77 @@ fn Use(n: i32) -> (i32, i32) { return Pair(n); }
 // CHECK:STDOUT: !109 = !DILocation(line: 3, column: 46, scope: !106)
 // CHECK:STDOUT: !112 = !DILocation(line: 3, column: 39, scope: !106)
 // CHECK:STDOUT: !113 = !{!107}
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; ---
+// CHECK:STDOUT: ; ModuleID = 'form.carbon'
+// CHECK:STDOUT: source_filename = "form.carbon"
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CUse.Main(ptr %n) #0 !dbg !116 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %RefIdFromGeneric.call = call ptr @_CRefIdFromGeneric.Main.55456748a8a2eb70(ptr %n), !dbg !123
+// CHECK:STDOUT:   %RefId.call = call ptr @_CRefId.Main.55456748a8a2eb70(ptr %n), !dbg !129
+// CHECK:STDOUT:   %.loc10 = load i32, ptr %n, align 4, !dbg !133
+// CHECK:STDOUT:   %ValId.call = call i32 @_CValId.Main.55456748a8a2eb70(i32 %.loc10), !dbg !134
+// CHECK:STDOUT:   ret i32 %ValId.call, !dbg !135
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr ptr @_CRefIdFromGeneric.Main.55456748a8a2eb70(ptr %x) #0 !dbg !137 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %RefId.call = call ptr @_CRefId.Main.55456748a8a2eb70(ptr %x), !dbg !144
+// CHECK:STDOUT:   ret ptr %RefId.call, !dbg !145
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr ptr @_CRefId.Main.55456748a8a2eb70(ptr %x) #0 !dbg !147 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret ptr %x, !dbg !151
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @_CValId.Main.55456748a8a2eb70(i32 %x) #0 !dbg !153 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret i32 %x, !dbg !157
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; uselistorder directives
+// CHECK:STDOUT: uselistorder ptr @_CRefId.Main.55456748a8a2eb70, { 1, 0 }
+// CHECK:STDOUT:
+// CHECK:STDOUT: attributes #0 = { nounwind }
+// CHECK:STDOUT:
+// CHECK:STDOUT: !llvm.dbg.cu = !{!115}
+// CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
+// CHECK:STDOUT:
+// CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !6 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
+// CHECK:STDOUT: !7 = !{!6, !6}
+// CHECK:STDOUT: !8 = !DISubroutineType(types: !7)
+// CHECK:STDOUT: !11 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !21 = !{!11, !6}
+// CHECK:STDOUT: !22 = !DISubroutineType(types: !21)
+// CHECK:STDOUT: !114 = !DIFile(filename: "form.carbon", directory: "")
+// CHECK:STDOUT: !115 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !114, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !116 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !114, line: 7, type: !8, spFlags: DISPFlagDefinition, unit: !115, retainedNodes: !136)
+// CHECK:STDOUT: !117 = !DILocalVariable(arg: 1, scope: !116, type: !6)
+// CHECK:STDOUT: !123 = !DILocation(line: 8, column: 25, scope: !116)
+// CHECK:STDOUT: !129 = !DILocation(line: 9, column: 25, scope: !116)
+// CHECK:STDOUT: !133 = !DILocation(line: 10, column: 16, scope: !116)
+// CHECK:STDOUT: !134 = !DILocation(line: 10, column: 10, scope: !116)
+// CHECK:STDOUT: !135 = !DILocation(line: 10, column: 3, scope: !116)
+// CHECK:STDOUT: !136 = !{!117}
+// CHECK:STDOUT: !137 = distinct !DISubprogram(name: "RefIdFromGeneric", linkageName: "_CRefIdFromGeneric.Main.55456748a8a2eb70", scope: null, file: !114, line: 5, type: !22, spFlags: DISPFlagDefinition, unit: !115, retainedNodes: !146)
+// CHECK:STDOUT: !138 = !DILocalVariable(arg: 1, scope: !137, type: !6)
+// CHECK:STDOUT: !144 = !DILocation(line: 5, column: 58, scope: !137)
+// CHECK:STDOUT: !145 = !DILocation(line: 5, column: 51, scope: !137)
+// CHECK:STDOUT: !146 = !{!138}
+// CHECK:STDOUT: !147 = distinct !DISubprogram(name: "RefId", linkageName: "_CRefId.Main.55456748a8a2eb70", scope: null, file: !114, line: 3, type: !22, spFlags: DISPFlagDefinition, unit: !115, retainedNodes: !152)
+// CHECK:STDOUT: !148 = !DILocalVariable(arg: 1, scope: !147, type: !6)
+// CHECK:STDOUT: !151 = !DILocation(line: 3, column: 43, scope: !147)
+// CHECK:STDOUT: !152 = !{!148}
+// CHECK:STDOUT: !153 = distinct !DISubprogram(name: "ValId", linkageName: "_CValId.Main.55456748a8a2eb70", scope: null, file: !114, line: 4, type: !8, spFlags: DISPFlagDefinition, unit: !115, retainedNodes: !158)
+// CHECK:STDOUT: !154 = !DILocalVariable(arg: 1, scope: !153, type: !6)
+// CHECK:STDOUT: !157 = !DILocation(line: 4, column: 39, scope: !153)
+// CHECK:STDOUT: !158 = !{!154}
 // CHECK:STDOUT:
