@@ -278,13 +278,20 @@ auto WrapInstForSpecific(Context& context, SemIR::LocId loc_id,
   CARBON_CHECK(type_id.has_value(), "Missing type for {0}",
                context.insts().Get(inst_id));
 
-  // If `inst_id` has a constant value that depends on its specific, store the
-  // specific too.
+  // If `inst_id` has a constant value or type that depends on its specific,
+  // store the specific too.
   if (specific_id.has_value() &&
-      context.constant_values().Get(inst_id).is_symbolic()) {
-    inst_id = AddInst<SemIR::SpecificConstant>(
-        context, loc_id,
-        {.type_id = type_id, .inst_id = inst_id, .specific_id = specific_id});
+      (context.constant_values().Get(inst_id).is_symbolic() ||
+       context.insts().Get(inst_id).type_id().is_symbolic())) {
+    if (context.constant_values().Get(inst_id).is_constant()) {
+      inst_id = AddInst<SemIR::SpecificConstant>(
+          context, loc_id,
+          {.type_id = type_id, .inst_id = inst_id, .specific_id = specific_id});
+    } else {
+      inst_id = AddInst<SemIR::SpecificInst>(
+          context, loc_id,
+          {.type_id = type_id, .inst_id = inst_id, .specific_id = specific_id});
+    }
   }
   return {.inst_id = inst_id, .type_id = type_id};
 }
@@ -297,6 +304,15 @@ auto BuildNameRef(Context& context, SemIR::LocId loc_id, SemIR::NameId name_id,
   return AddInst<SemIR::NameRef>(
       context, loc_id,
       {.type_id = type_id, .name_id = name_id, .value_id = new_inst_id});
+}
+
+auto GetInstLocationOrFallback(Context& context, SemIR::InstId inst_id,
+                               SemIR::LocId fallback) -> SemIR::LocId {
+  auto loc_id = context.insts().GetCanonicalLocId(inst_id);
+  if (!loc_id.has_value()) {
+    loc_id = fallback;
+  }
+  return loc_id;
 }
 
 }  // namespace Carbon::Check

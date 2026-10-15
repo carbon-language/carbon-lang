@@ -1844,8 +1844,9 @@ static auto CreateFunctionSignatureInsts(
   // C++ functions have no implicit parameters. Use `None` rather than an empty
   // block so that the signature matches a Carbon function with no implicit
   // parameter list.
-  auto match_results = CalleePatternMatch(context, SemIR::InstBlockId::None,
-                                          param_patterns_id, return_pattern_id);
+  auto match_results =
+      CalleePatternMatch(context, loc_id, SemIR::InstBlockId::None,
+                         param_patterns_id, return_pattern_id);
 
   return {{.implicit_param_patterns_id = SemIR::InstBlockId::None,
            .param_patterns_id = param_patterns_id,
@@ -2071,9 +2072,9 @@ static auto ImportFunctionDecl(Context& context, SemIR::LocId loc_id,
   if (IsCppThunkRequired(context, callee_info)) {
     Diagnostics::AnnotationScope annotate_diagnostics(
         &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(InCppThunk, Note,
-                            "in thunk for C++ function used here");
-          builder.Note(loc_id, InCppThunk);
+          CARBON_DIAGNOSTIC_LABEL(InCppThunk, Info,
+                                  "in thunk for C++ function used here");
+          builder.Attach(loc_id, InCppThunk);
         });
     DefineAsThunkCall(context, loc_id, callee_info, imported_function);
   } else {
@@ -2138,9 +2139,10 @@ auto ImportFunctionPointerInvoke(
   }
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppFunctionPointerThunk, Note,
-                          "in thunk for C++ function pointer type used here");
-        builder.Note(loc_id, InCppFunctionPointerThunk);
+        CARBON_DIAGNOSTIC_LABEL(
+            InCppFunctionPointerThunk, Info,
+            "in thunk for C++ function pointer type used here");
+        builder.Attach(loc_id, InCppFunctionPointerThunk);
       });
 
   CppCalleeFunctionInfo callee_info(context, info.clang_type);
@@ -2744,9 +2746,10 @@ auto ImportNameFromCpp(Context& context, SemIR::LocId loc_id,
     -> SemIR::ScopeLookupResult {
   Diagnostics::AnnotationScope annotate_diagnostics(
       &context.emitter(), [&](auto& builder) {
-        CARBON_DIAGNOSTIC(InCppNameLookup, Note,
-                          "in `Cpp` name lookup for `{0}`", SemIR::NameId);
-        builder.Note(loc_id, InCppNameLookup, name_id);
+        CARBON_DIAGNOSTIC_LABEL(InCppNameLookup, Info,
+                                "in `Cpp` name lookup for `{0}`",
+                                SemIR::NameId);
+        builder.Attach(loc_id, InCppNameLookup, name_id);
       });
   if (IsIncompleteClass(context, scope_id)) {
     return SemIR::ScopeLookupResult::MakeError();

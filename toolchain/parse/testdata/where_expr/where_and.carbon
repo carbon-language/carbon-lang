@@ -16,25 +16,19 @@ fn TwoAnd(generic Y: I where .J impls K and .L == .M and .N = bool);
 
 // --- fail_and_prefix.carbon
 
-// CHECK:STDERR: fail_and_prefix.carbon:[[@LINE+4]]:36: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: fn AndPrefix(generic T: type where and .V == .W);
-// CHECK:STDERR:                                    ^~~
+// CHECK:STDERR: fail_and_prefix.carbon:[[@LINE+2]]:36-38: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 fn AndPrefix(generic T: type where and .V == .W);
 
 // --- fail_and_suffix.carbon
 
-// CHECK:STDERR: fail_and_suffix.carbon:[[@LINE+4]]:47: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: fn AndSuffix(generic Y: I where .J impls K and);
-// CHECK:STDERR:                                               ^
+// CHECK:STDERR: fail_and_suffix.carbon:[[@LINE+2]]:47: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 fn AndSuffix(generic Y: I where .J impls K and);
 
 // --- fail_and_early.carbon
 
-// CHECK:STDERR: fail_and_early.carbon:[[@LINE+4]]:35: error: requirement should use `impls`, `=`, or `==` operator [ExpectedRequirementOperator]
-// CHECK:STDERR: fn AndEarly(generic Z: L where .M and N);
-// CHECK:STDERR:                                   ^~~
+// CHECK:STDERR: fail_and_early.carbon:[[@LINE+2]]:35-37: error: requirement should use `impls`, `=`, or `==` operator [ExpectedRequirementOperator]
 // CHECK:STDERR:
 fn AndEarly(generic Z: L where .M and N);
 

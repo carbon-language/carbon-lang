@@ -128,7 +128,7 @@ using EmptyDecl =
     LeafNode<NodeKind::EmptyDecl, Lex::SemiTokenIndex, NodeCategory::Decl>;
 
 // A name that may be immediately followed by a signature (i.e. parameter lists
-// and/or a return declaration). There may be false positives, because we make
+// and/or a return specifier). There may be false positives, because we make
 // this determination based on the context and a single token of lookahead.
 using IdentifierNameMaybeBeforeSignature =
     LeafNode<NodeKind::IdentifierNameMaybeBeforeSignature,
@@ -136,7 +136,7 @@ using IdentifierNameMaybeBeforeSignature =
              NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name that is known not to be immediately followed by a signature (i.e.
-// parameter lists and/or a return declaration).
+// parameter lists and/or a return specifier).
 using IdentifierNameNotBeforeSignature =
     LeafNode<NodeKind::IdentifierNameNotBeforeSignature,
              Lex::IdentifierTokenIndex,
@@ -574,7 +574,7 @@ using FunctionIntroducer =
 // A return type: `-> i32`.
 struct ReturnType {
   static constexpr auto Kind = NodeKind::ReturnType.Define(
-      {.category = NodeCategory::ReturnDecl, .child_count = 1});
+      {.category = NodeCategory::ReturnSpecifier, .child_count = 1});
 
   Lex::MinusGreaterTokenIndex token;
   AnyExprId type;
@@ -583,7 +583,7 @@ struct ReturnType {
 // A return form: `->? form(var i32)`
 struct ReturnForm {
   static constexpr auto Kind = NodeKind::ReturnForm.Define(
-      {.category = NodeCategory::ReturnDecl, .child_count = 1});
+      {.category = NodeCategory::ReturnSpecifier, .child_count = 1});
 
   Lex::MinusGreaterQuestionTokenIndex token;
   AnyExprId type;
@@ -599,7 +599,7 @@ struct FunctionSignature {
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  std::optional<AnyReturnDeclId> return_type;
+  std::optional<AnyReturnSpecifierId> return_type;
   TokenKind token;
 };
 
@@ -795,7 +795,7 @@ struct LambdaDefinitionStart {
   LambdaIntroducerId introducer;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> explicit_params;
-  std::optional<AnyReturnDeclId> return_type;
+  std::optional<AnyReturnSpecifierId> return_type;
   Lex::TokenIndex token;
 };
 

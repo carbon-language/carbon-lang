@@ -30,24 +30,16 @@ using namespace Carbon::N;
 // triggering typo correction) and resolve to `Fallback`. Following the normal
 // Carbon name poisoning rules, these then trigger poisoning errors when those
 // names are defined in Carbon.
-// CHECK:STDERR: fail_declare_after_poisoning.carbon:[[@LINE+3]]:10: error: name `LaterFn` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: int *a = LaterFn();
-// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_declare_after_poisoning.carbon:[[@LINE+1]]:10: error: name `LaterFn` used before it was declared [NameUseBeforeDecl]
 int *a = LaterFn();
 int *b = LaterNestedFn();
 ''';
 
-// CHECK:STDERR: fail_declare_after_poisoning.carbon:[[@LINE+7]]:4: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn LaterFn() -> i32;
-// CHECK:STDERR:    ^~~~~~~
+// CHECK:STDERR: fail_declare_after_poisoning.carbon:[[@LINE+3]]:4-10: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_declare_after_poisoning.carbon:[[@LINE-7]]:10: error: name `LaterNestedFn` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: int *b = LaterNestedFn();
-// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_declare_after_poisoning.carbon:[[@LINE-5]]:10: error: name `LaterNestedFn` used before it was declared [NameUseBeforeDecl]
 fn LaterFn() -> i32;
-// CHECK:STDERR: fail_declare_after_poisoning.carbon:[[@LINE+4]]:6: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn N.LaterNestedFn() -> i32;
-// CHECK:STDERR:      ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_declare_after_poisoning.carbon:[[@LINE+2]]:6-18: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 fn N.LaterNestedFn() -> i32;
 
@@ -72,21 +64,15 @@ void TestLookupFailureInNested() {
   // second is a Carbon error for declaring a poisoned name. Normally we would
   // suppress the first error when we produce the second, but we don't do that
   // when the first error is produced by Clang.
-  // CHECK:STDERR: fail_declare_after_poisoning_with_lookup_failure.carbon:[[@LINE+7]]:19: error: no member named 'LaterInNested' in namespace 'Carbon::Main::Nested' [CppInteropParseError]
-  // CHECK:STDERR:    21 |   Carbon::Nested::LaterInNested();
-  // CHECK:STDERR:       |                   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_declare_after_poisoning_with_lookup_failure.carbon:[[@LINE+3]]:19-31: error: no member named 'LaterInNested' in namespace 'Carbon::Main::Nested' [CppInteropParseError]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_declare_after_poisoning_with_lookup_failure.carbon:[[@LINE+3]]:19: error: name `LaterInNested` used before it was declared [NameUseBeforeDecl]
-  // CHECK:STDERR:   Carbon::Nested::LaterInNested();
-  // CHECK:STDERR:                   ^
+  // CHECK:STDERR: fail_declare_after_poisoning_with_lookup_failure.carbon:[[@LINE+1]]:19: error: name `LaterInNested` used before it was declared [NameUseBeforeDecl]
   Carbon::Nested::LaterInNested();
   Carbon::Nested::EarlyFn();
 }
 ''';
 
-// CHECK:STDERR: fail_declare_after_poisoning_with_lookup_failure.carbon:[[@LINE+4]]:11: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn Nested.LaterInNested() {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_declare_after_poisoning_with_lookup_failure.carbon:[[@LINE+2]]:11-23: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 fn Nested.LaterInNested() {}
 
@@ -112,13 +98,9 @@ inline Cpp '''
 Carbon::ExportedType* p1 = nullptr;
 
 void TestTypoInCarbon() {
-  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+8]]:11: error: no type named 'ExportedTyp' in namespace 'Carbon'; did you mean 'ExportedType'? [CppInteropParseError]
-  // CHECK:STDERR:    23 |   Carbon::ExportedTyp* p_typo = p1;
-  // CHECK:STDERR:       |   ~~~~~~~~^~~~~~~~~~~
-  // CHECK:STDERR:       |           ExportedType
-  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE-14]]:20: note: 'ExportedType' declared here [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class ExportedType {
-  // CHECK:STDERR:       |                    ^
+  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+4]]:11: error: no type named 'ExportedTyp' in namespace 'Carbon'; did you mean 'ExportedType'? [CppInteropParseError]
+  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+3]]:11-21: note: replace with `ExportedType` [CppInteropFixItReplacement]
+  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE-12]]:20: note: 'ExportedType' declared here [CppInteropParseNote]
   // CHECK:STDERR:
   Carbon::ExportedTyp* p_typo = p1;
 
@@ -127,9 +109,7 @@ void TestTypoInCarbon() {
   // subsequent name lookups still work properly.
   Carbon::EarlyFn();
   Carbon::ExportedType* p2 = p1;
-  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+4]]:11: error: no member named 'NotDeclared' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    34 |   Carbon::NotDeclared();
-  // CHECK:STDERR:       |           ^~~~~~~~~~~
+  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+2]]:11-21: error: no member named 'NotDeclared' in namespace 'Carbon' [CppInteropParseError]
   // CHECK:STDERR:
   Carbon::NotDeclared();
 }
@@ -161,9 +141,7 @@ class MyClass {
 inline Cpp '''
 void TestTypoInClass() {
   // TODO: It'd be nice if Clang's typo correction could correct this.
-  // CHECK:STDERR: fail_typo_in_carbon_class.carbon:[[@LINE+4]]:20: error: no member named 'StaticMetho1' in 'Carbon::Main::MyClass' [CppInteropParseError]
-  // CHECK:STDERR:    19 |   Carbon::MyClass::StaticMetho1();
-  // CHECK:STDERR:       |                    ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_typo_in_carbon_class.carbon:[[@LINE+2]]:20-31: error: no member named 'StaticMetho1' in 'Carbon::Main::MyClass' [CppInteropParseError]
   // CHECK:STDERR:
   Carbon::MyClass::StaticMetho1();
 
@@ -175,13 +153,9 @@ void TestTypoInClass() {
   static_assert(sizeof(Carbon::MyClass) == 4);
 
   // Typo correction does work once we've exported the name.
-  // CHECK:STDERR: fail_typo_in_carbon_class.carbon:[[@LINE+8]]:20: error: no member named 'StaticMetho1' in 'Carbon::Main::MyClass'; did you mean 'StaticMethod1'? [CppInteropParseError]
-  // CHECK:STDERR:    37 |   Carbon::MyClass::StaticMetho1();
-  // CHECK:STDERR:       |                    ^~~~~~~~~~~~
-  // CHECK:STDERR:       |                    StaticMethod1
-  // CHECK:STDERR: fail_typo_in_carbon_class.carbon:[[@LINE-26]]:21: note: 'StaticMethod1' declared here [CppInteropParseNote]
-  // CHECK:STDERR:     7 |   fn StaticMethod1();
-  // CHECK:STDERR:       |                     ^
+  // CHECK:STDERR: fail_typo_in_carbon_class.carbon:[[@LINE+4]]:20-31: error: no member named 'StaticMetho1' in 'Carbon::Main::MyClass'; did you mean 'StaticMethod1'? [CppInteropParseError]
+  // CHECK:STDERR: fail_typo_in_carbon_class.carbon:[[@LINE+3]]:20-31: note: replace with `StaticMethod1` [CppInteropFixItReplacement]
+  // CHECK:STDERR: fail_typo_in_carbon_class.carbon:[[@LINE-22]]:21: note: 'StaticMethod1' declared here [CppInteropParseNote]
   // CHECK:STDERR:
   Carbon::MyClass::StaticMetho1();
 }

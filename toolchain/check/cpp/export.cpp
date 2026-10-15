@@ -1576,6 +1576,13 @@ static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
 static auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                                 SemIR::FunctionId callee_function_id)
     -> clang::NamedDecl* {
+  if (const auto& callee = context.functions().Get(callee_function_id);
+      callee.has_pending_deduced_return_type() ||
+      (callee.has_deduced_return_type() && callee.generic_id.has_value())) {
+    context.TODO(loc_id, "export of function with deduced return type");
+    return nullptr;
+  }
+
   auto target = BuildFunctionInfo(context, loc_id, callee_function_id);
   if (!target) {
     return nullptr;
@@ -1677,12 +1684,13 @@ auto ExportFunctionToCppPointerConversion(
           ExportedFunctionPtrTypeMismatch, Error,
           "can't convert exported {0:member |}function pointer to `{1}`",
           Diagnostics::BoolAsSelect, CppType);
-      CARBON_DIAGNOSTIC(ExportedFromFunction, Note,
-                        "function exported with pointer type `{0}`", CppType);
+      CARBON_DIAGNOSTIC_LABEL(ExportedFromFunction, Info,
+                              "function exported with pointer type `{0}`",
+                              CppType);
       context.emitter()
           .Build(src_id, ExportedFunctionPtrTypeMismatch,
                  src_ptr_type->isMemberFunctionPointerType(), dest_ptr_type)
-          .Note(function.first_decl_id(), ExportedFromFunction, src_ptr_type)
+          .Attach(function.first_decl_id(), ExportedFromFunction, src_ptr_type)
           .Emit();
     }
     return false;

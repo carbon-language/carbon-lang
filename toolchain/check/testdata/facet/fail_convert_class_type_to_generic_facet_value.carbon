@@ -27,12 +27,8 @@ impl ImplsGeneric as Generic(GenericParam) {
 fn CallGenericMethod(generic T: type, unused generic U: Generic(T)) {}
 
 fn G() {
-  // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE+7]]:3: error: cannot convert type `ImplsGeneric` into type implementing `Generic(WrongGenericParam)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CallGenericMethod(WrongGenericParam, ImplsGeneric);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CallGenericMethod(generic T: type, unused generic U: Generic(T)) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE+3]]:3-52: error: cannot convert type `ImplsGeneric` into type implementing `Generic(WrongGenericParam)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_convert_class_type_to_generic_facet_value.carbon:[[@LINE-4]]:1-69: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CallGenericMethod(WrongGenericParam, ImplsGeneric);
 }

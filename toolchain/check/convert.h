@@ -209,7 +209,8 @@ auto ConvertForExplicitAs(Context& context, Parse::NodeId as_node,
 // argument values for runtime parameters. `is_desugared` indicates that this
 // call was produced by desugaring, not written as a function call in user code,
 // so arguments to `ref` parameters aren't required to have `ref` tags.
-auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
+auto ConvertCallArgs(Context& context, SemIR::LocId loc_id,
+                     SemIR::InstId self_id,
                      llvm::ArrayRef<SemIR::InstId> arg_refs,
                      SemIR::InstId return_arg_id, const SemIR::Function& callee,
                      SemIR::SpecificId callee_specific_id, bool is_desugared)
@@ -227,6 +228,11 @@ struct TypeExpr {
   SemIR::TypeInstId inst_id;
   // The corresponding type, or `ErrorInst::TypeId`.
   SemIR::TypeId type_id;
+
+  auto SetError() {
+    inst_id = SemIR::ErrorInst::TypeInstId;
+    type_id = SemIR::ErrorInst::TypeId;
+  }
 };
 
 inline constexpr TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
@@ -247,9 +253,13 @@ auto ExprAsType(Context& context, SemIR::LocId loc_id, SemIR::InstId value_id,
 
 // Converts an expression in a form position for use as a form.
 //
+// Form positions include return-forms (following `->?`) and form binding
+// patterns.
+//
 // Note that the right-hand side of a `->` return type declaration is normally
 // a type expression, not a form, and should be handled by `ReturnExprAsForm`.
-// It's only a form if it begins with a primitive form keyword such as `ref`.
+// It's only a form if it begins with a primitive form keyword: `val`, `ref`,
+// or `var`.
 //
 // `diagnose` has the same effect as in `ExprAsType`.
 auto FormExprAsForm(Context& context, SemIR::LocId loc_id,

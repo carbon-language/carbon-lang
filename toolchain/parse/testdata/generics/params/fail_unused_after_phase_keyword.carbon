@@ -10,25 +10,19 @@
 
 // --- fail_generic_before_unused.carbon
 
-// CHECK:STDERR: fail_generic_before_unused.carbon:[[@LINE+4]]:14: error: `unused` must be written before `generic` [UnusedAfterBindingModifier]
-// CHECK:STDERR: fn F(generic unused T: type);
-// CHECK:STDERR:              ^~~~~~
+// CHECK:STDERR: fail_generic_before_unused.carbon:[[@LINE+2]]:14-19: error: `unused` must be written before `generic` [UnusedAfterBindingModifier]
 // CHECK:STDERR:
 fn F(generic unused T: type);
 
 // --- fail_runtime_before_unused.carbon
 
-// CHECK:STDERR: fail_runtime_before_unused.carbon:[[@LINE+4]]:14: error: `unused` must be written before `runtime` [UnusedAfterBindingModifier]
-// CHECK:STDERR: fn G[runtime unused T: type]();
-// CHECK:STDERR:              ^~~~~~
+// CHECK:STDERR: fail_runtime_before_unused.carbon:[[@LINE+2]]:14-19: error: `unused` must be written before `runtime` [UnusedAfterBindingModifier]
 // CHECK:STDERR:
 fn G[runtime unused T: type]();
 
 // --- fail_redundant_runtime_before_unused.carbon
 
-// CHECK:STDERR: fail_redundant_runtime_before_unused.carbon:[[@LINE+4]]:6: error: `runtime` is redundant here; this binding is runtime by default [RedundantRuntimeModifier]
-// CHECK:STDERR: fn H(runtime unused x: i32);
-// CHECK:STDERR:      ^~~~~~~
+// CHECK:STDERR: fail_redundant_runtime_before_unused.carbon:[[@LINE+2]]:6-12: error: `runtime` is redundant here; this binding is runtime by default [RedundantRuntimeModifier]
 // CHECK:STDERR:
 fn H(runtime unused x: i32);
 

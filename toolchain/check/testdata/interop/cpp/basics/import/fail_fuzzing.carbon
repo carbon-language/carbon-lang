@@ -11,8 +11,6 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/basics/import/fail_fuzzing.carbon
 
-// CHECK:STDERR: fail_fuzzing.carbon:[[@LINE+4]]:1: error: `Cpp` import found during fuzzing [CppInteropFuzzing]
-// CHECK:STDERR: import Cpp library "file.h";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_fuzzing.carbon:[[@LINE+2]]:1-28: error: `Cpp` import found during fuzzing [CppInteropFuzzing]
 // CHECK:STDERR:
 import Cpp library "file.h";
