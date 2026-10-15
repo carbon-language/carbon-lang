@@ -17,14 +17,10 @@
 // This regression test ensures that reuse of `<error>` in different scopes
 // works.
 
-// CHECK:STDERR: fail_multi_error.carbon:[[@LINE+4]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
-// CHECK:STDERR: fn Foo[runtime a: ()]();
-// CHECK:STDERR:        ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_multi_error.carbon:[[@LINE+2]]:8-20: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
 // CHECK:STDERR:
 fn Foo[runtime a: ()]();
-// CHECK:STDERR: fail_multi_error.carbon:[[@LINE+4]]:8: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
-// CHECK:STDERR: fn Boo[runtime a: ()]() {}
-// CHECK:STDERR:        ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_multi_error.carbon:[[@LINE+2]]:8-20: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
 // CHECK:STDERR:
 fn Boo[runtime a: ()]() {}
 

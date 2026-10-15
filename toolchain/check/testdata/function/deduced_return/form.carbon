@@ -96,12 +96,8 @@ fn F() -> var auto {
 library "[[@TEST_NAME]]";
 
 fn F() -> ref auto {
-  // CHECK:STDERR: fail_ref_auto_non_ref.carbon:[[@LINE+7]]:3: error: cannot bind durable reference to non-reference value of type `i32` [ConversionFailureNonRefToRef]
-  // CHECK:STDERR:   return 0 as i32;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_ref_auto_non_ref.carbon:[[@LINE+4]]:10: note: return type deduced as `i32` [ReturnTypeDeducedAs]
-  // CHECK:STDERR:   return 0 as i32;
-  // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR: fail_ref_auto_non_ref.carbon:[[@LINE+3]]:3-18: error: cannot bind durable reference to non-reference value of type `i32` [ConversionFailureNonRefToRef]
+  // CHECK:STDERR: fail_ref_auto_non_ref.carbon:[[@LINE+2]]:10-17: note: return type deduced as `i32` [ReturnTypeDeducedAs]
   // CHECK:STDERR:
   return 0 as i32;
 }
@@ -110,12 +106,8 @@ fn F() -> ref auto {
 library "[[@TEST_NAME]]";
 
 fn F() -> ref auto {
-  // CHECK:STDERR: fail_ref_auto_returned_var.carbon:[[@LINE+7]]:3: error: `returned var` declaration in function with non-initializing return form [ReturnedVarNotInit]
-  // CHECK:STDERR:   returned var v: i32 = 1;
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_ref_auto_returned_var.carbon:[[@LINE-4]]:1: note: return form declared here [ReturnFormHereNote]
-  // CHECK:STDERR: fn F() -> ref auto {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_ref_auto_returned_var.carbon:[[@LINE+3]]:3-10: error: `returned var` declaration in function with non-initializing return form [ReturnedVarNotInit]
+  // CHECK:STDERR: fail_ref_auto_returned_var.carbon:[[@LINE-2]]:1-20: note: return form declared here [ReturnFormHereNote]
   // CHECK:STDERR:
   returned var v: i32 = 1;
   return var;
@@ -125,12 +117,8 @@ fn F() -> ref auto {
 library "[[@TEST_NAME]]";
 
 fn F() -> val auto {
-  // CHECK:STDERR: fail_val_auto_returned_var.carbon:[[@LINE+7]]:3: error: `returned var` declaration in function with non-initializing return form [ReturnedVarNotInit]
-  // CHECK:STDERR:   returned var v: i32 = 1;
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_val_auto_returned_var.carbon:[[@LINE-4]]:1: note: return form declared here [ReturnFormHereNote]
-  // CHECK:STDERR: fn F() -> val auto {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_val_auto_returned_var.carbon:[[@LINE+3]]:3-10: error: `returned var` declaration in function with non-initializing return form [ReturnedVarNotInit]
+  // CHECK:STDERR: fail_val_auto_returned_var.carbon:[[@LINE-2]]:1-20: note: return form declared here [ReturnFormHereNote]
   // CHECK:STDERR:
   returned var v: i32 = 1;
   return var;
@@ -139,9 +127,7 @@ fn F() -> val auto {
 // --- fail_ref_auto_forward_decl.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_ref_auto_forward_decl.carbon:[[@LINE+4]]:8: error: forward declaration of function with deduced return type [DeducedReturnTypeNotDefinition]
-// CHECK:STDERR: fn F() -> ref auto;
-// CHECK:STDERR:        ^~~~~~~~~~~
+// CHECK:STDERR: fail_ref_auto_forward_decl.carbon:[[@LINE+2]]:8-18: error: forward declaration of function with deduced return type [DeducedReturnTypeNotDefinition]
 // CHECK:STDERR:
 fn F() -> ref auto;
 
@@ -149,12 +135,8 @@ fn F() -> ref auto;
 library "[[@TEST_NAME]]";
 
 fn F() -> ref auto {
-  // CHECK:STDERR: fail_ref_auto_missing_return_value.carbon:[[@LINE+7]]:3: error: missing return value [ReturnStatementMissingExpr]
-  // CHECK:STDERR:   return;
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_ref_auto_missing_return_value.carbon:[[@LINE-4]]:1: note: return type of function is deduced [ReturnTypeIsDeducedNote]
-  // CHECK:STDERR: fn F() -> ref auto {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_ref_auto_missing_return_value.carbon:[[@LINE+3]]:3-9: error: missing return value [ReturnStatementMissingExpr]
+  // CHECK:STDERR: fail_ref_auto_missing_return_value.carbon:[[@LINE-2]]:1-20: note: return type of function is deduced [ReturnTypeIsDeducedNote]
   // CHECK:STDERR:
   return;
 }
@@ -164,9 +146,7 @@ library "[[@TEST_NAME]]";
 
 var g: i32 = 0;
 
-// CHECK:STDERR: fail_todo_form_literal.carbon:[[@LINE+4]]:21: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
-// CHECK:STDERR: fn F() ->? form(ref auto) {
-// CHECK:STDERR:                     ^~~~
+// CHECK:STDERR: fail_todo_form_literal.carbon:[[@LINE+2]]:21-24: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
 // CHECK:STDERR:
 fn F() ->? form(ref auto) {
   return g;

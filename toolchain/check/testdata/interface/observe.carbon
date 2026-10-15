@@ -38,31 +38,19 @@ import library "transitive";
 fn F[T: Transitive](t: T) {
   var a: T.A = t.GetA();
 
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `T.(Transitive.A)` to `T.(Transitive.B)` [ConversionFailure]
-  // CHECK:STDERR:   var b: T.B = a;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+4]]:3: note: type `T.(Transitive.A)` does not implement interface `Core.ImplicitAs(T.(Transitive.B))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   var b: T.B = a;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+3]]:3-12: error: cannot implicitly convert expression of type `T.(Transitive.A)` to `T.(Transitive.B)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+2]]:3-12: note: type `T.(Transitive.A)` does not implement interface `Core.ImplicitAs(T.(Transitive.B))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var b: T.B = a;
   b.InQ();
 
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+8]]:3: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   a.(T.C.InR)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE-18]]:1: in import [InImport]
-  // CHECK:STDERR: transitive.carbon:5:15: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: interface R { fn InR(self); }
-  // CHECK:STDERR:               ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+4]]:3-15: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: imported from: fail_todo_equivalent.carbon:[[@LINE-12]]:1 [InImport]
+  // CHECK:STDERR: transitive.carbon:5:15-27: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   a.(T.C.InR)();
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+7]]:4: error: cannot convert expression of type `T.(Transitive.A)` to `T.(Transitive.C)` with `as` [ConversionFailure]
-  // CHECK:STDERR:   (a as T.C).InR();
-  // CHECK:STDERR:    ^~~~~~~~
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+4]]:4: note: type `T.(Transitive.A)` does not implement interface `Core.As(T.(Transitive.C))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   (a as T.C).InR();
-  // CHECK:STDERR:    ^~~~~~~~
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+3]]:4-11: error: cannot convert expression of type `T.(Transitive.A)` to `T.(Transitive.C)` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+2]]:4-11: note: type `T.(Transitive.A)` does not implement interface `Core.As(T.(Transitive.C))` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   (a as T.C).InR();
 }
@@ -78,12 +66,8 @@ fn RequiresA[T: A](unused x: T) {}
 fn F[T: C](x: T) {
   observe T impls B;
 
-  // CHECK:STDERR: fail_todo_impls.carbon:[[@LINE+7]]:3: error: cannot convert type `T` that implements `C` into type implementing `A` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   RequiresA(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_impls.carbon:[[@LINE-7]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn RequiresA[T: A](unused x: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_impls.carbon:[[@LINE+3]]:3-14: error: cannot convert type `T` that implements `C` into type implementing `A` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_todo_impls.carbon:[[@LINE-5]]:1-33: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   RequiresA(x);
 }
@@ -98,19 +82,13 @@ fn G[T: Transitive](t: T) {
   var a: T.A = t.GetA();
 
   observe T.A == T.B impls Q;
-  // CHECK:STDERR: fail_todo_equivalent_impls.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Q` in type `T.(Transitive.A)` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   a.(Q.InQ)();
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_equivalent_impls.carbon:[[@LINE+2]]:3-11: error: cannot access member of interface `Q` in type `T.(Transitive.A)` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   a.(Q.InQ)();
 
   observe T.A == T.C impls R;
-  // CHECK:STDERR: fail_todo_equivalent_impls.carbon:[[@LINE+7]]:3: error: cannot convert type `T.(Transitive.A)` that implements `P & Core.Destroy` into type implementing `P & Q & R` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   TakesPQR(a);
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_equivalent_impls.carbon:[[@LINE-15]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TakesPQR[U: P & Q & R](unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_equivalent_impls.carbon:[[@LINE+3]]:3-13: error: cannot convert type `T.(Transitive.A)` that implements `P & Core.Destroy` into type implementing `P & Q & R` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_todo_equivalent_impls.carbon:[[@LINE-11]]:1-40: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   TakesPQR(a);
 }
@@ -124,18 +102,12 @@ fn TakesPQR[U: P & Q & R](unused u: U) {}
 fn G[T: Transitive](t: T) {
   var a: T.A = t.GetA();
 
-  // CHECK:STDERR: fail_equivalent_impls_without_observe.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Q` in type `T.(Transitive.A)` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   a.(Q.InQ)();
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_equivalent_impls_without_observe.carbon:[[@LINE+2]]:3-11: error: cannot access member of interface `Q` in type `T.(Transitive.A)` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   a.(Q.InQ)();
 
-  // CHECK:STDERR: fail_equivalent_impls_without_observe.carbon:[[@LINE+7]]:3: error: cannot convert type `T.(Transitive.A)` that implements `P & Core.Destroy` into type implementing `P & Q & R` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   TakesPQR(a);
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_equivalent_impls_without_observe.carbon:[[@LINE-13]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TakesPQR[U: P & Q & R](unused u: U) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_equivalent_impls_without_observe.carbon:[[@LINE+3]]:3-13: error: cannot convert type `T.(Transitive.A)` that implements `P & Core.Destroy` into type implementing `P & Q & R` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_equivalent_impls_without_observe.carbon:[[@LINE-9]]:1-40: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   TakesPQR(a);
 }
@@ -149,13 +121,9 @@ fn G[T: Transitive](t: T) {
   observe T.A == T.B == T.C;
 
   var a: T.A = t.GetA();
-  // CHECK:STDERR: fail_todo_same_observe_in_both_scopes.carbon:[[@LINE+8]]:3: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   a.(T.C.InR)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_same_observe_in_both_scopes.carbon:[[@LINE-9]]:1: in import [InImport]
-  // CHECK:STDERR: transitive.carbon:5:15: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: interface R { fn InR(self); }
-  // CHECK:STDERR:               ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_same_observe_in_both_scopes.carbon:[[@LINE+4]]:3-15: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: imported from: fail_todo_same_observe_in_both_scopes.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: transitive.carbon:5:15-27: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   a.(T.C.InR)();
 }
@@ -197,12 +165,8 @@ fn F[T: A, U: B where .Self == T]() {
   observe T == U;
 
   fn InnerF(x: U) {
-    // CHECK:STDERR: fail_todo_nested_functions_in_outer.carbon:[[@LINE+7]]:5: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     RequiresA(x);
-    // CHECK:STDERR:     ^~~~~~~~~~~~
-    // CHECK:STDERR: fail_todo_nested_functions_in_outer.carbon:[[@LINE-8]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-    // CHECK:STDERR: fn RequiresA[T: A](unused x: T) {}
-    // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_todo_nested_functions_in_outer.carbon:[[@LINE+3]]:5-16: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
+    // CHECK:STDERR: fail_todo_nested_functions_in_outer.carbon:[[@LINE-6]]:1-33: note: while deducing parameters of generic declared here [DeductionGenericHere]
     // CHECK:STDERR:
     RequiresA(x);
   }
@@ -221,12 +185,8 @@ fn F[T: A, U: B where .Self == T]() {
   fn InnerF(x: U) {
     observe T == U;
 
-    // CHECK:STDERR: fail_todo_nested_functions_in_inner.carbon:[[@LINE+7]]:5: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     RequiresA(x);
-    // CHECK:STDERR:     ^~~~~~~~~~~~
-    // CHECK:STDERR: fail_todo_nested_functions_in_inner.carbon:[[@LINE-9]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-    // CHECK:STDERR: fn RequiresA[T: A](unused x: T) {}
-    // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_todo_nested_functions_in_inner.carbon:[[@LINE+3]]:5-16: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
+    // CHECK:STDERR: fail_todo_nested_functions_in_inner.carbon:[[@LINE-7]]:1-33: note: while deducing parameters of generic declared here [DeductionGenericHere]
     // CHECK:STDERR:
     RequiresA(x);
   }
@@ -242,12 +202,8 @@ fn RequiresA[T: A](unused x: T) {}
 fn F[T: A, U: B where .Self == T]() {
 
   fn InnerF(x: U) {
-    // CHECK:STDERR: fail_nested_functions_lexical_order.carbon:[[@LINE+7]]:5: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
-    // CHECK:STDERR:     RequiresA(x);
-    // CHECK:STDERR:     ^~~~~~~~~~~~
-    // CHECK:STDERR: fail_nested_functions_lexical_order.carbon:[[@LINE-7]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-    // CHECK:STDERR: fn RequiresA[T: A](unused x: T) {}
-    // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_nested_functions_lexical_order.carbon:[[@LINE+3]]:5-16: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
+    // CHECK:STDERR: fail_nested_functions_lexical_order.carbon:[[@LINE-5]]:1-33: note: while deducing parameters of generic declared here [DeductionGenericHere]
     // CHECK:STDERR:
     RequiresA(x);
   }
@@ -268,12 +224,8 @@ fn F[T: A, U: B where .Self == T](x: U) {
     observe T == U;
   }
 
-  // CHECK:STDERR: fail_nested_functions_leak_upward.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   RequiresA(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_nested_functions_leak_upward.carbon:[[@LINE-10]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn RequiresA[T: A](unused x: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_nested_functions_leak_upward.carbon:[[@LINE+3]]:3-14: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_nested_functions_leak_upward.carbon:[[@LINE-8]]:1-33: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   RequiresA(x);
 }
@@ -288,12 +240,8 @@ fn RequiresA[T: A](unused x: T) {}
 fn F[T: A, U: B where .Self == T, V: B](x: U) {
   observe T == V;
 
-  // CHECK:STDERR: fail_not_observed.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   RequiresA(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_not_observed.carbon:[[@LINE-7]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn RequiresA[T: A](unused x: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_not_observed.carbon:[[@LINE+3]]:3-14: error: cannot convert type `U` that implements `B where...` into type implementing `A` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_not_observed.carbon:[[@LINE-5]]:1-33: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   RequiresA(x);
 }
@@ -307,12 +255,8 @@ interface B {}
 fn TakesA[T: A](unused x: T) {}
 fn F[T: A, U: B](x: U) {
   observe T == U;
-  // CHECK:STDERR: fail_invalid_equivalent.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `B` into type implementing `A` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   TakesA(x);
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_invalid_equivalent.carbon:[[@LINE-6]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn TakesA[T: A](unused x: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_invalid_equivalent.carbon:[[@LINE+3]]:3-11: error: cannot convert type `U` that implements `B` into type implementing `A` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_invalid_equivalent.carbon:[[@LINE-4]]:1-30: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   TakesA(x);
 }
@@ -321,9 +265,7 @@ fn F[T: A, U: B](x: U) {
 library "[[@TEST_NAME]]";
 
 class C(T: type, U: type) {
-  // CHECK:STDERR: fail_wrong_scope_class.carbon:[[@LINE+4]]:3: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
-  // CHECK:STDERR:   observe T == U;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_wrong_scope_class.carbon:[[@LINE+2]]:3-9: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
   // CHECK:STDERR:
   observe T == U;
 }
@@ -332,9 +274,7 @@ class C(T: type, U: type) {
 library "[[@TEST_NAME]]";
 
 constraint C(T: type, U: type) {
-  // CHECK:STDERR: fail_wrong_scope_named_constraint.carbon:[[@LINE+4]]:3: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
-  // CHECK:STDERR:   observe T == U;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_wrong_scope_named_constraint.carbon:[[@LINE+2]]:3-9: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
   // CHECK:STDERR:
   observe T == U;
 }
@@ -346,9 +286,7 @@ class C {}
 interface A {}
 
 fn F[T: A]() {
-  // CHECK:STDERR: fail_non_facet_type_in_impls.carbon:[[@LINE+4]]:19: error: right argument of `impls` requirement must be a facet type [ImplsOnNonFacetType]
-  // CHECK:STDERR:   observe T impls C;
-  // CHECK:STDERR:                   ^
+  // CHECK:STDERR: fail_non_facet_type_in_impls.carbon:[[@LINE+2]]:19: error: right argument of `impls` requirement must be a facet type [ImplsOnNonFacetType]
   // CHECK:STDERR:
   observe T impls C;
 }
@@ -380,13 +318,9 @@ impl C as A {}
 fn F[T: I(C)](t: T) {
   var u: T.U = t.GetU();
 
-  // CHECK:STDERR: fail_todo_generic_import.carbon:[[@LINE+8]]:3: error: cannot convert type `T.(I(C as A & Core.Destroy).U)` that implements `Core.Destroy & B where...` into type implementing `A & Core.Destroy` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   t.TakesT(u);
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_import.carbon:[[@LINE-11]]:1: in import [InImport]
-  // CHECK:STDERR: generic_observe.carbon:10:3: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR:   fn TakesT(self, t: T);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_generic_import.carbon:[[@LINE+4]]:3-13: error: cannot convert type `T.(I(C as A & Core.Destroy).U)` that implements `Core.Destroy & B where...` into type implementing `A & Core.Destroy` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: imported from: fail_todo_generic_import.carbon:[[@LINE-9]]:1 [InImport]
+  // CHECK:STDERR: generic_observe.carbon:10:3-24: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   t.TakesT(u);
 }
@@ -854,10 +788,11 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:       %x.patt.loc11_14.1: @InnerF.%pattern_type (%pattern_type.d51) = wrapper_binding_pattern x, %x.param_patt.loc11_14.1 [symbolic = %x.patt.loc11_14.2 (constants.%x.patt.a34)]
 // CHECK:STDOUT:     } {
 // CHECK:STDOUT:       %x.param: @InnerF.%U.as_type.loc11_16.1 (%U.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc11_16.1: type = splice_block %.loc11_16.2 [symbolic = %U.as_type.loc11_16.1 (constants.%U.as_type)] {
-// CHECK:STDOUT:         %U.ref: %B_where.type = name_ref U, @F.%U.loc8_13.2 [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:       %.loc11_16.1: type = splice_block %.loc11_16.3 [symbolic = %U.as_type.loc11_16.1 (constants.%U.as_type)] {
+// CHECK:STDOUT:         %.loc11_16.2: %B_where.type = specific_constant @F.%U.loc8_13.2, @F(constants.%T, constants.%U) [symbolic = %U (constants.%U)]
+// CHECK:STDOUT:         %U.ref: %B_where.type = name_ref U, %.loc11_16.2 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:         %U.as_type.loc11_16.2: type = facet_access_type %U.ref [symbolic = %U.as_type.loc11_16.1 (constants.%U.as_type)]
-// CHECK:STDOUT:         %.loc11_16.2: type = converted %U.ref, %U.as_type.loc11_16.2 [symbolic = %U.as_type.loc11_16.1 (constants.%U.as_type)]
+// CHECK:STDOUT:         %.loc11_16.3: type = converted %U.ref, %U.as_type.loc11_16.2 [symbolic = %U.as_type.loc11_16.1 (constants.%U.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %x: @InnerF.%U.as_type.loc11_16.1 (%U.as_type) = wrapper_binding x, %x.param
 // CHECK:STDOUT:     }
@@ -1049,21 +984,23 @@ fn F[T: I(C)](t: T) {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @I.WithSelf.TakesT.%Self.as_type.loc10_13.1 (%Self.as_type.7b3) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @I.WithSelf.TakesT.%T.as_type.loc10_22.1 (%T.as_type) = value_param call_param1
-// CHECK:STDOUT:       %.loc10_22.1: type = splice_block %.loc10_22.2 [symbolic = %T.as_type.loc10_22.1 (constants.%T.as_type)] {
-// CHECK:STDOUT:         %T.ref: %facet_type.8cb = name_ref T, @I.%T.loc6_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc10_22.1: type = splice_block %.loc10_22.3 [symbolic = %T.as_type.loc10_22.1 (constants.%T.as_type)] {
+// CHECK:STDOUT:         %.loc10_22.2: %facet_type.8cb = specific_constant @I.%T.loc6_14.2, @I(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %T.ref: %facet_type.8cb = name_ref T, %.loc10_22.2 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:         %T.as_type.loc10_22.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc10_22.1 (constants.%T.as_type)]
-// CHECK:STDOUT:         %.loc10_22.2: type = converted %T.ref, %T.as_type.loc10_22.2 [symbolic = %T.as_type.loc10_22.1 (constants.%T.as_type)]
+// CHECK:STDOUT:         %.loc10_22.3: type = converted %T.ref, %T.as_type.loc10_22.2 [symbolic = %T.as_type.loc10_22.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %t: @I.WithSelf.TakesT.%T.as_type.loc10_22.1 (%T.as_type) = wrapper_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %assoc2.loc10_24.1: @I.WithSelf.%I.assoc_type (%I.assoc_type) = assoc_entity element2, %I.WithSelf.TakesT.decl [symbolic = %assoc2.loc10_24.2 (constants.%assoc2)]
-// CHECK:STDOUT:     %T.ref: %facet_type.8cb = name_ref T, @I.%T.loc6_14.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:     %.loc12_11.1: %facet_type.8cb = specific_constant @I.%T.loc6_14.2, @I(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:     %T.ref: %facet_type.8cb = name_ref T, %.loc12_11.1 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:     %impl.elem0.loc12_16.1: %facet_type.208 = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc12_16.2 (constants.%impl.elem0.931)]
 // CHECK:STDOUT:     %U.ref: %facet_type.208 = name_ref U, %impl.elem0.loc12_16.1 [symbolic = %impl.elem0.loc12_16.2 (constants.%impl.elem0.931)]
 // CHECK:STDOUT:     %U.as_type: type = facet_access_type %U.ref [symbolic = %as_type (constants.%as_type)]
 // CHECK:STDOUT:     %.loc12_16: type = converted %U.ref, %U.as_type [symbolic = %as_type (constants.%as_type)]
 // CHECK:STDOUT:     %T.as_type.loc12_11.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc12_11.2 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc12_11: type = converted %T.ref, %T.as_type.loc12_11.1 [symbolic = %T.as_type.loc12_11.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc12_11.2: type = converted %T.ref, %T.as_type.loc12_11.1 [symbolic = %T.as_type.loc12_11.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %I.observe.decl = observe_decl @I.observe [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:

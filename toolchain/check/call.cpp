@@ -83,16 +83,17 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
                       " expecting {2} argument{2:s}",
                       Diagnostics::IntAsSelect, Diagnostics::IntAsSelect,
                       Diagnostics::IntAsSelect);
-    CARBON_DIAGNOSTIC(InCallToEntity, Note,
-                      "calling {0:=0:function|=1:generic class|=2:generic "
-                      "interface|=3:generic constraint}"
-                      " declared here",
-                      Diagnostics::IntAsSelect);
+    CARBON_DIAGNOSTIC_LABEL(
+        InCallToEntity, Info,
+        "calling {0:=0:function|=1:generic class|=2:generic "
+        "interface|=3:generic constraint}"
+        " declared here",
+        Diagnostics::IntAsSelect);
     context.emitter()
         .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
                static_cast<int>(entity_kind_for_diagnostic), expected_args_size)
-        .Note(entity.latest_decl_id(), InCallToEntity,
-              static_cast<int>(entity_kind_for_diagnostic))
+        .Attach(entity.latest_decl_id(), InCallToEntity,
+                static_cast<int>(entity_kind_for_diagnostic))
         .Emit();
     return std::nullopt;
   }
@@ -257,13 +258,13 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
     CARBON_DIAGNOSTIC(CallBeforeReturnTypeDeduced, Error,
                       "call to `{0}` before its return type is deduced",
                       SemIR::NameId);
-    CARBON_DIAGNOSTIC(ReturnTypeDeducedFromDefinition, Note,
-                      "return type of `{0}` is deduced from its definition",
-                      SemIR::NameId);
+    CARBON_DIAGNOSTIC_LABEL(
+        ReturnTypeDeducedFromDefinition, Info,
+        "return type of `{0}` is deduced from its definition", SemIR::NameId);
     context.emitter()
         .Build(loc_id, CallBeforeReturnTypeDeduced, callee.name_id)
-        .Note(callee.latest_decl_id(), ReturnTypeDeducedFromDefinition,
-              callee.name_id)
+        .Attach(callee.latest_decl_id(), ReturnTypeDeducedFromDefinition,
+                callee.name_id)
         .Emit();
     return SemIR::ErrorInst::InstId;
   }
@@ -283,9 +284,9 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   if (callee.return_pattern_id.has_value()) {
     Diagnostics::AnnotationScope annotate_diagnostics(
         &context.emitter(), [&](auto& builder) {
-          CARBON_DIAGNOSTIC(IncompleteReturnTypeHere, Note,
-                            "return type declared here");
-          builder.Note(callee.return_pattern_id, IncompleteReturnTypeHere);
+          CARBON_DIAGNOSTIC_LABEL(IncompleteReturnTypeHere, Info,
+                                  "return type declared here");
+          builder.Attach(callee.return_pattern_id, IncompleteReturnTypeHere);
         });
     auto arg_type_id = CheckFunctionReturnPatternType(
         context, loc_id, callee.return_pattern_id, *callee_specific_id);
@@ -304,8 +305,8 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
   // Convert the arguments to match the parameters.
   auto converted_args_id =
-      ConvertCallArgs(context, callee_function.self_id, arg_ids, return_arg_id,
-                      callee, *callee_specific_id, is_desugared);
+      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
+                      return_arg_id, callee, *callee_specific_id, is_desugared);
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.
@@ -488,7 +489,7 @@ static auto PerformCallHelper(Context& context, SemIR::LocId loc_id,
     }
 
     case CARBON_KIND(SemIR::CalleeCppOverloadSet overload): {
-      return PerformCallToCppFunction(context, loc_id,
+      return PerformCallToCppFunction(context, loc_id, callee_id,
                                       overload.cpp_overload_set_id,
                                       overload.self_id, arg_ids, is_desugared);
     }

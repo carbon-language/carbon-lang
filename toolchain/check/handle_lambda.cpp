@@ -61,7 +61,7 @@ auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
   }
 
   auto match_results =
-      CalleePatternMatch(context, *implicit_param_patterns_id,
+      CalleePatternMatch(context, params_node_id, *implicit_param_patterns_id,
                          *param_patterns_id, return_specifier.pattern_id);
   context.full_pattern_stack().PopFullPattern();
   auto pattern_block_id = context.pattern_block_stack().Pop();

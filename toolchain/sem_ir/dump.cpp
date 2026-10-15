@@ -629,16 +629,27 @@ LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id)
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file, const SpecificInterface& interface)
+    -> std::string {
+  RawStringOstream out;
+  out << "interface: " << DumpInterfaceSummary(file, interface.interface_id)
+      << "\n  - specific_id: "
+      << DumpSpecificSummary(file, interface.specific_id);
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file,
                            SpecificInterfaceId specific_interface_id)
     -> std::string {
   RawStringOstream out;
   const auto& interface = file.specific_interfaces().Get(specific_interface_id);
-  out << specific_interface_id << "\n"
-      << "  - interface: " << DumpInterfaceSummary(file, interface.interface_id)
-      << "\n"
-      << "  - specific_id: "
-      << DumpSpecificSummary(file, interface.specific_id);
+  out << specific_interface_id;
+  if (specific_interface_id.has_value()) {
+    out << "\n  - interface: "
+        << DumpInterfaceSummary(file, interface.interface_id)
+        << "\n  - specific_id: "
+        << DumpSpecificSummary(file, interface.specific_id);
+  }
   return out.TakeStr();
 }
 

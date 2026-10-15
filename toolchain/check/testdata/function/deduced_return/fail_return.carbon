@@ -17,12 +17,8 @@ fn F(b: bool) -> auto {
   if (b) {
     return 1 as i32;
   }
-  // CHECK:STDERR: fail_mismatch.carbon:[[@LINE+7]]:10: error: deduced return type `bool` does not match return type deduced earlier [DeducedReturnTypeMismatch]
-  // CHECK:STDERR:   return true;
-  // CHECK:STDERR:          ^~~~
-  // CHECK:STDERR: fail_mismatch.carbon:[[@LINE-5]]:12: note: return type previously deduced as `i32` here [DeducedReturnTypeMismatchPrevious]
-  // CHECK:STDERR:     return 1 as i32;
-  // CHECK:STDERR:            ^~~~~~~~
+  // CHECK:STDERR: fail_mismatch.carbon:[[@LINE+3]]:10-13: error: deduced return type `bool` does not match return type deduced earlier [DeducedReturnTypeMismatch]
+  // CHECK:STDERR: fail_mismatch.carbon:[[@LINE-3]]:12-19: note: return type previously deduced as `i32` here [DeducedReturnTypeMismatchPrevious]
   // CHECK:STDERR:
   return true;
 }
@@ -35,12 +31,8 @@ fn F(b: bool) -> auto {
     return 1 as i32;
   }
   // TODO: This should work once we use CommonType in return type deduction.
-  // CHECK:STDERR: fail_todo_mismatch_int_vs_int_literal.carbon:[[@LINE+7]]:10: error: deduced return type `Core.IntLiteral` does not match return type deduced earlier [DeducedReturnTypeMismatch]
-  // CHECK:STDERR:   return 0;
-  // CHECK:STDERR:          ^
-  // CHECK:STDERR: fail_todo_mismatch_int_vs_int_literal.carbon:[[@LINE-6]]:12: note: return type previously deduced as `i32` here [DeducedReturnTypeMismatchPrevious]
-  // CHECK:STDERR:     return 1 as i32;
-  // CHECK:STDERR:            ^~~~~~~~
+  // CHECK:STDERR: fail_todo_mismatch_int_vs_int_literal.carbon:[[@LINE+3]]:10: error: deduced return type `Core.IntLiteral` does not match return type deduced earlier [DeducedReturnTypeMismatch]
+  // CHECK:STDERR: fail_todo_mismatch_int_vs_int_literal.carbon:[[@LINE-4]]:12-19: note: return type previously deduced as `i32` here [DeducedReturnTypeMismatchPrevious]
   // CHECK:STDERR:
   return 0;
 }
@@ -51,9 +43,7 @@ library "[[@TEST_NAME]]";
 // The erroneous `return` doesn't affect the deduced return type.
 fn F(b: bool) -> auto {
   if (b) {
-    // CHECK:STDERR: fail_error_return_ignored.carbon:[[@LINE+4]]:12: error: name `Undeclared` not found [NameNotFound]
-    // CHECK:STDERR:     return Undeclared;
-    // CHECK:STDERR:            ^~~~~~~~~~
+    // CHECK:STDERR: fail_error_return_ignored.carbon:[[@LINE+2]]:12-21: error: name `Undeclared` not found [NameNotFound]
     // CHECK:STDERR:
     return Undeclared;
   }
@@ -69,12 +59,8 @@ library "[[@TEST_NAME]]";
 
 fn F(b: bool) -> auto {
   if (b) {
-    // CHECK:STDERR: fail_return_no_value.carbon:[[@LINE+7]]:5: error: missing return value [ReturnStatementMissingExpr]
-    // CHECK:STDERR:     return;
-    // CHECK:STDERR:     ^~~~~~~
-    // CHECK:STDERR: fail_return_no_value.carbon:[[@LINE-5]]:1: note: return type of function is deduced [ReturnTypeIsDeducedNote]
-    // CHECK:STDERR: fn F(b: bool) -> auto {
-    // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_return_no_value.carbon:[[@LINE+3]]:5-11: error: missing return value [ReturnStatementMissingExpr]
+    // CHECK:STDERR: fail_return_no_value.carbon:[[@LINE-3]]:1-23: note: return type of function is deduced [ReturnTypeIsDeducedNote]
     // CHECK:STDERR:
     return;
   }
@@ -85,12 +71,8 @@ fn F(b: bool) -> auto {
 library "[[@TEST_NAME]]";
 
 fn F() -> auto {
-  // CHECK:STDERR: fail_return_no_value_only.carbon:[[@LINE+7]]:3: error: missing return value [ReturnStatementMissingExpr]
-  // CHECK:STDERR:   return;
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_return_no_value_only.carbon:[[@LINE-4]]:1: note: return type of function is deduced [ReturnTypeIsDeducedNote]
-  // CHECK:STDERR: fn F() -> auto {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_return_no_value_only.carbon:[[@LINE+3]]:3-9: error: missing return value [ReturnStatementMissingExpr]
+  // CHECK:STDERR: fail_return_no_value_only.carbon:[[@LINE-2]]:1-16: note: return type of function is deduced [ReturnTypeIsDeducedNote]
   // CHECK:STDERR:
   return;
 }
@@ -102,18 +84,14 @@ fn F(b: bool) -> auto {
   if (b) {
     return 1 as i32;
   }
-// CHECK:STDERR: fail_reachable_end.carbon:[[@LINE+4]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_reachable_end.carbon:[[@LINE+2]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
 // CHECK:STDERR:
 }
 
 // --- fail_no_return.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_no_return.carbon:[[@LINE+4]]:1: error: no `return` in function with deduced return type [DeducedReturnTypeWithoutReturn]
-// CHECK:STDERR: fn F() -> auto {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_no_return.carbon:[[@LINE+2]]:1-16: error: no `return` in function with deduced return type [DeducedReturnTypeWithoutReturn]
 // CHECK:STDERR:
 fn F() -> auto {}
 
@@ -121,9 +99,7 @@ fn F() -> auto {}
 library "[[@TEST_NAME]]";
 
 fn F() -> auto {
-  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+4]]:3: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
-  // CHECK:STDERR:   return var;
-  // CHECK:STDERR:   ^~~~~~~~~~~
+  // CHECK:STDERR: fail_return_var_no_returned_var.carbon:[[@LINE+2]]:3-13: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
   // CHECK:STDERR:
   return var;
 }
@@ -136,12 +112,8 @@ class C;
 fn Make() -> C*;
 
 fn F() -> auto {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+7]]:10: error: function returns incomplete type `C` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR:   return *Make();
-  // CHECK:STDERR:          ^~~~~~~
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-8]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class C;
-  // CHECK:STDERR: ^~~~~~~~
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+3]]:10-16: error: function returns incomplete type `C` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE-6]]:1-8: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:
   return *Make();
 }
