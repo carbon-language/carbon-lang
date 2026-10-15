@@ -217,6 +217,12 @@ auto BuildNameRef(Context& context, SemIR::LocId loc_id, SemIR::NameId name_id,
                   SemIR::InstId inst_id, SemIR::SpecificId specific_id)
     -> SemIR::InstId;
 
+// Get a location to use in diagnostics from the `inst_id` if possible. If the
+// instruction is canonical, then it has no location, and the `fallback` will be
+// used instead.
+auto GetInstLocationOrFallback(Context& context, SemIR::InstId inst_id,
+                               SemIR::LocId fallback) -> SemIR::LocId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_INST_H_

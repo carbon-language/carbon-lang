@@ -1514,14 +1514,14 @@ fn Use() {
 // CHECK:STDOUT: define weak_odr void @"_CF:thunk:Base.Main:Derived.Main"(ptr sret({}) %return, ptr %self, ptr %n) #1 !dbg !429 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc17_52.2.temp = alloca {}, align 1, !dbg !433
-// CHECK:STDOUT:   %.5.temp = alloca {}, align 1, !dbg !432
+// CHECK:STDOUT:   %.loc17_52.4.temp = alloca {}, align 1, !dbg !433
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_52.2.temp), !dbg !433
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.5.temp), !dbg !432
-// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %.5.temp, ptr %n), !dbg !432
-// CHECK:STDOUT:   call void @_CF.Derived.Main(ptr %.loc17_52.2.temp, ptr %self, ptr %.5.temp), !dbg !433
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_52.4.temp), !dbg !433
+// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %.loc17_52.4.temp, ptr %n), !dbg !433
+// CHECK:STDOUT:   call void @_CF.Derived.Main(ptr %.loc17_52.2.temp, ptr %self, ptr %.loc17_52.4.temp), !dbg !433
 // CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %return, ptr %.loc17_52.2.temp), !dbg !433
 // CHECK:STDOUT:   call void @"_CSelfDestruct.c2a743abd057cb33:core.Destroy.Core"(ptr %.loc17_52.2.temp), !dbg !433
-// CHECK:STDOUT:   call void @"_CSelfDestruct.7ef2e8c2f12d163a:core.Destroy.Core"(ptr %.5.temp), !dbg !432
+// CHECK:STDOUT:   call void @"_CSelfDestruct.7ef2e8c2f12d163a:core.Destroy.Core"(ptr %.loc17_52.4.temp), !dbg !433
 // CHECK:STDOUT:   ret void, !dbg !433
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1672,7 +1672,6 @@ fn Use() {
 // CHECK:STDOUT: !429 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:Base.Main:Derived.Main", scope: null, file: !414, line: 17, type: !419, spFlags: DISPFlagDefinition, unit: !415, retainedNodes: !434)
 // CHECK:STDOUT: !430 = !DILocalVariable(arg: 1, scope: !429, type: !20)
 // CHECK:STDOUT: !431 = !DILocalVariable(arg: 2, scope: !429, type: !20)
-// CHECK:STDOUT: !432 = !DILocation(line: 0, scope: !429)
 // CHECK:STDOUT: !433 = !DILocation(line: 17, column: 3, scope: !429)
 // CHECK:STDOUT: !434 = !{!430, !431}
 // CHECK:STDOUT: !435 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.cb8adced19392b99:core.Destroy.Core", scope: null, file: !414, line: 17, type: !22, spFlags: DISPFlagDefinition, unit: !415, retainedNodes: !438)
@@ -1683,9 +1682,9 @@ fn Use() {
 // CHECK:STDOUT: !440 = !DILocalVariable(arg: 1, scope: !439, type: !20)
 // CHECK:STDOUT: !441 = !DILocation(line: 17, column: 3, scope: !439)
 // CHECK:STDOUT: !442 = !{!440}
-// CHECK:STDOUT: !443 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.7ef2e8c2f12d163a:core.Destroy.Core", scope: null, file: !414, type: !22, spFlags: DISPFlagDefinition, unit: !415, retainedNodes: !446)
+// CHECK:STDOUT: !443 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.7ef2e8c2f12d163a:core.Destroy.Core", scope: null, file: !414, line: 17, type: !22, spFlags: DISPFlagDefinition, unit: !415, retainedNodes: !446)
 // CHECK:STDOUT: !444 = !DILocalVariable(arg: 1, scope: !443, type: !20)
-// CHECK:STDOUT: !445 = !DILocation(line: 0, scope: !443)
+// CHECK:STDOUT: !445 = !DILocation(line: 17, column: 3, scope: !443)
 // CHECK:STDOUT: !446 = !{!444}
 // CHECK:STDOUT: !447 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !414, line: 22, type: !41, spFlags: DISPFlagDefinition, unit: !415)
 // CHECK:STDOUT: !448 = !DILocation(line: 23, column: 3, scope: !447)

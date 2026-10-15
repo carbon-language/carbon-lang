@@ -973,11 +973,10 @@ struct FormType : public SingletonTypeInst<InstKind::FormType, "Core.Form"> {
 
 // A function declaration.
 struct FunctionDecl {
-  static constexpr auto Kind =
-      InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
-          {.ir_name = "fn_decl",
-           .expr_category = ExprCategory::Value,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::FunctionDecl.Define<Parse::NodeId>(
+      {.ir_name = "fn_decl",
+       .expr_category = ExprCategory::Value,
+       .is_lowered = false});
 
   TypeId type_id;
   FunctionId function_id;

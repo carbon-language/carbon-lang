@@ -166,7 +166,7 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
   }
 
   auto match_results =
-      CalleePatternMatch(context, insts.implicit_param_patterns_id,
+      CalleePatternMatch(context, loc_id, insts.implicit_param_patterns_id,
                          insts.param_patterns_id, insts.return_pattern_id);
   insts.call_param_patterns_id = match_results.call_param_patterns_id;
   insts.call_params_id = match_results.call_params_id;
@@ -479,7 +479,7 @@ auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
   }
   auto return_pattern_id = AddReturnPattern(context, loc_id, form);
   auto results = CalleeReturnPatternMatch(
-      context,
+      context, loc_id,
       {.call_param_patterns_id = function.call_param_patterns_id,
        .call_params_id = function.call_params_id,
        .param_ranges = function.call_param_ranges},
