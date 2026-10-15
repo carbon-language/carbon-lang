@@ -66,6 +66,20 @@ struct FunctionFields {
   // TODO: turn into a CARBON_ENUM for more convenient checks.
   enum class InterfaceModifier : uint8_t { None, Default, Final };
 
+  // Kinds of deduced return. For a function whose return type is deduced from
+  // its body, this is the category of the return form, which is specified
+  // explicitly, as in `-> ref auto`.
+  enum class DeducedReturnKind : uint8_t {
+    // The return type is not deduced.
+    None,
+    // `-> auto` or `-> var auto`.
+    Init,
+    // `-> ref auto`.
+    Ref,
+    // `-> val auto`.
+    Value,
+  };
+
   // The following members always have values, and do not change throughout the
   // lifetime of the function. The exception is a function with a deduced return
   // type: its `Call` parameters, parameter pattern block and return
@@ -183,10 +197,10 @@ struct FunctionFields {
   // Which, if any, interface modifier is applied to this function.
   InterfaceModifier interface_modifier = InterfaceModifier::None;
 
-  // Whether the function's return type is deduced from its body, as in
-  // `-> auto`. Until the return type is deduced, the function has no return
+  // Whether, and how, the function's return type is deduced from its body, as
+  // in `-> auto`. Until the return type is deduced, the function has no return
   // information; see `has_pending_deduced_return_type`.
-  bool has_deduced_return_type = false;
+  DeducedReturnKind deduced_return_kind = DeducedReturnKind::None;
 
   // The `self` parameter pattern, if any. This is the first pattern in
   // `param_patterns_id` (from EntityWithParamsBase).
@@ -217,6 +231,23 @@ struct FunctionFields {
     }
 
     CARBON_FATAL("unhandled `ImplModifier` during printing");
+  }
+
+  friend auto operator<<(llvm::raw_ostream& out, DeducedReturnKind kind)
+      -> llvm::raw_ostream& {
+    using enum DeducedReturnKind;
+    switch (kind) {
+      case None:
+        return out << "none";
+      case Init:
+        return out << "init";
+      case Ref:
+        return out << "ref";
+      case Value:
+        return out << "value";
+    }
+
+    CARBON_FATAL("unhandled `DeducedReturnKind` during printing");
   }
 };
 
@@ -272,8 +303,8 @@ struct Function : public EntityWithParamsBase,
     if (interface_modifier != InterfaceModifier::None) {
       out << ", interface_modifier: " << interface_modifier;
     }
-    if (has_deduced_return_type) {
-      out << ", has_deduced_return_type: true";
+    if (deduced_return_kind != DeducedReturnKind::None) {
+      out << ", deduced_return_kind: " << deduced_return_kind;
     }
     if (!body_block_ids.empty()) {
       out << llvm::formatv(
@@ -336,7 +367,12 @@ struct Function : public EntityWithParamsBase,
   // var`. In this state, the function has no return information, and
   // querying its return type or form is an error.
   auto has_pending_deduced_return_type() const -> bool {
-    return has_deduced_return_type && !return_form_inst_id.has_value();
+    return has_deduced_return_type() && !return_form_inst_id.has_value();
+  }
+
+  // Returns whether this function's return type is deduced from its body.
+  auto has_deduced_return_type() const -> bool {
+    return deduced_return_kind != DeducedReturnKind::None;
   }
 
   // Gets the declared return type for a specific version of this function, or

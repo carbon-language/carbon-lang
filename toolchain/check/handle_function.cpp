@@ -64,12 +64,22 @@ static auto HandleReturnSpecifier(Context& context,
   bool is_return_type =
       context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind &&
       !is_primitive_form;
-  if (is_return_type && context.parse_tree().node_kind(expr_node_id) ==
-                            Parse::NodeKind::AutoTypeLiteral) {
+  if (is_return_type && expr_kind == Parse::NodeKind::AutoTypeLiteral) {
     // `-> auto`: the return type is deduced from the function body, so there is
     // no return form or pattern yet. Push a marker in place of the pattern; see
     // `PopReturnSpecifier`.
     context.node_stack().Push(node_id, SemIR::AutoType::TypeInstId);
+    return true;
+  }
+  if (is_primitive_form &&
+      context.insts()
+              .GetAs<SemIR::AnyPrimitiveForm>(expr_inst_id)
+              .type_component_id == SemIR::AutoType::TypeInstId) {
+    // `-> ref auto`, `-> val auto`, or `-> var auto`: the category is known but
+    // the type is deduced from the function body. Push the primitive form,
+    // whose type component is `auto`, as a marker in place of the pattern; see
+    // `PopReturnSpecifier`.
+    context.node_stack().Push(node_id, expr_inst_id);
     return true;
   }
   Context::FormExpr form_expr =
@@ -483,7 +493,7 @@ static auto BuildFunctionDecl(Context& context,
   // If the return type is deduced in a context where that's not allowed, we
   // will treat the function as having an invalid return type.
   bool is_invalid_deduced_return =
-      return_specifier.is_deduced &&
+      return_specifier.is_deduced() &&
       !CheckDeducedReturnTypeAllowed(context, node_id, return_specifier.node_id,
                                      is_definition, is_extern, virtual_modifier,
                                      parent_scope_inst);
@@ -509,7 +519,7 @@ static auto BuildFunctionDecl(Context& context,
           .virtual_modifier = virtual_modifier,
           .evaluation_mode = evaluation_mode,
           .interface_modifier = interface_modifier,
-          .has_deduced_return_type = return_specifier.is_deduced,
+          .deduced_return_kind = return_specifier.deduced_return_kind,
           .self_param_id = self_param_id,
       }};
   if (is_definition) {
@@ -571,7 +581,7 @@ static auto BuildFunctionDecl(Context& context,
 
   // If the return type is deduced, we validate the entry point at the end of
   // the definition, once the return type is known.
-  if (!return_specifier.is_deduced) {
+  if (!return_specifier.is_deduced()) {
     ValidateForEntryPoint(context, node_id, function_decl.function_id,
                           function_info);
   }
@@ -708,7 +718,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
 
   // Now that the return type has been deduced, we can validate the entry point.
   const auto& function = context.functions().Get(function_id);
-  if (function.has_deduced_return_type) {
+  if (function.has_deduced_return_type()) {
     ValidateForEntryPoint(context, start_node_id, function_id, function);
   }
 

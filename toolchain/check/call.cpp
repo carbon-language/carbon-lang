@@ -268,7 +268,7 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
         .Emit();
     return SemIR::ErrorInst::InstId;
   }
-  if (callee.has_deduced_return_type && callee_specific_id->has_value()) {
+  if (callee.has_deduced_return_type() && callee_specific_id->has_value()) {
     // TODO: Resolve the specific definition to determine the return type.
     context.TODO(loc_id, "call to generic function with deduced return type");
     return SemIR::ErrorInst::InstId;
