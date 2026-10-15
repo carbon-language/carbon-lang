@@ -466,7 +466,7 @@ static auto ValidateImplsForInterface(Context& context,
   }
 }
 
-auto ImportFinalImplsWithImplInFile(Context& context) -> bool {
+auto ImportFinalImplsWithImplInFile(Context& context) -> void {
   struct InterfaceToImport {
     SemIR::ImportIRId ir_id;
     SemIR::InterfaceId interface_id;
@@ -542,15 +542,9 @@ auto ImportFinalImplsWithImplInFile(Context& context) -> bool {
   llvm::sort(impls_to_import);
   llvm::unique(impls_to_import);
 
-  auto imported_new_impl = false;
   for (auto [ir_id, import_impl_id] : impls_to_import) {
-    if (ImportImpl(context, ir_id, import_impl_id) ==
-        ImportImplResult::NewlyImported) {
-      imported_new_impl = true;
-    }
+    ImportImpl(context, ir_id, import_impl_id);
   }
-
-  return imported_new_impl;
 }
 
 auto ValidateImplsInFile(Context& context) -> void {

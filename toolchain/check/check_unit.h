@@ -182,7 +182,7 @@ class CheckUnit {
 
   // Re-run every impl lookup with a concrete result and make sure they find the
   // same witnesses.
-  [[nodiscard]] auto CheckPoisonedConcreteImplLookupQueries() -> bool;
+  auto CheckPoisonedConcreteImplLookupQueries() -> void;
 
   // Does work after processing the parse tree, such as finishing the IR and
   // checking for missing contents.
@@ -199,14 +199,9 @@ class CheckUnit {
   Context context_;
 
   // The number of entries at the start of
-  // `context_.definitions_required_by_decl()` that `CheckRequiredDefinitions`
-  // has already checked.
-  size_t num_checked_definitions_required_by_decl_ = 0;
-
-  // The number of entries at the start of
   // `context_.definitions_required_by_use()` that `CheckRequiredDefinitions`
   // has already checked.
-  size_t num_checked_definitions_required_by_use_ = 0;
+  size_t checked_definitions_by_use_ = 0;
 };
 
 }  // namespace Carbon::Check

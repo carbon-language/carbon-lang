@@ -460,15 +460,11 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
 auto CheckUnit::CheckRequiredDefinitions() -> bool {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
-  auto resolution_occurred = false;
-
-  // Only check declarations added since the previous call, so that each one is
-  // diagnosed at most once.
-  auto decl_inst_ids =
-      llvm::ArrayRef(context_.definitions_required_by_decl())
-          .drop_front(num_checked_definitions_required_by_decl_);
-  num_checked_definitions_required_by_decl_ += decl_inst_ids.size();
-  for (SemIR::InstId decl_inst_id : decl_inst_ids) {
+  // TODO: benchmark whether it's better to use move and clear the original
+  // vector over assigning a new, empty vector.
+  auto definitions_required_by_decl =
+      std::exchange(context_.definitions_required_by_decl(), {});
+  for (SemIR::InstId decl_inst_id : definitions_required_by_decl) {
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -509,19 +505,21 @@ auto CheckUnit::CheckRequiredDefinitions() -> bool {
     }
   }
 
+  auto new_resolution_occurred = false;
   // Only check uses added since the previous call, so that each one is
   // diagnosed at most once. Resolving a definition can add more uses, which
   // this loop also checks.
-  auto& uses = context_.definitions_required_by_use();
-  for (; num_checked_definitions_required_by_use_ < uses.size();
-       ++num_checked_definitions_required_by_use_) {
+  auto& definitions_required_by_use = context_.definitions_required_by_use();
+  for (; checked_definitions_by_use_ < definitions_required_by_use.size();
+       ++checked_definitions_by_use_) {
     // Copy the use, because resolving a definition can add to `uses`.
-    auto [loc, specific_id] = uses[num_checked_definitions_required_by_use_];
+    auto [loc, specific_id] =
+        definitions_required_by_use[checked_definitions_by_use_];
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
     switch (ResolveSpecificDefinition(context_, loc, specific_id)) {
       case DefinitionResolution::NewlyResolved:
-        resolution_occurred = true;
+        new_resolution_occurred = true;
         break;
       case DefinitionResolution::PreviouslyResolved:
         break;
@@ -542,16 +540,15 @@ auto CheckUnit::CheckRequiredDefinitions() -> bool {
     }
   }
 
-  return resolution_occurred;
+  return new_resolution_occurred;
 }
 
-auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> bool {
+auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   // Impl lookup can generate instructions (via deduce) which we don't use, as
   // we're only generating diagnostics here, so we catch and discard them.
   context_.inst_block_stack().Push();
   auto poisoned_queries =
       std::exchange(context_.poisoned_concrete_impl_lookup_queries(), {});
-  auto found_difference = false;
   for (const auto& poison : poisoned_queries) {
     auto found_witness_id = EvalLookupSingleFinalWitness(
         context_, poison.loc_id, poison.query, SemIR::InstId::None,
@@ -563,7 +560,6 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> bool {
       continue;
     }
     if (found_witness_id != poison.witness_id) {
-      found_difference = true;
       auto witness_to_impl_id = [&](SemIR::ConstantId witness_id) {
         auto inst = context_.constant_values().GetInst(witness_id);
         CARBON_KIND_SWITCH(inst) {
@@ -631,10 +627,11 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> bool {
     }
   }
   context_.inst_block_stack().PopAndDiscard();
-  return found_difference;
 }
 
 auto CheckUnit::FinishRun() -> void {
+  ImportFinalImplsWithImplInFile(context_);
+
   auto do_resolution_checks = true;
   auto num_resolution_check_cycles = 0;
   constexpr auto max_resolution_check_cycles = 10;
@@ -646,8 +643,6 @@ auto CheckUnit::FinishRun() -> void {
     FinalizeCppAstFragment(context_);
 
     do_resolution_checks = CheckRequiredDefinitions();
-    do_resolution_checks |= CheckPoisonedConcreteImplLookupQueries();
-    do_resolution_checks |= ImportFinalImplsWithImplInFile(context_);
   }
 
   if (num_resolution_check_cycles == max_resolution_check_cycles) {
@@ -671,9 +666,8 @@ auto CheckUnit::FinishRun() -> void {
     }
   }
 
-  // This only emits diagnostics, so it never creates work for the loop above.
-  // Running it after the loop also covers functions added during the loop.
   CheckRequiredDeclarations();
+  CheckPoisonedConcreteImplLookupQueries();
 
   // Validate `impl`s once, after the loop has imported every `final impl` that
   // they need to be checked against. Validating on each pass would repeat the
