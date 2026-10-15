@@ -356,8 +356,9 @@ fn G() {
 // CHECK:STDOUT:       %return.param_patt.loc16_16.1: @Wrap.Make.%pattern_type (%pattern_type.51d) = out_param_pattern [symbolic = %return.param_patt.loc16_16.2 (constants.%return.param_patt.41d)]
 // CHECK:STDOUT:       %return.patt.loc16_13.1: @Wrap.Make.%pattern_type (%pattern_type.51d) = return_slot_pattern %return.param_patt.loc16_16.1, %T.ref [symbolic = %return.patt.loc16_13.2 (constants.%return.patt.b39)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @Wrap.%T.loc15_13.2 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:       %.loc16_16.3: Core.Form = init_form %T.ref [symbolic = %.loc16_16.2 (constants.%.184)]
+// CHECK:STDOUT:       %.loc16_16.3: type = specific_constant @Wrap.%T.loc15_13.2, @Wrap(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %T.ref: type = name_ref T, %.loc16_16.3 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc16_16.4: Core.Form = init_form %T.ref [symbolic = %.loc16_16.2 (constants.%.184)]
 // CHECK:STDOUT:       %return.param: ref @Wrap.Make.%T (%T) = out_param call_param0
 // CHECK:STDOUT:       %return: ref @Wrap.Make.%T (%T) = return_slot %return.param
 // CHECK:STDOUT:     }

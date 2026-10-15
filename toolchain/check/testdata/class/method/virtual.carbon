@@ -1848,7 +1848,10 @@ class T2(G2: type) {
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %self: @T1.F.%T1 (%T1) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @T1.F.%T (%T) = value_param call_param1
-// CHECK:STDOUT:       %T.ref: type = name_ref T, @T1.%T.loc4_16.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       %.loc6_39.1: type = splice_block %T.ref [symbolic = %T (constants.%T)] {
+// CHECK:STDOUT:         %.loc6_39.2: type = specific_constant @T1.%T.loc4_16.2, @T1(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %T.ref: type = name_ref T, %.loc6_39.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:       }
 // CHECK:STDOUT:       %t: @T1.F.%T (%T) = wrapper_binding t, %t.param
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     <elided>
@@ -2059,7 +2062,8 @@ class T2(G2: type) {
 // CHECK:STDOUT:       %self: @Derived.F.loc10_44.1.%Derived (%Derived) = wrapper_binding self, %self.param
 // CHECK:STDOUT:       %t.param: @Derived.F.loc10_44.1.%ptr.loc10_41.1 (%ptr.e8f) = value_param call_param1
 // CHECK:STDOUT:       %.loc10_41: type = splice_block %ptr.loc10_41.2 [symbolic = %ptr.loc10_41.1 (constants.%ptr.e8f)] {
-// CHECK:STDOUT:         %T.ref: type = name_ref T, @Derived.%T.loc7_16.2 [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %.loc10_40: type = specific_constant @Derived.%T.loc7_16.2, @Derived(constants.%T) [symbolic = %T (constants.%T)]
+// CHECK:STDOUT:         %T.ref: type = name_ref T, %.loc10_40 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:         %ptr.loc10_41.2: type = ptr_type %T.ref [symbolic = %ptr.loc10_41.1 (constants.%ptr.e8f)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %t: @Derived.F.loc10_44.1.%ptr.loc10_41.1 (%ptr.e8f) = wrapper_binding t, %t.param
