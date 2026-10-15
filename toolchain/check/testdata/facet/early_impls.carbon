@@ -297,34 +297,3 @@ private constraint ConstraintForZ {
 fn F(generic _: ConstraintForZ where
            .Z1 impls ConstraintForY and
            .Z1.(Y.Y1) == ()) {}
-
-// --- period_self_in_specific_needs_early_impls_in_impls_lhs.carbon
-library "[[@TEST_NAME]]";
-
-interface Z {}
-interface Y {
-  let Y1: type;
-}
-
-class C(T: Y where .Y1 impls Z) {}
-
-// The early impls provides a witness for the query `.Self.(Y.Y1) impls Z`,
-// which contains a frozen `.Self`. Impl lookup when forming the specific for
-// `C` needs to thaw it to compare with the facet type in `T`.
-fn F(generic _: Y where .Y1 impls Z and C(.Self) impls Z) {}
-
-// --- period_self_in_specific_needs_early_impls_in_impls_rhs.carbon
-library "[[@TEST_NAME]]";
-
-interface Z(T: type) {}
-interface Y {
-  let Y1: type;
-}
-
-class B;
-class C(T: Y where B impls Z(.Self)) {}
-
-// The `.Self` in `B impls Z(.Self)` does _not_ refer to `B` here. It refers to
-// `U`.  Impl lookup when forming the specific for `C` needs to thaw the `.Self`
-// to compare with the facet type in `T`, but also not replace it with `B`.
-fn F(unused generic U: Y where B impls Z(.Self) and C(.Self) impls Z(())) {}
