@@ -120,7 +120,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
         context().constant_values().GetInstId(period_self_replacement_id_);
     auto replacement_type_id =
         context().insts().Get(replacement_self_inst_id).type_id();
-    CARBON_CHECK(context().types().Is<SemIR::FacetType>(replacement_type_id));
+    CARBON_CHECK(context().types().IsFacetTypeOrError(replacement_type_id));
 
     // If the replacement has the same type as `.Self`, use it directly.
     if (replacement_type_id == period_self_type_id) {
