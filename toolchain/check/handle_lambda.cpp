@@ -112,7 +112,7 @@ auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
                   return_specifier.form.type_component_inst_id,
               .return_form_inst_id = return_specifier.form.form_inst_id,
               .return_pattern_id = return_specifier.pattern_id,
-              .has_deduced_return_type = return_specifier.is_deduced,
+              .deduced_return_kind = return_specifier.deduced_return_kind,
           }});
   context.inst_block_stack().AddInstId(decl_id);
 

@@ -302,7 +302,11 @@ auto RegisterReturnedVar(Context& context, Parse::NodeId returned_node,
                       "non-initializing return form");
     auto diag = context.emitter().Build(returned_node, ReturnedVarNotInit);
     CARBON_DIAGNOSTIC(ReturnFormHereNote, Note, "return form declared here");
-    diag.Note(function.return_form_inst_id, ReturnFormHereNote);
+    // A deduced return form is located where its type was deduced from, which
+    // is this `returned var`, so point at the function declaration instead.
+    diag.Note(function.has_deduced_return_type() ? function.latest_decl_id()
+                                                 : function.return_form_inst_id,
+              ReturnFormHereNote);
     diag.Emit();
   }
 

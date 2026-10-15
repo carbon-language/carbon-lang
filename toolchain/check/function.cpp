@@ -66,10 +66,32 @@ auto PopReturnSpecifier(Context& context) -> ReturnSpecifierInfo {
   if (!pattern_id) {
     return {};
   }
+  // For a deduced return type, `HandleReturnSpecifier` pushes a marker in place
+  // of a return pattern, and doesn't push a return form. The marker is either
+  // `auto`, for `-> auto`, or a primitive form whose type component is `auto`,
+  // for `-> ref auto` and similar.
+  using DeducedReturnKind = SemIR::Function::DeducedReturnKind;
   if (*pattern_id == SemIR::AutoType::TypeInstId) {
-    // For a deduced return type, `HandleReturnSpecifier` pushes `auto` in place
-    // of a return pattern, and doesn't push a return form.
-    return {.node_id = node_id, .is_deduced = true};
+    return {.node_id = node_id, .deduced_return_kind = DeducedReturnKind::Init};
+  }
+  if (auto form =
+          context.insts().TryGetAs<SemIR::AnyPrimitiveForm>(*pattern_id)) {
+    CARBON_CHECK(form->type_component_id == SemIR::AutoType::TypeInstId);
+    auto kind = DeducedReturnKind::None;
+    switch (form->kind) {
+      case SemIR::InitForm::Kind:
+        kind = DeducedReturnKind::Init;
+        break;
+      case SemIR::RefForm::Kind:
+        kind = DeducedReturnKind::Ref;
+        break;
+      case SemIR::ValueForm::Kind:
+        kind = DeducedReturnKind::Value;
+        break;
+      default:
+        CARBON_FATAL("Unexpected primitive form kind: {0}", form->kind);
+    }
+    return {.node_id = node_id, .deduced_return_kind = kind};
   }
   return {.node_id = node_id,
           .pattern_id = *pattern_id,
@@ -440,6 +462,8 @@ auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
   auto& function = context.functions().Get(function_id);
   CARBON_CHECK(function.has_pending_deduced_return_type());
 
+  loc_id = context.insts().GetLocIdForDesugaring(loc_id);
+
   // A function with a deduced return type can't be redeclared, so there is only
   // one declaration to complete.
   auto decl_id = function.latest_decl_id();
@@ -466,11 +490,27 @@ auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
         context, loc_id,
         {.type_id = SemIR::TypeType::TypeId,
          .value_id = context.types().GetTypeInstId(type_id)});
+    SemIR::InstKind form_kind = SemIR::InitForm::Kind;
+    switch (function.deduced_return_kind) {
+      case SemIR::Function::DeducedReturnKind::None:
+        CARBON_FATAL("Return type is not deduced");
+      case SemIR::Function::DeducedReturnKind::Init:
+        form_kind = SemIR::InitForm::Kind;
+        break;
+      case SemIR::Function::DeducedReturnKind::Ref:
+        form_kind = SemIR::RefForm::Kind;
+        break;
+      case SemIR::Function::DeducedReturnKind::Value:
+        form_kind = SemIR::ValueForm::Kind;
+        break;
+    }
     auto form_inst_id = AddInst(
-        context, SemIR::LocIdAndInst::RuntimeVerified(
-                     context.sem_ir(), loc_id,
-                     SemIR::InitForm{.type_id = SemIR::FormType::TypeId,
-                                     .type_component_inst_id = type_inst_id}));
+        context,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), loc_id,
+            SemIR::AnyPrimitiveForm{.kind = form_kind,
+                                    .type_id = SemIR::FormType::TypeId,
+                                    .type_component_id = type_inst_id}));
     form = {.form_inst_id = form_inst_id,
             .type_component_inst_id = type_inst_id,
             .type_component_id =
