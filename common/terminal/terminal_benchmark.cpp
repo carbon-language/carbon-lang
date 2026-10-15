@@ -13,6 +13,7 @@
 #include "common/terminal/style.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "testing/base/benchmark_helpers.h"
 
 namespace Carbon::Terminal {
 namespace {
@@ -57,7 +58,7 @@ static void BM_StyleTransition(benchmark::State& state, ColorMode mode) {
     // the one before it made, and blocks the optimizer from guessing the
     // value.
     uint8_t last_byte = str.c_str()[str.size()];
-    benchmark::DoNotOptimize(last_byte);
+    Testing::DoNotOptimize(last_byte);
     current_idx = (next_idx + last_byte) % PoolSize;
     str.clear();
   }
@@ -126,7 +127,7 @@ static void BM_BufferRender(benchmark::State& state, ColorMode mode) {
     // the one before it made, and blocks the optimizer from guessing the
     // value.
     uint8_t last_byte = str.c_str()[str.size()];
-    benchmark::DoNotOptimize(last_byte);
+    Testing::DoNotOptimize(last_byte);
     current_idx = (current_idx + 1 + last_byte) % PoolSize;
     str.clear();
   }
@@ -165,7 +166,7 @@ static void BM_DrawText(benchmark::State& state, Charset charset,
   int row = 0;
   for (auto _ : state) {
     row = buffer.DrawText(0, row, text, Style()).y + 1;
-    benchmark::DoNotOptimize(row);
+    Testing::DoNotOptimize(row);
     // Reuse a bounded band of rows so this measures drawing rather than the
     // buffer's growth.
     if (row > 64) {
@@ -198,7 +199,7 @@ static void BM_DrawBox(benchmark::State& state, Charset charset) {
   for (auto _ : state) {
     buffer.DrawBox(0, y, BoxWidth, BoxHeight, style);
     y = (y + BoxHeight) % (Rows - BoxHeight);
-    benchmark::DoNotOptimize(y);
+    Testing::DoNotOptimize(y);
   }
 }
 BENCHMARK_CAPTURE(BM_DrawBox, AsciiCharset, Charset::Ascii);
@@ -235,7 +236,7 @@ static void BM_RenderLineArt(benchmark::State& state, ColorMode mode) {
     // the one before it made, and blocks the optimizer from guessing the
     // value.
     uint8_t last_byte = str.c_str()[str.size()];
-    benchmark::DoNotOptimize(last_byte);
+    Testing::DoNotOptimize(last_byte);
     current_idx = (current_idx + 1 + last_byte) % PoolSize;
     str.clear();
   }

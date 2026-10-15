@@ -129,6 +129,10 @@ class Context {
     return field_decls_stack_;
   }
 
+  auto friend_scopes_stack() -> ArrayStack<SemIR::ConstantId>& {
+    return friend_scopes_stack_;
+  }
+
   auto require_impls_stack() -> RequireImplsStack& {
     return require_impls_stack_;
   }
@@ -310,9 +314,14 @@ class Context {
   struct DeclaringImplDecl {
     SemIR::ConstantId self_id;
     SemIR::SpecificInterface specific_interface;
+    auto operator==(const DeclaringImplDecl& rhs) const -> bool = default;
   };
   auto declaring_impl_decls() -> llvm::SmallVector<DeclaringImplDecl>& {
     return declaring_impl_decls_;
+  }
+
+  auto eval_impl_lookup_to_identified_witness() -> int32_t& {
+    return eval_impl_lookup_to_identified_witness_;
   }
 
   // Data about a form expression.
@@ -507,6 +516,10 @@ class Context {
   // The stack of FieldDecls for in-progress Class definitions.
   ArrayStack<SemIR::InstId> field_decls_stack_;
 
+  // The stack of `friend` decls for in-progress Class definitions, identified
+  // by the constant value of an expression that names them.
+  ArrayStack<SemIR::ConstantId> friend_scopes_stack_;
+
   // The stack of RequireImpls for in-progress Interface and Constraint
   // definitions.
   RequireImplsStack require_impls_stack_;
@@ -628,6 +641,13 @@ class Context {
   // `C as I`, an impl lookup query for `C as I` or `.Self as I` should find
   // that impl being declared (even though it does not yet exist).
   llvm::SmallVector<DeclaringImplDecl> declaring_impl_decls_;
+
+  // Tracks if we are currently identifying a facet type, which causes
+  // LookupImplWitness instructions to not resolve to final witnesses by
+  // redirecting them to form IdentifiedWitness instructions. The caller to
+  // identify must replace any IdentifiedWitness instructions in the
+  // IdentifiedFacetType before using the values there.
+  int32_t eval_impl_lookup_to_identified_witness_ = 0;
 
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;

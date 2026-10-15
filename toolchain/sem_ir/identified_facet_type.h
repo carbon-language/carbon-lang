@@ -42,14 +42,35 @@ struct IdentifiedFacetType {
     friend auto operator==(const RequiredImpl& lhs, const RequiredImpl& rhs)
         -> bool = default;
   };
+  struct Rewrite {
+    ConstantId lhs;
+    ConstantId rhs;
+
+    friend auto operator==(const Rewrite& lhs, const Rewrite& rhs)
+        -> bool = default;
+  };
+  struct Equivalent {
+    ConstantId lhs;
+    ConstantId rhs;
+
+    friend auto operator==(const Equivalent& lhs, const Equivalent& rhs)
+        -> bool = default;
+  };
 
   IdentifiedFacetType(IdentifiedFacetTypeKey key, bool partially_identified,
                       llvm::ArrayRef<RequiredImpl> extends,
-                      llvm::ArrayRef<RequiredImpl> self_impls);
+                      llvm::ArrayRef<RequiredImpl> self_impls,
+                      llvm::ArrayRef<Rewrite> rewrites,
+                      llvm::ArrayRef<Equivalent> equivalents);
 
   // The order here defines the order of impl witnesses for this facet type.
   auto required_impls() const -> llvm::ArrayRef<RequiredImpl> {
     return required_impls_;
+  }
+
+  auto rewrites() const -> llvm::ArrayRef<Rewrite> { return rewrites_; }
+  auto equivalents() const -> llvm::ArrayRef<Equivalent> {
+    return equivalents_;
   }
 
   // Can this be used to the right of an `as` in an `impl` declaration?
@@ -89,6 +110,18 @@ struct IdentifiedFacetType {
   // constraint. Sorted and deduplicated.
   llvm::SmallVector<RequiredImpl> required_impls_;
 
+  // Rewrite requirements from a facet type and any named constraints that it
+  // references, flattened to a single list. Only rewrite requirements from
+  // extended require decls are included here. Rewrite requirements from a
+  // non-extended require decl are treated as same-type requirements.
+  llvm::SmallVector<Rewrite> rewrites_;
+
+  // Same-type requirements from a facet type and any named constraints that it
+  // references, flattened to a single list. This includes rewrite requirements
+  // from non-extended require decls, which are treated as being same-type
+  // requirements.
+  llvm::SmallVector<Equivalent> equivalents_;
+
   // The single interface from `required_impls` to implement if this is
   // the facet type to the right of an `impl`...`as`, or `None` if no such
   // single interface.
@@ -120,7 +153,7 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
 namespace Carbon {
 extern template class CanonicalValueStore<
     SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
-    Tag<SemIR::CheckIRId>, SemIR ::IdentifiedFacetType>;
+    Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
 extern template class ValueStore<SemIR::IdentifiedFacetTypeId,
                                  SemIR::IdentifiedFacetType,
                                  Tag<SemIR::CheckIRId>>;

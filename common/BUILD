@@ -114,6 +114,12 @@ cc_test(
 )
 
 cc_library(
+    name = "checked_save_and_restore",
+    hdrs = ["checked_save_and_restore.h"],
+    deps = [":check"],
+)
+
+cc_library(
     name = "concepts",
     hdrs = ["concepts.h"],
 )
@@ -273,6 +279,7 @@ cc_binary(
     deps = [
         ":check",
         ":filesystem",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/random",
@@ -372,6 +379,7 @@ cc_binary(
     deps = [
         ":check",
         ":hashing",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/random",
@@ -400,6 +408,12 @@ cc_test(
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "increment_scope",
+    hdrs = ["increment_scope.h"],
+    deps = [":check"],
 )
 
 cc_library(
@@ -482,6 +496,7 @@ cc_binary(
     deps = [
         ":map",
         ":raw_hashtable_benchmark_helpers",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/random",
@@ -570,6 +585,7 @@ cc_binary(
     srcs = ["raw_hashtable_metadata_group_benchmark.cpp"],
     deps = [
         ":raw_hashtable_metadata_group",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "@abseil-cpp//absl/random",
         "@google_benchmark//:benchmark",
@@ -671,6 +687,7 @@ cc_binary(
     deps = [
         ":raw_hashtable_benchmark_helpers",
         ":set",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "@abseil-cpp//absl/container:flat_hash_set",
         "@google_benchmark//:benchmark",

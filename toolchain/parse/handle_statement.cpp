@@ -51,6 +51,12 @@ auto HandleStatement(Context& context) -> void {
       context.PushState(StateKind::MatchIntroducer);
       break;
     }
+    case Lex::TokenKind::PeriodPeriodPeriod: {
+      context.PushState(StateKind::StatementPackExpansionFinish);
+      context.AddLeafNode(NodeKind::PackExpansionStart, context.Consume());
+      context.PushState(StateKind::Statement);
+      break;
+    }
 #define CARBON_PARSE_NODE_KIND(Name)
 #define CARBON_PARSE_NODE_KIND_TOKEN_MODIFIER(Name) case Lex::TokenKind::Name:
 #include "toolchain/parse/node_kind.def"
@@ -226,6 +232,13 @@ auto HandleStatementReturn(Context& context) -> void {
 
 auto HandleStatementReturnFinish(Context& context) -> void {
   HandleStatementKeywordFinish(context, NodeKind::ReturnStatement);
+}
+
+auto HandleStatementPackExpansionFinish(Context& context) -> void {
+  auto state = context.PopState();
+
+  context.AddNode(NodeKind::PackExpansionStatement, state.token,
+                  state.has_error);
 }
 
 auto HandleStatementScopeLoop(Context& context) -> void {

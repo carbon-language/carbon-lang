@@ -16,6 +16,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/core_identifier.h"
+#include "toolchain/check/cpp/export.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/impl_lookup.h"
@@ -499,6 +500,23 @@ static auto ConvertTupleToArray(Context& context, SemIR::TupleType tuple_type,
                                    {.type_id = target.type_id,
                                     .inits_id = sem_ir.inst_blocks().Add(inits),
                                     .dest_id = return_slot_arg_id});
+}
+
+// Performs a conversion from a function to a C++ function pointer type.
+static auto ConvertFunctionToCppPointer(
+    Context& context, SemIR::LocId loc_id, SemIR::FunctionType src_type,
+    SemIR::CppFunctionPointerType target_type, SemIR::InstId value_id,
+    ConversionTarget target) -> SemIR::InstId {
+  if (!ExportFunctionToCppPointerConversion(context, value_id, src_type,
+                                            target_type, target.diagnose)) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  return AddInst<SemIR::CppAddrOfFunction>(
+      context, loc_id,
+      {.type_id = target.type_id,
+       .function_ref_id = value_id,
+       .function_id = src_type.function_id});
 }
 
 // Performs a conversion from a tuple to a tuple type. This function only
@@ -1622,11 +1640,25 @@ static auto PerformBuiltinConversion(Context& context, SemIR::LocId loc_id,
   }
 
   // A tuple (T1, T2, ..., Tn) converts to array(T, n) if each Ti converts to T.
-  if (auto target_array_type = target_type_inst.TryAs<SemIR::ArrayType>()) {
-    if (auto src_tuple_type =
-            sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
+  // This applies both to `Core.Array(T, n)`, which is the type named by
+  // `array(T, n)`, and to the primitive array type that it adapts.
+  if (auto src_tuple_type =
+          sem_ir.types().TryGetAs<SemIR::TupleType>(value_type_id)) {
+    if (auto target_array_type =
+            TryGetAsArrayType(context, loc_id, target.type_id)) {
       return ConvertTupleToArray(context, *src_tuple_type, *target_array_type,
                                  value_id, target);
+    }
+  }
+
+  // Function types can convert to C++ function pointer types.
+  if (auto fn_ptr_type =
+          context.types().TryGetAs<SemIR::CppFunctionPointerType>(
+              target.type_id)) {
+    if (auto src_fn_type =
+            context.types().TryGetAs<SemIR::FunctionType>(value_type_id)) {
+      return ConvertFunctionToCppPointer(context, loc_id, *src_fn_type,
+                                         *fn_ptr_type, value_id, target);
     }
   }
 
@@ -2179,6 +2211,25 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
         num_storage_args + 1, SemIR::InstType::TypeInstId);
     auto action_type_id = GetTupleType(context, action_type_elements_id);
 
+    // Move the `target.storage_access_block` into the `InitializeAction` so
+    // that it can be inserted when the action is performed.
+    auto storage_access_block_id = SemIR::InstId::None;
+    auto pending_inst_block = target.storage_access_block->TakeAsInstBlock();
+    if (pending_inst_block != SemIR::InstBlockId::Empty) {
+      auto pending_splice_block = AddInstInNoBlock<SemIR::SpliceBlock>(
+          context, loc_id,
+          {
+              .type_id = SemIR::InstType::TypeId,
+              .block_id = pending_inst_block,
+              .result_id = target.storage_id,
+          });
+      storage_access_block_id =
+          context.constant_values().GetInstId(context.constants().GetOrAdd(
+              SemIR::InstValue{.type_id = SemIR::InstType::TypeId,
+                               .inst_id = pending_splice_block},
+              SemIR::ConstantDependence::None));
+    }
+
     // Create the initialization action.
     auto action_id = AddDependentActionInst<SemIR::InitializeAction>(
         context, loc_id,
@@ -2188,6 +2239,7 @@ static auto AddConvertActionIfDependent(Context& context, SemIR::LocId loc_id,
              context.bundles().AddCanonical(SemIR::InitializeAction::Target{
                  .target_type_inst_id = target_type_inst_id,
                  .storage_id = target.storage_id,
+                 .storage_access_block_id = storage_access_block_id,
                  .in_place = SemIR::BoolValue::From(
                      target.kind == ConversionTarget::InPlaceInitializing)})});
 
@@ -2321,8 +2373,22 @@ auto PerformAction(Context& context, SemIR::SpecificId specific_id,
 
   const auto& target_bundle = context.bundles().Get(action.target_id);
   PendingBlock target_block(&context);
+
+  // Add the storage access block from the `action` to the pending
+  // `target_block`.
+  if (auto inst_value = context.insts().TryGetAsIfValid<SemIR::InstValue>(
+          target_bundle.storage_access_block_id)) {
+    auto splice_block =
+        context.insts().GetAs<SemIR::SpliceBlock>(inst_value->inst_id);
+    auto inst_block = context.inst_blocks().Get(splice_block.block_id);
+    for (auto inst_id : inst_block) {
+      target_block.AddInstId(inst_id);
+    }
+  }
+
   auto specific_storage_id = AddSpecificInstToPendingBlock(
       target_block, target_bundle.storage_id, specific_id);
+
   ConversionTarget target = {
       .kind = ConversionTarget::Kind(target_bundle.in_place.ToBool()
                                          ? ConversionTarget::InPlaceInitializing
@@ -2648,6 +2714,10 @@ auto ConvertCallArgs(Context& context, SemIR::InstId self_id,
   CARBON_CHECK(
       (self_id.has_value() ? 1 : 0) + arg_refs.size() <=
       context.inst_blocks().GetOrEmpty(callee.param_patterns_id).size());
+  // A return argument can only be matched against a return parameter.
+  CARBON_CHECK(
+      !return_arg_id.has_value() || callee.call_param_ranges.return_size() > 0,
+      "Return argument provided for a callee with no return parameter");
 
   return CallerPatternMatch(context, callee_specific_id, callee.self_param_id,
                             callee.param_patterns_id, callee.return_pattern_id,
@@ -2719,44 +2789,22 @@ auto FormExprAsForm(Context& context, SemIR::LocId loc_id,
 
 auto ReturnExprAsForm(Context& context, SemIR::LocId loc_id,
                       SemIR::InstId value_id) -> Context::FormExpr {
-  auto form_inst_id = SemIR::InstId::None;
-  auto type_inst_id = SemIR::InstId::None;
-  if (auto ref_tag = context.insts().TryGetAs<SemIR::RefTagExpr>(value_id)) {
-    type_inst_id = ConvertToValueOfType(context, loc_id, ref_tag->expr_id,
-                                        SemIR::TypeType::TypeId);
-    if (type_inst_id == SemIR::ErrorInst::InstId) {
-      return Context::FormExpr::Error;
-    }
-    if (!context.constant_values().Get(type_inst_id).is_constant()) {
-      DiagnoseTypeExprEvaluationFailure(context,
-                                        SemIR::LocId(ref_tag->expr_id));
-      return Context::FormExpr::Error;
-    }
-    form_inst_id = AddInst(
-        context,
-        SemIR::LocIdAndInst::RuntimeVerified(
-            context.sem_ir(), loc_id,
-            SemIR::RefForm{.type_id = SemIR::FormType::TypeId,
-                           .type_component_inst_id =
-                               context.types().GetAsTypeInstId(type_inst_id)}));
-  } else {
-    type_inst_id = ConvertToValueOfType(context, loc_id, value_id,
-                                        SemIR::TypeType::TypeId);
-    if (type_inst_id == SemIR::ErrorInst::InstId) {
-      return Context::FormExpr::Error;
-    }
-    if (!context.constant_values().Get(type_inst_id).is_constant()) {
-      DiagnoseTypeExprEvaluationFailure(context, loc_id);
-      return Context::FormExpr::Error;
-    }
-    form_inst_id = AddInst(
-        context, SemIR::LocIdAndInst::RuntimeVerified(
-                     context.sem_ir(), loc_id,
-                     SemIR::InitForm{
-                         .type_id = SemIR::FormType::TypeId,
-                         .type_component_inst_id =
-                             context.types().GetAsTypeInstId(type_inst_id)}));
+  auto type_inst_id =
+      ConvertToValueOfType(context, loc_id, value_id, SemIR::TypeType::TypeId);
+  if (type_inst_id == SemIR::ErrorInst::InstId) {
+    return Context::FormExpr::Error;
   }
+  if (!context.constant_values().Get(type_inst_id).is_constant()) {
+    DiagnoseTypeExprEvaluationFailure(context, loc_id);
+    return Context::FormExpr::Error;
+  }
+  auto form_inst_id = AddInst(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::InitForm{.type_id = SemIR::FormType::TypeId,
+                          .type_component_inst_id =
+                              context.types().GetAsTypeInstId(type_inst_id)}));
 
   auto type_const_id = context.constant_values().Get(type_inst_id);
   CARBON_CHECK(type_const_id.is_constant());

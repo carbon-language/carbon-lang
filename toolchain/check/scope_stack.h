@@ -56,6 +56,7 @@ class ScopeStack {
     CleanupScopeDepth break_depth;
     SemIR::InstBlockId continue_target;
     CleanupScopeDepth continue_depth;
+    SemIR::InstId return_scope_decl_id;
   };
 
   // A non-lexical scope in which unqualified lookup may be required.

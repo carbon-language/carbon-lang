@@ -191,6 +191,8 @@ auto CompilationUnit::RunLower() -> void {
     options.vlog_stream = vlog_stream_;
     options.opt_level = options_->opt_level;
     options.mangle_string_fingerprint = options_->mangle_string_fingerprint;
+    // Only generate inst names if the llvm IR needs to be human-readable.
+    options.generate_inst_names = options_->dump_llvm_ir;
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
                                  total_ir_count_, options);

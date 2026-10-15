@@ -137,9 +137,8 @@ using DeclaredFacetTypeStore =
     CanonicalValueStore<DeclaredFacetTypeId, DeclaredFacetType, Tag<CheckIRId>>;
 
 // See common/hashing.h.
-inline auto CarbonHashValue(const DeclaredFacetType& value, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
+inline auto CarbonHashValue(const DeclaredFacetType& value) -> HashCode {
+  Hasher hasher;
   hasher.HashArray(llvm::ArrayRef(value.extend_constraints));
   hasher.HashArray(llvm::ArrayRef(value.self_impls_constraints));
   hasher.HashArray(llvm::ArrayRef(value.extend_named_constraints));

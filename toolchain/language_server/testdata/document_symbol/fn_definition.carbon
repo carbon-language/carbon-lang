@@ -48,7 +48,7 @@ fn Builtin() = "int.make_type_32";
 // CHECK:STDOUT:       "typeDefinitionProvider": true
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 482{{\r}}
+// CHECK:STDOUT: }Content-Length: 490{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "jsonrpc": "2.0",
@@ -56,14 +56,14 @@ fn Builtin() = "int.make_type_32";
 // CHECK:STDOUT:   "params": {
 // CHECK:STDOUT:     "diagnostics": [
 // CHECK:STDOUT:       {
-// CHECK:STDOUT:         "message": "semantics TODO: `HandleTerseBodyArrow`",
+// CHECK:STDOUT:         "message": "semantics TODO: `HandleFunctionTerseDefinition`",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 13,
+// CHECK:STDOUT:             "character": 17,
 // CHECK:STDOUT:             "line": 2
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "start": {
-// CHECK:STDOUT:             "character": 11,
+// CHECK:STDOUT:             "character": 0,
 // CHECK:STDOUT:             "line": 2
 // CHECK:STDOUT:           }
 // CHECK:STDOUT:         },

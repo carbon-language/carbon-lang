@@ -286,12 +286,15 @@ fn F(generic T: C) {
 // --- fail_impl_requires_itself_cycle_with_monomorphization_error.carbon
 library "[[@TEST_NAME]]";
 
+// Unlike `array(T, N)`, this fails eagerly on an invalid bound.
+fn Array(T: type, N: Core.IntLiteral) -> type = "array.make_type";
+
 class W(T: type) {
   adapt {};
 }
 
 interface A(N: Core.IntLiteral) {
-  fn AA() -> W(array((), N));
+  fn AA() -> W(Array((), N));
 }
 interface B(N: Core.IntLiteral) {
   require impls A(N);
@@ -301,7 +304,7 @@ interface C(N: Core.IntLiteral) {
 }
 
 impl forall [N: Core.IntLiteral, T: B(N)] T as A(N) {
-  fn AA() -> W(array((), N)) { return {} as W(array((), N)); }
+  fn AA() -> W(Array((), N)) { return {} as W(Array((), N)); }
 }
 
 impl forall [N: Core.IntLiteral, T: C(N)] T as B(N) {
@@ -319,7 +322,7 @@ fn F(generic T: C(-1)) {
   // CHECK:STDERR:   T.(A(-1).AA)();
   // CHECK:STDERR:   ^~~~~~~~~~~~~~
   // CHECK:STDERR: fail_impl_requires_itself_cycle_with_monomorphization_error.carbon:[[@LINE-27]]:26: note: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR:   fn AA() -> W(array((), N));
+  // CHECK:STDERR:   fn AA() -> W(Array((), N));
   // CHECK:STDERR:                          ^
   // CHECK:STDERR:
   T.(A(-1).AA)();

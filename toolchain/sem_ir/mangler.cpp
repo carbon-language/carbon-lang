@@ -211,7 +211,11 @@ auto Mangler::MangleImpl(SemIR::FunctionId function_id,
 
   os << "_C";
 
-  MangleNameId(os, function.name_id);
+  if (function.name_id.has_value()) {
+    MangleNameId(os, function.name_id);
+  } else {
+    os << "fn";
+  }
   char separator = '.';
 
   // For a special function, add a marker to disambiguate.
@@ -275,7 +279,8 @@ auto Mangler::MangleImpl(SemIR::FunctionId function_id,
   MangleInverseQualifiedNameScope(os, function.parent_scope_id,
                                   SemIR::SpecificId::None, separator);
 
-  if (sem_ir().name_scopes().IsPrivateToLibrary(function.name_id,
+  if (!function.name_id.has_value() ||
+      sem_ir().name_scopes().IsPrivateToLibrary(function.name_id,
                                                 function.parent_scope_id)) {
     os << ".";
     MangleFingerprint(os, &sem_ir(), function.first_decl_id());

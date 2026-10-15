@@ -126,9 +126,9 @@ class IntId : public Printable<IntId> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << Label << "(";
     if (is_embedded_value()) {
-      out << "value: " << AsValue();
+      out << "value=" << AsValue();
     } else if (is_index()) {
-      out << "index: " << AsIndex();
+      out << "index=" << AsIndex();
     } else {
       CARBON_CHECK(!has_value());
       out << "<none>";

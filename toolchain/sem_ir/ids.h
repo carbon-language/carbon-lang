@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// When adding a new ID type, consider adding utilities to aid debugging. See
+// the comment in `toolchain/sem_ir/dump.h` for details.
+
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 
@@ -497,14 +500,14 @@ inline constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 // embedding pointers directly into the storage of SemIR as part of an
 // instruction.
 struct ClangDeclId : public IdBase<ClangDeclId> {
-  static constexpr llvm::StringLiteral Label = "clang_decl_id";
+  static constexpr llvm::StringLiteral Label = "clang_decl";
 
   using IdBase::IdBase;
 };
 
 // The ID of a `ClangDeclSignature`.
 struct ClangDeclSignatureId : public IdBase<ClangDeclSignatureId> {
-  static constexpr llvm::StringLiteral Label = "clang_decl_signature_id";
+  static constexpr llvm::StringLiteral Label = "clang_decl_signature";
 
   using IdBase::IdBase;
 };
@@ -723,6 +726,16 @@ inline constexpr int NameId::NonIndexValueCount =
     1 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_COUNT);
 #undef CARBON_SPECIAL_NAME_ID_FOR_COUNT
 
+// An X-macro for special name scopes. Uses should look like:
+//
+//   #define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ(Name) ...
+//   CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ)
+//   #undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ
+#define CARBON_SPECIAL_NAME_SCOPE_ID(X)                                \
+  /* A scope used by the toolchain to indicate it has access to all */ \
+  /* of a class' members. */                                           \
+  X(AllowHighestAccessLevel)
+
 // The ID of a `NameScope`.
 struct NameScopeId : public IdBase<NameScopeId> {
   static constexpr llvm::StringLiteral Label = "name_scope";
@@ -730,10 +743,34 @@ struct NameScopeId : public IdBase<NameScopeId> {
   // The package (or file) name scope, guaranteed to be the first added.
   static const NameScopeId Package;
 
+  // An enum of special name scopes.
+  enum class SpecialNameScopeId : uint8_t {
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM(Name) Name,
+    CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM
+  };
+
+  // For each SpecialNameScopeId, provide a matching `NameScopeId` instance for
+  // convenience.
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL(Name) \
+  static const NameScopeId Name;
+  CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL
+
   using IdBase::IdBase;
 };
 
 inline constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
+
+// Define the special `static const NameScopeId` values.
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF(Name) \
+  inline constexpr NameScopeId NameScopeId::Name = \
+      NameScopeId(NoneIndex - 1 -                  \
+                  static_cast<int>(NameScopeId::SpecialNameScopeId::Name));
+CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF
+
+#undef CARBON_SPECIAL_NAME_SCOPE_ID
 
 // The ID of an `InstId` block.
 struct InstBlockId : public IdBase<InstBlockId> {

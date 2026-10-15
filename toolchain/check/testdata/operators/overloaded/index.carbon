@@ -86,28 +86,34 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.DefaultOrUnformed = import_ref Core//prelude/parts/default, DefaultOrUnformed, unloaded
+// CHECK:STDOUT:   %Core.Default = import_ref Core//prelude/parts/default, Default, unloaded
+// CHECK:STDOUT:   %Core.SubobjectDestroy = import_ref Core//prelude/parts/destroy, SubobjectDestroy, unloaded
+// CHECK:STDOUT:   %Core.DestroyImpl = import_ref Core//prelude/parts/destroy, DestroyImpl, unloaded
+// CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
+// CHECK:STDOUT:   %Core.SelfDestruct = import_ref Core//prelude/parts/destroy, SelfDestruct, unloaded
+// CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
+// CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
 // CHECK:STDOUT:   %Core.UnsafeAs = import_ref Core//prelude/parts/as, UnsafeAs, unloaded
 // CHECK:STDOUT:   %Core.As = import_ref Core//prelude/parts/as, As, unloaded
 // CHECK:STDOUT:   %Core.ImplicitAs = import_ref Core//prelude/parts/as, ImplicitAs, unloaded
 // CHECK:STDOUT:   %Core.BitAndWith = import_ref Core//prelude/parts/as, BitAndWith, unloaded
-// CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
-// CHECK:STDOUT:   %Core.DefaultOrUnformed = import_ref Core//prelude/parts/default, DefaultOrUnformed, unloaded
-// CHECK:STDOUT:   %Core.Default = import_ref Core//prelude/parts/default, Default, unloaded
-// CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
-// CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .DefaultOrUnformed = imports.%Core.DefaultOrUnformed
+// CHECK:STDOUT:     .Default = imports.%Core.Default
+// CHECK:STDOUT:     .SubobjectDestroy = imports.%Core.SubobjectDestroy
+// CHECK:STDOUT:     .DestroyImpl = imports.%Core.DestroyImpl
+// CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = imports.%Core.SelfDestruct
+// CHECK:STDOUT:     .Copy = imports.%Core.Copy
+// CHECK:STDOUT:     .Form = imports.%Core.Form
 // CHECK:STDOUT:     .UnsafeAs = imports.%Core.UnsafeAs
 // CHECK:STDOUT:     .As = imports.%Core.As
 // CHECK:STDOUT:     .ImplicitAs = imports.%Core.ImplicitAs
 // CHECK:STDOUT:     .BitAndWith = imports.%Core.BitAndWith
-// CHECK:STDOUT:     .Copy = imports.%Core.Copy
-// CHECK:STDOUT:     .DefaultOrUnformed = imports.%Core.DefaultOrUnformed
-// CHECK:STDOUT:     .Default = imports.%Core.Default
-// CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
-// CHECK:STDOUT:     .Form = imports.%Core.Form
 // CHECK:STDOUT:     .IndexWith = %IndexWith.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
@@ -216,12 +222,12 @@ fn F() {
 // CHECK:STDOUT:   %ElementType: type = symbolic_binding ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %IndexWith.type.df6: type = generic_interface_type @IndexWith [concrete]
 // CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.df6 = struct_value () [concrete]
-// CHECK:STDOUT:   %IndexWith.type.a54: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic]
-// CHECK:STDOUT:   %Self: %IndexWith.type.a54 = symbolic_binding Self, 2 [symbolic]
+// CHECK:STDOUT:   %IndexWith.type.3a9: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic]
+// CHECK:STDOUT:   %Self: %IndexWith.type.3a9 = symbolic_binding Self, 2 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
-// CHECK:STDOUT:   %pattern_type.962: type = pattern_type %Self.as_type [symbolic]
-// CHECK:STDOUT:   %self.param_patt: %pattern_type.962 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt: %pattern_type.962 = wrapper_binding_pattern self, %self.param_patt [symbolic]
+// CHECK:STDOUT:   %pattern_type.482: type = pattern_type %Self.as_type [symbolic]
+// CHECK:STDOUT:   %self.param_patt: %pattern_type.482 = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt: %pattern_type.482 = wrapper_binding_pattern self, %self.param_patt [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %SubscriptType [symbolic]
 // CHECK:STDOUT:   %subscript.param_patt: %pattern_type.51d = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %subscript.patt: %pattern_type.51d = wrapper_binding_pattern subscript, %subscript.param_patt [symbolic]
@@ -236,28 +242,34 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core.DefaultOrUnformed = import_ref Core//prelude/parts/default, DefaultOrUnformed, unloaded
+// CHECK:STDOUT:   %Core.Default = import_ref Core//prelude/parts/default, Default, unloaded
+// CHECK:STDOUT:   %Core.SubobjectDestroy = import_ref Core//prelude/parts/destroy, SubobjectDestroy, unloaded
+// CHECK:STDOUT:   %Core.DestroyImpl = import_ref Core//prelude/parts/destroy, DestroyImpl, unloaded
+// CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
+// CHECK:STDOUT:   %Core.SelfDestruct = import_ref Core//prelude/parts/destroy, SelfDestruct, unloaded
+// CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
+// CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
 // CHECK:STDOUT:   %Core.UnsafeAs = import_ref Core//prelude/parts/as, UnsafeAs, unloaded
 // CHECK:STDOUT:   %Core.As = import_ref Core//prelude/parts/as, As, unloaded
 // CHECK:STDOUT:   %Core.ImplicitAs = import_ref Core//prelude/parts/as, ImplicitAs, unloaded
 // CHECK:STDOUT:   %Core.BitAndWith = import_ref Core//prelude/parts/as, BitAndWith, unloaded
-// CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
-// CHECK:STDOUT:   %Core.DefaultOrUnformed = import_ref Core//prelude/parts/default, DefaultOrUnformed, unloaded
-// CHECK:STDOUT:   %Core.Default = import_ref Core//prelude/parts/default, Default, unloaded
-// CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
-// CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .DefaultOrUnformed = imports.%Core.DefaultOrUnformed
+// CHECK:STDOUT:     .Default = imports.%Core.Default
+// CHECK:STDOUT:     .SubobjectDestroy = imports.%Core.SubobjectDestroy
+// CHECK:STDOUT:     .DestroyImpl = imports.%Core.DestroyImpl
+// CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = imports.%Core.SelfDestruct
+// CHECK:STDOUT:     .Copy = imports.%Core.Copy
+// CHECK:STDOUT:     .Form = imports.%Core.Form
 // CHECK:STDOUT:     .UnsafeAs = imports.%Core.UnsafeAs
 // CHECK:STDOUT:     .As = imports.%Core.As
 // CHECK:STDOUT:     .ImplicitAs = imports.%Core.ImplicitAs
 // CHECK:STDOUT:     .BitAndWith = imports.%Core.BitAndWith
-// CHECK:STDOUT:     .Copy = imports.%Core.Copy
-// CHECK:STDOUT:     .DefaultOrUnformed = imports.%Core.DefaultOrUnformed
-// CHECK:STDOUT:     .Default = imports.%Core.Default
-// CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
-// CHECK:STDOUT:     .Form = imports.%Core.Form
 // CHECK:STDOUT:     .IndexWith = %IndexWith.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import = import <none>
@@ -285,17 +297,17 @@ fn F() {
 // CHECK:STDOUT:   %ElementType.loc4_53.1: type = symbolic_binding ElementType, 1 [symbolic = %ElementType.loc4_53.1 (constants.%ElementType)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.loc4_34.1, %ElementType.loc4_53.1)> [symbolic = %IndexWith.type (constants.%IndexWith.type.a54)]
-// CHECK:STDOUT:   %Self.loc4_61.2: @IndexWith.%IndexWith.type (%IndexWith.type.a54) = symbolic_binding Self, 2 [symbolic = %Self.loc4_61.2 (constants.%Self)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType.loc4_34.1, %ElementType.loc4_53.1)> [symbolic = %IndexWith.type (constants.%IndexWith.type.3a9)]
+// CHECK:STDOUT:   %Self.loc4_61.2: @IndexWith.%IndexWith.type (%IndexWith.type.3a9) = symbolic_binding Self, 2 [symbolic = %Self.loc4_61.2 (constants.%Self)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
-// CHECK:STDOUT:     %Self.loc4_61.1: @IndexWith.%IndexWith.type (%IndexWith.type.a54) = symbolic_binding Self, 2 [symbolic = %Self.loc4_61.2 (constants.%Self)]
+// CHECK:STDOUT:     %Self.loc4_61.1: @IndexWith.%IndexWith.type (%IndexWith.type.3a9) = symbolic_binding Self, 2 [symbolic = %Self.loc4_61.2 (constants.%Self)]
 // CHECK:STDOUT:     %IndexWith.WithSelf.decl = interface_with_self_decl @IndexWith [concrete]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %IndexWith.WithSelf.At.decl: @IndexWith.WithSelf.%IndexWith.WithSelf.At.type (%IndexWith.WithSelf.At.type) = fn_decl @IndexWith.WithSelf.At [symbolic = @IndexWith.WithSelf.%IndexWith.WithSelf.At (constants.%IndexWith.WithSelf.At)] {
-// CHECK:STDOUT:       %self.param_patt.loc5_9.1: @IndexWith.WithSelf.At.%pattern_type.loc5_9 (%pattern_type.962) = value_param_pattern [symbolic = %self.param_patt.loc5_9.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:       %self.patt.loc5_9.1: @IndexWith.WithSelf.At.%pattern_type.loc5_9 (%pattern_type.962) = wrapper_binding_pattern self, %self.param_patt.loc5_9.1 [symbolic = %self.patt.loc5_9.2 (constants.%self.patt)]
+// CHECK:STDOUT:       %self.param_patt.loc5_9.1: @IndexWith.WithSelf.At.%pattern_type.loc5_9 (%pattern_type.482) = value_param_pattern [symbolic = %self.param_patt.loc5_9.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:       %self.patt.loc5_9.1: @IndexWith.WithSelf.At.%pattern_type.loc5_9 (%pattern_type.482) = wrapper_binding_pattern self, %self.param_patt.loc5_9.1 [symbolic = %self.patt.loc5_9.2 (constants.%self.patt)]
 // CHECK:STDOUT:       %subscript.param_patt.loc5_24.1: @IndexWith.WithSelf.At.%pattern_type.loc5_24 (%pattern_type.51d) = value_param_pattern [symbolic = %subscript.param_patt.loc5_24.2 (constants.%subscript.param_patt)]
 // CHECK:STDOUT:       %subscript.patt.loc5_24.1: @IndexWith.WithSelf.At.%pattern_type.loc5_24 (%pattern_type.51d) = wrapper_binding_pattern subscript, %subscript.param_patt.loc5_24.1 [symbolic = %subscript.patt.loc5_24.2 (constants.%subscript.patt)]
 // CHECK:STDOUT:       %return.param_patt.loc5_44.1: @IndexWith.WithSelf.At.%pattern_type.loc5_44 (%pattern_type.946) = out_param_pattern [symbolic = %return.param_patt.loc5_44.2 (constants.%return.param_patt)]
@@ -305,8 +317,8 @@ fn F() {
 // CHECK:STDOUT:       %.loc5_44.2: Core.Form = init_form %ElementType.ref [symbolic = %.loc5_44.1 (constants.%.822)]
 // CHECK:STDOUT:       %self.param: @IndexWith.WithSelf.At.%Self.as_type.loc5_9.1 (%Self.as_type) = value_param call_param0
 // CHECK:STDOUT:       %.loc5_9.1: type = splice_block %.loc5_9.3 [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)] {
-// CHECK:STDOUT:         %.loc5_9.2: @IndexWith.WithSelf.At.%IndexWith.type (%IndexWith.type.a54) = specific_constant @IndexWith.%Self.loc4_61.1, @IndexWith(constants.%SubscriptType, constants.%ElementType) [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:         %Self.ref: @IndexWith.WithSelf.At.%IndexWith.type (%IndexWith.type.a54) = name_ref Self, %.loc5_9.2 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %.loc5_9.2: @IndexWith.WithSelf.At.%IndexWith.type (%IndexWith.type.3a9) = specific_constant @IndexWith.%Self.loc4_61.1, @IndexWith(constants.%SubscriptType, constants.%ElementType) [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:         %Self.ref: @IndexWith.WithSelf.At.%IndexWith.type (%IndexWith.type.3a9) = name_ref Self, %.loc5_9.2 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:         %Self.as_type.loc5_9.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:         %.loc5_9.3: type = converted %Self.ref, %Self.as_type.loc5_9.2 [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:       }
@@ -332,15 +344,15 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @IndexWith.WithSelf.At(@IndexWith.%SubscriptType.loc4_34.2: type, @IndexWith.%ElementType.loc4_53.2: type, @IndexWith.%Self.loc4_61.1: @IndexWith.%IndexWith.type (%IndexWith.type.a54)) {
+// CHECK:STDOUT: generic fn @IndexWith.WithSelf.At(@IndexWith.%SubscriptType.loc4_34.2: type, @IndexWith.%ElementType.loc4_53.2: type, @IndexWith.%Self.loc4_61.1: @IndexWith.%IndexWith.type (%IndexWith.type.3a9)) {
 // CHECK:STDOUT:   %SubscriptType: type = symbolic_binding SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %ElementType: type = symbolic_binding ElementType, 1 [symbolic = %ElementType (constants.%ElementType)]
-// CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic = %IndexWith.type (constants.%IndexWith.type.a54)]
-// CHECK:STDOUT:   %Self: @IndexWith.WithSelf.At.%IndexWith.type (%IndexWith.type.a54) = symbolic_binding Self, 2 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic = %IndexWith.type (constants.%IndexWith.type.3a9)]
+// CHECK:STDOUT:   %Self: @IndexWith.WithSelf.At.%IndexWith.type (%IndexWith.type.3a9) = symbolic_binding Self, 2 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc5_9.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc5_9.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type.loc5_9: type = pattern_type %Self.as_type.loc5_9.1 [symbolic = %pattern_type.loc5_9 (constants.%pattern_type.962)]
-// CHECK:STDOUT:   %self.param_patt.loc5_9.2: @IndexWith.WithSelf.At.%pattern_type.loc5_9 (%pattern_type.962) = value_param_pattern [symbolic = %self.param_patt.loc5_9.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt.loc5_9.2: @IndexWith.WithSelf.At.%pattern_type.loc5_9 (%pattern_type.962) = wrapper_binding_pattern self, %self.param_patt.loc5_9.2 [symbolic = %self.patt.loc5_9.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %pattern_type.loc5_9: type = pattern_type %Self.as_type.loc5_9.1 [symbolic = %pattern_type.loc5_9 (constants.%pattern_type.482)]
+// CHECK:STDOUT:   %self.param_patt.loc5_9.2: @IndexWith.WithSelf.At.%pattern_type.loc5_9 (%pattern_type.482) = value_param_pattern [symbolic = %self.param_patt.loc5_9.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc5_9.2: @IndexWith.WithSelf.At.%pattern_type.loc5_9 (%pattern_type.482) = wrapper_binding_pattern self, %self.param_patt.loc5_9.2 [symbolic = %self.patt.loc5_9.2 (constants.%self.patt)]
 // CHECK:STDOUT:   %pattern_type.loc5_24: type = pattern_type %SubscriptType [symbolic = %pattern_type.loc5_24 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %subscript.param_patt.loc5_24.2: @IndexWith.WithSelf.At.%pattern_type.loc5_24 (%pattern_type.51d) = value_param_pattern [symbolic = %subscript.param_patt.loc5_24.2 (constants.%subscript.param_patt)]
 // CHECK:STDOUT:   %subscript.patt.loc5_24.2: @IndexWith.WithSelf.At.%pattern_type.loc5_24 (%pattern_type.51d) = wrapper_binding_pattern subscript, %subscript.param_patt.loc5_24.2 [symbolic = %subscript.patt.loc5_24.2 (constants.%subscript.patt)]
@@ -364,10 +376,10 @@ fn F() {
 // CHECK:STDOUT: specific @IndexWith.WithSelf.At(constants.%SubscriptType, constants.%ElementType, constants.%Self) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
-// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.a54
+// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.3a9
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %Self.as_type.loc5_9.1 => constants.%Self.as_type
-// CHECK:STDOUT:   %pattern_type.loc5_9 => constants.%pattern_type.962
+// CHECK:STDOUT:   %pattern_type.loc5_9 => constants.%pattern_type.482
 // CHECK:STDOUT:   %self.param_patt.loc5_9.2 => constants.%self.param_patt
 // CHECK:STDOUT:   %self.patt.loc5_9.2 => constants.%self.patt
 // CHECK:STDOUT:   %pattern_type.loc5_24 => constants.%pattern_type.51d
@@ -391,33 +403,33 @@ fn F() {
 // CHECK:STDOUT:   %IndexWith.generic: %IndexWith.type.df6 = struct_value () [concrete]
 // CHECK:STDOUT:   %ElementType: type = symbolic_binding ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %SubscriptType: type = symbolic_binding SubscriptType, 0 [symbolic]
-// CHECK:STDOUT:   %IndexWith.type.a54: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic]
+// CHECK:STDOUT:   %IndexWith.type.3a9: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic]
 // CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
 // CHECK:STDOUT:   %ElementType.patt: %pattern_type.9a5 = symbolic_binding_pattern ElementType, 1 [symbolic]
 // CHECK:STDOUT:   %SubscriptType.patt: %pattern_type.9a5 = symbolic_binding_pattern SubscriptType, 0 [symbolic]
-// CHECK:STDOUT:   %Self.799: %IndexWith.type.a54 = symbolic_binding Self, 2 [symbolic]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.404: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%SubscriptType, %ElementType, %Self.799) [symbolic]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.310: %IndexWith.WithSelf.At.type.404 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Self.2cc: %IndexWith.type.3a9 = symbolic_binding Self, 2 [symbolic]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.fcf: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%SubscriptType, %ElementType, %Self.2cc) [symbolic]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.76c: %IndexWith.WithSelf.At.type.fcf = struct_value () [symbolic]
 // CHECK:STDOUT:   %pattern_type.946: type = pattern_type %ElementType [symbolic]
 // CHECK:STDOUT:   %return.param_patt.6dd: %pattern_type.946 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.fc9: %pattern_type.946 = return_slot_pattern %return.param_patt.6dd, invalid [symbolic]
-// CHECK:STDOUT:   %Self.as_type.194: type = facet_access_type %Self.799 [symbolic]
-// CHECK:STDOUT:   %pattern_type.f87: type = pattern_type %Self.as_type.194 [symbolic]
-// CHECK:STDOUT:   %self.param_patt.fd0: %pattern_type.f87 = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %self.patt.61f: %pattern_type.f87 = wrapper_binding_pattern self, %self.param_patt.fd0 [symbolic]
+// CHECK:STDOUT:   %Self.as_type.672: type = facet_access_type %Self.2cc [symbolic]
+// CHECK:STDOUT:   %pattern_type.b0d: type = pattern_type %Self.as_type.672 [symbolic]
+// CHECK:STDOUT:   %self.param_patt.9e6: %pattern_type.b0d = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %self.patt.2f1: %pattern_type.b0d = wrapper_binding_pattern self, %self.param_patt.9e6 [symbolic]
 // CHECK:STDOUT:   %.822: Core.Form = init_form %ElementType [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %SubscriptType [symbolic]
 // CHECK:STDOUT:   %subscript.param_patt.fd1: %pattern_type.51d = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %subscript.patt.bfe: %pattern_type.51d = wrapper_binding_pattern subscript, %subscript.param_patt.fd1 [symbolic]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %IndexWith.type.de8: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type)> [concrete]
-// CHECK:STDOUT:   %.65d: <witness> = impl_self_witness %C, @IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %IndexWith.type.a36: type = facet_type <@IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type)> [concrete]
+// CHECK:STDOUT:   %.b6e: <witness> = impl_self_witness %C, @IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %IndexWith.impl_witness: <witness> = impl_witness @C.as.IndexWith.impl.%IndexWith.impl_witness_table [concrete]
-// CHECK:STDOUT:   %Self.121: %IndexWith.type.de8 = symbolic_binding Self, 2 [symbolic]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.d39: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%empty_tuple.type, %empty_tuple.type, %Self.799) [symbolic]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.dd0: %IndexWith.WithSelf.At.type.d39 = struct_value () [symbolic]
-// CHECK:STDOUT:   %IndexWith.assoc_type.e52: type = assoc_entity_type @IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %assoc0.a9a: %IndexWith.assoc_type.e52 = assoc_entity element0, imports.%Core.import_ref.dac [concrete]
+// CHECK:STDOUT:   %Self.cc6: %IndexWith.type.a36 = symbolic_binding Self, 2 [symbolic]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.540: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%empty_tuple.type, %empty_tuple.type, %Self.2cc) [symbolic]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.451: %IndexWith.WithSelf.At.type.540 = struct_value () [symbolic]
+// CHECK:STDOUT:   %IndexWith.assoc_type.20a: type = assoc_entity_type @IndexWith, @IndexWith(%empty_tuple.type, %empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %assoc0.8ef: %IndexWith.assoc_type.20a = assoc_entity element0, imports.%Core.import_ref.a1c [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %self.param_patt.303: %pattern_type.98b = value_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.36a: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt.303 [concrete]
@@ -429,9 +441,9 @@ fn F() {
 // CHECK:STDOUT:   %return.patt.427: %pattern_type.cb1 = return_slot_pattern %return.param_patt.900, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At.type: type = fn_type @C.as.IndexWith.impl.At [concrete]
 // CHECK:STDOUT:   %C.as.IndexWith.impl.At: %C.as.IndexWith.impl.At.type = struct_value () [concrete]
-// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.de8 = facet_value %C, (%IndexWith.impl_witness) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.799: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%empty_tuple.type, %empty_tuple.type, %IndexWith.facet) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.36a: %IndexWith.WithSelf.At.type.799 = struct_value () [concrete]
+// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.a36 = facet_value %C, (%IndexWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.d28: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%empty_tuple.type, %empty_tuple.type, %IndexWith.facet) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.a1d: %IndexWith.WithSelf.At.type.d28 = struct_value () [concrete]
 // CHECK:STDOUT:   %return.patt.9ca: %pattern_type.cb1 = return_slot_pattern %return.param_patt.900, invalid [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -439,75 +451,43 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %.115: ref %C = temporary invalid, %C.val [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
-// CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
-// CHECK:STDOUT:   %self.param_patt.52f: %pattern_type.a96 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.4b1: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt.52f [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc15_15.1 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc15_15.1 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.99a: %pattern_type.98b = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.cbd: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt.99a [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc15_15.2 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc15_15.2 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc15_15.2 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.115, %Destroy.WithSelf.SelfDestruct.db3fdb.2 [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc15_15.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.978: %SubobjectDestroy.type = facet_value %C, (%custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.1e5: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.978) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %C, (%DestroyImpl.impl_witness.1e5, %custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%facet_value) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .IndexWith = %Core.IndexWith
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//core_wrong_arg_count
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.IndexWith: %IndexWith.type.df6 = import_ref Core//core_wrong_arg_count, IndexWith, loaded [concrete = constants.%IndexWith.generic]
-// CHECK:STDOUT:   %Core.import_ref.f9c = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.At: @IndexWith.WithSelf.%IndexWith.WithSelf.At.type (%IndexWith.WithSelf.At.type.404) = import_ref Core//core_wrong_arg_count, At, loaded [symbolic = @IndexWith.WithSelf.%IndexWith.WithSelf.At (constants.%IndexWith.WithSelf.At.310)]
-// CHECK:STDOUT:   %Core.import_ref.dac = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.cf2 = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.At: @IndexWith.WithSelf.%IndexWith.WithSelf.At.type (%IndexWith.WithSelf.At.type.fcf) = import_ref Core//core_wrong_arg_count, At, loaded [symbolic = @IndexWith.WithSelf.%IndexWith.WithSelf.At (constants.%IndexWith.WithSelf.At.76c)]
+// CHECK:STDOUT:   %Core.import_ref.a1c = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.b3bc94.2: type = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %Core.import_ref.8e8b42.2: type = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%ElementType (constants.%ElementType)]
-// CHECK:STDOUT:   %Core.import_ref.0407af.2: @IndexWith.%IndexWith.type (%IndexWith.type.a54) = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%Self (constants.%Self.799)]
-// CHECK:STDOUT:   %Core.import_ref.740 = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %Core.import_ref.54cd15.2: @IndexWith.%IndexWith.type (%IndexWith.type.3a9) = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%Self (constants.%Self.2cc)]
+// CHECK:STDOUT:   %Core.import_ref.eee = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.b3bc94.3: type = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %Core.import_ref.8e8b42.3: type = import_ref Core//core_wrong_arg_count, loc{{\d+_\d+}}, loaded [symbolic = @IndexWith.%ElementType (constants.%ElementType)]
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/parts/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc15_15.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.1] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.a96 = ref_param_pattern [concrete = constants.%self.param_patt.52f]
-// CHECK:STDOUT:     %self.patt: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4b1]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %empty_struct_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %empty_struct_type = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc15_15.1 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.a96 = ref_param_pattern [concrete = constants.%self.param_patt.52f]
-// CHECK:STDOUT:     %self.patt: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4b1]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %empty_struct_type = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %empty_struct_type = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc15_15.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.98b = ref_param_pattern [concrete = constants.%self.param_patt.99a]
-// CHECK:STDOUT:     %self.patt: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.cbd]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %C = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc15_15.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.98b = ref_param_pattern [concrete = constants.%self.param_patt.99a]
-// CHECK:STDOUT:     %self.patt: %pattern_type.98b = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.cbd]
-// CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %C = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %C = wrapper_binding self, %self.param
-// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -526,9 +506,9 @@ fn F() {
 // CHECK:STDOUT:     %.loc8_31: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc8_32.1: type = converted %.loc8_27, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     %.loc8_32.2: type = converted %.loc8_31, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%empty_tuple.type, constants.%empty_tuple.type)> [concrete = constants.%IndexWith.type.de8]
+// CHECK:STDOUT:     %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(constants.%empty_tuple.type, constants.%empty_tuple.type)> [concrete = constants.%IndexWith.type.a36]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.IndexWith.impl.%C.ref, @IndexWith, @IndexWith(constants.%empty_tuple.type, constants.%empty_tuple.type) [concrete = constants.%.65d]
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @C.as.IndexWith.impl.%C.ref, @IndexWith, @IndexWith(constants.%empty_tuple.type, constants.%empty_tuple.type) [concrete = constants.%.b6e]
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -539,13 +519,13 @@ fn F() {
 // CHECK:STDOUT:   %ElementType: type = symbolic_binding ElementType, 1 [symbolic = %ElementType (constants.%ElementType)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic = %IndexWith.type (constants.%IndexWith.type.a54)]
-// CHECK:STDOUT:   %Self: @IndexWith.%IndexWith.type (%IndexWith.type.a54) = symbolic_binding Self, 2 [symbolic = %Self (constants.%Self.799)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic = %IndexWith.type (constants.%IndexWith.type.3a9)]
+// CHECK:STDOUT:   %Self: @IndexWith.%IndexWith.type (%IndexWith.type.3a9) = symbolic_binding Self, 2 [symbolic = %Self (constants.%Self.2cc)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   interface {
 // CHECK:STDOUT:   !members:
-// CHECK:STDOUT:     .Self = imports.%Core.import_ref.740
-// CHECK:STDOUT:     .At = imports.%Core.import_ref.f9c
+// CHECK:STDOUT:     .Self = imports.%Core.import_ref.eee
+// CHECK:STDOUT:     .At = imports.%Core.import_ref.cf2
 // CHECK:STDOUT:     witness = (imports.%Core.At)
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !requires:
@@ -593,15 +573,15 @@ fn F() {
 // CHECK:STDOUT:   .Self = constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @IndexWith.WithSelf.At(imports.%Core.import_ref.b3bc94.2: type, imports.%Core.import_ref.8e8b42.2: type, imports.%Core.import_ref.0407af.2: @IndexWith.%IndexWith.type (%IndexWith.type.a54)) [from "core_wrong_arg_count.carbon"] {
+// CHECK:STDOUT: generic fn @IndexWith.WithSelf.At(imports.%Core.import_ref.b3bc94.2: type, imports.%Core.import_ref.8e8b42.2: type, imports.%Core.import_ref.54cd15.2: @IndexWith.%IndexWith.type (%IndexWith.type.3a9)) [from "core_wrong_arg_count.carbon"] {
 // CHECK:STDOUT:   %SubscriptType: type = symbolic_binding SubscriptType, 0 [symbolic = %SubscriptType (constants.%SubscriptType)]
 // CHECK:STDOUT:   %ElementType: type = symbolic_binding ElementType, 1 [symbolic = %ElementType (constants.%ElementType)]
-// CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic = %IndexWith.type (constants.%IndexWith.type.a54)]
-// CHECK:STDOUT:   %Self: @IndexWith.WithSelf.At.%IndexWith.type (%IndexWith.type.a54) = symbolic_binding Self, 2 [symbolic = %Self (constants.%Self.799)]
-// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.194)]
-// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.f87)]
-// CHECK:STDOUT:   %self.param_patt: @IndexWith.WithSelf.At.%pattern_type.1 (%pattern_type.f87) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.fd0)]
-// CHECK:STDOUT:   %self.patt: @IndexWith.WithSelf.At.%pattern_type.1 (%pattern_type.f87) = wrapper_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.61f)]
+// CHECK:STDOUT:   %IndexWith.type: type = facet_type <@IndexWith, @IndexWith(%SubscriptType, %ElementType)> [symbolic = %IndexWith.type (constants.%IndexWith.type.3a9)]
+// CHECK:STDOUT:   %Self: @IndexWith.WithSelf.At.%IndexWith.type (%IndexWith.type.3a9) = symbolic_binding Self, 2 [symbolic = %Self (constants.%Self.2cc)]
+// CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic = %Self.as_type (constants.%Self.as_type.672)]
+// CHECK:STDOUT:   %pattern_type.1: type = pattern_type %Self.as_type [symbolic = %pattern_type.1 (constants.%pattern_type.b0d)]
+// CHECK:STDOUT:   %self.param_patt: @IndexWith.WithSelf.At.%pattern_type.1 (%pattern_type.b0d) = value_param_pattern [symbolic = %self.param_patt (constants.%self.param_patt.9e6)]
+// CHECK:STDOUT:   %self.patt: @IndexWith.WithSelf.At.%pattern_type.1 (%pattern_type.b0d) = wrapper_binding_pattern self, %self.param_patt [symbolic = %self.patt (constants.%self.patt.2f1)]
 // CHECK:STDOUT:   %pattern_type.2: type = pattern_type %SubscriptType [symbolic = %pattern_type.2 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %subscript.param_patt: @IndexWith.WithSelf.At.%pattern_type.2 (%pattern_type.51d) = value_param_pattern [symbolic = %subscript.param_patt (constants.%subscript.param_patt.fd1)]
 // CHECK:STDOUT:   %subscript.patt: @IndexWith.WithSelf.At.%pattern_type.2 (%pattern_type.51d) = wrapper_binding_pattern subscript, %subscript.param_patt [symbolic = %subscript.patt (constants.%subscript.patt.bfe)]
@@ -636,31 +616,18 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %.loc23: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call constants.%Destroy.WithSelf.SelfDestruct.bound(constants.%.115)
+// CHECK:STDOUT:   %facet_value.loc15_15.1: %facet_type = facet_value constants.%C, (constants.%DestroyImpl.impl_witness.1e5, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc15_15.7: %facet_type = converted constants.%C, %facet_value.loc15_15.1 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc15_15.2: %facet_type = facet_value constants.%C, (constants.%DestroyImpl.impl_witness.1e5, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc15_15.8: %facet_type = converted constants.%C, %facet_value.loc15_15.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%facet_value) [concrete = constants.%SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc15_15.5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc15_15.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc15_15.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc15_15.1(%self.param: ref %empty_struct_type) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc15_15.1(%self.param: ref %empty_struct_type) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.1(%self.param)
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.1(%self.param)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc15_15.2(%self.param: ref %C) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc15_15.2(%self.param: ref %C) = "no_op";
-// CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc15_15.2(%self.param: ref %C) {
-// CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)
-// CHECK:STDOUT:   return
-// CHECK:STDOUT: }
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc15_15.2(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith(constants.%SubscriptType, constants.%ElementType) {
 // CHECK:STDOUT:   %SubscriptType.patt => constants.%SubscriptType.patt
@@ -669,17 +636,17 @@ fn F() {
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith.WithSelf(constants.%SubscriptType, constants.%ElementType, constants.%Self.799) {}
+// CHECK:STDOUT: specific @IndexWith.WithSelf(constants.%SubscriptType, constants.%ElementType, constants.%Self.2cc) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith.WithSelf.At(constants.%SubscriptType, constants.%ElementType, constants.%Self.799) {
+// CHECK:STDOUT: specific @IndexWith.WithSelf.At(constants.%SubscriptType, constants.%ElementType, constants.%Self.2cc) {
 // CHECK:STDOUT:   %SubscriptType => constants.%SubscriptType
 // CHECK:STDOUT:   %ElementType => constants.%ElementType
-// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.a54
-// CHECK:STDOUT:   %Self => constants.%Self.799
-// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.194
-// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.f87
-// CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.fd0
-// CHECK:STDOUT:   %self.patt => constants.%self.patt.61f
+// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.3a9
+// CHECK:STDOUT:   %Self => constants.%Self.2cc
+// CHECK:STDOUT:   %Self.as_type => constants.%Self.as_type.672
+// CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.b0d
+// CHECK:STDOUT:   %self.param_patt => constants.%self.param_patt.9e6
+// CHECK:STDOUT:   %self.patt => constants.%self.patt.2f1
 // CHECK:STDOUT:   %pattern_type.2 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %subscript.param_patt => constants.%subscript.param_patt.fd1
 // CHECK:STDOUT:   %subscript.patt => constants.%subscript.patt.bfe
@@ -696,38 +663,38 @@ fn F() {
 // CHECK:STDOUT:   %ElementType => constants.%empty_tuple.type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.de8
-// CHECK:STDOUT:   %Self => constants.%Self.121
+// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.a36
+// CHECK:STDOUT:   %Self => constants.%Self.cc6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @IndexWith.WithSelf(constants.%empty_tuple.type, constants.%empty_tuple.type, constants.%Self.799) {
+// CHECK:STDOUT: specific @IndexWith.WithSelf(constants.%empty_tuple.type, constants.%empty_tuple.type, constants.%Self.2cc) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %SubscriptType => constants.%empty_tuple.type
 // CHECK:STDOUT:   %ElementType => constants.%empty_tuple.type
-// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.de8
-// CHECK:STDOUT:   %Self => constants.%Self.799
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type => constants.%IndexWith.WithSelf.At.type.d39
-// CHECK:STDOUT:   %IndexWith.WithSelf.At => constants.%IndexWith.WithSelf.At.dd0
-// CHECK:STDOUT:   %IndexWith.assoc_type => constants.%IndexWith.assoc_type.e52
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.a9a
+// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.a36
+// CHECK:STDOUT:   %Self => constants.%Self.2cc
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type => constants.%IndexWith.WithSelf.At.type.540
+// CHECK:STDOUT:   %IndexWith.WithSelf.At => constants.%IndexWith.WithSelf.At.451
+// CHECK:STDOUT:   %IndexWith.assoc_type => constants.%IndexWith.assoc_type.20a
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.8ef
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith.WithSelf(constants.%empty_tuple.type, constants.%empty_tuple.type, constants.%IndexWith.facet) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %SubscriptType => constants.%empty_tuple.type
 // CHECK:STDOUT:   %ElementType => constants.%empty_tuple.type
-// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.de8
+// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.a36
 // CHECK:STDOUT:   %Self => constants.%IndexWith.facet
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type => constants.%IndexWith.WithSelf.At.type.799
-// CHECK:STDOUT:   %IndexWith.WithSelf.At => constants.%IndexWith.WithSelf.At.36a
-// CHECK:STDOUT:   %IndexWith.assoc_type => constants.%IndexWith.assoc_type.e52
-// CHECK:STDOUT:   %assoc0 => constants.%assoc0.a9a
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type => constants.%IndexWith.WithSelf.At.type.d28
+// CHECK:STDOUT:   %IndexWith.WithSelf.At => constants.%IndexWith.WithSelf.At.a1d
+// CHECK:STDOUT:   %IndexWith.assoc_type => constants.%IndexWith.assoc_type.20a
+// CHECK:STDOUT:   %assoc0 => constants.%assoc0.8ef
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @IndexWith.WithSelf.At(constants.%empty_tuple.type, constants.%empty_tuple.type, constants.%IndexWith.facet) {
 // CHECK:STDOUT:   %SubscriptType => constants.%empty_tuple.type
 // CHECK:STDOUT:   %ElementType => constants.%empty_tuple.type
-// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.de8
+// CHECK:STDOUT:   %IndexWith.type => constants.%IndexWith.type.a36
 // CHECK:STDOUT:   %Self => constants.%IndexWith.facet
 // CHECK:STDOUT:   %Self.as_type => constants.%C
 // CHECK:STDOUT:   %pattern_type.1 => constants.%pattern_type.98b

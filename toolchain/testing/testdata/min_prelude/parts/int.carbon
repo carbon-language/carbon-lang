@@ -2,16 +2,16 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/as.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/copy.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/destroy.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/int_literal.carbon
 
 // --- min_prelude/parts/int.carbon
 
 package Core library "prelude/parts/int";
 
-export import library "prelude/parts/as";
 export import library "prelude/parts/copy";
+export import library "prelude/parts/destroy";
 export import library "prelude/parts/int_literal";
 
 private fn MakeInt(size: IntLiteral) -> type = "int.make_type_signed";

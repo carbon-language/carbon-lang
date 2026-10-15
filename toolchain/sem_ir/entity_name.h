@@ -19,7 +19,7 @@ struct EntityName : public Printable<EntityName> {
         << ", index: " << bind_index_value << ", is_template: " << is_template
         << ", is_unused: " << is_unused;
     if (name_id == SemIR::NameId::PeriodSelf) {
-      out << ", is_frozen_period_self: " << is_frozen_period_self << "}";
+      out << ", is_frozen_period_self: " << is_frozen_period_self;
     }
     out << ", form: " << form_id << ", type: " << type_inst_id << "}";
   }
@@ -44,9 +44,8 @@ struct EntityName : public Printable<EntityName> {
   }
 
   // Hashing for EntityName. See common/hashing.h.
-  friend auto CarbonHashValue(const EntityName& value, uint64_t seed)
-      -> HashCode {
-    Hasher hasher(seed);
+  friend auto CarbonHashValue(const EntityName& value) -> HashCode {
+    Hasher hasher;
     hasher.HashRaw(value.IdentityKey());
     return static_cast<HashCode>(hasher);
   }

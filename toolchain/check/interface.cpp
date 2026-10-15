@@ -179,5 +179,4 @@ auto GetCoreInterfaceId(Context& context, SemIR::LocId loc_id,
   auto generic = context.types().GetAs<SemIR::GenericInterfaceType>(type_id);
   return generic.interface_id;
 }
-
 }  // namespace Carbon::Check

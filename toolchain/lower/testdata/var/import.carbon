@@ -113,16 +113,16 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: @_Cv.Main = global { i32, i32 } zeroinitializer
 // CHECK:STDOUT: @_Cy.Main = global i32 0
 // CHECK:STDOUT: @_Cz.Main = global { i32, i32 } zeroinitializer
-// CHECK:STDOUT: @tuple.102.loc4_1 = internal constant { i32, i32 } { i32 1, i32 2 }
-// CHECK:STDOUT: @tuple.54c.loc8_1 = internal constant { i32, i32 } { i32 5, i32 6 }
+// CHECK:STDOUT: @tuple.380.loc4_1 = internal constant { i32, i32 } { i32 1, i32 2 }
+// CHECK:STDOUT: @tuple.da0.loc8_1 = internal constant { i32, i32 } { i32 5, i32 6 }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !37 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cv.Main, ptr align 4 @tuple.102.loc4_1, i64 8, i1 false), !dbg !38
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cv.Main, ptr align 4 @tuple.380.loc4_1, i64 8, i1 false), !dbg !38
 // CHECK:STDOUT:   store i32 4, ptr @_Cy.Main, align 4, !dbg !39
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cz.Main, ptr align 4 @tuple.54c.loc8_1, i64 8, i1 false), !dbg !40
+// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 @_Cz.Main, ptr align 4 @tuple.da0.loc8_1, i64 8, i1 false), !dbg !40
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -168,7 +168,7 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CW.Main() #0 !dbg !49 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc7_24 = load i32, ptr getelementptr inbounds nuw ({ i32, i32 }, ptr @_Cv.Main, i32 0, i32 1), align 4, !dbg !52
+// CHECK:STDOUT:   %.loc7_24 = load i32, ptr getelementptr inbounds nuw (i8, ptr @_Cv.Main, i64 4), align 4, !dbg !52
 // CHECK:STDOUT:   ret i32 %.loc7_24, !dbg !53
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -182,7 +182,7 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CZ.Main() #0 !dbg !59 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_24 = load i32, ptr getelementptr inbounds nuw ({ i32, i32 }, ptr @_Cz.Main, i32 0, i32 1), align 4, !dbg !62
+// CHECK:STDOUT:   %.loc10_24 = load i32, ptr getelementptr inbounds nuw (i8, ptr @_Cz.Main, i64 4), align 4, !dbg !62
 // CHECK:STDOUT:   ret i32 %.loc10_24, !dbg !63
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

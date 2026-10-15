@@ -8,6 +8,7 @@
 #include <optional>
 #include <string>
 
+#include "clang/AST/TypeBase.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/sem_ir/absolute_node_ref.h"
@@ -142,6 +143,9 @@ auto DiagnosticEmitter::ConvertArg(llvm::Any arg) const -> llvm::Any {
     auto specific_interface = sem_ir_->specific_interfaces().Get(
         specific_interface_raw->specific_interface_id);
     return StringifySpecificInterface(*sem_ir_, specific_interface);
+  }
+  if (auto* clang_type = llvm::any_cast<CppType>(&arg)) {
+    return clang_type->type.getAsString();
   }
   return DiagnosticEmitterBase::ConvertArg(arg);
 }

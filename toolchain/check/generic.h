@@ -102,14 +102,15 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
 // substitution into the declaration, but not the definition, of the generic.
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
                   SemIR::GenericId generic_id,
-                  llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId;
+                  llvm::ArrayRef<SemIR::InstId> args,
+                  bool make_identified_specific = false) -> SemIR::SpecificId;
 
 // Builds a new specific or finds an existing one in the case where the argument
 // list has already been converted into an instruction block. `args_id` should
 // be a canonical instruction block referring to constants.
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
-                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id)
-    -> SemIR::SpecificId;
+                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id,
+                  bool make_identified_specific = false) -> SemIR::SpecificId;
 
 // Builds the specific that describes how the generic should refer to itself.
 // For example, for a generic `G(T: type)`, this is the specific `G(T)`. If
@@ -123,11 +124,23 @@ auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
 auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
                          SemIR::SpecificId specific_id) -> void;
 
+enum class DefinitionResolution : std::uint8_t {
+  // The definition is not available.
+  NotDefinedYet,
+
+  // The definition was resolved by this operation.
+  NewlyResolved,
+
+  // The definition was resolved by a previous operation.
+  PreviouslyResolved,
+};
+
 // Attempts to resolve the definition of the given specific, by evaluating the
 // eval block of the corresponding generic and storing a corresponding value
-// block in the specific. Returns false if a definition is not available.
+// block in the specific.
 auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
-                               SemIR::SpecificId specific_id) -> bool;
+                               SemIR::SpecificId specific_id)
+    -> DefinitionResolution;
 
 // Diagnoses if an entity has implicit parameters, indicating it's generic, but
 // is missing explicit parameters.
@@ -162,7 +175,8 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                                SemIR::GenericId generic_without_self_id,
                                SemIR::GenericId generic_with_self_id,
                                SemIR::SpecificId specific_without_self_id,
-                               SemIR::ConstantId self_facet)
+                               SemIR::ConstantId self_facet,
+                               bool make_identified_specific = false)
     -> SemIR::SpecificId;
 
 // Copy the arguments of a specific into the context of another generic. The
@@ -174,7 +188,8 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
 // instantiation.
 auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
                            SemIR::SpecificId specific_id,
-                           SemIR::GenericId target_generic_id)
+                           SemIR::GenericId target_generic_id,
+                           bool make_identified_specific = false)
     -> SemIR::SpecificId;
 
 auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id) -> void;

@@ -14,7 +14,6 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "common/check.h"
 #include "common/command_line.h"
-#include "common/filesystem.h"
 #include "common/version.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/STLExtras.h"
@@ -193,22 +192,25 @@ auto ConfigSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       {.key = "VERSION", .value = Version::String.str()},
   };
 
-  // Try to read the installation digest and include that.
-  auto read_result = Filesystem::Cwd().ReadFileToString(
-      driver_env.installation->digest_path());
-  if (!read_result.ok()) {
+  // Try to read the installation digest and include that. This goes through the
+  // driver's filesystem so that tests get consistent results regardless of
+  // whether the digest happens to exist on the real filesystem.
+  auto read_result = driver_env.fs->getBufferForFile(
+      driver_env.installation->digest_path().native());
+  if (!read_result) {
     CARBON_DIAGNOSTIC(ConfigFailedToReadDigest, Error,
-                      "unable to read the installation's digest file: {0}",
-                      std::string);
+                      "unable to read the installation's digest file: {0}: {1}",
+                      std::string, std::string);
     driver_env.emitter.Emit(ConfigFailedToReadDigest,
-                            read_result.error().ToString());
+                            driver_env.installation->digest_path().native(),
+                            read_result.getError().message());
 
     // Remember that we encountered an error but continue to give a minimally
     // useful `config` output.
     result = false;
   } else {
     data.push_back({.key = "INSTALL_DIGEST",
-                    .value = llvm::StringRef(*read_result).rtrim().str()});
+                    .value = (*read_result)->getBuffer().rtrim().str()});
   }
 
   // Compute and print Clang's config entries if we can. This will have been

@@ -150,7 +150,8 @@ struct AliasBinding {
   InstId value_id;
 };
 
-// An array indexing operation, such as `array[index]`.
+// An array indexing operation, such as `array[index]`. The type of `array_id`
+// is an array type or a type that transitively adapts one.
 struct ArrayIndex {
   // Parse node is usually Parse::IndexExprId.
   static constexpr auto Kind = InstKind::ArrayIndex.Define<Parse::NodeId>(
@@ -178,9 +179,10 @@ struct ArrayInit {
   DestInstId dest_id;
 };
 
-// An array of `element_type_id` values, sized to `bound_id`.
+// A primitive array of `element_type_id` values, sized to `bound_id`. The
+// `Core.Array` class is defined as an adapter for this type.
 struct ArrayType {
-  static constexpr auto Kind = InstKind::ArrayType.Define<Parse::ArrayExprId>(
+  static constexpr auto Kind = InstKind::ArrayType.Define<Parse::NoneNodeId>(
       {.ir_name = "array_type",
        .is_type = InstIsType::Always,
        .constant_kind = InstConstantKind::Conditional,
@@ -639,6 +641,23 @@ struct ConvertToValueAction {
   TypeInstId target_type_inst_id;
 };
 
+// A C++ function pointer to a Carbon function.
+struct CppAddrOfFunction {
+  static constexpr auto Kind =
+      InstKind::CppAddrOfFunction.Define<Parse::NodeId>(
+          {.ir_name = "cpp_addr_of_fn",
+           .expr_category = ExprCategory::Value,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+
+  // The inst that refers to the Carbon function.
+  InstId function_ref_id;
+
+  // The Carbon function.
+  FunctionId function_id;
+};
+
 // The type of an overloaded C++ function.
 struct CppOverloadSetType {
   static constexpr auto Kind =
@@ -652,7 +671,7 @@ struct CppOverloadSetType {
   SpecificId specific_id;
 };
 
-// The type of a C++ function pointer.
+// The type of a C++ function pointer or member function pointer.
 struct CppFunctionPointerType {
   static constexpr auto Kind =
       InstKind::CppFunctionPointerType.Define<Parse::NodeId>(
@@ -957,7 +976,7 @@ struct FunctionDecl {
   static constexpr auto Kind =
       InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
           {.ir_name = "fn_decl",
-           .expr_category = ExprCategory::NotExpr,
+           .expr_category = ExprCategory::Value,
            .is_lowered = false});
 
   TypeId type_id;
@@ -999,21 +1018,6 @@ struct FunctionTypeWithSelfType {
   // The value to use for `Self` in this function. May be a type or a facet
   // value.
   InstId self_id;
-};
-
-// The type of the name of a generic class. The corresponding value is an empty
-// `StructValue`.
-struct GenericClassType {
-  // This is only ever created as a constant, so doesn't have a location.
-  static constexpr auto Kind =
-      InstKind::GenericClassType.Define<Parse::NoneNodeId>(
-          {.ir_name = "generic_class_type",
-           .is_type = InstIsType::Always,
-           .constant_kind = InstConstantKind::WheneverPossible});
-
-  TypeId type_id;
-  ClassId class_id;
-  SpecificId enclosing_specific_id;
 };
 
 // The type of the name of a generic interface. The corresponding value is an
@@ -1069,7 +1073,7 @@ struct ImplDecl {
 struct ImplSelfWitness {
   static constexpr auto Kind = InstKind::ImplSelfWitness.Define<Parse::NodeId>(
       {.ir_name = "impl_self_witness",
-       .constant_kind = InstConstantKind::Always,
+       .constant_kind = InstConstantKind::Conditional,
        .is_lowered = false});
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
@@ -1077,6 +1081,27 @@ struct ImplSelfWitness {
   InstId period_self;
   // The interface of the impl being declared.
   SpecificInterfaceId specific_interface_id;
+};
+
+// A witness that was modified while identifying a facet type and replacing a
+// `.Self` facet in a LookupImplWitness. It contains the operands from the
+// LookupImplWitness that resolved to it, and they can be used to reconstruct a
+// LookupImplWitness and replay the resulting lookup if desired. This witness
+// exists to give the caller of identify the choice to replace the witness with
+// an instruction of its choice instead of always evaluating and performing impl
+// lookup.
+struct IdentifiedWitness {
+  static constexpr auto Kind =
+      InstKind::IdentifiedWitness.Define<Parse::NodeId>(
+          {.ir_name = "identified_witness",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  // Always the type of the builtin `WitnessType` singleton instruction.
+  TypeId type_id;
+  // The self facet and interface of the impl lookup query.
+  InstId query_self_inst_id;
+  SpecificInterfaceId query_specific_interface_id;
 };
 
 // A witness that a type implements an interface.
@@ -1283,6 +1308,9 @@ struct InitializeAction {
     TypeInstId target_type_inst_id;
     // The storage for the initialization.
     MetaInstId storage_id;
+    // Block of pending instructions that `storage_id` depends on. This is
+    // always an `InstValue` that references a `SpliceBlock`.
+    MetaInstId storage_access_block_id;
     // Whether this is required to be an in-place initialization.
     BoolValue in_place;
   };
@@ -1413,7 +1441,7 @@ struct LookupImplWitness {
 
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
-  // The self type (or facet value) and interface of the impl lookup query.
+  // The self facet and interface of the impl lookup query.
   InstId query_self_inst_id;
   SpecificInterfaceId query_specific_interface_id;
 };
@@ -1582,6 +1610,21 @@ struct OutParamPattern {
 
   TypeId type_id;
   NameId pretty_name_id;
+};
+
+// The type of the name of a parameterized class. The corresponding value is an
+// empty `StructValue`.
+struct ParameterizedClassType {
+  // This is only ever created as a constant, so doesn't have a location.
+  static constexpr auto Kind =
+      InstKind::ParameterizedClassType.Define<Parse::NoneNodeId>(
+          {.ir_name = "parameterized_class_name_type",
+           .is_type = InstIsType::Always,
+           .constant_kind = InstConstantKind::WheneverPossible});
+
+  TypeId type_id;
+  ClassId class_id;
+  SpecificId enclosing_specific_id;
 };
 
 // Indicates `partial` on a type, such as `partial MyClass`.
@@ -2618,10 +2661,10 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplWitness`, `CustomWitness`,  `ImplSelfWitness`, and
-// `LookupImplWitness` instructions. The latter will evaluate at some point
-// during specific computation into one of first two, and their types should not
-// change in the process.
+// The type of witness instructions: `ImplWitness`, `CustomWitness`,
+// `ImplSelfWitness`, `IdentifiedWitness`, and `LookupImplWitness`. A
+// `LookupImplWitness` can evaluate into any of the other witness inst kinds,
+// and their types should not change in the process.
 //
 // Also the type of `RequireCompleteType` instructions.
 //

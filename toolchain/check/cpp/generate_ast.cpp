@@ -9,6 +9,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DeclContextInternals.h"
 #include "clang/AST/Mangle.h"
 #include "clang/Basic/DiagnosticParse.h"
 #include "clang/Basic/FileManager.h"
@@ -165,9 +166,6 @@ class CarbonExternalASTSource : public SemIR::ReadOnlyASTSource {
   auto MapInstIdToClangDeclOrType(LookupResult lookup)
       -> std::variant<clang::NamedDecl*, clang::QualType>;
 
-  auto GetOrExportFunctionToCpp(SemIR::InstId target_inst_id,
-                                SemIR::FunctionId function_id)
-      -> clang::NamedDecl*;
   // Get a current best-effort location for the current position within C++
   // processing.
   auto GetCurrentCppLocId() -> SemIR::LocId {
@@ -233,12 +231,12 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
           context_->types().GetTypeInstId(target_inst.type_id());
       auto callee = GetCallee(context_->sem_ir(), target_inst_id);
       if (auto* callee_function = std::get_if<SemIR::CalleeFunction>(&callee)) {
-        return GetOrExportFunctionToCpp(target_inst_id,
+        return GetOrExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id),
                                         callee_function->function_id);
-      } else if (auto generic_class =
-                     context_->insts().TryGetAs<SemIR::GenericClassType>(
+      } else if (auto param_class_type =
+                     context_->insts().TryGetAs<SemIR::ParameterizedClassType>(
                          type_inst_id)) {
-        return ExportGenericClassToCpp(*context_, *generic_class);
+        return ExportParameterizedClassToCpp(*context_, *param_class_type);
       }
 
       return nullptr;
@@ -253,46 +251,6 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
     default:
       return nullptr;
   }
-}
-
-auto CarbonExternalASTSource::GetOrExportFunctionToCpp(
-    SemIR::InstId target_inst_id, SemIR::FunctionId function_id)
-    -> clang::NamedDecl* {
-  SemIR::Function& function = context_->functions().Get(function_id);
-  if (const auto* clang_decl =
-          context_->clang_decls().Lookup(function.first_decl_id())) {
-    return cast<clang::NamedDecl>(clang_decl->decl());
-  }
-
-  auto* named_decl =
-      ExportFunctionToCpp(*context_, SemIR::LocId(target_inst_id), function_id);
-  if (!named_decl) {
-    return nullptr;
-  }
-
-  if (auto* function_template_decl =
-          llvm::dyn_cast<clang::FunctionTemplateDecl>(named_decl)) {
-    context_->clang_decls().Add(
-        {.key = SemIR::ClangDeclKey::ForNonFunctionDecl(function_template_decl),
-         .inst_id = function.first_decl_id()});
-    return function_template_decl;
-  }
-
-  auto* clang_function_decl = llvm::cast<clang::FunctionDecl>(named_decl);
-
-  SemIR::ClangDeclSignature thunk_signature;
-  thunk_signature.kind = SemIR::ClangDeclSignature::Normal;
-  thunk_signature.num_params =
-      static_cast<int32_t>(clang_function_decl->getNumParams());
-  thunk_signature.passing_modes.assign(
-      thunk_signature.num_params,
-      SemIR::ClangDeclSignature::PassingMode::ByValue);
-  context_->clang_decls().Add(
-      {.key = SemIR::ClangDeclKey::ForFunctionDecl(
-           clang_function_decl,
-           context_->clang_decl_signatures().Add(std::move(thunk_signature))),
-       .inst_id = function.first_decl_id()});
-  return clang_function_decl;
 }
 
 auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
@@ -314,10 +272,10 @@ auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
         clang::SourceLocation(), identifier, /*PrevDecl=*/nullptr,
         /*Nested=*/false);
     decl_context->addDecl(carbon_cpp_namespace);
-
-    // We provide custom lookup results within this namespace.
-    carbon_cpp_namespace->setHasExternalVisibleStorage();
   }
+
+  // We provide custom lookup results within this namespace.
+  carbon_cpp_namespace->getPrimaryContext()->setHasExternalVisibleStorage();
 
   // Register this file's package scope as corresponding to the `Carbon`
   // namespace in C++.
@@ -333,24 +291,26 @@ auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
     const clang::DeclContext* /*OriginalDC*/) -> bool {
-  // Find the Carbon declaration corresponding to this Clang declaration.
-  auto* decl = cast<clang::Decl>(
-      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
-  if (isa<clang::FunctionDecl>(decl)) {
-    // Functions don't meaningfully have visible decls, but bail out early since
-    // we can't form a `ClangDeclKey` for a function in the abstract.
+  auto clang_decl = GetCarbonOwnedDecl(decl_context);
+  if (!clang_decl) {
     return false;
   }
-  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
-  auto decl_id = context_->clang_decls().LookupId(key);
-  if (!decl_id.has_value()) {
-    return false;
-  }
-  auto clang_decl = context_->clang_decls().Get(decl_id);
-  if (clang_decl.is_imported) {
-    // This is imported from C++, presumably from a Clang AST file, so it's not
-    // our responsibility to provide its name lookup results.
-    return false;
+
+  auto* primary_context =
+      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext());
+  if (auto* lookup_map = primary_context->getLookupPtr()) {
+    if (auto it = lookup_map->find(decl_name);
+        it != lookup_map->end() && !it->second.isNull()) {
+      // We already exported declarations for this name, and may have been
+      // asked again after `completeVisibleDeclsMap` re-enabled external
+      // visible storage. Mark external lookup complete without re-exporting.
+      //
+      // Note that this only sets that there are no external decls from an AST
+      // file, despite its name. External visible decls already added by other
+      // AST sources, such as this one, are retained.
+      SetNoExternalVisibleDeclsForName(primary_context, decl_name);
+      return true;
+    }
   }
 
   llvm::SmallVector<Check::LookupScope> lookup_scopes;
@@ -359,7 +319,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
   // here - completeness should've been checked by clang before this point.
   if (!AppendLookupScopesForConstant(
           *context_, SemIR::LocId::None,
-          context_->constant_values().Get(clang_decl.inst_id),
+          context_->constant_values().Get(clang_decl->inst_id),
           SemIR::ConstantId::None, /*extended_scope=*/false, &lookup_scopes)) {
     return false;
   }
@@ -378,6 +338,7 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
       break;
     }
     default:
+      SetNoExternalVisibleDeclsForName(primary_context, decl_name);
       return false;
   }
 
@@ -385,18 +346,26 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
 
   // `required=false` so Carbon doesn't diagnose a failure, let Clang diagnose
   // it or even SFINAE.
-  LookupResult result =
-      LookupQualifiedName(*context_, SemIR::LocId::None, name_id, lookup_scopes,
-                          /*required=*/false);
+  LookupResult result = LookupQualifiedName(*context_, GetCurrentCppLocId(),
+                                            name_id, lookup_scopes,
+                                            /*required=*/false);
   if (!result.scope_result.is_found()) {
+    // Avoid caching a negative lookup, as a declaration with this name may be
+    // added in Carbon later.
+    if (auto* lookup_map = primary_context->getLookupPtr()) {
+      if (auto it = lookup_map->find(decl_name);
+          it != lookup_map->end() && it->second.isNull()) {
+        lookup_map->erase(it);
+      }
+    }
     return false;
   }
 
   // Map the found Carbon entity to a Clang NamedDecl.
   CARBON_KIND_SWITCH(MapInstIdToClangDeclOrType(result)) {
-    case CARBON_KIND(clang::NamedDecl* clang_decl): {
-      if (clang_decl) {
-        SetExternalVisibleDeclsForName(decl_context, decl_name, {clang_decl});
+    case CARBON_KIND(clang::NamedDecl* mapped_decl): {
+      if (mapped_decl) {
+        SetExternalVisibleDeclsForName(decl_context, decl_name, {mapped_decl});
         return true;
       } else {
         SetNoExternalVisibleDeclsForName(decl_context, decl_name);
@@ -1081,13 +1050,30 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
   ParseInjectedTokens(*cpp_context);
 }
 
-auto FinishAst(Context& context) -> void {
+auto FinalizeCppAstFragment(Context& context) -> void {
+  if (!context.cpp_context()) {
+    return;
+  }
+
+  // Finalize the per-Context AST fragment. The final ActOnEndOfTranslationUnit
+  // call for the CppDomain is performed in FinalizeCppDomain once all files
+  // sharing the domain have been checked.
+  context.cpp_context()->sema().ActOnEndOfTranslationUnitFragment(
+      clang::TUFragmentKind::Normal);
+  FlushDiagnosticConsumer(
+      *context.cpp_context()->sema().getDiagnostics().getClient());
+  context.emitter().Flush();
+}
+
+auto DisconnectCppAst(Context& context) -> void {
   if (!context.cpp_context()) {
     return;
   }
 
   // Leave the module we entered to encapsulate the contents of this Carbon
-  // file.
+  // file. This happens here rather than in `FinalizeCppAstFragment`, because
+  // that can run more than once for a file, but the module is only entered
+  // once.
   auto end_loc_id =
       SemIR::LocId(*(context.sem_ir().parse_tree().postorder().end() - 1));
   // Shuffle the end of file location back by one character to work around a
@@ -1098,12 +1084,6 @@ auto FinishAst(Context& context) -> void {
   // location adjustment is safe.
   LeaveModule(*context.cpp_context(),
               GetCppLocation(context, end_loc_id).getLocWithOffset(-1));
-
-  // Finalize the per-Context AST fragment. The final ActOnEndOfTranslationUnit
-  // call for the CppDomain is performed in FinalizeCppDomain once all files
-  // sharing the domain have been checked.
-  context.cpp_context()->sema().ActOnEndOfTranslationUnitFragment(
-      clang::TUFragmentKind::Normal);
   FlushDiagnosticConsumer(
       *context.cpp_context()->sema().getDiagnostics().getClient());
   context.emitter().Flush();

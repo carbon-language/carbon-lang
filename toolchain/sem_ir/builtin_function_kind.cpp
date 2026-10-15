@@ -130,6 +130,9 @@ using Bool = BuiltinType<BoolType::TypeInstId>;
 // Constraint that a type is `Core.CharLiteral`.
 using CharLiteral = BuiltinType<CharLiteralType::TypeInstId>;
 
+// Constraint that a type is `Core.IntLiteral`.
+using IntLiteral = BuiltinType<IntLiteralType::TypeInstId>;
+
 // Constraint that a type is `u8` or an adapted type, including `Core.Char`.
 struct CharCompatible {
   static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
@@ -456,6 +459,10 @@ constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
 // Returns the `MaybeUnformed(T)` type.
 constexpr BuiltinInfo MaybeUnformedMakeType = {
     "maybe_unformed.make_type", ValidateSignature<auto(Type)->Type>};
+
+// Returns the primitive `array(T, N)` type.
+constexpr BuiltinInfo ArrayMakeType = {
+    "array.make_type", ValidateSignature<auto(Type, IntLiteral)->Type>};
 
 // Returns the `Form` type.
 constexpr BuiltinInfo FormMakeType = {"form.make_type",

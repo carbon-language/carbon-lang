@@ -243,4 +243,15 @@ auto MakeStringType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
   return ExprAsType(context, loc_id, type_inst_id);
 }
 
+auto MakeArrayType(Context& context, SemIR::LocId loc_id,
+                   SemIR::InstId element_type_inst_id, SemIR::InstId bound_id)
+    -> TypeExpr {
+  auto desugared_loc_id = context.insts().GetLocIdForDesugaring(loc_id);
+  auto fn_inst_id =
+      LookupNameInCore(context, desugared_loc_id, CoreIdentifier::Array);
+  auto call_id = PerformCall(context, loc_id, fn_inst_id,
+                             {element_type_inst_id, bound_id});
+  return ExprAsType(context, loc_id, call_id);
+}
+
 }  // namespace Carbon::Check

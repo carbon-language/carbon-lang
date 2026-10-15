@@ -164,7 +164,7 @@ The other member access operators -- `x.y`, `x->y`, and `x->(y)` -- are defined
 by how they rewrite into the `x.(y)` form using these two rules:
 
 -   `x.y` is interpreted using the existing
-    [member resolution rules](/docs/design/expressions/member_access.md#member-resolution).
+    [member resolution rules](/docs/design/expressions/member_access.md).
     For example, `x.y` is treated as `x.(T.y)` for non-type values `x` with type
     `T`.
     -   Simple member access of a facet `T`, as in `T.y`, is not rewritten into
@@ -877,7 +877,7 @@ requirements. If necessary, we can in the future introduce a specific construct
 just for C++ interop that invokes the C++ arrow operator, such as
 `CppArrowOperator(x)`, that returns a pointer.
 
-**Context:** This was discuseed in
+**Context:** This was discussed in
 [2024-02-29 open discussion](https://docs.google.com/document/d/1s3mMCupmuSpWOFJGnvjoElcBIe2aoaysTIdyczvKX84/edit?resourcekey=0-G095Wc3sR6pW1hLJbGgE0g&tab=t.0#heading=h.5vj8ohrvqjqh)
 and in
 [a comment on this proposal](https://github.com/carbon-language/carbon-lang/pull/3720/files#r1507917882).

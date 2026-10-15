@@ -311,6 +311,8 @@ TEST_F(DriverTest, LinkWithFlagLikeFiles) {
 }
 
 TEST_F(DriverTest, ConfigJson) {
+  // Use the real filesystem so that the installation digest can be read.
+  auto cleanup = ScopedTempWorkingDir();
   EXPECT_TRUE(driver_.RunCommand({"config", "--json"}).success);
   EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
 

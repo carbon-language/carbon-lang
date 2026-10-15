@@ -191,8 +191,8 @@ static auto DiagnoseOrphanImpl(Context& context, const ImplInfo& impl,
         // type, but the specific also contains the callable's type which is one
         // of these.
         CARBON_KIND_SWITCH(context.types().GetAsInst(type.type_id)) {
-          case CARBON_KIND(SemIR::GenericClassType class_type): {
-            auto class_id = class_type.class_id;
+          case CARBON_KIND(SemIR::ParameterizedClassType param_class_type): {
+            auto class_id = param_class_type.class_id;
             auto inst_id = context.classes().Get(class_id).first_owning_decl_id;
             if (IsSameLibrary(context, inst_id)) {
               return true;
@@ -466,11 +466,7 @@ static auto ValidateImplsForInterface(Context& context,
   }
 }
 
-// For each `impl` seen in this file, ensure that we import every available
-// `final impl` for the same interface, so that we can to check for
-// diagnostics about the relationship between them and the `impl`s in this
-// file.
-static auto ImportFinalImplsWithImplInFile(Context& context) -> void {
+auto ImportFinalImplsWithImplInFile(Context& context) -> bool {
   struct InterfaceToImport {
     SemIR::ImportIRId ir_id;
     SemIR::InterfaceId interface_id;
@@ -546,14 +542,18 @@ static auto ImportFinalImplsWithImplInFile(Context& context) -> void {
   llvm::sort(impls_to_import);
   llvm::unique(impls_to_import);
 
+  auto imported_new_impl = false;
   for (auto [ir_id, import_impl_id] : impls_to_import) {
-    ImportImpl(context, ir_id, import_impl_id);
+    if (ImportImpl(context, ir_id, import_impl_id) ==
+        ImportImplResult::NewlyImported) {
+      imported_new_impl = true;
+    }
   }
+
+  return imported_new_impl;
 }
 
 auto ValidateImplsInFile(Context& context) -> void {
-  ImportFinalImplsWithImplInFile(context);
-
   // Collect all of the impls sorted into contiguous segments by their
   // interface. We only need to compare impls within each such segment. We don't
   // keep impls with an Error in them, as they may be missing other values

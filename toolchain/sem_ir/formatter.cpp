@@ -171,6 +171,7 @@ static auto IsDefinitionStart(Parse::NodeKind node_kind) -> bool {
     case Parse::NodeKind::FunctionDefinitionStart:
     case Parse::NodeKind::ImplDefinitionStart:
     case Parse::NodeKind::InterfaceDefinitionStart:
+    case Parse::NodeKind::LambdaDefinitionStart:
     case Parse::NodeKind::NamedConstraintDefinitionStart:
       return true;
     default:
@@ -645,7 +646,11 @@ auto Formatter::FormatSpecificRegion(const Generic& generic,
     }
     out() << " => ";
     if (specific_inst_id) {
-      FormatName(*specific_inst_id);
+      if (specific_inst_id->has_value()) {
+        FormatName(*specific_inst_id);
+      } else {
+        out() << "<not constant>";
+      }
     } else {
       out() << "<missing>";
     }
@@ -678,6 +683,9 @@ auto Formatter::FormatSpecific(SpecificId id, const Specific& specific)
   out() << "specific ";
   FormatName(id);
   out() << " ";
+  if (specific.identified) {
+    out() << "[identified] ";
+  }
 
   OpenBrace();
   FormatSpecificRegion(generic, specific, GenericInstIndex::Region::Declaration,

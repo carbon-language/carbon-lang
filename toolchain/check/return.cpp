@@ -207,6 +207,14 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
                                  ref_form.type_component_inst_id)});
         break;
       }
+      case CARBON_KIND(SemIR::ValueForm value_form): {
+        expr_id = Convert(
+            context, loc_id, expr_id,
+            ConversionTarget{.kind = ConversionTarget::Value,
+                             .type_id = context.types().GetTypeIdForTypeInstId(
+                                 value_form.type_component_inst_id)});
+        break;
+      }
       case CARBON_KIND(SemIR::ErrorInst _): {
         expr_id = SemIR::ErrorInst::InstId;
         break;

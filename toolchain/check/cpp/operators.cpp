@@ -18,6 +18,7 @@
 #include "toolchain/check/function.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/interface.h"
+#include "toolchain/check/literal.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
@@ -39,7 +40,7 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
     -> std::optional<clang::OverloadedOperatorKind> {
   switch (interface_name) {
       // Unary operators.
-    case CoreIdentifier::Destroy:
+    case CoreIdentifier::DestroyImpl:
     case CoreIdentifier::SubobjectDestroy:
     case CoreIdentifier::SelfDestruct:
     case CoreIdentifier::As:
@@ -256,15 +257,9 @@ static auto MakeCppStdInitializerListMake(Context& context, SemIR::LocId loc_id,
                                .type_id = GetSingletonType(
                                    context, SemIR::IntLiteralType::TypeInstId),
                                .int_id = context.ints().Add(size)}));
-  auto array_type_inst_id = AddTypeInst(
-      context,
-      SemIR::LocIdAndInst::RuntimeVerified(
-          context.sem_ir(), loc_id,
-          SemIR::ArrayType{.type_id = SemIR::TypeType::TypeId,
-                           .bound_id = bound_id,
-                           .element_type_inst_id = element_type_inst_id}));
   auto array_type_id =
-      context.types().GetTypeIdForTypeInstId(array_type_inst_id);
+      MakeArrayType(context, loc_id, element_type_inst_id, bound_id).type_id;
+  TryToCompleteType(context, array_type_id, loc_id);
 
   // Create a builtin function to perform the conversion from array type to
   // initializer list type. We name the synthesized function as if it were a
