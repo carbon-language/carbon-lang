@@ -227,6 +227,11 @@ struct TypeExpr {
   SemIR::TypeInstId inst_id;
   // The corresponding type, or `ErrorInst::TypeId`.
   SemIR::TypeId type_id;
+
+  auto SetError() {
+    inst_id = SemIR::ErrorInst::TypeInstId;
+    type_id = SemIR::ErrorInst::TypeId;
+  }
 };
 
 inline constexpr TypeExpr TypeExpr::None = {.inst_id = SemIR::TypeInstId::None,
