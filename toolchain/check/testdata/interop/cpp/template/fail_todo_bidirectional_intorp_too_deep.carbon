@@ -6,9 +6,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/template/fail_infinite_recursion.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interop/cpp/template/fail_todo_bidirectional_intorp_too_deep.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/template/fail_infinite_recursion.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/template/fail_todo_bidirectional_intorp_too_deep.carbon
 
 import Cpp;
 
@@ -22,7 +22,7 @@ auto ManualMultiply(T x) -> T {
 ''';
 
 fn ManualMultiply[template T: type](p: T*) -> T* {
-    // CHECK:STDERR: fail_infinite_recursion.carbon:[[@LINE+2]]:32: error: semantics TODO: `maximum depth for bidirectional Carbon/C++ interop is 10` [SemanticsTodo]
+    // CHECK:STDERR: fail_todo_bidirectional_intorp_too_deep.carbon:[[@LINE+2]]:32: error: semantics TODO: `maximum depth for bidirectional Carbon/C++ interop is 21` [SemanticsTodo]
     // CHECK:STDERR:
     return Cpp.ManualMultiply(p);
 }

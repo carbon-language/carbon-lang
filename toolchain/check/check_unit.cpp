@@ -634,7 +634,25 @@ auto CheckUnit::FinishRun() -> void {
 
   auto do_resolution_checks = true;
   auto num_resolution_check_cycles = 0;
-  constexpr auto max_resolution_check_cycles = 10;
+  // TODO: Find a more optimal way to evaluate mutually-dependent interop
+  // between Carbon and C++.
+  //
+  // Experimental evidence indicates that each additional loop doubles the
+  // run-time of `fail_todo_bidirectional_intorp_too_deep.carbon`. That unit
+  // test isn't terribly complex, so we should probably solve this fairly soon.
+  //
+  // - 14 loops average   5'323 ms (base case)
+  // - 15 loops average   7'695 ms (1.45x 14 loops)
+  // - 16 loops average  12'444 ms (1.62x 15 loops)
+  // - 17 loops average  22'195 ms (1.78x 16 loops)
+  // - 18 loops average  41'150 ms (1.85x 17 loops)
+  // - 19 loops average  79'812 ms (1.94x 18 loops)
+  // - 20 loops average 158'344 ms (1.98x 19 loops)
+  // - 21 loops average 308'374 ms (1.95x 20 loops)
+  //
+  // We choose 15 loops to make progress without significantly slowing down unit
+  // tests.
+  constexpr auto max_resolution_check_cycles = 15;
   while (do_resolution_checks &&
          ++num_resolution_check_cycles < max_resolution_check_cycles) {
     // Finalizes the C++ portion of the compilation, allowing any pending C++
