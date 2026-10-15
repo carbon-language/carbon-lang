@@ -46,15 +46,11 @@ namespace N1;
 
 // Use `package.N1` and poison `N2.N1`.
 namespace N2;
-// CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+3]]:15: error: name `N1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N2.N3 = N1;
-// CHECK:STDERR:               ^~
+// CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+1]]:15-16: error: name `N1` used before it was declared [NameUseBeforeDecl]
 alias N2.N3 = N1;
 
 // Failure: N2.N1 declared after it was poisoned.
-// CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+4]]:14: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: namespace N2.N1;
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+2]]:14-15: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 namespace N2.N1;
 
@@ -68,9 +64,7 @@ namespace N1;
 namespace N2;
 alias N2.N3 = N1;
 
-// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+4]]:15: error: member name `N1` not found in `N2` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: alias N2.N4 = N2.N1;
-// CHECK:STDERR:               ^~~~~
+// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+2]]:15-19: error: member name `N1` not found in `N2` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 alias N2.N4 = N2.N1;
 
@@ -82,21 +76,15 @@ namespace N1;
 
 // Use `package.N1` and poison `N2.N1`.
 namespace N2;
-// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+3]]:15: error: name `N1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N2.N3 = N1;
-// CHECK:STDERR:               ^~
+// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+1]]:15-16: error: name `N1` used before it was declared [NameUseBeforeDecl]
 alias N2.N3 = N1;
 
 // Failure: `N2.N1` declared after it was poisoned.
-// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:14: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: namespace N2.N1;
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+2]]:14-15: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 namespace N2.N1;
 
-// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:15: error: member name `N1` not found in `N2` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: alias N2.N4 = N2.N1;
-// CHECK:STDERR:               ^~~~~
+// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+2]]:15-19: error: member name `N1` not found in `N2` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 alias N2.N4 = N2.N1;
 
@@ -105,12 +93,8 @@ alias N2.N4 = N2.N1;
 namespace N1;
 
 namespace N2;
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:15: error: name `N1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N2.N1 = N1;
-// CHECK:STDERR:               ^~
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+4]]:10: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: alias N2.N1 = N1;
-// CHECK:STDERR:          ^~
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+3]]:15-16: error: name `N1` used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+2]]:10-11: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 alias N2.N1 = N1;
 
@@ -126,30 +110,18 @@ namespace N2.N3.N4;
 // * `N2.N1`
 // * `N2.N3.N1`
 // * `N2.N3.N4.N1`
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:21: error: name `N1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N2.N3.N4.N5 = N1;
-// CHECK:STDERR:                     ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+1]]:21-22: error: name `N1` used before it was declared [NameUseBeforeDecl]
 alias N2.N3.N4.N5 = N1;
 
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:20: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: namespace N2.N3.N4.N1;
-// CHECK:STDERR:                    ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:20-21: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-6]]:21: error: name `N1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N2.N3.N4.N5 = N1;
-// CHECK:STDERR:                     ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-4]]:21-22: error: name `N1` used before it was declared [NameUseBeforeDecl]
 namespace N2.N3.N4.N1;
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:17: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: namespace N2.N3.N1;
-// CHECK:STDERR:                 ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:17-18: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-14]]:21: error: name `N1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N2.N3.N4.N5 = N1;
-// CHECK:STDERR:                     ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-8]]:21-22: error: name `N1` used before it was declared [NameUseBeforeDecl]
 namespace N2.N3.N1;
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+4]]:14: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: namespace N2.N1;
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+2]]:14-15: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 namespace N2.N1;
 
@@ -174,26 +146,16 @@ library "[[@TEST_NAME]]";
 
 namespace N1;
 // `N1.N3` poisoned when not found.
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:15: error: name `N3` not found [NameNotFound]
-// CHECK:STDERR: alias N1.N2 = N3;
-// CHECK:STDERR:               ^~
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:15-16: error: name `N3` not found [NameNotFound]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:15: error: name `N3` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N1.N2 = N3;
-// CHECK:STDERR:               ^~
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+1]]:15-16: error: name `N3` used before it was declared [NameUseBeforeDecl]
 alias N1.N2 = N3;
 
 // TODO: We should ideally only produce one diagnostic here.
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:11: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: namespace N3;
-// CHECK:STDERR:           ^~
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:11-12: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE-7]]:15: error: name `N3` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N1.N2 = N3;
-// CHECK:STDERR:               ^~
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE-5]]:15-16: error: name `N3` used before it was declared [NameUseBeforeDecl]
 namespace N3;
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+4]]:14: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: namespace N1.N3;
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+2]]:14-15: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 namespace N1.N3;

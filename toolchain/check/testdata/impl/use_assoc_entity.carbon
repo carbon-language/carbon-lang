@@ -268,33 +268,19 @@ class A {}
 
 // TODO: Make sure this behaves reasonably once we support `where` declarations.
 
-// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+14]]:1: error: associated constant T not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: impl A as J {
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let T: type;
-// CHECK:STDERR:       ^~~~~~~
+// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+6]]:1-13: error: associated constant T not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-9]]:7-13: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+7]]:1: error: associated constant U not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: impl A as J {
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-17]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let U: type;
-// CHECK:STDERR:       ^~~~~~~
+// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+3]]:1-13: error: associated constant U not given a value in impl of interface J [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE-11]]:7-13: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:
 impl A as J {
-  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+8]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:   where .U = T;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+4]]:3-7: error: unrecognized declaration introducer [UnrecognizedDecl]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   where .U = T;
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+2]]:3-7: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:
   where .U = T;
-  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+4]]:3: error: unrecognized declaration introducer [UnrecognizedDecl]
-  // CHECK:STDERR:   where .T = ();
-  // CHECK:STDERR:   ^~~~~
+  // CHECK:STDERR: fail_todo_associated_constant_use_before_value_known.carbon:[[@LINE+2]]:3-7: error: unrecognized declaration introducer [UnrecognizedDecl]
   // CHECK:STDERR:
   where .T = ();
 }
@@ -332,9 +318,7 @@ impl A as J {
   // definition of `G()` until the enclosing `impl` is complete.
   // TODO: Diagnose this better.
   eval fn G() -> type { return A; }
-  // CHECK:STDERR: fail_associated_fn_use_in_decl_after_decl.carbon:[[@LINE+4]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   fn F() -> G();
-  // CHECK:STDERR:             ^~~
+  // CHECK:STDERR: fail_associated_fn_use_in_decl_after_decl.carbon:[[@LINE+2]]:13-15: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:
   fn F() -> G();
 }
@@ -350,9 +334,7 @@ interface J {
 class A {}
 
 impl A as J {
-  // CHECK:STDERR: fail_associated_fn_use_in_decl_before_decl.carbon:[[@LINE+4]]:13: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
-  // CHECK:STDERR:   fn F() -> G();
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR: fail_associated_fn_use_in_decl_before_decl.carbon:[[@LINE+2]]:13: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
   // CHECK:STDERR:
   fn F() -> G();
   eval fn G() -> type { return A; }
@@ -363,19 +345,11 @@ library "[[@TEST_NAME]]";
 
 interface J2 {
   let U2: type;
-  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE+14]]:17: error: member access into facet of incomplete type `J2` [IncompleteTypeInMemberAccessOfFacet]
-  // CHECK:STDERR:   fn F(self, z: Self.U2) -> Self.U2;
-  // CHECK:STDERR:                 ^~~~
-  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE-5]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface J2 {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE+6]]:17-20: error: member access into facet of incomplete type `J2` [IncompleteTypeInMemberAccessOfFacet]
+  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE-3]]:1-14: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE+7]]:29: error: member access into facet of incomplete type `J2` [IncompleteTypeInMemberAccessOfFacet]
-  // CHECK:STDERR:   fn F(self, z: Self.U2) -> Self.U2;
-  // CHECK:STDERR:                             ^~~~
-  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE-12]]:1: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
-  // CHECK:STDERR: interface J2 {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE+3]]:29-32: error: member access into facet of incomplete type `J2` [IncompleteTypeInMemberAccessOfFacet]
+  // CHECK:STDERR: fail_todo_self_period_associated_type.carbon:[[@LINE-6]]:1-14: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
   // CHECK:STDERR:
   fn F(self, z: Self.U2) -> Self.U2;
 }
@@ -403,19 +377,11 @@ interface K {
 }
 
 impl () as K where .V = {.a: ()} {
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+14]]:21: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn F(unused self, v: {.x: ()}) -> {.x: ()} { return v; }
-  // CHECK:STDERR:                     ^~~~~~~~~~~
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-7]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn F(self, v: V) -> V;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+6]]:21-31: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-5]]:3-24: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+7]]:3: error: cannot convert from struct type `{.x: ()}` to `{.a: ()}`: unexpected field `x` in source type [StructInitUnexpectedFieldInConversion]
-  // CHECK:STDERR:   fn F(unused self, v: {.x: ()}) -> {.x: ()} { return v; }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-14]]:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn F(self, v: V) -> V;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+3]]:3-46: error: cannot convert from struct type `{.x: ()}` to `{.a: ()}`: unexpected field `x` in source type [StructInitUnexpectedFieldInConversion]
+  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-8]]:3-24: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
   fn F(unused self, v: {.x: ()}) -> {.x: ()} { return v; }
 }

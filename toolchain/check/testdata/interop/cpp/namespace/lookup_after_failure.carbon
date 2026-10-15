@@ -28,24 +28,16 @@ using namespace Carbon::N;
 
 // Unqualified lookups search `Carbon` and `Carbon::N` (failing there without
 // triggering typo correction) and resolve to `Fallback`.
-// CHECK:STDERR: fail_negative_lookup_via_using_directive.carbon:[[@LINE+3]]:9: error: name `LaterFn` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: int a = LaterFn();
-// CHECK:STDERR:         ^
+// CHECK:STDERR: fail_negative_lookup_via_using_directive.carbon:[[@LINE+1]]:9: error: name `LaterFn` used before it was declared [NameUseBeforeDecl]
 int a = LaterFn();
 int b = LaterNestedFn();
 ''';
 
-// CHECK:STDERR: fail_negative_lookup_via_using_directive.carbon:[[@LINE+7]]:4: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn LaterFn() -> i32 { return 3; }
-// CHECK:STDERR:    ^~~~~~~
+// CHECK:STDERR: fail_negative_lookup_via_using_directive.carbon:[[@LINE+3]]:4-10: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_negative_lookup_via_using_directive.carbon:[[@LINE-7]]:9: error: name `LaterNestedFn` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: int b = LaterNestedFn();
-// CHECK:STDERR:         ^
+// CHECK:STDERR: fail_negative_lookup_via_using_directive.carbon:[[@LINE-5]]:9: error: name `LaterNestedFn` used before it was declared [NameUseBeforeDecl]
 fn LaterFn() -> i32 { return 3; }
-// CHECK:STDERR: fail_negative_lookup_via_using_directive.carbon:[[@LINE+4]]:6: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn N.LaterNestedFn() -> i32 { return 4; }
-// CHECK:STDERR:      ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_negative_lookup_via_using_directive.carbon:[[@LINE+2]]:6-18: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 fn N.LaterNestedFn() -> i32 { return 4; }
 
@@ -71,36 +63,24 @@ inline Cpp '''
 Carbon::ExportedType* p1 = nullptr;
 
 void TestTypoInCarbon() {
-  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+4]]:11: error: no member named 'NoSuchDecl' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    19 |   Carbon::NoSuchDecl();
-  // CHECK:STDERR:       |           ^~~~~~~~~~
+  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+2]]:11-20: error: no member named 'NoSuchDecl' in namespace 'Carbon' [CppInteropParseError]
   // CHECK:STDERR:
   Carbon::NoSuchDecl();
-  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+8]]:11: error: no type named 'ExportedTyp' in namespace 'Carbon'; did you mean 'ExportedType'? [CppInteropParseError]
-  // CHECK:STDERR:    28 |   Carbon::ExportedTyp* p_typo = p1;
-  // CHECK:STDERR:       |   ~~~~~~~~^~~~~~~~~~~
-  // CHECK:STDERR:       |           ExportedType
-  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE-19]]:20: note: 'ExportedType' declared here [CppInteropParseNote]
-  // CHECK:STDERR:     5 | class ExportedType {
-  // CHECK:STDERR:       |                    ^
+  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+4]]:11: error: no type named 'ExportedTyp' in namespace 'Carbon'; did you mean 'ExportedType'? [CppInteropParseError]
+  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+3]]:11-21: note: replace with `ExportedType` [CppInteropFixItReplacement]
+  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE-15]]:20: note: 'ExportedType' declared here [CppInteropParseNote]
   // CHECK:STDERR:
   Carbon::ExportedTyp* p_typo = p1;
-  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+7]]:11: error: no member named 'LaterDeclared' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    36 |   Carbon::LaterDeclared();
-  // CHECK:STDERR:       |           ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+3]]:11-23: error: no member named 'LaterDeclared' in namespace 'Carbon' [CppInteropParseError]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+3]]:11: error: name `LaterDeclared` used before it was declared [NameUseBeforeDecl]
-  // CHECK:STDERR:   Carbon::LaterDeclared();
-  // CHECK:STDERR:           ^
+  // CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+1]]:11: error: name `LaterDeclared` used before it was declared [NameUseBeforeDecl]
   Carbon::LaterDeclared();
   Carbon::EarlyFn();
   Carbon::ExportedType* p2 = p1;
 }
 ''';
 
-// CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+4]]:4: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn LaterDeclared() -> i32 { return 42; }
-// CHECK:STDERR:    ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_typo_in_carbon_namespace.carbon:[[@LINE+2]]:4-16: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 fn LaterDeclared() -> i32 { return 42; }
 
@@ -126,21 +106,15 @@ fn Nested.EarlyFn() {}
 
 inline Cpp '''
 void TestTypoInNested() {
-  // CHECK:STDERR: fail_typo_in_nested_namespace.carbon:[[@LINE+7]]:19: error: no member named 'LaterInNested' in namespace 'Carbon::Nested' [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Carbon::Nested::LaterInNested();
-  // CHECK:STDERR:       |                   ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_typo_in_nested_namespace.carbon:[[@LINE+3]]:19-31: error: no member named 'LaterInNested' in namespace 'Carbon::Nested' [CppInteropParseError]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_typo_in_nested_namespace.carbon:[[@LINE+3]]:19: error: name `LaterInNested` used before it was declared [NameUseBeforeDecl]
-  // CHECK:STDERR:   Carbon::Nested::LaterInNested();
-  // CHECK:STDERR:                   ^
+  // CHECK:STDERR: fail_typo_in_nested_namespace.carbon:[[@LINE+1]]:19: error: name `LaterInNested` used before it was declared [NameUseBeforeDecl]
   Carbon::Nested::LaterInNested();
   Carbon::Nested::EarlyFn();
 }
 ''';
 
-// CHECK:STDERR: fail_typo_in_nested_namespace.carbon:[[@LINE+4]]:11: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn Nested.LaterInNested() {}
-// CHECK:STDERR:           ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_typo_in_nested_namespace.carbon:[[@LINE+2]]:11-23: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 fn Nested.LaterInNested() {}
 
@@ -165,9 +139,7 @@ class MyClass {
 inline Cpp '''
 void TestTypoInClass() {
   Carbon::MyClass::StaticMethod1();
-  // CHECK:STDERR: fail_typo_in_carbon_class.carbon:[[@LINE+4]]:20: error: no member named 'NoSuchMember' in 'Carbon::MyClass' [CppInteropParseError]
-  // CHECK:STDERR:    19 |   Carbon::MyClass::NoSuchMember();
-  // CHECK:STDERR:       |                    ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_typo_in_carbon_class.carbon:[[@LINE+2]]:20-31: error: no member named 'NoSuchMember' in 'Carbon::MyClass' [CppInteropParseError]
   // CHECK:STDERR:
   Carbon::MyClass::NoSuchMember();
   Carbon::MyClass::StaticMethod1();

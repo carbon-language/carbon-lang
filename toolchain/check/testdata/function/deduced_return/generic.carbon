@@ -22,9 +22,7 @@ library "[[@TEST_NAME]]";
 
 fn F[T: Core.Copy](x: T) -> auto { return x; }
 
-// CHECK:STDERR: fail_todo_call_generic.carbon:[[@LINE+4]]:24: error: semantics TODO: `call to generic function with deduced return type` [SemanticsTodo]
-// CHECK:STDERR: fn G() -> i32 { return F(0 as i32); }
-// CHECK:STDERR:                        ^~~~~~~~~~~
+// CHECK:STDERR: fail_todo_call_generic.carbon:[[@LINE+2]]:24-34: error: semantics TODO: `call to generic function with deduced return type` [SemanticsTodo]
 // CHECK:STDERR:
 fn G() -> i32 { return F(0 as i32); }
 

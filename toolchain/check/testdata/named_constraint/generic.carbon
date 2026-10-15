@@ -26,12 +26,8 @@ constraint ForwardDeclaredGeneric(T: type) {}
 library "[[@TEST_NAME]]";
 
 constraint ForwardDeclaredGeneric(T: ());
-// CHECK:STDERR: fail_mismatched_generic_param_types.carbon:[[@LINE+7]]:35: error: type `<pattern for type>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for ()>` [RedeclParamDiffersType]
-// CHECK:STDERR: constraint ForwardDeclaredGeneric(T: type) {}
-// CHECK:STDERR:                                   ^~~~~~~
-// CHECK:STDERR: fail_mismatched_generic_param_types.carbon:[[@LINE-4]]:35: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: constraint ForwardDeclaredGeneric(T: ());
-// CHECK:STDERR:                                   ^~~~~
+// CHECK:STDERR: fail_mismatched_generic_param_types.carbon:[[@LINE+3]]:35-41: error: type `<pattern for type>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for ()>` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_mismatched_generic_param_types.carbon:[[@LINE-2]]:35-39: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR:
 constraint ForwardDeclaredGeneric(T: type) {}
 
@@ -39,12 +35,8 @@ constraint ForwardDeclaredGeneric(T: type) {}
 library "[[@TEST_NAME]]";
 
 constraint ForwardDeclaredGeneric(T: type, U: type);
-// CHECK:STDERR: fail_mismatched_generic_param_arity.carbon:[[@LINE+7]]:1: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
-// CHECK:STDERR: constraint ForwardDeclaredGeneric(T: type) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_mismatched_generic_param_arity.carbon:[[@LINE-4]]:1: note: previously declared with parameter count of 2 [RedeclParamCountPrevious]
-// CHECK:STDERR: constraint ForwardDeclaredGeneric(T: type, U: type);
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_mismatched_generic_param_arity.carbon:[[@LINE+3]]:1-44: error: redeclaration differs because of parameter count of 1 [RedeclParamCountDiffers]
+// CHECK:STDERR: fail_mismatched_generic_param_arity.carbon:[[@LINE-2]]:1-52: note: previously declared with parameter count of 2 [RedeclParamCountPrevious]
 // CHECK:STDERR:
 constraint ForwardDeclaredGeneric(T: type) {}
 
@@ -52,12 +44,8 @@ constraint ForwardDeclaredGeneric(T: type) {}
 library "[[@TEST_NAME]]";
 
 constraint Generic(T: type) {}
-// CHECK:STDERR: fail_inside_definition.carbon:[[@LINE+7]]:1: error: redefinition of `constraint Generic` [RedeclRedef]
-// CHECK:STDERR: constraint Generic(T: type) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_inside_definition.carbon:[[@LINE-4]]:1: note: previously defined here [RedeclPrevDef]
-// CHECK:STDERR: constraint Generic(T: type) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_inside_definition.carbon:[[@LINE+3]]:1-29: error: redefinition of `constraint Generic` [RedeclRedef]
+// CHECK:STDERR: fail_inside_definition.carbon:[[@LINE-2]]:1-29: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR:
 constraint Generic(T: type) {}
 
@@ -66,12 +54,8 @@ library "[[@TEST_NAME]]";
 
 constraint Generic(T: type) {}
 
-// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+7]]:24: error: 2 arguments passed to generic constraint expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fn F(unused generic T: Generic((), ())) {}
-// CHECK:STDERR:                        ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE-5]]:1: note: calling generic constraint declared here [InCallToEntity]
-// CHECK:STDERR: constraint Generic(T: type) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+3]]:24-38: error: 2 arguments passed to generic constraint expecting 1 argument [CallArgCountMismatch]
+// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE-3]]:1-29: note: calling generic constraint declared here [InCallToEntity]
 // CHECK:STDERR:
 fn F(unused generic T: Generic((), ())) {}
 

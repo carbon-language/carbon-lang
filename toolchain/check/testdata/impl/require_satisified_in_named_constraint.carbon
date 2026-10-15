@@ -25,9 +25,7 @@ constraint N {
 impl () as N;
 
 // () needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_require_for_concrete_type.carbon:[[@LINE+4]]:1: error: constraint `N` being implemented requires that `()` implements `Z` [IdentifiedRequireImplsNotImplemented]
-// CHECK:STDERR: impl () as N {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_missing_require_for_concrete_type.carbon:[[@LINE+2]]:1-14: error: constraint `N` being implemented requires that `()` implements `Z` [IdentifiedRequireImplsNotImplemented]
 // CHECK:STDERR:
 impl () as N {}
 
@@ -46,9 +44,7 @@ constraint N {
 impl forall [T: type] T as N;
 
 // T needs to impl Z at the start of the definition.
-// CHECK:STDERR: fail_missing_require_for_symbolic_type.carbon:[[@LINE+4]]:1: error: constraint `N` being implemented requires that `T` implements `Z` [IdentifiedRequireImplsNotImplemented]
-// CHECK:STDERR: impl forall [T: type] T as N {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_missing_require_for_symbolic_type.carbon:[[@LINE+2]]:1-30: error: constraint `N` being implemented requires that `T` implements `Z` [IdentifiedRequireImplsNotImplemented]
 // CHECK:STDERR:
 impl forall [T: type] T as N {}
 
@@ -171,13 +167,9 @@ impl () as N;
 // Wrong type for the requirement.
 impl () as Z where .Z1 = {};
 
-// CHECK:STDERR: fail_require_non_extended_rewrite_wrong_type.carbon:[[@LINE+8]]:1: error: constraint `N` being implemented requires that `().(Z.Z1)` equals `()`; found `{}` and `()` [IdentifiedRequireImplsNotEquivalent]
-// CHECK:STDERR: impl () as N {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_require_non_extended_rewrite_wrong_type.carbon:[[@LINE+4]]:1-14: error: constraint `N` being implemented requires that `().(Z.Z1)` equals `()`; found `{}` and `()` [IdentifiedRequireImplsNotEquivalent]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_require_non_extended_rewrite_wrong_type.carbon:[[@LINE-6]]:1: error: impl declared but not defined [ImplMissingDefinition]
-// CHECK:STDERR: impl () as Z where .Z1 = {};
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_require_non_extended_rewrite_wrong_type.carbon:[[@LINE-4]]:1-28: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR:
 impl () as N {}
 
@@ -210,8 +202,6 @@ constraint N {
 }
 
 // Wrong type for `.Z1`.
-// CHECK:STDERR: fail_require_non_extended_rewrite_same_interface_wrong_type.carbon:[[@LINE+4]]:1: error: constraint `N where .(Z.Z1) = {}` being implemented requires that `().(Z.Z1)` equals `()`; found `{}` and `()` [IdentifiedRequireImplsNotEquivalent]
-// CHECK:STDERR: impl () as N where .Z1 = {} {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_require_non_extended_rewrite_same_interface_wrong_type.carbon:[[@LINE+2]]:1-29: error: constraint `N where .(Z.Z1) = {}` being implemented requires that `().(Z.Z1)` equals `()`; found `{}` and `()` [IdentifiedRequireImplsNotEquivalent]
 // CHECK:STDERR:
 impl () as N where .Z1 = {} {}

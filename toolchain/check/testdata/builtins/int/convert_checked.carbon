@@ -130,9 +130,7 @@ library "[[@TEST_NAME]]";
 import library "int_ops";
 
 let max_plus_one: i32 =
-  // CHECK:STDERR: fail_too_large_u32_for_i32.carbon:[[@LINE+4]]:3: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
-  // CHECK:STDERR:   Uint32ToInt32(
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_too_large_u32_for_i32.carbon:[[@LINE+2]]:3-16: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
   // CHECK:STDERR:
   Uint32ToInt32(
     AddU32(Int32ToUint32(0x7FFF_FFFF),
@@ -143,9 +141,7 @@ let max_plus_one: i32 =
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_too_large_i32_for_i16.carbon:[[@LINE+4]]:25: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
-// CHECK:STDERR: let max_plus_one: i16 = Int32ToInt16(0x8000);
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_large_i32_for_i16.carbon:[[@LINE+2]]:25-44: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
 // CHECK:STDERR:
 let max_plus_one: i16 = Int32ToInt16(0x8000);
 
@@ -154,9 +150,7 @@ let max_plus_one: i16 = Int32ToInt16(0x8000);
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_too_large_i32_for_u16.carbon:[[@LINE+4]]:25: error: integer value 65536 too large for type `u16` [IntTooLargeForType]
-// CHECK:STDERR: let max_plus_one: u16 = Int32ToUint16(0x1_0000);
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_large_i32_for_u16.carbon:[[@LINE+2]]:25-47: error: integer value 65536 too large for type `u16` [IntTooLargeForType]
 // CHECK:STDERR:
 let max_plus_one: u16 = Int32ToUint16(0x1_0000);
 
@@ -165,9 +159,7 @@ let max_plus_one: u16 = Int32ToUint16(0x1_0000);
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_too_large_u32_for_i16.carbon:[[@LINE+4]]:25: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
-// CHECK:STDERR: let max_plus_one: i16 = Uint32ToInt16(Int32ToUint32(0x8000));
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_large_u32_for_i16.carbon:[[@LINE+2]]:25-60: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
 // CHECK:STDERR:
 let max_plus_one: i16 = Uint32ToInt16(Int32ToUint32(0x8000));
 
@@ -176,9 +168,7 @@ let max_plus_one: i16 = Uint32ToInt16(Int32ToUint32(0x8000));
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_too_large_u32_for_u16.carbon:[[@LINE+4]]:25: error: integer value 65536 too large for type `u16` [IntTooLargeForType]
-// CHECK:STDERR: let max_plus_one: u16 = Uint32ToUint16(Int32ToUint32(0x1_0000));
-// CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_large_u32_for_u16.carbon:[[@LINE+2]]:25-63: error: integer value 65536 too large for type `u16` [IntTooLargeForType]
 // CHECK:STDERR:
 let max_plus_one: u16 = Uint32ToUint16(Int32ToUint32(0x1_0000));
 
@@ -187,9 +177,7 @@ let max_plus_one: u16 = Uint32ToUint16(Int32ToUint32(0x1_0000));
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_negative_i32_to_u16.carbon:[[@LINE+4]]:29: error: negative integer value -1 converted to unsigned type `u16` [NegativeIntInUnsignedType]
-// CHECK:STDERR: let minus_one_to_u16: u16 = Int32ToUint16(SubI32(0, 1));
-// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_negative_i32_to_u16.carbon:[[@LINE+2]]:29-55: error: negative integer value -1 converted to unsigned type `u16` [NegativeIntInUnsignedType]
 // CHECK:STDERR:
 let minus_one_to_u16: u16 = Int32ToUint16(SubI32(0, 1));
 
@@ -198,9 +186,7 @@ let minus_one_to_u16: u16 = Int32ToUint16(SubI32(0, 1));
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_negative_i32_to_u32.carbon:[[@LINE+4]]:29: error: negative integer value -1 converted to unsigned type `u32` [NegativeIntInUnsignedType]
-// CHECK:STDERR: let minus_one_to_u32: u32 = Int32ToUint32(SubI32(0, 1));
-// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_negative_i32_to_u32.carbon:[[@LINE+2]]:29-55: error: negative integer value -1 converted to unsigned type `u32` [NegativeIntInUnsignedType]
 // CHECK:STDERR:
 let minus_one_to_u32: u32 = Int32ToUint32(SubI32(0, 1));
 
@@ -209,9 +195,7 @@ let minus_one_to_u32: u32 = Int32ToUint32(SubI32(0, 1));
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_negative_i32_to_u64.carbon:[[@LINE+4]]:29: error: negative integer value -1 converted to unsigned type `u64` [NegativeIntInUnsignedType]
-// CHECK:STDERR: let minus_one_to_u64: u64 = Int32ToUint64(SubI32(0, 1));
-// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_negative_i32_to_u64.carbon:[[@LINE+2]]:29-55: error: negative integer value -1 converted to unsigned type `u64` [NegativeIntInUnsignedType]
 // CHECK:STDERR:
 let minus_one_to_u64: u64 = Int32ToUint64(SubI32(0, 1));
 
@@ -220,9 +204,7 @@ let minus_one_to_u64: u64 = Int32ToUint64(SubI32(0, 1));
 library "[[@TEST_NAME]]";
 import library "int_ops";
 
-// CHECK:STDERR: fail_too_small_i32_for_i16.carbon:[[@LINE+4]]:26: error: integer value -32769 too large for type `i16` [IntTooLargeForType]
-// CHECK:STDERR: let min_minus_one: i16 = Int32ToInt16(NegateI32(0x8001));
-// CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_small_i32_for_i16.carbon:[[@LINE+2]]:26-56: error: integer value -32769 too large for type `i16` [IntTooLargeForType]
 // CHECK:STDERR:
 let min_minus_one: i16 = Int32ToInt16(NegateI32(0x8001));
 
@@ -233,33 +215,21 @@ import library "int_ops";
 
 let not_constant: i32 = 0;
 
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+8]]:40: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: let convert_not_constant_narrow: i16 = Int32ToInt16(not_constant);
-// CHECK:STDERR:                                        ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE-7]]:1: in import [InImport]
-// CHECK:STDERR: int_ops.carbon:19:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn Int32ToInt16(a: i32) -> i16 = "int.convert_checked";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:40-65: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: imported from: fail_not_constant.carbon:[[@LINE-5]]:1 [InImport]
+// CHECK:STDERR: int_ops.carbon:19:1-32: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let convert_not_constant_narrow: i16 = Int32ToInt16(not_constant);
 
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+8]]:38: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: let convert_not_constant_same: i32 = Int32ToInt32(not_constant);
-// CHECK:STDERR:                                      ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE-17]]:1: in import [InImport]
-// CHECK:STDERR: int_ops.carbon:11:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn Int32ToInt32(a: i32) -> i32 = "int.convert_checked";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:38-63: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: imported from: fail_not_constant.carbon:[[@LINE-11]]:1 [InImport]
+// CHECK:STDERR: int_ops.carbon:11:1-32: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let convert_not_constant_same: i32 = Int32ToInt32(not_constant);
 
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+8]]:39: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
-// CHECK:STDERR:                                       ^~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE-27]]:1: in import [InImport]
-// CHECK:STDERR: int_ops.carbon:27:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: fn Int32ToInt64(a: i32) -> i64 = "int.convert_checked";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:39-64: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: imported from: fail_not_constant.carbon:[[@LINE-17]]:1 [InImport]
+// CHECK:STDERR: int_ops.carbon:27:1-32: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 

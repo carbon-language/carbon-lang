@@ -208,9 +208,10 @@ static auto FindAndDiagnoseImplLookupCycle(
             context.types().GetTypeIdForTypeConstantId(query_self_const_id));
         for (const auto& active_entry : llvm::drop_begin(stack, i)) {
           if (active_entry.impl_loc.has_value()) {
-            CARBON_DIAGNOSTIC(ImplLookupCycleNote, Note,
-                              "determining if this impl clause matches", );
-            builder.Note(active_entry.impl_loc, ImplLookupCycleNote);
+            CARBON_DIAGNOSTIC_LABEL(
+                ImplLookupCycleNote, Info,
+                "determining if this impl clause matches", );
+            builder.Attach(active_entry.impl_loc, ImplLookupCycleNote);
           }
         }
         builder.Emit();
@@ -866,12 +867,12 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       context, loc_id, query_self_const_id,
       context.types().GetTypeIdForTypeConstantId(query_facet_type_const_id),
       [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Context,
-                          "facet type {0} can not be identified",
-                          SemIR::TypeId);
-        builder.Context(loc_id, ImplLookupInUnidentifiedFacetType,
-                        context.types().GetTypeIdForTypeConstantId(
-                            query_facet_type_const_id));
+        CARBON_DIAGNOSTIC_CONTEXT(ImplLookupInUnidentifiedFacetType,
+                                  "facet type {0} can not be identified",
+                                  SemIR::TypeId);
+        builder.Attach(loc_id, ImplLookupInUnidentifiedFacetType,
+                       context.types().GetTypeIdForTypeConstantId(
+                           query_facet_type_const_id));
       },
       diagnose);
   if (!required_identified_id.has_value()) {

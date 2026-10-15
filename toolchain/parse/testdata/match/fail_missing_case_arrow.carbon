@@ -10,14 +10,10 @@
 
 fn f() -> i32 {
   match (3) {
-    // CHECK:STDERR: fail_missing_case_arrow.carbon:[[@LINE+4]]:17: error: expected `=>` introducing statement block [ExpectedMatchCaseArrow]
-    // CHECK:STDERR:     case x: i32 { return 2; }
-    // CHECK:STDERR:                 ^
+    // CHECK:STDERR: fail_missing_case_arrow.carbon:[[@LINE+2]]:17: error: expected `=>` introducing statement block [ExpectedMatchCaseArrow]
     // CHECK:STDERR:
     case x: i32 { return 2; }
-    // CHECK:STDERR: fail_missing_case_arrow.carbon:[[@LINE+4]]:29: error: expected `=>` introducing statement block [ExpectedMatchCaseArrow]
-    // CHECK:STDERR:     case x: i32 if (x == 3) { return 3; }
-    // CHECK:STDERR:                             ^
+    // CHECK:STDERR: fail_missing_case_arrow.carbon:[[@LINE+2]]:29: error: expected `=>` introducing statement block [ExpectedMatchCaseArrow]
     // CHECK:STDERR:
     case x: i32 if (x == 3) { return 3; }
   }

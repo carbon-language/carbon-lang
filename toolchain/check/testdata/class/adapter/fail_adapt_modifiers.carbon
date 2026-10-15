@@ -13,52 +13,38 @@
 class B {}
 
 class C1 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: error: `private` not allowed on `adapt` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   private adapt B;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+2]]:3-9: error: `private` not allowed on `adapt` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   private adapt B;
 }
 
 class C2 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: error: `abstract` not allowed on `adapt` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   abstract adapt B;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+2]]:3-10: error: `abstract` not allowed on `adapt` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   abstract adapt B;
 }
 
 class C3 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: error: `default` not allowed on `adapt` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   default adapt B;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+2]]:3-9: error: `default` not allowed on `adapt` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   default adapt B;
 }
 
 class C4 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+7]]:10: error: `extend` repeated on declaration [ModifierRepeated]
-  // CHECK:STDERR:   extend extend adapt B;
-  // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: note: `extend` previously appeared here [ModifierPrevious]
-  // CHECK:STDERR:   extend extend adapt B;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+3]]:10-15: error: `extend` repeated on declaration [ModifierRepeated]
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+2]]:3-8: note: `extend` previously appeared here [ModifierPrevious]
   // CHECK:STDERR:
   extend extend adapt B;
 }
 
 class C5 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:3: error: `base` not allowed on `adapt` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   base adapt B;
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+2]]:3-6: error: `base` not allowed on `adapt` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   base adapt B;
 }
 
 class C6 {
-  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+4]]:10: error: `base` not allowed on `adapt` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   extend base adapt B;
-  // CHECK:STDERR:          ^~~~
+  // CHECK:STDERR: fail_adapt_modifiers.carbon:[[@LINE+2]]:10-13: error: `base` not allowed on `adapt` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   extend base adapt B;
 }

@@ -1647,12 +1647,13 @@ auto ExportFunctionToCppPointerConversion(
           ExportedFunctionPtrTypeMismatch, Error,
           "can't convert exported {0:member |}function pointer to `{1}`",
           Diagnostics::BoolAsSelect, CppType);
-      CARBON_DIAGNOSTIC(ExportedFromFunction, Note,
-                        "function exported with pointer type `{0}`", CppType);
+      CARBON_DIAGNOSTIC_LABEL(ExportedFromFunction, Info,
+                              "function exported with pointer type `{0}`",
+                              CppType);
       context.emitter()
           .Build(src_id, ExportedFunctionPtrTypeMismatch,
                  src_ptr_type->isMemberFunctionPointerType(), dest_ptr_type)
-          .Note(function.first_decl_id(), ExportedFromFunction, src_ptr_type)
+          .Attach(function.first_decl_id(), ExportedFromFunction, src_ptr_type)
           .Emit();
     }
     return false;
