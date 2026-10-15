@@ -11,21 +11,18 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/EnterExpressionEvaluationContext.h"
 #include "clang/Sema/Sema.h"
-#include "llvm/ADT/Repeated.h"
 #include "llvm/Support/Casting.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/cpp/location.h"
 #include "toolchain/check/cpp/type_mapping.h"
-#include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/name_lookup.h"
 #include "toolchain/check/pattern.h"
-#include "toolchain/check/pattern_match.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -650,8 +647,7 @@ static auto ExtractParameterDefaults(Context& context,
                                      SemIR::InstBlockId param_patterns_id)
     -> llvm::SmallVector<SemIR::InstId> {
   auto canonical_params = llvm::map_range(
-      context.inst_blocks().Get(param_patterns_id),
-      [&context](SemIR::InstId inst_id) {
+      context.inst_blocks().Get(param_patterns_id), [&](SemIR::InstId inst_id) {
         return context.constant_values().GetConstantInstId(inst_id);
       });
   llvm::SmallVector<SemIR::InstId> parameter_defaults;
@@ -882,9 +878,7 @@ static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
 // return type.
 //
 // The function's name will match the one referenced by `function_name_id`,
-// and the function will be added to the given `decl_context`. `default_values`
-// can be either an empty array, in which case no defaults are provided, or
-// an array of the same length as `param_types`.
+// and the function will be added to the given `decl_context`.
 static auto BuildCppFunctionDecl(Context& context,
                                  clang::DeclContext* decl_context,
                                  SemIR::LocId loc_id,
@@ -934,161 +928,6 @@ static auto BuildCppFunctionDecl(Context& context,
   return function_decl;
 }
 
-static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
-                                  const FunctionInfo& target,
-                                  int32_t parameter_index,
-                                  SemIR::InstId pattern_id,
-                                  SemIR::InstId value_id) -> clang::Expr* {
-  if (!value_id.has_value()) {
-    return nullptr;
-  }
-  // Set up to capture issued insts
-  context.inst_block_stack().Push();
-
-  // VariableIntroducer
-  context.decl_introducer_state_stack().Push<Lex::TokenKind::Var>();
-  context.pattern_block_stack().Push();
-  context.full_pattern_stack().PushNameBindingDecl();
-  BeginExprRegionForPattern(context);  // This does the following:
-  // context.inst_block_stack().Push();
-  // context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
-
-  // IdentifierNameNotBeforeSignature
-  // Synthesize a variable, initialized to the default value, for export to C++.
-  llvm::SmallString<64> var_name =
-      llvm::formatv("{}__{}__default_value",
-                    target.GetIdentifier(context)->getName(), parameter_index);
-  auto& ident = context.ast_context().Idents.get(var_name);
-  auto name_id =
-      SemIR::NameId::ForIdentifier(context.identifiers().Add(ident.getName()));
-  auto pattern_type_id = context.insts().Get(pattern_id).type_id();
-  auto entity_name_id = AddBindingEntityName(
-      context, name_id, context.types().GetTypeInstId(pattern_type_id),
-      SemIR::InstId::None,
-      /*is_unused=*/false, BindingPhase::Runtime);
-
-  // BindingPatternTypeStart <- saves the ElementIndex (0 for us) on the
-  // node stack
-
-  // IntTypeLiteral - this is a type instruction that is assumed issued in
-  // the inst block at the top of the stack
-  auto scrutinee_type_id = context.insts().Get(value_id).type_id();
-  auto type_expr_canonical_inst_id =
-      context.types().GetTypeInstId(scrutinee_type_id);
-  // Create a non-canonical copy of the type instruction on the block stack.
-  auto type_expr_inst_id = AddInst(
-      context,
-      SemIR::LocIdAndInst::RuntimeVerified(
-          context.sem_ir(), loc_id,
-          SemIR::Inst(context.insts().Get(type_expr_canonical_inst_id))));
-
-  // VarBindingPattern -> HandleAnyBindingPattern
-  //  |
-  //  +- HandleAnyBindingPatternType extracts the inst_id for the type
-  //  instruction |  at the top of the node stack
-  //  |
-  //  +- ConsumeExprRegionForPattern -> note this pops from the expr_region and
-  //  inst_block stacks.
-  auto type_region_id = ConsumeExprRegionForPattern(context, type_expr_inst_id);
-  //  |
-  //  +- AddBindingPattern
-  auto binding =
-      AddBindingPattern(context, loc_id, type_region_id, scrutinee_type_id,
-                        {.kind = SemIR::InstKind::RefBindingPattern,
-                         .type_id = pattern_type_id,
-                         .entity_name_id = entity_name_id,
-                         .subpattern_id = SemIR::InstId::None});
-  //  |
-  //  \- MakeUnqualifiedName
-  auto name_context =
-      context.decl_name_stack().MakeUnqualifiedName(loc_id, name_id);
-  context.decl_name_stack().AddNameOrDiagnose(name_context, binding.bind_id,
-                                              SemIR::AccessKind::Public);
-  context.full_pattern_stack().AddBindName(name_id);
-
-  // VariablePattern
-  //  |
-  //  +- EndExprRegionForPattern looks for expressions on the node stack, but
-  //  we would have pushed a pattern, pop the unreachable region pushed by
-  // ConsumeExprRegionForPattern. TODO: ensure it also doesn't pop a block
-  EndEmptyExprRegionForPattern(context);
-  //  |
-  //  +- AddInst for VarPattern
-  auto var_pattern_id = AddInst(
-      context, SemIR::LocIdAndInst::RuntimeVerified(
-                   context.sem_ir(), loc_id,
-                   SemIR::VarPattern({.type_id = pattern_type_id,
-                                      .subpattern_id = binding.pattern_id})));
-  //  |
-  //  +- GetOrAddVarStorage
-  auto var_storage_id =
-      GetOrAddVarStorage(context, var_pattern_id, /*is_returned_var=*/false);
-  context.full_pattern_stack().AddLocalVarPattern(
-      {.pattern_id = var_pattern_id, .storage_id = var_storage_id});
-  //  |
-  //  \- BeginExprRegionForPattern (which I don't think we need to call)
-
-  // VariableInitializer -> HandleInitializer
-  //  |
-  //  +- EndFullPattern (does nothing we need)
-  //  |
-  //  \- StartPatternInitializer - cannot be called because it attempts to look
-  // up lexical names which are dynamically generated
-  // context.full_pattern_stack().StartPatternInitializer();
-
-  // Now we have the literal value node
-  // Then we need to push the value onto the stack?
-  auto scrutinee_id =
-      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
-                           context.sem_ir(), loc_id,
-                           SemIR::Inst(context.insts().Get(value_id))));
-
-  // VariableDecl
-  //  |
-  //  +- HandleDecl
-  //     |
-  //     +- EndPatternInitializer - this tries lexical lookups on any pushed
-  // decl names, to make sure they are valid. We can't lookup names declared
-  // for generated code, so we omit this call to avoid an assert on lookup.
-  //  context.full_pattern_stack().EndPatternInitializer();
-  //  |
-  //  +- LocalPatternMatch - cannot be called because it assumes a properly
-  // configured full pattern stack
-  //     |
-  //     +- InitializeExisting
-  auto init_id = InitializeExisting(context, loc_id, var_storage_id,
-                                    scrutinee_id, /*for_return=*/false);
-  AddInst<SemIR::Assign>(context, loc_id,
-                         {.lhs_id = var_storage_id, .rhs_id = init_id});
-  AddInst(context,
-          SemIR::LocIdAndInst::RuntimeVerified(
-              context.sem_ir(), loc_id,
-              SemIR::WrapperBindingPattern({.type_id = pattern_type_id,
-                                            .entity_name_id = entity_name_id,
-                                            .subpattern_id = var_pattern_id})));
-
-  //  |
-  //  +- Create the NameBindingDecl
-  auto pattern_block_id = context.pattern_block_stack().Pop();
-  AddInst<SemIR::NameBindingDecl>(context, loc_id,
-                                  {.pattern_block_id = pattern_block_id});
-  context.full_pattern_stack().PopFullPattern();
-  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
-  context.inst_block_stack().Pop();
-
-  // Export this variable to C++
-  auto* var_decl =
-      ExportVarToCpp(context, var_storage_id,
-                     context.insts().GetAs<SemIR::VarStorage>(var_storage_id));
-  // Return a reference expression to the variable.
-  auto* decl_ref_expr = clang::DeclRefExpr::Create(
-      context.ast_context(), var_decl->getQualifierLoc(),
-      clang::SourceLocation(), var_decl, false, clang::SourceLocation(),
-      var_decl->getType(), clang::ExprValueKind::VK_PRValue);
-  CARBON_CHECK(decl_ref_expr);
-  return decl_ref_expr;
-}
-
 // Create a `clang::FunctionDecl` for the given Carbon function. This
 // can be used to call the Carbon function from C++. The Carbon
 // function's ABI must be compatible with C++.
@@ -1117,7 +956,7 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
   if (target.export_as_constructor) {
     params_to_map = params_to_map.drop_front();
   }
-  for (auto [i, param] : llvm::enumerate(params_to_map)) {
+  for (auto param : params_to_map) {
     auto cpp_type = MapToCppThunkParamType(context, param.type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map Carbon type to C++");
@@ -1284,7 +1123,161 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
       ->getAs<clang::FunctionProtoType>();
 }
 
-// FIXME: THIS IS E0
+static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
+                                  const FunctionInfo& target,
+                                  int32_t parameter_index,
+                                  SemIR::InstId pattern_id,
+                                  SemIR::InstId value_id) -> clang::Expr* {
+  if (!value_id.has_value()) {
+    return nullptr;
+  }
+  // Set up to capture issued insts
+  context.inst_block_stack().Push();
+
+  // VariableIntroducer
+  context.decl_introducer_state_stack().Push<Lex::TokenKind::Var>();
+  context.pattern_block_stack().Push();
+  context.full_pattern_stack().PushNameBindingDecl();
+  BeginExprRegionForPattern(context);  // This does the following:
+  // context.inst_block_stack().Push();
+  // context.region_stack().PushRegion(context.inst_block_stack().PeekOrAdd());
+
+  // IdentifierNameNotBeforeSignature
+  // Synthesize a variable, initialized to the default value, for export to C++.
+  llvm::SmallString<64> var_name =
+      llvm::formatv("{}__{}__default_value",
+                    target.GetIdentifier(context)->getName(), parameter_index);
+  auto& ident = context.ast_context().Idents.get(var_name);
+  auto name_id =
+      SemIR::NameId::ForIdentifier(context.identifiers().Add(ident.getName()));
+  auto pattern_type_id = context.insts().Get(pattern_id).type_id();
+  auto entity_name_id = AddBindingEntityName(
+      context, name_id, context.types().GetTypeInstId(pattern_type_id),
+      SemIR::InstId::None,
+      /*is_unused=*/false, BindingPhase::Runtime);
+
+  // BindingPatternTypeStart <- saves the ElementIndex (0 for us) on the
+  // node stack
+
+  // IntTypeLiteral - this is a type instruction that is assumed issued in
+  // the inst block at the top of the stack
+  auto scrutinee_type_id = context.insts().Get(value_id).type_id();
+  auto type_expr_canonical_inst_id =
+      context.types().GetTypeInstId(scrutinee_type_id);
+  // Create a non-canonical copy of the type instruction on the block stack.
+  auto type_expr_inst_id = AddInst(
+      context,
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::Inst(context.insts().Get(type_expr_canonical_inst_id))));
+
+  // VarBindingPattern -> HandleAnyBindingPattern
+  //  |
+  //  +- HandleAnyBindingPatternType extracts the inst_id for the type
+  //  instruction |  at the top of the node stack
+  //  |
+  //  +- ConsumeExprRegionForPattern -> note this pops from the expr_region and
+  //  inst_block stacks.
+  auto type_region_id = ConsumeExprRegionForPattern(context, type_expr_inst_id);
+  //  |
+  //  +- AddBindingPattern
+  auto binding =
+      AddBindingPattern(context, loc_id, type_region_id, scrutinee_type_id,
+                        {.kind = SemIR::InstKind::RefBindingPattern,
+                         .type_id = pattern_type_id,
+                         .entity_name_id = entity_name_id,
+                         .subpattern_id = SemIR::InstId::None});
+  //  |
+  //  \- MakeUnqualifiedName
+  auto name_context =
+      context.decl_name_stack().MakeUnqualifiedName(loc_id, name_id);
+  context.decl_name_stack().AddNameOrDiagnose(name_context, binding.bind_id,
+                                              SemIR::AccessKind::Public);
+  context.full_pattern_stack().AddBindName(name_id);
+
+  // VariablePattern
+  //  |
+  //  +- EndExprRegionForPattern looks for expressions on the node stack, but
+  //  we would have pushed a pattern, pop the unreachable region pushed by
+  // ConsumeExprRegionForPattern. TODO: ensure it also doesn't pop a block
+  EndEmptyExprRegionForPattern(context);
+  //  |
+  //  +- AddInst for VarPattern
+  auto var_pattern_id = AddInst(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), loc_id,
+                   SemIR::VarPattern({.type_id = pattern_type_id,
+                                      .subpattern_id = binding.pattern_id})));
+  //  |
+  //  +- GetOrAddVarStorage
+  auto var_storage_id =
+      GetOrAddVarStorage(context, var_pattern_id, /*is_returned_var=*/false);
+  context.full_pattern_stack().AddLocalVarPattern(
+      {.pattern_id = var_pattern_id, .storage_id = var_storage_id});
+  //  |
+  //  \- BeginExprRegionForPattern (which I don't think we need to call)
+
+  // VariableInitializer -> HandleInitializer
+  //  |
+  //  +- EndFullPattern (does nothing we need)
+  //  |
+  //  \- StartPatternInitializer - cannot be called because it attempts to look
+  // up lexical names which are dynamically generated
+  // context.full_pattern_stack().StartPatternInitializer();
+
+  // Now we have the literal value node
+  // Then we need to push the value onto the stack?
+  auto scrutinee_id =
+      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                           context.sem_ir(), loc_id,
+                           SemIR::Inst(context.insts().Get(value_id))));
+
+  // VariableDecl
+  //  |
+  //  +- HandleDecl
+  //     |
+  //     +- EndPatternInitializer - this tries lexical lookups on any pushed
+  // decl names, to make sure they are valid. We can't lookup names declared
+  // for generated code, so we omit this call to avoid an assert on lookup.
+  //  context.full_pattern_stack().EndPatternInitializer();
+  //  |
+  //  +- LocalPatternMatch - cannot be called because it assumes a properly
+  // configured full pattern stack
+  //     |
+  //     +- InitializeExisting
+  auto init_id = InitializeExisting(context, loc_id, var_storage_id,
+                                    scrutinee_id, /*for_return=*/false);
+  AddInst<SemIR::Assign>(context, loc_id,
+                         {.lhs_id = var_storage_id, .rhs_id = init_id});
+  AddInst(context,
+          SemIR::LocIdAndInst::RuntimeVerified(
+              context.sem_ir(), loc_id,
+              SemIR::WrapperBindingPattern({.type_id = pattern_type_id,
+                                            .entity_name_id = entity_name_id,
+                                            .subpattern_id = var_pattern_id})));
+
+  //  |
+  //  +- Create the NameBindingDecl
+  auto pattern_block_id = context.pattern_block_stack().Pop();
+  AddInst<SemIR::NameBindingDecl>(context, loc_id,
+                                  {.pattern_block_id = pattern_block_id});
+  context.full_pattern_stack().PopFullPattern();
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
+  context.inst_block_stack().Pop();
+
+  // Export this variable to C++
+  auto* var_decl =
+      ExportVarToCpp(context, var_storage_id,
+                     context.insts().GetAs<SemIR::VarStorage>(var_storage_id));
+  // Return a reference expression to the variable.
+  auto* decl_ref_expr = clang::DeclRefExpr::Create(
+      context.ast_context(), var_decl->getQualifierLoc(),
+      clang::SourceLocation(), var_decl, false, clang::SourceLocation(),
+      var_decl->getType(), clang::ExprValueKind::VK_PRValue);
+  CARBON_CHECK(decl_ref_expr);
+  return decl_ref_expr;
+}
+
 // Create the declaration of the C++ thunk.
 static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
                                       const FunctionInfo& target,
@@ -1541,10 +1534,8 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
   // the addition of an output parameter for the callee's return value
   // (if it has one).
   llvm::SmallVector<SemIR::TypeId> thunk_param_type_ids;
-  llvm::SmallVector<SemIR::InstId> param_default_values;
   for (const auto& param : target.explicit_params) {
     thunk_param_type_ids.push_back(param.type_id);
-    param_default_values.push_back(param.default_value_inst_id);
   }
   if (target.return_type_id != SemIR::TypeId::None) {
     thunk_param_type_ids.push_back(target.return_type_id);
@@ -1570,9 +1561,7 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
            .name_id = thunk_name_id,
            .self_type_id = target.GetSelfTypeId(),
            .param_type_ids = thunk_param_type_ids,
-           .param_kinds = thunk_param_kinds,
-           .param_default_values = param_default_values,
-           .default_value_arity = target.function.default_value_arity})
+           .param_kinds = thunk_param_kinds})
           .second;
 
   BuildThunkDefinitionForExport(

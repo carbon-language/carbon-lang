@@ -143,25 +143,16 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
           context, context.types().GetTypeInstId(args.self_type_id));
       insts.self_param_id = AddParamPattern(
           context, loc_id, SemIR::NameId::SelfValue, self_type_region_id,
-          args.self_type_id, args.self_kind, SemIR::InstId::None);
+          args.self_type_id, args.self_kind);
       param_patterns.push_back(insts.self_param_id);
     }
-
-    CARBON_CHECK(args.param_type_ids.size() == args.param_kinds.size());
-    // A default value array may be ommitted, but if provided it must also be
-    // the same size as the other two.
-    CARBON_CHECK(args.param_default_values.empty() ||
-                 args.param_default_values.size() == args.param_kinds.size());
-    for (auto [i, param_type_id] : llvm::enumerate(args.param_type_ids)) {
-      auto param_kind = args.param_kinds[i];
-      auto default_value_inst_id = args.param_default_values.empty()
-                                       ? SemIR::InstId::None
-                                       : args.param_default_values[i];
+    for (auto [param_type_id, param_kind] :
+         llvm::zip_equal(args.param_type_ids, args.param_kinds)) {
       auto param_type_region_id = MakeEmptyRegion(
           context, context.types().GetTypeInstId(param_type_id));
-      param_patterns.push_back(AddParamPattern(
-          context, loc_id, SemIR::NameId::Underscore, param_type_region_id,
-          param_type_id, param_kind, default_value_inst_id));
+      param_patterns.push_back(
+          AddParamPattern(context, loc_id, SemIR::NameId::Underscore,
+                          param_type_region_id, param_type_id, param_kind));
     }
     insts.param_patterns_id = context.inst_blocks().Add(param_patterns);
   }
@@ -214,7 +205,6 @@ auto MakeGeneratedFunctionDecl(Context& context, SemIR::LocId loc_id,
               .non_owning_decl_id = SemIR::InstId::None,
               // Set by `MakeFunctionDecl`.
               .first_owning_decl_id = SemIR::InstId::None,
-              .default_value_arity = args.default_value_arity,
           },
           {
               .call_param_patterns_id = insts.call_param_patterns_id,
