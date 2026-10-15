@@ -480,8 +480,8 @@ TEST_F(DominanceSpecificSpliceTest, SplicedUseInSpecificIsNotDominated) {
 
 TEST_F(DominanceTest, SpecificInstDominatedByEvaluation) {
   auto generic_id = AddGeneric();
-  auto specific_id =
-      file().specifics().GetOrAdd(generic_id, InstBlockId::Empty);
+  auto specific_id = file().specifics().GetOrAdd(generic_id, InstBlockId::Empty,
+                                                 /*identified=*/false);
   auto value_id = AddValue();
   auto specific_inst_id =
       AddNonConstInst(SpecificInst{.type_id = TypeType::TypeId,
@@ -494,8 +494,8 @@ TEST_F(DominanceTest, SpecificInstDominatedByEvaluation) {
 
 TEST_F(DominanceTest, SpecificInstNotDominated) {
   auto generic_id = AddGeneric();
-  auto specific_id =
-      file().specifics().GetOrAdd(generic_id, InstBlockId::Empty);
+  auto specific_id = file().specifics().GetOrAdd(generic_id, InstBlockId::Empty,
+                                                 /*identified=*/false);
   auto value_id = AddValue();
   auto specific_inst_id =
       AddNonConstInst(SpecificInst{.type_id = TypeType::TypeId,
