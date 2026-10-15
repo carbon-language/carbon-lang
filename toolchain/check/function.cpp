@@ -59,6 +59,23 @@ auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
        .type_inst_id = form_expr.type_component_inst_id});
 }
 
+auto PopReturnSpecifier(Context& context) -> ReturnSpecifierInfo {
+  auto [node_id, pattern_id] =
+      context.node_stack()
+          .PopWithNodeIdIf<Parse::NodeCategory::ReturnSpecifier>();
+  if (!pattern_id) {
+    return {};
+  }
+  if (*pattern_id == SemIR::AutoType::TypeInstId) {
+    // For a deduced return type, `HandleReturnSpecifier` pushes `auto` in place
+    // of a return pattern, and doesn't push a return form.
+    return {.node_id = node_id, .is_deduced = true};
+  }
+  return {.node_id = node_id,
+          .pattern_id = *pattern_id,
+          .form = context.PopReturnForm()};
+}
+
 auto IsValidBuiltinDeclaration(Context& context,
                                const SemIR::Function& function,
                                SemIR::BuiltinFunctionKind builtin_kind)
@@ -359,6 +376,25 @@ auto CheckFunctionReturnPatternType(Context& context, SemIR::LocId loc_id,
   return arg_type_id;
 }
 
+// Checks that the return type of a function definition is suitable for a
+// definition. `return_call_param` is the `Call` parameter for the return, if
+// any.
+static auto CheckDefinitionReturnType(Context& context,
+                                      SemIR::InstId return_pattern_id,
+                                      SemIR::InstId return_call_param) -> void {
+  CheckFunctionReturnPatternType(context, SemIR::LocId(return_pattern_id),
+                                 return_pattern_id, SemIR::SpecificId::None);
+
+  // `CheckFunctionReturnPatternType` should have diagnosed incomplete types,
+  // so don't `RequireCompleteType` on the return type.
+  if (return_call_param.has_value()) {
+    // TODO: If the types are already checked for completeness then this does
+    // nothing?
+    TryToCompleteType(context, context.insts().Get(return_call_param).type_id(),
+                      SemIR::LocId(return_call_param));
+  }
+}
+
 auto CheckFunctionDefinitionSignature(Context& context,
                                       SemIR::FunctionId function_id) -> void {
   auto& function = context.functions().Get(function_id);
@@ -394,19 +430,78 @@ auto CheckFunctionDefinitionSignature(Context& context,
 
   // Check the return type is complete.
   if (function.return_pattern_id.has_value()) {
-    CheckFunctionReturnPatternType(
-        context, SemIR::LocId(function.return_pattern_id),
-        function.return_pattern_id, SemIR::SpecificId::None);
+    CheckDefinitionReturnType(context, function.return_pattern_id,
+                              return_call_param);
+  }
+}
 
-    // `CheckFunctionReturnPatternType` should have diagnosed incomplete types,
-    // so don't `RequireCompleteType` on the return type.
-    if (return_call_param.has_value()) {
-      // TODO: If the types are already checked for completeness then this does
-      // nothing?
-      TryToCompleteType(context,
-                        context.insts().Get(return_call_param).type_id(),
-                        SemIR::LocId(return_call_param));
+auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
+                          SemIR::LocId loc_id, SemIR::TypeId type_id) -> void {
+  auto& function = context.functions().Get(function_id);
+  CARBON_CHECK(function.has_pending_deduced_return_type());
+
+  // A function with a deduced return type can't be redeclared, so there is only
+  // one declaration to complete.
+  auto decl_id = function.latest_decl_id();
+  auto decl = context.insts().GetAs<SemIR::FunctionDecl>(decl_id);
+
+  // Reopen the function's declaration and pattern blocks to finish building the
+  // signature. Add the return form and return pattern, as
+  // `HandleReturnSpecifier` would for an explicitly declared return type,
+  // followed by the callee pattern-match IR for the return, as
+  // `PopNameComponent` would.
+  context.inst_block_stack().Push(
+      SemIR::InstBlockId::None,
+      context.inst_blocks().GetOrEmpty(decl.decl_block_id));
+  context.pattern_block_stack().Push(
+      SemIR::InstBlockId::None,
+      context.inst_blocks().GetOrEmpty(function.pattern_block_id));
+  auto form = Context::FormExpr::Error;
+  if (type_id != SemIR::ErrorInst::TypeId) {
+    // Represent the return type as a type literal at the location it was
+    // deduced from. This is a new instruction, rather than the canonical
+    // instruction for the type, so that in a generic it is attached to the
+    // current region, and can depend on anything declared before this point.
+    auto type_inst_id = AddTypeInst<SemIR::TypeLiteral>(
+        context, loc_id,
+        {.type_id = SemIR::TypeType::TypeId,
+         .value_id = context.types().GetTypeInstId(type_id)});
+    auto form_inst_id = AddInst(
+        context, SemIR::LocIdAndInst::RuntimeVerified(
+                     context.sem_ir(), loc_id,
+                     SemIR::InitForm{.type_id = SemIR::FormType::TypeId,
+                                     .type_component_inst_id = type_inst_id}));
+    form = {.form_inst_id = form_inst_id,
+            .type_component_inst_id = type_inst_id,
+            .type_component_id =
+                context.types().GetTypeIdForTypeInstId(type_inst_id)};
+  }
+  auto return_pattern_id = AddReturnPattern(context, loc_id, form);
+  auto results = CalleeReturnPatternMatch(
+      context,
+      {.call_param_patterns_id = function.call_param_patterns_id,
+       .call_params_id = function.call_params_id,
+       .param_ranges = function.call_param_ranges},
+      return_pattern_id);
+  function.pattern_block_id = context.pattern_block_stack().Pop();
+  decl.decl_block_id = context.inst_block_stack().Pop();
+  ReplaceInstPreservingConstantValue(context, decl_id, decl);
+
+  function.call_param_patterns_id = results.call_param_patterns_id;
+  function.call_params_id = results.call_params_id;
+  function.call_param_ranges = results.param_ranges;
+  function.return_type_inst_id = form.type_component_inst_id;
+  function.return_form_inst_id = form.form_inst_id;
+  function.return_pattern_id = return_pattern_id;
+  CARBON_CHECK(!function.has_pending_deduced_return_type());
+
+  if (type_id != SemIR::ErrorInst::TypeId) {
+    auto return_call_param = SemIR::InstId::None;
+    if (results.param_ranges.return_size() == 1) {
+      return_call_param = context.inst_blocks().Get(
+          results.call_params_id)[results.param_ranges.return_begin().index];
     }
+    CheckDefinitionReturnType(context, return_pattern_id, return_call_param);
   }
 }
 
@@ -635,6 +730,14 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
 
 auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
                                  SemIR::FunctionId function_id) -> void {
+  // If the return type is deduced and we've not seen a `returned var`, the
+  // return type is determined by the `return` statements in the body.
+  if (context.functions().Get(function_id).has_pending_deduced_return_type() &&
+      !DeduceReturnTypeAtEndOfBody(context, function_id)) {
+    // There are no `return` statements, which has already been diagnosed.
+    return;
+  }
+
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
   if (IsCurrentPositionReachable(context)) {

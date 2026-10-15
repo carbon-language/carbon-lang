@@ -404,7 +404,7 @@ class NodeStack {
                               Parse::NodeCategory::Statement |
                               Parse::NodeCategory::Modifier,
                           Id::Kind::None);
-    set_id_if_category_is(Parse::NodeCategory::ReturnDecl,
+    set_id_if_category_is(Parse::NodeCategory::ReturnSpecifier,
                           Id::KindFor<SemIR::InstId>());
     return result;
   }

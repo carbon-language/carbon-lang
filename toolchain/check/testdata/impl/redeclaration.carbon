@@ -2,7 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/none.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -176,23 +176,25 @@ class C {
 // CHECK:STDERR:
 impl C as Z {}
 
-// --- fail_todo_redeclaration_in_block_scope_is_separate_impl.carbon
+// --- fail_redeclaration_in_block_scope_is_separate_impl.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {}
 
 fn F() {
-  // CHECK:STDERR: fail_todo_redeclaration_in_block_scope_is_separate_impl.carbon:[[@LINE+4]]:22: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
-  // CHECK:STDERR:   musteval fn G() -> auto {
-  // CHECK:STDERR:                      ^~~~
-  // CHECK:STDERR:
   musteval fn G() -> auto {
     class C {}
     impl C as Z {}
     return C;
   }
-  // TODO: This is not a redeclaration, since it's in a different scope.
-  // TODO: found non-final `impl` with the same type structure as another non-final `impl`.
+  // This is not a redeclaration, since it's in a different scope.
+  // CHECK:STDERR: fail_redeclaration_in_block_scope_is_separate_impl.carbon:[[@LINE+7]]:3: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+  // CHECK:STDERR:   impl G() as Z {}
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_redeclaration_in_block_scope_is_separate_impl.carbon:[[@LINE-7]]:5: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
+  // CHECK:STDERR:     impl C as Z {}
+  // CHECK:STDERR:     ^~~~~~~~~~~~~
+  // CHECK:STDERR:
   impl G() as Z {}
 }
 

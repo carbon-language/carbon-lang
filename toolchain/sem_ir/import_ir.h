@@ -73,7 +73,7 @@ class ImportIRInst : public Printable<ImportIRInst> {
   };
 };
 
-using ImportIRInstStore = ValueStore<ImportIRInstId, ImportIRInst>;
+using ImportIRInstStore = CanonicalValueStore<ImportIRInstId, ImportIRInst>;
 
 // Returns the canonical `File` and `InstId` for an entity, tracing imported
 // instructions. Note the returned `File` might not be directly imported by the
