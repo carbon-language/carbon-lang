@@ -92,6 +92,37 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
     return {.success = false};
   }
 
+  // Note that we append any extra Clang args before our object filenames. This
+  // allows us to propagate object filenames that collide with Clang flags using
+  // `--` before the filenames. While in theory, this could create a problem in
+  // the presence of mixtures of object files in the two lists and the order
+  // being dependent, we don't expect that in practice.
+  clang_args.append(options_->extra_clang_args.begin(),
+                    options_->extra_clang_args.end());
+
+  // Append Carbon codegen flags (`--target-cpu`, `--target-cpu-tune`,
+  // `--target-cpu-features`) after `extra_clang_args` so that explicit Carbon
+  // CLI flags take precedence over any target flags in `extra_clang_args` when
+  // computing runtime features and linking.
+  llvm::SmallVector<std::string> codegen_clang_args =
+      options_->codegen_options->GetClangArgs();
+  if (!codegen_clang_args.empty()) {
+    clang_args.push_back("--start-no-unused-arguments");
+    for (llvm::StringRef arg : codegen_clang_args) {
+      clang_args.push_back(arg);
+    }
+    clang_args.push_back("--end-no-unused-arguments");
+  }
+
+  ClangRunner runner(driver_env.installation, driver_env.fs,
+                     driver_env.vlog_stream);
+
+  auto features = runner.ComputeRuntimesFeatures(
+      options_->codegen_options->target, clang_args, driver_env.consumer);
+  if (!features.ok()) {
+    return {.success = false};
+  }
+
   // Find or build the Carbon Core runtimes for linking the prelude into the
   // binary.
   bool include_prelude = false;
@@ -111,14 +142,11 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
       runtimes_path = driver_env.prebuilt_runtimes->base_path();
       include_prelude = true;
     } else if (driver_env.build_runtimes_on_demand) {
-      Runtimes::Cache::Features features = {
-          .target = options_->codegen_options->target.str()};
-      auto runtimes_or_error = driver_env.runtimes_cache.Lookup(features);
+      auto runtimes_or_error = driver_env.runtimes_cache.Lookup(*features);
       CARBON_CHECK(runtimes_or_error.ok(), "Runtimes cache lookup failed: {}",
                    runtimes_or_error.error().message());
       auto runtimes = std::move(*runtimes_or_error);
-      CarbonPreludeBuilder prelude_builder(&driver_env, &runtimes,
-                                           options_->codegen_options);
+      CarbonPreludeBuilder prelude_builder(&driver_env, &runtimes, *features);
       auto path_or_error = std::move(prelude_builder).Build();
       if (!path_or_error.ok()) {
         CARBON_DIAGNOSTIC(LinkCarbonPreludeBuildFailed, Error,
@@ -137,13 +165,6 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
     }
   }
 
-  // Note that we append any extra Clang args before our object filenames. This
-  // allows us to propagate object filenames that collide with Clang flags using
-  // `--` before the filenames. While in theory, this could create a problem in
-  // the presence of mixtures of object files in the two lists and the order
-  // being dependent, we don't expect that in practice.
-  clang_args.append(options_->extra_clang_args.begin(),
-                    options_->extra_clang_args.end());
   clang_args.push_back("--");
 
   // Append the Carbon prelude object files to the link.
@@ -171,8 +192,6 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
   clang_args.append(options_->object_filenames.begin(),
                     options_->object_filenames.end());
 
-  ClangRunner runner(driver_env.installation, driver_env.fs,
-                     driver_env.vlog_stream);
   ErrorOr<bool> run_result =
       driver_env.prebuilt_runtimes
           ? runner.RunWithPrebuiltRuntimes(clang_args,
@@ -180,7 +199,8 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
                                            driver_env.enable_leaking)
       : driver_env.build_runtimes_on_demand
           ? runner.Run(clang_args, driver_env.runtimes_cache,
-                       *driver_env.thread_pool, driver_env.enable_leaking)
+                       *driver_env.thread_pool, driver_env.enable_leaking,
+                       *std::move(features))
           : runner.RunWithNoRuntimes(clang_args, driver_env.enable_leaking);
 
   if (!run_result.ok()) {

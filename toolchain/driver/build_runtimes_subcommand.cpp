@@ -82,8 +82,14 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
   ClangRunner runner(driver_env.installation, driver_env.fs,
                      driver_env.vlog_stream);
 
-  Runtimes::Cache::Features features = {
-      .target = options_.codegen_options.target.str()};
+  llvm::SmallVector<std::string> codegen_clang_args =
+      options_.codegen_options.GetClangArgs();
+  llvm::SmallVector<llvm::StringRef> target_args(codegen_clang_args.begin(),
+                                                 codegen_clang_args.end());
+  CARBON_ASSIGN_OR_RETURN(
+      Runtimes::Cache::Features features,
+      runner.ComputeRuntimesFeatures(options_.codegen_options.target,
+                                     target_args, driver_env.consumer));
 
   bool is_cache = options_.directory.empty();
   std::filesystem::path output_path = options_.directory.str();
@@ -103,15 +109,14 @@ auto BuildRuntimesSubcommand::RunInternal(DriverEnv& driver_env)
 
   ClangResourceDirBuilder resource_dir_builder(&runner, driver_env.thread_pool,
                                                llvm::Triple(features.target),
-                                               &runtimes);
+                                               &runtimes, features);
   ClangArchiveRuntimesBuilder<Runtimes::LibUnwind> lib_unwind_builder(
-      &runner, driver_env.thread_pool, llvm::Triple(features.target),
-      &runtimes);
+      &runner, driver_env.thread_pool, llvm::Triple(features.target), &runtimes,
+      features);
   ClangArchiveRuntimesBuilder<Runtimes::Libcxx> libcxx_builder(
-      &runner, driver_env.thread_pool, llvm::Triple(features.target),
-      &runtimes);
-  CarbonPreludeBuilder prelude_builder(&driver_env, &runtimes,
-                                       &options_.codegen_options);
+      &runner, driver_env.thread_pool, llvm::Triple(features.target), &runtimes,
+      features);
+  CarbonPreludeBuilder prelude_builder(&driver_env, &runtimes, features);
 
   CARBON_RETURN_IF_ERROR(std::move(resource_dir_builder).Wait());
   CARBON_RETURN_IF_ERROR(std::move(lib_unwind_builder).Wait());

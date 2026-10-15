@@ -14,6 +14,7 @@
 #include "clang/Basic/DiagnosticParse.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/Module.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
@@ -103,6 +104,7 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
     // Make a deep copy of options that we modify.
     FrontendOpts = std::make_shared<clang::FrontendOptions>(*FrontendOpts);
     PPOpts = std::make_shared<clang::PreprocessorOptions>(*PPOpts);
+    TargetOpts = std::make_shared<clang::TargetOptions>(*TargetOpts);
   }
 };
 

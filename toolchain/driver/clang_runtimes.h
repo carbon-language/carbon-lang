@@ -54,13 +54,34 @@ class ClangRuntimesBuilderBase {
   // Both the `clang` runner and the `threads` need to outlive this object.
   ClangRuntimesBuilderBase(ClangRunner* clang,
                            llvm::ThreadPoolInterface* threads,
-                           llvm::Triple target_triple)
+                           llvm::Triple target_triple,
+                           const Runtimes::Cache::Features& features)
       : clang_(clang),
         vlog_stream_(clang_->vlog_stream_),
         tasks_(*threads),
         target_triple_(std::move(target_triple)),
         target_flag_(llvm::formatv("--target={0}", target_triple_.str())),
-        result_(Error("Did not finish building the runtime!")) {}
+        result_(Error("Did not finish building the runtime!")) {
+    if (!features.cpu.empty() || !features.tune_cpu.empty() ||
+        !features.target_features.empty()) {
+      target_args_.push_back("--start-no-unused-arguments");
+      if (!features.cpu.empty()) {
+        target_args_.append({"-Xclang", "-target-cpu", "-Xclang", features.cpu,
+                             "-Xclangas", "-target-cpu", "-Xclangas",
+                             features.cpu});
+      }
+      if (!features.tune_cpu.empty()) {
+        target_args_.append(
+            {"-Xclang", "-tune-cpu", "-Xclang", features.tune_cpu});
+      }
+      for (const std::string& feature : features.target_features) {
+        target_args_.append({"-Xclang", "-target-feature", "-Xclang", feature,
+                             "-Xclangas", "-target-feature", "-Xclangas",
+                             feature});
+      }
+      target_args_.push_back("--end-no-unused-arguments");
+    }
+  }
 
   auto installation() -> const InstallPaths& { return *clang_->installation_; }
 
@@ -78,6 +99,7 @@ class ClangRuntimesBuilderBase {
 
   llvm::Triple target_triple_;
   std::string target_flag_;
+  llvm::SmallVector<std::string> target_args_;
 
   ErrorOr<std::filesystem::path> result_;
 
@@ -226,7 +248,8 @@ class ClangArchiveRuntimesBuilder : public ClangRuntimesBuilderBase {
   // they were already available, the call to `Wait` will not block.
   ClangArchiveRuntimesBuilder(ClangRunner* clang,
                               llvm::ThreadPoolInterface* threads,
-                              llvm::Triple target_triple, Runtimes* runtimes);
+                              llvm::Triple target_triple, Runtimes* runtimes,
+                              const Runtimes::Cache::Features& features);
 
  private:
   // Helpers to compute the list of source files and compile flags for a
@@ -280,7 +303,8 @@ class ClangResourceDirBuilder : public ClangRuntimesBuilderBase {
   // they were already available, the call to `Wait` will not block.
   ClangResourceDirBuilder(ClangRunner* clang,
                           llvm::ThreadPoolInterface* threads,
-                          llvm::Triple target_triple, Runtimes* runtimes);
+                          llvm::Triple target_triple, Runtimes* runtimes,
+                          const Runtimes::Cache::Features& features);
 
  private:
   friend class ClangResourceDirBuilderTestPeer;

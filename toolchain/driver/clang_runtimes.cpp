@@ -189,9 +189,12 @@ auto ClangRuntimesBuilderBase::ArchiveBuilder::CompileMember(
   }
 
   // Collect the additional required flags and dynamic flags for this builder.
+  args.push_back("-c");
+  args.push_back(builder_->target_flag_);
+  for (const std::string& target_arg : builder_->target_args_) {
+    args.push_back(target_arg);
+  }
   args.append({
-      "-c",
-      builder_->target_flag_,
       "-o",
       obj_path.native(),
       src_path.native(),
@@ -234,8 +237,10 @@ template <Runtimes::Component Component>
   requires IsClangArchiveRuntimes<Component>
 ClangArchiveRuntimesBuilder<Component>::ClangArchiveRuntimesBuilder(
     ClangRunner* clang, llvm::ThreadPoolInterface* threads,
-    llvm::Triple target_triple, Runtimes* runtimes)
-    : ClangRuntimesBuilderBase(clang, threads, std::move(target_triple)) {
+    llvm::Triple target_triple, Runtimes* runtimes,
+    const Runtimes::Cache::Features& features)
+    : ClangRuntimesBuilderBase(clang, threads, std::move(target_triple),
+                               features) {
   // Ensure we're on a platform where we _can_ build a working runtime.
   if (target_triple_.isOSWindows()) {
     result_ =
@@ -392,8 +397,10 @@ auto ClangResourceDirBuilder::GetDarwinOsSuffix(llvm::Triple target_triple)
 
 ClangResourceDirBuilder::ClangResourceDirBuilder(
     ClangRunner* clang, llvm::ThreadPoolInterface* threads,
-    llvm::Triple target_triple, Runtimes* runtimes)
-    : ClangRuntimesBuilderBase(clang, threads, std::move(target_triple)),
+    llvm::Triple target_triple, Runtimes* runtimes,
+    const Runtimes::Cache::Features& features)
+    : ClangRuntimesBuilderBase(clang, threads, std::move(target_triple),
+                               features),
       crt_begin_result_(Error("Never built CRT begin file!")),
       crt_end_result_(Error("Never built CRT end file!")) {
   // Ensure we're on a platform where we _can_ build a working runtime.
@@ -554,6 +561,9 @@ auto ClangResourceDirBuilder::BuildCrtFile(llvm::StringRef src_file)
       "-w",
       target_flag_,
   };
+  for (const std::string& target_arg : target_args_) {
+    copts.push_back(target_arg);
+  }
   llvm::append_range(copts, RuntimesBuildInfo::CrtCopts);
   copts.append({
       "-c",

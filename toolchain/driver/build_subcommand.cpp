@@ -106,6 +106,39 @@ auto BuildSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
   // compilation process.
   options_.link_options.codegen_options =
       options_.compile_options.codegen_options;
+  if (!options_.compile_options.clang_args.empty()) {
+    // Only forward target-related `--clang-arg` flags to the link step so that
+    // `LinkDriver` / `ComputeRuntimesFeatures` see the same target features
+    // without compile-only flags (such as `-fsanitize=*` or `-nostdlib`)
+    // altering the link command.
+    llvm::SmallVector<llvm::StringRef> target_clang_args;
+    llvm::ArrayRef<llvm::StringRef> compile_clang_args =
+        options_.compile_options.clang_args;
+    for (size_t i = 0; i < compile_clang_args.size(); ++i) {
+      llvm::StringRef arg = compile_clang_args[i];
+      if (arg.starts_with("-m")) {
+        target_clang_args.push_back(arg);
+      } else if (arg == "-Xclang" && i + 3 < compile_clang_args.size() &&
+                 (compile_clang_args[i + 1] == "-target-cpu" ||
+                  compile_clang_args[i + 1] == "-tune-cpu" ||
+                  compile_clang_args[i + 1] == "-target-feature") &&
+                 compile_clang_args[i + 2] == "-Xclang") {
+        target_clang_args.append(compile_clang_args.begin() + i,
+                                 compile_clang_args.begin() + i + 4);
+        i += 3;
+      }
+    }
+    if (!target_clang_args.empty()) {
+      llvm::SmallVector<llvm::StringRef> combined_clang_args;
+      combined_clang_args.push_back("--start-no-unused-arguments");
+      combined_clang_args.append(target_clang_args.begin(),
+                                 target_clang_args.end());
+      combined_clang_args.push_back("--end-no-unused-arguments");
+      combined_clang_args.append(options_.link_options.extra_clang_args.begin(),
+                                 options_.link_options.extra_clang_args.end());
+      options_.link_options.extra_clang_args = std::move(combined_clang_args);
+    }
+  }
 
   llvm::SmallString<256> output_filename;
   if (options_.link_options.output_filename.empty()) {

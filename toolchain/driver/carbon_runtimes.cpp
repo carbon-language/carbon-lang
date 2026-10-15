@@ -10,8 +10,10 @@
 namespace Carbon {
 
 CarbonRuntimesBuilderBase::CarbonRuntimesBuilderBase(
-    DriverEnv* driver_env, const CodegenOptions* codegen_options)
-    : compile_options_(codegen_options),
+    DriverEnv* driver_env, const Runtimes::Cache::Features& features)
+    : target_(features.target),
+      codegen_options_({.target = target_}),
+      compile_options_(&codegen_options_),
       compile_driver_(&compile_options_),
       driver_env_(driver_env),
       install_root_(driver_env->installation->root()),
@@ -21,12 +23,28 @@ CarbonRuntimesBuilderBase::CarbonRuntimesBuilderBase(
   compile_options_.prelude_import = false;
   // Don't also try and compile the rest of the core when compiling the prelude.
   compile_options_.include_carbon_core = false;
+  if (!features.cpu.empty()) {
+    clang_args_storage_.append(
+        {"-Xclang", "-target-cpu", "-Xclang", features.cpu});
+  }
+  if (!features.tune_cpu.empty()) {
+    clang_args_storage_.append(
+        {"-Xclang", "-tune-cpu", "-Xclang", features.tune_cpu});
+  }
+  for (const std::string& feature : features.target_features) {
+    clang_args_storage_.append(
+        {"-Xclang", "-target-feature", "-Xclang", feature});
+  }
+  compile_options_.clang_args.reserve(clang_args_storage_.size());
+  for (const std::string& arg : clang_args_storage_) {
+    compile_options_.clang_args.push_back(arg);
+  }
 }
 
 CarbonPreludeBuilder::CarbonPreludeBuilder(
     DriverEnv* driver_env, Runtimes* runtimes,
-    const CodegenOptions* codegen_options)
-    : CarbonRuntimesBuilderBase(driver_env, codegen_options) {
+    const Runtimes::Cache::Features& features)
+    : CarbonRuntimesBuilderBase(driver_env, features) {
   auto build_dir_or_error = runtimes->Build(Runtimes::CarbonCore);
   if (!build_dir_or_error.ok()) {
     result_ = std::move(build_dir_or_error).error();
@@ -102,11 +120,14 @@ auto CarbonPreludeBuilder::Build() && -> ErrorOr<std::filesystem::path> {
             absolute_output_path.parent_path());
         return absolute_output_path.string();
       });
-  CARBON_CHECK(init_result,
-               "Failed to initialize compiler driver for Carbon prelude.");
+  if (!init_result) {
+    return Error("Failed to initialize compiler driver for Carbon prelude.");
+  }
 
   auto compile_result = compile_driver_.Compile(*driver_env_);
-  CARBON_CHECK(compile_result.success, "Failed to compile Carbon prelude.");
+  if (!compile_result.success) {
+    return Error("Failed to compile Carbon prelude.");
+  }
 
   result_ = (*std::move(runtimes_builder_)).Commit();
   return std::move(result_);
