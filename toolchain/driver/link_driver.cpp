@@ -122,7 +122,7 @@ auto LinkDriver::Link(DriverEnv& driver_env) -> DriverResult {
       auto path_or_error = std::move(prelude_builder).Build();
       if (!path_or_error.ok()) {
         CARBON_DIAGNOSTIC(LinkCarbonPreludeBuildFailed, Error,
-                          "Failed to build Carbon prelude during linking: {0}",
+                          "failed to build Carbon prelude during linking: {0}",
                           std::string);
         driver_env.emitter.Emit(LinkCarbonPreludeBuildFailed,
                                 path_or_error.error().message());

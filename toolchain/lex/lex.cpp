@@ -1502,21 +1502,21 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
   auto diagnose_invalid_char = [&]() {
     CARBON_DIAGNOSTIC(
         InvalidCharacterInDollarIntLiteral, Error,
-        "Positional parameters can only contain digits after `$`");
+        "positional parameters can only contain digits after `$`");
     emitter_.Emit(word.begin() + 1, InvalidCharacterInDollarIntLiteral);
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   };
 
   if (word.size() < 2) {
     CARBON_DIAGNOSTIC(DollarIntLiteralMissingNumber, Error,
-                      "Expected digits after `$`");
+                      "expected digits after `$`");
     emitter_.Emit(word.begin() + 1, DollarIntLiteralMissingNumber);
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
   if (word[1] == '0' && word.size() > 2) {
     CARBON_DIAGNOSTIC(
         DollarIntLiteralLeadingZero, Error,
-        "Leading zeroes are not allowed in positional parameters");
+        "leading zeroes are not allowed in positional parameters");
     emitter_.Emit(word.begin() + 1, DollarIntLiteralLeadingZero);
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
