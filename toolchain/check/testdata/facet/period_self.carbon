@@ -432,6 +432,9 @@ class C(U: Y, v: U.Y1.L1) {
 // This creates a bug in the toolchain since the specific is now wrong and we're
 // unable to get the concrete value of `C(T, ()).C1`.
 fn F(generic T: Y where .Y1 impls M and C(.Self, ()) impls M) -> C(T, ()).C1 {
+  // CHECK:STDERR: fail_todo_specific_resolves_final_impl_while_collecting_witnesses.carbon:[[@LINE+3]]:3-12: error: cannot implicitly convert expression of type `()` to `T.(Y.Y1).(L.L1)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_specific_resolves_final_impl_while_collecting_witnesses.carbon:[[@LINE+2]]:3-12: note: type `()` does not implement interface `Core.ImplicitAs(T.(Y.Y1).(L.L1))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:
   return ();
 }
 
