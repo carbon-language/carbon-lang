@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 fn TestLiteralNegativeIndex() {
-  // CHECK:STDERR: fail_literal_negative_index.carbon:[[@LINE+2]]:24-33: error: index `-1` is negative. [StringAtIndexNegative]
+  // CHECK:STDERR: fail_literal_negative_index.carbon:[[@LINE+2]]:24-33: error: index `-1` is negative [StringAtIndexNegative]
   // CHECK:STDERR:
   let unused c: char = "Test"[-1];
 }
@@ -23,7 +23,7 @@ fn TestLiteralNegativeIndex() {
 library "[[@TEST_NAME]]";
 
 fn TestLiteralOutOfBounds() {
-  // CHECK:STDERR: fail_literal_out_of_bounds.carbon:[[@LINE+2]]:24-32: error: string index `4` is out of bounds; string has length 4. [StringAtIndexOutOfBounds]
+  // CHECK:STDERR: fail_literal_out_of_bounds.carbon:[[@LINE+2]]:24-32: error: string index `4` is out of bounds; string has length 4 [StringAtIndexOutOfBounds]
   // CHECK:STDERR:
   let unused c: char = "Test"[4];
 }

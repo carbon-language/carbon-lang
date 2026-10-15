@@ -2549,7 +2549,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
 
       if (index_val.isNegative()) {
         CARBON_DIAGNOSTIC(StringAtIndexNegative, Error,
-                          "index `{0}` is negative.", TypedInt);
+                          "index `{0}` is negative", TypedInt);
         context.emitter().Emit(
             loc_id, StringAtIndexNegative,
             {.type = eval_context.insts().Get(index_id).type_id(),
@@ -2560,7 +2560,7 @@ static auto MakeConstantForBuiltinCall(EvalContext& eval_context,
       if (index_val.getZExtValue() >= string_value.size()) {
         CARBON_DIAGNOSTIC(
             StringAtIndexOutOfBounds, Error,
-            "string index `{0}` is out of bounds; string has length {1}.",
+            "string index `{0}` is out of bounds; string has length {1}",
             TypedInt, size_t);
         context.emitter().Emit(
             loc_id, StringAtIndexOutOfBounds,
