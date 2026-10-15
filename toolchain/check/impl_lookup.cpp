@@ -301,6 +301,29 @@ static auto TryGetSpecificWitnessIdForImpl(
                                            impl.witness_id);
 }
 
+static auto ThawPeriodSelfInRequiredImpl(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::IdentifiedFacetType::RequiredImpl req)
+    -> SemIR::IdentifiedFacetType::RequiredImpl {
+  auto self_inst_id = context.constant_values().GetInstId(req.self_facet_value);
+  self_inst_id = ThawPeriodSelf(context, self_inst_id);
+  req.self_facet_value = context.constant_values().Get(self_inst_id);
+
+  if (req.specific_interface.specific_id.has_value()) {
+    const auto& specific =
+        context.specifics().Get(req.specific_interface.specific_id);
+    llvm::SmallVector<SemIR::InstId> args(
+        context.inst_blocks().Get(specific.args_id));
+    for (auto& arg_id : args) {
+      arg_id = ThawPeriodSelf(context, arg_id);
+    }
+    req.specific_interface.specific_id =
+        MakeSpecific(context, loc_id, specific.generic_id, args);
+  }
+
+  return req;
+}
+
 // A witness that some `self` facet impls some `interface`. Potentially with a
 // final witness instruction.
 struct FacetWitnessSource {
@@ -445,11 +468,11 @@ static auto CollectFacetWitnessSources(
     // constraints.
     const auto& impls = context.where_stack().back().impls;
     for (auto [self_const_id, facet_type_const_id] : impls) {
-      auto canon_self_const_id = GetCanonicalFacet(context, self_const_id);
+      self_const_id = GetCanonicalFacet(context, self_const_id);
       // TypeType (and ErrorInst) is never stored in the impls stack, so we
       // always have a FacetType in `facet_type_const_id`.
       auto identified_id = TryToIdentifyFacetType(
-          context, loc_id, canon_self_const_id,
+          context, loc_id, self_const_id,
           context.types().GetTypeIdForTypeConstantId(facet_type_const_id),
           /*allow_partially_identified=*/true);
       if (!identified_id.has_value()) {
@@ -458,10 +481,34 @@ static auto CollectFacetWitnessSources(
       const auto& identified =
           context.identified_facet_types().Get(identified_id);
       for (auto req : identified.required_impls()) {
+        // Avoid impl lookup cycles while collecting witnesses. See comment
+        // above where we also increment impl_lookup_no_symbolic_final_lookups.
+        IncrementScope inc(context.impl_lookup_no_symbolic_final_lookups());
+
         req = EvaluateIdentifiedWitnesses(context, loc_id, req);
         witnesses.push_back({.witnessed_self = req.self_facet_value,
                              .witnessed_interface = req.specific_interface,
                              .final_witness_id = SemIR::InstId::None});
+
+        // The `.Self` in an early impls will be frozen. In a sense, this is
+        // good because a `.Self` in the facet type does not refer to the self
+        // of the `impls` statement, it refers to the abstract `.Self` for the
+        // facet type as a whole. And lookups from inside the facet type also
+        // have frozen `.Self` in the query, like in `.X1 = .Z1.(Y.Y1)` which
+        // has a frozen `.Self` in the lookup `.Z1 as Y`.
+        //
+        // However, if we're doing a lookup query against something outside of
+        // the facet type, such as when forming a specific, the query
+        // requirements will not be frozen. We need a copy of this early impls
+        // witness with thawed `.Self` values in order to compare against those
+        // query requirements.
+        auto thawed_req = ThawPeriodSelfInRequiredImpl(context, loc_id, req);
+        if (thawed_req != req) {
+          witnesses.push_back(
+              {.witnessed_self = thawed_req.self_facet_value,
+               .witnessed_interface = thawed_req.specific_interface,
+               .final_witness_id = SemIR::InstId::None});
+        }
       }
     }
   }
