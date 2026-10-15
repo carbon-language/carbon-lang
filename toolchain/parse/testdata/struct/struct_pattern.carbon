@@ -206,31 +206,31 @@ let {"foo" = , .x = x:()} = {};
 
 // --- fail_struct_pattern_nested_tuple_pattern.carbon
 
-// CHECK:STDERR: fail_struct_pattern_nested_tuple_pattern.carbon:[[@LINE+2]]:14: error: Tuple pattern in shorthand struct pattern field. Use `.field = (...)` instead [NestedTuplePatternInStructPatternShortField]
+// CHECK:STDERR: fail_struct_pattern_nested_tuple_pattern.carbon:[[@LINE+2]]:14: error: tuple pattern in shorthand struct pattern field; use `.field = (...)` instead [NestedTuplePatternInStructPatternShortField]
 // CHECK:STDERR:
 var {x: i32, (y: i32, z: i32)} = {};
 
 // --- fail_struct_pattern_nested_var_tuple_pattern.carbon
 
-// CHECK:STDERR: fail_struct_pattern_nested_var_tuple_pattern.carbon:[[@LINE+2]]:18: error: Tuple pattern in shorthand struct pattern field. Use `.field = (...)` instead [NestedTuplePatternInStructPatternShortField]
+// CHECK:STDERR: fail_struct_pattern_nested_var_tuple_pattern.carbon:[[@LINE+2]]:18: error: tuple pattern in shorthand struct pattern field; use `.field = (...)` instead [NestedTuplePatternInStructPatternShortField]
 // CHECK:STDERR:
 let {x: i32, var (y: i32, z: i32)} = {};
 
 // --- fail_struct_pattern_nested_struct_pattern.carbon
 
-// CHECK:STDERR: fail_struct_pattern_nested_struct_pattern.carbon:[[@LINE+2]]:13: error: Struct pattern in shorthand struct pattern field. Use `.field = {...}` instead [NestedStructPatternStructPatternShortField]
+// CHECK:STDERR: fail_struct_pattern_nested_struct_pattern.carbon:[[@LINE+2]]:13: error: struct pattern in shorthand struct pattern field; use `.field = {...}` instead [NestedStructPatternStructPatternShortField]
 // CHECK:STDERR:
 let{x: i32, {y: i32, z: i32}} = {};
 
 // --- fail_struct_pattern_unused_shorthand.carbon
 
-// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:7: error: Anonymous binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
+// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:7: error: anonymous binding found in struct pattern; use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
 // CHECK:STDERR:
 var {_: i32} = {};
-// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:11: error: Anonymous binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
+// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:11: error: anonymous binding found in struct pattern; use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
 // CHECK:STDERR:
 let {ref _: i32} = {};
-// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:11: error: Anonymous binding found in struct pattern. Use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
+// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:11: error: anonymous binding found in struct pattern; use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
 // CHECK:STDERR:
 let {var _: i32} = {};
 

@@ -238,8 +238,8 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_default_values.carbon:[[@LINE+3]]:34-39: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
-  // CHECK:STDERR: fail_default_values.carbon:[[@LINE+2]]:15-20: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
+  // CHECK:STDERR: fail_default_values.carbon:[[@LINE+3]]:34-39: error: this pattern is missing a required default value [RequiredPatternDefaultValueMissing]
+  // CHECK:STDERR: fail_default_values.carbon:[[@LINE+2]]:15-20: note: all patterns to the right of this first pattern with a default value must also specify a default value [RequiredPatternDefaultValueFirstDefault]
   // CHECK:STDERR:
   (fn (unused x: i32 = 1, unused y: i32) {});
 }

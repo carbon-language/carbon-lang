@@ -684,14 +684,14 @@ static auto CheckDefaults(Context& context, SemIR::Function& function)
     // Finished processing this tuple-pattern, emit diagnostics if any.
     if (!state->patterns_missing_defaults.empty()) {
       CARBON_DIAGNOSTIC(RequiredPatternDefaultValueMissing, Error,
-                        "this pattern is missing a required default value.");
+                        "this pattern is missing a required default value");
       CARBON_DIAGNOSTIC_LABEL(RequiredPatternDefaultValueFirstDefault, Info,
                               "all patterns to the right of this first pattern "
                               "with a default value must also specify a "
-                              "default value.");
+                              "default value");
       CARBON_DIAGNOSTIC_LABEL(
           RequiredPatternDefaultValueMissingAdditional, Primary,
-          "this pattern is also missing a required default value.");
+          "this pattern is also missing a required default value");
       auto inst_ref = llvm::ArrayRef(state->patterns_missing_defaults);
       auto builder = context.emitter().Build(
           inst_ref.consume_front(), RequiredPatternDefaultValueMissing);
