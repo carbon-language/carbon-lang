@@ -23,7 +23,7 @@ impl forall [T: type] T as Simple {
   fn F() {}
 }
 
-// --- self_error.carbon
+// --- fail_self_error.carbon
 library "[[@TEST_NAME]]";
 
 interface Z { let Z1: type; }
@@ -31,7 +31,7 @@ interface Y {}
 
 // The self type `T` is an `ErrorInst`, and when identifying the facet type
 // would get substituted into the `.Self`.
-// CHECK:STDERR: self_error.carbon:[[@LINE+2]]:17-23: error: name `Invalid` not found [NameNotFound]
+// CHECK:STDERR: fail_self_error.carbon:[[@LINE+2]]:17-23: error: name `Invalid` not found [NameNotFound]
 // CHECK:STDERR:
 impl forall [T: Invalid] T as Z where .Z1 impls Y {}
 
@@ -159,7 +159,7 @@ impl forall [T: Invalid] T as Z where .Z1 impls Y {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Simple.WithSelf.F(constants.%Simple.facet) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- self_error.carbon
+// CHECK:STDOUT: --- fail_self_error.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
