@@ -12,9 +12,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_field_type_mismatch.carbon
 
-// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+4]]:20: error: struct `{.a: i32}` has no field named `b` [StructInitUnexpectedFieldInLiteral]
-// CHECK:STDERR: var x: {.a: i32} = {.b = 1.0};
-// CHECK:STDERR:                    ^~~~~~~~~~
+// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+2]]:20-29: error: struct `{.a: i32}` has no field named `b` [StructInitUnexpectedFieldInLiteral]
 // CHECK:STDERR:
 var x: {.a: i32} = {.b = 1.0};
 
@@ -23,13 +21,13 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %struct_type.a: type = struct_type {.a: %i32} [concrete]
-// CHECK:STDOUT:   %pattern_type.506: type = pattern_type %struct_type.a [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.506 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:   %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:   %pattern_type.243: type = pattern_type %struct_type.a [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.243 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.243 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete]
 // CHECK:STDOUT:   %struct_type.b: type = struct_type {.b: Core.FloatLiteral} [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.b = struct_value (%float) [concrete]
@@ -51,21 +49,21 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc19: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
+// CHECK:STDOUT:   %.loc17: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %struct_type.a = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.506 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete = constants.%x.var_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.243 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.243 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc19: %struct_type.b = struct_literal (%float) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc17: %struct_type.b = struct_literal (%float) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

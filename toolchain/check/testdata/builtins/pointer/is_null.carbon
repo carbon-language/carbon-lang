@@ -55,33 +55,23 @@ library "[[@TEST_NAME]]";
 
 fn MakeUnformed(t: type) -> type = "maybe_unformed.make_type";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NoParam() -> bool = "pointer.is_null";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-22: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn NoParam() -> bool = "pointer.is_null";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NoRetType(p: MakeUnformed({}*)) = "pointer.is_null";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-36: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn NoRetType(p: MakeUnformed({}*)) = "pointer.is_null";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn WrongRetType(p: MakeUnformed({}*)) -> {} = "pointer.is_null";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-45: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn WrongRetType(p: MakeUnformed({}*)) -> {} = "pointer.is_null";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NoUnformed(p: {}*) -> bool = "pointer.is_null";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-31: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn NoUnformed(p: {}*) -> bool = "pointer.is_null";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-44: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 
@@ -202,7 +192,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %s.patt: %pattern_type.b42 = wrapper_binding_pattern s, %s.param_patt [concrete]
 // CHECK:STDOUT:   %TestEmptyStruct.type: type = fn_type @TestEmptyStruct [concrete]
 // CHECK:STDOUT:   %TestEmptyStruct: %TestEmptyStruct.type = struct_value () [concrete]
-// CHECK:STDOUT:   %IsNull.specific_fn.add: <specific function> = specific_function %IsNull, @IsNull(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %IsNull.specific_fn.c88: <specific function> = specific_function %IsNull, @IsNull(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %ptr.6b6: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %.9e8: type = maybe_unformed_type %ptr.6b6 [concrete]
 // CHECK:STDOUT:   %pattern_type.e22: type = pattern_type %.9e8 [concrete]
@@ -210,7 +200,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %c.patt: %pattern_type.e22 = wrapper_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %TestC.type: type = fn_type @TestC [concrete]
 // CHECK:STDOUT:   %TestC: %TestC.type = struct_value () [concrete]
-// CHECK:STDOUT:   %IsNull.specific_fn.5e3: <specific function> = specific_function %IsNull, @IsNull(%C) [concrete]
+// CHECK:STDOUT:   %IsNull.specific_fn.5a8: <specific function> = specific_function %IsNull, @IsNull(%C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -263,7 +253,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IsNull.ref: %IsNull.type = name_ref IsNull, file.%IsNull.decl [concrete = constants.%IsNull]
 // CHECK:STDOUT:   %s.ref: %.b2d = name_ref s, %s
-// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%empty_struct_type) [concrete = constants.%IsNull.specific_fn.add]
+// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%empty_struct_type) [concrete = constants.%IsNull.specific_fn.c88]
 // CHECK:STDOUT:   %IsNull.call: init bool = call %IsNull.specific_fn(%s.ref)
 // CHECK:STDOUT:   return %IsNull.call
 // CHECK:STDOUT: }
@@ -272,7 +262,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IsNull.ref: %IsNull.type = name_ref IsNull, file.%IsNull.decl [concrete = constants.%IsNull]
 // CHECK:STDOUT:   %c.ref: %.9e8 = name_ref c, %c
-// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%C) [concrete = constants.%IsNull.specific_fn.5e3]
+// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%C) [concrete = constants.%IsNull.specific_fn.5a8]
 // CHECK:STDOUT:   %IsNull.call: init bool = call %IsNull.specific_fn(%c.ref)
 // CHECK:STDOUT:   return %IsNull.call
 // CHECK:STDOUT: }

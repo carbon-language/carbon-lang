@@ -8,6 +8,7 @@
 
 #include <string>
 
+#include "clang/AST/DeclBase.h"
 #include "common/raw_string_ostream.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
@@ -209,6 +210,31 @@ LLVM_DUMP_METHOD auto Dump(const File& file,
     const auto& canon = file.generated_functions().Get(generated_function_id);
     out << ": " << canon;
     out << "\n  - decl: " << DumpInstSummary(file, canon.decl_id);
+  }
+  return out.TakeStr();
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file, ClangDeclId clang_decl_id)
+    -> std::string {
+  RawStringOstream out;
+  out << clang_decl_id;
+  if (clang_decl_id.has_value()) {
+    const auto& clang_decl = file.clang_decls().Get(clang_decl_id);
+    out << ": " << clang_decl << "\ndecl:\n";
+    clang_decl.decl()->dump(out);
+  }
+  return out.TakeStr();
+}
+
+LLVM_DUMP_METHOD auto Dump(const File& file,
+                           ClangDeclSignatureId clang_decl_signature_id)
+    -> std::string {
+  RawStringOstream out;
+  out << clang_decl_signature_id;
+  if (clang_decl_signature_id.has_value()) {
+    const auto& clang_decl_signature =
+        file.clang_decl_signatures().Get(clang_decl_signature_id);
+    out << ": " << clang_decl_signature;
   }
   return out.TakeStr();
 }
@@ -456,7 +482,8 @@ LLVM_DUMP_METHOD auto Dump(const File& file, InstBlockId inst_block_id)
 LLVM_DUMP_METHOD auto Dump(const File& file, InstId inst_id) -> std::string {
   RawStringOstream out;
   out << DumpInstSummary(file, inst_id);
-  if (!inst_id.has_value()) {
+  if (inst_id == InstId::None || inst_id == InstId::InitTombstone ||
+      inst_id == InstId::ImplWitnessTablePlaceholder) {
     return out.TakeStr();
   }
 
@@ -602,16 +629,27 @@ LLVM_DUMP_METHOD auto Dump(const File& file, SpecificId specific_id)
   return out.TakeStr();
 }
 
+LLVM_DUMP_METHOD auto Dump(const File& file, const SpecificInterface& interface)
+    -> std::string {
+  RawStringOstream out;
+  out << "interface: " << DumpInterfaceSummary(file, interface.interface_id)
+      << "\n  - specific_id: "
+      << DumpSpecificSummary(file, interface.specific_id);
+  return out.TakeStr();
+}
+
 LLVM_DUMP_METHOD auto Dump(const File& file,
                            SpecificInterfaceId specific_interface_id)
     -> std::string {
   RawStringOstream out;
   const auto& interface = file.specific_interfaces().Get(specific_interface_id);
-  out << specific_interface_id << "\n"
-      << "  - interface: " << DumpInterfaceSummary(file, interface.interface_id)
-      << "\n"
-      << "  - specific_id: "
-      << DumpSpecificSummary(file, interface.specific_id);
+  out << specific_interface_id;
+  if (specific_interface_id.has_value()) {
+    out << "\n  - interface: "
+        << DumpInterfaceSummary(file, interface.interface_id)
+        << "\n  - specific_id: "
+        << DumpSpecificSummary(file, interface.specific_id);
+  }
   return out.TakeStr();
 }
 
@@ -645,6 +683,13 @@ LLVM_DUMP_METHOD static auto MakeBundleId(int id) -> RawBundleId {
 LLVM_DUMP_METHOD static auto MakeGeneratedFunctionId(int id)
     -> GeneratedFunctionId {
   return GeneratedFunctionId(id);
+}
+LLVM_DUMP_METHOD static auto MakeClangDeclId(int id) -> ClangDeclId {
+  return ClangDeclId(id);
+}
+LLVM_DUMP_METHOD static auto MakeClangDeclSignatureId(int id)
+    -> ClangDeclSignatureId {
+  return ClangDeclSignatureId(id);
 }
 LLVM_DUMP_METHOD static auto MakeClassId(int id) -> ClassId {
   return ClassId(id);

@@ -336,6 +336,7 @@ cc_library(
         ":absolute_node_ref",
         ":file",
         ":typed_insts",
+        "//common:check",
         "//toolchain/diagnostics:emitter",
         "//toolchain/parse:tree",
         "@llvm-project//clang:basic",
@@ -354,6 +355,7 @@ cc_library(
         ":typed_insts",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "@llvm-project//clang:ast",
     ],
     # Always link dump methods so they are callable from a debugger
     # even though they are never called.

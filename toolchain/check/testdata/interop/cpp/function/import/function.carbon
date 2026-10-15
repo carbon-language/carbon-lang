@@ -37,9 +37,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "global.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE+4]]:3: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.bar();
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE+2]]:3-9: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   Cpp.bar();
 }
@@ -59,9 +57,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE+4]]:3: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   Cpp.base();
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE+2]]:3-10: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   Cpp.base();
 }
@@ -85,13 +81,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE+8]]:15: error: no matching function for call to 'base' [CppInteropParseError]
-  // CHECK:STDERR:    15 |   Cpp.r#base(1);
-  // CHECK:STDERR:       |               ^
-  // CHECK:STDERR: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./special_name.h:2:6: note: candidate function not viable: requires 0 arguments, but 1 was provided [CppInteropParseNote]
-  // CHECK:STDERR:     2 | auto base() -> void;
-  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE+5]]:3-12: error: no matching function for call to 'base' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: ./special_name.h:2:6: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./special_name.h:2:10-11: note: requires 0 arguments, but 1 was provided [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Cpp.r#base(1);
 }
@@ -133,9 +126,7 @@ import Cpp library "variadic.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.variadic_foo(8);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+2]]:3-21: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
   // CHECK:STDERR:
   Cpp.variadic_foo(8);
   //@dump-sem-ir-end
@@ -148,9 +139,7 @@ fn F() {
 // --- static.h
 
 // TODO: Promote this warning to an error by default.
-// CHECK:STDERR: ./static.h:[[@LINE+3]]:13: warning: function 'static_foo' has internal linkage but is not defined [CppInteropParseWarning]
-// CHECK:STDERR:     6 | static auto static_foo() -> void;
-// CHECK:STDERR:       |             ^
+// CHECK:STDERR: ./static.h:[[@LINE+1]]:13: warning: function 'static_foo' has internal linkage but is not defined [CppInteropParseWarning]
 static auto static_foo() -> void;
 
 // --- todo_fail_import_static.carbon
@@ -161,9 +150,7 @@ import Cpp library "static.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: todo_fail_import_static.carbon:[[@LINE+4]]:18: note: used here [CppInteropParseNote]
-  // CHECK:STDERR:    12 |   Cpp.static_foo();
-  // CHECK:STDERR:       |                  ^
+  // CHECK:STDERR: todo_fail_import_static.carbon:[[@LINE+2]]:18: note: used here [CppInteropParseNote]
   // CHECK:STDERR:
   Cpp.static_foo();
   //@dump-sem-ir-end
@@ -346,20 +333,20 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %int_1.5b8: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %As.type.155: type = facet_type <@As, @As(%i32)> [concrete]
+// CHECK:STDOUT:   %As.type.b93: type = facet_type <@As, @As(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.c5d: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%To) [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.6ee: %Core.IntLiteral.as.As.impl.Convert.type.c5d = struct_value () [symbolic]
-// CHECK:STDOUT:   %As.impl_witness.e7f: <witness> = impl_witness imports.%As.impl_witness_table.d22, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.e79: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.8a4: %Core.IntLiteral.as.As.impl.Convert.type.e79 = struct_value () [concrete]
-// CHECK:STDOUT:   %As.facet: %As.type.155 = facet_value Core.IntLiteral, (%As.impl_witness.e7f) [concrete]
-// CHECK:STDOUT:   %As.WithSelf.Convert.type.d02: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%i32, %As.facet) [concrete]
-// CHECK:STDOUT:   %.453: type = fn_type_with_self_type %As.WithSelf.Convert.type.d02, %As.facet [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.8a4 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.As.impl.Convert.8a4, @Core.IntLiteral.as.As.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.396: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.84a: %Core.IntLiteral.as.As.impl.Convert.type.396 = struct_value () [symbolic]
+// CHECK:STDOUT:   %As.impl_witness.e09: <witness> = impl_witness imports.%As.impl_witness_table.1c2, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.type.2b0: type = fn_type @Core.IntLiteral.as.As.impl.Convert, @Core.IntLiteral.as.As.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.94f: %Core.IntLiteral.as.As.impl.Convert.type.2b0 = struct_value () [concrete]
+// CHECK:STDOUT:   %As.facet: %As.type.b93 = facet_value Core.IntLiteral, (%As.impl_witness.e09) [concrete]
+// CHECK:STDOUT:   %As.WithSelf.Convert.type.2be: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%i32, %As.facet) [concrete]
+// CHECK:STDOUT:   %.979: type = fn_type_with_self_type %As.WithSelf.Convert.type.2be, %As.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.bound: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.94f [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.As.impl.Convert.94f, @Core.IntLiteral.as.As.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_1.5b8, %Core.IntLiteral.as.As.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_1.0c6: %i32 = int_value 1 [concrete]
+// CHECK:STDOUT:   %int_1.68a: %i32 = int_value 1 [concrete]
 // CHECK:STDOUT:   %template_foo.type: type = fn_type @template_foo [concrete]
 // CHECK:STDOUT:   %template_foo: %template_foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %template_bar.cpp_overload_set.type: type = cpp_overload_set_type @template_bar.cpp_overload_set [concrete]
@@ -375,8 +362,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:     import Cpp//...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %template_foo.cpp_overload_set.value: %template_foo.cpp_overload_set.type = cpp_overload_set_value @template_foo.cpp_overload_set [concrete = constants.%template_foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %Core.import_ref.64b: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.c5d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.6ee)]
-// CHECK:STDOUT:   %As.impl_witness_table.d22 = impl_witness_table (%Core.import_ref.64b), @Core.IntLiteral.as.As.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.9e0: @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.396) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.84a)]
+// CHECK:STDOUT:   %As.impl_witness_table.1c2 = impl_witness_table (%Core.import_ref.9e0), @Core.IntLiteral.as.As.impl [concrete]
 // CHECK:STDOUT:   %template_foo.decl: %template_foo.type = fn_decl @template_foo [concrete = constants.%template_foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -396,13 +383,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %template_foo.ref: %template_foo.cpp_overload_set.type = name_ref template_foo, imports.%template_foo.cpp_overload_set.value [concrete = constants.%template_foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %.453 = impl_witness_access constants.%As.impl_witness.e7f, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.8a4]
+// CHECK:STDOUT:   %impl.elem0: %.979 = impl_witness_access constants.%As.impl_witness.e09, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.94f]
 // CHECK:STDOUT:   %bound_method.loc8_22.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_22.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i32 = call %bound_method.loc8_22.2(%int_1) [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc8_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc8_22.2: %i32 = converted %int_1, %.loc8_22.1 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i32 = call %bound_method.loc8_22.2(%int_1) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc8_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc8_22.2: %i32 = converted %int_1, %.loc8_22.1 [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %template_foo.call: init %empty_tuple.type = call imports.%template_foo.decl(%.loc8_22.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -413,13 +400,13 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %template_bar.ref: %template_bar.cpp_overload_set.type = name_ref template_bar, imports.%template_bar.cpp_overload_set.value [concrete = constants.%template_bar.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %i32.loc14: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %impl.elem0: %.453 = impl_witness_access constants.%As.impl_witness.e7f, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.8a4]
+// CHECK:STDOUT:   %impl.elem0: %.979 = impl_witness_access constants.%As.impl_witness.e09, element0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.94f]
 // CHECK:STDOUT:   %bound_method.loc14_29.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.As.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.As.impl.Convert.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_29.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i32 = call %bound_method.loc14_29.2(%int_1) [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc14_29.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.0c6]
-// CHECK:STDOUT:   %.loc14_29.2: %i32 = converted %int_1, %.loc14_29.1 [concrete = constants.%int_1.0c6]
+// CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i32 = call %bound_method.loc14_29.2(%int_1) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc14_29.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc14_29.2: %i32 = converted %int_1, %.loc14_29.1 [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %template_bar.call: init %i32 = call imports.%template_bar.decl(%.loc14_29.2)
 // CHECK:STDOUT:   return %template_bar.call
 // CHECK:STDOUT: }

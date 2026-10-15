@@ -20,6 +20,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/diagnostics/renderer.h"
 #include "toolchain/lower/clang_global_decl.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
@@ -171,6 +172,7 @@ auto FileContext::LowerDefinitions() -> void {
         .unused_param_indices =
             std::move(function_type_info.unused_param_indices),
         .llvm_function = llvm_function,
+        .return_kind = function_type_info.return_kind,
         .inexact = function_type_info.inexact};
     functions_.Set(global_ctor_id, function_info);
 
@@ -462,6 +464,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
            .unused_param_indices =
                std::move(function_type_info.unused_param_indices),
            .llvm_function = llvm_function,
+           .return_kind = function_type_info.return_kind,
            .inexact = function_type_info.inexact}};
 }
 
@@ -522,7 +525,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     auto converted =
         converter.Convert(SemIR::LocId(declaration_function.definition_id),
                           /*token_only=*/false);
-    converted.loc.FormatLocation(output);
+    output << Diagnostics::FormatLocation(converted.loc) << ": ";
     output << "Lowering function ";
     if (specific_id.has_value()) {
       output << SemIR::StringifySpecific(sem_ir(), specific_id);
@@ -532,7 +535,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     }
     output << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
-    converted.loc.FormatSnippet(output, /*indent=*/10);
+    Diagnostics::PrintSnippet(output, converted.loc, /*indent=*/10);
   });
 
   // Note that `definition_function` is potentially from a different SemIR::File

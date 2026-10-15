@@ -15,9 +15,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_value_not_constant.carbon:[[@LINE+4]]:19: error: default value is not a constant [PatternDefaultValueNotConstant]
-// CHECK:STDERR: fn H(x: C, y: C = x);
-// CHECK:STDERR:                   ^
+// CHECK:STDERR: fail_value_not_constant.carbon:[[@LINE+2]]:19: error: default value is not a constant [PatternDefaultValueNotConstant]
 // CHECK:STDERR:
 fn H(x: C, y: C = x);
 
@@ -27,12 +25,8 @@ library "[[@TEST_NAME]]";
 class C {}
 class D {}
 
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:13: error: cannot implicitly convert expression of type `D` to `C` [ConversionFailure]
-// CHECK:STDERR: fn K(x: C = {} as D);
-// CHECK:STDERR:             ^~~~~~~
-// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:13: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fn K(x: C = {} as D);
-// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:13-19: error: cannot implicitly convert expression of type `D` to `C` [ConversionFailure]
+// CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+2]]:13-19: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 fn K(x: C = {} as D);
 
@@ -41,9 +35,7 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_pattern_defaults_not_in_parameter_list.carbon:[[@LINE+4]]:19: error: default values are only supported in parameter lists [PatternDefaultValueNotInParameterList]
-// CHECK:STDERR: let (y: C, x: C = {}) = ({}, {});
-// CHECK:STDERR:                   ^~
+// CHECK:STDERR: fail_pattern_defaults_not_in_parameter_list.carbon:[[@LINE+2]]:19-20: error: default values are only supported in parameter lists [PatternDefaultValueNotInParameterList]
 // CHECK:STDERR:
 let (y: C, x: C = {}) = ({}, {});
 
@@ -52,22 +44,12 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+17]]:35: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
-// CHECK:STDERR: fn Z(v: C, x: C = {}, (y: C = {}, z: C), w: C = {}, k: C);
-// CHECK:STDERR:                                   ^~~~
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+14]]:24: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
-// CHECK:STDERR: fn Z(v: C, x: C = {}, (y: C = {}, z: C), w: C = {}, k: C);
-// CHECK:STDERR:                        ^~~~
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+7]]:35-38: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+6]]:24-27: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+10]]:23: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
-// CHECK:STDERR: fn Z(v: C, x: C = {}, (y: C = {}, z: C), w: C = {}, k: C);
-// CHECK:STDERR:                       ^~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+7]]:53: note: this pattern is also missing a required default value. [RequiredPatternDefaultValueMissingAdditional]
-// CHECK:STDERR: fn Z(v: C, x: C = {}, (y: C = {}, z: C), w: C = {}, k: C);
-// CHECK:STDERR:                                                     ^~~~
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+4]]:12: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
-// CHECK:STDERR: fn Z(v: C, x: C = {}, (y: C = {}, z: C), w: C = {}, k: C);
-// CHECK:STDERR:            ^~~~
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+4]]:23-39: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+3]]:53-56: note: this pattern is also missing a required default value. [RequiredPatternDefaultValueMissingAdditional]
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+2]]:12-15: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
 // CHECK:STDERR:
 fn Z(v: C, x: C = {}, (y: C = {}, z: C), w: C = {}, k: C);
 
@@ -76,19 +58,11 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+14]]:36: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
-// CHECK:STDERR: fn F(a: C, (b: C = {}, (c: C = {}, (d: C, e: C))));
-// CHECK:STDERR:                                    ^~~~~~~~~~~~
-// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+11]]:25: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
-// CHECK:STDERR: fn F(a: C, (b: C = {}, (c: C = {}, (d: C, e: C))));
-// CHECK:STDERR:                         ^~~~
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+6]]:36-47: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+5]]:25-28: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+7]]:24: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
-// CHECK:STDERR: fn F(a: C, (b: C = {}, (c: C = {}, (d: C, e: C))));
-// CHECK:STDERR:                        ^~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+4]]:13: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
-// CHECK:STDERR: fn F(a: C, (b: C = {}, (c: C = {}, (d: C, e: C))));
-// CHECK:STDERR:             ^~~~
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+3]]:24-48: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+2]]:13-16: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
 // CHECK:STDERR:
 fn F(a: C, (b: C = {}, (c: C = {}, (d: C, e: C))));
 
@@ -101,12 +75,8 @@ impl C as Core.As(D) {
   fn Convert(unused self: C) -> D { return {} as D; }
 }
 
-// CHECK:STDERR: fail_explicit_conversion_not_supported.carbon:[[@LINE+7]]:13: error: cannot implicitly convert expression of type `C` to `D` [ConversionFailure]
-// CHECK:STDERR: fn F(a: D = {} as C);
-// CHECK:STDERR:             ^~~~~~~
-// CHECK:STDERR: fail_explicit_conversion_not_supported.carbon:[[@LINE+4]]:13: note: type `C` does not implement interface `Core.ImplicitAs(D)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fn F(a: D = {} as C);
-// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR: fail_explicit_conversion_not_supported.carbon:[[@LINE+3]]:13-19: error: cannot implicitly convert expression of type `C` to `D` [ConversionFailure]
+// CHECK:STDERR: fail_explicit_conversion_not_supported.carbon:[[@LINE+2]]:13-19: note: type `C` does not implement interface `Core.ImplicitAs(D)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 fn F(a: D = {} as C);
 
@@ -148,14 +118,14 @@ fn F(x: C = {});
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.2be: type = facet_type <@ImplicitAs, @ImplicitAs(%D)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.eb1: type = facet_type <@ImplicitAs, @ImplicitAs(%D)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness: <witness> = impl_witness @C.as.ImplicitAs.impl.%ImplicitAs.impl_witness_table [concrete]
 // CHECK:STDOUT:   %pattern_type.d8d: type = pattern_type %D [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert.type: type = fn_type @C.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %C.as.ImplicitAs.impl.Convert: %C.as.ImplicitAs.impl.Convert.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.2be = facet_value %C, (%ImplicitAs.impl_witness) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.6cd: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%D, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %.ee7: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.6cd, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.eb1 = facet_value %C, (%ImplicitAs.impl_witness) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.f84: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%D, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.56d: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.f84, %ImplicitAs.facet [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.d8d = value_param_pattern [concrete]
 // CHECK:STDOUT:   %a.patt: %pattern_type.d8d = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
@@ -177,7 +147,7 @@ fn F(x: C = {});
 // CHECK:STDOUT:     %.loc10_14.2: ref %C = temporary_storage
 // CHECK:STDOUT:     %.loc10_14.3: init %C to %.loc10_14.2 = class_init () [concrete = constants.%C.val]
 // CHECK:STDOUT:     %.loc10_16.1: init %C = converted %.loc10_14.1, %.loc10_14.3 [concrete = constants.%C.val]
-// CHECK:STDOUT:     %impl.elem0: %.ee7 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:     %impl.elem0: %.56d = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%C.as.ImplicitAs.impl.Convert]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc10_16.1, %impl.elem0 [concrete = constants.%C.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:     %.loc10_16.2: ref %D = temporary_storage
 // CHECK:STDOUT:     %.loc10_16.3: ref %C = temporary %.loc10_14.2, %.loc10_16.1 [concrete = constants.%.115]

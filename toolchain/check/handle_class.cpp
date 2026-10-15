@@ -119,7 +119,7 @@ static auto BuildClassDecl(Context& context, Parse::AnyClassDeclId node_id,
     class_info.generic_id = BuildGenericDecl(context, class_decl_id);
     class_decl.class_id = context.classes().Add(class_info);
     if (class_info.has_parameters()) {
-      class_decl.type_id = GetGenericClassType(
+      class_decl.type_id = GetParameterizedClassType(
           context, class_decl.class_id, context.scope_stack().PeekSpecificId());
     }
   } else {
@@ -216,13 +216,13 @@ static auto DiagnoseClassSpecificDeclRepeated(Context& context,
   CARBON_DIAGNOSTIC(BaseDeclRepeated, Error,
                     "multiple `base` declarations in class; multiple "
                     "inheritance is not permitted");
-  CARBON_DIAGNOSTIC(ClassSpecificDeclPrevious, Note,
-                    "previous `{0}` declaration is here", Lex::TokenKind);
+  CARBON_DIAGNOSTIC_LABEL(ClassSpecificDeclPrevious, Info,
+                          "previous `{0}` declaration is here", Lex::TokenKind);
   CARBON_CHECK(tok == Lex::TokenKind::Adapt || tok == Lex::TokenKind::Base);
   context.emitter()
       .Build(new_loc_id, tok == Lex::TokenKind::Adapt ? AdaptDeclRepeated
                                                       : BaseDeclRepeated)
-      .Note(prev_loc_id, ClassSpecificDeclPrevious, tok)
+      .Attach(prev_loc_id, ClassSpecificDeclPrevious, tok)
       .Emit();
 }
 
@@ -260,18 +260,18 @@ auto HandleParseNode(Context& context, Parse::AdaptDeclId node_id) -> bool {
   if (!RequireConcreteType(
           context, adapted_type_id, node_id,
           [&](auto& builder) {
-            CARBON_DIAGNOSTIC(IncompleteTypeInAdaptDecl, Context,
-                              "adapted type {0} is an incomplete type",
-                              InstIdAsType);
-            builder.Context(node_id, IncompleteTypeInAdaptDecl,
-                            adapted_type_inst_id);
+            CARBON_DIAGNOSTIC_CONTEXT(IncompleteTypeInAdaptDecl,
+                                      "adapted type {0} is an incomplete type",
+                                      InstIdAsType);
+            builder.Attach(node_id, IncompleteTypeInAdaptDecl,
+                           adapted_type_inst_id);
           },
           [&](auto& builder) {
-            CARBON_DIAGNOSTIC(AbstractTypeInAdaptDecl, Context,
-                              "adapted type {0} is an abstract type",
-                              InstIdAsType);
-            builder.Context(node_id, AbstractTypeInAdaptDecl,
-                            adapted_type_inst_id);
+            CARBON_DIAGNOSTIC_CONTEXT(AbstractTypeInAdaptDecl,
+                                      "adapted type {0} is an abstract type",
+                                      InstIdAsType);
+            builder.Attach(node_id, AbstractTypeInAdaptDecl,
+                           adapted_type_inst_id);
           })) {
     adapted_type_id = SemIR::ErrorInst::TypeId;
   }
@@ -336,9 +336,10 @@ static auto CheckBaseType(Context& context, Parse::NodeId node_id,
     return BaseInfo::Error;
   }
   if (!RequireCompleteType(context, base_type_id, node_id, [&](auto& builder) {
-        CARBON_DIAGNOSTIC(IncompleteTypeInBaseDecl, Context,
-                          "base {0} is an incomplete type", InstIdAsType);
-        builder.Context(node_id, IncompleteTypeInBaseDecl, base_type_inst_id);
+        CARBON_DIAGNOSTIC_CONTEXT(IncompleteTypeInBaseDecl,
+                                  "base {0} is an incomplete type",
+                                  InstIdAsType);
+        builder.Attach(node_id, IncompleteTypeInBaseDecl, base_type_inst_id);
       })) {
     return BaseInfo::Error;
   }
@@ -458,7 +459,7 @@ auto HandleParseNode(Context& context, Parse::FriendDeclId node_id) -> bool {
       context.constant_values().Get(access_scope_inst_id));
   CARBON_KIND_SWITCH(access_scope_inst) {
     case SemIR::ClassType::Kind:
-    case SemIR::GenericClassType::Kind:
+    case SemIR::ParameterizedClassType::Kind:
       break;
     default:
       CARBON_DIAGNOSTIC(FriendNotAllowedInScope, Error,
@@ -479,7 +480,7 @@ auto HandleParseNode(Context& context, Parse::FriendDeclId node_id) -> bool {
       [[fallthrough]];
     }
     case SemIR::ClassType::Kind:
-    case SemIR::GenericClassType::Kind:
+    case SemIR::ParameterizedClassType::Kind:
     case SemIR::FacetType::Kind:
       break;
     default: {

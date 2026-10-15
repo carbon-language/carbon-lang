@@ -40,9 +40,7 @@ let a: i32 = Div(-0x7FFF_FFFF, -1);
 let b: i32 = Div(-0x8000_0000, 1);
 
 // -0x8000_0000 / -1 overflows.
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:14: error: integer overflow in calculation `-2147483648 / -1` [CompileTimeIntegerOverflow]
-// CHECK:STDERR: let c: i32 = Div(-0x8000_0000, -1);
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:14-34: error: integer overflow in calculation `-2147483648 / -1` [CompileTimeIntegerOverflow]
 // CHECK:STDERR:
 let c: i32 = Div(-0x8000_0000, -1);
 
@@ -67,28 +65,20 @@ library "[[@TEST_NAME]]";
 fn Div(a: i32, b: i32) -> i32 = "int.sdiv";
 fn DivLit(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.sdiv";
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:14: error: division by zero [CompileTimeDivisionByZero]
-// CHECK:STDERR: let a: i32 = Div(1, 0);
-// CHECK:STDERR:              ^~~~~~~~~
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+2]]:14-22: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR:
 let a: i32 = Div(1, 0);
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:14: error: division by zero [CompileTimeDivisionByZero]
-// CHECK:STDERR: let b: i32 = Div(0, 0);
-// CHECK:STDERR:              ^~~~~~~~~
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+2]]:14-22: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR:
 let b: i32 = Div(0, 0);
 
 // IntLiteral allows "overflow" by widening its representation, but not overflow to infinity.
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:26: error: division by zero [CompileTimeDivisionByZero]
-// CHECK:STDERR: let c: Core.IntLiteral = DivLit(1, 0);
-// CHECK:STDERR:                          ^~~~~~~~~~~~
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+2]]:26-37: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR:
 let c: Core.IntLiteral = DivLit(1, 0);
 
-// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+4]]:26: error: division by zero [CompileTimeDivisionByZero]
-// CHECK:STDERR: let d: Core.IntLiteral = DivLit(0, 0);
-// CHECK:STDERR:                          ^~~~~~~~~~~~
+// CHECK:STDERR: fail_div_by_zero.carbon:[[@LINE+2]]:26-37: error: division by zero [CompileTimeDivisionByZero]
 // CHECK:STDERR:
 let d: Core.IntLiteral = DivLit(0, 0);
 

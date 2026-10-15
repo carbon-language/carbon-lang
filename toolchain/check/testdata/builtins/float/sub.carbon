@@ -28,9 +28,7 @@ var x: f64 = Sub(2.0, 0.5);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.sub" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooFew(a: f64) -> f64 = "float.sub";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:1-26: error: invalid signature for builtin function "float.sub" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooFew(a: f64) -> f64 = "float.sub";
 
@@ -42,9 +40,7 @@ fn RuntimeCallIsValidTooFew(a: f64) -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.sub" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.sub";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:1-43: error: invalid signature for builtin function "float.sub" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.sub";
 
@@ -56,9 +52,7 @@ fn RuntimeCallIsValidTooMany(a: f64, b: f64, c: f64) -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.sub" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn BadReturnType(a: f64, b: f64) -> bool = "float.sub";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:1-42: error: invalid signature for builtin function "float.sub" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn BadReturnType(a: f64, b: f64) -> bool = "float.sub";
 
@@ -71,17 +65,17 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.761: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Sub.type: type = fn_type @Sub [concrete]
 // CHECK:STDOUT:   %Sub: %Sub.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.dc1, %b.param: %f64.dc1) -> out %return.param: %f64.dc1 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.761, %b.param: %f64.761) -> out %return.param: %f64.761 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Sub.ref: %Sub.type = name_ref Sub, file.%Sub.decl [concrete = constants.%Sub]
-// CHECK:STDOUT:   %a.ref: %f64.dc1 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %f64.dc1 = name_ref b, %b
-// CHECK:STDOUT:   %Sub.call: init %f64.dc1 = call %Sub.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %a.ref: %f64.761 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.761 = name_ref b, %b
+// CHECK:STDOUT:   %Sub.call: init %f64.761 = call %Sub.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Sub.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

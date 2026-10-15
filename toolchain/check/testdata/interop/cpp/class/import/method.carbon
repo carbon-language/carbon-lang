@@ -59,44 +59,28 @@ library "[[@TEST_NAME]]";
 import Cpp library "object_param_qualifiers.h";
 
 fn Value(v: Cpp.HasQualifiers) {
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+8]]:11: error: no matching function for call to 'plain' [CppInteropParseError]
-  // CHECK:STDERR:    15 |   v.plain();
-  // CHECK:STDERR:       |           ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3-9: error: no matching function for call to 'plain' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./object_param_qualifiers.h:3:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
-  // CHECK:STDERR:     3 |   void plain();
-  // CHECK:STDERR:       |        ^
   // CHECK:STDERR:
   v.plain();
 
   // TODO: This should remain invalid once we support `volatile`.
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+8]]:19: error: no matching function for call to 'volatile_this' [CppInteropParseError]
-  // CHECK:STDERR:    26 |   v.volatile_this();
-  // CHECK:STDERR:       |                   ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-17]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3-17: error: no matching function for call to 'volatile_this' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-11]]:10 [InCppInclude]
   // CHECK:STDERR: ./object_param_qualifiers.h:5:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
-  // CHECK:STDERR:     5 |   void volatile_this() volatile;
-  // CHECK:STDERR:       |        ^
   // CHECK:STDERR:
   v.volatile_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+8]]:14: error: no matching function for call to 'ref_this' [CppInteropParseError]
-  // CHECK:STDERR:    36 |   v.ref_this();
-  // CHECK:STDERR:       |              ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3-12: error: no matching function for call to 'ref_this' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-17]]:10 [InCppInclude]
   // CHECK:STDERR: ./object_param_qualifiers.h:7:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
-  // CHECK:STDERR:     7 |   void ref_this() &;
-  // CHECK:STDERR:       |        ^
   // CHECK:STDERR:
   v.ref_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+8]]:18: error: no matching function for call to 'ref_ref_this' [CppInteropParseError]
-  // CHECK:STDERR:    46 |   v.ref_ref_this();
-  // CHECK:STDERR:       |                  ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-37]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+4]]:3-16: error: no matching function for call to 'ref_ref_this' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE-23]]:10 [InCppInclude]
   // CHECK:STDERR: ./object_param_qualifiers.h:10:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
-  // CHECK:STDERR:    10 |   void ref_ref_this() &&;
-  // CHECK:STDERR:       |        ^
   // CHECK:STDERR:
   v.ref_ref_this();
 }
@@ -109,9 +93,7 @@ import Cpp library "object_param_qualifiers.h";
 
 fn Ref(p: Cpp.HasQualifiers*) {
   // TODO: This should eventually be accepted if we support `volatile`.
-  // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: volatile struct HasQualifiers &` [SemanticsTodo]
-  // CHECK:STDERR:   p->volatile_this();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+2]]:3-20: error: semantics TODO: `Unsupported: parameter type: volatile struct HasQualifiers &` [SemanticsTodo]
   // CHECK:STDERR:
   p->volatile_this();
 }
@@ -123,23 +105,17 @@ library "[[@TEST_NAME]]";
 import Cpp library "object_param_qualifiers.h";
 
 fn Ref(p: Cpp.HasQualifiers*) {
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+8]]:19: error: no matching function for call to 'ref_ref_this' [CppInteropParseError]
-  // CHECK:STDERR:    15 |   p->ref_ref_this();
-  // CHECK:STDERR:       |                   ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./object_param_qualifiers.h:10:8: note: candidate function not viable: expects an rvalue for object argument [CppInteropParseNote]
-  // CHECK:STDERR:    10 |   void ref_ref_this() &&;
-  // CHECK:STDERR:       |        ^
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'ref_ref_this' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: ./object_param_qualifiers.h:10:8: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./object_param_qualifiers.h:10:20-21: note: expects an rvalue for object argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   p->ref_ref_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+8]]:25: error: no matching function for call to 'const_ref_ref_this' [CppInteropParseError]
-  // CHECK:STDERR:    25 |   p->const_ref_ref_this();
-  // CHECK:STDERR:       |                         ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE-16]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./object_param_qualifiers.h:11:8: note: candidate function not viable: expects an rvalue for object argument [CppInteropParseNote]
-  // CHECK:STDERR:    11 |   void const_ref_ref_this() const&&;
-  // CHECK:STDERR:       |        ^
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+5]]:3-23: error: no matching function for call to 'const_ref_ref_this' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE-11]]:10 [InCppInclude]
+  // CHECK:STDERR: ./object_param_qualifiers.h:11:8: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./object_param_qualifiers.h:11:26-27: note: expects an rvalue for object argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   p->const_ref_ref_this();
 }
@@ -153,13 +129,10 @@ import Cpp library "object_param_qualifiers.h";
 fn Make() -> Cpp.HasQualifiers;
 
 fn F() {
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_for_temporary.carbon:[[@LINE+8]]:19: error: no matching function for call to 'ref_this' [CppInteropParseError]
-  // CHECK:STDERR:    17 |   Make().ref_this();
-  // CHECK:STDERR:       |                   ^
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_for_temporary.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./object_param_qualifiers.h:7:8: note: candidate function not viable: expects an lvalue for object argument [CppInteropParseNote]
-  // CHECK:STDERR:     7 |   void ref_this() &;
-  // CHECK:STDERR:       |        ^
+  // CHECK:STDERR: fail_bad_object_param_qualifiers_for_temporary.carbon:[[@LINE+5]]:3-17: error: no matching function for call to 'ref_this' [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_bad_object_param_qualifiers_for_temporary.carbon:[[@LINE-6]]:10 [InCppInclude]
+  // CHECK:STDERR: ./object_param_qualifiers.h:7:8: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: ./object_param_qualifiers.h:7:16-17: note: expects an lvalue for object argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   Make().ref_this();
 }
@@ -234,9 +207,7 @@ struct ExplicitObjectParamUnsupported {
 ''';
 
 fn Call(e: Cpp.ExplicitObjectParamUnsupported) {
-  // CHECK:STDERR: fail_call_explicit_object_param_with_unsupported_type_param.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
-  // CHECK:STDERR:   e.(Cpp.ExplicitObjectParamUnsupported.F)(1);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_call_explicit_object_param_with_unsupported_type_param.carbon:[[@LINE+2]]:3-45: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
   // CHECK:STDERR:
   e.(Cpp.ExplicitObjectParamUnsupported.F)(1);
 }
@@ -321,8 +292,8 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   %HasQualifiers.Op: %HasQualifiers.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.d0d: <witness> = custom_witness (%HasQualifiers.Op), @Copy [concrete]
 // CHECK:STDOUT:   %Copy.facet.11b: %Copy.type = facet_value %HasQualifiers, (%custom_witness.d0d) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.033: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.11b) [concrete]
-// CHECK:STDOUT:   %.703: type = fn_type_with_self_type %Copy.WithSelf.Op.type.033, %Copy.facet.11b [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.feb: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.11b) [concrete]
+// CHECK:STDOUT:   %.973: type = fn_type_with_self_type %Copy.WithSelf.Op.type.feb, %Copy.facet.11b [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -469,7 +440,7 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   %bound_method.loc22_9: <bound method> = bound_method %.loc22_8.2, %ref_ref_this.ref
 // CHECK:STDOUT:   %.loc22_8.3: %HasQualifiers = acquire_value %.loc22_8.2
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %impl.elem0: %.703 = impl_witness_access constants.%custom_witness.d0d, element0 [concrete = constants.%HasQualifiers.Op]
+// CHECK:STDOUT:   %impl.elem0: %.973 = impl_witness_access constants.%custom_witness.d0d, element0 [concrete = constants.%HasQualifiers.Op]
 // CHECK:STDOUT:   %bound_method.loc22_8: <bound method> = bound_method %.loc22_8.3, %impl.elem0
 // CHECK:STDOUT:   %.loc22_8.4: ref %HasQualifiers = temporary_storage
 // CHECK:STDOUT:   %Op.ref: %HasQualifiers.HasQualifiers.type = name_ref Op, imports.%HasQualifiers.HasQualifiers.decl [concrete = constants.%HasQualifiers.HasQualifiers]
@@ -517,29 +488,29 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %a.patt.623a16.1: %pattern_type.6b6 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt.207d5f.1: %pattern_type.6b6 = var_pattern %a.patt.623a16.1 [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %a.patt.1ddf80.1: %pattern_type.d94 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt.47ac83.1: %pattern_type.d94 = var_pattern %a.patt.1ddf80.1 [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.cpp_overload_set.type: type = cpp_overload_set_type @NoRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.cpp_overload_set.value: %NoRefQualifier.F.cpp_overload_set.type = cpp_overload_set_value @NoRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.8cce43.1: type = fn_type @F__carbon_thunk.1 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a92106.1: %F__carbon_thunk.type.8cce43.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %ptr.d08: type = ptr_type %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.f00: type = pattern_type %ptr.d08 [concrete]
-// CHECK:STDOUT:   %b.patt.9fb99a.1: %pattern_type.f00 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:   %b.var_patt.dede8c.1: %pattern_type.f00 = var_pattern %b.patt.9fb99a.1 [concrete]
+// CHECK:STDOUT:   %ptr.a17: type = ptr_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.7dc: type = pattern_type %ptr.a17 [concrete]
+// CHECK:STDOUT:   %b.patt.4a7b07.1: %pattern_type.7dc = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt.91c254.1: %pattern_type.7dc = var_pattern %b.patt.4a7b07.1 [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.type.8b6eff.2: type = fn_type @NoRefQualifier.F.2 [concrete]
 // CHECK:STDOUT:   %NoRefQualifier.F.dbb5f5.2: %NoRefQualifier.F.type.8b6eff.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.af0: %pattern_type.f00 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.954: %pattern_type.f00 = wrapper_binding_pattern self, %self.param_patt.af0 [concrete]
+// CHECK:STDOUT:   %self.param_patt.6cc: %pattern_type.7dc = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.a12: %pattern_type.7dc = wrapper_binding_pattern self, %self.param_patt.6cc [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc9 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc9 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.1: type = fn_type @Destroy.WithSelf.SelfDestruct.loc9 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.1: %Destroy.WithSelf.SelfDestruct.type.fbceb5.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %self.param_patt.705: %pattern_type.6b6 = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.70d: %pattern_type.6b6 = wrapper_binding_pattern self, %self.param_patt.705 [concrete]
+// CHECK:STDOUT:   %self.param_patt.0c5: %pattern_type.d94 = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.749: %pattern_type.d94 = wrapper_binding_pattern self, %self.param_patt.0c5 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc8 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc8 [concrete]
@@ -548,14 +519,14 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %WithRefQualifier: type = class_type @WithRefQualifier [concrete]
 // CHECK:STDOUT:   %ptr.90c: type = ptr_type %WithRefQualifier [concrete]
-// CHECK:STDOUT:   %a.patt.623a16.2: %pattern_type.6b6 = ref_binding_pattern a [concrete]
-// CHECK:STDOUT:   %a.var_patt.207d5f.2: %pattern_type.6b6 = var_pattern %a.patt.623a16.2 [concrete]
+// CHECK:STDOUT:   %a.patt.1ddf80.2: %pattern_type.d94 = ref_binding_pattern a [concrete]
+// CHECK:STDOUT:   %a.var_patt.47ac83.2: %pattern_type.d94 = var_pattern %a.patt.1ddf80.2 [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.cpp_overload_set.type: type = cpp_overload_set_type @WithRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.cpp_overload_set.value: %WithRefQualifier.F.cpp_overload_set.type = cpp_overload_set_value @WithRefQualifier.F.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.type.8cce43.2: type = fn_type @F__carbon_thunk.2 [concrete]
 // CHECK:STDOUT:   %F__carbon_thunk.a92106.2: %F__carbon_thunk.type.8cce43.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %b.patt.9fb99a.2: %pattern_type.f00 = ref_binding_pattern b [concrete]
-// CHECK:STDOUT:   %b.var_patt.dede8c.2: %pattern_type.f00 = var_pattern %b.patt.9fb99a.2 [concrete]
+// CHECK:STDOUT:   %b.patt.4a7b07.2: %pattern_type.7dc = ref_binding_pattern b [concrete]
+// CHECK:STDOUT:   %b.var_patt.91c254.2: %pattern_type.7dc = var_pattern %b.patt.4a7b07.2 [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.type.8b6eff.2: type = fn_type @WithRefQualifier.F.2 [concrete]
 // CHECK:STDOUT:   %WithRefQualifier.F.dbb5f5.2: %WithRefQualifier.F.type.8b6eff.2 = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -587,29 +558,29 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc9 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.1] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.f00 = ref_param_pattern [concrete = constants.%self.param_patt.af0]
-// CHECK:STDOUT:     %self.patt: %pattern_type.f00 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.954]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7dc = ref_param_pattern [concrete = constants.%self.param_patt.6cc]
+// CHECK:STDOUT:     %self.patt: %pattern_type.7dc = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a12]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %ptr.d08 = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %ptr.d08 = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %ptr.a17 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %ptr.a17 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc9 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.f00 = ref_param_pattern [concrete = constants.%self.param_patt.af0]
-// CHECK:STDOUT:     %self.patt: %pattern_type.f00 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.954]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.7dc = ref_param_pattern [concrete = constants.%self.param_patt.6cc]
+// CHECK:STDOUT:     %self.patt: %pattern_type.7dc = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a12]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: ref %ptr.d08 = ref_param call_param0
-// CHECK:STDOUT:     %self: ref %ptr.d08 = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self.param: ref %ptr.a17 = ref_param call_param0
+// CHECK:STDOUT:     %self: ref %ptr.a17 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc8 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete = constants.%self.param_patt.705]
-// CHECK:STDOUT:     %self.patt: %pattern_type.6b6 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.70d]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.d94 = ref_param_pattern [concrete = constants.%self.param_patt.0c5]
+// CHECK:STDOUT:     %self.patt: %pattern_type.d94 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.749]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %i32 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc8 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.6b6 = ref_param_pattern [concrete = constants.%self.param_patt.705]
-// CHECK:STDOUT:     %self.patt: %pattern_type.6b6 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.70d]
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.d94 = ref_param_pattern [concrete = constants.%self.param_patt.0c5]
+// CHECK:STDOUT:     %self.patt: %pattern_type.d94 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.749]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %i32 = wrapper_binding self, %self.param
@@ -627,24 +598,24 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete = constants.%a.patt.623a16.1]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete = constants.%a.var_patt.207d5f.1]
+// CHECK:STDOUT:     %a.patt: %pattern_type.d94 = ref_binding_pattern a [concrete = constants.%a.patt.1ddf80.1]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.d94 = var_pattern %a.patt [concrete = constants.%a.var_patt.47ac83.1]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %ptr.d08 = var_storage %b.var_patt
+// CHECK:STDOUT:   %b.var: ref %ptr.a17 = var_storage %b.var_patt
 // CHECK:STDOUT:   %p.ref: %ptr.f7d = name_ref p, %p
 // CHECK:STDOUT:   %.loc9_25: ref %NoRefQualifier = deref %p.ref
 // CHECK:STDOUT:   %F.ref.loc9: %NoRefQualifier.F.cpp_overload_set.type = name_ref F, imports.%NoRefQualifier.F.cpp_overload_set.value [concrete = constants.%NoRefQualifier.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc9: <bound method> = bound_method %.loc9_25, %F.ref.loc9
-// CHECK:STDOUT:   %NoRefQualifier.F.call: init %ptr.d08 = call imports.%NoRefQualifier.F.decl.89ec3d.2(%.loc9_25)
+// CHECK:STDOUT:   %NoRefQualifier.F.call: init %ptr.a17 = call imports.%NoRefQualifier.F.decl.89ec3d.2(%.loc9_25)
 // CHECK:STDOUT:   assign %b.var, %NoRefQualifier.F.call
-// CHECK:STDOUT:   %.loc9_20: type = splice_block %ptr.loc9 [concrete = constants.%ptr.d08] {
+// CHECK:STDOUT:   %.loc9_20: type = splice_block %ptr.loc9 [concrete = constants.%ptr.a17] {
 // CHECK:STDOUT:     %i32.loc9: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %i32.loc9 [concrete = constants.%ptr.d08]
+// CHECK:STDOUT:     %ptr.loc9: type = ptr_type %i32.loc9 [concrete = constants.%ptr.a17]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %ptr.d08 = wrapper_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %ptr.a17 = wrapper_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.1]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.1]
+// CHECK:STDOUT:     %b.patt: %pattern_type.7dc = ref_binding_pattern b [concrete = constants.%b.patt.4a7b07.1]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.7dc = var_pattern %b.patt [concrete = constants.%b.var_patt.91c254.1]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc9: <bound method> = bound_method %b.var, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc9: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc9(%b.var)
@@ -653,11 +624,11 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc9(%self.param: ref %ptr.d08) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc9(%self.param: ref %ptr.a17) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc9(%self.param: ref %ptr.d08) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc9(%self.param: ref %ptr.a17) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc9(%self.param: ref %ptr.d08) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc9(%self.param: ref %ptr.a17) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.1(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.1(%self.param)
@@ -686,24 +657,24 @@ fn Call(e: Cpp.ExplicitObjectParamOverloaded, n: i32, a: Cpp.AnotherOverloaded) 
 // CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: ref %i32 = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.6b6 = ref_binding_pattern a [concrete = constants.%a.patt.623a16.2]
-// CHECK:STDOUT:     %a.var_patt: %pattern_type.6b6 = var_pattern %a.patt [concrete = constants.%a.var_patt.207d5f.2]
+// CHECK:STDOUT:     %a.patt: %pattern_type.d94 = ref_binding_pattern a [concrete = constants.%a.patt.1ddf80.2]
+// CHECK:STDOUT:     %a.var_patt: %pattern_type.d94 = var_pattern %a.patt [concrete = constants.%a.var_patt.47ac83.2]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b.var: ref %ptr.d08 = var_storage %b.var_patt
+// CHECK:STDOUT:   %b.var: ref %ptr.a17 = var_storage %b.var_patt
 // CHECK:STDOUT:   %p.ref: %ptr.90c = name_ref p, %p
 // CHECK:STDOUT:   %.loc16_25: ref %WithRefQualifier = deref %p.ref
 // CHECK:STDOUT:   %F.ref.loc16: %WithRefQualifier.F.cpp_overload_set.type = name_ref F, imports.%WithRefQualifier.F.cpp_overload_set.value [concrete = constants.%WithRefQualifier.F.cpp_overload_set.value]
 // CHECK:STDOUT:   %bound_method.loc16: <bound method> = bound_method %.loc16_25, %F.ref.loc16
-// CHECK:STDOUT:   %WithRefQualifier.F.call: init %ptr.d08 = call imports.%WithRefQualifier.F.decl.89ec3d.2(%.loc16_25)
+// CHECK:STDOUT:   %WithRefQualifier.F.call: init %ptr.a17 = call imports.%WithRefQualifier.F.decl.89ec3d.2(%.loc16_25)
 // CHECK:STDOUT:   assign %b.var, %WithRefQualifier.F.call
-// CHECK:STDOUT:   %.loc16_20: type = splice_block %ptr.loc16 [concrete = constants.%ptr.d08] {
+// CHECK:STDOUT:   %.loc16_20: type = splice_block %ptr.loc16 [concrete = constants.%ptr.a17] {
 // CHECK:STDOUT:     %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %i32.loc16 [concrete = constants.%ptr.d08]
+// CHECK:STDOUT:     %ptr.loc16: type = ptr_type %i32.loc16 [concrete = constants.%ptr.a17]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: ref %ptr.d08 = wrapper_binding b, %b.var
+// CHECK:STDOUT:   %b: ref %ptr.a17 = wrapper_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %b.patt: %pattern_type.f00 = ref_binding_pattern b [concrete = constants.%b.patt.9fb99a.2]
-// CHECK:STDOUT:     %b.var_patt: %pattern_type.f00 = var_pattern %b.patt [concrete = constants.%b.var_patt.dede8c.2]
+// CHECK:STDOUT:     %b.patt: %pattern_type.7dc = ref_binding_pattern b [concrete = constants.%b.patt.4a7b07.2]
+// CHECK:STDOUT:     %b.var_patt: %pattern_type.7dc = var_pattern %b.patt [concrete = constants.%b.var_patt.91c254.2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc16: <bound method> = bound_method %b.var, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc16: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc16(%b.var)

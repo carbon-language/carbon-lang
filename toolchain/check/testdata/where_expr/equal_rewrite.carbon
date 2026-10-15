@@ -83,12 +83,8 @@ interface O {
 fn WithInteger(unused generic Q: O where .P = i32) {}
 
 fn WithBool(generic R: O where .P = bool) {
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+7]]:3: error: cannot convert type `R` that implements `O where .(O.P) = bool` into type implementing `O where .(O.P) = i32` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   WithInteger(R);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-6]]:31: note: initializing generic parameter `Q` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn WithInteger(unused generic Q: O where .P = i32) {}
-  // CHECK:STDERR:                               ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE+3]]:3-16: error: cannot convert type `R` that implements `O where .(O.P) = bool` into type implementing `O where .(O.P) = i32` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_rewrites_mismatch_right.carbon:[[@LINE-4]]:31-49: note: initializing generic parameter `Q` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   WithInteger(R);
 }
@@ -105,12 +101,8 @@ interface S {
 fn WithT(unused generic V: S where .T = ()) {}
 
 fn WithU(generic W: S where .U = ()) {
-  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+7]]:3: error: cannot convert type `W` that implements `S where .(S.U) = ()` into type implementing `S where .(S.T) = ()` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   WithT(W);
-  // CHECK:STDERR:   ^~~~~~~~
-  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-6]]:25: note: initializing generic parameter `V` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn WithT(unused generic V: S where .T = ()) {}
-  // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE+3]]:3-10: error: cannot convert type `W` that implements `S where .(S.U) = ()` into type implementing `S where .(S.T) = ()` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR: fail_rewrites_mismatch_left.carbon:[[@LINE-4]]:25-42: note: initializing generic parameter `V` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   WithT(W);
 }
@@ -123,23 +115,15 @@ import library "equal_constraint";
 import library "nested_rewrites";
 
 fn Calls() {
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: error: cannot convert type `bool` into type implementing `N where .(N.P) = {}` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   Equal(bool);
-  // CHECK:STDERR:   ^~~~~~~~~~~
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-7]]:1: in import [InImport]
-  // CHECK:STDERR: equal_constraint.carbon:9:18: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn Equal(generic T: N where .P = {});
-  // CHECK:STDERR:                  ^~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+4]]:3-13: error: cannot convert type `bool` into type implementing `N where .(N.P) = {}` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_import_rewrites.carbon:[[@LINE-5]]:1 [InImport]
+  // CHECK:STDERR: equal_constraint.carbon:9:18-35: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   Equal(bool);
 
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+8]]:3: error: cannot convert type `i32` into type implementing `A where .(A.C) = () and .(A.B) = bool` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   NestedRewrite(i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE-17]]:1: in import [InImport]
-  // CHECK:STDERR: nested_rewrites.carbon:10:26: note: initializing generic parameter `D` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn NestedRewrite(generic D: (A where .B = bool) where .C = ());
-  // CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+4]]:3-20: error: cannot convert type `i32` into type implementing `A where .(A.C) = () and .(A.B) = bool` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_import_rewrites.carbon:[[@LINE-11]]:1 [InImport]
+  // CHECK:STDERR: nested_rewrites.carbon:10:26-61: note: initializing generic parameter `D` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   NestedRewrite(i32);
 }
@@ -153,12 +137,8 @@ interface I {
 }
 
 // `2` can't be converted to the type of `I.Member`
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+7]]:53: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fn RewriteTypeMismatch(generic X: I where .Member = 2);
-// CHECK:STDERR:                                                     ^
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+4]]:53: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: fn RewriteTypeMismatch(generic X: I where .Member = 2);
-// CHECK:STDERR:                                                     ^
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+3]]:53: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+2]]:53: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 fn RewriteTypeMismatch(generic X: I where .Member = 2);
 
@@ -171,9 +151,7 @@ class D {}
 impl D as A {}
 
 fn F() {
-  // CHECK:STDERR: fail_todo_let.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic E: type where .Self impls A = D;
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_let.carbon:[[@LINE+2]]:15-41: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:
   let generic E: type where .Self impls A = D;
 }
@@ -186,9 +164,7 @@ interface A {}
 class D {}
 impl D as A {}
 // TODO: Compile-time binding are not yet supported at file scope.
-// CHECK:STDERR: fail_todo_let_compile_time.carbon:[[@LINE+4]]:13: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
-// CHECK:STDERR: let generic B: type where .Self impls A = D;
-// CHECK:STDERR:             ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_let_compile_time.carbon:[[@LINE+2]]:13-39: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
 // CHECK:STDERR:
 let generic B: type where .Self impls A = D;
 
@@ -203,21 +179,15 @@ interface E {
 // Testing how these types get stringified in error messages.
 
 // TODO: This should be a compile-time binding, once that is supported.
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:42: error: cannot convert type `f64` into type implementing `E where .(E.F) = bool and .(E.G) = ()` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: let H: (E where .F = bool and .G = ()) = f64;
-// CHECK:STDERR:                                          ^~~
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:42-44: error: cannot convert type `f64` into type implementing `E where .(E.F) = bool and .(E.G) = ()` [ConversionFailureTypeToFacet]
 // CHECK:STDERR:
 let H: (E where .F = bool and .G = ()) = f64;
 
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:45: error: cannot convert type `bool` into type implementing `E where .(E.F) = {} and .(E.G) = i32` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: let J: ((E where .F = {}) where .G = i32) = bool;
-// CHECK:STDERR:                                             ^~~~
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:45-48: error: cannot convert type `bool` into type implementing `E where .(E.F) = {} and .(E.G) = i32` [ConversionFailureTypeToFacet]
 // CHECK:STDERR:
 let J: ((E where .F = {}) where .G = i32) = bool;
 
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+4]]:33: error: cannot convert type `bool` into type implementing `E where .(E.F) = .(E.G)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: let K: (E where .F = .Self.G) = bool;
-// CHECK:STDERR:                                 ^~~~
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:33-36: error: cannot convert type `bool` into type implementing `E where .(E.F) = .(E.G)` [ConversionFailureTypeToFacet]
 // CHECK:STDERR:
 let K: (E where .F = .Self.G) = bool;
 
@@ -388,22 +358,22 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %E.lookup_impl_witness.8bd: <witness> = lookup_impl_witness %.Self, @E [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.554: type = impl_witness_access %E.lookup_impl_witness.8bd, element0 [symbolic_self]
 // CHECK:STDOUT:   %E_where.type: type = facet_type <@E where %impl.elem0.554 = %i32> [concrete]
-// CHECK:STDOUT:   %pattern_type.b73: type = pattern_type %E_where.type [concrete]
-// CHECK:STDOUT:   %G.patt: %pattern_type.b73 = symbolic_binding_pattern G, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.b17: type = pattern_type %E_where.type [concrete]
+// CHECK:STDOUT:   %G.patt: %pattern_type.b17 = symbolic_binding_pattern G, 0 [symbolic]
 // CHECK:STDOUT:   %G: %E_where.type = symbolic_binding G, 0 [symbolic]
 // CHECK:STDOUT:   %OneRewrite.type: type = fn_type @OneRewrite [concrete]
 // CHECK:STDOUT:   %OneRewrite: %OneRewrite.type = struct_value () [concrete]
-// CHECK:STDOUT:   %H.patt: %pattern_type.b73 = symbolic_binding_pattern H, 0 [symbolic]
+// CHECK:STDOUT:   %H.patt: %pattern_type.b17 = symbolic_binding_pattern H, 0 [symbolic]
 // CHECK:STDOUT:   %H: %E_where.type = symbolic_binding H, 0 [symbolic]
 // CHECK:STDOUT:   %RepeatedRewrite.type: type = fn_type @RepeatedRewrite [concrete]
 // CHECK:STDOUT:   %RepeatedRewrite: %RepeatedRewrite.type = struct_value () [concrete]
 // CHECK:STDOUT:   %I: %E_where.type = symbolic_binding I, 0 [symbolic]
-// CHECK:STDOUT:   %OneRewrite.specific_fn.ba0394.2: <specific function> = specific_function %OneRewrite, @OneRewrite(%I) [symbolic]
+// CHECK:STDOUT:   %OneRewrite.specific_fn.c00382.2: <specific function> = specific_function %OneRewrite, @OneRewrite(%I) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %OneRewrite.decl: %OneRewrite.type = fn_decl @OneRewrite [concrete = constants.%OneRewrite] {
-// CHECK:STDOUT:     %G.patt.loc9_31.1: %pattern_type.b73 = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
+// CHECK:STDOUT:     %G.patt.loc9_31.1: %pattern_type.b17 = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_35.1: type = splice_block %.loc9_35.2 [concrete = constants.%E_where.type] {
 // CHECK:STDOUT:       %.Self.frozen.loc9_31: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
@@ -427,7 +397,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:     %G.loc9_31.2: %E_where.type = symbolic_binding G, 0 [symbolic = %G.loc9_31.1 (constants.%G)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %RepeatedRewrite.decl: %RepeatedRewrite.type = fn_decl @RepeatedRewrite [concrete = constants.%RepeatedRewrite] {
-// CHECK:STDOUT:     %H.patt.loc11_29.1: %pattern_type.b73 = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
+// CHECK:STDOUT:     %H.patt.loc11_29.1: %pattern_type.b17 = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc11_33.1: type = splice_block %.loc11_33.2 [concrete = constants.%E_where.type] {
 // CHECK:STDOUT:       %.Self.frozen.loc11_29: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
@@ -465,7 +435,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @OneRewrite(%G.loc9_31.2: %E_where.type) {
-// CHECK:STDOUT:   %G.patt.loc9_31.2: %pattern_type.b73 = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
+// CHECK:STDOUT:   %G.patt.loc9_31.2: %pattern_type.b17 = symbolic_binding_pattern G, 0 [symbolic = %G.patt.loc9_31.2 (constants.%G.patt)]
 // CHECK:STDOUT:   %G.loc9_31.1: %E_where.type = symbolic_binding G, 0 [symbolic = %G.loc9_31.1 (constants.%G)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -477,7 +447,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @RepeatedRewrite(%H.loc11_29.2: %E_where.type) {
-// CHECK:STDOUT:   %H.patt.loc11_29.2: %pattern_type.b73 = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
+// CHECK:STDOUT:   %H.patt.loc11_29.2: %pattern_type.b17 = symbolic_binding_pattern H, 0 [symbolic = %H.patt.loc11_29.2 (constants.%H.patt)]
 // CHECK:STDOUT:   %H.loc11_29.1: %E_where.type = symbolic_binding H, 0 [symbolic = %H.loc11_29.1 (constants.%H)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -511,7 +481,7 @@ let K: (E where .F = .Self.G) = bool;
 // CHECK:STDOUT:   %H.loc11_29.1 => constants.%I
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %OneRewrite.specific_fn.loc13_3.2 => constants.%OneRewrite.specific_fn.ba0394.2
+// CHECK:STDOUT:   %OneRewrite.specific_fn.loc13_3.2 => constants.%OneRewrite.specific_fn.c00382.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @OneRewrite(constants.%I) {

@@ -12,48 +12,28 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_duplicate_name.carbon
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:42: error: duplicated field name `abc` in struct type literal [StructNameDuplicate]
-// CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
-// CHECK:STDERR:                                          ^~~
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: note: field with the same name here [StructNamePrevious]
-// CHECK:STDERR: fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
-// CHECK:STDERR:                      ^~~
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:42-44: error: duplicated field name `abc` in struct type literal [StructNameDuplicate]
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+2]]:22-24: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR:
 fn F() -> {.d: i32, .abc: i32, .e: i32, .abc: i32, .f: i32};
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:19: error: duplicated field name `a` in struct type literal [StructNameDuplicate]
-// CHECK:STDERR: let v: {.a: i32, .a: i32} = {.a = 1};
-// CHECK:STDERR:                   ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:10: note: field with the same name here [StructNamePrevious]
-// CHECK:STDERR: let v: {.a: i32, .a: i32} = {.a = 1};
-// CHECK:STDERR:          ^
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:19: error: duplicated field name `a` in struct type literal [StructNameDuplicate]
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+2]]:10: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR:
 let v: {.a: i32, .a: i32} = {.a = 1};
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:26: error: duplicated field name `def` in struct literal [StructNameDuplicate]
-// CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
-// CHECK:STDERR:                          ^~~
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:16: note: field with the same name here [StructNamePrevious]
-// CHECK:STDERR: let w: i32 = {.def = 1, .def = 2}.def;
-// CHECK:STDERR:                ^~~
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:26-28: error: duplicated field name `def` in struct literal [StructNameDuplicate]
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+2]]:16-18: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR:
 let w: i32 = {.def = 1, .def = 2}.def;
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:30: error: duplicated field name `a` in struct literal [StructNameDuplicate]
-// CHECK:STDERR: var x: {.a: i32} = {.a = 1, .a = 2};
-// CHECK:STDERR:                              ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:22: note: field with the same name here [StructNamePrevious]
-// CHECK:STDERR: var x: {.a: i32} = {.a = 1, .a = 2};
-// CHECK:STDERR:                      ^
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:30: error: duplicated field name `a` in struct literal [StructNameDuplicate]
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+2]]:22: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR:
 var x: {.a: i32} = {.a = 1, .a = 2};
 
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+7]]:39: error: duplicated field name `b` in struct literal [StructNameDuplicate]
-// CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
-// CHECK:STDERR:                                       ^
-// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+4]]:31: note: field with the same name here [StructNamePrevious]
-// CHECK:STDERR: var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
-// CHECK:STDERR:                               ^
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+3]]:39: error: duplicated field name `b` in struct literal [StructNameDuplicate]
+// CHECK:STDERR: fail_duplicate_name.carbon:[[@LINE+2]]:31: note: field with the same name here [StructNamePrevious]
 // CHECK:STDERR:
 var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 
@@ -62,7 +42,7 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
@@ -70,17 +50,17 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %struct_type.a.a6c: type = struct_type {.a: Core.IntLiteral} [concrete]
 // CHECK:STDOUT:   %struct: %struct_type.a.a6c = struct_value (%int_1) [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %w.patt: %pattern_type.6b6 = value_binding_pattern w [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %w.patt: %pattern_type.d94 = value_binding_pattern w [concrete]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete]
-// CHECK:STDOUT:   %struct_type.a.a92: type = struct_type {.a: %i32} [concrete]
-// CHECK:STDOUT:   %pattern_type.506: type = pattern_type %struct_type.a.a92 [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.506 = ref_binding_pattern x [concrete]
-// CHECK:STDOUT:   %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete]
+// CHECK:STDOUT:   %struct_type.a.15e: type = struct_type {.a: %i32} [concrete]
+// CHECK:STDOUT:   %pattern_type.243: type = pattern_type %struct_type.a.15e [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.243 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.var_patt: %pattern_type.243 = var_pattern %x.patt [concrete]
 // CHECK:STDOUT:   %struct_type.b.c: type = struct_type {.b: %i32, .c: %i32} [concrete]
-// CHECK:STDOUT:   %pattern_type.f19: type = pattern_type %struct_type.b.c [concrete]
-// CHECK:STDOUT:   %y.patt: %pattern_type.f19 = ref_binding_pattern y [concrete]
-// CHECK:STDOUT:   %y.var_patt: %pattern_type.f19 = var_pattern %y.patt [concrete]
+// CHECK:STDOUT:   %pattern_type.4ce: type = pattern_type %struct_type.b.c [concrete]
+// CHECK:STDOUT:   %y.patt: %pattern_type.4ce = ref_binding_pattern y [concrete]
+// CHECK:STDOUT:   %y.var_patt: %pattern_type.4ce = var_pattern %y.patt [concrete]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete]
 // CHECK:STDOUT: }
@@ -107,46 +87,46 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %i32.loc22_16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc22_27: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc22_36: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc22_47: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc22_56: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_16: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_27: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_36: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_47: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc18_56: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %i32.loc31_13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc31_22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc23_13: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc23_22: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = value_binding_pattern v [concrete = <error>]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i32.loc40: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc28: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %w: %i32 = wrapper_binding w, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %w.patt: %pattern_type.6b6 = value_binding_pattern w [concrete = constants.%w.patt]
+// CHECK:STDOUT:     %w.patt: %pattern_type.d94 = value_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x.var: ref %struct_type.a.a92 = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc49: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.a92] {
-// CHECK:STDOUT:     %i32.loc49: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.a92]
+// CHECK:STDOUT:   %x.var: ref %struct_type.a.15e = var_storage %x.var_patt [concrete]
+// CHECK:STDOUT:   %.loc33: type = splice_block %struct_type.a [concrete = constants.%struct_type.a.15e] {
+// CHECK:STDOUT:     %i32.loc33: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a.15e]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %x: ref %struct_type.a.a92 = wrapper_binding x, %x.var [concrete = %x.var]
+// CHECK:STDOUT:   %x: ref %struct_type.a.15e = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.506 = ref_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %x.var_patt: %pattern_type.506 = var_pattern %x.patt [concrete = constants.%x.var_patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.243 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.var_patt: %pattern_type.243 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %struct_type.b.c = var_storage %y.var_patt [concrete]
-// CHECK:STDOUT:   %.loc58: type = splice_block %struct_type.b.c [concrete = constants.%struct_type.b.c] {
-// CHECK:STDOUT:     %i32.loc58_13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc58_22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc38: type = splice_block %struct_type.b.c [concrete = constants.%struct_type.b.c] {
+// CHECK:STDOUT:     %i32.loc38_13: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc38_22: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.b.c: type = struct_type {.b: %i32, .c: %i32} [concrete = constants.%struct_type.b.c]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %struct_type.b.c = wrapper_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %y.patt: %pattern_type.f19 = ref_binding_pattern y [concrete = constants.%y.patt]
-// CHECK:STDOUT:     %y.var_patt: %pattern_type.f19 = var_pattern %y.patt [concrete = constants.%y.var_patt]
+// CHECK:STDOUT:     %y.patt: %pattern_type.4ce = ref_binding_pattern y [concrete = constants.%y.patt]
+// CHECK:STDOUT:     %y.var_patt: %pattern_type.4ce = var_pattern %y.patt [concrete = constants.%y.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -154,13 +134,13 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %.loc31: %struct_type.a.a6c = struct_literal (%int_1.loc31) [concrete = constants.%struct]
-// CHECK:STDOUT:   %int_1.loc40: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %int_2.loc40: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %int_1.loc23: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %.loc23: %struct_type.a.a6c = struct_literal (%int_1.loc23) [concrete = constants.%struct]
+// CHECK:STDOUT:   %int_1.loc28: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_2.loc28: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   %def.ref: <error> = name_ref def, <error> [concrete = <error>]
-// CHECK:STDOUT:   %int_1.loc49: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %int_2.loc49: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
+// CHECK:STDOUT:   %int_1.loc33: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_2.loc33: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]

@@ -98,7 +98,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.f58524831c37807e:core.Destroy.Core"(ptr %self) local_unnamed_addr #0 !dbg !37 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.72395be3dbbe8946:core.Destroy.Core"(ptr %self) local_unnamed_addr #0 !dbg !37 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
@@ -131,7 +131,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !31 = !DILocation(line: 16, column: 5, scope: !21)
 // CHECK:STDOUT: !35 = !DILocation(line: 12, column: 1, scope: !21)
 // CHECK:STDOUT: !36 = !{!22}
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.f58524831c37807e:core.Destroy.Core", scope: null, file: !0, line: 14, type: !9, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !40)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.72395be3dbbe8946:core.Destroy.Core", scope: null, file: !0, line: 14, type: !9, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !40)
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !37, type: !2)
 // CHECK:STDOUT: !39 = !DILocation(line: 14, column: 3, scope: !37)
 // CHECK:STDOUT: !40 = !{!38}
@@ -141,7 +141,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !46 = !{null, !2, !2}
 // CHECK:STDOUT: !47 = !DISubroutineType(types: !46)
 // CHECK:STDOUT: !49 = !{!43}
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.39e2e78a3c2e036d.Core:Int.9452f4c51951679b.Core:AddAssignWith.bcc2a64c00f3554f.Core.83481f1872d67895", scope: null, file: !41, line: 331, type: !47, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !57)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !41, line: 331, type: !47, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !57)
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !2)
 // CHECK:STDOUT: !52 = !DILocalVariable(arg: 2, scope: !50, type: !2)
 // CHECK:STDOUT: !57 = !{!51, !52}

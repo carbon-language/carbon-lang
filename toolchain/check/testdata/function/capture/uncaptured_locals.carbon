@@ -24,9 +24,7 @@ fn Test() {
 }
 
 // Intentionally include an error here so we skip dominance checking, which CHECK-fails for the above example.
-// CHECK:STDERR: fail_todo_reference_uncaptured.carbon:[[@LINE+4]]:14: error: name `error` not found [NameNotFound]
-// CHECK:STDERR: fn Error() { error; }
-// CHECK:STDERR:              ^~~~~
+// CHECK:STDERR: fail_todo_reference_uncaptured.carbon:[[@LINE+2]]:14-18: error: name `error` not found [NameNotFound]
 // CHECK:STDERR:
 fn Error() { error; }
 
@@ -44,8 +42,6 @@ fn Test() {
 }
 
 // Intentionally include an error here so we skip dominance checking, which CHECK-fails for the above example.
-// CHECK:STDERR: fail_todo_reference_uncaptured_lambda.carbon:[[@LINE+4]]:14: error: name `error` not found [NameNotFound]
-// CHECK:STDERR: fn Error() { error; }
-// CHECK:STDERR:              ^~~~~
+// CHECK:STDERR: fail_todo_reference_uncaptured_lambda.carbon:[[@LINE+2]]:14-18: error: name `error` not found [NameNotFound]
 // CHECK:STDERR:
 fn Error() { error; }

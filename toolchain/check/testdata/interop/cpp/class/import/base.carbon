@@ -156,111 +156,71 @@ library "[[@TEST_NAME]]";
 import Cpp library "multiple_inheritance.h";
 
 fn ConvertA(p: Cpp.C*) -> Cpp.A* {
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `C*` to `Cpp.A*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.C*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `C*` to `Cpp.A*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+2]]:3-11: note: type `Cpp.C*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertB(p: Cpp.C*) -> Cpp.B* {
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `C*` to `Cpp.B*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.C*` does not implement interface `Core.ImplicitAs(Cpp.B*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `C*` to `Cpp.B*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+2]]:3-11: note: type `Cpp.C*` does not implement interface `Core.ImplicitAs(Cpp.B*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertOneNonEmptyBaseToEmpty1(p: Cpp.OneNonEmptyBase*) -> Cpp.Empty1* {
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `OneNonEmptyBase*` to `Cpp.Empty1*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OneNonEmptyBase*` does not implement interface `Core.ImplicitAs(Cpp.Empty1*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `OneNonEmptyBase*` to `Cpp.Empty1*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+2]]:3-11: note: type `Cpp.OneNonEmptyBase*` does not implement interface `Core.ImplicitAs(Cpp.Empty1*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertOneNonEmptyBaseToEmpty2(p: Cpp.OneNonEmptyBase*) -> Cpp.Empty2* {
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `OneNonEmptyBase*` to `Cpp.Empty2*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OneNonEmptyBase*` does not implement interface `Core.ImplicitAs(Cpp.Empty2*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `OneNonEmptyBase*` to `Cpp.Empty2*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+2]]:3-11: note: type `Cpp.OneNonEmptyBase*` does not implement interface `Core.ImplicitAs(Cpp.Empty2*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertTwoNonEmptyBasesToA(p: Cpp.TwoNonEmptyBases*) -> Cpp.A* {
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `TwoNonEmptyBases*` to `Cpp.A*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoNonEmptyBases*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `TwoNonEmptyBases*` to `Cpp.A*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+2]]:3-11: note: type `Cpp.TwoNonEmptyBases*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertTwoNonEmptyBasesToB(p: Cpp.TwoNonEmptyBases*) -> Cpp.B* {
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `TwoNonEmptyBases*` to `Cpp.B*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoNonEmptyBases*` does not implement interface `Core.ImplicitAs(Cpp.B*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `TwoNonEmptyBases*` to `Cpp.B*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+2]]:3-11: note: type `Cpp.TwoNonEmptyBases*` does not implement interface `Core.ImplicitAs(Cpp.B*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertOnePolymorphicBaseToA(p: Cpp.OnePolymorphicBase*) -> Cpp.A* {
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `OnePolymorphicBase*` to `Cpp.A*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OnePolymorphicBase*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `OnePolymorphicBase*` to `Cpp.A*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+2]]:3-11: note: type `Cpp.OnePolymorphicBase*` does not implement interface `Core.ImplicitAs(Cpp.A*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertOnePolymorphicBaseToB(p: Cpp.OnePolymorphicBase*) -> Cpp.B* {
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `OnePolymorphicBase*` to `Cpp.B*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.OnePolymorphicBase*` does not implement interface `Core.ImplicitAs(Cpp.B*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `OnePolymorphicBase*` to `Cpp.B*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+2]]:3-11: note: type `Cpp.OnePolymorphicBase*` does not implement interface `Core.ImplicitAs(Cpp.B*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertTwoPolymorphicBasesToPolymorphic1(p: Cpp.TwoPolymorphicBases*) -> Cpp.Polymorphic1* {
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `TwoPolymorphicBases*` to `Cpp.Polymorphic1*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoPolymorphicBases*` does not implement interface `Core.ImplicitAs(Cpp.Polymorphic1*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `TwoPolymorphicBases*` to `Cpp.Polymorphic1*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+2]]:3-11: note: type `Cpp.TwoPolymorphicBases*` does not implement interface `Core.ImplicitAs(Cpp.Polymorphic1*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertTwoPolymorphicBasesToPolymorphic2(p: Cpp.TwoPolymorphicBases*) -> Cpp.Polymorphic2* {
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `TwoPolymorphicBases*` to `Cpp.Polymorphic2*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.TwoPolymorphicBases*` does not implement interface `Core.ImplicitAs(Cpp.Polymorphic2*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `TwoPolymorphicBases*` to `Cpp.Polymorphic2*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_multiple_inheritance.carbon:[[@LINE+2]]:3-11: note: type `Cpp.TwoPolymorphicBases*` does not implement interface `Core.ImplicitAs(Cpp.Polymorphic2*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
@@ -308,12 +268,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "virtual_inheritance.h";
 
 fn Convert(p: Cpp.VirtB*) -> Cpp.VirtA* {
-  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `VirtB*` to `Cpp.VirtA*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+4]]:3: note: type `Cpp.VirtB*` does not implement interface `Core.ImplicitAs(Cpp.VirtA*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `VirtB*` to `Cpp.VirtA*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_virtual_inheritance.carbon:[[@LINE+2]]:3-11: note: type `Cpp.VirtB*` does not implement interface `Core.ImplicitAs(Cpp.VirtA*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
@@ -343,89 +299,57 @@ library "[[@TEST_NAME]]";
 import Cpp library "diamond.h";
 
 fn ConvertBA(p: Cpp.DiamondB*) -> Cpp.DiamondA* {
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `DiamondB*` to `Cpp.DiamondA*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:3: note: type `Cpp.DiamondB*` does not implement interface `Core.ImplicitAs(Cpp.DiamondA*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `DiamondB*` to `Cpp.DiamondA*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+2]]:3-11: note: type `Cpp.DiamondB*` does not implement interface `Core.ImplicitAs(Cpp.DiamondA*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertCA(p: Cpp.DiamondC*) -> Cpp.DiamondA* {
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `DiamondC*` to `Cpp.DiamondA*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:3: note: type `Cpp.DiamondC*` does not implement interface `Core.ImplicitAs(Cpp.DiamondA*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `DiamondC*` to `Cpp.DiamondA*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+2]]:3-11: note: type `Cpp.DiamondC*` does not implement interface `Core.ImplicitAs(Cpp.DiamondA*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertDB(p: Cpp.DiamondD*) -> Cpp.DiamondB* {
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `DiamondD*` to `Cpp.DiamondB*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:3: note: type `Cpp.DiamondD*` does not implement interface `Core.ImplicitAs(Cpp.DiamondB*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `DiamondD*` to `Cpp.DiamondB*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+2]]:3-11: note: type `Cpp.DiamondD*` does not implement interface `Core.ImplicitAs(Cpp.DiamondB*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertDC(p: Cpp.DiamondD*) -> Cpp.DiamondC* {
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `DiamondD*` to `Cpp.DiamondC*` [ConversionFailure]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:3: note: type `Cpp.DiamondD*` does not implement interface `Core.ImplicitAs(Cpp.DiamondC*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return p;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `DiamondD*` to `Cpp.DiamondC*` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+2]]:3-11: note: type `Cpp.DiamondD*` does not implement interface `Core.ImplicitAs(Cpp.DiamondC*)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return p;
 }
 
 fn AccessBA(d: Cpp.DiamondD) -> i32 {
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:11: error: cannot convert expression of type `DiamondD` to `Cpp.DiamondB` with `as` [ConversionFailure]
-  // CHECK:STDERR:   return (d as Cpp.DiamondB).b;
-  // CHECK:STDERR:           ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:11: note: type `Cpp.DiamondD` does not implement interface `Core.As(Cpp.DiamondB)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return (d as Cpp.DiamondB).b;
-  // CHECK:STDERR:           ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+3]]:11-27: error: cannot convert expression of type `DiamondD` to `Cpp.DiamondB` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+2]]:11-27: note: type `Cpp.DiamondD` does not implement interface `Core.As(Cpp.DiamondB)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return (d as Cpp.DiamondB).b;
 }
 
 fn AccessCA(d: Cpp.DiamondD) -> i32 {
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:11: error: cannot convert expression of type `DiamondD` to `Cpp.DiamondC` with `as` [ConversionFailure]
-  // CHECK:STDERR:   return (d as Cpp.DiamondC).b;
-  // CHECK:STDERR:           ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:11: note: type `Cpp.DiamondD` does not implement interface `Core.As(Cpp.DiamondC)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return (d as Cpp.DiamondC).b;
-  // CHECK:STDERR:           ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+3]]:11-27: error: cannot convert expression of type `DiamondD` to `Cpp.DiamondC` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+2]]:11-27: note: type `Cpp.DiamondD` does not implement interface `Core.As(Cpp.DiamondC)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return (d as Cpp.DiamondC).b;
 }
 
 fn AccessDB(d: Cpp.DiamondD) -> i32 {
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `DiamondD` to `Cpp.DiamondB` [ConversionFailure]
-  // CHECK:STDERR:   return d.b;
-  // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:10: note: type `Cpp.DiamondD` does not implement interface `Core.ImplicitAs(Cpp.DiamondB)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return d.b;
-  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+3]]:10-12: error: cannot implicitly convert expression of type `DiamondD` to `Cpp.DiamondB` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+2]]:10-12: note: type `Cpp.DiamondD` does not implement interface `Core.ImplicitAs(Cpp.DiamondB)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return d.b;
 }
 
 fn AccessDC(d: Cpp.DiamondD) -> i32 {
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+7]]:10: error: cannot implicitly convert expression of type `DiamondD` to `Cpp.DiamondC` [ConversionFailure]
-  // CHECK:STDERR:   return d.c;
-  // CHECK:STDERR:          ^~~
-  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+4]]:10: note: type `Cpp.DiamondD` does not implement interface `Core.ImplicitAs(Cpp.DiamondC)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return d.c;
-  // CHECK:STDERR:          ^~~
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+3]]:10-12: error: cannot implicitly convert expression of type `DiamondD` to `Cpp.DiamondC` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_use_diamond.carbon:[[@LINE+2]]:10-12: note: type `Cpp.DiamondD` does not implement interface `Core.ImplicitAs(Cpp.DiamondC)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return d.c;
 }
@@ -441,9 +365,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "final.h";
 
 class B {
-  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+4]]:16: error: deriving from final type `FinalA`; base type must be an `abstract` or `base` class [BaseIsFinal]
-  // CHECK:STDERR:   extend base: Cpp.FinalA;
-  // CHECK:STDERR:                ^~~~~~~~~~
+  // CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+2]]:16-25: error: deriving from final type `FinalA`; base type must be an `abstract` or `base` class [BaseIsFinal]
   // CHECK:STDERR:
   extend base: Cpp.FinalA;
 }
@@ -459,9 +381,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "union.h";
 
 class V {
-  // CHECK:STDERR: fail_derive_from_union.carbon:[[@LINE+4]]:16: error: deriving from final type `U`; base type must be an `abstract` or `base` class [BaseIsFinal]
-  // CHECK:STDERR:   extend base: Cpp.U;
-  // CHECK:STDERR:                ^~~~~
+  // CHECK:STDERR: fail_derive_from_union.carbon:[[@LINE+2]]:16-20: error: deriving from final type `U`; base type must be an `abstract` or `base` class [BaseIsFinal]
   // CHECK:STDERR:
   extend base: Cpp.U;
 }
@@ -486,15 +406,15 @@ class V {
 // CHECK:STDOUT:   %ConvertPtr: %ConvertPtr.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.ff5: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.ce9: %ptr.as.Copy.impl.Op.type.ff5 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.60d: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%Base) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.136: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Base) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.377: %ptr.as.Copy.impl.Op.type.136 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.0e0, (%Copy.impl_witness.60d) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.ff1: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.883: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ff1, %Copy.facet [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.377, @ptr.as.Copy.impl.Op(%Base) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.20f: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f12: %ptr.as.Copy.impl.Op.type.20f = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.39c: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%Base) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.903: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Base) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.982: %ptr.as.Copy.impl.Op.type.903 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.0e0, (%Copy.impl_witness.39c) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.e2a: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.2aa: type = fn_type_with_self_type %Copy.WithSelf.Op.type.e2a, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.982, @ptr.as.Copy.impl.Op(%Base) [concrete]
 // CHECK:STDOUT:   %AcceptVal.type: type = fn_type @AcceptVal [concrete]
 // CHECK:STDOUT:   %AcceptVal: %AcceptVal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.2f5: type = pattern_type %Derived [concrete]
@@ -512,8 +432,8 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
 // CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
-// CHECK:STDOUT:   %Core.import_ref.e5f: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.ff5) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.ce9)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.fb0 = impl_witness_table (%Core.import_ref.e5f), @ptr.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.06a: @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op.type (%ptr.as.Copy.impl.Op.type.20f) = import_ref Core//prelude/parts/copy, loc{{\d+_\d+}}, loaded [symbolic = @ptr.as.Copy.impl.%ptr.as.Copy.impl.Op (constants.%ptr.as.Copy.impl.Op.f12)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.fb0 = impl_witness_table (%Core.import_ref.06a), @ptr.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -557,7 +477,7 @@ class V {
 // CHECK:STDOUT:   %.loc8_11.2: ref %Base = class_element_access %.loc8_11.1, element0
 // CHECK:STDOUT:   %addr: %ptr.0e0 = addr_of %.loc8_11.2
 // CHECK:STDOUT:   %.loc8_11.3: %ptr.0e0 = converted %d.ref, %addr
-// CHECK:STDOUT:   %impl.elem0: %.883 = impl_witness_access constants.%Copy.impl_witness.60d, element0 [concrete = constants.%ptr.as.Copy.impl.Op.377]
+// CHECK:STDOUT:   %impl.elem0: %.2aa = impl_witness_access constants.%Copy.impl_witness.39c, element0 [concrete = constants.%ptr.as.Copy.impl.Op.982]
 // CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %.loc8_11.3, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%Base) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %.loc8_11.3, %specific_fn
@@ -638,15 +558,15 @@ class V {
 // CHECK:STDOUT:   %FieldBase: type = class_type @FieldBase [concrete]
 // CHECK:STDOUT:   %FieldBase.elem: type = unbound_element_type %FieldBase, %i32 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.ac8: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.5e0: %Int.as.Copy.impl.Op.type.ac8 = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.b51: <witness> = impl_witness imports.%Copy.impl_witness_table.8d2, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.3f6: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.4f6: %Int.as.Copy.impl.Op.type.3f6 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.b51) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.381: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.737: type = fn_type_with_self_type %Copy.WithSelf.Op.type.381, %Copy.facet [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.4f6, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
+// CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -657,8 +577,8 @@ class V {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %FieldDerived.decl: type = class_decl @FieldDerived [concrete = constants.%FieldDerived] {} {}
 // CHECK:STDOUT:   %FieldBase.decl: type = class_decl @FieldBase [concrete = constants.%FieldBase] {} {}
-// CHECK:STDOUT:   %Core.import_ref.cd6: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.ac8) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.5e0)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.8d2 = impl_witness_table (%Core.import_ref.cd6), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.72f: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.a1d) = import_ref Core//prelude/parts/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.3c1)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.f44 = impl_witness_table (%Core.import_ref.72f), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @AccessDirect(%d.param: %FieldDerived) -> out %return.param: %i32 {
@@ -669,7 +589,7 @@ class V {
 // CHECK:STDOUT:   %.loc8_11.2: ref %FieldBase = converted %d.ref, %.loc8_11.1
 // CHECK:STDOUT:   %.loc8_11.3: ref %i32 = class_element_access %.loc8_11.2, element0
 // CHECK:STDOUT:   %.loc8_11.4: %i32 = acquire_value %.loc8_11.3
-// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
 // CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %.loc8_11.4, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %.loc8_11.4, %specific_fn
@@ -687,7 +607,7 @@ class V {
 // CHECK:STDOUT:   %.loc14_11.2: ref %FieldBase = converted %d.ref, %.loc14_11.1
 // CHECK:STDOUT:   %.loc14_11.3: ref %i32 = class_element_access %.loc14_11.2, element1
 // CHECK:STDOUT:   %.loc14_11.4: %i32 = acquire_value %.loc14_11.3
-// CHECK:STDOUT:   %impl.elem0: %.737 = impl_witness_access constants.%Copy.impl_witness.b51, element0 [concrete = constants.%Int.as.Copy.impl.Op.4f6]
+// CHECK:STDOUT:   %impl.elem0: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
 // CHECK:STDOUT:   %bound_method.loc14_11.1: <bound method> = bound_method %.loc14_11.4, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc14_11.2: <bound method> = bound_method %.loc14_11.4, %specific_fn

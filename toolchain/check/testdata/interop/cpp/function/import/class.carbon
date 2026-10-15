@@ -25,57 +25,29 @@ auto foo_decl_param2(ForwardDeclaredClass) -> void;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_param_type.h:4:6: error: argument type 'ForwardDeclaredClass' is incomplete [CppInteropParseError]
-// CHECK:STDERR:     4 | auto foo_decl_param1(ForwardDeclaredClass) -> void;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE+3]]:10 [InCppInclude]
+// CHECK:STDERR: ./decl_value_param_type.h:4:6-20: error: argument type 'ForwardDeclaredClass' is incomplete [CppInteropParseError]
 // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredClass' [CppInteropParseNote]
-// CHECK:STDERR:     2 | class ForwardDeclaredClass;
-// CHECK:STDERR:       |       ^
 import Cpp library "decl_value_param_type.h";
 
 fn F(p: Cpp.ForwardDeclaredClass*) {
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_decl_param1(*p);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+5]]:3-25: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
-  // CHECK:STDERR: ./decl_value_param_type.h:5:6: error: argument type 'ForwardDeclaredClass' is incomplete [CppInteropParseError]
-  // CHECK:STDERR:     5 | auto foo_decl_param2(ForwardDeclaredClass) -> void;
-  // CHECK:STDERR:       |      ^~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:10 [InCppInclude]
+  // CHECK:STDERR: ./decl_value_param_type.h:5:6-20: error: argument type 'ForwardDeclaredClass' is incomplete [CppInteropParseError]
   // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: forward declaration of 'ForwardDeclaredClass' [CppInteropParseNote]
-  // CHECK:STDERR:     2 | class ForwardDeclaredClass;
-  // CHECK:STDERR:       |       ^
   Cpp.foo_decl_param1(*p);
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+28]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_decl_param2(*p);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:3-25: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-5]]:23: error: forming value of incomplete type `Cpp.ForwardDeclaredClass` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR:   Cpp.foo_decl_param1(*p);
-  // CHECK:STDERR:                       ^~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-23]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-3]]:23-24: error: forming value of incomplete type `Cpp.ForwardDeclaredClass` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-12]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class ForwardDeclaredClass;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-27]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:4:42: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo_decl_param1(ForwardDeclaredClass) -> void;
-  // CHECK:STDERR:                                          ^
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+12]]:23: error: forming value of incomplete type `Cpp.ForwardDeclaredClass` [IncompleteTypeInValueConversion]
-  // CHECK:STDERR:   Cpp.foo_decl_param2(*p);
-  // CHECK:STDERR:                       ^~
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-35]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE+5]]:23-24: error: forming value of incomplete type `Cpp.ForwardDeclaredClass` [IncompleteTypeInValueConversion]
+  // CHECK:STDERR: included from: fail_import_decl_value_param_type.carbon:[[@LINE-17]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class ForwardDeclaredClass;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_decl_value_param_type.carbon:[[@LINE-39]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_param_type.h:5:42: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo_decl_param2(ForwardDeclaredClass) -> void;
-  // CHECK:STDERR:                                          ^
   // CHECK:STDERR:
   Cpp.foo_decl_param2(*p);
 }
@@ -118,25 +90,15 @@ auto foo_non_copyable_param(NonCopyableClass) -> void;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./non_copyable_param_type.h:6:6: error: call to deleted constructor of 'NonCopyableClass' [CppInteropParseError]
-// CHECK:STDERR:     6 | auto foo_non_copyable_param(NonCopyableClass) -> void;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./non_copyable_param_type.h:6:6-27: error: call to deleted constructor of 'NonCopyableClass' [CppInteropParseError]
 // CHECK:STDERR: ./non_copyable_param_type.h:3:3: note: 'NonCopyableClass' has been explicitly marked deleted here [CppInteropParseNote]
-// CHECK:STDERR:     3 |   NonCopyableClass(const NonCopyableClass&) = delete;
-// CHECK:STDERR:       |   ^
-// CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./non_copyable_param_type.h:6:45: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:     6 | auto foo_non_copyable_param(NonCopyableClass) -> void;
-// CHECK:STDERR:       |                                             ^
 import Cpp library "non_copyable_param_type.h";
 
 fn F(c: Cpp.NonCopyableClass) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_non_copyable_param(c);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_non_copyable_param_type.carbon:[[@LINE+2]]:3-31: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
   Cpp.foo_non_copyable_param(c);
   //@dump-sem-ir-end
@@ -172,24 +134,14 @@ fn F() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6-24: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
 // CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
-// CHECK:STDERR:     3 |   MoveOnlyClass(MoveOnlyClass&&);
-// CHECK:STDERR:       |   ^
-// CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./move_only_param_type.h:6:39: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |                                       ^
 import Cpp library "move_only_param_type.h";
 
 fn F(c: Cpp.MoveOnlyClass) {
-  // CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_move_only_param(c);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_pass_move_only_param_value.carbon:[[@LINE+2]]:3-28: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
   Cpp.foo_move_only_param(c);
 }
@@ -198,24 +150,14 @@ fn F(c: Cpp.MoveOnlyClass) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_pass_move_only_param_ref.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6-24: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
 // CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
-// CHECK:STDERR:     3 |   MoveOnlyClass(MoveOnlyClass&&);
-// CHECK:STDERR:       |   ^
-// CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./move_only_param_type.h:6:39: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |                                       ^
 import Cpp library "move_only_param_type.h";
 
 fn F(ref c: Cpp.MoveOnlyClass) {
-  // CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_move_only_param(c);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_pass_move_only_param_ref.carbon:[[@LINE+2]]:3-28: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
   Cpp.foo_move_only_param(c);
 }
@@ -224,24 +166,14 @@ fn F(ref c: Cpp.MoveOnlyClass) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./move_only_param_type.h:6:6: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./move_only_param_type.h:6:6-24: error: call to implicitly-deleted copy constructor of 'MoveOnlyClass' [CppInteropParseError]
 // CHECK:STDERR: ./move_only_param_type.h:3:3: note: copy constructor is implicitly deleted because 'MoveOnlyClass' has a user-declared move constructor [CppInteropParseNote]
-// CHECK:STDERR:     3 |   MoveOnlyClass(MoveOnlyClass&&);
-// CHECK:STDERR:       |   ^
-// CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./move_only_param_type.h:6:39: note: passing argument to parameter here [CppInteropParseNote]
-// CHECK:STDERR:     6 | auto foo_move_only_param(MoveOnlyClass) -> void;
-// CHECK:STDERR:       |                                       ^
 import Cpp library "move_only_param_type.h";
 
 fn F(ref c: Cpp.MoveOnlyClass) {
-  // CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+4]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_move_only_param(Cpp.move_move_only(ref c));
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_pass_move_only_param_ref_by_move.carbon:[[@LINE+2]]:3-52: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
   Cpp.foo_move_only_param(Cpp.move_move_only(ref c));
 }
@@ -427,13 +359,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+8]]:3: error: member access into incomplete class `Cpp.Incomplete` [QualifiedExprInIncompleteClassScope]
-  // CHECK:STDERR:   Cpp.Incomplete.foo();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_incomplete.carbon:[[@LINE+4]]:3-20: error: member access into incomplete class `Cpp.Incomplete` [QualifiedExprInIncompleteClassScope]
+  // CHECK:STDERR: included from: fail_import_incomplete.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class Incomplete;
-  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   Cpp.Incomplete.foo();
 }
@@ -496,36 +424,19 @@ auto foo_decl_value_return() -> DeclValueReturnClass;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+12]]:10: in file included here [InCppInclude]
-// CHECK:STDERR: ./decl_value_return_type.h:4:6: error: calling 'foo_decl_value_return' with incomplete return type 'DeclValueReturnClass' [CppInteropParseError]
-// CHECK:STDERR:     4 | auto foo_decl_value_return() -> DeclValueReturnClass;
-// CHECK:STDERR:       |      ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+8]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10 [InCppInclude]
+// CHECK:STDERR: ./decl_value_return_type.h:4:6-26: error: calling 'foo_decl_value_return' with incomplete return type 'DeclValueReturnClass' [CppInteropParseError]
 // CHECK:STDERR: ./decl_value_return_type.h:4:6: note: 'foo_decl_value_return' declared here [CppInteropParseNote]
-// CHECK:STDERR:     4 | auto foo_decl_value_return() -> DeclValueReturnClass;
-// CHECK:STDERR:       |      ^
-// CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+4]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: forward declaration of 'DeclValueReturnClass' [CppInteropParseNote]
-// CHECK:STDERR:     2 | class DeclValueReturnClass;
-// CHECK:STDERR:       |       ^
 import Cpp library "decl_value_return_type.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+16]]:3: note: in thunk for C++ function used here [InCppThunk]
-  // CHECK:STDERR:   Cpp.foo_decl_value_return();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+7]]:3-29: note: in thunk for C++ function used here [InCppThunk]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+12]]:3: error: function returns incomplete type `Cpp.DeclValueReturnClass` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR:   Cpp.foo_decl_value_return();
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE+5]]:3-29: error: function returns incomplete type `Cpp.DeclValueReturnClass` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR: included from: fail_import_decl_value_return_type.carbon:[[@LINE-6]]:10 [InCppInclude]
   // CHECK:STDERR: ./decl_value_return_type.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class DeclValueReturnClass;
-  // CHECK:STDERR:       ^
-  // CHECK:STDERR: fail_import_decl_value_return_type.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./decl_value_return_type.h:4:33: note: return type declared here [IncompleteReturnTypeHere]
-  // CHECK:STDERR: auto foo_decl_value_return() -> DeclValueReturnClass;
-  // CHECK:STDERR:                                 ^
   // CHECK:STDERR:
   Cpp.foo_decl_value_return();
 }
@@ -664,7 +575,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %NonCopyableClass) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo_non_copyable_param.ref: %foo_non_copyable_param.cpp_overload_set.type = name_ref foo_non_copyable_param, imports.%foo_non_copyable_param.cpp_overload_set.value [concrete = constants.%foo_non_copyable_param.cpp_overload_set.value]
 // CHECK:STDOUT:   %c.ref: %NonCopyableClass = name_ref c, %c
 // CHECK:STDOUT:   %foo_non_copyable_param.call: init %empty_tuple.type = call imports.%foo_non_copyable_param.decl(%c.ref)
@@ -819,14 +730,14 @@ fn F() {
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.b09: %Default.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.b09) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.cfe: %T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.4da: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.b09) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.79f: %T.as_type.as.DefaultOrUnformed.impl.Op.type.4da = struct_value () [symbolic]
 // CHECK:STDOUT:   %InNamespaceClass.Op.type: type = fn_type @InNamespaceClass.Op [concrete]
 // CHECK:STDOUT:   %InNamespaceClass.Op: %InNamespaceClass.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.85f: <witness> = custom_witness (%InNamespaceClass.Op), @Default [concrete]
 // CHECK:STDOUT:   %Default.facet.9a6: %Default.type = facet_value %InNamespaceClass, (%custom_witness.85f) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.4fe: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.9a6) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %InNamespaceClass, (%DefaultOrUnformed.impl_witness.4fe) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.523: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.9a6) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %InNamespaceClass, (%DefaultOrUnformed.impl_witness.523) [concrete]
 // CHECK:STDOUT:   %self.param_patt.5ba: %pattern_type.d8e = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.027: %pattern_type.d8e = wrapper_binding_pattern self, %self.param_patt.5ba [concrete]
 // CHECK:STDOUT:   %InNamespaceClass.cpp_destructor.type: type = fn_type @InNamespaceClass.cpp_destructor [concrete]
@@ -854,8 +765,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.c2f: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.cfe)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.c2f), @T.as_type.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.288: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.4da) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.79f)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.288), @T.as_type.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %InNamespaceClass.cpp_destructor.decl: %InNamespaceClass.cpp_destructor.type = fn_decl @InNamespaceClass.cpp_destructor [concrete = constants.%InNamespaceClass.cpp_destructor] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -882,7 +793,7 @@ fn F() {
 // CHECK:STDOUT:   %addr: %ptr.b66 = addr_of %.loc8
 // CHECK:STDOUT:   %foo_in_namespace_param__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_in_namespace_param__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %x.var: ref %InNamespaceClass = var_storage %x.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%InNamespaceClass, (constants.%DefaultOrUnformed.impl_witness.4fe) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%InNamespaceClass, (constants.%DefaultOrUnformed.impl_witness.523) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc10_39.1: %DefaultOrUnformed.type = converted constants.%InNamespaceClass, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc10_39.1 [concrete = constants.%InNamespaceClass]
 // CHECK:STDOUT:   %.loc10_39.2: type = converted %.loc10_39.1, %as_type [concrete = constants.%InNamespaceClass]
@@ -980,14 +891,14 @@ fn F() {
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.b09: %Default.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.b09) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.cfe: %T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.4da: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.b09) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.79f: %T.as_type.as.DefaultOrUnformed.impl.Op.type.4da = struct_value () [symbolic]
 // CHECK:STDOUT:   %OuterClass.Op.type: type = fn_type @OuterClass.Op [concrete]
 // CHECK:STDOUT:   %OuterClass.Op: %OuterClass.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.9b4: <witness> = custom_witness (%OuterClass.Op), @Default [concrete]
 // CHECK:STDOUT:   %Default.facet.3fb: %Default.type = facet_value %OuterClass, (%custom_witness.9b4) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.436: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.3fb) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %OuterClass, (%DefaultOrUnformed.impl_witness.436) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.7d6: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.3fb) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %OuterClass, (%DefaultOrUnformed.impl_witness.7d6) [concrete]
 // CHECK:STDOUT:   %self.param_patt.46e: %pattern_type.dd5 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.360: %pattern_type.dd5 = wrapper_binding_pattern self, %self.param_patt.46e [concrete]
 // CHECK:STDOUT:   %OuterClass.cpp_destructor.type: type = fn_type @OuterClass.cpp_destructor [concrete]
@@ -1011,8 +922,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.c2f: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.cfe)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.c2f), @T.as_type.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.288: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.4da) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.79f)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.288), @T.as_type.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT:   %OuterClass.cpp_destructor.decl: %OuterClass.cpp_destructor.type = fn_decl @OuterClass.cpp_destructor [concrete = constants.%OuterClass.cpp_destructor] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1039,7 +950,7 @@ fn F() {
 // CHECK:STDOUT:   %addr: %ptr.5e5 = addr_of %.loc8
 // CHECK:STDOUT:   %foo_in_outer_param__carbon_thunk.call: init %empty_tuple.type = call imports.%foo_in_outer_param__carbon_thunk.decl(%addr)
 // CHECK:STDOUT:   %x.var: ref %OuterClass = var_storage %x.var_patt
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%OuterClass, (constants.%DefaultOrUnformed.impl_witness.436) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%OuterClass, (constants.%DefaultOrUnformed.impl_witness.7d6) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc9_31.1: %DefaultOrUnformed.type = converted constants.%OuterClass, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc9_31.1 [concrete = constants.%OuterClass]
 // CHECK:STDOUT:   %.loc9_31.2: type = converted %.loc9_31.1, %as_type [concrete = constants.%OuterClass]

@@ -52,12 +52,8 @@ library "[[@TEST_NAME]]";
 fn AndLit(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
 
 fn F(a: Core.IntLiteral) -> Core.IntLiteral {
-  // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE+7]]:10: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR:   return AndLit(5, a);
-  // CHECK:STDERR:          ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE-6]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR: fn AndLit(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE+3]]:10-21: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_literal_runtime.carbon:[[@LINE-4]]:1-70: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:
   return AndLit(5, a);
 }
@@ -67,24 +63,16 @@ fn F(a: Core.IntLiteral) -> Core.IntLiteral {
 library "[[@TEST_NAME]]";
 
 // Heterogeneous "and" is not supported.
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAnd1(a: i32, b: Core.IntLiteral) -> i32 = "int.and";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-49: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn MixedAnd1(a: i32, b: Core.IntLiteral) -> i32 = "int.and";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAnd2(a: Core.IntLiteral, b: i32) -> i32 = "int.and";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-49: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn MixedAnd2(a: Core.IntLiteral, b: i32) -> i32 = "int.and";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAnd3(a: i32, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-61: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn MixedAnd3(a: i32, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MixedAnd4(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.and";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-61: error: invalid signature for builtin function "int.and" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn MixedAnd4(a: Core.IntLiteral, b: i32) -> Core.IntLiteral = "int.and";
 
@@ -97,28 +85,16 @@ fn And(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
 fn Test(n: Core.IntLiteral) {
   // OK
   And(1, 1);
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR:   And(n, 1);
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-8]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR: fn And(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+3]]:3-11: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-6]]:1-67: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:
   And(n, 1);
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR:   And(1, n);
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-16]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR: fn And(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+3]]:3-11: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-10]]:1-67: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:
   And(1, n);
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+7]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR:   And(n, n);
-  // CHECK:STDERR:   ^~~~~~~~~
-  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-24]]:1: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR: fn And(a: Core.IntLiteral, b: Core.IntLiteral) -> Core.IntLiteral = "int.and";
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE+3]]:3-11: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_runtime_literal.carbon:[[@LINE-14]]:1-67: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR:
   And(n, n);
 }
