@@ -135,8 +135,7 @@ auto HandleBindingPattern(Context& context) -> void {
           AnonymousBindingInStructPattern, Error,
           "anonymous binding found in struct pattern; use `.field = "
           "_: field_type` or `unused field: field_type`");
-      context.emitter().Emit(*context.position(),
-                             AnonymousBindingInStructPattern);
+      context.emitter().Emit(*underscore, AnonymousBindingInStructPattern);
       state.has_error = true;
     }
     context.AddLeafNode(NodeKind::UnderscoreName, *underscore);

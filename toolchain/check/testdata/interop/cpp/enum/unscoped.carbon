@@ -36,13 +36,15 @@ library "[[@TEST_NAME]]";
 import Cpp library "enum.h";
 
 fn F() {
-  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+3]]:29-38: error: cannot implicitly convert expression of type `Cpp.Enum` to `Cpp.Other` [ConversionFailure]
-  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+2]]:29-38: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+4]]:29-38: error: cannot implicitly convert expression of type `Cpp.Enum` to `Cpp.Other` [ConversionFailure]
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+3]]:29-38: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplForType]
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+2]]:14-25: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   let unused c: Cpp.Other = Cpp.Enum.c;
 
-  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+3]]:30-34: error: cannot implicitly convert expression of type `Cpp.Enum` to `Cpp.Other` [ConversionFailure]
-  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+2]]:30-34: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+4]]:30-34: error: cannot implicitly convert expression of type `Cpp.Enum` to `Cpp.Other` [ConversionFailure]
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+3]]:30-34: note: type `Cpp.Enum` does not implement interface `Core.ImplicitAs(Cpp.Other)` [MissingImplForType]
+  // CHECK:STDERR: fail_wrong_enum.carbon:[[@LINE+2]]:14-26: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   let unused c2: Cpp.Other = Cpp.c;
 }
@@ -54,7 +56,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "enum.h";
 
 fn F() {
-  // CHECK:STDERR: fail_non_enum_member.carbon:[[@LINE+2]]:29-38: error: member name `d` not found in `Cpp.Enum` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_non_enum_member.carbon:[[@LINE+3]]:29-38: error: member name `d` not found in `Cpp.Enum` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: ./enum.h:2:6: note: `Cpp.Enum` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   let unused c: Cpp.Other = Cpp.Enum.d;
 }

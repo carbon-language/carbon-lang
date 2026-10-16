@@ -37,6 +37,10 @@ class DeductionWorklist {
     SemIR::InstId arg;
     bool want_value;
     SemIR::LocId param_loc_id;
+    // Where the argument this deduction descended from was written. `arg` is
+    // often a canonicalized inst with no location, so diagnostics use this
+    // location instead.
+    SemIR::LocId origin_loc_id;
   };
 
   // Adds a single (param, arg) deduction.
@@ -48,7 +52,8 @@ class DeductionWorklist {
     deductions_.push_back({.param = param,
                            .arg = arg,
                            .want_value = want_value,
-                           .param_loc_id = param_loc_id});
+                           .param_loc_id = param_loc_id,
+                           .origin_loc_id = origin_loc_id_});
   }
 
   // Adds a single (param, arg) deduction of a specific.
@@ -76,9 +81,18 @@ class DeductionWorklist {
       // as non-deduced. For now we treat it as non-deduced.
       return;
     }
+    // With no origin set, as for the call's own arguments, each argument is
+    // its own origin. A list reached by decomposing a popped deduction keeps
+    // that deduction's origin. The origin is reset afterwards so that a later
+    // addition doesn't inherit the last argument's.
+    SemIR::LocId enclosing_origin_loc_id = origin_loc_id_;
     for (auto [param, arg] : llvm::reverse(llvm::zip_equal(params, args))) {
+      if (!enclosing_origin_loc_id.has_value()) {
+        origin_loc_id_ = SemIR::LocId(arg);
+      }
       Add(param, arg, want_value);
     }
+    origin_loc_id_ = enclosing_origin_loc_id;
   }
 
   auto AddAll(SemIR::InstBlockId params, llvm::ArrayRef<SemIR::InstId> args,
@@ -150,12 +164,22 @@ class DeductionWorklist {
   // Returns whether we have completed all deductions.
   auto Done() -> bool { return deductions_.empty(); }
 
-  // Pops the next deduction. Requires `!Done()`.
-  auto PopNext() -> PendingDeduction { return deductions_.pop_back_val(); }
+  // Pops the next deduction. Requires `!Done()`. Anything added while the
+  // result is being processed gets its origin, so a deduction reached by
+  // decomposing a parameter has the origin of the argument it came from.
+  auto PopNext() -> PendingDeduction {
+    auto result = deductions_.pop_back_val();
+    origin_loc_id_ = result.origin_loc_id;
+    return result;
+  }
 
  private:
   Context* context_;
   llvm::SmallVector<PendingDeduction> deductions_;
+  // The origin given to entries added from here on. `AddAll` sets it for each
+  // argument of a top-level list, and `PopNext` sets it to the popped
+  // deduction's origin.
+  SemIR::LocId origin_loc_id_ = SemIR::LocId::None;
 };
 
 // State that is tracked throughout the deduction process.
@@ -291,7 +315,8 @@ DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
 
 auto DeductionContext::Deduce() -> bool {
   while (!worklist_.Done()) {
-    auto [param_id, arg_id, want_value, param_loc_id] = worklist_.PopNext();
+    auto [param_id, arg_id, want_value, param_loc_id, origin_loc_id] =
+        worklist_.PopNext();
 
     if (param_id == SemIR::ErrorInst::InstId) {
       return false;
@@ -423,8 +448,16 @@ auto DeductionContext::Deduce() -> bool {
                                 "inconsistent deductions for value of generic "
                                 "parameter `{0}`",
                                 SemIR::NameId);
+              CARBON_DIAGNOSTIC_LABEL(
+                  DeductionInconsistentArg, Info,
+                  "conflicting value for `{0}` deduced from this argument",
+                  SemIR::NameId);
               auto diag = context().emitter().Build(
                   loc_id_, DeductionInconsistent, entity_name.name_id);
+              if (origin_loc_id.has_value()) {
+                diag.Attach(origin_loc_id, DeductionInconsistentArg,
+                            entity_name.name_id);
+              }
               NoteGenericHere(context(), generic_id_, diag);
               diag.Emit();
             }
@@ -513,8 +546,11 @@ auto DeductionContext::CheckDeductionIsComplete() -> bool {
         CARBON_DIAGNOSTIC(DeductionIncomplete, Error,
                           "cannot deduce value for generic parameter `{0}`",
                           SemIR::NameId);
+        CARBON_DIAGNOSTIC_LABEL(DeductionIncompleteParam, Info,
+                                "no value was deduced for this parameter");
         auto diag =
             context().emitter().Build(loc_id_, DeductionIncomplete, name_id);
+        diag.Attach(SemIR::LocId(binding_id), DeductionIncompleteParam);
         NoteGenericHere(context(), generic_id_, diag);
         diag.Emit();
       }

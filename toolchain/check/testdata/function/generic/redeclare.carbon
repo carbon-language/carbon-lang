@@ -28,8 +28,8 @@ library "[[@TEST_NAME]]";
 
 fn F(generic T: type, generic U: type) -> T*;
 
-// CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+3]]:1-46: error: function redeclaration differs because return type is `U*` [FunctionRedeclReturnTypeDiffers]
-// CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-3]]:1-45: note: previously declared with return type `T*` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+3]]:43-44: error: function redeclaration differs because return type is `U*` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_different_return_type.carbon:[[@LINE-3]]:43-44: note: previously declared with return type `T*` [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:
 fn F(generic T: type, generic U: type) -> U* {
   // CHECK:STDERR: fail_different_return_type.carbon:[[@LINE+3]]:10-13: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]

@@ -126,6 +126,8 @@ fn F() {
 
 // --- forward_decl.h
 
+// CHECK:STDERR: error: calling function with incomplete return type 'Incomplete' [CppInteropParseError]
+// CHECK:STDERR: ./forward_decl.h:[[@LINE+1]]:7: note: forward declaration of 'Incomplete' [CppInteropParseNote]
 class Incomplete;
 
 using CallbackType = Incomplete (*)();
@@ -146,9 +148,6 @@ fn F() {
 // --- fail_use_forward_decl.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: error: calling function with incomplete return type 'Incomplete' [CppInteropParseError]
-// CHECK:STDERR: included from: fail_use_forward_decl.carbon:[[@LINE+2]]:10 [InCppInclude]
-// CHECK:STDERR: ./forward_decl.h:2:7: note: forward declaration of 'Incomplete' [CppInteropParseNote]
 import Cpp library "forward_decl.h";
 
 fn F() {
@@ -156,7 +155,7 @@ fn F() {
   // CHECK:STDERR:
   // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+5]]:3-24: error: function returns incomplete type `Cpp.Incomplete` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR: included from: fail_use_forward_decl.carbon:[[@LINE-6]]:10 [InCppInclude]
-  // CHECK:STDERR: ./forward_decl.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: ./forward_decl.h:4:7: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR: note: return type declared here [IncompleteReturnTypeHere]
   // CHECK:STDERR:
   Cpp.ReturnCallback()();
@@ -172,7 +171,8 @@ using MyCallbackType = void(*)(int);
 fn MyCallback(generic arg: i32);
 
 fn F() {
-  // CHECK:STDERR: fail_convert_generic_arg.carbon:[[@LINE+2]]:43-52: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
+  // CHECK:STDERR: fail_convert_generic_arg.carbon:[[@LINE+3]]:43-52: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
+  // CHECK:STDERR: fail_convert_generic_arg.carbon:[[@LINE+2]]:3-39: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
 }
@@ -187,8 +187,9 @@ using MyCallbackType = void(*)(int);
 fn MyCallback(arg: i32) -> i32;
 
 fn F() {
-  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE+3]]:43-52: error: can't convert exported function pointer to `void (*)(int)` [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE+4]]:43-52: error: can't convert exported function pointer to `void (*)(int)` [ExportedFunctionPtrTypeMismatch]
   // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE-4]]:1-31: note: function exported with pointer type `int (*)(int)` [ExportedFromFunction]
+  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE+2]]:3-39: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
 }

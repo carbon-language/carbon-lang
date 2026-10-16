@@ -37,7 +37,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "global.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE+2]]:3-9: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE+3]]:3-9: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE-4]]:1-30: note: `Cpp` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   Cpp.bar();
 }
@@ -57,7 +58,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE+2]]:3-10: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE+3]]:3-10: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE-4]]:1-36: note: `Cpp` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   Cpp.base();
 }
@@ -81,8 +83,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE+5]]:3-12: error: no matching function for call to 'base' [CppInteropParseError]
-  // CHECK:STDERR: included from: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE+4]]:3-12: error: no matching function for call to 'base' [CppInteropParseError]
   // CHECK:STDERR: ./special_name.h:2:6: note: candidate function not viable [CppInteropParseNote]
   // CHECK:STDERR: ./special_name.h:2:10-11: note: requires 0 arguments, but 1 was provided [CppInteropParseNoteReason]
   // CHECK:STDERR:

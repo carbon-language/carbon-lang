@@ -53,7 +53,7 @@ class SomeClassAdapter {
 
 fn F(a: SomeClassAdapter) {
   // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+4]]:3: error: cannot implicitly convert expression of type `SomeClassAdapter` to `SomeClass` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+3]]:3: note: type `SomeClassAdapter` does not implement interface `Core.ImplicitAs(SomeClass)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+3]]:3: note: type `SomeClassAdapter` does not implement interface `Core.ImplicitAs(SomeClass)` [MissingImplForType]
   // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-10]]:8-11: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   a.F();
@@ -73,8 +73,8 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) -> i32 {
-  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+3]]:10-12: error: cannot implicitly convert expression of type `SomeClassAdapter` to `SomeClass` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+2]]:10-12: note: type `SomeClassAdapter` does not implement interface `Core.ImplicitAs(SomeClass)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+3]]:10: error: cannot implicitly convert expression of type `SomeClassAdapter` to `SomeClass` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+2]]:10-12: note: type `SomeClassAdapter` does not implement interface `Core.ImplicitAs(SomeClass)` [MissingImplForType]
   // CHECK:STDERR:
   return a.b;
 }
@@ -89,7 +89,8 @@ class StructAdapter {
 
 fn F(a: StructAdapter) -> i32 {
   // TODO: This should be allowed.
-  // CHECK:STDERR: fail_todo_adapt_struct.carbon:[[@LINE+2]]:10-12: error: member name `b` not found in `StructAdapter` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_todo_adapt_struct.carbon:[[@LINE+3]]:10-12: error: member name `b` not found in `StructAdapter` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_todo_adapt_struct.carbon:[[@LINE-7]]:1-21: note: `StructAdapter` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   return a.b;
 }
@@ -121,7 +122,8 @@ class IntAdapter {
 
 fn F(a: IntAdapter) -> i32 {
   // Builtin types have no member names.
-  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+2]]:10-14: error: member name `foo` not found in `IntAdapter` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+3]]:10-14: error: member name `foo` not found in `IntAdapter` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE-7]]:1-18: note: `IntAdapter` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   return a.foo;
 }

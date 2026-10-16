@@ -80,8 +80,8 @@ fn While() {
 library "[[@TEST_NAME]]";
 
 fn While() {
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:9-12: error: cannot implicitly convert expression of type `{}` to `bool` [ConversionFailure]
-  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+2]]:9-12: note: type `{}` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+3]]:10-11: error: cannot implicitly convert expression of type `{}` to `bool` [ConversionFailure]
+  // CHECK:STDERR: fail_bad_condition.carbon:[[@LINE+2]]:9-12: note: type `{}` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
   // CHECK:STDERR:
   while ({}) {}
 }

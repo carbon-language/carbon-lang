@@ -12,8 +12,9 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/var/fail_init_type_mismatch.carbon
 
-// CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+3]]:1-9: error: cannot implicitly convert expression of type `()` to `{}` [ConversionFailure]
-// CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+2]]:1-9: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+4]]:13-14: error: cannot implicitly convert expression of type `()` to `{}` [ConversionFailure]
+// CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+3]]:1-9: note: type `()` does not implement interface `Core.ImplicitAs({})` [MissingImplForType]
+// CHECK:STDERR: fail_init_type_mismatch.carbon:[[@LINE+2]]:1-9: note: initializing this binding [InBindingInit]
 // CHECK:STDERR:
 var x: {} = ();
 
@@ -48,9 +49,9 @@ var x: {} = ();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %x.var: ref %empty_struct_type = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc18_9.1: type = splice_block %.loc18_9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc18_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc18_9.3: type = converted %.loc18_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc19_9.1: type = splice_block %.loc19_9.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc19_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc19_9.3: type = converted %.loc19_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %x: ref %empty_struct_type = wrapper_binding x, %x.var [concrete = %x.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -61,8 +62,8 @@ var x: {} = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18_14: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc18_1: %empty_struct_type = converted %.loc18_14, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc19_14: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc19_1: %empty_struct_type = converted %.loc19_14, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

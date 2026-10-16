@@ -11,7 +11,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_ref_return.carbon
 
 fn F() -> ref i32 {
-  // CHECK:STDERR: fail_ref_return.carbon:[[@LINE+2]]:3-11: error: cannot bind durable reference to non-reference value of type `i32` [ConversionFailureNonRefToRef]
+  // CHECK:STDERR: fail_ref_return.carbon:[[@LINE+3]]:3-11: error: cannot bind durable reference to non-reference value of type `i32` [ConversionFailureNonRefToRef]
+  // CHECK:STDERR: fail_ref_return.carbon:[[@LINE-2]]:11-17: note: return type of function is `<type component of form <cannot stringify inst6400002D: {kind: RefForm, arg0: inst6400002A, type: type(inst(FormType))}>>` [ReturnTypeHereNote]
   // CHECK:STDERR:
   return 0;
 }

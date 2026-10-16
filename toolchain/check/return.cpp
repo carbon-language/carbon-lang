@@ -382,6 +382,13 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
   } else {
+    // A failed conversion here is about the declared return type, so attach a
+    // label to it on every diagnostic from the conversion.
+    auto note_return_type = [&](DiagnosticBuilder& diag) {
+      NoteReturnType(diag, function);
+    };
+    DiagnosticAnnotationScope annotate_return_type(&context.emitter(),
+                                                   note_return_type);
     converted = ConvertReturnExpr(context, loc_id, function, expr_id);
   }
   AddReturnInstWithCleanups(
@@ -397,7 +404,15 @@ auto BuildReturnVar(Context& context, Parse::ReturnStatementId node_id)
   if (!returned_var_id.has_value()) {
     CARBON_DIAGNOSTIC(ReturnVarWithNoReturnedVar, Error,
                       "`return var;` with no `returned var` in scope");
-    context.emitter().Emit(node_id, ReturnVarWithNoReturnedVar);
+    auto diag = context.emitter().Build(node_id, ReturnVarWithNoReturnedVar);
+    if (function.has_pending_deduced_return_type()) {
+      NoteReturnTypeIsDeduced(diag, function);
+    } else if (function.return_type_inst_id.has_value()) {
+      NoteReturnType(diag, function);
+    } else {
+      NoteNoReturnTypeProvided(diag, function);
+    }
+    diag.Emit();
     returned_var_id = SemIR::ErrorInst::InstId;
   }
 

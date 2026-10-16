@@ -6,7 +6,7 @@
 
 namespace Carbon::Lex {
 
-auto CanLexInt(Diagnostics::Emitter<const char*>& emitter, llvm::StringRef text)
+auto CanLexInt(Diagnostics::Emitter<SourceLoc>& emitter, llvm::StringRef text)
     -> bool {
   // Integer parsing has poor scaling characteristics for extremely large digit
   // amounts. We've done some performance work on this, but this limit exists to
@@ -21,7 +21,9 @@ auto CanLexInt(Diagnostics::Emitter<const char*>& emitter, llvm::StringRef text)
         "found a sequence of {0} digits, which is greater than the "
         "limit of {1}",
         size_t, size_t);
-    emitter.Emit(text.begin(), TooManyDigits, text.size(), DigitLimit);
+    emitter.Build(text.begin(), TooManyDigits, text.size(), DigitLimit)
+        .Attach(SourceLoc(text))
+        .Emit();
     return false;
   }
   return true;

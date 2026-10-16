@@ -42,7 +42,8 @@ base class Base {
 class Derived {
   var d: i32;
 
-  // CHECK:STDERR: fail_base_after_field.carbon:[[@LINE+2]]:3-20: error: `base` declaration must appear before field declarations [BaseDeclAfterFieldDecl]
+  // CHECK:STDERR: fail_base_after_field.carbon:[[@LINE+3]]:3-20: error: `base` declaration must appear before field declarations [BaseDeclAfterFieldDecl]
+  // CHECK:STDERR: fail_base_after_field.carbon:[[@LINE-3]]:7-12: note: first field declared here [BaseDeclAfterThisField]
   // CHECK:STDERR:
   extend base: Base;
 }

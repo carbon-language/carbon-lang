@@ -21,8 +21,12 @@ namespace Carbon::Check {
 static auto HandleUnaryOperator(Context& context, Parse::AnyExprId expr_node_id,
                                 CoreIdentifier interface_name) -> bool {
   auto operand_id = context.node_stack().PopExpr();
+  // The parse node is the operator token, so `TokenOnly` locates the message at
+  // the operator alone.
   auto result_id = BuildUnaryOperator(
-      context, expr_node_id, {.interface_name = interface_name}, operand_id);
+      context, expr_node_id, {.interface_name = interface_name}, operand_id,
+      /*diagnose=*/true, /*missing_impl_diagnostic_context=*/nullptr,
+      {.loc_id = LocIdForDiagnostics::TokenOnly(expr_node_id)});
   context.node_stack().Push(expr_node_id, result_id);
   return true;
 }
@@ -40,11 +44,29 @@ static auto HandleBinaryOperator(Context& context,
   // this function for it.
   SemIR::InstId args[] = {
       context.types().GetTypeInstId(context.insts().Get(rhs_id).type_id())};
-  auto result_id = BuildBinaryOperator(context, expr_node_id,
-                                       {.interface_name = interface_name,
-                                        .interface_args_ref = args,
-                                        .op_name = op_name},
-                                       lhs_id, rhs_id);
+  CARBON_DIAGNOSTIC_LABEL(BinaryOperatorLhsType, Primary,
+                          "left operand has type {0}", TypeOfInstId);
+  CARBON_DIAGNOSTIC_LABEL(BinaryOperatorRhsType, Primary,
+                          "right operand has type {0}", TypeOfInstId);
+  // The parse node is the operator token, so `TokenOnly` locates the message at
+  // the operator alone. The labels on the operands say which operand has which
+  // of the types the message names.
+  auto op_loc_id = LocIdForDiagnostics::TokenOnly(expr_node_id);
+  auto attach_operand_types = [&](DiagnosticBuilder& builder) {
+    // TODO: Remove this range once a label on the message's line no longer
+    // takes the message's place.
+    builder.Attach(op_loc_id);
+    AttachOperandType(context, builder, lhs_id, BinaryOperatorLhsType);
+    AttachOperandType(context, builder, rhs_id, BinaryOperatorRhsType);
+  };
+  auto result_id = BuildBinaryOperator(
+      context, expr_node_id,
+      {.interface_name = interface_name,
+       .interface_args_ref = args,
+       .op_name = op_name},
+      lhs_id, rhs_id, /*diagnose=*/true,
+      /*missing_impl_diagnostic_context=*/nullptr,
+      {.loc_id = op_loc_id, .annotate = attach_operand_types});
   context.node_stack().Push(expr_node_id, result_id);
   return true;
 }

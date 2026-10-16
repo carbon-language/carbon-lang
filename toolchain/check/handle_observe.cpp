@@ -21,13 +21,23 @@ namespace Carbon::Check {
 auto HandleParseNode(Context& context, Parse::ObserveIntroducerId node_id)
     -> bool {
   auto scope_inst_id = context.scope_stack().PeekInstId();
-  if (!context.insts()
+  if (!scope_inst_id.has_value() ||
+      !context.insts()
            .IsOneOf<SemIR::InterfaceWithSelfDecl, SemIR::FunctionDecl>(
                scope_inst_id)) {
     CARBON_DIAGNOSTIC(
         ObserveInWrongScope, Error,
         "`observe` can only be used in an `interface` or `function`");
-    context.emitter().Emit(node_id, ObserveInWrongScope);
+    CARBON_DIAGNOSTIC_LABEL(ObserveEnclosingScope, Info,
+                            "appears in this declaration");
+    auto builder = context.emitter().Build(node_id, ObserveInWrongScope);
+    // Only attach a label when the enclosing scope has an explicit
+    // declaration.
+    if (scope_inst_id.has_value() &&
+        context.insts().GetCanonicalLocId(scope_inst_id).has_value()) {
+      builder.Attach(scope_inst_id, ObserveEnclosingScope);
+    }
+    builder.Emit();
     scope_inst_id = SemIR::ErrorInst::InstId;
   }
 

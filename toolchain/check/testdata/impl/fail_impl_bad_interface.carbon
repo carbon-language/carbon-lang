@@ -17,7 +17,7 @@
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_impl_as_false.carbon:[[@LINE+3]]:13-17: error: cannot implicitly convert non-type value of type `bool` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_impl_as_false.carbon:[[@LINE+2]]:13-17: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_impl_as_false.carbon:[[@LINE+2]]:13-17: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
 // CHECK:STDERR:
 impl i32 as false {}
 

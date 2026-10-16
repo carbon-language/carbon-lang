@@ -18,13 +18,14 @@ fn F(unused x: C = {}, unused y: C = {}, unused z: C = {}) {}
 fn H(unused x: C = {}, (unused y: C = {}, unused z: C = {}) = ({}, {})) {}
 
 fn G() {
-  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE+6]]:3-19: error: 4 arguments passed to function expecting 3 arguments [CallArgCountMismatch]
+  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE+4]]:3-19: error: 4 arguments passed to function expecting 3 arguments [CallArgCountMismatch]
   // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE-5]]:1-60: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE-6]]:24-59: error: tuple pattern expects 2 elements, but tuple literal has 3 [TuplePatternSizeDoesntMatchLiteral]
-  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE-7]]:24-70: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:
   F({}, {}, {}, {});
+  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE+3]]:9-20: note: tuple literal has 3 elements [TupleLiteralElementCount]
+  // CHECK:STDERR: fail_caller_too_many_arguments.carbon:[[@LINE-9]]:24-70: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:
   H({}, ({}, {}, {}));
 }
 

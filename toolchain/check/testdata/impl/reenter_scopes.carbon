@@ -25,7 +25,7 @@ class N.C {
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_reenter_class_scope.carbon:[[@LINE+4]]:11-12: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_class_scope.carbon:[[@LINE+2]]:17: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_todo_reenter_class_scope.carbon:[[@LINE+2]]:15: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 impl N.C.(as Z) {
   fn ZF() {
@@ -49,7 +49,7 @@ class N.C {
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+6]]:19: error: name `Z` not found [NameNotFound]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+4]]:22: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+4]]:20: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+2]]:1-22: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
@@ -75,7 +75,7 @@ class N.C {
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+6]]:16: error: name `Z` not found [NameNotFound]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+4]]:19: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+4]]:17: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+2]]:1-19: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
@@ -99,7 +99,7 @@ class N.D {}
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_reenter_namespace_scope.carbon:[[@LINE+6]]:14: error: name `Z` not found [NameNotFound]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_namespace_scope.carbon:[[@LINE+4]]:17: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_todo_reenter_namespace_scope.carbon:[[@LINE+4]]:15: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_reenter_namespace_scope.carbon:[[@LINE+2]]:1-17: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:

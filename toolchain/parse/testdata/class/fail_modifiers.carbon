@@ -10,13 +10,13 @@
 
 // --- fail_virtual_class.carbon
 
-virtual class B
-// CHECK:STDERR: fail_virtual_class.carbon:[[@LINE+2]]:1: error: `virtual` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_virtual_class.carbon:[[@LINE+2]]:15: error: `virtual` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
 // CHECK:STDERR:
+virtual class B
 
 // --- fail_impl_class.carbon
 
-// CHECK:STDERR: fail_impl_class.carbon:[[@LINE+2]]:1-4: error: `impl` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_impl_class.carbon:[[@LINE+2]]:6-10: error: `impl` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 impl class
 

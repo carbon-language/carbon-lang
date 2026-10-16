@@ -72,7 +72,8 @@ interface J {
 }
 
 fn INotJ(generic T: I where .Self impls J) {
-  // CHECK:STDERR: fail_name_lookup_through_where_self_impls.carbon:[[@LINE+2]]:3-5: error: member name `G` not found in `I` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_name_lookup_through_where_self_impls.carbon:[[@LINE+3]]:3-5: error: member name `G` not found in `I` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_name_lookup_through_where_self_impls.carbon:[[@LINE-10]]:1-13: note: `I` declared here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   T.G();
 }
@@ -97,11 +98,13 @@ interface A {}
 interface B { fn Bfn(); }
 
 fn F(generic T: A & B) {
-  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+2]]:6-32: error: member name `Bfn` not found in `A` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+3]]:6-32: error: member name `Bfn` not found in `A` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE-5]]:1-13: note: `A` declared here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   T.((A where .Self impls B).Bfn)();
 
-  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+2]]:3-29: error: member name `Bfn` not found in `A` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE+3]]:3-29: error: member name `Bfn` not found in `A` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_facet_type_simple_member_access.carbon:[[@LINE-10]]:1-13: note: `A` declared here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   (A where .Self impls B).Bfn;
 }
@@ -120,11 +123,13 @@ interface J {
 }
 
 fn INotJ[T: I where .Self impls J](x: T) {
-  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+2]]:3-16: error: member name `GNonInstance` not found in `I` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+3]]:3-16: error: member name `GNonInstance` not found in `I` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE-12]]:1-13: note: `I` declared here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   x.GNonInstance();
 
-  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+2]]:3-9: error: member name `GSelf` not found in `I` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE+3]]:3-9: error: member name `GSelf` not found in `I` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_name_lookup_instance.carbon:[[@LINE-17]]:1-13: note: `I` declared here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   x.GSelf();
 }
@@ -176,23 +181,26 @@ interface J { let B: type; }
 
 fn Test() {
   // TODO: This should pass.
-  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+3]]:3-41: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-17]]:1-70: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+1]]:3-41: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
   AssertSame(Type((I where .A = ()) & J),
+             // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+3]]:14-38: note: conflicting value for `T` deduced from this argument [DeductionInconsistentArg]
+             // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-19]]:1-70: note: while deducing parameters of generic declared here [DeductionGenericHere]
+             // CHECK:STDERR:
              Type(I & J where .A = ()));
   // TODO: This should pass.
-  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+3]]:3-41: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-23]]:1-70: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+1]]:3-41: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
   AssertSame(Type(I & (J where .B = {})),
+             // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+3]]:14-38: note: conflicting value for `T` deduced from this argument [DeductionInconsistentArg]
+             // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-26]]:1-70: note: while deducing parameters of generic declared here [DeductionGenericHere]
+             // CHECK:STDERR:
              Type(I & J where .B = {}));
 
   // TODO: This should pass.
-  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+3]]:3-57: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-30]]:1-70: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+1]]:3-57: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
   AssertSame(Type((I where .A = ()) & (J where .B = {})),
+             // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+3]]:14-50: note: conflicting value for `T` deduced from this argument [DeductionInconsistentArg]
+             // CHECK:STDERR: fail_todo_compare_equal_with_rewrite.carbon:[[@LINE-34]]:1-70: note: while deducing parameters of generic declared here [DeductionGenericHere]
+             // CHECK:STDERR:
              Type(I & J where .A = () and .B = {}));
 }
 
@@ -207,8 +215,9 @@ interface I {}
 interface J {}
 
 fn Test() {
-  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE+3]]:3-64: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE-8]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE+4]]:3-64: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE+3]]:37-63: note: conflicting value for `T` deduced from this argument [DeductionInconsistentArg]
+  // CHECK:STDERR: fail_compare_not_equal.carbon:[[@LINE-9]]:1-64: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Same(Type(I where .Self impls J), Type(J where .Self impls I));
 }

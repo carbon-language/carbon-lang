@@ -33,7 +33,7 @@ interface I {
 }
 
 // CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+3]]:12-25: error: cannot implicitly convert expression of type `Core.IntLiteral` to `{}` [ConversionFailure]
-// CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+2]]:12-25: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_assoc_const_mismatch.carbon:[[@LINE+2]]:12-25: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs({})` [MissingImplForType]
 // CHECK:STDERR:
 impl {} as I where .V = 0 {}
 

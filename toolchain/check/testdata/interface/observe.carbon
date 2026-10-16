@@ -38,19 +38,19 @@ import library "transitive";
 fn F[T: Transitive](t: T) {
   var a: T.A = t.GetA();
 
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+3]]:3-12: error: cannot implicitly convert expression of type `T.(Transitive.A)` to `T.(Transitive.B)` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+2]]:3-12: note: type `T.(Transitive.A)` does not implement interface `Core.ImplicitAs(T.(Transitive.B))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+4]]:16: error: cannot implicitly convert expression of type `T.(Transitive.A)` to `T.(Transitive.B)` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+3]]:3-12: note: type `T.(Transitive.A)` does not implement interface `Core.ImplicitAs(T.(Transitive.B))` [MissingImplForType]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+2]]:3-12: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   var b: T.B = a;
   b.InQ();
 
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+4]]:3-15: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: imported from: fail_todo_equivalent.carbon:[[@LINE-12]]:1 [InImport]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+3]]:3-15: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
   // CHECK:STDERR: transitive.carbon:5:15-27: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   a.(T.C.InR)();
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+3]]:4-11: error: cannot convert expression of type `T.(Transitive.A)` to `T.(Transitive.C)` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+2]]:4-11: note: type `T.(Transitive.A)` does not implement interface `Core.As(T.(Transitive.C))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+3]]:4: error: cannot convert expression of type `T.(Transitive.A)` to `T.(Transitive.C)` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+2]]:4-11: note: type `T.(Transitive.A)` does not implement interface `Core.As(T.(Transitive.C))` [MissingImplForType]
   // CHECK:STDERR:
   (a as T.C).InR();
 }
@@ -121,8 +121,7 @@ fn G[T: Transitive](t: T) {
   observe T.A == T.B == T.C;
 
   var a: T.A = t.GetA();
-  // CHECK:STDERR: fail_todo_same_observe_in_both_scopes.carbon:[[@LINE+4]]:3-15: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: imported from: fail_todo_same_observe_in_both_scopes.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: fail_todo_same_observe_in_both_scopes.carbon:[[@LINE+3]]:3-15: error: cannot convert type `T.(Transitive.A)` that implements `Core.Destroy & P` into type implementing `R` [ConversionFailureFacetToFacet]
   // CHECK:STDERR: transitive.carbon:5:15-27: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   a.(T.C.InR)();
@@ -265,7 +264,8 @@ fn F[T: A, U: B](x: U) {
 library "[[@TEST_NAME]]";
 
 class C(T: type, U: type) {
-  // CHECK:STDERR: fail_wrong_scope_class.carbon:[[@LINE+2]]:3-9: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
+  // CHECK:STDERR: fail_wrong_scope_class.carbon:[[@LINE+3]]:3-9: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
+  // CHECK:STDERR: fail_wrong_scope_class.carbon:[[@LINE-2]]:1-27: note: appears in this declaration [ObserveEnclosingScope]
   // CHECK:STDERR:
   observe T == U;
 }
@@ -274,7 +274,8 @@ class C(T: type, U: type) {
 library "[[@TEST_NAME]]";
 
 constraint C(T: type, U: type) {
-  // CHECK:STDERR: fail_wrong_scope_named_constraint.carbon:[[@LINE+2]]:3-9: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
+  // CHECK:STDERR: fail_wrong_scope_named_constraint.carbon:[[@LINE+3]]:3-9: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
+  // CHECK:STDERR: fail_wrong_scope_named_constraint.carbon:[[@LINE-2]]:1-32: note: appears in this declaration [ObserveEnclosingScope]
   // CHECK:STDERR:
   observe T == U;
 }
@@ -318,12 +319,32 @@ impl C as A {}
 fn F[T: I(C)](t: T) {
   var u: T.U = t.GetU();
 
-  // CHECK:STDERR: fail_todo_generic_import.carbon:[[@LINE+4]]:3-13: error: cannot convert type `T.(I(C as A & Core.Destroy).U)` that implements `Core.Destroy & B where...` into type implementing `A & Core.Destroy` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: imported from: fail_todo_generic_import.carbon:[[@LINE-9]]:1 [InImport]
+  // CHECK:STDERR: fail_todo_generic_import.carbon:[[@LINE+3]]:3-13: error: cannot convert type `T.(I(C as A & Core.Destroy).U)` that implements `Core.Destroy & B where...` into type implementing `A & Core.Destroy` [ConversionFailureFacetToFacet]
   // CHECK:STDERR: generic_observe.carbon:10:3-24: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   t.TakesT(u);
 }
+
+// --- fail_wrong_scope_code_block.carbon
+library "[[@TEST_NAME]]";
+
+// A code block's scope has no instruction, so no label is attached to an
+// enclosing declaration.
+fn F[T: type, U: type]() {
+  if (true) {
+    // CHECK:STDERR: fail_wrong_scope_code_block.carbon:[[@LINE+2]]:5-11: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
+    // CHECK:STDERR:
+    observe T == U;
+  }
+}
+
+// --- fail_wrong_scope_file.carbon
+library "[[@TEST_NAME]]";
+
+// The package namespace is implicit, so no label is attached to it.
+// CHECK:STDERR: fail_wrong_scope_file.carbon:[[@LINE+2]]:1-7: error: `observe` can only be used in an `interface` or `function` [ObserveInWrongScope]
+// CHECK:STDERR:
+observe () == ();
 
 // CHECK:STDOUT: --- transitive.carbon
 // CHECK:STDOUT:

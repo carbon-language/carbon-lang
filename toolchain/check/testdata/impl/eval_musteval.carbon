@@ -150,18 +150,16 @@ import library "interface";
 class B { adapt {}; }
 
 impl B as Runtime {
-  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+5]]:3-38: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+4]]:3-38: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR: imported from: fail_impl_musteval.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+4]]:3-38: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+3]]:3-38: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR: interface.carbon:5:3-21: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
   musteval fn F(unused self) -> type { return B; }
 }
 
 impl B as Eval {
-  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+5]]:3-38: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+4]]:3-38: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR: imported from: fail_impl_musteval.carbon:[[@LINE-16]]:1 [InImport]
+  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+4]]:3-38: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+3]]:3-38: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR: interface.carbon:9:3-26: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
   musteval fn F(unused self) -> type { return B; }
@@ -197,9 +195,8 @@ impl B as Core.ImplicitAs(BView) {
 }
 
 impl B as MustEval {
-  // CHECK:STDERR: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE+5]]:3-45: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE+4]]:3-45: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR: imported from: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE-12]]:1 [InImport]
+  // CHECK:STDERR: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE+4]]:3-45: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE+3]]:3-45: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
   // CHECK:STDERR: interface.carbon:13:3-30: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
   musteval fn F(unused self: BView) -> type { return B; }

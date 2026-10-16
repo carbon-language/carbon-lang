@@ -56,7 +56,7 @@ auto HandleRequirementOperator(Context& context) -> void {
         CARBON_DIAGNOSTIC(
             ExpectedRequirementOperator, Error,
             "requirement should use `impls`, `=`, or `==` operator");
-        context.emitter().Emit(*context.position(),
+        context.emitter().Emit(*(context.position() - 1),
                                ExpectedRequirementOperator);
       }
       context.ReturnErrorOnState();

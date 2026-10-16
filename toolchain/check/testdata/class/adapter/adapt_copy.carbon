@@ -24,23 +24,27 @@ class AdaptCopyable {
 }
 
 fn F(c: AdaptCopyable) -> AdaptCopyable {
-  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+3]]:26: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+2]]:26: note: type `AdaptCopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+4]]:26: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+3]]:26: note: type `AdaptCopyable` does not implement interface `Core.Copy` [MissingImplForType]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+2]]:3-22: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   var d: AdaptCopyable = c;
-  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+3]]:10: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+2]]:10: note: type `AdaptCopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+4]]:10: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+3]]:10: note: type `AdaptCopyable` does not implement interface `Core.Copy` [MissingImplForType]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE-8]]:27-39: note: return type of function is `AdaptCopyable` [ReturnTypeHereNote]
   // CHECK:STDERR:
   return d;
 }
 
 fn InTuple(c: (AdaptCopyable, u32)) -> (AdaptCopyable, u32) {
-  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+3]]:33: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+2]]:33: note: type `AdaptCopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+4]]:33: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+3]]:33: note: type `AdaptCopyable` does not implement interface `Core.Copy` [MissingImplForType]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+2]]:3-29: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   var d: (AdaptCopyable, u32) = c;
-  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+3]]:10: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+2]]:10: note: type `AdaptCopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+4]]:10: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+3]]:10: note: type `AdaptCopyable` does not implement interface `Core.Copy` [MissingImplForType]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE-8]]:40-59: note: return type of function is `(AdaptCopyable, u32)` [ReturnTypeHereNote]
   // CHECK:STDERR:
   return d;
 }
@@ -76,12 +80,14 @@ class AdaptNoncopyable {
 }
 
 fn G(a: AdaptNoncopyable) -> AdaptNoncopyable {
-  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+3]]:29: error: cannot copy value of type `AdaptNoncopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+2]]:29: note: type `AdaptNoncopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+4]]:29: error: cannot copy value of type `AdaptNoncopyable` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+3]]:29: note: type `AdaptNoncopyable` does not implement interface `Core.Copy` [MissingImplForType]
+  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+2]]:3-25: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   var b: AdaptNoncopyable = a;
-  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+3]]:10: error: cannot copy value of type `AdaptNoncopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+2]]:10: note: type `AdaptNoncopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+4]]:10: error: cannot copy value of type `AdaptNoncopyable` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+3]]:10: note: type `AdaptNoncopyable` does not implement interface `Core.Copy` [MissingImplForType]
+  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE-8]]:30-45: note: return type of function is `AdaptNoncopyable` [ReturnTypeHereNote]
   // CHECK:STDERR:
   return b;
 }
@@ -100,13 +106,14 @@ class AdaptNoncopyableIndirect {
 
 fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
   // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+4]]:3-33: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+3]]:3-33: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+3]]:3-33: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplForType]
   // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+2]]:37: note: in copy of `AdaptNoncopyableIndirect` [InCopy]
   // CHECK:STDERR:
   var b: AdaptNoncopyableIndirect = a;
-  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+4]]:3-11: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+3]]:3-11: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+2]]:10: note: in copy of `AdaptNoncopyableIndirect` [InCopy]
+  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+5]]:3-11: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+4]]:3-11: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplForType]
+  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE+3]]:10: note: in copy of `AdaptNoncopyableIndirect` [InCopy]
+  // CHECK:STDERR: fail_adapt_not_copyable_indirect.carbon:[[@LINE-9]]:38-61: note: return type of function is `AdaptNoncopyableIndirect` [ReturnTypeHereNote]
   // CHECK:STDERR:
   return b;
 }
@@ -156,17 +163,17 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %self.param_patt.0c5: %pattern_type.d94 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.749: %pattern_type.d94 = wrapper_binding_pattern self, %self.param_patt.0c5 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc12_3.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc13_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc12_3.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc13_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.f36: %pattern_type.3b9 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.205: %pattern_type.3b9 = wrapper_binding_pattern self, %self.param_patt.f36 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc12_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc13_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc12_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc13_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc12_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc13_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %UInt.type: type = parameterized_class_name_type @UInt [concrete]
 // CHECK:STDOUT:   %UInt.generic: %UInt.type = struct_value () [concrete]
@@ -187,21 +194,21 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %pattern_type.129: type = pattern_type %u32 [concrete]
 // CHECK:STDOUT:   %self.param_patt.6f9: %pattern_type.129 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.ddd: %pattern_type.129 = wrapper_binding_pattern self, %self.param_patt.6f9 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc23_3.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc26_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc23_3.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc26_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.3: type = fn_type @Destroy.WithSelf.SelfDestruct.loc23_3.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.3: type = fn_type @Destroy.WithSelf.SelfDestruct.loc26_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.3: %Destroy.WithSelf.SelfDestruct.type.fbceb5.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.604: %pattern_type.848 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.094: %pattern_type.848 = wrapper_binding_pattern self, %self.param_patt.604 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.4: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc23_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.4: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc26_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.4: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc23_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.4: type = fn_type @Destroy.WithSelf.Op.loc26_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.4: %Destroy.WithSelf.Op.type.ef016f.4 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.4: type = fn_type @Destroy.WithSelf.SelfDestruct.loc23_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.4: type = fn_type @Destroy.WithSelf.SelfDestruct.loc26_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.4: %Destroy.WithSelf.SelfDestruct.type.fbceb5.4 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -221,56 +228,56 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc12_3.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.1] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc13_3.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.d94 = ref_param_pattern [concrete = constants.%self.param_patt.0c5]
 // CHECK:STDOUT:     %self.patt: %pattern_type.d94 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.749]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %i32 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc12_3.1 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc13_3.1 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.d94 = ref_param_pattern [concrete = constants.%self.param_patt.0c5]
 // CHECK:STDOUT:     %self.patt: %pattern_type.d94 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.749]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %i32 = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %i32 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc12_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc13_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.3b9 = ref_param_pattern [concrete = constants.%self.param_patt.f36]
 // CHECK:STDOUT:     %self.patt: %pattern_type.3b9 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.205]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %AdaptCopyable = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %AdaptCopyable = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc12_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc13_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.3b9 = ref_param_pattern [concrete = constants.%self.param_patt.f36]
 // CHECK:STDOUT:     %self.patt: %pattern_type.3b9 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.205]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %AdaptCopyable = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %AdaptCopyable = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc23_3.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.3] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc26_3.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.3] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.129 = ref_param_pattern [concrete = constants.%self.param_patt.6f9]
 // CHECK:STDOUT:     %self.patt: %pattern_type.129 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.ddd]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %u32 = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %u32 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.3: %Destroy.WithSelf.Op.type.ef016f.3 = fn_decl @Destroy.WithSelf.Op.loc23_3.1 [concrete = constants.%Destroy.WithSelf.Op.403171.3] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.3: %Destroy.WithSelf.Op.type.ef016f.3 = fn_decl @Destroy.WithSelf.Op.loc26_3.1 [concrete = constants.%Destroy.WithSelf.Op.403171.3] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.129 = ref_param_pattern [concrete = constants.%self.param_patt.6f9]
 // CHECK:STDOUT:     %self.patt: %pattern_type.129 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.ddd]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %u32 = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %u32 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.4: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.4 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc23_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.4] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.4: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.4 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc26_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.4] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.848 = ref_param_pattern [concrete = constants.%self.param_patt.604]
 // CHECK:STDOUT:     %self.patt: %pattern_type.848 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.094]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %tuple.type.c35 = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %tuple.type.c35 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.4: %Destroy.WithSelf.Op.type.ef016f.4 = fn_decl @Destroy.WithSelf.Op.loc23_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.4] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.4: %Destroy.WithSelf.Op.type.ef016f.4 = fn_decl @Destroy.WithSelf.Op.loc26_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.4] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.848 = ref_param_pattern [concrete = constants.%self.param_patt.604]
 // CHECK:STDOUT:     %self.patt: %pattern_type.848 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.094]
 // CHECK:STDOUT:   } {
@@ -306,19 +313,19 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.848 = value_param_pattern [concrete = constants.%c.param_patt.47e]
 // CHECK:STDOUT:     %c.patt: %pattern_type.848 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.fe5]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.848 = out_param_pattern [concrete = constants.%return.param_patt.117]
-// CHECK:STDOUT:     %return.patt: %pattern_type.848 = return_slot_pattern %return.param_patt, %.loc19_59.2 [concrete = constants.%return.patt.77a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.848 = return_slot_pattern %return.param_patt, %.loc21_59.2 [concrete = constants.%return.patt.77a]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %AdaptCopyable.ref.loc19_41: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
-// CHECK:STDOUT:     %u32.loc19_56: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:     %.loc19_59.1: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc19_41, %u32.loc19_56) [concrete = constants.%tuple.0f9]
-// CHECK:STDOUT:     %.loc19_59.2: type = converted %.loc19_59.1, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
-// CHECK:STDOUT:     %.loc19_59.3: Core.Form = init_form %.loc19_59.2 [concrete = constants.%.70b]
+// CHECK:STDOUT:     %AdaptCopyable.ref.loc21_41: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
+// CHECK:STDOUT:     %u32.loc21_56: type = type_literal constants.%u32 [concrete = constants.%u32]
+// CHECK:STDOUT:     %.loc21_59.1: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc21_41, %u32.loc21_56) [concrete = constants.%tuple.0f9]
+// CHECK:STDOUT:     %.loc21_59.2: type = converted %.loc21_59.1, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
+// CHECK:STDOUT:     %.loc21_59.3: Core.Form = init_form %.loc21_59.2 [concrete = constants.%.70b]
 // CHECK:STDOUT:     %c.param: %tuple.type.c35 = value_param call_param0
-// CHECK:STDOUT:     %.loc19_34.1: type = splice_block %.loc19_34.3 [concrete = constants.%tuple.type.c35] {
-// CHECK:STDOUT:       %AdaptCopyable.ref.loc19_16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
-// CHECK:STDOUT:       %u32.loc19_31: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:       %.loc19_34.2: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc19_16, %u32.loc19_31) [concrete = constants.%tuple.0f9]
-// CHECK:STDOUT:       %.loc19_34.3: type = converted %.loc19_34.2, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
+// CHECK:STDOUT:     %.loc21_34.1: type = splice_block %.loc21_34.3 [concrete = constants.%tuple.type.c35] {
+// CHECK:STDOUT:       %AdaptCopyable.ref.loc21_16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
+// CHECK:STDOUT:       %u32.loc21_31: type = type_literal constants.%u32 [concrete = constants.%u32]
+// CHECK:STDOUT:       %.loc21_34.2: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc21_16, %u32.loc21_31) [concrete = constants.%tuple.0f9]
+// CHECK:STDOUT:       %.loc21_34.3: type = converted %.loc21_34.2, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.c35 = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.c35 = out_param call_param1
@@ -341,35 +348,35 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %d.var: ref %AdaptCopyable = var_storage %d.var_patt
 // CHECK:STDOUT:   %c.ref: %AdaptCopyable = name_ref c, %c
 // CHECK:STDOUT:   assign %d.var, <error>
-// CHECK:STDOUT:   %AdaptCopyable.ref.loc12: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
+// CHECK:STDOUT:   %AdaptCopyable.ref.loc13: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
 // CHECK:STDOUT:   %d: ref %AdaptCopyable = wrapper_binding d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.3b9 = ref_binding_pattern d [concrete = constants.%d.patt.467]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.3b9 = var_pattern %d.patt [concrete = constants.%d.var_patt.b13]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.ref: ref %AdaptCopyable = name_ref d, %d
-// CHECK:STDOUT:   %.loc16: %AdaptCopyable = acquire_value %d.ref
+// CHECK:STDOUT:   %.loc18: %AdaptCopyable = acquire_value %d.ref
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %d.var, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%d.var)
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc12_3.1(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc13_3.1(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc12_3.1(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc13_3.1(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc12_3.1(%self.param: ref %i32) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc13_3.1(%self.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.1(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.1(%self.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc12_3.2(%self.param: ref %AdaptCopyable) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc13_3.2(%self.param: ref %AdaptCopyable) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc12_3.2(%self.param: ref %AdaptCopyable) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc13_3.2(%self.param: ref %AdaptCopyable) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc12_3.2(%self.param: ref %AdaptCopyable) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc13_3.2(%self.param: ref %AdaptCopyable) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)
@@ -380,13 +387,13 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.var: ref %tuple.type.c35 = var_storage %d.var_patt
 // CHECK:STDOUT:   %c.ref: %tuple.type.c35 = name_ref c, %c
-// CHECK:STDOUT:   %tuple.elem0.loc23: %AdaptCopyable = tuple_access %c.ref, element0
+// CHECK:STDOUT:   %tuple.elem0.loc26: %AdaptCopyable = tuple_access %c.ref, element0
 // CHECK:STDOUT:   assign %d.var, <error>
-// CHECK:STDOUT:   %.loc23_29.1: type = splice_block %.loc23_29.3 [concrete = constants.%tuple.type.c35] {
-// CHECK:STDOUT:     %AdaptCopyable.ref.loc23: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
-// CHECK:STDOUT:     %u32.loc23: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:     %.loc23_29.2: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc23, %u32.loc23) [concrete = constants.%tuple.0f9]
-// CHECK:STDOUT:     %.loc23_29.3: type = converted %.loc23_29.2, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
+// CHECK:STDOUT:   %.loc26_29.1: type = splice_block %.loc26_29.3 [concrete = constants.%tuple.type.c35] {
+// CHECK:STDOUT:     %AdaptCopyable.ref.loc26: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
+// CHECK:STDOUT:     %u32.loc26: type = type_literal constants.%u32 [concrete = constants.%u32]
+// CHECK:STDOUT:     %.loc26_29.2: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc26, %u32.loc26) [concrete = constants.%tuple.0f9]
+// CHECK:STDOUT:     %.loc26_29.3: type = converted %.loc26_29.2, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %tuple.type.c35 = wrapper_binding d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -394,40 +401,40 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.848 = var_pattern %d.patt [concrete = constants.%d.var_patt.66d]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.ref: ref %tuple.type.c35 = name_ref d, %d
-// CHECK:STDOUT:   %tuple.elem0.loc27: ref %AdaptCopyable = tuple_access %d.ref, element0
-// CHECK:STDOUT:   %.loc27: %AdaptCopyable = acquire_value %tuple.elem0.loc27
+// CHECK:STDOUT:   %tuple.elem0.loc31: ref %AdaptCopyable = tuple_access %d.ref, element0
+// CHECK:STDOUT:   %.loc31: %AdaptCopyable = acquire_value %tuple.elem0.loc31
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %d.var, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%d.var)
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc23_3.1(%self.param: ref %u32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc26_3.1(%self.param: ref %u32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc23_3.1(%self.param: ref %u32) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc26_3.1(%self.param: ref %u32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc23_3.1(%self.param: ref %u32) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc26_3.1(%self.param: ref %u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.3(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.3(%self.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc23_3.2(%self.param: ref %tuple.type.c35) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc26_3.2(%self.param: ref %tuple.type.c35) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %tuple.elem1: ref %u32 = tuple_access %self.param, element1
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc23_3.1: <bound method> = bound_method %tuple.elem1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc23_3.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc23_3.1(%tuple.elem1)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc26_3.1: <bound method> = bound_method %tuple.elem1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc26_3.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc26_3.1(%tuple.elem1)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %tuple.elem0: ref %AdaptCopyable = tuple_access %self.param, element0
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc23_3.2: <bound method> = bound_method %tuple.elem0, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc23_3.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc23_3.2(%tuple.elem0)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc26_3.2: <bound method> = bound_method %tuple.elem0, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc26_3.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc26_3.2(%tuple.elem0)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc23_3.2(%self.param: ref %tuple.type.c35) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc26_3.2(%self.param: ref %tuple.type.c35) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc23_3.2(%self.param: ref %tuple.type.c35) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc26_3.2(%self.param: ref %tuple.type.c35) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.4(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.4(%self.param)
@@ -944,24 +951,24 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %pattern_type.a96: type = pattern_type %empty_struct_type [concrete]
 // CHECK:STDOUT:   %self.param_patt.52f: %pattern_type.a96 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.4b1: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt.52f [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc16_3.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc17_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc16_3.1 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc17_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.944: type = pattern_type %Noncopyable [concrete]
 // CHECK:STDOUT:   %self.param_patt.648: %pattern_type.944 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.e5a: %pattern_type.944 = wrapper_binding_pattern self, %self.param_patt.648 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc16_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc17_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc16_3.2 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.2: type = fn_type @Destroy.WithSelf.Op.loc17_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.2: %Destroy.WithSelf.Op.type.ef016f.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.f20: %pattern_type.d14 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.b09: %pattern_type.d14 = wrapper_binding_pattern self, %self.param_patt.f20 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc16_3.3 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc17_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc16_3.3 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc17_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.3: type = fn_type @Destroy.WithSelf.SelfDestruct.loc16_3.3 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.3: type = fn_type @Destroy.WithSelf.SelfDestruct.loc17_3.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.3: %Destroy.WithSelf.SelfDestruct.type.fbceb5.3 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -977,42 +984,42 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc16_3.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.1] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.1: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.1 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc17_3.1 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.a96 = ref_param_pattern [concrete = constants.%self.param_patt.52f]
 // CHECK:STDOUT:     %self.patt: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4b1]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %empty_struct_type = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %empty_struct_type = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc16_3.1 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc17_3.1 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.a96 = ref_param_pattern [concrete = constants.%self.param_patt.52f]
 // CHECK:STDOUT:     %self.patt: %pattern_type.a96 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.4b1]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %empty_struct_type = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %empty_struct_type = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc16_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.2: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.2 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc17_3.2 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.944 = ref_param_pattern [concrete = constants.%self.param_patt.648]
 // CHECK:STDOUT:     %self.patt: %pattern_type.944 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.e5a]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %Noncopyable = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %Noncopyable = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc16_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.2: %Destroy.WithSelf.Op.type.ef016f.2 = fn_decl @Destroy.WithSelf.Op.loc17_3.2 [concrete = constants.%Destroy.WithSelf.Op.403171.2] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.944 = ref_param_pattern [concrete = constants.%self.param_patt.648]
 // CHECK:STDOUT:     %self.patt: %pattern_type.944 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.e5a]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %Noncopyable = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %Noncopyable = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc16_3.3 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.3] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc17_3.3 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.3] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.d14 = ref_param_pattern [concrete = constants.%self.param_patt.f20]
 // CHECK:STDOUT:     %self.patt: %pattern_type.d14 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.b09]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %AdaptNoncopyable = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %AdaptNoncopyable = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.3: %Destroy.WithSelf.Op.type.ef016f.3 = fn_decl @Destroy.WithSelf.Op.loc16_3.3 [concrete = constants.%Destroy.WithSelf.Op.403171.3] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.3: %Destroy.WithSelf.Op.type.ef016f.3 = fn_decl @Destroy.WithSelf.Op.loc17_3.3 [concrete = constants.%Destroy.WithSelf.Op.403171.3] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.d14 = ref_param_pattern [concrete = constants.%self.param_patt.f20]
 // CHECK:STDOUT:     %self.patt: %pattern_type.d14 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.b09]
 // CHECK:STDOUT:   } {
@@ -1071,46 +1078,46 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %b.var: ref %AdaptNoncopyable = var_storage %b.var_patt
 // CHECK:STDOUT:   %a.ref: %AdaptNoncopyable = name_ref a, %a
 // CHECK:STDOUT:   assign %b.var, <error>
-// CHECK:STDOUT:   %AdaptNoncopyable.ref.loc16: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [concrete = constants.%AdaptNoncopyable]
+// CHECK:STDOUT:   %AdaptNoncopyable.ref.loc17: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [concrete = constants.%AdaptNoncopyable]
 // CHECK:STDOUT:   %b: ref %AdaptNoncopyable = wrapper_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.d14 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.d14 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.ref: ref %AdaptNoncopyable = name_ref b, %b
-// CHECK:STDOUT:   %.loc20: %AdaptNoncopyable = acquire_value %b.ref
+// CHECK:STDOUT:   %.loc22: %AdaptNoncopyable = acquire_value %b.ref
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %b.var, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%b.var)
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc16_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc17_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc17_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc16_3.1(%self.param: ref %empty_struct_type) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc17_3.1(%self.param: ref %empty_struct_type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.1(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.1(%self.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc16_3.2(%self.param: ref %Noncopyable) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc17_3.2(%self.param: ref %Noncopyable) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16_3.2(%self.param: ref %Noncopyable) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc17_3.2(%self.param: ref %Noncopyable) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc16_3.2(%self.param: ref %Noncopyable) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc17_3.2(%self.param: ref %Noncopyable) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.2(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.2(%self.param)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc16_3.3(%self.param: ref %AdaptNoncopyable) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc17_3.3(%self.param: ref %AdaptNoncopyable) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc16_3.3(%self.param: ref %AdaptNoncopyable) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc17_3.3(%self.param: ref %AdaptNoncopyable) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc16_3.3(%self.param: ref %AdaptNoncopyable) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc17_3.3(%self.param: ref %AdaptNoncopyable) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.3(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.3(%self.param)
@@ -1361,19 +1368,19 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.be3 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.ref: ref %AdaptNoncopyableIndirect = name_ref b, %b
-// CHECK:STDOUT:   %.loc22_11.1: ref %tuple.type.71d = as_compatible %b.ref
-// CHECK:STDOUT:   %tuple.elem0.loc22_11.1: ref %i32 = tuple_access %.loc22_11.1, element0
-// CHECK:STDOUT:   %.loc22_11.2: %i32 = acquire_value %tuple.elem0.loc22_11.1
-// CHECK:STDOUT:   %impl.elem0.loc22: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
-// CHECK:STDOUT:   %bound_method.loc22_11.1: <bound method> = bound_method %.loc22_11.2, %impl.elem0.loc22
-// CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc22_11.2: <bound method> = bound_method %.loc22_11.2, %specific_fn.loc22
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc22: init %i32 = call %bound_method.loc22_11.2(%.loc22_11.2)
-// CHECK:STDOUT:   %.loc22_11.3: ref %tuple.type.71d = as_compatible %return.param
-// CHECK:STDOUT:   %tuple.elem0.loc22_11.2: ref %i32 = tuple_access %.loc22_11.3, element0
-// CHECK:STDOUT:   %.loc22_11.4: init %i32 to %tuple.elem0.loc22_11.2 = in_place_init %Int.as.Copy.impl.Op.call.loc22
-// CHECK:STDOUT:   %tuple.elem1.loc22: ref %Noncopyable = tuple_access %.loc22_11.1, element1
-// CHECK:STDOUT:   %.loc22_11.5: %Noncopyable = acquire_value %tuple.elem1.loc22
+// CHECK:STDOUT:   %.loc23_11.1: ref %tuple.type.71d = as_compatible %b.ref
+// CHECK:STDOUT:   %tuple.elem0.loc23_11.1: ref %i32 = tuple_access %.loc23_11.1, element0
+// CHECK:STDOUT:   %.loc23_11.2: %i32 = acquire_value %tuple.elem0.loc23_11.1
+// CHECK:STDOUT:   %impl.elem0.loc23: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
+// CHECK:STDOUT:   %bound_method.loc23_11.1: <bound method> = bound_method %.loc23_11.2, %impl.elem0.loc23
+// CHECK:STDOUT:   %specific_fn.loc23: <specific function> = specific_function %impl.elem0.loc23, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc23_11.2: <bound method> = bound_method %.loc23_11.2, %specific_fn.loc23
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc23: init %i32 = call %bound_method.loc23_11.2(%.loc23_11.2)
+// CHECK:STDOUT:   %.loc23_11.3: ref %tuple.type.71d = as_compatible %return.param
+// CHECK:STDOUT:   %tuple.elem0.loc23_11.2: ref %i32 = tuple_access %.loc23_11.3, element0
+// CHECK:STDOUT:   %.loc23_11.4: init %i32 to %tuple.elem0.loc23_11.2 = in_place_init %Int.as.Copy.impl.Op.call.loc23
+// CHECK:STDOUT:   %tuple.elem1.loc23: ref %Noncopyable = tuple_access %.loc23_11.1, element1
+// CHECK:STDOUT:   %.loc23_11.5: %Noncopyable = acquire_value %tuple.elem1.loc23
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %b.var, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%b.var)
 // CHECK:STDOUT:   return <error> to %return.param

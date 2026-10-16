@@ -115,14 +115,12 @@ import library "equal_constraint";
 import library "nested_rewrites";
 
 fn Calls() {
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+4]]:3-13: error: cannot convert type `bool` into type implementing `N where .(N.P) = {}` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: imported from: fail_import_rewrites.carbon:[[@LINE-5]]:1 [InImport]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+3]]:3-13: error: cannot convert type `bool` into type implementing `N where .(N.P) = {}` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: equal_constraint.carbon:9:18-35: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   Equal(bool);
 
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+4]]:3-20: error: cannot convert type `i32` into type implementing `A where .(A.C) = () and .(A.B) = bool` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: imported from: fail_import_rewrites.carbon:[[@LINE-11]]:1 [InImport]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+3]]:3-20: error: cannot convert type `i32` into type implementing `A where .(A.C) = () and .(A.B) = bool` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: nested_rewrites.carbon:10:26-61: note: initializing generic parameter `D` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   NestedRewrite(i32);
@@ -138,7 +136,7 @@ interface I {
 
 // `2` can't be converted to the type of `I.Member`
 // CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+3]]:53: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+2]]:53: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_check_rewrite_constraints.carbon:[[@LINE+2]]:53: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
 // CHECK:STDERR:
 fn RewriteTypeMismatch(generic X: I where .Member = 2);
 
@@ -179,15 +177,18 @@ interface E {
 // Testing how these types get stringified in error messages.
 
 // TODO: This should be a compile-time binding, once that is supported.
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:42-44: error: cannot convert type `f64` into type implementing `E where .(E.F) = bool and .(E.G) = ()` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+3]]:42-44: error: cannot convert type `f64` into type implementing `E where .(E.F) = bool and .(E.G) = ()` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:5-38: note: initializing this binding [InBindingInit]
 // CHECK:STDERR:
 let H: (E where .F = bool and .G = ()) = f64;
 
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:45-48: error: cannot convert type `bool` into type implementing `E where .(E.F) = {} and .(E.G) = i32` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+3]]:45-48: error: cannot convert type `bool` into type implementing `E where .(E.F) = {} and .(E.G) = i32` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:5-41: note: initializing this binding [InBindingInit]
 // CHECK:STDERR:
 let J: ((E where .F = {}) where .G = i32) = bool;
 
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:33-36: error: cannot convert type `bool` into type implementing `E where .(E.F) = .(E.G)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+3]]:33-36: error: cannot convert type `bool` into type implementing `E where .(E.F) = .(E.G)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:5-29: note: initializing this binding [InBindingInit]
 // CHECK:STDERR:
 let K: (E where .F = .Self.G) = bool;
 

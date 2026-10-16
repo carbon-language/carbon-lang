@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_period_only.carbon
 
-// CHECK:STDERR: fail_period_only.carbon:[[@LINE+2]]:10: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
+// CHECK:STDERR: fail_period_only.carbon:[[@LINE+2]]:9: error: expected identifier after `.` [ExpectedIdentifierAfterPeriodOrArrow]
 // CHECK:STDERR:
 var x: {.} = {};
 

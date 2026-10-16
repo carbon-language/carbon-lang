@@ -409,7 +409,7 @@ base class Base(T: type) {
 class D1 {
   extend base: Base(T1);
   // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+5]]:3-45: error: cannot implicitly convert expression of type `T1*` to `T2*` [ConversionFailure]
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+4]]:3-45: note: type `T1*` does not implement interface `Core.ImplicitAs(T2*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+4]]:3-45: note: type `T1*` does not implement interface `Core.ImplicitAs(T2*)` [MissingImplForType]
   // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+3]]:37-42: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE-8]]:3-44: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
@@ -426,7 +426,7 @@ abstract class Base(T: type) {
 class Derived(T: type) {
   extend base: Base(T);
   // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+5]]:3-43: error: cannot implicitly convert expression of type `T*` to `T` [ConversionFailure]
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+4]]:3-43: note: type `T*` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+4]]:3-43: note: type `T*` does not implement interface `Core.ImplicitAs(T)` [MissingImplForType]
   // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+3]]:37-40: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE-7]]:3-43: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:

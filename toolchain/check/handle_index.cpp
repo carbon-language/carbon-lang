@@ -38,8 +38,22 @@ static auto PerformIndexWith(Context& context, Parse::NodeId node_id,
   Operator op{.interface_name = CoreIdentifier::IndexWith,
               .interface_args_ref = args,
               .op_name = CoreIdentifier::At};
-  return BuildBinaryOperator(context, node_id, op, operand_inst_id,
-                             index_inst_id);
+  // Locate the message at the index, which is what the object failed to
+  // accept; the parse node is only the closing bracket. The interface the
+  // message names takes the index's type as its argument, so only the object
+  // gets a label with its type.
+  CARBON_DIAGNOSTIC_LABEL(IndexedObjectType, Primary,
+                          "indexing an object with type {0}", TypeOfInstId);
+  auto attach_object_type = [&](DiagnosticBuilder& builder) {
+    // TODO: Remove this range once a label on the message's line no longer
+    // takes the message's place.
+    builder.Attach(index_inst_id);
+    AttachOperandType(context, builder, operand_inst_id, IndexedObjectType);
+  };
+  return BuildBinaryOperator(
+      context, node_id, op, operand_inst_id, index_inst_id, /*diagnose=*/true,
+      /*missing_impl_diagnostic_context=*/nullptr,
+      {.loc_id = SemIR::LocId(index_inst_id), .annotate = attach_object_type});
 }
 
 auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {

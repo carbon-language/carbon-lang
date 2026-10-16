@@ -149,7 +149,9 @@ abstract class Abstract {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+4]]:28-29: error: initialization of abstract class `Abstract` [AbstractTypeInInit]
+  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+6]]:28-29: error: initialization of abstract class `Abstract` [AbstractTypeInInit]
+  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE-5]]:1-25: note: class declared abstract here [ClassDeclaredAbstractHere]
+  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+4]]:14-24: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+2]]:28-29: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
@@ -198,7 +200,7 @@ abstract class Abstract {
 
 fn Assign(ref a: Abstract) {
   // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE+3]]:7: error: cannot copy value of type `Abstract` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE+2]]:7: note: type `Abstract` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_assign_to_abstract_ref.carbon:[[@LINE+2]]:7: note: type `Abstract` does not implement interface `Core.Copy` [MissingImplForType]
   // CHECK:STDERR:
   a = a;
 }
@@ -902,14 +904,14 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc11_29.2: ref %Abstract = temporary_storage
-// CHECK:STDOUT:   %.loc11_29.3: init %Abstract to %.loc11_29.2 = class_init () [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc11_29.4: init %Abstract = converted %.loc11_29.1, %.loc11_29.3 [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc11_29.5: ref %Abstract = temporary %.loc11_29.2, %.loc11_29.4 [concrete = constants.%.69a]
-// CHECK:STDOUT:   %.loc11_29.6: %Abstract = acquire_value %.loc11_29.5 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc13_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc13_29.2: ref %Abstract = temporary_storage
+// CHECK:STDOUT:   %.loc13_29.3: init %Abstract to %.loc13_29.2 = class_init () [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc13_29.4: init %Abstract = converted %.loc13_29.1, %.loc13_29.3 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc13_29.5: ref %Abstract = temporary %.loc13_29.2, %.loc13_29.4 [concrete = constants.%.69a]
+// CHECK:STDOUT:   %.loc13_29.6: %Abstract = acquire_value %.loc13_29.5 [concrete = constants.%Abstract.val]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc11_29.6
+// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc13_29.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type.169 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }

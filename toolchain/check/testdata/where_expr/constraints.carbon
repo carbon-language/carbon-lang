@@ -80,7 +80,7 @@ fn AssociatedTypeImpls(generic W: K where .Associated impls M);
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+3]]:39: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+2]]:39: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+2]]:39: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
 // CHECK:STDERR:
 fn NonTypeImpls(generic U: type where 7 impls type);
 
@@ -89,7 +89,7 @@ fn NonTypeImpls(generic U: type where 7 impls type);
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+3]]:51: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+2]]:51: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_right_of_impls_non_type.carbon:[[@LINE+2]]:51: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
 // CHECK:STDERR:
 fn ImplsNonType(generic U: type where .Self impls 7);
 
@@ -120,8 +120,7 @@ class C {}
 impl C as J {}
 
 fn DoesNotImplI() {
-  // CHECK:STDERR: fail_enforce_impls_constraint.carbon:[[@LINE+4]]:3-10: error: cannot convert type `C` into type implementing `J where .Self impls I` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: imported from: fail_enforce_impls_constraint.carbon:[[@LINE-8]]:1 [InImport]
+  // CHECK:STDERR: fail_enforce_impls_constraint.carbon:[[@LINE+3]]:3-10: error: cannot convert type `C` into type implementing `J where .Self impls I` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: state_constraints.carbon:14:18-41: note: initializing generic parameter `V` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   Impls(C);

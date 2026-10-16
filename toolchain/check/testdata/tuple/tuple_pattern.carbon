@@ -81,11 +81,13 @@ class C {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_initializer_mismatch.carbon:[[@LINE+2]]:5-18: error: tuple pattern expects 2 elements, but tuple literal has 1 [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR: fail_initializer_mismatch.carbon:[[@LINE+3]]:5-18: error: tuple pattern expects 2 elements, but tuple literal has 1 [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR: fail_initializer_mismatch.carbon:[[@LINE+2]]:22-26: note: tuple literal has 1 element [TupleLiteralElementCount]
 // CHECK:STDERR:
 let (x: {}, y: {}) = ({},);
 
-// CHECK:STDERR: fail_initializer_mismatch.carbon:[[@LINE+2]]:5-18: error: tuple pattern expects 2 elements, but tuple literal has 3 [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR: fail_initializer_mismatch.carbon:[[@LINE+3]]:5-18: error: tuple pattern expects 2 elements, but tuple literal has 3 [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR: fail_initializer_mismatch.carbon:[[@LINE+2]]:22-33: note: tuple literal has 3 elements [TupleLiteralElementCount]
 // CHECK:STDERR:
 let (a: {}, b: {}) = ({}, {}, {});
 

@@ -10,40 +10,40 @@
 
 // --- fail_identifier.carbon
 
-// CHECK:STDERR: fail_identifier.carbon:[[@LINE+2]]:9-14: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
+// CHECK:STDERR: fail_identifier.carbon:[[@LINE+2]]:1-7: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
 // CHECK:STDERR:
 library Shapes;
 
 // --- fail_raw_identifier.carbon
 
-// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+2]]:9-17: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
+// CHECK:STDERR: fail_raw_identifier.carbon:[[@LINE+2]]:1-7: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
 // CHECK:STDERR:
 library r#default;
 
 // --- fail_missing.carbon
 
-// CHECK:STDERR: fail_missing.carbon:[[@LINE+2]]:8: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
+// CHECK:STDERR: fail_missing.carbon:[[@LINE+2]]:1-7: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
 // CHECK:STDERR:
 library;
 
 // --- fail_missing_with_api.carbon
 
-// CHECK:STDERR: fail_missing_with_api.carbon:[[@LINE+2]]:8: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
+// CHECK:STDERR: fail_missing_with_api.carbon:[[@LINE+2]]:1-7: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
 // CHECK:STDERR:
 library;
 
 // --- fail_trailing_impl.carbon
 
-// CHECK:STDERR: fail_trailing_impl.carbon:[[@LINE+2]]:25-28: error: `library` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_trailing_impl.carbon:[[@LINE+2]]:9-23: error: `library` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 library "[[@TEST_NAME]]" impl
 
 // --- fail_no_semi.carbon
 
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:9-17: error: `library` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:
 library "[[@TEST_NAME]]"
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+39]]:26: error: `library` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_identifier.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'

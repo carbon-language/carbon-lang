@@ -42,7 +42,8 @@ constraint W {
 fn F(generic T: W) {
   // Does not extend Z.
 interface Y { fn YF(); }
-  // CHECK:STDERR: fail_name_lookup_in_constraint_does_not_extend.carbon:[[@LINE+2]]:3-6: error: member name `ZF` not found in `W` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_name_lookup_in_constraint_does_not_extend.carbon:[[@LINE+3]]:3-6: error: member name `ZF` not found in `W` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR: fail_name_lookup_in_constraint_does_not_extend.carbon:[[@LINE-8]]:1-14: note: `W` declared here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   T.ZF();
 }

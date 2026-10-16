@@ -86,7 +86,7 @@ fn F() -> {} {
   let _: {} = {};
   // CHECK:STDERR: fail_use.carbon:[[@LINE+6]]:10: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_use.carbon:[[@LINE+4]]:10: error: `return` statements must end with a `;` [ExpectedStatementSemi]
+  // CHECK:STDERR: fail_use.carbon:[[@LINE+4]]:3-8: error: `return` statements must end with a `;` [ExpectedStatementSemi]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_use.carbon:[[@LINE+2]]:10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:

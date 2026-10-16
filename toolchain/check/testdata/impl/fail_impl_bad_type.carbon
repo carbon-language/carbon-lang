@@ -15,7 +15,7 @@
 interface I {}
 
 // CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+3]]:6-9: error: cannot implicitly convert non-type value of type `bool` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+2]]:6-9: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_impl_bad_type.carbon:[[@LINE+2]]:6-9: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
 // CHECK:STDERR:
 impl true as I {}
 

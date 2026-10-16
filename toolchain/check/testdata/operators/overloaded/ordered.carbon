@@ -75,25 +75,33 @@ package FailNoImpl;
 class D {};
 
 fn TestLess(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-14: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:12: error: type `D` does not implement interface `Core.OrderedWith(D)` [MissingImplForType]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: note: left operand has type `D` [BinaryOperatorLhsType]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:14: note: right operand has type `D` [BinaryOperatorRhsType]
   // CHECK:STDERR:
   return a < b;
 }
 
 fn TestLessEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:12-13: error: type `D` does not implement interface `Core.OrderedWith(D)` [MissingImplForType]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: note: left operand has type `D` [BinaryOperatorLhsType]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:15: note: right operand has type `D` [BinaryOperatorRhsType]
   // CHECK:STDERR:
   return a <= b;
 }
 
 fn TestGreater(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-14: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:12: error: type `D` does not implement interface `Core.OrderedWith(D)` [MissingImplForType]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: note: left operand has type `D` [BinaryOperatorLhsType]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:14: note: right operand has type `D` [BinaryOperatorRhsType]
   // CHECK:STDERR:
   return a > b;
 }
 
 fn TestGreaterEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-15: error: cannot access member of interface `Core.OrderedWith(D)` in type `D` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+4]]:12-13: error: type `D` does not implement interface `Core.OrderedWith(D)` [MissingImplForType]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+3]]:10: note: left operand has type `D` [BinaryOperatorLhsType]
+  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:15: note: right operand has type `D` [BinaryOperatorRhsType]
   // CHECK:STDERR:
   return a >= b;
 }
