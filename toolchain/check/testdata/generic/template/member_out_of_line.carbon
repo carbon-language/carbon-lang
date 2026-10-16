@@ -28,8 +28,8 @@ fn Class(template T: type).F(n: T.U) -> T.U {
   return n;
 }
 
-// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+3]]:1-43: error: function redeclaration differs because return type is `<splice of <cannot stringify inst780000DF: {kind: ConvertToValueAction, arg0: inst780000DC, arg1: inst(TypeType), type: type(inst(InstType))}>>` [FunctionRedeclReturnTypeDiffers]
-// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE-12]]:3-18: note: previously declared with return type `T` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+3]]:39-41: error: function redeclaration differs because return type is `<splice of <cannot stringify inst780000DF: {kind: ConvertToValueAction, arg0: inst780000DC, arg1: inst(TypeType), type: type(inst(InstType))}>>` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE-12]]:17: note: previously declared with return type `T` [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:
 fn Class(template T: type).G(self) -> T.U {
   return self.n;

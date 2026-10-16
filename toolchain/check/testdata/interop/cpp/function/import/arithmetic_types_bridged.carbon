@@ -275,7 +275,7 @@ import Cpp library "short_param.h";
 
 fn F() {
   // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+5]]:11-18: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
-  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+4]]:11-18: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+4]]:11-18: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplForType]
   // CHECK:STDERR: included from: fail_import_short_param_int32_arg.carbon:[[@LINE-5]]:10 [InCppInclude]
   // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:

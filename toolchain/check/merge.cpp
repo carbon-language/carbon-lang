@@ -50,6 +50,9 @@ static auto DiagnoseExternMismatch(Context& context, Lex::TokenKind decl_kind,
   CARBON_DIAGNOSTIC(RedeclExternMismatch, Error,
                     "redeclarations of `{0} {1}` must match use of `extern`",
                     Lex::TokenKind, SemIR::NameId);
+  // TODO: Locate the message or label at the `extern` keyword of whichever
+  // declaration has it. That needs declarations to record the keyword's
+  // location.
   context.emitter()
       .Build(new_loc_id, RedeclExternMismatch, decl_kind, name_id)
       .Attach(prev_loc_id, RedeclPrevDecl)

@@ -61,7 +61,7 @@ interface Z {
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_missing_impls.carbon:[[@LINE+2]]:12: error: expected `impls` in `require` declaration [RequireExpectedImpls]
+  // CHECK:STDERR: fail_missing_impls.carbon:[[@LINE+2]]:11: error: expected `impls` in `require` declaration [RequireExpectedImpls]
   // CHECK:STDERR:
   require Y;
 }
@@ -81,7 +81,7 @@ interface Z {
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_as_in_self.carbon:[[@LINE+2]]:16-17: error: expected `impls` in `require` declaration [RequireExpectedImpls]
+  // CHECK:STDERR: fail_as_in_self.carbon:[[@LINE+2]]:11-14: error: expected `impls` in `require` declaration [RequireExpectedImpls]
   // CHECK:STDERR:
   require Self as Y impls Y;
 }

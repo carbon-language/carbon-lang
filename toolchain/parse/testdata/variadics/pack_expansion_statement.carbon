@@ -49,9 +49,9 @@ fn F() {
 // --- fail_missing_semi.carbon
 
 fn F() {
+  // CHECK:STDERR: fail_missing_semi.carbon:[[@LINE+2]]:9: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:
   ... G()
-// CHECK:STDERR: fail_missing_semi.carbon:[[@LINE+2]]:1: error: expected `;` after expression statement [ExpectedExprSemi]
-// CHECK:STDERR:
 }
 
 // CHECK:STDOUT: - filename: expr_statement.carbon

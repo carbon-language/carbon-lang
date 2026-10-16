@@ -137,6 +137,30 @@ TEST_F(EmitterTest, AttachInfo) {
   emitter_.Build(1, TestDiagnostic).Attach(2, TestInfo).Emit();
 }
 
+TEST_F(EmitterTest, ScopeLeavesOutLabelAtDiagnosticLocation) {
+  CARBON_DIAGNOSTIC(TestDiagnostic, Error, "simple error");
+  CARBON_DIAGNOSTIC_LABEL(TestInfo, Info, "note");
+  Diagnostics::AnnotationScope annot(&emitter_, [&](auto& builder) {
+    if (!builder.IsLocatedAt(2)) {
+      builder.Attach(2, TestInfo);
+    }
+  });
+  EXPECT_CALL(
+      consumer_,
+      HandleDiagnostic(IsDiagnostic(
+          Diagnostics::Level::Error,
+          IsDiagnosticMessage(Diagnostics::Kind::TestDiagnostic,
+                              Diagnostics::Level::Error, 1, 1, "simple error"),
+          IsEmpty(),
+          ElementsAre(IsDiagnosticLabel(Diagnostics::LabelCategory::Info, 1, 2,
+                                        "note")))));
+  EXPECT_CALL(consumer_, HandleDiagnostic(IsSingleDiagnostic(
+                             Diagnostics::Kind::TestDiagnostic,
+                             Diagnostics::Level::Error, 1, 2, "simple error")));
+  emitter_.Emit(1, TestDiagnostic);
+  emitter_.Emit(2, TestDiagnostic);
+}
+
 TEST_F(EmitterTest, EmitContext) {
   CARBON_DIAGNOSTIC_CONTEXT(TestContext, "context");
   CARBON_DIAGNOSTIC(TestDiagnostic, Warning, "simple warning");

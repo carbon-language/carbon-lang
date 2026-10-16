@@ -360,7 +360,7 @@ CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsDifferentFile)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)
-CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccessInContext)
+CARBON_DIAGNOSTIC_KIND(MissingImplForType)
 CARBON_DIAGNOSTIC_KIND(ImplLookupCycle)
 
 // Require checking.

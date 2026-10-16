@@ -237,8 +237,9 @@ fn F[D: Y](unused d: D) {
   // because we are in a generic where `D` is an unknown type, which will cause
   // the query and impl self type to be C(FacetValue) for a symbolic FacetValue.
   //
-  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+3]]:30-31: error: cannot implicitly convert expression of type `()` to `C(D).(Z.X)` [ConversionFailure]
-  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+2]]:30-31: note: type `()` does not implement interface `Core.ImplicitAs(C(D).(Z.X))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+4]]:30-31: error: cannot implicitly convert expression of type `()` to `C(D).(Z.X)` [ConversionFailure]
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+3]]:30-31: note: type `()` does not implement interface `Core.ImplicitAs(C(D).(Z.X))` [MissingImplForType]
+  // CHECK:STDERR: fail_specialized_class_with_symbolic_facet_value_param.carbon:[[@LINE+2]]:14-26: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   let unused a: C(D).(Z.X) = ();
 }
@@ -335,8 +336,9 @@ impl forall [T: type, U: type] T as Z(U) where .X = () {}
 
 fn F[unused U: type](generic T: Z(C)) {
   // The value of `.X` is symbolic, it can't be assigned a value of type `C`.
-  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+3]]:23-29: error: cannot implicitly convert expression of type `C` to `T.(Z(C).X)` [ConversionFailure]
-  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+2]]:23-29: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+4]]:23-29: error: cannot implicitly convert expression of type `C` to `T.(Z(C).X)` [ConversionFailure]
+  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+3]]:23-29: note: type `C` does not implement interface `Core.ImplicitAs(T.(Z(C).X))` [MissingImplForType]
+  // CHECK:STDERR: fail_specialization_written_after_generic_use_of_type_constant.carbon:[[@LINE+2]]:14-19: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   let unused a: T.X = {} as C;
 }

@@ -274,24 +274,28 @@ auto CheckFunctionReturnTypeMatches(Context& context,
     CARBON_DIAGNOSTIC(
         FunctionRedeclReturnTypeDiffersNoReturn, Error,
         "function redeclaration differs because no return type is provided");
-    auto diag =
-        new_return_type_id.has_value()
-            ? context.emitter().Build(new_function.latest_decl_id(),
-                                      FunctionRedeclReturnTypeDiffers,
-                                      new_return_type_id)
-            : context.emitter().Build(new_function.latest_decl_id(),
-                                      FunctionRedeclReturnTypeDiffersNoReturn);
+    auto new_loc_id = new_function.return_type_inst_id.has_value()
+                          ? SemIR::LocId(new_function.return_type_inst_id)
+                          : SemIR::LocId(new_function.latest_decl_id());
+    auto prev_loc_id = prev_function.return_type_inst_id.has_value()
+                           ? SemIR::LocId(prev_function.return_type_inst_id)
+                           : SemIR::LocId(prev_function.latest_decl_id());
+    auto diag = new_return_type_id.has_value()
+                    ? context.emitter().Build(new_loc_id,
+                                              FunctionRedeclReturnTypeDiffers,
+                                              new_return_type_id)
+                    : context.emitter().Build(
+                          new_loc_id, FunctionRedeclReturnTypeDiffersNoReturn);
     if (prev_return_type_id.has_value()) {
       CARBON_DIAGNOSTIC_LABEL(FunctionRedeclReturnTypePrevious, Info,
                               "previously declared with return type {0}",
                               SemIR::TypeId);
-      diag.Attach(prev_function.latest_decl_id(),
-                  FunctionRedeclReturnTypePrevious, prev_return_type_id);
+      diag.Attach(prev_loc_id, FunctionRedeclReturnTypePrevious,
+                  prev_return_type_id);
     } else {
       CARBON_DIAGNOSTIC_LABEL(FunctionRedeclReturnTypePreviousNoReturn, Info,
                               "previously declared with no return type");
-      diag.Attach(prev_function.latest_decl_id(),
-                  FunctionRedeclReturnTypePreviousNoReturn);
+      diag.Attach(prev_loc_id, FunctionRedeclReturnTypePreviousNoReturn);
     }
     diag.Emit();
     return false;
@@ -329,6 +333,8 @@ static auto CheckFunctionEvaluationModeMatches(
       "function redeclaration differs because new function is "
       "{0:=-1:not `eval`|=-2:not `musteval`|=1:`eval`|=2:`musteval`}",
       Diagnostics::IntAsSelect);
+  // TODO: Locate the message and label at the `eval` or `musteval` keyword of
+  // each declaration. That needs the function to record the keyword's location.
   CARBON_DIAGNOSTIC_LABEL(
       FunctionRedeclEvaluationModePrevious, Info,
       "previously {0:<0:not |:}declared as "
@@ -828,12 +834,32 @@ auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
   // If the `}` of the function is reachable, reject if we need a return value
   // and otherwise add an implicit `return;`.
   if (IsCurrentPositionReachable(context)) {
-    if (context.functions().Get(function_id).return_form_inst_id.has_value()) {
+    const auto& function = context.functions().Get(function_id);
+    if (function.return_form_inst_id.has_value()) {
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");
-      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                             MissingReturnStatement);
+      CARBON_DIAGNOSTIC_LABEL(MissingReturnStatementType, Info,
+                              "return type declared here");
+      // A deduced return type is located where it was deduced from: a returned
+      // expression or a `returned var`.
+      CARBON_DIAGNOSTIC_LABEL(MissingReturnStatementDeducedType, Info,
+                              "return type deduced here");
+      auto builder = context.emitter().Build(
+          LocIdForDiagnostics::TokenOnly(node_id), MissingReturnStatement);
+      // Only attach a label when the return type has a location to reference.
+      if (context.insts()
+              .GetCanonicalLocId(function.return_type_inst_id)
+              .has_value()) {
+        if (function.has_deduced_return_type()) {
+          builder.Attach(function.return_type_inst_id,
+                         MissingReturnStatementDeducedType);
+        } else {
+          builder.Attach(function.return_type_inst_id,
+                         MissingReturnStatementType);
+        }
+      }
+      builder.Emit();
     } else {
       AddReturnInstWithCleanups(context, node_id);
     }

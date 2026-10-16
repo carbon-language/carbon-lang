@@ -27,7 +27,7 @@ fn F() {
   Interface.F();
 
   // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+3]]:17-27: error: cannot implicitly convert non-type value of type `<associated entity in Interface>` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+2]]:17-27: note: type `<associated entity in Interface>` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_member_lookup.carbon:[[@LINE+2]]:17-27: note: type `<associated entity in Interface>` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
   // CHECK:STDERR:
   var unused v: Interface.T;
 }

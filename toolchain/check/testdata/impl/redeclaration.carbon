@@ -53,7 +53,7 @@ class C {
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+4]]:9-10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+2]]:15: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class.carbon:[[@LINE+2]]:13: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 impl C.(as Z) {}
 
@@ -71,7 +71,7 @@ class C {
 // TODO: This should typecheck (see #5366).
 // CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+6]]:9-12: error: name `Self` not found [NameNotFound]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+4]]:20: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+4]]:18: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_redeclaration_reenter_class_explicit_self.carbon:[[@LINE+2]]:1-21: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
@@ -89,7 +89,7 @@ class C {
 // TODO: This should typecheck (see #5366).
 // CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+6]]:9-12: error: name `Self` not found [NameNotFound]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+4]]:20: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+4]]:18: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_outside.carbon:[[@LINE+2]]:1-21: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
@@ -109,7 +109,7 @@ class C {
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+4]]:9-10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+2]]:15: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR: fail_todo_redeclaration_reenter_class_mixed_self_inside.carbon:[[@LINE+2]]:13: error: expected `as` in `impl` declaration [ImplExpectedAs]
 // CHECK:STDERR:
 impl C.(as Z) {}
 

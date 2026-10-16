@@ -88,21 +88,18 @@ auto HandleDeclNameAndParams(Context& context) -> void {
     return;
   }
 
-  Lex::TokenIndex token = *context.position();
-  if (context.tokens().GetKind(token) == Lex::TokenKind::FileEnd) {
-    // The end of file is an unhelpful diagnostic location. Instead, use the
-    // introducer token.
-    token = state.token;
-  }
+  // The missing name goes after the token before the parser's position, which
+  // at the end of the file is the file's last token.
+  auto after_token = *(context.position() - 1);
   if (state.token == *context.position()) {
     CARBON_DIAGNOSTIC(ExpectedDeclNameAfterPeriod, Error,
                       "`.` should be followed by a name");
-    context.emitter().Emit(token, ExpectedDeclNameAfterPeriod);
+    context.emitter().Emit(after_token, ExpectedDeclNameAfterPeriod);
   } else {
     CARBON_DIAGNOSTIC(ExpectedDeclName, Error,
                       "`{0}` introducer should be followed by a name",
                       Lex::TokenKind);
-    context.emitter().Emit(token, ExpectedDeclName,
+    context.emitter().Emit(after_token, ExpectedDeclName,
                            context.tokens().GetKind(state.token));
   }
   context.ReturnErrorOnState();

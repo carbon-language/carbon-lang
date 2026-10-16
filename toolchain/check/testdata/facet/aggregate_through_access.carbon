@@ -43,7 +43,8 @@ interface Z {
   let X: type;
 }
 
-// CHECK:STDERR: fail_todo_array_access_through_witness.carbon:[[@LINE+2]]:47-52: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `type` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fail_todo_array_access_through_witness.carbon:[[@LINE+3]]:51: error: type `type` does not implement interface `Core.IndexWith(Core.IntLiteral)` [MissingImplForType]
+// CHECK:STDERR: fail_todo_array_access_through_witness.carbon:[[@LINE+2]]:47-49: note: indexing an object with type `type` [IndexedObjectType]
 // CHECK:STDERR:
 fn F(generic T: Z where .X = array({}, 1)) -> T.X[0] {
   return {};

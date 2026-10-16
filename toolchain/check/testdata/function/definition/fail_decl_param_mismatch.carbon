@@ -30,20 +30,20 @@ fn H(x: ());
 fn H(unused x: bool) {}
 
 fn I();
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+3]]:1-14: error: function redeclaration differs because return type is `()` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+3]]:11-12: error: function redeclaration differs because return type is `()` [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-2]]:1-7: note: previously declared with no return type [FunctionRedeclReturnTypePreviousNoReturn]
 // CHECK:STDERR:
 fn I() -> () { return (); }
 
 fn J() -> ();
 // CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+3]]:1-8: error: function redeclaration differs because no return type is provided [FunctionRedeclReturnTypeDiffersNoReturn]
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-2]]:1-13: note: previously declared with return type `()` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-2]]:11-12: note: previously declared with return type `()` [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:
 fn J() {}
 
 fn K() -> ();
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+3]]:1-14: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
-// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-2]]:1-13: note: previously declared with return type `()` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE+3]]:11-12: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_decl_param_mismatch.carbon:[[@LINE-2]]:11-12: note: previously declared with return type `()` [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:
 fn K() -> {} { return {}; }
 

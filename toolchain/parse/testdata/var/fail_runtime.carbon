@@ -19,7 +19,7 @@ var runtime u:|
 
 // CHECK:STDERR: fail_runtime.carbon:[[@LINE+17]]:26: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_runtime.carbon:[[@LINE+15]]:26: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_runtime.carbon:[[@LINE-5]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_runtime.carbon
 // CHECK:STDOUT:   ╭─FileStart ''

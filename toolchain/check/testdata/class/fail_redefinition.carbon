@@ -26,11 +26,12 @@ class Class {
 }
 
 fn Class.F() {}
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+2]]:10: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+3]]:10: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-17]]:1-13: note: no declaration of `G` in this scope [QualifiedDeclScopeEntity]
 // CHECK:STDERR:
 fn Class.G() {}
 fn Class.H() {}
 // CHECK:STDERR: fail_redefinition.carbon:[[@LINE+3]]:1-14: error: redefinition of `fn I` [RedeclRedef]
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-18]]:3-10: note: previously defined here [RedeclPrevDef]
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-19]]:3-10: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR:
 fn Class.I() {}

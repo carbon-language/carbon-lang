@@ -62,7 +62,8 @@ namespace N;
 // Use `package.I` and poison `N.I`.
 fn N.F1(generic x: I);
 
-// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+2]]:20-22: error: member name `I` not found in `N` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+3]]:20-22: error: member name `I` not found in `N` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fail_use_poison.carbon:[[@LINE-5]]:1-12: note: `N` declared here [MemberNameNotFoundScope]
 // CHECK:STDERR:
 fn N.F2(generic x: N.I);
 
@@ -81,7 +82,8 @@ fn N.F1(generic x: I);
 // CHECK:STDERR:
 interface N.I;
 
-// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+2]]:20-22: error: member name `I` not found in `N` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+3]]:20-22: error: member name `I` not found in `N` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE-10]]:1-12: note: `N` declared here [MemberNameNotFoundScope]
 // CHECK:STDERR:
 fn N.F2(generic x: N.I);
 

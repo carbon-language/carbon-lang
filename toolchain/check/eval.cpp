@@ -1790,6 +1790,10 @@ static auto PerformFloatToIntConvert(Context& context, SemIR::LocId loc_id,
 }
 
 // Issues a diagnostic for a compile-time division by zero.
+//
+// TODO: Locate the message at the divisor. The desugared call's arguments are
+// conversions located at the operator, so this needs the desugaring to record
+// where each operand was written.
 static auto DiagnoseDivisionByZero(Context& context, SemIR::LocId loc_id)
     -> void {
   CARBON_DIAGNOSTIC(CompileTimeDivisionByZero, Error, "division by zero");

@@ -59,7 +59,7 @@ fn F() {
   Cpp.TakesFunction(&n[0]);
 
   // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE+5]]:21-31: error: cannot implicitly convert expression of type `Cpp.nullptr_t` to `<C++ type int (*)(int)>` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE+4]]:21-31: note: type `Cpp.nullptr_t` does not implement interface `Core.ImplicitAs(<C++ type int (*)(int)>)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_call_params_2.carbon:[[@LINE+4]]:21-31: note: type `Cpp.nullptr_t` does not implement interface `Core.ImplicitAs(<C++ type int (*)(int)>)` [MissingImplForType]
   // CHECK:STDERR: included from: fail_todo_call_params_2.carbon:[[@LINE-20]]:10 [InCppInclude]
   // CHECK:STDERR: ./params.h:3:24: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:

@@ -67,7 +67,8 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 fn F() {
-  // CHECK:STDERR: fail_not_builtin.carbon:[[@LINE+2]]:28-42: error: member name `not_builtin` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_not_builtin.carbon:[[@LINE+3]]:28-42: error: member name `not_builtin` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_not_builtin.carbon:[[@LINE-4]]:1-11: note: `Cpp` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   let unused not_builtin : Cpp.not_builtin = 1;
 }

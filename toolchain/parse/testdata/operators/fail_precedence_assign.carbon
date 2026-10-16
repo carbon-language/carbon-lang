@@ -12,12 +12,12 @@ fn F() {
   var a: i32;
   // Assignment can only appear as an expression statement, not as a subexpression.
   // TODO: Produce the "can only be used as a complete statement" diagnostic in each of these cases.
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+2]]:10: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
+  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+2]]:8: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
   // CHECK:STDERR:
   1 + (a = 1);
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+4]]:19-20: error: expected `else` after `if ... then ...` [ExpectedElseAfterIf]
+  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+4]]:17: error: expected `else` after `if ... then ...` [ExpectedElseAfterIf]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+2]]:19-20: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
+  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+2]]:17: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
   // CHECK:STDERR:
   (if true then a += 1 else a /= 2);
   // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+2]]:7-8: error: operator `++` can only be used as a complete statement [StatementOperatorAsSubExpr]

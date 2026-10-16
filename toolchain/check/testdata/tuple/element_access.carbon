@@ -145,7 +145,7 @@ library "[[@TEST_NAME]]";
 
 var a: (i32, i32) = (12, 6);
 // CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+3]]:17-19: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `Core.IntLiteral` [ConversionFailure]
-// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+2]]:17-19: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(Core.IntLiteral)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_non_int_indexing.carbon:[[@LINE+2]]:17-19: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(Core.IntLiteral)` [MissingImplForType]
 // CHECK:STDERR:
 var b: i32 = a.(2.6);
 

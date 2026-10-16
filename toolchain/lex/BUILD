@@ -47,6 +47,7 @@ cc_library(
     srcs = ["helpers.cpp"],
     hdrs = ["helpers.h"],
     deps = [
+        ":source_loc",
         "//toolchain/diagnostics:emitter",
         "@llvm-project//llvm:Support",
     ],
@@ -57,6 +58,7 @@ cc_library(
     testonly = 1,
     hdrs = ["test_helpers.h"],
     deps = [
+        ":source_loc",
         "//common:check",
         "//common:string_helpers",
         "//toolchain/diagnostics:emitter",
@@ -72,6 +74,7 @@ cc_library(
     deps = [
         ":character_set",
         ":helpers",
+        ":source_loc",
         "//common:check",
         "//toolchain/base:int",
         "//toolchain/diagnostics:emitter",
@@ -131,6 +134,7 @@ cc_library(
     deps = [
         ":character_set",
         ":helpers",
+        ":source_loc",
         ":token_info",
         "//common:check",
         "//toolchain/diagnostics:emitter",
@@ -191,6 +195,7 @@ cc_library(
         ":helpers",
         ":mismatched_brackets",
         ":numeric_literal",
+        ":source_loc",
         ":string_literal",
         ":token_index",
         ":token_info",
@@ -308,6 +313,15 @@ cc_library(
 )
 
 cc_library(
+    name = "source_loc",
+    hdrs = ["source_loc.h"],
+    deps = [
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_library(
     name = "token_index",
     hdrs = ["token_index.h"],
     deps = [
@@ -336,6 +350,7 @@ cc_library(
         ":character_set",
         ":helpers",
         ":numeric_literal",
+        ":source_loc",
         ":string_literal",
         ":token_index",
         ":token_info",

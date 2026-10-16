@@ -112,7 +112,7 @@ impl C as I {
   // This leaves the impl with a placeholder instruction in the witness table.
   // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+6]]:9: error: name `x` not found [NameNotFound]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+4]]:11-14: error: expected `,` or `]` [UnexpectedTokenAfterListElement]
+  // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+4]]:9: error: expected `,` or `]` [UnexpectedTokenAfterListElement]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_invalid_fn_syntax_in_impl.carbon:[[@LINE+2]]:8-18: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:

@@ -52,7 +52,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "single.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_namespace_wrong_name.carbon:[[@LINE+2]]:3-22: error: member name `not_my_namespace` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_namespace_wrong_name.carbon:[[@LINE+3]]:3-22: error: member name `not_my_namespace` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_namespace_wrong_name.carbon:[[@LINE-4]]:1-30: note: `Cpp` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   Cpp.not_my_namespace.foo();
 }
@@ -178,7 +179,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_special_name_call_unescpaed.carbon:[[@LINE+2]]:3-10: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_special_name_call_unescpaed.carbon:[[@LINE+3]]:3-10: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_special_name_call_unescpaed.carbon:[[@LINE-4]]:1-36: note: `Cpp` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   Cpp.base.foo();
 }
@@ -252,11 +254,15 @@ import library "namespace_alias";
 fn F() {
   // Imports are not implicitly re-exported, so lookup is expected to fail,
   // regardless of whether a lookup was performed in the imported file.
-  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+2]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+4]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: imported from: fail_indirect_namespace_no_import.carbon:[[@LINE-6]]:1 [InImport]
+  // CHECK:STDERR: namespace_alias.carbon: note: `Cpp.my_namespace` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   MyNamespaceAlias.foo();
 
-  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+2]]:3-22: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_indirect_namespace_no_import.carbon:[[@LINE+4]]:3-22: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: imported from: fail_indirect_namespace_no_import.carbon:[[@LINE-12]]:1 [InImport]
+  // CHECK:STDERR: namespace_alias.carbon: note: `Cpp.my_namespace` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   MyNamespaceAlias.bar();
 }
@@ -274,11 +280,15 @@ import Cpp;
 fn F() {
   // Imports are not implicitly re-exported, so name lookup is expected to
   // fail, regardless of whether a lookup was performed in the imported file.
-  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+2]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: imported from: fail_indirect_namespace_no_local_decl.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: namespace_alias.carbon: note: `Cpp.my_namespace` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   MyNamespaceAlias.foo();
 
-  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+2]]:3-22: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_indirect_namespace_no_local_decl.carbon:[[@LINE+4]]:3-22: error: member name `bar` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: imported from: fail_indirect_namespace_no_local_decl.carbon:[[@LINE-13]]:1 [InImport]
+  // CHECK:STDERR: namespace_alias.carbon: note: `Cpp.my_namespace` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   MyNamespaceAlias.bar();
 }
@@ -312,7 +322,9 @@ namespace my_namespace {
 fn F() {
   // Cpp imports are not implicitly re-exported, so name lookup is expected to
   // fail.
-  // CHECK:STDERR: fail_indirect_namespace_different_contents_invalid.carbon:[[@LINE+2]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_indirect_namespace_different_contents_invalid.carbon:[[@LINE+4]]:3-22: error: member name `foo` not found in `Cpp.my_namespace` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: imported from: fail_indirect_namespace_different_contents_invalid.carbon:[[@LINE-13]]:1 [InImport]
+  // CHECK:STDERR: namespace_alias.carbon: note: `Cpp.my_namespace` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   MyNamespaceAlias.foo();
 }

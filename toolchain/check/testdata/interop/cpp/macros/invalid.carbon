@@ -23,10 +23,11 @@ error has_error;
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+5]]:3-22: error: failed to parse macro Cpp.macro_with_error to a valid constant expression [InCppMacroEvaluation]
-  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+4]]:3-22: note: in `Cpp` name lookup for `macro_with_error` [InCppNameLookup]
+  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+6]]:3-22: error: failed to parse macro Cpp.macro_with_error to a valid constant expression [InCppMacroEvaluation]
+  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+5]]:3-22: note: in `Cpp` name lookup for `macro_with_error` [InCppNameLookup]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+2]]:3-22: error: member name `macro_with_error` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+3]]:3-22: error: member name `macro_with_error` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE-13]]:1-21: note: `Cpp` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   Cpp.macro_with_error;
   //@dump-sem-ir-end

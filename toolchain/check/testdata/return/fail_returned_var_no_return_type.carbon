@@ -33,7 +33,8 @@ fn ForgotReturnType() {
   // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE-2]]:1-23: note: there was no return type provided [ReturnTypeOmittedNote]
   // CHECK:STDERR:
   returned var unused v: () = ();
-  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+2]]:3-13: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
+  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE+3]]:3-13: error: `return var;` with no `returned var` in scope [ReturnVarWithNoReturnedVar]
+  // CHECK:STDERR: fail_forgot_return_type.carbon:[[@LINE-6]]:1-23: note: there was no return type provided [ReturnTypeOmittedNote]
   // CHECK:STDERR:
   return var;
 }

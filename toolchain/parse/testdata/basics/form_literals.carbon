@@ -21,7 +21,7 @@ fn VarReturn() ->? form(ref i32);
 // --- fail_invalid_form_literal.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:7: error: expected `(` after `form` [ExpectedParenAfter]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:3-6: error: expected `(` after `form` [ExpectedParenAfter]
   // CHECK:STDERR:
   form;
   // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
@@ -40,14 +40,14 @@ fn F() {
   // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:18-20: error: unexpected tokens before `)` [ExpectedCloseSymbol]
   // CHECK:STDERR:
   form(var whole lot of nonsense);
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8-12: error: expected `(` after `form` [ExpectedParenAfter]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:3-6: error: expected `(` after `form` [ExpectedParenAfter]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:8-12: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:3-6: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   form whole lot of nonsense;
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8-10: error: expected `(` after `form` [ExpectedParenAfter]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:3-6: error: expected `(` after `form` [ExpectedParenAfter]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:8-10: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:3-6: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   form var whole lot of nonsense;
 }

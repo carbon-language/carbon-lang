@@ -76,8 +76,8 @@ struct S {};
 
 fn F(input: Cpp.void*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon:[[@LINE+3]]:26-40: error: cannot convert expression of type `void*` to `Cpp.S*` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon:[[@LINE+2]]:26-40: note: type `Cpp.void*` does not implement interface `Core.As(Cpp.S*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon:[[@LINE+3]]:26-30: error: cannot convert expression of type `void*` to `Cpp.S*` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon:[[@LINE+2]]:26-40: note: type `Cpp.void*` does not implement interface `Core.As(Cpp.S*)` [MissingImplForType]
   // CHECK:STDERR:
   let unused p: Cpp.S* = input as Cpp.S*;
   //@dump-sem-ir-end
@@ -93,8 +93,8 @@ class C {}
 
 fn F(input: Cpp.void*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon:[[@LINE+3]]:22-32: error: cannot convert expression of type `void*` to `C*` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon:[[@LINE+2]]:22-32: note: type `Cpp.void*` does not implement interface `Core.As(C*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon:[[@LINE+3]]:22-26: error: cannot convert expression of type `void*` to `C*` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon:[[@LINE+2]]:22-32: note: type `Cpp.void*` does not implement interface `Core.As(C*)` [MissingImplForType]
   // CHECK:STDERR:
   let unused p: C* = input as C*;
   //@dump-sem-ir-end

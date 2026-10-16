@@ -73,11 +73,11 @@ class OverloadX {
   extend base: Cpp.OverloadedBase;
   //
   // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+10]]:3-32: error: cannot implicitly convert expression of type `Cpp.Y` to `Cpp.X` [ConversionFailure]
-  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+9]]:3-32: note: type `Cpp.Y` does not implement interface `Core.ImplicitAs(Cpp.X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+9]]:3-32: note: type `Cpp.Y` does not implement interface `Core.ImplicitAs(Cpp.X)` [MissingImplForType]
   // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+8]]:23-30: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+6]]:3-32: error: cannot implicitly convert expression of type `Cpp.Y` to `Cpp.X` [ConversionFailure]
-  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+5]]:3-32: note: type `Cpp.Y` does not implement interface `Core.ImplicitAs(Cpp.X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+5]]:3-32: note: type `Cpp.Y` does not implement interface `Core.ImplicitAs(Cpp.X)` [MissingImplForType]
   // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+4]]:23-30: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: included from: fail_overload_type.carbon:[[@LINE-12]]:10 [InCppInclude]
   // CHECK:STDERR: ./overload.h:7:16: note: while building thunk to match the signature of this function [ThunkSignature]
@@ -89,11 +89,11 @@ class OverloadY {
   extend base: Cpp.OverloadedBase;
   //
   // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+10]]:3-32: error: cannot implicitly convert expression of type `Cpp.X` to `Cpp.Y` [ConversionFailure]
-  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+9]]:3-32: note: type `Cpp.X` does not implement interface `Core.ImplicitAs(Cpp.Y)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+9]]:3-32: note: type `Cpp.X` does not implement interface `Core.ImplicitAs(Cpp.Y)` [MissingImplForType]
   // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+8]]:23-30: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+6]]:3-32: error: cannot implicitly convert expression of type `Cpp.X` to `Cpp.Y` [ConversionFailure]
-  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+5]]:3-32: note: type `Cpp.X` does not implement interface `Core.ImplicitAs(Cpp.Y)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+5]]:3-32: note: type `Cpp.X` does not implement interface `Core.ImplicitAs(Cpp.Y)` [MissingImplForType]
   // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+4]]:23-30: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR: included from: fail_overload_type.carbon:[[@LINE-28]]:10 [InCppInclude]
   // CHECK:STDERR: ./overload.h:6:16: note: while building thunk to match the signature of this function [ThunkSignature]
