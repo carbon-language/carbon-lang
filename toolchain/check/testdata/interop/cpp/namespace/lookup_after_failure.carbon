@@ -64,7 +64,7 @@ void TestLookupFailureInNested() {
   // second is a Carbon error for declaring a poisoned name. Normally we would
   // suppress the first error when we produce the second, but we don't do that
   // when the first error is produced by Clang.
-  // CHECK:STDERR: fail_declare_after_poisoning_with_lookup_failure.carbon:[[@LINE+3]]:19-31: error: no member named 'LaterInNested' in namespace 'Carbon::Main::Nested' [CppInteropParseError]
+  // CHECK:STDERR: fail_declare_after_poisoning_with_lookup_failure.carbon:[[@LINE+3]]:19-31: error: no member named 'LaterInNested' in namespace 'Carbon::Nested' [CppInteropParseError]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_declare_after_poisoning_with_lookup_failure.carbon:[[@LINE+1]]:19: error: name `LaterInNested` used before it was declared [NameUseBeforeDecl]
   Carbon::Nested::LaterInNested();

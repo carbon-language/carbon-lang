@@ -91,25 +91,105 @@ static auto ExportClassToCppInDeclContext(Context& context,
   return record_decl;
 }
 
-auto ExportPackageNamespaceToCpp(Context& context,
-                                 clang::DeclContext* carbon_namespace,
-                                 clang::IdentifierInfo* package_identifier)
+auto CreateSemanticNamespace(Context& context,
+                             clang::DeclContext* parent_context,
+                             clang::IdentifierInfo* identifier)
     -> clang::NamespaceDecl* {
-  auto& package_namespaces =
-      context.cpp_context()->domain().package_namespaces();
-  auto [it, inserted] =
-      package_namespaces.try_emplace(package_identifier->getName(), nullptr);
-  if (inserted) {
+  // TODO: Provide a source location.
+  auto* namespace_decl = clang::NamespaceDecl::Create(
+      context.ast_context(), parent_context, /*Inline=*/false,
+      clang::SourceLocation(), clang::SourceLocation(), identifier,
+      /*PrevDecl=*/nullptr, /*Nested=*/false);
+  // This declaration should never be made visible to name lookups. Clear its
+  // set of associated identifier namespaces, which indicates that it should not
+  // be found by any kind of lookup.
+  namespace_decl->clearIdentifierNamespace();
+  parent_context->addHiddenDecl(namespace_decl);
+  return namespace_decl;
+}
+
+auto ExportNamespaceToCpp(Context& context, clang::DeclContext* parent_context,
+                          clang::IdentifierInfo* identifier)
+    -> clang::NamespaceDecl* {
+  auto& namespaces = context.cpp_context()->domain().semantic_namespaces();
+  auto result = namespaces.Insert(std::pair{parent_context, identifier}, [&] {
+    return CreateSemanticNamespace(context, parent_context, identifier);
+  });
+  return result.value();
+}
+
+auto ExportLookupNamespaceToCpp(Context& context, SemIR::LocId loc_id,
+                                SemIR::NameScopeId name_scope_id)
+    -> clang::DeclContext* {
+  auto& lookup_namespaces = context.cpp_context()->lookup_namespaces();
+  llvm::SmallVector<SemIR::NameScopeId> name_scope_ids_to_create;
+
+  // Collect all the enclosing Carbon namespaces that don't have a corresponding
+  // C++ namespace.
+  clang::DeclContext* decl_context = nullptr;
+  while (true) {
+    if (auto lookup = lookup_namespaces.Lookup(name_scope_id)) {
+      decl_context = lookup.value();
+      break;
+    }
+
+    const auto& name_scope = context.name_scopes().Get(name_scope_id);
+    if (name_scope.is_cpp_scope()) {
+      decl_context = GetClangDeclContextForScope(context, name_scope_id);
+      CARBON_CHECK(decl_context);
+      break;
+    }
+
+    CARBON_CHECK(context.name_scopes().InstIs<SemIR::Namespace>(name_scope_id),
+                 "Parent of namespace is non-namespace {0}",
+                 context.name_scopes().GetInstIfValid(name_scope_id).second);
+
+    name_scope_ids_to_create.push_back(name_scope_id);
+    name_scope_id = name_scope.parent_scope_id();
+    CARBON_CHECK(
+        name_scope_id.has_value(),
+        "Reached the top level without finding a scope mapped into C++");
+  }
+
+  // Build each new lookup namespace, from the outermost one inwards. The
+  // enclosing namespaces aren't necessary semantically, but they allow Clang to
+  // produce diagnostics that match the way we want the contents of namespace
+  // `Carbon` to be named.
+  for (auto name_scope_id : llvm::reverse(name_scope_ids_to_create)) {
+    const auto& name_scope = context.name_scopes().Get(name_scope_id);
+
+    auto* identifier_info =
+        GetClangIdentifierInfo(context, name_scope.name_id());
+    if (!identifier_info) {
+      // TODO: Handle keyword package names like `Cpp` and `Core`. These can
+      // be named from C++ via an alias.
+      context.TODO(loc_id, "interop with non-identifier package name");
+      return nullptr;
+    }
+
     // TODO: Provide a source location.
     auto* namespace_decl = clang::NamespaceDecl::Create(
-        context.ast_context(), carbon_namespace, /*Inline=*/false,
-        clang::SourceLocation(), clang::SourceLocation(), package_identifier,
+        context.ast_context(), decl_context, /*Inline=*/false,
+        clang::SourceLocation(), clang::SourceLocation(), identifier_info,
         /*PrevDecl=*/nullptr, /*Nested=*/false);
-    carbon_namespace->addHiddenDecl(namespace_decl);
-    it->second = namespace_decl;
+
+    // Add the declaration to the enclosing scope. We are providing lookup
+    // results in that enclosing scope, so don't add it to Clang's name lookup
+    // table.
+    decl_context->addHiddenDecl(namespace_decl);
+
+    // Notify Clang that we are providing lookup results in the new namespace
+    // too.
+    namespace_decl->setHasExternalVisibleStorage();
+
+    auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(namespace_decl);
+    context.clang_decls().Add({.key = key, .inst_id = name_scope.inst_id()});
+    lookup_namespaces.Insert(name_scope_id, namespace_decl);
+
+    decl_context = namespace_decl;
   }
-  it->second->getPrimaryContext()->setHasExternalVisibleStorage();
-  return it->second;
+
+  return decl_context;
 }
 
 auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
@@ -136,9 +216,7 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
     if (name_scope.is_imported_package()) {
       // Imported packages are exported as sub-namespaces of `::Carbon`, not of
       // the current package's sub-namespace.
-      decl_context =
-          GetClangDeclContextForScope(context, SemIR::NameScopeId::Package)
-              ->getParent();
+      decl_context = context.cpp_context()->domain().carbon_namespace();
       break;
     }
     name_scope_id = name_scope.parent_scope_id();
@@ -167,17 +245,8 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
         return nullptr;
       }
 
-      if (name_scope.is_imported_package()) {
-        decl_context =
-            ExportPackageNamespaceToCpp(context, decl_context, identifier_info);
-      } else {
-        // TODO: Provide a source location.
-        auto* namespace_decl = clang::NamespaceDecl::Create(
-            context.ast_context(), decl_context, false, clang::SourceLocation(),
-            clang::SourceLocation(), identifier_info, nullptr, false);
-        decl_context->addHiddenDecl(namespace_decl);
-        decl_context = namespace_decl;
-      }
+      decl_context =
+          ExportNamespaceToCpp(context, decl_context, identifier_info);
     } else if (auto class_type =
                    context.insts().TryGetAs<SemIR::ClassType>(const_inst_id)) {
       const auto& class_info = context.classes().Get(class_type->class_id);
@@ -187,8 +256,6 @@ auto ExportNameScopeToCpp(Context& context, SemIR::LocId loc_id,
       context.TODO(loc_id, "non-class non-namespace name scope");
       return nullptr;
     }
-
-    decl_context->setHasExternalVisibleStorage();
 
     auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(
         cast<clang::Decl>(decl_context));
