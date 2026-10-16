@@ -45,6 +45,14 @@ struct CppInputFile {
 // parse more code into that domain. May be shared across multiple Carbon files.
 class CppDomain {
  public:
+  // A map from parent context and namespace name to semantic namespace, for
+  // cross-file deduplication of exported packages and namespaces. We use the
+  // same semantic C++ namespace for the same Carbon package and namespace path
+  // in every file.
+  using SemanticNamespacesMap =
+      Map<std::pair<clang::DeclContext*, clang::IdentifierInfo*>,
+          clang::NamespaceDecl*>;
+
   explicit CppDomain(std::shared_ptr<clang::CompilerInstance> clang_instance,
                      std::unique_ptr<clang::Parser> parser,
                      llvm::ArrayRef<CppInputFile> inputs,
@@ -77,10 +85,8 @@ class CppDomain {
   auto set_carbon_namespace(clang::NamespaceDecl* carbon_namespace) -> void {
     carbon_namespace_ = carbon_namespace;
   }
-  auto namespaces()
-      -> Map<std::pair<clang::DeclContext*, clang::IdentifierInfo*>,
-             clang::NamespaceDecl*>& {
-    return namespaces_;
+  auto semantic_namespaces() -> SemanticNamespacesMap& {
+    return semantic_namespaces_;
   }
 
  private:
@@ -90,9 +96,7 @@ class CppDomain {
   Map<CheckIRId, clang::Module*> modules_;
   llvm::StringMap<clang::Module*> header_modules_;
   clang::NamespaceDecl* carbon_namespace_ = nullptr;
-  Map<std::pair<clang::DeclContext*, clang::IdentifierInfo*>,
-      clang::NamespaceDecl*>
-      namespaces_;
+  SemanticNamespacesMap semantic_namespaces_;
   llvm::LLVMContext* llvm_context_ = nullptr;
 };
 

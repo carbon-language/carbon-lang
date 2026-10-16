@@ -17,6 +17,15 @@ class CXXRecordDecl;
 
 namespace Carbon::Check {
 
+// Creates a namespace to use as a semantic parent for exported C++ entities.
+// This is used for the root `Carbon` namespace, the package namespaces within
+// it, and any nested namespaces within those packages. Does not register the
+// namespace as corresponding to any particular Carbon entity.
+auto CreateSemanticNamespace(Context& context,
+                             clang::DeclContext* parent_context,
+                             clang::IdentifierInfo* identifier)
+    -> clang::NamespaceDecl*;
+
 // Exports a Carbon namespace into C++ as a semantic sub-namespace of
 // `parent_context` (used as the parent `DeclContext` of exported Carbon
 // entities), or returns the existing namespace if already exported in this C++
@@ -29,7 +38,8 @@ auto ExportNamespaceToCpp(Context& context, clang::DeclContext* parent_context,
 // `NamespaceDecl`, or returns the C++ declaration context if it was imported
 // from C++. Lookup-only namespaces are only used for C++ name lookup in the
 // current Carbon file, and are never the parent `DeclContext` of anything
-// other than child lookup-only namespaces.
+// other than child lookup-only namespaces, so that references to Carbon
+// entities are mangled consistently.
 auto ExportLookupNamespaceToCpp(Context& context, SemIR::LocId loc_id,
                                 SemIR::NameScopeId name_scope_id)
     -> clang::DeclContext*;

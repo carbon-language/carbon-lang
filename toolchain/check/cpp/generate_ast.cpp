@@ -265,13 +265,8 @@ auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
   auto& domain = context_->cpp_context()->domain();
   auto* semantic_carbon_namespace = domain.carbon_namespace();
   if (!semantic_carbon_namespace) {
-    semantic_carbon_namespace = clang::NamespaceDecl::Create(
-        ast_context, tu_decl, /*Inline=*/false, clang::SourceLocation(),
-        clang::SourceLocation(), identifier, /*PrevDecl=*/nullptr,
-        /*Nested=*/false);
-    // This declaration should never be made visible to name lookups.
-    semantic_carbon_namespace->clearIdentifierNamespace();
-    tu_decl->addHiddenDecl(semantic_carbon_namespace);
+    semantic_carbon_namespace =
+        CreateSemanticNamespace(*context_, tu_decl, identifier);
     domain.set_carbon_namespace(semantic_carbon_namespace);
   }
 
