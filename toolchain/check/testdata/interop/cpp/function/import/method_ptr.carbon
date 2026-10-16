@@ -96,8 +96,9 @@ import Cpp library "method_ptr.h";
 fn F(ref c: Cpp.C);
 
 fn G() {
-  // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE+3]]:39: error: can't convert exported function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE+4]]:39: error: can't convert exported function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
   // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE-4]]:1-19: note: function exported with pointer type `void (*)(class C &)` [ExportedFromFunction]
+  // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE+2]]:3-35: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = F;
 }
@@ -112,8 +113,9 @@ class C {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE+3]]:39-46: error: can't convert exported member function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE+4]]:39-46: error: can't convert exported member function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
   // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE-5]]:3-18: note: function exported with pointer type `void (Carbon::Main::C::*)(void) const` [ExportedFromFunction]
+  // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE+2]]:3-35: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = C.Method;
 }
@@ -133,8 +135,9 @@ using MethodPtrType = void(Carbon::C::*)(float) const;
 
 fn G() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:39-46: error: can't convert exported member function pointer to `void (Carbon::Main::C::*)(float) const` [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:39-46: error: can't convert exported member function pointer to `void (Carbon::Main::C::*)(float) const` [ExportedFunctionPtrTypeMismatch]
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-10]]:3-26: note: function exported with pointer type `void (Carbon::Main::C::*)(int) const` [ExportedFromFunction]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+2]]:3-35: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = C.Method;
   //@dump-sem-ir-end
@@ -461,11 +464,11 @@ fn G() {
 // CHECK:STDOUT:   %ptr.var_patt: %pattern_type.4b7 = var_pattern %ptr.patt [concrete]
 // CHECK:STDOUT:   %self.param_patt.952: %pattern_type.4b7 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.a35: %pattern_type.4b7 = wrapper_binding_pattern self, %self.param_patt.952 [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc18 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc19 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01daf.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc18 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.3: type = fn_type @Destroy.WithSelf.Op.loc19 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.3: %Destroy.WithSelf.Op.type.ef016f.3 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.3: type = fn_type @Destroy.WithSelf.SelfDestruct.loc18 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.3: type = fn_type @Destroy.WithSelf.SelfDestruct.loc19 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.3: %Destroy.WithSelf.SelfDestruct.type.fbceb5.3 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -477,14 +480,14 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc18 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.3] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl.763c71.3: %Destroy.WithSelf.SubobjectDestroy.type.dfcbdb.3 = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc19 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01daf.3] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.4b7 = ref_param_pattern [concrete = constants.%self.param_patt.952]
 // CHECK:STDOUT:     %self.patt: %pattern_type.4b7 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a35]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %.659 = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %.659 = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.3: %Destroy.WithSelf.Op.type.ef016f.3 = fn_decl @Destroy.WithSelf.Op.loc18 [concrete = constants.%Destroy.WithSelf.Op.403171.3] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.3: %Destroy.WithSelf.Op.type.ef016f.3 = fn_decl @Destroy.WithSelf.Op.loc19 [concrete = constants.%Destroy.WithSelf.Op.403171.3] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.4b7 = ref_param_pattern [concrete = constants.%self.param_patt.952]
 // CHECK:STDOUT:     %self.patt: %pattern_type.4b7 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.a35]
 // CHECK:STDOUT:   } {
@@ -499,7 +502,7 @@ fn G() {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Method.ref: %C.Method.type = name_ref Method, @C.%C.Method.decl [concrete = constants.%C.Method]
 // CHECK:STDOUT:   assign %ptr.var, <error>
-// CHECK:STDOUT:   %.loc18: type = splice_block %MethodPtrType.ref [concrete = constants.%.659] {
+// CHECK:STDOUT:   %.loc19: type = splice_block %MethodPtrType.ref [concrete = constants.%.659] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %MethodPtrType.ref: type = name_ref MethodPtrType, constants.%.659 [concrete = constants.%.659]
 // CHECK:STDOUT:   }
@@ -516,16 +519,16 @@ fn G() {
 // CHECK:STDOUT: fn @C.Method__carbon_thunk(%self.param: ref %C, %_.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc18_40.1: %C = acquire_value %self.param
-// CHECK:STDOUT:   %.loc18_40.2: %i32 = acquire_value %_.param
+// CHECK:STDOUT:   %.loc19_40.1: %C = acquire_value %self.param
+// CHECK:STDOUT:   %.loc19_40.2: %i32 = acquire_value %_.param
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc18(%self.param: ref %.659) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc19(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18(%self.param: ref %.659) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc19(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc18(%self.param: ref %.659) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc19(%self.param: ref %.659) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.3(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl.763c71.3(%self.param)

@@ -17,7 +17,9 @@ class Z {
 }
 
 fn Run() {
-  // CHECK:STDERR: fail_init_missing_base.carbon:[[@LINE+2]]:14-15: error: missing value for field `base` in struct initialization [StructInitMissingFieldInLiteral]
+  // CHECK:STDERR: fail_init_missing_base.carbon:[[@LINE+4]]:14-15: error: missing value for field `base` in struct initialization [StructInitMissingFieldInLiteral]
+  // CHECK:STDERR: fail_init_missing_base.carbon:[[@LINE-5]]:3-17: note: field `base` declared here [StructFieldDeclaredHere]
+  // CHECK:STDERR: fail_init_missing_base.carbon:[[@LINE+2]]:3-10: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   var _: Z = {};
 }

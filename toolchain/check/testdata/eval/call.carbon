@@ -26,7 +26,8 @@ eval fn F() -> i32 { return 3; }
 
 // Ensure we get an error about the over-sized initializer and aren't just
 // treating all `eval fn` calls as silent errors.
-// CHECK:STDERR: fail_call_wrong_value.carbon:[[@LINE+2]]:26-37: error: cannot initialize array of 3 elements from 4 initializers [ArrayInitFromLiteralArgCountMismatch]
+// CHECK:STDERR: fail_call_wrong_value.carbon:[[@LINE+3]]:26-37: error: cannot initialize array of 3 elements from 4 initializers [ArrayInitFromLiteralArgCountMismatch]
+// CHECK:STDERR: fail_call_wrong_value.carbon:[[@LINE+2]]:1-22: note: initializing this binding [InBindingInit]
 // CHECK:STDERR:
 var a: array(i32, F()) = (0, 1, 2, 3);
 

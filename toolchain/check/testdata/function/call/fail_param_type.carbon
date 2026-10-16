@@ -16,7 +16,7 @@ fn G(unused a: i32) {}
 
 fn F() {
   // CHECK:STDERR: fail_param_type.carbon:[[@LINE+4]]:5-7: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+3]]:5-7: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+3]]:5-7: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
   // CHECK:STDERR: fail_param_type.carbon:[[@LINE-5]]:13-18: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   G(1.0);

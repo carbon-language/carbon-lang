@@ -476,8 +476,18 @@ static auto DiagnoseMemberNameNotFound(
       CARBON_DIAGNOSTIC(MemberNameNotFoundInSpecificScope, Error,
                         "member name `{0}` not found in {1}", SemIR::NameId,
                         SemIR::SpecificId);
-      context.emitter().Emit(loc_id, MemberNameNotFoundInSpecificScope, name_id,
-                             specific_id);
+      CARBON_DIAGNOSTIC_LABEL(MemberNameNotFoundSpecificScope, Info,
+                              "{0} declared here", SemIR::SpecificId);
+      auto scope_inst_id = context.name_scopes()
+                               .Get(lookup_scopes.front().name_scope_id)
+                               .inst_id();
+      auto diag = context.emitter().Build(
+          loc_id, MemberNameNotFoundInSpecificScope, name_id, specific_id);
+      if (context.insts().GetCanonicalLocId(scope_inst_id).has_value()) {
+        diag.Attach(scope_inst_id, MemberNameNotFoundSpecificScope,
+                    specific_id);
+      }
+      diag.Emit();
     } else {
       auto scope_inst_id = context.name_scopes()
                                .Get(lookup_scopes.front().name_scope_id)
@@ -485,8 +495,20 @@ static auto DiagnoseMemberNameNotFound(
       CARBON_DIAGNOSTIC(MemberNameNotFoundInInstScope, Error,
                         "member name `{0}` not found in {1}", SemIR::NameId,
                         InstIdAsType);
-      context.emitter().Emit(loc_id, MemberNameNotFoundInInstScope, name_id,
-                             scope_inst_id);
+      CARBON_DIAGNOSTIC_LABEL(MemberNameNotFoundScope, Info,
+                              "{0} declared here", InstIdAsType);
+      auto diag = context.emitter().Build(loc_id, MemberNameNotFoundInInstScope,
+                                          name_id, scope_inst_id);
+      // Only attach a label when the scope has an explicit declaration.
+      //
+      // TODO: A C++ namespace introduced by an alias passes this check, but its
+      // Clang location is invalid, so the label gets a filename and no line.
+      // Leaving that label out needs the converted location, which isn't
+      // available here.
+      if (context.insts().GetCanonicalLocId(scope_inst_id).has_value()) {
+        diag.Attach(scope_inst_id, MemberNameNotFoundScope, scope_inst_id);
+      }
+      diag.Emit();
     }
     return;
   }
@@ -577,8 +599,15 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
           NameAmbiguousDueToExtend, Error,
           "ambiguous use of name `{0}` found in multiple extended scopes",
           SemIR::NameId);
-      context.emitter().Emit(loc_id, NameAmbiguousDueToExtend, name_id);
-      // TODO: Add notes pointing to the scopes.
+      CARBON_DIAGNOSTIC_LABEL(NameAmbiguousCandidate, Info,
+                              "candidate `{0}` declared here", SemIR::NameId);
+      context.emitter()
+          .Build(loc_id, NameAmbiguousDueToExtend, name_id)
+          .Attach(result.scope_result.target_inst_id(), NameAmbiguousCandidate,
+                  name_id)
+          .Attach(scope_result.target_inst_id(), NameAmbiguousCandidate,
+                  name_id)
+          .Emit();
       return {.specific_id = SemIR::SpecificId::None,
               .scope_result = SemIR::ScopeLookupResult::MakeError()};
     }

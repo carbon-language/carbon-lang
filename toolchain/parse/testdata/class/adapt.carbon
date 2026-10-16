@@ -36,7 +36,7 @@ adapt i32;
 // --- fail_bad_syntax.carbon
 
 class A {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:11-24: error: `adapt` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:9: error: `adapt` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   adapt 1 trailing_token;
 }

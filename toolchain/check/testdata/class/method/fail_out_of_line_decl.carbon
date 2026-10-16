@@ -12,6 +12,7 @@
 
 class C {}
 
-// CHECK:STDERR: fail_out_of_line_decl.carbon:[[@LINE+2]]:6: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
+// CHECK:STDERR: fail_out_of_line_decl.carbon:[[@LINE+3]]:6: error: out-of-line declaration requires a declaration in scoped entity [QualifiedDeclOutsideScopeEntity]
+// CHECK:STDERR: fail_out_of_line_decl.carbon:[[@LINE-3]]:1-9: note: no declaration of `F` in this scope [QualifiedDeclScopeEntity]
 // CHECK:STDERR:
 fn C.F() {}

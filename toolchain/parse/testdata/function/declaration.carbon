@@ -45,7 +45,7 @@ private override default fn I();
 
 // --- fail_identifier_instead_of_sig.carbon
 
-// CHECK:STDERR: fail_identifier_instead_of_sig.carbon:[[@LINE+2]]:8-10: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_identifier_instead_of_sig.carbon:[[@LINE+2]]:4-6: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
 // CHECK:STDERR:
 fn foo bar;
 
@@ -58,31 +58,31 @@ fn Div[();
 
 // --- fail_missing_name.carbon
 
-// CHECK:STDERR: fail_missing_name.carbon:[[@LINE+2]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_missing_name.carbon:[[@LINE+2]]:1-2: error: `fn` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 fn ();
 
 // --- fail_no_sig_or_semi.carbon
 
-fn foo
-// CHECK:STDERR: fail_no_sig_or_semi.carbon:[[@LINE+2]]:1: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR: fail_no_sig_or_semi.carbon:[[@LINE+2]]:4-6: error: `fn` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
 // CHECK:STDERR:
+fn foo
 
 // --- fail_only_fn_and_semi.carbon
 
-// CHECK:STDERR: fail_only_fn_and_semi.carbon:[[@LINE+2]]:3: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_only_fn_and_semi.carbon:[[@LINE+2]]:1-2: error: `fn` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 fn;
 
 // --- fail_repeated_fn_and_semi.carbon
 
-// CHECK:STDERR: fail_repeated_fn_and_semi.carbon:[[@LINE+2]]:4-5: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_repeated_fn_and_semi.carbon:[[@LINE+2]]:1-2: error: `fn` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 fn fn;
 
 // --- fail_skip_indented_newline_until_outdent.carbon
 
-  // CHECK:STDERR: fail_skip_indented_newline_until_outdent.carbon:[[@LINE+2]]:6: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+  // CHECK:STDERR: fail_skip_indented_newline_until_outdent.carbon:[[@LINE+2]]:3-4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
   // CHECK:STDERR:
   fn (x,
       y,
@@ -91,7 +91,7 @@ fn F();
 
 // --- fail_skip_indented_newline_with_semi.carbon
 
-// CHECK:STDERR: fail_skip_indented_newline_with_semi.carbon:[[@LINE+2]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_skip_indented_newline_with_semi.carbon:[[@LINE+2]]:1-2: error: `fn` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 fn (x,
     y,
@@ -100,7 +100,7 @@ fn F();
 
 // --- fail_skip_indented_newline_without_semi.carbon
 
-// CHECK:STDERR: fail_skip_indented_newline_without_semi.carbon:[[@LINE+2]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_skip_indented_newline_without_semi.carbon:[[@LINE+2]]:1-2: error: `fn` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 fn (x,
     y,
@@ -109,7 +109,7 @@ fn F();
 
 // --- fail_skip_to_newline_without_semi.carbon
 
-// CHECK:STDERR: fail_skip_to_newline_without_semi.carbon:[[@LINE+2]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_skip_to_newline_without_semi.carbon:[[@LINE+2]]:1-2: error: `fn` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 fn ()
 fn F();
@@ -127,7 +127,7 @@ fn foo(bar);
 
 // --- fail_without_name_and_many_tokens_in_params.carbon
 
-// CHECK:STDERR: fail_without_name_and_many_tokens_in_params.carbon:[[@LINE+2]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_without_name_and_many_tokens_in_params.carbon:[[@LINE+2]]:1-2: error: `fn` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 fn (a tokens c d e f g h i j k l m n o p q r s t u v w x y z);
 

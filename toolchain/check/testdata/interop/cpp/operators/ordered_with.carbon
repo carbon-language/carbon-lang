@@ -118,8 +118,9 @@ library "[[@TEST_NAME]]";
 
 import Cpp inline '''c++
 struct LessReturnsBoolish {
-  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+3]]:8: error: cannot implicitly convert expression of type `i32` to `bool` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+2]]:8: note: type `i32` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+4]]:8: error: cannot implicitly convert expression of type `i32` to `bool` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+3]]:8: note: type `i32` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+  // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:34-37: note: return type of function is `bool` [ReturnTypeHereNote]
   // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:3-38: note: while building thunk to match the signature of this function [ThunkSignature]
   auto operator<(LessReturnsBoolish) const -> int;
   auto operator<=(LessReturnsBoolish) const -> bool;
@@ -161,35 +162,41 @@ struct AllReturnBoolish {
 };
 ''';
 
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+32]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+38]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-34]]:8: error: cannot implicitly convert expression of type `Core.Optional(i32* as Core.OptionalStorage)` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-35]]:8: note: type `Core.Optional(i32* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-35]]:8: note: type `Core.Optional(i32* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:46-49: note: return type of function is `bool` [ReturnTypeHereNote]
 // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3-50: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+27]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+32]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-29]]:8: error: cannot implicitly convert expression of type `Cpp.Result` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-30]]:8: note: type `Cpp.Result` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-30]]:8: error: cannot implicitly convert expression of type `Cpp.Result` to `bool` [ConversionFailure]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-31]]:8: note: type `Cpp.Result` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:31:49-52: note: return type of function is `bool` [ReturnTypeHereNote]
 // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:31:3-53: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+22]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+26]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-19]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-20]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-21]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-22]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:34-37: note: return type of function is `bool` [ReturnTypeHereNote]
 // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:3-38: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+17]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+20]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-23]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-24]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-26]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-27]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:46-49: note: return type of function is `bool` [ReturnTypeHereNote]
 // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3-50: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+12]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-27]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-28]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:30:3-41: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+7]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+14]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-31]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-32]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-32]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:30:37-40: note: return type of function is `bool` [ReturnTypeHereNote]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:30:3-41: note: while building thunk to match the signature of this function [ThunkSignature]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+8]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-36]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
+// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-37]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:31:49-52: note: return type of function is `bool` [ReturnTypeHereNote]
 // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:31:3-53: note: while building thunk to match the signature of this function [ThunkSignature]
 // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+2]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:

@@ -140,6 +140,9 @@ auto HandleParseNode(Context& context, Parse::ImplDefaultSelfAsId node_id)
   } else {
     CARBON_DIAGNOSTIC(ImplAsOutsideClass, Error,
                       "`impl as` can only be used in a class");
+    // TODO: Attach a label to the enclosing declaration. That needs the scope
+    // stack to provide one for the scopes that reach here, which have no
+    // instruction.
     context.emitter().Emit(node_id, ImplAsOutsideClass);
     self_inst_id = SemIR::ErrorInst::TypeInstId;
   }

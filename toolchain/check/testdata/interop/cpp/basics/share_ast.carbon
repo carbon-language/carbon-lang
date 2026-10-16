@@ -38,7 +38,8 @@ import Cpp;
 
 fn CallLeakedA() -> i32 {
   // This should not be found as we have not imported "a.h".
-  // CHECK:STDERR: fail_a_does_not_leak.carbon:[[@LINE+2]]:10-17: error: member name `GetA` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_a_does_not_leak.carbon:[[@LINE+3]]:10-17: error: member name `GetA` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_a_does_not_leak.carbon:[[@LINE-5]]:1-11: note: `Cpp` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   return Cpp.GetA();
 }

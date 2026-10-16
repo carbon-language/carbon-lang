@@ -61,7 +61,7 @@ auto Context::ConsumeAndAddOpenCurlyBrace(Lex::TokenIndex default_token,
   } else {
     CARBON_DIAGNOSTIC(ExpectedCurlyBraceAfter, Error,
                       "expected `{` after `{0}`", Lex::TokenKind);
-    emitter_.Emit(*position_, ExpectedCurlyBraceAfter,
+    emitter_.Emit(default_token, ExpectedCurlyBraceAfter,
                   tokens().GetKind(default_token));
     AddLeafNode(start_kind, default_token, /*has_error=*/true);
     return std::nullopt;
@@ -77,7 +77,7 @@ auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
   } else {
     CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "expected `(` after `{0}`",
                       Lex::TokenKind);
-    emitter_.Emit(*position_, ExpectedParenAfter,
+    emitter_.Emit(default_token, ExpectedParenAfter,
                   tokens().GetKind(default_token));
     AddLeafNode(start_kind, default_token, /*has_error=*/true);
     return std::nullopt;
@@ -93,12 +93,18 @@ auto Context::ConsumeAndAddCloseSymbol(State state, NodeKind close_kind)
   } else if (auto close_token = ConsumeIf(open_token_kind.closing_symbol())) {
     AddNode(close_kind, *close_token, state.has_error);
   } else {
-    // TODO: Include the location of the matching opening delimiter in the
-    // diagnostic.
     CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
                       "unexpected tokens before `{0}`", Lex::TokenKind);
-    emitter_.Emit(*position_, ExpectedCloseSymbol,
-                  open_token_kind.closing_symbol());
+    CARBON_DIAGNOSTIC_LABEL(GroupOpenedHere, Info, "to match this `{0}`",
+                            Lex::TokenKind);
+    auto diag = emitter_.Build(*position_, ExpectedCloseSymbol,
+                               open_token_kind.closing_symbol());
+    // The message's line already shows an opening token on that line, so only
+    // one on an earlier line is labeled.
+    if (tokens().GetLine(state.token) != tokens().GetLine(*position_)) {
+      diag.Attach(state.token, GroupOpenedHere, open_token_kind);
+    }
+    diag.Emit();
 
     SkipTo(tokens().GetMatchedClosingToken(state.token));
     AddNode(close_kind, Consume(), /*has_error=*/true);
@@ -336,9 +342,13 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
   if (!PositionIs(Lex::TokenKind::Comma) && !PositionIs(close_kind)) {
     // Don't error a second time on the same element.
     if (!already_has_error) {
+      // TODO: Also label the bracket that opened the list, to show which list
+      // this is. That needs the opening token, which callers hold in
+      // `state.token` but don't pass down.
       CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
                         "expected `,` or `{0}`", Lex::TokenKind);
-      emitter_.Emit(*position_, UnexpectedTokenAfterListElement, close_kind);
+      emitter_.Emit(*(position_ - 1), UnexpectedTokenAfterListElement,
+                    close_kind);
       ReturnErrorOnState();
     }
 
@@ -415,8 +425,9 @@ auto Context::ParseLibraryName(bool accept_default)
       "expected `default` or a string literal to specify the library name");
   CARBON_DIAGNOSTIC(ExpectedLibraryName, Error,
                     "expected a string literal to specify the library name");
-  emitter().Emit(*position(), accept_default ? ExpectedLibraryNameOrDefault
-                                             : ExpectedLibraryName);
+  emitter().Emit(*(position() - 1), accept_default
+                                        ? ExpectedLibraryNameOrDefault
+                                        : ExpectedLibraryName);
   return std::nullopt;
 }
 
@@ -434,7 +445,7 @@ auto Context::ParseLibrarySpecifier(bool accept_default)
 auto Context::DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclSemi, Error,
                     "`{0}` declarations must end with a `;`", Lex::TokenKind);
-  emitter().Emit(*position(), ExpectedDeclSemi, expected_kind);
+  emitter().Emit(*(position() - 1), ExpectedDeclSemi, expected_kind);
 }
 
 auto Context::DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
@@ -443,7 +454,8 @@ auto Context::DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
                     "`{0}` declarations must either end with a `;` or "
                     "have a `{{ ... }` block for a definition",
                     Lex::TokenKind);
-  emitter().Emit(*position(), ExpectedDeclSemiOrDefinition, expected_kind);
+  emitter().Emit(*(position() - 1), ExpectedDeclSemiOrDefinition,
+                 expected_kind);
 }
 
 // Returns whether we are currently parsing in a scope in which function

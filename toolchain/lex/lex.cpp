@@ -22,6 +22,7 @@
 #include "toolchain/lex/helpers.h"
 #include "toolchain/lex/mismatched_brackets.h"
 #include "toolchain/lex/numeric_literal.h"
+#include "toolchain/lex/source_loc.h"
 #include "toolchain/lex/string_literal.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_info.h"
@@ -250,7 +251,7 @@ class [[clang::internal_linkage]] Lexer {
 
   Diagnostics::ErrorTrackingConsumer consumer_;
 
-  TokenizedBuffer::SourcePointerDiagnosticEmitter emitter_;
+  TokenizedBuffer::SourceLocDiagnosticEmitter emitter_;
 
   TokenizedBuffer::TokenDiagnosticEmitter token_emitter_;
 };
@@ -1026,7 +1027,9 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     }
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                       "whitespace is required after '//'");
-    emitter_.Emit(comment_text.begin() + 2, NoWhitespaceAfterCommentIntroducer);
+    emitter_.Build(comment_text.begin() + 2, NoWhitespaceAfterCommentIntroducer)
+        .Attach(SourceLoc(comment_text.take_front(3)))
+        .Emit();
 
     // We use this to tweak the lexing of blocks below.
     is_valid_after_slashes = false;
@@ -1228,13 +1231,15 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   }
 }
 
-static auto DiagnoseUnterminatedString(
-    Diagnostics::Emitter<const char*>& emitter, const StringLiteral& literal,
-    bool is_char) -> void {
+static auto DiagnoseUnterminatedString(Diagnostics::Emitter<SourceLoc>& emitter,
+                                       const StringLiteral& literal,
+                                       bool is_char) -> void {
   CARBON_DIAGNOSTIC(UnterminatedString, Error,
                     "{0:character|string} literal is missing a terminator",
                     Diagnostics::BoolAsSelect);
-  emitter.Emit(literal.text().begin(), UnterminatedString, is_char);
+  emitter.Build(literal.text().begin(), UnterminatedString, is_char)
+      .Attach(SourceLoc(literal.text()))
+      .Emit();
 }
 
 auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
@@ -1274,7 +1279,9 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
                       "invalid multi-line string literal introducer; a file "
                       "type indicator may not contain `'`, `#`, or `\"`, and "
                       "the content must begin on a new line");
-    emitter_.Emit(literal->text().begin(), MultiLineStringInvalidIntroducer);
+    emitter_.Build(literal->text().begin(), MultiLineStringInvalidIntroducer)
+        .Attach(SourceLoc(literal->text()))
+        .Emit();
     return lex_as_error();
   }
 
@@ -1450,8 +1457,11 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
                       "found a type literal with a bit width using {0} digits, "
                       "which is greater than the limit of {1}",
                       size_t, size_t);
-    emitter_.Emit(word.begin() + 1, TooManyTypeBitWidthDigits, suffix.size(),
-                  DigitLimit);
+    emitter_
+        .Build(word.begin() + 1, TooManyTypeBitWidthDigits, suffix.size(),
+               DigitLimit)
+        .Attach(SourceLoc(suffix))
+        .Emit();
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
 
@@ -1670,7 +1680,9 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
       LexTokenWithPayload(TokenKind::Error, error_text.size(), position);
   CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
                     "encountered unrecognized characters while parsing");
-  emitter_.Emit(error_text.begin(), UnrecognizedCharacters);
+  emitter_.Build(error_text.begin(), UnrecognizedCharacters)
+      .Attach(SourceLoc(error_text))
+      .Emit();
 
   position += error_text.size();
   return token;

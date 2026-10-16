@@ -48,8 +48,8 @@ impl {.b: ()} as NonInstance2 {
 }
 
 fn NonInstanceCall2(n: {.b: ()}) {
-  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+3]]:3-21: error: cannot implicitly convert non-type value of type `{.b: ()}` into type implementing `NonInstance2` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+2]]:3-21: note: type `{.b: ()}` does not implement interface `Core.ImplicitAs(NonInstance2)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+3]]:3: error: cannot implicitly convert non-type value of type `{.b: ()}` into type implementing `NonInstance2` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_non-instance.carbon:[[@LINE+2]]:3-21: note: type `{.b: ()}` does not implement interface `Core.ImplicitAs(NonInstance2)` [MissingImplForType]
   // CHECK:STDERR:
   n.(NonInstance2.F2)();
 }
@@ -69,7 +69,7 @@ impl {.c: ()} as NonInstance3 {
 
 fn NonInstanceCallIndirect(p: {.c: ()}*) {
   // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+3]]:3-22: error: cannot implicitly convert non-type value of type `{.c: ()}` into type implementing `NonInstance3` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+2]]:3-22: note: type `{.c: ()}` does not implement interface `Core.ImplicitAs(NonInstance3)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_non-instance_indirect.carbon:[[@LINE+2]]:3-22: note: type `{.c: ()}` does not implement interface `Core.ImplicitAs(NonInstance3)` [MissingImplForType]
   // CHECK:STDERR:
   p->(NonInstance3.F3)();
 }

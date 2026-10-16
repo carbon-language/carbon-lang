@@ -45,7 +45,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
       break;
   }
 
-  auto* null_emitter = &Diagnostics::NullEmitter<const char*>();
+  auto* null_emitter = &Diagnostics::NullEmitter<Lex::SourceLoc>();
   if (literal->kind() == Lex::StringLiteral::Kind::Char) {
     volatile auto value = literal->ComputeCharLiteralValue(*null_emitter);
     (void)value;

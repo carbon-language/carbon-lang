@@ -16,7 +16,8 @@ class Class {
 
 fn G(c: Class) -> i32 {
   // TODO: Mention the scope in which we looked for the name.
-  // CHECK:STDERR: fail_unknown_member.carbon:[[@LINE+2]]:10-20: error: member name `something` not found in `Class` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_unknown_member.carbon:[[@LINE+3]]:10-20: error: member name `something` not found in `Class` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_unknown_member.carbon:[[@LINE-7]]:1-13: note: `Class` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   return c.something;
 }

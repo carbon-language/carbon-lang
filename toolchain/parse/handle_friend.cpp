@@ -21,7 +21,8 @@ auto HandleFriendDecl(Context& context) -> void {
     state.has_error = true;
     CARBON_DIAGNOSTIC(ExpectedIdentifierForFriend, Error,
                       "expected identifier for friend declaration");
-    context.emitter().Emit(*context.position(), ExpectedIdentifierForFriend);
+    context.emitter().Emit(*(context.position() - 1),
+                           ExpectedIdentifierForFriend);
     context.RecoverFromDeclError(state, NodeKind::FriendDecl,
                                  /*skip_past_likely_end=*/true);
     return;

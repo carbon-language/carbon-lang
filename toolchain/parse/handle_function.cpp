@@ -86,7 +86,7 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
                                            NodeKind::BuiltinName)) {
         CARBON_DIAGNOSTIC(ExpectedBuiltinName, Error,
                           "expected builtin function name after `=`");
-        context.emitter().Emit(*context.position(), ExpectedBuiltinName);
+        context.emitter().Emit(*(context.position() - 1), ExpectedBuiltinName);
         state.has_error = true;
       }
       auto semi = context.ConsumeIf(Lex::TokenKind::Semi);

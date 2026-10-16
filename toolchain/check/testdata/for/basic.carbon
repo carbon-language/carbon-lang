@@ -16,7 +16,7 @@ library "[[@TEST_NAME]]";
 
 fn Run() {
   // TODO: These diagnostics could be better.
-  // CHECK:STDERR: fail_not_range.carbon:[[@LINE+2]]:7-26: error: cannot access member of interface `Core.Iterate` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_not_range.carbon:[[@LINE+2]]:24-25: error: type `{}` does not implement interface `Core.Iterate` [MissingImplForType]
   // CHECK:STDERR:
   for (unused c: {} in {}) {
   }

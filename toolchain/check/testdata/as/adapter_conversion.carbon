@@ -134,7 +134,7 @@ fn F(a: A) {
   // behavior.
 
   // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+4]]:3-22: error: cannot copy value of type `Noncopyable` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+3]]:3-22: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+3]]:3-22: note: type `Noncopyable` does not implement interface `Core.Copy` [MissingImplForType]
   // CHECK:STDERR: fail_init_tuple_variable.carbon:[[@LINE+2]]:26-54: note: in copy of `A` [InCopy]
   // CHECK:STDERR:
   var unused a_init: A = (a as ({}, Noncopyable)) as A;
@@ -155,8 +155,8 @@ class B {
 // We do not try to implicitly convert from the first operand of `as` to the
 // adapted type of the second operand.
 
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12-25: error: cannot convert expression of type `{.x: ()}` to `B` with `as` [ConversionFailure]
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+2]]:12-25: note: type `{.x: ()}` does not implement interface `Core.As(B)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12-20: error: cannot convert expression of type `{.x: ()}` to `B` with `as` [ConversionFailure]
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+2]]:12-25: note: type `{.x: ()}` does not implement interface `Core.As(B)` [MissingImplForType]
 // CHECK:STDERR:
 var b: B = {.x = ()} as B;
 

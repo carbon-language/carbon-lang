@@ -183,11 +183,13 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn Outer() -> i32 {
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+2]]:18: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+  // CHECK:STDERR: fail_return.carbon:[[@LINE+3]]:18: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+  // CHECK:STDERR: fail_return.carbon:[[@LINE+2]]:13-15: note: return type declared here [MissingReturnStatementType]
   // CHECK:STDERR:
   (fn () -> i32 {});
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+3]]:20-28: error: cannot implicitly convert expression of type `Core.IntLiteral` to `bool` [ConversionFailure]
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+2]]:20-28: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_return.carbon:[[@LINE+4]]:27: error: cannot implicitly convert expression of type `Core.IntLiteral` to `bool` [ConversionFailure]
+  // CHECK:STDERR: fail_return.carbon:[[@LINE+3]]:20-28: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+  // CHECK:STDERR: fail_return.carbon:[[@LINE+2]]:13-16: note: return type of function is `bool` [ReturnTypeHereNote]
   // CHECK:STDERR:
   (fn () -> bool { return 1; });
   // CHECK:STDERR: fail_return.carbon:[[@LINE+3]]:12-20: error: no return expression should be provided in this context [ReturnStatementDisallowExpr]
@@ -254,10 +256,11 @@ fn F() {
   // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-4]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:
   (fn (unused x: Incomplete) {});
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+5]]:10-22: error: function returns incomplete type `Incomplete` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+6]]:10-22: error: function returns incomplete type `Incomplete` [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-8]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+2]]:25: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+3]]:25: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+2]]:13-22: note: return type declared here [MissingReturnStatementType]
   // CHECK:STDERR:
   (fn () -> Incomplete {});
 }
@@ -266,8 +269,9 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_conversion.carbon:[[@LINE+3]]:16-22: error: cannot implicitly convert expression of type `<type of function expression>` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_conversion.carbon:[[@LINE+2]]:16-22: note: type `<type of function expression>` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_conversion.carbon:[[@LINE+4]]:16-22: error: cannot implicitly convert expression of type `<type of function expression>` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_conversion.carbon:[[@LINE+3]]:16-22: note: type `<type of function expression>` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
+  // CHECK:STDERR: fail_conversion.carbon:[[@LINE+2]]:7-12: note: initializing this binding [InBindingInit]
   // CHECK:STDERR:
   let _: i32 = fn () {};
 }

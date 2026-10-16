@@ -28,8 +28,9 @@ fn G() {
   // TODO: Should be able to see that ().(Z.Z1) is C(D), so deduce that C(U)
   // is C(D) and U is D.
   //
-  // CHECK:STDERR: fail_todo_where.carbon:[[@LINE+3]]:3-15: error: cannot deduce value for generic parameter `U` [DeductionIncomplete]
-  // CHECK:STDERR: fail_todo_where.carbon:[[@LINE-10]]:1-53: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_where.carbon:[[@LINE+4]]:3-15: error: cannot deduce value for generic parameter `U` [DeductionIncomplete]
+  // CHECK:STDERR: fail_todo_where.carbon:[[@LINE-10]]:6-12: note: no value was deduced for this parameter [DeductionIncompleteParam]
+  // CHECK:STDERR: fail_todo_where.carbon:[[@LINE-11]]:1-53: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   F(() as type);
 }

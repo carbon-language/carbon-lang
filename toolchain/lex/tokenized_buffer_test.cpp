@@ -1095,9 +1095,11 @@ TEST_F(LexerTest, TypeLiterals) {
 TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   // We increase the number of digits until the first one that is to large.
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            Diagnostics::Kind::TooManyTypeBitWidthDigits,
-                            Diagnostics::Level::Error, 1, 2, _)));
+  // The bit width's digits are marked as the range that is too long.
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(Testing::IsDiagnosticWithRange(
+                  Diagnostics::Kind::TooManyTypeBitWidthDigits,
+                  Diagnostics::Level::Error, 1, 2, _, 1, 2, testing::Gt(1))));
   std::string code = "i";
   // A 128-bit APInt should be plenty large, but if needed in the future it can
   // be widened without issue.
@@ -1128,10 +1130,11 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   // Make sure we can also gracefully reject very large number of digits without
   // crashing or hanging, and show the correct number.
   constexpr int Count = 10000;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            Diagnostics::Kind::TooManyTypeBitWidthDigits,
-                            Diagnostics::Level::Error, 1, 2,
-                            HasSubstr(llvm::formatv(" {0} ", Count)))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(Testing::IsDiagnosticWithRange(
+                  Diagnostics::Kind::TooManyTypeBitWidthDigits,
+                  Diagnostics::Level::Error, 1, 2,
+                  HasSubstr(llvm::formatv(" {0} ", Count)), 1, 2, Count)));
   code = "i";
   code.append(Count, '9');
   auto& buffer = compile_helper_.GetTokenizedBuffer(code, &consumer);
@@ -1235,10 +1238,12 @@ TEST_F(LexerTest, InvalidCommentRunsLumpTogether) {
   // no matter which invalid byte follows each `//`; a valid comment ends the
   // run and starts its own record.
   Testing::MockDiagnosticConsumer consumer;
+  // The `//` introducer and the character that should have been whitespace
+  // are marked together, so the range contains the message's location.
   EXPECT_CALL(consumer,
-              HandleDiagnostic(IsSingleDiagnostic(
+              HandleDiagnostic(Testing::IsDiagnosticWithRange(
                   Diagnostics::Kind::NoWhitespaceAfterCommentIntroducer,
-                  Diagnostics::Level::Error, 1, 3, _)));
+                  Diagnostics::Level::Error, 1, 3, _, 1, 1, 3)));
   auto& buffer = compile_helper_.GetTokenizedBuffer(
       "//!one\n"
       "//?two\n"
@@ -1276,32 +1281,38 @@ TEST_F(LexerTest, InvalidCommentRunAtEof) {
 
 TEST_F(LexerTest, DiagnosticWhitespace) {
   Testing::MockDiagnosticConsumer consumer;
+  // The `//` introducer and the character that should have been whitespace
+  // are marked together, so the range contains the message's location.
   EXPECT_CALL(consumer,
-              HandleDiagnostic(IsSingleDiagnostic(
+              HandleDiagnostic(Testing::IsDiagnosticWithRange(
                   Diagnostics::Kind::NoWhitespaceAfterCommentIntroducer,
-                  Diagnostics::Level::Error, 1, 3, _)));
+                  Diagnostics::Level::Error, 1, 3, _, 1, 1, 3)));
   compile_helper_.GetTokenizedBuffer("//no space after comment", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
   Testing::MockDiagnosticConsumer consumer;
+  // The message is located at the `\` that starts the escape, and the escape
+  // is marked.
   EXPECT_CALL(consumer,
-              HandleDiagnostic(IsSingleDiagnostic(
+              HandleDiagnostic(Testing::IsDiagnosticWithRange(
                   Diagnostics::Kind::UnknownEscapeSequence,
-                  Diagnostics::Level::Error, 1, 8, HasSubstr("`b`"))));
+                  Diagnostics::Level::Error, 1, 7, HasSubstr("`b`"), 1, 7, 2)));
   compile_helper_.GetTokenizedBuffer(R"("hello\bworld")", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticBadHex) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
                             Diagnostics::Kind::HexadecimalEscapeMissingDigits,
-                            Diagnostics::Level::Error, 1, 9, _)));
+                            Diagnostics::Level::Error, 1, 7, _, 1, 7, 2)));
   compile_helper_.GetTokenizedBuffer(R"("hello\xabworld")", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticInvalidDigit) {
   Testing::MockDiagnosticConsumer consumer;
+  // Only the invalid digit is marked, since the message says which literal it
+  // is in.
   EXPECT_CALL(consumer,
               HandleDiagnostic(IsSingleDiagnostic(
                   Diagnostics::Kind::InvalidDigit, Diagnostics::Level::Error, 1,
@@ -1327,17 +1338,18 @@ TEST_F(LexerTest, DiagnosticLfCr) {
 
 TEST_F(LexerTest, DiagnosticMissingTerminator) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+  // The whole unterminated literal is the range.
+  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
                             Diagnostics::Kind::UnterminatedString,
-                            Diagnostics::Level::Error, 1, 1, _)));
+                            Diagnostics::Level::Error, 1, 1, _, 1, 1, 4)));
   compile_helper_.GetTokenizedBuffer(R"(#" ")", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
+  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
                             Diagnostics::Kind::UnrecognizedCharacters,
-                            Diagnostics::Level::Error, 1, 1, _)));
+                            Diagnostics::Level::Error, 1, 1, _, 1, 1, 1)));
   compile_helper_.GetTokenizedBuffer("\b", &consumer);
 }
 

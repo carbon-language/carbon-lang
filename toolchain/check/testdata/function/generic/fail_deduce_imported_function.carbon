@@ -25,13 +25,15 @@ import Lib;
 fn A[T: Lib.Z](unused x: {.a: T}) {}
 
 fn B() {
-  // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE+3]]:3-14: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
-  // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE-4]]:1-35: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE+4]]:3-14: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
+  // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE-4]]:6-13: note: no value was deduced for this parameter [DeductionIncompleteParam]
+  // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE-5]]:1-35: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   A({.b = {}});
 
-  // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE+4]]:3-18: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
-  // CHECK:STDERR: imported from: fail_deduce_imported_function.carbon:[[@LINE-11]]:1 [InImport]
+  // CHECK:STDERR: fail_deduce_imported_function.carbon:[[@LINE+5]]:3-18: error: cannot deduce value for generic parameter `T` [DeductionIncomplete]
+  // CHECK:STDERR: imported from: fail_deduce_imported_function.carbon:[[@LINE-12]]:1 [InImport]
+  // CHECK:STDERR: lib.carbon:4:6-9: note: no value was deduced for this parameter [DeductionIncompleteParam]
   // CHECK:STDERR: lib.carbon:4:1-31: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   Lib.A({.b = {}});
@@ -224,13 +226,13 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc10: %A.type.9f4 = name_ref A, file.%A.decl [concrete = constants.%A.921]
-// CHECK:STDOUT:   %.loc10_12: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_13: %struct_type.b = struct_literal (%.loc10_12) [concrete = constants.%struct]
+// CHECK:STDOUT:   %A.ref.loc11: %A.type.9f4 = name_ref A, file.%A.decl [concrete = constants.%A.921]
+// CHECK:STDOUT:   %.loc11_12: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc11_13: %struct_type.b = struct_literal (%.loc11_12) [concrete = constants.%struct]
 // CHECK:STDOUT:   %Lib.ref: <namespace> = name_ref Lib, imports.%Lib [concrete = imports.%Lib]
-// CHECK:STDOUT:   %A.ref.loc16: %A.type.42a = name_ref A, imports.%Lib.A [concrete = constants.%A.b9a]
-// CHECK:STDOUT:   %.loc16_16: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc16_17: %struct_type.b = struct_literal (%.loc16_16) [concrete = constants.%struct]
+// CHECK:STDOUT:   %A.ref.loc18: %A.type.42a = name_ref A, imports.%Lib.A [concrete = constants.%A.b9a]
+// CHECK:STDOUT:   %.loc18_16: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc18_17: %struct_type.b = struct_literal (%.loc18_16) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

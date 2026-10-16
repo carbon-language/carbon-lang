@@ -47,8 +47,9 @@ class C;
 // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+2]]:9-23: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
 // CHECK:STDERR:
 fn G(p: const (const C)**) -> C** {
-  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `const C**` to `C**` [ConversionFailure]
-  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+2]]:3-11: note: type `const C**` does not implement interface `Core.ImplicitAs(C**)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+4]]:10: error: cannot implicitly convert expression of type `const C**` to `C**` [ConversionFailure]
+  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+3]]:3-11: note: type `const C**` does not implement interface `Core.ImplicitAs(C**)` [MissingImplForType]
+  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE-3]]:31-33: note: return type of function is `C**` [ReturnTypeHereNote]
   // CHECK:STDERR:
   return p;
 }
@@ -107,7 +108,7 @@ class X {
 
 fn PassConstReferenceToReference(p: const X*) {
   // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+4]]:3-17: error: cannot implicitly convert expression of type `const X` to `X` [ConversionFailure]
-  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+3]]:3-17: note: type `const X` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+3]]:3-17: note: type `const X` does not implement interface `Core.ImplicitAs(X)` [MissingImplForType]
   // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE-6]]:15-22: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   p->(X.TakeSelf)();
@@ -123,21 +124,21 @@ interface J {}
 // type. The operand of `const` is parenthesized if it's a facet type formed
 // with `&` or `where`.
 fn F() -> const (I & J);
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+3]]:1-13: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-2]]:1-24: note: previously declared with return type `const (I & J)` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+3]]:11-12: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-2]]:11-23: note: previously declared with return type `const (I & J)` [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:
 fn F() -> {};
 
 fn G() -> const (I where .T = ());
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+3]]:1-13: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-2]]:1-34: note: previously declared with return type `const (I where .(I.T) = ())` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+3]]:11-12: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-2]]:11-33: note: previously declared with return type `const (I where .(I.T) = ())` [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:
 fn G() -> {};
 
 // No parentheses are needed for a single interface.
 fn H() -> const I;
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+3]]:1-13: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-2]]:1-18: note: previously declared with return type `const I` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+3]]:11-12: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-2]]:11-17: note: previously declared with return type `const I` [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:
 fn H() -> {};
 

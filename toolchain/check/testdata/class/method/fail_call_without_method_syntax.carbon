@@ -39,7 +39,7 @@ fn TooMany(p: Point) -> i32 {
 
 fn WrongSelfType(o: Other) -> i32 {
   // CHECK:STDERR: fail_call_without_method_syntax.carbon:[[@LINE+4]]:20: error: cannot implicitly convert expression of type `Other` to `Point` [ConversionFailure]
-  // CHECK:STDERR: fail_call_without_method_syntax.carbon:[[@LINE+3]]:20: note: type `Other` does not implement interface `Core.ImplicitAs(Point)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_call_without_method_syntax.carbon:[[@LINE+3]]:20: note: type `Other` does not implement interface `Core.ImplicitAs(Point)` [MissingImplForType]
   // CHECK:STDERR: fail_call_without_method_syntax.carbon:[[@LINE-26]]:10-13: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   return Point.Get(o);

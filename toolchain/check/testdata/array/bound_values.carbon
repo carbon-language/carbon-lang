@@ -53,7 +53,7 @@ var a: array(i32, 39999999999999999993);
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_invalid_type_with_overflow.carbon:[[@LINE+3]]:14: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_invalid_type_with_overflow.carbon:[[@LINE+2]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR: fail_invalid_type_with_overflow.carbon:[[@LINE+2]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
 // CHECK:STDERR:
 var b: array(1, 39999999999999999993);
 

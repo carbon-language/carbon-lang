@@ -115,8 +115,9 @@ library "[[@TEST_NAME]]";
 base class C { }
 
 fn G(p: partial C*) -> C* {
-  // CHECK:STDERR: fail_convert_to_nonpartial.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `partial C*` to `C*` [ConversionFailure]
-  // CHECK:STDERR: fail_convert_to_nonpartial.carbon:[[@LINE+2]]:3-11: note: type `partial C*` does not implement interface `Core.ImplicitAs(C*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_convert_to_nonpartial.carbon:[[@LINE+4]]:10: error: cannot implicitly convert expression of type `partial C*` to `C*` [ConversionFailure]
+  // CHECK:STDERR: fail_convert_to_nonpartial.carbon:[[@LINE+3]]:3-11: note: type `partial C*` does not implement interface `Core.ImplicitAs(C*)` [MissingImplForType]
+  // CHECK:STDERR: fail_convert_to_nonpartial.carbon:[[@LINE-3]]:24-25: note: return type of function is `C*` [ReturnTypeHereNote]
   // CHECK:STDERR:
   return p;
 }

@@ -22,7 +22,7 @@ auto HandleIfExprFinishCondition(Context& context) -> void {
     CARBON_DIAGNOSTIC(ExpectedThenAfterIf, Error,
                       "expected `then` after `if` condition");
     if (!state.has_error) {
-      context.emitter().Emit(*context.position(), ExpectedThenAfterIf);
+      context.emitter().Emit(*(context.position() - 1), ExpectedThenAfterIf);
     }
     // Add invalid nodes to substitute for `IfExprThen` and the final `Expr`.
     context.AddInvalidParse(*context.position());
@@ -45,7 +45,7 @@ auto HandleIfExprFinishThen(Context& context) -> void {
     CARBON_DIAGNOSTIC(ExpectedElseAfterIf, Error,
                       "expected `else` after `if ... then ...`");
     if (!state.has_error) {
-      context.emitter().Emit(*context.position(), ExpectedElseAfterIf);
+      context.emitter().Emit(*(context.position() - 1), ExpectedElseAfterIf);
     }
     // Add an invalid node to substitute for the final `Expr`.
     context.AddInvalidParse(*context.position());

@@ -100,8 +100,9 @@ class C {}
 fn G[T: type](x: T, unused y: typeof(x)) {}
 
 fn Call() {
-  // CHECK:STDERR: fail_generic_mismatch.carbon:[[@LINE+3]]:3-18: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR: fail_generic_mismatch.carbon:[[@LINE-4]]:1-42: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_generic_mismatch.carbon:[[@LINE+4]]:3-18: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
+  // CHECK:STDERR: fail_generic_mismatch.carbon:[[@LINE+3]]:11-17: note: conflicting value for `T` deduced from this argument [DeductionInconsistentArg]
+  // CHECK:STDERR: fail_generic_mismatch.carbon:[[@LINE-5]]:1-42: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   G(true, {} as C);
 }

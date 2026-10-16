@@ -315,7 +315,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "fix_it_hints.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_fix_it_hints.carbon:[[@LINE+2]]:3-9: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_fix_it_hints.carbon:[[@LINE+3]]:3-9: error: member name `foo` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR: fail_import_fix_it_hints.carbon:[[@LINE-4]]:1-36: note: `Cpp` declared here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   Cpp.foo();
 }

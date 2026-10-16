@@ -75,13 +75,13 @@ fn InterfaceParam(unused generic U: Z) {}
 fn ConstraintParam(unused generic U: N) {}
 
 fn F(generic T: {.a: type}) {
-  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+4]]:3-19: error: cannot implicitly convert non-type value of type `{.a: type}` into type implementing `Z` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+3]]:3-19: note: type `{.a: type}` does not implement interface `Core.ImplicitAs(Z)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+4]]:18: error: cannot implicitly convert non-type value of type `{.a: type}` into type implementing `Z` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+3]]:3-19: note: type `{.a: type}` does not implement interface `Core.ImplicitAs(Z)` [MissingImplForType]
   // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE-6]]:34-37: note: initializing generic parameter `U` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   InterfaceParam(T);
-  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+4]]:3-20: error: cannot implicitly convert non-type value of type `{.a: type}` into type implementing `N` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+3]]:3-20: note: type `{.a: type}` does not implement interface `Core.ImplicitAs(N)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+4]]:19: error: cannot implicitly convert non-type value of type `{.a: type}` into type implementing `N` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE+3]]:3-20: note: type `{.a: type}` does not implement interface `Core.ImplicitAs(N)` [MissingImplForType]
   // CHECK:STDERR: fail_struct_value_with_field_to_facet_value.carbon:[[@LINE-10]]:35-38: note: initializing generic parameter `U` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   ConstraintParam(T);
