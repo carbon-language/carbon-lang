@@ -16,8 +16,8 @@ fn Foo() -> f64 { return 1.0; }
 
 fn Run() {
   // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+4]]:23-27: error: cannot implicitly convert expression of type `f64` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:3-19: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
-  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+2]]:3-19: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+3]]:23-27: note: type `f64` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
+  // CHECK:STDERR: fail_return_type_mismatch.carbon:[[@LINE+2]]:3-19: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var unused x: i32 = Foo();
 }

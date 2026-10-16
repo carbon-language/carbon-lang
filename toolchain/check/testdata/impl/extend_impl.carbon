@@ -64,7 +64,7 @@ class C {
   fn F() {
     // The name lookup error still happens, since the `require` is not `extend`.
     // CHECK:STDERR: fail_impl_nonexistent.carbon:[[@LINE+3]]:5-10: error: member name `A` not found in `C` [MemberNameNotFoundInInstScope]
-    // CHECK:STDERR: fail_impl_nonexistent.carbon:[[@LINE-8]]:1-9: note: `C` declared here [MemberNameNotFoundScope]
+    // CHECK:STDERR: fail_impl_nonexistent.carbon:[[@LINE-8]]:1-9: note: `C` defined here [MemberNameNotFoundScope]
     // CHECK:STDERR:
     Self.A;
   }

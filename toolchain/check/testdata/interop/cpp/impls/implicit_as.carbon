@@ -94,7 +94,7 @@ fn NonConstConversionTest(s: Cpp.NonConstConversion) {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+4]]:21: error: cannot implicitly convert expression of type `NonConstConversion` to `Cpp.Dest` [ConversionFailure]
   // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+3]]:21: note: type `Cpp.NonConstConversion` does not implement interface `Core.ImplicitAs(Cpp.Dest)` [MissingImplForType]
-  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+2]]:7-17: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_expr_category.carbon:[[@LINE+2]]:7-17: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.Dest = s;
   //@dump-sem-ir-end
@@ -111,7 +111,7 @@ fn InaccessibleConstructorTest(s: Cpp.Source) {
   // CHECK:STDERR: fail_access.carbon:[[@LINE+5]]:40: error: cannot access private member `InaccessibleConstructor` of type `Cpp.InaccessibleConstructor` [ClassInvalidMemberAccess]
   // CHECK:STDERR: included from: fail_access.carbon:[[@LINE-5]]:10 [InCppInclude]
   // CHECK:STDERR: ./implicit_conversions.h:21:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR: fail_access.carbon:[[@LINE+2]]:7-36: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_access.carbon:[[@LINE+2]]:7-36: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.InaccessibleConstructor = s;
   //@dump-sem-ir-end
@@ -122,7 +122,7 @@ fn InaccessibleConversionTest(s: Cpp.InaccessibleConversion) {
   // CHECK:STDERR: fail_access.carbon:[[@LINE+5]]:21: error: cannot access private member `<C++ operator>` of type `Cpp.InaccessibleConversion` [ClassInvalidMemberAccess]
   // CHECK:STDERR: included from: fail_access.carbon:[[@LINE-16]]:10 [InCppInclude]
   // CHECK:STDERR: ./implicit_conversions.h:26:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR: fail_access.carbon:[[@LINE+2]]:7-17: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_access.carbon:[[@LINE+2]]:7-17: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.Dest = s;
   //@dump-sem-ir-end
@@ -138,7 +138,7 @@ fn DeletedConstructorTest(s: Cpp.Source) {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+4]]:35: error: cannot implicitly convert expression of type `Source` to `Cpp.DeletedConstructor` [ConversionFailure]
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+3]]:35: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.DeletedConstructor)` [MissingImplForType]
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+2]]:7-31: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+2]]:7-31: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.DeletedConstructor = s;
   //@dump-sem-ir-end
@@ -148,7 +148,7 @@ fn DeletedConversionTest(s: Cpp.DeletedConversion) {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+4]]:21: error: cannot implicitly convert expression of type `DeletedConversion` to `Cpp.Dest` [ConversionFailure]
   // CHECK:STDERR: fail_deleted.carbon:[[@LINE+3]]:21: note: type `Cpp.DeletedConversion` does not implement interface `Core.ImplicitAs(Cpp.Dest)` [MissingImplForType]
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+2]]:7-17: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+2]]:7-17: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.Dest = s;
   //@dump-sem-ir-end
@@ -164,7 +164,7 @@ fn ExplicitConstructorTest(s: Cpp.Source) {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_explicit.carbon:[[@LINE+4]]:36: error: cannot implicitly convert expression of type `Source` to `Cpp.ExplicitConstructor` [ConversionFailure]
   // CHECK:STDERR: fail_explicit.carbon:[[@LINE+3]]:36: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ExplicitConstructor)` [MissingImplForType]
-  // CHECK:STDERR: fail_explicit.carbon:[[@LINE+2]]:7-32: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_explicit.carbon:[[@LINE+2]]:7-32: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.ExplicitConstructor = s;
   //@dump-sem-ir-end
@@ -174,7 +174,7 @@ fn ExplicitConversionTest(s: Cpp.ExplicitConversion) {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_explicit.carbon:[[@LINE+4]]:21: error: cannot implicitly convert expression of type `ExplicitConversion` to `Cpp.Dest` [ConversionFailure]
   // CHECK:STDERR: fail_explicit.carbon:[[@LINE+3]]:21: note: type `Cpp.ExplicitConversion` does not implement interface `Core.ImplicitAs(Cpp.Dest)` [MissingImplForType]
-  // CHECK:STDERR: fail_explicit.carbon:[[@LINE+2]]:7-17: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_explicit.carbon:[[@LINE+2]]:7-17: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.Dest = s;
   //@dump-sem-ir-end
@@ -204,7 +204,7 @@ fn IntConstructorTest(u: u32) {
   // CHECK:STDERR: fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE+5]]:31: note: type `u32` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
   // CHECK:STDERR: included from: fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE-6]]:10 [InCppInclude]
   // CHECK:STDERR: ./implicit_conversions.h:38:21: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE+2]]:7-27: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE+2]]:7-27: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.IntConstructor = u;
   //@dump-sem-ir-end
@@ -276,17 +276,17 @@ fn InitFromTuple() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+4]]:26-27: error: cannot implicitly convert expression of type `()` to `Cpp.Aggregate` [ConversionFailure]
   // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+3]]:26-27: note: type `()` does not implement interface `Core.ImplicitAs(Cpp.Aggregate)` [MissingImplForType]
-  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.Aggregate = ();
   // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+4]]:26-29: error: cannot implicitly convert expression of type `(Core.IntLiteral,)` to `Cpp.Aggregate` [ConversionFailure]
   // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+3]]:26-29: note: type `(Core.IntLiteral,)` does not implement interface `Core.ImplicitAs(Cpp.Aggregate)` [MissingImplForType]
-  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.Aggregate = (1,);
   // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+4]]:26-31: error: cannot implicitly convert expression of type `(Core.IntLiteral, Core.IntLiteral)` to `Cpp.Aggregate` [ConversionFailure]
   // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+3]]:26-31: note: type `(Core.IntLiteral, Core.IntLiteral)` does not implement interface `Core.ImplicitAs(Cpp.Aggregate)` [MissingImplForType]
-  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_todo_aggregate_from_tuple.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.Aggregate = (1, 2);
   //@dump-sem-ir-end
@@ -302,17 +302,17 @@ fn InitFromStruct() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+4]]:26-27: error: cannot implicitly convert expression of type `{}` to `Cpp.Aggregate` [ConversionFailure]
   // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+3]]:26-27: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.Aggregate)` [MissingImplForType]
-  // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.Aggregate = {};
   // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+4]]:26-33: error: cannot implicitly convert expression of type `{.x: Core.IntLiteral}` to `Cpp.Aggregate` [ConversionFailure]
   // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+3]]:26-33: note: type `{.x: Core.IntLiteral}` does not implement interface `Core.ImplicitAs(Cpp.Aggregate)` [MissingImplForType]
-  // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.Aggregate = {.x = 1};
   // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+4]]:26-41: error: cannot implicitly convert expression of type `{.x: Core.IntLiteral, .y: Core.IntLiteral}` to `Cpp.Aggregate` [ConversionFailure]
   // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+3]]:26-41: note: type `{.x: Core.IntLiteral, .y: Core.IntLiteral}` does not implement interface `Core.ImplicitAs(Cpp.Aggregate)` [MissingImplForType]
-  // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_todo_aggregate_from_struct.carbon:[[@LINE+2]]:7-22: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.Aggregate = {.x = 1, .y = 2};
   //@dump-sem-ir-end
@@ -342,17 +342,17 @@ fn InitFromStruct() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+4]]:29-30: error: cannot implicitly convert expression of type `{}` to `Cpp.NonAggregate` [ConversionFailure]
   // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+3]]:29-30: note: type `{}` does not implement interface `Core.ImplicitAs(Cpp.NonAggregate)` [MissingImplForType]
-  // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+2]]:7-25: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+2]]:7-25: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.NonAggregate = {};
   // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+4]]:29-36: error: cannot implicitly convert expression of type `{.x: Core.IntLiteral}` to `Cpp.NonAggregate` [ConversionFailure]
   // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+3]]:29-36: note: type `{.x: Core.IntLiteral}` does not implement interface `Core.ImplicitAs(Cpp.NonAggregate)` [MissingImplForType]
-  // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+2]]:7-25: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+2]]:7-25: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.NonAggregate = {.x = 1};
   // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+4]]:29-44: error: cannot implicitly convert expression of type `{.x: Core.IntLiteral, .y: Core.IntLiteral}` to `Cpp.NonAggregate` [ConversionFailure]
   // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+3]]:29-44: note: type `{.x: Core.IntLiteral, .y: Core.IntLiteral}` does not implement interface `Core.ImplicitAs(Cpp.NonAggregate)` [MissingImplForType]
-  // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+2]]:7-25: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_non_aggregate_from_struct.carbon:[[@LINE+2]]:7-25: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.NonAggregate = {.x = 1, .y = 2};
   //@dump-sem-ir-end

@@ -27,7 +27,7 @@ class A(N: i32) {
 fn F(a: A(0)*) {
   // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:22: error: unable to monomorphize specific `A(0)` [ResolvingSpecificHere]
   // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE-5]]:10-15: note: integer type width of 0 is not positive [IntWidthNotPositive]
-  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+2]]:14-18: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+2]]:14-18: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let unused b: B* = a;
 }

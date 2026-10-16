@@ -13,7 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_assign_empty.carbon
 
 // CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+3]]:20-21: error: missing value for field `a` in struct initialization [StructInitMissingFieldInLiteral]
-// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+2]]:1-16: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_assign_empty.carbon:[[@LINE+2]]:1-16: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var x: {.a: i32} = {};
 

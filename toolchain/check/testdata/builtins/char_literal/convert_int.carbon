@@ -49,7 +49,7 @@ fn ConvertToU8(c: CharLiteral) -> UInt(8) = "char_literal.convert_int";
 // CHECK:STDERR:
 // CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:13-34: error: cannot implicitly convert expression of type `<builtin u8>` to `u8` [ConversionFailure]
 // CHECK:STDERR: fail_overflow.carbon:[[@LINE+3]]:13-34: note: type `<builtin u8>` does not implement interface `Core.ImplicitAs(u8)` [MissingImplForType]
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:5-9: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:5-9: note: initializing this binding [InPatternInit]
 // CHECK:STDERR:
 let g: u8 = ConvertToU8('\u{100}');
 

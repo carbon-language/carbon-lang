@@ -48,8 +48,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:11-16: error: member name `A` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE-3]]:1-26: note: `Test` declared here [MemberNameNotFoundScope]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+2]]:11-16: error: member name `A` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 var inst: Test.A = {};
 
@@ -204,7 +203,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc9: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

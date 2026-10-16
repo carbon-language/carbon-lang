@@ -37,8 +37,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "global.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE+3]]:3-9: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE-4]]:1-30: note: `Cpp` declared here [MemberNameNotFoundScope]
+  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE+2]]:3-9: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   Cpp.bar();
 }
@@ -58,8 +57,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE+3]]:3-10: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE-4]]:1-36: note: `Cpp` declared here [MemberNameNotFoundScope]
+  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE+2]]:3-10: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   Cpp.base();
 }

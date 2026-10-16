@@ -58,7 +58,7 @@ import Core library "prelude_fake_int";
 // CHECK:STDERR:
 // CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+4]]:17-19: error: cannot implicitly convert expression of type `type` to `Core.X` [ConversionFailure]
 // CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+3]]:17-19: note: type `type` does not implement interface `Core.ImplicitAs(Core.X)` [MissingImplForType]
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+2]]:5-13: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+2]]:5-13: note: initializing this binding [InPatternInit]
 // CHECK:STDERR:
 let n: Core.X = i32;
 

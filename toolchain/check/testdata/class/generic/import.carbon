@@ -59,8 +59,8 @@ import library "foo";
 
 fn Use() {
   // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+4]]:39-41: error: cannot implicitly convert expression of type `CompleteClass(i32)` to `CompleteClass(i32*)` [ConversionFailure]
-  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+3]]:3-35: note: type `CompleteClass(i32)` does not implement interface `Core.ImplicitAs(CompleteClass(i32*))` [MissingImplForType]
-  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+2]]:3-35: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+3]]:39-41: note: type `CompleteClass(i32)` does not implement interface `Core.ImplicitAs(CompleteClass(i32*))` [MissingImplForType]
+  // CHECK:STDERR: fail_generic_arg_mismatch.carbon:[[@LINE+2]]:3-35: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var unused v: CompleteClass(i32*) = F();
 }

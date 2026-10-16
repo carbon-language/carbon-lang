@@ -15,7 +15,7 @@
 fn Main() {
   var a: i32 = 3;
   // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+3]]:7-9: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+2]]:3-9: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
+  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+2]]:7-9: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
   // CHECK:STDERR:
   a = 5.6;
 }

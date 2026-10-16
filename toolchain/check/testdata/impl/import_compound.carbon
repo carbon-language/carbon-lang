@@ -46,7 +46,7 @@ library "[[@TEST_NAME]]";
 import library "lib";
 
 fn NonInstanceCallImportFail(n: {.i: ()}) {
-  // CHECK:STDERR: fail_import_non-instance.carbon:[[@LINE+3]]:3: error: cannot implicitly convert non-type value of type `{.i: ()}` into type implementing `NonInstance` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_import_non-instance.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert non-type value of type `{.i: ()}` into type implementing `NonInstance` [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR: fail_import_non-instance.carbon:[[@LINE+2]]:3-19: note: type `{.i: ()}` does not implement interface `Core.ImplicitAs(NonInstance)` [MissingImplForType]
   // CHECK:STDERR:
   n.(NonInstance.F)();

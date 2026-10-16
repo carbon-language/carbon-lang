@@ -29,11 +29,11 @@ library "[[@TEST_NAME]]";
 fn F() {
   var x: () = ();
   // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+3]]:22-26: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+2]]:14-18: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+2]]:14-18: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let unused y: () = ref x;
   // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+3]]:23-27: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+2]]:14-18: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_ref_out_of_place.carbon:[[@LINE+2]]:14-18: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let unused z: () = (ref x);
 }

@@ -21,7 +21,7 @@ fn F() {
 
 class C {
   // CHECK:STDERR: fail_not_top_level.carbon:[[@LINE+3]]:3-14: error: `namespace` declaration not at top level [NamespaceDeclNotAtTopLevel]
-  // CHECK:STDERR: fail_not_top_level.carbon:[[@LINE-2]]:1-9: note: appears in this declaration [NamespaceEnclosingScope]
+  // CHECK:STDERR: fail_not_top_level.carbon:[[@LINE-2]]:1-9: note: appears in this definition [NamespaceEnclosingScope]
   // CHECK:STDERR:
   namespace N;
   fn N.F() {}
@@ -29,7 +29,7 @@ class C {
 
 interface I {
   // CHECK:STDERR: fail_not_top_level.carbon:[[@LINE+3]]:3-14: error: `namespace` declaration not at top level [NamespaceDeclNotAtTopLevel]
-  // CHECK:STDERR: fail_not_top_level.carbon:[[@LINE-2]]:1-13: note: appears in this declaration [NamespaceEnclosingScope]
+  // CHECK:STDERR: fail_not_top_level.carbon:[[@LINE-2]]:1-13: note: appears in this definition [NamespaceEnclosingScope]
   // CHECK:STDERR:
   namespace N;
   fn N.I() {}

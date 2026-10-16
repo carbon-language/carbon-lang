@@ -58,13 +58,13 @@ let a: C = {.a = 1, .b = 2};
 
 // CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:17: error: cannot implicitly convert expression of type `C` to `AdaptC` [ConversionFailure]
 // CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:17: note: type `C` does not implement interface `Core.ImplicitAs(AdaptC)` [MissingImplForType]
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+2]]:5-13: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+2]]:5-13: note: initializing this binding [InPatternInit]
 // CHECK:STDERR:
 let b: AdaptC = a;
 
 // CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:12: error: cannot implicitly convert expression of type `AdaptC` to `C` [ConversionFailure]
 // CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:12: note: type `AdaptC` does not implement interface `Core.ImplicitAs(C)` [MissingImplForType]
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+2]]:5-8: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+2]]:5-8: note: initializing this binding [InPatternInit]
 // CHECK:STDERR:
 let c: C = b;
 
@@ -73,14 +73,14 @@ fn MakeC() -> C;
 fn MakeAdaptC() -> AdaptC;
 
 // CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:17-23: error: cannot implicitly convert expression of type `C` to `AdaptC` [ConversionFailure]
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:1-13: note: type `C` does not implement interface `Core.ImplicitAs(AdaptC)` [MissingImplForType]
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+2]]:1-13: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:17-23: note: type `C` does not implement interface `Core.ImplicitAs(AdaptC)` [MissingImplForType]
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+2]]:1-13: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var d: AdaptC = MakeC();
 
 // CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+4]]:12-23: error: cannot implicitly convert expression of type `AdaptC` to `C` [ConversionFailure]
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:1-8: note: type `AdaptC` does not implement interface `Core.ImplicitAs(C)` [MissingImplForType]
-// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+2]]:1-8: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+3]]:12-23: note: type `AdaptC` does not implement interface `Core.ImplicitAs(C)` [MissingImplForType]
+// CHECK:STDERR: fail_not_implicit.carbon:[[@LINE+2]]:1-8: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var e: C = MakeAdaptC();
 

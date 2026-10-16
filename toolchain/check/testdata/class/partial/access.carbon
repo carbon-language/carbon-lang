@@ -38,7 +38,7 @@ import Common;
 fn F(ref pb: partial Common.B) {
     // CHECK:STDERR: fail_invalid_partial_member_access.carbon:[[@LINE+4]]:27-33: error: cannot implicitly convert expression of type `partial Common.A` to `Common.A` [ConversionFailure]
     // CHECK:STDERR: fail_invalid_partial_member_access.carbon:[[@LINE+3]]:27-33: note: type `partial Common.A` does not implement interface `Core.ImplicitAs(Common.A)` [MissingImplForType]
-    // CHECK:STDERR: fail_invalid_partial_member_access.carbon:[[@LINE+2]]:9-23: note: initializing this binding [InBindingInit]
+    // CHECK:STDERR: fail_invalid_partial_member_access.carbon:[[@LINE+2]]:9-23: note: initializing this binding [InPatternInit]
     // CHECK:STDERR:
     let ref _: Common.A = pb.base;
 }

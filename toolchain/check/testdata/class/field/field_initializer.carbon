@@ -50,8 +50,9 @@ class Class {
   var field: i32 = 123;
 }
 
-// CHECK:STDERR: fail_field_initializer_invalid_name.carbon:[[@LINE+3]]:32-34: error: struct `Class` has no field named `not_a_field` [StructInitUnexpectedFieldInLiteral]
-// CHECK:STDERR: fail_field_initializer_invalid_name.carbon:[[@LINE+2]]:1-12: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_field_initializer_invalid_name.carbon:[[@LINE+4]]:18-28: error: struct `Class` has no field named `not_a_field` [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR: fail_field_initializer_invalid_name.carbon:[[@LINE-5]]:1-13: note: class defined here [StructInitClassDefinedHere]
+// CHECK:STDERR: fail_field_initializer_invalid_name.carbon:[[@LINE+2]]:1-12: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var C: Class = {.not_a_field = 456};
 
@@ -61,7 +62,7 @@ library "[[@TEST_NAME]]";
 class Class {
   // CHECK:STDERR: fail_field_initializer_wrong_type.carbon:[[@LINE+4]]:20-21: error: cannot implicitly convert expression of type `()` to `i32` [ConversionFailure]
   // CHECK:STDERR: fail_field_initializer_wrong_type.carbon:[[@LINE+3]]:20-21: note: type `()` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
-  // CHECK:STDERR: fail_field_initializer_wrong_type.carbon:[[@LINE+2]]:7-16: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_field_initializer_wrong_type.carbon:[[@LINE+2]]:7-16: note: initializing this pattern [InPatternInit]
   // CHECK:STDERR:
   var field: i32 = ();
 }
@@ -75,7 +76,7 @@ class Class {
   var field: i32 = x;
 }
 
-// CHECK:STDERR: fail_field_initializer_not_constant.carbon:[[@LINE+2]]:1-12: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_field_initializer_not_constant.carbon:[[@LINE+2]]:1-12: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var C: Class = {};
 

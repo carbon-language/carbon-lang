@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_assign_from_empty.carbon:[[@LINE+3]]:16-17: error: cannot initialize tuple of 1 element from tuple with 0 elements [TupleInitElementCountMismatch]
-// CHECK:STDERR: fail_assign_from_empty.carbon:[[@LINE+2]]:1-12: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_assign_from_empty.carbon:[[@LINE+2]]:1-12: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var x: ((),) = ();
 
@@ -22,7 +22,7 @@ var x: ((),) = ();
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+3]]:13-17: error: cannot initialize tuple of 0 elements from tuple with 1 element [TupleInitElementCountMismatch]
-// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+2]]:1-9: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_assign_to_empty.carbon:[[@LINE+2]]:1-9: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var x: () = ((),);
 
@@ -30,7 +30,7 @@ var x: () = ((),);
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:32-43: error: cannot initialize tuple of 2 elements from tuple with 3 elements [TupleInitElementCountMismatch]
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+2]]:1-27: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+2]]:1-27: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var x: (((), ()), ((), ())) = (((), (), ()), ((), (), ()));
 
@@ -38,6 +38,6 @@ var x: (((), ()), ((), ())) = (((), (), ()), ((), (), ()));
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_too_few_elements.carbon:[[@LINE+3]]:19-24: error: cannot initialize tuple of 2 elements from tuple with 1 element [TupleInitElementCountMismatch]
-// CHECK:STDERR: fail_too_few_elements.carbon:[[@LINE+2]]:1-15: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_too_few_elements.carbon:[[@LINE+2]]:1-15: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var x: ((), ()) = ((), );

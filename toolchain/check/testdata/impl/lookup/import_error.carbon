@@ -32,7 +32,7 @@ fn F[unused U: type](generic T: Z) {
   //
   // CHECK:STDERR: fail_import_error.carbon:[[@LINE+4]]:23-24: error: cannot implicitly convert expression of type `()` to `T.(Z.X)` [ConversionFailure]
   // CHECK:STDERR: fail_import_error.carbon:[[@LINE+3]]:23-24: note: type `()` does not implement interface `Core.ImplicitAs(T.(Z.X))` [MissingImplForType]
-  // CHECK:STDERR: fail_import_error.carbon:[[@LINE+2]]:14-19: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_import_error.carbon:[[@LINE+2]]:14-19: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let unused a: T.X = ();
 }

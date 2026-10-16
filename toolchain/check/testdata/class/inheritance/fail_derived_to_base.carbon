@@ -24,7 +24,7 @@ class B2 {
 }
 
 // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:45: error: cannot implicitly convert expression of type `B2*` to `A1*` [ConversionFailure]
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:38-46: note: type `B2*` does not implement interface `Core.ImplicitAs(A1*)` [MissingImplForType]
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:45: note: type `B2*` does not implement interface `Core.ImplicitAs(A1*)` [MissingImplForType]
 // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+2]]:32-34: note: return type of function is `A1*` [ReturnTypeHereNote]
 // CHECK:STDERR:
 fn ConvertUnrelated(p: B2*) -> A1* { return p; }
@@ -32,7 +32,7 @@ fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 class Incomplete;
 
 // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+4]]:54: error: cannot implicitly convert expression of type `Incomplete*` to `A2*` [ConversionFailure]
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:47-55: note: type `Incomplete*` does not implement interface `Core.ImplicitAs(A2*)` [MissingImplForType]
+// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:54: note: type `Incomplete*` does not implement interface `Core.ImplicitAs(A2*)` [MissingImplForType]
 // CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+2]]:41-43: note: return type of function is `A2*` [ReturnTypeHereNote]
 // CHECK:STDERR:
 fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }

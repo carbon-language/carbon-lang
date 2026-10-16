@@ -42,8 +42,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "templates.h";
 
 // CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+4]]:26-44: error: cannot implicitly convert expression of type `Cpp.Simple` to `Cpp.Simple` [ConversionFailure]
-// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+3]]:1-22: note: type `Cpp.Simple` does not implement interface `Core.ImplicitAs(Cpp.Simple)` [MissingImplForType]
-// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+2]]:1-22: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+3]]:26-44: note: type `Cpp.Simple` does not implement interface `Core.ImplicitAs(Cpp.Simple)` [MissingImplForType]
+// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+2]]:1-22: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var s: Cpp.Simple(456) = Cpp.MakeSimple123();
 

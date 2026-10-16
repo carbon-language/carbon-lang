@@ -40,7 +40,7 @@ fn F() {
   // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+5]]:3-13: error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+3]]:17-19: error: cannot implicitly convert expression of type `Core.IntLiteral` to `const i32` [ConversionFailure]
-  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+2]]:3-19: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(const i32)` [MissingImplForType]
+  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+2]]:17-19: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(const i32)` [MissingImplForType]
   // CHECK:STDERR:
   Cpp.Get().x = 123;
 }

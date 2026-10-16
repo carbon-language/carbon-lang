@@ -162,7 +162,7 @@ class C;
 
 interface I {
   // CHECK:STDERR: fail_friend_not_in_class.carbon:[[@LINE+3]]:3-11: error: `friend` declaration in non-class scope [FriendNotAllowedInScope]
-  // CHECK:STDERR: fail_friend_not_in_class.carbon:[[@LINE-2]]:1-13: note: appears in this declaration [FriendEnclosingScope]
+  // CHECK:STDERR: fail_friend_not_in_class.carbon:[[@LINE-2]]:1-13: note: appears in this definition [FriendEnclosingScope]
   // CHECK:STDERR:
   friend C;
 }

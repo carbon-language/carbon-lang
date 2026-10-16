@@ -114,7 +114,7 @@ fn ConstructorExplicit(s: Cpp.Source) {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+4]]:42: error: cannot implicitly convert expression of type `Source` to `Cpp.ConditionallyExplicit` [ConversionFailure]
   // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+3]]:42: note: type `Cpp.Source` does not implement interface `Core.ImplicitAs(Cpp.ConditionallyExplicit)` [MissingImplForType]
-  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+2]]:7-38: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_conditionally_explicit_implicit.carbon:[[@LINE+2]]:7-38: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: Cpp.ConditionallyExplicitTrue = s;
   //@dump-sem-ir-end

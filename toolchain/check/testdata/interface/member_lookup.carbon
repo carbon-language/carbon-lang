@@ -38,14 +38,14 @@ interface Interface(T: type) {
 
 fn AccessMissingGeneric[T: type](generic I: Interface(T)) -> T {
   // CHECK:STDERR: fail_no_member.carbon:[[@LINE+3]]:10-19: error: member name `nonesuch` not found in `Interface(T)` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE-6]]:1-30: note: `Interface(T)` declared here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE-6]]:1-30: note: `Interface(T)` defined here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   return I.nonesuch;
 }
 
 fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
   // CHECK:STDERR: fail_no_member.carbon:[[@LINE+3]]:10-19: error: member name `nonesuch` not found in `Interface(i32)` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR: fail_no_member.carbon:[[@LINE-13]]:1-30: note: `Interface(i32)` declared here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR: fail_no_member.carbon:[[@LINE-13]]:1-30: note: `Interface(i32)` defined here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   return I.nonesuch;
 }

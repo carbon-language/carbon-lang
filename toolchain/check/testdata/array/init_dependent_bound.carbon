@@ -33,7 +33,7 @@ library "[[@TEST_NAME]]";
 
 fn F(generic N: i32) {
   // CHECK:STDERR: fail_init_dependent_bound.carbon:[[@LINE+3]]:35-43: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
-  // CHECK:STDERR: fail_init_dependent_bound.carbon:[[@LINE+2]]:3-31: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_init_dependent_bound.carbon:[[@LINE+2]]:3-31: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var unused arr: array(i32, N) = (1, 2, 3);
 }

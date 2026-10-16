@@ -106,7 +106,7 @@ let n: Y = ({.x = ()} as X) as Y;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:13: error: cannot convert expression of type `Core.IntLiteral` to `{}` with `as` [ConversionFailure]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:13-19: error: cannot convert expression of type `Core.IntLiteral` to `{}` with `as` [ConversionFailure]
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+2]]:13-19: note: type `Core.IntLiteral` does not implement interface `Core.As({})` [MissingImplForType]
 // CHECK:STDERR:
 let a: {} = 1 as {};

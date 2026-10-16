@@ -151,7 +151,7 @@ abstract class Abstract {
 fn F() {
   // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+6]]:28-29: error: initialization of abstract class `Abstract` [AbstractTypeInInit]
   // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE-5]]:1-25: note: class declared abstract here [ClassDeclaredAbstractHere]
-  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+4]]:14-24: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+4]]:14-24: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+2]]:28-29: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:

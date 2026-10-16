@@ -19,7 +19,7 @@ fn F() -> bool {
   // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+5]]:17-20: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE+3]]:11-20: error: member name `r#Self` not found in `Class` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE-9]]:1-13: note: `Class` declared here [MemberNameNotFoundScope]
+  // CHECK:STDERR: fail_self_type_member.carbon:[[@LINE-9]]:1-13: note: `Class` defined here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   var c2: Class.Self = c1;
   return c2.b;

@@ -179,7 +179,7 @@ class D {}
 
 fn Test(d: D) {
   // CHECK:STDERR: fail_cannot_as.carbon:[[@LINE+4]]:16-20: error: unable to monomorphize specific `AsI32(D)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_cannot_as.carbon:[[@LINE-7]]:10: note: cannot convert expression of type `D` to `i32` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_cannot_as.carbon:[[@LINE-7]]:10-17: note: cannot convert expression of type `D` to `i32` with `as` [ConversionFailure]
   // CHECK:STDERR: fail_cannot_as.carbon:[[@LINE-8]]:10-17: note: type `D` does not implement interface `Core.As(i32)` [MissingImplForType]
   // CHECK:STDERR:
   let _: i32 = AsI32(d);
@@ -222,7 +222,7 @@ class D {}
 
 fn Test(d: D) {
   // CHECK:STDERR: fail_cannot_as_type.carbon:[[@LINE+4]]:3-8: error: unable to monomorphize specific `AsType(D, i32)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_cannot_as_type.carbon:[[@LINE-7]]:14: note: cannot convert expression of type `D` to `i32` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_cannot_as_type.carbon:[[@LINE-7]]:14-19: note: cannot convert expression of type `D` to `i32` with `as` [ConversionFailure]
   // CHECK:STDERR: fail_cannot_as_type.carbon:[[@LINE-8]]:14-19: note: type `D` does not implement interface `Core.As(i32)` [MissingImplForType]
   // CHECK:STDERR:
   AsType(d, i32);

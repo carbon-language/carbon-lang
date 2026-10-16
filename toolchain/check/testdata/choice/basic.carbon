@@ -67,7 +67,7 @@ choice Never {}
 
 // TODO: Can we produce a better diagnostic?
 // CHECK:STDERR: fail_no_alternative_construct.carbon:[[@LINE+3]]:20-21: error: missing value for field `discriminant` in struct initialization [StructInitMissingFieldInLiteral]
-// CHECK:STDERR: fail_no_alternative_construct.carbon:[[@LINE+2]]:5-16: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_no_alternative_construct.carbon:[[@LINE+2]]:5-16: note: initializing this binding [InPatternInit]
 // CHECK:STDERR:
 let never: Never = {};
 

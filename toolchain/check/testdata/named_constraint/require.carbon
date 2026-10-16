@@ -103,7 +103,7 @@ fn F(generic T: Z) {
   // This should fail name lookup since Z does not extend Y.
   //
   // CHECK:STDERR: fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+3]]:3-6: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR: fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE-8]]:1-14: note: `Z` declared here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR: fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE-8]]:1-14: note: `Z` defined here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   T.YY();
 }
@@ -123,7 +123,7 @@ fn F(generic T: Z) {
   // This should fail name lookup since Z does not extend Y.
   //
   // CHECK:STDERR: fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+3]]:3-6: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR: fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE-8]]:1-14: note: `Z` declared here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR: fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE-8]]:1-14: note: `Z` defined here [MemberNameNotFoundSpecificScope]
   // CHECK:STDERR:
   T.YY();
 }

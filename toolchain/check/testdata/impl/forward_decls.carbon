@@ -111,7 +111,7 @@ impl D as I where .T = C;
 interface I {}
 class C {}
 // CHECK:STDERR: fail_associated_const_before_interface_definition.carbon:[[@LINE+3]]:19-20: error: member name `T` not found in `I` [MemberNameNotFoundInSpecificScope]
-// CHECK:STDERR: fail_associated_const_before_interface_definition.carbon:[[@LINE-3]]:1-13: note: `I` declared here [MemberNameNotFoundSpecificScope]
+// CHECK:STDERR: fail_associated_const_before_interface_definition.carbon:[[@LINE-3]]:1-13: note: `I` defined here [MemberNameNotFoundSpecificScope]
 // CHECK:STDERR:
 impl D as I where .T = C {}
 

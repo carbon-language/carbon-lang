@@ -17,8 +17,8 @@ library "[[@TEST_NAME]]";
 class C {}
 
 // CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+4]]:27-28: error: cannot implicitly convert expression of type `()` to `C` [ConversionFailure]
-// CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+3]]:22-35: note: type `()` does not implement interface `Core.ImplicitAs(C)` [MissingImplForType]
-// CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+2]]:1-18: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+3]]:27-28: note: type `()` does not implement interface `Core.ImplicitAs(C)` [MissingImplForType]
+// CHECK:STDERR: fail_arg_wrong_type.carbon:[[@LINE+2]]:1-18: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var a: array(C, 3) = ({}, (), true);
 
@@ -32,14 +32,14 @@ class D {}
 var a: (D, C, D);
 // CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+4]]:22: error: cannot implicitly convert expression of type `D` to `C` [ConversionFailure]
 // CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+3]]:22: note: type `D` does not implement interface `Core.ImplicitAs(C)` [MissingImplForType]
-// CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+2]]:1-18: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+2]]:1-18: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var b: array(C, 3) = a;
 
 var c: (C, D, D);
 // CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+4]]:22: error: cannot copy value of type `C` [CopyOfUncopyableType]
 // CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+3]]:22: note: type `C` does not implement interface `Core.Copy` [MissingImplForType]
-// CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+2]]:1-18: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_var_wrong_type.carbon:[[@LINE+2]]:1-18: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var d: array(C, 3) = c;
 
@@ -50,7 +50,7 @@ library "[[@TEST_NAME]]";
 class C {}
 
 // CHECK:STDERR: fail_arg_too_short.carbon:[[@LINE+3]]:22-29: error: cannot initialize array of 3 elements from 2 initializers [ArrayInitFromLiteralArgCountMismatch]
-// CHECK:STDERR: fail_arg_too_short.carbon:[[@LINE+2]]:1-18: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_arg_too_short.carbon:[[@LINE+2]]:1-18: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var a: array(C, 3) = ({}, {});
 
@@ -62,13 +62,13 @@ class C {}
 
 var a: (C, C);
 // CHECK:STDERR: fail_var_too_short.carbon:[[@LINE+3]]:22: error: cannot initialize array of 3 elements from tuple with 2 elements [ArrayInitFromExprArgCountMismatch]
-// CHECK:STDERR: fail_var_too_short.carbon:[[@LINE+2]]:1-18: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_var_too_short.carbon:[[@LINE+2]]:1-18: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var b: array(C, 3) = a;
 
 // --- fail_arg_too_long.carbon
 
 // CHECK:STDERR: fail_arg_too_long.carbon:[[@LINE+3]]:23-34: error: cannot initialize array of 1 element from 3 initializers [ArrayInitFromLiteralArgCountMismatch]
-// CHECK:STDERR: fail_arg_too_long.carbon:[[@LINE+2]]:1-19: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_arg_too_long.carbon:[[@LINE+2]]:1-19: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var a: array((), 1) = ((), (), ());

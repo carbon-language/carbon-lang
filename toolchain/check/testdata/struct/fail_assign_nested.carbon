@@ -12,8 +12,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_assign_nested.carbon
 
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:25-26: error: struct `{.a: {}}` has no field named `b` [StructInitUnexpectedFieldInLiteral]
-// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+2]]:1-15: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+3]]:21: error: struct `{.a: {}}` has no field named `b` [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR: fail_assign_nested.carbon:[[@LINE+2]]:1-15: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var x: {.a: {}} = {.b = {}};
 

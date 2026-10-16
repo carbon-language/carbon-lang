@@ -98,7 +98,7 @@ fn F(ref c: Cpp.C);
 fn G() {
   // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE+4]]:39: error: can't convert exported function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
   // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE-4]]:1-19: note: function exported with pointer type `void (*)(class C &)` [ExportedFromFunction]
-  // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE+2]]:3-35: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE+2]]:3-35: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = F;
 }
@@ -115,7 +115,7 @@ class C {
 fn F() {
   // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE+4]]:39-46: error: can't convert exported member function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
   // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE-5]]:3-18: note: function exported with pointer type `void (Carbon::Main::C::*)(void) const` [ExportedFromFunction]
-  // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE+2]]:3-35: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE+2]]:3-35: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = C.Method;
 }
@@ -137,7 +137,7 @@ fn G() {
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:39-46: error: can't convert exported member function pointer to `void (Carbon::Main::C::*)(float) const` [ExportedFunctionPtrTypeMismatch]
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-10]]:3-26: note: function exported with pointer type `void (Carbon::Main::C::*)(int) const` [ExportedFromFunction]
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+2]]:3-35: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+2]]:3-35: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = C.Method;
   //@dump-sem-ir-end

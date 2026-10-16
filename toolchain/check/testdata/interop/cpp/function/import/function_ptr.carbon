@@ -173,7 +173,7 @@ fn MyCallback(generic arg: i32);
 
 fn F() {
   // CHECK:STDERR: fail_convert_generic_arg.carbon:[[@LINE+3]]:43-52: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
-  // CHECK:STDERR: fail_convert_generic_arg.carbon:[[@LINE+2]]:3-39: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_convert_generic_arg.carbon:[[@LINE+2]]:3-39: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
 }
@@ -190,7 +190,7 @@ fn MyCallback(arg: i32) -> i32;
 fn F() {
   // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE+4]]:43-52: error: can't convert exported function pointer to `void (*)(int)` [ExportedFunctionPtrTypeMismatch]
   // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE-4]]:1-31: note: function exported with pointer type `int (*)(int)` [ExportedFromFunction]
-  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE+2]]:3-39: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE+2]]:3-39: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
 }

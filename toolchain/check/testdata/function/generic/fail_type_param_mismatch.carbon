@@ -14,7 +14,7 @@ fn F(generic T: type, generic U: type) {
   var p: T*;
   // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+4]]:21-22: error: cannot implicitly convert expression of type `T` to `U` [ConversionFailure]
   // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+3]]:21-22: note: type `T` does not implement interface `Core.ImplicitAs(U)` [MissingImplForType]
-  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+2]]:14-17: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_type_param_mismatch.carbon:[[@LINE+2]]:14-17: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let unused n: U = *p;
 }

@@ -48,8 +48,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+3]]:14-19: error: member name `v` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE-3]]:1-26: note: `Test` declared here [MemberNameNotFoundScope]
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+2]]:14-19: error: member name `v` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 let v2: () = Test.v;
 
@@ -177,9 +176,9 @@ let v2: () = Test.v;
 // CHECK:STDOUT:     .v2 = %v2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Test.import = import Test
-// CHECK:STDOUT:   %.loc9_10.1: type = splice_block %.loc9_10.3 [concrete = constants.%empty_tuple.type] {
-// CHECK:STDOUT:     %.loc9_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc9_10.3: type = converted %.loc9_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %.loc8_10.1: type = splice_block %.loc8_10.3 [concrete = constants.%empty_tuple.type] {
+// CHECK:STDOUT:     %.loc8_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc8_10.3: type = converted %.loc8_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v2: %empty_tuple.type = wrapper_binding v2, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

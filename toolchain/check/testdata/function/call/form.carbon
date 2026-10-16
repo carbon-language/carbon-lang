@@ -109,7 +109,7 @@ fn F(generic Fm: Core.Form, unused x:? Fm) {}
 fn G() {
   var x: i32;
   // CHECK:STDERR: fail_todo_composite_generic_form.carbon:[[@LINE+4]]:5-34: error: cannot implicitly convert expression of type `(Core.Form, Core.Form)` to `Core.Form` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_composite_generic_form.carbon:[[@LINE+3]]:3-47: note: type `(Core.Form, Core.Form)` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplForType]
+  // CHECK:STDERR: fail_todo_composite_generic_form.carbon:[[@LINE+3]]:5-34: note: type `(Core.Form, Core.Form)` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplForType]
   // CHECK:STDERR: fail_todo_composite_generic_form.carbon:[[@LINE-6]]:14-26: note: initializing generic parameter `Fm` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   F((form(var i32), form(ref i32)), (x, ref x));
@@ -137,7 +137,7 @@ fn F(generic Fm: Core.Form, unused x:? Fm) {}
 fn G() {
   var x: i32;
   // CHECK:STDERR: fail_form_generic_arg_not_form.carbon:[[@LINE+4]]:5-7: error: cannot implicitly convert expression of type `type` to `Core.Form` [ConversionFailure]
-  // CHECK:STDERR: fail_form_generic_arg_not_form.carbon:[[@LINE+3]]:3-11: note: type `type` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplForType]
+  // CHECK:STDERR: fail_form_generic_arg_not_form.carbon:[[@LINE+3]]:5-7: note: type `type` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplForType]
   // CHECK:STDERR: fail_form_generic_arg_not_form.carbon:[[@LINE-6]]:14-26: note: initializing generic parameter `Fm` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   F(i32, x);

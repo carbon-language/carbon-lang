@@ -21,8 +21,8 @@ class EmptyParams() {}
 
 var v: NoParams;
 // CHECK:STDERR: fail_empty_params.carbon:[[@LINE+4]]:24: error: cannot implicitly convert expression of type `NoParams` to `EmptyParams()` [ConversionFailure]
-// CHECK:STDERR: fail_empty_params.carbon:[[@LINE+3]]:1-20: note: type `NoParams` does not implement interface `Core.ImplicitAs(EmptyParams())` [MissingImplForType]
-// CHECK:STDERR: fail_empty_params.carbon:[[@LINE+2]]:1-20: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_empty_params.carbon:[[@LINE+3]]:24: note: type `NoParams` does not implement interface `Core.ImplicitAs(EmptyParams())` [MissingImplForType]
+// CHECK:STDERR: fail_empty_params.carbon:[[@LINE+2]]:1-20: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var w: EmptyParams() = v;
 
@@ -39,8 +39,8 @@ var v: Outer({}*);
 
 // TODO: It would be nice to include the `Outer({}*).` prefix in the name of `Inner`.
 // CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:39: error: cannot implicitly convert expression of type `Outer({}*)` to `Inner({.a: i32}*)` [ConversionFailure]
-// CHECK:STDERR: fail_nested.carbon:[[@LINE+3]]:1-35: note: type `Outer({}*)` does not implement interface `Core.ImplicitAs(Inner({.a: i32}*))` [MissingImplForType]
-// CHECK:STDERR: fail_nested.carbon:[[@LINE+2]]:1-35: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_nested.carbon:[[@LINE+3]]:39: note: type `Outer({}*)` does not implement interface `Core.ImplicitAs(Inner({.a: i32}*))` [MissingImplForType]
+// CHECK:STDERR: fail_nested.carbon:[[@LINE+2]]:1-35: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var w: Outer({}*).Inner({.a: i32}*) = v;
 
@@ -51,8 +51,8 @@ library "[[@TEST_NAME]]";
 class C(N: i32) {}
 
 // CHECK:STDERR: fail_int_value.carbon:[[@LINE+4]]:17-18: error: cannot implicitly convert expression of type `()` to `C(123)` [ConversionFailure]
-// CHECK:STDERR: fail_int_value.carbon:[[@LINE+3]]:1-13: note: type `()` does not implement interface `Core.ImplicitAs(C(123))` [MissingImplForType]
-// CHECK:STDERR: fail_int_value.carbon:[[@LINE+2]]:1-13: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_int_value.carbon:[[@LINE+3]]:17-18: note: type `()` does not implement interface `Core.ImplicitAs(C(123))` [MissingImplForType]
+// CHECK:STDERR: fail_int_value.carbon:[[@LINE+2]]:1-13: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var v: C(123) = ();
 
@@ -68,8 +68,8 @@ class D {
 class E(F: D) {}
 
 // CHECK:STDERR: fail_class_param.carbon:[[@LINE+4]]:30-59: error: cannot implicitly convert expression of type `E({.a = 3, .b = 4})` to `E({.a = 1, .b = 2})` [ConversionFailure]
-// CHECK:STDERR: fail_class_param.carbon:[[@LINE+3]]:1-26: note: type `E({.a = 3, .b = 4})` does not implement interface `Core.ImplicitAs(E({.a = 1, .b = 2}))` [MissingImplForType]
-// CHECK:STDERR: fail_class_param.carbon:[[@LINE+2]]:1-26: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_class_param.carbon:[[@LINE+3]]:30-59: note: type `E({.a = 3, .b = 4})` does not implement interface `Core.ImplicitAs(E({.a = 1, .b = 2}))` [MissingImplForType]
+// CHECK:STDERR: fail_class_param.carbon:[[@LINE+2]]:1-26: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var g: E({.a = 1, .b = 2}) = {} as E({.a = 3, .b = 4} as D);
 

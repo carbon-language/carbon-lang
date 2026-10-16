@@ -26,7 +26,7 @@ interface Y {}
 
 class C {
   // CHECK:STDERR: fail_require_in_class.carbon:[[@LINE+3]]:3-9: error: `require` can only be used in an `interface` or `constraint` [RequireInWrongScope]
-  // CHECK:STDERR: fail_require_in_class.carbon:[[@LINE-2]]:1-9: note: appears in this declaration [RequireEnclosingScope]
+  // CHECK:STDERR: fail_require_in_class.carbon:[[@LINE-2]]:1-9: note: appears in this definition [RequireEnclosingScope]
   // CHECK:STDERR:
   require impls Y;
 }
@@ -56,7 +56,7 @@ interface Z {
   fn F() {
     class C {
       // CHECK:STDERR: fail_require_in_nested_class.carbon:[[@LINE+3]]:7-13: error: `require` can only be used in an `interface` or `constraint` [RequireInWrongScope]
-      // CHECK:STDERR: fail_require_in_nested_class.carbon:[[@LINE-2]]:5-13: note: appears in this declaration [RequireEnclosingScope]
+      // CHECK:STDERR: fail_require_in_nested_class.carbon:[[@LINE-2]]:5-13: note: appears in this definition [RequireEnclosingScope]
       // CHECK:STDERR:
       require impls Y;
     }
@@ -89,7 +89,7 @@ class C {
   // diagnose issues inside the decl too.
   //
   // CHECK:STDERR: fail_errors_in_require_still_found.carbon:[[@LINE+5]]:3-9: error: `require` can only be used in an `interface` or `constraint` [RequireInWrongScope]
-  // CHECK:STDERR: fail_errors_in_require_still_found.carbon:[[@LINE-5]]:1-9: note: appears in this declaration [RequireEnclosingScope]
+  // CHECK:STDERR: fail_errors_in_require_still_found.carbon:[[@LINE-5]]:1-9: note: appears in this definition [RequireEnclosingScope]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_errors_in_require_still_found.carbon:[[@LINE+2]]:17: error: name `Y` not found [NameNotFound]
   // CHECK:STDERR:
@@ -128,7 +128,7 @@ interface Z {
   fn F() {
     // The name lookup error still happens, since the `require` is not `extend`.
     // CHECK:STDERR: fail_require_with_nonexistent_type.carbon:[[@LINE+3]]:5-10: error: member name `A` not found in `Z` [MemberNameNotFoundInSpecificScope]
-    // CHECK:STDERR: fail_require_with_nonexistent_type.carbon:[[@LINE-8]]:1-13: note: `Z` declared here [MemberNameNotFoundSpecificScope]
+    // CHECK:STDERR: fail_require_with_nonexistent_type.carbon:[[@LINE-8]]:1-13: note: `Z` defined here [MemberNameNotFoundSpecificScope]
     // CHECK:STDERR:
     Self.A;
   }

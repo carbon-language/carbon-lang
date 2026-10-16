@@ -39,11 +39,11 @@ let value: X = Init();
 fn Use() {
   // TODO: These should probably be valid.
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+3]]:41-46: error: cannot convert expression of type `X` to `Core.MaybeUnformed(X)` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+3]]:41-71: error: cannot convert expression of type `X` to `Core.MaybeUnformed(X)` with `as` [ConversionFailure]
   // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+2]]:41-71: note: type `X` does not implement interface `Core.As(Core.MaybeUnformed(X))` [MissingImplForType]
   // CHECK:STDERR:
   var unused i: Core.MaybeUnformed(X) = Init() as Core.MaybeUnformed(X);
-  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+3]]:41-45: error: cannot convert expression of type `X` to `Core.MaybeUnformed(X)` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+3]]:41-70: error: cannot convert expression of type `X` to `Core.MaybeUnformed(X)` with `as` [ConversionFailure]
   // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+2]]:41-70: note: type `X` does not implement interface `Core.As(Core.MaybeUnformed(X))` [MissingImplForType]
   // CHECK:STDERR:
   let unused v: Core.MaybeUnformed(X) = value as Core.MaybeUnformed(X);
@@ -62,25 +62,25 @@ var reference: Core.MaybeUnformed(X);
 let ptr: Core.MaybeUnformed(X)* = &reference;
 
 fn Use() {
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:21-26: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:21-31: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+2]]:21-31: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplForType]
   // CHECK:STDERR:
   var unused i: X = Init() as X;
   // TODO: The diagnostic should explain that the reason we can't perform this
   // conversion is due to the expression category.
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:21-26: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `unsafe as` [ConversionFailure]
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:21-38: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `unsafe as` [ConversionFailure]
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+2]]:21-38: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.UnsafeAs(X)` [MissingImplForType]
   // CHECK:STDERR:
   var unused j: X = Init() unsafe as X;
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:21-25: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:21-30: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+2]]:21-30: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplForType]
   // CHECK:STDERR:
   let unused v: X = value as X;
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:24-32: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:24-37: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+2]]:24-37: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplForType]
   // CHECK:STDERR:
   let unused a: X* = &(reference as X);
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:22-24: error: cannot convert expression of type `Core.MaybeUnformed(X)*` to `X*` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:22-30: error: cannot convert expression of type `Core.MaybeUnformed(X)*` to `X*` with `as` [ConversionFailure]
   // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+2]]:22-30: note: type `Core.MaybeUnformed(X)*` does not implement interface `Core.As(X*)` [MissingImplForType]
   // CHECK:STDERR:
   let unused b: X* = ptr as X*;

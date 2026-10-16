@@ -79,7 +79,7 @@ fn G() {
   var y: i32 = 0;
 
   // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+3]]:27-31: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
-  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+2]]:3-22: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+2]]:3-22: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var unused z: (i32,) = (ref y,);
   // CHECK:STDERR: fail_unnecessary_ref.carbon:[[@LINE+3]]:5-9: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]

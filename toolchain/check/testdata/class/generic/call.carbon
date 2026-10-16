@@ -52,7 +52,7 @@ library "[[@TEST_NAME]]";
 class Class(T: type, N: i32) {}
 
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:14: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:8-21: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
 // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE-4]]:13-19: note: initializing generic parameter `T` declared here [InitializingGenericParam]
 // CHECK:STDERR:
 var a: Class(5, i32*);

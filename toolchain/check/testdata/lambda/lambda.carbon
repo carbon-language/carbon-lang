@@ -188,7 +188,7 @@ fn Outer() -> i32 {
   // CHECK:STDERR:
   (fn () -> i32 {});
   // CHECK:STDERR: fail_return.carbon:[[@LINE+4]]:27: error: cannot implicitly convert expression of type `Core.IntLiteral` to `bool` [ConversionFailure]
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+3]]:20-28: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+  // CHECK:STDERR: fail_return.carbon:[[@LINE+3]]:27: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
   // CHECK:STDERR: fail_return.carbon:[[@LINE+2]]:13-16: note: return type of function is `bool` [ReturnTypeHereNote]
   // CHECK:STDERR:
   (fn () -> bool { return 1; });
@@ -271,7 +271,7 @@ library "[[@TEST_NAME]]";
 fn F() {
   // CHECK:STDERR: fail_conversion.carbon:[[@LINE+4]]:16-22: error: cannot implicitly convert expression of type `<type of function expression>` to `i32` [ConversionFailure]
   // CHECK:STDERR: fail_conversion.carbon:[[@LINE+3]]:16-22: note: type `<type of function expression>` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
-  // CHECK:STDERR: fail_conversion.carbon:[[@LINE+2]]:7-12: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_conversion.carbon:[[@LINE+2]]:7-12: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let _: i32 = fn () {};
 }

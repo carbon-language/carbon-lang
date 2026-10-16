@@ -149,7 +149,7 @@ fn G(generic U: I(.Self) where .Self impls J(.Self)) {
   //
   // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+4]]:14-19: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
   // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+3]]:14-19: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplForType]
-  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+2]]:7-10: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+2]]:7-10: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let u: U = U.I1();
   // `u` is a non-type value. Can call methods with `self` through compound
@@ -178,7 +178,7 @@ interface I(T: type) {
 fn F(generic U: I(.Self)) {
   // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+4]]:21-25: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
   // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+3]]:21-25: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplForType]
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+2]]:14-17: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+2]]:14-17: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let unused a: U = U.G();
 }
@@ -274,7 +274,7 @@ interface Z {}
 // deduction is attempted.
 //
 // CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon:[[@LINE+4]]:60: error: cannot implicitly convert expression of type `T.(L.W)` to `{}` [ConversionFailure]
-// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon:[[@LINE+3]]:53-61: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs({})` [MissingImplForType]
+// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon:[[@LINE+3]]:60: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs({})` [MissingImplForType]
 // CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon:[[@LINE+2]]:48-49: note: return type of function is `{}` [ReturnTypeHereNote]
 // CHECK:STDERR:
 fn F(generic T: L where .W impls Z, a: T.W) -> {} { return a; }
@@ -315,7 +315,7 @@ interface Z(T: type) {}
 // deduction is attempted.
 //
 // CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon:[[@LINE+4]]:67: error: cannot implicitly convert expression of type `T.(L.W)` to `()` [ConversionFailure]
-// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon:[[@LINE+3]]:60-68: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplForType]
+// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon:[[@LINE+3]]:67: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplForType]
 // CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon:[[@LINE+2]]:55-56: note: return type of function is `()` [ReturnTypeHereNote]
 // CHECK:STDERR:
 fn F(generic T: L where .Self impls Z(.W), a: T.W) -> () { return a; }
@@ -334,7 +334,7 @@ interface Z(T: L) {}
 // deduction is attempted.
 //
 // CHECK:STDERR: fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon:[[@LINE+4]]:70: error: cannot implicitly convert expression of type `T.(L.W)` to `()` [ConversionFailure]
-// CHECK:STDERR: fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon:[[@LINE+3]]:63-71: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplForType]
+// CHECK:STDERR: fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon:[[@LINE+3]]:70: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplForType]
 // CHECK:STDERR: fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon:[[@LINE+2]]:58-59: note: return type of function is `()` [ReturnTypeHereNote]
 // CHECK:STDERR:
 fn F(generic T: L where .Self impls Z(.Self), a: T.W) -> () { return a; }
@@ -376,7 +376,7 @@ interface Z(T: Y) {}
 // deduction is attempted.
 //
 // CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon:[[@LINE+4]]:82: error: cannot implicitly convert expression of type `T.(L.W)` to `()` [ConversionFailure]
-// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon:[[@LINE+3]]:75-83: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplForType]
+// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon:[[@LINE+3]]:82: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplForType]
 // CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon:[[@LINE+2]]:70-71: note: return type of function is `()` [ReturnTypeHereNote]
 // CHECK:STDERR:
 fn F(generic T: L where .W impls Y and .Self impls Z(.W), a: T.W) -> () { return a; }

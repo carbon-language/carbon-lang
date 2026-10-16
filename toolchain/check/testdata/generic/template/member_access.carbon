@@ -49,7 +49,7 @@ class D {
 fn Test(d: D) {
   // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE+4]]:3: error: unable to monomorphize specific `F(D)` [ResolvingSpecificHere]
   // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE-10]]:16-18: note: member name `n` not found in `D` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE-7]]:1-9: note: `D` declared here [MemberNameNotFoundScope]
+  // CHECK:STDERR: fail_no_such_member.carbon:[[@LINE-7]]:1-9: note: `D` defined here [MemberNameNotFoundScope]
   // CHECK:STDERR:
   F(d);
 }

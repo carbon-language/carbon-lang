@@ -65,8 +65,7 @@ fn F1();
 namespace N;
 alias N.F2 = F1;
 
-// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+3]]:14-17: error: member name `F1` not found in `N` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fail_use_poison.carbon:[[@LINE-4]]:1-12: note: `N` declared here [MemberNameNotFoundScope]
+// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+2]]:14-17: error: member name `F1` not found in `N` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 alias N.F3 = N.F1;
 

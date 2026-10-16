@@ -37,8 +37,7 @@ fn F() -> {} {
   // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+2]]:9-10: error: name `NS` not found [NameNotFound]
   // CHECK:STDERR:
   alias NS.a = {};
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+3]]:10-13: error: member name `a` not found in `NS` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE-7]]:1-13: note: `NS` declared here [MemberNameNotFoundScope]
+  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+2]]:10-13: error: member name `a` not found in `NS` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   return NS.a;
 }

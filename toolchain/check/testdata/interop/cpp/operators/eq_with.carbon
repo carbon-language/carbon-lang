@@ -172,20 +172,19 @@ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
 }
 
 fn Test(default_eq_only: Cpp.DefaultEqOnly,
-        // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE+3]]:33-56: error: member name `DefaultSpaceshipOnly` not found in `Cpp` [MemberNameNotFoundInInstScope]
-        // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-19]]:1-24: note: `Cpp` declared here [MemberNameNotFoundScope]
+        // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE+2]]:33-56: error: member name `DefaultSpaceshipOnly` not found in `Cpp` [MemberNameNotFoundInInstScope]
         // CHECK:STDERR:
         default_spaceship_only: Cpp.DefaultSpaceshipOnly,
         only_eq_declared: Cpp.OnlyEqDeclared) {
   // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE+3]]:3-42: error: semantics TODO: `Rewriting operator!= using operator== is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-12]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-11]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   EqWith(default_eq_only, default_eq_only);
 
   EqWith(default_spaceship_only, default_spaceship_only);
 
   // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE+3]]:3-44: error: semantics TODO: `Rewriting operator!= using operator== is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-19]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-18]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   EqWith(only_eq_declared, only_eq_declared);
 }

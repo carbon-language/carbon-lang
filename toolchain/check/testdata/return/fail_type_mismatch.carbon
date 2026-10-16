@@ -14,7 +14,7 @@
 
 fn Main() -> i32 {
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+4]]:10-12: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:3-13: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:10-12: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
   // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-3]]:14-16: note: return type of function is `i32` [ReturnTypeHereNote]
   // CHECK:STDERR:
   return 1.0;

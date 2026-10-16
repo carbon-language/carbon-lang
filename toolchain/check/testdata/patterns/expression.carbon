@@ -27,7 +27,7 @@ library "[[@TEST_NAME]]";
 // TODO: We should reject this for using a refutable pattern in an irrefutable pattern context.
 let a: () = ();
 // CHECK:STDERR: fail_todo_in_tuple.carbon:[[@LINE+3]]:13: error: semantics TODO: `expression pattern` [SemanticsTodo]
-// CHECK:STDERR: fail_todo_in_tuple.carbon:[[@LINE+2]]:5-21: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_todo_in_tuple.carbon:[[@LINE+2]]:5-21: note: initializing this pattern [InPatternInit]
 // CHECK:STDERR:
 let (b: (), a, c: ()) = ((), (), ());
 
@@ -63,10 +63,10 @@ fn F() {
   // pattern contexts.
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+6]]:8-35: error: semantics TODO: `expression pattern` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+5]]:7-51: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+5]]:7-51: note: initializing this pattern [InPatternInit]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+3]]:38-50: error: semantics TODO: `expression pattern` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+2]]:7-51: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_todo_control_flow.carbon:[[@LINE+2]]:7-51: note: initializing this pattern [InPatternInit]
   // CHECK:STDERR:
   let (if true then true else false, true and true) = (true, true);
   //@dump-sem-ir-end

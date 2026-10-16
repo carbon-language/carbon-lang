@@ -14,7 +14,7 @@
 
 interface I {
   // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+3]]:17-18: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+2]]:3-19: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
+  // CHECK:STDERR: fail_assoc_const_bad_default.carbon:[[@LINE+2]]:17-18: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
   // CHECK:STDERR:
   let T: type = 42;
 }

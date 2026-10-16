@@ -180,17 +180,17 @@ interface E {
 
 // TODO: This should be a compile-time binding, once that is supported.
 // CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+3]]:42-44: error: cannot convert type `f64` into type implementing `E where .(E.F) = bool and .(E.G) = ()` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:5-38: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:5-38: note: initializing this binding [InPatternInit]
 // CHECK:STDERR:
 let H: (E where .F = bool and .G = ()) = f64;
 
 // CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+3]]:45-48: error: cannot convert type `bool` into type implementing `E where .(E.F) = {} and .(E.G) = i32` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:5-41: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:5-41: note: initializing this binding [InPatternInit]
 // CHECK:STDERR:
 let J: ((E where .F = {}) where .G = i32) = bool;
 
 // CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+3]]:33-36: error: cannot convert type `bool` into type implementing `E where .(E.F) = .(E.G)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:5-29: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_type_does_not_implement_where.carbon:[[@LINE+2]]:5-29: note: initializing this binding [InPatternInit]
 // CHECK:STDERR:
 let K: (E where .F = .Self.G) = bool;
 

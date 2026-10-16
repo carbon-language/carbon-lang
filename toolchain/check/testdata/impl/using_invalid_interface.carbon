@@ -51,7 +51,7 @@ fn F(generic T: IMisuse) { T.Op(); }
 fn G() {
   var c: C;
   // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+4]]:5: error: cannot implicitly convert non-type value of type `C` into type implementing `IMisuse` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+3]]:3-6: note: type `C` does not implement interface `Core.ImplicitAs(IMisuse)` [MissingImplForType]
+  // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+3]]:5: note: type `C` does not implement interface `Core.ImplicitAs(IMisuse)` [MissingImplForType]
   // CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE-6]]:14-23: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   F(c);
@@ -85,7 +85,7 @@ fn F(generic T: IMisuse) { T.Op(); }
 fn G() {
   var c: C;
   // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+4]]:5: error: cannot implicitly convert non-type value of type `C` into type implementing `IMisuse` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+3]]:3-6: note: type `C` does not implement interface `Core.ImplicitAs(IMisuse)` [MissingImplForType]
+  // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+3]]:5: note: type `C` does not implement interface `Core.ImplicitAs(IMisuse)` [MissingImplForType]
   // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE-6]]:14-23: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   F(c);

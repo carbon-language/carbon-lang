@@ -150,7 +150,7 @@ fn F() {
   impl C as X {}
   // Since C impls X and Y, the first one in the match_first block
   // should be selected, which is the .y impl. So this should fail.
-  // CHECK:STDERR: fail_prioritization_does_not_choose_second_declarared.carbon:[[@LINE+2]]:9-12: error: struct `{.y: type}` has no field named `x` [StructInitUnexpectedFieldInLiteral]
+  // CHECK:STDERR: fail_prioritization_does_not_choose_second_declarared.carbon:[[@LINE+2]]:5: error: struct `{.y: type}` has no field named `x` [StructInitUnexpectedFieldInLiteral]
   // CHECK:STDERR:
   {.x = type} as C.(Z.Z1);
 }
@@ -178,7 +178,7 @@ fn F() {
   impl C as X {}
   // Since C impls X and Y, the first one in the match_first block
   // should be selected, which is the .x impl. So this should fail.
-  // CHECK:STDERR: fail_prioritization_does_not_choose_first_declarared.carbon:[[@LINE+2]]:9-12: error: struct `{.x: type}` has no field named `y` [StructInitUnexpectedFieldInLiteral]
+  // CHECK:STDERR: fail_prioritization_does_not_choose_first_declarared.carbon:[[@LINE+2]]:5: error: struct `{.x: type}` has no field named `y` [StructInitUnexpectedFieldInLiteral]
   // CHECK:STDERR:
   {.y = type} as C.(Z.Z1);
 }

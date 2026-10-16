@@ -29,7 +29,7 @@ library "[[@TEST_NAME]]";
 fn F[T: Core.Destroy](x: T) {
   // CHECK:STDERR: fail_var.carbon:[[@LINE+4]]:21: error: cannot copy value of type `T` [CopyOfUncopyableType]
   // CHECK:STDERR: fail_var.carbon:[[@LINE+3]]:21: note: type `T` does not implement interface `Core.Copy` [MissingImplForType]
-  // CHECK:STDERR: fail_var.carbon:[[@LINE+2]]:3-17: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_var.carbon:[[@LINE+2]]:3-17: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var unused y: T = x;
 }

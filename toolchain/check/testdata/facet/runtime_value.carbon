@@ -45,7 +45,7 @@ fn F(c: C) {
   //
   //@dump-sem-ir-begin
   // CHECK:STDERR: fail_todo_facet_copy_narrowing_from_reference.carbon:[[@LINE+3]]:21-24: error: semantics TODO: `conversion of runtime facet value` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_facet_copy_narrowing_from_reference.carbon:[[@LINE+2]]:14-17: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_todo_facet_copy_narrowing_from_reference.carbon:[[@LINE+2]]:14-17: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let unused a: I = c.ij;
   //@dump-sem-ir-end

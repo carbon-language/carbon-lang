@@ -26,7 +26,7 @@ class AdaptCopyable {
 fn F(c: AdaptCopyable) -> AdaptCopyable {
   // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+4]]:26: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
   // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+3]]:26: note: type `AdaptCopyable` does not implement interface `Core.Copy` [MissingImplForType]
-  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+2]]:3-22: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+2]]:3-22: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var d: AdaptCopyable = c;
   // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+4]]:10: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
@@ -39,7 +39,7 @@ fn F(c: AdaptCopyable) -> AdaptCopyable {
 fn InTuple(c: (AdaptCopyable, u32)) -> (AdaptCopyable, u32) {
   // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+4]]:33: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
   // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+3]]:33: note: type `AdaptCopyable` does not implement interface `Core.Copy` [MissingImplForType]
-  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+2]]:3-29: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+2]]:3-29: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var d: (AdaptCopyable, u32) = c;
   // CHECK:STDERR: fail_adapt_copyable.carbon:[[@LINE+4]]:10: error: cannot copy value of type `AdaptCopyable` [CopyOfUncopyableType]
@@ -82,7 +82,7 @@ class AdaptNoncopyable {
 fn G(a: AdaptNoncopyable) -> AdaptNoncopyable {
   // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+4]]:29: error: cannot copy value of type `AdaptNoncopyable` [CopyOfUncopyableType]
   // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+3]]:29: note: type `AdaptNoncopyable` does not implement interface `Core.Copy` [MissingImplForType]
-  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+2]]:3-25: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+2]]:3-25: note: initializing this variable [InPatternInit]
   // CHECK:STDERR:
   var b: AdaptNoncopyable = a;
   // CHECK:STDERR: fail_adapt_not_copyable.carbon:[[@LINE+4]]:10: error: cannot copy value of type `AdaptNoncopyable` [CopyOfUncopyableType]

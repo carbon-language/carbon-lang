@@ -17,6 +17,6 @@ class C {
 }
 
 // CHECK:STDERR: fail_base_unbound.carbon:[[@LINE+3]]:12-17: error: expression cannot be used as a value [UseOfNonExprAsValue]
-// CHECK:STDERR: fail_base_unbound.carbon:[[@LINE+2]]:5-8: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_base_unbound.carbon:[[@LINE+2]]:5-8: note: initializing this binding [InPatternInit]
 // CHECK:STDERR:
 let b: B = C.base;

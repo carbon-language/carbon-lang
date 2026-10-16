@@ -14,17 +14,17 @@
 
 var a: {.a: i32} = {.a = 1 };
 // CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:29: error: cannot convert from struct type `{.a: i32}` to `{.a: i32, .b: i32}`: missing field `b` in source type [StructInitMissingFieldInConversion]
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+2]]:1-25: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+2]]:1-25: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var b: {.a: i32, .b: i32} = a;
 
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:26: error: struct `{.a: i32}` has no field named `b` [StructInitUnexpectedFieldInLiteral]
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+2]]:1-16: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:22: error: struct `{.a: i32}` has no field named `b` [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+2]]:1-16: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var x: {.a: i32} = {.b = 1};
 
 // CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+3]]:20: error: cannot convert from struct type `{.a: i32}` to `{.b: i32}`: unexpected field `a` in source type [StructInitUnexpectedFieldInConversion]
-// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+2]]:1-16: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_field_name_mismatch.carbon:[[@LINE+2]]:1-16: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var y: {.b: i32} = x;
 

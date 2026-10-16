@@ -159,8 +159,8 @@ var test_f1000000000000: f1000000000000;
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+4]]:15-16: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+3]]:1-11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
-// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+2]]:1-11: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+3]]:15-16: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplForType]
+// CHECK:STDERR: fail_non_type_as_type.carbon:[[@LINE+2]]:1-11: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var x: type = 42;
 
@@ -171,38 +171,38 @@ library "[[@TEST_NAME]]";
 // Ensure that type literals get stringified properly.
 
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:21-22: error: cannot implicitly convert expression of type `()` to `i32` [ConversionFailure]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:1-17: note: type `()` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-17: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:21-22: note: type `()` does not implement interface `Core.ImplicitAs(i32)` [MissingImplForType]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-17: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var test_i32: i32 = ();
 
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:21-22: error: cannot implicitly convert expression of type `()` to `f32` [ConversionFailure]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:1-17: note: type `()` does not implement interface `Core.ImplicitAs(f32)` [MissingImplForType]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-17: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:21-22: note: type `()` does not implement interface `Core.ImplicitAs(f32)` [MissingImplForType]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-17: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var test_f32: f32 = ();
 
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:21-22: error: cannot implicitly convert expression of type `()` to `u32` [ConversionFailure]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:1-17: note: type `()` does not implement interface `Core.ImplicitAs(u32)` [MissingImplForType]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-17: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:21-22: note: type `()` does not implement interface `Core.ImplicitAs(u32)` [MissingImplForType]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-17: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var test_u32: u32 = ();
 
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:23-24: error: cannot implicitly convert expression of type `()` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:1-19: note: type `()` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-19: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:23-24: note: type `()` does not implement interface `Core.ImplicitAs(bool)` [MissingImplForType]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-19: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var test_bool: bool = ();
 
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:23-24: error: cannot implicitly convert expression of type `()` to `char` [ConversionFailure]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:1-19: note: type `()` does not implement interface `Core.ImplicitAs(char)` [MissingImplForType]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-19: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:23-24: note: type `()` does not implement interface `Core.ImplicitAs(char)` [MissingImplForType]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-19: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var test_char: char = ();
 
 // CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+4]]:21-22: error: cannot implicitly convert expression of type `()` to `str` [ConversionFailure]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:1-17: note: type `()` does not implement interface `Core.ImplicitAs(str)` [MissingImplForType]
-// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-17: note: initializing this binding [InBindingInit]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+3]]:21-22: note: type `()` does not implement interface `Core.ImplicitAs(str)` [MissingImplForType]
+// CHECK:STDERR: fail_stringify_type_literals.carbon:[[@LINE+2]]:1-17: note: initializing this variable [InPatternInit]
 // CHECK:STDERR:
 var test_str: str = ();
 

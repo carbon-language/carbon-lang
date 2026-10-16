@@ -80,7 +80,7 @@ fn F() {
   let cpp_long_long: Cpp.long_long = 1;
   // CHECK:STDERR: fail_implicit_conversion_long_long_to_i64.carbon:[[@LINE+4]]:32-44: error: cannot implicitly convert expression of type `long_long` to `i64` [ConversionFailure]
   // CHECK:STDERR: fail_implicit_conversion_long_long_to_i64.carbon:[[@LINE+3]]:32-44: note: type `Cpp.long_long` does not implement interface `Core.ImplicitAs(i64)` [MissingImplForType]
-  // CHECK:STDERR: fail_implicit_conversion_long_long_to_i64.carbon:[[@LINE+2]]:14-28: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_implicit_conversion_long_long_to_i64.carbon:[[@LINE+2]]:14-28: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   let unused carbon_i64: i64 = cpp_long_long;
 }
@@ -603,7 +603,7 @@ fn F() {
   // long` happens to fit in `u64` on this target.
   // CHECK:STDERR: fail_pass_ulonglong_to_u64.carbon:[[@LINE+6]]:25-46: error: cannot implicitly convert expression of type `unsigned_long_long` to `u64` [ConversionFailure]
   // CHECK:STDERR: fail_pass_ulonglong_to_u64.carbon:[[@LINE+5]]:25-46: note: type `Cpp.unsigned_long_long` does not implement interface `Core.ImplicitAs(u64)` [MissingImplForType]
-  // CHECK:STDERR: fail_pass_ulonglong_to_u64.carbon:[[@LINE+4]]:7-21: note: initializing this binding [InBindingInit]
+  // CHECK:STDERR: fail_pass_ulonglong_to_u64.carbon:[[@LINE+4]]:7-21: note: initializing this binding [InPatternInit]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_pass_ulonglong_to_u64.carbon:[[@LINE+2]]:7-21: warning: binding `carbon_u64` unused [UnusedBinding]
   // CHECK:STDERR:

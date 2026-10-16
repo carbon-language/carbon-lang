@@ -38,8 +38,7 @@ import r#Core;
 // CHECK:STDERR:
 fn G() { Core.F(); }
 
-// CHECK:STDERR: fail_raw_core_not_core.carbon:[[@LINE+3]]:10-19: error: member name `Int` not found in `r#Core` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fail_raw_core_not_core.carbon:[[@LINE-7]]:1-14: note: `r#Core` declared here [MemberNameNotFoundScope]
+// CHECK:STDERR: fail_raw_core_not_core.carbon:[[@LINE+2]]:10-19: error: member name `Int` not found in `r#Core` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 fn H() { r#Core.Int(32); }
 

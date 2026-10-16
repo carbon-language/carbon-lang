@@ -155,7 +155,7 @@ class B {
 // We do not try to implicitly convert from the first operand of `as` to the
 // adapted type of the second operand.
 
-// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12-20: error: cannot convert expression of type `{.x: ()}` to `B` with `as` [ConversionFailure]
+// CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+3]]:12-25: error: cannot convert expression of type `{.x: ()}` to `B` with `as` [ConversionFailure]
 // CHECK:STDERR: fail_adapt_init_from_struct.carbon:[[@LINE+2]]:12-25: note: type `{.x: ()}` does not implement interface `Core.As(B)` [MissingImplForType]
 // CHECK:STDERR:
 var b: B = {.x = ()} as B;
