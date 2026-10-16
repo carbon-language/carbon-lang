@@ -117,7 +117,7 @@ using AnyObserveOperandId =
     NodeIdInCategory<NodeCategory::Expr | NodeCategory::ObserveOperator>;
 using AnyNonExprNameId = NodeIdInCategory<NodeCategory::NonExprName>;
 using AnyPackageNameId = NodeIdInCategory<NodeCategory::PackageName>;
-using AnyReturnDeclId = NodeIdInCategory<NodeCategory::ReturnDecl>;
+using AnyReturnSpecifierId = NodeIdInCategory<NodeCategory::ReturnSpecifier>;
 
 namespace Internal {
 template <typename T>

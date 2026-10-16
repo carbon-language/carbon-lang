@@ -12,11 +12,12 @@
 namespace Carbon {
 
 // Sets a variable to a new value, and restores the original value when
-// the SetAndRestore is destroyed. CHECKs that the variable is still holding the
-// new value when restoring the original value, to catch any data loss.
+// the CheckedSaveAndRestore is destroyed. CHECKs that the variable is still
+// holding the new value when restoring the original value, to catch any data
+// loss.
 //
 // The value must be copyable in order to compare with the new value at the time
-// the SetAndRestore is destroyed.
+// the CheckedSaveAndRestore is destroyed.
 template <typename T>
 class [[nodiscard]] CheckedSaveAndRestore {
  public:
@@ -29,6 +30,10 @@ class [[nodiscard]] CheckedSaveAndRestore {
     CARBON_CHECK(*var_ == new_value_);
     *var_ = std::move(orig_value_);
   }
+
+  CheckedSaveAndRestore(const CheckedSaveAndRestore&) = delete;
+  auto operator=(const CheckedSaveAndRestore&)
+      -> CheckedSaveAndRestore& = delete;
 
  private:
   T* var_;

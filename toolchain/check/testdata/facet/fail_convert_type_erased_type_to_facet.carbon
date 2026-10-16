@@ -20,9 +20,7 @@ impl Goat as Animal {}
 fn WalkAnimal(unused generic a: Animal) {}
 
 fn F() {
-  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic x: type = Goat;
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR: fail_convert_type_erased_type_to_facet.carbon:[[@LINE+2]]:15-21: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:
   let generic x: type = Goat;
   WalkAnimal(x);

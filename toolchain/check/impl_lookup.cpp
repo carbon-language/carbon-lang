@@ -37,6 +37,12 @@
 
 namespace Carbon::Check {
 
+static auto IsFinalWitness(Context& context, SemIR::InstId inst_id) -> bool {
+  return !context.insts()
+              .IsOneOf<SemIR::LookupImplWitness, SemIR::IdentifiedWitness>(
+                  inst_id);
+}
+
 // Returns IRs which are allowed to define an `impl` involving the arguments.
 // This is limited by the orphan rule.
 static auto FindAssociatedImportIRs(
@@ -208,9 +214,10 @@ static auto FindAndDiagnoseImplLookupCycle(
             context.types().GetTypeIdForTypeConstantId(query_self_const_id));
         for (const auto& active_entry : llvm::drop_begin(stack, i)) {
           if (active_entry.impl_loc.has_value()) {
-            CARBON_DIAGNOSTIC(ImplLookupCycleNote, Note,
-                              "determining if this impl clause matches", );
-            builder.Note(active_entry.impl_loc, ImplLookupCycleNote);
+            CARBON_DIAGNOSTIC_LABEL(
+                ImplLookupCycleNote, Info,
+                "determining if this impl clause matches", );
+            builder.Attach(active_entry.impl_loc, ImplLookupCycleNote);
           }
         }
         builder.Emit();
@@ -300,6 +307,29 @@ static auto TryGetSpecificWitnessIdForImpl(
                                            impl.witness_id);
 }
 
+static auto ThawPeriodSelfInRequiredImpl(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::IdentifiedFacetType::RequiredImpl req)
+    -> SemIR::IdentifiedFacetType::RequiredImpl {
+  auto self_inst_id = context.constant_values().GetInstId(req.self_facet_value);
+  self_inst_id = ThawPeriodSelf(context, self_inst_id);
+  req.self_facet_value = context.constant_values().Get(self_inst_id);
+
+  if (req.specific_interface.specific_id.has_value()) {
+    const auto& specific =
+        context.specifics().Get(req.specific_interface.specific_id);
+    llvm::SmallVector<SemIR::InstId> args(
+        context.inst_blocks().Get(specific.args_id));
+    for (auto& arg_id : args) {
+      arg_id = ThawPeriodSelf(context, arg_id);
+    }
+    req.specific_interface.specific_id =
+        MakeSpecific(context, loc_id, specific.generic_id, args);
+  }
+
+  return req;
+}
+
 // A witness that some `self` facet impls some `interface`. Potentially with a
 // final witness instruction.
 struct FacetWitnessSource {
@@ -351,12 +381,15 @@ static auto CollectFacetWitnessSources(
       //
       // TODO: This prevents some legitimate code from working, as we can't find
       // some witnesses that involve concrete associated constants from a
-      // symbolic facet. We could consider another approach: When we identify
-      // and replace `.Self` with `facet_const_id` in each constraint in its
-      // facet type, remove that constraint from the type of `facet_const_id`.
-      // Then each cycle back through to `facet_const_id` will have a smaller
-      // type until it runs out of constraints. See for example the
-      // fail_todo_concrete_access_witness_m_in_impls_constraint.carbon test.
+      // symbolic facet, and this can cause us to form incorrect specifics. See
+      // for example the test:
+      // fail_todo_specific_resolves_final_impl_while_collecting_witnesses.carbon.
+      //
+      // We could consider another approach: When we identify and replace
+      // `.Self` with `facet_const_id` in each constraint in its facet type,
+      // remove that constraint from the type of `facet_const_id`. Then each
+      // cycle back through to `facet_const_id` will have a smaller type until
+      // it runs out of constraints.
       {
         IncrementScope inc(context.impl_lookup_no_symbolic_final_lookups());
         req = EvaluateIdentifiedWitnesses(context, loc_id, req);
@@ -370,7 +403,7 @@ static auto CollectFacetWitnessSources(
             context.inst_blocks().Get(facet_value->witnesses_block_id)[index];
         // Using a non-final witness here would preclude finding a final witness
         // from other places.
-        if (!context.insts().Is<SemIR::LookupImplWitness>(witness_id)) {
+        if (IsFinalWitness(context, witness_id)) {
           final_witness_id = witness_id;
         }
       }
@@ -444,11 +477,11 @@ static auto CollectFacetWitnessSources(
     // constraints.
     const auto& impls = context.where_stack().back().impls;
     for (auto [self_const_id, facet_type_const_id] : impls) {
-      auto canon_self_const_id = GetCanonicalFacet(context, self_const_id);
+      self_const_id = GetCanonicalFacet(context, self_const_id);
       // TypeType (and ErrorInst) is never stored in the impls stack, so we
       // always have a FacetType in `facet_type_const_id`.
       auto identified_id = TryToIdentifyFacetType(
-          context, loc_id, canon_self_const_id,
+          context, loc_id, self_const_id,
           context.types().GetTypeIdForTypeConstantId(facet_type_const_id),
           /*allow_partially_identified=*/true);
       if (!identified_id.has_value()) {
@@ -457,10 +490,32 @@ static auto CollectFacetWitnessSources(
       const auto& identified =
           context.identified_facet_types().Get(identified_id);
       for (auto req : identified.required_impls()) {
+        // Avoid impl lookup cycles while collecting witnesses. See comment
+        // above where we also increment impl_lookup_no_symbolic_final_lookups.
+        IncrementScope inc(context.impl_lookup_no_symbolic_final_lookups());
+
         req = EvaluateIdentifiedWitnesses(context, loc_id, req);
         witnesses.push_back({.witnessed_self = req.self_facet_value,
                              .witnessed_interface = req.specific_interface,
                              .final_witness_id = SemIR::InstId::None});
+
+        // The `.Self` in an early impls will be frozen. In a sense, this is
+        // good because a `.Self` in the facet type does not refer to the self
+        // of the `impls` statement, it refers to the abstract `.Self` for the
+        // facet type as a whole. And lookups from inside the facet type also
+        // have frozen `.Self` in the query, like in `.X1 = .Z1.(Y.Y1)` which
+        // has a frozen `.Self` in the lookup `.Z1 as Y`.
+        //
+        // However, if we're doing a lookup query against something outside of
+        // the facet type, such as when forming a specific, the query
+        // requirements will not be frozen. We need a copy of this early impls
+        // witness with thawed `.Self` values in order to compare against those
+        // query requirements.
+        auto thawed_req = ThawPeriodSelfInRequiredImpl(context, loc_id, req);
+        witnesses.push_back(
+            {.witnessed_self = thawed_req.self_facet_value,
+             .witnessed_interface = thawed_req.specific_interface,
+             .final_witness_id = SemIR::InstId::None});
       }
     }
   }
@@ -866,12 +921,12 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       context, loc_id, query_self_const_id,
       context.types().GetTypeIdForTypeConstantId(query_facet_type_const_id),
       [&](auto& builder) {
-        CARBON_DIAGNOSTIC(ImplLookupInUnidentifiedFacetType, Context,
-                          "facet type {0} can not be identified",
-                          SemIR::TypeId);
-        builder.Context(loc_id, ImplLookupInUnidentifiedFacetType,
-                        context.types().GetTypeIdForTypeConstantId(
-                            query_facet_type_const_id));
+        CARBON_DIAGNOSTIC_CONTEXT(ImplLookupInUnidentifiedFacetType,
+                                  "facet type {0} can not be identified",
+                                  SemIR::TypeId);
+        builder.Attach(loc_id, ImplLookupInUnidentifiedFacetType,
+                       context.types().GetTypeIdForTypeConstantId(
+                           query_facet_type_const_id));
       },
       diagnose);
   if (!required_identified_id.has_value()) {
@@ -943,10 +998,10 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
          .query_specific_interface_id =
              context.specific_interfaces().Add(req_impl.specific_interface)});
     result_witness_id = context.constant_values().GetInstId(witness_const_id);
-    if (!context.insts().Is<SemIR::LookupImplWitness>(result_witness_id)) {
+    CARBON_CHECK(
+        !context.insts().Is<SemIR::IdentifiedWitness>(result_witness_id));
+    if (IsFinalWitness(context, result_witness_id)) {
       // Found a final witness, use it.
-      CARBON_CHECK(
-          !context.insts().Is<SemIR::IdentifiedWitness>(result_witness_id));
       result_witness_ids.push_back(result_witness_id);
       continue;
     }
@@ -1167,7 +1222,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
       CARBON_CHECK(witnesses.size() == 1);
       auto witness_inst_id = witnesses.front();
       // Only use the witness in monomoprhization if it's a final witness.
-      if (!context.insts().Is<SemIR::LookupImplWitness>(witness_inst_id)) {
+      if (IsFinalWitness(context, witness_inst_id)) {
         return context.constant_values().Get(witness_inst_id);
       }
     }

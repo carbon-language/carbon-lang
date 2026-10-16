@@ -64,9 +64,7 @@ class C {}
 
 inline Cpp '''
 Carbon::C* p;
-// CHECK:STDERR: fail_current_package_not_in_carbon.carbon:[[@LINE+4]]:25: error: expected namespace name [CppInteropParseError]
-// CHECK:STDERR:    12 | namespace Bad = Carbon::SelfPkg;
-// CHECK:STDERR:       |                 ~~~~~~~~^
+// CHECK:STDERR: fail_current_package_not_in_carbon.carbon:[[@LINE+2]]:25: error: expected namespace name [CppInteropParseError]
 // CHECK:STDERR:
 namespace Bad = Carbon::SelfPkg;
 ''';
@@ -79,9 +77,7 @@ class C {}
 
 inline Cpp '''
 Carbon::C* p;
-// CHECK:STDERR: fail_main_package_not_in_carbon.carbon:[[@LINE+4]]:25: error: expected namespace name [CppInteropParseError]
-// CHECK:STDERR:    12 | namespace Bad = Carbon::Main;
-// CHECK:STDERR:       |                 ~~~~~~~~^
+// CHECK:STDERR: fail_main_package_not_in_carbon.carbon:[[@LINE+2]]:25: error: expected namespace name [CppInteropParseError]
 // CHECK:STDERR:
 namespace Bad = Carbon::Main;
 ''';

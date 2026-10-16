@@ -18,12 +18,8 @@ class A {};
 class B {};
 
 fn Convert(a: A) -> B {
-  // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:10: error: cannot convert expression of type `A` to `B` with `unsafe as` [ConversionFailure]
-  // CHECK:STDERR:   return a unsafe as B;
-  // CHECK:STDERR:          ^~~~~~~~~~~~~
-  // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:10: note: type `A` does not implement interface `Core.UnsafeAs(B)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return a unsafe as B;
-  // CHECK:STDERR:          ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:10-22: error: cannot convert expression of type `A` to `B` with `unsafe as` [ConversionFailure]
+  // CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+2]]:10-22: note: type `A` does not implement interface `Core.UnsafeAs(B)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return a unsafe as B;
 }

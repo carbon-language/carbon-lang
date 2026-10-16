@@ -133,7 +133,7 @@ auto HandleBindingPattern(Context& context) -> void {
     if (state.in_field_shorthand_pattern) {
       CARBON_DIAGNOSTIC(
           AnonymousBindingInStructPattern, Error,
-          "Anonymous binding found in struct pattern. Use `.field = "
+          "anonymous binding found in struct pattern; use `.field = "
           "_: field_type` or `unused field: field_type`");
       context.emitter().Emit(*context.position(),
                              AnonymousBindingInStructPattern);

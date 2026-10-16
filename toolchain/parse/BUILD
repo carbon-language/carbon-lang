@@ -112,6 +112,7 @@ cc_library(
         "//toolchain/base:shared_value_stores",
         "//toolchain/diagnostics:emitter",
         "//toolchain/diagnostics:format_providers",
+        "//toolchain/diagnostics:renderer",
         "//toolchain/lex:token_index",
         "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",

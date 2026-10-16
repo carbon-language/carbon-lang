@@ -36,9 +36,7 @@ let b: array(i32, 3)* = &a;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_negative.carbon:[[@LINE+4]]:19: error: array bound of -1 is negative [ArrayBoundNegative]
-// CHECK:STDERR: var a: array(i32, -1);
-// CHECK:STDERR:                   ^~
+// CHECK:STDERR: fail_negative.carbon:[[@LINE+2]]:19-20: error: array bound of -1 is negative [ArrayBoundNegative]
 // CHECK:STDERR:
 var a: array(i32, -1);
 
@@ -46,9 +44,7 @@ var a: array(i32, -1);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+4]]:19: error: array bound of 39999999999999999993 is too large [ArrayBoundTooLarge]
-// CHECK:STDERR: var a: array(i32, 39999999999999999993);
-// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:19-38: error: array bound of 39999999999999999993 is too large [ArrayBoundTooLarge]
 // CHECK:STDERR:
 var a: array(i32, 39999999999999999993);
 
@@ -56,12 +52,8 @@ var a: array(i32, 39999999999999999993);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_invalid_type_with_overflow.carbon:[[@LINE+7]]:14: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: var b: array(1, 39999999999999999993);
-// CHECK:STDERR:              ^
-// CHECK:STDERR: fail_invalid_type_with_overflow.carbon:[[@LINE+4]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var b: array(1, 39999999999999999993);
-// CHECK:STDERR:              ^
+// CHECK:STDERR: fail_invalid_type_with_overflow.carbon:[[@LINE+3]]:14: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR: fail_invalid_type_with_overflow.carbon:[[@LINE+2]]:14: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 var b: array(1, 39999999999999999993);
 
@@ -151,8 +143,8 @@ var b: array(1, 39999999999999999993);
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.d9c7: @Core.IntLiteral.as.As.impl.d83.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.16e) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.d83.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.81c)]
 // CHECK:STDOUT:   %As.impl_witness_table.43c = impl_witness_table (%Core.import_ref.d9c7), @Core.IntLiteral.as.As.impl.d83 [concrete]
-// CHECK:STDOUT:   %Core.import_ref.b7af0: @UInt.as.ImplicitAs.impl.d6a.%UInt.as.ImplicitAs.impl.Convert.type (%UInt.as.ImplicitAs.impl.Convert.type.802) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @UInt.as.ImplicitAs.impl.d6a.%UInt.as.ImplicitAs.impl.Convert (constants.%UInt.as.ImplicitAs.impl.Convert.7a2)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.7eb = impl_witness_table (%Core.import_ref.b7af0), @UInt.as.ImplicitAs.impl.d6a [concrete]
+// CHECK:STDOUT:   %Core.import_ref.b7af: @UInt.as.ImplicitAs.impl.d6a.%UInt.as.ImplicitAs.impl.Convert.type (%UInt.as.ImplicitAs.impl.Convert.type.802) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @UInt.as.ImplicitAs.impl.d6a.%UInt.as.ImplicitAs.impl.Convert (constants.%UInt.as.ImplicitAs.impl.Convert.7a2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.7eb = impl_witness_table (%Core.import_ref.b7af), @UInt.as.ImplicitAs.impl.d6a [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

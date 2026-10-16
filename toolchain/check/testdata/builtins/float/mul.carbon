@@ -28,9 +28,7 @@ var x: f64 = Mul(2.0, 0.5);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.mul" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooFew(a: f64) -> f64 = "float.mul";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:1-26: error: invalid signature for builtin function "float.mul" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooFew(a: f64) -> f64 = "float.mul";
 
@@ -42,9 +40,7 @@ fn RuntimeCallIsValidTooFew(a: f64) -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.mul" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.mul";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:1-43: error: invalid signature for builtin function "float.mul" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.mul";
 
@@ -56,9 +52,7 @@ fn RuntimeCallIsValidTooMany(a: f64, b: f64, c: f64) -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.mul" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn BadReturnType(a: f64, b: f64) -> bool = "float.mul";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:1-42: error: invalid signature for builtin function "float.mul" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn BadReturnType(a: f64, b: f64) -> bool = "float.mul";
 
@@ -71,9 +65,7 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 library "[[@TEST_NAME]]";
 
 fn Literal() -> type = "float_literal.make_type";
-// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.mul" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_literal.carbon:[[@LINE+2]]:1-56: error: invalid signature for builtin function "float.mul" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn MulLiteral(a: Literal(), b: Literal()) -> Literal() = "float.mul";
 

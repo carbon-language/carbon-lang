@@ -209,10 +209,10 @@ auto HandleParseNode(Context& context, Parse::DesignatorExprId node_id)
       // note to the current "name `.Self` not found" message.
       Diagnostics::AnnotationScope annotate_diagnostics(
           &context.emitter(), [&](auto& builder) {
-            CARBON_DIAGNOSTIC(
-                NoPeriodSelfForDesignator, Note,
+            CARBON_DIAGNOSTIC_LABEL(
+                NoPeriodSelfForDesignator, Info,
                 "designator may only be used when `.Self` is in scope");
-            builder.Note(SemIR::LocId::None, NoPeriodSelfForDesignator);
+            builder.Attach(SemIR::LocId::None, NoPeriodSelfForDesignator);
           });
       period_self_id =
           HandleNameAsExpr(context, node_id, SemIR::NameId::PeriodSelf);

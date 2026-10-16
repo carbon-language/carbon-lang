@@ -38,9 +38,7 @@ import Cpp;
 
 fn CallLeakedA() -> i32 {
   // This should not be found as we have not imported "a.h".
-  // CHECK:STDERR: fail_a_does_not_leak.carbon:[[@LINE+4]]:10: error: member name `GetA` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   return Cpp.GetA();
-  // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR: fail_a_does_not_leak.carbon:[[@LINE+2]]:10-17: error: member name `GetA` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   return Cpp.GetA();
 }
@@ -145,19 +143,13 @@ import Cpp;
 namespace N;
 
 inline Cpp '''
-// CHECK:STDERR: fail_carbon_export_does_not_leak.carbon:[[@LINE+4]]:23: error: no type named 'ExportedClass' in namespace 'Carbon' [CppInteropParseError]
-// CHECK:STDERR:    11 | using Leak1 = Carbon::ExportedClass;
-// CHECK:STDERR:       |               ~~~~~~~~^
+// CHECK:STDERR: fail_carbon_export_does_not_leak.carbon:[[@LINE+2]]:23: error: no type named 'ExportedClass' in namespace 'Carbon' [CppInteropParseError]
 // CHECK:STDERR:
 using Leak1 = Carbon::ExportedClass;
-// CHECK:STDERR: fail_carbon_export_does_not_leak.carbon:[[@LINE+4]]:26: error: no type named 'ExportedNested' in namespace 'Carbon::N' [CppInteropParseError]
-// CHECK:STDERR:    16 | using Leak2 = Carbon::N::ExportedNested;
-// CHECK:STDERR:       |               ~~~~~~~~~~~^
+// CHECK:STDERR: fail_carbon_export_does_not_leak.carbon:[[@LINE+2]]:26: error: no type named 'ExportedNested' in namespace 'Carbon::N' [CppInteropParseError]
 // CHECK:STDERR:
 using Leak2 = Carbon::N::ExportedNested;
-// CHECK:STDERR: fail_carbon_export_does_not_leak.carbon:[[@LINE+4]]:23: error: no member named 'PkgA' in namespace 'Carbon' [CppInteropParseError]
-// CHECK:STDERR:    21 | using Leak3 = Carbon::PkgA::SameName;
-// CHECK:STDERR:       |               ~~~~~~~~^
+// CHECK:STDERR: fail_carbon_export_does_not_leak.carbon:[[@LINE+2]]:23: error: no member named 'PkgA' in namespace 'Carbon' [CppInteropParseError]
 // CHECK:STDERR:
 using Leak3 = Carbon::PkgA::SameName;
 ''';
