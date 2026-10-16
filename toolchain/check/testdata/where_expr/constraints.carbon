@@ -79,7 +79,8 @@ fn AssociatedTypeImpls(generic W: K where .Associated impls M);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+2]]:39-50: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+3]]:39: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR: fail_left_of_impls_non_type.carbon:[[@LINE+2]]:39: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 fn NonTypeImpls(generic U: type where 7 impls type);
 
@@ -99,6 +100,14 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_right_of_impls_non_facet_type.carbon:[[@LINE+2]]:58-60: error: right argument of `impls` requirement must be a facet type [ImplsOnNonFacetType]
 // CHECK:STDERR:
 fn ImplsOfNonFacetType(generic U: type where .Self impls i32);
+
+// --- fail_right_of_impls_non_facet_type_without_period_self.carbon
+
+library "[[@TEST_NAME]]";
+
+// CHECK:STDERR: fail_right_of_impls_non_facet_type_without_period_self.carbon:[[@LINE+2]]:55-57: error: right argument of `impls` requirement must be a facet type [ImplsOnNonFacetType]
+// CHECK:STDERR:
+fn ImplsOfNonFacetType(generic U: type where () impls i32);
 
 // --- fail_enforce_impls_constraint.carbon
 

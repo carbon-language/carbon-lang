@@ -87,7 +87,7 @@ abstract class AbstractWithVdtor {
 }
 
 inline Cpp '''
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:27: error: variable type 'Carbon::AbstractWithVdtor' is an abstract class [CppInteropParseError]
+// CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:27: error: variable type 'Carbon::AbstractWithVdtor' (aka 'Carbon::Main::AbstractWithVdtor') is an abstract class [CppInteropParseError]
 // CHECK:STDERR: fail_abstract.carbon:[[@LINE-6]]:34: note: unimplemented pure virtual method '~AbstractWithVdtor' in 'AbstractWithVdtor' [CppInteropParseNote]
 // CHECK:STDERR:
 Carbon::AbstractWithVdtor x;
@@ -144,7 +144,7 @@ abstract class AbstractWithMethod {
 }
 
 inline Cpp '''
-// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+3]]:28: error: variable type 'Carbon::AbstractWithMethod' is an abstract class [CppInteropParseError]
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+3]]:28: error: variable type 'Carbon::AbstractWithMethod' (aka 'Carbon::Main::AbstractWithMethod') is an abstract class [CppInteropParseError]
 // CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE-5]]:22: note: unimplemented pure virtual method 'F' in 'AbstractWithMethod' [CppInteropParseNote]
 // CHECK:STDERR:
 Carbon::AbstractWithMethod x_abstract;

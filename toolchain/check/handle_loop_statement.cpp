@@ -255,7 +255,7 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // Initialize the pattern from `<element>.Get()`.
   auto element_value_id =
       CallOptionalAccessor(context, node_id, element_id, CoreIdentifier::Get);
-  LocalPatternMatch(context, pattern_id, element_value_id);
+  LocalPatternMatch(context, node_id, pattern_id, element_value_id);
   context.full_pattern_stack().PopFullPattern();
   return true;
 }

@@ -577,7 +577,7 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
                           fn.has_pending_deduced_return_type()
                               ? InstId::None
                               : fn.GetDeclaredReturnForm(*sem_ir_));
-  if (fn.has_deduced_return_type) {
+  if (fn.has_deduced_return_type()) {
     out() << " [deduced]";
   }
 

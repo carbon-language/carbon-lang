@@ -1844,8 +1844,9 @@ static auto CreateFunctionSignatureInsts(
   // C++ functions have no implicit parameters. Use `None` rather than an empty
   // block so that the signature matches a Carbon function with no implicit
   // parameter list.
-  auto match_results = CalleePatternMatch(context, SemIR::InstBlockId::None,
-                                          param_patterns_id, return_pattern_id);
+  auto match_results =
+      CalleePatternMatch(context, loc_id, SemIR::InstBlockId::None,
+                         param_patterns_id, return_pattern_id);
 
   return {{.implicit_param_patterns_id = SemIR::InstBlockId::None,
            .param_patterns_id = param_patterns_id,

@@ -66,10 +66,32 @@ auto PopReturnSpecifier(Context& context) -> ReturnSpecifierInfo {
   if (!pattern_id) {
     return {};
   }
+  // For a deduced return type, `HandleReturnSpecifier` pushes a marker in place
+  // of a return pattern, and doesn't push a return form. The marker is either
+  // `auto`, for `-> auto`, or a primitive form whose type component is `auto`,
+  // for `-> ref auto` and similar.
+  using DeducedReturnKind = SemIR::Function::DeducedReturnKind;
   if (*pattern_id == SemIR::AutoType::TypeInstId) {
-    // For a deduced return type, `HandleReturnSpecifier` pushes `auto` in place
-    // of a return pattern, and doesn't push a return form.
-    return {.node_id = node_id, .is_deduced = true};
+    return {.node_id = node_id, .deduced_return_kind = DeducedReturnKind::Init};
+  }
+  if (auto form =
+          context.insts().TryGetAs<SemIR::AnyPrimitiveForm>(*pattern_id)) {
+    CARBON_CHECK(form->type_component_id == SemIR::AutoType::TypeInstId);
+    auto kind = DeducedReturnKind::None;
+    switch (form->kind) {
+      case SemIR::InitForm::Kind:
+        kind = DeducedReturnKind::Init;
+        break;
+      case SemIR::RefForm::Kind:
+        kind = DeducedReturnKind::Ref;
+        break;
+      case SemIR::ValueForm::Kind:
+        kind = DeducedReturnKind::Value;
+        break;
+      default:
+        CARBON_FATAL("Unexpected primitive form kind: {0}", form->kind);
+    }
+    return {.node_id = node_id, .deduced_return_kind = kind};
   }
   return {.node_id = node_id,
           .pattern_id = *pattern_id,
@@ -166,7 +188,7 @@ static auto MakeFunctionSignature(Context& context, SemIR::LocId loc_id,
   }
 
   auto match_results =
-      CalleePatternMatch(context, insts.implicit_param_patterns_id,
+      CalleePatternMatch(context, loc_id, insts.implicit_param_patterns_id,
                          insts.param_patterns_id, insts.return_pattern_id);
   insts.call_param_patterns_id = match_results.call_param_patterns_id;
   insts.call_params_id = match_results.call_params_id;
@@ -441,6 +463,8 @@ auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
   auto& function = context.functions().Get(function_id);
   CARBON_CHECK(function.has_pending_deduced_return_type());
 
+  loc_id = context.insts().GetLocIdForDesugaring(loc_id);
+
   // A function with a deduced return type can't be redeclared, so there is only
   // one declaration to complete.
   auto decl_id = function.latest_decl_id();
@@ -467,11 +491,27 @@ auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
         context, loc_id,
         {.type_id = SemIR::TypeType::TypeId,
          .value_id = context.types().GetTypeInstId(type_id)});
+    SemIR::InstKind form_kind = SemIR::InitForm::Kind;
+    switch (function.deduced_return_kind) {
+      case SemIR::Function::DeducedReturnKind::None:
+        CARBON_FATAL("Return type is not deduced");
+      case SemIR::Function::DeducedReturnKind::Init:
+        form_kind = SemIR::InitForm::Kind;
+        break;
+      case SemIR::Function::DeducedReturnKind::Ref:
+        form_kind = SemIR::RefForm::Kind;
+        break;
+      case SemIR::Function::DeducedReturnKind::Value:
+        form_kind = SemIR::ValueForm::Kind;
+        break;
+    }
     auto form_inst_id = AddInst(
-        context, SemIR::LocIdAndInst::RuntimeVerified(
-                     context.sem_ir(), loc_id,
-                     SemIR::InitForm{.type_id = SemIR::FormType::TypeId,
-                                     .type_component_inst_id = type_inst_id}));
+        context,
+        SemIR::LocIdAndInst::RuntimeVerified(
+            context.sem_ir(), loc_id,
+            SemIR::AnyPrimitiveForm{.kind = form_kind,
+                                    .type_id = SemIR::FormType::TypeId,
+                                    .type_component_id = type_inst_id}));
     form = {.form_inst_id = form_inst_id,
             .type_component_inst_id = type_inst_id,
             .type_component_id =
@@ -479,7 +519,7 @@ auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
   }
   auto return_pattern_id = AddReturnPattern(context, loc_id, form);
   auto results = CalleeReturnPatternMatch(
-      context,
+      context, loc_id,
       {.call_param_patterns_id = function.call_param_patterns_id,
        .call_params_id = function.call_params_id,
        .param_ranges = function.call_param_ranges},
@@ -684,14 +724,14 @@ static auto CheckDefaults(Context& context, SemIR::Function& function)
     // Finished processing this tuple-pattern, emit diagnostics if any.
     if (!state->patterns_missing_defaults.empty()) {
       CARBON_DIAGNOSTIC(RequiredPatternDefaultValueMissing, Error,
-                        "this pattern is missing a required default value.");
+                        "this pattern is missing a required default value");
       CARBON_DIAGNOSTIC_LABEL(RequiredPatternDefaultValueFirstDefault, Info,
                               "all patterns to the right of this first pattern "
                               "with a default value must also specify a "
-                              "default value.");
+                              "default value");
       CARBON_DIAGNOSTIC_LABEL(
           RequiredPatternDefaultValueMissingAdditional, Primary,
-          "this pattern is also missing a required default value.");
+          "this pattern is also missing a required default value");
       auto inst_ref = llvm::ArrayRef(state->patterns_missing_defaults);
       auto builder = context.emitter().Build(
           inst_ref.consume_front(), RequiredPatternDefaultValueMissing);

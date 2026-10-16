@@ -36,24 +36,24 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTV1X = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTVN6Carbon1ZE = comdat any
+// CHECK:STDOUT: $_ZTVN6Carbon4Main1ZE = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTI1X = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZTS1X = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTIN6Carbon1ZE = comdat any
+// CHECK:STDOUT: $_ZTIN6Carbon4Main1ZE = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTSN6Carbon1ZE = comdat any
+// CHECK:STDOUT: $_ZTSN6Carbon4Main1ZE = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_ZTV1X = linkonce_odr dso_local constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI1X, ptr @_ZN1X1fEv] }, comdat, align 8
-// CHECK:STDOUT: @_ZTVN6Carbon1ZE = linkonce_odr dso_local constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTIN6Carbon1ZE, ptr @_ZN6Carbon1Z1fEv] }, comdat, align 8
+// CHECK:STDOUT: @_ZTVN6Carbon4Main1ZE = linkonce_odr dso_local constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTIN6Carbon4Main1ZE, ptr @_ZN6Carbon4Main1Z1fEv] }, comdat, align 8
 // CHECK:STDOUT: @_ZTI1X = linkonce_odr dso_local constant { ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv117__class_type_infoE, i64 16), ptr @_ZTS1X }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv117__class_type_infoE = external global [0 x ptr]
 // CHECK:STDOUT: @_ZTS1X = linkonce_odr dso_local constant [3 x i8] c"1X\00", comdat, align 1
-// CHECK:STDOUT: @_ZTIN6Carbon1ZE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon1ZE, ptr @_ZTI1X }, comdat, align 8
+// CHECK:STDOUT: @_ZTIN6Carbon4Main1ZE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon4Main1ZE, ptr @_ZTI1X }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv120__si_class_type_infoE = external global [0 x ptr]
-// CHECK:STDOUT: @_ZTSN6Carbon1ZE = linkonce_odr dso_local constant [12 x i8] c"N6Carbon1ZE\00", comdat, align 1
+// CHECK:STDOUT: @_ZTSN6Carbon4Main1ZE = linkonce_odr dso_local constant [17 x i8] c"N6Carbon4Main1ZE\00", comdat, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN1X1fEv(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #0 comdat align 2 {
@@ -136,7 +136,7 @@ fn F() {
 // CHECK:STDOUT:   call void @_ZN1XC1Ev.carbon_thunk.(ptr %.loc24_32.1.base), !dbg !54
 // CHECK:STDOUT:   %.loc24_32.7.base = getelementptr inbounds nuw { [8 x i8] }, ptr %_.var, i32 0, i32 0, !dbg !53
 // CHECK:STDOUT:   %.loc24_32.8.vptr = getelementptr inbounds nuw [8 x i8], ptr %.loc24_32.7.base, i32 0, i32 0, !dbg !53
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTVN6Carbon1ZE, i64 16), ptr %.loc24_32.8.vptr, align 8, !dbg !53
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTVN6Carbon4Main1ZE, i64 16), ptr %.loc24_32.8.vptr, align 8, !dbg !53
 // CHECK:STDOUT:   call void @"_CSelfDestruct.680f7fa3ef86df7a:core.Destroy.Core"(ptr %_.var), !dbg !52
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
@@ -155,7 +155,7 @@ fn F() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6Carbon1Z1fEv(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 align 2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon4Main1Z1fEv(ptr noundef nonnull align 8 dereferenceable(8) %this) unnamed_addr #3 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !65
@@ -242,7 +242,7 @@ fn F() {
 // CHECK:STDOUT: !61 = !{!60, !60, i64 0}
 // CHECK:STDOUT: !62 = !{!"vtable pointer", !57, i64 0}
 // CHECK:STDOUT: !63 = !{!62, !62, i64 0}
-// CHECK:STDOUT: !64 = !{!"p1 _ZTSN6Carbon1ZE", !59, i64 0}
+// CHECK:STDOUT: !64 = !{!"p1 _ZTSN6Carbon4Main1ZE", !59, i64 0}
 // CHECK:STDOUT: !65 = !{!64, !64, i64 0}
 // CHECK:STDOUT: !68 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !69 = !{i32 7, !"PIE Level", i32 2}

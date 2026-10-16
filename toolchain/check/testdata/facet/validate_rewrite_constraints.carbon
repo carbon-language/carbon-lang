@@ -1011,7 +1011,7 @@ fn G(generic T: I where .X = NI({}), generic U: I where .Y = {}) {
   F(T, U);
 }
 
-// --- fail_todo_nested_facet_type_used_as_root_facet_type_in_caller.carbon
+// --- nested_facet_type_used_as_root_facet_type_in_caller.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -1026,10 +1026,6 @@ constraint NI(V: type) {
 fn F(unused generic T: I where .X = NI({}), unused generic U: I where .Y = {}) {}
 
 fn G(generic T: I where .X = NI({}), generic U: T.X) {
-  // TODO: This should pass, the rewrite in the constraint `NI` should be visible.
-  // CHECK:STDERR: fail_todo_nested_facet_type_used_as_root_facet_type_in_caller.carbon:[[@LINE+3]]:3-9: error: cannot convert type `U` that implements `NI({})` into type implementing `I where .(I.Y) = {}` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: fail_todo_nested_facet_type_used_as_root_facet_type_in_caller.carbon:[[@LINE-5]]:60-77: note: initializing generic parameter `U` declared here [InitializingGenericParam]
-  // CHECK:STDERR:
   F(T, U);
 }
 
@@ -1207,7 +1203,7 @@ fn G(generic T: Z where .Z1 = {} and .Z2 = {}) {
   //@dump-sem-ir-end
 }
 
-// --- fail_todo_rewrite_provided_by_named_constraint.carbon
+// --- rewrite_provided_by_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -1223,10 +1219,6 @@ constraint N {
 }
 
 fn G(generic T: N) {
-  // TODO: This should pass.
-  // CHECK:STDERR: fail_todo_rewrite_provided_by_named_constraint.carbon:[[@LINE+3]]:3-6: error: cannot convert type `T` that implements `N` into type implementing `Z where .(Z.Z1) = {}` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: fail_todo_rewrite_provided_by_named_constraint.carbon:[[@LINE-11]]:14-32: note: initializing generic parameter `_` declared here [InitializingGenericParam]
-  // CHECK:STDERR:
   F(T);
 }
 

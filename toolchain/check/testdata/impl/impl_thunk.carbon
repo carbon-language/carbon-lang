@@ -163,8 +163,6 @@ impl A as X {
 }
 
 // --- fail_param_type_mismatch.carbon
-// CHECK:STDERR: fail_param_type_mismatch.carbon: error: cannot implicitly convert expression of type `A` to `B` [ConversionFailure]
-// CHECK:STDERR: fail_param_type_mismatch.carbon: note: type `A` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessInContext]
 
 library "[[@TEST_NAME]]";
 
@@ -176,8 +174,10 @@ class A {}
 class B {}
 
 impl A as I {
+  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE+5]]:3-13: error: cannot implicitly convert expression of type `A` to `B` [ConversionFailure]
+  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE+4]]:3-13: note: type `A` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE+3]]:8-11: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE-8]]:3-16: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE-10]]:3-16: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
   fn F(a: B);
 }
@@ -263,8 +263,8 @@ class C {
   impl as I(B) {
     // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+7]]:5-15: note: while building thunk calling this function [ThunkCallee]
     // CHECK:STDERR:
-    // CHECK:STDERR: fail_param_type_incomplete.carbon: error: cannot implicitly convert expression of type `B` to `C` [ConversionFailure]
-    // CHECK:STDERR: fail_param_type_incomplete.carbon: note: type `B` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessInContext]
+    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+5]]:5-15: error: cannot implicitly convert expression of type `B` to `C` [ConversionFailure]
+    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+4]]:5-15: note: type `B` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessInContext]
     // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+3]]:10-13: note: initializing function parameter [InCallToFunctionParam]
     // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE-13]]:3-13: note: while building thunk to match the signature of this function [ThunkSignature]
     // CHECK:STDERR:
@@ -459,24 +459,27 @@ impl () as I({}) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %empty_tuple.type.as.I.impl.F.type.48cdab.1 = name_ref F, @empty_tuple.type.as.I.impl.%empty_tuple.type.as.I.impl.F.decl.loc10_48.1 [concrete = constants.%empty_tuple.type.as.I.impl.F.bd5be1.1]
 // CHECK:STDOUT:   %.loc10_48.1: ref %struct_type.d.c.b36 = temporary_storage
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %empty_tuple.type.as.I.impl.F.call: init %struct_type.d.c.b36 to %.loc10_48.1 = call %F.ref(%.5)
-// CHECK:STDOUT:   %.loc10_48.2: ref %struct_type.d.c.b36 = temporary %.loc10_48.1, %empty_tuple.type.as.I.impl.F.call
-// CHECK:STDOUT:   %.loc10_48.3: ref %empty_tuple.type = struct_access %.loc10_48.2, element1
-// CHECK:STDOUT:   %.loc10_48.4: ref %empty_tuple.type = struct_access %return.param, element1
-// CHECK:STDOUT:   %.loc10_48.5: init %empty_tuple.type to %.loc10_48.4 = tuple_init () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_48.6: init %empty_tuple.type = converted %.loc10_48.3, %.loc10_48.5 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_48.7: init %empty_tuple.type to %.loc10_48.4 = in_place_init %.loc10_48.6 [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc10_48.8: ref %empty_struct_type = struct_access %.loc10_48.2, element0
-// CHECK:STDOUT:   %.loc10_48.9: ref %empty_struct_type = struct_access %return.param, element0
-// CHECK:STDOUT:   %.loc10_48.10: init %empty_struct_type to %.loc10_48.9 = struct_init () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_48.11: init %empty_struct_type = converted %.loc10_48.8, %.loc10_48.10 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_48.12: init %empty_struct_type to %.loc10_48.9 = in_place_init %.loc10_48.11 [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_48.13: init %struct_type.c.d.15a to %return.param = struct_init (%.loc10_48.7, %.loc10_48.12) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc10_48.14: init %struct_type.c.d.15a = converted %empty_tuple.type.as.I.impl.F.call, %.loc10_48.13 [concrete = constants.%struct]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc10_48.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc10_48.2)
-// CHECK:STDOUT:   return %.loc10_48.14 to %return.param
+// CHECK:STDOUT:   %.loc10_48.2: %empty_struct_type = struct_access %x.param, element1
+// CHECK:STDOUT:   %.loc10_48.3: %empty_tuple.type = struct_access %x.param, element0
+// CHECK:STDOUT:   %struct: %struct_type.b.a.40c = struct_value (%.loc10_48.2, %.loc10_48.3)
+// CHECK:STDOUT:   %.loc10_48.4: %struct_type.b.a.40c = converted %x.param, %struct
+// CHECK:STDOUT:   %empty_tuple.type.as.I.impl.F.call: init %struct_type.d.c.b36 to %.loc10_48.1 = call %F.ref(%.loc10_48.4)
+// CHECK:STDOUT:   %.loc10_48.5: ref %struct_type.d.c.b36 = temporary %.loc10_48.1, %empty_tuple.type.as.I.impl.F.call
+// CHECK:STDOUT:   %.loc10_48.6: ref %empty_tuple.type = struct_access %.loc10_48.5, element1
+// CHECK:STDOUT:   %.loc10_48.7: ref %empty_tuple.type = struct_access %return.param, element1
+// CHECK:STDOUT:   %.loc10_48.8: init %empty_tuple.type to %.loc10_48.7 = tuple_init () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc10_48.9: init %empty_tuple.type = converted %.loc10_48.6, %.loc10_48.8 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc10_48.10: init %empty_tuple.type to %.loc10_48.7 = in_place_init %.loc10_48.9 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc10_48.11: ref %empty_struct_type = struct_access %.loc10_48.5, element0
+// CHECK:STDOUT:   %.loc10_48.12: ref %empty_struct_type = struct_access %return.param, element0
+// CHECK:STDOUT:   %.loc10_48.13: init %empty_struct_type to %.loc10_48.12 = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_48.14: init %empty_struct_type = converted %.loc10_48.11, %.loc10_48.13 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_48.15: init %empty_struct_type to %.loc10_48.12 = in_place_init %.loc10_48.14 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc10_48.16: init %struct_type.c.d.15a to %return.param = struct_init (%.loc10_48.10, %.loc10_48.15) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc10_48.17: init %struct_type.c.d.15a = converted %empty_tuple.type.as.I.impl.F.call, %.loc10_48.16 [concrete = constants.%struct]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc10_48.5, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc10_48.5)
+// CHECK:STDOUT:   return %.loc10_48.17 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc10_48.1(%self.param: ref %empty_struct_type) = "no_op";
@@ -612,19 +615,24 @@ impl () as I({}) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.48cdab.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1 [concrete = constants.%B.as.X.impl.F.bd5be1.1]
 // CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %B.as.X.impl.F.call: init %ptr.6b6 = call %B.as.X.impl.F.bound(%.5, %.8)
-// CHECK:STDOUT:   %.loc14_37.1: %ptr.6b6 = value_of_initializer %B.as.X.impl.F.call
-// CHECK:STDOUT:   %.loc14_37.2: %ptr.6b6 = converted %B.as.X.impl.F.call, %.loc14_37.1
-// CHECK:STDOUT:   %.loc14_37.3: ref %C = deref %.loc14_37.2
-// CHECK:STDOUT:   %.loc14_37.4: ref %B = class_element_access %.loc14_37.3, element0
-// CHECK:STDOUT:   %addr.loc14: %ptr.432 = addr_of %.loc14_37.4
-// CHECK:STDOUT:   %.loc14_37.5: %ptr.432 = converted %B.as.X.impl.F.call, %addr.loc14
+// CHECK:STDOUT:   %.loc14_37.1: ref %A = class_element_access %self.param, element0
+// CHECK:STDOUT:   %.loc14_37.2: ref %A = converted %self.param, %.loc14_37.1
+// CHECK:STDOUT:   %.loc14_37.3: ref %B = deref %other.param
+// CHECK:STDOUT:   %.loc14_37.4: ref %A = class_element_access %.loc14_37.3, element0
+// CHECK:STDOUT:   %addr.loc14_37.1: %ptr.d43 = addr_of %.loc14_37.4
+// CHECK:STDOUT:   %.loc14_37.5: %ptr.d43 = converted %other.param, %addr.loc14_37.1
+// CHECK:STDOUT:   %B.as.X.impl.F.call: init %ptr.6b6 = call %B.as.X.impl.F.bound(%.loc14_37.2, %.loc14_37.5)
+// CHECK:STDOUT:   %.loc14_37.6: %ptr.6b6 = value_of_initializer %B.as.X.impl.F.call
+// CHECK:STDOUT:   %.loc14_37.7: %ptr.6b6 = converted %B.as.X.impl.F.call, %.loc14_37.6
+// CHECK:STDOUT:   %.loc14_37.8: ref %C = deref %.loc14_37.7
+// CHECK:STDOUT:   %.loc14_37.9: ref %B = class_element_access %.loc14_37.8, element0
+// CHECK:STDOUT:   %addr.loc14_37.2: %ptr.432 = addr_of %.loc14_37.9
+// CHECK:STDOUT:   %.loc14_37.10: %ptr.432 = converted %B.as.X.impl.F.call, %addr.loc14_37.2
 // CHECK:STDOUT:   %impl.elem0: %.19e = impl_witness_access constants.%Copy.impl_witness.730, element0 [concrete = constants.%ptr.as.Copy.impl.Op.0df]
-// CHECK:STDOUT:   %bound_method.loc14_37.1: <bound method> = bound_method %.loc14_37.5, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc14_37.1: <bound method> = bound_method %.loc14_37.10, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%B) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.432 = call %bound_method.loc14_37.2(%.loc14_37.5)
+// CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.10, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.432 = call %bound_method.loc14_37.2(%.loc14_37.10)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -683,8 +691,13 @@ impl () as I({}) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.48cdab.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc13_26.1 [concrete = constants.%B.as.X.impl.F.bd5be1.1]
 // CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %B.as.X.impl.F.call: init %empty_tuple.type = call %B.as.X.impl.F.bound(%.5, %.8)
+// CHECK:STDOUT:   %.loc13_26.1: ref %A = class_element_access %self.param, element0
+// CHECK:STDOUT:   %.loc13_26.2: ref %A = converted %self.param, %.loc13_26.1
+// CHECK:STDOUT:   %.loc13_26.3: %A = acquire_value %.loc13_26.2
+// CHECK:STDOUT:   %.loc13_26.4: ref %A = class_element_access %other.param, element0
+// CHECK:STDOUT:   %.loc13_26.5: ref %A = converted %other.param, %.loc13_26.4
+// CHECK:STDOUT:   %.loc13_26.6: %A = acquire_value %.loc13_26.5
+// CHECK:STDOUT:   %B.as.X.impl.F.call: init %empty_tuple.type = call %B.as.X.impl.F.bound(%.loc13_26.3, %.loc13_26.6)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -779,19 +792,24 @@ impl () as I({}) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.48cdab.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1 [concrete = constants.%B.as.X.impl.F.bd5be1.1]
 // CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %B.as.X.impl.F.call: init %ptr.6b6 = call %B.as.X.impl.F.bound(%.5, %.8)
-// CHECK:STDOUT:   %.loc14_37.1: %ptr.6b6 = value_of_initializer %B.as.X.impl.F.call
-// CHECK:STDOUT:   %.loc14_37.2: %ptr.6b6 = converted %B.as.X.impl.F.call, %.loc14_37.1
-// CHECK:STDOUT:   %.loc14_37.3: ref %C = deref %.loc14_37.2
-// CHECK:STDOUT:   %.loc14_37.4: ref %B = class_element_access %.loc14_37.3, element0
-// CHECK:STDOUT:   %addr.loc14: %ptr.432 = addr_of %.loc14_37.4
-// CHECK:STDOUT:   %.loc14_37.5: %ptr.432 = converted %B.as.X.impl.F.call, %addr.loc14
+// CHECK:STDOUT:   %.loc14_37.1: ref %A = class_element_access %self.param, element0
+// CHECK:STDOUT:   %.loc14_37.2: ref %A = converted %self.param, %.loc14_37.1
+// CHECK:STDOUT:   %.loc14_37.3: ref %B = deref %other.param
+// CHECK:STDOUT:   %.loc14_37.4: ref %A = class_element_access %.loc14_37.3, element0
+// CHECK:STDOUT:   %addr.loc14_37.1: %ptr.d43 = addr_of %.loc14_37.4
+// CHECK:STDOUT:   %.loc14_37.5: %ptr.d43 = converted %other.param, %addr.loc14_37.1
+// CHECK:STDOUT:   %B.as.X.impl.F.call: init %ptr.6b6 = call %B.as.X.impl.F.bound(%.loc14_37.2, %.loc14_37.5)
+// CHECK:STDOUT:   %.loc14_37.6: %ptr.6b6 = value_of_initializer %B.as.X.impl.F.call
+// CHECK:STDOUT:   %.loc14_37.7: %ptr.6b6 = converted %B.as.X.impl.F.call, %.loc14_37.6
+// CHECK:STDOUT:   %.loc14_37.8: ref %C = deref %.loc14_37.7
+// CHECK:STDOUT:   %.loc14_37.9: ref %B = class_element_access %.loc14_37.8, element0
+// CHECK:STDOUT:   %addr.loc14_37.2: %ptr.432 = addr_of %.loc14_37.9
+// CHECK:STDOUT:   %.loc14_37.10: %ptr.432 = converted %B.as.X.impl.F.call, %addr.loc14_37.2
 // CHECK:STDOUT:   %impl.elem0: %.19e = impl_witness_access constants.%Copy.impl_witness.730, element0 [concrete = constants.%ptr.as.Copy.impl.Op.0df]
-// CHECK:STDOUT:   %bound_method.loc14_37.1: <bound method> = bound_method %.loc14_37.5, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc14_37.1: <bound method> = bound_method %.loc14_37.10, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%B) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.432 = call %bound_method.loc14_37.2(%.loc14_37.5)
+// CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.10, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.432 = call %bound_method.loc14_37.2(%.loc14_37.10)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -886,19 +904,24 @@ impl () as I({}) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.48cdab.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc14_37.1 [concrete = constants.%B.as.X.impl.F.bd5be1.1]
 // CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %B.as.X.impl.F.call: init %ptr.6b6 = call %B.as.X.impl.F.bound(%.5, %.8)
-// CHECK:STDOUT:   %.loc14_37.1: %ptr.6b6 = value_of_initializer %B.as.X.impl.F.call
-// CHECK:STDOUT:   %.loc14_37.2: %ptr.6b6 = converted %B.as.X.impl.F.call, %.loc14_37.1
-// CHECK:STDOUT:   %.loc14_37.3: ref %C = deref %.loc14_37.2
-// CHECK:STDOUT:   %.loc14_37.4: ref %B = class_element_access %.loc14_37.3, element0
-// CHECK:STDOUT:   %addr.loc14: %ptr.432 = addr_of %.loc14_37.4
-// CHECK:STDOUT:   %.loc14_37.5: %ptr.432 = converted %B.as.X.impl.F.call, %addr.loc14
+// CHECK:STDOUT:   %.loc14_37.1: ref %A = class_element_access %self.param, element0
+// CHECK:STDOUT:   %.loc14_37.2: ref %A = converted %self.param, %.loc14_37.1
+// CHECK:STDOUT:   %.loc14_37.3: ref %B = deref %other.param
+// CHECK:STDOUT:   %.loc14_37.4: ref %A = class_element_access %.loc14_37.3, element0
+// CHECK:STDOUT:   %addr.loc14_37.1: %ptr.d43 = addr_of %.loc14_37.4
+// CHECK:STDOUT:   %.loc14_37.5: %ptr.d43 = converted %other.param, %addr.loc14_37.1
+// CHECK:STDOUT:   %B.as.X.impl.F.call: init %ptr.6b6 = call %B.as.X.impl.F.bound(%.loc14_37.2, %.loc14_37.5)
+// CHECK:STDOUT:   %.loc14_37.6: %ptr.6b6 = value_of_initializer %B.as.X.impl.F.call
+// CHECK:STDOUT:   %.loc14_37.7: %ptr.6b6 = converted %B.as.X.impl.F.call, %.loc14_37.6
+// CHECK:STDOUT:   %.loc14_37.8: ref %C = deref %.loc14_37.7
+// CHECK:STDOUT:   %.loc14_37.9: ref %B = class_element_access %.loc14_37.8, element0
+// CHECK:STDOUT:   %addr.loc14_37.2: %ptr.432 = addr_of %.loc14_37.9
+// CHECK:STDOUT:   %.loc14_37.10: %ptr.432 = converted %B.as.X.impl.F.call, %addr.loc14_37.2
 // CHECK:STDOUT:   %impl.elem0: %.19e = impl_witness_access constants.%Copy.impl_witness.730, element0 [concrete = constants.%ptr.as.Copy.impl.Op.0df]
-// CHECK:STDOUT:   %bound_method.loc14_37.1: <bound method> = bound_method %.loc14_37.5, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc14_37.1: <bound method> = bound_method %.loc14_37.10, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%B) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.5, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.432 = call %bound_method.loc14_37.2(%.loc14_37.5)
+// CHECK:STDOUT:   %bound_method.loc14_37.2: <bound method> = bound_method %.loc14_37.10, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.432 = call %bound_method.loc14_37.2(%.loc14_37.10)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -957,8 +980,12 @@ impl () as I({}) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %B.as.X.impl.F.type.48cdab.1 = name_ref F, @B.as.X.impl.%B.as.X.impl.F.decl.loc13_30.1 [concrete = constants.%B.as.X.impl.F.bd5be1.1]
 // CHECK:STDOUT:   %B.as.X.impl.F.bound: <bound method> = bound_method %self.param, %F.ref
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %B.as.X.impl.F.call: init %empty_tuple.type = call %B.as.X.impl.F.bound(%.5, %.7)
+// CHECK:STDOUT:   %.loc13_30.1: ref %A = class_element_access %self.param, element0
+// CHECK:STDOUT:   %.loc13_30.2: ref %A = converted %self.param, %.loc13_30.1
+// CHECK:STDOUT:   %.loc13_30.3: %A = acquire_value %.loc13_30.2
+// CHECK:STDOUT:   %.loc13_30.4: ref %A = class_element_access %other.param, element0
+// CHECK:STDOUT:   %.loc13_30.5: ref %A = converted %other.param, %.loc13_30.4
+// CHECK:STDOUT:   %B.as.X.impl.F.call: init %empty_tuple.type = call %B.as.X.impl.F.bound(%.loc13_30.3, %.loc13_30.5)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1039,8 +1066,11 @@ impl () as I({}) {
 // CHECK:STDOUT: fn @C.as.I.impl.F.loc11_48.2(%x.param: ref %empty_tuple.type, %y.param: %struct_type.a.b) [thunk @C.as.I.impl.%C.as.I.impl.F.decl.loc11_48.1 for @I.WithSelf.%I.WithSelf.F.decl, @I.WithSelf.F(constants.%I.facet.aa5)] {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %C.as.I.impl.F.type.a24f58.1 = name_ref F, @C.as.I.impl.%C.as.I.impl.F.decl.loc11_48.1 [concrete = constants.%C.as.I.impl.F.4c1488.1]
-// CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %C.as.I.impl.F.call: init %empty_tuple.type = call %F.ref(%x.param, %.5)
+// CHECK:STDOUT:   %.loc11_48.1: %empty_tuple.type = struct_access %y.param, element1
+// CHECK:STDOUT:   %.loc11_48.2: %empty_tuple.type = struct_access %y.param, element0
+// CHECK:STDOUT:   %struct: %struct_type.b.a = struct_value (%.loc11_48.1, %.loc11_48.2)
+// CHECK:STDOUT:   %.loc11_48.3: %struct_type.b.a = converted %y.param, %struct
+// CHECK:STDOUT:   %C.as.I.impl.F.call: init %empty_tuple.type = call %F.ref(%x.param, %.loc11_48.3)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
