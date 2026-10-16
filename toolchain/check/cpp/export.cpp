@@ -680,22 +680,21 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 
 namespace {
 
+// Given a block of parameter patterns, returns a vector of the same size,
+// where each element of that vector contains the canonical instruction for
+// the default value for that parameter, or `None` if no default value was
+// specified.
 static auto ExtractParameterDefaults(Context& context,
                                      SemIR::InstBlockId param_patterns_id)
     -> llvm::SmallVector<SemIR::InstId> {
-  auto canonical_params = llvm::map_range(
-      context.inst_blocks().Get(param_patterns_id), [&](SemIR::InstId inst_id) {
-        return context.constant_values().GetConstantInstId(inst_id);
-      });
   llvm::SmallVector<SemIR::InstId> parameter_defaults;
-  for (auto inst_id : canonical_params) {
-    auto pattern_id = inst_id;
-    auto default_id = SemIR::InstId::None;
+  for (auto inst_id : context.inst_blocks().Get(param_patterns_id)) {
+    auto pattern_id = context.constant_values().GetConstantInstId(inst_id);
     while (pattern_id.has_value()) {
       CARBON_KIND_SWITCH(context.insts().Get(pattern_id)) {
         case CARBON_KIND(SemIR::DefaultValuePattern inst): {
-          default_id = inst.value_id;
-          pattern_id = inst.subpattern_id;
+          parameter_defaults.push_back(inst.value_id);
+          pattern_id = SemIR::InstId::None;
           break;
         }
         case CARBON_KIND_ANY(SemIR::AnyBindingPattern, inst): {
@@ -703,7 +702,7 @@ static auto ExtractParameterDefaults(Context& context,
           break;
         }
         case CARBON_KIND_ANY(SemIR::AnyParamPattern, _): {
-          parameter_defaults.push_back(default_id);
+          parameter_defaults.push_back(SemIR::InstId::None);
           pattern_id = SemIR::InstId::None;
           break;
         }
@@ -757,24 +756,28 @@ struct FunctionInfo {
     const auto& ranges = function.call_param_ranges;
     CARBON_CHECK(parameter_defaults.size() ==
                  static_cast<size_t>(ranges.explicit_size()));
-    auto explicit_begin = ranges.explicit_begin().index;
+    auto param_start = ranges.explicit_begin().index;
+    auto explicit_begin = param_start;
 
     // Get the function's `self` parameter, if present. `self` is the first
     // explicit call parameter. (The lowered call parameters are leaf patterns
     // without binding names, so we rely on `self_param_id` and the positional
     // convention rather than inspecting the pattern.)
     if (function.self_param_id.has_value()) {
-      CARBON_CHECK(explicit_begin != ranges.explicit_end().index);
+      CARBON_CHECK(param_start != ranges.explicit_end().index);
       self_param =
-          Param(context, function_params[explicit_begin], SemIR::InstId::None);
-      ++explicit_begin;
+          Param(context, function_params[param_start], SemIR::InstId::None);
+      ++param_start;
     }
 
     // The remaining explicit parameters are the caller-provided arguments.
-    for (auto i = explicit_begin; i != ranges.explicit_end().index; ++i) {
+    for (auto i = param_start; i != ranges.explicit_end().index; ++i) {
+      // We only calculated default values for the explicit parameters, so
+      // we need to adjust the index within `parameter_defaults` by any elements
+      // in `function_params` that may have preceded them.
+      auto default_value_inst_id = parameter_defaults[i - explicit_begin];
       explicit_params.push_back(
-          Param(context, function_params[i],
-                parameter_defaults[i - ranges.explicit_begin().index]));
+          Param(context, function_params[i], default_value_inst_id));
     }
   }
 
@@ -1168,7 +1171,7 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
   if (!value_id.has_value()) {
     return nullptr;
   }
-  // Set up to capture issued insts
+  // Set up to capture issued insts.
   context.inst_block_stack().Push();
 
   // VariableIntroducer
@@ -1182,11 +1185,10 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
   // IdentifierNameNotBeforeSignature
   // Synthesize a variable, initialized to the default value, for export to C++.
   llvm::SmallString<64> var_name =
-      llvm::formatv("{}__{}__default_value",
+      llvm::formatv("__{}__{}__default_value",
                     target.GetIdentifier(context)->getName(), parameter_index);
-  auto& ident = context.ast_context().Idents.get(var_name);
   auto name_id =
-      SemIR::NameId::ForIdentifier(context.identifiers().Add(ident.getName()));
+      SemIR::NameId::ForIdentifier(context.identifiers().Add(var_name));
   auto pattern_type_id = context.insts().Get(pattern_id).type_id();
   auto entity_name_id = AddBindingEntityName(
       context, name_id, context.types().GetTypeInstId(pattern_type_id),
@@ -1211,7 +1213,7 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
   // VarBindingPattern -> HandleAnyBindingPattern
   //  |
   //  +- HandleAnyBindingPatternType extracts the inst_id for the type
-  //  instruction |  at the top of the node stack
+  //  instruction | at the top of the node stack
   //  |
   //  +- ConsumeExprRegionForPattern -> note this pops from the expr_region and
   //  inst_block stacks.
@@ -1282,6 +1284,7 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
   // configured full pattern stack
   //     |
   //     +- InitializeExisting
+
   auto init_id = InitializeExisting(context, loc_id, var_storage_id,
                                     scrutinee_id, /*for_return=*/false);
   AddInst<SemIR::Assign>(context, loc_id,
