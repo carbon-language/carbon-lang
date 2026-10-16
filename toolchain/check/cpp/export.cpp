@@ -1171,8 +1171,8 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
   if (!value_id.has_value()) {
     return nullptr;
   }
-  // Set up to capture issued insts.
-  context.inst_block_stack().Push();
+  // ** Need to be in the top block in the file, for the instructions to
+  // be picked up for export as a global variable.
 
   // VariableIntroducer
   context.decl_introducer_state_stack().Push<Lex::TokenKind::Var>();
@@ -1190,10 +1190,12 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
   auto name_id =
       SemIR::NameId::ForIdentifier(context.identifiers().Add(var_name));
   auto pattern_type_id = context.insts().Get(pattern_id).type_id();
-  auto entity_name_id = AddBindingEntityName(
-      context, name_id, context.types().GetTypeInstId(pattern_type_id),
-      SemIR::InstId::None,
-      /*is_unused=*/false, BindingPhase::Runtime);
+  SemIR::EntityName entity_name = {
+      .name_id = name_id,
+      .parent_scope_id = SemIR::NameScopeId::Package,
+      .type_inst_id = context.types().GetTypeInstId(pattern_type_id),
+  };
+  auto entity_name_id = context.entity_names().Add(entity_name);
 
   // BindingPatternTypeStart <- saves the ElementIndex (0 for us) on the
   // node stack
@@ -1236,13 +1238,7 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
     context.decl_name_stack().AddNameOrDiagnose(name_context, binding.bind_id,
                                                 SemIR::AccessKind::Public);
                                                 */
-  auto export_id =
-      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
-                           context.sem_ir(), loc_id,
-                           SemIR::ExportDecl({.type_id = scrutinee_type_id,
-                                              .entity_name_id = entity_name_id,
-                                              .value_id = binding.bind_id})));
-  context.exports().push_back(export_id);
+  //  context.exports().push_back(binding.bind_id);
   auto& name_scope = context.name_scopes().Get(SemIR::NameScopeId::Package);
   name_scope.AddRequired({.name_id = name_id,
                           .result = SemIR::ScopeLookupResult::MakeFound(
@@ -1321,7 +1317,6 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
   context.global_init().Suspend();
   context.full_pattern_stack().PopFullPattern();
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
-  context.inst_block_stack().Pop();
 
   // Export this variable to C++
   auto* var_decl =
