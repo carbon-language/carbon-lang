@@ -25,9 +25,13 @@ auto HandleParseNode(Context& context, Parse::LambdaIntroducerId node_id)
   return true;
 }
 
-auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
-    -> bool {
+static auto HandleLambdaSignature(Context& context,
+                                  Parse::AnyLambdaDefinitionStartId node_id,
+                                  bool is_terse_definition) -> bool {
   auto return_specifier = PopReturnSpecifier(context);
+  if (is_terse_definition) {
+    AdjustReturnSpecifierForTerseDefinition(context, node_id, return_specifier);
+  }
 
   Parse::NodeId first_param_node_id = Parse::NoneNodeId();
   Parse::NodeId last_param_node_id = Parse::NoneNodeId();
@@ -123,13 +127,35 @@ auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
   return true;
 }
 
+auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
+    -> bool {
+  return HandleLambdaSignature(context, node_id,
+                               /*is_terse_definition=*/false);
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::LambdaTerseDefinitionStartId node_id) -> bool {
+  return HandleLambdaSignature(context, node_id,
+                               /*is_terse_definition=*/true);
+}
+
 auto HandleParseNode(Context& context, Parse::LambdaId node_id) -> bool {
-  if (context.node_stack().PeekIs(Parse::NodeCategory::Expr)) {
-    return context.TODO(node_id, "terse lambda body");
-  }
   auto function_id =
       context.node_stack().Pop<Parse::NodeKind::LambdaDefinitionStart>();
   CheckFunctionReturnOnFinish(context, node_id, function_id);
+  FinishFunctionDefinition(context, function_id);
+  context.scope_stack().Pop(/*check_unused=*/true);
+  context.node_stack().Push(
+      node_id, context.functions().Get(function_id).first_owning_decl_id);
+  return true;
+}
+
+auto HandleParseNode(Context& context, Parse::LambdaTerseDefinitionId node_id)
+    -> bool {
+  auto body_expr_id = context.node_stack().PopExpr();
+  auto function_id =
+      context.node_stack().Pop<Parse::NodeKind::LambdaTerseDefinitionStart>();
+  CheckFunctionTerseBody(context, node_id, function_id, body_expr_id);
   FinishFunctionDefinition(context, function_id);
   context.scope_stack().Pop(/*check_unused=*/true);
   context.node_stack().Push(

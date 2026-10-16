@@ -285,6 +285,7 @@ CARBON_DIAGNOSTIC_KIND(FunctionRedeclEvaluationModeDiffers)
 CARBON_DIAGNOSTIC_KIND(InvalidMainRunParameters)
 CARBON_DIAGNOSTIC_KIND(InvalidMainRunReturnType)
 CARBON_DIAGNOSTIC_KIND(MissingReturnStatement)
+CARBON_DIAGNOSTIC_KIND(ReturnTypeInTerseFunction)
 CARBON_DIAGNOSTIC_KIND(UnknownBuiltinFunctionName)
 CARBON_DIAGNOSTIC_KIND(InvalidBuiltinSignature)
 

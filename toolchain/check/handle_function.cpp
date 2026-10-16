@@ -458,6 +458,12 @@ static auto BuildFunctionDecl(Context& context,
                                return_specifier.has_return_specifier());
   auto name_context = context.decl_name_stack().FinishName(name);
 
+  bool is_terse_definition = context.parse_tree().node_kind(node_id) ==
+                             Parse::NodeKind::FunctionTerseDefinitionStart;
+  if (is_terse_definition) {
+    AdjustReturnSpecifierForTerseDefinition(context, node_id, return_specifier);
+  }
+
   context.node_stack()
       .PopAndDiscardSoloNodeId<Parse::NodeKind::FunctionIntroducer>();
 
@@ -672,14 +678,14 @@ auto HandleParseNode(Context& context, Parse::FunctionDeclId node_id) -> bool {
 // built a function ID. This logic is shared between processing regular function
 // definitions and delayed parsing of inline method definitions.
 static auto HandleFunctionDefinitionAfterSignature(
-    Context& context, Parse::FunctionDefinitionStartId node_id,
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id,
     SemIR::FunctionId function_id, SemIR::InstId decl_id) -> void {
   StartFunctionDefinition(context, decl_id, function_id);
   context.node_stack().Push(node_id, function_id);
 }
 
-auto HandleFunctionDefinitionSuspend(Context& context,
-                                     Parse::FunctionDefinitionStartId node_id)
+auto HandleFunctionDefinitionSuspend(
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id)
     -> DeferredDefinitionWorklist::SuspendedFunction {
   // Process the declaration portion of the function.
   auto [function_id, decl_id] =
@@ -690,11 +696,27 @@ auto HandleFunctionDefinitionSuspend(Context& context,
 }
 
 auto HandleFunctionDefinitionResume(
-    Context& context, Parse::FunctionDefinitionStartId node_id,
+    Context& context, Parse::AnyFunctionDefinitionStartId node_id,
     DeferredDefinitionWorklist::SuspendedFunction&& suspended_fn) -> void {
   context.decl_name_stack().Restore(std::move(suspended_fn.saved_name_state));
   HandleFunctionDefinitionAfterSignature(
       context, node_id, suspended_fn.function_id, suspended_fn.decl_id);
+}
+
+static auto HandleFunctionDefinitionFinish(Context& context,
+                                           Parse::AnyFunctionDeclId fn_node_id,
+                                           SemIR::FunctionId function_id)
+    -> void {
+  FinishFunctionDefinition(context, function_id);
+
+  // If the function has a deduced return type, we can now perform any delayed
+  // checks of its signature.
+  const auto& function = context.functions().Get(function_id);
+  if (function.has_deduced_return_type()) {
+    ValidateForEntryPoint(context, fn_node_id, function_id, function);
+  }
+
+  context.decl_name_stack().PopScope(/*check_unused=*/true);
 }
 
 auto HandleParseNode(Context& context, Parse::FunctionDefinitionStartId node_id)
@@ -714,16 +736,29 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
           .PopWithNodeId<Parse::NodeKind::FunctionDefinitionStart>();
 
   CheckFunctionReturnOnFinish(context, node_id, function_id);
-  FinishFunctionDefinition(context, function_id);
+  HandleFunctionDefinitionFinish(context, start_node_id, function_id);
+  return true;
+}
 
-  // Now that the return type has been deduced, we can validate the entry point.
-  const auto& function = context.functions().Get(function_id);
-  if (function.has_deduced_return_type()) {
-    ValidateForEntryPoint(context, start_node_id, function_id, function);
-  }
+auto HandleParseNode(Context& context,
+                     Parse::FunctionTerseDefinitionStartId node_id) -> bool {
+  // Process the declaration portion of the function.
+  auto [function_id, decl_id] =
+      BuildFunctionDecl(context, node_id, /*is_definition=*/true);
+  HandleFunctionDefinitionAfterSignature(context, node_id, function_id,
+                                         decl_id);
+  return true;
+}
 
-  context.decl_name_stack().PopScope(/*check_unused=*/true);
+auto HandleParseNode(Context& context, Parse::FunctionTerseDefinitionId node_id)
+    -> bool {
+  auto body_expr_id = context.node_stack().PopExpr();
+  auto [signature_node_id, function_id] =
+      context.node_stack()
+          .PopWithNodeId<Parse::NodeKind::FunctionTerseDefinitionStart>();
 
+  CheckFunctionTerseBody(context, node_id, function_id, body_expr_id);
+  HandleFunctionDefinitionFinish(context, signature_node_id, function_id);
   return true;
 }
 
@@ -787,11 +822,6 @@ auto HandleParseNode(Context& context,
   }
   context.decl_name_stack().PopScope();
   return true;
-}
-
-auto HandleParseNode(Context& context, Parse::FunctionTerseDefinitionId node_id)
-    -> bool {
-  return context.TODO(node_id, "HandleFunctionTerseDefinition");
 }
 
 }  // namespace Carbon::Check
