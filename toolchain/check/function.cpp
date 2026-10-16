@@ -794,12 +794,6 @@ auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
       CARBON_DIAGNOSTIC(
           MissingReturnStatement, Error,
           "missing `return` at end of function with declared return type");
-      CARBON_DIAGNOSTIC_LABEL(MissingReturnStatementType, Info,
-                              "return type declared here");
-      // A deduced return type is located where it was deduced from: a returned
-      // expression or a `returned var`.
-      CARBON_DIAGNOSTIC_LABEL(MissingReturnStatementDeducedType, Info,
-                              "return type deduced here");
       auto builder = context.emitter().Build(
           LocIdForDiagnostics::TokenOnly(node_id), MissingReturnStatement);
       // Only attach a label when the return type has a location to reference.
@@ -807,9 +801,15 @@ auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
               .GetCanonicalLocId(function.return_type_inst_id)
               .has_value()) {
         if (function.has_deduced_return_type()) {
+          // A deduced return type is located where it was deduced from: a
+          // returned expression or a `returned var`.
+          CARBON_DIAGNOSTIC_LABEL(MissingReturnStatementDeducedType, Info,
+                                  "return type deduced here");
           builder.Attach(function.return_type_inst_id,
                          MissingReturnStatementDeducedType);
         } else {
+          CARBON_DIAGNOSTIC_LABEL(MissingReturnStatementType, Info,
+                                  "return type declared here");
           builder.Attach(function.return_type_inst_id,
                          MissingReturnStatementType);
         }

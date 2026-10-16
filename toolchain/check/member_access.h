@@ -37,6 +37,8 @@ auto PerformMemberAccess(Context& context, SemIR::LocId loc_id,
 // as an operator, and is where a missing-`impl` diagnostic is placed instead of
 // the whole expression. The message then names only the type that doesn't
 // implement the interface, since the syntax shows which operation needed it.
+// It's a `LocIdForDiagnostics` so that it can be token-only, such as an
+// operator without its operands.
 //
 // On failure, an ErrorInst is returned and a diagnostic is produced unless
 // `diagnose` is false. It is incorrect to specify `diagnose` as false if the

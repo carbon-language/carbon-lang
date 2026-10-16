@@ -30,6 +30,8 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/diagnostics/format_providers.h"
+#include "toolchain/parse/tree_and_subtrees.h"
+#include "toolchain/parse/typed_nodes.h"
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/copy_on_write_block.h"
 #include "toolchain/sem_ir/expr_info.h"
@@ -795,19 +797,47 @@ static auto ConvertPartialInitializerToNonPartial(
                                      .update_init_id = vptr_init_id});
 }
 
+// Returns the location of the name of field `index` of the struct literal at
+// `literal_loc_id`, or `None` when that isn't a struct literal in this file.
+// SemIR doesn't record where a field's name was written, so this reads the
+// parse tree.
+static auto GetStructLiteralFieldNameLoc(Context& context,
+                                         SemIR::LocId literal_loc_id,
+                                         size_t index) -> SemIR::LocId {
+  if (literal_loc_id.kind() != SemIR::LocId::Kind::NodeId) {
+    return SemIR::LocId::None;
+  }
+  const auto& tree = context.parse_tree_and_subtrees();
+  auto literal = tree.ExtractAs<Parse::StructLiteral>(literal_loc_id.node_id());
+  if (!literal || index >= literal->fields.size()) {
+    return SemIR::LocId::None;
+  }
+  auto field = tree.Extract(literal->fields[index].value);
+  if (!field) {
+    return SemIR::LocId::None;
+  }
+  auto designator = tree.Extract(field->designator);
+  if (!designator) {
+    return SemIR::LocId::None;
+  }
+  return SemIR::LocId(designator->name);
+}
+
 // Common implementation for ConvertStructToStruct and ConvertStructToClass.
 //
 // `get_field_decl` returns the declaration of a destination field, or `None`,
 // for diagnostics to attach a label to. The destination's fields come from its
 // object representation, which is canonicalized and has no locations.
+// `dest_class_definition_id` is likewise the destination class's definition, or
+// `None` for a struct type.
 template <typename TargetAccessInstT, typename GetDefault,
           typename GetFieldDecl>
 static auto ConvertStructToStructOrClass(
     Context& context, SemIR::LocId loc_id, SemIR::StructType src_type,
     SemIR::StructType dest_type, SemIR::InstId value_id,
     ConversionTarget target, GetDefault get_default,
-    GetFieldDecl get_field_decl, SemIR::ClassType* vtable_class_type = nullptr)
-    -> SemIR::InstId {
+    GetFieldDecl get_field_decl, SemIR::InstId dest_class_definition_id,
+    SemIR::ClassType* vtable_class_type = nullptr) -> SemIR::InstId {
   static_assert(std::is_same_v<SemIR::ClassElementAccess, TargetAccessInstT> ||
                 std::is_same_v<SemIR::StructAccess, TargetAccessInstT>);
   constexpr bool ToClass =
@@ -843,23 +873,37 @@ static auto ConvertStructToStructOrClass(
     for (auto [i, field] : llvm::enumerate(src_elem_fields)) {
       if (!dest_field_names.Lookup(field.name_id)) {
         if (target.diagnose) {
-          if (literal.elems_id.has_value()) {
-            CARBON_DIAGNOSTIC(StructInitUnexpectedFieldInLiteral, Error,
-                              "struct {0} has no field named `{1}`",
-                              SemIR::TypeId, SemIR::NameId);
-            context.emitter().Emit(
-                SemIR::LocId(context.inst_blocks().Get(literal.elems_id)[i]),
-                StructInitUnexpectedFieldInLiteral, target.type_id,
-                field.name_id);
-          } else {
-            CARBON_DIAGNOSTIC(StructInitUnexpectedFieldInConversion, Error,
-                              "cannot convert from struct type {0} to {1}: "
-                              "unexpected field `{2}` in source type",
-                              TypeOfInstId, SemIR::TypeId, SemIR::NameId);
-            context.emitter().Emit(value_loc_id,
-                                   StructInitUnexpectedFieldInConversion,
-                                   value_id, target.type_id, field.name_id);
+          CARBON_DIAGNOSTIC(StructInitUnexpectedFieldInLiteral, Error,
+                            "struct {0} has no field named `{1}`",
+                            SemIR::TypeId, SemIR::NameId);
+          CARBON_DIAGNOSTIC(StructInitUnexpectedFieldInConversion, Error,
+                            "cannot convert from struct type {0} to {1}: "
+                            "unexpected field `{2}` in source type",
+                            TypeOfInstId, SemIR::TypeId, SemIR::NameId);
+          auto builder = [&] {
+            if (literal.elems_id.has_value()) {
+              auto field_loc_id =
+                  GetStructLiteralFieldNameLoc(context, value_loc_id, i);
+              if (!field_loc_id.has_value()) {
+                field_loc_id = GetInstLocationOrFallback(
+                    context, context.inst_blocks().Get(literal.elems_id)[i],
+                    value_loc_id);
+              }
+              return context.emitter().Build(field_loc_id,
+                                             StructInitUnexpectedFieldInLiteral,
+                                             target.type_id, field.name_id);
+            }
+            return context.emitter().Build(
+                value_loc_id, StructInitUnexpectedFieldInConversion, value_id,
+                target.type_id, field.name_id);
+          }();
+          if (dest_class_definition_id.has_value()) {
+            CARBON_DIAGNOSTIC_LABEL(StructInitClassDefinedHere, Info,
+                                    "class defined here");
+            builder.Attach(dest_class_definition_id,
+                           StructInitClassDefinedHere);
           }
+          builder.Emit();
         }
         return SemIR::ErrorInst::InstId;
       }
@@ -973,13 +1017,13 @@ static auto ConvertStructToStructOrClass(
               StructInitMissingFieldInLiteral, Error,
               "missing value for field `{0}` in struct initialization",
               SemIR::NameId);
-          CARBON_DIAGNOSTIC_LABEL(StructFieldDeclaredHere, Info,
-                                  "field `{0}` declared here", SemIR::NameId);
           auto builder = context.emitter().Build(
               value_loc_id, StructInitMissingFieldInLiteral,
               dest_field.name_id);
           if (auto field_decl_id = get_field_decl(dest_field.name_id);
               field_decl_id.has_value()) {
+            CARBON_DIAGNOSTIC_LABEL(StructFieldDeclaredHere, Info,
+                                    "field `{0}` declared here", SemIR::NameId);
             builder.Attach(field_decl_id, StructFieldDeclaredHere,
                            dest_field.name_id);
           }
@@ -1050,7 +1094,8 @@ static auto ConvertStructToStruct(Context& context, SemIR::LocId loc_id,
   return ConvertStructToStructOrClass<SemIR::StructAccess>(
       context, loc_id, src_type, dest_type, value_id, target,
       /*get_default=*/[](SemIR::NameId) { return SemIR::InstId::None; },
-      /*get_field_decl=*/[](SemIR::NameId) { return SemIR::InstId::None; });
+      /*get_field_decl=*/[](SemIR::NameId) { return SemIR::InstId::None; },
+      /*dest_class_definition_id=*/SemIR::InstId::None);
 }
 
 // Performs a conversion from a struct to a class type. This function only
@@ -1152,7 +1197,8 @@ static auto ConvertStructToClass(Context& context, SemIR::LocId loc_id,
 
   return ConvertStructToStructOrClass<SemIR::ClassElementAccess>(
       context, loc_id, src_type, dest_struct_type, value_id, target,
-      get_default, get_field_decl, is_partial ? nullptr : &dest_type);
+      get_default, get_field_decl, dest_class_info.definition_id,
+      is_partial ? nullptr : &dest_type);
 }
 
 // Represents an edge in the inheritance graph, created by a `base` declaration.
@@ -1952,7 +1998,8 @@ static auto GetConversionInterfaceName(ConversionTarget::Kind kind)
 // A failure is located at `orig_expr_id`, the expression as it was written, or
 // at `loc_id` when `orig_expr_id` is canonical and has no location. `expr_id`
 // may be the result of an earlier conversion of `orig_expr_id`, which has no
-// location of its own.
+// location of its own. A failure of an explicit `as` conversion, or of a
+// conversion with `locate_failure_at_loc_id`, is located at `loc_id`.
 static auto PerformUserDefinedConversion(Context& context, SemIR::LocId loc_id,
                                          SemIR::InstId expr_id,
                                          SemIR::InstId orig_expr_id,
@@ -1969,10 +2016,13 @@ static auto PerformUserDefinedConversion(Context& context, SemIR::LocId loc_id,
       .interface_args_ref = interface_args,
       .op_name = CoreIdentifier::Convert,
   };
+  auto failure_loc_id =
+      target.is_explicit_as() || target.locate_failure_at_loc_id
+          ? loc_id
+          : GetInstLocationOrFallback(context, orig_expr_id, loc_id);
   expr_id = BuildUnaryOperator(
-      context, loc_id, op, expr_id, target.diagnose, [&](auto& builder) {
-        auto orig_loc_id =
-            GetInstLocationOrFallback(context, orig_expr_id, loc_id);
+      context, loc_id, op, expr_id, target.diagnose,
+      [&](auto& builder) {
         int target_kind_for_diag =
             target.kind == ConversionTarget::ExplicitAs         ? 1
             : target.kind == ConversionTarget::ExplicitUnsafeAs ? 2
@@ -1985,7 +2035,7 @@ static auto PerformUserDefinedConversion(Context& context, SemIR::LocId loc_id,
               "{0:=1: with `as`|=2: with `unsafe as`|:}",
               Diagnostics::IntAsSelect, TypeOfInstId, Diagnostics::BoolAsSelect,
               SemIR::TypeId);
-          builder.Attach(orig_loc_id, ConversionFailureNonTypeToFacet,
+          builder.Attach(failure_loc_id, ConversionFailureNonTypeToFacet,
                          target_kind_for_diag, expr_id,
                          target.type_id == SemIR::TypeType::TypeId,
                          target.type_id);
@@ -1995,10 +2045,11 @@ static auto PerformUserDefinedConversion(Context& context, SemIR::LocId loc_id,
               "cannot{0:=0: implicitly|:} convert expression of type "
               "{1} to {2}{0:=1: with `as`|=2: with `unsafe as`|:}",
               Diagnostics::IntAsSelect, TypeOfInstId, SemIR::TypeId);
-          builder.Attach(orig_loc_id, ConversionFailure, target_kind_for_diag,
-                         expr_id, target.type_id);
+          builder.Attach(failure_loc_id, ConversionFailure,
+                         target_kind_for_diag, expr_id, target.type_id);
         }
-      });
+      },
+      {.loc_id = failure_loc_id});
 
   // Pull a value directly out of the initializer if possible and wanted.
   // TODO: Should this be done as part of category conversion instead?

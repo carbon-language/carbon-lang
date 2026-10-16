@@ -272,7 +272,27 @@ class MatchContext {
   SemIR::LocId loc_id_;
 };
 
+// Pattern kinds, for diagnostics. Converted to an int for a select.
+enum class PatternKind : uint8_t {
+  Binding = 0,
+  Variable = 1,
+  Other = 2,
+};
+
 }  // namespace
+
+// Returns the kind of `pattern_id` to name in a diagnostic.
+static auto GetPatternKind(Context& context, SemIR::InstId pattern_id)
+    -> PatternKind {
+  auto pattern = context.insts().Get(pattern_id);
+  if (pattern.Is<SemIR::AnyBindingPattern>()) {
+    return PatternKind::Binding;
+  }
+  if (pattern.Is<SemIR::VarPattern>()) {
+    return PatternKind::Variable;
+  }
+  return PatternKind::Other;
+}
 
 // TODO: There is a cycle through pattern matching with an action.
 // NOLINTNEXTLINE(misc-no-recursion)
@@ -284,13 +304,17 @@ auto MatchContext::Match(State state, WorkItem entry) -> void {
                                   "initializing function parameter");
           builder.Attach(entry.pattern_id, InCallToFunctionParam);
         } else if (std::holds_alternative<LocalState*>(state)) {
-          // A failure initializing a binding is usually about its declared
+          // A failure initializing a pattern is usually about its declared
           // type, which is written in the pattern, so attach a label to the
           // pattern unless the diagnostic is already located there.
-          CARBON_DIAGNOSTIC_LABEL(InBindingInit, Info,
-                                  "initializing this binding");
           if (!builder.IsLocatedAt(entry.pattern_id)) {
-            builder.Attach(entry.pattern_id, InBindingInit);
+            CARBON_DIAGNOSTIC_LABEL(
+                InPatternInit, Info,
+                "initializing this {0:=0:binding|=1:variable|=2:pattern}",
+                Diagnostics::IntAsSelect);
+            builder.Attach(
+                entry.pattern_id, InPatternInit,
+                static_cast<int>(GetPatternKind(context_, entry.pattern_id)));
           }
         }
       });

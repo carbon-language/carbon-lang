@@ -188,14 +188,16 @@ static auto DiagnoseClassSpecificDeclOutsideClass(Context& context,
                                                   Lex::TokenKind tok) -> void {
   CARBON_DIAGNOSTIC(ClassSpecificDeclOutsideClass, Error,
                     "`{0}` declaration outside class", Lex::TokenKind);
-  CARBON_DIAGNOSTIC_LABEL(ClassSpecificDeclEnclosingScope, Info,
-                          "appears in this declaration");
   auto builder =
       context.emitter().Build(loc_id, ClassSpecificDeclOutsideClass, tok);
-  // Only attach a label when the enclosing scope has an explicit declaration.
+  // Only attach a label when the enclosing scope has an explicit definition.
+  // A code block has no scope instruction, and the file scope's package
+  // namespace has no location.
   if (auto scope_inst_id = context.scope_stack().PeekInstId();
       scope_inst_id.has_value() &&
       context.insts().GetCanonicalLocId(scope_inst_id).has_value()) {
+    CARBON_DIAGNOSTIC_LABEL(ClassSpecificDeclEnclosingScope, Info,
+                            "appears in this definition");
     builder.Attach(scope_inst_id, ClassSpecificDeclEnclosingScope);
   }
   builder.Emit();
@@ -335,11 +337,11 @@ static auto DiagnoseBaseIsFinal(Context& context, Parse::NodeId node_id,
                     "deriving from final type {0}; base type must be an "
                     "`abstract` or `base` class",
                     InstIdAsType);
-  CARBON_DIAGNOSTIC_LABEL(BaseClassNotInheritable, Info,
-                          "declared without `abstract` or `base` here");
   auto builder =
       context.emitter().Build(node_id, BaseIsFinal, base_type_inst_id);
   if (base_decl_id.has_value()) {
+    CARBON_DIAGNOSTIC_LABEL(BaseClassNotInheritable, Info,
+                            "declared without `abstract` or `base` here");
     builder.Attach(base_decl_id, BaseClassNotInheritable);
   }
   builder.Emit();
@@ -489,13 +491,14 @@ auto HandleParseNode(Context& context, Parse::FriendDeclId node_id) -> bool {
     default: {
       CARBON_DIAGNOSTIC(FriendNotAllowedInScope, Error,
                         "`friend` declaration in non-class scope");
-      CARBON_DIAGNOSTIC_LABEL(FriendEnclosingScope, Info,
-                              "appears in this declaration");
       auto builder = context.emitter().Build(node_id, FriendNotAllowedInScope);
       // Only attach a label when the enclosing scope has an explicit
-      // declaration.
+      // definition. A code block has no scope instruction, and the file
+      // scope's package namespace has no location.
       if (access_scope_inst_id.has_value() &&
           context.insts().GetCanonicalLocId(access_scope_inst_id).has_value()) {
+        CARBON_DIAGNOSTIC_LABEL(FriendEnclosingScope, Info,
+                                "appears in this definition");
         builder.Attach(access_scope_inst_id, FriendEnclosingScope);
       }
       builder.Emit();

@@ -476,14 +476,14 @@ static auto DiagnoseMemberNameNotFound(
       CARBON_DIAGNOSTIC(MemberNameNotFoundInSpecificScope, Error,
                         "member name `{0}` not found in {1}", SemIR::NameId,
                         SemIR::SpecificId);
-      CARBON_DIAGNOSTIC_LABEL(MemberNameNotFoundSpecificScope, Info,
-                              "{0} declared here", SemIR::SpecificId);
       auto scope_inst_id = context.name_scopes()
                                .Get(lookup_scopes.front().name_scope_id)
                                .inst_id();
       auto diag = context.emitter().Build(
           loc_id, MemberNameNotFoundInSpecificScope, name_id, specific_id);
       if (context.insts().GetCanonicalLocId(scope_inst_id).has_value()) {
+        CARBON_DIAGNOSTIC_LABEL(MemberNameNotFoundSpecificScope, Info,
+                                "{0} defined here", SemIR::SpecificId);
         diag.Attach(scope_inst_id, MemberNameNotFoundSpecificScope,
                     specific_id);
       }
@@ -495,17 +495,15 @@ static auto DiagnoseMemberNameNotFound(
       CARBON_DIAGNOSTIC(MemberNameNotFoundInInstScope, Error,
                         "member name `{0}` not found in {1}", SemIR::NameId,
                         InstIdAsType);
-      CARBON_DIAGNOSTIC_LABEL(MemberNameNotFoundScope, Info,
-                              "{0} declared here", InstIdAsType);
       auto diag = context.emitter().Build(loc_id, MemberNameNotFoundInInstScope,
                                           name_id, scope_inst_id);
-      // Only attach a label when the scope has an explicit declaration.
-      //
-      // TODO: A C++ namespace introduced by an alias passes this check, but its
-      // Clang location is invalid, so the label gets a filename and no line.
-      // Leaving that label out needs the converted location, which isn't
-      // available here.
-      if (context.insts().GetCanonicalLocId(scope_inst_id).has_value()) {
+      // Only attach a label when the scope has a definition to reference. A
+      // namespace's members aren't declared with any one declaration of the
+      // namespace.
+      if (!context.insts().Is<SemIR::Namespace>(scope_inst_id) &&
+          context.insts().GetCanonicalLocId(scope_inst_id).has_value()) {
+        CARBON_DIAGNOSTIC_LABEL(MemberNameNotFoundScope, Info,
+                                "{0} defined here", InstIdAsType);
         diag.Attach(scope_inst_id, MemberNameNotFoundScope, scope_inst_id);
       }
       diag.Emit();

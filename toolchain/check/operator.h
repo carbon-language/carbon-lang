@@ -38,8 +38,9 @@ inline auto AttachOperandType(Context& context, DiagnosticBuilder& builder,
 // the diagnostic is emitted several layers down.
 struct MissingImplDiagnostic {
   // Where to locate the message, when the syntax has a better location than
-  // the whole expression: the operator of an infix expression, or the index of
-  // an indexing expression. Unset locates it at the expression.
+  // the whole expression: the operator of an infix expression, the index of an
+  // indexing expression, or the operand of a conversion. Unset locates it at
+  // the expression.
   std::optional<LocIdForDiagnostics> loc_id = std::nullopt;
   // Attaches labels with the operands' types. Their text follows the syntax:
   // an infix operator has a left and a right operand, and `a[i]` has an object

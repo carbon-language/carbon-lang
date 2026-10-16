@@ -28,13 +28,14 @@ auto HandleParseNode(Context& context, Parse::ObserveIntroducerId node_id)
     CARBON_DIAGNOSTIC(
         ObserveInWrongScope, Error,
         "`observe` can only be used in an `interface` or `function`");
-    CARBON_DIAGNOSTIC_LABEL(ObserveEnclosingScope, Info,
-                            "appears in this declaration");
     auto builder = context.emitter().Build(node_id, ObserveInWrongScope);
-    // Only attach a label when the enclosing scope has an explicit
-    // declaration.
+    // Only attach a label when the enclosing scope has an explicit definition.
+    // A code block has no scope instruction, and the file scope's package
+    // namespace has no location.
     if (scope_inst_id.has_value() &&
         context.insts().GetCanonicalLocId(scope_inst_id).has_value()) {
+      CARBON_DIAGNOSTIC_LABEL(ObserveEnclosingScope, Info,
+                              "appears in this definition");
       builder.Attach(scope_inst_id, ObserveEnclosingScope);
     }
     builder.Emit();

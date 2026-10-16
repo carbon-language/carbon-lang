@@ -27,3 +27,7 @@ fn F() {
   // CHECK:STDERR:
   {.a = 1, .b = 2, .c = 3} as Class;
 }
+
+fn G(s: {.a: i32, .b: i32, .c: i32}) {
+  s as Class;
+}

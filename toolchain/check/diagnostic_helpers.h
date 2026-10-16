@@ -55,6 +55,10 @@ using DiagnosticContextBuilder = DiagnosticEmitterBase::ContextBuilder;
 using DiagnosticContextFn =
     llvm::function_ref<auto(DiagnosticContextBuilder&)->void>;
 
+// Adds a context label to every diagnostic emitted while it is in scope.
+using DiagnosticContextScope =
+    Diagnostics::ContextScope<LocIdForDiagnostics, DiagnosticContextFn>;
+
 // A function that attaches labels to a diagnostic, for a caller that knows what
 // the code being checked looks like but not which diagnostic will come of it.
 using DiagnosticAnnotateFn = llvm::function_ref<auto(DiagnosticBuilder&)->void>;

@@ -4,10 +4,13 @@
 
 #include "toolchain/check/return.h"
 
+#include <optional>
+
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/control_flow.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/sem_ir/expr_info.h"
@@ -382,13 +385,17 @@ auto BuildReturnWithExpr(Context& context, SemIR::LocId loc_id,
     NoteReturnedVar(diag, returned_var_id);
     diag.Emit();
   } else {
-    // A failed conversion here is about the declared return type, so attach a
-    // label to it on every diagnostic from the conversion.
+    // A failed conversion of an expression is about the declared return type,
+    // so attach a label to it on every diagnostic from the conversion. Using
+    // something that isn't an expression fails regardless of the return type.
     auto note_return_type = [&](DiagnosticBuilder& diag) {
       NoteReturnType(diag, function);
     };
-    DiagnosticAnnotationScope annotate_return_type(&context.emitter(),
-                                                   note_return_type);
+    std::optional<DiagnosticAnnotationScope> annotate_return_type;
+    if (SemIR::GetExprCategory(context.sem_ir(), expr_id) !=
+        SemIR::ExprCategory::NotExpr) {
+      annotate_return_type.emplace(&context.emitter(), note_return_type);
+    }
     converted = ConvertReturnExpr(context, loc_id, function, expr_id);
   }
   AddReturnInstWithCleanups(

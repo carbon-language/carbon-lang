@@ -38,26 +38,33 @@ class DeductionWorklist {
     bool want_value;
     SemIR::LocId param_loc_id;
     // Where the argument this deduction descended from was written. `arg` is
-    // often a canonicalized inst with no location, so diagnostics use this
-    // location instead.
-    SemIR::LocId origin_loc_id;
+    // often a canonicalized inst with no location, or a conversion located at
+    // the whole call, so diagnostics use this location instead.
+    SemIR::LocId original_arg_loc_id;
   };
 
-  // Adds a single (param, arg) deduction.
+  // Adds a single (param, arg) deduction. `original_arg_loc_id` is where the
+  // argument this deduction descends from was written; `None` means `arg` is
+  // that argument.
   auto Add(SemIR::InstId param, SemIR::InstId arg, bool want_value,
+           SemIR::LocId original_arg_loc_id,
            SemIR::LocId param_loc_id = SemIR::LocId::None) -> void {
     if (!param_loc_id.has_value()) {
       param_loc_id = SemIR::LocId(param);
+    }
+    if (!original_arg_loc_id.has_value()) {
+      original_arg_loc_id = SemIR::LocId(arg);
     }
     deductions_.push_back({.param = param,
                            .arg = arg,
                            .want_value = want_value,
                            .param_loc_id = param_loc_id,
-                           .origin_loc_id = origin_loc_id_});
+                           .original_arg_loc_id = original_arg_loc_id});
   }
 
   // Adds a single (param, arg) deduction of a specific.
-  auto Add(SemIR::SpecificId param, SemIR::SpecificId arg) -> void {
+  auto Add(SemIR::SpecificId param, SemIR::SpecificId arg,
+           SemIR::LocId original_arg_loc_id) -> void {
     if (!param.has_value() || !arg.has_value()) {
       return;
     }
@@ -68,40 +75,33 @@ class DeductionWorklist {
       // non-deduced. For now we treat it as non-deduced.
       return;
     }
-    AddAll(param_specific.args_id, arg_specific.args_id, /*want_value=*/true);
+    AddAll(param_specific.args_id, arg_specific.args_id, /*want_value=*/true,
+           original_arg_loc_id);
   }
 
   // Adds a list of (param, arg) deductions. These are added in reverse order so
   // they are popped in forward order.
   template <typename ElementId>
   auto AddAll(llvm::ArrayRef<ElementId> params, llvm::ArrayRef<ElementId> args,
-              bool want_value) -> void {
+              bool want_value, SemIR::LocId original_arg_loc_id) -> void {
     if (params.size() != args.size()) {
       // TODO: Decide whether to error on this or just treat the parameter list
       // as non-deduced. For now we treat it as non-deduced.
       return;
     }
-    // With no origin set, as for the call's own arguments, each argument is
-    // its own origin. A list reached by decomposing a popped deduction keeps
-    // that deduction's origin. The origin is reset afterwards so that a later
-    // addition doesn't inherit the last argument's.
-    SemIR::LocId enclosing_origin_loc_id = origin_loc_id_;
     for (auto [param, arg] : llvm::reverse(llvm::zip_equal(params, args))) {
-      if (!enclosing_origin_loc_id.has_value()) {
-        origin_loc_id_ = SemIR::LocId(arg);
-      }
-      Add(param, arg, want_value);
+      Add(param, arg, want_value, original_arg_loc_id);
     }
-    origin_loc_id_ = enclosing_origin_loc_id;
   }
 
   auto AddAll(SemIR::InstBlockId params, llvm::ArrayRef<SemIR::InstId> args,
-              bool want_value) -> void {
-    AddAll(context_->inst_blocks().Get(params), args, want_value);
+              bool want_value, SemIR::LocId original_arg_loc_id) -> void {
+    AddAll(context_->inst_blocks().Get(params), args, want_value,
+           original_arg_loc_id);
   }
 
-  auto AddAll(SemIR::StructTypeFieldsId params, SemIR::StructTypeFieldsId args)
-      -> void {
+  auto AddAll(SemIR::StructTypeFieldsId params, SemIR::StructTypeFieldsId args,
+              SemIR::LocId original_arg_loc_id) -> void {
     const auto& param_fields = context_->struct_type_fields().Get(params);
     const auto& arg_fields = context_->struct_type_fields().Get(args);
     if (param_fields.size() != arg_fields.size()) {
@@ -118,42 +118,44 @@ class DeductionWorklist {
     }
     for (auto [param, arg] :
          llvm::reverse(llvm::zip_equal(param_fields, arg_fields))) {
-      Add(param.type_inst_id, arg.type_inst_id, /*want_value=*/true);
+      Add(param.type_inst_id, arg.type_inst_id, /*want_value=*/true,
+          original_arg_loc_id);
     }
   }
 
   auto AddAll(SemIR::InstBlockId params, SemIR::InstBlockId args,
-              bool want_value) -> void {
+              bool want_value, SemIR::LocId original_arg_loc_id) -> void {
     AddAll(context_->inst_blocks().Get(params),
-           context_->inst_blocks().Get(args), want_value);
+           context_->inst_blocks().Get(args), want_value, original_arg_loc_id);
   }
 
   // Adds a (param, arg) pair for an instruction argument, given its kind.
-  auto AddInstArg(SemIR::IdAndKind param, int32_t arg, bool want_value)
-      -> void {
+  auto AddInstArg(SemIR::IdAndKind param, int32_t arg, bool want_value,
+                  SemIR::LocId original_arg_loc_id) -> void {
     CARBON_KIND_SWITCH(param) {
       case SemIR::IdKind::None:
       case SemIR::IdKind::For<SemIR::ClassId>:
       case SemIR::IdKind::For<SemIR::IntKind>:
         break;
       case CARBON_KIND(SemIR::InstId inst_id): {
-        Add(inst_id, SemIR::InstId(arg), want_value);
+        Add(inst_id, SemIR::InstId(arg), want_value, original_arg_loc_id);
         break;
       }
       case CARBON_KIND(SemIR::TypeInstId inst_id): {
-        Add(inst_id, SemIR::InstId(arg), want_value);
+        Add(inst_id, SemIR::InstId(arg), want_value, original_arg_loc_id);
         break;
       }
       case CARBON_KIND(SemIR::StructTypeFieldsId fields_id): {
-        AddAll(fields_id, SemIR::StructTypeFieldsId(arg));
+        AddAll(fields_id, SemIR::StructTypeFieldsId(arg), original_arg_loc_id);
         break;
       }
       case CARBON_KIND(SemIR::InstBlockId inst_block_id): {
-        AddAll(inst_block_id, SemIR::InstBlockId(arg), want_value);
+        AddAll(inst_block_id, SemIR::InstBlockId(arg), want_value,
+               original_arg_loc_id);
         break;
       }
       case CARBON_KIND(SemIR::SpecificId specific_id): {
-        Add(specific_id, SemIR::SpecificId(arg));
+        Add(specific_id, SemIR::SpecificId(arg), original_arg_loc_id);
         break;
       }
       default:
@@ -164,22 +166,12 @@ class DeductionWorklist {
   // Returns whether we have completed all deductions.
   auto Done() -> bool { return deductions_.empty(); }
 
-  // Pops the next deduction. Requires `!Done()`. Anything added while the
-  // result is being processed gets its origin, so a deduction reached by
-  // decomposing a parameter has the origin of the argument it came from.
-  auto PopNext() -> PendingDeduction {
-    auto result = deductions_.pop_back_val();
-    origin_loc_id_ = result.origin_loc_id;
-    return result;
-  }
+  // Pops the next deduction. Requires `!Done()`.
+  auto PopNext() -> PendingDeduction { return deductions_.pop_back_val(); }
 
  private:
   Context* context_;
   llvm::SmallVector<PendingDeduction> deductions_;
-  // The origin given to entries added from here on. `AddAll` sets it for each
-  // argument of a top-level list, and `PopNext` sets it to the popped
-  // deduction's origin.
-  SemIR::LocId origin_loc_id_ = SemIR::LocId::None;
 };
 
 // State that is tracked throughout the deduction process.
@@ -194,30 +186,29 @@ class DeductionContext {
 
   auto context() const -> Context& { return *context_; }
 
-  // Adds a pending deduction of `param` from `arg`. If `param_loc_id` is not
-  // `None`, it is used in place of `LocId(param)` in diagnostics.
-  // `needs_substitution` indicates whether we need to substitute known generic
-  // parameters into `param`.
-  auto Add(SemIR::InstId param, SemIR::InstId arg, bool want_value,
-           SemIR::LocId param_loc_id = SemIR::LocId::None) -> void {
-    worklist_.Add(param, arg, want_value, param_loc_id);
+  // Adds a pending deduction of `param` from the argument `arg`.
+  auto Add(SemIR::InstId param, SemIR::InstId arg, bool want_value) -> void {
+    worklist_.Add(param, arg, want_value,
+                  /*original_arg_loc_id=*/SemIR::LocId::None);
   }
 
   template <typename ParamT, typename ArgT>
   auto Add(ParamT param, ArgT arg) -> void {
-    worklist_.Add(param, arg);
+    worklist_.Add(param, arg, /*original_arg_loc_id=*/SemIR::LocId::None);
   }
 
   // Same as `Add` but for an array or block of operands.
   auto AddAll(SemIR::InstBlockId param, llvm::ArrayRef<SemIR::InstId> arg,
               bool want_value) -> void {
-    worklist_.AddAll(param, arg, want_value);
+    worklist_.AddAll(param, arg, want_value,
+                     /*original_arg_loc_id=*/SemIR::LocId::None);
   }
 
   template <typename ElementId>
   auto AddAll(llvm::ArrayRef<ElementId> params, llvm::ArrayRef<ElementId> args,
               bool want_value) -> void {
-    worklist_.AddAll(params, args, want_value);
+    worklist_.AddAll(params, args, want_value,
+                     /*original_arg_loc_id=*/SemIR::LocId::None);
   }
 
   // Performs all deductions in the deduction worklist. Returns whether
@@ -315,7 +306,7 @@ DeductionContext::DeductionContext(Context* context, SemIR::LocId loc_id,
 
 auto DeductionContext::Deduce() -> bool {
   while (!worklist_.Done()) {
-    auto [param_id, arg_id, want_value, param_loc_id, origin_loc_id] =
+    auto [param_id, arg_id, want_value, param_loc_id, original_arg_loc_id] =
         worklist_.PopNext();
 
     if (param_id == SemIR::ErrorInst::InstId) {
@@ -349,10 +340,10 @@ auto DeductionContext::Deduce() -> bool {
     if (param_type_id.is_symbolic()) {
       // TODO: This looks liable to add redundant work (possibly even
       // exponential amounts of it) in some of the cases handled below.
-      Add(context().types().GetTypeInstId(param_type_id),
-          context().types().GetTypeInstId(
-              context().insts().Get(arg_id).type_id()),
-          /*want_value=*/true);
+      worklist_.Add(context().types().GetTypeInstId(param_type_id),
+                    context().types().GetTypeInstId(
+                        context().insts().Get(arg_id).type_id()),
+                    /*want_value=*/true, original_arg_loc_id);
     } else if (want_value) {
       // The argument (e.g. a TupleLiteral of types) may be convertible to a
       // compile-time value (e.g. TupleType) that we can decompose further.
@@ -454,8 +445,8 @@ auto DeductionContext::Deduce() -> bool {
                   SemIR::NameId);
               auto diag = context().emitter().Build(
                   loc_id_, DeductionInconsistent, entity_name.name_id);
-              if (origin_loc_id.has_value()) {
-                diag.Attach(origin_loc_id, DeductionInconsistentArg,
+              if (original_arg_loc_id.has_value()) {
+                diag.Attach(original_arg_loc_id, DeductionInconsistentArg,
                             entity_name.name_id);
               }
               NoteGenericHere(context(), generic_id_, diag);
@@ -483,9 +474,9 @@ auto DeductionContext::Deduce() -> bool {
             break;
           }
           worklist_.AddInstArg(param_inst.arg0_and_kind(), arg_inst.arg0(),
-                               want_value);
+                               want_value, original_arg_loc_id);
           worklist_.AddInstArg(param_inst.arg1_and_kind(), arg_inst.arg1(),
-                               want_value);
+                               want_value, original_arg_loc_id);
           continue;
         }
         break;
@@ -501,7 +492,8 @@ auto DeductionContext::Deduce() -> bool {
     auto param_const_inst_id =
         context().constant_values().GetInstId(param_const_id);
     if (param_const_inst_id != param_id) {
-      Add(param_const_inst_id, arg_id, want_value, param_loc_id);
+      worklist_.Add(param_const_inst_id, arg_id, want_value,
+                    original_arg_loc_id, param_loc_id);
       continue;
     }
   }

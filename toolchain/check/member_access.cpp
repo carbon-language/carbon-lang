@@ -11,6 +11,7 @@
 #include "toolchain/check/action.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
+#include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
@@ -270,10 +271,7 @@ static auto PerformImplLookup(
                                          interface_type_id.AsConstantId());
   if (!lookup_result.has_value()) {
     if (diagnose) {
-      auto diag_loc_id = desugared_loc_id.value_or(loc_id);
-      std::optional<
-          Diagnostics::ContextScope<LocIdForDiagnostics, DiagnosticContextFn>>
-          scope;
+      std::optional<DiagnosticContextScope> scope;
       if (missing_impl_diagnostic_context) {
         scope.emplace(&context.emitter(), missing_impl_diagnostic_context);
       }
@@ -285,15 +283,16 @@ static auto PerformImplLookup(
         CARBON_DIAGNOSTIC(MissingImplForType, Error,
                           "type {1} does not implement interface {0}",
                           SemIR::TypeId, SemIR::TypeId);
-        context.emitter().Emit(diag_loc_id, MissingImplForType,
-                               interface_type_id, self_type_id);
+        context.emitter().Emit(desugared_loc_id.value_or(loc_id),
+                               MissingImplForType, interface_type_id,
+                               self_type_id);
       } else {
         // TODO: Pass in the expression whose type we are printing.
         CARBON_DIAGNOSTIC(MissingImplInMemberAccess, Error,
                           "cannot access member of interface {0} in type {1} "
                           "that does not implement that interface",
                           SemIR::TypeId, SemIR::TypeId);
-        context.emitter().Emit(diag_loc_id, MissingImplInMemberAccess,
+        context.emitter().Emit(loc_id, MissingImplInMemberAccess,
                                interface_type_id, self_type_id);
       }
     }
@@ -426,8 +425,15 @@ static auto PerformInstanceBinding(Context& context, SemIR::LocId loc_id,
                          context.types().GetTypeIdForTypeInstId(
                              unbound_element_type->class_type_inst_id),
                          qualifiers);
-    base_id = ConvertToValueOrRefOfType(context, loc_id, base_id,
-                                        element_class_type_id);
+    // A failure is located at the member access, which is what requires the
+    // conversion.
+    //
+    // TODO: When the member is found through `extend adapt`, consider
+    // attaching a label to that declaration.
+    base_id = Convert(context, loc_id, base_id,
+                      {.kind = ConversionTarget::ValueOrRef,
+                       .type_id = element_class_type_id,
+                       .locate_failure_at_loc_id = true});
 
     // Find the specified element, which could be either a field or a base
     // class, and build an element access expression.
@@ -701,11 +707,14 @@ static auto GetAssociatedValueImpl(Context& context, SemIR::LocId loc_id,
                                    SemIR::SpecificInterface specific_interface)
     -> SemIR::InstId {
   // Convert to the interface type of the associated member, to get a facet
-  // value.
+  // value. A failure is located at the member access, which is what requires
+  // the conversion.
   auto interface_type_id = GetInterfaceType(
       context, specific_interface.interface_id, specific_interface.specific_id);
-  auto self_facet_inst_id =
-      ConvertToValueOfType(context, loc_id, base_id, interface_type_id);
+  auto self_facet_inst_id = Convert(context, loc_id, base_id,
+                                    {.kind = ConversionTarget::Value,
+                                     .type_id = interface_type_id,
+                                     .locate_failure_at_loc_id = true});
   if (self_facet_inst_id == SemIR::ErrorInst::InstId) {
     return SemIR::ErrorInst::InstId;
   }
