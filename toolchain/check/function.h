@@ -74,6 +74,21 @@ auto AdjustReturnSpecifierForTerseDefinition(
 auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
                           SemIR::LocId loc_id, SemIR::TypeId type_id) -> void;
 
+// Ensures that the return type of `function` is known in `specific_id`, so that
+// it can be queried with `GetDeclaredReturnType` and similar. If the return
+// type was deduced and depends on the function's generic parameters, it's
+// computed by the definition's eval block, so this resolves the definition of
+// the specific.
+//
+// Returns false if the return type isn't known yet. This happens if it hasn't
+// been deduced yet, and for uses of a specific other than the self specific
+// from within the function's own definition. It also happens for uses of a
+// specific while instantiating its own definition, if that instantiation hasn't
+// yet reached the point where the return type is deduced.
+auto ResolveReturnTypeInSpecific(Context& context, SemIR::LocId loc_id,
+                                 const SemIR::Function& function,
+                                 SemIR::SpecificId specific_id) -> bool;
+
 // Returns whether `function` is a valid declaration of `builtin_kind`.
 auto IsValidBuiltinDeclaration(Context& context,
                                const SemIR::Function& function,

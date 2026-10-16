@@ -482,6 +482,12 @@ auto Internal::BeginPerformDelayedAction(Context& context) -> void {
   // this changes, we should push a region too.
   context.inst_block_stack().Push();
   context.pattern_block_stack().Push();
+
+  // The action is being performed within a specific, so the instructions it
+  // creates belong to that specific, not to whatever generic we might be in the
+  // middle of checking. Track them in a separate generic region, which
+  // `EndPerformDelayedAction` discards, leaving them unattached.
+  StartGenericDecl(context);
 }
 
 auto Internal::EndPerformDelayedAction(Context& context,
@@ -495,27 +501,32 @@ auto Internal::EndPerformDelayedAction(Context& context,
       (pattern_contents == llvm::ArrayRef(result_id) && contents.empty())) {
     context.inst_block_stack().PopAndDiscard();
     context.pattern_block_stack().PopAndDiscard();
-    return result_id;
+  } else {
+    // Otherwise, create a splice_block to represent the sequence of
+    // instructions created by the action.
+    auto block_id = SemIR::InstBlockId::None;
+    if (pattern_contents.empty()) {
+      block_id = context.inst_block_stack().Pop();
+      context.pattern_block_stack().PopAndDiscard();
+    } else {
+      // TODO: pattern insts can depend on non-pattern insts, so we'll probably
+      // eventually need to support actions that produce both.
+      CARBON_CHECK(contents.empty());
+      block_id = context.pattern_block_stack().Pop();
+      context.inst_block_stack().PopAndDiscard();
+    }
+    auto result = context.insts().GetWithLocId(result_id);
+    result_id =
+        AddInstInNoBlock(context, result.loc_id,
+                         SemIR::SpliceBlock{.type_id = result.inst.type_id(),
+                                            .block_id = block_id,
+                                            .result_id = result_id});
   }
 
-  // Otherwise, create a splice_block to represent the sequence of instructions
-  // created by the action.
-  auto block_id = SemIR::InstBlockId::None;
-  if (pattern_contents.empty()) {
-    block_id = context.inst_block_stack().Pop();
-    context.pattern_block_stack().PopAndDiscard();
-  } else {
-    // TODO: pattern insts can depend on non-pattern insts, so we'll probably
-    // eventually need to support actions that produce both.
-    CARBON_CHECK(contents.empty());
-    block_id = context.pattern_block_stack().Pop();
-    context.inst_block_stack().PopAndDiscard();
-  }
-  auto result = context.insts().GetWithLocId(result_id);
-  return AddInstInNoBlock(context, result.loc_id,
-                          SemIR::SpliceBlock{.type_id = result.inst.type_id(),
-                                             .block_id = block_id,
-                                             .result_id = result_id});
+  // Discard the generic region pushed by `BeginPerformDelayedAction`. This is
+  // done last so that the `splice_block` above is also left unattached.
+  DiscardGenericDecl(context);
+  return result_id;
 }
 
 }  // namespace Carbon::Check

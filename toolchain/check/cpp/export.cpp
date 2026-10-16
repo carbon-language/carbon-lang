@@ -1513,6 +1513,10 @@ auto ExportFunctionSpecializationToCpp(
   if (specific_id == SemIR::SpecificId::None) {
     return false;
   }
+  if (!ResolveReturnTypeInSpecific(context, loc_id, target.function,
+                                   specific_id)) {
+    return false;
+  }
   // This name is appended to the thunk name to disambiguate between
   // specializations.
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
@@ -1576,10 +1580,11 @@ static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
 static auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
                                 SemIR::FunctionId callee_function_id)
     -> clang::NamedDecl* {
-  if (const auto& callee = context.functions().Get(callee_function_id);
-      callee.has_pending_deduced_return_type() ||
-      (callee.has_deduced_return_type() && callee.generic_id.has_value())) {
-    context.TODO(loc_id, "export of function with deduced return type");
+  if (context.functions()
+          .Get(callee_function_id)
+          .has_pending_deduced_return_type()) {
+    context.TODO(loc_id,
+                 "export of function before its return type is deduced");
     return nullptr;
   }
 

@@ -48,14 +48,12 @@ fn TestMethods(c: WithMethods) {
   let unused b: i32 = WithMethods.Static();
 }
 
-// --- fail_todo_generic_non_dependent.carbon
+// --- generic_non_dependent.carbon
 library "[[@TEST_NAME]]";
 
 fn GenericNonDependent[T: type](unused x: T) => 42 as i32;
 
 fn TestGenericNonDependent() {
-  // CHECK:STDERR: fail_todo_generic_non_dependent.carbon:[[@LINE+2]]:23-47: error: semantics TODO: `call to generic function with deduced return type` [SemanticsTodo]
-  // CHECK:STDERR:
   let unused a: i32 = GenericNonDependent(true);
 }
 
@@ -136,14 +134,14 @@ fn GenericId[T: Core.Copy](x: T) => x;
 // --- fail_call_before_deduced.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_call_before_deduced.carbon:[[@LINE+3]]:23-32: error: call to `Recurse` before its return type is deduced [CallBeforeReturnTypeDeduced]
+// CHECK:STDERR: fail_call_before_deduced.carbon:[[@LINE+3]]:23-32: error: call to `Recurse` before its return type is known [CallBeforeReturnTypeDeduced]
 // CHECK:STDERR: fail_call_before_deduced.carbon:[[@LINE+2]]:1-21: note: return type of `Recurse` is deduced from its definition [ReturnTypeDeducedFromDefinition]
 // CHECK:STDERR:
 fn Recurse(x: i32) => Recurse(x);
 
 class EarlyCall {
   fn M() => 1 as i32;
-  // CHECK:STDERR: fail_call_before_deduced.carbon:[[@LINE+3]]:16-18: error: call to `M` before its return type is deduced [CallBeforeReturnTypeDeduced]
+  // CHECK:STDERR: fail_call_before_deduced.carbon:[[@LINE+3]]:16-18: error: call to `M` before its return type is known [CallBeforeReturnTypeDeduced]
   // CHECK:STDERR: fail_call_before_deduced.carbon:[[@LINE-2]]:3-11: note: return type of `M` is deduced from its definition [ReturnTypeDeducedFromDefinition]
   // CHECK:STDERR:
   var x: i32 = M();
