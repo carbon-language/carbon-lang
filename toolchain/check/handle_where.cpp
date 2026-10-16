@@ -407,35 +407,33 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
 
-  if (!FindDesignator(context, lhs_id)) {
-    bool found_designator = false;
-    auto const_rhs_id = context.constant_values().Get(rhs_id);
-    if (auto facet_type =
-            context.constant_values().TryGetInstAs<SemIR::FacetType>(
-                const_rhs_id)) {
-      found_designator =
-          FindDesignatorInEveryExtendConstraint(context, *facet_type);
-    }
-    if (!found_designator) {
-      auto const_lhs_id = context.constant_values().Get(lhs_id);
-      if (const_lhs_id != SemIR::ErrorInst::ConstantId &&
-          const_rhs_id != SemIR::ErrorInst::ConstantId) {
-        // TODO: Can we diagnose the specific constraint that was missing the
-        // `.Self`?
-        DiagnoseMissingDesignator(context, node_id);
-      }
-      lhs_id = rhs_id = SemIR::ErrorInst::InstId;
-    }
-  }
-
   // Check lhs is a facet and rhs is a facet type.
   auto lhs_as_type = ExprAsType(context, lhs_node, lhs_id);
   auto rhs_as_type = ExprAsType(context, rhs_node, rhs_id);
   if (!context.types().IsFacetTypeOrError(rhs_as_type.type_id)) {
     DiagnoseImplsOnNonFacetType(context, rhs_node);
-    rhs_as_type.type_id = SemIR::ErrorInst::TypeId;
-    rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
+    rhs_as_type.SetError();
   }
+
+  if (!FindDesignator(context, lhs_as_type.inst_id)) {
+    bool found_designator = false;
+    if (auto facet_type =
+            context.types().TryGetAs<SemIR::FacetType>(rhs_as_type.type_id)) {
+      found_designator =
+          FindDesignatorInEveryExtendConstraint(context, *facet_type);
+    }
+    if (!found_designator) {
+      if (lhs_as_type.type_id != SemIR::ErrorInst::TypeId &&
+          rhs_as_type.type_id != SemIR::ErrorInst::TypeId) {
+        // TODO: Can we diagnose the specific constraint that was missing the
+        // `.Self`?
+        DiagnoseMissingDesignator(context, node_id);
+      }
+      lhs_as_type.SetError();
+      rhs_as_type.SetError();
+    }
+  }
+
   // TODO: For things like `HashSet(.T) as type`, add an implied constraint
   // that `.T impls Hash`.
 

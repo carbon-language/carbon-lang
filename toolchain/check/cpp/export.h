@@ -17,6 +17,13 @@ class CXXRecordDecl;
 
 namespace Carbon::Check {
 
+// Exports a Carbon package into C++ as a sub-namespace of `carbon_namespace`,
+// or returns the existing namespace if already exported in this C++ domain.
+auto ExportPackageNamespaceToCpp(Context& context,
+                                 clang::DeclContext* carbon_namespace,
+                                 clang::IdentifierInfo* package_identifier)
+    -> clang::NamespaceDecl*;
+
 // Exports a Carbon name scope into C++ as a namespace or class, or returns the
 // C++ namespace or class declaration that it was imported from.
 //

@@ -306,4 +306,13 @@ auto BuildNameRef(Context& context, SemIR::LocId loc_id, SemIR::NameId name_id,
       {.type_id = type_id, .name_id = name_id, .value_id = new_inst_id});
 }
 
+auto GetInstLocationOrFallback(Context& context, SemIR::InstId inst_id,
+                               SemIR::LocId fallback) -> SemIR::LocId {
+  auto loc_id = context.insts().GetCanonicalLocId(inst_id);
+  if (!loc_id.has_value()) {
+    loc_id = fallback;
+  }
+  return loc_id;
+}
+
 }  // namespace Carbon::Check

@@ -113,7 +113,7 @@ class C {
 
 fn F() {
   // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE+3]]:39-46: error: can't convert exported member function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
-  // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE-5]]:3-18: note: function exported with pointer type `void (Carbon::C::*)(void) const` [ExportedFromFunction]
+  // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE-5]]:3-18: note: function exported with pointer type `void (Carbon::Main::C::*)(void) const` [ExportedFromFunction]
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = C.Method;
 }
@@ -133,8 +133,8 @@ using MethodPtrType = void(Carbon::C::*)(float) const;
 
 fn G() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:39-46: error: can't convert exported member function pointer to `void (Carbon::C::*)(float) const` [ExportedFunctionPtrTypeMismatch]
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-10]]:3-26: note: function exported with pointer type `void (Carbon::C::*)(int) const` [ExportedFromFunction]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:39-46: error: can't convert exported member function pointer to `void (Carbon::Main::C::*)(float) const` [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-10]]:3-26: note: function exported with pointer type `void (Carbon::Main::C::*)(int) const` [ExportedFromFunction]
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = C.Method;
   //@dump-sem-ir-end

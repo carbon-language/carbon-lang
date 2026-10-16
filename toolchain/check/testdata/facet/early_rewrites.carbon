@@ -473,7 +473,7 @@ constraint NY(V: type) {
 // CHECK:STDERR:
 fn G(unused generic T: Z where .Z1 impls NY(()) and .Self impls Y and .Z2 = C(Self.(Y.Y1))) {}
 
-// --- fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon
+// --- access_of_rewrite_from_nested_facet_type.carbon
 library "[[@TEST_NAME]]";
 
 interface Z {
@@ -486,11 +486,5 @@ constraint NZ(PeriodY: type) {
 }
 
 fn F(generic T: Z where .Y = {} and .X = NZ(.Y), generic U: T.X) -> U.(Z.X) {
-  // This should fail: `U: T.X` contains a rewrite `.X = .Y` in its type, but
-  // the value of `U.(Z.Y)` is not known. Only `T.(Z.Y)` is rewritten to `{}`.
-  //
-  // CHECK:STDERR: fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon:[[@LINE+3]]:3-12: error: cannot implicitly convert expression of type `{}` to `U.(Z.X)` [ConversionFailure]
-  // CHECK:STDERR: fail_nested_facet_type_in_rewrite_does_not_use_rewrite_from_outside.carbon:[[@LINE+2]]:3-12: note: type `{}` does not implement interface `Core.ImplicitAs(U.(Z.X))` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:
   return {};
 }

@@ -268,7 +268,7 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
         .Emit();
     return SemIR::ErrorInst::InstId;
   }
-  if (callee.has_deduced_return_type && callee_specific_id->has_value()) {
+  if (callee.has_deduced_return_type() && callee_specific_id->has_value()) {
     // TODO: Resolve the specific definition to determine the return type.
     context.TODO(loc_id, "call to generic function with deduced return type");
     return SemIR::ErrorInst::InstId;
@@ -305,8 +305,8 @@ auto PerformCallToFunction(Context& context, SemIR::LocId loc_id,
   }
   // Convert the arguments to match the parameters.
   auto converted_args_id =
-      ConvertCallArgs(context, callee_function.self_id, arg_ids, return_arg_id,
-                      callee, *callee_specific_id, is_desugared);
+      ConvertCallArgs(context, loc_id, callee_function.self_id, arg_ids,
+                      return_arg_id, callee, *callee_specific_id, is_desugared);
   switch (callee.special_function_kind) {
     case SemIR::Function::SpecialFunctionKind::Thunk: {
       // If we're about to form a direct call to a thunk, inline it.

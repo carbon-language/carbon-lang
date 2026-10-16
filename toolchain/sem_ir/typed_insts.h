@@ -973,11 +973,10 @@ struct FormType : public SingletonTypeInst<InstKind::FormType, "Core.Form"> {
 
 // A function declaration.
 struct FunctionDecl {
-  static constexpr auto Kind =
-      InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
-          {.ir_name = "fn_decl",
-           .expr_category = ExprCategory::Value,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::FunctionDecl.Define<Parse::NodeId>(
+      {.ir_name = "fn_decl",
+       .expr_category = ExprCategory::Value,
+       .is_lowered = false});
 
   TypeId type_id;
   FunctionId function_id;
@@ -1681,13 +1680,15 @@ struct RefBindingPattern {
   EntityNameId entity_name_id;
 };
 
+// A primitive reference form.
 struct RefForm {
-  static constexpr auto Kind =
-      InstKind::RefForm.Define<Parse::NodeIdOneOf<Parse::PrefixOperatorRefId,
-                                                  Parse::RefPrimitiveFormId>>(
-          {.ir_name = "ref_form",
-           .constant_kind = InstConstantKind::Always,
-           .is_lowered = false});
+  // The node is usually a `RefPrimitiveForm` or `ref` prefix operator, but for
+  // a deduced return form, such as `-> ref auto`, it is the expression that the
+  // type was deduced from.
+  static constexpr auto Kind = InstKind::RefForm.Define<Parse::NodeId>(
+      {.ir_name = "ref_form",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
   TypeId type_id;
   TypeInstId type_component_inst_id;
@@ -2494,11 +2495,12 @@ struct ValueBindingPattern {
 
 // A primitive value form.
 struct ValueForm {
-  static constexpr auto Kind =
-      InstKind::ValueForm.Define<Parse::ValPrimitiveFormId>(
-          {.ir_name = "value_form",
-           .constant_kind = InstConstantKind::Always,
-           .is_lowered = false});
+  // The node is usually a `ValPrimitiveForm`, but for a deduced return form,
+  // such as `-> val auto`, it is the expression that the type was deduced from.
+  static constexpr auto Kind = InstKind::ValueForm.Define<Parse::NodeId>(
+      {.ir_name = "value_form",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
   TypeId type_id;
   TypeInstId type_component_inst_id;

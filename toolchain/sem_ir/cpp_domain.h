@@ -17,6 +17,7 @@ namespace clang {
 class CodeGenerator;
 class CompilerInstance;
 class Module;
+class NamespaceDecl;
 class Parser;
 }  // namespace clang
 
@@ -67,6 +68,9 @@ class CppDomain {
   auto header_modules() -> llvm::StringMap<clang::Module*>& {
     return header_modules_;
   }
+  auto package_namespaces() -> llvm::StringMap<clang::NamespaceDecl*>& {
+    return package_namespaces_;
+  }
 
  private:
   std::shared_ptr<clang::CompilerInstance> clang_instance_;
@@ -74,6 +78,7 @@ class CppDomain {
   Map<CheckIRId, clang::CodeGenerator*> code_generators_;
   Map<CheckIRId, clang::Module*> modules_;
   llvm::StringMap<clang::Module*> header_modules_;
+  llvm::StringMap<clang::NamespaceDecl*> package_namespaces_;
   llvm::LLVMContext* llvm_context_ = nullptr;
 };
 

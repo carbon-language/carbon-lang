@@ -1254,6 +1254,8 @@ constraint N {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) [identified] {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y_where.type.require(constants.%Self.d87) {
 // CHECK:STDOUT:   %Self => constants.%Self.d87
 // CHECK:STDOUT:   %Self.as_type.loc7_11.2 => constants.%Self.as_type
@@ -1422,6 +1424,8 @@ constraint N {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) [identified] {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y_where.type.require(constants.%Self.d87) {
 // CHECK:STDOUT:   %Self => constants.%Self.d87

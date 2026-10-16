@@ -325,7 +325,7 @@ class C;
 
 eval fn E(generic _: type) -> type { return C; }
 
-// CHECK:STDERR: fail_fn_call_returns_type_without_self_in_impls.carbon:[[@LINE+2]]:32-47: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fail_fn_call_returns_type_without_self_in_impls.carbon:[[@LINE+2]]:40-47: error: right argument of `impls` requirement must be a facet type [ImplsOnNonFacetType]
 // CHECK:STDERR:
 fn F(unused generic T: I where C impls E(.Self)) {}
 
@@ -359,7 +359,7 @@ eval fn E(generic T: type) -> type { return T; }
 // value. As such, we can't tell at the time of checking the facet type if
 // `E(.Self)` resolves to an expression containing a designator.
 
-// CHECK:STDERR: fail_fn_call_returns_type_with_self_in_impls.carbon:[[@LINE+2]]:32-47: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR: fail_fn_call_returns_type_with_self_in_impls.carbon:[[@LINE+2]]:40-47: error: right argument of `impls` requirement must be a facet type [ImplsOnNonFacetType]
 // CHECK:STDERR:
 fn F(unused generic T: I where C impls E(.Self)) {}
 

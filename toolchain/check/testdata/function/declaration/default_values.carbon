@@ -44,12 +44,12 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+7]]:35-38: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+6]]:24-27: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+7]]:35-38: error: this pattern is missing a required default value [RequiredPatternDefaultValueMissing]
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+6]]:24-27: note: all patterns to the right of this first pattern with a default value must also specify a default value [RequiredPatternDefaultValueFirstDefault]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+4]]:23-39: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+3]]:53-56: note: this pattern is also missing a required default value. [RequiredPatternDefaultValueMissingAdditional]
-// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+2]]:12-15: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+4]]:23-39: error: this pattern is missing a required default value [RequiredPatternDefaultValueMissing]
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+3]]:53-56: note: this pattern is also missing a required default value [RequiredPatternDefaultValueMissingAdditional]
+// CHECK:STDERR: fail_required_default_values_missing.carbon:[[@LINE+2]]:12-15: note: all patterns to the right of this first pattern with a default value must also specify a default value [RequiredPatternDefaultValueFirstDefault]
 // CHECK:STDERR:
 fn Z(v: C, x: C = {}, (y: C = {}, z: C), w: C = {}, k: C);
 
@@ -58,11 +58,11 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+6]]:36-47: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
-// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+5]]:25-28: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+6]]:36-47: error: this pattern is missing a required default value [RequiredPatternDefaultValueMissing]
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+5]]:25-28: note: all patterns to the right of this first pattern with a default value must also specify a default value [RequiredPatternDefaultValueFirstDefault]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+3]]:24-48: error: this pattern is missing a required default value. [RequiredPatternDefaultValueMissing]
-// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+2]]:13-16: note: all patterns to the right of this first pattern with a default value must also specify a default value. [RequiredPatternDefaultValueFirstDefault]
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+3]]:24-48: error: this pattern is missing a required default value [RequiredPatternDefaultValueMissing]
+// CHECK:STDERR: fail_nesting_required_default_values_missing.carbon:[[@LINE+2]]:13-16: note: all patterns to the right of this first pattern with a default value must also specify a default value [RequiredPatternDefaultValueFirstDefault]
 // CHECK:STDERR:
 fn F(a: C, (b: C = {}, (c: C = {}, (d: C, e: C))));
 

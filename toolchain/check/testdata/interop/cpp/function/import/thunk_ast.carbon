@@ -14,6 +14,7 @@
 // CHECK:STDOUT: TranslationUnitDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc>
 // CHECK:STDOUT: |-EmptyDecl {{0x[a-f0-9]+}} <<carbon Cpp imports>:1:1> col:1
 // CHECK:STDOUT: |-NamespaceDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> Carbon external-linkage
+// CHECK:STDOUT: | `-NamespaceDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> Main external-linkage
 
 // --- thunk_required.h
 
@@ -45,10 +46,11 @@ fn F() {
   Cpp.foo(1 as i16);
 }
 
-// CHECK:STDOUT: `-ImportDecl {{0x[a-f0-9]+}} <import_thunk_required.carbon:[[@LINE+3]]:104> col:104 in import_thunk_required.carbon implicit import_thunk_required.carbon
+// CHECK:STDOUT: `-ImportDecl {{0x[a-f0-9]+}} <import_thunk_required.carbon:[[@LINE+4]]:104> col:104 in import_thunk_required.carbon implicit import_thunk_required.carbon
 // CHECK:STDOUT: TranslationUnitDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc>
 // CHECK:STDOUT: |-EmptyDecl {{0x[a-f0-9]+}} <<carbon Cpp imports>:1:1> col:1
 // CHECK:STDOUT: |-NamespaceDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> Carbon external-linkage
+// CHECK:STDOUT: | `-NamespaceDecl {{0x[a-f0-9]+}} <<invalid sloc>> <invalid sloc> Main external-linkage
 // --- return_thunk_required.h
 
 auto foo() -> short;

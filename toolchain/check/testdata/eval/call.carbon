@@ -194,7 +194,7 @@ fn H() {
 // CHECK:STDOUT:   %inst.splice_block.426619.1: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.dbd: init %C = splice_block %.b84 [concrete = %C.val] {
 // CHECK:STDOUT:       %.ddc4c9.2: ref %C = specific_inst @UseFGenerically.%v.var, @UseFGenerically(%int_3.9f3)
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.b84: init %C to %.ddc4c9.2 = class_init () [concrete = %C.val]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple.242: %tuple.type.f7a = tuple_value (%inst.splice_block.426619.1) [concrete]

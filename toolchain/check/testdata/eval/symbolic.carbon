@@ -42,7 +42,7 @@ fn G(generic B: bool) {
 // TODO: Provide a location for the "cannot initialize" error message.
 fn H() {
   // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE+3]]:3: error: unable to monomorphize specific `G(true)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon: note: cannot initialize tuple of 0 elements from tuple with 2 elements [TupleInitElementCountMismatch]
+  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE-6]]:24-31: note: cannot initialize tuple of 0 elements from tuple with 2 elements [TupleInitElementCountMismatch]
   // CHECK:STDERR:
   G(true);
 }

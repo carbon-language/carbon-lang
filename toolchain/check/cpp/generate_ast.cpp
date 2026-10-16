@@ -277,15 +277,31 @@ auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
   // We provide custom lookup results within this namespace.
   carbon_cpp_namespace->getPrimaryContext()->setHasExternalVisibleStorage();
 
-  // Register this file's package scope as corresponding to the `Carbon`
-  // namespace in C++.
-  // TODO: For mangling purposes, include the package as a sub-namespace.
-  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(carbon_cpp_namespace);
-  auto clang_decl_id = context_->clang_decls().Add(
-      {.key = key, .inst_id = SemIR::Namespace::PackageInstId});
-  context_->name_scopes()
-      .Get(SemIR::NameScopeId::Package)
-      .set_clang_decl_context_id(clang_decl_id, /*is_cpp_scope=*/false);
+  // Create or find the sub-namespace for this file's package, which is used as
+  // the parent `DeclContext` for package-scope entities so that the package
+  // name is included in C++ mangled names.
+  auto& package_scope =
+      context_->name_scopes().Get(SemIR::NameScopeId::Package);
+  auto package_name = context_->names().GetIRBaseName(package_scope.name_id());
+  auto* package_identifier = &ast_context.Idents.get(package_name);
+  auto* package_cpp_namespace = ExportPackageNamespaceToCpp(
+      *context_, carbon_cpp_namespace, package_identifier);
+
+  // Register this file's package scope as corresponding to the package
+  // sub-namespace in C++, and also map the `Carbon` namespace itself to the
+  // package scope so that C++ lookups in `Carbon` find package-scope entities
+  // directly (and do not find the current package name).
+  auto package_key =
+      SemIR::ClangDeclKey::ForNonFunctionDecl(package_cpp_namespace);
+  auto package_clang_decl_id = context_->clang_decls().Add(
+      {.key = package_key, .inst_id = SemIR::Namespace::PackageInstId});
+  package_scope.set_clang_decl_context_id(package_clang_decl_id,
+                                          /*is_cpp_scope=*/false);
+
+  auto carbon_key =
+      SemIR::ClangDeclKey::ForNonFunctionDecl(carbon_cpp_namespace);
+  context_->clang_decls().Add(
+      {.key = carbon_key, .inst_id = SemIR::Namespace::PackageInstId});
 }
 
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(

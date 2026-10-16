@@ -61,7 +61,7 @@ auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
   }
 
   auto match_results =
-      CalleePatternMatch(context, *implicit_param_patterns_id,
+      CalleePatternMatch(context, params_node_id, *implicit_param_patterns_id,
                          *param_patterns_id, return_specifier.pattern_id);
   context.full_pattern_stack().PopFullPattern();
   auto pattern_block_id = context.pattern_block_stack().Pop();
@@ -112,7 +112,7 @@ auto HandleParseNode(Context& context, Parse::LambdaDefinitionStartId node_id)
                   return_specifier.form.type_component_inst_id,
               .return_form_inst_id = return_specifier.form.form_inst_id,
               .return_pattern_id = return_specifier.pattern_id,
-              .has_deduced_return_type = return_specifier.is_deduced,
+              .deduced_return_kind = return_specifier.deduced_return_kind,
           }});
   context.inst_block_stack().AddInstId(decl_id);
 

@@ -34,8 +34,10 @@ auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
 struct ReturnSpecifierInfo {
   // The return specifier, or `None` if there is none.
   Parse::NodeId node_id = Parse::NoneNodeId();
-  // Whether the return type is deduced from the body, as in `-> auto`.
-  bool is_deduced = false;
+  // Whether, and how, the return type is deduced from the body, as in
+  // `-> auto` or `-> ref auto`.
+  SemIR::Function::DeducedReturnKind deduced_return_kind =
+      SemIR::Function::DeducedReturnKind::None;
   // The declared return pattern. `None` if there is no return specifier or
   // the return type is deduced.
   SemIR::InstId pattern_id = SemIR::InstId::None;
@@ -44,6 +46,9 @@ struct ReturnSpecifierInfo {
   Context::FormExpr form = Context::FormExpr::None;
 
   auto has_return_specifier() const -> bool { return node_id.has_value(); }
+  auto is_deduced() const -> bool {
+    return deduced_return_kind != SemIR::Function::DeducedReturnKind::None;
+  }
 };
 
 // Pops the return specifier of a function declaration or function expression

@@ -18,6 +18,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/inst.h"
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
@@ -151,9 +152,9 @@ class MatchContext {
 
   // Constructs a MatchContext that uses the substituted constant values of
   // patterns in the given specific.
-  explicit MatchContext(Context& context,
+  explicit MatchContext(Context& context, SemIR::LocId loc_id,
                         SemIR::SpecificId specific_id = SemIR::SpecificId::None)
-      : specific_id_stack_({specific_id}), context_(context) {}
+      : specific_id_stack_({specific_id}), context_(context), loc_id_(loc_id) {}
 
   // Performs pattern matching for the given work item.
   auto Match(State state, WorkItem entry) -> void;
@@ -268,6 +269,7 @@ class MatchContext {
   llvm::SmallVector<SemIR::SpecificId> specific_id_stack_;
 
   Context& context_;
+  SemIR::LocId loc_id_;
 };
 
 }  // namespace
@@ -491,7 +493,9 @@ auto MatchContext::DoPreWork(State state, SemIR::AnyParamPattern param_pattern,
         caller_state->call_args.push_back(SemIR::ErrorInst::InstId);
       } else {
         caller_state->call_args.push_back(
-            Convert(context_, SemIR::LocId(scrutinee_id), scrutinee_id,
+            Convert(context_,
+                    GetInstLocationOrFallback(context_, scrutinee_id, loc_id_),
+                    scrutinee_id,
                     {.kind = ConversionKindFor(param_pattern, entry),
                      .type_id = scrutinee_type_id}));
       }
@@ -1080,7 +1084,7 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
   }
 }
 
-auto CalleePatternMatch(Context& context,
+auto CalleePatternMatch(Context& context, SemIR::LocId loc_id,
                         SemIR::InstBlockId implicit_param_patterns_id,
                         SemIR::InstBlockId param_patterns_id,
                         SemIR::InstId return_pattern_id)
@@ -1093,7 +1097,7 @@ auto CalleePatternMatch(Context& context,
   }
 
   CalleeState state = {.index = IndexSource(SemIR::CallParamIndex(0))};
-  MatchContext match(context);
+  MatchContext match(context, loc_id);
 
   // We add work to the stack in reverse so that the results will be produced
   // in the original order.
@@ -1133,7 +1137,7 @@ auto CalleePatternMatch(Context& context,
           .param_ranges = {implicit_end, explicit_end, return_end}};
 }
 
-auto CalleeReturnPatternMatch(Context& context,
+auto CalleeReturnPatternMatch(Context& context, SemIR::LocId loc_id,
                               const CalleePatternMatchResults& param_results,
                               SemIR::InstId return_pattern_id)
     -> CalleePatternMatchResults {
@@ -1152,7 +1156,7 @@ auto CalleeReturnPatternMatch(Context& context,
                                                       call_params.end()),
       .call_param_patterns = llvm::SmallVector<SemIR::InstId>(
           call_param_patterns.begin(), call_param_patterns.end())};
-  MatchContext match(context);
+  MatchContext match(context, loc_id);
   match.Match(&state, {.pattern_id = return_pattern_id,
                        .work = MatchContext::PreWork{.scrutinee_id =
                                                          SemIR::InstId::None}});
@@ -1166,12 +1170,12 @@ auto CalleeReturnPatternMatch(Context& context,
                            explicit_end, return_end}};
 }
 
-auto ThunkPatternMatch(Context& context,
+auto ThunkPatternMatch(Context& context, SemIR::LocId loc_id,
                        llvm::ArrayRef<SemIR::InstId> param_pattern_ids,
                        llvm::ArrayRef<SemIR::InstId> outer_call_args)
     -> ThunkPatternMatchResults {
   ThunkState state = {.outer_call_args = outer_call_args};
-  MatchContext match(context);
+  MatchContext match(context, loc_id);
 
   llvm::SmallVector<SemIR::InstId> inner_args;
   inner_args.reserve(outer_call_args.size());
@@ -1190,11 +1194,11 @@ auto ThunkPatternMatch(Context& context,
 
 // TODO: There is a cycle through pattern matching with an action.
 // NOLINTNEXTLINE(misc-no-recursion)
-auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
+auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::CallerPatternMatchAction action) -> SemIR::InstId {
   auto args = context.bundles().Get(action.args_id);
   CallerState state;
-  MatchContext match(context, args.callee_specific_id);
+  MatchContext match(context, loc_id, args.callee_specific_id);
 
   match.Match(&state,
               {.pattern_id = args.pattern_id,
@@ -1208,11 +1212,11 @@ auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
 
 // TODO: There is a cycle through pattern matching with an action.
 // NOLINTNEXTLINE(misc-no-recursion)
-auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
+auto PerformAction(Context& context, SemIR::LocId loc_id,
                    SemIR::CalleePatternMatchAction action) -> SemIR::InstId {
   auto args = context.bundles().Get(action.args_id);
   CalleeState state = {.index = IndexSource(args.parent_index)};
-  MatchContext match(context);
+  MatchContext match(context, loc_id);
 
   auto result_id = match.MatchWithResult(
       &state,
@@ -1224,16 +1228,14 @@ auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
   return result_id;
 }
 
-auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
-                        SemIR::InstId self_pattern_id,
-                        SemIR::InstBlockId param_patterns_id,
-                        SemIR::InstId return_pattern_id,
-                        SemIR::InstId self_arg_id,
-                        llvm::ArrayRef<SemIR::InstId> arg_refs,
-                        SemIR::InstId return_arg_id, bool is_desugared)
-    -> SemIR::InstBlockId {
+auto CallerPatternMatch(
+    Context& context, SemIR::LocId loc_id, SemIR::SpecificId specific_id,
+    SemIR::InstId self_pattern_id, SemIR::InstBlockId param_patterns_id,
+    SemIR::InstId return_pattern_id, SemIR::InstId self_arg_id,
+    llvm::ArrayRef<SemIR::InstId> arg_refs, SemIR::InstId return_arg_id,
+    bool is_desugared) -> SemIR::InstBlockId {
   CallerState state;
-  MatchContext match(context, specific_id);
+  MatchContext match(context, loc_id, specific_id);
 
   // When we have a separate `self_arg_id`, we concatenate that onto the front
   // of the arg_refs to match against the first parameter.
@@ -1278,10 +1280,11 @@ auto CallerPatternMatch(Context& context, SemIR::SpecificId specific_id,
   return context.inst_blocks().Add(state.call_args);
 }
 
-auto LocalPatternMatch(Context& context, SemIR::InstId pattern_id,
-                       SemIR::InstId scrutinee_id) -> void {
+auto LocalPatternMatch(Context& context, SemIR::LocId loc_id,
+                       SemIR::InstId pattern_id, SemIR::InstId scrutinee_id)
+    -> void {
   LocalState state;
-  MatchContext match(context);
+  MatchContext match(context, loc_id);
   match.Match(&state,
               {.pattern_id = pattern_id,
                .work = MatchContext::PreWork{.scrutinee_id = scrutinee_id}});

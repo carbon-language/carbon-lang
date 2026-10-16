@@ -106,7 +106,7 @@ fn Nested.EarlyFn() {}
 
 inline Cpp '''
 void TestTypoInNested() {
-  // CHECK:STDERR: fail_typo_in_nested_namespace.carbon:[[@LINE+3]]:19-31: error: no member named 'LaterInNested' in namespace 'Carbon::Nested' [CppInteropParseError]
+  // CHECK:STDERR: fail_typo_in_nested_namespace.carbon:[[@LINE+3]]:19-31: error: no member named 'LaterInNested' in namespace 'Carbon::Main::Nested' [CppInteropParseError]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_typo_in_nested_namespace.carbon:[[@LINE+1]]:19: error: name `LaterInNested` used before it was declared [NameUseBeforeDecl]
   Carbon::Nested::LaterInNested();
@@ -139,7 +139,7 @@ class MyClass {
 inline Cpp '''
 void TestTypoInClass() {
   Carbon::MyClass::StaticMethod1();
-  // CHECK:STDERR: fail_typo_in_carbon_class.carbon:[[@LINE+2]]:20-31: error: no member named 'NoSuchMember' in 'Carbon::MyClass' [CppInteropParseError]
+  // CHECK:STDERR: fail_typo_in_carbon_class.carbon:[[@LINE+2]]:20-31: error: no member named 'NoSuchMember' in 'Carbon::Main::MyClass' [CppInteropParseError]
   // CHECK:STDERR:
   Carbon::MyClass::NoSuchMember();
   Carbon::MyClass::StaticMethod1();

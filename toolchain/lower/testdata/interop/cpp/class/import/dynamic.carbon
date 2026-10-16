@@ -55,20 +55,20 @@ fn DoThing() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN11FurtherBaseC2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTVN6Carbon7DerivedE = comdat any
+// CHECK:STDOUT: $_ZTVN6Carbon4Main7DerivedE = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTIN6Carbon7DerivedE = comdat any
+// CHECK:STDOUT: $_ZTIN6Carbon4Main7DerivedE = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZTSN6Carbon7DerivedE = comdat any
+// CHECK:STDOUT: $_ZTSN6Carbon4Main7DerivedE = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_ZTV4Base = available_externally constant { [4 x ptr] } { [4 x ptr] [ptr null, ptr @_ZTI4Base, ptr @_ZN11FurtherBase17further_base_funcEv, ptr @_ZNR4Base4funcEv] }, align 8
 // CHECK:STDOUT: @_ZTV11FurtherBase = available_externally constant { [3 x ptr] } { [3 x ptr] [ptr null, ptr @_ZTI11FurtherBase, ptr @_ZN11FurtherBase17further_base_funcEv] }, align 8
-// CHECK:STDOUT: @_ZTVN6Carbon7DerivedE = linkonce_odr dso_local constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTIN6Carbon7DerivedE, ptr @_ZN11FurtherBase17further_base_funcEv, ptr @_ZNR6Carbon7Derived4funcEv, ptr @_ZNK6Carbon7Derived10other_funcEv] }, comdat, align 8
+// CHECK:STDOUT: @_ZTVN6Carbon4Main7DerivedE = linkonce_odr dso_local constant { [5 x ptr] } { [5 x ptr] [ptr null, ptr @_ZTIN6Carbon4Main7DerivedE, ptr @_ZN11FurtherBase17further_base_funcEv, ptr @_ZNR6Carbon4Main7Derived4funcEv, ptr @_ZNK6Carbon4Main7Derived10other_funcEv] }, comdat, align 8
 // CHECK:STDOUT: @_ZTI4Base = external constant ptr
 // CHECK:STDOUT: @_ZTI11FurtherBase = external constant ptr
-// CHECK:STDOUT: @_ZTIN6Carbon7DerivedE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon7DerivedE, ptr @_ZTI4Base }, comdat, align 8
+// CHECK:STDOUT: @_ZTIN6Carbon4Main7DerivedE = linkonce_odr dso_local constant { ptr, ptr, ptr } { ptr getelementptr inbounds (i8, ptr @_ZTVN10__cxxabiv120__si_class_type_infoE, i64 16), ptr @_ZTSN6Carbon4Main7DerivedE, ptr @_ZTI4Base }, comdat, align 8
 // CHECK:STDOUT: @_ZTVN10__cxxabiv120__si_class_type_infoE = external global [0 x ptr]
-// CHECK:STDOUT: @_ZTSN6Carbon7DerivedE = linkonce_odr dso_local constant [18 x i8] c"N6Carbon7DerivedE\00", comdat, align 1
+// CHECK:STDOUT: @_ZTSN6Carbon4Main7DerivedE = linkonce_odr dso_local constant [23 x i8] c"N6Carbon4Main7DerivedE\00", comdat, align 1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress noinline nounwind optnone uwtable
 // CHECK:STDOUT: define dso_local void @_Z3UseR4Base(ptr noundef nonnull align 8 dereferenceable(12) %b) #0 {
@@ -170,7 +170,7 @@ fn DoThing() {
 // CHECK:STDOUT:   %.loc31_44.7.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !96
 // CHECK:STDOUT:   %.loc31_44.8.base = getelementptr inbounds nuw [16 x i8], ptr %.loc31_44.7.base, i32 0, i32 0, !dbg !96
 // CHECK:STDOUT:   %.loc31_44.9.vptr = getelementptr inbounds nuw [8 x i8], ptr %.loc31_44.8.base, i32 0, i32 0, !dbg !96
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon7DerivedE, i64 16), ptr %.loc31_44.9.vptr, align 8, !dbg !96
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 24) (i8, ptr @_ZTVN6Carbon4Main7DerivedE, i64 16), ptr %.loc31_44.9.vptr, align 8, !dbg !96
 // CHECK:STDOUT:   %.loc32_11.2.base = getelementptr inbounds nuw { [16 x i8] }, ptr %d.var, i32 0, i32 0, !dbg !100
 // CHECK:STDOUT:   call void @_Z3UseR4Base(ptr %.loc32_11.2.base), !dbg !101
 // CHECK:STDOUT:   call void @"_CSelfDestruct.b25525d21a9bd472:core.Destroy.Core"(ptr %d.var), !dbg !95
@@ -194,7 +194,7 @@ fn DoThing() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #6
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZNR6Carbon7Derived4funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #4 align 2 {
+// CHECK:STDOUT: define internal void @_ZNR6Carbon4Main7Derived4funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #4 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !108
@@ -204,7 +204,7 @@ fn DoThing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZNK6Carbon7Derived10other_funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #4 align 2 {
+// CHECK:STDOUT: define internal void @_ZNK6Carbon4Main7Derived10other_funcEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #4 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !108
@@ -319,7 +319,7 @@ fn DoThing() {
 // CHECK:STDOUT: !104 = !{!103, !103, i64 0}
 // CHECK:STDOUT: !105 = !{!"p1 _ZTS11FurtherBase", !2, i64 0}
 // CHECK:STDOUT: !106 = !{!105, !105, i64 0}
-// CHECK:STDOUT: !107 = !{!"p1 _ZTSN6Carbon7DerivedE", !2, i64 0}
+// CHECK:STDOUT: !107 = !{!"p1 _ZTSN6Carbon4Main7DerivedE", !2, i64 0}
 // CHECK:STDOUT: !108 = !{!107, !107, i64 0}
 // CHECK:STDOUT: !110 = !{!"int", !1, i64 0}
 // CHECK:STDOUT: !113 = !{i32 8, !"PIC Level", i32 2}
