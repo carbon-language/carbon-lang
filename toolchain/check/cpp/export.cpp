@@ -1228,10 +1228,25 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
                          .subpattern_id = SemIR::InstId::None});
   //  |
   //  \- MakeUnqualifiedName
-  auto name_context =
-      context.decl_name_stack().MakeUnqualifiedName(loc_id, name_id);
-  context.decl_name_stack().AddNameOrDiagnose(name_context, binding.bind_id,
-                                              SemIR::AccessKind::Public);
+  /*
+    auto name_context =
+        context.decl_name_stack().MakeUnqualifiedName(loc_id, name_id);
+    name_context.initial_scope_index = ScopeIndex::Package;
+    name_context.parent_scope_id = SemIR::NameScopeId::None;
+    context.decl_name_stack().AddNameOrDiagnose(name_context, binding.bind_id,
+                                                SemIR::AccessKind::Public);
+                                                */
+  auto export_id =
+      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
+                           context.sem_ir(), loc_id,
+                           SemIR::ExportDecl({.type_id = scrutinee_type_id,
+                                              .entity_name_id = entity_name_id,
+                                              .value_id = binding.bind_id})));
+  context.exports().push_back(export_id);
+  auto& name_scope = context.name_scopes().Get(SemIR::NameScopeId::Package);
+  name_scope.AddRequired({.name_id = name_id,
+                          .result = SemIR::ScopeLookupResult::MakeFound(
+                              binding.bind_id, SemIR::AccessKind::Public)});
   context.full_pattern_stack().AddBindName(name_id);
 
   // VariablePattern
@@ -1247,6 +1262,14 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
                    context.sem_ir(), loc_id,
                    SemIR::VarPattern({.type_id = pattern_type_id,
                                       .subpattern_id = binding.pattern_id})));
+  // This pattern is normally added much later but we can add it to the pattern
+  // block now.
+  AddInst(context,
+          SemIR::LocIdAndInst::RuntimeVerified(
+              context.sem_ir(), loc_id,
+              SemIR::WrapperBindingPattern({.type_id = pattern_type_id,
+                                            .entity_name_id = entity_name_id,
+                                            .subpattern_id = var_pattern_id})));
   //  |
   //  +- GetOrAddVarStorage
   auto var_storage_id =
@@ -1285,22 +1308,17 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
   //     |
   //     +- InitializeExisting
 
+  //  |
+  //  +- Create the NameBindingDecl
+  context.global_init().Resume();
   auto init_id = InitializeExisting(context, loc_id, var_storage_id,
                                     scrutinee_id, /*for_return=*/false);
   AddInst<SemIR::Assign>(context, loc_id,
                          {.lhs_id = var_storage_id, .rhs_id = init_id});
-  AddInst(context,
-          SemIR::LocIdAndInst::RuntimeVerified(
-              context.sem_ir(), loc_id,
-              SemIR::WrapperBindingPattern({.type_id = pattern_type_id,
-                                            .entity_name_id = entity_name_id,
-                                            .subpattern_id = var_pattern_id})));
-
-  //  |
-  //  +- Create the NameBindingDecl
   auto pattern_block_id = context.pattern_block_stack().Pop();
   AddInst<SemIR::NameBindingDecl>(context, loc_id,
                                   {.pattern_block_id = pattern_block_id});
+  context.global_init().Suspend();
   context.full_pattern_stack().PopFullPattern();
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Var>();
   context.inst_block_stack().Pop();
@@ -1310,12 +1328,12 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
       ExportVarToCpp(context, var_storage_id,
                      context.insts().GetAs<SemIR::VarStorage>(var_storage_id));
   // Return a reference expression to the variable.
-  auto* decl_ref_expr = clang::DeclRefExpr::Create(
-      context.ast_context(), var_decl->getQualifierLoc(),
-      clang::SourceLocation(), var_decl, false, clang::SourceLocation(),
-      var_decl->getType(), clang::ExprValueKind::VK_PRValue);
-  CARBON_CHECK(decl_ref_expr);
-  return decl_ref_expr;
+  auto decl_ref_expr = context.clang_sema().BuildDeclarationNameExpr(
+      clang::CXXScopeSpec(),
+      clang::DeclarationNameInfo(var_decl->getDeclName(),
+                                 clang::SourceLocation()),
+      var_decl);
+  return decl_ref_expr.get();
 }
 
 // Create the declaration of the C++ thunk.
@@ -1402,9 +1420,16 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
     clang::ParmVarDecl* thunk_param = clang::ParmVarDecl::Create(
         ast_context, thunk_function_decl, /*StartLoc=*/clang_loc,
         /*IdLoc=*/clang_loc, /*Id=*/nullptr, type,
-        /*TInfo=*/nullptr, clang::SC_None,
-        BuildDefaultValueExpr(context, loc_id, target, i, param.pattern_inst_id,
-                              param.default_value_inst_id));
+        /*TInfo=*/nullptr, clang::SC_None, /*DefArg=*/nullptr);
+    if (auto* default_value_expr = BuildDefaultValueExpr(
+            context, loc_id, target, i, param.pattern_inst_id,
+            param.default_value_inst_id)) {
+      auto converted_result = context.clang_sema().ConvertParamDefaultArgument(
+          thunk_param, default_value_expr, clang_loc);
+      CARBON_CHECK(!converted_result.isInvalid());
+      context.clang_sema().SetParamDefaultArgument(
+          thunk_param, converted_result.get(), clang_loc);
+    }
     param_var_decls.push_back(thunk_param);
   }
   thunk_function_decl->setParams(param_var_decls);
