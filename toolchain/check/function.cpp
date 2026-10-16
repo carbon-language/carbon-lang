@@ -817,7 +817,8 @@ auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
   }
 }
 
-auto CheckFunctionTerseBody(Context& context, Parse::NodeId node_id,
+auto CheckFunctionTerseBody(Context& context,
+                            Parse::AnyTerseFunctionDefinitionId node_id,
                             SemIR::FunctionId function_id,
                             SemIR::InstId body_expr_id) -> void {
   // A terse body `=> expr` is equivalent to `{ return expr; }`. The return type

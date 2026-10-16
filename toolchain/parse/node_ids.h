@@ -203,6 +203,8 @@ using AnyRuntimeBindingPatternName =
                 UnderscoreNameId>;
 using AnyPrimitiveFormIdId =
     NodeIdOneOf<RefPrimitiveFormId, VarPrimitiveFormId, ValPrimitiveFormId>;
+using AnyTerseFunctionDefinitionId =
+    NodeIdOneOf<FunctionTerseDefinitionId, LambdaTerseDefinitionId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>
