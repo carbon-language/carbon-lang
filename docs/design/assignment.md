@@ -83,9 +83,11 @@ However, the first operand must be modifiable because it is passed to a
 
 ## Simple assignment semantics
 
-A simple assignment statement is intended to exactly mirror the semantics of
-initialization. The following two code snippets should have the same meaning if
-they are both valid:
+A simple assignment statement to an unformed variable is intended to mirror the
+semantics of initialization. When `T` does not implement `Core.Default` (so that
+`var v: T;` leaves `v` in an
+[unformed state](/docs/design/values.md#unformed-state)), the following two code
+snippets have the same meaning if they are both valid:
 
 ```
 // Declare and initialize.
@@ -94,16 +96,30 @@ var v: T = init;
 
 ```
 // Declare separately from initialization.
-// Requires that `T` has an unformed state.
+// Requires that `T` has a default value or an unformed state.
 var v: T;
 v = init;
 ```
 
-This equivalence is not enforced, but when an object is in an unformed state,
-running the assignment function is _optional_, just like running the destructor
-is. If the assignment function is not run, the object will be directly
-initialized from the right-hand side instead. The type is still required to
-implement `AssignWith` for the assignment to be valid.
+An implementation of `AssignWith` may declare its object parameter as
+[`Core.MaybeUnformed(Self)`](/docs/design/values.md#using-an-object-that-might-be-unformed),
+in which case it is called whether or not the object is unformed and is
+responsible for handling both cases, leaving the object initialized on return.
+
+When the implementation does not opt in this way, and the object might be in an
+[unformed state](/docs/design/values.md#unformed-state):
+
+-   If the type implements `Core.IsUnformed`, the language tests
+    `Core.IsUnformed` first and, when the object is unformed, directly
+    initializes it from the right-hand side instead of running the assignment
+    function.
+-   Otherwise (for a `Core.UnformedNoop` or direct `Core.UnformedInit` type),
+    running the assignment function is _optional_, just like running the
+    destructor is: the object may either be assigned using `AssignWith` or
+    directly initialized from the right-hand side.
+
+In all cases, the type is still required to implement `AssignWith` for the
+assignment to be valid.
 
 ```
 class C { ... }
@@ -354,3 +370,5 @@ impl MyString as AddAssignWith(like MyString) {
     [#1191: Bitwise and shift operators](https://github.com/carbon-language/carbon-lang/pull/1191)
 -   Proposal
     [#2511: Assignment statements](https://github.com/carbon-language/carbon-lang/pull/2511)
+-   Proposal
+    [#7640: Reworking unformed state](https://github.com/carbon-language/carbon-lang/pull/7640)

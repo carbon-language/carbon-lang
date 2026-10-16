@@ -32,6 +32,12 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Function calls and returns](#function-calls-and-returns)
         -   [Deferred initialization from values and references](#deferred-initialization-from-values-and-references)
         -   [Declared `returned` variable](#declared-returned-variable)
+-   [Unformed state](#unformed-state)
+    -   [Declaring an unformed state](#declaring-an-unformed-state)
+    -   [Detecting an unformed state](#detecting-an-unformed-state)
+    -   [Hardening an unformed state](#hardening-an-unformed-state)
+    -   [Declaring a variable with no initializer](#declaring-a-variable-with-no-initializer)
+    -   [Using an object that might be unformed](#using-an-object-that-might-be-unformed)
 -   [Extended types](#extended-types)
     -   [Initializing results](#initializing-results)
     -   [Extended type conversions](#extended-type-conversions)
@@ -604,14 +610,7 @@ The specific tradeoff here is covered in a proposal
 Storage in Carbon is initialized using _initializing expressions_. Their
 evaluation takes a _result location_ as an implicit input, and produces an
 initialized object at that location, although that object may still be
-_unformed_.
-
-**Future work:** More details on initialization and unformed objects should be
-added to the design from the proposal
-[#257](https://github.com/carbon-language/carbon-lang/pull/257), see
-[#1993](https://github.com/carbon-language/carbon-lang/issues/1993). When added,
-it should be linked from here for the details on the initialization semantics
-specifically.
+[unformed](#unformed-state).
 
 The simplest form of initializing expressions are value or durable reference
 expressions that are converted into an initializing expression. Value
@@ -804,6 +803,201 @@ where that initialization is not necessary.
 The model of initialization of returns also facilitates the use of
 [`returned var` declarations](control_flow/return.md#returned-var). These
 directly observe the storage provided for initialization of a function's return.
+
+## Unformed state
+
+An object is _unformed_ when it has been given storage and initialized only to
+an unformed representation rather than a meaningful value. A type supports an
+unformed state by implementing `Core.UnformedInit` (typically by way of
+`Core.UnformedInvalid` or `Core.UnformedNoop`). An unformed state belongs to one
+of two semantic categories:
+
+-   _Invalid_ (`Core.UnformedInvalid`): the unformed representation is not a
+    valid value of the type and can be detected with `Core.IsUnformed`. When an
+    object might be unformed, the language tests `Core.IsUnformed` before
+    destruction (skipping the destructor when unformed) and before assignment
+    (initializing the object instead of assigning when unformed, unless the
+    type's assignment implementation opts into handling `Core.MaybeUnformed`).
+-   _No-op_ (`Core.UnformedNoop`, or implementing `Core.UnformedInit` directly
+    without `Core.IsUnformed`): every representation whose participating fields
+    match the nominated unformed value (with any remaining bytes arbitrary) has
+    a no-op destructor and supports normal assignment. Destruction and normal
+    assignment may run or be skipped without changing program behavior or
+    leaking resources.
+
+A type may have more than one in-memory representation for an unformed object,
+and those representations may also be valid values of the type. For example,
+every representation is a valid unformed representation for a type with a
+trivial destructor such as `i32`. Operating on an unformed object as a formed
+value is an error even when its representation is that of a valid value for the
+type.
+
+The _unformed representation set_ of a type is the set of representations an
+object of the type may hold while unformed. This includes both the _unformed
+value_ written by `Core.UnformedInit` and the _hardened unformed value_ written
+by `Core.UnformedHardenInit` when hardening is enabled.
+
+### Declaring an unformed state
+
+A type declares an unformed state by implementing `Core.UnformedInit`:
+
+```carbon
+interface UnformedInit {
+  private default let StructT: type = {};
+  default fn Op() -> Core.MaybeUnformed(Self) {
+    return {} unsafe as Core.MaybeUnformed(Self);
+  }
+}
+```
+
+`StructT` is a struct type whose field names are a subset of `Self`'s, and whose
+field types are compatible with the corresponding fields of `Self`. It specifies
+which fields of `Self` are initialized in the unformed state; any other fields
+are left uninitialized. `Op` produces an unformed object by initializing those
+fields in place (using a built-in `unsafe as` conversion from `StructT` to
+`Core.MaybeUnformed(Self)`). Both default to `{}` (when `StructT` is overridden,
+`Value` or `Op` must also be provided), so a type with a trivial destructor can
+implement `Core.UnformedInit` using the defaults (`impl as Core.UnformedInit
+{}`).
+
+For composite types that do not customize `Core.UnformedInit` (tuples, structs,
+arrays, and data classes), an unformed state is synthesized member-wise when all
+members implement `Core.UnformedInit`.
+
+`StructT` is `private` so that implementing an unformed state does not expose
+the names or types of private fields outside the prelude and language
+implementation.
+
+> **Open question:** Carbon has access control on an interface declaration but
+> not on an interface member. Whether `private` is the right spelling for an
+> associated member that an external `impl` can define but external callers
+> cannot read is still an open question.
+
+Most types implement one of two interfaces that provide a blanket implementation
+of `Core.UnformedInit` from a constant `Value`:
+
+-   `Core.UnformedInvalid` (which requires `Core.IsUnformed`) specifies a
+    representation that is not a valid value of the type and can be detected by
+    `Core.IsUnformed`.
+-   `Core.UnformedNoop` specifies a representation whose destruction is a no-op.
+
+A type may implement both, in which case `Core.UnformedInvalid` takes priority.
+
+### Detecting an unformed state
+
+A type whose unformed state is an invalid representation implements
+`Core.IsUnformed` to test whether an object is currently unformed:
+
+```carbon
+interface IsUnformed {
+  fn Op(self: Core.MaybeUnformed(Self)) -> bool;
+}
+```
+
+`Op` takes its object parameter as `Core.MaybeUnformed(Self)` so that it can be
+called on an object that might be unformed. It tests for membership in the
+unformed representation set rather than equality with a single unformed value,
+so it recognizes both the normal and hardened unformed values.
+
+The prelude implements `Core.IsUnformed` for every type implementing
+`Core.UnformedInvalid` whose `StructT` is comparable with `==`, and forwards it
+through `Core.MaybeUnformed(T)`. A type may implement `Core.IsUnformed`
+directly (and must do so when `StructT` is not comparable with `==`), in which
+case it must return `true` for every representation in the type's unformed
+representation set.
+
+When destroying a maybe-unformed object:
+
+-   If the type implements `Core.IsUnformed`, destruction is skipped when
+    `Core.IsUnformed` returns `true` (when the type's destructor is trivial,
+    both the test and the destructor can be elided).
+-   If the type uses `Core.UnformedNoop` (or implements `Core.UnformedInit`
+    directly without `Core.IsUnformed`), its destructor is a no-op on unformed
+    representations and may either run or be skipped.
+-   For an object of static type `Core.MaybeUnformed(T)`, destruction follows
+    the same rule when `T` implements `Core.UnformedInit`. When `T` has no
+    unformed state, automatic destruction of `Core.MaybeUnformed(T)` is a no-op
+    and the owner of the storage is responsible for destroying the `T` when
+    present.
+
+### Hardening an unformed state
+
+In [build modes](/docs/design/safety/README.md#build-modes) with hardening
+enabled (such as the release build mode), the compiler applies baseline
+initialization hardening to objects left unformed by the language. A type can
+also customize the representation used when hardening by implementing
+`Core.UnformedHarden` or `Core.UnformedHardenInit`, which parallel
+`Core.UnformedInvalid` and `Core.UnformedInit`.
+
+The hardened `StructT` must be a superset of `UnformedInit.StructT`, since
+hardening may initialize additional fields of the object. Any automatic fill
+performed by the compiler is applied before (or only to bytes outside) the
+`StructT` fields written by `UnformedInit.Op` or `UnformedHardenInit.Op`, so
+that `Core.IsUnformed` continues to recognize the object. Hardening applies only
+when the language leaves an object unformed or uninitialized, not to fully
+formed objects or to explicit calls to `Core.UnformedInit.Op`.
+
+The hardened value must belong to the same semantic category as the unformed
+value:
+
+-   A type implementing `Core.UnformedInvalid` must harden to an invalid
+    representation that is in the unformed representation set and recognized by
+    `Core.IsUnformed` (in every build mode, since hardening may vary across
+    packages or compilation units in the same program).
+-   A type implementing `Core.UnformedNoop` must harden to a representation
+    whose destruction and assignment are also valid no-ops.
+
+> **Future work:** Specify the exact points where hardening is applied,
+> particularly when a pointer or reference to a maybe-unformed object escapes
+> the flow-tracked context, once the memory safety model's flow analysis and
+> function effect annotations are finalized.
+
+### Declaring a variable with no initializer
+
+When a `var` declaration omits its initializer, its behavior depends on the
+variable's type `T`:
+
+-   If `T` implements `Core.Default`, the variable is initialized by calling
+    `Core.Default.Op` and starts in the definitely initialized state.
+-   Otherwise, if `T` implements `Core.UnformedInit`, the variable is
+    initialized with `Core.UnformedInit.Op` and starts in the maybe-unformed
+    state.
+-   Otherwise, the declaration is invalid.
+
+When `T` is a generic parameter, this choice is resolved at type-checking time
+from `T`'s constraints, so the declaration is invalid unless `T` is constrained
+to implement `Core.Default` or `Core.UnformedInit`.
+
+### Using an object that might be unformed
+
+`Core.MaybeUnformed(T)` is the type of an object of type `T` that might be in an
+unformed state. It is a built-in type qualifier spelled as an
+[unsafe adapter](/docs/design/classes.md#unsafe-adapters) of `T`, so it has the
+same object representation as `T`, while using a bit-preserving value
+representation (such as a pointer value representation when `T`'s value
+representation does not preserve all object bits). Like `const` and `partial`,
+`Core.MaybeUnformed` is idempotent (`Core.MaybeUnformed(Core.MaybeUnformed(T))`
+is `Core.MaybeUnformed(T)`), and `Core.MaybeUnformed(T)` itself implements
+`Core.UnformedInit` for every `T`.
+
+`Core.MaybeUnformed(T)` exposes only the fields that participate in the unformed
+state (with their types from `StructT`) and member functions that opt in by
+declaring `self` with type `Core.MaybeUnformed(Self)`, matching the opt-in model
+of the [partial class type](/docs/design/classes.md#partial-class-type).
+
+`T` converts implicitly to `Core.MaybeUnformed(T)`. A variable declared with
+type `T` has static type `T` throughout its scope: when it is known to be
+initialized it may be used directly as a `T`, and while it might be unformed it
+may only be assigned to, destroyed, initialized member-by-member, converted to
+`Core.MaybeUnformed(T)`, or explicitly cast with
+[`unsafe as`](/docs/design/expressions/as_expressions.md#unsafe-as-expressions).
+An expression whose static type is `Core.MaybeUnformed(T)` always requires
+`unsafe as T` to be converted to `T`.
+
+> **Future work:** Flow-sensitive initialization checking and function effect
+> annotations for initialization are part of the memory safety model and will be
+> specified in a future proposal; see
+> [#7640: Reworking unformed state](/proposals/p007640-reworking-unformed-state.md#flow-sensitive-restrictions-on-objects-that-might-be-unformed).
 
 ## Extended types
 
@@ -1538,6 +1732,7 @@ itself.
 -   [Proposal #5545: Expression form basics][#5545]
 -   [Proposal #7254: Replace `:!` and `:?` with keywords and contextual
     defaults][#7254]
+-   [Proposal #7640: Reworking unformed state][#7640]
 
 [#257]: /proposals/p000257-initialization-of-memory-and-variables.md
 [#339]: /proposals/p000339-var-statement.md
@@ -1546,3 +1741,4 @@ itself.
 [#2006]: /proposals/p002006-values-variables-pointers-and-references.md
 [#5545]: /proposals/p005545-expression-form-basics.md
 [#7254]: /proposals/p007254-replace-and-with-keywords-and-contextual-defaults.md
+[#7640]: /proposals/p007640-reworking-unformed-state.md
