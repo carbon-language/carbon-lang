@@ -151,6 +151,20 @@ constraint B(X: Undefined) {
 
 impl () as B(1) {}
 
+// --- fail_todo_impl_as_constraint_duplicates_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T: type) {}
+constraint J {
+  extend require impls I(Self);
+}
+
+// This impls `I(())` twice, which should be deduplicated to a single specific
+// interface.
+// CHECK:STDERR: fail_todo_impl_as_constraint_duplicates_interface.carbon:[[@LINE+2]]:1-22: error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:
+impl () as I(()) & J {}
+
 // --- impl_as_constraint_where_rewrite.carbon
 library "[[@TEST_NAME]]";
 
@@ -344,6 +358,31 @@ fn G() {
   // symbolic `.X` at all.
   F(());
 }
+
+// --- access_through_nested_specific_in_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+impl forall [T: type] T as Z where .Z1 = {} {}
+
+class C(T: type) {
+    alias U = T.(Z.Z1);
+}
+
+interface K {}
+
+constraint J {
+    extend require impls Z;
+    // When identifying `() as J` for the impl below, this forms a specific `C(())`
+    // which contains an access of `().(Z.Z1)`. The `() as Z` lookup _should_ find
+    // the impl below, not the blanket impl above. If we find the above impl, then
+    // the access of `U` here resolves to `{}` incorrectly.
+    require C(Self).U impls K;
+}
+
+impl () as K {}
+
+impl () as J where .Z1 = () {}
 
 // --- witness_access_in_named_constraint.carbon
 library "[[@TEST_NAME]]";

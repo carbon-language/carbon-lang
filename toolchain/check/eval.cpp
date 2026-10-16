@@ -685,8 +685,15 @@ static auto GetConstantValue(EvalContext& eval_context,
   if (args_id == specific.args_id) {
     return specific_id;
   }
-  return eval_context.context().specifics().GetOrAdd(
-      specific.generic_id, args_id, specific.identified);
+  // When modifying a non-`identified` specific during identify, mark the new
+  // specific as `identified` too. If modifying an `identified` specific outside
+  // of identify, it may contain `IdentifiedWitness` insts so the new specific
+  // must keep the `identified` marker.
+  bool identified =
+      eval_context.context().eval_impl_lookup_to_identified_witness() ||
+      specific.identified;
+  return eval_context.context().specifics().GetOrAdd(specific.generic_id,
+                                                     args_id, identified);
 }
 
 static auto GetConstantValue(EvalContext& eval_context,

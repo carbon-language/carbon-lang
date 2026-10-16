@@ -815,11 +815,11 @@ constraint N {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T):identified {
 // CHECK:STDOUT:   %Self => constants.%T
 // CHECK:STDOUT:   %Self.as_type.loc9_18.2 => constants.%T.as_type
 // CHECK:STDOUT: }
@@ -850,6 +850,8 @@ constraint N {
 // CHECK:STDOUT:   %require_complete.331: <witness> = require_complete_type %Y.type.a55 [symbolic]
 // CHECK:STDOUT:   %Y.assoc_type.18b: type = assoc_entity_type @Y, @Y(%T.as_type) [symbolic]
 // CHECK:STDOUT:   %assoc0.eff: %Y.assoc_type.18b = assoc_entity element0, @Y.WithSelf.%Y.WithSelf.YY.decl [symbolic]
+// CHECK:STDOUT:   %Y.type.7e4: type = facet_type <@Y, @Y(%T.as_type):identified> [symbolic]
+// CHECK:STDOUT:   %require_complete.aa7: <witness> = require_complete_type %Y.type.7e4 [symbolic]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %T.f45, @Y, @Y(%T.as_type) [symbolic]
 // CHECK:STDOUT:   %Y.facet: %Y.type.a55 = facet_value %T.as_type, (%Y.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.YY.type.e81: type = fn_type @Y.WithSelf.YY, @Y.WithSelf(%T.as_type, %Y.facet) [symbolic]
@@ -979,18 +981,18 @@ constraint N {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.331
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T.f45) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T.f45):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%T.f45
 // CHECK:STDOUT:   %Self.as_type => constants.%T.as_type
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.a55
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.331
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.7e4
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.aa7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T.f45) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T.f45):identified {
 // CHECK:STDOUT:   %Self => constants.%T.f45
 // CHECK:STDOUT:   %Self.as_type.loc9_18.2 => constants.%T.as_type
-// CHECK:STDOUT:   %Y.type.loc9_30.2 => constants.%Y.type.a55
+// CHECK:STDOUT:   %Y.type.loc9_30.2 => constants.%Y.type.7e4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit_self_impls.carbon
@@ -1044,11 +1046,11 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T):identified {
 // CHECK:STDOUT:   %Self => constants.%T
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%T.as_type
 // CHECK:STDOUT: }
@@ -1106,11 +1108,11 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T):identified {
 // CHECK:STDOUT:   %Self => constants.%T
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%T.as_type
 // CHECK:STDOUT: }
@@ -1254,7 +1256,7 @@ constraint N {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) [identified] {}
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87):identified {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y_where.type.require(constants.%Self.d87) {
 // CHECK:STDOUT:   %Self => constants.%Self.d87
@@ -1425,7 +1427,7 @@ constraint N {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) [identified] {}
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87):identified {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y_where.type.require(constants.%Self.d87) {
 // CHECK:STDOUT:   %Self => constants.%Self.d87
@@ -1458,7 +1460,7 @@ constraint N {
 // CHECK:STDOUT:   %facet_type.e5c: type = facet_type <@Z & @Y, @Y(%.Self.c86)> [symbolic_self]
 // CHECK:STDOUT:   %T.d09: %facet_type.e5c = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.d09 [symbolic]
-// CHECK:STDOUT:   %Z_where.type.bfc: type = facet_type <@Z where .Self impls @Y, @Y(%T.as_type)> [symbolic]
+// CHECK:STDOUT:   %Z_where.type.8a6: type = facet_type <@Z where .Self impls @Y, @Y(%T.as_type):identified> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1526,14 +1528,14 @@ constraint N {
 // CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.e7d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%T.d09) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf(constants.%T.d09):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.d09) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.d09):identified {
 // CHECK:STDOUT:   %Self => constants.%T.d09
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2 => constants.%T.as_type
-// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.bfc
+// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.8a6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- require_with_specific_period_self.carbon
@@ -1558,11 +1560,11 @@ constraint N {
 // CHECK:STDOUT:   %Y.type.23e: type = facet_type <@Y, @Y(%.Self.as_type)> [symbolic_self]
 // CHECK:STDOUT:   %Z_where.type.a0f3c6.1: type = facet_type <@Z where %C.cf2 impls @Y, @Y(%.Self.as_type)> [concrete]
 // CHECK:STDOUT:   %C.f15: type = class_type @C, @C(%Self.as_type) [symbolic]
-// CHECK:STDOUT:   %Z_where.type.a0f3c6.2: type = facet_type <@Z where %C.f15 impls @Y, @Y(%Self.as_type)> [symbolic]
+// CHECK:STDOUT:   %Z_where.type.a0f3c6.3: type = facet_type <@Z where %C.f15 impls @Y, @Y(%Self.as_type)> [symbolic]
 // CHECK:STDOUT:   %T.013: %Z.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.013 [symbolic]
-// CHECK:STDOUT:   %C.7b3: type = class_type @C, @C(%T.as_type) [symbolic]
-// CHECK:STDOUT:   %Z_where.type.a0f3c6.3: type = facet_type <@Z where %C.7b3 impls @Y, @Y(%T.as_type)> [symbolic]
+// CHECK:STDOUT:   %C.f24: type = class_type @C, @C(%T.as_type):identified [symbolic]
+// CHECK:STDOUT:   %Z_where.type.a0f3c6.4: type = facet_type <@Z where %C.f24 impls @Y, @Y(%T.as_type):identified> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1599,7 +1601,7 @@ constraint N {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %Z.ref [concrete]
 // CHECK:STDOUT:       %impls.loc10_34.2 = requirement_impls %C.loc10_32.2, %Y.type.loc10_47.2 [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Z_where.type.loc10_19.1: type = facet_type <@Z where constants.%C.f15 impls @Y, @Y(constants.%Self.as_type)> [symbolic = %Z_where.type.loc10_19.2 (constants.%Z_where.type.a0f3c6.2)]
+// CHECK:STDOUT:     %Z_where.type.loc10_19.1: type = facet_type <@Z where constants.%C.f15 impls @Y, @Y(constants.%Self.as_type)> [symbolic = %Z_where.type.loc10_19.2 (constants.%Z_where.type.a0f3c6.3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1621,7 +1623,7 @@ constraint N {
 // CHECK:STDOUT:   %Self: %N.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.d87)]
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc10_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %C.loc10_19: type = class_type @C, @C(%Self.as_type.loc10_11.2) [symbolic = %C.loc10_19 (constants.%C.f15)]
-// CHECK:STDOUT:   %Z_where.type.loc10_19.2: type = facet_type <@Z where %C.loc10_19 impls @Y, @Y(%Self.as_type.loc10_11.2)> [symbolic = %Z_where.type.loc10_19.2 (constants.%Z_where.type.a0f3c6.2)]
+// CHECK:STDOUT:   %Z_where.type.loc10_19.2: type = facet_type <@Z where %C.loc10_19 impls @Y, @Y(%Self.as_type.loc10_11.2)> [symbolic = %Z_where.type.loc10_19.2 (constants.%Z_where.type.a0f3c6.3)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.WithSelf(constants.%Self.d87) {}
@@ -1630,17 +1632,17 @@ constraint N {
 // CHECK:STDOUT:   %Self => constants.%Self.d87
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %C.loc10_19 => constants.%C.f15
-// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.a0f3c6.2
+// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.a0f3c6.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%T.013) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf(constants.%T.013):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.013) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.013):identified {
 // CHECK:STDOUT:   %Self => constants.%T.013
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2 => constants.%T.as_type
-// CHECK:STDOUT:   %C.loc10_19 => constants.%C.7b3
-// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.a0f3c6.3
+// CHECK:STDOUT:   %C.loc10_19 => constants.%C.f24
+// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.a0f3c6.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -584,6 +584,15 @@ class EvaluateSubstCallbacks : public SubstInstCallbacks {
     return RebuildNewInst(loc_id_, new_inst);
   }
 
+  auto RebuildSpecific(SemIR::SpecificId orig_specific_id,
+                       SemIR::InstBlockId args_id)
+      -> SemIR::SpecificId override {
+    auto generic_id = context().specifics().Get(orig_specific_id).generic_id;
+    // Drop the `identified` flag from any specifics we create here, as we have
+    // substituted the IdentifiedWitness instructions away.
+    return context().specifics().GetOrAdd(generic_id, args_id, false);
+  }
+
  private:
   auto SubstIdentifiedWitness(SemIR::IdentifiedWitness witness)
       -> SemIR::InstId {

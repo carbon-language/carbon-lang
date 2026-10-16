@@ -684,12 +684,16 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.e1f642.1 [symbolic]
 // CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %J.type.d682d6.2: type = facet_type <@J, @J(%empty_struct_type)> [concrete]
-// CHECK:STDOUT:   %I.type.aaf: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
-// CHECK:STDOUT:   %Self.968: %I.type.aaf = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %complete_type.a15: <witness> = complete_type_witness %I.type.aaf [concrete]
+// CHECK:STDOUT:   %I.type.aab: type = facet_type <@I, @I(%empty_struct_type):identified> [concrete]
+// CHECK:STDOUT:   %Self.551: %I.type.aab = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %complete_type.8b4: <witness> = complete_type_witness %I.type.aab [concrete]
+// CHECK:STDOUT:   %J.type.d682d6.3: type = facet_type <@J, @J(%empty_struct_type):identified> [concrete]
 // CHECK:STDOUT:   %.ea2: <witness> = impl_self_witness %C, @I, @I(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %Self.e1f642.2: %J.type.d682d6.2 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %I.type.aaf: type = facet_type <@I, @I(%empty_struct_type)> [concrete]
+// CHECK:STDOUT:   %Self.968: %I.type.aaf = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %complete_type.a15: <witness> = complete_type_witness %I.type.aaf [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type.aaf = facet_value %C, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -825,11 +829,37 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.e1f642.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @J.WithSelf(constants.%empty_struct_type, constants.%C) [identified] {
+// CHECK:STDOUT: specific @J.WithSelf(constants.%empty_struct_type, constants.%C):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%empty_struct_type
-// CHECK:STDOUT:   %I.type => constants.%I.type.aaf
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.a15
+// CHECK:STDOUT:   %I.type => constants.%I.type.aab
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.8b4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%empty_struct_type):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
+// CHECK:STDOUT:   %T => constants.%empty_struct_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %I.type => constants.%I.type.aab
+// CHECK:STDOUT:   %Self => constants.%Self.551
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%empty_struct_type, constants.%Self.a4f):identified {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J.WithSelf.Self.as_type.impls.I.type.require(constants.%empty_struct_type, constants.%C):identified {
+// CHECK:STDOUT:   %T => constants.%empty_struct_type
+// CHECK:STDOUT:   %J.type => constants.%J.type.d682d6.3
+// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT:   %Self.as_type => constants.%C
+// CHECK:STDOUT:   %I.type => constants.%I.type.aab
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @J(constants.%empty_struct_type):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
+// CHECK:STDOUT:   %T => constants.%empty_struct_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%empty_struct_type) {
@@ -841,23 +871,15 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.968
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%empty_struct_type, constants.%Self.a4f) {
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @J.WithSelf.Self.as_type.impls.I.type.require(constants.%empty_struct_type, constants.%C) [identified] {
-// CHECK:STDOUT:   %T => constants.%empty_struct_type
-// CHECK:STDOUT:   %J.type => constants.%J.type.d682d6.2
-// CHECK:STDOUT:   %Self => constants.%C
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT:   %I.type => constants.%I.type.aaf
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @J.WithSelf(constants.%empty_struct_type, constants.%Self.e1f642.1) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%empty_struct_type
 // CHECK:STDOUT:   %I.type => constants.%I.type.aaf
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.a15
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I.WithSelf(constants.%empty_struct_type, constants.%Self.a4f) {
+// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%empty_struct_type, constants.%I.facet) {
@@ -1178,7 +1200,13 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %N.type.d682d6.1: type = facet_type <@N, @N(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.e1f: %N.type.d682d6.1 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.e1f [symbolic]
-// CHECK:STDOUT:   %N.type.d682d6.2: type = facet_type <@N, @N(%ptr)> [symbolic]
+// CHECK:STDOUT:   %I.type.d5d: type = facet_type <@I, @I(%T):identified> [symbolic]
+// CHECK:STDOUT:   %require_complete.bb5: <witness> = require_complete_type %I.type.d5d [symbolic]
+// CHECK:STDOUT:   %N.type.d682d6.2: type = facet_type <@N, @N(%T):identified> [symbolic]
+// CHECK:STDOUT:   %N.type.d682d6.3: type = facet_type <@N, @N(%ptr)> [symbolic]
+// CHECK:STDOUT:   %I.type.97e: type = facet_type <@I, @I(%ptr):identified> [symbolic]
+// CHECK:STDOUT:   %require_complete.bfd: <witness> = require_complete_type %I.type.97e [symbolic]
+// CHECK:STDOUT:   %N.type.d682d6.4: type = facet_type <@N, @N(%ptr):identified> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1297,7 +1325,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:     %N.ref: %N.type.b76 = name_ref N, imports.%Main.N [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc25_15.1 [symbolic = %T.loc25_15.2 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc25_31.1: type = ptr_type %T.ref [symbolic = %ptr.loc25_31.2 (constants.%ptr)]
-// CHECK:STDOUT:     %N.type.loc25_32.1: type = facet_type <@N, @N(constants.%ptr)> [symbolic = %N.type.loc25_32.2 (constants.%N.type.d682d6.2)]
+// CHECK:STDOUT:     %N.type.loc25_32.1: type = facet_type <@N, @N(constants.%ptr)> [symbolic = %N.type.loc25_32.2 (constants.%N.type.d682d6.3)]
 // CHECK:STDOUT:     %.loc25_17.1: type = splice_block %.loc25_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc25_17.2: type = type_literal type [concrete = type]
@@ -1450,7 +1478,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %T.patt.loc25_15.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc25_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc25_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc25_15.2 (constants.%T)]
 // CHECK:STDOUT:   %ptr.loc25_31.2: type = ptr_type %T.loc25_15.2 [symbolic = %ptr.loc25_31.2 (constants.%ptr)]
-// CHECK:STDOUT:   %N.type.loc25_32.2: type = facet_type <@N, @N(%ptr.loc25_31.2)> [symbolic = %N.type.loc25_32.2 (constants.%N.type.d682d6.2)]
+// CHECK:STDOUT:   %N.type.loc25_32.2: type = facet_type <@N, @N(%ptr.loc25_31.2)> [symbolic = %N.type.loc25_32.2 (constants.%N.type.d682d6.3)]
 // CHECK:STDOUT:   %.loc25_33: <witness> = impl_self_witness constants.%C, @I, @I(%ptr.loc25_31.2) [symbolic = %.loc25_33 (constants.%.f39)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %C.ref as %N.type.loc25_32.1;
@@ -1547,19 +1575,29 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %I.type => constants.%I.type.184
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%T, constants.%C) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf(constants.%T, constants.%C):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %I.type => constants.%I.type.184
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.abf
+// CHECK:STDOUT:   %I.type => constants.%I.type.d5d
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.bb5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.I.type.require(constants.%T, constants.%C) [identified] {
+// CHECK:STDOUT: specific @I(constants.%T):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.I.type.require(constants.%T, constants.%C):identified {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.2
 // CHECK:STDOUT:   %Self => constants.%C
 // CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT:   %I.type => constants.%I.type.184
+// CHECK:STDOUT:   %I.type => constants.%I.type.d5d
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%T):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.042f52.1(constants.%T) {
@@ -1574,26 +1612,36 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %T => constants.%ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%ptr, constants.%C) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf(constants.%ptr, constants.%C):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%ptr
-// CHECK:STDOUT:   %I.type => constants.%I.type.751
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.d61
+// CHECK:STDOUT:   %I.type => constants.%I.type.97e
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.bfd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.I.type.require(constants.%ptr, constants.%C) [identified] {
+// CHECK:STDOUT: specific @I(constants.%ptr):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%ptr
-// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.I.type.require(constants.%ptr, constants.%C):identified {
+// CHECK:STDOUT:   %T => constants.%ptr
+// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.4
 // CHECK:STDOUT:   %Self => constants.%C
 // CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT:   %I.type => constants.%I.type.751
+// CHECK:STDOUT:   %I.type => constants.%I.type.97e
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%ptr):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
+// CHECK:STDOUT:   %T => constants.%ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.042f52.2(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc25_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc25_15.2 => constants.%T
 // CHECK:STDOUT:   %ptr.loc25_31.2 => constants.%ptr
-// CHECK:STDOUT:   %N.type.loc25_32.2 => constants.%N.type.d682d6.2
+// CHECK:STDOUT:   %N.type.loc25_32.2 => constants.%N.type.d682d6.3
 // CHECK:STDOUT:   %.loc25_33 => constants.%.f39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1831,11 +1879,14 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.e1f642.1 [symbolic]
 // CHECK:STDOUT:   %ptr.125: type = ptr_type %ptr.e8f [symbolic]
 // CHECK:STDOUT:   %N.type.d682d6.2: type = facet_type <@N, @N(%ptr.125)> [symbolic]
-// CHECK:STDOUT:   %I.type.539: type = facet_type <@I, @I(%ptr.125)> [symbolic]
-// CHECK:STDOUT:   %require_complete.776: <witness> = require_complete_type %I.type.539 [symbolic]
+// CHECK:STDOUT:   %I.type.1c0: type = facet_type <@I, @I(%ptr.125):identified> [symbolic]
+// CHECK:STDOUT:   %require_complete.d22: <witness> = require_complete_type %I.type.1c0 [symbolic]
+// CHECK:STDOUT:   %N.type.d682d6.3: type = facet_type <@N, @N(%ptr.125):identified> [symbolic]
 // CHECK:STDOUT:   %.27c: <witness> = impl_self_witness %C, @I, @I(%ptr.125) [symbolic]
 // CHECK:STDOUT:   %I.impl_witness.3cb: <witness> = impl_witness @C.as.I.impl.042.%I.impl_witness_table, @C.as.I.impl.042(%T) [symbolic]
 // CHECK:STDOUT:   %Self.e1f642.2: %N.type.d682d6.2 = symbolic_binding Self, 1 [symbolic]
+// CHECK:STDOUT:   %I.type.539: type = facet_type <@I, @I(%ptr.125)> [symbolic]
+// CHECK:STDOUT:   %require_complete.776: <witness> = require_complete_type %I.type.539 [symbolic]
 // CHECK:STDOUT:   %require_complete.533: <witness> = require_complete_type %N.type.d682d6.2 [symbolic]
 // CHECK:STDOUT:   %I.facet.869: %I.type.539 = facet_value %C, (%I.impl_witness.3cb) [symbolic]
 // CHECK:STDOUT: }
@@ -2087,24 +2138,34 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %Self => constants.%Self.e1f642.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%ptr.125, constants.%C) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf(constants.%ptr.125, constants.%C):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%ptr.125
-// CHECK:STDOUT:   %I.type => constants.%I.type.539
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.776
+// CHECK:STDOUT:   %I.type => constants.%I.type.1c0
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.d22
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%ptr.125):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
+// CHECK:STDOUT:   %T => constants.%ptr.125
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.I.type.require(constants.%ptr.125, constants.%C):identified {
+// CHECK:STDOUT:   %T => constants.%ptr.125
+// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.3
+// CHECK:STDOUT:   %Self => constants.%C
+// CHECK:STDOUT:   %Self.as_type => constants.%C
+// CHECK:STDOUT:   %I.type => constants.%I.type.1c0
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%ptr.125):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
+// CHECK:STDOUT:   %T => constants.%ptr.125
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%ptr.125) {
 // CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%ptr.125
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.I.type.require(constants.%ptr.125, constants.%C) [identified] {
-// CHECK:STDOUT:   %T => constants.%ptr.125
-// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.2
-// CHECK:STDOUT:   %Self => constants.%C
-// CHECK:STDOUT:   %Self.as_type => constants.%C
-// CHECK:STDOUT:   %I.type => constants.%I.type.539
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.as.I.impl.042(constants.%T) {
@@ -2383,10 +2444,14 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %empty_struct: %N.type.b76 = struct_value () [concrete]
 // CHECK:STDOUT:   %N.type.d682d6.1: type = facet_type <@N, @N(%T)> [symbolic]
 // CHECK:STDOUT:   %Self.e1f: %N.type.d682d6.1 = symbolic_binding Self, 1 [symbolic]
-// CHECK:STDOUT:   %require_complete.bd0: <witness> = require_complete_type %J.type.ed5 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.e1f [symbolic]
-// CHECK:STDOUT:   %N.type.d682d6.2: type = facet_type <@N, @N(%ptr)> [symbolic]
-// CHECK:STDOUT:   %require_complete.3d2: <witness> = require_complete_type %J.type.a41 [symbolic]
+// CHECK:STDOUT:   %J.type.17a: type = facet_type <@J, @J(%T):identified> [symbolic]
+// CHECK:STDOUT:   %require_complete.b01: <witness> = require_complete_type %J.type.17a [symbolic]
+// CHECK:STDOUT:   %N.type.d682d6.2: type = facet_type <@N, @N(%T):identified> [symbolic]
+// CHECK:STDOUT:   %N.type.d682d6.3: type = facet_type <@N, @N(%ptr)> [symbolic]
+// CHECK:STDOUT:   %J.type.31c: type = facet_type <@J, @J(%ptr):identified> [symbolic]
+// CHECK:STDOUT:   %require_complete.9f3: <witness> = require_complete_type %J.type.31c [symbolic]
+// CHECK:STDOUT:   %N.type.d682d6.4: type = facet_type <@N, @N(%ptr):identified> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2501,7 +2566,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:     %N.ref: %N.type.b76 = name_ref N, imports.%Main.N [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc26_15.1 [symbolic = %T.loc26_15.2 (constants.%T)]
 // CHECK:STDOUT:     %ptr.loc26_31.1: type = ptr_type %T.ref [symbolic = %ptr.loc26_31.2 (constants.%ptr)]
-// CHECK:STDOUT:     %N.type.loc26_32.1: type = facet_type <@N, @N(constants.%ptr)> [symbolic = %N.type.loc26_32.2 (constants.%N.type.d682d6.2)]
+// CHECK:STDOUT:     %N.type.loc26_32.1: type = facet_type <@N, @N(constants.%ptr)> [symbolic = %N.type.loc26_32.2 (constants.%N.type.d682d6.3)]
 // CHECK:STDOUT:     %.loc26_17.1: type = splice_block %.loc26_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %.loc26_17.2: type = type_literal type [concrete = type]
@@ -2646,7 +2711,7 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %T.patt.loc26_15.2: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc26_15.2 (constants.%T.patt)]
 // CHECK:STDOUT:   %T.loc26_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc26_15.2 (constants.%T)]
 // CHECK:STDOUT:   %ptr.loc26_31.2: type = ptr_type %T.loc26_15.2 [symbolic = %ptr.loc26_31.2 (constants.%ptr)]
-// CHECK:STDOUT:   %N.type.loc26_32.2: type = facet_type <@N, @N(%ptr.loc26_31.2)> [symbolic = %N.type.loc26_32.2 (constants.%N.type.d682d6.2)]
+// CHECK:STDOUT:   %N.type.loc26_32.2: type = facet_type <@N, @N(%ptr.loc26_31.2)> [symbolic = %N.type.loc26_32.2 (constants.%N.type.d682d6.3)]
 // CHECK:STDOUT:   %.loc26_34: <witness> = impl_self_witness constants.%D, @J, @J(%ptr.loc26_31.2) [symbolic = %.loc26_34 (constants.%.d76)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -2745,19 +2810,29 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %J.type => constants.%J.type.ed5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%T, constants.%D) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf(constants.%T, constants.%D):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %J.type => constants.%J.type.ed5
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.bd0
+// CHECK:STDOUT:   %J.type => constants.%J.type.17a
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.b01
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.J.type.require(constants.%T, constants.%D) [identified] {
+// CHECK:STDOUT: specific @J(constants.%T):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.1
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.J.type.require(constants.%T, constants.%D):identified {
+// CHECK:STDOUT:   %T => constants.%T
+// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.2
 // CHECK:STDOUT:   %Self => constants.%D
 // CHECK:STDOUT:   %Self.as_type => constants.%D
-// CHECK:STDOUT:   %J.type => constants.%J.type.ed5
+// CHECK:STDOUT:   %J.type => constants.%J.type.17a
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%T):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
+// CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.as.J.impl.d69d6f.1(constants.%T) {
@@ -2772,26 +2847,36 @@ impl forall [T: type] D as N(T*) {}
 // CHECK:STDOUT:   %T => constants.%ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%ptr, constants.%D) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf(constants.%ptr, constants.%D):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%ptr
-// CHECK:STDOUT:   %J.type => constants.%J.type.a41
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.3d2
+// CHECK:STDOUT:   %J.type => constants.%J.type.31c
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.9f3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.J.type.require(constants.%ptr, constants.%D) [identified] {
+// CHECK:STDOUT: specific @J(constants.%ptr):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
 // CHECK:STDOUT:   %T => constants.%ptr
-// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.2
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.J.type.require(constants.%ptr, constants.%D):identified {
+// CHECK:STDOUT:   %T => constants.%ptr
+// CHECK:STDOUT:   %N.type => constants.%N.type.d682d6.4
 // CHECK:STDOUT:   %Self => constants.%D
 // CHECK:STDOUT:   %Self.as_type => constants.%D
-// CHECK:STDOUT:   %J.type => constants.%J.type.a41
+// CHECK:STDOUT:   %J.type => constants.%J.type.31c
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @N(constants.%ptr):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
+// CHECK:STDOUT:   %T => constants.%ptr
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.as.J.impl.d69d6f.2(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc26_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc26_15.2 => constants.%T
 // CHECK:STDOUT:   %ptr.loc26_31.2 => constants.%ptr
-// CHECK:STDOUT:   %N.type.loc26_32.2 => constants.%N.type.d682d6.2
+// CHECK:STDOUT:   %N.type.loc26_32.2 => constants.%N.type.d682d6.3
 // CHECK:STDOUT:   %.loc26_34 => constants.%.d76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
