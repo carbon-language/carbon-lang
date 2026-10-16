@@ -22,16 +22,10 @@ impl forall [T: type] T as Z {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_function_type_with_self_type.carbon:[[@LINE+11]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
-  // CHECK:STDERR:   &(().(Z.G)) as type;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR: fail_function_type_with_self_type.carbon:[[@LINE+5]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_function_type_with_self_type.carbon:[[@LINE+7]]:3: error: cannot convert non-type value of type `<type of G in () as Z>*` to `type` with `as` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   &(().(Z.G)) as type;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_function_type_with_self_type.carbon:[[@LINE+4]]:3: note: type `<type of G in () as Z>*` does not implement interface `Core.As(type)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   &(().(Z.G)) as type;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_function_type_with_self_type.carbon:[[@LINE+3]]:3-21: error: cannot convert non-type value of type `<type of G in () as Z>*` to `type` with `as` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_function_type_with_self_type.carbon:[[@LINE+2]]:3-21: note: type `<type of G in () as Z>*` does not implement interface `Core.As(type)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   &(().(Z.G)) as type;
 }
@@ -42,16 +36,10 @@ library "[[@TEST_NAME]]";
 fn F() {
   // This does an impl lookup for `As` with `FunctionType` in the self type.
   //
-  // CHECK:STDERR: fail_function_type.carbon:[[@LINE+11]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
-  // CHECK:STDERR:   &F as type;
-  // CHECK:STDERR:   ^
+  // CHECK:STDERR: fail_function_type.carbon:[[@LINE+5]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_function_type.carbon:[[@LINE+7]]:3: error: cannot convert non-type value of type `<type of F>*` to `type` with `as` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   &F as type;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_function_type.carbon:[[@LINE+4]]:3: note: type `<type of F>*` does not implement interface `Core.As(type)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   &F as type;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_function_type.carbon:[[@LINE+3]]:3-12: error: cannot convert non-type value of type `<type of F>*` to `type` with `as` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_function_type.carbon:[[@LINE+2]]:3-12: note: type `<type of F>*` does not implement interface `Core.As(type)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   &F as type;
 }

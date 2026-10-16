@@ -106,12 +106,8 @@ let n: Y = ({.x = ()} as X) as Y;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:13: error: cannot convert expression of type `Core.IntLiteral` to `{}` with `as` [ConversionFailure]
-// CHECK:STDERR: let a: {} = 1 as {};
-// CHECK:STDERR:             ^~~~~~~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:13: note: type `Core.IntLiteral` does not implement interface `Core.As({})` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: let a: {} = 1 as {};
-// CHECK:STDERR:             ^~~~~~~
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:13-19: error: cannot convert expression of type `Core.IntLiteral` to `{}` with `as` [ConversionFailure]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+2]]:13-19: note: type `Core.IntLiteral` does not implement interface `Core.As({})` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 let a: {} = 1 as {};
 
@@ -119,12 +115,8 @@ let a: {} = 1 as {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+7]]:32: error: cannot implicitly convert non-type value of type `{.x: ()}` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: let n: {.x: ()} = {.x = ()} as {.x = ()};
-// CHECK:STDERR:                                ^~~~~~~~~
-// CHECK:STDERR: fail_not_type.carbon:[[@LINE+4]]:32: note: type `{.x: ()}` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: let n: {.x: ()} = {.x = ()} as {.x = ()};
-// CHECK:STDERR:                                ^~~~~~~~~
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+3]]:32-40: error: cannot implicitly convert non-type value of type `{.x: ()}` to `type` [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR: fail_not_type.carbon:[[@LINE+2]]:32-40: note: type `{.x: ()}` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 let n: {.x: ()} = {.x = ()} as {.x = ()};
 
@@ -551,14 +543,14 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %pattern_type.7ab: type = pattern_type %Y [concrete]
 // CHECK:STDOUT:   %struct.948: %struct_type.x = struct_value (%empty_tuple) [concrete]
 // CHECK:STDOUT:   %X.val: %X = struct_value (%empty_tuple) [concrete]
-// CHECK:STDOUT:   %As.type.f20: type = facet_type <@As, @As(%Y)> [concrete]
-// CHECK:STDOUT:   %As.impl_witness.647: <witness> = impl_witness @X.as.As.impl.%As.impl_witness_table [concrete]
+// CHECK:STDOUT:   %As.type.02d: type = facet_type <@As, @As(%Y)> [concrete]
+// CHECK:STDOUT:   %As.impl_witness.71c: <witness> = impl_witness @X.as.As.impl.%As.impl_witness_table [concrete]
 // CHECK:STDOUT:   %X.as.As.impl.Convert.type: type = fn_type @X.as.As.impl.Convert [concrete]
 // CHECK:STDOUT:   %X.as.As.impl.Convert: %X.as.As.impl.Convert.type = struct_value () [concrete]
-// CHECK:STDOUT:   %As.facet.9fd: %As.type.f20 = facet_value %X, (%As.impl_witness.647) [concrete]
-// CHECK:STDOUT:   %As.WithSelf.Convert.type.373: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%Y, %As.facet.9fd) [concrete]
+// CHECK:STDOUT:   %As.facet.3f7: %As.type.02d = facet_value %X, (%As.impl_witness.71c) [concrete]
+// CHECK:STDOUT:   %As.WithSelf.Convert.type.5bb: type = fn_type @As.WithSelf.Convert, @As.WithSelf(%Y, %As.facet.3f7) [concrete]
 // CHECK:STDOUT:   %n.patt: %pattern_type.7ab = value_binding_pattern n [concrete]
-// CHECK:STDOUT:   %.926: type = fn_type_with_self_type %As.WithSelf.Convert.type.373, %As.facet.9fd [concrete]
+// CHECK:STDOUT:   %.09f: type = fn_type_with_self_type %As.WithSelf.Convert.type.5bb, %As.facet.3f7 [concrete]
 // CHECK:STDOUT:   %X.as.As.impl.Convert.bound: <bound method> = bound_method %X.val, %X.as.As.impl.Convert [concrete]
 // CHECK:STDOUT:   %.650: ref %X = temporary invalid, %X.val [concrete]
 // CHECK:STDOUT: }
@@ -586,7 +578,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc19_21.6: init %X to %.loc19_21.2 = class_init (%.loc19_21.5) [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc19_23.1: init %X = converted %.loc19_21.1, %.loc19_21.6 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
-// CHECK:STDOUT:   %impl.elem0: %.926 = impl_witness_access constants.%As.impl_witness.647, element0 [concrete = constants.%X.as.As.impl.Convert]
+// CHECK:STDOUT:   %impl.elem0: %.09f = impl_witness_access constants.%As.impl_witness.71c, element0 [concrete = constants.%X.as.As.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_23.1, %impl.elem0 [concrete = constants.%X.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary_storage
 // CHECK:STDOUT:   %.loc19_23.2: ref %X = temporary %.loc19_21.2, %.loc19_23.1 [concrete = constants.%.650]

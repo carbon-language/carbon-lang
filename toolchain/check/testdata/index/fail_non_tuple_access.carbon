@@ -13,9 +13,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_non_tuple_access.carbon
 
 fn Main() {
-  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   0[1];
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_non_tuple_access.carbon:[[@LINE+2]]:3-6: error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   0[1];
 }

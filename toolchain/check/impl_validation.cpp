@@ -257,9 +257,9 @@ static auto DiagnoseNonFinalImplsWithSameTypeStructureOutsideMatchFirst(
                       "structure as another non-final `impl`");
     auto builder = context.emitter().Build(impl_b.latest_decl_id,
                                            ImplNonFinalSameTypeStructure);
-    CARBON_DIAGNOSTIC(ImplNonFinalSameTypeStructureNote, Note,
-                      "other `impl` here");
-    builder.Note(impl_a.latest_decl_id, ImplNonFinalSameTypeStructureNote);
+    CARBON_DIAGNOSTIC_LABEL(ImplNonFinalSameTypeStructureNote, Info,
+                            "other `impl` here");
+    builder.Attach(impl_a.latest_decl_id, ImplNonFinalSameTypeStructureNote);
     builder.Emit();
     return true;
   }
@@ -285,10 +285,10 @@ static auto DiagnoseUnmatchableNonFinalImplWithFinalImpl(Context& context,
                         "`impl` will never be used");
       auto builder = context.emitter().Build(query_impl.latest_decl_id,
                                              ImplFinalOverlapsNonFinal);
-      CARBON_DIAGNOSTIC(
-          ImplFinalOverlapsNonFinalNote, Note,
+      CARBON_DIAGNOSTIC_LABEL(
+          ImplFinalOverlapsNonFinalNote, Info,
           "`final impl` declared here would always be used instead");
-      builder.Note(final_impl.latest_decl_id, ImplFinalOverlapsNonFinalNote);
+      builder.Attach(final_impl.latest_decl_id, ImplFinalOverlapsNonFinalNote);
       builder.Emit();
       return true;
     }
@@ -316,17 +316,17 @@ static auto DiagnoseFinalImplsOverlapInDifferentFiles(Context& context,
     CARBON_DIAGNOSTIC(
         FinalImplOverlapsDifferentFile, Error,
         "`final impl` overlaps with `final impl` from another file");
-    CARBON_DIAGNOSTIC(FinalImplOverlapsDifferentFileNote, Note,
-                      "imported `final impl` here");
+    CARBON_DIAGNOSTIC_LABEL(FinalImplOverlapsDifferentFileNote, Info,
+                            "imported `final impl` here");
     if (impl_a.is_local) {
       auto builder = context.emitter().Build(impl_a.latest_decl_id,
                                              FinalImplOverlapsDifferentFile);
-      builder.Note(impl_b.latest_decl_id, FinalImplOverlapsDifferentFileNote);
+      builder.Attach(impl_b.latest_decl_id, FinalImplOverlapsDifferentFileNote);
       builder.Emit();
     } else {
       auto builder = context.emitter().Build(impl_b.latest_decl_id,
                                              FinalImplOverlapsDifferentFile);
-      builder.Note(impl_a.latest_decl_id, FinalImplOverlapsDifferentFileNote);
+      builder.Attach(impl_a.latest_decl_id, FinalImplOverlapsDifferentFileNote);
       builder.Emit();
     }
     return true;
@@ -351,9 +351,9 @@ static auto DiagnoseFinalImplsOverlapOutsideMatchFirst(Context& context,
                       "outside a `match_first` block");
     auto builder = context.emitter().Build(impl_b.latest_decl_id,
                                            FinalImplOverlapsSameFile);
-    CARBON_DIAGNOSTIC(FinalImplOverlapsSameFileNote, Note,
-                      "other `final impl` here");
-    builder.Note(impl_a.latest_decl_id, FinalImplOverlapsSameFileNote);
+    CARBON_DIAGNOSTIC_LABEL(FinalImplOverlapsSameFileNote, Info,
+                            "other `final impl` here");
+    builder.Attach(impl_a.latest_decl_id, FinalImplOverlapsSameFileNote);
     builder.Emit();
     return true;
   }

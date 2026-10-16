@@ -41,10 +41,8 @@ fn G(generic B: bool) {
 
 // TODO: Provide a location for the "cannot initialize" error message.
 fn H() {
-  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE+5]]:3: error: unable to monomorphize specific `G(true)` [ResolvingSpecificHere]
-  // CHECK:STDERR:   G(true);
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon: note: cannot initialize tuple of 0 elements from tuple with 2 elements [TupleInitElementCountMismatch]
+  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE+3]]:3: error: unable to monomorphize specific `G(true)` [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_symbolic_call_to_eval_fn_invalid_instantiation.carbon:[[@LINE-6]]:24-31: note: cannot initialize tuple of 0 elements from tuple with 2 elements [TupleInitElementCountMismatch]
   // CHECK:STDERR:
   G(true);
 }
@@ -85,24 +83,16 @@ eval fn G(generic B: bool, (a: bool, b: bool)) -> type {
 // the type of the parameter. The argument for the generic parameter is found
 // in the specific for the callee, not in the arguments of the SemIR `call`.
 fn UseF(generic B: bool, x: F(B));
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:26: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for F(B)>` [RedeclParamDiffersType]
-// CHECK:STDERR: fn UseF(generic B: bool, x: bool);
-// CHECK:STDERR:                          ^~~~~~~
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-4]]:26: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: fn UseF(generic B: bool, x: F(B));
-// CHECK:STDERR:                          ^~~~~~~
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+3]]:26-32: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for F(B)>` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-2]]:26-32: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR:
 fn UseF(generic B: bool, x: bool);
 
 // The arguments of the SemIR `call` are flattened by the nested tuple pattern
 // in the signature of `G`, and are regrouped here to match the source.
 fn UseG(generic B: bool, x: G(B, (true, false)));
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:26: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for G(B, (true, false))>` [RedeclParamDiffersType]
-// CHECK:STDERR: fn UseG(generic B: bool, x: bool);
-// CHECK:STDERR:                          ^~~~~~~
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-4]]:26: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: fn UseG(generic B: bool, x: G(B, (true, false)));
-// CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+3]]:26-32: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for G(B, (true, false))>` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-2]]:26-47: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR:
 fn UseG(generic B: bool, x: bool);
 
@@ -113,21 +103,15 @@ eval fn H(generic B: bool, (a: bool,)) -> type {
 }
 
 fn UseH(generic B: bool, x: H(B, (true,)));
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:26: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for H(B, (true,))>` [RedeclParamDiffersType]
-// CHECK:STDERR: fn UseH(generic B: bool, x: bool);
-// CHECK:STDERR:                          ^~~~~~~
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-4]]:26: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: fn UseH(generic B: bool, x: H(B, (true,)));
-// CHECK:STDERR:                          ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+3]]:26-32: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for H(B, (true,))>` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-2]]:26-41: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR:
 fn UseH(generic B: bool, x: bool);
 
 // The `self` argument is the first argument of the SemIR `call`, but is printed
 // before the name of the method, as it was written.
 class C {
-  // CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+4]]:13: warning: binding `self` unused [UnusedBinding]
-  // CHECK:STDERR:   eval fn M(self: Self, b: bool) -> type {
-  // CHECK:STDERR:             ^~~~~~~~~~
+  // CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+2]]:13-22: warning: binding `self` unused [UnusedBinding]
   // CHECK:STDERR:
   eval fn M(self: Self, b: bool) -> type {
     if (b) { return (); }
@@ -136,12 +120,8 @@ class C {
 }
 
 fn UseM(generic c: C, x: c.M(true));
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:23: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for (c).M(true)>` [RedeclParamDiffersType]
-// CHECK:STDERR: fn UseM(generic c: C, x: bool);
-// CHECK:STDERR:                       ^~~~~~~
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-4]]:23: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: fn UseM(generic c: C, x: c.M(true));
-// CHECK:STDERR:                       ^~~~~~~~~~~~
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+3]]:23-29: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for (c).M(true)>` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-2]]:23-34: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR:
 fn UseM(generic c: C, x: bool);
 
@@ -154,12 +134,8 @@ impl type as J {
 }
 
 fn UseN(generic T: type, x: (const T).(J.N)());
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+7]]:26: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for (const T).N()>` [RedeclParamDiffersType]
-// CHECK:STDERR: fn UseN(generic T: type, x: bool);
-// CHECK:STDERR:                          ^~~~~~~
-// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-4]]:26: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
-// CHECK:STDERR: fn UseN(generic T: type, x: (const T).(J.N)());
-// CHECK:STDERR:                          ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE+3]]:26-32: error: type `<pattern for bool>` of parameter 2 in redeclaration differs from previous parameter type `<pattern for (const T).N()>` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_print_call_in_diagnostic.carbon:[[@LINE-2]]:26-45: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR:
 fn UseN(generic T: type, x: bool);
 
@@ -178,8 +154,8 @@ fn UseN(generic T: type, x: bool);
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.f3e: <witness> = impl_witness imports.%Copy.impl_witness_table.aa5 [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value type, (%Copy.impl_witness.f3e) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.571: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.39e: type = fn_type_with_self_type %Copy.WithSelf.Op.type.571, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.ca9: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.cd2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.ca9, %Copy.facet [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.type: type = fn_type @type.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op: %type.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %type.as.Copy.impl.Op.bound.05d: <bound method> = bound_method %U.as_type.ff1, %type.as.Copy.impl.Op [symbolic]
@@ -203,7 +179,7 @@ fn UseN(generic T: type, x: bool);
 // CHECK:STDOUT:     %U.ref: %Z.type = name_ref U, %U.loc6_20.2 [symbolic = %U.loc6_20.1 (constants.%U.013)]
 // CHECK:STDOUT:     %U.as_type.loc11_11.1: type = facet_access_type %U.ref [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
 // CHECK:STDOUT:     %.loc11: type = converted %U.ref, %U.as_type.loc11_11.1 [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
-// CHECK:STDOUT:     %impl.elem0: %.39e = impl_witness_access constants.%Copy.impl_witness.f3e, element0 [concrete = constants.%type.as.Copy.impl.Op]
+// CHECK:STDOUT:     %impl.elem0: %.cd2 = impl_witness_access constants.%Copy.impl_witness.f3e, element0 [concrete = constants.%type.as.Copy.impl.Op]
 // CHECK:STDOUT:     %bound_method: <bound method> = bound_method %.loc11, %impl.elem0 [symbolic = %type.as.Copy.impl.Op.bound (constants.%type.as.Copy.impl.Op.bound.05d)]
 // CHECK:STDOUT:     %type.as.Copy.impl.Op.call: init type = call %bound_method(%.loc11) [symbolic = %U.as_type.loc11_11.2 (constants.%U.as_type.ff1)]
 // CHECK:STDOUT:     return %type.as.Copy.impl.Op.call

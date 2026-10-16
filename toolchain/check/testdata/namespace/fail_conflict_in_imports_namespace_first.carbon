@@ -29,14 +29,10 @@ fn NS() {}
 
 package Example library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+9]]:1: in import [InImport]
-// CHECK:STDERR: fn.carbon:4:1: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn NS() {}
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+5]]:1: in import [InImport]
-// CHECK:STDERR: namespace.carbon:4:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: namespace NS;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE+5]]:1 [InImport]
+// CHECK:STDERR: fn.carbon:4:1-9: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE+3]]:1 [InImport]
+// CHECK:STDERR: namespace.carbon:4:1-13: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 import library "namespace";
 import library "fn";

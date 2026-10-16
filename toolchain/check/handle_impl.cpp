@@ -9,6 +9,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/decl_name_stack.h"
+#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
 #include "toolchain/check/impl.h"
@@ -88,9 +89,9 @@ auto HandleParseNode(Context& context, Parse::ImplTypeAsId node_id) -> bool {
         // If the explicit self type is the default, suggest removing it with a
         // diagnostic, but continue as if no error occurred since the self-type
         // is semantically valid.
-        CARBON_DIAGNOSTIC(ExtendImplSelfAsDefault, Note,
-                          "remove the explicit `Self` type here");
-        diag.Note(self_node, ExtendImplSelfAsDefault);
+        CARBON_DIAGNOSTIC_LABEL(ExtendImplSelfAsDefault, Info,
+                                "remove the explicit `Self` type here");
+        diag.Attach(self_node, ExtendImplSelfAsDefault);
         if (self_type.type_id != SemIR::ErrorInst::TypeId) {
           diag.Emit();
         }
@@ -169,9 +170,9 @@ static auto PopImplIntroducerAndParamsAsNameComponent(
         .PopAndDiscardSoloNodeId<Parse::NodeKind::ImplicitParamListStart>();
     // Emit the `forall` match. This shouldn't produce any valid `Call` params,
     // because `impl`s are never actually called at runtime.
-    auto match_results =
-        CalleePatternMatch(context, *implicit_param_patterns_id,
-                           SemIR::InstBlockId::None, SemIR::InstId::None);
+    auto match_results = CalleePatternMatch(
+        context, implicit_params_loc_id, *implicit_param_patterns_id,
+        SemIR::InstBlockId::None, SemIR::InstId::None);
     CARBON_CHECK(match_results.call_params_id == SemIR::InstBlockId::Empty);
     CARBON_CHECK(match_results.call_param_patterns_id ==
                  SemIR::InstBlockId::Empty);
@@ -224,6 +225,10 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
   auto name = PopImplIntroducerAndParamsAsNameComponent(context, node_id);
   auto decl_block_id = context.inst_block_stack().Pop();
 
+  // Witnesses for this impl in the DeclaredFacetType of the decl will have
+  // been evaluated to ImplSelfWitness.
+  context.declaring_impl_decls().pop_back();
+
   // Convert the constraint expression to a type. This contains all constraints,
   // including rewrites and other constrains on the RHS of `where`.
   auto full_constraint_type_inst_id =
@@ -261,17 +266,18 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
   }
 
-  // Identifying the constraint above replaces `.Self` which can evaluate
-  // LookupImplWitness, and we want affected designators to evaluate to
-  // ImplSelfWitness.
-  context.declaring_impl_decls().pop_back();
-
-  auto specific_interface =
-      full_constraint_type_inst_id != SemIR::ErrorInst::InstId
-          ? context.identified_facet_types()
-                .Get(identified_id)
-                .impl_as_target_interface()
-          : SemIR::SpecificInterface::None;
+  auto specific_interface = SemIR::SpecificInterface::None;
+  if (full_constraint_type_inst_id != SemIR::ErrorInst::TypeInstId) {
+    const auto& identified =
+        context.identified_facet_types().Get(identified_id);
+    auto eval_interface = EvaluateIdentifiedWitnesses(
+        context, node_id, identified.impl_as_target_interface());
+    if (!context.specifics().HasError(eval_interface.specific_id)) {
+      specific_interface = eval_interface;
+    } else {
+      full_constraint_type_inst_id = SemIR::ErrorInst::TypeInstId;
+    }
+  }
 
   // Store an instruction in the decl's eval block that contains the target
   // interface's specific, whose constant value will be updated when specifics
@@ -344,13 +350,13 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
     if (is_final && context.match_first_context()) {
       CARBON_DIAGNOSTIC(FinalImplInMatchFirst, Error,
                         "`final impl` in `match_first` block");
-      CARBON_DIAGNOSTIC(
-          FinalImplInMatchFirstNote, Note,
+      CARBON_DIAGNOSTIC_LABEL(
+          FinalImplInMatchFirstNote, Info,
           "the `match_first` block can be modified as `final` instead");
       context.emitter()
           .Build(node_id, FinalImplInMatchFirst)
-          .Note(context.match_first_context()->decl_id,
-                FinalImplInMatchFirstNote)
+          .Attach(context.match_first_context()->decl_id,
+                  FinalImplInMatchFirstNote)
           .Emit();
       impl_had_error = true;
     }
@@ -377,12 +383,12 @@ static auto BuildImplDecl(Context& context, Parse::AnyImplDeclId node_id,
               CARBON_DIAGNOSTIC(
                   ImplInTwoMatchFirst, Error,
                   "impl declared in `match_first` more than once");
-              CARBON_DIAGNOSTIC(ImplInTwoMatchFirstNote, Note,
-                                "previous declaration here");
+              CARBON_DIAGNOSTIC_LABEL(ImplInTwoMatchFirstNote, Info,
+                                      "previous declaration here");
               context.emitter()
                   .Build(node_id, ImplInTwoMatchFirst)
-                  .Note(prev_impl.decl_loc_in_match_first,
-                        ImplInTwoMatchFirstNote)
+                  .Attach(prev_impl.decl_loc_in_match_first,
+                          ImplInTwoMatchFirstNote)
                   .Emit();
             }
             impl_had_error = true;

@@ -41,12 +41,8 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+7]]:1: error: cannot implicitly convert expression of type `Cpp.Simple` to `Cpp.Simple` [ConversionFailure]
-// CHECK:STDERR: var s: Cpp.Simple(456) = Cpp.MakeSimple123();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+4]]:1: note: type `Cpp.Simple` does not implement interface `Core.ImplicitAs(Cpp.Simple)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var s: Cpp.Simple(456) = Cpp.MakeSimple123();
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+3]]:1-22: error: cannot implicitly convert expression of type `Cpp.Simple` to `Cpp.Simple` [ConversionFailure]
+// CHECK:STDERR: fail_int_param_mismatch.carbon:[[@LINE+2]]:1-22: note: type `Cpp.Simple` does not implement interface `Core.ImplicitAs(Cpp.Simple)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 var s: Cpp.Simple(456) = Cpp.MakeSimple123();
 
@@ -139,12 +135,8 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `type` to `i32` [ConversionFailure]
-// CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A) = {};
-// CHECK:STDERR:                          ^~~~~
-// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+4]]:26: note: type `type` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var x: Cpp.TwoNonType(1, Cpp.A) = {};
-// CHECK:STDERR:                          ^~~~~
+// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+3]]:26-30: error: cannot implicitly convert expression of type `type` to `i32` [ConversionFailure]
+// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+2]]:26-30: note: type `type` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 var x: Cpp.TwoNonType(1, Cpp.A) = {};
 
@@ -156,12 +148,8 @@ import Cpp library "templates.h";
 
 var n: i32;
 
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+7]]:26: error: cannot implicitly convert expression of type `i32*` to `i32` [ConversionFailure]
-// CHECK:STDERR: var x: Cpp.TwoNonType(1, &n) = {};
-// CHECK:STDERR:                          ^~
-// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+4]]:26: note: type `i32*` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: var x: Cpp.TwoNonType(1, &n) = {};
-// CHECK:STDERR:                          ^~
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+3]]:26-27: error: cannot implicitly convert expression of type `i32*` to `i32` [ConversionFailure]
+// CHECK:STDERR: fail_no_conversion.carbon:[[@LINE+2]]:26-27: note: type `i32*` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
 // CHECK:STDERR:
 var x: Cpp.TwoNonType(1, &n) = {};
 
@@ -219,7 +207,7 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %DependentNonType.template: %DependentNonType.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.df9: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %DependentNonType.43e: type = class_type @DependentNonType.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.eef: type = pattern_type %DependentNonType.43e [concrete]
@@ -230,8 +218,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %ptr.f0c: type = ptr_type %DependentNonType.43e [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk.type: type = fn_type @MakeDependentNonType123__carbon_thunk [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk: %MakeDependentNonType123__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.df9 = ref_binding_pattern StaticInt [concrete]
-// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.df9 = var_pattern %StaticInt.patt [concrete]
+// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.d94 = ref_binding_pattern StaticInt [concrete]
+// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.d94 = var_pattern %StaticInt.patt [concrete]
 // CHECK:STDOUT:   %DependentNonType.d43: type = class_type @DependentNonType.2 [concrete]
 // CHECK:STDOUT:   %pattern_type.70d: type = pattern_type %DependentNonType.d43 [concrete]
 // CHECK:STDOUT:   %y.patt: %pattern_type.70d = ref_binding_pattern y [concrete]
@@ -254,8 +242,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.df9 = ref_binding_pattern StaticInt [concrete = constants.%StaticInt.patt]
-// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.df9 = var_pattern %StaticInt.patt [concrete = constants.%StaticInt.var_patt]
+// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.d94 = ref_binding_pattern StaticInt [concrete = constants.%StaticInt.patt]
+// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.d94 = var_pattern %StaticInt.patt [concrete = constants.%StaticInt.var_patt]
 // CHECK:STDOUT:   %StaticInt.var: ref %i32 = var_storage %StaticInt.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

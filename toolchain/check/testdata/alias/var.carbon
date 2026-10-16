@@ -34,9 +34,7 @@ library "[[@TEST_NAME]]";
 fn F() -> () {
   var a: () = ();
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_local.carbon:[[@LINE+4]]:13: error: alias refers to a runtime value [AliasRequiresConstantValue]
-  // CHECK:STDERR:   alias b = a;
-  // CHECK:STDERR:             ^
+  // CHECK:STDERR: fail_local.carbon:[[@LINE+2]]:13: error: alias refers to a runtime value [AliasRequiresConstantValue]
   // CHECK:STDERR:
   alias b = a;
   //@dump-sem-ir-end

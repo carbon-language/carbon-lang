@@ -13,16 +13,10 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_use_in_init.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+11]]:23: error: `a` used before initialization [UsedBeforeInitialization]
-  // CHECK:STDERR:   let unused a: i32 = a;
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+5]]:23: error: `a` used before initialization [UsedBeforeInitialization]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+7]]:14: error: variable `a` marked `unused` but used [UnusedButUsed]
-  // CHECK:STDERR:   let unused a: i32 = a;
-  // CHECK:STDERR:              ^~~~~~
-  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+4]]:23: note: usage here [UnusedButUsedHere]
-  // CHECK:STDERR:   let unused a: i32 = a;
-  // CHECK:STDERR:                       ^
+  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+3]]:14-19: error: variable `a` marked `unused` but used [UnusedButUsed]
+  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+2]]:23: note: usage here [UnusedButUsedHere]
   // CHECK:STDERR:
   let unused a: i32 = a;
 }
@@ -37,8 +31,8 @@ fn F() {
 // CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.df9: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.df9 = value_binding_pattern a [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.d94 = value_binding_pattern a [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -65,7 +59,7 @@ fn F() {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %a: %i32 = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %a.patt: %pattern_type.df9 = value_binding_pattern a [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.d94 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

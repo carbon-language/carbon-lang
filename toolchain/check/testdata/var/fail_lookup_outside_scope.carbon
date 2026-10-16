@@ -16,8 +16,6 @@ fn Main() {
   var unused x: ();
 }
 
-// CHECK:STDERR: fail_basic.carbon:[[@LINE+4]]:13: error: name `x` not found [NameNotFound]
-// CHECK:STDERR: var y: () = x;
-// CHECK:STDERR:             ^
+// CHECK:STDERR: fail_basic.carbon:[[@LINE+2]]:13: error: name `x` not found [NameNotFound]
 // CHECK:STDERR:
 var y: () = x;

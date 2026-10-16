@@ -19,34 +19,26 @@ package main;
 
 // --- fail_main.carbon
 
-// CHECK:STDERR: fail_main.carbon:[[@LINE+4]]:1: error: `Main//default` must omit `package` declaration [ExplicitMainPackage]
-// CHECK:STDERR: package Main;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_main.carbon:[[@LINE+2]]:1-13: error: `Main//default` must omit `package` declaration [ExplicitMainPackage]
 // CHECK:STDERR:
 package Main;
 
 // --- fail_main_impl.carbon
 
-// CHECK:STDERR: fail_main_impl.carbon:[[@LINE+4]]:1: error: `Main//default` must omit `package` declaration [ExplicitMainPackage]
-// CHECK:STDERR: impl package Main;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_main_impl.carbon:[[@LINE+2]]:1-18: error: `Main//default` must omit `package` declaration [ExplicitMainPackage]
 // CHECK:STDERR:
 impl package Main;
 
 // --- fail_raw_main.carbon
 
 // `Main` isn't a keyword, so this fails the same way.
-// CHECK:STDERR: fail_raw_main.carbon:[[@LINE+4]]:1: error: `Main//default` must omit `package` declaration [ExplicitMainPackage]
-// CHECK:STDERR: package r#Main;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_raw_main.carbon:[[@LINE+2]]:1-15: error: `Main//default` must omit `package` declaration [ExplicitMainPackage]
 // CHECK:STDERR:
 package r#Main;
 
 // --- fail_main_lib.carbon
 
-// CHECK:STDERR: fail_main_lib.carbon:[[@LINE+4]]:1: error: use `library` declaration in `Main` package libraries [ExplicitMainLibrary]
-// CHECK:STDERR: package Main library "main_lib";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_main_lib.carbon:[[@LINE+2]]:1-32: error: use `library` declaration in `Main` package libraries [ExplicitMainLibrary]
 // CHECK:STDERR:
 package Main library "[[@TEST_NAME]]";
 
@@ -57,17 +49,13 @@ package cpp;
 
 // --- fail_cpp.carbon
 
-// CHECK:STDERR: fail_cpp.carbon:[[@LINE+4]]:1: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
-// CHECK:STDERR: package Cpp;
-// CHECK:STDERR: ^~~~~~~~~~~~
+// CHECK:STDERR: fail_cpp.carbon:[[@LINE+2]]:1-12: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
 // CHECK:STDERR:
 package Cpp;
 
 // --- fail_cpp.impl.carbon
 
-// CHECK:STDERR: fail_cpp.impl.carbon:[[@LINE+4]]:1: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
-// CHECK:STDERR: impl package Cpp;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_cpp.impl.carbon:[[@LINE+2]]:1-17: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
 // CHECK:STDERR:
 impl package Cpp;
 
@@ -77,9 +65,7 @@ package r#Cpp;
 
 // --- fail_cpp_lib.carbon
 
-// CHECK:STDERR: fail_cpp_lib.carbon:[[@LINE+4]]:1: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
-// CHECK:STDERR: package Cpp library "cpp_lib";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_cpp_lib.carbon:[[@LINE+2]]:1-30: error: `Cpp` cannot be used by a `package` declaration [CppPackageDeclaration]
 // CHECK:STDERR:
 package Cpp library "[[@TEST_NAME]]";
 

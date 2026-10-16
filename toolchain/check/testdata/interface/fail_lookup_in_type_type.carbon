@@ -16,9 +16,7 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lookup_in_type.carbon:[[@LINE+4]]:8: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
-// CHECK:STDERR: let T: type.not_found = {};
-// CHECK:STDERR:        ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_lookup_in_type.carbon:[[@LINE+2]]:8-21: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
 // CHECK:STDERR:
 let T: type.not_found = {};
 
@@ -26,9 +24,7 @@ let T: type.not_found = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+4]]:8: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
-// CHECK:STDERR: let U: (type where .Self impls type).missing = {};
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_lookup_type_where.carbon:[[@LINE+2]]:8-44: error: type `type` does not support qualified expressions [QualifiedExprUnsupported]
 // CHECK:STDERR:
 let U: (type where .Self impls type).missing = {};
 
@@ -44,7 +40,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .T = %T
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc8: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %.loc6: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   %T: <error> = wrapper_binding T, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %T.patt: <error> = value_binding_pattern T [concrete = <error>]
@@ -53,7 +49,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -72,18 +68,18 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:     .U = %U
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %.loc8_9: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %.loc6_9: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %.loc8_9 [concrete]
-// CHECK:STDOUT:     %.Self.ref.loc8_20.1: type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc8_32: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %impls.loc8_26.1 = requirement_impls %.Self.ref.loc8_20.1, %.loc8_32 [concrete]
+// CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %.loc6_9 [concrete]
+// CHECK:STDOUT:     %.Self.ref.loc6_20.1: type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc6_32: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %impls.loc6_26.1 = requirement_impls %.Self.ref.loc6_20.1, %.loc6_32 [concrete]
 // CHECK:STDOUT:     %.Self: type = symbolic_binding .Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %.Self.ref.loc8_20.2: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
-// CHECK:STDOUT:     %impls.loc8_26.2 = requirement_impls %.Self.ref.loc8_20.2, %.loc8_32 [concrete]
-// CHECK:STDOUT:     %.loc8_14: type = where_expr [concrete = type] {
-// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc8_9 [concrete]
-// CHECK:STDOUT:       %impls.loc8_26.2 = requirement_impls %.Self.ref.loc8_20.2, %.loc8_32 [concrete]
+// CHECK:STDOUT:     %.Self.ref.loc6_20.2: type = name_ref .Self, %.Self [symbolic_self = constants.%.Self]
+// CHECK:STDOUT:     %impls.loc6_26.2 = requirement_impls %.Self.ref.loc6_20.2, %.loc6_32 [concrete]
+// CHECK:STDOUT:     %.loc6_14: type = where_expr [concrete = type] {
+// CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %.loc6_9 [concrete]
+// CHECK:STDOUT:       %impls.loc6_26.2 = requirement_impls %.Self.ref.loc6_20.2, %.loc6_32 [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %U: <error> = wrapper_binding U, <error> [concrete = <error>]
@@ -94,7 +90,7 @@ let U: (type where .Self impls type).missing = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

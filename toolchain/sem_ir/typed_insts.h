@@ -973,11 +973,10 @@ struct FormType : public SingletonTypeInst<InstKind::FormType, "Core.Form"> {
 
 // A function declaration.
 struct FunctionDecl {
-  static constexpr auto Kind =
-      InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
-          {.ir_name = "fn_decl",
-           .expr_category = ExprCategory::Value,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::FunctionDecl.Define<Parse::NodeId>(
+      {.ir_name = "fn_decl",
+       .expr_category = ExprCategory::Value,
+       .is_lowered = false});
 
   TypeId type_id;
   FunctionId function_id;
@@ -1081,6 +1080,27 @@ struct ImplSelfWitness {
   InstId period_self;
   // The interface of the impl being declared.
   SpecificInterfaceId specific_interface_id;
+};
+
+// A witness that was modified while identifying a facet type and replacing a
+// `.Self` facet in a LookupImplWitness. It contains the operands from the
+// LookupImplWitness that resolved to it, and they can be used to reconstruct a
+// LookupImplWitness and replay the resulting lookup if desired. This witness
+// exists to give the caller of identify the choice to replace the witness with
+// an instruction of its choice instead of always evaluating and performing impl
+// lookup.
+struct IdentifiedWitness {
+  static constexpr auto Kind =
+      InstKind::IdentifiedWitness.Define<Parse::NodeId>(
+          {.ir_name = "identified_witness",
+           .constant_kind = InstConstantKind::Always,
+           .is_lowered = false});
+
+  // Always the type of the builtin `WitnessType` singleton instruction.
+  TypeId type_id;
+  // The self facet and interface of the impl lookup query.
+  InstId query_self_inst_id;
+  SpecificInterfaceId query_specific_interface_id;
 };
 
 // A witness that a type implements an interface.
@@ -1420,7 +1440,7 @@ struct LookupImplWitness {
 
   // Always the type of the builtin `WitnessType` singleton instruction.
   TypeId type_id;
-  // The self type (or facet value) and interface of the impl lookup query.
+  // The self facet and interface of the impl lookup query.
   InstId query_self_inst_id;
   SpecificInterfaceId query_specific_interface_id;
 };
@@ -1550,7 +1570,7 @@ using NamespaceType = SingletonTypeInst<InstKind::NamespaceType, "<namespace>">;
 // `form_id`. See `AnyFormParamAction` for member documentation.
 struct OutFormParamPatternAction {
   static constexpr auto Kind =
-      // TODO: Use Parse::AnyReturnDeclId once we support passing node
+      // TODO: Use Parse::AnyReturnSpecifierId once we support passing node
       // categories to Define.
       InstKind::OutFormParamPatternAction
           .Define<Parse::NodeIdOneOf<Parse::ReturnFormId, Parse::ReturnTypeId>>(
@@ -1660,13 +1680,15 @@ struct RefBindingPattern {
   EntityNameId entity_name_id;
 };
 
+// A primitive reference form.
 struct RefForm {
-  static constexpr auto Kind =
-      InstKind::RefForm.Define<Parse::NodeIdOneOf<Parse::PrefixOperatorRefId,
-                                                  Parse::RefPrimitiveFormId>>(
-          {.ir_name = "ref_form",
-           .constant_kind = InstConstantKind::Always,
-           .is_lowered = false});
+  // The node is usually a `RefPrimitiveForm` or `ref` prefix operator, but for
+  // a deduced return form, such as `-> ref auto`, it is the expression that the
+  // type was deduced from.
+  static constexpr auto Kind = InstKind::RefForm.Define<Parse::NodeId>(
+      {.ir_name = "ref_form",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
   TypeId type_id;
   TypeInstId type_component_inst_id;
@@ -1981,9 +2003,9 @@ struct ReturnSlotPattern {
   TypeInstId type_inst_id;
 };
 
-// Given an instruction with a constant value that depends on a generic
-// parameter, selects a version of that instruction with the constant value
-// corresponding to a particular specific.
+// Given a constant instruction whose constant value or type depends on a
+// generic parameter, selects a version of that instruction with the type and
+// constant value corresponding to a particular specific.
 struct SpecificConstant {
   // TODO: Can we make Parse::NodeId more specific?
   static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(
@@ -2062,9 +2084,10 @@ struct SpecificImplFunction {
 // used to refer to constants and to instructions from the same scope (and hence
 // the same specific) that this instruction occupies.
 //
-// This is used as a convenience during action evaluation to allow an action to
-// refer to its `MetaInstId` operands from the generic with their specific types
-// and constant values.
+// This is used for lexical references to non-constant instructions from an
+// enclosing generic, and as a convenience during action evaluation to allow an
+// action to refer to its `MetaInstId` operands from the generic with their
+// specific types and constant values.
 struct SpecificInst {
   static constexpr auto Kind = InstKind::SpecificInst.Define<Parse::NodeId>(
       {.ir_name = "specific_inst",
@@ -2472,11 +2495,12 @@ struct ValueBindingPattern {
 
 // A primitive value form.
 struct ValueForm {
-  static constexpr auto Kind =
-      InstKind::ValueForm.Define<Parse::ValPrimitiveFormId>(
-          {.ir_name = "value_form",
-           .constant_kind = InstConstantKind::Always,
-           .is_lowered = false});
+  // The node is usually a `ValPrimitiveForm`, but for a deduced return form,
+  // such as `-> val auto`, it is the expression that the type was deduced from.
+  static constexpr auto Kind = InstKind::ValueForm.Define<Parse::NodeId>(
+      {.ir_name = "value_form",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
   TypeId type_id;
   TypeInstId type_component_inst_id;
@@ -2640,10 +2664,10 @@ struct WhereExpr {
   InstBlockId requirements_id;
 };
 
-// The type of `ImplWitness`, `CustomWitness`,  `ImplSelfWitness`, and
-// `LookupImplWitness` instructions. The latter will evaluate at some point
-// during specific computation into one of first two, and their types should not
-// change in the process.
+// The type of witness instructions: `ImplWitness`, `CustomWitness`,
+// `ImplSelfWitness`, `IdentifiedWitness`, and `LookupImplWitness`. A
+// `LookupImplWitness` can evaluate into any of the other witness inst kinds,
+// and their types should not change in the process.
 //
 // Also the type of `RequireCompleteType` instructions.
 //

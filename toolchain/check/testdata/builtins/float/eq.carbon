@@ -32,9 +32,7 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.eq" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-39: error: invalid signature for builtin function "float.eq" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 
@@ -42,9 +40,7 @@ fn WrongResult(a: f64, b: f64) -> f64 = "float.eq";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.eq" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_literal.carbon:[[@LINE+2]]:1-59: error: invalid signature for builtin function "float.eq" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
 
@@ -53,16 +49,16 @@ fn Eq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.eq";
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.978: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.761: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Eq.type: type = fn_type @Eq [concrete]
 // CHECK:STDOUT:   %Eq: %Eq.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.978, %b.param: %f64.978) -> out %return.param: bool {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.761, %b.param: %f64.761) -> out %return.param: bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Eq.ref: %Eq.type = name_ref Eq, file.%Eq.decl [concrete = constants.%Eq]
-// CHECK:STDOUT:   %a.ref: %f64.978 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %f64.978 = name_ref b, %b
+// CHECK:STDOUT:   %a.ref: %f64.761 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.761 = name_ref b, %b
 // CHECK:STDOUT:   %Eq.call: init bool = call %Eq.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Eq.call
 // CHECK:STDOUT: }

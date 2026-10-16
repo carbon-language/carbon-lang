@@ -50,9 +50,9 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CCallNoInlineWithOptSize.Main() local_unnamed_addr #0 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc4_15.i = tail call i32 @_CRand.Main() #0, !dbg !81
-// CHECK:STDOUT:   %Rand.call.loc4_24.i = tail call i32 @_CRand.Main() #0, !dbg !82
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc4_24.i, %Rand.call.loc4_15.i, !dbg !81
+// CHECK:STDOUT:   %Rand.call.loc4_15.i = tail call i32 @_CRand.Main() #0, !dbg !80
+// CHECK:STDOUT:   %Rand.call.loc4_24.i = tail call i32 @_CRand.Main() #0, !dbg !81
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc4_24.i, %Rand.call.loc4_15.i, !dbg !80
 // CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.i, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +68,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc16_11.array.index, align 4, !dbg !31
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = shl i32 %Int.as.MulAssignWith.impl.Op.call, 1, !dbg !31
 // CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc16_11.array.index, align 4, !dbg !31
-// CHECK:STDOUT:   %1 = add nuw nsw i32 %n.var.03, 1, !dbg !90
+// CHECK:STDOUT:   %1 = add nuw nsw i32 %n.var.03, 1, !dbg !89
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp samesign ult i32 %n.var.03, 65535, !dbg !27
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !26
 // CHECK:STDOUT:
@@ -82,7 +82,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.d19d32d3b3a297a1:core.Destroy.Core"(ptr %self) local_unnamed_addr #0 !dbg !37 {
+// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.72395be3dbbe8946:core.Destroy.Core"(ptr %self) local_unnamed_addr #0 !dbg !37 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
@@ -116,7 +116,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !31 = !DILocation(line: 16, column: 5, scope: !21)
 // CHECK:STDOUT: !35 = !DILocation(line: 12, column: 1, scope: !21)
 // CHECK:STDOUT: !36 = !{!22}
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.d19d32d3b3a297a1:core.Destroy.Core", scope: null, file: !0, line: 14, type: !9, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !40)
+// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.72395be3dbbe8946:core.Destroy.Core", scope: null, file: !0, line: 14, type: !9, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !40)
 // CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !37, type: !2)
 // CHECK:STDOUT: !39 = !DILocation(line: 14, column: 3, scope: !37)
 // CHECK:STDOUT: !40 = !{!38}
@@ -126,16 +126,16 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !46 = !{null, !2, !2}
 // CHECK:STDOUT: !47 = !DISubroutineType(types: !46)
 // CHECK:STDOUT: !49 = !{!43}
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.61f6ad3c44ea60b1.Core:Int.9452f4c51951679b.Core:AddAssignWith.bdff52c0a09c17c8.Core.f4e2976a9e250481", scope: null, file: !41, line: 331, type: !47, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !57)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !41, line: 331, type: !47, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !57)
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !2)
 // CHECK:STDOUT: !52 = !DILocalVariable(arg: 2, scope: !50, type: !2)
 // CHECK:STDOUT: !57 = !{!51, !52}
 // CHECK:STDOUT: !75 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !76 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !80 = distinct !DILocation(line: 9, column: 10, scope: !16)
-// CHECK:STDOUT: !81 = distinct !DILocation(line: 4, column: 10, scope: !10, inlinedAt: !80)
-// CHECK:STDOUT: !82 = distinct !DILocation(line: 4, column: 19, scope: !10, inlinedAt: !80)
-// CHECK:STDOUT: !88 = distinct !DILocation(line: 17, column: 5, scope: !21)
-// CHECK:STDOUT: !89 = distinct !DILocation(line: 398, column: 5, scope: !42, inlinedAt: !88)
-// CHECK:STDOUT: !90 = distinct !DILocation(line: 331, column: 3, scope: !50, inlinedAt: !89)
+// CHECK:STDOUT: !79 = distinct !DILocation(line: 9, column: 10, scope: !16)
+// CHECK:STDOUT: !80 = distinct !DILocation(line: 4, column: 10, scope: !10, inlinedAt: !79)
+// CHECK:STDOUT: !81 = distinct !DILocation(line: 4, column: 19, scope: !10, inlinedAt: !79)
+// CHECK:STDOUT: !87 = distinct !DILocation(line: 17, column: 5, scope: !21)
+// CHECK:STDOUT: !88 = distinct !DILocation(line: 398, column: 5, scope: !42, inlinedAt: !87)
+// CHECK:STDOUT: !89 = distinct !DILocation(line: 331, column: 3, scope: !50, inlinedAt: !88)
 // CHECK:STDOUT:

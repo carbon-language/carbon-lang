@@ -336,6 +336,7 @@ cc_library(
         ":absolute_node_ref",
         ":file",
         ":typed_insts",
+        "//common:check",
         "//toolchain/diagnostics:emitter",
         "//toolchain/parse:tree",
         "@llvm-project//clang:basic",
@@ -470,6 +471,7 @@ cc_library(
     hdrs = ["read_only_ast_source.h"],
     deps = [
         "//toolchain/sem_ir:file",
+        "@llvm-project//clang:ast",
         "@llvm-project//clang:sema",
     ],
 )

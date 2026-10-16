@@ -16,12 +16,8 @@ interface I {}
 
 impl i32 as I {}
 
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+7]]:1: error: redefinition of `impl i32 as I` [ImplRedefinition]
-// CHECK:STDERR: impl i32 as I {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-5]]:1: note: previous definition was here [ImplPreviousDefinition]
-// CHECK:STDERR: impl i32 as I {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+3]]:1-15: error: redefinition of `impl i32 as I` [ImplRedefinition]
+// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-3]]:1-15: note: previous definition was here [ImplPreviousDefinition]
 // CHECK:STDERR:
 impl i32 as I {}
 
@@ -35,8 +31,8 @@ impl i32 as I {}
 // CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.828: <witness> = impl_self_witness %i32, @I [concrete]
-// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @i32.as.I.impl.f9d52b.1.%I.impl_witness_table [concrete]
+// CHECK:STDOUT:   %.c43: <witness> = impl_self_witness %i32, @I [concrete]
+// CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @i32.as.I.impl.3f9847.1.%I.impl_witness_table [concrete]
 // CHECK:STDOUT:   %I.facet: %I.type = facet_value %i32, (%I.impl_witness) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -56,16 +52,16 @@ impl i32 as I {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
-// CHECK:STDOUT:   impl_decl @i32.as.I.impl.f9d52b.1 [concrete] {} {
+// CHECK:STDOUT:   impl_decl @i32.as.I.impl.3f9847.1 [concrete] {} {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @i32.as.I.impl.f9d52b.1.%i32, @I [concrete = constants.%.828]
-// CHECK:STDOUT:   impl_decl @i32.as.I.impl.f9d52b.2 [concrete] {} {
+// CHECK:STDOUT:   %.loc17: <witness> = impl_self_witness @i32.as.I.impl.3f9847.1.%i32, @I [concrete = constants.%.c43]
+// CHECK:STDOUT:   impl_decl @i32.as.I.impl.3f9847.2 [concrete] {} {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc26: <witness> = impl_self_witness @i32.as.I.impl.f9d52b.2.%i32, @I [concrete = constants.%.828]
+// CHECK:STDOUT:   %.loc22: <witness> = impl_self_witness @i32.as.I.impl.3f9847.2.%i32, @I [concrete = constants.%.c43]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I {
@@ -79,8 +75,8 @@ impl i32 as I {}
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @i32.as.I.impl.f9d52b.1: %i32 as %I.ref {
-// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @i32.as.I.impl.f9d52b.1 [concrete]
+// CHECK:STDOUT: impl @i32.as.I.impl.3f9847.1: %i32 as %I.ref {
+// CHECK:STDOUT:   %I.impl_witness_table = impl_witness_table (), @i32.as.I.impl.3f9847.1 [concrete]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness %I.impl_witness_table [concrete = constants.%I.impl_witness]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -88,7 +84,7 @@ impl i32 as I {}
 // CHECK:STDOUT:   witness = %I.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @i32.as.I.impl.f9d52b.2: %i32 as %I.ref {
+// CHECK:STDOUT: impl @i32.as.I.impl.3f9847.2: %i32 as %I.ref {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend %I.ref
 // CHECK:STDOUT:   witness = <error>

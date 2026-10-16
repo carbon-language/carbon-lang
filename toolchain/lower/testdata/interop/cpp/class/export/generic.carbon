@@ -40,17 +40,17 @@ fn Run() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::C" = type {}
+// CHECK:STDOUT: %"class.Carbon::Main::C" = type {}
 // CHECK:STDOUT: %class.A = type { i8 }
-// CHECK:STDOUT: %"class.Carbon::C.0" = type {}
+// CHECK:STDOUT: %"class.Carbon::Main::C.0" = type {}
 // CHECK:STDOUT: %class.B = type { i8 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
 // CHECK:STDOUT: define dso_local void @_Z1Fv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c1 = alloca %"class.Carbon::C", align 1
+// CHECK:STDOUT:   %c1 = alloca %"class.Carbon::Main::C", align 1
 // CHECK:STDOUT:   %ref.tmp = alloca %class.A, align 1
-// CHECK:STDOUT:   %c2 = alloca %"class.Carbon::C.0", align 1
+// CHECK:STDOUT:   %c2 = alloca %"class.Carbon::Main::C.0", align 1
 // CHECK:STDOUT:   %ref.tmp1 = alloca %class.B, align 1
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c1) #2
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #2

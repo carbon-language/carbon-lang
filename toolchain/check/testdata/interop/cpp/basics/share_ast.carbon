@@ -38,9 +38,7 @@ import Cpp;
 
 fn CallLeakedA() -> i32 {
   // This should not be found as we have not imported "a.h".
-  // CHECK:STDERR: fail_a_does_not_leak.carbon:[[@LINE+4]]:10: error: member name `GetA` not found in `Cpp` [MemberNameNotFoundInInstScope]
-  // CHECK:STDERR:   return Cpp.GetA();
-  // CHECK:STDERR:          ^~~~~~~~
+  // CHECK:STDERR: fail_a_does_not_leak.carbon:[[@LINE+2]]:10-17: error: member name `GetA` not found in `Cpp` [MemberNameNotFoundInInstScope]
   // CHECK:STDERR:
   return Cpp.GetA();
 }
@@ -65,3 +63,38 @@ fn CallAIndirect() -> i32 {
 fn CallB() -> i32 {
   return Cpp.GetB();
 }
+
+// --- pkg_a.carbon
+package PkgA;
+import Cpp inline '''
+template <typename T> void Accept(T) {}
+''';
+
+class SameName {}
+
+fn TestPkgA(s: SameName) {
+  Cpp.Accept(s);
+}
+
+// --- pkg_b.carbon
+package PkgB;
+import Cpp inline '''
+template <typename T> void Accept(T) {}
+''';
+
+class SameName {}
+
+fn TestPkgB(s: SameName) {
+  Cpp.Accept(s);
+}
+
+// --- use_both_packages.carbon
+library "[[@TEST_NAME]]";
+import PkgA;
+import PkgB;
+import Cpp inline '''
+// SameName in PkgA and PkgB have distinct C++ DeclContexts (Carbon::PkgA vs
+// Carbon::PkgB), so overloading on them in C++ succeeds.
+void OverloadByPackage(Carbon::PkgA::SameName*) {}
+void OverloadByPackage(Carbon::PkgB::SameName*) {}
+''';

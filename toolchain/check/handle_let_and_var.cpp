@@ -330,7 +330,8 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
                                       /*is_definition=*/false);
 
   if (decl_info.init_id.has_value()) {
-    LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
+    LocalPatternMatch(context, node_id, decl_info.pattern_id,
+                      decl_info.init_id);
   } else {
     CARBON_DIAGNOSTIC(
         ExpectedInitializerAfterLet, Error,
@@ -418,7 +419,7 @@ auto HandleParseNode(Context& context, Parse::VariableDeclId node_id) -> bool {
                            KeywordModifierSet::Returned |
                            KeywordModifierSet::Static);
 
-  LocalPatternMatch(context, decl_info.pattern_id, decl_info.init_id);
+  LocalPatternMatch(context, node_id, decl_info.pattern_id, decl_info.init_id);
 
   auto pattern_block_id = context.pattern_block_stack().Pop();
   if (!InNonStaticFieldDecl(context)) {

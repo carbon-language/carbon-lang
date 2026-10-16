@@ -268,7 +268,7 @@ static auto HandlePatternList(Context& context, NodeKind node_kind,
   if (state.in_field_shorthand_pattern) {
     if (node_kind == NodeKind::TuplePatternStart) {
       CARBON_DIAGNOSTIC(NestedTuplePatternInStructPatternShortField, Error,
-                        "Tuple pattern in shorthand struct pattern field. Use "
+                        "tuple pattern in shorthand struct pattern field; use "
                         "`.field = (...)` instead");
       context.emitter().Emit(*context.position(),
                              NestedTuplePatternInStructPatternShortField);
@@ -276,7 +276,7 @@ static auto HandlePatternList(Context& context, NodeKind node_kind,
       context.ReturnErrorOnState();
     } else if (node_kind == NodeKind::StructPatternStart) {
       CARBON_DIAGNOSTIC(NestedStructPatternStructPatternShortField, Error,
-                        "Struct pattern in shorthand struct pattern field. Use "
+                        "struct pattern in shorthand struct pattern field; use "
                         "`.field = {{...}` instead");
       context.emitter().Emit(*context.position(),
                              NestedStructPatternStructPatternShortField);

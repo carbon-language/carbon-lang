@@ -12,16 +12,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_missing_value.carbon
 
-// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+4]]:11: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
-// CHECK:STDERR: let n: i32;
-// CHECK:STDERR:           ^
+// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+2]]:11: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
 // CHECK:STDERR:
 let n: i32;
 
 fn F() {
-  // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+4]]:20: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
-  // CHECK:STDERR:   let unused n: i32;
-  // CHECK:STDERR:                    ^
+  // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+2]]:20: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
   // CHECK:STDERR:
   let unused n: i32;
 }
@@ -34,11 +30,11 @@ fn F() {
 // CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.df9: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %n.patt.210: %pattern_type.df9 = value_binding_pattern n [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %n.patt.b8d: %pattern_type.d94 = value_binding_pattern n [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
-// CHECK:STDOUT:   %n.patt.2e9: %pattern_type.df9 = value_binding_pattern n [concrete]
+// CHECK:STDOUT:   %n.patt.1b2: %pattern_type.d94 = value_binding_pattern n [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -53,12 +49,12 @@ fn F() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .n = <unexpected>.inst{{[0-9A-F]+}}.loc19_6
+// CHECK:STDOUT:     .n = <unexpected>.inst{{[0-9A-F]+}}.loc17_6
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.df9 = value_binding_pattern n [concrete = constants.%n.patt.210]
+// CHECK:STDOUT:     %n.patt: %pattern_type.d94 = value_binding_pattern n [concrete = constants.%n.patt.b8d]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
@@ -66,7 +62,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %n.patt: %pattern_type.df9 = value_binding_pattern n [concrete = constants.%n.patt.2e9]
+// CHECK:STDOUT:     %n.patt: %pattern_type.d94 = value_binding_pattern n [concrete = constants.%n.patt.1b2]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

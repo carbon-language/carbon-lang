@@ -28,9 +28,7 @@ let a: f64 = Negate(1.5);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.negate" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooFew() -> f64 = "float.negate";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:1-20: error: invalid signature for builtin function "float.negate" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooFew() -> f64 = "float.negate";
 
@@ -42,9 +40,7 @@ fn RuntimeCallIsValidTooFew() -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.negate" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooMany(a: f64, b: f64) -> f64 = "float.negate";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:1-35: error: invalid signature for builtin function "float.negate" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64) -> f64 = "float.negate";
 
@@ -56,9 +52,7 @@ fn RuntimeCallIsValidTooMany(a: f64, b: f64) -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.negate" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn BadReturnType(a: f64) -> bool = "float.negate";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:1-34: error: invalid signature for builtin function "float.negate" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn BadReturnType(a: f64) -> bool = "float.negate";
 
@@ -71,16 +65,16 @@ fn RuntimeCallIsValidBadReturnType(a: f64) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.978: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.761: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [concrete]
 // CHECK:STDOUT:   %Negate: %Negate.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.978, %b.param: %f64.978) -> out %return.param: %f64.978 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.761, %b.param: %f64.761) -> out %return.param: %f64.761 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Negate.ref: %Negate.type = name_ref Negate, file.%Negate.decl [concrete = constants.%Negate]
-// CHECK:STDOUT:   %a.ref: %f64.978 = name_ref a, %a
-// CHECK:STDOUT:   %Negate.call: init %f64.978 = call %Negate.ref(%a.ref)
+// CHECK:STDOUT:   %a.ref: %f64.761 = name_ref a, %a
+// CHECK:STDOUT:   %Negate.call: init %f64.761 = call %Negate.ref(%a.ref)
 // CHECK:STDOUT:   return %Negate.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

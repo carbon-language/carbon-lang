@@ -18,12 +18,8 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_implicit_conversion.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `<bound method>` to `i32` [ConversionFailure]
-  // CHECK:STDERR:   var _: i32 = c.Get;
-  // CHECK:STDERR:   ^~~~~~~~~~
-  // CHECK:STDERR: fail_implicit_conversion.carbon:[[@LINE+4]]:3: note: type `<bound method>` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   var _: i32 = c.Get;
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_implicit_conversion.carbon:[[@LINE+3]]:3-12: error: cannot implicitly convert expression of type `<bound method>` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_implicit_conversion.carbon:[[@LINE+2]]:3-12: note: type `<bound method>` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var _: i32 = c.Get;
 }
@@ -36,12 +32,8 @@ class C {
 }
 
 fn F(c: C) -> i32 {
-  // CHECK:STDERR: fail_as.carbon:[[@LINE+7]]:10: error: cannot convert expression of type `<bound method>` to `i32` with `as` [ConversionFailure]
-  // CHECK:STDERR:   return c.Get as i32;
-  // CHECK:STDERR:          ^~~~~~~~~~~~
-  // CHECK:STDERR: fail_as.carbon:[[@LINE+4]]:10: note: type `<bound method>` does not implement interface `Core.As(i32)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   return c.Get as i32;
-  // CHECK:STDERR:          ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_as.carbon:[[@LINE+3]]:10-21: error: cannot convert expression of type `<bound method>` to `i32` with `as` [ConversionFailure]
+  // CHECK:STDERR: fail_as.carbon:[[@LINE+2]]:10-21: note: type `<bound method>` does not implement interface `Core.As(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   return c.Get as i32;
 }
@@ -58,9 +50,7 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_interface_member.carbon:[[@LINE+4]]:3: error: cannot access member of interface `I` in type `<bound method>` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   c.Get.(I.Op)();
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_interface_member.carbon:[[@LINE+2]]:3-14: error: cannot access member of interface `I` in type `<bound method>` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   c.Get.(I.Op)();
 }
@@ -73,12 +63,8 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_copy.carbon:[[@LINE+7]]:26: error: cannot copy value of type `<bound method>` [CopyOfUncopyableType]
-  // CHECK:STDERR:   var _: typeof(c.Get) = c.Get;
-  // CHECK:STDERR:                          ^~~~~
-  // CHECK:STDERR: fail_copy.carbon:[[@LINE+4]]:26: note: type `<bound method>` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   var _: typeof(c.Get) = c.Get;
-  // CHECK:STDERR:                          ^~~~~
+  // CHECK:STDERR: fail_copy.carbon:[[@LINE+3]]:26-30: error: cannot copy value of type `<bound method>` [CopyOfUncopyableType]
+  // CHECK:STDERR: fail_copy.carbon:[[@LINE+2]]:26-30: note: type `<bound method>` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var _: typeof(c.Get) = c.Get;
 }
