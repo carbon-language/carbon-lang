@@ -560,14 +560,15 @@ auto ResolveReturnTypeInSpecific(Context& context, SemIR::LocId loc_id,
   }
 
   // So is a deduced return type that doesn't depend on the generic's
-  // parameters. Otherwise, the return type and the return pattern were created
-  // within the definition of the generic, and are computed by its eval block.
+  // parameters.
   auto pattern_const_id =
       context.constant_values().Get(function.return_pattern_id);
   if (!pattern_const_id.is_symbolic()) {
     return true;
   }
 
+  // Otherwise, the return type and the return pattern were created
+  // within the definition of the generic, and are computed by its eval block.
   if (!ResolveSpecificDefinition(context, loc_id, specific_id)) {
     // We're within the definition of the function, after its return type was
     // deduced. In the self specific, the return type is just the deduced type,
@@ -583,8 +584,8 @@ auto ResolveReturnTypeInSpecific(Context& context, SemIR::LocId loc_id,
   // has a value, the instantiation has reached the point where the return type
   // was deduced.
   //
-  // Note that a pattern never evaluates to `NotConstant`, so this can only mean
-  // that we haven't reached it yet.
+  // Note that a return pattern never evaluates to `NotConstant`, so this can
+  // only mean that we haven't reached it yet.
   return SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
                                            function.return_pattern_id) !=
          SemIR::ConstantId::NotConstant;
