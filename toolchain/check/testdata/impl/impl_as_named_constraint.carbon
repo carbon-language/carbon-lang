@@ -383,6 +383,41 @@ fn F() -> G(C).(Z(G(C)).Result) {
   return ();
 }
 
+// --- rewrite_twice_same.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+constraint J {
+    extend require impls Z where .Z1 = ();
+}
+impl () as J where .Z1 = () {}
+
+// --- fail_rewrite_twice_different.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+constraint J {
+    extend require impls Z where .Z1 = {};
+}
+// CHECK:STDERR: fail_rewrite_twice_different.carbon:[[@LINE+2]]:12-27: error: associated constant Z1 given value `()` that is different from previously given value `{}` [AssociatedConstantGivenDifferentValues]
+// CHECK:STDERR:
+impl () as J where .Z1 = () {}
+
+// --- fail_rewrite_twice_different_named_constraints.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+constraint K {
+    extend require impls Z where .Z1 = ();
+}
+constraint J {
+    extend require impls Z where .Z1 = {};
+    extend require impls K;
+}
+// CHECK:STDERR: fail_rewrite_twice_different_named_constraints.carbon:[[@LINE+2]]:12: error: associated constant Z1 given value `{}` that is different from previously given value `()` [AssociatedConstantGivenDifferentValues]
+// CHECK:STDERR:
+impl () as J {}
+
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

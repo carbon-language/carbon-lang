@@ -569,11 +569,6 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
       continue;
     }
 
-    // FacetTypes resolution disallows two rewrites to the same associated
-    // constant, so we won't ever have a facet write twice to the same position
-    // in the witness table.
-    CARBON_CHECK(table_entry == SemIR::InstId::ImplWitnessTablePlaceholder);
-
     // If the associated constant has a symbolic type, convert the rewrite
     // value to that type now we know the value of `Self`.
     SemIR::TypeId assoc_const_type_id = assoc_constant_decl->type_id;
@@ -617,6 +612,28 @@ auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
     CARBON_CHECK(rewrite_inst_id == context.constant_values().GetConstantInstId(
                                         rewrite_inst_id),
                  "Rewritten value for associated constant is not canonical.");
+
+    // The same entry may be written by a named constraint and the impl, or by
+    // two named constraints, etc. They need to all match.
+    if (table_entry != SemIR::InstId::ImplWitnessTablePlaceholder) {
+      if (context.constant_values().Get(table_entry) !=
+          context.constant_values().Get(rewrite_inst_id)) {
+        if (table_entry != SemIR::ErrorInst::InstId) {
+          const auto& assoc_const = context.associated_constants().Get(
+              assoc_constant_decl->assoc_const_id);
+          CARBON_DIAGNOSTIC(
+              AssociatedConstantGivenDifferentValues, Error,
+              "associated constant {0} given value {1} that is different from "
+              "previously given value {2}",
+              SemIR::NameId, InstIdAsConstant, InstIdAsConstant);
+          context.emitter().Emit(
+              constraint_loc_id, AssociatedConstantGivenDifferentValues,
+              assoc_const.name_id, rewrite_inst_id, table_entry);
+        }
+        table_entry = SemIR::ErrorInst::InstId;
+      }
+      continue;
+    }
 
     table_entry = AddInst<SemIR::ImplWitnessAssociatedConstant>(
         context, loc_id,
