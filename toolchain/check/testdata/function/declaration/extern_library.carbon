@@ -90,12 +90,12 @@ extern library "extern_library_owner" fn F();
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR: fail_extern_library_mismatch_owner.carbon:[[@LINE+4]]:16-40: error: `import` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_extern_library_mismatch_owner.carbon:[[@LINE+2]]:1-40: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:
 import library "extern_library_mismatch"
 
-// CHECK:STDERR: fail_extern_library_mismatch_owner.carbon:[[@LINE+4]]:1-6: error: `import` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_extern_library_mismatch_owner.carbon:[[@LINE-4]]:1-40: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-// CHECK:STDERR:
 extern fn F();
 
 // --- fail_extern_self_library.carbon

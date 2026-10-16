@@ -78,12 +78,12 @@ fn G() {}
 // CHECK:STDOUT:         "message": "`fn` declarations must either end with a `;` or have a `{ ... }` block for a definition",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 2,
-// CHECK:STDOUT:             "line": 2
+// CHECK:STDOUT:             "character": 4,
+// CHECK:STDOUT:             "line": 0
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "start": {
-// CHECK:STDOUT:             "character": 0,
-// CHECK:STDOUT:             "line": 2
+// CHECK:STDOUT:             "character": 3,
+// CHECK:STDOUT:             "line": 0
 // CHECK:STDOUT:           }
 // CHECK:STDOUT:         },
 // CHECK:STDOUT:         "severity": 1,

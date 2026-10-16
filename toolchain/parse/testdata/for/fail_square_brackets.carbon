@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/for/fail_square_brackets.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+10]]:7: error: expected `(` after `for` [ExpectedParenAfter]
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+10]]:3-5: error: expected `(` after `for` [ExpectedParenAfter]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+8]]:7: error: expected pattern [ExpectedPattern]
   // CHECK:STDERR:

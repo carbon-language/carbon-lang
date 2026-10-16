@@ -93,7 +93,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_missing_colon.carbon:[[@LINE+2]]:8: error: expected `:` in associated constant declaration [ExpectedAssociatedConstantColon]
+  // CHECK:STDERR: fail_missing_colon.carbon:[[@LINE+2]]:7: error: expected `:` in associated constant declaration [ExpectedAssociatedConstantColon]
   // CHECK:STDERR:
   let a;
 }

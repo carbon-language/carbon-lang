@@ -34,7 +34,7 @@ var a: auto = not expand x;
 
 // --- fail_as_postfix.carbon
 
-// CHECK:STDERR: fail_as_postfix.carbon:[[@LINE+2]]:17-22: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_as_postfix.carbon:[[@LINE+2]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 var a: auto = x expand;
 

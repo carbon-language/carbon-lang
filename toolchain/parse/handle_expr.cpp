@@ -185,11 +185,12 @@ auto HandleExprInPostfix(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::Package: {
-      context.AddLeafNode(NodeKind::PackageExpr, context.Consume());
+      auto package_token = context.Consume();
+      context.AddLeafNode(NodeKind::PackageExpr, package_token);
       if (context.PositionKind() != Lex::TokenKind::Period) {
         CARBON_DIAGNOSTIC(ExpectedPeriodAfterPackage, Error,
                           "expected `.` after `package` expression");
-        context.emitter().Emit(*context.position(), ExpectedPeriodAfterPackage);
+        context.emitter().Emit(package_token, ExpectedPeriodAfterPackage);
         state.has_error = true;
       }
       context.PushState(state);
@@ -230,8 +231,7 @@ auto HandleExprInPostfix(Context& context) -> void {
       } else {
         CARBON_DIAGNOSTIC(ExpectedIdentifierOrSelfAfterPeriod, Error,
                           "expected identifier or `Self` after `.`");
-        context.emitter().Emit(*context.position(),
-                               ExpectedIdentifierOrSelfAfterPeriod);
+        context.emitter().Emit(period, ExpectedIdentifierOrSelfAfterPeriod);
         // Only consume if it is a number or word.
         if (context.PositionKind().is_keyword()) {
           context.AddLeafNode(NodeKind::IdentifierNameNotBeforeSignature,
@@ -508,7 +508,7 @@ auto HandleExprStatementFinish(Context& context) -> void {
   if (!state.has_error) {
     CARBON_DIAGNOSTIC(ExpectedExprSemi, Error,
                       "expected `;` after expression statement");
-    context.emitter().Emit(*context.position(), ExpectedExprSemi);
+    context.emitter().Emit(*(context.position() - 1), ExpectedExprSemi);
   }
 
   context.AddNode(NodeKind::ExprStatement,

@@ -19,11 +19,11 @@ var package.n: i32;
 // CHECK:STDERR:
 var package.val: i32;
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+2]]:11-17: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_in_name.carbon:[[@LINE+2]]:1-9: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 namespace package.NS;
 
-// CHECK:STDERR: fail_in_name.carbon:[[@LINE+2]]:7-13: error: `class` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_in_name.carbon:[[@LINE+2]]:1-5: error: `class` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 class package.C {
 }
