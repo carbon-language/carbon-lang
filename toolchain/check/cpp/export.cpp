@@ -1230,6 +1230,11 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
       ->getAs<clang::FunctionProtoType>();
 }
 
+// Synthesizes a global variable with a value of `value_id` and exports it to
+// clang. To generate a unique name, `parameter_index` should be the index of
+// the parameter within the function. `pattern_id` is the parameter pattern.
+// Returns a `clang::Expr*` suitable for conversion into an argument default
+// value to provide to clang, or `nullptr` if `value_id` is None.
 static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
                                   const FunctionInfo& target,
                                   int32_t parameter_index,
@@ -1276,17 +1281,14 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
                                         .subpattern_id = var_pattern_id})));
   auto var_storage_id =
       GetOrAddVarStorage(context, var_pattern_id, /*is_returned_var=*/false);
-  auto scrutinee_id =
-      AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(
-                           context.sem_ir(), loc_id,
-                           SemIR::Inst(context.insts().Get(value_id))));
 
   // Add the variable initialization commands to the global initialization
   // section so that it will have its value set before being referenced by the
   // C++ code.
   context.global_init().Resume();
-  auto init_id = InitializeExisting(context, loc_id, var_storage_id,
-                                    scrutinee_id, /*for_return=*/false);
+  auto init_id =
+      InitializeExisting(context, loc_id, var_storage_id,
+                         value_id /*scrutinee_id */, /*for_return=*/false);
   AddInst<SemIR::Assign>(context, loc_id,
                          {.lhs_id = var_storage_id, .rhs_id = init_id});
   context.global_init().Suspend();
