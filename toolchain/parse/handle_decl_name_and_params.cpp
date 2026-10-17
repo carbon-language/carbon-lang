@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
@@ -88,19 +89,44 @@ auto HandleDeclNameAndParams(Context& context) -> void {
     return;
   }
 
-  // The missing name goes after the token before the parser's position, which
-  // at the end of the file is the file's last token.
-  auto after_token = *(context.position() - 1);
+  // A word that can't be a name, followed by a token that can follow one, was
+  // most likely meant as the name, and is what the message is about. Otherwise
+  // the name is missing, and goes after the token before it.
+  bool recover_as_raw =
+      context.PositionKind().is_word() &&
+      context.PositionKind(Lookahead::NextToken)
+          .IsOneOf({Lex::TokenKind::Period, Lex::TokenKind::OpenSquareBracket,
+                    Lex::TokenKind::OpenParen, Lex::TokenKind::MinusGreater,
+                    Lex::TokenKind::MinusGreaterQuestion, Lex::TokenKind::Semi,
+                    Lex::TokenKind::OpenCurlyBrace, Lex::TokenKind::Equal});
+  auto loc = recover_as_raw ? DiagnosticLoc(*context.position())
+                            : context.PointAfterPreviousToken();
   if (state.token == *context.position()) {
-    CARBON_DIAGNOSTIC(ExpectedDeclNameAfterPeriod, Error,
-                      "`.` should be followed by a name");
-    context.emitter().Emit(after_token, ExpectedDeclNameAfterPeriod);
+    CARBON_DIAGNOSTIC(
+        ExpectedDeclNameAfterPeriod, Error,
+        "`.` should be followed by a name"
+        "{0:; prefix reserved word with `r#` to form a valid identifier|}",
+        Diagnostics::BoolAsSelect);
+    context.emitter().Emit(loc, ExpectedDeclNameAfterPeriod, recover_as_raw);
   } else {
-    CARBON_DIAGNOSTIC(ExpectedDeclName, Error,
-                      "`{0}` introducer should be followed by a name",
-                      Lex::TokenKind);
-    context.emitter().Emit(after_token, ExpectedDeclName,
-                           context.tokens().GetKind(state.token));
+    CARBON_DIAGNOSTIC(
+        ExpectedDeclName, Error,
+        "`{0}` introducer should be followed by a name"
+        "{1:; prefix reserved word with `r#` to form a valid identifier|}",
+        Lex::TokenKind, Diagnostics::BoolAsSelect);
+    context.emitter().Emit(loc, ExpectedDeclName,
+                           context.tokens().GetKind(state.token),
+                           recover_as_raw);
+  }
+
+  if (recover_as_raw) {
+    HandleName(context, state,
+               context.tokens().AddPostLexingRecoveryTokenAsIdentifier(
+                   context.Consume()),
+               NodeKind::IdentifierNameNotBeforeSignature,
+               NodeKind::IdentifierNameQualifierWithoutParams,
+               NodeKind::IdentifierNameMaybeBeforeSignature);
+    return;
   }
   context.ReturnErrorOnState();
   context.AddInvalidParse(*context.position());

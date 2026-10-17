@@ -327,25 +327,8 @@ auto TreeAndSubtrees::NodeToDiagnosticLoc(NodeId node_id, bool token_only) const
 
   // Construct a location that encompasses all tokens that descend from this
   // node (including the root).
-  Lex::InclusiveTokenRange token_range = GetSubtreeTokenRange(node_id);
-  auto begin_loc = tree_->tokens().TokenToDiagnosticLoc(token_range.begin);
-  if (token_range.begin == token_range.end) {
-    return begin_loc;
-  }
-  auto end_loc = tree_->tokens().TokenToDiagnosticLoc(token_range.end);
-  begin_loc.last_byte_offset = end_loc.last_byte_offset;
-  // For multiline locations we simply return the rest of the line for now
-  // since true multiline locations are not yet supported.
-  if (begin_loc.loc.line_number != end_loc.loc.line_number) {
-    begin_loc.loc.length =
-        begin_loc.loc.line.size() - begin_loc.loc.column_number + 1;
-  } else {
-    if (begin_loc.loc.column_number != end_loc.loc.column_number) {
-      begin_loc.loc.length = end_loc.loc.column_number + end_loc.loc.length -
-                             begin_loc.loc.column_number;
-    }
-  }
-  return begin_loc;
+  return tree_->tokens().TokenRangeToDiagnosticLoc(
+      GetSubtreeTokenRange(node_id));
 }
 
 auto TreeAndSubtrees::SiblingIterator::Print(llvm::raw_ostream& output) const

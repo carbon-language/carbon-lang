@@ -1027,9 +1027,8 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     }
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                       "whitespace is required after '//'");
-    emitter_.Build(comment_text.begin() + 2, NoWhitespaceAfterCommentIntroducer)
-        .Attach(SourceLoc(comment_text.take_front(3)))
-        .Emit();
+    emitter_.Emit(SourceLoc::Before(comment_text.begin() + 2),
+                  NoWhitespaceAfterCommentIntroducer);
 
     // We use this to tweak the lexing of blocks below.
     is_valid_after_slashes = false;
@@ -1237,8 +1236,11 @@ static auto DiagnoseUnterminatedString(Diagnostics::Emitter<SourceLoc>& emitter,
   CARBON_DIAGNOSTIC(UnterminatedString, Error,
                     "{0:character|string} literal is missing a terminator",
                     Diagnostics::BoolAsSelect);
-  emitter.Build(literal.text().begin(), UnterminatedString, is_char)
-      .Attach(SourceLoc(literal.text()))
+  // The terminator goes where the literal stops.
+  emitter
+      .Build(SourceLoc::Before(literal.text().end()), UnterminatedString,
+             is_char)
+      .Attach(SourceLoc::Range(literal.text()))
       .Emit();
 }
 
@@ -1280,7 +1282,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
                       "type indicator may not contain `'`, `#`, or `\"`, and "
                       "the content must begin on a new line");
     emitter_.Build(literal->text().begin(), MultiLineStringInvalidIntroducer)
-        .Attach(SourceLoc(literal->text()))
+        .Attach(SourceLoc::Range(literal->text()))
         .Emit();
     return lex_as_error();
   }
@@ -1460,7 +1462,7 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
     emitter_
         .Build(word.begin() + 1, TooManyTypeBitWidthDigits, suffix.size(),
                DigitLimit)
-        .Attach(SourceLoc(suffix))
+        .Attach(SourceLoc::Range(suffix))
         .Emit();
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
@@ -1520,7 +1522,7 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
   if (word.size() < 2) {
     CARBON_DIAGNOSTIC(DollarIntLiteralMissingNumber, Error,
                       "expected digits after `$`");
-    emitter_.Emit(word.begin() + 1, DollarIntLiteralMissingNumber);
+    emitter_.Emit(SourceLoc::Before(word.end()), DollarIntLiteralMissingNumber);
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
   if (word[1] == '0' && word.size() > 2) {
@@ -1681,7 +1683,7 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
   CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
                     "encountered unrecognized characters while parsing");
   emitter_.Build(error_text.begin(), UnrecognizedCharacters)
-      .Attach(SourceLoc(error_text))
+      .Attach(SourceLoc::Range(error_text))
       .Emit();
 
   position += error_text.size();
@@ -2190,12 +2192,12 @@ static auto TokenEndPosition(const TokenizedBuffer& buffer, TokenIndex token)
   return TokenStartPosition(buffer, token) + buffer.GetTokenText(token).size();
 }
 
-// Where in the source a bracket that `correction` proposes would be written:
-// just past the end of the token it goes after, rather than at the start of the
-// token it goes before. For `f(x` on one line and `;` on the next, that points
-// the suggestion at the position directly after the `x`, where the `)` belongs,
-// instead of down at the `;`. Where the two tokens are separated, the bracket
-// is then placed on the side that matches how it would be written.
+// Where a user would insert the bracket that `correction` proposes: just past
+// the end of the token it goes after, rather than at the start of the token it
+// goes before. For `f(x` on one line and `;` on the next, that points the
+// suggestion at the position directly after the `x`, where the `)` belongs,
+// instead of down at the `;`. An opening bracket and a `}` closing a multi-line
+// scope are inserted elsewhere, as described below.
 static auto BracketInsertionPosition(const TokenizedBuffer& buffer,
                                      const BracketCorrection& correction)
     -> const char* {
@@ -2234,9 +2236,12 @@ static auto BracketInsertionPosition(const TokenizedBuffer& buffer,
                         buffer.GetIndentColumnNumber(open_line) - 1);
     }
   } else if (correction.fix_token_kind.is_opening_symbol()) {
-    // An opening bracket binds to what comes after it, so it belongs on the far
-    // side of any space separating it from the token it follows.
-    pos = skip_spaces(pos, NoLimit);
+    // An opening bracket is inserted against the token after it when that token
+    // is on the same line.
+    TokenIndex insert_before(insert_after.index + 1);
+    if (buffer.GetEndLoc(insert_after).first == buffer.GetLine(insert_before)) {
+      pos = TokenStartPosition(buffer, insert_before);
+    }
   }
   return pos;
 }
@@ -2277,8 +2282,9 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
       // on the bracket rather than suggest one of them.
       fixes.ReplaceWithError(correction.diagnostic_token_index);
     } else {
-      builder.Attach(BracketInsertionPosition(buffer_, correction),
-                     PossiblyMissingBracketHere, correction.fix_token_kind);
+      builder.Attach(
+          SourceLoc::Before(BracketInsertionPosition(buffer_, correction)),
+          PossiblyMissingBracketHere, correction.fix_token_kind);
       insertion_ids[correction_index] =
           correction.fix_action == BracketFixAction::InsertBefore
               ? fixes.InsertBefore(correction.fix_token_index,

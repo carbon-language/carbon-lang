@@ -20,7 +20,8 @@ auto HandleCodeBlock(Context& context) -> void {
 
     // Recover by parsing a single statement.
     CARBON_DIAGNOSTIC(ExpectedCodeBlock, Error, "expected braced code block");
-    context.emitter().Emit(*context.position(), ExpectedCodeBlock);
+    context.emitter().Emit(context.OpeningBracketInsertionPoint(),
+                           ExpectedCodeBlock);
 
     context.PushState(StateKind::Statement);
   }

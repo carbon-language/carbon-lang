@@ -35,7 +35,8 @@ auto HandleAliasAfterName(Context& context) -> void {
   } else {
     CARBON_DIAGNOSTIC(ExpectedAliasInitializer, Error,
                       "`alias` requires a `=` for the source");
-    context.emitter().Emit(*(context.position() - 1), ExpectedAliasInitializer);
+    context.emitter().Emit(context.PointAfterPreviousToken(),
+                           ExpectedAliasInitializer);
     context.RecoverFromDeclError(state, NodeKind::Alias,
                                  /*skip_past_likely_end=*/true);
   }

@@ -10,22 +10,25 @@
 
 namespace Carbon::Lex {
 
-// The location of a lexer diagnostic: a range of the source buffer, one
-// character long when it names a position.
+// The location of a lexer diagnostic: a range of the source buffer. An empty
+// range names the point between two characters, where something missing would
+// be written.
 //
-// A `const char*` converts implicitly to a one-character position, and a range
-// has to be constructed explicitly. Converting a bare `const char*` to
-// `llvm::StringRef` scans to the next null, which in a source buffer is the
-// end of the file.
+// A `const char*` converts implicitly to the one character it points at, and
+// any other range has to be made by a factory function. Converting a bare
+// `const char*` to `llvm::StringRef` scans to the next null, which in a source
+// buffer is the end of the file.
 class SourceLoc {
  public:
-  // The position at `pos`, which must point into the source buffer.
+  // The character at `pos`, which must point into the source buffer.
   //
-  // NOLINTNEXTLINE(google-explicit-constructor): A position is a location.
+  // NOLINTNEXTLINE(google-explicit-constructor): A character is a location.
   SourceLoc(const char* pos) : text_(pos, 1) {}
 
   // The range `text` covers, which must point into the source buffer.
-  explicit SourceLoc(llvm::StringRef text) : text_(text) {}
+  static auto Range(llvm::StringRef text) -> SourceLoc {
+    return SourceLoc(text);
+  }
 
   // The range from `begin` up to `end`, both of which must point into the
   // source buffer.
@@ -34,10 +37,16 @@ class SourceLoc {
     return SourceLoc(llvm::StringRef(begin, end - begin));
   }
 
+  // The point just before `pos`, which must point into the source buffer or
+  // just past its end.
+  static auto Before(const char* pos) -> SourceLoc { return Range(pos, pos); }
+
   // The source text this location covers.
   auto text() const -> llvm::StringRef { return text_; }
 
  private:
+  explicit SourceLoc(llvm::StringRef text) : text_(text) {}
+
   llvm::StringRef text_;
 };
 

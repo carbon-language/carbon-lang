@@ -22,7 +22,7 @@ auto CanLexInt(Diagnostics::Emitter<SourceLoc>& emitter, llvm::StringRef text)
         "limit of {1}",
         size_t, size_t);
     emitter.Build(text.begin(), TooManyDigits, text.size(), DigitLimit)
-        .Attach(SourceLoc(text))
+        .Attach(SourceLoc::Range(text))
         .Emit();
     return false;
   }

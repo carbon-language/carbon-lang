@@ -52,6 +52,15 @@ auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
   *node_impl = Tree::NodeImpl(kind, has_error, token);
 }
 
+auto Context::OpeningBracketInsertionPoint() const -> DiagnosticLoc {
+  auto previous_token = *(position_ - 1);
+  if (tokens().GetEndLoc(previous_token).first ==
+      tokens().GetLine(*position_)) {
+    return DiagnosticLoc::Before(*position_);
+  }
+  return DiagnosticLoc::After(previous_token);
+}
+
 auto Context::ConsumeAndAddOpenCurlyBrace(Lex::TokenIndex default_token,
                                           NodeKind start_kind)
     -> std::optional<Lex::TokenIndex> {
@@ -61,7 +70,7 @@ auto Context::ConsumeAndAddOpenCurlyBrace(Lex::TokenIndex default_token,
   } else {
     CARBON_DIAGNOSTIC(ExpectedCurlyBraceAfter, Error,
                       "expected `{` after `{0}`", Lex::TokenKind);
-    emitter_.Emit(default_token, ExpectedCurlyBraceAfter,
+    emitter_.Emit(OpeningBracketInsertionPoint(), ExpectedCurlyBraceAfter,
                   tokens().GetKind(default_token));
     AddLeafNode(start_kind, default_token, /*has_error=*/true);
     return std::nullopt;
@@ -77,7 +86,7 @@ auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
   } else {
     CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "expected `(` after `{0}`",
                       Lex::TokenKind);
-    emitter_.Emit(default_token, ExpectedParenAfter,
+    emitter_.Emit(OpeningBracketInsertionPoint(), ExpectedParenAfter,
                   tokens().GetKind(default_token));
     AddLeafNode(start_kind, default_token, /*has_error=*/true);
     return std::nullopt;
@@ -97,8 +106,12 @@ auto Context::ConsumeAndAddCloseSymbol(State state, NodeKind close_kind)
                       "unexpected tokens before `{0}`", Lex::TokenKind);
     CARBON_DIAGNOSTIC_LABEL(GroupOpenedHere, Info, "to match this `{0}`",
                             Lex::TokenKind);
-    auto diag = emitter_.Build(*position_, ExpectedCloseSymbol,
-                               open_token_kind.closing_symbol());
+    auto matched_close = tokens().GetMatchedClosingToken(state.token);
+    auto diag =
+        emitter_.Build(DiagnosticLoc::Tokens(
+                           {.begin = *position_,
+                            .end = Lex::TokenIndex(matched_close.index - 1)}),
+                       ExpectedCloseSymbol, open_token_kind.closing_symbol());
     // The message's line already shows an opening token on that line, so only
     // one on an earlier line is labeled.
     if (tokens().GetLine(state.token) != tokens().GetLine(*position_)) {
@@ -106,7 +119,7 @@ auto Context::ConsumeAndAddCloseSymbol(State state, NodeKind close_kind)
     }
     diag.Emit();
 
-    SkipTo(tokens().GetMatchedClosingToken(state.token));
+    SkipTo(matched_close);
     AddNode(close_kind, Consume(), /*has_error=*/true);
   }
 }
@@ -306,13 +319,18 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
                         "whitespace missing {0:=-1:before|=0:around|=1:after} "
                         "binary operator",
                         Diagnostics::IntAsSelect);
+      // Whitespace missing on one side goes at that side. Whitespace missing
+      // around the operator is about the operator.
       Diagnostics::IntAsSelect pos(0);
+      DiagnosticLoc loc = *position_;
       if (tokens().HasLeadingWhitespace(*position_)) {
         pos.value = 1;
+        loc = DiagnosticLoc::After(*position_);
       } else if (tokens().HasTrailingWhitespace(*position_)) {
         pos.value = -1;
+        loc = DiagnosticLoc::Before(*position_);
       }
-      emitter_.Emit(*position_, BinaryOperatorRequiresWhitespace, pos);
+      emitter_.Emit(loc, BinaryOperatorRequiresWhitespace, pos);
     }
   } else {
     bool prefix = fixity == OperatorFixity::Prefix;
@@ -332,7 +350,9 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
           UnaryOperatorRequiresWhitespace, Error,
           "whitespace is required {0:before|after} this unary operator",
           Diagnostics::BoolAsSelect);
-      emitter_.Emit(*position_, UnaryOperatorRequiresWhitespace, prefix);
+      emitter_.Emit(prefix ? DiagnosticLoc::Before(*position_)
+                           : DiagnosticLoc::After(*position_),
+                    UnaryOperatorRequiresWhitespace, prefix);
     }
   }
 }
@@ -347,7 +367,7 @@ auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
       // `state.token` but don't pass down.
       CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
                         "expected `,` or `{0}`", Lex::TokenKind);
-      emitter_.Emit(*(position_ - 1), UnexpectedTokenAfterListElement,
+      emitter_.Emit(PointAfterPreviousToken(), UnexpectedTokenAfterListElement,
                     close_kind);
       ReturnErrorOnState();
     }
@@ -425,9 +445,9 @@ auto Context::ParseLibraryName(bool accept_default)
       "expected `default` or a string literal to specify the library name");
   CARBON_DIAGNOSTIC(ExpectedLibraryName, Error,
                     "expected a string literal to specify the library name");
-  emitter().Emit(*(position() - 1), accept_default
-                                        ? ExpectedLibraryNameOrDefault
-                                        : ExpectedLibraryName);
+  emitter().Emit(PointAfterPreviousToken(), accept_default
+                                                ? ExpectedLibraryNameOrDefault
+                                                : ExpectedLibraryName);
   return std::nullopt;
 }
 
@@ -445,7 +465,7 @@ auto Context::ParseLibrarySpecifier(bool accept_default)
 auto Context::DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void {
   CARBON_DIAGNOSTIC(ExpectedDeclSemi, Error,
                     "`{0}` declarations must end with a `;`", Lex::TokenKind);
-  emitter().Emit(*(position() - 1), ExpectedDeclSemi, expected_kind);
+  emitter().Emit(PointAfterPreviousToken(), ExpectedDeclSemi, expected_kind);
 }
 
 auto Context::DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
@@ -454,7 +474,7 @@ auto Context::DiagnoseExpectedDeclSemiOrDefinition(Lex::TokenKind expected_kind)
                     "`{0}` declarations must either end with a `;` or "
                     "have a `{{ ... }` block for a definition",
                     Lex::TokenKind);
-  emitter().Emit(*(position() - 1), ExpectedDeclSemiOrDefinition,
+  emitter().Emit(PointAfterPreviousToken(), ExpectedDeclSemiOrDefinition,
                  expected_kind);
 }
 

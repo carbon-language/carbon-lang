@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/base/shared_value_stores.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/context.h"
@@ -50,7 +51,6 @@ static auto HandleDeclContent(Context& context, Context::State state,
   } else {
     // We require a package name. This is either an identifier or package name
     // keyword.
-    auto package_name_position = *context.position();
     if (auto ident = context.ConsumeIf(Lex::TokenKind::Identifier)) {
       names.package_id =
           PackageNameId::ForIdentifier(context.tokens().GetIdentifier(*ident));
@@ -62,16 +62,38 @@ static auto HandleDeclContent(Context& context, Context::State state,
       names.package_id = PackageNameId::Cpp;
       context.AddLeafNode(NodeKind::CppPackageName, *cpp);
     } else {
-      CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
-                        "expected identifier after `package`");
-      CARBON_DIAGNOSTIC(ExpectedIdentifierAfterImport, Error,
-                        "expected identifier or `library` after `import`");
-      context.emitter().Emit(package_name_position,
+      // A word that can't be a name, followed by a token that can follow one,
+      // was most likely meant as the name, and is what the message is about.
+      // Otherwise the name is missing, and goes after the token before it.
+      bool recover_as_raw =
+          context.PositionKind().is_word() &&
+          context.PositionKind(Lookahead::NextToken)
+              .IsOneOf({Lex::TokenKind::Semi, Lex::TokenKind::Library});
+      CARBON_DIAGNOSTIC(
+          ExpectedIdentifierAfterPackage, Error,
+          "expected identifier after `package`"
+          "{0:; prefix reserved word with `r#` to form a valid identifier|}",
+          Diagnostics::BoolAsSelect);
+      CARBON_DIAGNOSTIC(
+          ExpectedIdentifierAfterImport, Error,
+          "expected identifier or `library` after `import`"
+          "{0:; prefix reserved word with `r#` to form a valid identifier|}",
+          Diagnostics::BoolAsSelect);
+      context.emitter().Emit(recover_as_raw ? DiagnosticLoc(*context.position())
+                                            : context.PointAfterPreviousToken(),
                              DeclKind == NodeKind::PackageDecl
                                  ? ExpectedIdentifierAfterPackage
-                                 : ExpectedIdentifierAfterImport);
-      on_parse_error();
-      return;
+                                 : ExpectedIdentifierAfterImport,
+                             recover_as_raw);
+      if (!recover_as_raw) {
+        on_parse_error();
+        return;
+      }
+      auto ident = context.tokens().AddPostLexingRecoveryTokenAsIdentifier(
+          context.Consume());
+      names.package_id =
+          PackageNameId::ForIdentifier(context.tokens().GetIdentifier(ident));
+      context.AddLeafNode(NodeKind::IdentifierPackageName, ident);
     }
 
     if (names.is_export) {
@@ -114,7 +136,8 @@ static auto HandleDeclContent(Context& context, Context::State state,
       if (!inline_body_token) {
         CARBON_DIAGNOSTIC(ExpectedStringAfterInline, Error,
                           "expected string literal after `inline`");
-        context.emitter().Emit(inline_token, ExpectedStringAfterInline);
+        context.emitter().Emit(context.PointAfterPreviousToken(),
+                               ExpectedStringAfterInline);
         on_parse_error();
         return;
       }
@@ -125,7 +148,8 @@ static auto HandleDeclContent(Context& context, Context::State state,
       // before the library name.
       CARBON_DIAGNOSTIC(MissingLibraryKeyword, Error,
                         "missing `library` keyword");
-      context.emitter().Emit(*context.position(), MissingLibraryKeyword);
+      context.emitter().Emit(context.PointAfterPreviousToken(),
+                             MissingLibraryKeyword);
       on_parse_error();
       return;
     }

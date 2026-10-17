@@ -236,6 +236,16 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   auto TokenToDiagnosticLoc(TokenIndex token) const
       -> Diagnostics::ConvertedLoc;
 
+  // Converts a run of tokens to a diagnostic location. A run spanning lines
+  // covers the rest of its first line.
+  auto TokenRangeToDiagnosticLoc(InclusiveTokenRange tokens) const
+      -> Diagnostics::ConvertedLoc;
+
+  // Converts the point just past `token`, where something missing after it
+  // would be written, to a diagnostic location.
+  auto PointAfterTokenToDiagnosticLoc(TokenIndex token) const
+      -> Diagnostics::ConvertedLoc;
+
   // Returns true if the given range overlaps with an entry in
   // `dump_sem_ir_ranges_`. Must not be called when there are no ranges; query
   // `has_dump_sem_ir_ranges` first.

@@ -46,9 +46,10 @@ static auto HandlePeriodOrArrow(Context& context, NodeKind node_kind,
         Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
     // A reserved word in the name's position is what the message is about.
     // Otherwise the name is missing, and goes after the `.` or `->`.
-    context.emitter().Emit(
-        recover_as_raw ? *context.position() : *(context.position() - 1),
-        ExpectedIdentifierAfterPeriodOrArrow, is_arrow, recover_as_raw);
+    context.emitter().Emit(recover_as_raw ? DiagnosticLoc(*context.position())
+                                          : context.PointAfterPreviousToken(),
+                           ExpectedIdentifierAfterPeriodOrArrow, is_arrow,
+                           recover_as_raw);
     // If we see a word, assume it was intended to be a name.
     // TODO: Should word tokens be valid here?
     if (recover_as_raw) {

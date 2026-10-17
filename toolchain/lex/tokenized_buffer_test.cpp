@@ -1096,10 +1096,10 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   // We increase the number of digits until the first one that is to large.
   Testing::MockDiagnosticConsumer consumer;
   // The bit width's digits are marked as the range that is too long.
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(Testing::IsDiagnosticWithRange(
-                  Diagnostics::Kind::TooManyTypeBitWidthDigits,
-                  Diagnostics::Level::Error, 1, 2, _, 1, 2, testing::Gt(1))));
+  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
+                            Diagnostics::Kind::TooManyTypeBitWidthDigits,
+                            Diagnostics::Level::Error, 1, 2, 1, _, 1, 2,
+                            testing::Gt(1))));
   std::string code = "i";
   // A 128-bit APInt should be plenty large, but if needed in the future it can
   // be widened without issue.
@@ -1133,7 +1133,7 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   EXPECT_CALL(consumer,
               HandleDiagnostic(Testing::IsDiagnosticWithRange(
                   Diagnostics::Kind::TooManyTypeBitWidthDigits,
-                  Diagnostics::Level::Error, 1, 2,
+                  Diagnostics::Level::Error, 1, 2, 1,
                   HasSubstr(llvm::formatv(" {0} ", Count)), 1, 2, Count)));
   code = "i";
   code.append(Count, '9');
@@ -1238,12 +1238,11 @@ TEST_F(LexerTest, InvalidCommentRunsLumpTogether) {
   // no matter which invalid byte follows each `//`; a valid comment ends the
   // run and starts its own record.
   Testing::MockDiagnosticConsumer consumer;
-  // The `//` introducer and the character that should have been whitespace
-  // are marked together, so the range contains the message's location.
+  // The whitespace goes just past the `//`.
   EXPECT_CALL(consumer,
-              HandleDiagnostic(Testing::IsDiagnosticWithRange(
+              HandleDiagnostic(Testing::IsPointDiagnostic(
                   Diagnostics::Kind::NoWhitespaceAfterCommentIntroducer,
-                  Diagnostics::Level::Error, 1, 3, _, 1, 1, 3)));
+                  Diagnostics::Level::Error, 1, 3, _)));
   auto& buffer = compile_helper_.GetTokenizedBuffer(
       "//!one\n"
       "//?two\n"
@@ -1281,12 +1280,11 @@ TEST_F(LexerTest, InvalidCommentRunAtEof) {
 
 TEST_F(LexerTest, DiagnosticWhitespace) {
   Testing::MockDiagnosticConsumer consumer;
-  // The `//` introducer and the character that should have been whitespace
-  // are marked together, so the range contains the message's location.
+  // The whitespace goes just past the `//`.
   EXPECT_CALL(consumer,
-              HandleDiagnostic(Testing::IsDiagnosticWithRange(
+              HandleDiagnostic(Testing::IsPointDiagnostic(
                   Diagnostics::Kind::NoWhitespaceAfterCommentIntroducer,
-                  Diagnostics::Level::Error, 1, 3, _, 1, 1, 3)));
+                  Diagnostics::Level::Error, 1, 3, _)));
   compile_helper_.GetTokenizedBuffer("//no space after comment", &consumer);
 }
 
@@ -1294,18 +1292,20 @@ TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
   Testing::MockDiagnosticConsumer consumer;
   // The message is located at the `\` that starts the escape, and the escape
   // is marked.
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(Testing::IsDiagnosticWithRange(
-                  Diagnostics::Kind::UnknownEscapeSequence,
-                  Diagnostics::Level::Error, 1, 7, HasSubstr("`b`"), 1, 7, 2)));
+  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
+                            Diagnostics::Kind::UnknownEscapeSequence,
+                            Diagnostics::Level::Error, 1, 7, 1,
+                            HasSubstr("`b`"), 1, 7, 2)));
   compile_helper_.GetTokenizedBuffer(R"("hello\bworld")", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticBadHex) {
   Testing::MockDiagnosticConsumer consumer;
+  // The message is located at the first digit that isn't an uppercase
+  // hexadecimal digit, and the escape before it is marked.
   EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
                             Diagnostics::Kind::HexadecimalEscapeMissingDigits,
-                            Diagnostics::Level::Error, 1, 7, _, 1, 7, 2)));
+                            Diagnostics::Level::Error, 1, 9, 0, _, 1, 7, 2)));
   compile_helper_.GetTokenizedBuffer(R"("hello\xabworld")", &consumer);
 }
 
@@ -1338,18 +1338,73 @@ TEST_F(LexerTest, DiagnosticLfCr) {
 
 TEST_F(LexerTest, DiagnosticMissingTerminator) {
   Testing::MockDiagnosticConsumer consumer;
-  // The whole unterminated literal is the range.
+  // The terminator goes where the literal stops, and the whole literal is
+  // marked.
   EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
                             Diagnostics::Kind::UnterminatedString,
-                            Diagnostics::Level::Error, 1, 1, _, 1, 1, 4)));
+                            Diagnostics::Level::Error, 1, 5, 0, _, 1, 1, 4)));
   compile_helper_.GetTokenizedBuffer(R"(#" ")", &consumer);
+}
+
+TEST_F(LexerTest, DiagnosticMissingMultiLineTerminator) {
+  Testing::MockDiagnosticConsumer consumer;
+  // The literal runs to the end of the file, which is where the terminator
+  // goes, and the literal is marked from its introducer.
+  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
+                            Diagnostics::Kind::UnterminatedString,
+                            Diagnostics::Level::Error, 3, 1, 0, _, 1, 1, _)));
+  compile_helper_.GetTokenizedBuffer(
+      "'''\n"
+      "  text\n",
+      &consumer);
+}
+
+TEST_F(LexerTest, DiagnosticPointAtEndOfFile) {
+  Testing::MockDiagnosticConsumer consumer;
+  // A file that doesn't end in a newline ends at the end of its last line.
+  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsPointDiagnostic(
+                            Diagnostics::Kind::DollarIntLiteralMissingNumber,
+                            Diagnostics::Level::Error, 1, 2, _)));
+  compile_helper_.GetTokenizedBuffer("$", &consumer);
+}
+
+// Returns the line and column of the point just past `token`, checking that it
+// is a point.
+static auto PointAfter(const TokenizedBuffer& buffer, int token)
+    -> std::pair<int, int> {
+  auto loc = buffer.PointAfterTokenToDiagnosticLoc(TokenIndex(token)).loc;
+  EXPECT_THAT(loc.length, Eq(0));
+  return {loc.line_number, loc.column_number};
+}
+
+TEST_F(LexerTest, PointAfterToken) {
+  // Tokens are `FileStart`, `a`, `b`, the string literal, and `FileEnd`.
+  auto& buffer = compile_helper_.GetTokenizedBuffer(
+      "a  b\n"
+      "'''\n"
+      "  c\n"
+      "'''");
+  // The point is before the spaces after the token.
+  EXPECT_THAT(PointAfter(buffer, 1), Pair(1, 2));
+  // The point just past the last token on a line is at the end of the line.
+  EXPECT_THAT(PointAfter(buffer, 2), Pair(1, 5));
+  // A token spanning lines ends on its last line, which here ends the file.
+  EXPECT_THAT(PointAfter(buffer, 3), Pair(4, 4));
+}
+
+TEST_F(LexerTest, PointAfterRecoveryToken) {
+  // The lexer inserts a `)` after `a`. It isn't in the source, so the point
+  // just past it is the point just past `a`.
+  auto& buffer = compile_helper_.GetTokenizedBuffer("(a");
+  ASSERT_TRUE(buffer.IsRecoveryToken(TokenIndex(3)));
+  EXPECT_THAT(PointAfter(buffer, 3), Pair(1, 3));
 }
 
 TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Testing::MockDiagnosticConsumer consumer;
   EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
                             Diagnostics::Kind::UnrecognizedCharacters,
-                            Diagnostics::Level::Error, 1, 1, _, 1, 1, 1)));
+                            Diagnostics::Level::Error, 1, 1, 1, _, 1, 1, 1)));
   compile_helper_.GetTokenizedBuffer("\b", &consumer);
 }
 

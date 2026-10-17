@@ -305,7 +305,7 @@ static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
                       "code point specified by `\\u{{...}}` escape is greater "
                       "than 0x10FFFF");
     emitter.Build(digits.begin(), UnicodeEscapeTooLarge)
-        .Attach(SourceLoc(digits))
+        .Attach(SourceLoc::Range(digits))
         .Emit();
     return false;
   }
@@ -315,7 +315,7 @@ static auto ExpandUnicodeEscapeSequence(DiagnosticEmitter& emitter,
                       "code point specified by `\\u{{...}}` escape is a "
                       "surrogate character");
     emitter.Build(digits.begin(), UnicodeEscapeSurrogate)
-        .Attach(SourceLoc(digits))
+        .Attach(SourceLoc::Range(digits))
         .Emit();
     return false;
   }
@@ -401,7 +401,7 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
         return;
       }
       return;
-    case 'x':
+    case 'x': {
       if (content.size() >= 2 && IsUpperHexDigit(content[0]) &&
           IsUpperHexDigit(content[1])) {
         AppendChar(buffer_cursor, static_cast<char>(llvm::hexFromNibbles(
@@ -412,10 +412,16 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
       CARBON_DIAGNOSTIC(HexadecimalEscapeMissingDigits, Error,
                         "escape sequence `\\x` must be followed by two "
                         "uppercase hexadecimal digits, for example `\\x0F`");
-      emitter.Build(escape_begin, HexadecimalEscapeMissingDigits)
-          .Attach(escape_through(content.begin()))
+      // The digit that is missing or wrong is where the escape needs fixing.
+      const char* bad_digit =
+          content.begin() +
+          content.take_front(2).take_while(IsUpperHexDigit).size();
+      emitter
+          .Build(SourceLoc::Before(bad_digit), HexadecimalEscapeMissingDigits)
+          .Attach(escape_through(bad_digit))
           .Emit();
       break;
+    }
     case 'u': {
       llvm::StringRef remaining = content;
       if (remaining.consume_front("{")) {
@@ -433,8 +439,12 @@ static auto ExpandAndConsumeEscapeSequence(DiagnosticEmitter& emitter,
           UnicodeEscapeMissingBracedDigits, Error,
           "escape sequence `\\u` must be followed by a braced sequence of "
           "uppercase hexadecimal digits, for example `\\u{{70AD}}`");
-      emitter.Build(escape_begin, UnicodeEscapeMissingBracedDigits)
-          .Attach(escape_through(content.begin()))
+      // `remaining` starts at the part of `{...}` that is missing or wrong,
+      // which is where the escape needs fixing.
+      emitter
+          .Build(SourceLoc::Before(remaining.begin()),
+                 UnicodeEscapeMissingBracedDigits)
+          .Attach(escape_through(remaining.begin()))
           .Emit();
       break;
     }
@@ -482,7 +492,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
         if (contents.begin() != line_start) {
           diag.Attach(SourceLoc::Range(line_start, contents.begin()));
         }
-        diag.Attach(SourceLoc(indent), ClosingDelimiterIndent).Emit();
+        diag.Attach(SourceLoc::Range(indent), ClosingDelimiterIndent).Emit();
       }
     }
 
@@ -534,7 +544,7 @@ static auto ExpandEscapeSequencesAndRemoveIndent(
               "whitespace other than plain space must be expressed with an "
               "escape sequence in a string literal");
           emitter.Build(contents.begin(), InvalidHorizontalWhitespaceInString)
-              .Attach(SourceLoc(contents.take_front(after_space)))
+              .Attach(SourceLoc::Range(contents.take_front(after_space)))
               .Emit();
           // Include the whitespace in the string contents for error recovery.
           AppendFrontOfContents(buffer_cursor, contents, after_space);
@@ -580,7 +590,7 @@ auto StringLiteral::ComputeCharLiteralValue(
     CARBON_DIAGNOSTIC(CharLiteralRaw, Error,
                       "unexpected `#` before character literal");
     emitter.Build(text_.begin(), CharLiteralRaw)
-        .Attach(SourceLoc(text_))
+        .Attach(SourceLoc::Range(text_))
         .Emit();
   }
 
@@ -610,8 +620,9 @@ auto StringLiteral::ComputeCharLiteralValue(
     case llvm::conversionOK: {
       if (target_cursor == target) {
         CARBON_DIAGNOSTIC(CharLiteralEmpty, Error, "empty character literal");
-        emitter.Build(text_.begin(), CharLiteralEmpty)
-            .Attach(SourceLoc(text_))
+        // The character goes between the quotes.
+        emitter.Build(SourceLoc::Before(content_.begin()), CharLiteralEmpty)
+            .Attach(SourceLoc::Range(text_))
             .Emit();
         return std::nullopt;
       }
@@ -629,7 +640,7 @@ auto StringLiteral::ComputeCharLiteralValue(
                           "escape sequence `\\u{{{0:X-2}}`",
                           llvm::UTF32);
         emitter.Build(text_.begin(), CharLiteralControlCharacter, result)
-            .Attach(SourceLoc(text_))
+            .Attach(SourceLoc::Range(text_))
             .Emit();
         return std::nullopt;
       }
@@ -640,7 +651,7 @@ auto StringLiteral::ComputeCharLiteralValue(
                           "as escape sequence `\\u{{{0:X-2}}`",
                           llvm::UTF32);
         emitter.Build(text_.begin(), CharLiteralHexEscape, result)
-            .Attach(SourceLoc(text_))
+            .Attach(SourceLoc::Range(text_))
             .Emit();
         return std::nullopt;
       }
@@ -650,14 +661,14 @@ auto StringLiteral::ComputeCharLiteralValue(
     case llvm::sourceExhausted: {
       CARBON_DIAGNOSTIC(CharLiteralUnderflow, Error, "incomplete UTF-8");
       emitter.Build(text_.begin(), CharLiteralUnderflow)
-          .Attach(SourceLoc(text_))
+          .Attach(SourceLoc::Range(text_))
           .Emit();
       return std::nullopt;
     }
     case llvm::targetExhausted: {
       CARBON_DIAGNOSTIC(CharLiteralOverflow, Error, "too many characters");
       emitter.Build(text_.begin(), CharLiteralOverflow)
-          .Attach(SourceLoc(text_))
+          .Attach(SourceLoc::Range(text_))
           .Emit();
       return std::nullopt;
     }
@@ -665,7 +676,7 @@ auto StringLiteral::ComputeCharLiteralValue(
       CARBON_DIAGNOSTIC(CharLiteralInvalidUTF8, Error,
                         "invalid UTF-8 character");
       emitter.Build(text_.begin(), CharLiteralInvalidUTF8)
-          .Attach(SourceLoc(text_))
+          .Attach(SourceLoc::Range(text_))
           .Emit();
       return std::nullopt;
     }
@@ -683,7 +694,7 @@ auto StringLiteral::ComputeStringValue(llvm::BumpPtrAllocator& allocator,
         MultiLineStringWithDoubleQuotes, Error,
         "use `'''` delimiters for a multi-line string literal, not `\"\"\"`");
     emitter.Build(text_.begin(), MultiLineStringWithDoubleQuotes)
-        .Attach(SourceLoc(text_.take_front(hash_level_ + 3)))
+        .Attach(SourceLoc::Range(text_.take_front(hash_level_ + 3)))
         .Emit();
   }
   llvm::StringRef indent = IsMultiLine(kind_)

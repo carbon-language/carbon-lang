@@ -32,7 +32,8 @@ auto HandleRequireBeforeImpls(Context& context) -> void {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(RequireExpectedImpls, Error,
                         "expected `impls` in `require` declaration");
-      context.emitter().Emit(*(context.position() - 1), RequireExpectedImpls);
+      context.emitter().Emit(context.PointAfterPreviousToken(),
+                             RequireExpectedImpls);
     }
     context.ReturnErrorOnState();
   }

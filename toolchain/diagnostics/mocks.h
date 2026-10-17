@@ -99,11 +99,13 @@ inline auto IsDiagnostic(
 }
 
 // Matches a diagnostic with one message and one range attached to it with no
-// text, checking the range's length as well as its start.
+// text, checking the lengths of the message's location and of the range as
+// well as their starts.
 inline auto IsDiagnosticWithRange(testing::Matcher<Diagnostics::Kind> kind,
                                   testing::Matcher<Diagnostics::Level> level,
                                   testing::Matcher<int> line_number,
                                   testing::Matcher<int> column_number,
+                                  testing::Matcher<int> length,
                                   testing::Matcher<std::string> message,
                                   testing::Matcher<int> range_line_number,
                                   testing::Matcher<int> range_column_number,
@@ -111,7 +113,11 @@ inline auto IsDiagnosticWithRange(testing::Matcher<Diagnostics::Kind> kind,
     -> testing::Matcher<Diagnostics::Diagnostic> {
   return IsDiagnostic(
       level,
-      IsDiagnosticMessage(kind, level, line_number, column_number, message),
+      testing::AllOf(
+          IsDiagnosticMessage(kind, level, line_number, column_number, message),
+          testing::Field(
+              "loc", &Diagnostics::Message::loc,
+              testing::Field("length", &Diagnostics::Loc::length, length))),
       testing::IsEmpty(),
       testing::ElementsAre(testing::AllOf(
           IsDiagnosticLabel(Diagnostics::LabelCategory::Primary,
@@ -130,6 +136,24 @@ inline auto IsSingleDiagnostic(testing::Matcher<Diagnostics::Kind> kind,
   return IsDiagnostic(
       level,
       IsDiagnosticMessage(kind, level, line_number, column_number, message),
+      testing::IsEmpty(), testing::IsEmpty());
+}
+
+// Matches a diagnostic with one message, located at the point just before
+// `column_number`, and nothing attached to it.
+inline auto IsPointDiagnostic(testing::Matcher<Diagnostics::Kind> kind,
+                              testing::Matcher<Diagnostics::Level> level,
+                              testing::Matcher<int> line_number,
+                              testing::Matcher<int> column_number,
+                              testing::Matcher<std::string> message)
+    -> testing::Matcher<Diagnostics::Diagnostic> {
+  return IsDiagnostic(
+      level,
+      testing::AllOf(
+          IsDiagnosticMessage(kind, level, line_number, column_number, message),
+          testing::Field(
+              "loc", &Diagnostics::Message::loc,
+              testing::Field("length", &Diagnostics::Loc::length, 0))),
       testing::IsEmpty(), testing::IsEmpty());
 }
 

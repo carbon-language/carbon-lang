@@ -42,7 +42,8 @@ auto HandleVarAsReturned(Context& context) -> void {
   if (!context.PositionIs(Lex::TokenKind::Var)) {
     CARBON_DIAGNOSTIC(ExpectedVarAfterReturned, Error,
                       "expected `var` after `returned`");
-    context.emitter().Emit(returned_token, ExpectedVarAfterReturned);
+    context.emitter().Emit(context.PointAfterPreviousToken(),
+                           ExpectedVarAfterReturned);
     context.AddLeafNode(NodeKind::EmptyDecl,
                         context.SkipPastLikelyEnd(returned_token),
                         /*has_error=*/true);

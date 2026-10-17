@@ -44,25 +44,80 @@ enum class BindingContext : uint8_t {
   CompileTimeEntityParam,
 };
 
+// The location of a parse diagnostic: a run of tokens, or the point just before
+// or just past a token, where something missing would be written.
+class DiagnosticLoc {
+ public:
+  enum class Kind : int8_t {
+    Tokens,
+    PointBefore,
+    PointAfter,
+  };
+
+  // NOLINTNEXTLINE(google-explicit-constructor): A token is a location.
+  DiagnosticLoc(Lex::TokenIndex token)
+      : DiagnosticLoc(Kind::Tokens, {.begin = token, .end = token}) {}
+
+  // The tokens from `tokens.begin` through `tokens.end`.
+  static auto Tokens(Lex::InclusiveTokenRange tokens) -> DiagnosticLoc {
+    return DiagnosticLoc(Kind::Tokens, tokens);
+  }
+
+  // The point just before `token`.
+  static auto Before(Lex::TokenIndex token) -> DiagnosticLoc {
+    return DiagnosticLoc(Kind::PointBefore, {.begin = token, .end = token});
+  }
+
+  // The point just past `token`.
+  static auto After(Lex::TokenIndex token) -> DiagnosticLoc {
+    return DiagnosticLoc(Kind::PointAfter, {.begin = token, .end = token});
+  }
+
+  auto kind() const -> Kind { return kind_; }
+
+  // The tokens this location covers, or the one token a point is before or
+  // after.
+  auto tokens() const -> Lex::InclusiveTokenRange { return tokens_; }
+
+ private:
+  explicit DiagnosticLoc(Kind kind, Lex::InclusiveTokenRange tokens)
+      : kind_(kind), tokens_(tokens) {}
+
+  Kind kind_;
+  Lex::InclusiveTokenRange tokens_;
+};
+
 // Context and shared functionality for parser handlers. See state.def for state
 // documentation.
 class Context {
  public:
   // A token-based emitter for use during parse.
-  class DiagnosticEmitter : public Diagnostics::Emitter<Lex::TokenIndex> {
+  class DiagnosticEmitter : public Diagnostics::Emitter<DiagnosticLoc> {
    public:
     explicit DiagnosticEmitter(Diagnostics::Consumer* consumer,
                                Context* context)
         : Emitter(consumer), context_(context) {}
 
    protected:
-    // Applies the `position_` to the `last_byte_offset` returned by
-    // `TokenToDiagnosticLoc`, so that a diagnostic sorts by how far the parser
-    // had read even when the token it names is earlier. Diagnostics with the
-    // same offset stay in the order they were emitted.
-    auto ConvertLoc(Lex::TokenIndex token, ContextFnT /*context_fn*/) const
+    // Applies the `position_` to the `last_byte_offset` of the converted
+    // location, so that a diagnostic sorts by how far the parser had read even
+    // when the location it names is earlier. Diagnostics with the same offset
+    // stay in the order they were emitted.
+    auto ConvertLoc(DiagnosticLoc loc, ContextFnT /*context_fn*/) const
         -> Diagnostics::ConvertedLoc override {
-      auto converted = context_->tokens().TokenToDiagnosticLoc(token);
+      auto converted =
+          context_->tokens().TokenRangeToDiagnosticLoc(loc.tokens());
+      switch (loc.kind()) {
+        case DiagnosticLoc::Kind::Tokens:
+          break;
+        case DiagnosticLoc::Kind::PointBefore:
+          converted.loc.length = 0;
+          break;
+        case DiagnosticLoc::Kind::PointAfter:
+          converted = context_->tokens().PointAfterTokenToDiagnosticLoc(
+              loc.tokens().begin);
+          break;
+      }
       converted.last_byte_offset =
           std::max(converted.last_byte_offset,
                    context_->tokens().GetByteOffset(*context_->position()));
@@ -484,6 +539,17 @@ class Context {
 
   auto position() -> Lex::TokenIterator& { return position_; }
   auto position() const -> Lex::TokenIterator { return position_; }
+
+  // Returns the point just past the token before `position_`, which is where a
+  // token missing at `position_` would be written.
+  auto PointAfterPreviousToken() const -> DiagnosticLoc {
+    return DiagnosticLoc::After(*(position_ - 1));
+  }
+
+  // Returns where a user would insert an opening bracket missing at
+  // `position_`: against the token at `position_` when it's on the line where
+  // the previous token ends, and otherwise just past the previous token.
+  auto OpeningBracketInsertionPoint() const -> DiagnosticLoc;
 
   auto state_stack() -> llvm::SmallVector<State>& { return state_stack_; }
 

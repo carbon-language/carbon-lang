@@ -107,7 +107,7 @@ auto HandleStructPatternFieldAfterDesignator(Context& context) -> void {
 
       CARBON_DIAGNOSTIC(ExpectedStructPatternDesignatedField, Error,
                         "expected `= value` after `.field`");
-      context.emitter().Emit(*(context.position() - 1),
+      context.emitter().Emit(context.PointAfterPreviousToken(),
                              ExpectedStructPatternDesignatedField);
     }
     skip_to_recovery_position(/*add_invalid_parse=*/true);
