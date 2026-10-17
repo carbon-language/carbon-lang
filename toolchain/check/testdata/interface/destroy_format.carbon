@@ -297,18 +297,10 @@ interface I {
 }
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_associated_entity_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type AssociatedEntityType` [SemanticsTodo]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(I.F);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_associated_entity_value.carbon:[[@LINE-10]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_associated_entity_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<associated entity in I>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   CheckHasTrivialDestruction(I.F);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_associated_entity_value.carbon:[[@LINE-18]]:1: in import [InImport]
+  // CHECK:STDERR: fail_todo_associated_entity_value.carbon:[[@LINE-10]]:1: in import [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -325,18 +317,10 @@ import library "check_destroy_format";
 class Generic(T: type) {}
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_generic_class_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type ParameterizedClassType` [SemanticsTodo]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(Generic);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_class_value.carbon:[[@LINE-8]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_generic_class_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of Generic>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   CheckHasTrivialDestruction(Generic);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_class_value.carbon:[[@LINE-16]]:1: in import [InImport]
+  // CHECK:STDERR: fail_todo_generic_class_value.carbon:[[@LINE-8]]:1: in import [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -353,18 +337,10 @@ import library "check_destroy_format";
 interface GenericInterface(T: type) {}
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_generic_interface_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type GenericInterfaceType` [SemanticsTodo]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(GenericInterface);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_interface_value.carbon:[[@LINE-8]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_generic_interface_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of GenericInterface>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   CheckHasTrivialDestruction(GenericInterface);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_interface_value.carbon:[[@LINE-16]]:1: in import [InImport]
+  // CHECK:STDERR: fail_todo_generic_interface_value.carbon:[[@LINE-8]]:1: in import [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -381,18 +357,10 @@ import library "check_destroy_format";
 constraint GenericConstraint(T: type) {}
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_generic_named_constraint_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type GenericNamedConstraintType` [SemanticsTodo]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(GenericConstraint);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_named_constraint_value.carbon:[[@LINE-8]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_generic_named_constraint_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of GenericConstraint>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   CheckHasTrivialDestruction(GenericConstraint);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_generic_named_constraint_value.carbon:[[@LINE-16]]:1: in import [InImport]
+  // CHECK:STDERR: fail_todo_generic_named_constraint_value.carbon:[[@LINE-8]]:1: in import [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -409,18 +377,10 @@ import library "check_destroy_format";
 namespace N;
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_namespace_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type NamespaceType` [SemanticsTodo]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(N);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_namespace_value.carbon:[[@LINE-8]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_namespace_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<namespace>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   CheckHasTrivialDestruction(N);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_namespace_value.carbon:[[@LINE-16]]:1: in import [InImport]
+  // CHECK:STDERR: fail_todo_namespace_value.carbon:[[@LINE-8]]:1: in import [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -463,18 +423,10 @@ import library "check_destroy_format";
 import Cpp library "unhandled.h";
 
 fn Test() {
-  // CHECK:STDERR: fail_todo_cpp_overload_set_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type CppOverloadSetType` [SemanticsTodo]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(Cpp.Function);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_cpp_overload_set_value.carbon:[[@LINE-7]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   // CHECK:STDERR: fail_todo_cpp_overload_set_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of Cpp.Function>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:   CheckHasTrivialDestruction(Cpp.Function);
   // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_cpp_overload_set_value.carbon:[[@LINE-15]]:1: in import [InImport]
+  // CHECK:STDERR: fail_todo_cpp_overload_set_value.carbon:[[@LINE-7]]:1: in import [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
   // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

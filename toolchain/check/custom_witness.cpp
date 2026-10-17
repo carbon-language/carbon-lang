@@ -554,7 +554,7 @@ static auto GetDestroyFormat(Context& context, SemIR::LocId loc_id,
   }
 
   if (auto early_exit = GetDestroyFormatFromKind(inst.kind())) {
-    return *early_exit;
+    return early_exit;
   }
 
   // Incomplete types cannot be destroyed because we don't know anything about
@@ -1064,10 +1064,6 @@ static auto LookupSubobjectDestroyWitness(
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterface query_specific_interface, bool build_witness)
     -> std::optional<SemIR::InstId> {
-  if (!build_witness || query_self_const_id.is_symbolic()) {
-    return SemIR::InstId::None;
-  }
-
   auto format = GetDestroyFormat(context, loc_id, query_self_const_id);
   if (format == std::nullopt) {
     return SemIR::ErrorInst::InstId;
@@ -1075,6 +1071,10 @@ static auto LookupSubobjectDestroyWitness(
 
   if (format == DestroyFormat::NoDestroy) {
     return std::nullopt;
+  }
+
+  if (!build_witness || query_self_const_id.is_symbolic()) {
+    return SemIR::InstId::None;
   }
 
   return BuildSubobjectDestroyWitness(context, loc_id, query_self_const_id,
@@ -1286,7 +1286,7 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::IntFitsIn:
       return MakeIntFitsInWitness(context, loc_id, query_self_const_id,
                                   query_specific_interface, build_witness);
-    case SemIR::CoreInterface::TrivialDestroy:
+    case SemIR::CoreInterface::TrivialDestroyImpl:
       return MakeTrivialDestroyWitness(context, loc_id, query_self_const_id,
                                        query_specific_interface, build_witness);
     case SemIR::CoreInterface::SubobjectDestroy:
