@@ -94,6 +94,42 @@ fn F(c: CNonCopy, s: SubscriptType) {
   c.(Core.IndexWith(SubscriptType).At)(s);
 }
 
+// --- subscript_copyable.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "types";
+
+fn F(c: C, s: SubscriptType) -> Copyable {
+  //@dump-sem-ir-begin
+  return c[s];
+  //@dump-sem-ir-end
+}
+
+// --- subscript_non_copyable.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "types";
+
+fn F(c: CNonCopy, s: SubscriptType) -> ref NonCopyable {
+  //@dump-sem-ir-begin
+  return c[s];
+  //@dump-sem-ir-end
+}
+
+// --- subscript_assign.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "types";
+
+fn F(c: C, s: SubscriptType, v: Copyable) {
+  //@dump-sem-ir-begin
+  c[s] = v;
+  //@dump-sem-ir-end
+}
+
 // CHECK:STDOUT: --- types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -453,5 +489,130 @@ fn F(c: CNonCopy, s: SubscriptType) {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.call: init %Copyable to %.loc6_33.1 = call %bound_method.loc8_48(%c.ref, %s.ref)
 // CHECK:STDOUT:   return %T.as_type.as.IndexWith.impl.At.call to %return.param
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- subscript_copyable.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %Copyable: type = class_type @Copyable [concrete]
+// CHECK:STDOUT:   %SubscriptType.f8f: type = class_type @SubscriptType [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.type.c10: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(%SubscriptType.f8f)> [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.impl_witness: <witness> = impl_witness imports.%IndirectIndexWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.facet: %IndirectIndexWith.type.c10 = facet_value %C, (%IndirectIndexWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.WithSelf.Ref.type.7ed: type = fn_type @IndirectIndexWith.WithSelf.Ref, @IndirectIndexWith.WithSelf(%SubscriptType.f8f, %IndirectIndexWith.facet) [concrete]
+// CHECK:STDOUT:   %.edc: type = fn_type_with_self_type %IndirectIndexWith.WithSelf.Ref.type.7ed, %IndirectIndexWith.facet [concrete]
+// CHECK:STDOUT:   %C.as.IndirectIndexWith.impl.Ref.type: type = fn_type @C.as.IndirectIndexWith.impl.Ref [concrete]
+// CHECK:STDOUT:   %C.as.IndirectIndexWith.impl.Ref: %C.as.IndirectIndexWith.impl.Ref.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.c00: <witness> = impl_witness imports.%Copy.impl_witness_table.a69 [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %Copyable, (%Copy.impl_witness.c00) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.43f: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.9d4: type = fn_type_with_self_type %Copy.WithSelf.Op.type.43f, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copyable.as.Copy.impl.Op.type: type = fn_type @Copyable.as.Copy.impl.Op [concrete]
+// CHECK:STDOUT:   %Copyable.as.Copy.impl.Op: %Copyable.as.Copy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.import_ref.bdc = import_ref Main//types, loc17_79, unloaded
+// CHECK:STDOUT:   %Main.import_ref.2b0: %C.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc18_65, loaded [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]
+// CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Main.import_ref.bdc, %Main.import_ref.2b0), @C.as.IndirectIndexWith.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.b8e: %Copyable.as.Copy.impl.Op.type = import_ref Main//types, loc6_32, loaded [concrete = constants.%Copyable.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Copy.impl_witness_table.a69 = impl_witness_table (%Main.import_ref.b8e), @Copyable.as.Copy.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%c.param: %C, %s.param: %SubscriptType.f8f) -> out %return.param: %Copyable {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %s.ref: %SubscriptType.f8f = name_ref s, %s
+// CHECK:STDOUT:   %impl.elem1: %.edc = impl_witness_access constants.%IndirectIndexWith.impl_witness, element1 [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]
+// CHECK:STDOUT:   %bound_method.loc8_13.1: <bound method> = bound_method %c.ref, %impl.elem1
+// CHECK:STDOUT:   %C.as.IndirectIndexWith.impl.Ref.call: ref %Copyable = call %bound_method.loc8_13.1(%c.ref, %s.ref)
+// CHECK:STDOUT:   %.loc8: %Copyable = acquire_value %C.as.IndirectIndexWith.impl.Ref.call
+// CHECK:STDOUT:   %impl.elem0: %.9d4 = impl_witness_access constants.%Copy.impl_witness.c00, element0 [concrete = constants.%Copyable.as.Copy.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc8_13.2: <bound method> = bound_method %.loc8, %impl.elem0
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %Copyable.as.Copy.impl.Op.call: init %Copyable to %.loc6_33.1 = call %bound_method.loc8_13.2(%.loc8)
+// CHECK:STDOUT:   return %Copyable.as.Copy.impl.Op.call to %return.param
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- subscript_non_copyable.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %CNonCopy: type = class_type @CNonCopy [concrete]
+// CHECK:STDOUT:   %NonCopyable: type = class_type @NonCopyable [concrete]
+// CHECK:STDOUT:   %SubscriptType.f8f: type = class_type @SubscriptType [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.type.c10: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(%SubscriptType.f8f)> [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.impl_witness: <witness> = impl_witness imports.%IndirectIndexWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.facet: %IndirectIndexWith.type.c10 = facet_value %CNonCopy, (%IndirectIndexWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.WithSelf.Ref.type.111: type = fn_type @IndirectIndexWith.WithSelf.Ref, @IndirectIndexWith.WithSelf(%SubscriptType.f8f, %IndirectIndexWith.facet) [concrete]
+// CHECK:STDOUT:   %.e4b: type = fn_type_with_self_type %IndirectIndexWith.WithSelf.Ref.type.111, %IndirectIndexWith.facet [concrete]
+// CHECK:STDOUT:   %CNonCopy.as.IndirectIndexWith.impl.Ref.type: type = fn_type @CNonCopy.as.IndirectIndexWith.impl.Ref [concrete]
+// CHECK:STDOUT:   %CNonCopy.as.IndirectIndexWith.impl.Ref: %CNonCopy.as.IndirectIndexWith.impl.Ref.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.import_ref.e33 = import_ref Main//types, loc29_38, unloaded
+// CHECK:STDOUT:   %Main.import_ref.2b0: %CNonCopy.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc30_68, loaded [concrete = constants.%CNonCopy.as.IndirectIndexWith.impl.Ref]
+// CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Main.import_ref.e33, %Main.import_ref.2b0), @CNonCopy.as.IndirectIndexWith.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%c.param: %CNonCopy, %s.param: %SubscriptType.f8f) -> ref %NonCopyable {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %c.ref: %CNonCopy = name_ref c, %c
+// CHECK:STDOUT:   %s.ref: %SubscriptType.f8f = name_ref s, %s
+// CHECK:STDOUT:   %impl.elem1: %.e4b = impl_witness_access constants.%IndirectIndexWith.impl_witness, element1 [concrete = constants.%CNonCopy.as.IndirectIndexWith.impl.Ref]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %c.ref, %impl.elem1
+// CHECK:STDOUT:   %CNonCopy.as.IndirectIndexWith.impl.Ref.call: ref %NonCopyable = call %bound_method(%c.ref, %s.ref)
+// CHECK:STDOUT:   return %CNonCopy.as.IndirectIndexWith.impl.Ref.call
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- subscript_assign.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %C: type = class_type @C [concrete]
+// CHECK:STDOUT:   %Copyable: type = class_type @Copyable [concrete]
+// CHECK:STDOUT:   %SubscriptType.f8f: type = class_type @SubscriptType [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.type.c10: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(%SubscriptType.f8f)> [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.impl_witness: <witness> = impl_witness imports.%IndirectIndexWith.impl_witness_table [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.facet: %IndirectIndexWith.type.c10 = facet_value %C, (%IndirectIndexWith.impl_witness) [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.WithSelf.Ref.type.7ed: type = fn_type @IndirectIndexWith.WithSelf.Ref, @IndirectIndexWith.WithSelf(%SubscriptType.f8f, %IndirectIndexWith.facet) [concrete]
+// CHECK:STDOUT:   %.edc: type = fn_type_with_self_type %IndirectIndexWith.WithSelf.Ref.type.7ed, %IndirectIndexWith.facet [concrete]
+// CHECK:STDOUT:   %C.as.IndirectIndexWith.impl.Ref.type: type = fn_type @C.as.IndirectIndexWith.impl.Ref [concrete]
+// CHECK:STDOUT:   %C.as.IndirectIndexWith.impl.Ref: %C.as.IndirectIndexWith.impl.Ref.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.c00: <witness> = impl_witness imports.%Copy.impl_witness_table.a69 [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %Copyable, (%Copy.impl_witness.c00) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.43f: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.9d4: type = fn_type_with_self_type %Copy.WithSelf.Op.type.43f, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copyable.as.Copy.impl.Op.type: type = fn_type @Copyable.as.Copy.impl.Op [concrete]
+// CHECK:STDOUT:   %Copyable.as.Copy.impl.Op: %Copyable.as.Copy.impl.Op.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.import_ref.bdc = import_ref Main//types, loc17_79, unloaded
+// CHECK:STDOUT:   %Main.import_ref.2b0: %C.as.IndirectIndexWith.impl.Ref.type = import_ref Main//types, loc18_65, loaded [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]
+// CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Main.import_ref.bdc, %Main.import_ref.2b0), @C.as.IndirectIndexWith.impl [concrete]
+// CHECK:STDOUT:   %Main.import_ref.b8e: %Copyable.as.Copy.impl.Op.type = import_ref Main//types, loc6_32, loaded [concrete = constants.%Copyable.as.Copy.impl.Op]
+// CHECK:STDOUT:   %Copy.impl_witness_table.a69 = impl_witness_table (%Main.import_ref.b8e), @Copyable.as.Copy.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%c.param: %C, %s.param: %SubscriptType.f8f, %v.param: %Copyable) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
+// CHECK:STDOUT:   %s.ref: %SubscriptType.f8f = name_ref s, %s
+// CHECK:STDOUT:   %impl.elem1: %.edc = impl_witness_access constants.%IndirectIndexWith.impl_witness, element1 [concrete = constants.%C.as.IndirectIndexWith.impl.Ref]
+// CHECK:STDOUT:   %bound_method.loc8_6: <bound method> = bound_method %c.ref, %impl.elem1
+// CHECK:STDOUT:   %C.as.IndirectIndexWith.impl.Ref.call: ref %Copyable = call %bound_method.loc8_6(%c.ref, %s.ref)
+// CHECK:STDOUT:   %v.ref: %Copyable = name_ref v, %v
+// CHECK:STDOUT:   %impl.elem0: %.9d4 = impl_witness_access constants.%Copy.impl_witness.c00, element0 [concrete = constants.%Copyable.as.Copy.impl.Op]
+// CHECK:STDOUT:   %bound_method.loc8_10: <bound method> = bound_method %v.ref, %impl.elem0
+// CHECK:STDOUT:   %.loc8: ref %Copyable = splice_block %C.as.IndirectIndexWith.impl.Ref.call {}
+// CHECK:STDOUT:   %Copyable.as.Copy.impl.Op.call: init %Copyable to %.loc8 = call %bound_method.loc8_10(%v.ref)
+// CHECK:STDOUT:   assign %C.as.IndirectIndexWith.impl.Ref.call, %Copyable.as.Copy.impl.Op.call
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

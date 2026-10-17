@@ -26,20 +26,22 @@ auto HandleParseNode(Context& /*context*/, Parse::IndexExprStartId /*node_id*/)
   return true;
 }
 
-// Performs an index with base expression `operand_inst_id` and
-// `operand_type_id` for types that are not an array. This checks if
-// the base expression implements the `IndexWith` interface; if so, uses the
-// `At` associative method, otherwise prints a diagnostic.
-static auto PerformIndexWith(Context& context, Parse::NodeId node_id,
-                             SemIR::InstId operand_inst_id,
-                             SemIR::InstId index_inst_id) -> SemIR::InstId {
+// Performs an index with base expression `operand_inst_id` for types that are
+// not an array, using the `op_name` method of the interface `interface_name`.
+// On failure, returns an `ErrorInst`, and diagnoses unless `diagnose` is false.
+static auto PerformIndexOperator(Context& context, Parse::NodeId node_id,
+                                 CoreIdentifier interface_name,
+                                 CoreIdentifier op_name,
+                                 SemIR::InstId operand_inst_id,
+                                 SemIR::InstId index_inst_id, bool diagnose)
+    -> SemIR::InstId {
   SemIR::InstId args[] = {context.types().GetTypeInstId(
       context.insts().Get(index_inst_id).type_id())};
-  Operator op{.interface_name = CoreIdentifier::IndexWith,
+  Operator op{.interface_name = interface_name,
               .interface_args_ref = args,
-              .op_name = CoreIdentifier::At};
+              .op_name = op_name};
   return BuildBinaryOperator(context, node_id, op, operand_inst_id,
-                             index_inst_id);
+                             index_inst_id, diagnose);
 }
 
 auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
@@ -83,8 +85,18 @@ auto HandleParseNode(Context& context, Parse::IndexExprId node_id) -> bool {
     }
     context.node_stack().Push(node_id, elem_id);
   } else {
-    auto elem_id =
-        PerformIndexWith(context, node_id, operand_inst_id, index_inst_id);
+    // Per the design, prefer `IndirectIndexWith` if the type implements it,
+    // otherwise fall back to `IndexWith`.
+    // TODO: Use `IndexWith.Ref` when the operand is a durable reference.
+    auto elem_id = PerformIndexOperator(
+        context, node_id, CoreIdentifier::IndirectIndexWith,
+        CoreIdentifier::Ref, operand_inst_id, index_inst_id,
+        /*diagnose=*/false);
+    if (elem_id == SemIR::ErrorInst::InstId) {
+      elem_id = PerformIndexOperator(
+          context, node_id, CoreIdentifier::IndexWith, CoreIdentifier::At,
+          operand_inst_id, index_inst_id, /*diagnose=*/true);
+    }
     context.node_stack().Push(node_id, elem_id);
   }
   return true;
