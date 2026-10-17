@@ -486,24 +486,29 @@ static auto GetClassDestroyFormat(Context& context, SemIR::LocId loc_id,
   return destroy_format;
 }
 
-static auto IsBuiltinType(SemIR::InstKind type) -> bool {
+// Returns whether the destroy format can be determined without any lookup.
+static auto GetDestroyFormatFromKind(SemIR::InstKind type)
+    -> std::optional<DestroyFormat> {
   switch (type) {
+    // Built-in types have trivial destruction.
+    //
     case SemIR::BoolType::Kind:
+    case SemIR::BoundMethodType::Kind:
+    case SemIR::CharLiteralType::Kind:
     case SemIR::CppFunctionPointerType::Kind:
     case SemIR::FacetType::Kind:
     case SemIR::FloatType::Kind:
+    case SemIR::FloatLiteralType::Kind:
     case SemIR::FormType::Kind:
+    case SemIR::FunctionType::Kind:
+    case SemIR::FunctionTypeWithSelfType::Kind:
     case SemIR::IntLiteralType::Kind:
     case SemIR::IntType::Kind:
     case SemIR::PointerType::Kind:
-      return true;
-    default:
-      return false;
-  }
-}
+      return DestroyFormat::Trivial;
 
-static auto IsConcreteType(SemIR::InstKind type) -> bool {
-  switch (type) {
+    // Types that can't be destroyed.
+    //
     // A dependent type constructor calls that cannot be resolved under the
     // generic context.
     case SemIR::Call::Kind:
@@ -511,9 +516,22 @@ static auto IsConcreteType(SemIR::InstKind type) -> bool {
     // destroyed.
     case SemIR::ImplWitnessAccess::Kind:
     case SemIR::SymbolicBinding::Kind:
-      return false;
+    case SemIR::AssociatedEntityType::Kind:
+    case SemIR::CppOverloadSetType::Kind:
+    case SemIR::CppTemplateNameType::Kind:
+    case SemIR::GenericInterfaceType::Kind:
+    case SemIR::GenericNamedConstraintType::Kind:
+    case SemIR::NamespaceType::Kind:
+    case SemIR::ParameterizedClassType::Kind:
+    case SemIR::SpecificConstant::Kind:
+    case SemIR::TupleAccess::Kind:
+    case SemIR::UnboundElementType::Kind:
+      return DestroyFormat::NoDestroy;
+
+    // We can't work it out from the kind alone
+    //
     default:
-      return true;
+      return std::nullopt;
   }
 }
 
@@ -535,15 +553,14 @@ static auto GetDestroyFormat(Context& context, SemIR::LocId loc_id,
     return DestroyFormat::NoDestroy;
   }
 
-  if (IsBuiltinType(inst.kind())) {
-    return DestroyFormat::Trivial;
+  if (auto early_exit = GetDestroyFormatFromKind(inst.kind())) {
+    return *early_exit;
   }
 
   // Incomplete types cannot be destroyed because we don't know anything about
   // them.
   auto type_id = context.types().GetTypeIdForTypeInstId(inst_id);
-  if (!IsConcreteType(inst.kind()) ||
-      !TryToCompleteType(context, type_id, loc_id)) {
+  if (!TryToCompleteType(context, type_id, loc_id)) {
     return DestroyFormat::NoDestroy;
   }
 
@@ -1047,13 +1064,17 @@ static auto LookupSubobjectDestroyWitness(
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterface query_specific_interface, bool build_witness)
     -> std::optional<SemIR::InstId> {
-  auto format = GetDestroyFormat(context, loc_id, query_self_const_id);
-  if (format == std::nullopt || format == DestroyFormat::NoDestroy) {
-    return std::nullopt;
-  }
-
   if (!build_witness || query_self_const_id.is_symbolic()) {
     return SemIR::InstId::None;
+  }
+
+  auto format = GetDestroyFormat(context, loc_id, query_self_const_id);
+  if (format == std::nullopt) {
+    return SemIR::ErrorInst::InstId;
+  }
+
+  if (format == DestroyFormat::NoDestroy) {
+    return std::nullopt;
   }
 
   return BuildSubobjectDestroyWitness(context, loc_id, query_self_const_id,

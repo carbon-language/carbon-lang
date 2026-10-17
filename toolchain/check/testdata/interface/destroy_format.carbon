@@ -32,6 +32,9 @@ fn CheckHasDestruction[T: Core.Destroy](_: T) {}
 // redundant.
 fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
 
+fn CheckTypeHasDestruction(unused T: Core.Destroy) {}
+fn CheckTypeHasTrivialDestruction(unused T: Core.TrivialDestroy) {}
+
 // --- empty_struct.carbon
 
 library "[[@TEST_NAME]]";
@@ -239,6 +242,265 @@ fn Test(x: Cpp.PrivateDestructor) {
   CheckHasTrivialDestruction(x);
 }
 
+// --- function_value.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+fn G() {}
+
+fn Test() {
+  CheckHasTrivialDestruction(G);
+}
+
+// --- function_with_self_value.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+fn Test() {
+  CheckHasTrivialDestruction((i32 as Core.Copy).Op);
+}
+
+// --- fail_unbound_element_value.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+class C {
+  var x: i32;
+}
+
+fn Test() {
+  // CHECK:STDERR: fail_unbound_element_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<unbound element of class C>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(C.x);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_unbound_element_value.carbon:[[@LINE-10]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  CheckHasTrivialDestruction(C.x);
+}
+
+// --- fail_todo_associated_entity_value.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+interface I {
+  fn F();
+}
+
+fn Test() {
+  // CHECK:STDERR: fail_todo_associated_entity_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type AssociatedEntityType` [SemanticsTodo]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(I.F);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_associated_entity_value.carbon:[[@LINE-10]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_associated_entity_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<associated entity in I>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(I.F);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_associated_entity_value.carbon:[[@LINE-18]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  CheckHasTrivialDestruction(I.F);
+}
+
+// --- fail_todo_generic_class_value.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+class Generic(T: type) {}
+
+fn Test() {
+  // CHECK:STDERR: fail_todo_generic_class_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type ParameterizedClassType` [SemanticsTodo]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(Generic);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_generic_class_value.carbon:[[@LINE-8]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_generic_class_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of Generic>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(Generic);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_generic_class_value.carbon:[[@LINE-16]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  CheckHasTrivialDestruction(Generic);
+}
+
+// --- fail_todo_generic_interface_value.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+interface GenericInterface(T: type) {}
+
+fn Test() {
+  // CHECK:STDERR: fail_todo_generic_interface_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type GenericInterfaceType` [SemanticsTodo]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(GenericInterface);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_generic_interface_value.carbon:[[@LINE-8]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_generic_interface_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of GenericInterface>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(GenericInterface);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_generic_interface_value.carbon:[[@LINE-16]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  CheckHasTrivialDestruction(GenericInterface);
+}
+
+// --- fail_todo_generic_named_constraint_value.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+constraint GenericConstraint(T: type) {}
+
+fn Test() {
+  // CHECK:STDERR: fail_todo_generic_named_constraint_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type GenericNamedConstraintType` [SemanticsTodo]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(GenericConstraint);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_generic_named_constraint_value.carbon:[[@LINE-8]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_generic_named_constraint_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of GenericConstraint>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(GenericConstraint);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_generic_named_constraint_value.carbon:[[@LINE-16]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  CheckHasTrivialDestruction(GenericConstraint);
+}
+
+// --- fail_todo_namespace_value.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+namespace N;
+
+fn Test() {
+  // CHECK:STDERR: fail_todo_namespace_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type NamespaceType` [SemanticsTodo]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(N);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_namespace_value.carbon:[[@LINE-8]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_namespace_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<namespace>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(N);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_namespace_value.carbon:[[@LINE-16]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  CheckHasTrivialDestruction(N);
+}
+
+// --- float_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+fn Test() {
+  CheckTypeHasTrivialDestruction(Core.FloatLiteral);
+}
+
+// --- char_literal.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+fn Test() {
+  CheckTypeHasTrivialDestruction(Core.CharLiteral);
+}
+
+// --- unhandled.h
+
+void Function();
+
+template <typename T>
+struct Template {};
+
+// --- fail_todo_cpp_overload_set_value.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+import Cpp library "unhandled.h";
+
+fn Test() {
+  // CHECK:STDERR: fail_todo_cpp_overload_set_value.carbon:[[@LINE+16]]:3: error: semantics TODO: `unhandled type CppOverloadSetType` [SemanticsTodo]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(Cpp.Function);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_cpp_overload_set_value.carbon:[[@LINE-7]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_cpp_overload_set_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of Cpp.Function>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(Cpp.Function);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_cpp_overload_set_value.carbon:[[@LINE-15]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  CheckHasTrivialDestruction(Cpp.Function);
+}
+
+// --- fail_cpp_template_name_value.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+import Cpp library "unhandled.h";
+
+fn Test() {
+  // CHECK:STDERR: fail_cpp_template_name_value.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of Cpp.Template>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:   CheckHasTrivialDestruction(Cpp.Template);
+  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_cpp_template_name_value.carbon:[[@LINE-7]]:1: in import [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:20:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
+  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR:
+  CheckHasTrivialDestruction(Cpp.Template);
+}
+
 // CHECK:STDOUT: --- empty_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -249,15 +511,26 @@ fn Test(x: Cpp.PrivateDestructor) {
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.type: type = fn_type @CheckHasTrivialDestruction [concrete]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction: %CheckHasTrivialDestruction.type = struct_value () [concrete]
 // CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.41a: <witness> = custom_witness (), @TrivialDestroy [concrete]
-// CHECK:STDOUT:   %TrivialDestroy.facet: %TrivialDestroy.type = facet_value %empty_struct_type, (%custom_witness.41a) [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.687: type = fn_type @SubobjectDestroy.WithSelf.Op.loc8 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f: %SubobjectDestroy.WithSelf.Op.type.687 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.6b7: %SubobjectDestroy.type = facet_value %empty_struct_type, (%custom_witness.b80) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.011: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.6b7) [concrete]
+// CHECK:STDOUT:   %custom_witness.447: <witness> = custom_witness (), @TrivialDestroyImpl [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.facet: %TrivialDestroy.type = facet_value %empty_struct_type, (%custom_witness.447, %custom_witness.b80, %DestroyImpl.impl_witness.011) [concrete]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction, @CheckHasTrivialDestruction(%TrivialDestroy.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.CheckHasTrivialDestruction: %CheckHasTrivialDestruction.type = import_ref Main//check_destroy_format, CheckHasTrivialDestruction, loaded [concrete = constants.%CheckHasTrivialDestruction]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -268,9 +541,9 @@ fn Test(x: Cpp.PrivateDestructor) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.ref: %CheckHasTrivialDestruction.type = name_ref CheckHasTrivialDestruction, imports.%Main.CheckHasTrivialDestruction [concrete = constants.%CheckHasTrivialDestruction]
 // CHECK:STDOUT:   %.loc8_31.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_32.1: %TrivialDestroy.type = facet_value constants.%empty_struct_type, (constants.%custom_witness.41a) [concrete = constants.%TrivialDestroy.facet]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_32.1: %TrivialDestroy.type = facet_value constants.%empty_struct_type, (constants.%custom_witness.447, constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.011) [concrete = constants.%TrivialDestroy.facet]
 // CHECK:STDOUT:   %.loc8_32.1: %TrivialDestroy.type = converted constants.%empty_struct_type, %TrivialDestroy.facet.loc8_32.1 [concrete = constants.%TrivialDestroy.facet]
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_32.2: %TrivialDestroy.type = facet_value constants.%empty_struct_type, (constants.%custom_witness.41a) [concrete = constants.%TrivialDestroy.facet]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_32.2: %TrivialDestroy.type = facet_value constants.%empty_struct_type, (constants.%custom_witness.447, constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.011) [concrete = constants.%TrivialDestroy.facet]
 // CHECK:STDOUT:   %.loc8_32.2: %TrivialDestroy.type = converted constants.%empty_struct_type, %TrivialDestroy.facet.loc8_32.2 [concrete = constants.%TrivialDestroy.facet]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction.ref, @CheckHasTrivialDestruction(constants.%TrivialDestroy.facet) [concrete = constants.%CheckHasTrivialDestruction.specific_fn]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
@@ -295,13 +568,24 @@ fn Test(x: Cpp.PrivateDestructor) {
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.type: type = fn_type @CheckHasTrivialDestruction [concrete]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction: %CheckHasTrivialDestruction.type = struct_value () [concrete]
 // CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
-// CHECK:STDOUT:   %custom_witness.41a: <witness> = custom_witness (), @TrivialDestroy [concrete]
-// CHECK:STDOUT:   %TrivialDestroy.facet: %TrivialDestroy.type = facet_value %empty_tuple.type, (%custom_witness.41a) [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.687: type = fn_type @SubobjectDestroy.WithSelf.Op.loc8 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f: %SubobjectDestroy.WithSelf.Op.type.687 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.f89: %SubobjectDestroy.type = facet_value %empty_tuple.type, (%custom_witness.b80) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.674: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.f89) [concrete]
+// CHECK:STDOUT:   %custom_witness.447: <witness> = custom_witness (), @TrivialDestroyImpl [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.facet: %TrivialDestroy.type = facet_value %empty_tuple.type, (%custom_witness.447, %custom_witness.b80, %DestroyImpl.impl_witness.674) [concrete]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction, @CheckHasTrivialDestruction(%TrivialDestroy.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.CheckHasTrivialDestruction: %CheckHasTrivialDestruction.type = import_ref Main//check_destroy_format, CheckHasTrivialDestruction, loaded [concrete = constants.%CheckHasTrivialDestruction]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -322,9 +606,9 @@ fn Test(x: Cpp.PrivateDestructor) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.ref: %CheckHasTrivialDestruction.type = name_ref CheckHasTrivialDestruction, imports.%Main.CheckHasTrivialDestruction [concrete = constants.%CheckHasTrivialDestruction]
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, %x
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_31.1: %TrivialDestroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.41a) [concrete = constants.%TrivialDestroy.facet]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_31.1: %TrivialDestroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.447, constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.674) [concrete = constants.%TrivialDestroy.facet]
 // CHECK:STDOUT:   %.loc8_31.1: %TrivialDestroy.type = converted constants.%empty_tuple.type, %TrivialDestroy.facet.loc8_31.1 [concrete = constants.%TrivialDestroy.facet]
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_31.2: %TrivialDestroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.41a) [concrete = constants.%TrivialDestroy.facet]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_31.2: %TrivialDestroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.447, constants.%custom_witness.b80, constants.%DestroyImpl.impl_witness.674) [concrete = constants.%TrivialDestroy.facet]
 // CHECK:STDOUT:   %.loc8_31.2: %TrivialDestroy.type = converted constants.%empty_tuple.type, %TrivialDestroy.facet.loc8_31.2 [concrete = constants.%TrivialDestroy.facet]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction.ref, @CheckHasTrivialDestruction(constants.%TrivialDestroy.facet) [concrete = constants.%CheckHasTrivialDestruction.specific_fn]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.call: init %empty_tuple.type = call %CheckHasTrivialDestruction.specific_fn(%x.ref)
@@ -349,13 +633,24 @@ fn Test(x: Cpp.PrivateDestructor) {
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.type: type = fn_type @CheckHasTrivialDestruction [concrete]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction: %CheckHasTrivialDestruction.type = struct_value () [concrete]
 // CHECK:STDOUT:   %TrivialDestroy.type: type = facet_type <@TrivialDestroy> [concrete]
-// CHECK:STDOUT:   %custom_witness.41a: <witness> = custom_witness (), @TrivialDestroy [concrete]
-// CHECK:STDOUT:   %TrivialDestroy.facet: %TrivialDestroy.type = facet_value %C, (%custom_witness.41a) [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc10_31.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.978: %SubobjectDestroy.type = facet_value %C, (%custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.1e5: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.978) [concrete]
+// CHECK:STDOUT:   %custom_witness.447: <witness> = custom_witness (), @TrivialDestroyImpl [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.facet: %TrivialDestroy.type = facet_value %C, (%custom_witness.447, %custom_witness.b80ef6.2, %DestroyImpl.impl_witness.1e5) [concrete]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction, @CheckHasTrivialDestruction(%TrivialDestroy.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.CheckHasTrivialDestruction: %CheckHasTrivialDestruction.type = import_ref Main//check_destroy_format, CheckHasTrivialDestruction, loaded [concrete = constants.%CheckHasTrivialDestruction]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -382,9 +677,9 @@ fn Test(x: Cpp.PrivateDestructor) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.ref: %CheckHasTrivialDestruction.type = name_ref CheckHasTrivialDestruction, imports.%Main.CheckHasTrivialDestruction [concrete = constants.%CheckHasTrivialDestruction]
 // CHECK:STDOUT:   %x.ref: %C = name_ref x, %x
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc10_31.1: %TrivialDestroy.type = facet_value constants.%C, (constants.%custom_witness.41a) [concrete = constants.%TrivialDestroy.facet]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc10_31.1: %TrivialDestroy.type = facet_value constants.%C, (constants.%custom_witness.447, constants.%custom_witness.b80ef6.2, constants.%DestroyImpl.impl_witness.1e5) [concrete = constants.%TrivialDestroy.facet]
 // CHECK:STDOUT:   %.loc10_31.1: %TrivialDestroy.type = converted constants.%C, %TrivialDestroy.facet.loc10_31.1 [concrete = constants.%TrivialDestroy.facet]
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc10_31.2: %TrivialDestroy.type = facet_value constants.%C, (constants.%custom_witness.41a) [concrete = constants.%TrivialDestroy.facet]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc10_31.2: %TrivialDestroy.type = facet_value constants.%C, (constants.%custom_witness.447, constants.%custom_witness.b80ef6.2, constants.%DestroyImpl.impl_witness.1e5) [concrete = constants.%TrivialDestroy.facet]
 // CHECK:STDOUT:   %.loc10_31.2: %TrivialDestroy.type = converted constants.%C, %TrivialDestroy.facet.loc10_31.2 [concrete = constants.%TrivialDestroy.facet]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction.ref, @CheckHasTrivialDestruction(constants.%TrivialDestroy.facet) [concrete = constants.%CheckHasTrivialDestruction.specific_fn]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.call: init %empty_tuple.type = call %CheckHasTrivialDestruction.specific_fn(%x.ref)
