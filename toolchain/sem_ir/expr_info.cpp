@@ -45,12 +45,36 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
         [&](SemIR::FunctionId function_id,
             SemIR::SpecificId resolved_specific_id) -> ExprCategory {
       const auto& function = ir->functions().Get(function_id);
+      if (function.return_form_inst_id == ErrorInst::InstId) {
+        return ExprCategory::Error;
+      }
+
+      // For a deduced return type, we know the form independent of the
+      // specific. Don't query the return form in the specific: in a generic,
+      // it's computed by the definition's eval block, which might not have been
+      // evaluated for this specific.
+      // TODO: Once we support `->? auto`, we'll need the specific function
+      // definition to be resolved here.
+      CARBON_CHECK(!function.has_pending_deduced_return_type(),
+                   "Call to function before its return type is deduced");
+      switch (function.deduced_return_kind) {
+        case Function::DeducedReturnKind::None:
+          break;
+        case Function::DeducedReturnKind::Init:
+          return ExprCategory::ReprInitializing;
+        case Function::DeducedReturnKind::Ref:
+          return ExprCategory::DurableRef;
+        case Function::DeducedReturnKind::Value:
+          return ExprCategory::Value;
+      }
+
       auto return_form_id =
           function.GetDeclaredReturnForm(*ir, resolved_specific_id);
       if (!return_form_id.has_value()) {
         // Treat as equivalent to `-> ()`.
         return ExprCategory::ReprInitializing;
       }
+
       auto return_form = ir->insts().Get(return_form_id);
       CARBON_KIND_SWITCH(return_form) {
         case CARBON_KIND(InitForm _):
@@ -356,6 +380,9 @@ auto FindStorageArgForInitializerInSpecific(const File& sem_ir, InstId init_id,
                                           .index]};
           }
           case CARBON_KIND(RefForm _): {
+            return {ir, InstId::None};
+          }
+          case CARBON_KIND(ValueForm _): {
             return {ir, InstId::None};
           }
           default:

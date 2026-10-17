@@ -24,6 +24,7 @@
 #include "toolchain/check/eval_inst.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
@@ -3612,6 +3613,10 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
         builder.Attach(loc_id, ResolvingSpecificHere, specific_id);
       });
 
+  // Everything created while evaluating the eval block belongs to the specific,
+  // so nothing should be added to any generic we're in the middle of checking.
+  auto num_tracked_insts = context.generic_region_stack().num_tracked_insts();
+
   for (auto [i, inst_id, result_id] :
        llvm::enumerate(eval_block, value_block)) {
     auto const_id = TryEvalInstInContext(eval_context, inst_id,
@@ -3623,6 +3628,14 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
     }
     result_id = context.constant_values().GetInstId(const_id);
   }
+
+  // TODO: Enable this CHECK once it passes.
+  //
+  // CARBON_CHECK(
+  //     context.generic_region_stack().num_tracked_insts() ==
+  //     num_tracked_insts, "Evaluating {0} added instructions to an enclosing
+  //     generic region", specific_id);
+  static_cast<void>(num_tracked_insts);
 }
 
 // Information about the function call we are currently executing. Unlike
@@ -3652,22 +3665,31 @@ class FunctionExecContext : public EvalContext {
   // Branch control flow to the given block. This replaces the innermost block
   // in the block stack, but doesn't affect any enclosing blocks.
   auto BranchTo(SemIR::InstBlockId block_id) -> void {
-    blocks_.back() = inst_blocks().Get(block_id);
+    blocks_.back().insts = inst_blocks().Get(block_id);
   }
 
   // Push a new block to be executed immediately. After the block finishes,
-  // control will resume after the current instruction.
-  auto PushBlock(SemIR::InstBlockId block_id) -> void {
-    blocks_.push_back(inst_blocks().Get(block_id));
+  // control will resume after the current instruction. If `splice_id` is
+  // specified, it is the `SpliceBlock` instruction whose block is being
+  // executed, and its value is set to the value of its result once the block
+  // finishes.
+  auto PushBlock(SemIR::InstBlockId block_id,
+                 SemIR::InstId splice_id = SemIR::InstId::None) -> void {
+    blocks_.push_back(
+        {.insts = inst_blocks().Get(block_id), .splice_id = splice_id});
   }
 
   // Pops and returns the next instruction to be executed.
   auto PopNextInstId() -> SemIR::InstId {
-    while (blocks_.back().empty()) {
-      blocks_.pop_back();
+    while (blocks_.back().insts.empty()) {
+      auto splice_id = blocks_.pop_back_val().splice_id;
       CARBON_CHECK(!blocks_.empty(), "Fell off end of function");
+      if (splice_id.has_value()) {
+        auto splice = insts().GetAs<SemIR::SpliceBlock>(splice_id);
+        locals().Update(splice_id, GetConstantValue(splice.result_id));
+      }
     }
-    return blocks_.back().consume_front();
+    return blocks_.back().insts.consume_front();
   }
 
   // Sets the most recent block argument value provided by a `BranchWithArg`.
@@ -3682,11 +3704,19 @@ class FunctionExecContext : public EvalContext {
   }
 
  private:
+  // A block that is being executed.
+  struct ExecBlock {
+    // The remaining instructions in the block.
+    llvm::ArrayRef<SemIR::InstId> insts;
+    // The `SpliceBlock` instruction that is executing this block, if any.
+    SemIR::InstId splice_id = SemIR::InstId::None;
+  };
+
   // The stack of code blocks that we are currently evaluating. This is kept as
   // a stack so that we can schedule the function body to execute after the decl
   // block and so that we can handle `SpliceBlock`s. When the innermost block is
   // complete, it will be popped and the next outer block will execute.
-  llvm::SmallVector<llvm::ArrayRef<SemIR::InstId>, 4> blocks_;
+  llvm::SmallVector<ExecBlock, 4> blocks_;
 
   // The arguments in the function call.
   llvm::ArrayRef<SemIR::InstId> args_;
@@ -3837,13 +3867,13 @@ auto TryExecTypedInst<SemIR::ReturnSlot>(FunctionExecContext& eval_context,
 
 template <>
 auto TryExecTypedInst<SemIR::SpliceBlock>(FunctionExecContext& eval_context,
-                                          SemIR::InstId /*inst_id*/,
+                                          SemIR::InstId inst_id,
                                           SemIR::Inst inst)
     -> SemIR::ConstantId {
   auto splice_block = inst.As<SemIR::SpliceBlock>();
-  eval_context.PushBlock(splice_block.block_id);
-  // TODO: Copy the values from the result_id instruction to the result of
-  // the splice_block instruction once the spliced block finishes.
+  // Once the spliced block finishes, the value of its result is copied to the
+  // `SpliceBlock` instruction.
+  eval_context.PushBlock(splice_block.block_id, inst_id);
   return SemIR::ConstantId::None;
 }
 

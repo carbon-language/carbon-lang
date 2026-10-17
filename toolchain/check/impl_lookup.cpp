@@ -37,6 +37,12 @@
 
 namespace Carbon::Check {
 
+static auto IsFinalWitness(Context& context, SemIR::InstId inst_id) -> bool {
+  return !context.insts()
+              .IsOneOf<SemIR::LookupImplWitness, SemIR::IdentifiedWitness>(
+                  inst_id);
+}
+
 // Returns IRs which are allowed to define an `impl` involving the arguments.
 // This is limited by the orphan rule.
 static auto FindAssociatedImportIRs(
@@ -375,12 +381,15 @@ static auto CollectFacetWitnessSources(
       //
       // TODO: This prevents some legitimate code from working, as we can't find
       // some witnesses that involve concrete associated constants from a
-      // symbolic facet. We could consider another approach: When we identify
-      // and replace `.Self` with `facet_const_id` in each constraint in its
-      // facet type, remove that constraint from the type of `facet_const_id`.
-      // Then each cycle back through to `facet_const_id` will have a smaller
-      // type until it runs out of constraints. See for example the
-      // fail_todo_concrete_access_witness_m_in_impls_constraint.carbon test.
+      // symbolic facet, and this can cause us to form incorrect specifics. See
+      // for example the test:
+      // fail_todo_specific_resolves_final_impl_while_collecting_witnesses.carbon.
+      //
+      // We could consider another approach: When we identify and replace
+      // `.Self` with `facet_const_id` in each constraint in its facet type,
+      // remove that constraint from the type of `facet_const_id`. Then each
+      // cycle back through to `facet_const_id` will have a smaller type until
+      // it runs out of constraints.
       {
         IncrementScope inc(context.impl_lookup_no_symbolic_final_lookups());
         req = EvaluateIdentifiedWitnesses(context, loc_id, req);
@@ -394,7 +403,7 @@ static auto CollectFacetWitnessSources(
             context.inst_blocks().Get(facet_value->witnesses_block_id)[index];
         // Using a non-final witness here would preclude finding a final witness
         // from other places.
-        if (!context.insts().Is<SemIR::LookupImplWitness>(witness_id)) {
+        if (IsFinalWitness(context, witness_id)) {
           final_witness_id = witness_id;
         }
       }
@@ -989,10 +998,10 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
          .query_specific_interface_id =
              context.specific_interfaces().Add(req_impl.specific_interface)});
     result_witness_id = context.constant_values().GetInstId(witness_const_id);
-    if (!context.insts().Is<SemIR::LookupImplWitness>(result_witness_id)) {
+    CARBON_CHECK(
+        !context.insts().Is<SemIR::IdentifiedWitness>(result_witness_id));
+    if (IsFinalWitness(context, result_witness_id)) {
       // Found a final witness, use it.
-      CARBON_CHECK(
-          !context.insts().Is<SemIR::IdentifiedWitness>(result_witness_id));
       result_witness_ids.push_back(result_witness_id);
       continue;
     }
@@ -1213,7 +1222,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
       CARBON_CHECK(witnesses.size() == 1);
       auto witness_inst_id = witnesses.front();
       // Only use the witness in monomoprhization if it's a final witness.
-      if (!context.insts().Is<SemIR::LookupImplWitness>(witness_inst_id)) {
+      if (IsFinalWitness(context, witness_inst_id)) {
         return context.constant_values().Get(witness_inst_id);
       }
     }

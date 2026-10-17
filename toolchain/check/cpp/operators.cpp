@@ -200,6 +200,12 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
       return clang::OO_Subscript;
     }
 
+    // C++ `operator[]` is found through `IndexWith`, which subscripting falls
+    // back to.
+    case CoreIdentifier::IndirectIndexWith: {
+      return std::nullopt;
+    }
+
     default: {
       context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
                                          interface_name));
