@@ -37,7 +37,14 @@ bazel_dep(name = "rules_cc", version = "0.2.25")
 bazel_dep(name = "rules_pkg", version = "1.2.0")
 bazel_dep(name = "rules_shell", version = "0.8.0")
 bazel_dep(name = "tcmalloc", version = "0.0.0-20250927-12f2552")
+
 bazel_dep(name = "tree-sitter-bazel", version = "0.26.5")
+
+tree_sitter_binary = use_extension(
+    "//bazel/tree_sitter_rules:defs.bzl",
+    "tree_sitter_binary",
+)
+use_repo(tree_sitter_binary, "tree_sitter_binary")
 
 bazel_dep(name = "wolfd_bazel_compile_commands", version = "0.5.2", dev_dependency = True)
 git_override(
