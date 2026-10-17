@@ -77,6 +77,7 @@ class InstBlockStack {
   }
 
   auto empty() const -> bool { return id_stack_.empty(); }
+  auto size() const -> size_t { return id_stack_.size(); }
 
  private:
   // A name for debugging.
