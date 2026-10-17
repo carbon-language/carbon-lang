@@ -6,7 +6,6 @@ package Core library "prelude/destroy";
 import library "prelude/operators/as";
 import library "prelude/operators/bitwise";
 
-// TODO: uncomment when `require impls` adds a witness table entry.
 interface SubobjectDestroy {
   fn Op(ref self);
 }
@@ -35,3 +34,5 @@ fn SelfDestruct[T: Destroy](ref t: T) {
     t.(DestroyImpl.Op)();
     t.(SubobjectDestroy.Op)();
 }
+
+interface TrivialDestroy {}
