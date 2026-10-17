@@ -1312,6 +1312,10 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
     }
   }
 
+  // TODO: Recover from an unterminated literal in a way that lets parsing
+  // continue as if it were terminated. The error token makes the parser also
+  // report the enclosing construct as incomplete, for example a missing `;`
+  // after `var s: str = "abc`.
   if (!literal->is_terminated()) {
     DiagnoseUnterminatedString(emitter_, *literal, /*is_char=*/false);
     return lex_as_error();

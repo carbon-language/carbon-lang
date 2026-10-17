@@ -190,6 +190,11 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // of the given word token. This should only be used for error recovery
   // purposes, when a phase after the lexer determines that a word token was
   // intended to represent an identifier rather than its special meaning.
+  //
+  // TODO: Recover with a raw identifier only when it names something, perhaps
+  // with a note suggesting `r#` otherwise. The parser recovers with one for any
+  // reserved word it takes as a name, so check cascades, for example to "name
+  // `r#Cpp` not found" on `class Cpp.C {}`.
   auto AddPostLexingRecoveryTokenAsIdentifier(TokenIndex token) -> TokenIndex;
 
   // Returns the 1-based indentation column number.
