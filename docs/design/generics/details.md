@@ -3337,15 +3337,15 @@ the expression `G.E.N.E.N` is one equality away from `G.N.E.N` and so it is
 allowed. This is true even though `G.N.E.N` isn't the type expression
 immediately prior to `G.E.N.E.N`.
 
-An `observe` declaration inside an `interface` definition may only refer to
-names dependent on:
+An `observe` declaration inside an `interface` definition refers to related
+values, which are type expressions dependent on at least one of:
 
 -   `.Self`,
--   generic parameters, and
--   associated constants that are part of the enclosing `interface`.
+-   a generic parameter, including `Self`, or
+-   an associated constant that is part of the enclosing `interface`.
 
-Equivalence chains may include at most one unrelated value.
-`observe .. == .. impls` declarations may include unrelated values that
+Inside an `interface`, equivalence chains may include at most one unrelated
+value. `observe .. == .. impls` declarations may include unrelated values that
 immediately satisfy the `impls` constraint.
 
 The `observe` declaration in the example below is allowed because `X.T` and
