@@ -92,6 +92,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.DestroyImpl = import_ref Core//prelude/parts/destroy, DestroyImpl, unloaded
 // CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
 // CHECK:STDOUT:   %Core.SelfDestruct = import_ref Core//prelude/parts/destroy, SelfDestruct, unloaded
+// CHECK:STDOUT:   %Core.TrivialDestroyImpl = import_ref Core//prelude/parts/destroy, TrivialDestroyImpl, unloaded
 // CHECK:STDOUT:   %Core.TrivialDestroy = import_ref Core//prelude/parts/destroy, TrivialDestroy, unloaded
 // CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
 // CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
@@ -109,6 +110,7 @@ fn F() {
 // CHECK:STDOUT:     .DestroyImpl = imports.%Core.DestroyImpl
 // CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
 // CHECK:STDOUT:     .SelfDestruct = imports.%Core.SelfDestruct
+// CHECK:STDOUT:     .TrivialDestroyImpl = imports.%Core.TrivialDestroyImpl
 // CHECK:STDOUT:     .TrivialDestroy = imports.%Core.TrivialDestroy
 // CHECK:STDOUT:     .Copy = imports.%Core.Copy
 // CHECK:STDOUT:     .Form = imports.%Core.Form
@@ -250,6 +252,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.DestroyImpl = import_ref Core//prelude/parts/destroy, DestroyImpl, unloaded
 // CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
 // CHECK:STDOUT:   %Core.SelfDestruct = import_ref Core//prelude/parts/destroy, SelfDestruct, unloaded
+// CHECK:STDOUT:   %Core.TrivialDestroyImpl = import_ref Core//prelude/parts/destroy, TrivialDestroyImpl, unloaded
 // CHECK:STDOUT:   %Core.TrivialDestroy = import_ref Core//prelude/parts/destroy, TrivialDestroy, unloaded
 // CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
 // CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
@@ -267,6 +270,7 @@ fn F() {
 // CHECK:STDOUT:     .DestroyImpl = imports.%Core.DestroyImpl
 // CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
 // CHECK:STDOUT:     .SelfDestruct = imports.%Core.SelfDestruct
+// CHECK:STDOUT:     .TrivialDestroyImpl = imports.%Core.TrivialDestroyImpl
 // CHECK:STDOUT:     .TrivialDestroy = imports.%Core.TrivialDestroy
 // CHECK:STDOUT:     .Copy = imports.%Core.Copy
 // CHECK:STDOUT:     .Form = imports.%Core.Form
