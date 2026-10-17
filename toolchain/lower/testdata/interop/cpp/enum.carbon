@@ -261,9 +261,9 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !28 = !DILocation(line: 13, column: 3, scope: !12)
 // CHECK:STDOUT: !29 = !DILocation(line: 6, column: 1, scope: !12)
 // CHECK:STDOUT: !30 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2b8d16719298937c", scope: null, file: !30, line: 34, type: !16, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !37)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2b8d16719298937c", scope: null, file: !30, line: 33, type: !16, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !37)
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !31, type: !6)
-// CHECK:STDOUT: !36 = !DILocation(line: 34, column: 1, scope: !31)
+// CHECK:STDOUT: !36 = !DILocation(line: 33, column: 1, scope: !31)
 // CHECK:STDOUT: !37 = !{!32}
 // CHECK:STDOUT: !38 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !39 = !{!"omnipotent char", !38, i64 0}
@@ -377,9 +377,9 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !66 = !DILocation(line: 17, column: 3, scope: !62)
 // CHECK:STDOUT: !67 = !DILocation(line: 16, column: 1, scope: !62)
 // CHECK:STDOUT: !68 = !{!63}
-// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2b8d16719298937c", scope: null, file: !30, line: 34, type: !16, spFlags: DISPFlagDefinition, unit: !51, retainedNodes: !75)
+// CHECK:STDOUT: !69 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2b8d16719298937c", scope: null, file: !30, line: 33, type: !16, spFlags: DISPFlagDefinition, unit: !51, retainedNodes: !75)
 // CHECK:STDOUT: !70 = !DILocalVariable(arg: 1, scope: !69, type: !6)
-// CHECK:STDOUT: !74 = !DILocation(line: 34, column: 1, scope: !69)
+// CHECK:STDOUT: !74 = !DILocation(line: 33, column: 1, scope: !69)
 // CHECK:STDOUT: !75 = !{!70}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -834,9 +834,9 @@ fn CallCompareGeneric3(a: Cpp.C.E, b: Cpp.ConvertToEnum2) -> bool {
 // CHECK:STDOUT: !252 = !DILocalVariable(arg: 2, scope: !250, type: !9)
 // CHECK:STDOUT: !253 = !DILocation(line: 0, scope: !250)
 // CHECK:STDOUT: !254 = !{!251, !252}
-// CHECK:STDOUT: !255 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2b8d16719298937c", scope: null, file: !30, line: 34, type: !16, spFlags: DISPFlagDefinition, unit: !147, retainedNodes: !261)
+// CHECK:STDOUT: !255 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2b8d16719298937c", scope: null, file: !30, line: 33, type: !16, spFlags: DISPFlagDefinition, unit: !147, retainedNodes: !261)
 // CHECK:STDOUT: !256 = !DILocalVariable(arg: 1, scope: !255, type: !6)
-// CHECK:STDOUT: !260 = !DILocation(line: 34, column: 1, scope: !255)
+// CHECK:STDOUT: !260 = !DILocation(line: 33, column: 1, scope: !255)
 // CHECK:STDOUT: !261 = !{!256}
 // CHECK:STDOUT: !262 = distinct !DISubprogram(name: "CompareGeneric", linkageName: "_CCompareGeneric.Main.9f771e4a50bafdbe", scope: null, file: !146, line: 29, type: !149, spFlags: DISPFlagDefinition, unit: !147, retainedNodes: !272)
 // CHECK:STDOUT: !263 = !DILocalVariable(arg: 1, scope: !262, type: !6)

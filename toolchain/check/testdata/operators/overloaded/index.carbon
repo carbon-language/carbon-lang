@@ -92,6 +92,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.DestroyImpl = import_ref Core//prelude/parts/destroy, DestroyImpl, unloaded
 // CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
 // CHECK:STDOUT:   %Core.SelfDestruct = import_ref Core//prelude/parts/destroy, SelfDestruct, unloaded
+// CHECK:STDOUT:   %Core.TrivialDestroy = import_ref Core//prelude/parts/destroy, TrivialDestroy, unloaded
 // CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
 // CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
 // CHECK:STDOUT:   %Core.UnsafeAs = import_ref Core//prelude/parts/as, UnsafeAs, unloaded
@@ -108,6 +109,7 @@ fn F() {
 // CHECK:STDOUT:     .DestroyImpl = imports.%Core.DestroyImpl
 // CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
 // CHECK:STDOUT:     .SelfDestruct = imports.%Core.SelfDestruct
+// CHECK:STDOUT:     .TrivialDestroy = imports.%Core.TrivialDestroy
 // CHECK:STDOUT:     .Copy = imports.%Core.Copy
 // CHECK:STDOUT:     .Form = imports.%Core.Form
 // CHECK:STDOUT:     .UnsafeAs = imports.%Core.UnsafeAs
@@ -248,6 +250,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.DestroyImpl = import_ref Core//prelude/parts/destroy, DestroyImpl, unloaded
 // CHECK:STDOUT:   %Core.Destroy = import_ref Core//prelude/parts/destroy, Destroy, unloaded
 // CHECK:STDOUT:   %Core.SelfDestruct = import_ref Core//prelude/parts/destroy, SelfDestruct, unloaded
+// CHECK:STDOUT:   %Core.TrivialDestroy = import_ref Core//prelude/parts/destroy, TrivialDestroy, unloaded
 // CHECK:STDOUT:   %Core.Copy = import_ref Core//prelude/parts/copy, Copy, unloaded
 // CHECK:STDOUT:   %Core.Form = import_ref Core//prelude/parts/form, Form, unloaded
 // CHECK:STDOUT:   %Core.UnsafeAs = import_ref Core//prelude/parts/as, UnsafeAs, unloaded
@@ -264,6 +267,7 @@ fn F() {
 // CHECK:STDOUT:     .DestroyImpl = imports.%Core.DestroyImpl
 // CHECK:STDOUT:     .Destroy = imports.%Core.Destroy
 // CHECK:STDOUT:     .SelfDestruct = imports.%Core.SelfDestruct
+// CHECK:STDOUT:     .TrivialDestroy = imports.%Core.TrivialDestroy
 // CHECK:STDOUT:     .Copy = imports.%Core.Copy
 // CHECK:STDOUT:     .Form = imports.%Core.Form
 // CHECK:STDOUT:     .UnsafeAs = imports.%Core.UnsafeAs
@@ -453,6 +457,7 @@ fn F() {
 // CHECK:STDOUT:   %.115: ref %C = temporary invalid, %C.val [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
@@ -471,6 +476,8 @@ fn F() {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .IndexWith = %Core.IndexWith
 // CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
+// CHECK:STDOUT:     .SubobjectDestroy = %Core.SubobjectDestroy
+// CHECK:STDOUT:     .DestroyImpl = %Core.DestroyImpl
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//core_wrong_arg_count
 // CHECK:STDOUT:     import Core//prelude/...
@@ -488,6 +495,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/parts/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
+// CHECK:STDOUT:   %Core.DestroyImpl: type = import_ref Core//prelude/parts/destroy, DestroyImpl, loaded [concrete = constants.%DestroyImpl.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

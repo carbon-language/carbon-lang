@@ -23,53 +23,53 @@ fn Main() {
 // CHECK:STDOUT: source_filename = "empty_tuple.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CEcho.Main() #0 !dbg !18 {
+// CHECK:STDOUT: define void @_CEcho.Main() #0 !dbg !20 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !23
+// CHECK:STDOUT:   ret void, !dbg !25
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !24 {
+// CHECK:STDOUT: define void @_CMain.Main() #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !25
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !25
-// CHECK:STDOUT:   call void @_CEcho.Main(), !dbg !26
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6d185494fc1773c8(ptr %_.var), !dbg !25
-// CHECK:STDOUT:   ret void, !dbg !31
+// CHECK:STDOUT:   %_.var = alloca {}, align 1, !dbg !27
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !27
+// CHECK:STDOUT:   call void @_CEcho.Main(), !dbg !28
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6d185494fc1773c8(ptr %_.var), !dbg !27
+// CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6d185494fc1773c8(ptr %t) #0 !dbg !32 {
-// CHECK:STDOUT:   ret void, !dbg !37
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6d185494fc1773c8(ptr %t) #0 !dbg !34 {
+// CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!15}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!17}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
 // CHECK:STDOUT: !6 = !DIFile(filename: "min_prelude/parts/destroy.carbon", directory: "")
-// CHECK:STDOUT: !14 = !DIFile(filename: "empty_tuple.carbon", directory: "")
-// CHECK:STDOUT: !15 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !14, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !16 = !{null}
-// CHECK:STDOUT: !17 = !DISubroutineType(types: !16)
-// CHECK:STDOUT: !18 = distinct !DISubprogram(name: "Echo", linkageName: "_CEcho.Main", scope: null, file: !14, line: 13, type: !17, spFlags: DISPFlagDefinition, unit: !15)
-// CHECK:STDOUT: !23 = !DILocation(line: 14, column: 3, scope: !18)
-// CHECK:STDOUT: !24 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !14, line: 17, type: !17, spFlags: DISPFlagDefinition, unit: !15)
-// CHECK:STDOUT: !25 = !DILocation(line: 18, column: 3, scope: !24)
-// CHECK:STDOUT: !26 = !DILocation(line: 18, column: 15, scope: !24)
-// CHECK:STDOUT: !28 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !29 = !{null, !28}
-// CHECK:STDOUT: !30 = !DISubroutineType(types: !29)
-// CHECK:STDOUT: !31 = !DILocation(line: 17, column: 1, scope: !24)
-// CHECK:STDOUT: !32 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6d185494fc1773c8", scope: null, file: !6, line: 30, type: !30, spFlags: DISPFlagDefinition, unit: !15, retainedNodes: !38)
-// CHECK:STDOUT: !33 = !DILocalVariable(arg: 1, scope: !32, type: !28)
-// CHECK:STDOUT: !37 = !DILocation(line: 30, column: 1, scope: !32)
-// CHECK:STDOUT: !38 = !{!33}
+// CHECK:STDOUT: !16 = !DIFile(filename: "empty_tuple.carbon", directory: "")
+// CHECK:STDOUT: !17 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !16, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !18 = !{null}
+// CHECK:STDOUT: !19 = !DISubroutineType(types: !18)
+// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "Echo", linkageName: "_CEcho.Main", scope: null, file: !16, line: 13, type: !19, spFlags: DISPFlagDefinition, unit: !17)
+// CHECK:STDOUT: !25 = !DILocation(line: 14, column: 3, scope: !20)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Main", linkageName: "_CMain.Main", scope: null, file: !16, line: 17, type: !19, spFlags: DISPFlagDefinition, unit: !17)
+// CHECK:STDOUT: !27 = !DILocation(line: 18, column: 3, scope: !26)
+// CHECK:STDOUT: !28 = !DILocation(line: 18, column: 15, scope: !26)
+// CHECK:STDOUT: !30 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !31 = !{null, !30}
+// CHECK:STDOUT: !32 = !DISubroutineType(types: !31)
+// CHECK:STDOUT: !33 = !DILocation(line: 17, column: 1, scope: !26)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6d185494fc1773c8", scope: null, file: !6, line: 30, type: !32, spFlags: DISPFlagDefinition, unit: !17, retainedNodes: !40)
+// CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !34, type: !30)
+// CHECK:STDOUT: !39 = !DILocation(line: 30, column: 1, scope: !34)
+// CHECK:STDOUT: !40 = !{!35}
 // CHECK:STDOUT:

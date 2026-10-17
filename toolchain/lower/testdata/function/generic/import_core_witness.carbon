@@ -93,8 +93,8 @@ fn Run() {
 // CHECK:STDOUT: !20 = !DISubroutineType(types: !19)
 // CHECK:STDOUT: !21 = !DILocation(line: 4, column: 1, scope: !16)
 // CHECK:STDOUT: !22 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.dc5658e0ac74b2aa", scope: null, file: !22, line: 34, type: !20, spFlags: DISPFlagDefinition, unit: !8, retainedNodes: !29)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.dc5658e0ac74b2aa", scope: null, file: !22, line: 33, type: !20, spFlags: DISPFlagDefinition, unit: !8, retainedNodes: !29)
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !23, type: !6)
-// CHECK:STDOUT: !28 = !DILocation(line: 34, column: 1, scope: !23)
+// CHECK:STDOUT: !28 = !DILocation(line: 33, column: 1, scope: !23)
 // CHECK:STDOUT: !29 = !{!24}
 // CHECK:STDOUT:

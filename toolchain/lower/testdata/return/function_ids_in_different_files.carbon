@@ -29,45 +29,45 @@ fn G() {
 // CHECK:STDOUT: ; ModuleID = 'a.carbon'
 // CHECK:STDOUT: source_filename = "a.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!15}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!17}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !14 = !DIFile(filename: "a.carbon", directory: "")
-// CHECK:STDOUT: !15 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !14, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !16 = !DIFile(filename: "a.carbon", directory: "")
+// CHECK:STDOUT: !17 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !16, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'b.carbon'
 // CHECK:STDOUT: source_filename = "b.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !20 {
+// CHECK:STDOUT: define void @_CG.Main() #0 !dbg !22 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main.6944efcfbb6a8360(), !dbg !21
-// CHECK:STDOUT:   ret void, !dbg !22
+// CHECK:STDOUT:   call void @_CF.Main.6944efcfbb6a8360(), !dbg !23
+// CHECK:STDOUT:   ret void, !dbg !24
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF.Main.6944efcfbb6a8360() #0 !dbg !23 {
-// CHECK:STDOUT:   ret void, !dbg !24
+// CHECK:STDOUT: define linkonce_odr void @_CF.Main.6944efcfbb6a8360() #0 !dbg !25 {
+// CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!17}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!19}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !14 = !DIFile(filename: "a.carbon", directory: "")
-// CHECK:STDOUT: !16 = !DIFile(filename: "b.carbon", directory: "")
-// CHECK:STDOUT: !17 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !16, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !18 = !{null}
-// CHECK:STDOUT: !19 = !DISubroutineType(types: !18)
-// CHECK:STDOUT: !20 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !16, line: 3, type: !19, spFlags: DISPFlagDefinition, unit: !17)
-// CHECK:STDOUT: !21 = !DILocation(line: 5, column: 3, scope: !20)
-// CHECK:STDOUT: !22 = !DILocation(line: 3, column: 1, scope: !20)
-// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.6944efcfbb6a8360", scope: null, file: !14, line: 2, type: !19, spFlags: DISPFlagDefinition, unit: !17)
-// CHECK:STDOUT: !24 = !DILocation(line: 4, column: 3, scope: !23)
+// CHECK:STDOUT: !16 = !DIFile(filename: "a.carbon", directory: "")
+// CHECK:STDOUT: !18 = !DIFile(filename: "b.carbon", directory: "")
+// CHECK:STDOUT: !19 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !18, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !20 = !{null}
+// CHECK:STDOUT: !21 = !DISubroutineType(types: !20)
+// CHECK:STDOUT: !22 = distinct !DISubprogram(name: "G", linkageName: "_CG.Main", scope: null, file: !18, line: 3, type: !21, spFlags: DISPFlagDefinition, unit: !19)
+// CHECK:STDOUT: !23 = !DILocation(line: 5, column: 3, scope: !22)
+// CHECK:STDOUT: !24 = !DILocation(line: 3, column: 1, scope: !22)
+// CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main.6944efcfbb6a8360", scope: null, file: !16, line: 2, type: !21, spFlags: DISPFlagDefinition, unit: !19)
+// CHECK:STDOUT: !26 = !DILocation(line: 4, column: 3, scope: !25)
 // CHECK:STDOUT:

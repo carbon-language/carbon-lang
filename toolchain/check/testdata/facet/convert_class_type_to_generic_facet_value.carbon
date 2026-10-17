@@ -445,7 +445,7 @@ fn G() {
 // CHECK:STDOUT:   %Generic.WithSelf.F.type.8bd: type = fn_type @Generic.WithSelf.F, @Generic.WithSelf(%GenericParam, %Self.be2) [symbolic]
 // CHECK:STDOUT:   %Generic.WithSelf.F.b31: %Generic.WithSelf.F.type.8bd = struct_value () [symbolic]
 // CHECK:STDOUT:   %Generic.assoc_type.f22: type = assoc_entity_type @Generic, @Generic(%GenericParam) [concrete]
-// CHECK:STDOUT:   %assoc0.c69: %Generic.assoc_type.f22 = assoc_entity element0, @Generic.WithSelf.%Generic.WithSelf.F.decl [concrete]
+// CHECK:STDOUT:   %assoc0.c691: %Generic.assoc_type.f22 = assoc_entity element0, @Generic.WithSelf.%Generic.WithSelf.F.decl [concrete]
 // CHECK:STDOUT:   %ImplsGeneric.as.Generic.impl.F.type: type = fn_type @ImplsGeneric.as.Generic.impl.F [concrete]
 // CHECK:STDOUT:   %ImplsGeneric.as.Generic.impl.F: %ImplsGeneric.as.Generic.impl.F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Generic.facet: %Generic.type.e46 = facet_value %ImplsGeneric, (%Generic.impl_witness) [concrete]
@@ -476,6 +476,7 @@ fn G() {
 // CHECK:STDOUT:   %.b65: ref %GenericParam = temporary invalid, %GenericParam.val [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
@@ -493,12 +494,16 @@ fn G() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
 // CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
+// CHECK:STDOUT:     .SubobjectDestroy = %Core.SubobjectDestroy
+// CHECK:STDOUT:     .DestroyImpl = %Core.DestroyImpl
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/parts/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
+// CHECK:STDOUT:   %Core.DestroyImpl: type = import_ref Core//prelude/parts/destroy, DestroyImpl, loaded [concrete = constants.%DestroyImpl.type]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -689,7 +694,7 @@ fn G() {
 // CHECK:STDOUT:   %Generic.WithSelf.F.type => constants.%Generic.WithSelf.F.type.8bd
 // CHECK:STDOUT:   %Generic.WithSelf.F => constants.%Generic.WithSelf.F.b31
 // CHECK:STDOUT:   %Generic.assoc_type => constants.%Generic.assoc_type.f22
-// CHECK:STDOUT:   %assoc0.loc5_9.2 => constants.%assoc0.c69
+// CHECK:STDOUT:   %assoc0.loc5_9.2 => constants.%assoc0.c691
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.WithSelf(constants.%GenericParam, constants.%Generic.facet) {
@@ -700,7 +705,7 @@ fn G() {
 // CHECK:STDOUT:   %Generic.WithSelf.F.type => constants.%Generic.WithSelf.F.type.ae1
 // CHECK:STDOUT:   %Generic.WithSelf.F => constants.%Generic.WithSelf.F.946
 // CHECK:STDOUT:   %Generic.assoc_type => constants.%Generic.assoc_type.f22
-// CHECK:STDOUT:   %assoc0.loc5_9.2 => constants.%assoc0.c69
+// CHECK:STDOUT:   %assoc0.loc5_9.2 => constants.%assoc0.c691
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Generic.WithSelf.F(constants.%GenericParam, constants.%Generic.facet) {}
