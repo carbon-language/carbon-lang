@@ -8,12 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/let/fail_no_semi.carbon
 
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+4]]:4: error: expected pattern [ExpectedPattern]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:4: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:
 let
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+10]]:26: error: expected pattern [ExpectedPattern]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE-4]]:1-3: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'

@@ -8,19 +8,19 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/fail_runtime.carbon
 
-// CHECK:STDERR: fail_runtime.carbon:[[@LINE+6]]:5-11: error: `runtime` is redundant here; this binding is runtime by default [RedundantRuntimeModifier]
+// CHECK:STDERR: fail_runtime.carbon:[[@LINE+10]]:5-11: error: `runtime` is redundant here; this binding is runtime by default [RedundantRuntimeModifier]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_runtime.carbon:[[@LINE+4]]:15: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_runtime.carbon:[[@LINE+8]]:15: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_runtime.carbon:[[@LINE+2]]:15: error: whitespace missing before binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR: fail_runtime.carbon:[[@LINE+6]]:15: error: whitespace missing before binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_runtime.carbon:[[@LINE+4]]:16: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_runtime.carbon:[[@LINE+2]]:16: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 var runtime u:|
 
 
-// CHECK:STDERR: fail_runtime.carbon:[[@LINE+17]]:26: error: expected expression [ExpectedExpr]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_runtime.carbon:[[@LINE-5]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_runtime.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'

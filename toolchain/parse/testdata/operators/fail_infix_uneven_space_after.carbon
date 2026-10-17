@@ -10,7 +10,7 @@
 
 // TODO: We could figure out that this first Failed example is infix
 // with one-token lookahead.
-// CHECK:STDERR: fail_infix_uneven_space_after.carbon:[[@LINE+2]]:14: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_infix_uneven_space_after.carbon:[[@LINE+2]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 var n: i8 = n* n;
 

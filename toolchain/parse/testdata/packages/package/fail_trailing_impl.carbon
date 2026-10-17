@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/package/fail_trailing_impl.carbon
 
-// CHECK:STDERR: fail_trailing_impl.carbon:[[@LINE+2]]:9-16: error: `package` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_trailing_impl.carbon:[[@LINE+2]]:17: error: `package` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 package Geometry impl;
 

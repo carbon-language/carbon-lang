@@ -17,7 +17,7 @@ class Foo {
 // --- fail_todo_qualified.carbon
 
 class Baz {
-  // CHECK:STDERR: fail_todo_qualified.carbon:[[@LINE+2]]:10: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_todo_qualified.carbon:[[@LINE+2]]:11: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   friend P.Q;
 }
@@ -25,31 +25,31 @@ class Baz {
 // --- fail_bad_syntax.carbon
 
 class A {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:3-8: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:9: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
   // CHECK:STDERR:
   friend;
 }
 
 class B {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:10: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:11: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   friend X extra_token;
 }
 
 class C {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:3-8: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:9: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
   // CHECK:STDERR:
   friend
 }
 
 class D {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:10: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:11: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   friend X
 }
 
 class E {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:3-8: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:10-14: error: expected identifier for friend declaration; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierForFriend]
   // CHECK:STDERR:
   friend class;
 }
@@ -108,7 +108,8 @@ class E {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'E'
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─FriendIntroducer 'friend'
-// CHECK:STDOUT:   │ ├─FriendDecl ';' has_error
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'class'
+// CHECK:STDOUT:   │ ├─FriendDecl ';'
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -8,11 +8,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/basics/fail_paren_match_regression.carbon
 
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+6]]:5: error: expected pattern [ExpectedPattern]
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+6]]:4: error: expected pattern [ExpectedPattern]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+4]]:8-10: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+4]]:11: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+2]]:14: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+2]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 var = (foo {})
 

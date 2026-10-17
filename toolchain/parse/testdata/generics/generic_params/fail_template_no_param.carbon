@@ -10,7 +10,7 @@
 
 // --- fail_template_before_type.carbon
 
-// CHECK:STDERR: fail_template_before_type.carbon:[[@LINE+2]]:15-17: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_template_before_type.carbon:[[@LINE+2]]:14: error: expected name in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR:
 fn A(template i32);
 
@@ -22,7 +22,7 @@ fn C(template);
 
 // --- fail_reserved_word_after_generic.carbon
 
-// CHECK:STDERR: fail_reserved_word_after_generic.carbon:[[@LINE+2]]:22: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
+// CHECK:STDERR: fail_reserved_word_after_generic.carbon:[[@LINE+2]]:14-21: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
 // CHECK:STDERR:
 fn E(generic template: i32);
 

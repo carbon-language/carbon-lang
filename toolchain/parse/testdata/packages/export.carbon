@@ -28,7 +28,7 @@ export Foo.Bar;
 
 package Pkg;
 
-// CHECK:STDERR: fail_expr.carbon:[[@LINE+2]]:1-6: error: `export` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_expr.carbon:[[@LINE+2]]:7: error: `export` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 export ();
 
@@ -36,7 +36,7 @@ export ();
 
 package Pkg;
 
-// CHECK:STDERR: fail_package_in_name.carbon:[[@LINE+2]]:1-6: error: `export` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_package_in_name.carbon:[[@LINE+2]]:8-14: error: `export` introducer should be followed by a name; prefix reserved word with `r#` to form a valid identifier [ExpectedDeclName]
 // CHECK:STDERR:
 export package.Bar;
 
@@ -44,7 +44,7 @@ export package.Bar;
 
 package Pkg;
 
-// CHECK:STDERR: fail_keyword_only:[[@LINE+2]]:1-6: error: `export` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_keyword_only:[[@LINE+2]]:7: error: `export` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 export
 
@@ -52,7 +52,7 @@ export
 
 package Pkg;
 
-// CHECK:STDERR: fail_no_name.carbon:[[@LINE+2]]:1-6: error: `export` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_no_name.carbon:[[@LINE+2]]:7: error: `export` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 export ;
 
@@ -60,7 +60,7 @@ export ;
 
 package Pkg;
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:8-10: error: `export` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:11: error: `export` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 export Foo
 
@@ -68,7 +68,7 @@ export Foo
 
 package Pkg;
 
-// CHECK:STDERR: fail_incomplete_qual_name.carbon:[[@LINE+2]]:11: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR: fail_incomplete_qual_name.carbon:[[@LINE+2]]:12: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
 // CHECK:STDERR:
 export Foo.;
 
@@ -76,7 +76,7 @@ export Foo.;
 
 package Pkg;
 
-// CHECK:STDERR: fail_incomplete_qual_name2.carbon:[[@LINE+2]]:1-6: error: `export` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_incomplete_qual_name2.carbon:[[@LINE+2]]:7: error: `export` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 export .Bar;
 
@@ -158,8 +158,10 @@ export Foo;
 // CHECK:STDOUT:   │ ├─IdentifierPackageName 'Pkg'
 // CHECK:STDOUT:   ├─PackageDecl ';'
 // CHECK:STDOUT:   │ ╭─ExportIntroducer 'export'
-// CHECK:STDOUT:   │ ├─InvalidParse 'package' has_error
-// CHECK:STDOUT:   ├─ExportDecl ';' has_error
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'package'
+// CHECK:STDOUT:   │ ├─IdentifierNameQualifierWithoutParams '.'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Bar'
+// CHECK:STDOUT:   ├─ExportDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_keyword_only

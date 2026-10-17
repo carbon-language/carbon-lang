@@ -20,7 +20,7 @@ fn F() {
 
 // --- fail_no_paren.carbon
 
-// CHECK:STDERR: fail_no_paren.carbon:[[@LINE+2]]:8-13: error: expected `(` after `typeof` [ExpectedParenAfter]
+// CHECK:STDERR: fail_no_paren.carbon:[[@LINE+2]]:15: error: expected `(` after `typeof` [ExpectedParenAfter]
 // CHECK:STDERR:
 var x: typeof y;
 

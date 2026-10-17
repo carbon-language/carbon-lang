@@ -19,7 +19,7 @@ class C {
 
 fn F() {
   // `package` here is an expression naming the package scope.
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+2]]:3-9: error: expected `.` after `package` expression [ExpectedPeriodAfterPackage]
+  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+2]]:10: error: expected `.` after `package` expression [ExpectedPeriodAfterPackage]
   // CHECK:STDERR:
   package P;
 

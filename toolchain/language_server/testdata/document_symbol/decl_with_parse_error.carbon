@@ -82,7 +82,7 @@ fn G() {}
 // CHECK:STDOUT:             "line": 0
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "start": {
-// CHECK:STDOUT:             "character": 3,
+// CHECK:STDOUT:             "character": 4,
 // CHECK:STDOUT:             "line": 0
 // CHECK:STDOUT:           }
 // CHECK:STDOUT:         },

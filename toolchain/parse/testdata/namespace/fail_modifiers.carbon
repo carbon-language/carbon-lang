@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/namespace/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:19: error: `namespace` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:20: error: `namespace` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 virtual namespace B
 

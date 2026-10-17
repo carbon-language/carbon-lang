@@ -8,7 +8,7 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/observe/fail_invalid_operator.carbon
 
-// CHECK:STDERR: fail_invalid_operator.carbon:[[@LINE+2]]:9: error: observe should use `==` or `impls` operator [ExpectedObserveOperator]
+// CHECK:STDERR: fail_invalid_operator.carbon:[[@LINE+2]]:10: error: observe should use `==` or `impls` operator [ExpectedObserveOperator]
 // CHECK:STDERR:
 observe T = U impls I;
 

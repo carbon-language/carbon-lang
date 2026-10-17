@@ -13,15 +13,15 @@ fn F() {
   // CHECK:STDERR:
   x.();
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:6: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:7: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
   // CHECK:STDERR:
   y.(1,);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:6: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:7: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
   // CHECK:STDERR:
   z.(a, b);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:6: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:7: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
   // CHECK:STDERR:
   w.(c d e ());
 
@@ -29,15 +29,15 @@ fn F() {
   // CHECK:STDERR:
   v->();
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:7: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:8: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
   // CHECK:STDERR:
   u->(f,);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:7: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:8: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
   // CHECK:STDERR:
   t->(2, 3);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:7: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:8: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
   // CHECK:STDERR:
   s->(g h i ());
 }

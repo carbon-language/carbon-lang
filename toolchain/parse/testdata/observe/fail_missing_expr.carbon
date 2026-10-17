@@ -10,19 +10,19 @@
 
 // --- fail_missing_expr_after_observe.carbon
 
-// CHECK:STDERR: fail_missing_expr_after_observe.carbon:[[@LINE+2]]:9-13: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_missing_expr_after_observe.carbon:[[@LINE+2]]:8: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 observe impls I;
 
 // --- fail_missing_expr_after_impls.carbon
 
-// CHECK:STDERR: fail_missing_expr_after_impls.carbon:[[@LINE+2]]:17: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_missing_expr_after_impls.carbon:[[@LINE+2]]:16: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 observe T impls ;
 
 // --- fail_missing_impls.carbon
 
-// CHECK:STDERR: fail_missing_impls.carbon:[[@LINE+2]]:9: error: observe should use `==` or `impls` operator [ExpectedObserveOperator]
+// CHECK:STDERR: fail_missing_impls.carbon:[[@LINE+2]]:10: error: observe should use `==` or `impls` operator [ExpectedObserveOperator]
 // CHECK:STDERR:
 observe T ;
 

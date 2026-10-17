@@ -8,27 +8,27 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/namespace/fail_incomplete.carbon
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:1-9: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:10: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 namespace 123
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:1-9: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:10: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 namespace ""
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:1-9: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:10: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 namespace +
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:1-9: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:10: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 namespace bool
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:1-9: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:10: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 namespace namespace namespace namespace namespace
 
-// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:1-9: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR: fail_incomplete.carbon:[[@LINE+2]]:10: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
 // CHECK:STDERR:
 namespace
 

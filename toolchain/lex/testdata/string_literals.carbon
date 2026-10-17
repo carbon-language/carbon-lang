@@ -21,7 +21,7 @@
 // CHECK:STDOUT: - filename: fail_unterminated.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_unterminated.carbon:[[@LINE+2]]:1: error: string literal is missing a terminator [UnterminatedString]
+// CHECK:STDERR: fail_unterminated.carbon:[[@LINE+2]]:3: error: string literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR:
 "s
 // CHECK:STDOUT:   - { index: 1, kind:     "Error", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "\"s", has_leading_space: true }
@@ -49,7 +49,7 @@
 // CHECK:STDOUT: - filename: fail_unicode_escape_missing_braced_digits.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_unicode_escape_missing_braced_digits.carbon:[[@LINE+2]]:2: error: escape sequence `\u` must be followed by a braced sequence of uppercase hexadecimal digits, for example `\u{70AD}}` [UnicodeEscapeMissingBracedDigits]
+// CHECK:STDERR: fail_unicode_escape_missing_braced_digits.carbon:[[@LINE+2]]:4: error: escape sequence `\u` must be followed by a braced sequence of uppercase hexadecimal digits, for example `\u{70AD}}` [UnicodeEscapeMissingBracedDigits]
 // CHECK:STDERR:
 "\u"
 // CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "\"\\u\"", value: "u", has_leading_space: true }
@@ -58,7 +58,7 @@
 // CHECK:STDOUT: - filename: fail_hex_escape_missing_digits.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_hex_escape_missing_digits.carbon:[[@LINE+2]]:2: error: escape sequence `\x` must be followed by two uppercase hexadecimal digits, for example `\x0F` [HexadecimalEscapeMissingDigits]
+// CHECK:STDERR: fail_hex_escape_missing_digits.carbon:[[@LINE+2]]:4: error: escape sequence `\x` must be followed by two uppercase hexadecimal digits, for example `\x0F` [HexadecimalEscapeMissingDigits]
 // CHECK:STDERR:
 "\x"
 // CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "\"\\x\"", value: "x", has_leading_space: true }

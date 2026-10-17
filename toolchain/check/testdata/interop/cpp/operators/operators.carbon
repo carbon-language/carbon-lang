@@ -69,12 +69,12 @@ import Cpp library "prefix_inc_and_dec.h";
 
 fn F() {
   var prefix: Cpp.Prefix = Cpp.Prefix.Prefix();
-  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+4]]:3-8: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+4]]:9: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+2]]:3-11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:
   prefix++;
-  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+2]]:3-8: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+2]]:9: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   prefix--;
 }
@@ -493,31 +493,31 @@ fn F() {
   var c: Cpp.UnsupportedUnaryC = Cpp.UnsupportedUnaryC.UnsupportedUnaryC();
 
   // Arithmetic.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+6]]:37: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+6]]:36: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:37: error: whitespace missing after binary operator [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:37: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:37: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:38: error: whitespace missing after binary operator [BinaryOperatorRequiresWhitespace]
   // CHECK:STDERR:
   let plus: Cpp.UnsupportedUnaryC = +c;
 
   // Increment and Decrement.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:3: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:4: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   c++;
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:3: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:4: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   c--;
 
   // Bitwise.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:42: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:41: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:40: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:41: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   let not_value: Cpp.UnsupportedUnaryC = ~c;
 
   // Logical.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:43-50: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:51: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   let not_result: Cpp.UnsupportedUnaryC = operator!(c1);
 

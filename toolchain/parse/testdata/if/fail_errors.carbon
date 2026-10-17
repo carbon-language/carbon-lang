@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if/fail_errors.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:3-4: error: expected `(` after `if` [ExpectedParenAfter]
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:6: error: expected `(` after `if` [ExpectedParenAfter]
   // CHECK:STDERR:
   if a {}
   // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:7: error: expected expression [ExpectedExpr]
@@ -18,9 +18,9 @@ fn F() {
   // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:9: error: unexpected tokens before `)` [ExpectedCloseSymbol]
   // CHECK:STDERR:
   if (b c) {}
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:9: error: expected braced code block [ExpectedCodeBlock]
+  // CHECK:STDERR:
   if (d)
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:1: error: expected braced code block [ExpectedCodeBlock]
-// CHECK:STDERR:
 // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:1: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 }

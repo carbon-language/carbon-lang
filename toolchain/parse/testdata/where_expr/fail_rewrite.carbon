@@ -31,7 +31,7 @@ fn DotSelf(generic W: K where .Self = f32);
 
 // --- fail_dot_keyword.carbon
 
-// CHECK:STDERR: fail_dot_keyword.carbon:[[@LINE+2]]:34: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fail_dot_keyword.carbon:[[@LINE+2]]:35-37: error: expected identifier or `Self` after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR:
 fn DotKeyword(generic W: K where .and = u8);
 
