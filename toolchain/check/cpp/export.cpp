@@ -1293,11 +1293,9 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
                          {.lhs_id = var_storage_id, .rhs_id = init_id});
   context.global_init().Suspend();
 
-  // Export this variable to C++
   auto* var_decl =
       ExportVarToCpp(context, var_storage_id,
                      context.insts().GetAs<SemIR::VarStorage>(var_storage_id));
-  // Return a reference expression to the variable.
   auto decl_ref_expr = context.clang_sema().BuildDeclarationNameExpr(
       clang::CXXScopeSpec(),
       clang::DeclarationNameInfo(var_decl->getDeclName(),
