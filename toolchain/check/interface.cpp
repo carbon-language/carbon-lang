@@ -80,11 +80,10 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
   // numbering at the point where the self specific is used.
   int index_delta = num_enclosing_specific_args - arg_ids.size();
 
-  // Trailing member parameters may mention outer parameters of `generic` in
-  // their types (for example `U: A(T)` where `T` comes from the enclosing
-  // interface). Substitute those outer arguments before adjusting bind indices,
-  // so later thunk cloning does not evaluate a binding against the wrong
-  // generic.
+  // Trailing arguments may mention outer parameters of `generic` in their
+  // types (for example `U: A(T)` where `T` comes from the enclosing interface).
+  // Substitute those outer arguments before adjusting bind indices, so later
+  // thunk cloning does not evaluate a binding against the wrong generic.
   llvm::SmallVector<Substitution, 8> substitutions;
   substitutions.reserve(arg_ids.size());
   auto generic_bindings = context.inst_blocks().Get(generic.bindings_id);
