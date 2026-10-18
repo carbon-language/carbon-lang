@@ -26,6 +26,10 @@ struct VtableFields {
   // (eg: Carbon type with a C++ vtable distinct from a C++ type with a C++
   // vtable, maybe other language interop, etc)
   bool carbon_native_vtable = true;
+
+  // Specifies that this class has multiple virtual tables (e.g. from multiple
+  // inheritance in C++).
+  bool has_multiple_vtables = false;
 };
 
 struct Vtable : public VtableFields, public Printable<Vtable> {
