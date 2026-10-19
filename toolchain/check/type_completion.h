@@ -79,7 +79,7 @@ auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
                             SemIR::ConstantId self_const_id,
                             SemIR::TypeId facet_type_type_id,
                             bool allow_partially_identified)
-    -> SemIR::IdentifiedFacetTypeId;
+    -> IdentifiedFacetTypeId;
 
 // Requires the named constraints in the facet type to be complete, so that the
 // set of interfaces the facet type requires is known. The `self_const_id` is a
@@ -108,7 +108,7 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::TypeId facet_type_type_id,
                                 DiagnosticContextFn diagnostic_context,
                                 bool diagnose = true)
-    -> SemIR::IdentifiedFacetTypeId;
+    -> IdentifiedFacetTypeId;
 
 // Emits an error diagnostic explaining that a class is incomplete.
 //

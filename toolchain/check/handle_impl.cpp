@@ -209,7 +209,7 @@ struct BuildImplDeclResult {
   SemIR::ImplId impl_id;
   SemIR::InstId impl_decl_id;
   SemIR::TypeInstId full_constraint_type_inst_id;
-  SemIR::IdentifiedFacetTypeId identified_id;
+  IdentifiedFacetTypeId identified_id;
 };
 
 // Build an ImplDecl describing the signature of an impl. This handles the

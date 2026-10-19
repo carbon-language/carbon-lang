@@ -378,13 +378,6 @@ struct DeclaredFacetTypeId : public IdBase<DeclaredFacetTypeId> {
 inline constexpr DeclaredFacetTypeId DeclaredFacetTypeId::Empty =
     DeclaredFacetTypeId(0);
 
-// The ID of an resolved facet type value.
-struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
-  static constexpr llvm::StringLiteral Label = "identified_facet_type";
-
-  using IdBase::IdBase;
-};
-
 // The ID of an `Impl`.
 struct ImplId : public IdBase<ImplId> {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;

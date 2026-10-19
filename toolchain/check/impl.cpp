@@ -27,7 +27,7 @@
 #include "toolchain/check/type_structure.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/sem_ir/generic.h"
-#include "toolchain/sem_ir/identified_facet_type.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst.h"
@@ -442,7 +442,7 @@ class SubstWithImplWitness : public SubstIdentifiedWitnessesCallbacks {
 auto AddImplWitnessForDeclaration(Context& context, SemIR::LocId loc_id,
                                   SemIR::LocId constraint_loc_id,
                                   const SemIR::Impl& impl,
-                                  SemIR::IdentifiedFacetTypeId identified_id,
+                                  IdentifiedFacetTypeId identified_id,
                                   SemIR::SpecificId self_specific_id)
     -> SemIR::InstId {
   const auto& identified = context.identified_facet_types().Get(identified_id);
@@ -841,7 +841,7 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
 auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                                 SemIR::Impl& impl,
                                 SemIR::TypeInstId full_constraint_id,
-                                SemIR::IdentifiedFacetTypeId identified_id)
+                                IdentifiedFacetTypeId identified_id)
     -> void {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
@@ -1011,7 +1011,7 @@ auto CheckConstraintIsFacetType(Context& context, SemIR::LocId loc_id,
 auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 SemIR::TypeInstId full_constraint_id)
-    -> SemIR::IdentifiedFacetTypeId {
+    -> IdentifiedFacetTypeId {
   auto identified_id = RequireIdentifiedFacetType(
       context, SemIR::LocId(full_constraint_id),
       context.constant_values().Get(self_id),
@@ -1023,7 +1023,7 @@ auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
         builder.Attach(loc_id, ImplOfUnidentifiedFacetType, full_constraint_id);
       });
   if (!identified_id.has_value()) {
-    return SemIR::IdentifiedFacetTypeId::None;
+    return IdentifiedFacetTypeId::None;
   }
   const auto& identified = context.identified_facet_types().Get(identified_id);
   if (!identified.is_valid_impl_as_target()) {
@@ -1031,7 +1031,7 @@ auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                       "impl as {0} interfaces, expected 1", int);
     context.emitter().Emit(loc_id, ImplOfNotOneInterface,
                            identified.num_interfaces_to_impl());
-    return SemIR::IdentifiedFacetTypeId::None;
+    return IdentifiedFacetTypeId::None;
   }
   return identified_id;
 }

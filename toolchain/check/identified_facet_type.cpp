@@ -2,14 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#include "toolchain/sem_ir/identified_facet_type.h"
+#include "toolchain/check/identified_facet_type.h"
 
 #include "toolchain/base/canonical_value_store_impl.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_store_impl.h"
-#include "toolchain/sem_ir/file.h"
+#include "toolchain/check/context.h"
 
-namespace Carbon::SemIR {
+namespace Carbon::Check {
 
 template <typename T>
 using LessThanFn = llvm::function_ref<auto(const T&, const T&)->bool>;
@@ -24,8 +24,8 @@ static auto SortAndDeduplicate(VecT& vec,
 
 // Canonically ordered by the numerical ids. Matches the order of RequiredLess
 // when the `self_facet_value` is the same for all interfaces.
-static auto InterfaceLess(const SpecificInterface& lhs,
-                          const SpecificInterface& rhs) -> bool {
+static auto InterfaceLess(const SemIR::SpecificInterface& lhs,
+                          const SemIR::SpecificInterface& rhs) -> bool {
   return std::tie(lhs.interface_id.index, lhs.specific_id.index) <
          std::tie(rhs.interface_id.index, rhs.specific_id.index);
 }
@@ -71,7 +71,7 @@ IdentifiedFacetType::IdentifiedFacetType(
     interface_id_ = required_impls_.front().specific_interface.interface_id;
     specific_id_ = required_impls_.front().specific_interface.specific_id;
   } else {
-    interface_id_ = InterfaceId::None;
+    interface_id_ = SemIR::InterfaceId::None;
     num_interface_to_impl_ = required_impls_.size();
   }
 
@@ -93,36 +93,37 @@ IdentifiedFacetType::IdentifiedFacetType(
   SortAndDeduplicate(equivalents_, EquivalentLess);
 }
 
-auto AddCanonicalWitnessesBlock(File& sem_ir,
-                                llvm::SmallVector<InstId>& witnesses)
-    -> InstBlockId {
+auto AddCanonicalWitnessesBlock(Context& context,
+                                llvm::SmallVector<SemIR::InstId>& witnesses)
+    -> SemIR::InstBlockId {
   // Small blocks don't need to be sorted.
   if (witnesses.size() <= 1) {
-    return sem_ir.inst_blocks().AddCanonical(witnesses);
+    return context.inst_blocks().AddCanonical(witnesses);
   }
 
-  llvm::SmallVector<std::pair<SpecificInterface, InstId>> sortable;
+  llvm::SmallVector<std::pair<SemIR::SpecificInterface, SemIR::InstId>>
+      sortable;
   sortable.reserve(witnesses.size());
 
   // Produce the sorted order based on the witness's SpecificInterface.
   for (auto witness_id : witnesses) {
-    auto inst = sem_ir.insts().Get(witness_id);
+    auto inst = context.insts().Get(witness_id);
     CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND(CustomWitness witness): {
-        sortable.push_back({sem_ir.specific_interfaces().Get(
+      case CARBON_KIND(SemIR::CustomWitness witness): {
+        sortable.push_back({context.specific_interfaces().Get(
                                 witness.query_specific_interface_id),
                             witness_id});
         break;
       }
-      case CARBON_KIND(ImplWitness witness): {
-        auto table =
-            sem_ir.insts().GetAs<ImplWitnessTable>(witness.witness_table_id);
+      case CARBON_KIND(SemIR::ImplWitness witness): {
+        auto table = context.insts().GetAs<SemIR::ImplWitnessTable>(
+            witness.witness_table_id);
         sortable.push_back(
-            {sem_ir.impls().Get(table.impl_id).interface, witness_id});
+            {context.impls().Get(table.impl_id).interface, witness_id});
         break;
       }
-      case CARBON_KIND(LookupImplWitness witness): {
-        sortable.push_back({sem_ir.specific_interfaces().Get(
+      case CARBON_KIND(SemIR::LookupImplWitness witness): {
+        sortable.push_back({context.specific_interfaces().Get(
                                 witness.query_specific_interface_id),
                             witness_id});
         break;
@@ -146,7 +147,15 @@ auto AddCanonicalWitnessesBlock(File& sem_ir,
     witness_id = sortable_entry.second;
   }
 
-  return sem_ir.inst_blocks().AddCanonical(witnesses);
+  return context.inst_blocks().AddCanonical(witnesses);
 }
 
-}  // namespace Carbon::SemIR
+}  // namespace Carbon::Check
+
+namespace Carbon {
+template class CanonicalValueStore<
+    Check::IdentifiedFacetTypeId, Check::IdentifiedFacetTypeKey,
+    Tag<SemIR::CheckIRId>, Check::IdentifiedFacetType>;
+template class ValueStore<Check::IdentifiedFacetTypeId,
+                          Check::IdentifiedFacetType, Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon

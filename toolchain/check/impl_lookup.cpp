@@ -27,7 +27,7 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/type_structure.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
-#include "toolchain/sem_ir/identified_facet_type.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst.h"
@@ -309,8 +309,8 @@ static auto TryGetSpecificWitnessIdForImpl(
 
 static auto ThawPeriodSelfInRequiredImpl(
     Context& context, SemIR::LocId loc_id,
-    SemIR::IdentifiedFacetType::RequiredImpl req)
-    -> SemIR::IdentifiedFacetType::RequiredImpl {
+    IdentifiedFacetType::RequiredImpl req)
+    -> IdentifiedFacetType::RequiredImpl {
   auto self_inst_id = context.constant_values().GetInstId(req.self_facet_value);
   self_inst_id = ThawPeriodSelf(context, self_inst_id);
   req.self_facet_value = context.constant_values().Get(self_inst_id);
@@ -528,7 +528,7 @@ class SubstMatchingWitnessesFromImplLookup
  public:
   explicit SubstMatchingWitnessesFromImplLookup(
       Context* context,
-      llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls,
+      llvm::ArrayRef<IdentifiedFacetType::RequiredImpl> req_impls,
       llvm::ArrayRef<SemIR::InstId> found_witness_inst_ids)
       : SubstIdentifiedWitnessesCallbacks(context),
         req_impls_(req_impls),
@@ -556,7 +556,7 @@ class SubstMatchingWitnessesFromImplLookup
   }
 
  private:
-  llvm::ArrayRef<SemIR::IdentifiedFacetType::RequiredImpl> req_impls_;
+  llvm::ArrayRef<IdentifiedFacetType::RequiredImpl> req_impls_;
   llvm::ArrayRef<SemIR::InstId> found_witness_inst_ids_;
 };
 
@@ -943,7 +943,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   }
   // These RequiredImpls have IdentifiedWitnesses in them initially. We will
   // replace those with real witnesses as we process them.
-  llvm::SmallVector<SemIR::IdentifiedFacetType::RequiredImpl> req_impls(
+  llvm::SmallVector<IdentifiedFacetType::RequiredImpl> req_impls(
       required_identified.required_impls());
 
   // Find all the facets in the query and their witnesses.
@@ -1062,7 +1062,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   }
   for (auto rewrite : required_identified.rewrites()) {
     // Rewrites are treated as equivalent requirements in impl lookup.
-    SemIR::IdentifiedFacetType::Equivalent equiv = {.lhs = rewrite.lhs,
+    IdentifiedFacetType::Equivalent equiv = {.lhs = rewrite.lhs,
                                                     .rhs = rewrite.rhs};
     equiv = SubstIdentifiedWitnesses(context, loc_id, equiv,
                                      subst_witnesses_callbacks);

@@ -29,6 +29,24 @@
 
 namespace Carbon::SemIR {
 
+auto DumpNameIfValid(const File& file, NameId name_id) -> std::string;
+auto DumpNameOfEntityName(const File& file, const EntityName& entity_name)
+    -> std::string;
+auto DumpLocSummary(const File& file, LocId loc_id) -> std::string;
+auto DumpConstantSummary(const File& file, ConstantId const_id) -> std::string;
+auto DumpTypeSummary(const File& file, TypeId type_id) -> std::string;
+auto DumpInstSummary(const File& file, InstId inst_id) -> std::string;
+auto DumpGenericSummary(const File& file, GenericId generic_id) -> std::string;
+auto DumpInterfaceSummary(const File& file, InterfaceId interface_id)
+    -> std::string;
+auto DumpNamedConstraintSummary(const File& file,
+                                NamedConstraintId named_constraint_id)
+    -> std::string;
+auto DumpSpecificSummary(const File& file, SpecificId specific_id)
+    -> std::string;
+auto DumpRequireImplsSummary(const File& file, RequireImplsId require_impls_id)
+    -> std::string;
+
 auto Dump(const File& file) -> std::string;
 auto Dump(const File& file, RawBundleId bundle_id) -> std::string;
 auto Dump(const File& file, GeneratedFunctionId generated_function_id)
@@ -45,8 +63,6 @@ auto Dump(const File& file, EntityNameId entity_name_id) -> std::string;
 auto Dump(const File& file, FieldId field_id) -> std::string;
 auto Dump(const File& file, FunctionId function_id) -> std::string;
 auto Dump(const File& file, GenericId generic_id) -> std::string;
-auto Dump(const File& file, IdentifiedFacetTypeId identified_facet_type_id)
-    -> std::string;
 auto Dump(const File& file, ImplId impl_id) -> std::string;
 auto Dump(const File& file, ImportIRInstId import_inst_id) -> std::string;
 auto Dump(const File& file, const Inst& inst) -> std::string;

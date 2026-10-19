@@ -631,8 +631,8 @@ class EvaluateSubstCallbacks : public SubstInstCallbacks {
 };
 
 auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
-                                 SemIR::IdentifiedFacetType::RequiredImpl req)
-    -> SemIR::IdentifiedFacetType::RequiredImpl {
+                                 IdentifiedFacetType::RequiredImpl req)
+    -> IdentifiedFacetType::RequiredImpl {
   if (context.eval_impl_lookup_to_identified_witness()) {
     return req;
   }
@@ -647,8 +647,8 @@ auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
 }
 
 auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
-                                 SemIR::IdentifiedFacetType::Rewrite rewrite)
-    -> SemIR::IdentifiedFacetType::Rewrite {
+                                 IdentifiedFacetType::Rewrite rewrite)
+    -> IdentifiedFacetType::Rewrite {
   if (context.eval_impl_lookup_to_identified_witness()) {
     return rewrite;
   }
@@ -694,9 +694,9 @@ auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
 }
 
 auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
-                              SemIR::IdentifiedFacetType::RequiredImpl req,
+                              IdentifiedFacetType::RequiredImpl req,
                               SubstIdentifiedWitnessesCallbacks& callbacks)
-    -> SemIR::IdentifiedFacetType::RequiredImpl {
+    -> IdentifiedFacetType::RequiredImpl {
   // SubstIdentifiedWitnesses allows the caller to cleverly replace witnesses
   // coming from identify with their own. If we do this in the middle of
   // identify, it means there is another caller waiting for identify and they
@@ -728,9 +728,9 @@ auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
 }
 
 auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
-                              SemIR::IdentifiedFacetType::Equivalent equiv,
+                              IdentifiedFacetType::Equivalent equiv,
                               SubstIdentifiedWitnessesCallbacks& callbacks)
-    -> SemIR::IdentifiedFacetType::Equivalent {
+    -> IdentifiedFacetType::Equivalent {
   // SubstIdentifiedWitnesses allows the caller to cleverly replace witnesses
   // coming from identify with their own. If we do this in the middle of
   // identify, it means there is another caller waiting for identify and they

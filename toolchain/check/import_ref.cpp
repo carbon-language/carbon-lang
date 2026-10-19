@@ -29,7 +29,7 @@
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
-#include "toolchain/sem_ir/identified_facet_type.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/import_ir.h"
@@ -4038,7 +4038,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto witnesses_block_id = SemIR::InstBlockId::None;
   if (inst.witnesses_block_id.has_value()) {
     witnesses_block_id =
-        AddCanonicalWitnessesBlock(resolver.local_ir(), witnesses);
+        AddCanonicalWitnessesBlock(resolver.local_context(), witnesses);
   }
 
   return ResolveResult::Deduplicated<SemIR::FacetValue>(
