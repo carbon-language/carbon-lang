@@ -16,8 +16,8 @@
 #include "toolchain/check/deduce.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/eval.h"
-#include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -27,7 +27,6 @@
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/type_structure.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
-#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst.h"
@@ -307,9 +306,8 @@ static auto TryGetSpecificWitnessIdForImpl(
                                            impl.witness_id);
 }
 
-static auto ThawPeriodSelfInRequiredImpl(
-    Context& context, SemIR::LocId loc_id,
-    IdentifiedFacetType::RequiredImpl req)
+static auto ThawPeriodSelfInRequiredImpl(Context& context, SemIR::LocId loc_id,
+                                         IdentifiedFacetType::RequiredImpl req)
     -> IdentifiedFacetType::RequiredImpl {
   auto self_inst_id = context.constant_values().GetInstId(req.self_facet_value);
   self_inst_id = ThawPeriodSelf(context, self_inst_id);
@@ -1063,7 +1061,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
   for (auto rewrite : required_identified.rewrites()) {
     // Rewrites are treated as equivalent requirements in impl lookup.
     IdentifiedFacetType::Equivalent equiv = {.lhs = rewrite.lhs,
-                                                    .rhs = rewrite.rhs};
+                                             .rhs = rewrite.rhs};
     equiv = SubstIdentifiedWitnesses(context, loc_id, equiv,
                                      subst_witnesses_callbacks);
     if (equiv.lhs != equiv.rhs) {

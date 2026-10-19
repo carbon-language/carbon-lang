@@ -12,6 +12,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
