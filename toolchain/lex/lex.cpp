@@ -147,8 +147,9 @@ class [[clang::internal_linkage]] Lexer {
       -> void;
 
   // Starts a new line, skipping whitespace and setting the indent.
-  auto AdvanceToLine(llvm::StringRef source_text, ssize_t& position,
-                     LineIndex to_line_index) -> void;
+  [[clang::always_inline]] auto AdvanceToLine(llvm::StringRef source_text,
+                                              ssize_t& position,
+                                              LineIndex to_line_index) -> void;
 
   auto LexHorizontalWhitespace(llvm::StringRef source_text, ssize_t& position)
       -> void;
@@ -158,8 +159,9 @@ class [[clang::internal_linkage]] Lexer {
 
   auto LexCR(llvm::StringRef source_text, ssize_t& position) -> void;
 
-  auto LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
-      -> void;
+  // Diagnoses a CR that doesn't begin a CR+LF line ending.
+  [[gnu::noinline]] auto DiagnoseCR(llvm::StringRef source_text,
+                                    ssize_t position) -> void;
 
   auto LexComment(llvm::StringRef source_text, ssize_t& position) -> void;
 
@@ -526,7 +528,8 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
 }
 
 using DispatchFunctionT = auto(Lexer& lexer, llvm::StringRef source_text,
-                               ssize_t position) -> void;
+                               ssize_t position) [[clang::preserve_none]]
+-> void;
 using DispatchTableT = std::array<DispatchFunctionT*, 256>;
 
 static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
@@ -549,29 +552,50 @@ static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
 // build efficient dispatch tables out of them. All of them end by doing a
 // must-tail return call to this routine. It handles continuing the dispatch
 // chain.
-static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
-                         ssize_t position) -> void;
+[[clang::preserve_none]] static auto DispatchNext(Lexer& lexer,
+                                                  llvm::StringRef source_text,
+                                                  ssize_t position) -> void;
+
+[[clang::preserve_none]] static auto DispatchLexError(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  Lexer::LexResult result = lexer.LexError(source_text, position);
+  CARBON_CHECK(result, "Failed to form a token!");
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchNext(lexer, source_text, position);
+}
 
 // Define a set of dispatch functions that simply forward to a method that
-// lexes a token. This includes validating that an actual token was produced,
-// and continuing the dispatch.
-#define CARBON_DISPATCH_LEX_TOKEN(LexMethod)                                 \
-  static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef source_text, \
-                                  ssize_t position) -> void {                \
-    Lexer::LexResult result = lexer.LexMethod(source_text, position);        \
-    CARBON_CHECK(result, "Failed to form a token!");                         \
-    [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
+// lexes a token. If no token is matched, they tail-dispatch to the error token
+// handler; otherwise they continue dispatching the next token.
+#define CARBON_DISPATCH_LEX_TOKEN(LexMethod)                                   \
+  [[clang::preserve_none]] static auto Dispatch##LexMethod(                    \
+      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {   \
+    if (LLVM_LIKELY(lexer.LexMethod(source_text, position))) {                 \
+      /* NOLINTNEXTLINE(readability-avoid-return-with-void-value) */           \
+      [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
+    }                                                                          \
+    /* NOLINTNEXTLINE(readability-avoid-return-with-void-value) */             \
+    [[clang::musttail]] return DispatchLexError(lexer, source_text, position); \
   }
-CARBON_DISPATCH_LEX_TOKEN(LexError)
 CARBON_DISPATCH_LEX_TOKEN(LexSymbolToken)
 CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifier)
-CARBON_DISPATCH_LEX_TOKEN(LexHash)
 CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
+[[clang::preserve_none]] static auto DispatchLexHash(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  if (lexer.LexHash(source_text, position)) {
+    // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+    [[clang::musttail]] return DispatchNext(lexer, source_text, position);
+  }
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchLexStringLiteral(lexer, source_text,
+                                                      position);
+}
+
 // A set of custom dispatch functions that preselect the symbol token to lex.
 #define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
-  static auto Dispatch##LexMethod##SymbolToken(                              \
+  [[clang::preserve_none]] static auto Dispatch##LexMethod##SymbolToken(     \
       Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
     Lexer::LexResult result = lexer.LexMethod##SymbolToken(                  \
         source_text,                                                         \
@@ -588,15 +612,35 @@ CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexClosing)
 // Define a set of non-token dispatch functions that handle things like
 // whitespace and comments.
 #define CARBON_DISPATCH_LEX_NON_TOKEN(LexMethod)                             \
-  static auto Dispatch##LexMethod(Lexer& lexer, llvm::StringRef source_text, \
-                                  ssize_t position) -> void {                \
+  [[clang::preserve_none]] static auto Dispatch##LexMethod(                  \
+      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
     lexer.LexMethod(source_text, position);                                  \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
   }
 CARBON_DISPATCH_LEX_NON_TOKEN(LexHorizontalWhitespace)
 CARBON_DISPATCH_LEX_NON_TOKEN(LexVerticalWhitespace)
 CARBON_DISPATCH_LEX_NON_TOKEN(LexCR)
-CARBON_DISPATCH_LEX_NON_TOKEN(LexCommentOrSlash)
+
+[[clang::preserve_none]] static auto DispatchLexCommentOrSlash(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  CARBON_DCHECK(source_text[position] == '/');
+
+  // Both comments and slash symbols start with a `/`. We disambiguate with a
+  // max-munch rule -- if the next character is another `/` then we lex it as
+  // a comment start. If it isn't, then we lex as a slash. We also optimize
+  // for the comment case as we expect that to be much more important for
+  // overall lexer performance.
+  if (LLVM_LIKELY(position + 1 < static_cast<ssize_t>(source_text.size()) &&
+                  source_text[position + 1] == '/')) {
+    lexer.LexComment(source_text, position);
+    // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+    [[clang::musttail]] return DispatchNext(lexer, source_text, position);
+  }
+
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchLexSymbolToken(lexer, source_text,
+                                                    position);
+}
 
 // Build a table of function pointers that we can use to dispatch to the
 // correct lexer routine based on the first byte of source text.
@@ -700,18 +744,8 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
 
 static constexpr DispatchTableT DispatchTable = MakeDispatchTable();
 
-static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
-                         ssize_t position) -> void {
-  if (LLVM_LIKELY(position < static_cast<ssize_t>(source_text.size()))) {
-    // The common case is to tail recurse based on the next character. Note
-    // that because this is a must-tail return, this cannot fail to tail-call
-    // and will not grow the stack. This is in essence a loop with dynamic
-    // tail dispatch to the next stage of the loop.
-    // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
-    [[clang::musttail]] return DispatchTable[static_cast<unsigned char>(
-        source_text[position])](lexer, source_text, position);
-  }
-
+[[clang::preserve_none]] static auto DispatchFileEnd(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
   if (lexer.has_dump_sem_ir_ranges()) {
     // Incomplete ranges will use the next token for their end; we want that to
     // be `FileEnd` in this case, so check before adding `FileEnd`. The argument
@@ -725,6 +759,23 @@ static auto DispatchNext(Lexer& lexer, llvm::StringRef source_text,
   // the tail-dispatch is optimized as that's essentially the loop back-edge
   // and this is the loop exit.
   lexer.LexFileEnd(source_text, position);
+}
+
+[[clang::preserve_none]] static auto DispatchNext(Lexer& lexer,
+                                                  llvm::StringRef source_text,
+                                                  ssize_t position) -> void {
+  if (LLVM_LIKELY(position < static_cast<ssize_t>(source_text.size()))) {
+    // The common case is to tail recurse based on the next character. Note
+    // that because this is a must-tail return, this cannot fail to tail-call
+    // and will not grow the stack. This is in essence a loop with dynamic
+    // tail dispatch to the next stage of the loop.
+    // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+    [[clang::musttail]] return DispatchTable[static_cast<unsigned char>(
+        source_text[position])](lexer, source_text, position);
+  }
+
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchFileEnd(lexer, source_text, position);
 }
 
 // Estimate an upper bound on the number of identifiers we will need to lex.
@@ -888,14 +939,7 @@ auto Lexer::LexVerticalWhitespace(llvm::StringRef source_text,
   AdvanceToLine(source_text, position, next_line());
 }
 
-auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
-  if (LLVM_LIKELY((position + 1) < static_cast<ssize_t>(source_text.size())) &&
-      LLVM_LIKELY(source_text[position + 1] == '\n')) {
-    // Skip to the vertical whitespace path, it will skip over both CR and LF.
-    LexVerticalWhitespace(source_text, position);
-    return;
-  }
-
+auto Lexer::DiagnoseCR(llvm::StringRef source_text, ssize_t position) -> void {
   CARBON_DIAGNOSTIC(UnsupportedLfCrLineEnding, Error,
                     "the LF+CR line ending is not supported, only LF and CR+LF "
                     "are supported");
@@ -907,32 +951,23 @@ auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
   // snippet rendering to gracefully handle CRs.
   emitter_.Emit(source_text.begin() + position,
                 is_lfcr ? UnsupportedLfCrLineEnding : UnsupportedCrLineEnding);
+}
+
+auto Lexer::LexCR(llvm::StringRef source_text, ssize_t& position) -> void {
+  if (LLVM_LIKELY((position + 1) < static_cast<ssize_t>(source_text.size())) &&
+      LLVM_LIKELY(source_text[position + 1] == '\n')) {
+    // Skip to the vertical whitespace path, it will skip over both CR and LF.
+    LexVerticalWhitespace(source_text, position);
+    return;
+  }
+
+  DiagnoseCR(source_text, position);
 
   // Recover by treating the CR as a horizontal whitespace. This should make our
   // whitespace rules largely work and parse cleanly without disrupting the line
   // tracking data structures that were pre-built.
   NoteWhitespace();
   ++position;
-}
-
-auto Lexer::LexCommentOrSlash(llvm::StringRef source_text, ssize_t& position)
-    -> void {
-  CARBON_DCHECK(source_text[position] == '/');
-
-  // Both comments and slash symbols start with a `/`. We disambiguate with a
-  // max-munch rule -- if the next character is another `/` then we lex it as
-  // a comment start. If it isn't, then we lex as a slash. We also optimize
-  // for the comment case as we expect that to be much more important for
-  // overall lexer performance.
-  if (LLVM_LIKELY(position + 1 < static_cast<ssize_t>(source_text.size()) &&
-                  source_text[position + 1] == '/')) {
-    LexComment(source_text, position);
-    return;
-  }
-
-  // This code path should produce a token, make sure that happens.
-  LexResult result = LexSymbolToken(source_text, position);
-  CARBON_CHECK(result, "Failed to form a token!");
 }
 
 auto Lexer::BeginDumpSemIRRange(const char* diag_loc) -> void {
@@ -1001,7 +1036,9 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     if (!is_trailing) {
       // A directive is also recorded as a comment: the tokens and comments
       // together reconstruct the source, so tooling such as the formatter
-      // would otherwise silently drop the directive line.
+      // would otherwise silently drop the directive line. Despite being on a
+      // cold path, calls below force inlining to keep fast-path register
+      // allocation efficient.
       auto add_directive_comment_line = [&] {
         buffer_.AddComment(line_info.indent, comment_start,
                            buffer_.line_infos_.Get(next_line()).start,
@@ -1010,17 +1047,17 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
       };
       if (comment_text.starts_with("//@include-in-dumps\n")) {
         buffer_.has_include_in_dumps_ = true;
-        add_directive_comment_line();
+        [[clang::always_inline]] add_directive_comment_line();
         return;
       }
       if (comment_text.starts_with("//@dump-sem-ir-begin\n")) {
         BeginDumpSemIRRange(comment_text.begin());
-        add_directive_comment_line();
+        [[clang::always_inline]] add_directive_comment_line();
         return;
       }
       if (comment_text.starts_with("//@dump-sem-ir-end\n")) {
         EndDumpSemIRRange(comment_text.begin());
-        add_directive_comment_line();
+        [[clang::always_inline]] add_directive_comment_line();
         return;
       }
     }
@@ -1198,7 +1235,7 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   std::optional<NumericLiteral> literal =
       NumericLiteral::Lex(source_text.substr(position), CanFormRealLiteral());
   if (!literal) {
-    return LexError(source_text, position);
+    return LexResult::NoMatch();
   }
 
   // Capture the position before we step past the token.
@@ -1242,7 +1279,7 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
   std::optional<StringLiteral> literal =
       StringLiteral::Lex(source_text.substr(position));
   if (!literal) {
-    return LexError(source_text, position);
+    return LexResult::NoMatch();
   }
 
   // Capture the position before we step past the token.
@@ -1396,7 +1433,7 @@ auto Lexer::LexSymbolToken(llvm::StringRef source_text, ssize_t& position)
 #include "toolchain/lex/token_kind.def"
                        .Default(TokenKind::Error);
   if (kind == TokenKind::Error) {
-    return LexError(source_text, position);
+    return LexResult::NoMatch();
   }
 
   TokenIndex token = LexToken(kind, position);
@@ -1562,7 +1599,7 @@ auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
                                    ssize_t& position) -> LexResult {
   if (static_cast<unsigned char>(source_text[position]) > 0x7F) {
     // TODO: Need to add support for Unicode lexing.
-    return LexError(source_text, position);
+    return LexResult::NoMatch();
   }
   CARBON_CHECK(
       IsIdStartByteTable[static_cast<unsigned char>(source_text[position])]);
@@ -1621,7 +1658,7 @@ auto Lexer::LexHash(llvm::StringRef source_text, ssize_t& position)
       !IsIdStartByteTable[static_cast<unsigned char>(
           source_text[position + 1])] ||
       prev_token_info.byte_offset() != static_cast<int32_t>(position) - 1) {
-    [[clang::musttail]] return LexStringLiteral(source_text, position);
+    return LexResult::NoMatch();
   }
   CARBON_DCHECK(buffer_.value_stores_->identifiers().Get(
                     prev_token_info.ident_id()) == "r");
