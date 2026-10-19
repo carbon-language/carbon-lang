@@ -6,7 +6,7 @@
 
 #include <string>
 
-#include "common/check.h"
+#include "toolchain/base/shared_value_stores.h"
 #include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/lex/numeric_literal.h"
 
@@ -32,91 +32,98 @@ static auto MakeIntString(llvm::StringLiteral prefix, int radix, int num_digits)
 
 static void BM_Lex_Float(benchmark::State& state) {
   for (auto _ : state) {
-    CARBON_CHECK(NumericLiteral::Lex("0.000001", true));
+    benchmark::DoNotOptimize(
+        NumericLiteral::Lex("0.000001", [] { return true; }));
   }
 }
 
 static void BM_Lex_Int(benchmark::State& state) {
   for (auto _ : state) {
-    CARBON_CHECK(NumericLiteral::Lex("1_234_567_890", true));
+    benchmark::DoNotOptimize(
+        NumericLiteral::Lex("1_234_567_890", [] { return true; }));
   }
 }
 
 static void BM_Lex_IntDecimalN(benchmark::State& state) {
   std::string s = MakeIntString("", 10, state.range(0));
   for (auto _ : state) {
-    CARBON_CHECK(NumericLiteral::Lex(s, true));
+    benchmark::DoNotOptimize(NumericLiteral::Lex(s, [] { return true; }));
   }
 }
 
-static void BM_ComputeValue_Float(benchmark::State& state) {
-  auto val = NumericLiteral::Lex("0.000001", true);
-  CARBON_CHECK(val);
+static void BM_AddValue_Float(benchmark::State& state) {
+  auto val = NumericLiteral::Lex("0.000001", [] { return true; });
   auto& emitter = Diagnostics::NullEmitter<Lex::SourceLoc>();
-  for (auto _ : state) {
-    val->ComputeValue(emitter);
+  // Real values aren't canonicalized, so each one grows the value store. Use a
+  // fresh store for each batch of values to bound its size.
+  constexpr int BatchSize = 1000;
+  while (state.KeepRunningBatch(BatchSize)) {
+    SharedValueStores value_stores;
+    for (int i = 0; i < BatchSize; ++i) {
+      benchmark::DoNotOptimize(val.AddValue(value_stores, emitter));
+    }
   }
 }
 
-static void BM_ComputeValue_Int(benchmark::State& state) {
-  auto val = NumericLiteral::Lex("1_234_567_890", true);
+static void BM_AddValue_Int(benchmark::State& state) {
+  auto val = NumericLiteral::Lex("1_234_567_890", [] { return true; });
   auto& emitter = Diagnostics::NullEmitter<Lex::SourceLoc>();
-  CARBON_CHECK(val);
+  SharedValueStores value_stores;
   for (auto _ : state) {
-    val->ComputeValue(emitter);
+    benchmark::DoNotOptimize(val.AddValue(value_stores, emitter));
   }
 }
 
-static void BM_ComputeValue_IntDecimalN(benchmark::State& state) {
+static void BM_AddValue_IntDecimalN(benchmark::State& state) {
   std::string s = MakeIntString("", 10, state.range(0));
-  auto val = NumericLiteral::Lex(s, true);
+  auto val = NumericLiteral::Lex(s, [] { return true; });
   auto& emitter = Diagnostics::NullEmitter<Lex::SourceLoc>();
-  CARBON_CHECK(val);
+  SharedValueStores value_stores;
   for (auto _ : state) {
-    val->ComputeValue(emitter);
+    benchmark::DoNotOptimize(val.AddValue(value_stores, emitter));
   }
 }
 
-static void BM_ComputeValue_IntBinaryN(benchmark::State& state) {
+static void BM_AddValue_IntBinaryN(benchmark::State& state) {
   std::string s = MakeIntString("0b", 2, state.range(0));
-  auto val = NumericLiteral::Lex(s, true);
+  auto val = NumericLiteral::Lex(s, [] { return true; });
   auto& emitter = Diagnostics::NullEmitter<Lex::SourceLoc>();
-  CARBON_CHECK(val);
+  SharedValueStores value_stores;
   for (auto _ : state) {
-    val->ComputeValue(emitter);
+    benchmark::DoNotOptimize(val.AddValue(value_stores, emitter));
   }
 }
 
-static void BM_ComputeValue_IntOctalN(benchmark::State& state) {
+static void BM_AddValue_IntOctalN(benchmark::State& state) {
   std::string s = MakeIntString("0o", 8, state.range(0));
-  auto val = NumericLiteral::Lex(s, true);
+  auto val = NumericLiteral::Lex(s, [] { return true; });
   auto& emitter = Diagnostics::NullEmitter<Lex::SourceLoc>();
-  CARBON_CHECK(val);
+  SharedValueStores value_stores;
   for (auto _ : state) {
-    val->ComputeValue(emitter);
+    benchmark::DoNotOptimize(val.AddValue(value_stores, emitter));
   }
 }
 
-static void BM_ComputeValue_IntHexN(benchmark::State& state) {
+static void BM_AddValue_IntHexN(benchmark::State& state) {
   // 0 is in the middle so that it isn't truncated in parse.
   std::string s = MakeIntString("0x", 16, state.range(0));
-  auto val = NumericLiteral::Lex(s, true);
+  auto val = NumericLiteral::Lex(s, [] { return true; });
   auto& emitter = Diagnostics::NullEmitter<Lex::SourceLoc>();
-  CARBON_CHECK(val);
+  SharedValueStores value_stores;
   for (auto _ : state) {
-    val->ComputeValue(emitter);
+    benchmark::DoNotOptimize(val.AddValue(value_stores, emitter));
   }
 }
 
 BENCHMARK(BM_Lex_Float);
 BENCHMARK(BM_Lex_Int);
 BENCHMARK(BM_Lex_IntDecimalN)->RangeMultiplier(10)->Range(1, 10000);
-BENCHMARK(BM_ComputeValue_Float);
-BENCHMARK(BM_ComputeValue_Int);
-BENCHMARK(BM_ComputeValue_IntDecimalN)->RangeMultiplier(10)->Range(1, 10000);
-BENCHMARK(BM_ComputeValue_IntBinaryN)->RangeMultiplier(10)->Range(1, 10000);
-BENCHMARK(BM_ComputeValue_IntOctalN)->RangeMultiplier(10)->Range(1, 10000);
-BENCHMARK(BM_ComputeValue_IntHexN)->RangeMultiplier(10)->Range(1, 10000);
+BENCHMARK(BM_AddValue_Float);
+BENCHMARK(BM_AddValue_Int);
+BENCHMARK(BM_AddValue_IntDecimalN)->RangeMultiplier(10)->Range(1, 10000);
+BENCHMARK(BM_AddValue_IntBinaryN)->RangeMultiplier(10)->Range(1, 10000);
+BENCHMARK(BM_AddValue_IntOctalN)->RangeMultiplier(10)->Range(1, 10000);
+BENCHMARK(BM_AddValue_IntHexN)->RangeMultiplier(10)->Range(1, 10000);
 
 }  // namespace
 }  // namespace Carbon::Lex

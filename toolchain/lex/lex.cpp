@@ -181,7 +181,10 @@ class [[clang::internal_linkage]] Lexer {
   // intervening whitespace.
   auto CanFormRealLiteral() -> bool;
 
-  auto LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
+  // Always inlined into its dispatch function, so that the inline fast paths in
+  // `NumericLiteral` for single digits don't pay for a call.
+  [[clang::always_inline]] auto LexNumericLiteral(llvm::StringRef source_text,
+                                                  ssize_t& position)
       -> LexResult;
 
   auto LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
@@ -1427,32 +1430,23 @@ auto Lexer::CanFormRealLiteral() -> bool {
 
 auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
     -> LexResult {
-  std::optional<NumericLiteral> literal =
-      NumericLiteral::Lex(source_text.substr(position), CanFormRealLiteral());
-  if (!literal) {
-    return LexResult::NoMatch();
-  }
+  // This is only dispatched at a decimal digit, as `NumericLiteral::Lex`
+  // requires.
+  NumericLiteral literal = NumericLiteral::Lex(
+      source_text.substr(position), [this] { return CanFormRealLiteral(); });
 
   // Capture the position before we step past the token.
   int32_t byte_offset = position;
-  int token_size = literal->text().size();
+  int token_size = literal.text().size();
   position += token_size;
 
-  CARBON_KIND_SWITCH(literal->ComputeValue(emitter_)) {
-    case CARBON_KIND(NumericLiteral::IntValue&& value): {
-      return LexTokenWithPayload(TokenKind::IntLiteral,
-                                 buffer_.value_stores_->ints()
-                                     .AddUnsigned(std::move(value.value))
-                                     .AsTokenPayload(),
+  CARBON_KIND_SWITCH(literal.AddValue(*buffer_.value_stores_, emitter_)) {
+    case CARBON_KIND(IntId id): {
+      return LexTokenWithPayload(TokenKind::IntLiteral, id.AsTokenPayload(),
                                  byte_offset);
     }
-    case CARBON_KIND(NumericLiteral::RealValue&& value): {
-      auto real_id = buffer_.value_stores_->reals().Add(
-          Real{.mantissa = value.mantissa,
-               .exponent = value.exponent,
-               .is_decimal = (value.radix == NumericLiteral::Radix::Decimal)});
-      return LexTokenWithPayload(TokenKind::RealLiteral, real_id.index,
-                                 byte_offset);
+    case CARBON_KIND(RealId id): {
+      return LexTokenWithPayload(TokenKind::RealLiteral, id.index, byte_offset);
     }
     case CARBON_KIND(NumericLiteral::UnrecoverableError _): {
       return LexTokenWithPayload(TokenKind::Error, token_size, byte_offset);
