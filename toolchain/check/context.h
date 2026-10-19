@@ -363,6 +363,11 @@ class Context {
 
   auto access_context() -> SemIR::NameScopeId& { return access_context_; }
 
+  auto default_value_globals_exported_to_cpp()
+      -> llvm::SmallVector<SemIR::InstId>& {
+    return default_value_globals_exported_to_cpp_;
+  }
+
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
   // --------------------------------------------------------------------------
@@ -663,6 +668,11 @@ class Context {
   // This is updated by `DeclNameStack`. During monomorphization, it is updated
   // by `TryEvalBlockForSpecific`.
   SemIR::NameScopeId access_context_ = SemIR::NameScopeId::None;
+
+  // Tracks instruction IDs to be issued in a block marked for exporting as
+  // global variables during lower. For use by default values for function
+  // arguments being exported to C++.
+  llvm::SmallVector<SemIR::InstId> default_value_globals_exported_to_cpp_;
 };
 
 inline constexpr Context::FormExpr Context::FormExpr::Error = {

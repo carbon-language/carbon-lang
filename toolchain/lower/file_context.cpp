@@ -124,6 +124,11 @@ auto FileContext::LowerDefinitions() -> void {
     }
   }
 
+  // Lower any default values exported to C++.
+  if (sem_ir().default_value_globals_exported_to_cpp().has_value()) {
+    LowerGlobalVariables(sem_ir().default_value_globals_exported_to_cpp());
+  }
+
   // Lower function definitions.
   for (auto [id, fn_info] : sem_ir_->functions().enumerate()) {
     // If we created a declaration and the function definition is needed but not

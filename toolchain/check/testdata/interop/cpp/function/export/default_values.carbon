@@ -11,7 +11,6 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function/export/default_values.carbon
 
 // --- other_function.carbon
-
 package OtherFunction;
 fn F(unused i: i32 = 0) {}
 
