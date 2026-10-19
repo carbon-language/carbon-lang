@@ -195,9 +195,6 @@ class [[clang::internal_linkage]] Lexer {
   auto LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
                              ssize_t& position) -> LexResult;
 
-  auto LexSymbolToken(llvm::StringRef source_text, ssize_t& position)
-      -> LexResult;
-
   // Given a word that has already been lexed, determine whether it is a type
   // literal and if so form the corresponding token.
   auto LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
@@ -317,6 +314,31 @@ static constexpr std::array<bool, 256> IsIdByteTable = [] {
   }
   // Identifiers can only have `$` in start.
   table['$'] = false;
+  return table;
+}();
+
+// A table of booleans classifying the bytes that end a run of unrecognized
+// characters forming an error token: alphanumeric characters, `_`, tabs and
+// newlines, and any character that is by itself a symbol.
+static constexpr std::array<bool, 256> IsErrorEndByteTable = [] {
+  std::array<bool, 256> table = {};
+  for (char c = '0'; c <= '9'; ++c) {
+    table[c] = true;
+  }
+  for (char c = 'A'; c <= 'Z'; ++c) {
+    table[c] = true;
+  }
+  for (char c = 'a'; c <= 'z'; ++c) {
+    table[c] = true;
+  }
+  table['_'] = true;
+  table['\t'] = true;
+  table['\n'] = true;
+#define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
+  if (sizeof(Spelling) == 2) {                   \
+    table[(Spelling)[0]] = true;                 \
+  }
+#include "toolchain/lex/token_kind.def"
   return table;
 }();
 
@@ -537,18 +559,6 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
   return ScanForIdentifierPrefixScalar(text, 0);
 }
 
-static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
-  std::array<TokenKind, 256> table = {};
-#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = TokenKind::TokenName;
-#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
-  table[(Spelling)[0]] = TokenKind::TokenName;
-#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
-  table[(Spelling)[0]] = TokenKind::TokenName;
-#include "toolchain/lex/token_kind.def"
-  return table;
-}();
-
 // We use a collection of static member functions for table-based dispatch to
 // lexer methods. These are named static member functions so that they show up
 // helpfully in profiles and backtraces, but they tend to not contain the
@@ -586,7 +596,6 @@ CARBON_PRESERVE_NONE static auto DispatchLexError(Lexer& lexer,
     /* NOLINTNEXTLINE(readability-avoid-return-with-void-value) */             \
     [[clang::musttail]] return DispatchLexError(lexer, source_text, position); \
   }
-CARBON_DISPATCH_LEX_TOKEN(LexSymbolToken)
 CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifier)
 CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
@@ -604,20 +613,41 @@ CARBON_PRESERVE_NONE static auto DispatchLexHash(Lexer& lexer,
 }
 
 // A set of custom dispatch functions that preselect the symbol token to lex.
-#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
-  CARBON_PRESERVE_NONE static auto Dispatch##LexMethod##SymbolToken(         \
-      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
-    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                  \
-        source_text,                                                         \
-        OneCharTokenKindTable[static_cast<unsigned char>(                    \
-            source_text[position])],                                         \
-        position);                                                           \
-    CARBON_CHECK(result, "Failed to form a token!");                         \
-    [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
+#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                           \
+  template <TokenKind::RawEnumType Kind>                                      \
+  CARBON_PRESERVE_NONE static auto Dispatch##LexMethod##SymbolToken(          \
+      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {  \
+    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                   \
+        source_text, TokenKind::Make(Kind), position);                        \
+    CARBON_CHECK(result, "Failed to form a token!");                          \
+    /* NOLINTNEXTLINE(readability-avoid-return-with-void-value): musttail. */ \
+    [[clang::musttail]] return DispatchNext(lexer, source_text, position);    \
   }
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOneChar)
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOpening)
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexClosing)
+
+template <char FirstChar>
+CARBON_PRESERVE_NONE static auto DispatchLexSymbolToken(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  CARBON_DCHECK(source_text[position] == FirstChar);
+  llvm::StringRef tail = source_text.substr(position + 1);
+#define CARBON_SYMBOL_TOKEN(Name, Spelling)                                    \
+  if constexpr ((Spelling)[0] == FirstChar) {                                  \
+    if (tail.starts_with(llvm::StringLiteral(Spelling).substr(1))) {           \
+      lexer.LexToken(TokenKind::Name, position);                               \
+      /* NOLINTNEXTLINE(readability-avoid-return-with-void-value): musttail */ \
+      [[clang::musttail]] return DispatchNext(                                 \
+          lexer, source_text, position + (sizeof(Spelling) - 1));              \
+    }                                                                          \
+  }
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName)
+#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName)
+#include "toolchain/lex/token_kind.def"
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchLexError(lexer, source_text, position);
+}
 
 // Define a set of non-token dispatch functions that handle things like
 // whitespace and comments.
@@ -648,8 +678,8 @@ CARBON_PRESERVE_NONE static auto DispatchLexCommentOrSlash(
   }
 
   // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
-  [[clang::musttail]] return DispatchLexSymbolToken(lexer, source_text,
-                                                    position);
+  [[clang::musttail]] return DispatchLexSymbolToken<'/'>(lexer, source_text,
+                                                         position);
 }
 
 // Build a table of function pointers that we can use to dispatch to the
@@ -692,12 +722,10 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   }
 
   // Symbols have some special dispatching. First, set the first character of
-  // each symbol token spelling to dispatch to the symbol lexer. We don't
-  // provide a pre-computed token here, so the symbol lexer will compute the
-  // exact symbol token kind. We'll override this with more specific dispatch
-  // below.
+  // each symbol token spelling to dispatch to the symbol lexer for that
+  // starting character. We'll override this with more specific dispatch below.
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = &DispatchLexSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexSymbolToken<(Spelling)[0]>;
 #include "toolchain/lex/token_kind.def"
 
   // Now special cased single-character symbols that are guaranteed to not
@@ -707,11 +735,11 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   // needs to override some of the generic handling above, and provide a
   // custom token.
 #define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = &DispatchLexOneCharSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexOneCharSymbolToken<TokenKind::TokenName>;
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
-  table[(Spelling)[0]] = &DispatchLexOpeningSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexOpeningSymbolToken<TokenKind::TokenName>;
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
-  table[(Spelling)[0]] = &DispatchLexClosingSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexClosingSymbolToken<TokenKind::TokenName>;
 #include "toolchain/lex/token_kind.def"
 
   // Override the handling for `/` to consider comments as well as a `/`
@@ -1583,27 +1611,6 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
   return token;
 }
 
-auto Lexer::LexSymbolToken(llvm::StringRef source_text, ssize_t& position)
-    -> LexResult {
-  // One character symbols and grouping symbols are handled with dedicated
-  // dispatch. We only lex the multi-character tokens here.
-  TokenKind kind = llvm::StringSwitch<TokenKind>(source_text.substr(position))
-#define CARBON_SYMBOL_TOKEN(Name, Spelling) \
-  .StartsWith(Spelling, TokenKind::Name)
-#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)
-#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName)
-#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName)
-#include "toolchain/lex/token_kind.def"
-                       .Default(TokenKind::Error);
-  if (kind == TokenKind::Error) {
-    return LexResult::NoMatch();
-  }
-
-  TokenIndex token = LexToken(kind, position);
-  position += kind.fixed_spelling().size();
-  return token;
-}
-
 auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
     -> LexResult {
   if (word.size() < 2) {
@@ -1844,21 +1851,7 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
     -> LexResult {
   llvm::StringRef error_text =
       source_text.substr(position).take_while([](char c) {
-        if (IsAlnum(c)) {
-          return false;
-        }
-        switch (c) {
-          case '_':
-          case '\t':
-          case '\n':
-            return false;
-          default:
-            break;
-        }
-        return llvm::StringSwitch<bool>(llvm::StringRef(&c, 1))
-#define CARBON_SYMBOL_TOKEN(Name, Spelling) .StartsWith(Spelling, false)
-#include "toolchain/lex/token_kind.def"
-            .Default(true);
+        return !IsErrorEndByteTable[static_cast<unsigned char>(c)];
       });
   if (error_text.empty()) {
     // TODO: Reimplement this to use the lexer properly. In the meantime,
