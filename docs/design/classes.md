@@ -121,8 +121,8 @@ constant value.
 The use cases for classes include both cases motivated by C++ interop, and cases
 that we expect to be included in idiomatic Carbon-only code.
 
-**This design currently only attempts to address the "data classes" and
-"encapsulated types" use cases.** Addressing the "interface as base class",
+**This design currently only attempts to address the "data classes",
+"encapsulated types", and "interface as base class" use cases.** Addressing the
 "interop with C++ multiple inheritance" and "mixin" use cases is future work.
 
 ### Data classes
