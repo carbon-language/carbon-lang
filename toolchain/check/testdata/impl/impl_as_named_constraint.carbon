@@ -151,7 +151,7 @@ constraint B(X: Undefined) {
 
 impl () as B(1) {}
 
-// --- fail_todo_impl_as_constraint_duplicates_interface.carbon
+// --- impl_as_constraint_duplicates_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface I(T: type) {}
@@ -161,8 +161,6 @@ constraint J {
 
 // This impls `I(())` twice, which should be deduplicated to a single specific
 // interface.
-// CHECK:STDERR: fail_todo_impl_as_constraint_duplicates_interface.carbon:[[@LINE+2]]:1-22: error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR:
 impl () as I(()) & J {}
 
 // --- impl_as_constraint_where_rewrite.carbon
