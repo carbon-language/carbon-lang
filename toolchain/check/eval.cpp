@@ -673,7 +673,7 @@ static auto GetConstantValue(EvalContext& eval_context,
                         result_id);
   } else {
     // Impl witness table construction happens before its generic decl is
-    // finish, in order to make the table's instructions dependent
+    // finished, in order to make the table's instructions dependent
     // instructions of the Impl's generic. But those instructions can refer
     // to the generic's self specific. We can not resolve the specific
     // declaration for the self specific until the generic is finished, but
