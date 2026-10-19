@@ -11,6 +11,7 @@
 #include "toolchain/check/cpp/import.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/literal.h"
 #include "toolchain/check/period_self.h"
@@ -21,7 +22,6 @@
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/generic.h"
-#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/named_constraint.h"
 #include "toolchain/sem_ir/specific_interface.h"
@@ -975,9 +975,9 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
   // set of required impls that it contains, which requires us to do most of the
   // work of identifying the facet type (though we could skip the mapping of
   // constant values into specifics).
-  auto key = IdentifiedFacetTypeKey{
-      .declared_facet_type_id = declared_facet_type_id,
-      .self_const_id = initial_self_const_id};
+  auto key =
+      IdentifiedFacetTypeKey{.declared_facet_type_id = declared_facet_type_id,
+                             .self_const_id = initial_self_const_id};
   if (auto identified_id = context.identified_facet_types().Lookup(key);
       identified_id.has_value()) {
     return identified_id;

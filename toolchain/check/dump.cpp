@@ -100,8 +100,8 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 }
 
 LLVM_DUMP_METHOD static auto Dump(
-    const Context& context,
-    IdentifiedFacetTypeId identified_facet_type_id) -> std::string {
+    const Context& context, IdentifiedFacetTypeId identified_facet_type_id)
+    -> std::string {
   RawStringOstream out;
   out << identified_facet_type_id;
   if (!identified_facet_type_id.has_value()) {

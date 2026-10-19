@@ -12,6 +12,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"
@@ -27,7 +28,6 @@
 #include "toolchain/check/type_structure.h"
 #include "toolchain/diagnostics/emitter.h"
 #include "toolchain/sem_ir/generic.h"
-#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/inst.h"
@@ -841,8 +841,7 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl) -> void {
 auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                                 SemIR::Impl& impl,
                                 SemIR::TypeInstId full_constraint_id,
-                                IdentifiedFacetTypeId identified_id)
-    -> void {
+                                IdentifiedFacetTypeId identified_id) -> void {
   if (impl.witness_id == SemIR::ErrorInst::InstId) {
     return;
   }

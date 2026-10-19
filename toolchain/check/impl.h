@@ -70,8 +70,7 @@ auto FinishImplWitness(Context& context, const SemIR::Impl& impl_id) -> void;
 auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                                 SemIR::Impl& impl,
                                 SemIR::TypeInstId full_constraint_id,
-                                IdentifiedFacetTypeId identified_id)
-    -> void;
+                                IdentifiedFacetTypeId identified_id) -> void;
 
 // Sets all unset members of the witness for `impl` to the error instruction and
 // sets the witness id in the `Impl` to an error.

@@ -107,8 +107,7 @@ auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
                                 SemIR::TypeId facet_type_type_id,
                                 DiagnosticContextFn diagnostic_context,
-                                bool diagnose = true)
-    -> IdentifiedFacetTypeId;
+                                bool diagnose = true) -> IdentifiedFacetTypeId;
 
 // Emits an error diagnostic explaining that a class is incomplete.
 //
