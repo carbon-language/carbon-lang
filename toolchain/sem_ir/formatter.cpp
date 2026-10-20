@@ -691,9 +691,6 @@ auto Formatter::FormatSpecific(SpecificId id, const Specific& specific)
   out() << "specific ";
   FormatName(id);
   out() << " ";
-  if (specific.identified) {
-    out() << "[identified] ";
-  }
 
   OpenBrace();
   FormatSpecificRegion(generic, specific, GenericInstIndex::Region::Declaration,
@@ -1765,6 +1762,9 @@ auto Formatter::FormatName(SpecificId id) -> void {
   const auto& specific = sem_ir_->specifics().Get(id);
   FormatName(specific.generic_id);
   FormatArg(specific.args_id);
+  if (specific.identified) {
+    out() << ":identified";
+  }
 }
 
 auto Formatter::FormatName(SpecificInterfaceId id) -> void {

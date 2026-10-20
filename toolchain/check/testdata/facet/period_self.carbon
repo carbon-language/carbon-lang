@@ -1088,6 +1088,11 @@ impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.1a5
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @I(constants.%T.as_type):identified {
+// CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.loc4_14.1 => constants.%T.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @I(constants.%T.as_type) {
 // CHECK:STDOUT:   %T.patt.loc4_14.2 => constants.%T.patt.3a0
 // CHECK:STDOUT:   %T.loc4_14.1 => constants.%T.as_type

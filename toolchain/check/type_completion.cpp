@@ -1116,8 +1116,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
-          constraint.generic_with_self_id, extends.specific_id, self_const_id,
-          /*make_identified_specific=*/true);
+          constraint.generic_with_self_id, extends.specific_id, self_const_id);
       if (context.specifics().HasError(constraint_with_self_specific_id)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }
@@ -1130,8 +1129,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
         // instantiated.
         auto require_specific_id = CopySpecificToGeneric(
             context, SemIR::LocId(require.decl_id),
-            constraint_with_self_specific_id, require.generic_id,
-            /*make_identified_specific=*/true);
+            constraint_with_self_specific_id, require.generic_id);
         auto require_self = GetConstantValueInSpecific(
             context.sem_ir(), require_specific_id, require.self_id);
         auto require_facet_type = GetConstantValueInSpecific(
@@ -1175,8 +1173,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
 
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
-          constraint.generic_with_self_id, impls.specific_id, self_const_id,
-          /*make_identified_specific=*/true);
+          constraint.generic_with_self_id, impls.specific_id, self_const_id);
       if (context.specifics().HasError(constraint_with_self_specific_id)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }
@@ -1189,8 +1186,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
         // instantiated.
         auto require_specific_id = CopySpecificToGeneric(
             context, SemIR::LocId(require.decl_id),
-            constraint_with_self_specific_id, require.generic_id,
-            /*make_identified_specific=*/true);
+            constraint_with_self_specific_id, require.generic_id);
         auto require_self = GetConstantValueInSpecific(
             context.sem_ir(), require_specific_id, require.self_id);
         auto require_facet_type = GetConstantValueInSpecific(
@@ -1236,8 +1232,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
       auto constraint_with_self_specific_id = MakeSpecificWithInnerSelf(
           context, loc_id, constraint.generic_id,
           constraint.generic_with_self_id, impls.specific_id,
-          context.constant_values().Get(self_type_inst_id),
-          /*make_identified_specific=*/true);
+          context.constant_values().Get(self_type_inst_id));
       if (context.specifics().HasError(constraint_with_self_specific_id)) {
         return SemIR::IdentifiedFacetTypeId::None;
       }
@@ -1250,8 +1245,7 @@ static auto IdentifyFacetType(Context& context, SemIR::LocId loc_id,
         // instantiated.
         auto require_specific_id = CopySpecificToGeneric(
             context, SemIR::LocId(require.decl_id),
-            constraint_with_self_specific_id, require.generic_id,
-            /*make_identified_specific=*/true);
+            constraint_with_self_specific_id, require.generic_id);
         auto require_self = GetConstantValueInSpecific(
             context.sem_ir(), require_specific_id, require.self_id);
         auto require_facet_type = GetConstantValueInSpecific(
