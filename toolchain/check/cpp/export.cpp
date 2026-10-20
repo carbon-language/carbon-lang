@@ -1244,17 +1244,24 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
     return nullptr;
   }
 
+  // Synthesize a global variable, initialized to the default value, for export
+  // to C++.
   // TODO: making the mangler is expensive, we should cache and reuse it.
   SemIR::Mangler mangler(context.sem_ir(), context.total_ir_count(),
                          context.mangle_string_fingerprint());
   auto mangled_fn_name =
       mangler.Mangle(target.function_id, SemIR::SpecificId::None);
-  // Synthesize a variable, initialized to the default value, for export to C++.
   llvm::SmallString<64> var_name = llvm::formatv(
       "__carbon_default_value_{}_{}", mangled_fn_name, parameter_index);
   auto name_id =
       SemIR::NameId::ForIdentifier(context.identifiers().Add(var_name));
 
+  // First we synthesize the variable definition by creating an EntityName from
+  // the generated name stored in `var_name`. We want to generate a
+  // `SemIR::VarStorage` instruction in the `InstBlockId::ExtraGlobalVariables`
+  // special block. During lowering this block is scanned for `VarStorage`
+  // instructions, and each one encountered is exported as a global variable
+  // with the associated typed storage.
   auto pattern_type_id = context.insts().Get(pattern_id).type_id();
   // TODO: we are not storing the original TypeInstIds of the parameter patterns
   // with the function, so the location of those instructions are lost in this
@@ -1287,7 +1294,12 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
 
   // Add the variable initialization commands to the global initialization
   // section so that it will have its value set before being referenced by the
-  // C++ code.
+  // C++ code. Because we are exporting variables (vs. constants), we don't
+  // export the value of that default value, only the location of the global
+  // storage for that value. As a result, we must add instructions to
+  // the global initialization table to actually initialize that storage
+  // at binary startup time, so that when the C++ code dereferences
+  // it, the value is correct.
   context.global_init().Resume();
   auto init_id = InitializeExisting(
       context, loc_id, var_storage_id,
