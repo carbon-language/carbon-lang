@@ -790,8 +790,19 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
     -> llvm::Constant* {
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
   if (!vtable.carbon_native_vtable) {
-    const auto* clang_decl =
-        sem_ir().clang_decls().Lookup(class_info.first_decl_id());
+    // Find the clang decl corresponding to this vtable and specific. For
+    // generic classes this will be a `ClassTemplateSpecializationDecl`,
+    // otherwise it will be a regular `CXXRecordDecl`.
+    auto lookup_id = SemIR::InstId::None;
+    if (class_info.generic_id.has_value()) {
+      SemIR::ClassType class_type{SemIR::TypeType::TypeId, vtable.class_id,
+                                  specific_id};
+      auto const_id = sem_ir().constants().Get(class_type);
+      lookup_id = sem_ir().constant_values().GetInstId(const_id);
+    } else {
+      lookup_id = class_info.first_decl_id();
+    }
+    const auto* clang_decl = sem_ir().clang_decls().Lookup(lookup_id);
     CARBON_CHECK(clang_decl, "Missing Clang declaration for class {0}",
                  class_info.name_id);
     auto* cxx_record_decl = cast<clang::CXXRecordDecl>(clang_decl->key.decl);

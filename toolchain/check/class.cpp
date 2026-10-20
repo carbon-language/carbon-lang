@@ -436,15 +436,10 @@ static auto CheckCompleteClassType(
            context.types().GetTypeInstId(struct_type_id)});
   class_info.complete_type_witness_id = complete_type_witness_id;
 
-  if (foreign_vtable) {
-    if (class_info.generic_id.has_value()) {
-      context.TODO(class_info.first_decl_id(),
-                   "generic class deriving from C++ virtual class");
-    } else {
-      ExportAndCompleteClassToCpp(
-          context,
-          context.types().GetAs<SemIR::ClassType>(class_info.self_type_id));
-    }
+  if (foreign_vtable && !class_info.generic_id.has_value()) {
+    ExportAndCompleteClassToCpp(
+        context,
+        context.types().GetAs<SemIR::ClassType>(class_info.self_type_id));
   }
 
   return complete_type_witness_id;
