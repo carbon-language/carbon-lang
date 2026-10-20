@@ -95,7 +95,8 @@ enum class PlanStepKind : uint8_t {
   // updated by subsequent steps.
   ScalarLocal,
   // `var <local>: <class> = <class>.Make();`, whose local is read with
-  // `Checksum` by the next step and is available to be read (but not updated) by other steps.
+  // `Checksum` by the next step and is available to be read (but not updated)
+  // by other steps.
   ClassTypeLocal,
   // A declaration that destructures a tuple into two locals, such as
   // `let (<local>: i32, <local>: i64) = (<expr>, <expr> as i64);`, whose locals
