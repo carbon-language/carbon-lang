@@ -782,16 +782,6 @@ auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
   return context().GetLocForDI(abs_node_ref);
 }
 
-// Get a `ClassType` inst ID for the given class and specific. This is used for
-// looking up a `ClassTemplateSpecializationDecl` in `clang_decls`.
-static auto GetClassTypeInstId(const SemIR::File& sem_ir,
-                               SemIR::ClassId class_id,
-                               SemIR::SpecificId specific_id) -> SemIR::InstId {
-  SemIR::ClassType class_type{SemIR::TypeType::TypeId, class_id, specific_id};
-  auto const_id = sem_ir.constants().Get(class_type);
-  return sem_ir.constant_values().GetInstId(const_id);
-}
-
 auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
                               SemIR::SpecificId specific_id)
     -> llvm::Constant* {
@@ -802,7 +792,10 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
     // otherwise it will be a regular `CXXRecordDecl`.
     auto lookup_id = SemIR::InstId::None;
     if (class_info.generic_id.has_value()) {
-      lookup_id = GetClassTypeInstId(sem_ir(), vtable.class_id, specific_id);
+      SemIR::ClassType class_type{SemIR::TypeType::TypeId, vtable.class_id,
+                                  specific_id};
+      auto const_id = sem_ir().constants().Get(class_type);
+      lookup_id = sem_ir().constant_values().GetInstId(const_id);
     } else {
       lookup_id = class_info.first_decl_id();
     }
