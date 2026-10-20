@@ -124,10 +124,8 @@ auto FileContext::LowerDefinitions() -> void {
     }
   }
 
-  // Lower any default values exported to C++.
-  if (sem_ir().default_value_globals_exported_to_cpp().has_value()) {
-    LowerGlobalVariables(sem_ir().default_value_globals_exported_to_cpp());
-  }
+  // Lower any additional global variables defined outside of the top block.
+  LowerGlobalVariables(SemIR::InstBlockId::ExtraGlobalVariables);
 
   // Lower function definitions.
   for (auto [id, fn_info] : sem_ir_->functions().enumerate()) {

@@ -170,6 +170,10 @@ class Context {
 
   auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
 
+  auto extra_global_variables() -> llvm::SmallVector<SemIR::InstId>& {
+    return extra_global_variables_;
+  }
+
   using CheckIRToImportIRStore =
       FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>;
   auto check_ir_map() -> CheckIRToImportIRStore& { return check_ir_map_; }
@@ -363,11 +367,6 @@ class Context {
 
   auto access_context() -> SemIR::NameScopeId& { return access_context_; }
 
-  auto default_value_globals_exported_to_cpp()
-      -> llvm::SmallVector<SemIR::InstId>& {
-    return default_value_globals_exported_to_cpp_;
-  }
-
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
   // --------------------------------------------------------------------------
@@ -557,6 +556,10 @@ class Context {
   // `InstBlockId::Exports`.
   llvm::SmallVector<SemIR::InstId> exports_;
 
+  // Instructions that will be scanned for export as global variables. This
+  // becomes `InstBlockId::ExtraGlobalVariables`.
+  llvm::SmallVector<SemIR::InstId> extra_global_variables_;
+
   // Maps CheckIRId to ImportIRId.
   CheckIRToImportIRStore check_ir_map_;
 
@@ -668,11 +671,6 @@ class Context {
   // This is updated by `DeclNameStack`. During monomorphization, it is updated
   // by `TryEvalBlockForSpecific`.
   SemIR::NameScopeId access_context_ = SemIR::NameScopeId::None;
-
-  // Tracks instruction IDs to be issued in a block marked for exporting as
-  // global variables during lower. For use by default values for function
-  // arguments being exported to C++.
-  llvm::SmallVector<SemIR::InstId> default_value_globals_exported_to_cpp_;
 };
 
 inline constexpr Context::FormExpr Context::FormExpr::Error = {

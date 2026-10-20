@@ -624,11 +624,6 @@ auto CheckUnit::FinishRun() -> void {
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());
   context_.scope_stack().Pop(/*check_unused=*/true);
-  if (!context_.default_value_globals_exported_to_cpp().empty()) {
-    context_.sem_ir().set_default_value_globals_exports_to_cpp(
-        context_.inst_blocks().Add(
-            context_.default_value_globals_exported_to_cpp()));
-  }
 
   // Finalizes reserved blocks, using `ReservedIds` to avoid missing values.
   for (auto reserved_id : SemIR::InstBlockId::ReservedIds) {
@@ -647,6 +642,8 @@ auto CheckUnit::FinishRun() -> void {
       block = context_.generated();
     } else if (reserved_id == SemIR::InstBlockId::Imports) {
       block = context_.imports();
+    } else if (reserved_id == SemIR::InstBlockId::ExtraGlobalVariables) {
+      block = context_.extra_global_variables();
     } else {
       CARBON_FATAL("Unexpected reserved InstBlockId: {0}", reserved_id);
     }

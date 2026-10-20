@@ -1270,20 +1270,20 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
   auto binding_pattern_id = AddInstInNoBlock<SemIR::RefBindingPattern>(
       context, loc_id,
       {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
-  context.default_value_globals_exported_to_cpp().push_back(binding_pattern_id);
+  context.extra_global_variables().push_back(binding_pattern_id);
 
   auto var_pattern_id = AddInstInNoBlock(
       context, SemIR::LocIdAndInst::RuntimeVerified(
                    context.sem_ir(), loc_id,
                    SemIR::VarPattern({.type_id = pattern_type_id,
                                       .subpattern_id = binding_pattern_id})));
-  context.default_value_globals_exported_to_cpp().push_back(var_pattern_id);
+  context.extra_global_variables().push_back(var_pattern_id);
 
   auto var_storage_id = AddInstWithCleanupInNoBlock<SemIR::VarStorage>(
       context, loc_id,
       {.type_id = ExtractScrutineeType(context.sem_ir(), pattern_type_id),
        .pattern_id = var_pattern_id});
-  context.default_value_globals_exported_to_cpp().push_back(var_storage_id);
+  context.extra_global_variables().push_back(var_storage_id);
 
   // Add the variable initialization commands to the global initialization
   // section so that it will have its value set before being referenced by the

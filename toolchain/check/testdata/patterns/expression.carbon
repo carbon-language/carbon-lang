@@ -78,7 +78,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (bool, bool) [concrete]
 // CHECK:STDOUT:   %pattern_type.860: type = pattern_type %tuple.type [concrete]
-// CHECK:STDOUT:   %.2f0: %pattern_type.860 = tuple_pattern (@F.%expr_patt.loc12_26, @F.%expr_patt.loc12_43) [concrete]
+// CHECK:STDOUT:   %.108: %pattern_type.860 = tuple_pattern (@F.%expr_patt.loc12_26, @F.%expr_patt.loc12_43) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%true, %true) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -117,7 +117,7 @@ fn F() {
 // CHECK:STDOUT:       %.loc12_43: bool = block_arg !.loc12 [concrete = constants.%true]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc12_51: %pattern_type.860 = tuple_pattern (%expr_patt.loc12_26, %expr_patt.loc12_43) [concrete = constants.%.2f0]
+// CHECK:STDOUT:     %.loc12_51: %pattern_type.860 = tuple_pattern (%expr_patt.loc12_26, %expr_patt.loc12_43) [concrete = constants.%.108]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
