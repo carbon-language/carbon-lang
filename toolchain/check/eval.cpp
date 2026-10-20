@@ -673,8 +673,10 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   const auto& generic = eval_context.generics().Get(specific.generic_id);
-  if (!generic.self_specific_id.has_value() ||
-      result_id == generic.self_specific_id) {
+  if (result_id == generic.self_specific_id ||
+      // If the generic doesn't yet have a self-specific, the specific we're
+      // currently handling must be the in-progress self-specific.
+      !generic.self_specific_id.has_value()) {
     // Impl witness table construction happens before its generic decl is
     // finished, in order to make the table's instructions dependent
     // instructions of the Impl's generic. But those instructions can refer
