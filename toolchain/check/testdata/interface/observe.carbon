@@ -306,7 +306,7 @@ interface B {}
 
 fn F(generic T: A, generic U: B) {
   // TODO: This should be diagnosed, since T and U are not equal by a
-  // single same-type where equality constraint.
+  // single same-type `where` equality constraint.
   observe T == U;
 }
 
