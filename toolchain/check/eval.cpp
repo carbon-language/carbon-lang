@@ -669,9 +669,9 @@ static auto GetConstantValue(EvalContext& eval_context,
   // creates.
   if (args_id != specific.args_id) {
     // When modifying a non-`identified` specific during identify, mark the new
-    // specific as `identified` too. If modifying an `identified` specific outside
-    // of identify, it may contain `IdentifiedWitness` insts so the new specific
-    // must keep the `identified` marker.
+    // specific as `identified` too. If modifying an `identified` specific
+    // outside of identify, it may contain `IdentifiedWitness` insts so the new
+    // specific must keep the `identified` marker.
     bool identified =
         eval_context.context().eval_impl_lookup_to_identified_witness() ||
         specific.identified;
