@@ -79,10 +79,10 @@ static auto WeightedFixedTypes(
   }
 }
 
-// The kinds of statement in a definition plan. A plan fixes how many statements
-// of each kind a definition has at each depth of nesting, and the definition
-// arranges them randomly. A statement has the same size wherever it lands at
-// its depth, so the arrangement doesn't change the definition's size.
+// The kinds of step in a definition plan. A plan fixes how many steps of each
+// kind a definition has at each depth of nesting, and the definition arranges
+// them randomly. A step has the same size wherever it lands at its depth, so
+// the arrangement doesn't change the definition's size.
 //
 // TODO: Plans read each parameter once, read class-typed locals only with
 // `Checksum`, and make no calls. Real definitions read parameters and fields
@@ -90,16 +90,18 @@ static auto WeightedFixedTypes(
 // their locals. Add those statements and expressions, fixing each one's
 // spelling before the shuffle as the type use pools do, so that sizes stay the
 // same for every seed.
-enum class PlanKind : uint8_t {
-  // `var <local>: i32 = <expr>;`
-  Local,
-  // `var <local>: <class> = <class>.Make();`, followed by
-  // `<local> = <local> + <class local>.Checksum();`, which reads it: two
-  // statements.
-  ClassLocal,
+enum class PlanStepKind : uint8_t {
+  // `var <local>: i32 = <expr>;`, whose local is available to be read and
+  // updated by subsequent steps.
+  ScalarLocal,
+  // `var <local>: <class> = <class>.Make();`, whose local is read with
+  // `Checksum` by the next step and is not available to other steps.
+  ClassTypeLocal,
   // A declaration that destructures a tuple into two locals, such as
   // `let (<local>: i32, <local>: i64) = (<expr>, <expr> as i64);`, whose locals
-  // the next statement reads. `form` selects among `DestructureForms`.
+  // are read by the next step and whose `i32` locals are available to be read
+  // (and updated, when `var`) by subsequent steps. `form` selects among
+  // `DestructureForms`.
   Destructure,
   // `<local> = <expr>;`
   Update,
@@ -117,48 +119,49 @@ enum class PlanKind : uint8_t {
   GuardExit,
   // `<local> = <local> + <reads>;`, where the reads apply a consumer template
   // to each parameter, and read `self` in a method. Definitions add one of
-  // these to their plan's statements at depth 0.
+  // these to their plan's steps at depth 0.
   ReadParams,
 };
 
-// The number of blocks that a statement of `kind` opens.
-static auto NumPlanBlocks(PlanKind kind) -> int {
+// The number of blocks that a step of `kind` opens.
+static auto NumPlanBlocks(PlanStepKind kind) -> int {
   switch (kind) {
-    case PlanKind::If:
-    case PlanKind::While:
+    case PlanStepKind::If:
+    case PlanStepKind::While:
       return 1;
-    case PlanKind::IfElse:
-    case PlanKind::ElseIf:
+    case PlanStepKind::IfElse:
+    case PlanStepKind::ElseIf:
       return 2;
     default:
       return 0;
   }
 }
 
-// Whether a statement of `kind` declares locals, which the statement after it
-// reads.
-static auto IsDeclaration(PlanKind kind) -> bool {
-  return kind == PlanKind::Local || kind == PlanKind::Destructure;
+// Whether a step of `kind` declares locals, which the step after it reads.
+static auto IsLocalDeclaration(PlanStepKind kind) -> bool {
+  return kind == PlanStepKind::ScalarLocal ||
+         kind == PlanStepKind::ClassTypeLocal ||
+         kind == PlanStepKind::Destructure;
 }
 
-// A statement in a definition plan. `form` selects among the kind's spellings.
-struct PlanStmt {
-  PlanKind kind;
+// A step in a definition plan. `form` selects among the kind's spellings.
+struct PlanStep {
+  PlanStepKind kind;
   int form;
 };
 
-// The expressions and conditions in plan statements. `{0}` and `{1}` are
-// locals, which all have the same length. Conditions compare a single local, so
-// that they can't compare a local with itself.
+// The expressions and conditions in plan steps. `{0}` and `{1}` are locals,
+// which all have the same length. Conditions compare a single local, so that
+// they can't compare a local with itself.
 static constexpr llvm::StringLiteral PlanExprs[] = {
     "{0} + 1", "{0} * 2", "{0} - {1}", "({0} % 7) + {1}"};
 static constexpr llvm::StringLiteral PlanConds[] = {"{0} > 3", "{0} < 9",
                                                     "{0} == 2", "{0} != 5"};
 
-// A form of `Destructure` statement. `{0}` and `{1}` are operands, and `{a}`
-// and `{b}` the two locals, which `read` reads as an `i32` expression. Later
-// statements can also read the locals that are `i32`s, and update them when
-// they're `var`s.
+// A form of `Destructure` step. `{0}` and `{1}` are operands, and `{a}` and
+// `{b}` the two locals, which `read` reads as an `i32` expression. Later steps
+// can also read the locals that are `i32`s, and update them when they're
+// `var`s.
 struct DestructureForm {
   llvm::StringLiteral carbon_decl;
   llvm::StringLiteral cpp_decl;
@@ -193,17 +196,18 @@ static constexpr DestructureForm DestructureForms[] = {
      .b_is_i32 = true},
 };
 
-// The statements of a definition plan at each depth. The statement that a guard
+// The steps of a definition plan at each depth. The statement that a guard
 // returns or exits with is one depth below the guard, and isn't listed.
 struct DefPlan {
-  llvm::SmallVector<llvm::SmallVector<PlanStmt>> levels;
-  // The number of lines in the plan's statements, of locals that they declare,
-  // and of class-typed locals among those.
+  llvm::SmallVector<llvm::SmallVector<PlanStep>> levels;
+  // The number of lines in the plan's steps.
   int lines = 0;
+  // The number of local variables that the plan's steps declare.
   int locals = 0;
-  int class_locals = 0;
-  // The classes of the plan's class-typed locals, with `""` for `Self`.
-  llvm::SmallVector<llvm::StringRef> class_local_types;
+  // The number of class-typed locals among `locals`.
+  int class_type_locals = 0;
+  // The class names of the plan's class-typed locals, with `""` for `Self`.
+  llvm::SmallVector<llvm::StringRef> class_type_local_types;
 };
 
 // The internal shape calibration of definition plans, which approximates the
@@ -297,13 +301,11 @@ static constexpr int LoopBlockWeight = 3;
 static constexpr int TopLocalPercent = 35;
 static constexpr int NestedLocalPercent = 25;
 // The percentages of declarations that destructure a tuple, and of the rest
-// that declare a local of a class type, which takes an update to read it.
-// Structured bindings are 0.2-1.9% of the declarations in the sample, and
-// Carbon's tuples suggest the high end. Class types are 29-78% of the types of
-// local variables, 49% on average, which this percentage gives after the depths
-// with too few updates cap it.
+// that declare a local of a class type. Structured bindings are 0.2-1.9% of the
+// declarations in the sample, and Carbon's tuples suggest the high end. Class
+// types are 29-78% of the types of local variables, 49% on average.
 static constexpr int DestructurePercent = 2;
-static constexpr int ClassLocalPercent = 70;
+static constexpr int ClassTypeLocalPercent = 50;
 
 // Scales `count` by `percent`%, rounding up with probability equal to the
 // remainder (`(count * percent % 100) / 100.0`).
@@ -381,9 +383,10 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
       scale_by_percent);
 
   plan.levels.resize(depth_counts.size());
-  // Each kind's statements take its forms in turn.
-  std::array<int, static_cast<int>(PlanKind::ReadParams) + 1> next_forms = {};
-  auto add = [&](int depth, PlanKind kind, int count) {
+  // Each kind's steps take its forms in turn.
+  std::array<int, static_cast<int>(PlanStepKind::ReadParams) + 1> next_forms =
+      {};
+  auto add = [&](int depth, PlanStepKind kind, int count) {
     for (auto _ : llvm::seq(count)) {
       int& next_form = next_forms[static_cast<int>(kind)];
       plan.levels[depth].push_back({.kind = kind, .form = variant + next_form});
@@ -454,32 +457,33 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
     }
 
     int fixed = guards + exits + ifs + pairs + loops;
-    // Each block at this depth ends with a statement that isn't a local.
+    // Each block at this depth ends with a step that isn't a local declaration.
     int max_locals = heads - fixed - std::max(0, blocks - fixed);
     int local_percent = depth == 0 ? TopLocalPercent : NestedLocalPercent;
     int locals = std::min(scale_by_percent(heads, local_percent), max_locals);
     int else_ifs = scale_by_percent(pairs, ElseIfPercent);
     int updates = heads - fixed - locals;
     int destructures = scale_by_percent(locals, DestructurePercent);
-    int class_locals = std::min(
-        scale_by_percent(locals - destructures, ClassLocalPercent), updates);
-    add(depth, PlanKind::Local, locals - destructures - class_locals);
-    add(depth, PlanKind::ClassLocal, class_locals);
-    add(depth, PlanKind::Destructure, destructures);
-    add(depth, PlanKind::Update, updates - class_locals);
-    add(depth, PlanKind::If, ifs);
-    add(depth, PlanKind::IfElse, pairs - else_ifs);
-    add(depth, PlanKind::ElseIf, else_ifs);
-    add(depth, PlanKind::While, loops);
-    add(depth, PlanKind::GuardReturn, guards);
-    add(depth, PlanKind::GuardExit, exits);
+    int class_type_locals =
+        scale_by_percent(locals - destructures, ClassTypeLocalPercent);
+    add(depth, PlanStepKind::ScalarLocal,
+        locals - destructures - class_type_locals);
+    add(depth, PlanStepKind::ClassTypeLocal, class_type_locals);
+    add(depth, PlanStepKind::Destructure, destructures);
+    add(depth, PlanStepKind::Update, updates);
+    add(depth, PlanStepKind::If, ifs);
+    add(depth, PlanStepKind::IfElse, pairs - else_ifs);
+    add(depth, PlanStepKind::ElseIf, else_ifs);
+    add(depth, PlanStepKind::While, loops);
+    add(depth, PlanStepKind::GuardReturn, guards);
+    add(depth, PlanStepKind::GuardExit, exits);
 
-    // Each statement takes a line, and so does the `}` that ends each block and
+    // Each step takes a line, and so does the `}` that ends each block and
     // guard, and the line between the blocks of a pair.
     plan.lines += count + ifs + loops + 2 * pairs + guards + exits;
     // Each destructuring declares two locals.
     plan.locals += locals + destructures;
-    plan.class_locals += class_locals;
+    plan.class_type_locals += class_type_locals;
     guard_children = guards + exits;
     blocks = next_blocks;
     loop_blocks = loops;
@@ -758,8 +762,8 @@ class SourceGen::ClassGenState {
                      bool needs_value_expr, bool consumed,
                      bool exclude_last_class,
                      const TypeUseParams& type_use_params) -> TypePool;
-  auto AssignClassLocalTypes(SourceGen& gen, int defs_per_class,
-                             llvm::MutableArrayRef<DefPlan> plans) -> void;
+  auto AssignClassTypeLocalTypes(SourceGen& gen, int defs_per_class,
+                                 llvm::MutableArrayRef<DefPlan> plans) -> void;
 
   llvm::SmallVector<int> public_function_param_counts_;
   llvm::SmallVector<int> public_method_param_counts_;
@@ -947,12 +951,12 @@ auto SourceGen::ClassGenState::GetValidReturnType(TypePool& pool,
                                                   bool is_inline) -> TypeUse {
   int plans_start = is_inline ? inline_def_plans_start_ : 0;
   return GetValidTypeUse(pool, [&](const TypeUse& use) {
-    // A definition spells its own class `Self` (`""`), never by class name.
-    // Inline definitions can only name classes defined prior to
-    // `current_class_`, whereas out-of-line definitions follow every class and
-    // can name any other class.
+    // A definition spells its own class `Self` (represented here by the empty
+    // string), never by class name. Inline definitions can only name classes
+    // defined prior to `current_class_`, whereas out-of-line definitions follow
+    // every class and can name any other class.
     const DefPlan& plan = def_plans_[plans_start + use.index];
-    for (llvm::StringRef type : plan.class_local_types) {
+    for (llvm::StringRef type : plan.class_type_local_types) {
       if (!type.empty() && (type == current_class_ ||
                             (is_inline && !valid_type_names_.Contains(type)))) {
         return false;
@@ -966,17 +970,17 @@ auto SourceGen::ClassGenState::GetValidReturnType(TypePool& pool,
 // classes with the fixed types to roughly match the weights in
 // `type_use_params`. `max_refs_per_class` caps the references to each class.
 //
-// With `exclude_last_class`, the pool excludes the last class defined in the
-// file (`class_names_[0]`): field types are drawn before the current class is
-// valid, and return types are paired with definition plans whose non-`Self`
-// class-typed locals cannot name the enclosing class (or, for inline
-// definitions, any later class). With `needs_value_expr`, the pool only
-// includes fixed types that have a value expression (for initializing a field
-// in `Make` or returning a value from a function definition). With `consumed`,
-// each use gets one of its type's consumer templates, assigned round-robin per
-// type before the shuffle so that the mix of templates doesn't depend on the
-// seed. Each use also records its pre-shuffle index so it can be paired
-// deterministically with a definition plan.
+// With `needs_value_expr`, the pool only includes fixed types that have a value
+// expression (for initializing a field in `Make` or returning a value from a
+// function definition). With `consumed`, each use gets one of its type's
+// consumer templates, assigned round-robin per type before the shuffle so that
+// the mix of templates doesn't depend on the seed. With `exclude_last_class`,
+// the pool excludes the last class defined in the file (`class_names_[0]`):
+// field types are drawn before the current class is valid, and return types are
+// paired with definition plans whose non-`Self` class-typed locals cannot name
+// the enclosing class (or, for inline definitions, any later class). Each use
+// also records its pre-shuffle index so it can be paired deterministically with
+// a definition plan.
 //
 // `valid_type_names_` must already contain the fixed type spellings.
 auto SourceGen::ClassGenState::BuildTypePool(
@@ -1124,14 +1128,14 @@ auto SourceGen::ClassGenState::BuildTypePool(
 // class defined in the file (where no prior classes exist). Because this runs
 // before `class_names_` is shuffled, the multiset of class-local spellings and
 // the file's total byte count are independent of the seed.
-auto SourceGen::ClassGenState::AssignClassLocalTypes(
+auto SourceGen::ClassGenState::AssignClassTypeLocalTypes(
     SourceGen& gen, int defs_per_class, llvm::MutableArrayRef<DefPlan> plans)
     -> void {
-  int total_class_locals = 0;
+  int total_class_type_locals = 0;
   for (const DefPlan& plan : plans) {
-    total_class_locals += plan.class_locals;
+    total_class_type_locals += plan.class_type_locals;
   }
-  if (total_class_locals == 0) {
+  if (total_class_type_locals == 0) {
     return;
   }
 
@@ -1141,25 +1145,26 @@ auto SourceGen::ClassGenState::AssignClassLocalTypes(
   int class_plans = static_cast<int>(classes.size()) * defs_per_class;
   int self_locals = 0;
   for (DefPlan& plan : plans.drop_front(class_plans)) {
-    plan.class_local_types.append(plan.class_locals, "");
-    self_locals += plan.class_locals;
+    plan.class_type_local_types.append(plan.class_type_locals, "");
+    self_locals += plan.class_type_locals;
   }
 
-  int target_self_locals = (total_class_locals + num_classes - 1) / num_classes;
+  int target_self_locals =
+      (total_class_type_locals + num_classes - 1) / num_classes;
   int extra_self_locals = std::max(0, target_self_locals - self_locals);
   for (auto [index, plan] : llvm::enumerate(plans.take_front(class_plans))) {
     llvm::StringRef class_name = classes[index % classes.size()];
-    plan.class_local_types.reserve(plan.class_locals);
-    for (auto _ : llvm::seq(plan.class_locals)) {
+    plan.class_type_local_types.reserve(plan.class_type_locals);
+    for (auto _ : llvm::seq(plan.class_type_locals)) {
       if (extra_self_locals > 0) {
-        plan.class_local_types.push_back("");
+        plan.class_type_local_types.push_back("");
         --extra_self_locals;
       } else {
-        plan.class_local_types.push_back(class_name);
+        plan.class_type_local_types.push_back(class_name);
       }
     }
-    std::shuffle(plan.class_local_types.begin(), plan.class_local_types.end(),
-                 gen.rng_);
+    std::shuffle(plan.class_type_local_types.begin(),
+                 plan.class_type_local_types.end(), gen.rng_);
   }
 }
 
@@ -1218,7 +1223,7 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
       BuildTypePool(gen, num_inline_returns, class_params.inline_function_defs,
                     /*needs_value_expr=*/true, /*consumed=*/false,
                     /*exclude_last_class=*/true, type_use_params);
-  AssignClassLocalTypes(
+  AssignClassTypeLocalTypes(
       gen, class_params.inline_function_defs,
       llvm::MutableArrayRef(def_plans_).drop_front(inline_def_plans_start_));
 
@@ -1256,7 +1261,7 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
         BuildTypePool(gen, num_decl_returns, decls_per_class,
                       /*needs_value_expr=*/true, /*consumed=*/false,
                       /*exclude_last_class=*/true, type_use_params);
-    AssignClassLocalTypes(
+    AssignClassTypeLocalTypes(
         gen, decls_per_class,
         llvm::MutableArrayRef(def_plans_).take_front(inline_def_plans_start_));
     // As for inline definitions, each declaration has one parameter beyond its
@@ -2072,34 +2077,34 @@ static auto EmitTemplate(llvm::StringRef format, llvm::StringRef name,
   os << prefix << name << suffix;
 }
 
-// A statement of an arranged definition. A statement that opens blocks opens
-// them at `first_block` and, for a second block, the index after it.
-struct ArrangedStmt {
-  PlanStmt plan;
+// A step of an arranged definition. A step that opens blocks opens them at
+// `first_block` and, for a second block, the index after it.
+struct ArrangedStep {
+  PlanStep plan;
   int first_block = -1;
 };
 
-// A block of an arranged definition: its statements, and whether it is a loop's
+// A block of an arranged definition: its steps, and whether it is a loop's
 // block.
 struct ArrangedBlock {
-  llvm::SmallVector<int> stmts;
+  llvm::SmallVector<int> steps;
   bool is_loop_block = false;
 };
 
-// A definition plan's statements, arranged in blocks. The first block is the
+// A definition plan's steps, arranged in blocks. The first block is the
 // definition's top-level block.
 struct ArrangedDef {
-  llvm::SmallVector<ArrangedStmt> stmts;
+  llvm::SmallVector<ArrangedStep> steps;
   llvm::SmallVector<ArrangedBlock> blocks;
 };
 
-// Randomly arranges the statements of `plan`, along with a `ReadParams`
-// statement at depth 0. Each block gets at least one statement, and ends with a
-// statement that isn't a declaration, so that the statement after each
-// declaration can read its locals. Guard exits go in distinct loop blocks.
+// Randomly arranges the steps of `plan`, along with a `ReadParams` step at
+// depth 0. Each block gets at least one step, and ends with a step that isn't
+// a local declaration, so that the step after each local declaration can read
+// its locals. Guard exits go in distinct loop blocks.
 //
-// The statements beyond the first in each block go in a block chosen with
-// probability proportional to its statements so far, counting loop blocks
+// The steps beyond the first in each block go in a block chosen with
+// probability proportional to its steps so far, counting loop blocks
 // `LoopBlockWeight` times. This gives a wider spread of block sizes than
 // choosing uniformly, and larger loop blocks, as in real definitions.
 static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
@@ -2108,31 +2113,31 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
   llvm::SmallVector<int> level_blocks = {0};
   int num_depths = std::max<int>(plan.levels.size(), 1);
   for (int depth : llvm::seq(num_depths)) {
-    llvm::SmallVector<PlanStmt> exits;
-    llvm::SmallVector<PlanStmt> others;
-    llvm::SmallVector<PlanStmt> locals;
+    llvm::SmallVector<PlanStep> exits;
+    llvm::SmallVector<PlanStep> others;
+    llvm::SmallVector<PlanStep> locals;
     if (depth < static_cast<int>(plan.levels.size())) {
-      for (PlanStmt stmt : plan.levels[depth]) {
-        switch (stmt.kind) {
-          case PlanKind::GuardExit:
-            exits.push_back(stmt);
+      for (PlanStep step : plan.levels[depth]) {
+        switch (step.kind) {
+          case PlanStepKind::GuardExit:
+            exits.push_back(step);
             break;
           default:
-            (IsDeclaration(stmt.kind) ? locals : others).push_back(stmt);
+            (IsLocalDeclaration(step.kind) ? locals : others).push_back(step);
             break;
         }
       }
     }
     if (depth == 0) {
-      others.push_back({.kind = PlanKind::ReadParams, .form = 0});
+      others.push_back({.kind = PlanStepKind::ReadParams, .form = 0});
     }
     std::shuffle(others.begin(), others.end(), rng);
 
-    // The block of each statement placed at this depth.
+    // The block of each step placed at this depth.
     llvm::SmallVector<int> placed_blocks;
-    auto place = [&](int block, PlanStmt stmt) {
-      def.blocks[block].stmts.push_back(def.stmts.size());
-      def.stmts.push_back({.plan = stmt});
+    auto place = [&](int block, PlanStep step) {
+      def.blocks[block].steps.push_back(def.steps.size());
+      def.steps.push_back({.plan = step});
       placed_blocks.push_back(block);
     };
     llvm::SmallVector<int> loop_blocks;
@@ -2147,56 +2152,56 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
       place(block, exit);
     }
     for (int block : level_blocks) {
-      if (def.blocks[block].stmts.empty()) {
-        CARBON_CHECK(!others.empty(), "Not enough statements to end blocks.");
+      if (def.blocks[block].steps.empty()) {
+        CARBON_CHECK(!others.empty(), "Not enough steps to end blocks.");
         place(block, others.pop_back_val());
       }
     }
     for (int block : loop_blocks) {
       placed_blocks.append(LoopBlockWeight - 1, block);
     }
-    for (PlanStmt stmt : llvm::concat<PlanStmt>(others, locals)) {
+    for (PlanStep step : llvm::concat<PlanStep>(others, locals)) {
       int block =
           placed_blocks[absl::Uniform<int>(rng, 0, placed_blocks.size())];
-      place(block, stmt);
+      place(block, step);
       if (def.blocks[block].is_loop_block) {
         placed_blocks.append(LoopBlockWeight - 1, block);
       }
     }
 
     for (int block : level_blocks) {
-      llvm::SmallVector<int>& stmts = def.blocks[block].stmts;
-      std::shuffle(stmts.begin(), stmts.end(), rng);
-      auto is_local = [&](int stmt) {
-        return IsDeclaration(def.stmts[stmt].plan.kind);
+      llvm::SmallVector<int>& steps = def.blocks[block].steps;
+      std::shuffle(steps.begin(), steps.end(), rng);
+      auto is_local = [&](int step) {
+        return IsLocalDeclaration(def.steps[step].plan.kind);
       };
-      if (is_local(stmts.back())) {
+      if (is_local(steps.back())) {
         llvm::SmallVector<int> non_locals;
-        for (int i : llvm::seq<int>(stmts.size())) {
-          if (!is_local(stmts[i])) {
+        for (int i : llvm::seq<int>(steps.size())) {
+          if (!is_local(steps[i])) {
             non_locals.push_back(i);
           }
         }
         std::swap(
-            stmts.back(),
-            stmts[non_locals[absl::Uniform<int>(rng, 0, non_locals.size())]]);
+            steps.back(),
+            steps[non_locals[absl::Uniform<int>(rng, 0, non_locals.size())]]);
       }
     }
 
     // Open the blocks for the next depth.
     llvm::SmallVector<int> next_blocks;
     for (int block : level_blocks) {
-      for (int i : llvm::seq<int>(def.blocks[block].stmts.size())) {
-        ArrangedStmt& stmt = def.stmts[def.blocks[block].stmts[i]];
-        int num_blocks = NumPlanBlocks(stmt.plan.kind);
+      for (int i : llvm::seq<int>(def.blocks[block].steps.size())) {
+        ArrangedStep& step = def.steps[def.blocks[block].steps[i]];
+        int num_blocks = NumPlanBlocks(step.plan.kind);
         if (num_blocks == 0) {
           continue;
         }
-        stmt.first_block = def.blocks.size();
+        step.first_block = def.blocks.size();
         for (auto _ : llvm::seq(num_blocks)) {
           next_blocks.push_back(def.blocks.size());
           def.blocks.push_back(
-              {.is_loop_block = stmt.plan.kind == PlanKind::While});
+              {.is_loop_block = step.plan.kind == PlanStepKind::While});
         }
       }
     }
@@ -2206,29 +2211,28 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
   return def;
 }
 
-// Emits the statements of `def` after its `acc` declaration, indented beyond
+// Emits the steps of `def` after its `acc` declaration, indented beyond
 // `indent`. Locals take their names from `locals` in turn, class-typed locals
-// take their classes from `class_local_types` (with `""` for `Self`), the
-// `ReadParams` statement adds `reads`, and guards return `return_value`.
+// take their classes from `class_type_local_types` (with `""` for `Self`), the
+// `ReadParams` step adds `reads`, and guards return `return_value`.
 //
-// The first operand of each statement after a declaration reads the locals
+// The first operand of each step after a local declaration reads the locals
 // that it declares, so that every local is read. Every other operand is a
 // random `i32` local in scope, and the target of each update a random `var`
 // one.
-static auto EmitArrangedDef(const ArrangedDef& def,
-                            llvm::ArrayRef<llvm::StringRef> locals,
-                            llvm::ArrayRef<llvm::StringRef> class_local_types,
-                            llvm::StringRef reads, llvm::StringRef return_value,
-                            bool is_cpp, llvm::StringRef indent,
-                            absl::BitGen& rng, llvm::raw_ostream& os) -> void {
-  // The `i32` locals in scope that later statements can update, and the ones
-  // that they can only read.
+static auto EmitArrangedDef(
+    const ArrangedDef& def, llvm::ArrayRef<llvm::StringRef> locals,
+    llvm::ArrayRef<llvm::StringRef> class_type_local_types,
+    llvm::StringRef reads, llvm::StringRef return_value, bool is_cpp,
+    llvm::StringRef indent, absl::BitGen& rng, llvm::raw_ostream& os) -> void {
+  // The `i32` locals in scope that later steps can update, and the ones that
+  // they can only read.
   llvm::SmallVector<llvm::StringRef> var_scope = {"acc"};
   llvm::SmallVector<llvm::StringRef> let_scope;
-  // An expression reading the locals that the last statement declared.
+  // An expression reading the locals that the last step declared.
   std::string pending = "acc";
   int next_local = 0;
-  int next_class_local = 0;
+  int next_class_type_local = 0;
   auto pick_local = [&]() {
     int index = absl::Uniform<int>(rng, 0, var_scope.size() + let_scope.size());
     return index < static_cast<int>(var_scope.size())
@@ -2238,17 +2242,18 @@ static auto EmitArrangedDef(const ArrangedDef& def,
   auto pick_var = [&]() {
     return var_scope[absl::Uniform<int>(rng, 0, var_scope.size())];
   };
-  auto emit_expr = [&](llvm::StringRef format) {
+  auto emit_expr_to = [&](llvm::StringRef format, llvm::raw_ostream& out) {
     while (!format.empty()) {
       if (format.starts_with("{0}") || format.starts_with("{1}")) {
-        os << (pending.empty() ? pick_local() : std::exchange(pending, {}));
+        out << (pending.empty() ? pick_local() : std::exchange(pending, {}));
         format = format.drop_front(3);
       } else {
-        os << format.front();
+        out << format.front();
         format = format.drop_front();
       }
     }
   };
+  auto emit_expr = [&](llvm::StringRef format) { emit_expr_to(format, os); };
   auto emit_cond = [&](int form) {
     emit_expr(PlanConds[form % std::size(PlanConds)]);
   };
@@ -2257,17 +2262,17 @@ static auto EmitArrangedDef(const ArrangedDef& def,
     os.indent(2 * depth);
   };
 
-  // The blocks being emitted, with the index of the next statement in each,
-  // and the sizes of the scopes outside it.
+  // The blocks being emitted, with the index of the next step in each, and the
+  // sizes of the scopes outside it.
   struct Frame {
     int block;
-    int next_stmt;
+    int next_step;
     int outer_var_scope_size;
     int outer_let_scope_size;
   };
   auto open_block = [&](int block) -> Frame {
     return {.block = block,
-            .next_stmt = 0,
+            .next_step = 0,
             .outer_var_scope_size = static_cast<int>(var_scope.size()),
             .outer_let_scope_size = static_cast<int>(let_scope.size())};
   };
@@ -2276,7 +2281,7 @@ static auto EmitArrangedDef(const ArrangedDef& def,
     Frame& frame = stack.back();
     int depth = stack.size();
     const ArrangedBlock& block = def.blocks[frame.block];
-    if (frame.next_stmt == static_cast<int>(block.stmts.size())) {
+    if (frame.next_step == static_cast<int>(block.steps.size())) {
       // End the block, and start the second block of an `else` or `else if`.
       var_scope.truncate(frame.outer_var_scope_size);
       let_scope.truncate(frame.outer_let_scope_size);
@@ -2286,15 +2291,15 @@ static auto EmitArrangedDef(const ArrangedDef& def,
         break;
       }
       const Frame& owner_frame = stack.back();
-      const ArrangedStmt& owner =
-          def.stmts[def.blocks[owner_frame.block]
-                        .stmts[owner_frame.next_stmt - 1]];
+      const ArrangedStep& owner =
+          def.steps[def.blocks[owner_frame.block]
+                        .steps[owner_frame.next_step - 1]];
       indent_to(depth - 1);
       if (NumPlanBlocks(owner.plan.kind) == 1 || ended != owner.first_block) {
         os << "}\n";
         continue;
       }
-      if (owner.plan.kind == PlanKind::IfElse) {
+      if (owner.plan.kind == PlanStepKind::IfElse) {
         os << "} else {\n";
       } else {
         os << "} else if (";
@@ -2305,12 +2310,12 @@ static auto EmitArrangedDef(const ArrangedDef& def,
       continue;
     }
 
-    const ArrangedStmt& stmt = def.stmts[block.stmts[frame.next_stmt]];
-    ++frame.next_stmt;
-    PlanStmt planned = stmt.plan;
+    const ArrangedStep& step = def.steps[block.steps[frame.next_step]];
+    ++frame.next_step;
+    PlanStep planned = step.plan;
     indent_to(depth);
     switch (planned.kind) {
-      case PlanKind::Local: {
+      case PlanStepKind::ScalarLocal: {
         llvm::StringRef name = locals[next_local++];
         os << (is_cpp ? "int " : "var ") << name
            << (is_cpp ? " = " : ": i32 = ");
@@ -2320,9 +2325,9 @@ static auto EmitArrangedDef(const ArrangedDef& def,
         pending = name;
         break;
       }
-      case PlanKind::ClassLocal: {
+      case PlanStepKind::ClassTypeLocal: {
         llvm::StringRef name = locals[next_local++];
-        llvm::StringRef type = class_local_types[next_class_local++];
+        llvm::StringRef type = class_type_local_types[next_class_type_local++];
         if (type.empty()) {
           os << (is_cpp ? "Self " : "var ") << name
              << (is_cpp ? " = Self();\n" : ": Self = Make();\n");
@@ -2331,13 +2336,12 @@ static auto EmitArrangedDef(const ArrangedDef& def,
         } else {
           os << "var " << name << ": " << type << " = " << type << ".Make();\n";
         }
-        indent_to(depth);
-        os << pick_var() << " = ";
-        emit_expr("{0}");
-        os << " + " << name << ".Checksum();\n";
+        RawStringOstream read;
+        emit_expr_to(("({0} + " + name + ".Checksum())").str(), read);
+        pending = read.TakeStr();
         break;
       }
-      case PlanKind::Destructure: {
+      case PlanStepKind::Destructure: {
         const DestructureForm& form =
             DestructureForms[planned.form % std::size(DestructureForms)];
         llvm::StringRef a = locals[next_local++];
@@ -2361,32 +2365,32 @@ static auto EmitArrangedDef(const ArrangedDef& def,
         pending = substitute(is_cpp ? form.cpp_read : form.carbon_read);
         break;
       }
-      case PlanKind::Update:
+      case PlanStepKind::Update:
         os << pick_var() << " = ";
         emit_expr(PlanExprs[planned.form % std::size(PlanExprs)]);
         os << ";\n";
         break;
-      case PlanKind::ReadParams:
+      case PlanStepKind::ReadParams:
         os << pick_var() << " = ";
         emit_expr("{0}");
         os << " + " << reads << ";\n";
         break;
-      case PlanKind::If:
-      case PlanKind::IfElse:
-      case PlanKind::ElseIf:
-      case PlanKind::While:
-        os << (planned.kind == PlanKind::While ? "while (" : "if (");
+      case PlanStepKind::If:
+      case PlanStepKind::IfElse:
+      case PlanStepKind::ElseIf:
+      case PlanStepKind::While:
+        os << (planned.kind == PlanStepKind::While ? "while (" : "if (");
         emit_cond(planned.form);
         os << ") {\n";
-        stack.push_back(open_block(stmt.first_block));
+        stack.push_back(open_block(step.first_block));
         break;
-      case PlanKind::GuardReturn:
-      case PlanKind::GuardExit:
+      case PlanStepKind::GuardReturn:
+      case PlanStepKind::GuardExit:
         os << "if (";
         emit_cond(planned.form);
         os << ") {\n";
         indent_to(depth + 1);
-        if (planned.kind == PlanKind::GuardReturn) {
+        if (planned.kind == PlanStepKind::GuardReturn) {
           os << "return " << return_value << ";\n";
         } else {
           os << (planned.form % 2 == 0 ? "break;\n" : "continue;\n");
@@ -2407,16 +2411,16 @@ static auto EmitArrangedDef(const ArrangedDef& def,
 // `GeneratePredicate`, and `GenerateForwarder`), which have fixed signatures
 // coupled to a class field or private `<name>Impl` declaration, a plan-based
 // definition works with any `FunctionSig`: after declaring `acc`, it arranges
-// its `DefPlan` statements randomly along with a depth-0 statement that reads
-// every parameter with its consumer template (and `self` in a method with
+// its `DefPlan` steps randomly along with a depth-0 step that reads every
+// parameter with its consumer template (and `self` in a method with
 // `Checksum`), and ends with `return`. That parameter-read statement is on one
 // line however long it is, which the line estimates assume.
 //
 // Both inline and out-of-line definitions spell their enclosing class `Self`
-// (`""`) in class-typed locals. For other class types, inline definitions only
-// use classes defined prior to the enclosing class, whereas out-of-line
-// definitions follow every class and can use any other class; see
-// `GetValidReturnType`.
+// (represented as the empty string) in class-typed locals. For other class
+// types, inline definitions only use classes defined prior to the enclosing
+// class, whereas out-of-line definitions follow every class and can use any
+// other class; see `GetValidReturnType`.
 auto SourceGen::GenerateFunctionDef(ClassGenState& state,
                                     const FunctionSig& sig,
                                     llvm::StringRef indent,
@@ -2452,7 +2456,7 @@ auto SourceGen::GenerateFunctionDef(ClassGenState& state,
   RawStringOstream return_value;
   state.ProduceValue(sig.return_type, return_value);
   std::string return_value_str = return_value.TakeStr();
-  EmitArrangedDef(ArrangeDef(plan, rng_), locals, plan.class_local_types,
+  EmitArrangedDef(ArrangeDef(plan, rng_), locals, plan.class_type_local_types,
                   reads.TakeStr(), return_value_str, IsCpp(), indent, rng_, os);
   os << indent << "  return " << return_value_str << ";\n";
 }
