@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <string_view>
 #include <utility>
 
 #include "common/check.h"
@@ -30,40 +31,29 @@ static constexpr size_t MaxCombiningBytes = 32;
 // weight of the line in each direction. `DrawLine` never sets a heavy bit
 // without its direction bit, and those entries repeat the glyph with the
 // direction present.
-static constexpr std::array<std::array<char32_t, 16>, 16> Utf8LineGlyphs = {{
-    {U'·', U'╴', U'╶', U'─', U'╵', U'╯', U'╰', U'┴', U'╷', U'╮', U'╭', U'┬',
-     U'│', U'┤', U'├', U'┼'},  // all light
-    {U'╸', U'╸', U'╾', U'╾', U'┙', U'┙', U'┵', U'┵', U'┑', U'┑', U'┭', U'┭',
-     U'┥', U'┥', U'┽', U'┽'},  // heavy left
-    {U'╺', U'╼', U'╺', U'╼', U'┕', U'┶', U'┕', U'┶', U'┍', U'┮', U'┍', U'┮',
-     U'┝', U'┾', U'┝', U'┾'},  // heavy right
-    {U'━', U'━', U'━', U'━', U'┷', U'┷', U'┷', U'┷', U'┯', U'┯', U'┯', U'┯',
-     U'┿', U'┿', U'┿', U'┿'},  // heavy left, right
-    {U'╹', U'┚', U'┖', U'┸', U'╹', U'┚', U'┖', U'┸', U'╿', U'┦', U'┞', U'╀',
-     U'╿', U'┦', U'┞', U'╀'},  // heavy up
-    {U'┛', U'┛', U'┹', U'┹', U'┛', U'┛', U'┹', U'┹', U'┩', U'┩', U'╃', U'╃',
-     U'┩', U'┩', U'╃', U'╃'},  // heavy left, up
-    {U'┗', U'┺', U'┗', U'┺', U'┗', U'┺', U'┗', U'┺', U'┡', U'╄', U'┡', U'╄',
-     U'┡', U'╄', U'┡', U'╄'},  // heavy right, up
-    {U'┻', U'┻', U'┻', U'┻', U'┻', U'┻', U'┻', U'┻', U'╇', U'╇', U'╇', U'╇',
-     U'╇', U'╇', U'╇', U'╇'},  // heavy left, right, up
-    {U'╻', U'┒', U'┎', U'┰', U'╽', U'┧', U'┟', U'╁', U'╻', U'┒', U'┎', U'┰',
-     U'╽', U'┧', U'┟', U'╁'},  // heavy down
-    {U'┓', U'┓', U'┱', U'┱', U'┪', U'┪', U'╅', U'╅', U'┓', U'┓', U'┱', U'┱',
-     U'┪', U'┪', U'╅', U'╅'},  // heavy left, down
-    {U'┏', U'┲', U'┏', U'┲', U'┢', U'╆', U'┢', U'╆', U'┏', U'┲', U'┏', U'┲',
-     U'┢', U'╆', U'┢', U'╆'},  // heavy right, down
-    {U'┳', U'┳', U'┳', U'┳', U'╈', U'╈', U'╈', U'╈', U'┳', U'┳', U'┳', U'┳',
-     U'╈', U'╈', U'╈', U'╈'},  // heavy left, right, down
-    {U'┃', U'┨', U'┠', U'╂', U'┃', U'┨', U'┠', U'╂', U'┃', U'┨', U'┠', U'╂',
-     U'┃', U'┨', U'┠', U'╂'},  // heavy up, down
-    {U'┫', U'┫', U'╉', U'╉', U'┫', U'┫', U'╉', U'╉', U'┫', U'┫', U'╉', U'╉',
-     U'┫', U'┫', U'╉', U'╉'},  // heavy left, up, down
-    {U'┣', U'╊', U'┣', U'╊', U'┣', U'╊', U'┣', U'╊', U'┣', U'╊', U'┣', U'╊',
-     U'┣', U'╊', U'┣', U'╊'},  // heavy right, up, down
-    {U'╋', U'╋', U'╋', U'╋', U'╋', U'╋', U'╋', U'╋', U'╋', U'╋', U'╋', U'╋',
-     U'╋', U'╋', U'╋', U'╋'},  // all heavy
-}};
+static constexpr std::array<std::u32string_view, 16> Utf8LineGlyphs = {
+    U"·╴╶─╵╯╰┴╷╮╭┬│┤├┼",  // All light.
+    U"╸╸╾╾┙┙┵┵┑┑┭┭┥┥┽┽",  // Heavy left.
+    U"╺╼╺╼┕┶┕┶┍┮┍┮┝┾┝┾",  // Heavy right.
+    U"━━━━┷┷┷┷┯┯┯┯┿┿┿┿",  // Heavy left and right.
+    U"╹┚┖┸╹┚┖┸╿┦┞╀╿┦┞╀",  // Heavy up.
+    U"┛┛┹┹┛┛┹┹┩┩╃╃┩┩╃╃",  // Heavy left and up.
+    U"┗┺┗┺┗┺┗┺┡╄┡╄┡╄┡╄",  // Heavy right and up.
+    U"┻┻┻┻┻┻┻┻╇╇╇╇╇╇╇╇",  // Heavy left, right, and up.
+    U"╻┒┎┰╽┧┟╁╻┒┎┰╽┧┟╁",  // Heavy down.
+    U"┓┓┱┱┪┪╅╅┓┓┱┱┪┪╅╅",  // Heavy left and down.
+    U"┏┲┏┲┢╆┢╆┏┲┏┲┢╆┢╆",  // Heavy right and down.
+    U"┳┳┳┳╈╈╈╈┳┳┳┳╈╈╈╈",  // Heavy left, right, and down.
+    U"┃┨┠╂┃┨┠╂┃┨┠╂┃┨┠╂",  // Heavy up and down.
+    U"┫┫╉╉┫┫╉╉┫┫╉╉┫┫╉╉",  // Heavy left, up, and down.
+    U"┣╊┣╊┣╊┣╊┣╊┣╊┣╊┣╊",  // Heavy right, up, and down.
+    U"╋╋╋╋╋╋╋╋╋╋╋╋╋╋╋╋",  // All heavy.
+};
+// Every row has a glyph for each set of direction bits.
+static_assert(std::all_of(Utf8LineGlyphs.begin(), Utf8LineGlyphs.end(),
+                          [](std::u32string_view glyphs) {
+                            return glyphs.size() == 16;
+                          }));
 
 // The ASCII glyphs, which use `+` only for a crossing:
 //
@@ -87,22 +77,22 @@ static constexpr std::array<std::array<char32_t, 16>, 16> Utf8LineGlyphs = {{
 // `LineWeight` describes. That covers the top cell of a heavy vertical line, so
 // the line is `^` above `|`.
 static constexpr std::array<char32_t, 16> AsciiLineGlyphs = {
-    U'.',   // (none): a point
-    U'-',   // left
-    U'-',   // right
-    U'-',   // left, right
-    U'|',   // up
-    U'\'',  // left, up
-    U'\'',  // right, up
-    U'\'',  // left, right, up
-    U'|',   // down
-    U'.',   // left, down
-    U'.',   // right, down
-    U'.',   // left, right, down
-    U'|',   // up, down
-    U'|',   // left, up, down
-    U'|',   // right, up, down
-    U'+',   // left, right, up, down
+    U'.',   // None: a point.
+    U'-',   // Left.
+    U'-',   // Right.
+    U'-',   // Left and right.
+    U'|',   // Up.
+    U'\'',  // Left and up.
+    U'\'',  // Right and up.
+    U'\'',  // Left, right, and up.
+    U'|',   // Down.
+    U'.',   // Left and down.
+    U'.',   // Right and down.
+    U'.',   // Left, right, and down.
+    U'|',   // Up and down.
+    U'|',   // Left, up, and down.
+    U'|',   // Right, up, and down.
+    U'+',   // Left, right, up, and down.
 };
 
 // Returns the next tab stop after `x` on a line whose stops are `tab_width`
@@ -344,24 +334,22 @@ auto Buffer::DrawVerticalLine(int x, int y, int length, const Style& style,
   return {.x = x, .y = y + length};
 }
 
+auto Buffer::HoldsText(int x, int y) const -> bool {
+  if (x < 0 || x >= width_ || y >= height()) {
+    return false;
+  }
+  const Cell& cell = CellAt(x, y);
+  return (cell.lines & LineCell) == 0 &&
+         (cell.code_point != U' ' || cell.is_continuation ||
+          (!combining_marks_.empty() &&
+           combining_marks_.contains(CellIndex(x, y))));
+}
+
 auto Buffer::DrawCrossingVerticalLine(int x, int y, int length,
                                       const Style& style, LineEnd start)
     -> DrawEnd {
   CheckOrigin(x, y);
   CheckLineFits(y, length, MaxRows);
-
-  // Returns whether the cell at (cell_x, cell_y) holds text. Cells outside
-  // what has been drawn hold nothing.
-  auto is_text = [&](int cell_x, int cell_y) {
-    if (cell_x < 0 || cell_x >= width_ || cell_y >= height()) {
-      return false;
-    }
-    const Cell& cell = CellAt(cell_x, cell_y);
-    return (cell.lines & LineCell) == 0 &&
-           (cell.code_point != U' ' || cell.is_continuation ||
-            (!combining_marks_.empty() &&
-             combining_marks_.contains(CellIndex(cell_x, cell_y))));
-  };
 
   for (int i : llvm::seq(length)) {
     int cell_y = y + i;
@@ -388,8 +376,8 @@ auto Buffer::DrawCrossingVerticalLine(int x, int y, int length,
     }
     // Skip text, and blank cells beside text, where a line could be mistaken
     // for part of a word.
-    if (is_text(x, cell_y) || is_text(x - 1, cell_y) ||
-        is_text(x + 1, cell_y)) {
+    if (HoldsText(x, cell_y) || HoldsText(x - 1, cell_y) ||
+        HoldsText(x + 1, cell_y)) {
       continue;
     }
     DrawLine(x, cell_y, directions, LineWeight::Light, style);
@@ -474,22 +462,24 @@ static constexpr auto IsWrapBreak(char c) -> bool {
 }
 
 // Removes the word at the front of `text` and returns it: everything up to the
-// next break or newline, except that a pair of `quote`s on one line keeps
-// everything between them in the word. Empty when `text` starts with a break or
-// a newline.
+// next break or newline, except that with `keep_backtick_quotes_whole`, a pair
+// of backticks on one line keeps everything between them in the word. When
+// `text` starts with a break or a newline, returns an empty word and leaves
+// `text` unchanged, so the caller has to step past that character itself.
 //
 // With `IsWrapBreak` this is the one definition of where wrapping may
 // introduce a break, so that measuring what text wraps into and drawing it
 // wrapped agree about it.
-static auto TakeWord(llvm::StringRef& text, char quote) -> llvm::StringRef {
+static auto TakeWord(llvm::StringRef& text, bool keep_backtick_quotes_whole)
+    -> llvm::StringRef {
   size_t end = 0;
   while (end < text.size()) {
     char c = text[end];
     if (c == '\n' || IsWrapBreak(c)) {
       break;
     }
-    if (quote != '\0' && c == quote) {
-      size_t close = text.find(quote, end + 1);
+    if (keep_backtick_quotes_whole && c == '`') {
+      size_t close = text.find('`', end + 1);
       if (close != llvm::StringRef::npos &&
           text.slice(end + 1, close).find_first_of("\t\n\r") ==
               llvm::StringRef::npos) {
@@ -506,7 +496,8 @@ static auto TakeWord(llvm::StringRef& text, char quote) -> llvm::StringRef {
 
 template <typename PlaceFn>
 auto Buffer::WalkWrappedText(int x, int y, int margin, int max_width,
-                             llvm::StringRef text, char quote,
+                             llvm::StringRef text,
+                             bool keep_backtick_quotes_whole,
                              PlaceFn place) const -> DrawEnd {
   CheckTextSize(text);
   // The block runs from the margin to `margin + max_width`, lies within the
@@ -571,7 +562,7 @@ auto Buffer::WalkWrappedText(int x, int y, int margin, int max_width,
       continue;
     }
 
-    llvm::StringRef word = TakeWord(text, quote);
+    llvm::StringRef word = TakeWord(text, keep_backtick_quotes_whole);
 
     // Move a word that doesn't fit down to the next row, which minimizes the
     // overhang when it doesn't fit there either. The word is drawn into the row
@@ -592,27 +583,30 @@ auto Buffer::WalkWrappedText(int x, int y, int margin, int max_width,
 
 auto Buffer::DrawWrappedText(int x, int y, int margin, int max_width,
                              llvm::StringRef text, const Style& style,
-                             char quote) -> DrawEnd {
-  return WalkWrappedText(x, y, margin, max_width, text, quote,
-                         [&](int cur_x, int cur_y, char32_t code_point) {
-                           return PlaceCodePoint(cur_x, cur_y, code_point,
-                                                 style);
-                         });
+                             bool keep_backtick_quotes_whole) -> DrawEnd {
+  return WalkWrappedText(
+      x, y, margin, max_width, text, keep_backtick_quotes_whole,
+      [&](int cur_x, int cur_y, char32_t code_point) {
+        return PlaceCodePoint(cur_x, cur_y, code_point, style);
+      });
 }
 
 auto Buffer::MeasureWrappedText(int x, int y, int margin, int max_width,
-                                llvm::StringRef text, char quote) const
+                                llvm::StringRef text,
+                                bool keep_backtick_quotes_whole) const
     -> DrawEnd {
-  return WalkWrappedText(x, y, margin, max_width, text, quote,
+  return WalkWrappedText(x, y, margin, max_width, text,
+                         keep_backtick_quotes_whole,
                          [&](int cur_x, int /*cur_y*/, char32_t code_point) {
                            return cur_x + metrics_.CodePointWidth(code_point);
                          });
 }
 
-auto Buffer::MeasureWrapWidth(llvm::StringRef text, char quote) const -> int {
+auto Buffer::MeasureWrapWidth(llvm::StringRef text,
+                              bool keep_backtick_quotes_whole) const -> int {
   int width = 0;
   while (!text.empty()) {
-    llvm::StringRef word = TakeWord(text, quote);
+    llvm::StringRef word = TakeWord(text, keep_backtick_quotes_whole);
     width = std::max(width, metrics_.Width(word));
     if (word.empty()) {
       text = text.drop_front();

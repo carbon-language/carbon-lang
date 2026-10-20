@@ -261,16 +261,18 @@ class Buffer {
   // The block and the origin are checked as drawing checks them, so measuring
   // answers only for arguments drawing would accept.
   auto MeasureWrappedText(int x, int y, int margin, int max_width,
-                          llvm::StringRef text, char quote = '\0') const
+                          llvm::StringRef text,
+                          bool keep_backtick_quotes_whole = false) const
       -> DrawEnd;
 
   // Returns the fewest columns `text` wraps into without overhanging them,
   // which is the width of its widest word since wrapping never breaks one.
-  // `quote` is as for `DrawWrappedText`.
+  // `keep_backtick_quotes_whole` is as for `DrawWrappedText`.
   //
   // Wrapping into fewer columns still draws everything; the excess overhangs.
   // So this is a layout preference rather than a minimum.
-  auto MeasureWrapWidth(llvm::StringRef text, char quote = '\0') const -> int;
+  auto MeasureWrapWidth(llvm::StringRef text,
+                        bool keep_backtick_quotes_whole = false) const -> int;
 
   // Draws `code_point` at (x, y), which must be a non-negative column and a row
   // inside `MaxRows`, widening the buffer and adding rows as needed to reach
@@ -401,11 +403,11 @@ class Buffer {
   // word, and one too long for a row of its own is moved down to one and then
   // overhangs it rather than being broken.
   //
-  // Unless `quote` is `'\0'`, quotes pair up from the left on each line and no
-  // break falls between a pair, so a quoted type with spaces in it wraps whole
-  // or overhangs, as a URL does. A `quote` with no partner later on its line,
-  // or with a tab or carriage return before its partner, is an ordinary
-  // character.
+  // With `keep_backtick_quotes_whole`, backticks pair up from the left on each
+  // line and no break falls between a pair, so a quoted type with spaces in it
+  // wraps whole or overhangs, as a URL does. A backtick with no partner later
+  // on its line, or with a tab or carriage return before its partner, is an
+  // ordinary character.
   //
   // Whitespace stops at the block's edge rather than running past it, so the
   // spaces between two words stay on the row the first of them ended and the
@@ -441,7 +443,7 @@ class Buffer {
   // that text came from.
   auto DrawWrappedText(int x, int y, int margin, int max_width,
                        llvm::StringRef text, const Style& style,
-                       char quote = '\0') -> DrawEnd;
+                       bool keep_backtick_quotes_whole = false) -> DrawEnd;
 
   // Renders the grid, appending the bytes that draw it to `out`.
   //
@@ -554,8 +556,8 @@ class Buffer {
                 PlaceFn place) const -> DrawEnd;
   template <typename PlaceFn>
   auto WalkWrappedText(int x, int y, int margin, int max_width,
-                       llvm::StringRef text, char quote, PlaceFn place) const
-      -> DrawEnd;
+                       llvm::StringRef text, bool keep_backtick_quotes_whole,
+                       PlaceFn place) const -> DrawEnd;
 
   // Adds rows until row `y` exists.
   auto EnsureRow(int y) -> void;
@@ -576,6 +578,10 @@ class Buffer {
   // weight those directions had, and updates its glyph.
   auto DrawLine(int x, int y, uint8_t directions, LineWeight weight,
                 const Style& style) -> void;
+
+  // Returns whether the cell at (x, y) holds text. Cells outside what has been
+  // drawn hold nothing.
+  auto HoldsText(int x, int y) const -> bool;
 
   // Returns the last column in row `y` that renders anything under `mode`, or
   // -1 when the row renders nothing.

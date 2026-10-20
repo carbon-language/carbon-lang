@@ -877,40 +877,43 @@ TEST(BufferTest, TabWidthComesFromCapabilities) {
 }
 
 TEST(BufferTest, WrappedTextKeepsAQuotedRunWhole) {
-  // With a quote character, the spaces between a pair of quotes are not
-  // breaks, so the quoted run wraps to the next row whole.
+  // With backtick quotes kept whole, the spaces between a pair of backticks
+  // are not breaks, so the quoted run wraps to the next row whole.
   Buffer buffer(20, Charset::Utf8);
-  buffer.DrawWrappedText(0, 0, 0, 20, "type `{.a: i32}` is not", Style(), '`');
+  buffer.DrawWrappedText(0, 0, 0, 20, "type `{.a: i32}` is not", Style(),
+                         /*keep_backtick_quotes_whole=*/true);
   EXPECT_EQ(Render(buffer),
             "type `{.a: i32}` is\n"
             "not\n");
 
   Buffer split(14, Charset::Utf8);
-  split.DrawWrappedText(0, 0, 0, 14, "type `{.a: i32}` is not", Style(), '`');
+  split.DrawWrappedText(0, 0, 0, 14, "type `{.a: i32}` is not", Style(),
+                        /*keep_backtick_quotes_whole=*/true);
   EXPECT_EQ(Render(split),
             "type\n"
             "`{.a: i32}` is\n"
             "not\n");
 
-  // Without one, the same text breaks inside the quotes like anywhere else.
+  // Otherwise, the same text breaks inside the quotes like anywhere else.
   Buffer unquoted(14, Charset::Utf8);
   unquoted.DrawWrappedText(0, 0, 0, 14, "type `{.a: i32}` is not", Style());
   EXPECT_EQ(Render(unquoted),
             "type `{.a:\n"
             "i32}` is not\n");
 
-  // A quote with no partner on its line is an ordinary character, so the text
-  // after it still breaks at its spaces.
+  // A backtick with no partner on its line is an ordinary character, so the
+  // text after it still breaks at its spaces.
   Buffer stray(14, Charset::Utf8);
   stray.DrawWrappedText(0, 0, 0, 14, "a `stray quote and more words", Style(),
-                        '`');
+                        /*keep_backtick_quotes_whole=*/true);
   EXPECT_EQ(Render(stray),
             "a `stray quote\n"
             "and more words\n");
 
   // Nor does a run reach across a newline the caller wrote.
   Buffer lines(14, Charset::Utf8);
-  lines.DrawWrappedText(0, 0, 0, 14, "a `b\nc d` e f g h", Style(), '`');
+  lines.DrawWrappedText(0, 0, 0, 14, "a `b\nc d` e f g h", Style(),
+                        /*keep_backtick_quotes_whole=*/true);
   EXPECT_EQ(Render(lines),
             "a `b\n"
             "c d` e f g h\n");
@@ -918,17 +921,24 @@ TEST(BufferTest, WrappedTextKeepsAQuotedRunWhole) {
   // A word can't hold a tab or carriage return, so a quoted run doesn't reach
   // across one either.
   Buffer tabbed(14, Charset::Utf8);
-  tabbed.DrawWrappedText(0, 0, 0, 14, "a `b\tc` d", Style(), '`');
+  tabbed.DrawWrappedText(0, 0, 0, 14, "a `b\tc` d", Style(),
+                         /*keep_backtick_quotes_whole=*/true);
   EXPECT_EQ(Render(tabbed), "a `b    c` d\n");
-  EXPECT_EQ(buffer.MeasureWrapWidth("`b\tc`", '`'), 2);
-  EXPECT_EQ(buffer.MeasureWrapWidth("`b\rc`", '`'), 2);
+  EXPECT_EQ(
+      buffer.MeasureWrapWidth("`b\tc`", /*keep_backtick_quotes_whole=*/true),
+      2);
+  EXPECT_EQ(
+      buffer.MeasureWrapWidth("`b\rc`", /*keep_backtick_quotes_whole=*/true),
+      2);
 
   // Measuring agrees: the quoted run is the widest word.
-  EXPECT_EQ(buffer.MeasureWrapWidth("type `{.a: i32}` is not", '`'), 11);
+  EXPECT_EQ(buffer.MeasureWrapWidth("type `{.a: i32}` is not",
+                                    /*keep_backtick_quotes_whole=*/true),
+            11);
   EXPECT_EQ(buffer.MeasureWrapWidth("type `{.a: i32}` is not"), 5);
-  EXPECT_EQ(
-      buffer.MeasureWrappedText(0, 0, 0, 14, "type `{.a: i32}` is not", '`'),
-      DrawEnd(3, 2));
+  EXPECT_EQ(buffer.MeasureWrappedText(0, 0, 0, 14, "type `{.a: i32}` is not",
+                                      /*keep_backtick_quotes_whole=*/true),
+            DrawEnd(3, 2));
 }
 
 TEST(BufferTest, WrappedTextKeepsTheBreaksItIsGiven) {
