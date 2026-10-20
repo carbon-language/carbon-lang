@@ -410,8 +410,8 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.98e: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_42.db5: %i32 = int_value 42 [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.d94 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:   %fn.type.ee2: type = fn_type @fn.loc7 [concrete]
-// CHECK:STDOUT:   %fn.eb8: %fn.type.ee2 = struct_value () [concrete]
+// CHECK:STDOUT:   %fn.type.499: type = fn_type @fn.loc7 [concrete]
+// CHECK:STDOUT:   %fn.5f1: %fn.type.499 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_10.64f: Core.IntLiteral = int_value 10 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.02d: <bound method> = bound_method %int_10.64f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %bound_method.002: <bound method> = bound_method %int_10.64f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -459,7 +459,7 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d94 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %fn.decl.loc7: %fn.type.ee2 = fn_decl @fn.loc7 [concrete = constants.%fn.eb8] {
+// CHECK:STDOUT:   %fn.decl.loc7: %fn.type.499 = fn_decl @fn.loc7 [concrete = constants.%fn.5f1] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.d94 = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.d94 = out_param_pattern [concrete = constants.%return.param_patt.299]
@@ -556,14 +556,14 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.98e: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_42.db5: %i32 = int_value 42 [concrete]
 // CHECK:STDOUT:   %f.patt: %pattern_type.d94 = value_binding_pattern f [concrete]
-// CHECK:STDOUT:   %fn.type.aea: type = fn_type @fn.loc7 [concrete]
-// CHECK:STDOUT:   %fn.4d2: %fn.type.aea = struct_value () [concrete]
+// CHECK:STDOUT:   %fn.type.66a: type = fn_type @fn.loc7 [concrete]
+// CHECK:STDOUT:   %fn.4ec: %fn.type.66a = struct_value () [concrete]
 // CHECK:STDOUT:   %int_10.64f: Core.IntLiteral = int_value 10 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.02d: <bound method> = bound_method %int_10.64f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %bound_method.002: <bound method> = bound_method %int_10.64f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_10.6a3: %i32 = int_value 10 [concrete]
-// CHECK:STDOUT:   %fn.type.d0d: type = fn_type @fn.loc12 [concrete]
-// CHECK:STDOUT:   %fn.5b0: %fn.type.d0d = struct_value () [concrete]
+// CHECK:STDOUT:   %fn.type.8cf: type = fn_type @fn.loc12 [concrete]
+// CHECK:STDOUT:   %fn.bae: %fn.type.8cf = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -574,7 +574,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %fn.decl: %fn.type.d0d = fn_decl @fn.loc12 [concrete = constants.%fn.5b0] {
+// CHECK:STDOUT:   %fn.decl: %fn.type.8cf = fn_decl @fn.loc12 [concrete = constants.%fn.bae] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.d94 = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.d94 = out_param_pattern [concrete = constants.%return.param_patt.299]
@@ -588,7 +588,7 @@ fn F() {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %terse_id_fn: %fn.type.d0d = alias_binding terse_id_fn, %fn.decl [concrete = constants.%fn.5b0]
+// CHECK:STDOUT:   %terse_id_fn: %fn.type.8cf = alias_binding terse_id_fn, %fn.decl [concrete = constants.%fn.bae]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestTerse() {
@@ -625,7 +625,7 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.d94 = value_binding_pattern e [concrete = constants.%e.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %fn.decl.loc7: %fn.type.aea = fn_decl @fn.loc7 [concrete = constants.%fn.4d2] {
+// CHECK:STDOUT:   %fn.decl.loc7: %fn.type.66a = fn_decl @fn.loc7 [concrete = constants.%fn.4ec] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.d94 = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.d94 = out_param_pattern [concrete = constants.%return.param_patt.299]
