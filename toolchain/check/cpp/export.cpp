@@ -748,7 +748,7 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 namespace {
 
 // Given a block of parameter patterns, returns a vector of the same size,
-// where each element of that vector contains the constant id for the default
+// where each element of that vector contains the value used as the default
 // value for that parameter, or `None` if no default value was specified.
 static auto ExtractParameterDefaults(Context& context,
                                      SemIR::InstBlockId param_patterns_id)
@@ -1244,9 +1244,11 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
     return nullptr;
   }
 
-  SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
-                   context.mangle_string_fingerprint());
-  auto mangled_fn_name = m.Mangle(target.function_id, SemIR::SpecificId::None);
+  // TODO: making the mangler is expensive, we should cache and re-use it.
+  SemIR::Mangler mangler(context.sem_ir(), context.total_ir_count(),
+                         context.mangle_string_fingerprint());
+  auto mangled_fn_name =
+      mangler.Mangle(target.function_id, SemIR::SpecificId::None);
   // Synthesize a variable, initialized to the default value, for export to C++.
   llvm::SmallString<64> var_name = llvm::formatv(
       "__carbon_default_value_{}_{}", mangled_fn_name, parameter_index);
