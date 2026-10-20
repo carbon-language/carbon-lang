@@ -661,6 +661,12 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   auto result_id = specific_id;
+
+  // If the args are unchanged, we can reuse the specific ID. However, we still
+  // have to resolve the specific because it may have been produced by `Subst`,
+  // which doesn't resolve specifics.
+  // TODO: consider finding a way to have `Subst` resolve the specifics it
+  // creates.
   if (args_id != specific.args_id) {
     result_id = eval_context.context().specifics().GetOrAdd(
         specific.generic_id, args_id, specific.identified);
