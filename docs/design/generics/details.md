@@ -3340,7 +3340,6 @@ immediately prior to `G.E.N.E.N`.
 An `observe` declaration inside an `interface` definition refers to related
 values, which are type expressions dependent on at least one of:
 
--   `.Self`,
 -   a generic parameter, including `Self`, or
 -   an associated constant that is part of the enclosing `interface`.
 
