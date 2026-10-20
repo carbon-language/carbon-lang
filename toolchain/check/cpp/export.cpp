@@ -1244,7 +1244,7 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
     return nullptr;
   }
 
-  // TODO: making the mangler is expensive, we should cache and re-use it.
+  // TODO: making the mangler is expensive, we should cache and reuse it.
   SemIR::Mangler mangler(context.sem_ir(), context.total_ir_count(),
                          context.mangle_string_fingerprint());
   auto mangled_fn_name =
