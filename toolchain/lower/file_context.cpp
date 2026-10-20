@@ -124,6 +124,9 @@ auto FileContext::LowerDefinitions() -> void {
     }
   }
 
+  // Lower any additional global variables defined outside of the top block.
+  LowerGlobalVariables(SemIR::InstBlockId::ExtraGlobalVariables);
+
   // Lower function definitions.
   for (auto [id, fn_info] : sem_ir_->functions().enumerate()) {
     // If we created a declaration and the function definition is needed but not
