@@ -667,18 +667,18 @@ static auto GetConstantValue(EvalContext& eval_context,
   }
 
   const auto& generic = eval_context.generics().Get(specific.generic_id);
-  if (generic.self_specific_id.has_value() &&
-      result_id != generic.self_specific_id) {
-    ResolveSpecificDecl(eval_context.context(), eval_context.fallback_loc_id(),
-                        result_id);
-  } else {
+  if (!generic.self_specific_id.has_value() ||
+      result_id == generic.self_specific_id) {
     // Impl witness table construction happens before its generic decl is
     // finished, in order to make the table's instructions dependent
     // instructions of the Impl's generic. But those instructions can refer
     // to the generic's self specific. We can not resolve the specific
     // declaration for the self specific until the generic is finished, but
     // it is explicitly resolved at that time in `FinishGenericDecl()`.
+    return result_id;
   }
+  ResolveSpecificDecl(eval_context.context(), eval_context.fallback_loc_id(),
+                      result_id);
   return result_id;
 }
 
