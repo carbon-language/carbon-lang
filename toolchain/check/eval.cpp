@@ -668,8 +668,15 @@ static auto GetConstantValue(EvalContext& eval_context,
   // TODO: consider finding a way to have `Subst` resolve the specifics it
   // creates.
   if (args_id != specific.args_id) {
+    // When modifying a non-`identified` specific during identify, mark the new
+    // specific as `identified` too. If modifying an `identified` specific outside
+    // of identify, it may contain `IdentifiedWitness` insts so the new specific
+    // must keep the `identified` marker.
+    bool identified =
+        eval_context.context().eval_impl_lookup_to_identified_witness() ||
+        specific.identified;
     result_id = eval_context.context().specifics().GetOrAdd(
-        specific.generic_id, args_id, specific.identified);
+        specific.generic_id, args_id, identified);
   }
 
   const auto& generic = eval_context.generics().Get(specific.generic_id);
