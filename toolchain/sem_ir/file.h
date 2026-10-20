@@ -339,6 +339,12 @@ class File : public Printable<File> {
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
     top_inst_block_id_ = block_id;
   }
+  auto default_value_globals_exported_to_cpp() const -> InstBlockId {
+    return default_value_globals_exported_to_cpp_;
+  }
+  auto set_default_value_globals_exports_to_cpp(InstBlockId block_id) -> void {
+    default_value_globals_exported_to_cpp_ = block_id;
+  }
   auto global_ctor_id() const -> FunctionId { return global_ctor_id_; }
   auto set_global_ctor_id(FunctionId function_id) -> void {
     global_ctor_id_ = function_id;
@@ -476,6 +482,10 @@ class File : public Printable<File> {
 
   // The top instruction block ID.
   InstBlockId top_inst_block_id_ = InstBlockId::None;
+
+  // An instruction block for storing any global variables used for exporting
+  // default values for function parameters to C++.
+  InstBlockId default_value_globals_exported_to_cpp_ = InstBlockId::None;
 
   // The global constructor function id.
   FunctionId global_ctor_id_ = FunctionId::None;

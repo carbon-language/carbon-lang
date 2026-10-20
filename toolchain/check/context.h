@@ -170,6 +170,10 @@ class Context {
 
   auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
 
+  auto extra_global_variables() -> llvm::SmallVector<SemIR::InstId>& {
+    return extra_global_variables_;
+  }
+
   using CheckIRToImportIRStore =
       FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>;
   auto check_ir_map() -> CheckIRToImportIRStore& { return check_ir_map_; }
@@ -551,6 +555,10 @@ class Context {
   // Instructions which are operands to an `export` directive. This becomes
   // `InstBlockId::Exports`.
   llvm::SmallVector<SemIR::InstId> exports_;
+
+  // Instructions that will be scanned for export as global variables. This
+  // becomes `InstBlockId::ExtraGlobalVariables`.
+  llvm::SmallVector<SemIR::InstId> extra_global_variables_;
 
   // Maps CheckIRId to ImportIRId.
   CheckIRToImportIRStore check_ir_map_;

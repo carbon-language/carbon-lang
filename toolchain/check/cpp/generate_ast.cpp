@@ -560,10 +560,16 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   class_decl->completeDefinition();
 
   // Now the class is complete, we can define the virtual function thunks.
-  for (auto virtual_fn : pending_virtual_functions) {
-    DefineExportedVirtualFunction(*context_, virtual_fn.loc_id,
-                                  virtual_fn.function_id,
-                                  virtual_fn.method_decl);
+  if (llvm::isa<clang::ClassTemplateSpecializationDecl>(class_decl) &&
+      !pending_virtual_functions.empty()) {
+    context_->TODO(class_info.first_decl_id(),
+                   "generic class overriding methods from a C++ virtual class");
+  } else {
+    for (auto virtual_fn : pending_virtual_functions) {
+      DefineExportedVirtualFunction(*context_, virtual_fn.loc_id,
+                                    virtual_fn.function_id,
+                                    virtual_fn.method_decl);
+    }
   }
 }
 

@@ -38,15 +38,15 @@ fn F(generic Form: Core.Form) ->? Form;
 // CHECK:STDOUT:     entity_name70000001: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:     entity_name70000002: {name: name1, parent_scope: name_scope<none>, index: 0, is_template: 0, is_unused: 0, form: inst<none>, type: inst70000016}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function70000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block70000007, call_params_id: inst_block70000008, return_type_inst_id: inst7000001F, return_form_inst_id: inst7000001E, return_pattern_id: inst70000028}
+// CHECK:STDOUT:     function70000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block70000008, call_params_id: inst_block70000009, return_type_inst_id: inst7000001F, return_form_inst_id: inst7000001E, return_pattern_id: inst70000028}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:      {}
 // CHECK:STDOUT:   associated_constants: {}
 // CHECK:STDOUT:   impls:           {}
 // CHECK:STDOUT:   generics:
-// CHECK:STDOUT:     generic70000000: {decl: inst70000031, bindings: inst_block7000000B, self_specific_id: specific70000000, decl_block_id: inst_block7000000D, definition_block_id: inst_block<none>}
+// CHECK:STDOUT:     generic70000000: {decl: inst70000031, bindings: inst_block7000000C, self_specific_id: specific70000000, decl_block_id: inst_block7000000E, definition_block_id: inst_block<none>}
 // CHECK:STDOUT:   specifics:
-// CHECK:STDOUT:     specific70000000: {generic: generic70000000, args: inst_block7000000C, identified: 0, decl_block_id: inst_block7000000E, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
+// CHECK:STDOUT:     specific70000000: {generic: generic70000000, args: inst_block7000000D, identified: 0, decl_block_id: inst_block7000000F, decl_has_error: 0, definition_block_id: inst_block<none>, definition_has_error: 0}
 // CHECK:STDOUT:   specific_interfaces: {}
 // CHECK:STDOUT:   struct_type_fields:
 // CHECK:STDOUT:     struct_type_fields_empty: {}
@@ -118,13 +118,13 @@ fn F(generic Form: Core.Form) ->? Form;
 // CHECK:STDOUT:     inst70000028:    {kind: ReturnSlotPattern, arg0: inst70000024, arg1: inst7000001F, type: type(symbolic_constant7000000A)}
 // CHECK:STDOUT:     inst70000029:    {kind: ReturnSlotPattern, arg0: inst70000025, arg1: inst70000020, type: type(symbolic_constant70000007)}
 // CHECK:STDOUT:     inst7000002A:    {kind: ReturnSlotPattern, arg0: inst70000027, arg1: inst70000021, type: type(symbolic_constant7000000A)}
-// CHECK:STDOUT:     inst7000002B:    {kind: SpliceBlock, arg0: inst_block70000005, arg1: inst70000016, type: type(TypeType)}
+// CHECK:STDOUT:     inst7000002B:    {kind: SpliceBlock, arg0: inst_block70000006, arg1: inst70000016, type: type(TypeType)}
 // CHECK:STDOUT:     inst7000002C:    {kind: CalleePatternMatchAction, arg0: bundle70000000, type: type(inst(InstType))}
 // CHECK:STDOUT:     inst7000002D:    {kind: SpliceInst, arg0: inst7000002C, type: type(symbolic_constant70000006)}
 // CHECK:STDOUT:     inst7000002E:    {kind: SpliceInst, arg0: inst7000002C, type: type(symbolic_constant70000005)}
 // CHECK:STDOUT:     inst7000002F:    {kind: SpliceInst, arg0: inst7000002C, type: type(symbolic_constant70000006)}
 // CHECK:STDOUT:     inst70000030:    {kind: ReturnSlot, arg0: inst70000020, arg1: inst7000002D, type: type(symbolic_constant70000006)}
-// CHECK:STDOUT:     inst70000031:    {kind: FunctionDecl, arg0: function70000000, arg1: inst_block7000000A, type: type(inst70000037)}
+// CHECK:STDOUT:     inst70000031:    {kind: FunctionDecl, arg0: function70000000, arg1: inst_block7000000B, type: type(inst70000037)}
 // CHECK:STDOUT:     inst70000032:    {kind: OutFormParamPatternAction, arg0: inst7000001C, type: type(inst(InstType))}
 // CHECK:STDOUT:     inst70000033:    {kind: SpliceInst, arg0: inst70000032, type: type(symbolic_constant70000007)}
 // CHECK:STDOUT:     inst70000034:    {kind: ReturnSlotPattern, arg0: inst70000033, arg1: inst70000020, type: type(symbolic_constant70000007)}
@@ -211,32 +211,33 @@ fn F(generic Form: Core.Form) ->? Form;
 // CHECK:STDOUT:       0:               inst70000011
 // CHECK:STDOUT:       1:               inst70000015
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block70000005:
+// CHECK:STDOUT:     extra_global_variables: {}
+// CHECK:STDOUT:     inst_block70000006:
 // CHECK:STDOUT:       0:               inst70000012
 // CHECK:STDOUT:       1:               inst70000014
 // CHECK:STDOUT:       2:               inst70000016
-// CHECK:STDOUT:     inst_block70000006:
-// CHECK:STDOUT:       0:               inst70000018
 // CHECK:STDOUT:     inst_block70000007:
-// CHECK:STDOUT:       0:               inst70000024
+// CHECK:STDOUT:       0:               inst70000018
 // CHECK:STDOUT:     inst_block70000008:
-// CHECK:STDOUT:       0:               inst7000002D
+// CHECK:STDOUT:       0:               inst70000024
 // CHECK:STDOUT:     inst_block70000009:
+// CHECK:STDOUT:       0:               inst7000002D
+// CHECK:STDOUT:     inst_block7000000A:
 // CHECK:STDOUT:       0:               inst70000018
 // CHECK:STDOUT:       1:               inst70000024
 // CHECK:STDOUT:       2:               inst70000028
-// CHECK:STDOUT:     inst_block7000000A:
+// CHECK:STDOUT:     inst_block7000000B:
 // CHECK:STDOUT:       0:               inst7000001E
 // CHECK:STDOUT:       1:               inst7000001F
 // CHECK:STDOUT:       2:               inst7000002B
 // CHECK:STDOUT:       3:               inst7000001B
 // CHECK:STDOUT:       4:               inst7000002D
 // CHECK:STDOUT:       5:               inst70000030
-// CHECK:STDOUT:     inst_block7000000B:
-// CHECK:STDOUT:       0:               inst7000001B
 // CHECK:STDOUT:     inst_block7000000C:
-// CHECK:STDOUT:       0:               inst7000001C
+// CHECK:STDOUT:       0:               inst7000001B
 // CHECK:STDOUT:     inst_block7000000D:
+// CHECK:STDOUT:       0:               inst7000001C
+// CHECK:STDOUT:     inst_block7000000E:
 // CHECK:STDOUT:       0:               inst7000001A
 // CHECK:STDOUT:       1:               inst7000001D
 // CHECK:STDOUT:       2:               inst70000021
@@ -246,7 +247,7 @@ fn F(generic Form: Core.Form) ->? Form;
 // CHECK:STDOUT:       6:               inst7000002A
 // CHECK:STDOUT:       7:               inst7000002C
 // CHECK:STDOUT:       8:               inst7000002F
-// CHECK:STDOUT:     inst_block7000000E:
+// CHECK:STDOUT:     inst_block7000000F:
 // CHECK:STDOUT:       0:               inst70000019
 // CHECK:STDOUT:       1:               inst7000001C
 // CHECK:STDOUT:       2:               inst70000020
@@ -256,7 +257,7 @@ fn F(generic Form: Core.Form) ->? Form;
 // CHECK:STDOUT:       6:               inst70000034
 // CHECK:STDOUT:       7:               inst70000035
 // CHECK:STDOUT:       8:               inst70000036
-// CHECK:STDOUT:     inst_block7000000F:
+// CHECK:STDOUT:     inst_block70000010:
 // CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               inst70000010
 // CHECK:STDOUT:       2:               inst70000031

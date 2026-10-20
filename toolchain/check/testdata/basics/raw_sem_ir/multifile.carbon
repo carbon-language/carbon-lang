@@ -42,7 +42,7 @@ fn B() {
 // CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst50000010}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block50000006]}
+// CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block50000007]}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:      {}
 // CHECK:STDOUT:   associated_constants: {}
@@ -115,10 +115,11 @@ fn B() {
 // CHECK:STDOUT:     generated:       {}
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block50000005: {}
-// CHECK:STDOUT:     inst_block50000006:
-// CHECK:STDOUT:       0:               inst50000014
+// CHECK:STDOUT:     extra_global_variables: {}
+// CHECK:STDOUT:     inst_block50000006: {}
 // CHECK:STDOUT:     inst_block50000007:
+// CHECK:STDOUT:       0:               inst50000014
+// CHECK:STDOUT:     inst_block50000008:
 // CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               inst50000010
 // CHECK:STDOUT:   value_stores:
@@ -150,7 +151,7 @@ fn B() {
 // CHECK:STDOUT:   entity_names:
 // CHECK:STDOUT:     entity_name70000000: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:   functions:
-// CHECK:STDOUT:     function70000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block70000006]}
+// CHECK:STDOUT:     function70000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block70000007]}
 // CHECK:STDOUT:     function70000001: {name: name1, parent_scope: name_scope70000001, call_param_patterns_id: inst_block_empty}
 // CHECK:STDOUT:   classes:         {}
 // CHECK:STDOUT:   interfaces:      {}
@@ -243,13 +244,14 @@ fn B() {
 // CHECK:STDOUT:       1:               inst70000017
 // CHECK:STDOUT:       2:               inst70000018
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block70000005: {}
-// CHECK:STDOUT:     inst_block70000006:
+// CHECK:STDOUT:     extra_global_variables: {}
+// CHECK:STDOUT:     inst_block70000006: {}
+// CHECK:STDOUT:     inst_block70000007:
 // CHECK:STDOUT:       0:               inst70000016
 // CHECK:STDOUT:       1:               inst7000001B
 // CHECK:STDOUT:       2:               inst7000001C
 // CHECK:STDOUT:       3:               inst7000001D
-// CHECK:STDOUT:     inst_block70000007:
+// CHECK:STDOUT:     inst_block70000008:
 // CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               inst70000010
 // CHECK:STDOUT:       2:               inst70000012
