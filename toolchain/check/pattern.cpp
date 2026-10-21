@@ -360,4 +360,26 @@ auto PerformAction(Context& context, SemIR::LocId /*loc_id*/,
   }
 }
 
+auto ExtractParameterDefault(Context& context,
+                             SemIR::InstId param_pattern_inst_id)
+    -> SemIR::ConstantId {
+  auto pattern_id =
+      context.constant_values().GetConstantInstId(param_pattern_inst_id);
+  while (pattern_id.has_value()) {
+    CARBON_KIND_SWITCH(context.insts().Get(pattern_id)) {
+      case CARBON_KIND(SemIR::DefaultValuePattern inst): {
+        return context.constant_values().Get(inst.value_id);
+      }
+      case CARBON_KIND_ANY(SemIR::AnyBindingPattern, inst): {
+        pattern_id = inst.subpattern_id;
+        break;
+      }
+      default: {
+        return SemIR::ConstantId::None;
+      }
+    }
+  }
+  return SemIR::ConstantId::None;
+}
+
 }  // namespace Carbon::Check
