@@ -9,6 +9,7 @@ import library "prelude/default";
 import library "prelude/destroy";
 import library "prelude/operators/as";
 import library "prelude/operators/index";
+import library "prelude/types/array";
 import library "prelude/types/int";
 import library "prelude/types/int_literal";
 import library "prelude/types/uint";

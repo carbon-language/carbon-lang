@@ -83,7 +83,7 @@ fn For() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @"_CSelfDestruct.72395be3dbbe8946:core.Destroy.Core"(ptr)
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare void @"_COp.830bbdcf8982aa42:core.Destroy.Core"(ptr)
+// CHECK:STDOUT: declare void @"_CSelfDestruct.92d33a575b583425:core.Destroy.Core"(ptr)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define weak_odr void @"_CSubobjectDestroy.b3126fe3b97d1b85:core.Destroy.Core"(ptr %self) #0 !dbg !37 {
