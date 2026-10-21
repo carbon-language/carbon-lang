@@ -56,6 +56,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %.8bf: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d2f9c3.2, %T.f84 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.bb5: %.8bf = impl_witness_access %Copy.lookup_impl_witness.d9c, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.2ac: <specific function> = specific_impl_function %impl.elem0.bb5, @Copy.WithSelf.Op(%T.f84) [symbolic]
+// CHECK:STDOUT:   %.24e: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness.d9c [symbolic]
 // CHECK:STDOUT:   %bound_method.fb3: <bound method> = bound_method %U.7e5, %impl.elem0.bb5 [symbolic]
 // CHECK:STDOUT:   %bound_method.ecc: <bound method> = bound_method %U.7e5, %specific_impl_fn.2ac [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -100,6 +101,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   %Inner.Get.7d7: %Inner.Get.type.67d = struct_value () [concrete]
 // CHECK:STDOUT:   %return.patt.6fa: %pattern_type.d94 = return_slot_pattern %return.param_patt.299, %i32 [concrete]
 // CHECK:STDOUT:   %Inner.Get.specific_fn: <specific function> = specific_function %Inner.Get.7d7, @Inner.Get(%Copy.facet.95d, %int_42.db5) [concrete]
+// CHECK:STDOUT:   %.dbc: require_witness_defn_type = require_witness_defn %Copy.impl_witness.8af [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.95d) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet.95d [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound: <bound method> = bound_method %int_42.db5, %Int.as.Copy.impl.Op.cae [concrete]
@@ -185,10 +187,11 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc7_17.1 [symbolic = %require_complete (constants.%require_complete.d83)]
 // CHECK:STDOUT:   %U: @Inner.Get.%T.as_type.loc7_17.1 (%T.as_type) = symbolic_binding U, 1 [symbolic = %U (constants.%U.7e5)]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
-// CHECK:STDOUT:   %.loc7_28.4: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T [symbolic = %.loc7_28.4 (constants.%.8bf)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c)]
-// CHECK:STDOUT:   %impl.elem0.loc7_28.2: @Inner.Get.%.loc7_28.4 (%.8bf) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_28.2 (constants.%impl.elem0.bb5)]
+// CHECK:STDOUT:   %.loc7_28.4: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic = %.loc7_28.4 (constants.%.24e)]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
+// CHECK:STDOUT:   %.loc7_28.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T [symbolic = %.loc7_28.5 (constants.%.8bf)]
+// CHECK:STDOUT:   %impl.elem0.loc7_28.2: @Inner.Get.%.loc7_28.5 (%.8bf) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_28.2 (constants.%impl.elem0.bb5)]
 // CHECK:STDOUT:   %bound_method.loc7_28.3: <bound method> = bound_method %U, %impl.elem0.loc7_28.2 [symbolic = %bound_method.loc7_28.3 (constants.%bound_method.fb3)]
 // CHECK:STDOUT:   %specific_impl_fn.loc7_28.2: <specific function> = specific_impl_function %impl.elem0.loc7_28.2, @Copy.WithSelf.Op(%T) [symbolic = %specific_impl_fn.loc7_28.2 (constants.%specific_impl_fn.2ac)]
 // CHECK:STDOUT:   %bound_method.loc7_28.4: <bound method> = bound_method %U, %specific_impl_fn.loc7_28.2 [symbolic = %bound_method.loc7_28.4 (constants.%bound_method.ecc)]
@@ -197,7 +200,7 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %.loc7_28.1: @Inner.Get.%T.as_type.loc7_17.1 (%T.as_type) = specific_constant @Inner.%U.loc5_16.2, @Inner(constants.%T.f84, constants.%U.7e5) [symbolic = %U (constants.%U.7e5)]
 // CHECK:STDOUT:     %U.ref: @Inner.Get.%T.as_type.loc7_17.1 (%T.as_type) = name_ref U, %.loc7_28.1 [symbolic = %U (constants.%U.7e5)]
-// CHECK:STDOUT:     %impl.elem0.loc7_28.1: @Inner.Get.%.loc7_28.4 (%.8bf) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c, element0 [symbolic = %impl.elem0.loc7_28.2 (constants.%impl.elem0.bb5)]
+// CHECK:STDOUT:     %impl.elem0.loc7_28.1: @Inner.Get.%.loc7_28.5 (%.8bf) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c, element0 [symbolic = %impl.elem0.loc7_28.2 (constants.%impl.elem0.bb5)]
 // CHECK:STDOUT:     %bound_method.loc7_28.1: <bound method> = bound_method %U.ref, %impl.elem0.loc7_28.1 [symbolic = %bound_method.loc7_28.3 (constants.%bound_method.fb3)]
 // CHECK:STDOUT:     %.loc7_28.2: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:     %.loc7_28.3: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T (constants.%T.f84)]
@@ -299,9 +302,10 @@ var n: i32 = Outer(i32).Inner(42).Get();
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type.f8a
 // CHECK:STDOUT:   %U => constants.%int_42.db5
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.f76
-// CHECK:STDOUT:   %.loc7_28.4 => constants.%.2b9
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.8af
+// CHECK:STDOUT:   %.loc7_28.4 => constants.%.dbc
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.f76
+// CHECK:STDOUT:   %.loc7_28.5 => constants.%.2b9
 // CHECK:STDOUT:   %impl.elem0.loc7_28.2 => constants.%Int.as.Copy.impl.Op.cae
 // CHECK:STDOUT:   %bound_method.loc7_28.3 => constants.%Int.as.Copy.impl.Op.bound
 // CHECK:STDOUT:   %specific_impl_fn.loc7_28.2 => constants.%Int.as.Copy.impl.Op.specific_fn

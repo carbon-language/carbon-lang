@@ -92,6 +92,7 @@ fn F(generic B: Y) {
 // CHECK:STDOUT:   %Z.type.67e: type = facet_type <@Z, @Z(%A.as_type):identified> [symbolic]
 // CHECK:STDOUT:   %require_complete.d81: <witness> = require_complete_type %Z.type.67e [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %A, @Z, @Z(%A.as_type) [symbolic]
+// CHECK:STDOUT:   %.7ec: require_witness_defn_type = require_witness_defn %Z.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Z.facet: %Z.type.56f318.2 = facet_value %A.as_type, (%Z.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %Z.WithSelf.F.type.20b: type = fn_type @Z.WithSelf.F, @Z.WithSelf(%A.as_type, %Z.facet) [symbolic]
 // CHECK:STDOUT:   %Z.WithSelf.F.53e: %Z.WithSelf.F.type.20b = struct_value () [symbolic]
@@ -218,12 +219,13 @@ fn F(generic B: Y) {
 // CHECK:STDOUT:   %A.as_type.loc5_4.2: type = facet_access_type %A.loc4_15.1 [symbolic = %A.as_type.loc5_4.2 (constants.%A.as_type)]
 // CHECK:STDOUT:   %Z.assoc_type: type = assoc_entity_type @Z, @Z(%A.as_type.loc5_4.2) [symbolic = %Z.assoc_type (constants.%Z.assoc_type.4e0)]
 // CHECK:STDOUT:   %assoc0: @F.%Z.assoc_type (%Z.assoc_type.4e0) = assoc_entity element0, imports.%Main.import_ref.7eb [symbolic = %assoc0 (constants.%assoc0.de7)]
-// CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%A.as_type.loc5_4.2)> [symbolic = %Z.type (constants.%Z.type.56f318.2)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %A.loc4_15.1, @Z, @Z(%A.as_type.loc5_4.2) [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
+// CHECK:STDOUT:   %.loc5_4.3: require_witness_defn_type = require_witness_defn %Z.lookup_impl_witness [symbolic = %.loc5_4.3 (constants.%.7ec)]
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%A.as_type.loc5_4.2)> [symbolic = %Z.type (constants.%Z.type.56f318.2)]
 // CHECK:STDOUT:   %Z.facet: @F.%Z.type (%Z.type.56f318.2) = facet_value %A.as_type.loc5_4.2, (%Z.lookup_impl_witness) [symbolic = %Z.facet (constants.%Z.facet)]
 // CHECK:STDOUT:   %Z.WithSelf.F.type: type = fn_type @Z.WithSelf.F, @Z.WithSelf(%A.as_type.loc5_4.2, %Z.facet) [symbolic = %Z.WithSelf.F.type (constants.%Z.WithSelf.F.type.20b)]
-// CHECK:STDOUT:   %.loc5_4.3: type = fn_type_with_self_type %Z.WithSelf.F.type, %Z.facet [symbolic = %.loc5_4.3 (constants.%.a25)]
-// CHECK:STDOUT:   %impl.elem0.loc5_4.2: @F.%.loc5_4.3 (%.a25) = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc5_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %.loc5_4.4: type = fn_type_with_self_type %Z.WithSelf.F.type, %Z.facet [symbolic = %.loc5_4.4 (constants.%.a25)]
+// CHECK:STDOUT:   %impl.elem0.loc5_4.2: @F.%.loc5_4.4 (%.a25) = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc5_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc5_4.2: <specific function> = specific_impl_function %impl.elem0.loc5_4.2, @Z.WithSelf.F(%A.as_type.loc5_4.2, %Z.facet) [symbolic = %specific_impl_fn.loc5_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -233,7 +235,7 @@ fn F(generic B: Y) {
 // CHECK:STDOUT:     %.loc5_4.1: type = converted %A.ref, %A.as_type.loc5_4.1 [symbolic = %A.as_type.loc5_4.2 (constants.%A.as_type)]
 // CHECK:STDOUT:     %.loc5_4.2: @F.%Z.assoc_type (%Z.assoc_type.4e0) = specific_constant imports.%Main.import_ref.0f7, @Z.WithSelf(constants.%A.as_type, constants.%A) [symbolic = %assoc0 (constants.%assoc0.de7)]
 // CHECK:STDOUT:     %F.ref: @F.%Z.assoc_type (%Z.assoc_type.4e0) = name_ref F, %.loc5_4.2 [symbolic = %assoc0 (constants.%assoc0.de7)]
-// CHECK:STDOUT:     %impl.elem0.loc5_4.1: @F.%.loc5_4.3 (%.a25) = impl_witness_access constants.%Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc5_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc5_4.1: @F.%.loc5_4.4 (%.a25) = impl_witness_access constants.%Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc5_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %specific_impl_fn.loc5_4.1: <specific function> = specific_impl_function %impl.elem0.loc5_4.1, @Z.WithSelf.F(constants.%A.as_type, constants.%Z.facet) [symbolic = %specific_impl_fn.loc5_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %Z.WithSelf.F.call: init %empty_tuple.type = call %specific_impl_fn.loc5_4.1()
 // CHECK:STDOUT:     return

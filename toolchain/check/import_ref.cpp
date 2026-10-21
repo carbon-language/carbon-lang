@@ -4354,26 +4354,24 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                  .complete_type_inst_id = complete_type_inst_id});
 }
 
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::RequireSpecificDefinition inst)
-    -> ResolveResult {
+static auto TryResolveTypedInst(
+    ImportRefResolver& resolver,
+    SemIR::RequireImplWitnessSpecificDefinition inst) -> ResolveResult {
   CARBON_CHECK(resolver.import_types().GetTypeInstId(inst.type_id) ==
-               SemIR::RequireSpecificDefinitionType::TypeInstId);
+               SemIR::RequireImplWitnessSpecificDefinitionType::TypeInstId);
 
-  auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
-
+  auto witness_id = GetLocalConstantInstId(resolver, inst.witness_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
-  auto specific_id =
-      GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
-
-  return ResolveResult::Deduplicated<SemIR::RequireSpecificDefinition>(
-      resolver, {.type_id = GetSingletonType(
-                     resolver.local_context(),
-                     SemIR::RequireSpecificDefinitionType::TypeInstId),
-                 .specific_id = specific_id});
+  return ResolveResult::Deduplicated<
+      SemIR::RequireImplWitnessSpecificDefinition>(
+      resolver,
+      {.type_id = GetSingletonType(
+           resolver.local_context(),
+           SemIR::RequireImplWitnessSpecificDefinitionType::TypeInstId),
+       .witness_id = witness_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -4864,7 +4862,7 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
     case CARBON_KIND(SemIR::RequireCompleteType inst): {
       return TryResolveTypedInst(resolver, inst);
     }
-    case CARBON_KIND(SemIR::RequireSpecificDefinition inst): {
+    case CARBON_KIND(SemIR::RequireImplWitnessSpecificDefinition inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ReturnSlotPattern inst): {

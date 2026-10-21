@@ -39,7 +39,7 @@ fn F(generic T: type, n: T*) -> T* {
 // CHECK:STDOUT:   %m.patt: %pattern_type.4f4 = value_binding_pattern m [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.1da: <witness> = lookup_impl_witness %ptr, @Copy [symbolic]
-// CHECK:STDOUT:   %.66e: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %.dc9: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness.1da [symbolic]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr, (%Copy.lookup_impl_witness.1da) [symbolic]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.e38: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [symbolic]
 // CHECK:STDOUT:   %.3f816: type = fn_type_with_self_type %Copy.WithSelf.Op.type.e38, %Copy.facet [symbolic]
@@ -53,8 +53,8 @@ fn F(generic T: type, n: T*) -> T* {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %m.patt.loc6_8.2: @F.%pattern_type (%pattern_type.4f4) = value_binding_pattern m [symbolic = %m.patt.loc6_8.2 (constants.%m.patt)]
-// CHECK:STDOUT:   %.loc7_10.3: require_specific_def_type = require_specific_def @ptr.as.Copy.impl(%T.loc4_15.1) [symbolic = %.loc7_10.3 (constants.%.66e)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc4_27.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.1da)]
+// CHECK:STDOUT:   %.loc7_10.3: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic = %.loc7_10.3 (constants.%.dc9)]
 // CHECK:STDOUT:   %Copy.facet.loc7_10.3: %Copy.type = facet_value %ptr.loc4_27.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc7_10.3 (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.loc7_10.3) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e38)]
 // CHECK:STDOUT:   %.loc7_10.4: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet.loc7_10.3 [symbolic = %.loc7_10.4 (constants.%.3f816)]

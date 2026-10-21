@@ -284,24 +284,11 @@ static auto TryGetSpecificWitnessIdForImpl(
     return SemIR::ConstantId::None;
   }
 
-  LoadImportRef(context, impl.witness_id);
-  if (!impl.is_being_defined() && specific_id.has_value()) {
-    // If the impl definition can be resolved, eval will do it immediately;
-    // otherwise, it can be resolved by further specialization. This is used to
-    // resolve dependency chains when `MakeFinal` is returned without a concrete
-    // definition; particularly final impls with symbolic constants.
-    //
-    // Note we do not do this for lookups _inside_ the definition of the impl,
-    // as that creates a cycle where resolving the definition must resolve the
-    // definition.
-    AddInstInNoBlock(
-        context, loc_id,
-        SemIR::RequireSpecificDefinition{
-            .type_id = GetSingletonType(
-                context, SemIR::RequireSpecificDefinitionType::TypeInstId),
-            .specific_id = specific_id});
+  if (specific_id.has_value()) {
+    ResolveSpecificDefinition(context, loc_id, specific_id);
   }
 
+  LoadImportRef(context, impl.witness_id);
   return SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
                                            impl.witness_id);
 }
@@ -1023,6 +1010,15 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       // At least one queried interface in the facet type has no witness for the
       // given type, we can stop looking for more.
       break;
+    }
+
+    if (witness_const_id.is_symbolic()) {
+      AddInstInNoBlock<SemIR::RequireImplWitnessSpecificDefinition>(
+          context, loc_id,
+          {.type_id = GetSingletonType(
+               context,
+               SemIR::RequireImplWitnessSpecificDefinitionType::TypeInstId),
+           .witness_id = result_witness_id});
     }
 
     // Save the non-final witness, which will eventually resolve to a final

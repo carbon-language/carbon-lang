@@ -51,6 +51,7 @@ fn Use(generic T: I) {
 // CHECK:STDOUT:   %I.WithSelf.F.4b1: %I.WithSelf.F.type.eae = struct_value () [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T, @I [symbolic]
+// CHECK:STDOUT:   %.18c: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %.b94: type = fn_type_with_self_type %I.WithSelf.F.type.eae, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.b94 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.b94 [symbolic]
@@ -116,11 +117,12 @@ fn Use(generic T: I) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc11_4.2: type = facet_access_type %T.loc8_17.1 [symbolic = %T.as_type.loc11_4.2 (constants.%T.as_type)]
-// CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%T.loc8_17.1) [symbolic = %I.WithSelf.F.type (constants.%I.WithSelf.F.type.eae)]
-// CHECK:STDOUT:   %.loc11_4.2: type = fn_type_with_self_type %I.WithSelf.F.type, %T.loc8_17.1 [symbolic = %.loc11_4.2 (constants.%.b94)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc8_17.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %impl.elem0.loc11_4.2: @Use.%.loc11_4.2 (%.b94) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.loc11_4.2 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %.loc11_4.2: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic = %.loc11_4.2 (constants.%.18c)]
+// CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%T.loc8_17.1) [symbolic = %I.WithSelf.F.type (constants.%I.WithSelf.F.type.eae)]
+// CHECK:STDOUT:   %.loc11_4.3: type = fn_type_with_self_type %I.WithSelf.F.type, %T.loc8_17.1 [symbolic = %.loc11_4.3 (constants.%.b94)]
+// CHECK:STDOUT:   %impl.elem0.loc11_4.2: @Use.%.loc11_4.3 (%.b94) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.loc11_4.3 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
@@ -128,7 +130,7 @@ fn Use(generic T: I) {
 // CHECK:STDOUT:     %T.as_type.loc11_4.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc11_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %.loc11_4.1: type = converted %T.ref, %T.as_type.loc11_4.1 [symbolic = %T.as_type.loc11_4.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc11_4.1: @Use.%.loc11_4.2 (%.b94) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc11_4.1: @Use.%.loc11_4.3 (%.b94) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

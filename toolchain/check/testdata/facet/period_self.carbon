@@ -859,6 +859,7 @@ impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
 // CHECK:STDOUT:   %assoc0.1a5: %I.assoc_type.46d = assoc_entity element0, @I.WithSelf.%I1 [symbolic_self]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.019 [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness.1f0: <witness> = lookup_impl_witness %T.019, @I, @I(%T.as_type) [symbolic]
+// CHECK:STDOUT:   %.62a: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness.1f0 [symbolic]
 // CHECK:STDOUT:   %I.facet.8b3: %I.type.e26 = facet_value %T.as_type, (%I.lookup_impl_witness.1f0) [symbolic]
 // CHECK:STDOUT:   %.262: Core.Form = init_form %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
@@ -887,11 +888,11 @@ impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: %I_where.type.4b3 = name_ref T, %T.loc8_15.2 [symbolic = %T.loc8_15.1 (constants.%T.019)]
 // CHECK:STDOUT:     %T.as_type.loc8_46.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc8_46.1 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc8_46.1: type = converted %T.ref, %T.as_type.loc8_46.2 [symbolic = %T.as_type.loc8_46.1 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc8_46.2: %I.assoc_type.46d = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.c86, constants.%T.019) [symbolic_self = constants.%assoc0.1a5]
-// CHECK:STDOUT:     %I1.ref.loc8_46: %I.assoc_type.46d = name_ref I1, %.loc8_46.2 [symbolic_self = constants.%assoc0.1a5]
+// CHECK:STDOUT:     %.loc8_46.2: type = converted %T.ref, %T.as_type.loc8_46.2 [symbolic = %T.as_type.loc8_46.1 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc8_46.3: %I.assoc_type.46d = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.c86, constants.%T.019) [symbolic_self = constants.%assoc0.1a5]
+// CHECK:STDOUT:     %I1.ref.loc8_46: %I.assoc_type.46d = name_ref I1, %.loc8_46.3 [symbolic_self = constants.%assoc0.1a5]
 // CHECK:STDOUT:     %impl.elem0.loc8_46: type = impl_witness_access constants.%I.lookup_impl_witness.1f0, element0 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc8_46.3: Core.Form = init_form %impl.elem0.loc8_46 [concrete = constants.%.262]
+// CHECK:STDOUT:     %.loc8_46.4: Core.Form = init_form %impl.elem0.loc8_46 [concrete = constants.%.262]
 // CHECK:STDOUT:     %.loc8_26.1: type = splice_block %.loc8_26.3 [symbolic_self = constants.%I_where.type.4b3] {
 // CHECK:STDOUT:       %.Self.frozen.loc8_15: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %I.ref: %I.type.335 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
@@ -934,11 +935,11 @@ impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: %I_where.type.4b3 = name_ref T, %T.loc12_15.2 [symbolic = %T.loc12_15.1 (constants.%T.019)]
 // CHECK:STDOUT:     %T.as_type.loc12_54.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc12_54.1 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc12_54.1: type = converted %T.ref, %T.as_type.loc12_54.2 [symbolic = %T.as_type.loc12_54.1 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc12_54.2: %I.assoc_type.46d = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.c86, constants.%T.019) [symbolic_self = constants.%assoc0.1a5]
-// CHECK:STDOUT:     %I1.ref.loc12_54: %I.assoc_type.46d = name_ref I1, %.loc12_54.2 [symbolic_self = constants.%assoc0.1a5]
+// CHECK:STDOUT:     %.loc12_54.2: type = converted %T.ref, %T.as_type.loc12_54.2 [symbolic = %T.as_type.loc12_54.1 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc12_54.3: %I.assoc_type.46d = specific_constant @I1.%assoc0, @I.WithSelf(constants.%.Self.c86, constants.%T.019) [symbolic_self = constants.%assoc0.1a5]
+// CHECK:STDOUT:     %I1.ref.loc12_54: %I.assoc_type.46d = name_ref I1, %.loc12_54.3 [symbolic_self = constants.%assoc0.1a5]
 // CHECK:STDOUT:     %impl.elem0.loc12_54: type = impl_witness_access constants.%I.lookup_impl_witness.1f0, element0 [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %.loc12_54.3: Core.Form = init_form %impl.elem0.loc12_54 [concrete = constants.%.262]
+// CHECK:STDOUT:     %.loc12_54.4: Core.Form = init_form %impl.elem0.loc12_54 [concrete = constants.%.262]
 // CHECK:STDOUT:     %.loc12_34.1: type = splice_block %.loc12_34.3 [symbolic_self = constants.%I_where.type.4b3] {
 // CHECK:STDOUT:       %.Self.frozen.loc12_15: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %I.ref: %I.type.335 = name_ref I, file.%I.decl [concrete = constants.%I.generic]
@@ -1007,6 +1008,8 @@ impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
 // CHECK:STDOUT:   %T.patt.loc8_15.2: %pattern_type.ad5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc8_15.2 (constants.%T.patt.818)]
 // CHECK:STDOUT:   %T.loc8_15.1: %I_where.type.4b3 = symbolic_binding T, 0 [symbolic = %T.loc8_15.1 (constants.%T.019)]
 // CHECK:STDOUT:   %T.as_type.loc8_46.1: type = facet_access_type %T.loc8_15.1 [symbolic = %T.as_type.loc8_46.1 (constants.%T.as_type)]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc8_15.1, @I, @I(%T.as_type.loc8_46.1) [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness.1f0)]
+// CHECK:STDOUT:   %.loc8_46.1: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic = %.loc8_46.1 (constants.%.62a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -1023,6 +1026,8 @@ impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
 // CHECK:STDOUT:   %T.patt.loc12_15.2: %pattern_type.ad5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_15.2 (constants.%T.patt.818)]
 // CHECK:STDOUT:   %T.loc12_15.1: %I_where.type.4b3 = symbolic_binding T, 0 [symbolic = %T.loc12_15.1 (constants.%T.019)]
 // CHECK:STDOUT:   %T.as_type.loc12_54.1: type = facet_access_type %T.loc12_15.1 [symbolic = %T.as_type.loc12_54.1 (constants.%T.as_type)]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc12_15.1, @I, @I(%T.as_type.loc12_54.1) [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness.1f0)]
+// CHECK:STDOUT:   %.loc12_54.1: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic = %.loc12_54.1 (constants.%.62a)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -1109,11 +1114,15 @@ impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
 // CHECK:STDOUT:   %T.patt.loc8_15.2 => constants.%T.patt.818
 // CHECK:STDOUT:   %T.loc8_15.1 => constants.%T.019
 // CHECK:STDOUT:   %T.as_type.loc8_46.1 => constants.%T.as_type
+// CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.lookup_impl_witness.1f0
+// CHECK:STDOUT:   %.loc8_46.1 => constants.%.62a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.019) {
 // CHECK:STDOUT:   %T.patt.loc12_15.2 => constants.%T.patt.818
 // CHECK:STDOUT:   %T.loc12_15.1 => constants.%T.019
 // CHECK:STDOUT:   %T.as_type.loc12_54.1 => constants.%T.as_type
+// CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.lookup_impl_witness.1f0
+// CHECK:STDOUT:   %.loc12_54.1 => constants.%.62a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

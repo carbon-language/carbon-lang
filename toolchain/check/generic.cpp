@@ -710,8 +710,10 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
   // block to form information about the specific.
   auto& specific = context.specifics().Get(specific_id);
   if (!specific.decl_block_id.has_value()) {
+    specific.definition_block_id = SemIR::InstBlockId::Empty;
     TryEvalBlockForSpecific(context, loc_id, specific_id,
                             SemIR::GenericInstIndex::Region::Declaration);
+    specific.definition_block_id = SemIR::InstBlockId::None;
   }
 }
 

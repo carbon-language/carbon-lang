@@ -853,6 +853,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc7_3.1 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness.011: <witness> = lookup_impl_witness %C.04a, @Destroy [symbolic]
+// CHECK:STDOUT:   %.3db: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness.011 [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.89b: %Destroy.type = facet_value %C.04a, (%Destroy.lookup_impl_witness.011) [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.346: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.89b) [symbolic]
 // CHECK:STDOUT:   %.cf2: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.346, %Destroy.facet.89b [symbolic]
@@ -872,6 +873,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc7_3.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.f8f19d.2: <witness> = custom_witness (%Destroy.WithSelf.Op.403171.2, %Destroy.WithSelf.SubobjectDestroy.d01daf.2, %Destroy.WithSelf.SelfDestruct.db3fdb.2), @Destroy [concrete]
+// CHECK:STDOUT:   %.b54: require_witness_defn_type = require_witness_defn %custom_witness.f8f19d.2 [concrete]
 // CHECK:STDOUT:   %Destroy.facet.05a: %Destroy.type = facet_value %C.664, (%custom_witness.f8f19d.2) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.f82: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.05a) [concrete]
 // CHECK:STDOUT:   %.29f: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.f82, %Destroy.facet.05a [concrete]
@@ -932,10 +934,11 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %v.var_patt.loc7_3.2: @F.%pattern_type (%pattern_type.563) = var_pattern %v.patt.loc7_15.2 [symbolic = %v.var_patt.loc7_3.2 (constants.%v.var_patt.783)]
 // CHECK:STDOUT:   %C.val: @F.%C.loc7_20.2 (%C.04a) = struct_value () [symbolic = %C.val (constants.%C.val.beb)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %C.loc7_20.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.011)]
+// CHECK:STDOUT:   %.loc7_3.4: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic = %.loc7_3.4 (constants.%.3db)]
 // CHECK:STDOUT:   %Destroy.facet.loc7_3.3: %Destroy.type = facet_value %C.loc7_20.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc7_3.3 (constants.%Destroy.facet.89b)]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.loc7_3.3) [symbolic = %Destroy.WithSelf.SelfDestruct.type (constants.%Destroy.WithSelf.SelfDestruct.type.346)]
-// CHECK:STDOUT:   %.loc7_3.4: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %Destroy.facet.loc7_3.3 [symbolic = %.loc7_3.4 (constants.%.cf2)]
-// CHECK:STDOUT:   %impl.elem2.loc7_3.2: @F.%.loc7_3.4 (%.cf2) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc7_3.2 (constants.%impl.elem2)]
+// CHECK:STDOUT:   %.loc7_3.5: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %Destroy.facet.loc7_3.3 [symbolic = %.loc7_3.5 (constants.%.cf2)]
+// CHECK:STDOUT:   %impl.elem2.loc7_3.2: @F.%.loc7_3.5 (%.cf2) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc7_3.2 (constants.%impl.elem2)]
 // CHECK:STDOUT:   %specific_impl_fn.loc7_3.2: <specific function> = specific_impl_function %impl.elem2.loc7_3.2, @Destroy.WithSelf.SelfDestruct.1(%Destroy.facet.loc7_3.3) [symbolic = %specific_impl_fn.loc7_3.2 (constants.%specific_impl_fn.ac0)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -955,7 +958,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:       %v.patt.loc7_15.1: @F.%pattern_type (%pattern_type.563) = ref_binding_pattern v [symbolic = %v.patt.loc7_15.2 (constants.%v.patt.315)]
 // CHECK:STDOUT:       %v.var_patt.loc7_3.1: @F.%pattern_type (%pattern_type.563) = var_pattern %v.patt.loc7_15.1 [symbolic = %v.var_patt.loc7_3.2 (constants.%v.var_patt.783)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %impl.elem2.loc7_3.1: @F.%.loc7_3.4 (%.cf2) = impl_witness_access constants.%Destroy.lookup_impl_witness.011, element2 [symbolic = %impl.elem2.loc7_3.2 (constants.%impl.elem2)]
+// CHECK:STDOUT:     %impl.elem2.loc7_3.1: @F.%.loc7_3.5 (%.cf2) = impl_witness_access constants.%Destroy.lookup_impl_witness.011, element2 [symbolic = %impl.elem2.loc7_3.2 (constants.%impl.elem2)]
 // CHECK:STDOUT:     %bound_method.loc7_3.1: <bound method> = bound_method %v.var, %impl.elem2.loc7_3.1
 // CHECK:STDOUT:     %Destroy.facet.loc7_3.1: %Destroy.type = facet_value constants.%C.04a, (constants.%Destroy.lookup_impl_witness.011) [symbolic = %Destroy.facet.loc7_3.3 (constants.%Destroy.facet.89b)]
 // CHECK:STDOUT:     %.loc7_3.2: %Destroy.type = converted constants.%C.04a, %Destroy.facet.loc7_3.1 [symbolic = %Destroy.facet.loc7_3.3 (constants.%Destroy.facet.89b)]
@@ -1007,9 +1010,10 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %v.var_patt.loc7_3.2 => constants.%v.var_patt.afa
 // CHECK:STDOUT:   %C.val => constants.%C.val.c26
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f19d.2
+// CHECK:STDOUT:   %.loc7_3.4 => constants.%.b54
 // CHECK:STDOUT:   %Destroy.facet.loc7_3.3 => constants.%Destroy.facet.05a
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.f82
-// CHECK:STDOUT:   %.loc7_3.4 => constants.%.29f
+// CHECK:STDOUT:   %.loc7_3.5 => constants.%.29f
 // CHECK:STDOUT:   %impl.elem2.loc7_3.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT:   %specific_impl_fn.loc7_3.2 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.2
 // CHECK:STDOUT: }

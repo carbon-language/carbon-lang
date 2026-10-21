@@ -1266,6 +1266,7 @@ fn G(generic T: N) {
 // CHECK:STDOUT:   %T: %Z_where.type.c91 = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness.9fe: <witness> = lookup_impl_witness %T, @Z [symbolic]
+// CHECK:STDOUT:   %.8c5: require_witness_defn_type = require_witness_defn %Z.lookup_impl_witness.9fe [symbolic]
 // CHECK:STDOUT:   %facet_value: %Z_where.type.7b9 = facet_value %T.as_type, (%Z.lookup_impl_witness.9fe) [symbolic]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%facet_value) [symbolic]
 // CHECK:STDOUT: }
@@ -1276,6 +1277,7 @@ fn G(generic T: N) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc14_6.2: type = facet_access_type %T.loc10_15.1 [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc10_15.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness.9fe)]
+// CHECK:STDOUT:   %.loc14_6.2: require_witness_defn_type = require_witness_defn %Z.lookup_impl_witness [symbolic = %.loc14_6.2 (constants.%.8c5)]
 // CHECK:STDOUT:   %facet_value.loc14_6.2: %Z_where.type.7b9 = facet_value %T.as_type.loc14_6.2, (%Z.lookup_impl_witness) [symbolic = %facet_value.loc14_6.2 (constants.%facet_value)]
 // CHECK:STDOUT:   %F.specific_fn.loc14_3.2: <specific function> = specific_function constants.%F, @F(%facet_value.loc14_6.2) [symbolic = %F.specific_fn.loc14_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
@@ -1285,7 +1287,7 @@ fn G(generic T: N) {
 // CHECK:STDOUT:     %T.ref: %Z_where.type.c91 = name_ref T, %T.loc10_15.2 [symbolic = %T.loc10_15.1 (constants.%T)]
 // CHECK:STDOUT:     %T.as_type.loc14_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     %facet_value.loc14_6.1: %Z_where.type.7b9 = facet_value %T.as_type.loc14_6.1, (constants.%Z.lookup_impl_witness.9fe) [symbolic = %facet_value.loc14_6.2 (constants.%facet_value)]
-// CHECK:STDOUT:     %.loc14: %Z_where.type.7b9 = converted %T.ref, %facet_value.loc14_6.1 [symbolic = %facet_value.loc14_6.2 (constants.%facet_value)]
+// CHECK:STDOUT:     %.loc14_6.1: %Z_where.type.7b9 = converted %T.ref, %facet_value.loc14_6.1 [symbolic = %facet_value.loc14_6.2 (constants.%facet_value)]
 // CHECK:STDOUT:     %F.specific_fn.loc14_3.1: <specific function> = specific_function %F.ref, @F(constants.%facet_value) [symbolic = %F.specific_fn.loc14_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:     %F.call: init %empty_tuple.type = call %F.specific_fn.loc14_3.1()
 // CHECK:STDOUT:     <elided>

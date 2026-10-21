@@ -1800,23 +1800,37 @@ struct RequireImplsDecl {
   DeclInstBlockId decl_block_id;
 };
 
-// As part of a generic region, requires that an `impl` which is initially part
-// of a symbolic specific be defined once a concrete specific is formed.
-struct RequireSpecificDefinition {
+// Record a dependency on the definition of an impl, without knowing what impl
+// it will be yet.
+//
+// An impl lookup has an implied dependency on the resulting final impl's
+// definition. If the lookup results in a LookupImplWitness, then we have a
+// dependency on an impl that we don't know yet. Once a specific is applied
+// and the LookupImplWitness resolves to a final witness, we need to resolve
+// that witness's specific definition. This instruction encodes that dependency
+// into the eval block where the LookupImplWitness originated. We store the
+// LookupImplWitness instruction as an operand so that we can find the specific
+// impl that it eventually resolves to.
+struct RequireImplWitnessSpecificDefinition {
   static constexpr auto Kind =
-      InstKind::RequireSpecificDefinition.Define<Parse::NodeId>(
-          {.ir_name = "require_specific_def",
+      InstKind::RequireImplWitnessSpecificDefinition.Define<Parse::NodeId>(
+          {.ir_name = "require_witness_defn",
            .constant_kind = InstConstantKind::Conditional,
+           .constant_needs_inst_id =
+               InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
-  // Always the builtin `RequireSpecificDefinitionType` type.
+  // Always the builtin `RequireImplWitnessSpecificDefinitionType` type.
   TypeId type_id;
-  SemIR::SpecificId specific_id;
+  // Initially an LookupImplWitness instruction. When it evaluates to a final
+  // ImplWitness, then this instruction will resolve that impl's specific
+  // definition.
+  InstId witness_id;
 };
 
-// A dedicated type for `RequireSpecificDefinition`.
-using RequireSpecificDefinitionType =
-    SingletonTypeInst<InstKind::RequireSpecificDefinitionType,
-                      "require_specific_def_type">;
+// A dedicated type for `RequireImplWitnessSpecificDefinition`.
+using RequireImplWitnessSpecificDefinitionType =
+    SingletonTypeInst<InstKind::RequireImplWitnessSpecificDefinitionType,
+                      "require_witness_defn_type">;
 
 // A requirement that `.Self` implements a facet type, specified as the first
 // operand of a `where` expression. This is always the first requirement in a
