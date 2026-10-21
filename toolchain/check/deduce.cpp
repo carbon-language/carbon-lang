@@ -640,16 +640,14 @@ auto DeduceGenericCallArguments(
   // If we are short on arguments, check if we can append default values for
   // deduction.
   llvm::SmallVector<SemIR::InstId> default_values;
-  if (argument_count < param_patterns_block.size()) {
-    for (auto i = argument_count; i < param_patterns_block.size(); ++i) {
-      auto default_value =
-          ExtractParameterDefault(context, param_patterns_block[i]);
-      if (!default_value.has_value()) {
-        break;
-      }
-      default_values.push_back(
-          context.constant_values().GetInstId(default_value));
+  for (auto i = argument_count; i < param_patterns_block.size(); ++i) {
+    auto default_value =
+        ExtractParameterDefault(context, param_patterns_block[i]);
+    if (!default_value.has_value()) {
+      break;
     }
+    default_values.push_back(
+        context.constant_values().GetInstId(default_value));
   }
 
   deduction.AddAll(

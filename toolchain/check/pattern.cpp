@@ -12,7 +12,6 @@
 #include "toolchain/check/return.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/emitter.h"
-#include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/inst_categories.h"
 
