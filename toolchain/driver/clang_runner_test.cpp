@@ -24,13 +24,20 @@
 #include "testing/base/file_helpers.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/base/install_paths.h"
+#include "toolchain/diagnostics/null_diagnostics.h"
+#include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/runtimes_cache.h"
 
 namespace Carbon {
 namespace {
 
+using ::testing::_;
+using ::testing::Contains;
 using ::testing::HasSubstr;
+using ::testing::IsEmpty;
+using Testing::IsError;
 using Testing::IsSuccess;
+using ::testing::Not;
 using ::testing::StrEq;
 
 class ClangRunnerTest : public ::testing::Test {
@@ -276,6 +283,155 @@ _Z4testv:
   // No output should be produced.
   EXPECT_THAT(out, StrEq(""));
   EXPECT_THAT(err, StrEq(""));
+}
+
+TEST_F(ClangRunnerTest, ComputeRuntimesFeatures) {
+  ClangRunner runner(&install_paths_, vfs_);
+  auto compute = [&](const CodegenOptions& options) {
+    return runner.ComputeRuntimesFeatures(options, Diagnostics::NullConsumer());
+  };
+
+  // x86_64: default, microarchitecture level, specific CPU, and tune CPU.
+  auto x86_default = compute({.target = "x86_64-unknown-linux-gnu"});
+  ASSERT_THAT(x86_default, IsSuccess(_));
+  EXPECT_THAT(x86_default->cpu, StrEq("x86-64"));
+  EXPECT_THAT(x86_default->tune_cpu, StrEq("generic"));
+
+  auto x86_v3 = compute(
+      {.target = "x86_64-unknown-linux-gnu", .target_cpu = "x86-64-v3"});
+  ASSERT_THAT(x86_v3, IsSuccess(_));
+  EXPECT_THAT(x86_v3->cpu, StrEq("x86-64-v3"));
+  EXPECT_THAT(x86_v3->tune_cpu, IsEmpty());
+  EXPECT_THAT(x86_v3->target_features, Contains("+avx2"));
+  EXPECT_THAT(x86_v3->target_features, Contains("+bmi2"));
+
+  auto x86_v3_tuned = compute({.target = "x86_64-unknown-linux-gnu",
+                               .target_cpu = "x86-64-v3",
+                               .target_cpu_tune = "znver4"});
+  ASSERT_THAT(x86_v3_tuned, IsSuccess(_));
+  EXPECT_THAT(x86_v3_tuned->cpu, StrEq("x86-64-v3"));
+  EXPECT_THAT(x86_v3_tuned->tune_cpu, StrEq("znver4"));
+
+  auto x86_znver4 =
+      compute({.target = "x86_64-unknown-linux-gnu", .target_cpu = "znver4"});
+  ASSERT_THAT(x86_znver4, IsSuccess(_));
+  EXPECT_THAT(x86_znver4->cpu, StrEq("znver4"));
+  EXPECT_THAT(x86_znver4->tune_cpu, IsEmpty());
+  EXPECT_THAT(x86_znver4->target_features, Contains("+avx512f"));
+
+  // AArch64: architecture string (-march), CPU name (-mcpu), and tune (-mtune).
+  auto aarch64_v9 = compute({.target = "aarch64-unknown-linux-gnu",
+                             .target_cpu = "armv9-a",
+                             .target_cpu_tune = "neoverse-v2"});
+  ASSERT_THAT(aarch64_v9, IsSuccess(_));
+  EXPECT_THAT(aarch64_v9->tune_cpu, StrEq("neoverse-v2"));
+  EXPECT_THAT(aarch64_v9->target_features, Contains("+v9a"));
+  EXPECT_THAT(aarch64_v9->target_features, Contains("+sve2"));
+
+  auto aarch64_neoverse = compute(
+      {.target = "aarch64-unknown-linux-gnu", .target_cpu = "neoverse-v2"});
+  ASSERT_THAT(aarch64_neoverse, IsSuccess(_));
+  EXPECT_THAT(aarch64_neoverse->cpu, StrEq("neoverse-v2"));
+  EXPECT_THAT(aarch64_neoverse->tune_cpu, IsEmpty());
+  EXPECT_THAT(aarch64_neoverse->target_features, Contains("+v9a"));
+
+  // RISC-V: ISA string (-march), profile (-march), CPU name (-mcpu), and tune
+  // (-mtune).
+  auto riscv_gc = compute({.target = "riscv64-unknown-linux-gnu",
+                           .target_cpu = "rv64gc",
+                           .target_cpu_tune = "spacemit-x60"});
+  ASSERT_THAT(riscv_gc, IsSuccess(_));
+  EXPECT_THAT(riscv_gc->tune_cpu, StrEq("spacemit-x60"));
+  EXPECT_THAT(riscv_gc->target_features, Contains("+m"));
+  EXPECT_THAT(riscv_gc->target_features, Contains("+a"));
+  EXPECT_THAT(riscv_gc->target_features, Contains("+f"));
+  EXPECT_THAT(riscv_gc->target_features, Contains("+d"));
+  EXPECT_THAT(riscv_gc->target_features, Contains("+c"));
+
+  auto riscv_profile = compute(
+      {.target = "riscv64-unknown-linux-gnu", .target_cpu = "rva22u64"});
+  ASSERT_THAT(riscv_profile, IsSuccess(_));
+  EXPECT_THAT(riscv_profile->target_features, Contains("+zba"));
+  EXPECT_THAT(riscv_profile->target_features, Contains("+zbb"));
+  EXPECT_THAT(riscv_profile->target_features, Contains("+zbs"));
+
+  auto riscv_cpu = compute(
+      {.target = "riscv64-unknown-linux-gnu", .target_cpu = "spacemit-x60"});
+  ASSERT_THAT(riscv_cpu, IsSuccess(_));
+  EXPECT_THAT(riscv_cpu->cpu, StrEq("spacemit-x60"));
+  EXPECT_THAT(riscv_cpu->tune_cpu, IsEmpty());
+  EXPECT_THAT(riscv_cpu->target_features, Contains("+v"));
+
+  // Host `native` resolution should canonicalize to a concrete CPU name for
+  // both target CPU and tune CPU.
+  std::string host_target = llvm::sys::getDefaultTargetTriple();
+  llvm::Triple host_triple(host_target);
+  if (host_triple.isX86() || host_triple.isAArch64()) {
+    std::string host_cpu = llvm::sys::getHostCPUName().str();
+    auto native_features = compute({.target = host_target,
+                                    .target_cpu = "native",
+                                    .target_cpu_tune = "native"});
+    ASSERT_THAT(native_features, IsSuccess(_));
+    EXPECT_THAT(native_features->cpu, StrEq(host_cpu));
+    EXPECT_THAT(native_features->tune_cpu, StrEq(host_cpu));
+    EXPECT_THAT(native_features->target_features, Not(IsEmpty()));
+  }
+
+  // `--target-cpu-features` across x86_64, AArch64, and RISC-V, including `+`,
+  // `-`, and bare feature names.
+  {
+    auto features = compute({.target = "x86_64-unknown-linux-gnu",
+                             .target_cpu = "x86-64-v3",
+                             .target_cpu_features = "-avx2,avx512f"});
+    ASSERT_THAT(features, IsSuccess(_));
+    EXPECT_THAT(features->cpu, StrEq("x86-64-v3"));
+    // Enabling `avx512f` after `-avx2` works in order and re-enables `avx2` as
+    // an implied prerequisite.
+    EXPECT_THAT(features->target_features, Contains("+avx512f"));
+    EXPECT_THAT(features->target_features, Contains("+avx2"));
+  }
+  {
+    auto features = compute({.target = "x86_64-unknown-linux-gnu",
+                             .target_cpu = "x86-64-v3",
+                             .target_cpu_features = "avx512f,-avx512f,-fma"});
+    ASSERT_THAT(features, IsSuccess(_));
+    EXPECT_THAT(features->target_features, Not(Contains("+avx512f")));
+    EXPECT_THAT(features->target_features, Not(Contains("+fma")));
+    EXPECT_THAT(features->target_features, Contains("+avx2"));
+  }
+  {
+    auto features = compute({.target = "aarch64-unknown-linux-gnu",
+                             .target_cpu = "armv8-a",
+                             .target_cpu_features = "sve,+lse,-crc"});
+    ASSERT_THAT(features, IsSuccess(_));
+    EXPECT_THAT(features->target_features, Contains("+sve"));
+    EXPECT_THAT(features->target_features, Contains("+lse"));
+    EXPECT_THAT(features->target_features, Not(Contains("+crc")));
+  }
+  {
+    auto features = compute({.target = "riscv64-unknown-linux-gnu",
+                             .target_cpu = "rv64gc",
+                             .target_cpu_features = "+zba,zbb,-m"});
+    ASSERT_THAT(features, IsSuccess(_));
+    EXPECT_THAT(features->target_features, Contains("+zba"));
+    EXPECT_THAT(features->target_features, Contains("+zbb"));
+    EXPECT_THAT(features->target_features, Not(Contains("+m")));
+  }
+
+  // Invalid target CPU, tune CPU, or target feature flags should return an
+  // error.
+  EXPECT_THAT(compute({.target = "x86_64-unknown-linux-gnu",
+                       .target_cpu = "invalid-cpu-name"}),
+              IsError(_));
+  EXPECT_THAT(compute({.target = "x86_64-unknown-linux-gnu",
+                       .target_cpu_tune = "invalid-cpu-name"}),
+              IsError(_));
+  EXPECT_THAT(compute({.target = "x86_64-unknown-linux-gnu",
+                       .target_cpu_features = "+not-a-feature"}),
+              IsError(_));
+  EXPECT_THAT(compute({.target = "riscv64-unknown-linux-gnu",
+                       .target_cpu_features = "+f,+zfinx"}),
+              IsError(_));
 }
 
 }  // namespace

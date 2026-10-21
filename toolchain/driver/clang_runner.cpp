@@ -8,19 +8,19 @@
 #include <unistd.h>
 
 #include <filesystem>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <string>
 #include <utility>
 
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/DiagnosticDriver.h"
 #include "clang/Basic/DiagnosticIDs.h"
 #include "clang/Basic/DiagnosticOptions.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang/CodeGen/ObjectFilePCHContainerWriter.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
-#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
@@ -151,6 +151,31 @@ static auto IsNonLinkCommand(llvm::ArrayRef<llvm::StringRef> args) -> bool {
   });
 }
 
+auto ClangRunner::ComputeRuntimesFeatures(const CodegenOptions& codegen_options,
+                                          Diagnostics::Consumer& consumer)
+    -> ErrorOr<Runtimes::Cache::Features> {
+  llvm::SmallVector<std::string> codegen_clang_args =
+      codegen_options.GetClangArgs();
+  llvm::SmallVector<llvm::StringRef> extra_args(codegen_clang_args.begin(),
+                                                codegen_clang_args.end());
+  std::unique_ptr<clang::CompilerInvocation> invocation = BuildClangInvocation(
+      consumer, fs_, *installation_, codegen_options.target, extra_args);
+  if (!invocation) {
+    return Error(
+        llvm::formatv("Unable to setup target `{0}`", codegen_options.target)
+            .str());
+  }
+  clang::TargetOptions& target_opts = invocation->getTargetOpts();
+  return Runtimes::Cache::Features{
+      .target = codegen_options.target.str(),
+      .cpu = std::move(target_opts.CPU),
+      .tune_cpu = std::move(target_opts.TuneCPU),
+      .target_features = llvm::SmallVector<std::string>(
+          std::make_move_iterator(target_opts.Features.begin()),
+          std::make_move_iterator(target_opts.Features.end())),
+  };
+}
+
 auto ClangRunner::RunWithPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
                                           Runtimes& prebuilt_runtimes,
                                           bool enable_leaking)
@@ -179,7 +204,8 @@ auto ClangRunner::RunWithPrebuiltRuntimes(llvm::ArrayRef<llvm::StringRef> args,
 auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
                       Runtimes::Cache& runtimes_cache,
                       llvm::ThreadPoolInterface& runtimes_build_thread_pool,
-                      bool enable_leaking) -> ErrorOr<bool> {
+                      bool enable_leaking, Runtimes::Cache::Features features)
+    -> ErrorOr<bool> {
   std::string target = ComputeClangTarget(args);
 
   // Check the args to see if we have a known target-independent command. If so,
@@ -198,7 +224,9 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
                        enable_leaking);
   }
 
-  Runtimes::Cache::Features features = {.target = target};
+  if (features.target.empty()) {
+    features.target = target;
+  }
   CARBON_ASSIGN_OR_RETURN(Runtimes runtimes, runtimes_cache.Lookup(features));
 
   // We need to build the Clang resource directory for these runtimes. This
@@ -206,14 +234,12 @@ auto ClangRunner::Run(llvm::ArrayRef<llvm::StringRef> args,
   // the build. The temporary directory should only be used during the build,
   // not once we are running Clang with the built runtime.
   CARBON_VLOG("Building target resource dir...\n");
-  ClangResourceDirBuilder builder(this, &runtimes_build_thread_pool,
-                                  llvm::Triple(features.target), &runtimes);
+  ClangResourceDirBuilder builder(this, &runtimes_build_thread_pool, &runtimes,
+                                  features);
   ClangArchiveRuntimesBuilder<Runtimes::LibUnwind> lib_unwind_builder(
-      this, &runtimes_build_thread_pool, llvm::Triple(features.target),
-      &runtimes);
+      this, &runtimes_build_thread_pool, &runtimes, features);
   ClangArchiveRuntimesBuilder<Runtimes::Libcxx> libcxx_builder(
-      this, &runtimes_build_thread_pool, llvm::Triple(features.target),
-      &runtimes);
+      this, &runtimes_build_thread_pool, &runtimes, features);
   CARBON_ASSIGN_OR_RETURN(std::filesystem::path resource_dir_path,
                           std::move(builder).Wait());
   CARBON_ASSIGN_OR_RETURN(std::filesystem::path libunwind_path,
