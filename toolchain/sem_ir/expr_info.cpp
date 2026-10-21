@@ -316,6 +316,14 @@ auto FindStorageArgForInitializerInSpecific(const File& sem_ir, InstId init_id,
         specific_id = inst.specific_id;
         continue;
       }
+      case CARBON_KIND(SpecificConstant inst): {
+        if (!allow_transitive) {
+          return {ir, InstId::None};
+        }
+        init_id = inst.inst_id;
+        specific_id = inst.specific_id;
+        continue;
+      }
       case CARBON_KIND(ArrayInit init): {
         return {ir, init.dest_id};
       }
