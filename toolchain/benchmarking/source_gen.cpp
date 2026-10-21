@@ -112,6 +112,8 @@ enum class PlanKind : uint8_t {
   ReadParams,
 };
 
+static constexpr int NumPlanKinds = static_cast<int>(PlanKind::ReadParams) + 1;
+
 // The number of blocks that a statement of `kind` opens.
 static auto NumPlanBlocks(PlanKind kind) -> int {
   switch (kind) {
@@ -126,10 +128,11 @@ static auto NumPlanBlocks(PlanKind kind) -> int {
   }
 }
 
-// A statement in a definition plan. `form` selects among the kind's spellings.
+// A statement in a definition plan. `spelling_index` selects among the
+// available spellings for `kind`, in `[0, NumPlanSpellings(kind))`.
 struct PlanStmt {
   PlanKind kind;
-  int form;
+  int spelling_index;
 };
 
 // The expressions and conditions in plan statements. `{0}` and `{1}` are
@@ -139,6 +142,26 @@ static constexpr llvm::StringLiteral PlanExprs[] = {
     "{0} + 1", "{0} * 2", "{0} - {1}", "({0} % 7) + {1}"};
 static constexpr llvm::StringLiteral PlanConds[] = {"{0} > 3", "{0} < 9",
                                                     "{0} == 2", "{0} != 5"};
+
+// The number of distinct spellings for a statement of `kind`.
+static auto NumPlanSpellings(PlanKind kind) -> int {
+  switch (kind) {
+    case PlanKind::Local:
+    case PlanKind::Update:
+      return std::size(PlanExprs);
+    case PlanKind::If:
+    case PlanKind::IfElse:
+    case PlanKind::ElseIf:
+    case PlanKind::While:
+    case PlanKind::GuardReturn:
+      return std::size(PlanConds);
+    case PlanKind::GuardExit:
+      // Pairs one of `PlanConds` with `break;` or `continue;`.
+      return std::lcm<int>(std::size(PlanConds), 2);
+    case PlanKind::ReadParams:
+      return 1;
+  }
+}
 
 // The statements of a definition plan at each depth. The statement that a guard
 // returns or exits with is one depth below the guard, and isn't listed.
@@ -154,35 +177,27 @@ struct DefPlan {
 // Clang's implementation files, as classified with libclang (excluding
 // definitions with a `switch`).
 //
-// Why these constants are not in `DenseDeclParams` / `ClassParams`:
-// `DenseDeclParams` and `ClassParams` parameterize the high-level shape of a
-// generated file: what declarations and definitions a class contains, what
-// types they use, and the distribution of definition sizes
-// (`out_of_line_def_sizes`). Once a definition's statement count is chosen,
-// the constants below govern its internal statement mix and control-flow
-// nesting (`if`/`else`/`while` blocks, guard returns/exits, and local variable
-// density) so that generated definitions of any size have a realistic internal
-// shape without requiring callers to configure dozens of coupled internal
-// ratios.
-//
-// Criteria for adding any of these constants to `DenseDeclParams` or
-// `ClassParams`: promote a constant to the parameterization when a benchmark or
-// test needs to isolate the compiler's sensitivity to a specific structural
+// These constants are hardcoded rather than in `DenseDeclParams` or
+// `ClassParams` unless a benchmark or test needs to vary a specific structural
 // dimension inside definitions (such as nesting depth, branching factor, or
-// local variable density) independently of total statement count.
+// local variable density) independently of statement count.
 //
 // All rates and bucket distributions below are integer percentages (with
-// multi-bucket rows summing to 100), so `ComposeDefPlan` can scale counts with
-// integer arithmetic (`scale_by_percent`).
+// multi-bucket rows summing to 100).
 //
-// By the plan's size, the percentages of plans with each maximum depth, and
-// the number of guard returns at a depth as a percentage of the statements at
-// the next depth.
+// A row of `PlanShapeTable` giving the shape parameters for plans with at
+// least `min_statements` statements: the percentage of plans with each maximum
+// depth, and the number of guard returns at a depth as a percentage of the
+// statements at the next depth.
 struct PlanShapeRow {
   int min_statements;
   std::array<int, 6> max_depth_percents;
   int guard_return_percent;
 };
+// Rows are sorted in strictly increasing order of `min_statements`, starting
+// with `min_statements = 0` so that every statement count has an applicable
+// row. A plan deterministically uses the last row with
+// `min_statements <= statements`.
 static constexpr PlanShapeRow PlanShapeTable[] = {
     {.min_statements = 0,
      .max_depth_percents = {100, 0, 0, 0, 0, 0},
@@ -212,9 +227,10 @@ static constexpr PlanShapeRow PlanShapeTable[] = {
      .max_depth_percents = {0, 5, 4, 29, 30, 32},
      .guard_return_percent = 12},
 };
-// By a plan's maximum depth, the percentage of its statements at each depth
-// (summing to 100). Every definition also has three statements at depth 0, so
-// plans have a lower share there than real definitions.
+// Indexed by a plan's maximum depth, each row gives the percentage of the
+// plan's statements at each depth (summing to 100). Every definition also has
+// three statements at depth 0, so plans have a lower share there than real
+// definitions.
 static constexpr std::array<int, 6> PlanDepthPercents[] = {
     {100, 0, 0, 0, 0, 0},   {60, 40, 0, 0, 0, 0},   {38, 45, 17, 0, 0, 0},
     {25, 38, 27, 10, 0, 0}, {17, 29, 28, 18, 8, 0}, {13, 25, 24, 19, 13, 6},
@@ -304,8 +320,15 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
     return (count * percent + absl::Uniform<int>(rng, 0, 100)) / 100;
   };
 
+  // Find the last row satisfying `statements >= row.min_statements`. This
+  // invariant is satisfied for `*shape` throughout the loop because the first
+  // row has `min_statements == 0`.
+  static_assert(PlanShapeTable[0].min_statements == 0);
   const PlanShapeRow* shape = PlanShapeTable;
   for (const PlanShapeRow& row : PlanShapeTable) {
+    if (&row != PlanShapeTable) {
+      CARBON_CHECK(row.min_statements > (&row - 1)->min_statements);
+    }
     if (statements >= row.min_statements) {
       shape = &row;
     }
@@ -315,17 +338,24 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
       scale_by_percent);
 
   plan.levels.resize(depth_counts.size());
-  // Each kind's statements take its forms in turn.
-  std::array<int, static_cast<int>(PlanKind::ReadParams) + 1> next_forms = {};
+  // Select each statement's spelling starting from `variant` and advancing with
+  // each statement of the same kind, so that spellings rotate both across
+  // variants of the same size and across same-kind statements within a plan.
+  std::array<int, NumPlanKinds> next_spelling = {};
+  next_spelling.fill(variant);
   auto add = [&](int depth, PlanKind kind, int count) {
+    int num_spellings = NumPlanSpellings(kind);
+    int& next = next_spelling[static_cast<int>(kind)];
     for (auto _ : llvm::seq(count)) {
-      int& next_form = next_forms[static_cast<int>(kind)];
-      plan.levels[depth].push_back({.kind = kind, .form = variant + next_form});
-      ++next_form;
+      plan.levels[depth].push_back(
+          {.kind = kind, .spelling_index = next % num_spellings});
+      ++next;
     }
   };
 
-  // The statements at a depth that guards at the previous depth imply.
+  // How many of `depth_counts[depth]` are the `return`, `break`, or `continue`
+  // body statements of guards at `depth - 1` (which are emitted as part of
+  // those guards rather than as separate `PlanStmt`s at `depth`).
   int guard_children = 0;
   // The blocks at a depth, and how many of them are loop blocks.
   int blocks = 1;
@@ -349,9 +379,13 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
                         next - min_free});
       guards = std::min({scale_by_percent(next, shape->guard_return_percent),
                          heads - exits, next - exits - min_free});
+      // The number of statements at the next depth that aren't the body of a
+      // guard at this depth, and so must be placed in blocks opened by
+      // non-guard statements at this depth.
       int free = next - guards - exits;
-      // Keep a statement at this depth to hold the next depth's free
-      // statements.
+      // When there are such `free` statements at the next depth (rather than
+      // every statement at the next depth being a guard's body), keep at least
+      // one non-guard statement at this depth to open a block for them.
       if (free > 0 && heads == guards + exits) {
         if (guards > 0) {
           --guards;
@@ -453,9 +487,8 @@ static auto ApportionDefSizes(int num_defs,
 static auto BuildDefPlans(int num_defs,
                           llvm::ArrayRef<SourceGen::DefSizeWeight> sizes)
     -> llvm::SmallVector<DefPlan> {
-  // `position` is a `double` in `(0, 1)` so that buckets with different counts
-  // can be interleaved by sorting on `(variant + 0.5) / count` directly rather
-  // than scaling to a common integer denominator.
+  // Entries are sorted by `position`, which is `(variant + 0.5) / count`, to
+  // interleave buckets with different counts.
   struct Entry {
     double position;
     int statements;
@@ -865,9 +898,10 @@ auto SourceGen::ClassGenState::GetValidTypeUse(TypePool& pool) -> TypeUse {
 // With `producible_only`, the pool only uses fixed types that have a value
 // expression. With `consumed`, each use gets one of its type's consumer
 // templates, round-robin per type before the shuffle, so that the mix of
-// templates doesn't depend on the seed. Each use also records its index before
-// the shuffle, which pairs it with something else that doesn't depend on the
-// seed.
+// templates doesn't depend on the seed. Each use also records its pre-shuffle
+// `index` in the pool so callers can pair it with other unshuffled
+// per-function state (such as `def_plans_`), keeping the pairing and the
+// resulting generated code size independent of the shuffle seed.
 //
 // `valid_type_names_` must already contain the fixed type spellings.
 auto SourceGen::ClassGenState::BuildTypePool(
@@ -1831,8 +1865,9 @@ auto SourceGen::EmitFunctionDecl(llvm::StringRef name, bool is_private,
 //
 // The declaration can be configured with a function name, private modifier,
 // whether it is a method, the parameter count, and how indented it is. Its
-// parameter names and types come from `state`. When `captured` is not null, the declaration
-// has an out-of-line definition, and records its signature in `captured`.
+// parameter names and types come from `state`. When `captured` is not null, the
+// declaration has an out-of-line definition, and records its signature in
+// `captured`.
 auto SourceGen::GenerateFunctionDecl(ClassGenState& state, llvm::StringRef name,
                                      bool is_private, bool is_method,
                                      int param_count, llvm::StringRef indent,
@@ -1883,9 +1918,9 @@ struct ArrangedStmt {
   int first_block = -1;
 };
 
-// A block of an arranged definition
+// A block of an arranged definition.
 struct ArrangedBlock {
-  // <FIXME: how is a statement an integer?>
+  // Indices into `ArrangedDef::stmts`.
   llvm::SmallVector<int> stmts;
   bool is_loop_block = false;
 };
@@ -1931,7 +1966,7 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
       }
     }
     if (depth == 0) {
-      others.push_back({.kind = PlanKind::ReadParams, .form = 0});
+      others.push_back({.kind = PlanKind::ReadParams, .spelling_index = 0});
     }
     std::shuffle(others.begin(), others.end(), rng);
 
@@ -2013,9 +2048,9 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
   return def;
 }
 
-// Emits the statements of `def` after its `acc` declaration. Locals take their
-// names from `locals` in turn, the `ReadParams` statement adds `reads`, and
-// guards return `return_value`.
+// Emits the statements of `def` after the accumulator declaration that every
+// function begins with. Locals take their names from `locals` in turn, the
+// `ReadParams` statement adds `reads`, and guards return `return_value`.
 //
 // The first operand of each statement after a local is that local, so that
 // every local is read. Every other operand, and the target of each update, is a
@@ -2042,8 +2077,8 @@ static auto EmitArrangedDef(const ArrangedDef& def,
       }
     }
   };
-  auto emit_cond = [&](int form) {
-    emit_expr(PlanConds[form % std::size(PlanConds)]);
+  auto emit_cond = [&](int spelling_index) {
+    emit_expr(PlanConds[spelling_index % std::size(PlanConds)]);
   };
   auto indent = [&](int depth) { os.indent(2 * depth); };
 
@@ -2081,7 +2116,7 @@ static auto EmitArrangedDef(const ArrangedDef& def,
         os << "} else {\n";
       } else {
         os << "} else if (";
-        emit_cond(owner.plan.form + 1);
+        emit_cond(owner.plan.spelling_index + 1);
         os << ") {\n";
       }
       stack.push_back({.block = ended + 1,
@@ -2099,7 +2134,7 @@ static auto EmitArrangedDef(const ArrangedDef& def,
         llvm::StringRef name = locals[next_local++];
         os << (is_cpp ? "int " : "var ") << name
            << (is_cpp ? " = " : ": i32 = ");
-        emit_expr(PlanExprs[planned.form % std::size(PlanExprs)]);
+        emit_expr(PlanExprs[planned.spelling_index]);
         os << ";\n";
         scope.push_back(name);
         pending = name;
@@ -2107,7 +2142,7 @@ static auto EmitArrangedDef(const ArrangedDef& def,
       }
       case PlanKind::Update:
         os << pick_local() << " = ";
-        emit_expr(PlanExprs[planned.form % std::size(PlanExprs)]);
+        emit_expr(PlanExprs[planned.spelling_index]);
         os << ";\n";
         break;
       case PlanKind::ReadParams:
@@ -2120,7 +2155,7 @@ static auto EmitArrangedDef(const ArrangedDef& def,
       case PlanKind::ElseIf:
       case PlanKind::While:
         os << (planned.kind == PlanKind::While ? "while (" : "if (");
-        emit_cond(planned.form);
+        emit_cond(planned.spelling_index);
         os << ") {\n";
         stack.push_back({.block = stmt.first_block,
                          .next_stmt = 0,
@@ -2129,13 +2164,13 @@ static auto EmitArrangedDef(const ArrangedDef& def,
       case PlanKind::GuardReturn:
       case PlanKind::GuardExit:
         os << "if (";
-        emit_cond(planned.form);
+        emit_cond(planned.spelling_index);
         os << ") {\n";
         indent(depth + 1);
         if (planned.kind == PlanKind::GuardReturn) {
           os << "return " << return_value << ";\n";
         } else {
-          os << (planned.form % 2 == 0 ? "break;\n" : "continue;\n");
+          os << (planned.spelling_index % 2 == 0 ? "break;\n" : "continue;\n");
         }
         indent(depth);
         os << "}\n";
@@ -2196,7 +2231,7 @@ auto SourceGen::GenerateOutOfLineDef(ClassGenState& state,
 
   // Locals and parameters draw from the same identifiers of each length, so
   // exclude this function's parameter names: C++ rejects a local that
-  // redeclares a parameter.
+  // has the same name as a parameter.
   const DefPlan& plan = state.def_plans()[sig.def_plan];
   Set<llvm::StringRef> param_names;
   for (const TypedName& param : sig.params) {
@@ -2269,7 +2304,8 @@ auto SourceGen::GenerateInlineFunctionDef(ClassGenState& state,
 
   // Each local after the first reads the previous one. Locals and parameters
   // draw from the same identifiers of each length, so exclude this function's
-  // parameter names: C++ rejects a local that redeclares a parameter.
+  // parameter names: C++ rejects a local that has the same name as a
+  // parameter.
   llvm::SmallVector<llvm::StringRef> locals;
   locals.reserve(local_count);
   UniqueIdentifierPopper unique_local_names(*this, state.local_names(),

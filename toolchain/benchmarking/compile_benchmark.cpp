@@ -268,8 +268,10 @@ static auto DenseDeclParams() -> SourceGen::DenseDeclParams {
 
 // Parameters for the implementation file pattern: classes whose functions and
 // methods are all defined out-of-line, with the default definition sizes. Two
-// thirds of the functions are methods, and they average two parameters, as in
-// the Carbon toolchain's, LLVM's, and Clang's implementation files.
+// thirds of the functions are methods, and they average two parameters (`0..2`
+// from `max_params = 2`, plus the extra parameter added to out-of-line
+// definitions), as in the Carbon toolchain's, LLVM's, and Clang's
+// implementation files.
 static auto ImplFileParams() -> SourceGen::DenseDeclParams {
   SourceGen::DenseDeclParams params;
   params.class_params = {.public_function_decls = 2,
@@ -431,34 +433,34 @@ static auto ConfigureImplFileBenchmark(benchmark::Benchmark* b) -> void {
 // In-process benchmarks measure the compiler as a library across each phase of
 // compilation. The mode defaults to `Mode::InProcess`.
 BENCHMARK(BM_CompileApiFileDenseDecls<Lang::Carbon, Phase::Lex>)
-    ->Apply(ConfigureCompileBenchmark);
+    ->Apply(ConfigureDenseDeclBenchmark);
 BENCHMARK(BM_CompileApiFileDenseDecls<Lang::Carbon, Phase::Parse>)
-    ->Apply(ConfigureCompileBenchmark);
+    ->Apply(ConfigureDenseDeclBenchmark);
 BENCHMARK(BM_CompileApiFileDenseDecls<Lang::Carbon, Phase::Check>)
-    ->Apply(ConfigureCompileBenchmark);
+    ->Apply(ConfigureDenseDeclBenchmark);
 BENCHMARK(BM_CompileApiFileDenseDecls<Lang::Cpp, Phase::Lex>)
-    ->Apply(ConfigureCompileBenchmark);
+    ->Apply(ConfigureDenseDeclBenchmark);
 BENCHMARK(BM_CompileApiFileDenseDecls<Lang::Cpp, Phase::Check>)
-    ->Apply(ConfigureCompileBenchmark);
+    ->Apply(ConfigureDenseDeclBenchmark);
 
 // Subprocess benchmarks measure the same work end-to-end by executing the
 // installed compiler binary, including process startup cost. They use real
 // (wall-clock) time because the compilation happens in a child process whose
 // CPU time isn't attributed to the benchmark process.
 BENCHMARK(BM_CompileExecApiFileDenseDecls<Lang::Carbon, Phase::Lex>)
-    ->Apply(ConfigureCompileBenchmark)
+    ->Apply(ConfigureDenseDeclBenchmark)
     ->UseRealTime();
 BENCHMARK(BM_CompileExecApiFileDenseDecls<Lang::Carbon, Phase::Parse>)
-    ->Apply(ConfigureCompileBenchmark)
+    ->Apply(ConfigureDenseDeclBenchmark)
     ->UseRealTime();
 BENCHMARK(BM_CompileExecApiFileDenseDecls<Lang::Carbon, Phase::Check>)
-    ->Apply(ConfigureCompileBenchmark)
+    ->Apply(ConfigureDenseDeclBenchmark)
     ->UseRealTime();
 BENCHMARK(BM_CompileExecApiFileDenseDecls<Lang::Cpp, Phase::Lex>)
-    ->Apply(ConfigureCompileBenchmark)
+    ->Apply(ConfigureDenseDeclBenchmark)
     ->UseRealTime();
 BENCHMARK(BM_CompileExecApiFileDenseDecls<Lang::Cpp, Phase::Check>)
-    ->Apply(ConfigureCompileBenchmark)
+    ->Apply(ConfigureDenseDeclBenchmark)
     ->UseRealTime();
 
 // In-process benchmarks of the implementation file pattern.
