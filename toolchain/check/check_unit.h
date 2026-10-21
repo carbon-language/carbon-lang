@@ -197,11 +197,6 @@ class CheckUnit {
 
   DiagnosticEmitter emitter_;
   Context context_;
-
-  // The number of entries at the start of
-  // `context_.definitions_required_by_use()` that `CheckRequiredDefinitions`
-  // has already checked.
-  size_t checked_definitions_by_use_ = 0;
 };
 
 }  // namespace Carbon::Check

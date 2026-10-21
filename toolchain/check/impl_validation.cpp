@@ -466,7 +466,11 @@ static auto ValidateImplsForInterface(Context& context,
   }
 }
 
-auto ImportFinalImplsWithImplInFile(Context& context) -> void {
+// For each `impl` seen in this file, ensure that we import every available
+// `final impl` for the same interface, so that we can to check for
+// diagnostics about the relationship between them and the `impl`s in this
+// file.
+static auto ImportFinalImplsWithImplInFile(Context& context) -> void {
   struct InterfaceToImport {
     SemIR::ImportIRId ir_id;
     SemIR::InterfaceId interface_id;
@@ -548,6 +552,8 @@ auto ImportFinalImplsWithImplInFile(Context& context) -> void {
 }
 
 auto ValidateImplsInFile(Context& context) -> void {
+  ImportFinalImplsWithImplInFile(context);
+
   // Collect all of the impls sorted into contiguous segments by their
   // interface. We only need to compare impls within each such segment. We don't
   // keep impls with an Error in them, as they may be missing other values

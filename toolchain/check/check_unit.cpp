@@ -11,6 +11,7 @@
 
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Sema/Sema.h"
+#include "common/growing_range.h"
 #include "common/pretty_stack_trace_function.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
@@ -464,11 +465,7 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
 auto CheckUnit::CheckRequiredDefinitions() -> bool {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
-  // TODO: benchmark whether it's better to use move and clear the original
-  // vector over assigning a new, empty vector.
-  auto definitions_required_by_decl =
-      std::exchange(context_.definitions_required_by_decl(), {});
-  for (SemIR::InstId decl_inst_id : definitions_required_by_decl) {
+  for (SemIR::InstId decl_inst_id : context_.definitions_required_by_decl()) {
     SemIR::Inst decl_inst = context_.insts().Get(decl_inst_id);
     CARBON_KIND_SWITCH(context_.insts().Get(decl_inst_id)) {
       case CARBON_KIND(SemIR::ClassDecl class_decl): {
@@ -508,17 +505,11 @@ auto CheckUnit::CheckRequiredDefinitions() -> bool {
       }
     }
   }
+  context_.definitions_required_by_decl().clear();
 
   auto new_resolution_occurred = false;
-  // Only check uses added since the previous call, so that each one is
-  // diagnosed at most once. Resolving a definition can add more uses, which
-  // this loop also checks.
-  auto& definitions_required_by_use = context_.definitions_required_by_use();
-  for (; checked_definitions_by_use_ < definitions_required_by_use.size();
-       ++checked_definitions_by_use_) {
-    // Copy the use, because resolving a definition can add to `uses`.
-    auto [loc, specific_id] =
-        definitions_required_by_use[checked_definitions_by_use_];
+  for (auto [loc, specific_id] :
+       GrowingRange(context_.definitions_required_by_use())) {
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
     switch (ResolveSpecificDefinition(context_, loc, specific_id)) {
@@ -544,6 +535,7 @@ auto CheckUnit::CheckRequiredDefinitions() -> bool {
     }
   }
 
+  context_.definitions_required_by_use().clear();
   return new_resolution_occurred;
 }
 
@@ -634,10 +626,6 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
 }
 
 auto CheckUnit::FinishRun() -> void {
-  ImportFinalImplsWithImplInFile(context_);
-
-  auto do_resolution_checks = true;
-  auto num_resolution_check_cycles = 0;
   // TODO: Find a more optimal way to evaluate mutually-dependent interop
   // between Carbon and C++.
   //
@@ -645,29 +633,23 @@ auto CheckUnit::FinishRun() -> void {
   // run-time of `fail_todo_bidirectional_intorp_too_deep.carbon`. That unit
   // test isn't terribly complex, so we should probably solve this fairly soon.
   //
-  // - 14 loops average   5'323 ms (base case)
-  // - 15 loops average   7'695 ms (1.45x 14 loops)
-  // - 16 loops average  12'444 ms (1.62x 15 loops)
-  // - 17 loops average  22'195 ms (1.78x 16 loops)
-  // - 18 loops average  41'150 ms (1.85x 17 loops)
-  // - 19 loops average  79'812 ms (1.94x 18 loops)
-  // - 20 loops average 158'344 ms (1.98x 19 loops)
-  // - 21 loops average 308'374 ms (1.95x 20 loops)
-  //
-  // We choose 15 loops to make progress without significantly slowing down unit
-  // tests.
-  constexpr auto max_resolution_check_cycles = 15;
-  while (do_resolution_checks &&
-         ++num_resolution_check_cycles < max_resolution_check_cycles) {
+  // We chose 10 loops to make progress without significantly slowing down debug
+  // unit tests.
+  constexpr auto max_resolution_check_cycles = 10;
+  auto num_resolution_check_cycles = 0;
+
+  while (num_resolution_check_cycles++ < max_resolution_check_cycles) {
     // Finalizes the C++ portion of the compilation, allowing any pending C++
     // template instantiations to complete Carbon types and generate required
     // thunks or function calls.
     FinalizeCppAstFragment(context_);
 
-    do_resolution_checks = CheckRequiredDefinitions();
+    if (!CheckRequiredDefinitions()) {
+      break;
+    }
   }
 
-  if (num_resolution_check_cycles == max_resolution_check_cycles) {
+  if (num_resolution_check_cycles > max_resolution_check_cycles) {
     // Point at the code that queued the next C++ instantiation, because that
     // is what needed another pass. If nothing is queued, point at the top of
     // the file.
