@@ -63,3 +63,93 @@ fn CallAIndirect() -> i32 {
 fn CallB() -> i32 {
   return Cpp.GetB();
 }
+
+// --- pkg_a.carbon
+package PkgA;
+import Cpp inline '''
+template <typename T> void Accept(T) {}
+''';
+
+class SameName {}
+alias TypeAlias = i32;
+namespace N;
+class N.SameNested {}
+
+inline Cpp '''
+void CheckPkgA(Carbon::SameName, Carbon::N::SameNested) {
+  Carbon::TypeAlias x = 0;
+  static_assert(sizeof(x) == 4);
+}
+''';
+
+fn TestPkgA(s: SameName, n: N.SameNested) {
+  Cpp.Accept(s);
+  Cpp.CheckPkgA(s, n);
+}
+
+// --- pkg_b.carbon
+package PkgB;
+import Cpp inline '''
+template <typename T> void Accept(T) {}
+''';
+
+class SameName {}
+alias TypeAlias = i64;
+namespace N;
+class N.SameNested {}
+
+inline Cpp '''
+void CheckPkgB(Carbon::SameName, Carbon::N::SameNested) {
+  Carbon::TypeAlias x = 0;
+  static_assert(sizeof(x) == 8);
+}
+''';
+
+fn TestPkgB(s: SameName, n: N.SameNested) {
+  Cpp.Accept(s);
+  Cpp.CheckPkgB(s, n);
+}
+
+// --- use_both_packages.carbon
+library "[[@TEST_NAME]]";
+import PkgA;
+import PkgB;
+import Cpp inline '''
+// SameName and N::SameNested in PkgA and PkgB have distinct C++ DeclContexts
+// (Carbon::PkgA vs Carbon::PkgB), so overloading on them in C++ succeeds.
+void OverloadByPackage(Carbon::PkgA::SameName*) {}
+void OverloadByPackage(Carbon::PkgB::SameName*) {}
+void OverloadNestedByPackage(Carbon::PkgA::N::SameNested*) {}
+void OverloadNestedByPackage(Carbon::PkgB::N::SameNested*) {}
+''';
+
+// --- export_in_c.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class ExportedClass {}
+namespace N;
+class N.ExportedNested {}
+
+inline Cpp '''
+using UseExported = Carbon::ExportedClass;
+using UseNested = Carbon::N::ExportedNested;
+''';
+
+// --- fail_carbon_export_does_not_leak.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+namespace N;
+
+inline Cpp '''
+// CHECK:STDERR: fail_carbon_export_does_not_leak.carbon:[[@LINE+2]]:23: error: no type named 'ExportedClass' in namespace 'Carbon' [CppInteropParseError]
+// CHECK:STDERR:
+using Leak1 = Carbon::ExportedClass;
+// CHECK:STDERR: fail_carbon_export_does_not_leak.carbon:[[@LINE+2]]:26: error: no type named 'ExportedNested' in namespace 'Carbon::N' [CppInteropParseError]
+// CHECK:STDERR:
+using Leak2 = Carbon::N::ExportedNested;
+// CHECK:STDERR: fail_carbon_export_does_not_leak.carbon:[[@LINE+2]]:23: error: no member named 'PkgA' in namespace 'Carbon' [CppInteropParseError]
+// CHECK:STDERR:
+using Leak3 = Carbon::PkgA::SameName;
+''';

@@ -26,36 +26,36 @@ $999999999999
 // CHECK:STDOUT: - filename: fail_invalid.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: Expected digits after `$` [DollarIntLiteralMissingNumber]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: expected digits after `$` [DollarIntLiteralMissingNumber]
 // CHECK:STDERR:
 $
 // CHECK:STDOUT:   - { index:  1, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$", has_leading_space: true }
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: Expected digits after `$` [DollarIntLiteralMissingNumber]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: expected digits after `$` [DollarIntLiteralMissingNumber]
 // CHECK:STDERR:
 $ 1
 // CHECK:STDOUT:   - { index:  2, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$", has_leading_space: true }
 // CHECK:STDOUT:   - { index:  3, kind: "IntLiteral", line: {{ *}}[[@LINE-2]], column:   3, indent: 1, spelling: "1", value: "1", has_leading_space: true }
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: Positional parameters can only contain digits after `$` [InvalidCharacterInDollarIntLiteral]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: positional parameters can only contain digits after `$` [InvalidCharacterInDollarIntLiteral]
 // CHECK:STDERR:
 $foo
 // CHECK:STDOUT:   - { index:  4, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$foo", has_leading_space: true }
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: Positional parameters can only contain digits after `$` [InvalidCharacterInDollarIntLiteral]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: positional parameters can only contain digits after `$` [InvalidCharacterInDollarIntLiteral]
 // CHECK:STDERR:
 $1a32
 // CHECK:STDOUT:   - { index:  5, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$1a32", has_leading_space: true }
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: Leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
 // CHECK:STDERR:
 $00
 // CHECK:STDOUT:   - { index:  6, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$00", has_leading_space: true }
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: Leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
 // CHECK:STDERR:
 $025321
 // CHECK:STDOUT:   - { index:  7, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$025321", has_leading_space: true }
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: Leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
 // CHECK:STDERR:
 $0x12
 // CHECK:STDOUT:   - { index:  8, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$0x12", has_leading_space: true }
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: Leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: leading zeroes are not allowed in positional parameters [DollarIntLiteralLeadingZero]
 // CHECK:STDERR:
 $0b1100
 // CHECK:STDOUT:   - { index:  9, kind:      "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "$0b1100", has_leading_space: true }

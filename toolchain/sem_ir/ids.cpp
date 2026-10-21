@@ -225,6 +225,8 @@ auto InstBlockId::Print(llvm::raw_ostream& out) const -> void {
     out << "imports";
   } else if (*this == GlobalInit) {
     out << "global_init";
+  } else if (*this == ExtraGlobalVariables) {
+    out << "extra_global_variables";
   } else {
     IdBase::Print(out);
   }

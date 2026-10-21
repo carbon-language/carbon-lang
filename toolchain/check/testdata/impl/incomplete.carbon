@@ -539,11 +539,11 @@ interface B {
 // CHECK:STDOUT:   %Incomplete.type: type = facet_type <@Incomplete> [concrete]
 // CHECK:STDOUT:   %.Self.frozen: %J.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.frozen.as_type: type = facet_access_type %.Self.frozen [symbolic_self]
+// CHECK:STDOUT:   %.Self: %J.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.aa3: <witness> = impl_self_witness %.Self.frozen, @J [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.643: type = impl_witness_access %.aa3, element0 [symbolic_self]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
-// CHECK:STDOUT:   %.Self: %J.type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %.Self.as_type: type = facet_access_type %.Self [symbolic_self]
 // CHECK:STDOUT:   %.b2e: <witness> = impl_self_witness %.Self, @J [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.4f1: type = impl_witness_access %.b2e, element0 [symbolic_self]
@@ -1087,11 +1087,11 @@ interface B {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.b43) [identified] {
+// CHECK:STDOUT: specific @Y.WithSelf(constants.%Self.b43):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Y.WithSelf.Self.as_type.impls.Z.type.require(constants.%Self.b43) [identified] {
+// CHECK:STDOUT: specific @Y.WithSelf.Self.as_type.impls.Z.type.require(constants.%Self.b43):identified {
 // CHECK:STDOUT:   %Self => constants.%Self.b43
 // CHECK:STDOUT:   %Self.as_type.loc6_11.2 => constants.%Self.as_type.ace
 // CHECK:STDOUT: }

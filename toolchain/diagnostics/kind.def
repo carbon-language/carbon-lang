@@ -285,6 +285,7 @@ CARBON_DIAGNOSTIC_KIND(FunctionRedeclEvaluationModeDiffers)
 CARBON_DIAGNOSTIC_KIND(InvalidMainRunParameters)
 CARBON_DIAGNOSTIC_KIND(InvalidMainRunReturnType)
 CARBON_DIAGNOSTIC_KIND(MissingReturnStatement)
+CARBON_DIAGNOSTIC_KIND(ReturnTypeInTerseFunction)
 CARBON_DIAGNOSTIC_KIND(UnknownBuiltinFunctionName)
 CARBON_DIAGNOSTIC_KIND(InvalidBuiltinSignature)
 
@@ -357,6 +358,7 @@ CARBON_DIAGNOSTIC_KIND(FinalImplInMatchFirst)
 CARBON_DIAGNOSTIC_KIND(FinalImplInvalidFile)
 CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsSameFile)
 CARBON_DIAGNOSTIC_KIND(FinalImplOverlapsDifferentFile)
+CARBON_DIAGNOSTIC_KIND(AssociatedConstantGivenDifferentValues)
 
 // Impl lookup.
 CARBON_DIAGNOSTIC_KIND(MissingImplInMemberAccess)

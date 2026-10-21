@@ -101,8 +101,8 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %Core.IntLiteral.as.DivWith.impl.Op.type: type = fn_type @Core.IntLiteral.as.DivWith.impl.Op [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.DivWith.impl.Op: %Core.IntLiteral.as.DivWith.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.DivWith.impl.Op.bound: <bound method> = bound_method %int_4, %Core.IntLiteral.as.DivWith.impl.Op [concrete]
-// CHECK:STDOUT:   %.Self: %I.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.00f: <witness> = impl_self_witness %.Self, @I [symbolic_self]
+// CHECK:STDOUT:   %.Self.f73: %I.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.00f: <witness> = impl_self_witness %.Self.f73, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.fcf: %struct_type.a.b.36f = impl_witness_access %.00f, element0 [symbolic_self]
 // CHECK:STDOUT:   %I_where.type.604: type = facet_type <@I where %impl.elem0.fcf = %struct.8fa> [concrete]
 // CHECK:STDOUT:   %.2ef: <witness> = impl_self_witness %empty_tuple.type, @I [concrete]
@@ -334,8 +334,8 @@ impl () as I where .X = {.a = true, .b = (1, 2)} and .X = {.a = false, .b = (3, 
 // CHECK:STDOUT:   %int_4.6bf: %i32 = int_value 4 [concrete]
 // CHECK:STDOUT:   %tuple.859: %tuple.type.35f = tuple_value (%int_3.9f3, %int_4.6bf) [concrete]
 // CHECK:STDOUT:   %struct.7c4: %struct_type.a.b.36f = struct_value (%false, %tuple.859) [concrete]
-// CHECK:STDOUT:   %.Self: %I.type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %.00f: <witness> = impl_self_witness %.Self, @I [symbolic_self]
+// CHECK:STDOUT:   %.Self.f73: %I.type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %.00f: <witness> = impl_self_witness %.Self.f73, @I [symbolic_self]
 // CHECK:STDOUT:   %impl.elem0.fcf: %struct_type.a.b.36f = impl_witness_access %.00f, element0 [symbolic_self]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

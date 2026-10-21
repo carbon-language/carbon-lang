@@ -22,7 +22,7 @@ auto ManualMultiply(T x) -> T {
 ''';
 
 fn ManualMultiply[template T: type](p: T*) -> T* {
-    // CHECK:STDERR: fail_todo_bidirectional_intorp_too_deep.carbon:[[@LINE+2]]:32: error: semantics TODO: `maximum depth for bidirectional Carbon/C++ interop is 21` [SemanticsTodo]
+    // CHECK:STDERR: fail_todo_bidirectional_intorp_too_deep.carbon:[[@LINE+2]]:32: error: semantics TODO: `maximum depth for bidirectional Carbon/C++ interop is 15` [SemanticsTodo]
     // CHECK:STDERR:
     return Cpp.ManualMultiply(p);
 }

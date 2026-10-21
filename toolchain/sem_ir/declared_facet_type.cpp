@@ -303,11 +303,6 @@ namespace Carbon {
 template class CanonicalValueStore<SemIR::DeclaredFacetTypeId,
                                    SemIR::DeclaredFacetType,
                                    Tag<SemIR::CheckIRId>>;
-template class CanonicalValueStore<
-    SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
-    Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
 template class ValueStore<SemIR::DeclaredFacetTypeId, SemIR::DeclaredFacetType,
                           Tag<SemIR::CheckIRId>>;
-template class ValueStore<SemIR::IdentifiedFacetTypeId,
-                          SemIR::IdentifiedFacetType, Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon

@@ -14,7 +14,7 @@
 library "[[@TEST_NAME]]";
 
 fn TestLiteralNegativeIndex() {
-  // CHECK:STDERR: fail_literal_negative_index.carbon:[[@LINE+2]]:24-33: error: index `-1` is negative. [StringAtIndexNegative]
+  // CHECK:STDERR: fail_literal_negative_index.carbon:[[@LINE+2]]:24-33: error: index `-1` is negative [StringAtIndexNegative]
   // CHECK:STDERR:
   let unused c: char = "Test"[-1];
 }
@@ -23,7 +23,7 @@ fn TestLiteralNegativeIndex() {
 library "[[@TEST_NAME]]";
 
 fn TestLiteralOutOfBounds() {
-  // CHECK:STDERR: fail_literal_out_of_bounds.carbon:[[@LINE+2]]:24-32: error: string index `4` is out of bounds; string has length 4. [StringAtIndexOutOfBounds]
+  // CHECK:STDERR: fail_literal_out_of_bounds.carbon:[[@LINE+2]]:24-32: error: string index `4` is out of bounds; string has length 4 [StringAtIndexOutOfBounds]
   // CHECK:STDERR:
   let unused c: char = "Test"[4];
 }
@@ -112,12 +112,12 @@ fn TestStringIndexing() {
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.008: %str.as.IndexWith.impl.At.type.312 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.b1b: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_64) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.e56 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.b1b) [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness.e0f: <witness> = impl_witness imports.%IndexWith.impl_witness_table, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness.e0f: <witness> = impl_witness imports.%IndexWith.impl_witness_table.002, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.type.9e0: type = fn_type @str.as.IndexWith.impl.At, @str.as.IndexWith.impl(%ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.484: %str.as.IndexWith.impl.At.type.9e0 = struct_value () [concrete]
-// CHECK:STDOUT:   %IndexWith.facet: %IndexWith.type.06b = facet_value %str.3d4, (%IndexWith.impl_witness.e0f) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.938: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(Core.IntLiteral, %IndexWith.facet) [concrete]
-// CHECK:STDOUT:   %.55c: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.938, %IndexWith.facet [concrete]
+// CHECK:STDOUT:   %IndexWith.facet.bbf: %IndexWith.type.06b = facet_value %str.3d4, (%IndexWith.impl_witness.e0f) [concrete]
+// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.938: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(Core.IntLiteral, %IndexWith.facet.bbf) [concrete]
+// CHECK:STDOUT:   %.55c: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.938, %IndexWith.facet.bbf [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.bound: <bound method> = bound_method %String.val, %str.as.IndexWith.impl.At.484 [concrete]
 // CHECK:STDOUT:   %str.as.IndexWith.impl.At.specific_fn: <specific function> = specific_function %str.as.IndexWith.impl.At.484, @str.as.IndexWith.impl.At(%ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %String.val, %str.as.IndexWith.impl.At.specific_fn [concrete]
@@ -130,7 +130,7 @@ fn TestStringIndexing() {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.c1f = import_ref Core//prelude/types/string, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.485: @str.as.IndexWith.impl.%str.as.IndexWith.impl.At.type (%str.as.IndexWith.impl.At.type.312) = import_ref Core//prelude/types/string, loc{{\d+_\d+}}, loaded [symbolic = @str.as.IndexWith.impl.%str.as.IndexWith.impl.At (constants.%str.as.IndexWith.impl.At.008)]
-// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.c1f, %Core.import_ref.485), @str.as.IndexWith.impl [concrete]
+// CHECK:STDOUT:   %IndexWith.impl_witness_table.002 = impl_witness_table (%Core.import_ref.c1f, %Core.import_ref.485), @str.as.IndexWith.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.6b3 = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f53 = impl_witness_table (%Core.import_ref.6b3), @Core.IntLiteral.as.ImplicitAs.impl.6b6 [concrete]
 // CHECK:STDOUT: }

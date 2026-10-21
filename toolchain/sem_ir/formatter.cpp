@@ -169,9 +169,11 @@ static auto IsDefinitionStart(Parse::NodeKind node_kind) -> bool {
     case Parse::NodeKind::ChoiceDefinitionStart:
     case Parse::NodeKind::ClassDefinitionStart:
     case Parse::NodeKind::FunctionDefinitionStart:
+    case Parse::NodeKind::FunctionTerseDefinitionStart:
     case Parse::NodeKind::ImplDefinitionStart:
     case Parse::NodeKind::InterfaceDefinitionStart:
     case Parse::NodeKind::LambdaDefinitionStart:
+    case Parse::NodeKind::LambdaTerseDefinitionStart:
     case Parse::NodeKind::NamedConstraintDefinitionStart:
       return true;
     default:
@@ -577,7 +579,7 @@ auto Formatter::FormatFunction(FunctionId id, const Function& fn) -> void {
                           fn.has_pending_deduced_return_type()
                               ? InstId::None
                               : fn.GetDeclaredReturnForm(*sem_ir_));
-  if (fn.has_deduced_return_type) {
+  if (fn.has_deduced_return_type()) {
     out() << " [deduced]";
   }
 
@@ -689,9 +691,6 @@ auto Formatter::FormatSpecific(SpecificId id, const Specific& specific)
   out() << "specific ";
   FormatName(id);
   out() << " ";
-  if (specific.identified) {
-    out() << "[identified] ";
-  }
 
   OpenBrace();
   FormatSpecificRegion(generic, specific, GenericInstIndex::Region::Declaration,
@@ -1763,6 +1762,9 @@ auto Formatter::FormatName(SpecificId id) -> void {
   const auto& specific = sem_ir_->specifics().Get(id);
   FormatName(specific.generic_id);
   FormatArg(specific.args_id);
+  if (specific.identified) {
+    out() << ":identified";
+  }
 }
 
 auto Formatter::FormatName(SpecificInterfaceId id) -> void {

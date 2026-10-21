@@ -352,12 +352,12 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_Z2G1v() #1 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN6CarbonL1FEv()
+// CHECK:STDOUT:   call void @_ZN6Carbon4MainL1FEv()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6CarbonL1FEv() #2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon4MainL1FEv() #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF__carbon_thunk.Main()
 // CHECK:STDOUT:   ret void
@@ -424,12 +424,12 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_Z8CallBasev() #1 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN6CarbonL4baseEv()
+// CHECK:STDOUT:   call void @_ZN6Carbon4MainL4baseEv()
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6CarbonL4baseEv() #2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon4MainL4baseEv() #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Cbase__carbon_thunk.Main()
 // CHECK:STDOUT:   ret void

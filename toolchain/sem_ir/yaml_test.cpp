@@ -109,6 +109,7 @@ TEST(SemIRTest, Yaml) {
                Pair("generated", Yaml::Mapping(IsEmpty())),
                Pair("imports", Yaml::Mapping(IsEmpty())),
                Pair("global_init", Yaml::Mapping(IsEmpty())),
+               Pair("extra_global_variables", Yaml::Mapping(IsEmpty())),
                // There are 5 non-reserved inst blocks.
                inst_block, inst_block, inst_block, inst_block, inst_block))),
       Pair("value_stores",

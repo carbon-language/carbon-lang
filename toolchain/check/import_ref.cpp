@@ -19,6 +19,7 @@
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/import.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/name_lookup.h"
@@ -29,7 +30,6 @@
 #include "toolchain/sem_ir/constant.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/function.h"
-#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/import_ir.h"
@@ -2765,8 +2765,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
         return_form_const_id);
   }
   new_function.return_pattern_id = AddLoadedImportRef(resolver, return_pattern);
-  new_function.has_deduced_return_type =
-      import_function.has_deduced_return_type;
+  new_function.deduced_return_kind = import_function.deduced_return_kind;
   if (import_function.definition_id.has_value()) {
     new_function.definition_id = new_function.first_owning_decl_id;
   }
@@ -4039,7 +4038,7 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
   auto witnesses_block_id = SemIR::InstBlockId::None;
   if (inst.witnesses_block_id.has_value()) {
     witnesses_block_id =
-        AddCanonicalWitnessesBlock(resolver.local_ir(), witnesses);
+        AddCanonicalWitnessesBlock(resolver.local_context(), witnesses);
   }
 
   return ResolveResult::Deduplicated<SemIR::FacetValue>(
@@ -4196,24 +4195,6 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::InitForm inst) -> ResolveResult {
-  auto type_const_id = GetLocalConstantId(resolver, inst.type_id);
-  auto type_component_const_id =
-      GetLocalConstantId(resolver, inst.type_component_inst_id);
-  if (resolver.HasNewWork()) {
-    return ResolveResult::Retry();
-  }
-  return ResolveResult::Deduplicated<SemIR::InitForm>(
-      resolver,
-      SemIR::InitForm{
-          .type_id =
-              resolver.local_types().GetTypeIdForTypeConstantId(type_const_id),
-          .type_component_inst_id = resolver.local_types().GetTypeInstId(
-              resolver.local_types().GetTypeIdForTypeConstantId(
-                  type_component_const_id))});
-}
-
-static auto TryResolveTypedInst(ImportRefResolver& resolver,
                                 SemIR::IntValue inst) -> ResolveResult {
   auto type_id = GetLocalConstantId(resolver, inst.type_id);
   if (resolver.HasNewWork()) {
@@ -4338,19 +4319,21 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
       resolver, {.type_id = SemIR::TypeType::TypeId, .pointee_id = pointee_id});
 }
 
+template <typename PrimitiveFormT>
+  requires SemIR::Internal::HasInstCategory<SemIR::AnyPrimitiveForm,
+                                            PrimitiveFormT>
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
-                                SemIR::RefForm inst) -> ResolveResult {
+                                PrimitiveFormT inst) -> ResolveResult {
+  CARBON_CHECK(inst.type_id == SemIR::FormType::TypeId);
   auto type_component_inst_id =
-      GetLocalConstantId(resolver, inst.type_component_inst_id);
+      GetLocalTypeInstId(resolver, inst.type_component_inst_id);
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
-  return ResolveResult::Deduplicated<SemIR::RefForm>(
-      resolver, {.type_id = SemIR::TypeType::TypeId,
-                 .type_component_inst_id = resolver.local_types().GetTypeInstId(
-                     resolver.local_types().GetTypeIdForTypeConstantId(
-                         type_component_inst_id))});
+  return ResolveResult::Deduplicated<PrimitiveFormT>(
+      resolver, {.type_id = SemIR::FormType::TypeId,
+                 .type_component_inst_id = type_component_inst_id});
 }
 
 static auto TryResolveTypedInst(ImportRefResolver& resolver,
@@ -4924,6 +4907,9 @@ static auto TryResolveInstCanonical(ImportRefResolver& resolver,
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ValueBindingPattern inst): {
+      return TryResolveTypedInst(resolver, inst);
+    }
+    case CARBON_KIND(SemIR::ValueForm inst): {
       return TryResolveTypedInst(resolver, inst);
     }
     case CARBON_KIND(SemIR::ValueParamPattern inst): {

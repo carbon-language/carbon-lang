@@ -368,7 +368,6 @@ impl C2 as J2 where .U2 = C2 {
 }
 
 // --- fail_associated_type_in_signature_mismatch.carbon
-// CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon: error: cannot convert from struct type `{.a: ()}` to `{.x: ()}`: unexpected field `a` in source type [StructInitUnexpectedFieldInConversion]
 library "[[@TEST_NAME]]";
 
 interface K {
@@ -377,11 +376,12 @@ interface K {
 }
 
 impl () as K where .V = {.a: ()} {
+  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+7]]:3-46: error: cannot convert from struct type `{.a: ()}` to `{.x: ()}`: unexpected field `a` in source type [StructInitUnexpectedFieldInConversion]
   // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+6]]:21-31: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-5]]:3-24: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-6]]:3-24: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE+3]]:3-46: error: cannot convert from struct type `{.x: ()}` to `{.a: ()}`: unexpected field `x` in source type [StructInitUnexpectedFieldInConversion]
-  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-8]]:3-24: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR: fail_associated_type_in_signature_mismatch.carbon:[[@LINE-9]]:3-24: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
   fn F(unused self, v: {.x: ()}) -> {.x: ()} { return v; }
 }

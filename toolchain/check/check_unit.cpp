@@ -94,6 +94,10 @@ auto CheckUnit::Run() -> void {
 
   if (!ProcessNodeIds()) {
     context_.sem_ir().set_has_errors(true);
+
+    // TODO: Are there more steps from `FinishRun` we should be doing here?
+    FinalizeCppAstFragment(context_);
+    DisconnectCppAst(context_);
     return;
   }
 
@@ -717,6 +721,8 @@ auto CheckUnit::FinishRun() -> void {
       block = context_.generated();
     } else if (reserved_id == SemIR::InstBlockId::Imports) {
       block = context_.imports();
+    } else if (reserved_id == SemIR::InstBlockId::ExtraGlobalVariables) {
+      block = context_.extra_global_variables();
     } else {
       CARBON_FATAL("Unexpected reserved InstBlockId: {0}", reserved_id);
     }
