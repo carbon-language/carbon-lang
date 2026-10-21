@@ -28,6 +28,7 @@ fn Bar() {
 // CHECK:STDOUT: --- function.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Baz.type.dc3: type = fn_type @Baz.loc18 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Baz.29d: %Baz.type.dc3 = struct_value () [concrete]

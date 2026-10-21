@@ -17,40 +17,41 @@ fn foo() {
 }
 
 // CHECK:STDOUT: - filename: nested.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'foo'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ForHeaderStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:                 {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:               {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ForIn', text: 'in', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:         {kind: 'ForHeader', text: ')', subtree_size: 8},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:               {kind: 'ForHeaderStart', text: '('},
-// CHECK:STDOUT:                     {kind: 'IdentifierNameNotBeforeSignature', text: 'z'},
-// CHECK:STDOUT:                     {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:                   {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:                 {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:               {kind: 'ForIn', text: 'in', subtree_size: 5},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'y'},
-// CHECK:STDOUT:             {kind: 'ForHeader', text: ')', subtree_size: 8},
-// CHECK:STDOUT:               {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:                     {kind: 'IdentifierNameExpr', text: 'Print'},
-// CHECK:STDOUT:                   {kind: 'CallExprStart', text: '(', subtree_size: 2},
-// CHECK:STDOUT:                   {kind: 'IdentifierNameExpr', text: 'z'},
-// CHECK:STDOUT:                 {kind: 'CallExpr', text: ')', subtree_size: 4},
-// CHECK:STDOUT:               {kind: 'ExprStatement', text: ';', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'CodeBlock', text: '}', subtree_size: 7},
-// CHECK:STDOUT:           {kind: 'ForStatement', text: 'for', subtree_size: 16},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 18},
-// CHECK:STDOUT:       {kind: 'ForStatement', text: 'for', subtree_size: 27},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 33},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'foo'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─ForHeaderStart '('
+// CHECK:STDOUT:   │ │   │     ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │   │     ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │     ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │   │   ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │   │ ╭─VariablePattern 'var'
+// CHECK:STDOUT:   │ │   ├─ForIn 'in'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │ ╭─ForHeader ')'
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │   ╭─ForHeaderStart '('
+// CHECK:STDOUT:   │ │ │ │   │     ╭─IdentifierNameNotBeforeSignature 'z'
+// CHECK:STDOUT:   │ │ │ │   │     ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │   │     ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ │   │   ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ │   │ ╭─VariablePattern 'var'
+// CHECK:STDOUT:   │ │ │ │   ├─ForIn 'in'
+// CHECK:STDOUT:   │ │ │ │   ├─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │ │ │ ╭─ForHeader ')'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ │ │ │ │     ╭─IdentifierNameExpr 'Print'
+// CHECK:STDOUT:   │ │ │ │ │ │   ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │ │ │ │ │   ├─IdentifierNameExpr 'z'
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─CallExpr ')'
+// CHECK:STDOUT:   │ │ │ │ │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │ │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ │ │ ├─ForStatement 'for'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ ├─ForStatement 'for'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -49,93 +49,89 @@ fn I() {
 }
 
 // CHECK:STDOUT: - filename: parens.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:           {kind: 'InfixOperatorEqualEqual', text: '==', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ParenPattern', text: ')', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:             {kind: 'ShortCircuitOperandAnd', text: 'and', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:           {kind: 'ShortCircuitOperatorAnd', text: 'and', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ParenPattern', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'TuplePatternStart', text: '('},
-// CHECK:STDOUT:               {kind: 'BoolLiteralTrue', text: 'true'},
-// CHECK:STDOUT:             {kind: 'IfExprIf', text: 'if', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:             {kind: 'IfExprThen', text: 'then', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '2'},
-// CHECK:STDOUT:           {kind: 'IfExprElse', text: 'else', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'ParenPattern', text: ')', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '3'},
-// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 37},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ │ ╭─TuplePatternStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │ │ │ ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │ ├─InfixOperatorEqualEqual '=='
+// CHECK:STDOUT:   │ │ ├─ParenPattern ')'
+// CHECK:STDOUT:   │ │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ ├─LetDecl ';'
+// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ │ ╭─TuplePatternStart '('
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │ │ │ ╭─ShortCircuitOperandAnd 'and'
+// CHECK:STDOUT:   │ │ │ │ ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │ ├─ShortCircuitOperatorAnd 'and'
+// CHECK:STDOUT:   │ │ ├─ParenPattern ')'
+// CHECK:STDOUT:   │ │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ ├─LetDecl ';'
+// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ │ ╭─TuplePatternStart '('
+// CHECK:STDOUT:   │ │ │ │   ╭─BoolLiteralTrue 'true'
+// CHECK:STDOUT:   │ │ │ │ ╭─IfExprIf 'if'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─IntLiteral '1'
+// CHECK:STDOUT:   │ │ │ │ ├─IfExprThen 'then'
+// CHECK:STDOUT:   │ │ │ │ ├─IntLiteral '2'
+// CHECK:STDOUT:   │ │ │ ├─IfExprElse 'else'
+// CHECK:STDOUT:   │ │ ├─ParenPattern ')'
+// CHECK:STDOUT:   │ │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ├─IntLiteral '3'
+// CHECK:STDOUT:   │ ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_relational.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'G'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'G'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ ├─LetDecl ';' has_error
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_logical.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'H'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'H'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ ├─LetDecl ';' has_error
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_if.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'I'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:             {kind: 'BoolLiteralTrue', text: 'true'},
-// CHECK:STDOUT:           {kind: 'IfExprIf', text: 'if', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:           {kind: 'IfExprThen', text: 'then', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IntLiteral', text: '2'},
-// CHECK:STDOUT:         {kind: 'IfExprElse', text: 'else', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'LetInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'IntLiteral', text: '3'},
-// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 16},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'I'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ │   ╭─BoolLiteralTrue 'true'
+// CHECK:STDOUT:   │ │ │ ╭─IfExprIf 'if'
+// CHECK:STDOUT:   │ │ │ │ ╭─IntLiteral '1'
+// CHECK:STDOUT:   │ │ │ ├─IfExprThen 'then'
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '2'
+// CHECK:STDOUT:   │ │ ├─IfExprElse 'else'
+// CHECK:STDOUT:   │ │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ├─IntLiteral '3'
+// CHECK:STDOUT:   │ ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -39,6 +39,10 @@ class RawStringOstream : public llvm::raw_pwrite_stream {
   auto empty() -> bool { return str_.empty(); }
   auto size() -> size_t { return str_.size(); }
 
+  auto reserveExtraSpace(uint64_t extra_size) -> void override {
+    str_.reserve(str_.size() + extra_size);
+  }
+
  private:
   auto current_pos() const -> uint64_t override { return str_.size(); }
 
@@ -49,10 +53,6 @@ class RawStringOstream : public llvm::raw_pwrite_stream {
 
   auto write_impl(const char* ptr, size_t size) -> void override {
     str_.append(ptr, size);
-  }
-
-  auto reserveExtraSpace(uint64_t extra_size) -> void override {
-    str_.reserve(str_.size() + extra_size);
   }
 
   // The actual buffer.

@@ -66,83 +66,77 @@ impl package Pkg;
 export import library "lib";
 
 // CHECK:STDOUT: - filename: fail_package.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Bar'},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Pkg'
+// CHECK:STDOUT:   ├─PackageDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─ExportModifier 'export'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Bar'
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: default.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
-// CHECK:STDOUT:         {kind: 'DefaultLibrary', text: 'default'},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Pkg'
+// CHECK:STDOUT:   ├─PackageDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─ExportModifier 'export'
+// CHECK:STDOUT:   │ │ ╭─DefaultLibrary 'default'
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─ImportDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: named.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"lib"'},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Pkg'
+// CHECK:STDOUT:   ├─PackageDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─ExportModifier 'export'
+// CHECK:STDOUT:   │ │ ╭─LibraryName '"lib"'
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─ImportDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_order.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"a"'},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:     {kind: 'ClassDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Pkg'
+// CHECK:STDOUT:   ├─PackageDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─ExportModifier 'export'
+// CHECK:STDOUT:   │ │ ╭─LibraryName '"a"'
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─ImportDecl ';'
+// CHECK:STDOUT:   │ ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   ├─ClassDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─ExportModifier 'export'
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_in_default_library.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"lib"'},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─ExportModifier 'export'
+// CHECK:STDOUT:   │ │ ╭─LibraryName '"lib"'
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_in_impl.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Pkg'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'ExportModifier', text: 'export'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"lib"'},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─ImplModifier 'impl'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Pkg'
+// CHECK:STDOUT:   ├─PackageDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─ExportModifier 'export'
+// CHECK:STDOUT:   │ │ ╭─LibraryName '"lib"'
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─ImportDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

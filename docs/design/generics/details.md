@@ -29,6 +29,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Facet types](#facet-types)
     -   [Identified facet types](#identified-facet-types)
 -   [Named constraints](#named-constraints)
+    -   [Rewrites and same-type constraints in a named constraint](#rewrites-and-same-type-constraints-in-a-named-constraint)
+    -   [Constraints that don't depend on `.Self`](#constraints-that-dont-depend-on-self)
     -   [Subtyping between facet types](#subtyping-between-facet-types)
 -   [Combining interfaces by anding facet types](#combining-interfaces-by-anding-facet-types)
 -   [Interface requiring other interfaces](#interface-requiring-other-interfaces)
@@ -43,7 +45,6 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Use case: Defining an impl for use by other types](#use-case-defining-an-impl-for-use-by-other-types)
     -   [Use case: Private impl](#use-case-private-impl)
     -   [Use case: Accessing interface names](#use-case-accessing-interface-names)
-    -   [Future work: Adapter with stricter invariants](#future-work-adapter-with-stricter-invariants)
 -   [Associated constants](#associated-constants)
     -   [Associated functions](#associated-functions)
 -   [Associated facets](#associated-facets)
@@ -87,6 +88,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Lookup resolution and specialization](#lookup-resolution-and-specialization)
         -   [Type structure of an impl declaration](#type-structure-of-an-impl-declaration)
         -   [Orphan rule](#orphan-rule)
+            -   [Re-entering a nested scope in an `impl` declaration](#re-entering-a-nested-scope-in-an-impl-declaration)
         -   [Overlap rule](#overlap-rule)
         -   [Prioritization rule](#prioritization-rule)
         -   [Acyclic rule](#acyclic-rule)
@@ -98,7 +100,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Forward declarations and cyclic references](#forward-declarations-and-cyclic-references)
     -   [Declaring interfaces and named constraints](#declaring-interfaces-and-named-constraints)
     -   [Declaring implementations](#declaring-implementations)
-    -   [Matching and agreeing](#matching-and-agreeing)
+    -   [Matching redeclarations](#matching-redeclarations)
+        -   [`impl` members vs `interface` members](#impl-members-vs-interface-members)
     -   [Declaration examples](#declaration-examples)
     -   [Example of declaring interfaces with cyclic references](#example-of-declaring-interfaces-with-cyclic-references)
     -   [Interfaces with parameters constrained by the same interface](#interfaces-with-parameters-constrained-by-the-same-interface)
@@ -315,7 +318,7 @@ Assert(p1.Add(p1) == p2);
 ```
 
 For more on how `extend` affects member access, see
-[member access](../expressions/member_access.md#extend).
+[member access](/docs/design/expressions/member_access.md#extend).
 
 Without `extend`, those methods may only be accessed with
 [qualified member names and compound member access](#qualified-member-names-and-compound-member-access):
@@ -514,7 +517,12 @@ class Player {
 ### Avoiding name collisions
 
 > **TODO:** This has changed. Now you can always extend, but conflicting names
-> may only be found by qualified name lookup.
+> may only be found by qualified name lookup. See proposals
+> [#5337: Interface extension and `final impl` update](https://github.com/carbon-language/carbon-lang/pull/5337)
+> and
+> [#6395: Type completeness in extend](https://github.com/carbon-language/carbon-lang/pull/6395),
+> along with leads issue
+> [#2745: Name conflicts beyond inheritance](https://github.com/carbon-language/carbon-lang/issues/2745).
 
 To avoid name collisions, you can't extend implementations of two interfaces
 that have a name in common:
@@ -922,6 +930,11 @@ A facet with an unidentified or partially identified facet type may be converted
 _to_ other facet types. While its set of requirements are not fully determined,
 the requirements that are known at that time may be used.
 
+> References:
+>
+> -   Proposal
+>     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
+
 ## Named constraints
 
 If the interfaces discussed above are the building blocks for facet types,
@@ -1108,6 +1121,81 @@ class ImplementsS {
   Y { ... }
   Z { ... }
 }
+```
+
+> References:
+>
+> -   Proposal
+>     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
+
+### Rewrites and same-type constraints in a named constraint
+
+A `require` statement may include rewrite or same-type constraints. In the case
+of `extend require`, the rewrites are
+[preserved as such](appendix-rewrite-constraints.md#combining-constraints-with-extend).
+But otherwise, any rewrite constraint in the
+[identified facet type](#identified-facet-types) of the `require` is
+[treated as a same-type constraint](appendix-rewrite-constraints.md#combining-constraints-with-require-and-impls)
+instead.
+
+### Constraints that don't depend on `.Self`
+
+> **TODO:** Link to section explaining when identifying a facet type happens
+> when
+> [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md)
+> is applied to these docs.
+
+When identifying a facet type, we collect all constraints found in the facet
+type and named constraints. Each constraint must depend on `.Self` in some way
+in order to be found in future impl lookups involving the facet being
+constrained. Thus, if there is no dependency on `.Self` in a constraint, it must
+be satisfied immediately for the identify to complete successfully.
+
+```carbon
+constraint N(T: type) {
+  require impls Z where .Z1 = {};
+}
+```
+
+When the above named constraint is identified as part of a facet type as `C
+impls N(.Self)`, the resulting requirement `Z where .Z1 = {}` is only
+constraining `C`, and not `.Self` from the top-level top-level facet type. So we
+require that `C impls (Z where .Z1 = {})` is already true in order to
+successfully identify.
+
+```carbon
+interface Z(V: type) {
+  let Z1: type;
+  let Z2: type;
+}
+
+constraint M(T2: type, U2: type) {
+  extend require impls Z(U2) where .Z1 = {} and .Z2 == ();
+}
+
+interface Y {
+  fn YY();
+}
+
+class C;
+
+fn F(U: Y where C impls Z(.Self) where .Z1 = {} and .Z2 == (),
+     T: Y where C impls M(.Self, U)) {
+  // Member access into `T` causes its type to be identified, which succeeds.
+  // The identified facet type requires
+  // `C impls Z(U) where .Z1 = {} and .Z2 == ()` which is true from the facet
+  // type of `U`.
+  T.YY();
+}
+
+fn G(U: Y where C impls Z(.Self),
+     T: Y where C impls M(.Self, U));
+  // ❌ Error: The type of `T` can not be identified.
+  // Member access into `T` causes its type to be identified, which fails.
+  // The identified facet type requires
+  // `C impls Z(U) where .Z1 = {} and .Z2 == ()` which we don't know to be
+  // true here.
+  T.YY();
 ```
 
 ### Subtyping between facet types
@@ -1356,13 +1444,18 @@ fn DoHashAndEquals[T: Hashable](x: T) {
 **Note:** The design for this feature is continued in
 [a later section](#interface-requiring-other-interfaces-revisited).
 
+> References:
+>
+> -   Proposal
+>     [#6902: Identification of a named constraint during definition](https://github.com/carbon-language/carbon-lang/pull/6902)
+
 ### Interface extension
 
 > **TODO:** Update this section as needed to reflect the fact that an impl of an
 > interface doesn't impl the interfaces it extends, as adopted in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 > Should link to
-> [`extend` in member access](../expressions/member_access.md#extend).
+> [`extend` in member access](/docs/design/expressions/member_access.md#extend).
 
 When implementing an interface, we allow implementing the aliased names as well.
 In the case of `Hashable` above, this includes all the members of `Equatable`,
@@ -1729,10 +1822,10 @@ be detected in function overloading.
 Since interfaces may only be implemented for a type once, and we limit where
 implementations may be added to a type, there is a need to allow the user to
 switch the type of a value to access different interface implementations. Carbon
-therefore provides a way to create new types
-[compatible with](terminology.md#compatible-types) existing types with different
-APIs, in particular with different interface implementations, by
-[adapting](terminology.md#adapting-a-type) them:
+therefore provides [adapters](/docs/design/classes.md#adapters) as a way to
+create new types [compatible with](/docs/design/classes.md#compatible-types)
+existing types with different APIs, in particular with different interface
+implementations:
 
 ```carbon
 interface Printable {
@@ -1764,60 +1857,11 @@ class FormattedSongByTitle {
 This allows developers to provide implementations of new interfaces (as in
 `SongByTitle`), provide different implementations of the same interface (as in
 `FormattedSong`), or mix and match implementations from other compatible types
-(as in `FormattedSongByTitle`). The rules are:
+(as in `FormattedSongByTitle`).
 
--   You can add any declaration that you could add to a class except for
-    declarations that would change the representation of the type. This means
-    you can add methods, functions, interface implementations, and aliases, but
-    not fields, base classes, or virtual functions. The specific implementations
-    of virtual functions are part of the type representation, and so no virtual
-    functions may be overridden in an adapter either.
--   The adapted type is compatible with the original type, and that relationship
-    is an equivalence class, so all of `Song`, `SongByTitle`, `FormattedSong`,
-    and `FormattedSongByTitle` end up compatible with each other.
--   Since adapted types are compatible with the original type, you may
-    explicitly cast between them, but there is no implicit conversion between
-    these types.
-
-Inside an adapter, the `Self` type matches the adapter. Members of the original
-type may be accessed either by a cast:
-
-```carbon
-class SongByTitle {
-  adapt Song;
-  extend impl as Ordered {
-    fn Less(self, rhs: Self) -> bool {
-      return (self as Song).Title() < (rhs as Song).Title();
-    }
-  }
-}
-```
-
-or using a qualified member access expression:
-
-```carbon
-class SongByTitle {
-  adapt Song;
-  extend impl as Ordered {
-    fn Less(self, rhs: Self) -> bool {
-      return self.(Song.Title)() < rhs.(Song.Title)();
-    }
-  }
-}
-```
-
-**Comparison with other languages:** This matches the Rust idiom called
-"newtype", which is used to implement traits on types while avoiding
-[coherence](terminology.md#coherence) problems, see
-[here](https://doc.rust-lang.org/book/ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types)
-and
-[here](https://github.com/Ixrec/rust-orphan-rules#user-content-why-are-the-orphan-rules-controversial).
-Rust's mechanism doesn't directly support reusing implementations, though some
-of that is provided by macros defined in libraries. Haskell has a
-[`newtype` feature](https://wiki.haskell.org/Newtype) as well. Haskell's feature
-doesn't directly support reusing implementations either, but the most popular
-compiler provides it as
-[an extension](https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/newtype_deriving.html).
+For the definition of adapters, including what declarations can be added to an
+adapter, compatibility rules, member access, and casting between adapted types,
+see [adapters in the class design](/docs/design/classes.md#adapters).
 
 ### Adapter compatibility
 
@@ -1881,7 +1925,7 @@ the API of the original type. The two most common cases expected are adding and
 replacing an interface implementation. Users would indicate that an adapter
 starts from the original type's existing API by using the `extend` keyword
 before `adapt`, which
-[extends member access to lookup names in the adapted class](../expressions/member_access.md#extend)
+[extends member access to lookup names in the adapted class](/docs/design/expressions/member_access.md#extend)
 along with `impl` lookup:
 
 ```carbon
@@ -2145,21 +2189,6 @@ fn Render(w: Window) {
 }
 ```
 
-### Future work: Adapter with stricter invariants
-
-**Future work:** Rust also uses the newtype idiom to create types with
-additional invariants or other information encoded in the type
-([1](https://doc.rust-lang.org/rust-by-example/generics/new_types.html),
-[2](https://doc.rust-lang.org/book/ch19-04-advanced-types.html#using-the-newtype-pattern-for-type-safety-and-abstraction),
-[3](https://www.worthe-it.co.za/blog/2020-10-31-newtype-pattern-in-rust.html)).
-This is used to record in the type system that some data has passed validation
-checks, like `ValidDate` with the same data layout as `Date`. Or to record the
-units associated with a value, such as `Seconds` versus `Milliseconds` or `Feet`
-versus `Meters`. We should have some way of restricting the casts between a type
-and an adapter to address this use case. One possibility would be to add the
-keyword `private` before `adapt`, so you might write
-`extend private adapt Date;`.
-
 ## Associated constants
 
 > **TODO:** Update this section to reflect the new rules and guidance on
@@ -2290,6 +2319,57 @@ var y: MySerializableType = Deserialize(MySerializableType, "4");
 
 This is instead of declaring an associated constant using `let` with a function
 type.
+
+An associated function of an interface `I` is callable, and in a call to it, the
+`Self` parameter is treated as a generic parameter that can be deduced. Since
+the interface itself requires `Self` to implement `I`, that will be validated as
+part of determining whether the deduced `Self` type valid meets its requirements
+(which may involve
+[`impl` lookup](/docs/design/expressions/member_access.md#impl-lookup)). Lastly,
+the corresponding function from the `impl` is called. Note that this is allowed
+for any associated function for which `Self` can be deduced, not just for
+associated methods.
+
+```carbon
+interface Interface {
+  fn Method(self);
+}
+
+class Class {
+  extend impl as Interface { fn Method(unused self) {} }
+}
+
+fn Fn(value: Class) {
+  // Calling by way of facet member access:
+  (Class as Interface).Method(value);
+  // Calling the associated method directly deduces `Self = Class`:
+  Interface.Method(value);
+}
+```
+
+Here is an example from
+[leads issue #7606](https://github.com/carbon-language/carbon-lang/issues/7606)
+where `Self` is deduced and used for
+[`impl` lookup](/docs/design/expressions/member_access.md#impl-lookup) when
+calling a non-method associated function:
+
+```carbon
+interface Printable {
+  // Print one `Self` object.
+  fn Print(self);
+  // Print a sequence of `Self` objects.
+  fn PrintSlice(s: slice(Self));
+}
+impl Widget as Printable { ... }
+fn PrintWidgets(s: slice(Widget)) {
+  // OK, deduces `Self` is `Widget`. Equivalent to
+  // `(Widget as Printable).PrintSlice(s)`.
+  Printable.PrintSlice(s);
+}
+```
+
+Note that `Self` is in deducible position, but not directly the type of any
+argument.
 
 > **TODO:** Document rules on where associated function implementations can be
 > declared, as adopted in
@@ -2670,9 +2750,9 @@ member of another. The `where` operator is not associative, so a type expression
 using multiple must use round parens `(`...`)` to specify grouping.
 
 The scope of a facet type formed by a `where` declaration
-[extends](../expressions/member_access.md#extend) the scope of its first
-operand, and the resulting facet type is complete if that scope it extends is
-complete.
+[extends](/docs/design/expressions/member_access.md#extend) the scope of its
+first operand, and the resulting facet type is complete if that scope it extends
+is complete.
 
 > **Comparison with other languages:** Both Swift and Rust use `where` clauses
 > on declarations instead of in the expression syntax. These happen after the
@@ -2858,7 +2938,8 @@ constraint ContainerIsSlice {
 
 The `.Self` construct follows these rules:
 
--   A checked binding `X` introduces a checked generic binding `.Self: type`, where
+-   A checked binding `X` introduces a checked generic binding `.Self: type`,
+    where
 
     references to `.Self` are resolved to `X`. This allows you to use `.Self` as
     an interface parameter as in `X: I(.Self)`.
@@ -3255,6 +3336,34 @@ fn J[G: Graph](g: G) {
 the expression `G.E.N.E.N` is one equality away from `G.N.E.N` and so it is
 allowed. This is true even though `G.N.E.N` isn't the type expression
 immediately prior to `G.E.N.E.N`.
+
+An `observe` declaration inside an `interface` definition may only refer to
+names dependent on:
+
+-   `.Self`,
+-   generic parameters, and
+-   associated constants that are part of the enclosing `interface`.
+
+Equivalence chains may include at most one unrelated value.
+`observe .. == .. impls` declarations may include unrelated values that
+immediately satisfy the `impls` constraint.
+
+The `observe` declaration in the example below is allowed because `X.T` and
+`Y.T` are equivalent to `i32`, and `i32` directly satisfies the `Core.AddWith`
+constraint.
+
+```carbon
+interface A {
+    let T: type;
+}
+
+interface B {
+    let X: A where .T == i32;
+    let Y: A where .T == i32;
+
+    observe .X.T == i32 == .Y.T impls AddWith;
+}
+```
 
 After an `observe` declaration, all of the listed type expressions are
 considered equal to each other using a single `where` equality. In this example,
@@ -3934,11 +4043,11 @@ fn DownCast[T: type](p: T*, generic U: type where .Self extends T) -> U*;
 
 Given a type `U`, define the facet type `CompatibleWith(U)` as follows:
 
-> `CompatibleWith(U)` is a facet type whose values are facets `T` such that
-> `T as type` and `U as type` are
-> [compatible types](terminology.md#compatible-types). That is values of `T` and
-> `U` as types can be cast back and forth without any change in representation
-> (for example `T` is an [adapter](#adapting-types) for `U`).
+> `CompatibleWith(U)` is a facet type whose values are facets `T` such that `T
+> as type` and `U as type` are
+> [compatible types](/docs/design/classes.md#compatible-types). That is values
+> of `T` and `U` as types can be cast back and forth without any change in
+> representation (for example `T` is an [adapter](#adapting-types) for `U`).
 
 `CompatibleWith` determines an equivalence relationship between types.
 Specifically, given two types `T1` and `T2`, they are equivalent if
@@ -4759,6 +4868,42 @@ declarations with a particular type structure.
 > -   [Disallowing the anchor name to be in a nested scope](/proposals/p007140-orphan-rule-for-scopes.md#disallowing-the-anchor-name-to-be-in-a-nested-scope)
 > -   [Anchoring to a definition](/proposals/p007140-orphan-rule-for-scopes.md#anchoring-to-a-definition)
 
+##### Re-entering a nested scope in an `impl` declaration
+
+It is possible to [re-enter a nested scope](#declaring-implementations) by
+writing a qualified path for the entire `Type as Interface` expression, such as
+`impl C.(D as Z)`. This functions like writing `impl D as Z` within the nested
+scope `C`, or in other words, by performing name lookups from the scope of `C`.
+
+By re-entering the nested scope `C`, it becomes the scope containing the `impl`
+declaration when applying the orphan rule.
+
+For example, this is equivalent to writing `impl D as Z` inside the class `C`,
+which is allowed by the orphan rule.
+
+```carbon
+class C {
+  class D {}
+}
+impl C.(D as Z);
+```
+
+Whereas it is not allowed to write `impl C as Z` inside the scope of `D`, so it
+is also not allowed to write `impl C.D.(C as Z)`.
+
+```carbon
+class C {
+  class D {}
+}
+// ERROR: Neither `C` nor `Z` is defined by or has its owning declaration
+// within the scope `C.D`.
+impl C.D.(C as Z);
+```
+
+> References:
+>
+> -   ["Re-entering a nested scope in an `impl` declaration" in proposal #7140](/proposals/p007140-orphan-rule-for-scopes.md#re-entering-a-nested-scope-in-an-impl-declaration)
+
 #### Overlap rule
 
 Given a specific concrete type, say `Foo(bool, i32)`, and an interface, say
@@ -4786,7 +4931,8 @@ difference.
 #### Prioritization rule
 
 > **TODO:** Document the changes to prioritization adopted in
-> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md) and
+> [#5337: Interface extension and `final impl` update](/proposals/p005337-interface-extension-and-final-impl-update.md)
+> and
 > [#7493: Disallow impl in match_first twice](/proposals/p007493-disallow-impl-in-match-first-twice.md).
 
 Since at most one library can contain `impl` definitions with a given type
@@ -5362,7 +5508,8 @@ interfaces or constraints used in the expression are incomplete.
 An interface or named constraint may be forward declared subject to these rules:
 
 -   The definition must be in the same file as the declaration.
--   Only the first declaration may have an access-control keyword.
+-   Access modifiers (`private` and `protected`) must match between forward
+    declaration and definition.
 -   An incomplete interface or named constraint may be used as constraints in
     declarations of types, functions, interfaces, or named constraints. This
     includes a `require` declaration inside an interface or named constraint,
@@ -5404,7 +5551,7 @@ An incomplete `C` cannot be used in the following contexts:
 -   ❌ `interface `...` { extend require impls C; }` or
     `constraint `...` { extend require impls C; }`
     -   An `extend` declaration requires the target scope to be complete. See
-        [`extend` in member access](../expressions/member_access.md#extend).
+        [`extend` in member access](/docs/design/expressions/member_access.md#extend).
 -   ❌ `T: C` ... `T impls A` where `T` is a checked binding, and `A` is an
     interface or named constraint different from `C`
     -   Need to see the definition of `C` to see if it implies `A`.
@@ -5430,12 +5577,41 @@ The declaration of an interface implementation consists of:
     [associated constants](#associated-constants) including
     [associated facets](#associated-facets).
 
-> **TODO:** Document the redeclaration syntax `impl C.(as I)` adopted in
-> [#5366: The name of an `impl` in `class` scope](/proposals/p005366-the-name-of-an-impl-in-class-scope.md).
+An `impl` declaration is associated with the scope it is first declared in, and
+can only be redeclared in that scope, matching all other declarations. To
+redeclare an `impl` after the end of the scope it was declared in, that scope
+may be re-entered as part of the `impl` redeclaration by writing it in the same
+way, except with parentheses around the name of the `impl`, as in:
+
+```carbon
+class X {
+  // Forward declaration that `X impls Y`:
+  impl as Y;
+}
+
+// Definition of the `impl` that `X impls Y`
+// that was forward declared in `X`:
+impl X.(as Y) { ... }
+```
+
+More generally, in a `class` scope
+
+```carbon
+class __X__ {
+  impl __Y__;
+}
+```
+
+is redeclared `impl __X__.(__Y__)` outside of that `class` scope. Here `__X__`
+is whatever sequence of tokens appears in that position in the `class`
+declaration, and `__Y__` is the sequence of tokens in the `impl` declaration.
+These declarations are matched syntactically, and anything in `__Y__` is
+interpreted as if it appeared in the scope of `__X__` like it was first
+declared.
 
 **Note:** The type before the `as` is required except in class scope, where it
 defaults to `Self` as described in the
-[matching and agreeing section](#matching-and-agreeing).
+[matching redeclarations section](#matching-redeclarations).
 
 **Note:** The `extend` keyword, when present, is not part of the `impl`
 declaration. It precedes the `impl` declaration in class scope. When the
@@ -5470,60 +5646,147 @@ these rules:
     declaration. This matches the
     [information accumulation principle](/docs/project/principles/information_accumulation.md).
 
-### Matching and agreeing
+For `impl` members defined out-of-line, parentheses are added around the
+corresponding portion of the scope.
+For example:
 
-> **TODO:** Update this section to reflect the new terminology and rules adopted
-> in
-> [#3763: Matching redeclarations](/proposals/p003763-matching-redeclarations.md),
-> and the new rules adopted in
+```carbon
+impl Type as Interface {
+  fn F();
+}
+// Not `fn Type as Interface.F() {}`.
+fn (Type as Interface).F() {}
+```
+
+Similarly for parameterized `impl`s:
+
+```carbon
+impl forall [T: type] T as Interface(T) {
+  fn F();
+}
+fn (forall [T: type] T as Interface(T)).F() {}
+```
+
+And for class-scope `impl` members:
+
+```carbon
+class Class {
+  impl as Interface {
+    fn F();
+    fn G();
+  }
+}
+
+// ✅︎ OK
+fn Class.(Self as Interface).F() {}
+
+// ✅︎ Rewritten to `Self as Interface`.
+fn Class.(as Interface).G() {}
+```
+
+> References:
+>
+> -   ["Out-of-line definitions of associated functions" in proposal #3763](/proposals/p003763-matching-redeclarations.md#out-of-line-definitions-of-associated-functions)
+> -   [Proposal #5366: "The name of an `impl` in `class` scope"](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#proposal)
+
+### Matching redeclarations
+
+> **TODO:** Update this section to reflect the new rules adopted in
 > [#5168: Forward `impl` declaration of an incomplete interface](/proposals/p005168-forward-impl-declaration-of-an-incomplete-interface.md).
 
-Carbon needs to determine if two declarations match in order to say which
-definition a forward declaration corresponds to and to verify that nothing is
-defined twice. Declarations that match must also agree, meaning they are
-consistent with each other.
+Carbon needs to determine if two declarations _declare the same entity_ in order
+to say which definition a forward declaration corresponds to and to verify that
+nothing is defined twice. The program is invalid if it contains two declarations
+of the same entity that _differ_.
 
-Interface and named constraint declarations match if their names are the same
-after name and alias resolution. To agree:
+Named declarations (such as interfaces and named constraints) follow the general
+[matching redeclaration rules](/docs/design/declaring_entities.md#matching-redeclarations-of-an-entity):
+two declarations declare the same entity if they have the same scope and the
+same name, and two owned declarations differ if the sequence of tokens following
+the introducer keyword and optional scope up to the semicolon or open brace is
+different.
 
--   The introducer keyword or keywords much be the same.
--   The types and order of parameters in the parameter list, if any, must match.
-    The parameter names may be omitted, but if they are included in both
-    declarations, they must match.
--   Types agree if they correspond to the same expression tree, after name and
-    alias resolution and canonicalization of parentheses. Note that no other
-    evaluation of expressions is performed.
+Two `impl` declarations declare the same entity if the portion of the
+declaration from the introducer keyword until the `;` or `{` does not differ,
+except that an omitted type before `as` is normalized by inserting `Self` before
+`as` (inside the parentheses when redeclared outside of its `class` scope)
+before looking for and comparing with a previous declaration.
+For example:
 
-Interface implementation declarations match if the type and interface
-expressions match along with
-[the `forall` clause](#parameterized-impl-declarations), if any:
+```carbon
+class A {
+  // First impl declaration is equivalent
+  // to `impl Self as As(i32);`
+  impl as As(i32);
 
--   If the type part is omitted, it is rewritten to `Self` in the context of the
-    declaration.
--   `Self` is rewritten to its meaning in the scope it is used. In a class
-    scope, this should match the type name and
-    [optional parameter expression](#parameterized-types) after `class`. So in
-    `class MyClass { ... }`, `Self` is rewritten to `MyClass`. In
-    `class Vector(T: Movable) { ... }`, `Self` is rewritten to
-    `forall [T: Movable] Vector(T)`.
--   Types match if they have the same name after name and alias resolution and
-    the same parameters, or are the same type parameter.
--   Interfaces match if they have the same name after name and alias resolution
-    and the same parameters. Note that a named constraint that is equivalent to
-    an interface, as in `constraint Equivalent { extend MyInterface; }`, is not
-    considered to match.
+  // Second impl declaration.
+  impl Self as As(bool);
+}
 
-> **TODO:** Document the matching rules for the redeclaration syntax
-> `impl C.(as I)` adopted in
-> [#5366: The name of an `impl` in `class` scope](/proposals/p005366-the-name-of-an-impl-in-class-scope.md).
+// Redeclaration of the first impl declaration.
+impl A.(Self as As(i32)) { ... }
 
-For implementations to agree:
+// Since this is equivalent to
+// `impl A.(Self as As(bool)) { ... }`, is a
+// valid redeclaration of the second impl
+// declaration.
+impl A.(as As(bool)) { ... }
+```
 
--   The presence of the modifier keyword `final` before `impl` must match
-    between a forward declaration and definition.
--   If either declaration includes a `where` clause, they must both include one.
-    If neither uses `where _`, they must match in that they produce the
-    associated constants with the same values considered separately.
+> References:
+>
+> -   [Proposal #3763: "Matching redeclarations"](/proposals/p003763-matching-redeclarations.md#proposal),
+>     including section:
+>     -   ["`impl` declarations"](/proposals/p003763-matching-redeclarations.md#impl-declarations)
+> -   ["Optional `Self` before `as`" in proposal #5366](/proposals/p005366-the-name-of-an-impl-in-class-scope.md#optional-self-before-as)
+
+#### `impl` members vs `interface` members
+
+Associated functions in an `impl` are permitted to differ syntactically from the
+corresponding declarations in the `interface`:
+
+```carbon
+interface I {
+  fn F(s: Self);
+}
+impl i32 as I {
+  fn F(s: i32);
+}
+```
+
+In the specific case where an associated function declaration in the `impl` can
+semantically be used directly to satisfy a requirement introduced by a function
+declaration in the `interface`, it is used directly. Specifically, the function
+in the `impl` is used directly when:
+
+-   Each parameter in the `impl` function has the same type as the parameter in
+    the `interface`. This includes the `self` parameter, which must be present
+    in both functions if it is present in either.
+-   Each parameter in the `impl` has the same category (`var`, `ref`, or value)
+    as the parameter in the `interface`.
+-   The return type in the `interface` and `impl` are the same type and
+    category.
+
+Otherwise, a synthetic function called a _thunk_ is generated:
+
+-   The declaration of the thunk is formed by substituting the `Self` type of
+    the `impl` into the declaration in the `interface`. This implicitly also
+    provides values for any associated constants used in the declaration.
+-   The body of the thunk calls the function in the `impl`, passing in the
+    arguments to the thunk, and, if a return type is specified in the interface,
+    returning the value returned by the call.
+-   Implicit conversions are performed as necessary to initialize the parameters
+    of the function in the `impl` from the parameters of the thunk, and to
+    initialize the return value of the function from the result of the call.
+-   If the function in the interface does not have a return type, the program is
+    invalid if the function in the `impl` specifies a return type.
+-   It is an error if a thunk is needed to wrap a function declaration with a
+    `var` parameter, because otherwise a copy would always be performed when
+    initializing the parameter.
+
+> References:
+>
+> -   ["`impl` members vs `interface` members" in proposal #3763](/proposals/p003763-matching-redeclarations.md#impl-members-vs-interface-members)
 
 ### Declaration examples
 
@@ -5609,12 +5872,12 @@ class MyClass {
 
 // Definitions of previously declared implementations.
 impl MyClass as Interface2 where _ { }
-impl MyClass as Interface5 where _ { }
+impl MyClass.(MyClass as Interface5 where _) { }
 
 // Definition of previously declared extending
 // implementations.
 impl MyClass as Interface4 where _ { }
-impl MyClass as Interface6 where _ { }
+impl MyClass.(as Interface6 where _) { }
 ```
 
 ### Example of declaring interfaces with cyclic references
@@ -6904,3 +7167,8 @@ and
 -   [#2760: Consistent `class` and `interface` syntax](https://github.com/carbon-language/carbon-lang/pull/2760)
 -   [#2964: Expression phase terminology](https://github.com/carbon-language/carbon-lang/pull/2964)
 -   [#3162: Reduce ambiguity in terminology](https://github.com/carbon-language/carbon-lang/pull/3162)
+-   [#3763: Matching redeclarations](https://github.com/carbon-language/carbon-lang/pull/3763)
+-   [#5366: The name of an `impl` in `class` scope](https://github.com/carbon-language/carbon-lang/pull/5366)
+-   [#7140: Orphan rule for scopes](https://github.com/carbon-language/carbon-lang/pull/7140)
+-   [Issue #7606: Should associated function names be callable?](https://github.com/carbon-language/carbon-lang/issues/7606)
+-   [#7697: Updates to member access](https://github.com/carbon-language/carbon-lang/pull/7697)

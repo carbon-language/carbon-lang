@@ -13,6 +13,7 @@
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_component.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/type.h"
 #include "toolchain/check/type_completion.h"
 #include "toolchain/check/unused.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -65,6 +66,8 @@ auto DeclNameStack::PushScopeAndStartName() -> void {
 
   // Create a scope for any parameters introduced in this name.
   context_->scope_stack().PushForDeclName();
+
+  UpdateAccessContext();
 }
 
 auto DeclNameStack::FinishName(const NameComponent& name) -> NameContext {
@@ -93,6 +96,8 @@ auto DeclNameStack::PopScope(bool check_unused) -> void {
   context_->scope_stack().PopTo(decl_name_stack_.back().initial_scope_index,
                                 check_unused);
   decl_name_stack_.pop_back();
+
+  UpdateAccessContext();
 }
 
 auto DeclNameStack::Suspend() -> SuspendedName {
@@ -108,6 +113,9 @@ auto DeclNameStack::Suspend() -> SuspendedName {
   CARBON_CHECK(scope_stack.PeekIndex() == scope_index,
                "Scope index {0} does not enclose the current scope {1}",
                scope_index, scope_stack.PeekIndex());
+
+  UpdateAccessContext();
+
   return result;
 }
 
@@ -131,6 +139,8 @@ auto DeclNameStack::Restore(SuspendedName&& sus) -> void {
 
     context_->scope_stack().Restore(std::move(suspended_scope));
   }
+
+  UpdateAccessContext();
 }
 
 auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
@@ -311,6 +321,7 @@ auto DeclNameStack::ApplyNameQualifier(const NameComponent& name) -> void {
     name_context.parent_scope_id = PushNameQualifierScope(
         *context_, name_context.loc_id, scope_id, generic_id,
         context_->name_scopes().Get(scope_id).has_error());
+    UpdateAccessContext();
   } else {
     name_context.state = NameContext::State::Error;
   }
@@ -520,6 +531,14 @@ auto DeclNameStack::ResolveAsScope(const NameContext& name_context,
           SemIR::LocId(name_context.resolved_inst_id));
       return InvalidResult;
     }
+  }
+}
+
+auto DeclNameStack::UpdateAccessContext() const -> void {
+  if (decl_name_stack_.empty()) {
+    context_->access_context() = SemIR::NameScopeId::None;
+  } else {
+    context_->access_context() = decl_name_stack_.back().parent_scope_id;
   }
 }
 

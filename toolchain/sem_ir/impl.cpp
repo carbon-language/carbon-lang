@@ -6,7 +6,7 @@
 
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_store_impl.h"
-#include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/specific_interface.h"
 #include "toolchain/sem_ir/specific_named_constraint.h"

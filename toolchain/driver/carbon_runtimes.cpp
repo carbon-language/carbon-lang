@@ -71,35 +71,42 @@ auto CarbonPreludeBuilder::Build() && -> ErrorOr<std::filesystem::path> {
                  });
 
   auto install_root_length = install_root_.string().length();
-  CARBON_CHECK(
-      compile_driver_.Initialize(
-          *driver_env_,
-          [&](llvm::StringRef input_filename) -> std::string {
-            // Make the input path relative to the install_root_ again, and
-            // replace the `.carbon` extension with a `.o`.
-            auto object_path =
-                std::filesystem::path(
-                    input_filename.substr(install_root_length).str())
-                    .replace_extension(".o");
-            auto output_path =
-                runtimes_builder_->path() / lib_path_ / object_path;
-            // The output path may contain subdirectories that haven't yet been
-            // created, so check for that and create if necessary.
-            if (!std::filesystem::exists(output_path.parent_path())) {
-              CARBON_CHECK(
-                  runtimes_builder_->dir()
-                      .CreateDirectories(lib_path_ / output_path.parent_path())
-                      .ok(),
-                  "Failed to make output subdirectory while building Carbon "
-                  "prelude.");
-            }
-            llvm::errs() << "mapping: `" << input_filename << "` to: `"
-                         << output_path << "`\n";
-            return output_path.string();
-          }),
-      "Failed to initialize compiler driver for Carbon prelude.");
-  CARBON_CHECK(compile_driver_.Compile(*driver_env_).success,
-               "Failed to compile Carbon prelude.");
+  auto init_result = compile_driver_.Initialize(
+      *driver_env_, [&](llvm::StringRef input_filename) -> std::string {
+        // Make the input path relative to the input path root, and
+        // replace the `.carbon` extension with a `.o`, so we can re-parent
+        // this file and any subdirectories into the output path.
+        auto relative_output_path =
+            lib_path_ / std::filesystem::path(
+                            input_filename.substr(install_root_length).str())
+                            .replace_extension(".o");
+
+        // The output path may contain subdirectories that haven't yet been
+        // created, so create if necessary.
+        // **Note** this call to `Dir::CreateDirectory` requires a path
+        // _relative_to_ where the `Dir` object itself was opened, which the
+        // runtimes builder opened at the path represented by
+        // `runtimes_builder_->path()`. So we use the _relative_ path here.
+        // The Builder exposes both `dir()` and `path()` methods because
+        // `Dir` objects themselves don't know their own path, so the
+        // Builder presents it separately.
+        auto mkdir_result = runtimes_builder_->dir().CreateDirectories(
+            relative_output_path.parent_path());
+
+        auto absolute_output_path =
+            runtimes_builder_->path() / relative_output_path;
+        CARBON_CHECK(
+            mkdir_result.ok(),
+            "Failed to make output subdirectory {0} while building Carbon "
+            "prelude.",
+            absolute_output_path.parent_path());
+        return absolute_output_path.string();
+      });
+  CARBON_CHECK(init_result,
+               "Failed to initialize compiler driver for Carbon prelude.");
+
+  auto compile_result = compile_driver_.Compile(*driver_env_);
+  CARBON_CHECK(compile_result.success, "Failed to compile Carbon prelude.");
 
   result_ = (*std::move(runtimes_builder_)).Commit();
   return std::move(result_);

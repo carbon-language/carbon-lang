@@ -31,6 +31,7 @@ fn F() {
 // CHECK:STDOUT: --- fail_convert_type_erased_type_to_facet.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Animal.type: type = facet_type <@Animal> [concrete]
 // CHECK:STDOUT:   %Self: %Animal.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Goat: type = class_type @Goat [concrete]

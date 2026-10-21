@@ -9,6 +9,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
@@ -21,8 +22,7 @@ namespace Carbon::Check {
 
 auto MakePeriodSelfFacetValue(Context& context, SemIR::LocId loc_id,
                               SemIR::TypeId self_type_id) -> SemIR::InstId {
-  CARBON_CHECK(self_type_id == SemIR::ErrorInst::TypeId ||
-               context.types().Is<SemIR::FacetType>(self_type_id));
+  CARBON_CHECK(context.types().IsFacetTypeOrError(self_type_id));
   auto entity_name_id = context.entity_names().AddCanonical(
       {.name_id = SemIR::NameId::PeriodSelf,
        .parent_scope_id = context.scope_stack().PeekNameScopeId(),
@@ -56,8 +56,7 @@ static auto TryGetAsPeriodSelf(Context& context, SemIR::InstId inst_id,
     return std::nullopt;
   }
   auto query_inst_id =
-      canonicalize ? GetCanonicalFacetOrTypeValue(context, const_inst_id)
-                   : inst_id;
+      canonicalize ? GetCanonicalFacet(context, const_inst_id) : inst_id;
   if (auto bind =
           context.insts().TryGetAs<SemIR::SymbolicBinding>(query_inst_id)) {
     const auto& entity_name = context.entity_names().Get(bind->entity_name_id);
@@ -80,15 +79,11 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
         rebuild_callback_(rebuild) {}
 
   auto Subst(SemIR::InstId& inst_id) -> SubstResult override {
-    // FacetTypes are concrete even if they have `.Self` inside them, but we
-    // don't recurse into FacetTypes, so we can use this as a base case. This
-    // avoids infinite recursion on TypeType and ErrorInst.
-    if (context().constant_values().Get(inst_id).is_concrete()) {
-      return FullySubstituted;
-    }
-    // Don't recurse into nested facet types, even if they are symbolic. Leave
-    // their `.Self` as is.
-    if (context().insts().Is<SemIR::FacetType>(inst_id)) {
+    // We need to recurse into facet types that are concrete to find `.Self`,
+    // because the top level instruction being substituted could be such a facet
+    // type. So we can't early out if the inst has a concrete constant value.
+    if (inst_id == SemIR::TypeType::TypeInstId ||
+        inst_id == SemIR::ErrorInst::InstId) {
       return FullySubstituted;
     }
 
@@ -103,7 +98,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
       return FullySubstituted;
     }
 
-    return SubstOperands;
+    return SubstOperandsSkipType;
   }
 
   auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
@@ -125,7 +120,7 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
         context().constant_values().GetInstId(period_self_replacement_id_);
     auto replacement_type_id =
         context().insts().Get(replacement_self_inst_id).type_id();
-    CARBON_CHECK(context().types().IsFacetType(replacement_type_id));
+    CARBON_CHECK(context().types().Is<SemIR::FacetType>(replacement_type_id));
 
     // If the replacement has the same type as `.Self`, use it directly.
     if (replacement_type_id == period_self_type_id) {
@@ -140,81 +135,50 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
 
     // Convert the replacement facet to the type of `.Self`.
     cached_replacement_id_ = ConvertReplacement(
-        replacement_self_inst_id, replacement_type_id, period_self_type_id);
+        replacement_self_inst_id, period_self, period_self_type_id);
     cached_replacement_type_id_ = period_self_type_id;
     return cached_replacement_id_;
   }
 
   auto ConvertReplacement(SemIR::InstId replacement_self_inst_id,
-                          SemIR::TypeId replacement_type_id,
+                          SemIR::InstId period_self_inst_id,
                           SemIR::TypeId period_self_type_id) -> SemIR::InstId {
-    // TODO: Replace all empty facet types with TypeType.
-    if (period_self_type_id == GetEmptyFacetType(context())) {
-      // Convert to an empty facet type (representing TypeType); we don't need
-      // any witnesses.
-      return ConvertToValueOfType(context(), loc_id_, replacement_self_inst_id,
-                                  period_self_type_id);
+    // TODO: If this replacement is in the query self of a LookupImplWitness
+    // instruction, it's just going to strip off the FacetValue and
+    // FacetAccessType anyway, so we are wasting effort here. We could just
+    // directly return the `replacement_self_inst_id`.
+
+    // Ensure the replacement is a type, which we will need for the return or to
+    // construct FacetValue.
+    auto replacement_self_type_inst_id = context().types().GetTypeInstId(
+        GetFacetAccessType(context(), replacement_self_inst_id));
+    if (period_self_type_id == SemIR::TypeType::TypeId) {
+      return replacement_self_type_inst_id;
     }
 
-    // We have a facet or a type, but we need more interfaces in the facet type.
-    // We will have to synthesize a symbolic witness for each interface.
+    // We have a replacement facet (converted to `type`), but we need different
+    // interfaces than we had in the facet's type. We will have to synthesize a
+    // symbolic witness for each interface.
     //
     // Why is this okay? The type of `.Self` comes from interfaces that are
     // before it (to the left of it) in the facet type. The replacement for
     // `.Self` will have to impl those interfaces in order to match the facet
     // type, so we know that it is valid to construct these witnesses.
 
-    // Make the replacement into a type, which we will need for the FacetValue.
-    if (context().types().Is<SemIR::FacetType>(replacement_type_id)) {
-      replacement_self_inst_id = context().constant_values().GetInstId(
-          EvalOrAddInst<SemIR::FacetAccessType>(
-              context(), loc_id_,
-              {.type_id = SemIR::TypeType::TypeId,
-               .facet_value_inst_id = replacement_self_inst_id}));
-    }
-
-    auto identified_period_self_type_id = RequireIdentifiedFacetType(
+    auto witnesses = MakeWitnessesForPeriodSelfTypeWithoutLookup(
         context(), loc_id_,
         context().constant_values().Get(replacement_self_inst_id),
-        context().types().GetTypeInstId(period_self_type_id),
-        [&](auto& /*builder*/) {
-          // Given `I where .Self == ()`, the type of `.Self` is `I` and we're
-          // replacing `.Self` with some `T` that must also implement `I`.
-          // However `I` can be a generic with arbitrary complexity and the
-          // replacement with `T` may fail monomorphization.
-          //
-          // We don't have any better context to add here really, but we
-          // need to accept that errors happen rather than CHECKing that
-          // they don't.
-        });
-    if (!identified_period_self_type_id.has_value()) {
+        context().constant_values().Get(period_self_inst_id));
+    if (witnesses.has_error_value()) {
       return SemIR::ErrorInst::InstId;
-    }
-    const auto& identified_period_self_type =
-        context().identified_facet_types().Get(identified_period_self_type_id);
-    auto required_impls = identified_period_self_type.required_impls();
-    llvm::SmallVector<SemIR::InstId> witnesses;
-    witnesses.reserve(required_impls.size());
-    for (const auto& req : required_impls) {
-      witnesses.push_back(context().constant_values().GetInstId(
-          EvalOrAddInst<SemIR::LookupImplWitness>(
-              context(), loc_id_,
-              {.type_id =
-                   GetSingletonType(context(), SemIR::WitnessType::TypeInstId),
-               .query_self_inst_id =
-                   context().constant_values().GetInstId(req.self_facet_value),
-               .query_specific_interface_id =
-                   context().specific_interfaces().Add(
-                       req.specific_interface)})));
     }
     return context().constant_values().GetInstId(
         EvalOrAddInst<SemIR::FacetValue>(
             context(), loc_id_,
             {
                 .type_id = period_self_type_id,
-                .type_inst_id =
-                    context().types().GetAsTypeInstId(replacement_self_inst_id),
-                .witnesses_block_id = context().inst_blocks().Add(witnesses),
+                .type_inst_id = replacement_self_type_inst_id,
+                .witnesses_block_id = witnesses.inst_block_id(),
             }));
   }
 
@@ -309,8 +273,8 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
 
   auto orig_facet_type =
       context.insts().GetAs<SemIR::FacetType>(canon_facet_type_inst_id);
-  const auto& orig_info =
-      context.facet_types().Get(orig_facet_type.facet_type_id);
+  const auto& orig_declared_facet_type = context.declared_facet_types().Get(
+      orig_facet_type.declared_facet_type_id);
 
   auto replace_interface = [&](SemIR::SpecificInterface si) {
     return SubstPeriodSelf(context, loc_id, si, period_self_replacement_id);
@@ -319,8 +283,8 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
     return SubstPeriodSelf(context, loc_id, sc, period_self_replacement_id);
   };
   auto replace_type_impls_interface =
-      [&](SemIR::FacetTypeInfo::TypeImplsInterface impls)
-      -> SemIR::FacetTypeInfo::TypeImplsInterface {
+      [&](SemIR::DeclaredFacetType::TypeImplsInterface impls)
+      -> SemIR::DeclaredFacetType::TypeImplsInterface {
     auto self = SubstPeriodSelf(context, loc_id,
                                 context.constant_values().Get(impls.self_type),
                                 period_self_replacement_id);
@@ -329,8 +293,8 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
     return {context.constant_values().GetInstId(self), interface};
   };
   auto replace_type_impls_constraint =
-      [&](SemIR::FacetTypeInfo::TypeImplsNamedConstraint impls)
-      -> SemIR::FacetTypeInfo::TypeImplsNamedConstraint {
+      [&](SemIR::DeclaredFacetType::TypeImplsNamedConstraint impls)
+      -> SemIR::DeclaredFacetType::TypeImplsNamedConstraint {
     auto self = SubstPeriodSelf(context, loc_id,
                                 context.constant_values().Get(impls.self_type),
                                 period_self_replacement_id);
@@ -339,43 +303,50 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
                         period_self_replacement_id);
     return {context.constant_values().GetInstId(self), constraint};
   };
-  auto replace_rewrite = [&](SemIR::FacetTypeInfo::RewriteConstraint r)
-      -> SemIR::FacetTypeInfo::RewriteConstraint {
-    // The LHS access instruction is not substituted so it keeps its `.Self`.
-    // This avoids evaluation replacing it with a concrete value from a final
-    // impl, as that would drop the association with the associated constant
-    // being rewritten.
+  auto replace_rewrite = [&](SemIR::DeclaredFacetType::RewriteConstraint r)
+      -> SemIR::DeclaredFacetType::RewriteConstraint {
+    auto lhs = SubstPeriodSelf(context, loc_id,
+                               context.constant_values().Get(r.lhs_id),
+                               period_self_replacement_id);
     auto rhs = SubstPeriodSelf(context, loc_id,
                                context.constant_values().Get(r.rhs_id),
                                period_self_replacement_id);
-    return {r.lhs_id, context.constant_values().GetInstId(rhs)};
+    return {context.constant_values().GetInstId(lhs),
+            context.constant_values().GetInstId(rhs)};
   };
 
-  SemIR::FacetTypeInfo info;
+  SemIR::DeclaredFacetType declared_facet_type;
   llvm::append_range(
-      info.extend_constraints,
-      llvm::map_range(orig_info.extend_constraints, replace_interface));
+      declared_facet_type.extend_constraints,
+      llvm::map_range(orig_declared_facet_type.extend_constraints,
+                      replace_interface));
   llvm::append_range(
-      info.extend_named_constraints,
-      llvm::map_range(orig_info.extend_named_constraints, replace_constraint));
+      declared_facet_type.extend_named_constraints,
+      llvm::map_range(orig_declared_facet_type.extend_named_constraints,
+                      replace_constraint));
   llvm::append_range(
-      info.self_impls_constraints,
-      llvm::map_range(orig_info.self_impls_constraints, replace_interface));
-  llvm::append_range(info.self_impls_named_constraints,
-                     llvm::map_range(orig_info.self_impls_named_constraints,
-                                     replace_constraint));
-  llvm::append_range(info.type_impls_interfaces,
-                     llvm::map_range(orig_info.type_impls_interfaces,
-                                     replace_type_impls_interface));
-  llvm::append_range(info.type_impls_named_constraints,
-                     llvm::map_range(orig_info.type_impls_named_constraints,
-                                     replace_type_impls_constraint));
+      declared_facet_type.self_impls_constraints,
+      llvm::map_range(orig_declared_facet_type.self_impls_constraints,
+                      replace_interface));
   llvm::append_range(
-      info.rewrite_constraints,
-      llvm::map_range(orig_info.rewrite_constraints, replace_rewrite));
+      declared_facet_type.self_impls_named_constraints,
+      llvm::map_range(orig_declared_facet_type.self_impls_named_constraints,
+                      replace_constraint));
+  llvm::append_range(
+      declared_facet_type.type_impls_interfaces,
+      llvm::map_range(orig_declared_facet_type.type_impls_interfaces,
+                      replace_type_impls_interface));
+  llvm::append_range(
+      declared_facet_type.type_impls_named_constraints,
+      llvm::map_range(orig_declared_facet_type.type_impls_named_constraints,
+                      replace_type_impls_constraint));
+  llvm::append_range(
+      declared_facet_type.rewrite_constraints,
+      llvm::map_range(orig_declared_facet_type.rewrite_constraints,
+                      replace_rewrite));
 
-  info.Canonicalize();
-  if (info == orig_info) {
+  declared_facet_type.Canonicalize();
+  if (declared_facet_type == orig_declared_facet_type) {
     // Nothing was substituted, keep the original instruction.
     //
     // It is noteworthy that we keep the non-canonical instruction here, since
@@ -388,7 +359,8 @@ auto SubstPeriodSelfInFacetType(Context& context, SemIR::LocId loc_id,
   return AddTypeInst<SemIR::FacetType>(
       context, loc_id,
       {.type_id = SemIR::TypeType::TypeId,
-       .facet_type_id = context.facet_types().Add(info)});
+       .declared_facet_type_id =
+           context.declared_facet_types().Add(declared_facet_type)});
 }
 
 auto IsPeriodSelf(Context& context, SemIR::InstId inst_id, bool canonicalize)

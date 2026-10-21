@@ -8,7 +8,7 @@
 // invoked. The debugger should do namespace resolution automatically. For
 // example:
 //
-// - lldb: `expr Dump(context, id)`
+// - lldb: `dump context id`
 // - gdb: `call Dump(context, id)`
 
 #ifndef NDEBUG
@@ -25,6 +25,7 @@
 #include "toolchain/parse/tree.h"
 #include "toolchain/sem_ir/dump.h"
 #include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
 
@@ -47,6 +48,24 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
   return SemIR::Dump(context.sem_ir(), bundle_id);
 }
 
+LLVM_DUMP_METHOD static auto Dump(
+    const Context& context, SemIR::GeneratedFunctionId generated_function_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), generated_function_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::ClangDeclId clang_decl_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), clang_decl_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(
+    const Context& context, SemIR::ClangDeclSignatureId clang_decl_signature_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), clang_decl_signature_id);
+}
+
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
                                   SemIR::ClassId class_id) -> std::string {
   return SemIR::Dump(context.sem_ir(), class_id);
@@ -57,16 +76,16 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
   return SemIR::Dump(context.sem_ir(), const_id);
 }
 
+LLVM_DUMP_METHOD static auto Dump(
+    const Context& context, SemIR::DeclaredFacetTypeId declared_facet_type_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), declared_facet_type_id);
+}
+
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
                                   SemIR::EntityNameId entity_name_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), entity_name_id);
-}
-
-LLVM_DUMP_METHOD static auto Dump(const Context& context,
-                                  SemIR::FacetTypeId facet_type_id)
-    -> std::string {
-  return SemIR::Dump(context.sem_ir(), facet_type_id);
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,

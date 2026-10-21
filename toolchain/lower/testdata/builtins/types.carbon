@@ -44,28 +44,28 @@ fn Uses() {
 // CHECK:STDOUT: declare void @_CBoolParam.Main(i1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CUses.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CUses.Main() #0 !dbg !26 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CIntParam.Main(i32 1), !dbg !7
-// CHECK:STDOUT:   call void @_CFloatParam.Main(half 1.000000e+00, float 1.000000e+00, double 1.000000e+00, fp128 1.000000e+00), !dbg !8
-// CHECK:STDOUT:   call void @_CBoolParam.Main(i1 false), !dbg !9
-// CHECK:STDOUT:   ret void, !dbg !10
+// CHECK:STDOUT:   call void @_CIntParam.Main(i32 1), !dbg !27
+// CHECK:STDOUT:   call void @_CFloatParam.Main(half 1.000000e+00, float 1.000000e+00, double 1.000000e+00, fp128 1.000000e+00), !dbg !28
+// CHECK:STDOUT:   call void @_CBoolParam.Main(i1 false), !dbg !29
+// CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!15}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "types.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Uses", linkageName: "_CUses.Main", scope: null, file: !1, line: 30, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 31, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 32, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 33, column: 3, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 30, column: 1, scope: !4)
+// CHECK:STDOUT: !14 = !DIFile(filename: "types.carbon", directory: "")
+// CHECK:STDOUT: !15 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !14, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !24 = !{null}
+// CHECK:STDOUT: !25 = !DISubroutineType(types: !24)
+// CHECK:STDOUT: !26 = distinct !DISubprogram(name: "Uses", linkageName: "_CUses.Main", scope: null, file: !14, line: 30, type: !25, spFlags: DISPFlagDefinition, unit: !15)
+// CHECK:STDOUT: !27 = !DILocation(line: 31, column: 3, scope: !26)
+// CHECK:STDOUT: !28 = !DILocation(line: 32, column: 3, scope: !26)
+// CHECK:STDOUT: !29 = !DILocation(line: 33, column: 3, scope: !26)
+// CHECK:STDOUT: !30 = !DILocation(line: 30, column: 1, scope: !26)
 // CHECK:STDOUT:

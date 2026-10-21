@@ -53,17 +53,17 @@ TEST(StructReflectionTest, CanListInitialize) {
   {
     using Type = OneField;
     using Field = Internal::AnyField<Type>;
-    static_assert(Internal::CanListInitialize<Type>(nullptr));
-    static_assert(Internal::CanListInitialize<Type, Field>(nullptr));
-    static_assert(!Internal::CanListInitialize<Type, Field, Field>(0));
+    static_assert(Internal::CanListInitialize<Type>);
+    static_assert(Internal::CanListInitialize<Type, Field>);
+    static_assert(!Internal::CanListInitialize<Type, Field, Field>);
   }
 
   {
     using Type = OneFieldNoDefaultConstructor;
     using Field = Internal::AnyField<Type>;
-    static_assert(!Internal::CanListInitialize<Type>(0));
-    static_assert(Internal::CanListInitialize<Type, Field>(nullptr));
-    static_assert(!Internal::CanListInitialize<Type, Field, Field>(0));
+    static_assert(!Internal::CanListInitialize<Type>);
+    static_assert(Internal::CanListInitialize<Type, Field>);
+    static_assert(!Internal::CanListInitialize<Type, Field, Field>);
   }
 }
 

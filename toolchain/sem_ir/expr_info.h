@@ -14,7 +14,14 @@
 namespace Carbon::SemIR {
 
 // Returns the expression category for an instruction.
-auto GetExprCategory(const File& file, InstId inst_id) -> ExprCategory;
+//
+// If specified, `specific_file` and `specific_id` identify the specific in
+// which the instruction is being queried. `specific_file` can be `file` if the
+// specific is from the same file as the instruction, and can be `nullptr` if
+// `SpecificId::None` is specified.
+auto GetExprCategory(const File& file, InstId inst_id,
+                     const File* specific_file = nullptr,
+                     SpecificId specific_id = SpecificId::None) -> ExprCategory;
 
 // Returns whether the given expression category is for a reference expression.
 inline auto IsRefCategory(ExprCategory cat) -> bool {
@@ -38,6 +45,15 @@ inline auto IsInitializerCategory(ExprCategory cat) -> bool {
 // and its category is `Initializing`.
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
                                   bool allow_transitive = true) -> InstId;
+
+// Same as `FindStorageArgForInitializer`, but also takes a `SpecificId` and
+// corresponding `File`. Returns the inst ID of the storage to initialize and
+// the `File` of that inst.
+auto FindStorageArgForInitializerInSpecific(const File& sem_ir, InstId init_id,
+                                            const File& specific_sem_ir,
+                                            SpecificId specific_id,
+                                            bool allow_transitive = true)
+    -> std::pair<const File*, InstId>;
 
 // Information about the form of an expression.
 struct FormInfo {

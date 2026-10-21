@@ -253,7 +253,7 @@ TEST_F(LexerTest, HandlesNumericLiteral) {
   auto token_1_5e9 = token_1_234_567 + 1;
   auto value_1_5e9 =
       value_stores.reals().Get(buffer.GetRealLiteral(*token_1_5e9));
-  EXPECT_EQ(value_1_5e9.mantissa.getZExtValue(), 15);
+  EXPECT_EQ(value_1_5e9.mantissa.getSExtValue(), 15);
   EXPECT_EQ(value_1_5e9.exponent.getSExtValue(), 8);
   EXPECT_EQ(value_1_5e9.is_decimal, true);
 }
@@ -369,7 +369,7 @@ TEST_F(LexerTest, SplitsNumericLiteralsProperly) {
 }
 
 TEST_F(LexerTest, HandlesGarbageCharacters) {
-  constexpr char GarbageText[] = "$$💩-$\n$\0$12$\n\\\"\\\n\"x";
+  constexpr char GarbageText[] = "##💩-#\n#\0#12#\n\\\"\\\n\"x";
   auto& buffer = compile_helper_.GetTokenizedBuffer(
       llvm::StringRef(GarbageText, sizeof(GarbageText) - 1));
   EXPECT_TRUE(buffer.has_errors());
@@ -381,16 +381,16 @@ TEST_F(LexerTest, HandlesGarbageCharacters) {
            .line = 1,
            .column = 1,
            // 💩 takes 4 bytes, and we count column as bytes offset.
-           .text = llvm::StringRef("$$💩", 6)},
+           .text = llvm::StringRef("##💩", 6)},
           {.kind = TokenKind::Minus, .line = 1, .column = 7},
-          {.kind = TokenKind::Error, .line = 1, .column = 8, .text = "$"},
+          {.kind = TokenKind::Error, .line = 1, .column = 8, .text = "#"},
           // newline
           {.kind = TokenKind::Error,
            .line = 2,
            .column = 1,
-           .text = llvm::StringRef("$\0$", 3)},
+           .text = llvm::StringRef("#\0#", 3)},
           {.kind = TokenKind::IntLiteral, .line = 2, .column = 4, .text = "12"},
-          {.kind = TokenKind::Error, .line = 2, .column = 6, .text = "$"},
+          {.kind = TokenKind::Error, .line = 2, .column = 6, .text = "#"},
           // newline
           {.kind = TokenKind::Backslash, .line = 3, .column = 1, .text = "\\"},
           {.kind = TokenKind::Error, .line = 3, .column = 2, .text = "\"\\"},
@@ -591,11 +591,14 @@ TEST_F(LexerTest, MatchingGroups) {
 TEST_F(LexerTest, MismatchedGroups) {
   auto& buffer1 = compile_helper_.GetTokenizedBuffer("{");
   EXPECT_TRUE(buffer1.has_errors());
-  EXPECT_THAT(buffer1, HasTokens(llvm::ArrayRef<ExpectedToken>{
-                           {.kind = TokenKind::FileStart},
-                           {.kind = TokenKind::Error, .text = "{"},
-                           {.kind = TokenKind::FileEnd},
-                       }));
+  EXPECT_THAT(
+      buffer1,
+      HasTokens(llvm::ArrayRef<ExpectedToken>{
+          {.kind = TokenKind::FileStart},
+          {.kind = TokenKind::OpenCurlyBrace, .column = 1},
+          {.kind = TokenKind::CloseCurlyBrace, .column = 2, .recovery = true},
+          {.kind = TokenKind::FileEnd},
+      }));
 
   auto& buffer2 = compile_helper_.GetTokenizedBuffer("}");
   EXPECT_TRUE(buffer2.has_errors());
@@ -618,9 +621,7 @@ TEST_F(LexerTest, MismatchedGroups) {
           {.kind = TokenKind::FileEnd},
       }));
 
-  // Two recovery tokens inserted at the same point: each must be flagged at
-  // its own merged index, not the pre-insertion index of the token it was
-  // inserted before.
+  // `{((}` is recovered by closing both parens before the `}`, i.e. `{(())}`.
   auto& buffer3b = compile_helper_.GetTokenizedBuffer("{((}");
   EXPECT_TRUE(buffer3b.has_errors());
   EXPECT_THAT(
@@ -672,9 +673,12 @@ TEST_F(LexerTest, MismatchedGroups) {
 }
 
 TEST_F(LexerTest, Whitespace) {
+  // The trailing `{(` is recovered by inserting `)` and `}` at end of file,
+  // giving `{()} {()}`.
   auto& buffer = compile_helper_.GetTokenizedBuffer("{( } {(");
 
-  // Whether there should be whitespace before/after each token.
+  // Whether there should be whitespace at each boundary, from before the
+  // first token to after the last.
   bool space[] = {false,
                   // start-of-file
                   true,
@@ -683,13 +687,17 @@ TEST_F(LexerTest, Whitespace) {
                   // (
                   true,
                   // inserted )
-                  true,
+                  false,
                   // }
                   true,
-                  // error {
+                  // {
                   false,
-                  // error (
+                  // (
                   true,
+                  // inserted )
+                  false,
+                  // inserted }
+                  false,
                   // EOF
                   false};
   int pos = 0;

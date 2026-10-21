@@ -66,32 +66,22 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
   return BadReturnType(a, b);
 }
 
-// --- fail_literal.carbon
-
-library "[[@TEST_NAME]]";
-
-fn Literal() -> type = "float_literal.make_type";
-// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.sub" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn SubLiteral(a: Literal(), b: Literal()) -> Literal() = "float.sub";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR:
-fn SubLiteral(a: Literal(), b: Literal()) -> Literal() = "float.sub";
-
 // CHECK:STDOUT: --- float_sub.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.761: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Sub.type: type = fn_type @Sub [concrete]
 // CHECK:STDOUT:   %Sub: %Sub.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.dc1, %b.param: %f64.dc1) -> out %return.param: %f64.dc1 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.761, %b.param: %f64.761) -> out %return.param: %f64.761 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Sub.ref: %Sub.type = name_ref Sub, file.%Sub.decl [concrete = constants.%Sub]
-// CHECK:STDOUT:   %a.ref: %f64.dc1 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %f64.dc1 = name_ref b, %b
-// CHECK:STDOUT:   %Sub.call: init %f64.dc1 = call %Sub.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %a.ref: %f64.761 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.761 = name_ref b, %b
+// CHECK:STDOUT:   %Sub.call: init %f64.761 = call %Sub.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Sub.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

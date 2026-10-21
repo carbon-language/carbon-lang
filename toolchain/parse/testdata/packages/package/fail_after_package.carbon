@@ -19,12 +19,11 @@ package A;
 package B;
 
 // CHECK:STDOUT: - filename: fail_after_package.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'A'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'PackageIntroducer', text: 'package'},
-// CHECK:STDOUT:     {kind: 'PackageDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'A'
+// CHECK:STDOUT:   ├─PackageDecl ';'
+// CHECK:STDOUT:   │ ╭─PackageIntroducer 'package'
+// CHECK:STDOUT:   ├─PackageDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

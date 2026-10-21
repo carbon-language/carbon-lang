@@ -1,0 +1,313 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+#include "toolchain/sem_ir/declared_facet_type.h"
+
+#include <tuple>
+
+#include "toolchain/base/canonical_value_store_impl.h"
+#include "toolchain/base/value_store_impl.h"
+#include "toolchain/sem_ir/file.h"
+#include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/typed_insts.h"
+
+namespace Carbon::SemIR {
+
+template <typename T>
+using LessThanFn = llvm::function_ref<auto(const T&, const T&)->bool>;
+
+template <typename VecT>
+static auto SortAndDeduplicate(VecT& vec,
+                               LessThanFn<typename VecT::value_type> compare)
+    -> void {
+  llvm::sort(vec, compare);
+  vec.erase(llvm::unique(vec), vec.end());
+}
+
+// Canonically ordered by the numerical ids.
+static auto InterfaceLess(const SpecificInterface& lhs,
+                          const SpecificInterface& rhs) -> bool {
+  return std::tie(lhs.interface_id.index, lhs.specific_id.index) <
+         std::tie(rhs.interface_id.index, rhs.specific_id.index);
+}
+
+// Canonically ordered by the numerical ids.
+static auto RewriteLess(const DeclaredFacetType::RewriteConstraint& lhs,
+                        const DeclaredFacetType::RewriteConstraint& rhs)
+    -> bool {
+  return std::tie(lhs.lhs_id.index, lhs.rhs_id.index) <
+         std::tie(rhs.lhs_id.index, rhs.rhs_id.index);
+}
+
+// Canonically ordered by the numerical ids.
+static auto NamedConstraintLess(const SpecificNamedConstraint& lhs,
+                                const SpecificNamedConstraint& rhs) -> bool {
+  return std::tie(lhs.named_constraint_id.index, lhs.specific_id.index) <
+         std::tie(rhs.named_constraint_id.index, rhs.specific_id.index);
+}
+
+// Canonically ordered by the numerical ids.
+static auto TypeImplsInterfaceLess(
+    const DeclaredFacetType::TypeImplsInterface& lhs,
+    const DeclaredFacetType::TypeImplsInterface& rhs) -> bool {
+  return std::tie(lhs.self_type.index,
+                  lhs.specific_interface.interface_id.index,
+                  lhs.specific_interface.specific_id.index) <
+         std::tie(rhs.self_type.index,
+                  rhs.specific_interface.interface_id.index,
+                  rhs.specific_interface.specific_id.index);
+}
+
+// Canonically ordered by the numerical ids.
+static auto TypeImplsNamedConstraintLess(
+    const DeclaredFacetType::TypeImplsNamedConstraint& lhs,
+    const DeclaredFacetType::TypeImplsNamedConstraint& rhs) -> bool {
+  return std::tie(lhs.self_type.index,
+                  lhs.specific_named_constraint.named_constraint_id.index,
+                  lhs.specific_named_constraint.specific_id.index) <
+         std::tie(rhs.self_type.index,
+                  rhs.specific_named_constraint.named_constraint_id.index,
+                  rhs.specific_named_constraint.specific_id.index);
+}
+
+// Assuming both `a` and `b` are sorted and deduplicated, replaces `a` with `a -
+// b` as sets. Assumes there are few elements between them.
+template <typename VecT>
+static auto SubtractSorted(VecT& a, const VecT& b,
+                           LessThanFn<typename VecT::value_type> compare)
+    -> void {
+  using Iter = VecT::iterator;
+  Iter a_iter = a.begin();
+  Iter a_end = a.end();
+  using ConstIter = VecT::const_iterator;
+  ConstIter b_iter = b.begin();
+  ConstIter b_end = b.end();
+  // Advance the iterator pointing to the smaller element until we find a match.
+  while (a_iter != a_end && b_iter != b_end) {
+    if (compare(*a_iter, *b_iter)) {
+      ++a_iter;
+    } else if (compare(*b_iter, *a_iter)) {
+      ++b_iter;
+    } else {
+      break;
+    }
+  }
+  if (a_iter == a_end || b_iter == b_end) {
+    // Nothing to remove from `a`.
+    return;
+  }
+  // Found a match, switch to removing elements of `a`.
+  CARBON_DCHECK(*a_iter == *b_iter);
+  // We copy the elements we want to keep to `*a_new_end`, and skip the elements
+  // of `a` that match something in `b`.
+  Iter a_new_end = a_iter;
+  ++a_iter;
+  ++b_iter;
+  while (a_iter != a_end && b_iter != b_end) {
+    if (compare(*a_iter, *b_iter)) {
+      *a_new_end = *a_iter;
+      ++a_new_end;
+      ++a_iter;
+    } else if (compare(*b_iter, *a_iter)) {
+      ++b_iter;
+    } else {
+      CARBON_DCHECK(*a_iter == *b_iter);
+      ++a_iter;
+      ++b_iter;
+    }
+  }
+  // Keep the remaining elements of `a`, if any.
+  for (; a_iter != a_end; ++a_iter) {
+    *a_new_end = *a_iter;
+    ++a_new_end;
+  }
+  // Shrink `a` by the number of elements that we skipped since they matched
+  // something in `b`.
+  a.erase(a_new_end, a_end);
+}
+
+template <typename VecT>
+static auto CombineVectors(VecT& vec, const VecT& lhs, const VecT& rhs) {
+  vec.reserve(lhs.size() + rhs.size());
+  llvm::append_range(vec,
+                     llvm::concat<const typename VecT::value_type>(lhs, rhs));
+}
+
+auto DeclaredFacetType::Combine(const DeclaredFacetType& lhs,
+                                const DeclaredFacetType& rhs)
+    -> DeclaredFacetType {
+  DeclaredFacetType declared_facet_type;
+  CombineVectors(declared_facet_type.extend_constraints, lhs.extend_constraints,
+                 rhs.extend_constraints);
+  CombineVectors(declared_facet_type.self_impls_constraints,
+                 lhs.self_impls_constraints, rhs.self_impls_constraints);
+  CombineVectors(declared_facet_type.extend_named_constraints,
+                 lhs.extend_named_constraints, rhs.extend_named_constraints);
+  CombineVectors(declared_facet_type.self_impls_named_constraints,
+                 lhs.self_impls_named_constraints,
+                 rhs.self_impls_named_constraints);
+  CombineVectors(declared_facet_type.type_impls_interfaces,
+                 lhs.type_impls_interfaces, rhs.type_impls_interfaces);
+  CombineVectors(declared_facet_type.type_impls_named_constraints,
+                 lhs.type_impls_named_constraints,
+                 rhs.type_impls_named_constraints);
+  CombineVectors(declared_facet_type.rewrite_constraints,
+                 lhs.rewrite_constraints, rhs.rewrite_constraints);
+  declared_facet_type.other_requirements =
+      lhs.other_requirements || rhs.other_requirements;
+  return declared_facet_type;
+}
+
+auto DeclaredFacetType::ExtendedOnly(
+    const DeclaredFacetType& declared_facet_type) -> DeclaredFacetType {
+  return {
+      .extend_constraints = declared_facet_type.extend_constraints,
+      .extend_named_constraints = declared_facet_type.extend_named_constraints};
+}
+
+auto DeclaredFacetType::TryAsSingleExtend() const
+    -> std::optional<SingleExtendFacetType> {
+  if (!IsExtendedOnly()) {
+    return std::nullopt;
+  }
+  if (extend_constraints.size() == 1 && extend_named_constraints.empty()) {
+    return extend_constraints.front();
+  }
+  if (extend_constraints.empty() && extend_named_constraints.size() == 1) {
+    return extend_named_constraints.front();
+  }
+  return std::nullopt;
+}
+
+auto DeclaredFacetType::IsExtendedOnly() const -> bool {
+  return self_impls_constraints.empty() &&
+         self_impls_named_constraints.empty() &&
+         type_impls_interfaces.empty() &&
+         type_impls_named_constraints.empty() && rewrite_constraints.empty() &&
+         !other_requirements;
+}
+
+auto DeclaredFacetType::Canonicalize() -> void {
+  SortAndDeduplicate(extend_constraints, InterfaceLess);
+  SortAndDeduplicate(self_impls_constraints, InterfaceLess);
+  SubtractSorted(self_impls_constraints, extend_constraints, InterfaceLess);
+  SortAndDeduplicate(extend_named_constraints, NamedConstraintLess);
+  SortAndDeduplicate(self_impls_named_constraints, NamedConstraintLess);
+  SubtractSorted(self_impls_named_constraints, extend_named_constraints,
+                 NamedConstraintLess);
+  SortAndDeduplicate(type_impls_interfaces, TypeImplsInterfaceLess);
+  SortAndDeduplicate(type_impls_named_constraints,
+                     TypeImplsNamedConstraintLess);
+  SortAndDeduplicate(rewrite_constraints, RewriteLess);
+}
+
+auto DeclaredFacetType::Print(llvm::raw_ostream& out) const -> void {
+  out << "{";
+  llvm::ListSeparator outer_sep;
+
+  if (!extend_constraints.empty()) {
+    out << outer_sep << "extends interface: [";
+    llvm::ListSeparator sep;
+    for (auto req : extend_constraints) {
+      out << sep << req.interface_id;
+      if (req.specific_id.has_value()) {
+        out << "(" << req.specific_id << ")";
+      }
+    }
+    out << "]";
+  }
+
+  if (!self_impls_constraints.empty()) {
+    out << outer_sep << "self impls interface: [";
+    llvm::ListSeparator sep;
+    for (auto req : self_impls_constraints) {
+      out << sep << req.interface_id;
+      if (req.specific_id.has_value()) {
+        out << "(" << req.specific_id << ")";
+      }
+    }
+    out << "]";
+  }
+
+  if (!extend_named_constraints.empty()) {
+    out << outer_sep << "extends named constraint: [";
+    llvm::ListSeparator sep;
+    for (auto extend : extend_named_constraints) {
+      out << sep << extend.named_constraint_id;
+      if (extend.specific_id.has_value()) {
+        out << "(" << extend.specific_id << ")";
+      }
+    }
+    out << "]";
+  }
+
+  if (!self_impls_named_constraints.empty()) {
+    out << outer_sep << "self impls named constraint: [";
+    llvm::ListSeparator sep;
+    for (auto self_impls : self_impls_named_constraints) {
+      out << sep << self_impls.named_constraint_id;
+      if (self_impls.specific_id.has_value()) {
+        out << "(" << self_impls.specific_id << ")";
+      }
+    }
+    out << "]";
+  }
+
+  if (!type_impls_interfaces.empty()) {
+    out << outer_sep << "type impls interface: [";
+    llvm::ListSeparator sep;
+    for (const auto& type_impls : type_impls_interfaces) {
+      out << sep << type_impls.self_type;
+      out << " impls " << type_impls.specific_interface.interface_id;
+      if (type_impls.specific_interface.specific_id.has_value()) {
+        out << "(" << type_impls.specific_interface.specific_id << ")";
+      }
+    }
+    out << "]";
+  }
+
+  if (!type_impls_named_constraints.empty()) {
+    out << outer_sep << "type impls interface: [";
+    llvm::ListSeparator sep;
+    for (const auto& type_impls : type_impls_named_constraints) {
+      out << sep << type_impls.self_type;
+      out << " impls "
+          << type_impls.specific_named_constraint.named_constraint_id;
+      if (type_impls.specific_named_constraint.specific_id.has_value()) {
+        out << "(" << type_impls.specific_named_constraint.specific_id << ")";
+      }
+    }
+    out << "]";
+  }
+
+  if (!rewrite_constraints.empty()) {
+    out << outer_sep << "rewrites: {";
+    llvm::ListSeparator sep;
+    for (auto req : rewrite_constraints) {
+      out << sep << req.lhs_id << ": " << req.rhs_id;
+    }
+    out << "}";
+  }
+
+  if (other_requirements) {
+    out << outer_sep << "TODO requirements: true";
+  }
+
+  out << "}";
+}
+
+}  // namespace Carbon::SemIR
+
+namespace Carbon {
+template class CanonicalValueStore<SemIR::DeclaredFacetTypeId,
+                                   SemIR::DeclaredFacetType,
+                                   Tag<SemIR::CheckIRId>>;
+template class CanonicalValueStore<
+    SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
+    Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
+template class ValueStore<SemIR::DeclaredFacetTypeId, SemIR::DeclaredFacetType,
+                          Tag<SemIR::CheckIRId>>;
+template class ValueStore<SemIR::IdentifiedFacetTypeId,
+                          SemIR::IdentifiedFacetType, Tag<SemIR::CheckIRId>>;
+}  // namespace Carbon

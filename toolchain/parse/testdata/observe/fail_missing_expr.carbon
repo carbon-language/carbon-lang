@@ -33,30 +33,27 @@ observe T impls ;
 observe T ;
 
 // CHECK:STDOUT: - filename: fail_missing_expr_after_observe.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: 'impls', has_error: yes},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
+// CHECK:STDOUT:   │ │ ╭─InvalidParse 'impls' has_error
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'I'
+// CHECK:STDOUT:   │ ├─ObserveImpls 'impls' has_error
+// CHECK:STDOUT:   ├─ObserveDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing_expr_after_impls.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: ';', has_error: yes},
-// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │ │ ├─InvalidParse ';' has_error
+// CHECK:STDOUT:   │ ├─ObserveImpls 'impls' has_error
+// CHECK:STDOUT:   ├─ObserveDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing_impls.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
+// CHECK:STDOUT:   │ ├─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   ├─ObserveDecl ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

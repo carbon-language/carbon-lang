@@ -32,72 +32,68 @@ interface I {
 }
 
 // CHECK:STDOUT: - filename: base.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'A'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'B'},
-// CHECK:STDOUT:         {kind: 'ObserveEqualEqual', text: '==', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ObserveEqualEqual', text: '==', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'A'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'B'
+// CHECK:STDOUT:   │ │ ╭─ObserveEqualEqual '=='
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │ ├─ObserveEqualEqual '=='
+// CHECK:STDOUT:   ├─ObserveDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: impls.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'I'
+// CHECK:STDOUT:   │ ├─ObserveImpls 'impls'
+// CHECK:STDOUT:   ├─ObserveDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: equal_equal_impls.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'U'},
-// CHECK:STDOUT:         {kind: 'ObserveEqualEqual', text: '==', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'A'},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'B'},
-// CHECK:STDOUT:             {kind: 'ObserveEqualEqual', text: '==', subtree_size: 3},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'C'},
-// CHECK:STDOUT:           {kind: 'ObserveEqualEqual', text: '==', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'D'},
-// CHECK:STDOUT:         {kind: 'ObserveEqualEqual', text: '==', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:       {kind: 'ObserveImpls', text: 'impls', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'ObserveDecl', text: ';', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'U'
+// CHECK:STDOUT:   │ │ ╭─ObserveEqualEqual '=='
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'I'
+// CHECK:STDOUT:   │ ├─ObserveImpls 'impls'
+// CHECK:STDOUT:   ├─ObserveDecl ';'
+// CHECK:STDOUT:   │ ╭─ObserveIntroducer 'observe'
+// CHECK:STDOUT:   │ │       ╭─IdentifierNameExpr 'A'
+// CHECK:STDOUT:   │ │       ├─IdentifierNameExpr 'B'
+// CHECK:STDOUT:   │ │     ╭─ObserveEqualEqual '=='
+// CHECK:STDOUT:   │ │     ├─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │ │   ╭─ObserveEqualEqual '=='
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'D'
+// CHECK:STDOUT:   │ │ ╭─ObserveEqualEqual '=='
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'I'
+// CHECK:STDOUT:   │ ├─ObserveImpls 'impls'
+// CHECK:STDOUT:   ├─ObserveDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: statement.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'A'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'B'},
-// CHECK:STDOUT:         {kind: 'ObserveEqualEqual', text: '==', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ObserveDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 11},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ObserveIntroducer', text: 'observe'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'A'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'B'},
-// CHECK:STDOUT:         {kind: 'ObserveEqualEqual', text: '==', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'ObserveDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─ObserveIntroducer 'observe'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'A'
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'B'
+// CHECK:STDOUT:   │ │ ├─ObserveEqualEqual '=='
+// CHECK:STDOUT:   │ ├─ObserveDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─ObserveIntroducer 'observe'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'A'
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'B'
+// CHECK:STDOUT:   │ │ ├─ObserveEqualEqual '=='
+// CHECK:STDOUT:   │ ├─ObserveDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

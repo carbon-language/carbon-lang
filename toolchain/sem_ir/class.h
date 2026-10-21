@@ -46,9 +46,6 @@ struct ClassFields {
   // Whether this class or any base class has at least one virtual function.
   bool is_dynamic = false;
 
-  // Whether the class's fields have been exported to C++.
-  bool fields_exported = false;
-
   // The following members are set at the `{` of the class definition.
 
   // The class scope.
@@ -80,6 +77,10 @@ struct ClassFields {
   // inherited) virtual functions.
   InstId vtable_decl_id = InstId::None;
 
+  // The scopes that are declared as friends of this class. Each scope is
+  // identified by the constant value of the expression that names it.
+  Set<SemIR::ConstantId> friend_scopes;
+
   auto PrintClassFields(llvm::raw_ostream& out) const -> void {
     out << "self_type_id: " << self_type_id << ", inheritance_kind: ";
     switch (inheritance_kind) {
@@ -97,7 +98,7 @@ struct ClassFields {
         << ", body_block_id: " << body_block_id << ", adapt_id: " << adapt_id
         << ", base_id: " << base_id
         << ", complete_type_witness_id: " << complete_type_witness_id
-        << ", vtable_decl_id: " << vtable_decl_id << "}";
+        << ", vtable_decl_id: " << vtable_decl_id;
   }
 };
 
@@ -142,7 +143,7 @@ struct Class : public EntityWithParamsBase,
   auto GetObjectRepr(const File& file, SpecificId specific_id) const -> TypeId;
 
   // Get the `StructTypeField`s from a class's object repr.
-  auto GetStructTypeFields(const File& sem_ir) const
+  auto GetStructTypeFields(const File& sem_ir, SpecificId specific_id) const
       -> llvm::ArrayRef<SemIR::StructTypeField>;
 };
 

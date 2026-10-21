@@ -30,6 +30,7 @@ fn Foo.Baz() {
 // CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Baz.type.280a69.1: type = fn_type @Baz.loc17 [concrete]
 // CHECK:STDOUT:   %Baz.f49bdd.1: %Baz.type.280a69.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Baz.type.280a69.2: type = fn_type @Baz.loc27 [concrete]

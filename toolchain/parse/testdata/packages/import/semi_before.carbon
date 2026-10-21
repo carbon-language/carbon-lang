@@ -20,17 +20,16 @@ import Bar;
 ;
 
 // CHECK:STDOUT: - filename: semi_before.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:     {kind: 'EmptyDecl', text: ';'},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:         {kind: 'LibraryName', text: '"foo"'},
-// CHECK:STDOUT:       {kind: 'LibrarySpecifier', text: 'library', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'EmptyDecl', text: ';'},
-// CHECK:STDOUT:       {kind: 'ImportIntroducer', text: 'import'},
-// CHECK:STDOUT:       {kind: 'IdentifierPackageName', text: 'Bar'},
-// CHECK:STDOUT:     {kind: 'ImportDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'EmptyDecl', text: ';'},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   ├─EmptyDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ │ ╭─LibraryName '"foo"'
+// CHECK:STDOUT:   │ ├─LibrarySpecifier 'library'
+// CHECK:STDOUT:   ├─ImportDecl ';'
+// CHECK:STDOUT:   ├─EmptyDecl ';'
+// CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'
+// CHECK:STDOUT:   │ ├─IdentifierPackageName 'Bar'
+// CHECK:STDOUT:   ├─ImportDecl ';'
+// CHECK:STDOUT:   ├─EmptyDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

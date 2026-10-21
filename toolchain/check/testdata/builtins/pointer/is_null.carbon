@@ -88,6 +88,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT: --- call_exact.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %MakeUnformed.type: type = fn_type @MakeUnformed [concrete]
@@ -108,11 +109,11 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %IsNullC.type: type = fn_type @IsNullC [concrete]
 // CHECK:STDOUT:   %IsNullC: %IsNullC.type = struct_value () [concrete]
 // CHECK:STDOUT:   %s.param_patt: %pattern_type.b42 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %s.patt: %pattern_type.b42 = at_binding_pattern s, %s.param_patt [concrete]
+// CHECK:STDOUT:   %s.patt: %pattern_type.b42 = wrapper_binding_pattern s, %s.param_patt [concrete]
 // CHECK:STDOUT:   %TestEmptyStruct.type: type = fn_type @TestEmptyStruct [concrete]
 // CHECK:STDOUT:   %TestEmptyStruct: %TestEmptyStruct.type = struct_value () [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.e22 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt: %pattern_type.e22 = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.e22 = wrapper_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %TestC.type: type = fn_type @TestC [concrete]
 // CHECK:STDOUT:   %TestC: %TestC.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -120,7 +121,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %TestEmptyStruct.decl: %TestEmptyStruct.type = fn_decl @TestEmptyStruct [concrete = constants.%TestEmptyStruct] {
 // CHECK:STDOUT:     %s.param_patt: %pattern_type.b42 = value_param_pattern [concrete = constants.%s.param_patt]
-// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = at_binding_pattern s, %s.param_patt [concrete = constants.%s.patt]
+// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = wrapper_binding_pattern s, %s.param_patt [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt.5a1]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc11_45.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
@@ -142,7 +143,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestC.decl: %TestC.type = fn_decl @TestC [concrete = constants.%TestC] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.e22 = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type.e22 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.e22 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt.5a1]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc15_34.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
@@ -182,6 +183,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT: --- call_generic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %MakeUnformed.type: type = fn_type @MakeUnformed [concrete]
 // CHECK:STDOUT:   %MakeUnformed: %MakeUnformed.type = struct_value () [concrete]
 // CHECK:STDOUT:   %.f34: Core.Form = init_form bool [concrete]
@@ -197,24 +199,24 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   %.b2d: type = maybe_unformed_type %ptr.c28 [concrete]
 // CHECK:STDOUT:   %pattern_type.b42: type = pattern_type %.b2d [concrete]
 // CHECK:STDOUT:   %s.param_patt: %pattern_type.b42 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %s.patt: %pattern_type.b42 = at_binding_pattern s, %s.param_patt [concrete]
+// CHECK:STDOUT:   %s.patt: %pattern_type.b42 = wrapper_binding_pattern s, %s.param_patt [concrete]
 // CHECK:STDOUT:   %TestEmptyStruct.type: type = fn_type @TestEmptyStruct [concrete]
 // CHECK:STDOUT:   %TestEmptyStruct: %TestEmptyStruct.type = struct_value () [concrete]
-// CHECK:STDOUT:   %IsNull.specific_fn.add: <specific function> = specific_function %IsNull, @IsNull(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %IsNull.specific_fn.c88: <specific function> = specific_function %IsNull, @IsNull(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %ptr.6b6: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %.9e8: type = maybe_unformed_type %ptr.6b6 [concrete]
 // CHECK:STDOUT:   %pattern_type.e22: type = pattern_type %.9e8 [concrete]
 // CHECK:STDOUT:   %c.param_patt: %pattern_type.e22 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %c.patt: %pattern_type.e22 = at_binding_pattern c, %c.param_patt [concrete]
+// CHECK:STDOUT:   %c.patt: %pattern_type.e22 = wrapper_binding_pattern c, %c.param_patt [concrete]
 // CHECK:STDOUT:   %TestC.type: type = fn_type @TestC [concrete]
 // CHECK:STDOUT:   %TestC: %TestC.type = struct_value () [concrete]
-// CHECK:STDOUT:   %IsNull.specific_fn.5e3: <specific function> = specific_function %IsNull, @IsNull(%C) [concrete]
+// CHECK:STDOUT:   %IsNull.specific_fn.5a8: <specific function> = specific_function %IsNull, @IsNull(%C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %TestEmptyStruct.decl: %TestEmptyStruct.type = fn_decl @TestEmptyStruct [concrete = constants.%TestEmptyStruct] {
 // CHECK:STDOUT:     %s.param_patt: %pattern_type.b42 = value_param_pattern [concrete = constants.%s.param_patt]
-// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = at_binding_pattern s, %s.param_patt [concrete = constants.%s.patt]
+// CHECK:STDOUT:     %s.patt: %pattern_type.b42 = wrapper_binding_pattern s, %s.param_patt [concrete = constants.%s.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt.5a1]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc10_45.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
@@ -236,7 +238,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %TestC.decl: %TestC.type = fn_decl @TestC [concrete = constants.%TestC] {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.e22 = value_param_pattern [concrete = constants.%c.param_patt]
-// CHECK:STDOUT:     %c.patt: %pattern_type.e22 = at_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
+// CHECK:STDOUT:     %c.patt: %pattern_type.e22 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt.5a1]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc14_34.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {
@@ -261,7 +263,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IsNull.ref: %IsNull.type = name_ref IsNull, file.%IsNull.decl [concrete = constants.%IsNull]
 // CHECK:STDOUT:   %s.ref: %.b2d = name_ref s, %s
-// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%empty_struct_type) [concrete = constants.%IsNull.specific_fn.add]
+// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%empty_struct_type) [concrete = constants.%IsNull.specific_fn.c88]
 // CHECK:STDOUT:   %IsNull.call: init bool = call %IsNull.specific_fn(%s.ref)
 // CHECK:STDOUT:   return %IsNull.call
 // CHECK:STDOUT: }
@@ -270,7 +272,7 @@ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %IsNull.ref: %IsNull.type = name_ref IsNull, file.%IsNull.decl [concrete = constants.%IsNull]
 // CHECK:STDOUT:   %c.ref: %.9e8 = name_ref c, %c
-// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%C) [concrete = constants.%IsNull.specific_fn.5e3]
+// CHECK:STDOUT:   %IsNull.specific_fn: <specific function> = specific_function %IsNull.ref, @IsNull(constants.%C) [concrete = constants.%IsNull.specific_fn.5a8]
 // CHECK:STDOUT:   %IsNull.call: init bool = call %IsNull.specific_fn(%c.ref)
 // CHECK:STDOUT:   return %IsNull.call
 // CHECK:STDOUT: }

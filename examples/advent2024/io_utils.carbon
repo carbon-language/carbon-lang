@@ -85,8 +85,7 @@ fn ReadChar() -> CharOrEOF {
 
 fn UnreadChar(c: CharOrEOF) {
   // TODO: assert(unread_char == 0);
-  // TODO: unread_char = c;
-  unread_char = Core.Optional(CharOrEOF).Some(c);
+  unread_char = c;
 }
 
 fn PeekChar() -> CharOrEOF {

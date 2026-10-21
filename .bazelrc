@@ -45,7 +45,11 @@ build --use_target_config_carbon_rules
 # Default to using a disk cache to minimize re-building LLVM and Clang which we
 # try to avoid updating too frequently to minimize rebuild cost. The location
 # here can be overridden in the user configuration where needed.
-common --disk_cache=~/.cache/carbon-lang-build-cache
+#
+# We avoid the disk cache on MacOS because it breaks debugging. When the cache
+# is used, the separate debug symbol files are not perserved.
+common:linux --disk_cache=~/.cache/carbon-lang-build-cache
+common:windows --disk_cache=~/.cache/carbon-lang-build-cache
 # If you'd like a different disk cache size, override it by copying this
 # line to `user.bazelrc` in the repository root and modify the number there.
 common --experimental_disk_cache_gc_max_size=100G

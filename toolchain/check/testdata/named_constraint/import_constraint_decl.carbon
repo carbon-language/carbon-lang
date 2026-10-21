@@ -79,8 +79,8 @@ impl C as B {}
 // CHECK:STDOUT: --- b.impl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
-// CHECK:STDOUT:   %type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %.Self.frozen: %type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
 // CHECK:STDOUT:   %B.type: type = facet_type <@B> [concrete]
 // CHECK:STDOUT:   %Self.f45: %B.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
@@ -96,7 +96,7 @@ impl C as B {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I = import_ref Main//b, I, unloaded
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//b, B, loaded [concrete = constants.%B.type]
-// CHECK:STDOUT:   %Main.import_ref.da7 = import_ref Main//b, loc5_25, unloaded
+// CHECK:STDOUT:   %Main.import_ref.ae4 = import_ref Main//b, loc5_25, unloaded
 // CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//b, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5f6: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.WithSelf.Self.as_type.impls.I.type.require.%Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.c3f: type = import_ref Main//b, loc5_24, loaded [concrete = constants.%I.type]
@@ -116,7 +116,7 @@ impl C as B {}
 // CHECK:STDOUT:     %T.patt.loc4_22.1: %pattern_type = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc4_22.2 (constants.%T.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc4: type = splice_block %B.ref [concrete = constants.%B.type] {
-// CHECK:STDOUT:       %.Self.frozen: %type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %B.ref: type = name_ref B, imports.%Main.B [concrete = constants.%B.type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T.loc4_22.2: %B.type = symbolic_binding T, 0 [symbolic = %T.loc4_22.1 (constants.%T)]
@@ -134,7 +134,7 @@ impl C as B {}
 // CHECK:STDOUT: constraint @B [from "b.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.364
-// CHECK:STDOUT:   extend imports.%Main.import_ref.da7
+// CHECK:STDOUT:   extend imports.%Main.import_ref.ae4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @B.WithSelf.Self.as_type.impls.I.type.require {

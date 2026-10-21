@@ -121,8 +121,10 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, %empty_tuple.type [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
 // CHECK:STDOUT:   %complete_type.9be: <witness> = complete_type_witness %struct_type.x [concrete]
@@ -142,23 +144,29 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %.loc5: %C.elem = field_decl x, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %C.elem = field_decl x, element0, %.loc5_11.2 in [concrete] {
+// CHECK:STDOUT:     %.loc5_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x [concrete = constants.%complete_type.9be]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%C
-// CHECK:STDOUT:   .x = %.loc5
+// CHECK:STDOUT:   .x = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D {
-// CHECK:STDOUT:   %.loc9: %D.elem = field_decl y, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: %D.elem = field_decl y, element0, %.loc9_11.2 in [concrete] {
+// CHECK:STDOUT:     %.loc9_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc9_11.2: type = converted %.loc9_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.y [concrete = constants.%complete_type.9f4]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%D
-// CHECK:STDOUT:   .y = %.loc9
+// CHECK:STDOUT:   .y = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_import.carbon
@@ -179,6 +187,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: --- export_import_then_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
@@ -190,7 +199,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %Main.D = import_ref Main//base, D, unloaded
 // CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.e47 = import_ref Main//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c69 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.14f = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -207,12 +216,13 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
-// CHECK:STDOUT:   .x = imports.%Main.import_ref.c69
+// CHECK:STDOUT:   .x = imports.%Main.import_ref.14f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
@@ -224,7 +234,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %Main.D = import_ref Main//base, D, unloaded
 // CHECK:STDOUT:   %Main.import_ref.56d: <witness> = import_ref Main//base, loc6_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.e47 = import_ref Main//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.c69 = import_ref Main//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.14f = import_ref Main//base, loc5_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -241,7 +251,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
-// CHECK:STDOUT:   .x = imports.%Main.import_ref.c69
+// CHECK:STDOUT:   .x = imports.%Main.import_ref.14f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- export_name_then_import.carbon
@@ -260,6 +270,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: --- use_export_import_then_name.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
@@ -277,7 +288,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//export_import_then_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.0a8 = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.1ec = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.b7f = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -300,7 +311,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.0a8
-// CHECK:STDOUT:   .x = imports.%Main.import_ref.1ec
+// CHECK:STDOUT:   .x = imports.%Main.import_ref.b7f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -320,6 +331,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: --- use_export_name_then_import.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
@@ -337,7 +349,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//export_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//export_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.0a8 = import_ref Main//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.1ec = import_ref Main//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.b7f = import_ref Main//export_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -360,7 +372,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.0a8
-// CHECK:STDOUT:   .x = imports.%Main.import_ref.1ec
+// CHECK:STDOUT:   .x = imports.%Main.import_ref.b7f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -380,6 +392,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: --- use_both.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
@@ -397,7 +410,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//export_import_then_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.0a8 = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.1ec = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.b7f = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -420,7 +433,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.0a8
-// CHECK:STDOUT:   .x = imports.%Main.import_ref.1ec
+// CHECK:STDOUT:   .x = imports.%Main.import_ref.b7f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -440,6 +453,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: --- fail_nonexport_use_both.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %struct_type.y: type = struct_type {.y: %empty_tuple.type} [concrete]
@@ -477,6 +491,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: --- use_both_reversed.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
@@ -494,7 +509,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %Main.C: type = import_ref Main//export_import_then_name, C, loaded [concrete = constants.%C]
 // CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Main.import_ref.0a8 = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.1ec = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.b7f = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -517,7 +532,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.0a8
-// CHECK:STDOUT:   .x = imports.%Main.import_ref.1ec
+// CHECK:STDOUT:   .x = imports.%Main.import_ref.b7f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
@@ -537,6 +552,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT: --- use_both_and_export_import.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
@@ -564,10 +580,10 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:   %Main.D: type = import_ref Main//base, D, loaded [concrete = constants.%D]
 // CHECK:STDOUT:   %Main.import_ref.ad3: <witness> = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], loaded [concrete = constants.%complete_type.9be]
 // CHECK:STDOUT:   %Main.import_ref.0a8 = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %Main.import_ref.1ec = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
+// CHECK:STDOUT:   %Main.import_ref.b7f = import_ref Main//export_import_then_name, inst{{[0-9A-F]+}} [indirect], unloaded
 // CHECK:STDOUT:   %Main.import_ref.5ab: <witness> = import_ref Main//base, loc10_1, loaded [concrete = constants.%complete_type.9f4]
 // CHECK:STDOUT:   %Main.import_ref.54a = import_ref Main//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Main.import_ref.053 = import_ref Main//base, loc9_8, unloaded
+// CHECK:STDOUT:   %Main.import_ref.d27 = import_ref Main//base, loc9_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -599,7 +615,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.0a8
-// CHECK:STDOUT:   .x = imports.%Main.import_ref.1ec
+// CHECK:STDOUT:   .x = imports.%Main.import_ref.b7f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @D [from "base.carbon"] {
@@ -607,7 +623,7 @@ var d: D = {.y = ()};
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.54a
-// CHECK:STDOUT:   .y = imports.%Main.import_ref.053
+// CHECK:STDOUT:   .y = imports.%Main.import_ref.d27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {

@@ -13,34 +13,36 @@ fn F(b: bool, x: i32, y: i32) -> bool {
 }
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 13},
-// CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 18},
-// CHECK:STDOUT:         {kind: 'ReturnStatementStart', text: 'return'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:           {kind: 'IfExprIf', text: 'if', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'x'},
-// CHECK:STDOUT:           {kind: 'IfExprThen', text: 'then', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'y'},
-// CHECK:STDOUT:         {kind: 'IfExprElse', text: 'else', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ReturnStatement', text: ';', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 27},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   │ ├─PatternListComma ','
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   │ ├─PatternListComma ','
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   │ ╭─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │   ├─ReturnType '->'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │ │ ╭─IfExprIf 'if'
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameExpr 'x'
+// CHECK:STDOUT:   │ │ │ ├─IfExprThen 'then'
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'y'
+// CHECK:STDOUT:   │ │ ├─IfExprElse 'else'
+// CHECK:STDOUT:   │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

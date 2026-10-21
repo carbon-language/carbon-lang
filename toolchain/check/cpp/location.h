@@ -14,6 +14,11 @@ namespace Carbon::Check {
 auto GetCppLocation(Context& context, SemIR::LocId loc_id)
     -> clang::SourceLocation;
 
+// Adds an `ImportIRInst` referring to the given source location and returns a
+// corresponding `ImportIRInstId` that can be used to construct a `LocId`.
+auto AddImportIRInst(SemIR::File& file, clang::SourceLocation clang_source_loc)
+    -> SemIR::ImportIRInstId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CPP_LOCATION_H_

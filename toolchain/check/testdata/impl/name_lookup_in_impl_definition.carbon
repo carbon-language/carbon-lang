@@ -30,15 +30,17 @@ impl forall [T: type] T as I where .U = C {
 // CHECK:STDOUT: --- name_lookup_into_impl_as_target.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %I.type: type = facet_type <@I> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
-// CHECK:STDOUT:   %pattern_type.98f: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt: %pattern_type.98f = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %.917: <witness> = impl_self_witness %T, @I [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @T.as.I.impl.%I.impl_witness_table, @T.as.I.impl(%T) [symbolic]
-// CHECK:STDOUT:   %I.facet: %I.type = facet_value %T, (%I.impl_witness) [symbolic]
+// CHECK:STDOUT:   %I.facet.510: %I.type = facet_value %T, (%I.impl_witness) [symbolic]
 // CHECK:STDOUT:   %.a44: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %return.param_patt.89a: %pattern_type.98b = out_param_pattern [concrete]
@@ -55,13 +57,13 @@ impl forall [T: type] T as I where .U = C {
 // CHECK:STDOUT:   %T.as.I.impl.F.type: type = fn_type @T.as.I.impl.F, @T.as.I.impl(%T.loc10_15.1) [symbolic = %T.as.I.impl.F.type (constants.%T.as.I.impl.F.type)]
 // CHECK:STDOUT:   %T.as.I.impl.F: @T.as.I.impl.%T.as.I.impl.F.type (%T.as.I.impl.F.type) = struct_value () [symbolic = %T.as.I.impl.F (constants.%T.as.I.impl.F)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   impl: %T.ref as %.loc10_30 {
+// CHECK:STDOUT:   impl: %T.ref as %I.ref {
 // CHECK:STDOUT:     %T.as.I.impl.F.decl: @T.as.I.impl.%T.as.I.impl.F.type (%T.as.I.impl.F.type) = fn_decl @T.as.I.impl.F [symbolic = @T.as.I.impl.%T.as.I.impl.F (constants.%T.as.I.impl.F)] {
 // CHECK:STDOUT:       %return.param_patt: %pattern_type.98b = out_param_pattern [concrete = constants.%return.param_patt.89a]
 // CHECK:STDOUT:       %return.patt: %pattern_type.98b = return_slot_pattern %return.param_patt, %U.ref [concrete = constants.%return.patt.e4a]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %I.facet.loc13_13.2: %I.type = facet_value @T.as.I.impl.%T.ref, (constants.%I.impl_witness) [symbolic = %I.facet.loc13_13.1 (constants.%I.facet)]
-// CHECK:STDOUT:       %.loc13_13.1: %I.type = converted @T.as.I.impl.%T.ref, %I.facet.loc13_13.2 [symbolic = %I.facet.loc13_13.1 (constants.%I.facet)]
+// CHECK:STDOUT:       %I.facet.loc13_13.2: %I.type = facet_value @T.as.I.impl.%T.ref, (constants.%I.impl_witness) [symbolic = %I.facet.loc13_13.1 (constants.%I.facet.510)]
+// CHECK:STDOUT:       %.loc13_13.1: %I.type = converted @T.as.I.impl.%T.ref, %I.facet.loc13_13.2 [symbolic = %I.facet.loc13_13.1 (constants.%I.facet.510)]
 // CHECK:STDOUT:       %impl.elem0: type = impl_witness_access constants.%I.impl_witness, element0 [concrete = constants.%C]
 // CHECK:STDOUT:       %U.ref: type = name_ref U, %impl.elem0 [concrete = constants.%C]
 // CHECK:STDOUT:       %.loc13_13.2: Core.Form = init_form %U.ref [concrete = constants.%.a44]
@@ -74,7 +76,7 @@ impl forall [T: type] T as I where .U = C {
 // CHECK:STDOUT:     .U = <poisoned>
 // CHECK:STDOUT:     .F = %T.as.I.impl.F.decl
 // CHECK:STDOUT:     .C = <poisoned>
-// CHECK:STDOUT:     extend %.loc10_30
+// CHECK:STDOUT:     extend %I.ref
 // CHECK:STDOUT:     witness = %I.impl_witness.loc10_43.1
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -82,7 +84,7 @@ impl forall [T: type] T as I where .U = C {
 // CHECK:STDOUT: generic fn @T.as.I.impl.F(@T.as.I.impl.%T.loc10_15.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @T.as.I.impl.%I.impl_witness_table, @T.as.I.impl(%T) [symbolic = %I.impl_witness (constants.%I.impl_witness)]
-// CHECK:STDOUT:   %I.facet.loc13_13.1: %I.type = facet_value %T, (%I.impl_witness) [symbolic = %I.facet.loc13_13.1 (constants.%I.facet)]
+// CHECK:STDOUT:   %I.facet.loc13_13.1: %I.type = facet_value %T, (%I.impl_witness) [symbolic = %I.facet.loc13_13.1 (constants.%I.facet.510)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:
@@ -104,6 +106,7 @@ impl forall [T: type] T as I where .U = C {
 // CHECK:STDOUT: specific @T.as.I.impl(constants.%T) {
 // CHECK:STDOUT:   %T.patt.loc10_15.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc10_15.1 => constants.%T
+// CHECK:STDOUT:   %.loc10_43 => constants.%.917
 // CHECK:STDOUT:   %I.impl_witness.loc10_43.2 => constants.%I.impl_witness
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -114,6 +117,6 @@ impl forall [T: type] T as I where .U = C {
 // CHECK:STDOUT: specific @T.as.I.impl.F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness
-// CHECK:STDOUT:   %I.facet.loc13_13.1 => constants.%I.facet
+// CHECK:STDOUT:   %I.facet.loc13_13.1 => constants.%I.facet.510
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

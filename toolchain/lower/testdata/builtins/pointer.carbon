@@ -29,37 +29,37 @@ fn Check(p: MakeUnformed(C*)) -> bool {
 // CHECK:STDOUT: source_filename = "pointer.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define ptr @_CNull.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define ptr @_CNull.Main() #0 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret ptr null, !dbg !8
+// CHECK:STDOUT:   ret ptr null, !dbg !27
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i1 @_CCheck.Main(ptr %p) #0 !dbg !9 {
+// CHECK:STDOUT: define i1 @_CCheck.Main(ptr %p) #0 !dbg !28 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %IsNull.call = icmp eq ptr %p, null, !dbg !14
-// CHECK:STDOUT:   ret i1 %IsNull.call, !dbg !15
+// CHECK:STDOUT:   %IsNull.call = icmp eq ptr %p, null, !dbg !34
+// CHECK:STDOUT:   ret i1 %IsNull.call, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!17}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "pointer.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "Null", linkageName: "_CNull.Main", scope: null, file: !1, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{!7}
-// CHECK:STDOUT: !7 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
-// CHECK:STDOUT: !8 = !DILocation(line: 20, column: 3, scope: !4)
-// CHECK:STDOUT: !9 = distinct !DISubprogram(name: "Check", linkageName: "_CCheck.Main", scope: null, file: !1, line: 23, type: !10, spFlags: DISPFlagDefinition, unit: !0, retainedNodes: !12)
-// CHECK:STDOUT: !10 = !DISubroutineType(types: !11)
-// CHECK:STDOUT: !11 = !{!7, !7}
-// CHECK:STDOUT: !12 = !{!13}
-// CHECK:STDOUT: !13 = !DILocalVariable(arg: 1, scope: !9, type: !7)
-// CHECK:STDOUT: !14 = !DILocation(line: 24, column: 10, scope: !9)
-// CHECK:STDOUT: !15 = !DILocation(line: 24, column: 3, scope: !9)
+// CHECK:STDOUT: !16 = !DIFile(filename: "pointer.carbon", directory: "")
+// CHECK:STDOUT: !17 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !16, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !18 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
+// CHECK:STDOUT: !19 = !{!18}
+// CHECK:STDOUT: !20 = !DISubroutineType(types: !19)
+// CHECK:STDOUT: !21 = !{!18, !18}
+// CHECK:STDOUT: !22 = !DISubroutineType(types: !21)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "Null", linkageName: "_CNull.Main", scope: null, file: !16, line: 19, type: !20, spFlags: DISPFlagDefinition, unit: !17)
+// CHECK:STDOUT: !27 = !DILocation(line: 20, column: 3, scope: !23)
+// CHECK:STDOUT: !28 = distinct !DISubprogram(name: "Check", linkageName: "_CCheck.Main", scope: null, file: !16, line: 23, type: !22, spFlags: DISPFlagDefinition, unit: !17, retainedNodes: !36)
+// CHECK:STDOUT: !29 = !DILocalVariable(arg: 1, scope: !28, type: !18)
+// CHECK:STDOUT: !34 = !DILocation(line: 24, column: 10, scope: !28)
+// CHECK:STDOUT: !35 = !DILocation(line: 24, column: 3, scope: !28)
+// CHECK:STDOUT: !36 = !{!29}
 // CHECK:STDOUT:

@@ -54,8 +54,12 @@ auto HandleParseNode(Context& context, Parse::FunctionIntroducerId node_id)
 static auto HandleReturnDecl(Context& context, Parse::AnyReturnDeclId node_id)
     -> bool {
   auto [expr_node_id, expr_inst_id] = context.node_stack().PopExprWithNodeId();
-  Context::FormExpr form_expr = [&]() {
-    if (context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind) {
+  Context::FormExpr form_expr = [&] {
+    // `-> T` provides a type expression, whereas `-> ref T` and `->? F`
+    // provide a form.
+    if (context.parse_tree().node_kind(node_id) == Parse::ReturnTypeId::Kind &&
+        context.parse_tree().node_kind(expr_node_id) !=
+            Parse::RefPrimitiveFormId::Kind) {
       return ReturnExprAsForm(context, expr_node_id, expr_inst_id);
     } else {
       return FormExprAsForm(context, expr_node_id, expr_inst_id);
@@ -95,14 +99,10 @@ static auto DiagnoseModifiers(Context& context,
                                is_definition);
   CheckMethodModifiersOnFunction(context, introducer, parent_scope_inst_id,
                                  parent_scope_inst);
-  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id);
-
-  if (introducer.modifier_set.HasAnyOf(KeywordModifierSet::Interface)) {
-    // TODO: Once we are saving the modifiers for a function, add check that
-    // the function may only be defined if it is marked `default` or `final`.
-    context.TODO(introducer.modifier_node_id(ModifierOrder::Decl),
-                 "interface modifier");
-  }
+  RequireDefaultFinalOnlyInInterfaces(context, introducer, parent_scope_id,
+                                      is_definition);
+  // TODO: add check that functions in interfaces may only be defined if they
+  // are marked `default` or `final`.
 
   if (!self_param_id.has_value() &&
       introducer.modifier_set.HasAnyOf(KeywordModifierSet::Method)) {
@@ -135,129 +135,14 @@ static auto GetEvaluationMode(const KeywordModifierSet& modifier_set)
       .Default(SemIR::Function::EvaluationMode::None);
 }
 
-// Tries to merge new_function into prev_function_id. Since new_function won't
-// have a definition even if one is upcoming, set is_definition to indicate the
-// planned result.
-//
-// If merging is successful, returns true and may update the previous function.
-// Otherwise, returns false. Prints a diagnostic when appropriate.
-static auto MergeFunctionRedecl(Context& context,
-                                Parse::AnyFunctionDeclId node_id,
-                                SemIR::Function& new_function,
-                                bool new_is_definition,
-                                SemIR::FunctionId prev_function_id,
-                                SemIR::ImportIRId prev_import_ir_id) -> bool {
-  auto& prev_function = context.functions().Get(prev_function_id);
-
-  if (!CheckFunctionTypeMatches(context, new_function, prev_function)) {
-    return false;
-  }
-
-  DiagnoseIfInvalidRedecl(
-      context, Lex::TokenKind::Fn, prev_function.name_id,
-      RedeclInfo(new_function, node_id, new_is_definition),
-      RedeclInfo(prev_function, SemIR::LocId(prev_function.latest_decl_id()),
-                 prev_function.has_definition_started()),
-      prev_import_ir_id);
-  if (new_is_definition && prev_function.has_definition_started()) {
-    return false;
-  }
-
-  if (!prev_function.first_owning_decl_id.has_value()) {
-    prev_function.first_owning_decl_id = new_function.first_owning_decl_id;
-  }
-  if (new_is_definition) {
-    // Track the signature from the definition, so that IDs in the body
-    // match IDs in the signature.
-    prev_function.MergeDefinition(new_function);
-  }
-  if (prev_import_ir_id.has_value()) {
-    ReplacePrevInstForMerge(context, new_function.parent_scope_id,
-                            prev_function.name_id,
-                            new_function.first_owning_decl_id);
-  }
-  return true;
-}
-
-// Check whether this is a redeclaration, merging if needed.
-static auto TryMergeRedecl(Context& context, Parse::AnyFunctionDeclId node_id,
-                           const DeclNameStack::NameContext& name_context,
-                           SemIR::FunctionDecl& function_decl,
-                           SemIR::Function& function_info, bool is_definition)
-    -> void {
-  // Diagnose if we are declaring a poisoned name. However, don't diagnose at
-  // impl scope: if the name was referenced before being declared, we will have
-  // produced an error already.
-  if (name_context.state == DeclNameStack::NameContext::State::Poisoned) {
-    if (!context.name_scopes().InstIs<SemIR::ImplDecl>(
-            name_context.parent_scope_id)) {
-      DiagnosePoisonedName(context, name_context.name_id_for_new_inst(),
-                           name_context.poisoning_loc_id, name_context.loc_id);
-    }
-    return;
-  }
-
-  auto prev_id = name_context.prev_inst_id();
-  if (!prev_id.has_value()) {
-    return;
-  }
-
-  auto prev_function_id = SemIR::FunctionId::None;
-  auto prev_type_id = SemIR::TypeId::None;
-  auto prev_import_ir_id = SemIR::ImportIRId::None;
-  CARBON_KIND_SWITCH(context.insts().Get(prev_id)) {
-    case CARBON_KIND(SemIR::AssociatedEntity assoc_entity): {
-      // This is a function in an interface definition scope.
-      auto function_decl =
-          context.insts().GetAs<SemIR::FunctionDecl>(assoc_entity.decl_id);
-      prev_function_id = function_decl.function_id;
-      prev_type_id = function_decl.type_id;
-      break;
-    }
-    case CARBON_KIND(SemIR::FunctionDecl function_decl): {
-      prev_function_id = function_decl.function_id;
-      prev_type_id = function_decl.type_id;
-      break;
-    }
-    case SemIR::ImportRefLoaded::Kind: {
-      auto import_ir_inst = GetCanonicalImportIRInst(context, prev_id);
-
-      // Verify the decl so that things like aliases are name conflicts.
-      const auto* import_ir =
-          context.import_irs().Get(import_ir_inst.ir_id()).sem_ir;
-      if (!import_ir->insts().Is<SemIR::FunctionDecl>(
-              import_ir_inst.inst_id())) {
-        break;
-      }
-
-      // Use the type to get the ID.
-      if (auto struct_value = context.insts().TryGetAs<SemIR::StructValue>(
-              context.constant_values().GetConstantInstId(prev_id))) {
-        if (auto function_type = context.types().TryGetAs<SemIR::FunctionType>(
-                struct_value->type_id)) {
-          prev_function_id = function_type->function_id;
-          prev_type_id = struct_value->type_id;
-          prev_import_ir_id = import_ir_inst.ir_id();
-        }
-      }
-      break;
-    }
-    default:
-      break;
-  }
-
-  if (!prev_function_id.has_value()) {
-    DiagnoseDuplicateName(context, name_context.name_id, name_context.loc_id,
-                          SemIR::LocId(prev_id));
-    return;
-  }
-
-  if (MergeFunctionRedecl(context, node_id, function_info, is_definition,
-                          prev_function_id, prev_import_ir_id)) {
-    // When merging, use the existing function rather than adding a new one.
-    function_decl.function_id = prev_function_id;
-    function_decl.type_id = prev_type_id;
-  }
+// Returns the implementation modifier as an enum.
+static auto GetInterfaceModifier(const KeywordModifierSet& modifier_set)
+    -> SemIR::Function::InterfaceModifier {
+  using enum SemIR::Function::InterfaceModifier;
+  return modifier_set.ToEnum<SemIR::Function::InterfaceModifier>()
+      .Case(KeywordModifierSet::Default, Default)
+      .Case(KeywordModifierSet::Final, Final)
+      .Default(None);
 }
 
 // Adds the declaration to name lookup when appropriate.
@@ -479,19 +364,6 @@ static auto RequestVtableIfVirtual(
   context.vtable_stack().AddInstId(decl_id);
 }
 
-// Diagnoses when positional params aren't supported. Reassigns the pattern
-// block if needed.
-static auto DiagnosePositionalParams(Context& context,
-                                     SemIR::Function& function_info) -> void {
-  if (function_info.param_patterns_id.has_value()) {
-    return;
-  }
-
-  context.TODO(function_info.latest_decl_id(),
-               "function with positional parameters");
-  function_info.param_patterns_id = SemIR::InstBlockId::Empty;
-}
-
 // Build a FunctionDecl describing the signature of a function. This
 // handles the common logic shared by function declaration syntax and function
 // definition syntax.
@@ -545,6 +417,7 @@ static auto BuildFunctionDecl(Context& context,
   bool is_extern = introducer.modifier_set.HasAnyOf(KeywordModifierSet::Extern);
   auto virtual_modifier = GetVirtualModifier(introducer.modifier_set);
   auto evaluation_mode = GetEvaluationMode(introducer.modifier_set);
+  auto interface_modifier = GetInterfaceModifier(introducer.modifier_set);
 
   // Add the function declaration.
   SemIR::FunctionDecl function_decl = {SemIR::TypeId::None,
@@ -557,23 +430,29 @@ static auto BuildFunctionDecl(Context& context,
   auto function_info =
       SemIR::Function{name_context.MakeEntityWithParamsBase(
                           name, decl_id, is_extern, introducer.extern_library),
-                      {.call_param_patterns_id = name.call_param_patterns_id,
-                       .call_params_id = name.call_params_id,
-                       .call_param_ranges = name.param_ranges,
-                       .return_type_inst_id = return_type_inst_id,
-                       .return_form_inst_id = return_form_inst_id,
-                       .return_pattern_id = return_pattern_id,
-                       .virtual_modifier = virtual_modifier,
-                       .evaluation_mode = evaluation_mode,
-                       .self_param_id = self_param_id}};
+                      {
+                          .call_param_patterns_id = name.call_param_patterns_id,
+                          .call_params_id = name.call_params_id,
+                          .call_param_ranges = name.param_ranges,
+                          .return_type_inst_id = return_type_inst_id,
+                          .return_form_inst_id = return_form_inst_id,
+                          .return_pattern_id = return_pattern_id,
+                          .virtual_modifier = virtual_modifier,
+                          .evaluation_mode = evaluation_mode,
+                          .interface_modifier = interface_modifier,
+                          .self_param_id = self_param_id,
+                      }};
   if (is_definition) {
     function_info.definition_id = decl_id;
   }
 
-  DiagnosePositionalParams(context, function_info);
+  CheckFunctionParams(context, function_info);
 
-  TryMergeRedecl(context, node_id, name_context, function_decl, function_info,
-                 is_definition);
+  TryMergeRedecl(
+      context, name_context, std::nullopt,
+      MergeRedeclEntityInfo<SemIR::Function>{.new_entity_decl = function_decl,
+                                             .new_entity = function_info},
+      is_definition);
 
   // Create a new function if this isn't a valid redeclaration.
   if (!function_decl.function_id.has_value()) {
@@ -663,6 +542,10 @@ static auto CheckUnusedBindingsInPattern(Context& context,
         }
         break;
       }
+      case CARBON_KIND(SemIR::DefaultValuePattern default_value_pattern): {
+        work_list.push_back(default_value_pattern.subpattern_id);
+        break;
+      }
       default:
         break;
     }
@@ -738,20 +621,7 @@ auto HandleParseNode(Context& context, Parse::FunctionDefinitionId node_id)
   SemIR::FunctionId function_id =
       context.node_stack().Pop<Parse::NodeKind::FunctionDefinitionStart>();
 
-  // If the `}` of the function is reachable, reject if we need a return value
-  // and otherwise add an implicit `return;`.
-  if (IsCurrentPositionReachable(context)) {
-    if (context.functions().Get(function_id).return_form_inst_id.has_value()) {
-      CARBON_DIAGNOSTIC(
-          MissingReturnStatement, Error,
-          "missing `return` at end of function with declared return type");
-      context.emitter().Emit(LocIdForDiagnostics::TokenOnly(node_id),
-                             MissingReturnStatement);
-    } else {
-      AddReturnInstWithCleanups(context, node_id);
-    }
-  }
-
+  CheckFunctionReturnOnFinish(context, node_id, function_id);
   FinishFunctionDefinition(context, function_id);
   context.decl_name_stack().PopScope(/*check_unused=*/true);
 

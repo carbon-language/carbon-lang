@@ -84,17 +84,17 @@ import Cpp;
 alias r#Cpp = Cpp;
 
 inline Cpp '''
-void F();
+void FRaw();
 
-void G() {
+void GRaw() {
   // CHECK:STDERR: fail_carbon_raw_cpp.carbon:[[@LINE+8]]:16: error: semantics TODO: `interop with translation unit decl` [SemanticsTodo]
-  // CHECK:STDERR:   Carbon::Cpp::F();
+  // CHECK:STDERR:   Carbon::Cpp::FRaw();
   // CHECK:STDERR:                ^
   // CHECK:STDERR:
   // CHECK:STDERR: fail_carbon_raw_cpp.carbon:[[@LINE+4]]:11: error: no member named 'Cpp' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    19 |   Carbon::Cpp::F();
+  // CHECK:STDERR:    19 |   Carbon::Cpp::FRaw();
   // CHECK:STDERR:       |   ~~~~~~~~^
   // CHECK:STDERR:
-  Carbon::Cpp::F();
+  Carbon::Cpp::FRaw();
 }
 ''';

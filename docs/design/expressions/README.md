@@ -340,7 +340,7 @@ Most expressions are modeled as operators:
 | Arithmetic | [`/`](arithmetic.md)                | `x / y`   | `x` divided by `y`, or the quotient thereof.                          |
 | Arithmetic | [`%`](arithmetic.md)                | `x % y`   | `x` modulo `y`.                                                       |
 | Bitwise    | [`&`](bitwise.md)                   | `x & y`   | The bitwise AND of `x` and `y`.                                       |
-| Bitwise    | [`\|`](bitwise.md)                  | `x \| y`  | The bitwise OR of `x` and `y`.                                        |
+| Bitwise    | [<code>\|</code>](bitwise.md)       | <code>x \| y</code> | The bitwise OR of `x` and `y`.                              |
 | Bitwise    | [`^`](bitwise.md) (binary)          | `x ^ y`   | The bitwise XOR of `x` and `y`.                                       |
 | Bitwise    | [`<<`](bitwise.md)                  | `x << y`  | `x` bit-shifted left `y` places.                                      |
 | Bitwise    | [`>>`](bitwise.md)                  | `x >> y`  | `x` bit-shifted right `y` places.                                     |

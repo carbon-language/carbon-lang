@@ -62,12 +62,9 @@ FileContext::FileContext(Context& context, const SemIR::File& sem_ir,
                          llvm::SmallVector<SemIR::SpecificId>()),
       coalescer_(vlog_stream_, sem_ir.specifics()),
       vtables_(decltype(vtables_)::MakeForOverwrite(sem_ir.vtables())),
-      specific_vtables_(sem_ir.specifics(), nullptr) {
-  // Initialization that relies on invariants of the class.
-  cpp_code_generator_ = cpp_file() ? cpp_file()->GetCodeGenerator() : nullptr;
-  CARBON_CHECK(
-      !cpp_code_generator_ ||
-      (&cpp_code_generator_->GetModule()->getContext() == &llvm_context()));
+      specific_vtables_(sem_ir.specifics(), nullptr),
+      mangler_(sem_ir, context.total_ir_count(),
+               context.mangle_string_fingerprint()) {
   CARBON_CHECK(!sem_ir.has_errors(),
                "Generating LLVM IR from invalid SemIR::File is unsupported.");
 }
@@ -119,7 +116,7 @@ auto FileContext::LowerDefinitions() -> void {
   LowerGlobalVariables(sem_ir().top_inst_block_id());
 
   // Lower static class variable definitions.
-  for (auto class_info : sem_ir().classes().values()) {
+  for (const auto& class_info : sem_ir().classes().values()) {
     auto inst_block_id = class_info.body_block_id;
     if (inst_block_id.has_value()) {
       LowerGlobalVariables(inst_block_id);
@@ -128,9 +125,11 @@ auto FileContext::LowerDefinitions() -> void {
 
   // Lower function definitions.
   for (auto [id, fn_info] : sem_ir_->functions().enumerate()) {
-    // If we created a declaration and the function definition is not imported,
-    // build a definition.
+    // If we created a declaration and the function definition is needed but not
+    // imported, build a definition.
     if (functions_.Get(id) && fn_info.definition_id.has_value() &&
+        fn_info.special_function_kind !=
+            SemIR::Function::SpecialFunctionKind::CppFunctionPointerThunk &&
         !sem_ir().insts().GetImportSource(fn_info.definition_id).has_value()) {
       BuildFunctionDefinition(id);
     }
@@ -172,6 +171,7 @@ auto FileContext::LowerDefinitions() -> void {
         .unused_param_indices =
             std::move(function_type_info.unused_param_indices),
         .llvm_function = llvm_function,
+        .return_kind = function_type_info.return_kind,
         .inexact = function_type_info.inexact};
     functions_.Set(global_ctor_id, function_info);
 
@@ -184,10 +184,14 @@ auto FileContext::LowerDefinitions() -> void {
 }
 
 auto FileContext::Finalize() -> void {
-  if (cpp_code_generator_) {
+  // TODO: This is an ugly way to check if we're supposed to finalize this code
+  // generator. Context::Finalize should finalize its own code generator, but
+  // doesn't have a reference to its `ASTContext`.
+  if (cpp_file() &&
+      cpp_file()->code_generator() == context().cpp_code_generator()) {
     // Clang code generation should not actually modify the AST, but isn't
     // const-correct.
-    cpp_code_generator_->HandleTranslationUnit(
+    cpp_file()->code_generator()->HandleTranslationUnit(
         const_cast<clang::ASTContext&>(cpp_file()->ast_context()));
   }
 
@@ -316,9 +320,12 @@ auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
   // so that code generation (`CodeGenModule::EmitGlobal()`) would see this
   // function name (`CodeGenModule::getMangledName()`), and will generate
   // its definition.
-  auto* function_address = dyn_cast<llvm::Function>(
-      cpp_code_generator_->GetAddrOfGlobal(CreateGlobalDecl(cpp_decl),
-                                           /*isForDefinition=*/false));
+  // TODO: This code generator can be for the wrong AST if we're not using
+  // --share-cpp-ast.
+  auto* function_address =
+      dyn_cast<llvm::Function>(context().cpp_code_generator()->GetAddrOfGlobal(
+          CreateGlobalDecl(cpp_decl),
+          /*isForDefinition=*/false));
   CARBON_CHECK(function_address);
 
   return function_address;
@@ -363,9 +370,7 @@ auto FileContext::GetOrCreateLLVMFunction(
     }
   }
 
-  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
-                   context().mangle_string_fingerprint());
-  std::string mangled_name = m.Mangle(function_id, specific_id);
+  std::string mangled_name = mangler_.Mangle(function_id, specific_id);
   if (auto* existing = llvm_module().getFunction(mangled_name)) {
     // We might have already lowered this function while lowering a different
     // file. That's OK.
@@ -422,7 +427,8 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
   }
 
   // Don't lower builtins.
-  if (function.builtin_function_kind() != SemIR::BuiltinFunctionKind::None) {
+  if (function.GetBuiltinFunctionKind(sem_ir()) !=
+      SemIR::BuiltinFunctionKind::None) {
     return std::nullopt;
   }
 
@@ -442,8 +448,13 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
       {fallback_file, fallback_function_id, fallback_specific_id}};
   auto function_type_info =
       BuildFunctionTypeInfo(llvm::ArrayRef(func_infos, fallback_file ? 2 : 1));
-  auto* llvm_function =
-      GetOrCreateLLVMFunction(function_type_info, function_id, specific_id);
+  llvm::Function* llvm_function = nullptr;
+  // If we're calling a function pointer, we don't need an LLVM function.
+  if (function.special_function_kind !=
+      SemIR::Function::SpecialFunctionKind::CppFunctionPointerThunk) {
+    llvm_function =
+        GetOrCreateLLVMFunction(function_type_info, function_id, specific_id);
+  }
 
   return {{.type = function_type_info.type,
            .di_type = function_type_info.di_type,
@@ -452,6 +463,7 @@ auto FileContext::BuildFunctionDecl(SemIR::FunctionId function_id,
            .unused_param_indices =
                std::move(function_type_info.unused_param_indices),
            .llvm_function = llvm_function,
+           .return_kind = function_type_info.return_kind,
            .inexact = function_type_info.inexact}};
 }
 
@@ -560,11 +572,11 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     // Specific functions are emitted in each file they are referenced in.
     linkage = llvm::Function::LinkOnceODRLinkage;
   } else if (declaration_function.special_function_kind ==
-                 SemIR::Function::SpecialFunctionKind::CoreWitness ||
+                 SemIR::Function::SpecialFunctionKind::Generated ||
              declaration_function.special_function_kind ==
                  SemIR::Function::SpecialFunctionKind::Thunk) {
-    // TODO: Emit CoreWitness functions and thunks in files where they're called
-    // instead of in files where they're defined. That should allow
+    // TODO: Emit custom witness functions and thunks in files where they're
+    // called instead of in files where they're defined. That should allow
     // LinkOnceODRLinkage.
     linkage = llvm::Function::WeakODRLinkage;
   }
@@ -689,14 +701,18 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   if (!context().di_compile_unit()) {
     return nullptr;
   }
-  auto name = sem_ir().names().GetAsStringIfIdentifier(function.name_id);
-  CARBON_CHECK(name, "Unexpected special name for function: {0}",
-               function.name_id);
+  llvm::StringRef name = "";
+  if (function.name_id.has_value()) {
+    auto maybe_name =
+        sem_ir().names().GetAsStringIfIdentifier(function.name_id);
+    CARBON_CHECK(maybe_name, "Unexpected special name for function: {0}",
+                 function.name_id);
+    name = *maybe_name;
+  }
   auto loc = GetLocForDI(function.definition_id);
   llvm::DISubroutineType* subroutine_type = function_info.di_type;
   auto* subprogram = context().di_builder().createFunction(
-      context().di_compile_unit(), *name,
-      function_info.llvm_function->getName(),
+      context().di_compile_unit(), name, function_info.llvm_function->getName(),
       /*File=*/context().di_builder().createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number, subroutine_type,
       /*ScopeLine=*/0, llvm::DINode::FlagZero,
@@ -724,7 +740,9 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
   // llvm::GlobalVariable.
   if (const auto* clang_decl =
           sem_ir().clang_decls().Lookup(var_storage.pattern_id)) {
-    auto* constant = cpp_code_generator_->GetAddrOfGlobal(
+    // TODO: This code generator can be for the wrong AST if we're not using
+    // --share-cpp-ast.
+    auto* constant = context().cpp_code_generator()->GetAddrOfGlobal(
         CreateGlobalDecl(cast<clang::NamedDecl>(clang_decl->decl())),
         /*isForDefinition=*/false);
     if (constant) {
@@ -737,9 +755,7 @@ auto FileContext::BuildGlobalVariableDecl(SemIR::VarStorage var_storage)
 
 auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
     -> llvm::GlobalVariable* {
-  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
-                   context().mangle_string_fingerprint());
-  auto mangled_name = m.MangleGlobalVariable(var_storage.pattern_id);
+  auto mangled_name = mangler_.MangleGlobalVariable(var_storage.pattern_id);
   auto linkage = llvm::GlobalVariable::ExternalLinkage;
 
   // If the variable doesn't have an externally-visible name, demote it to
@@ -770,17 +786,20 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
     -> llvm::Constant* {
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
   if (!vtable.carbon_native_vtable) {
-    auto* cxx_record_decl = cast<clang::CXXRecordDecl>(
-        sem_ir().clang_decls().Lookup(class_info.latest_decl_id())->key.decl);
-    return cpp_code_generator_->GetAddrOfVTable(
+    const auto* clang_decl =
+        sem_ir().clang_decls().Lookup(class_info.first_decl_id());
+    CARBON_CHECK(clang_decl, "Missing Clang declaration for class {0}",
+                 class_info.name_id);
+    auto* cxx_record_decl = cast<clang::CXXRecordDecl>(clang_decl->key.decl);
+    // TODO: This code generator can be for the wrong AST if we're not using
+    // --share-cpp-ast.
+    return context().cpp_code_generator()->GetAddrOfVTable(
         clang::BaseSubobject(cxx_record_decl,
                              clang::CharUnits::fromQuantity(0)),
         cxx_record_decl);
   }
 
-  SemIR::Mangler m(sem_ir(), context().total_ir_count(),
-                   context().mangle_string_fingerprint());
-  std::string mangled_name = m.MangleVTable(class_info, specific_id);
+  std::string mangled_name = mangler_.MangleVTable(class_info, specific_id);
 
   if (sem_ir()
           .insts()

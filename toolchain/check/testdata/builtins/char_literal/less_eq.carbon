@@ -26,6 +26,7 @@ let c: bool = LessEq('b', 'a');
 // CHECK:STDOUT: --- less_eq.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %LessEq.type: type = fn_type @LessEq [concrete]
 // CHECK:STDOUT:   %LessEq: %LessEq.type = struct_value () [concrete]

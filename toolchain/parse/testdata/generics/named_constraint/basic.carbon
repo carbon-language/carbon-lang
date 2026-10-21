@@ -23,28 +23,25 @@ constraint WithRequire {
 constraint ForwardDeclared;
 
 // CHECK:STDOUT: - filename: empty.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Empty'},
-// CHECK:STDOUT:       {kind: 'NamedConstraintDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─NamedConstraintIntroducer 'constraint'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Empty'
+// CHECK:STDOUT:   │ ╭─NamedConstraintDefinitionStart '{'
+// CHECK:STDOUT:   ├─NamedConstraintDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: with_require.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'WithRequire'},
-// CHECK:STDOUT:       {kind: 'NamedConstraintDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'NamedConstraintDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─NamedConstraintIntroducer 'constraint'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'WithRequire'
+// CHECK:STDOUT:   │ ╭─NamedConstraintDefinitionStart '{'
+// CHECK:STDOUT:   ├─NamedConstraintDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: forward_decl.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'NamedConstraintIntroducer', text: 'constraint'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'ForwardDeclared'},
-// CHECK:STDOUT:     {kind: 'NamedConstraintDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─NamedConstraintIntroducer 'constraint'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'ForwardDeclared'
+// CHECK:STDOUT:   ├─NamedConstraintDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

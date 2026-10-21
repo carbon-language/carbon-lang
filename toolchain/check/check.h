@@ -28,6 +28,7 @@ struct Unit {
   // The unit's SemIR, provided as empty and filled in by CheckParseTrees.
   SemIR::File* sem_ir;
   llvm::LLVMContext* llvm_context;
+  bool is_lowered;
   // The total number of files.
   int total_ir_count;
 };
@@ -79,6 +80,9 @@ struct CheckParseTreesOptions {
   // Whether to use the string form of the fingerprint from mangling instead of
   // the hash form.
   bool mangle_string_fingerprint = false;
+
+  // Whether to share a single Clang ASTContext across all files.
+  bool share_cpp_ast = false;
 };
 
 // Checks a group of parse trees. This will use imports to decide the order of

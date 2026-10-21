@@ -10,6 +10,7 @@
 #include "common/raw_hashtable_benchmark_helpers.h"
 #include "common/set.h"
 #include "llvm/ADT/DenseSet.h"
+#include "testing/base/benchmark_helpers.h"
 
 namespace Carbon {
 namespace {
@@ -19,6 +20,7 @@ using RawHashtable::GetKeysAndHitKeys;
 using RawHashtable::GetKeysAndMissKeys;
 using RawHashtable::HitArgs;
 using RawHashtable::ReportTableMetrics;
+using RawHashtable::RunLoopInRandomLayout;
 using RawHashtable::SizeArgs;
 using RawHashtable::ValueToBool;
 
@@ -35,9 +37,10 @@ static constexpr bool IsCarbonSet = IsCarbonSetImpl<SetT>::value;
 // support different APIs. The primary template assumes a roughly
 // `std::unordered_set` API design, and types with a different API design are
 // supported through specializations.
-template <typename SetT>
+template <typename InSetT>
 struct SetWrapperImpl {
-  using KeyT = typename SetT::key_type;
+  using SetT = InSetT;
+  using KeyT = SetT::key_type;
 
   SetT s;
 
@@ -58,6 +61,17 @@ struct SetWrapperImpl {
   }
 
   auto BenchErase(KeyT k) -> bool { return s.erase(k) != 0; }
+
+  // Visits every key in the set, calling `cb` with each one. Each set type is
+  // expected to traverse using whatever API it provides for this, so that the
+  // benchmark measures iterating the set rather than any specific iteration
+  // API.
+  template <typename CallbackT>
+  auto BenchIterate(CallbackT cb) -> void {
+    for (const auto& k : s) {
+      cb(k);
+    }
+  }
 };
 
 // Explicit (partial) specialization for the Carbon map type that uses its
@@ -85,6 +99,13 @@ struct SetWrapperImpl<Set<KT, MinSmallSize>> {
   }
 
   auto BenchErase(KeyT k) -> bool { return s.Erase(k); }
+
+  template <typename CallbackT>
+  auto BenchIterate(CallbackT cb) -> void {
+    for (const auto& k : s.entries()) {
+      cb(k);
+    }
+  }
 };
 
 // Provide a way to override the Carbon Set specific benchmark runs with another
@@ -123,6 +144,17 @@ using SetWrapper =
     SetWrapperOverride<SetT, SetOverride::CARBON_SET_BENCH_OVERRIDE>;
 #endif
 
+// Reports extra statistics about the table, when it is in fact a Carbon table.
+// Note that this has to inspect the *wrapped* type in order to work correctly
+// when the Carbon benchmarks are overridden with another implementation.
+template <typename SetT>
+auto ReportMetrics(const SetWrapper<SetT>& s_wrapper, benchmark::State& state)
+    -> void {
+  if constexpr (IsCarbonSet<typename SetWrapper<SetT>::SetT>) {
+    ReportTableMetrics(s_wrapper.s, state);
+  }
+}
+
 // NOLINTBEGIN(bugprone-macro-parentheses): Parentheses are incorrect here.
 #define MAP_BENCHMARK_ONE_OP_SIZE(NAME, APPLY, KT)        \
   BENCHMARK(NAME<Set<KT>>)->Apply(APPLY);                 \
@@ -158,7 +190,7 @@ using SetWrapper =
 template <typename SetT>
 static void BM_SetContainsHitPtr(benchmark::State& state) {
   using SetWrapperT = SetWrapper<SetT>;
-  using KT = typename SetWrapperT::KeyT;
+  using KT = SetWrapperT::KeyT;
   SetWrapperT s;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), state.range(1));
@@ -167,21 +199,23 @@ static void BM_SetContainsHitPtr(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size;) {
-      // We block optimizing `i` as that has proven both more effective at
-      // blocking the loop from being optimized away and avoiding disruption of
-      // the generated code that we're benchmarking.
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size;) {
+        // We block optimizing `i` as that has proven both more effective at
+        // blocking the loop from being optimized away and avoiding disruption
+        // of the generated code that we're benchmarking.
+        Testing::DoNotOptimize(i);
 
-      bool result = s.BenchContains(lookup_keys[i]);
-      CARBON_DCHECK(result);
-      // We use the lookup success to step through keys, establishing a
-      // dependency between each lookup. This doesn't fully allow us to measure
-      // latency rather than throughput, as noted above.
-      i += static_cast<ssize_t>(result);
+        bool result = s.BenchContains(lookup_keys[i]);
+        CARBON_DCHECK(result);
+        // We use the lookup success to step through keys, establishing a
+        // dependency between each lookup. This doesn't fully allow us to
+        // measure latency rather than throughput, as noted above.
+        i += static_cast<ssize_t>(result);
+      }
     }
-  }
+  });
 }
 MAP_BENCHMARK_ONE_OP(BM_SetContainsHitPtr, HitArgs);
 
@@ -190,7 +224,7 @@ MAP_BENCHMARK_ONE_OP(BM_SetContainsHitPtr, HitArgs);
 template <typename SetT>
 static void BM_SetContainsMissPtr(benchmark::State& state) {
   using SetWrapperT = SetWrapper<SetT>;
-  using KT = typename SetWrapperT::KeyT;
+  using KT = SetWrapperT::KeyT;
   SetWrapperT s;
   auto [keys, lookup_keys] = GetKeysAndMissKeys<KT>(state.range(0));
   for (auto k : keys) {
@@ -198,15 +232,17 @@ static void BM_SetContainsMissPtr(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size;) {
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size;) {
+        Testing::DoNotOptimize(i);
 
-      bool result = s.BenchContains(lookup_keys[i]);
-      CARBON_DCHECK(!result);
-      i += static_cast<ssize_t>(!result);
+        bool result = s.BenchContains(lookup_keys[i]);
+        CARBON_DCHECK(!result);
+        i += static_cast<ssize_t>(!result);
+      }
     }
-  }
+  });
 }
 MAP_BENCHMARK_ONE_OP(BM_SetContainsMissPtr, SizeArgs);
 
@@ -225,7 +261,7 @@ MAP_BENCHMARK_ONE_OP(BM_SetContainsMissPtr, SizeArgs);
 template <typename SetT>
 static void BM_SetLookupHitPtr(benchmark::State& state) {
   using SetWrapperT = SetWrapper<SetT>;
-  using KT = typename SetWrapperT::KeyT;
+  using KT = SetWrapperT::KeyT;
   SetWrapperT s;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), state.range(1));
@@ -234,15 +270,17 @@ static void BM_SetLookupHitPtr(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size;) {
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size;) {
+        Testing::DoNotOptimize(i);
 
-      bool result = s.BenchLookup(lookup_keys[i]);
-      CARBON_DCHECK(result);
-      i += static_cast<ssize_t>(result);
+        bool result = s.BenchLookup(lookup_keys[i]);
+        CARBON_DCHECK(result);
+        i += static_cast<ssize_t>(result);
+      }
     }
-  }
+  });
 }
 MAP_BENCHMARK_ONE_OP(BM_SetLookupHitPtr, HitArgs);
 
@@ -265,7 +303,7 @@ MAP_BENCHMARK_ONE_OP(BM_SetLookupHitPtr, HitArgs);
 template <typename SetT>
 static void BM_SetEraseInsertHitPtr(benchmark::State& state) {
   using SetWrapperT = SetWrapper<SetT>;
-  using KT = typename SetWrapperT::KeyT;
+  using KT = SetWrapperT::KeyT;
   SetWrapperT s;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), state.range(1));
@@ -274,18 +312,20 @@ static void BM_SetEraseInsertHitPtr(benchmark::State& state) {
   }
   ssize_t lookup_keys_size = lookup_keys.size();
 
-  while (state.KeepRunningBatch(lookup_keys_size)) {
-    for (ssize_t i = 0; i < lookup_keys_size;) {
-      benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(lookup_keys_size)) {
+      for (ssize_t i = 0; i < lookup_keys_size;) {
+        Testing::DoNotOptimize(i);
 
-      s.BenchErase(lookup_keys[i]);
-      benchmark::ClobberMemory();
+        s.BenchErase(lookup_keys[i]);
+        benchmark::ClobberMemory();
 
-      bool inserted = s.BenchInsert(lookup_keys[i]);
-      CARBON_DCHECK(inserted);
-      i += static_cast<ssize_t>(inserted);
+        bool inserted = s.BenchInsert(lookup_keys[i]);
+        CARBON_DCHECK(inserted);
+        i += static_cast<ssize_t>(inserted);
+      }
     }
-  }
+  });
 }
 MAP_BENCHMARK_ONE_OP(BM_SetEraseInsertHitPtr, HitArgs);
 
@@ -324,7 +364,7 @@ MAP_BENCHMARK_ONE_OP(BM_SetEraseInsertHitPtr, HitArgs);
 template <typename SetT>
 static void BM_SetInsertSeq(benchmark::State& state) {
   using SetWrapperT = SetWrapper<SetT>;
-  using KT = typename SetWrapperT::KeyT;
+  using KT = SetWrapperT::KeyT;
   constexpr ssize_t LookupKeysSize = 1 << 8;
   auto [keys, lookup_keys] =
       GetKeysAndHitKeys<KT>(state.range(0), LookupKeysSize);
@@ -332,22 +372,24 @@ static void BM_SetInsertSeq(benchmark::State& state) {
   // Now build a large shuffled set of keys (with duplicates) we'll use at the
   // end.
   ssize_t i = 0;
-  for (auto _ : state) {
-    benchmark::DoNotOptimize(i);
+  RunLoopInRandomLayout(state, [&] {
+    for (auto _ : state) {
+      Testing::DoNotOptimize(i);
 
-    SetWrapperT s;
-    for (auto k : keys) {
-      bool inserted = s.BenchInsert(k);
-      CARBON_DCHECK(inserted, "Must be a successful insert!");
+      SetWrapperT s;
+      for (auto k : keys) {
+        bool inserted = s.BenchInsert(k);
+        CARBON_DCHECK(inserted, "Must be a successful insert!");
+      }
+
+      // Now insert a final random repeated key.
+      bool inserted = s.BenchInsert(lookup_keys[i]);
+      CARBON_DCHECK(!inserted, "Must already be in the map!");
+
+      // Rotate through the shuffled keys.
+      i = (i + static_cast<ssize_t>(!inserted)) & (LookupKeysSize - 1);
     }
-
-    // Now insert a final random repeated key.
-    bool inserted = s.BenchInsert(lookup_keys[i]);
-    CARBON_DCHECK(!inserted, "Must already be in the map!");
-
-    // Rotate through the shuffled keys.
-    i = (i + static_cast<ssize_t>(!inserted)) & (LookupKeysSize - 1);
-  }
+  });
 
   // It can be easier in some cases to think of this as a key-throughput rate of
   // insertion rather than the latency of inserting N keys, so construct the
@@ -374,6 +416,47 @@ static void BM_SetInsertSeq(benchmark::State& state) {
   }
 }
 MAP_BENCHMARK_OP_SEQ(BM_SetInsertSeq);
+
+// Benchmark visiting every key in a set.
+//
+// Unlike the lookup benchmarks, this walks the table's storage from end to end
+// rather than probing it, so it is largely a measure of how densely keys are
+// packed and how cheaply empty slots can be skipped. There is no dependency
+// between the keys visited, and so this is a throughput measurement.
+//
+// Each batch is a single complete traversal of the set, with the batch size set
+// to the number of keys so that the reported time is the per-key cost.
+template <typename SetT>
+static void BM_SetIterate(benchmark::State& state) {
+  using SetWrapperT = SetWrapper<SetT>;
+  using KT = typename SetWrapperT::KeyT;
+  SetWrapperT s;
+  auto [keys, _] = GetKeysAndMissKeys<KT>(state.range(0));
+  for (auto k : keys) {
+    bool inserted = s.BenchInsert(k);
+    CARBON_DCHECK(inserted, "Must be a successful insert!");
+  }
+
+  RunLoopInRandomLayout(state, [&] {
+    while (state.KeepRunningBatch(keys.size())) {
+      ssize_t sum = 0;
+      s.BenchIterate([&sum](const KT& k) {
+        // Consume the key so that neither the traversal nor the loads out of
+        // the entries can be optimized away.
+        sum += ValueToBool(k);
+      });
+      Testing::DoNotOptimize(sum);
+    }
+  });
+
+  // The time is already per-key, so an iteration-invariant rate of one gives
+  // the throughput of keys visited.
+  state.counters["KeyRate"] =
+      benchmark::Counter(1, benchmark::Counter::kIsIterationInvariantRate);
+
+  ReportMetrics(s, state);
+}
+MAP_BENCHMARK_ONE_OP(BM_SetIterate, SizeArgs);
 
 }  // namespace
 }  // namespace Carbon

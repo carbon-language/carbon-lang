@@ -20,18 +20,18 @@
 var n: i8 = n* -n;
 
 // CHECK:STDOUT: - filename: fail_star_minus.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'n'},
-// CHECK:STDOUT:           {kind: 'IntTypeLiteral', text: 'i8'},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:         {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'n'},
-// CHECK:STDOUT:       {kind: 'InfixOperatorMinus', text: '-', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'n'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   ├─IntTypeLiteral 'i8'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameExpr 'n'
+// CHECK:STDOUT:   │ │ ╭─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'n'
+// CHECK:STDOUT:   │ ├─InfixOperatorMinus '-'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

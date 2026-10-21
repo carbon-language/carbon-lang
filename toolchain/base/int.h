@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_BASE_INT_H_
 
 #include "common/check.h"
+#include "common/hashing_llvm.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/canonical_value_store.h"
@@ -125,9 +126,9 @@ class IntId : public Printable<IntId> {
   auto Print(llvm::raw_ostream& out) const -> void {
     out << Label << "(";
     if (is_embedded_value()) {
-      out << "value: " << AsValue();
+      out << "value=" << AsValue();
     } else if (is_index()) {
-      out << "index: " << AsIndex();
+      out << "index=" << AsIndex();
     } else {
       CARBON_CHECK(!has_value());
       out << "<none>";

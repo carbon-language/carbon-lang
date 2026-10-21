@@ -61,6 +61,7 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT: --- literal.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]
@@ -105,6 +106,7 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT: --- init_expr.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [concrete]
@@ -121,15 +123,15 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT:   %.loc7_24.1: ref %tuple.type = temporary @__global_init.%.loc7, @__global_init.%F.call
 // CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access %.loc7_24.1, element0
 // CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access %.loc7_24.1, element1
-// CHECK:STDOUT:   %tuple.loc7_24.1: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc7_24.2: %empty_tuple.type = converted %tuple.elem0, %tuple.loc7_24.1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc7_24.1: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_24.2: %empty_tuple.type = converted %tuple.elem0, %empty_tuple.loc7_24.1 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_10.1: type = splice_block %.loc7_10.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc7_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_10.3: type = converted %.loc7_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc7_24.2
-// CHECK:STDOUT:   %tuple.loc7_24.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc7_24.3: %empty_tuple.type = converted %tuple.elem1, %tuple.loc7_24.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc7_24.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_24.3: %empty_tuple.type = converted %tuple.elem1, %empty_tuple.loc7_24.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_17.1: type = splice_block %.loc7_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc7_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc7_17.3: type = converted %.loc7_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -153,6 +155,7 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT: --- ref_expr.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (%empty_tuple.type, %empty_tuple.type) [concrete]
@@ -168,15 +171,15 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %tuple.elem0: ref %empty_tuple.type = tuple_access @__global_init.%t.ref, element0 [concrete = constants.%tuple.elem0]
 // CHECK:STDOUT:   %tuple.elem1: ref %empty_tuple.type = tuple_access @__global_init.%t.ref, element1 [concrete = constants.%tuple.elem1]
-// CHECK:STDOUT:   %tuple.loc6_22.1: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_22.1: %empty_tuple.type = converted %tuple.elem0, %tuple.loc6_22.1 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc6_22.1: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_22.1: %empty_tuple.type = converted %tuple.elem0, %empty_tuple.loc6_22.1 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_10.1: type = splice_block %.loc6_10.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc6_10.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_10.3: type = converted %.loc6_10.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: %empty_tuple.type = wrapper_binding a, %.loc6_22.1
-// CHECK:STDOUT:   %tuple.loc6_22.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc6_22.2: %empty_tuple.type = converted %tuple.elem1, %tuple.loc6_22.2 [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple.loc6_22.2: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc6_22.2: %empty_tuple.type = converted %tuple.elem1, %empty_tuple.loc6_22.2 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc6_17.1: type = splice_block %.loc6_17.3 [concrete = constants.%empty_tuple.type] {
 // CHECK:STDOUT:     %.loc6_17.2: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     %.loc6_17.3: type = converted %.loc6_17.2, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
@@ -199,6 +202,7 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT: --- grouping_parens.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %empty_tuple.type [concrete]
@@ -239,6 +243,7 @@ let (((b: ()),)) = ((),);
 // CHECK:STDOUT: --- one_tuple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
 // CHECK:STDOUT:   %pattern_type.cb1: type = pattern_type %empty_tuple.type [concrete]

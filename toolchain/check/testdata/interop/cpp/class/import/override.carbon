@@ -94,10 +94,16 @@ import Cpp library "overload.h";
 class OverloadX {
   extend base: Cpp.OverloadedBase;
   //
+  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+16]]:23: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   override fn f(self, x: Cpp.X);
+  // CHECK:STDERR:                       ^~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_overload_type.carbon: error: cannot implicitly convert expression of type `Cpp.Y` to `Cpp.X` [ConversionFailure]
+  // CHECK:STDERR: fail_overload_type.carbon: note: type `Cpp.Y` does not implement interface `Core.ImplicitAs(Cpp.X)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+10]]:23: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   override fn f(self, x: Cpp.X);
   // CHECK:STDERR:                       ^~~~~~~~
-  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE-8]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./overload.h:7:16: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   virtual void f(Y y);
   // CHECK:STDERR:                ^
@@ -110,10 +116,16 @@ class OverloadX {
 class OverloadY {
   extend base: Cpp.OverloadedBase;
   //
+  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+14]]:23: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:   override fn f(self, y: Cpp.Y);
+  // CHECK:STDERR:                       ^~~~~~~~
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_overload_type.carbon: error: cannot implicitly convert expression of type `Cpp.X` to `Cpp.Y` [ConversionFailure]
+  // CHECK:STDERR: fail_overload_type.carbon: note: type `Cpp.X` does not implement interface `Core.ImplicitAs(Cpp.Y)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR: fail_overload_type.carbon:[[@LINE+8]]:23: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:   override fn f(self, y: Cpp.Y);
   // CHECK:STDERR:                       ^~~~~~~~
-  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE-24]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_overload_type.carbon:[[@LINE-36]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./overload.h:6:16: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:   virtual void f(X x);
   // CHECK:STDERR:                ^

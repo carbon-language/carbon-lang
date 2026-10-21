@@ -58,9 +58,12 @@ struct BindingPatternInfo {
 enum class BindingPhase { Template, Symbolic, Runtime };
 
 // Creates an entity name for a binding pattern with the given properties.
+// `type_inst_id` is the declared type of the binding as written, if known; see
+// `SemIR::EntityName::type_inst_id`.
 auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
-                          SemIR::InstId form_id, bool is_unused,
-                          BindingPhase phase) -> SemIR::EntityNameId;
+                          SemIR::TypeInstId type_inst_id, SemIR::InstId form_id,
+                          bool is_unused, BindingPhase phase)
+    -> SemIR::EntityNameId;
 
 // Creates a binding pattern and the associated binding inst, and returns their
 // IDs. `scrutinee_type_id` is the type of the binding, and `type_region_id` is

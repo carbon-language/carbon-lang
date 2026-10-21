@@ -164,12 +164,12 @@ import library "poison";
 // This doesn't fail.
 interface N.I;
 
-// --- poison.impl.carbon
+// --- todo_fail_poison.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
 // TODO: #4622 This should fail since `N.I` was poisoned in the api.
-interface N.I;
+interface N.I {}
 
 // --- fail_poison_when_lookup_fails.carbon
 

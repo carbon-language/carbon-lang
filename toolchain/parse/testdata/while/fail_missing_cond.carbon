@@ -18,19 +18,18 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: fail_missing_cond.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'WhileConditionStart', text: 'while', has_error: yes},
-// CHECK:STDOUT:           {kind: 'InvalidParse', text: '{', has_error: yes},
-// CHECK:STDOUT:         {kind: 'WhileCondition', text: 'while', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'CodeBlockStart', text: '{'},
-// CHECK:STDOUT:         {kind: 'CodeBlock', text: '}', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'WhileStatement', text: 'while', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─WhileConditionStart 'while' has_error
+// CHECK:STDOUT:   │ │   ├─InvalidParse '{' has_error
+// CHECK:STDOUT:   │ │ ╭─WhileCondition 'while' has_error
+// CHECK:STDOUT:   │ │ │ ╭─CodeBlockStart '{'
+// CHECK:STDOUT:   │ │ ├─CodeBlock '}'
+// CHECK:STDOUT:   │ ├─WhileStatement 'while'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -18,61 +18,64 @@ fn F(c: bool) {
 }
 
 // CHECK:STDOUT: - filename: precedence_assign.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'c'},
-// CHECK:STDOUT:             {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'b'},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 4},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'p'},
-// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'PostfixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'VarBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'VariablePattern', text: 'var', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'VariableDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'p'},
-// CHECK:STDOUT:           {kind: 'PrefixOperatorStar', text: '*', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:             {kind: 'IfExprIf', text: 'if', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:             {kind: 'IfExprThen', text: 'then', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '2'},
-// CHECK:STDOUT:           {kind: 'IfExprElse', text: 'else', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'InfixOperatorEqual', text: '=', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 10},
-// CHECK:STDOUT:             {kind: 'ParenExprStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:               {kind: 'IfExprIf', text: 'if', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameExpr', text: 'a'},
-// CHECK:STDOUT:               {kind: 'IfExprThen', text: 'then', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'b'},
-// CHECK:STDOUT:             {kind: 'IfExprElse', text: 'else', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'ParenExpr', text: ')', subtree_size: 8},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'c'},
-// CHECK:STDOUT:             {kind: 'IfExprIf', text: 'if', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IntLiteral', text: '1'},
-// CHECK:STDOUT:             {kind: 'IfExprThen', text: 'then', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IntLiteral', text: '2'},
-// CHECK:STDOUT:           {kind: 'IfExprElse', text: 'else', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'InfixOperatorPlusEqual', text: '+=', subtree_size: 15},
-// CHECK:STDOUT:       {kind: 'ExprStatement', text: ';', subtree_size: 16},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 54},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'c'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'b'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'p'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   │ ╭─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │   ├─PostfixOperatorStar '*'
+// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableDecl ';'
+// CHECK:STDOUT:   │ │     ╭─IdentifierNameExpr 'p'
+// CHECK:STDOUT:   │ │   ╭─PrefixOperatorStar '*'
+// CHECK:STDOUT:   │ │   │   ╭─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ │   │ ╭─IfExprIf 'if'
+// CHECK:STDOUT:   │ │   │ │ ╭─IntLiteral '1'
+// CHECK:STDOUT:   │ │   │ ├─IfExprThen 'then'
+// CHECK:STDOUT:   │ │   │ ├─IntLiteral '2'
+// CHECK:STDOUT:   │ │   ├─IfExprElse 'else'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorEqual '='
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   │ │     ╭─ParenExprStart '('
+// CHECK:STDOUT:   │ │     │   ╭─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ │     │ ╭─IfExprIf 'if'
+// CHECK:STDOUT:   │ │     │ │ ╭─IdentifierNameExpr 'a'
+// CHECK:STDOUT:   │ │     │ ├─IfExprThen 'then'
+// CHECK:STDOUT:   │ │     │ ├─IdentifierNameExpr 'b'
+// CHECK:STDOUT:   │ │     ├─IfExprElse 'else'
+// CHECK:STDOUT:   │ │   ╭─ParenExpr ')'
+// CHECK:STDOUT:   │ │   │   ╭─IdentifierNameExpr 'c'
+// CHECK:STDOUT:   │ │   │ ╭─IfExprIf 'if'
+// CHECK:STDOUT:   │ │   │ │ ╭─IntLiteral '1'
+// CHECK:STDOUT:   │ │   │ ├─IfExprThen 'then'
+// CHECK:STDOUT:   │ │   │ ├─IntLiteral '2'
+// CHECK:STDOUT:   │ │   ├─IfExprElse 'else'
+// CHECK:STDOUT:   │ │ ╭─InfixOperatorPlusEqual '+='
+// CHECK:STDOUT:   │ ├─ExprStatement ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

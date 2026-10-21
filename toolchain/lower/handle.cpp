@@ -13,7 +13,6 @@
 #include "llvm/Support/Casting.h"
 #include "toolchain/lower/function_context.h"
 #include "toolchain/sem_ir/builtin_function_kind.h"
-#include "toolchain/sem_ir/entry_point.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/inst.h"
@@ -94,6 +93,12 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   }
 
   context.SetLocal(inst_id, context.GetValue(inst.value_id));
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::CppAddrOfFunction inst) -> void {
+  context.SetLocal(
+      inst_id, context.specific_file_context().GetFunction(inst.function_id));
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -189,11 +194,6 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
-                SemIR::FacetAccessType /*inst*/) -> void {
-  context.SetLocal(inst_id, context.GetTypeAsValue());
-}
-
-auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::FacetValue /*inst*/) -> void {
   context.SetLocal(inst_id, context.GetTypeAsValue());
 }
@@ -255,14 +255,22 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
   context.SetLocal(inst_id, context.GetValue(inst.storage_id));
 }
 
+// Returns how the function being lowered returns its result, as determined
+// when its signature was lowered.
+static auto GetReturnKind(FunctionContext& context) -> ReturnKind {
+  const auto& function_info = context.specific_file_context().GetFunctionInfo(
+      context.specific_sem_ir_function_id(), context.specific_id());
+  CARBON_CHECK(function_info, "Lowering body of undeclared function");
+  return function_info->return_kind;
+}
+
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::Return /*inst*/) -> void {
   // The 'Run()' entry point does not need to specify a return type, but
   // the C runtime and system ABI expects the entry point to return an `int`.
   // In this situation we modify the lowered IR to return `0`
   // with the expected LLVM type that corresponds to the `int` type.
-  if (SemIR::IsEntryPoint(context.specific_sem_ir(),
-                          context.specific_sem_ir_function_id())) {
+  if (GetReturnKind(context) == ReturnKind::EntryPointInt32) {
     context.builder().CreateRet(context.builder().getInt32(0));
     return;
   }
@@ -271,63 +279,50 @@ auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId /*inst_id*/,
                 SemIR::ReturnExpr inst) -> void {
-  auto expr_cat = SemIR::GetExprCategory(context.sem_ir(), inst.expr_id);
-  switch (expr_cat) {
-    case SemIR::ExprCategory::EphemeralRef:
-    case SemIR::ExprCategory::DurableRef:
-      // Reference return.
-      context.builder().CreateRet(context.GetValue(inst.expr_id));
-      return;
+  auto expr_cat =
+      SemIR::GetExprCategory(context.sem_ir(), inst.expr_id,
+                             &context.specific_sem_ir(), context.specific_id());
+  context.AddEnumToCurrentFingerprint(expr_cat);
 
-    case SemIR::ExprCategory::Value:
-      // Return of a `returned var`.
-    case SemIR::ExprCategory::ReprInitializing:
-    case SemIR::ExprCategory::InPlaceInitializing:
-      // Initializing return.
-      break;
-
-    case SemIR::ExprCategory::Mixed:
-    case SemIR::ExprCategory::RefTagged:
-    case SemIR::ExprCategory::NotExpr:
-    case SemIR::ExprCategory::Error:
-    case SemIR::ExprCategory::Pattern:
-    case SemIR::ExprCategory::Dependent:
-      CARBON_FATAL("Unexpected category for `return` expression");
-  }
-
-  auto result_type = context.GetTypeIdOfInst(inst.expr_id);
-  switch (context.GetInitRepr(result_type).kind) {
-    case SemIR::InitRepr::None:
+  auto return_kind = GetReturnKind(context);
+  context.AddEnumToCurrentFingerprint(return_kind);
+  switch (return_kind) {
+    case ReturnKind::None:
       // Nothing to return.
       context.builder().CreateRetVoid();
       return;
-    case SemIR::InitRepr::InPlace:
-      CARBON_CHECK(context.GetValueRepr(result_type).repr.kind ==
-                       SemIR::ValueRepr::Pointer,
-                   "TODO: Add support for ReturnExpr with custom value repr");
-      // TODO: find a way to avoid the redundant call to GetInitRepr inside
-      // InitializeStorage.
-      context.InitializeStorage(result_type, inst.dest_id, inst.expr_id);
-      context.builder().CreateRetVoid();
+
+    case ReturnKind::ByReference:
+      // Return a pointer: either the address of a reference, or the value
+      // representation of a value of a type with a pointer (or pointer-like
+      // custom) value representation.
+      context.builder().CreateRet(context.GetValue(inst.expr_id));
       return;
-    case SemIR::InitRepr::ByCopy: {
+
+    case ReturnKind::ByCopy: {
       auto* value = context.GetValue(inst.expr_id);
       if (expr_cat == SemIR::ExprCategory::InPlaceInitializing) {
-        value =
-            context.builder().CreateLoad(context.GetType(result_type), value);
+        value = context.builder().CreateLoad(
+            context.GetType(context.GetTypeIdOfInst(inst.expr_id)), value);
       }
       context.builder().CreateRet(value);
       return;
     }
-    case SemIR::InitRepr::Abstract:
-      CARBON_FATAL("Lowering return of abstract type {0}",
-                   result_type.file->types().GetAsInst(result_type.type_id));
-    case SemIR::InitRepr::Incomplete:
-      CARBON_FATAL("Lowering return of incomplete type {0}",
-                   result_type.file->types().GetAsInst(result_type.type_id));
-    case SemIR::InitRepr::Dependent:
-      CARBON_FATAL("Lowering return of dependent type {0}",
-                   result_type.file->types().GetAsInst(result_type.type_id));
+
+    case ReturnKind::InPlace: {
+      auto result_type = context.GetTypeIdOfInst(inst.expr_id);
+      CARBON_CHECK(context.GetValueRepr(result_type).repr.kind ==
+                       SemIR::ValueRepr::Pointer,
+                   "TODO: Add support for ReturnExpr with custom value repr");
+      context.InitializeStorage(result_type, inst.dest_id, inst.expr_id);
+      context.builder().CreateRetVoid();
+      return;
+    }
+
+    case ReturnKind::EntryPointInt32:
+      CARBON_FATAL(
+          "`return` with expression in entry point without a return "
+          "type");
   }
 }
 
@@ -351,16 +346,49 @@ auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::SpecificInst inst) -> void {
+  // If it's valid to refer to inst.inst_id at runtime and it's not constant, it
+  // must be within this function, and hence in the same specific that we're
+  // lowering.
+  CARBON_CHECK(&context.sem_ir() == &context.specific_sem_ir() &&
+                   context.specific_id() == inst.specific_id,
+               "Runtime specific_inst refers to a different specific");
+
+  // When lowering templates, the specific may contain instructions that
+  // neither emit a value during lowering nor have a constant value, so set
+  // require_value=false.
+  if (auto* value = context.GetValue(inst.inst_id, /*require_value=*/false)) {
+    context.SetLocal(inst_id, value);
+  }
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::SpliceBlock inst) -> void {
   context.LowerBlockContents(inst.block_id);
   context.SetLocal(inst_id, context.GetValue(inst.result_id));
 }
 
-auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,
-                SemIR::SpliceInst /*inst*/) -> void {
-  // TODO: Get the constant value of the spliced instruction from the current
-  // specific, and lower the instruction in that constant value.
-  CARBON_FATAL("Template lowering not implemented yet");
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::SpliceInst inst) -> void {
+  auto [inst_ir, inst_value_id] = GetConstantValueInSpecific(
+      context.specific_sem_ir(), context.specific_id(), context.sem_ir(),
+      inst.inst_id);
+  auto inst_value =
+      inst_ir->constant_values().GetInstAs<SemIR::InstValue>(inst_value_id);
+  if (inst_ir == &context.sem_ir()) {
+    // Easy case: same file. Just emit the spliced instruction.
+    context.AddInstToCurrentFingerprint(inst_value.inst_id);
+    context.LowerInst(inst_value.inst_id);
+    context.SetLocal(inst_id, context.GetValue(inst_value.inst_id));
+  } else {
+    // TODO: We don't yet have support for cross-file templates at all. Lowering
+    // the result here would mostly just require that we switch the `sem_ir` on
+    // the `FunctionContext` to instead refer to the `specific_sem_ir`, but we
+    // would also need to handle references from the instantiated instructions
+    // back to the original ones, and we don't even know how to represent those
+    // references yet.
+    CARBON_FATAL("Cross-file template lowering not implemented yet");
+  }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,

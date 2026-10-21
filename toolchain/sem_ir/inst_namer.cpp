@@ -264,7 +264,9 @@ auto InstNamer::GetNameFor(ScopeId scope_id, InstId inst_id) const
   if (IsSingletonInstId(inst_id)) {
     return sem_ir_->insts().Get(inst_id).kind().ir_name().str();
   }
-
+  if (inst_id == TypeType::TypeInstId) {
+    return "type";
+  }
   if (inst_id == SemIR::Namespace::PackageInstId) {
     return "package";
   }
@@ -409,7 +411,7 @@ auto InstNamer::Namespace::AllocateName(
   }
 
   // Append numbers until we find an available name.
-  name += ".";
+  name.push_back('.');
   auto name_size_without_counter = name.size();
   for (int counter = 1;; ++counter) {
     name.resize(name_size_without_counter);
@@ -632,7 +634,9 @@ auto InstNamer::PushEntity(FunctionId function_id, ScopeId scope_id,
   scope.name = globals_.AllocateName(
       *this, fn_loc,
       llvm::formatv("{0}{1}{2}", scope_prefix, scope_prefix.empty() ? "" : ".",
-                    sem_ir_->names().GetIRBaseName(fn.name_id)));
+                    fn.name_id.has_value()
+                        ? sem_ir_->names().GetIRBaseName(fn.name_id)
+                        : "fn"));
   if (!fn.body_block_ids.empty()) {
     AddBlockLabel(scope_id, fn.body_block_ids.front(), "entry", fn_loc);
   }
@@ -1084,27 +1088,28 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(FacetType inst): {
-      const auto& facet_type_info =
-          sem_ir().facet_types().Get(inst.facet_type_id);
-      bool has_where = facet_type_info.other_requirements ||
-                       !facet_type_info.self_impls_constraints.empty() ||
-                       !facet_type_info.self_impls_named_constraints.empty() ||
-                       !facet_type_info.type_impls_interfaces.empty() ||
-                       !facet_type_info.type_impls_named_constraints.empty() ||
-                       !facet_type_info.rewrite_constraints.empty();
-      if (facet_type_info.extend_constraints.size() == 1 &&
-          facet_type_info.extend_named_constraints.empty()) {
+      const auto& declared_facet_type =
+          sem_ir().declared_facet_types().Get(inst.declared_facet_type_id);
+      bool has_where =
+          declared_facet_type.other_requirements ||
+          !declared_facet_type.self_impls_constraints.empty() ||
+          !declared_facet_type.self_impls_named_constraints.empty() ||
+          !declared_facet_type.type_impls_interfaces.empty() ||
+          !declared_facet_type.type_impls_named_constraints.empty() ||
+          !declared_facet_type.rewrite_constraints.empty();
+      if (declared_facet_type.extend_constraints.size() == 1 &&
+          declared_facet_type.extend_named_constraints.empty()) {
         AddEntityNameAndMaybePush(
-            facet_type_info.extend_constraints.front().interface_id,
+            declared_facet_type.extend_constraints.front().interface_id,
             has_where ? "_where.type" : ".type");
-      } else if (facet_type_info.extend_named_constraints.size() == 1 &&
-                 facet_type_info.extend_constraints.empty()) {
+      } else if (declared_facet_type.extend_named_constraints.size() == 1 &&
+                 declared_facet_type.extend_constraints.empty()) {
         AddEntityNameAndMaybePush(
-            facet_type_info.extend_named_constraints.front()
+            declared_facet_type.extend_named_constraints.front()
                 .named_constraint_id,
             has_where ? "_where.type" : ".type");
-      } else if (facet_type_info.extend_constraints.empty() &&
-                 facet_type_info.extend_named_constraints.empty()) {
+      } else if (declared_facet_type.extend_constraints.empty() &&
+                 declared_facet_type.extend_named_constraints.empty()) {
         AddInstName(has_where ? "type_where" : "type");
       } else {
         AddInstName("facet_type");
@@ -1114,9 +1119,9 @@ auto InstNamer::NamingContext::NameInst() -> void {
     case CARBON_KIND(FacetValue inst): {
       if (auto facet_type =
               sem_ir().types().TryGetAs<FacetType>(inst.type_id)) {
-        const auto& facet_type_info =
-            sem_ir().facet_types().Get(facet_type->facet_type_id);
-        if (auto single = facet_type_info.TryAsSingleExtend()) {
+        const auto& declared_facet_type = sem_ir().declared_facet_types().Get(
+            facet_type->declared_facet_type_id);
+        if (auto single = declared_facet_type.TryAsSingleExtend()) {
           CARBON_KIND_SWITCH(*single) {
             case CARBON_KIND(SemIR::SpecificInterface interface): {
               AddEntityNameAndMaybePush(interface.interface_id, ".facet");
@@ -1130,29 +1135,16 @@ auto InstNamer::NamingContext::NameInst() -> void {
           }
           return;
         }
-        if (facet_type_info.HasNoConstraints()) {
-          if (auto class_ty =
-                  sem_ir().insts().TryGetAs<ClassType>(inst.type_inst_id)) {
-            AddEntityNameAndMaybePush(class_ty->class_id, ".type.facet");
-            return;
-          }
-          if (auto tuple_ty = sem_ir().insts().TryGetAs<SemIR::TupleType>(
-                  inst.type_inst_id)) {
-            if (tuple_ty->type_elements_id == InstBlockId::Empty) {
-              AddInstName("empty_tuple.type.facet");
-            } else {
-              AddInstName("tuple.type.facet");
-            }
-            return;
-          }
-          if (auto struct_ty = sem_ir().insts().TryGetAs<SemIR::StructType>(
-                  inst.type_inst_id)) {
-            AddStructTypeInstName(*struct_ty, "", ".type.facet");
-            return;
-          }
-        }
       }
       AddInstName("facet_value");
+      return;
+    }
+    case CARBON_KIND(FieldDecl inst): {
+      for (auto block_id :
+           sem_ir().expr_regions().Get(inst.type_region_id).block_ids) {
+        PushBlockId(scope_id_, block_id);
+      }
+      AddInstName("field_decl");
       return;
     }
     case CARBON_KIND(FloatType inst): {
@@ -1182,7 +1174,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.overload_set_id, ".type");
       return;
     }
-    case CARBON_KIND(GenericClassType inst): {
+    case CARBON_KIND(ParameterizedClassType inst): {
       AddEntityNameAndMaybePush(inst.class_id, ".type");
       return;
     }
@@ -1438,32 +1430,38 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(StructValue inst): {
-      if (auto fn_ty = sem_ir().types().TryGetAs<FunctionType>(inst.type_id)) {
-        AddEntityNameAndMaybePush(fn_ty->function_id);
-      } else if (auto class_ty =
-                     sem_ir().types().TryGetAs<ClassType>(inst.type_id)) {
-        AddEntityNameAndMaybePush(class_ty->class_id, ".val");
-      } else if (auto generic_class_ty =
-                     sem_ir().types().TryGetAs<GenericClassType>(
-                         inst.type_id)) {
-        AddEntityNameAndMaybePush(generic_class_ty->class_id, ".generic");
-      } else if (auto generic_interface_ty =
-                     sem_ir().types().TryGetAs<GenericInterfaceType>(
-                         inst.type_id)) {
-        AddInstNameId(sem_ir()
-                          .interfaces()
-                          .Get(generic_interface_ty->interface_id)
-                          .name_id,
-                      ".generic");
-      } else if (auto template_name_ty =
-                     sem_ir().types().TryGetAs<CppTemplateNameType>(
-                         inst.type_id)) {
-        AddInstEntityNameId(template_name_ty->name_id, ".template");
-      } else {
-        if (sem_ir().inst_blocks().Get(inst.elements_id).empty()) {
-          AddInstName("empty_struct");
-        } else {
-          AddInstName("struct");
+      CARBON_KIND_SWITCH(sem_ir().types().GetAsInst(inst.type_id)) {
+        case CARBON_KIND(FunctionType fn_ty): {
+          AddEntityNameAndMaybePush(fn_ty.function_id);
+          break;
+        }
+        case CARBON_KIND(ClassType class_ty): {
+          AddEntityNameAndMaybePush(class_ty.class_id, ".val");
+          break;
+        }
+        case CARBON_KIND(ParameterizedClassType generic_class_ty): {
+          AddEntityNameAndMaybePush(generic_class_ty.class_id, ".generic");
+          break;
+        }
+        case CARBON_KIND(GenericInterfaceType generic_interface_ty): {
+          AddInstNameId(sem_ir()
+                            .interfaces()
+                            .Get(generic_interface_ty.interface_id)
+                            .name_id,
+                        ".generic");
+          break;
+        }
+        case CARBON_KIND(CppTemplateNameType template_name_ty): {
+          AddInstEntityNameId(template_name_ty.name_id, ".template");
+          break;
+        }
+        default: {
+          if (sem_ir().inst_blocks().Get(inst.elements_id).empty()) {
+            AddInstName("empty_struct");
+          } else {
+            AddInstName("struct");
+          }
+          break;
         }
       }
       return;
@@ -1483,7 +1481,8 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case CARBON_KIND(TupleValue inst): {
-      if (sem_ir().types().Is<ArrayType>(inst.type_id)) {
+      if (sem_ir().types().Is<ArrayType>(
+              sem_ir().types().GetTransitiveAdaptedType(inst.type_id))) {
         AddInstName("array");
       } else if (inst.elements_id == InstBlockId::Empty) {
         AddInstName("empty_tuple");
@@ -1507,6 +1506,14 @@ auto InstNamer::NamingContext::NameInst() -> void {
             }
           }
         }
+      }
+      AddInstName("");
+      return;
+    }
+    case CARBON_KIND(TypeOf inst): {
+      for (auto block_id :
+           sem_ir().expr_regions().Get(inst.operand_region_id).block_ids) {
+        PushBlockId(scope_id_, block_id);
       }
       AddInstName("");
       return;

@@ -18,6 +18,8 @@
 #include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/compile_driver.h"
 #include "toolchain/driver/compile_options.h"
+#include "toolchain/language_server/sem_ir_index.h"
+#include "toolchain/language_server/sem_ir_text.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/file.h"
@@ -30,35 +32,88 @@ class Context {
   // Cached information for an open file.
   class File {
    public:
-    explicit File(clang::clangd::URIForFile uri)
+    // `language_id` is the client's `TextDocumentItem::languageId`, which may
+    // be empty for a file we were never told about in `didOpen`.
+    explicit File(clang::clangd::URIForFile uri, llvm::StringRef language_id)
         : uri_(std::move(uri)),
           filename_(uri_.file().str()),
+          language_id_(language_id.str()),
           options_(&codegen_options_) {}
 
     // Changes the file's text, updating dependent state.
     auto SetText(Context& context, std::optional<int64_t> version,
                  llvm::StringRef text) -> void;
 
+    auto uri() const -> const clang::clangd::URIForFile& { return uri_; }
     auto filename() const -> llvm::StringRef { return filename_; }
     auto text() const -> llvm::StringRef { return text_; }
 
+    // Returns whether this is a toolchain test file rather than a Carbon
+    // source file. Test files aren't compiled: their text is a script for the
+    // test runner, holding any number of input files plus the output expected
+    // from compiling them, so compiling it as a single source file would
+    // produce nothing but noise.
+    auto is_test_file() const -> bool { return is_test_file_; }
+
     auto tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
-      CARBON_CHECK(compile_driver_);
-      return compile_driver_->units()[compile_driver_->first_input_index()]
-          ->parse_tree_and_subtrees();
+      return unit().parse_tree_and_subtrees();
     }
 
+    auto tokens() const -> const Lex::TokenizedBuffer& {
+      return unit().tokens();
+    }
+
+    // Returns the checked IR, or null if checking didn't get far enough to
+    // produce one, including because this is a test file and wasn't compiled.
+    auto sem_ir() const -> const SemIR::File* {
+      if (!compile_driver_) {
+        return nullptr;
+      }
+      const auto& compilation_unit = unit();
+      return compilation_unit.has_sem_ir() ? &compilation_unit.sem_ir()
+                                           : nullptr;
+    }
+
+    // Returns an index of this file's instructions by token, building it if
+    // this is the first query since the text last changed. Returns null if
+    // there's no checked IR to index.
+    //
+    // This is deliberately not built by `SetText`: most text changes are
+    // followed by another text change rather than by a query, and the work
+    // would land on the path that produces diagnostics, which is the latency
+    // users actually notice.
+    auto sem_ir_index() const -> const SemIRIndex*;
+
+    // Returns an index of the formatted SemIR in this file's expected output,
+    // building it on first use as `sem_ir_index` does. Returns null unless
+    // this is a test file that has some.
+    auto sem_ir_text() const -> const SemIRText*;
+
    private:
+    auto unit() const -> const CompilationUnit& {
+      CARBON_CHECK(compile_driver_);
+      return *compile_driver_->units()[compile_driver_->first_input_index()];
+    }
+
     // The filename, stable across instances.
     clang::clangd::URIForFile uri_;
     std::string filename_;
 
+    // The language the client says this file is written in, which is how we
+    // recognize a test file when the client knows it's looking at one.
+    std::string language_id_;
+
     // Current file content, and derived values.
     std::string text_;
+    bool is_test_file_ = false;
 
     CodegenOptions codegen_options_;
     CompileOptions options_;
     std::unique_ptr<CompileDriver> compile_driver_;
+
+    // Built on demand by their accessors, and discarded by `SetText`.
+    mutable std::optional<SemIRIndex> sem_ir_index_;
+    mutable std::optional<SemIRText> sem_ir_text_;
   };
 
   // `vlog_stream` is optional; other parameters are required.
@@ -93,6 +148,19 @@ class Context {
 
   auto files() -> Map<std::string, File>& { return files_; }
 
+  // The encoding used to measure `Position::character` on the wire, negotiated
+  // during `initialize`. Either UTF-8, in which case we can use our column
+  // (byte) counts directly, or UTF-16 for clients without UTF-8 support, such
+  // as VS Code.
+  // TODO: Convert positions when the encoding is `UTF16`, or remove UTF-16
+  // support entirely if VS Code starts accepting UTF-8 positions.
+  auto position_encoding() const -> clang::clangd::OffsetEncoding {
+    return position_encoding_;
+  }
+  auto SetPositionEncoding(clang::clangd::OffsetEncoding encoding) -> void {
+    position_encoding_ = encoding;
+  }
+
   auto prelude_import() const -> bool { return prelude_import_; }
 
  private:
@@ -109,6 +177,10 @@ class Context {
 
   // Content of files managed by the language client.
   Map<std::string, File> files_;
+
+  // Set during `initialize`; UTF-16 is the protocol default until then.
+  clang::clangd::OffsetEncoding position_encoding_ =
+      clang::clangd::OffsetEncoding::UTF16;
 
   bool prelude_import_;
 };

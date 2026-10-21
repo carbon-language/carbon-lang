@@ -93,175 +93,166 @@ interface Z {
 }
 
 // CHECK:STDOUT: - filename: implicit_self_impls.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Z'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'RequireIntroducer', text: 'require'},
-// CHECK:STDOUT:         {kind: 'RequireDefaultSelfImpls', text: 'impls'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'RequireDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 8},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Z'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
+// CHECK:STDOUT:   │ │ ├─RequireDefaultSelfImpls 'impls'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'Y'
+// CHECK:STDOUT:   │ ├─RequireDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: explicit_self_impls.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Z'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'RequireIntroducer', text: 'require'},
-// CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:         {kind: 'RequireTypeImpls', text: 'impls', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'RequireDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Z'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
+// CHECK:STDOUT:   │ │ │ ╭─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │ ├─RequireTypeImpls 'impls'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'Y'
+// CHECK:STDOUT:   │ ├─RequireDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: impls_where.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'Y1'},
-// CHECK:STDOUT:           {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Z'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'RequireIntroducer', text: 'require'},
-// CHECK:STDOUT:         {kind: 'RequireDefaultSelfImpls', text: 'impls'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'Y'},
-// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'Y1'},
-// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'TupleLiteralStart', text: '('},
-// CHECK:STDOUT:             {kind: 'TupleLiteral', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'RequirementEqual', text: '=', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'RequireDecl', text: ';', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 15},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'Y1'
+// CHECK:STDOUT:   │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ ├─AssociatedConstantNameAndType ':'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Z'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
+// CHECK:STDOUT:   │ │ ├─RequireDefaultSelfImpls 'impls'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameExpr 'Y'
+// CHECK:STDOUT:   │ │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'Y1'
+// CHECK:STDOUT:   │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─TupleLiteralStart '('
+// CHECK:STDOUT:   │ │ │ │ ├─TupleLiteral ')'
+// CHECK:STDOUT:   │ │ │ ├─RequirementEqual '='
+// CHECK:STDOUT:   │ │ ├─WhereExpr 'where'
+// CHECK:STDOUT:   │ ├─RequireDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: other_impls.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Z'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'RequireIntroducer', text: 'require'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:         {kind: 'RequireTypeImpls', text: 'impls', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'RequireDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 15},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'Z'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │ │ ├─RequireTypeImpls 'impls'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'Y'
+// CHECK:STDOUT:   │ ├─RequireDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: extend.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Z'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'RequireIntroducer', text: 'require'},
-// CHECK:STDOUT:         {kind: 'ExtendModifier', text: 'extend'},
-// CHECK:STDOUT:         {kind: 'RequireDefaultSelfImpls', text: 'impls'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'RequireDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Z'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
+// CHECK:STDOUT:   │ │ ├─ExtendModifier 'extend'
+// CHECK:STDOUT:   │ │ ├─RequireDefaultSelfImpls 'impls'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'Y'
+// CHECK:STDOUT:   │ ├─RequireDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: type_and.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Z'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'RequireIntroducer', text: 'require'},
-// CHECK:STDOUT:         {kind: 'RequireDefaultSelfImpls', text: 'impls'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Y'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Y'},
-// CHECK:STDOUT:         {kind: 'InfixOperatorAmp', text: '&', subtree_size: 3},
-// CHECK:STDOUT:       {kind: 'RequireDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Z'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
+// CHECK:STDOUT:   │ │ ├─RequireDefaultSelfImpls 'impls'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'Y'
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'Y'
+// CHECK:STDOUT:   │ │ ├─InfixOperatorAmp '&'
+// CHECK:STDOUT:   │ ├─RequireDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing_impls.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Z'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'RequireIntroducer', text: 'require'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'RequireDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Z'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'Y'
+// CHECK:STDOUT:   │ ├─RequireDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_wrong_keyword.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Z'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'RequireIntroducer', text: 'require'},
-// CHECK:STDOUT:         {kind: 'InvalidParse', text: 'as', has_error: yes},
-// CHECK:STDOUT:       {kind: 'RequireDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Z'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
+// CHECK:STDOUT:   │ │ ├─InvalidParse 'as' has_error
+// CHECK:STDOUT:   │ ├─RequireDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_as_in_self.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Z'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'RequireIntroducer', text: 'require'},
-// CHECK:STDOUT:         {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:       {kind: 'RequireDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Z'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─RequireIntroducer 'require'
+// CHECK:STDOUT:   │ │ ├─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ ├─RequireDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

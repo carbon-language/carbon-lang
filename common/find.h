@@ -15,11 +15,11 @@ namespace Carbon {
 namespace Internal {
 
 template <typename Range>
-using RangePointerType = typename std::iterator_traits<decltype(std::begin(
-    std::declval<Range>()))>::pointer;
+using RangePointerType =
+    std::iterator_traits<decltype(std::begin(std::declval<Range>()))>::pointer;
 
 template <typename Range>
-using RangeValueType = typename std::iterator_traits<decltype(std::begin(
+using RangeValueType = std::iterator_traits<decltype(std::begin(
     std::declval<Range>()))>::value_type;
 
 template <typename Range, typename Pred>

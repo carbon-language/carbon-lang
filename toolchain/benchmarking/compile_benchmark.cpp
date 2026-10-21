@@ -21,6 +21,7 @@
 #include "llvm/Support/FormatVariadic.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/VirtualFileSystem.h"
+#include "testing/base/benchmark_helpers.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/base/install_paths.h"
 #include "toolchain/base/install_paths_test_helpers.h"
@@ -254,6 +255,17 @@ using CompilerFor =
     std::conditional_t<M == Mode::InProcess, InProcessCompiler<L>,
                        SubprocessCompiler<L>>;
 
+// Parameters for the dense declarations pattern, which models an API file:
+// classes of mostly function declarations, with a few small inline definitions.
+static auto DenseDeclParams() -> SourceGen::DenseDeclParams {
+  SourceGen::DenseDeclParams params;
+  params.class_params.inline_function_defs = 1;
+  params.class_params.max_body_locals = 3;
+  params.class_params.inline_getters = 1;
+  params.class_params.inline_forwarders = 1;
+  return params;
+}
+
 // Benchmark on multiple files of the same size but with different source code
 // in order to avoid branch prediction perfectly learning a particular file's
 // structure and shape, and to get closer to a cache-cold benchmark number which
@@ -277,7 +289,9 @@ static auto ComputeFileCount(int target_lines, int min_files,
 }
 
 template <Lang L, Phase P, Mode M = Mode::InProcess>
-static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
+static auto RunApiFileBenchmark(benchmark::State& state,
+                                const SourceGen::DenseDeclParams& params)
+    -> void {
   using Compiler = CompilerFor<L, M>;
   Compiler bench;
   CompileHelper carbon_compile_helper;
@@ -297,15 +311,35 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
   double total_lines = 0.0;
   double total_tokens = 0.0;
 
+  ssize_t first_bytes = 0;
+  ssize_t first_lines = 0;
+
   for (auto _ : llvm::seq(num_files)) {
-    sources.push_back(bench.gen().GenApiFileDenseDecls(
-        target_lines, SourceGen::DenseDeclParams{}));
+    sources.push_back(bench.gen().GenApiFileDenseDecls(target_lines, params));
     const auto& source = sources.back();
-    total_bytes += source.size();
-    total_lines += llvm::count(source, '\n');
+    ssize_t bytes = source.size();
+    ssize_t lines = llvm::count(source, '\n');
+
+    total_bytes += bytes;
+    total_lines += lines;
     if constexpr (L == Lang::Carbon) {
       total_tokens += carbon_compile_helper.GetTokenizedBuffer(source).size();
     }
+
+    // The generator varies each file's content but not its size, which keeps
+    // results comparable across files and runs.
+    if (sources.size() == 1) {
+      first_bytes = bytes;
+      first_lines = lines;
+      continue;
+    }
+
+    CARBON_CHECK(bytes == first_bytes,
+                 "Generated file {0} has {1} bytes but file 0 has {2}.",
+                 sources.size() - 1, bytes, first_bytes);
+    CARBON_CHECK(lines == first_lines,
+                 "Generated file {0} has {1} lines but file 0 has {2}.",
+                 sources.size() - 1, lines, first_lines);
   }
 
   state.counters["Bytes"] =
@@ -331,7 +365,7 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
       // We block optimizing `i` as that has proven both more effective at
       // blocking the loop from being optimized away and avoiding disruption of
       // the generated code that we're benchmarking.
-      benchmark::DoNotOptimize(i);
+      DoNotOptimize(i);
 
       bool success = bench.RunCompile(file_names[i], P);
       CARBON_CHECK(success, "Compilation failed for file: {0}", file_names[i]);
@@ -343,6 +377,11 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
       i += static_cast<ssize_t>(success);
     }
   }
+}
+
+template <Lang L, Phase P, Mode M = Mode::InProcess>
+static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
+  RunApiFileBenchmark<L, P, M>(state, DenseDeclParams());
 }
 
 // A thin wrapper for the subprocess benchmarks: they reuse the shared

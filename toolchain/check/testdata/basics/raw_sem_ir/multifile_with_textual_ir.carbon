@@ -39,7 +39,7 @@ fn B() {
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst50000010}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name0: inst50000010}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function50000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block50000006]}
@@ -88,9 +88,11 @@ fn B() {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:   facet_types:     {}
+// CHECK:STDOUT:   declared_facet_types:
+// CHECK:STDOUT:     'declared_facet_type(Empty)': {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'inst(TypeType)':  {kind: FacetType, arg0: declared_facet_type(Empty), type: type(TypeType)}
+// CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst50000010:    {kind: FunctionDecl, arg0: function50000000, arg1: inst_block_empty, type: type(inst50000011)}
 // CHECK:STDOUT:     inst50000011:    {kind: FunctionType, arg0: function50000000, arg1: specific<none>, type: type(TypeType)}
 // CHECK:STDOUT:     inst50000012:    {kind: TupleType, arg0: inst_block_empty, type: type(TypeType)}
@@ -99,7 +101,8 @@ fn B() {
 // CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       instF:           concrete_constant(instF)
+// CHECK:STDOUT:       'inst(TypeType)':  concrete_constant(inst(TypeType))
+// CHECK:STDOUT:       'inst(Package)':   concrete_constant(inst(Package))
 // CHECK:STDOUT:       inst50000010:    concrete_constant(inst50000013)
 // CHECK:STDOUT:       inst50000011:    concrete_constant(inst50000011)
 // CHECK:STDOUT:       inst50000012:    concrete_constant(inst50000012)
@@ -116,7 +119,7 @@ fn B() {
 // CHECK:STDOUT:     inst_block50000006:
 // CHECK:STDOUT:       0:               inst50000014
 // CHECK:STDOUT:     inst_block50000007:
-// CHECK:STDOUT:       0:               instF
+// CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               inst50000010
 // CHECK:STDOUT:   value_stores:
 // CHECK:STDOUT:     shared_values:
@@ -130,6 +133,7 @@ fn B() {
 // CHECK:STDOUT: --- a.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -162,10 +166,10 @@ fn B() {
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: inst70000011, name0: inst70000012}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {name1: inst70000011, name0: inst70000012}}
 // CHECK:STDOUT:     name_scope70000001: {inst: inst70000011, parent_scope: name_scope0, has_error: false, extended_scopes: [], names: {name1: inst70000017}}
 // CHECK:STDOUT:   entity_names:
-// CHECK:STDOUT:     entity_name70000000: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>}
+// CHECK:STDOUT:     entity_name70000000: {name: name1, parent_scope: name_scope70000001, index: -1, is_template: 0, is_unused: 0, form: inst<none>, type: inst<none>}
 // CHECK:STDOUT:   functions:
 // CHECK:STDOUT:     function70000000: {name: name0, parent_scope: name_scope0, call_param_patterns_id: inst_block_empty, call_params_id: inst_block_empty, body: [inst_block70000006]}
 // CHECK:STDOUT:     function70000001: {name: name1, parent_scope: name_scope70000001, call_param_patterns_id: inst_block_empty}
@@ -214,9 +218,11 @@ fn B() {
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:   facet_types:     {}
+// CHECK:STDOUT:   declared_facet_types:
+// CHECK:STDOUT:     'declared_facet_type(Empty)': {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'inst(TypeType)':  {kind: FacetType, arg0: declared_facet_type(Empty), type: type(TypeType)}
+// CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst70000010:    {kind: ImportDecl, arg0: name1}
 // CHECK:STDOUT:     inst70000011:    {kind: Namespace, arg0: name_scope70000001, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:     inst70000012:    {kind: FunctionDecl, arg0: function70000000, arg1: inst_block_empty, type: type(inst70000013)}
@@ -234,7 +240,8 @@ fn B() {
 // CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
-// CHECK:STDOUT:       instF:           concrete_constant(instF)
+// CHECK:STDOUT:       'inst(TypeType)':  concrete_constant(inst(TypeType))
+// CHECK:STDOUT:       'inst(Package)':   concrete_constant(inst(Package))
 // CHECK:STDOUT:       inst70000011:    concrete_constant(inst70000011)
 // CHECK:STDOUT:       inst70000012:    concrete_constant(inst70000015)
 // CHECK:STDOUT:       inst70000013:    concrete_constant(inst70000013)
@@ -264,7 +271,7 @@ fn B() {
 // CHECK:STDOUT:       2:               inst7000001C
 // CHECK:STDOUT:       3:               inst7000001D
 // CHECK:STDOUT:     inst_block70000007:
-// CHECK:STDOUT:       0:               instF
+// CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:       1:               inst70000010
 // CHECK:STDOUT:       2:               inst70000012
 // CHECK:STDOUT:   value_stores:
@@ -280,6 +287,7 @@ fn B() {
 // CHECK:STDOUT: --- b.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %B.type: type = fn_type @B [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %B: %B.type = struct_value () [concrete]

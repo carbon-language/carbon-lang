@@ -130,6 +130,9 @@ using Bool = BuiltinType<BoolType::TypeInstId>;
 // Constraint that a type is `Core.CharLiteral`.
 using CharLiteral = BuiltinType<CharLiteralType::TypeInstId>;
 
+// Constraint that a type is `Core.IntLiteral`.
+using IntLiteral = BuiltinType<IntLiteralType::TypeInstId>;
+
 // Constraint that a type is `u8` or an adapted type, including `Core.Char`.
 struct CharCompatible {
   static auto CheckType(const File& sem_ir, ValidateState& /*state*/,
@@ -457,6 +460,10 @@ constexpr BuiltinInfo BoolMakeType = {"bool.make_type",
 constexpr BuiltinInfo MaybeUnformedMakeType = {
     "maybe_unformed.make_type", ValidateSignature<auto(Type)->Type>};
 
+// Returns the primitive `array(T, N)` type.
+constexpr BuiltinInfo ArrayMakeType = {
+    "array.make_type", ValidateSignature<auto(Type, IntLiteral)->Type>};
+
 // Returns the `Form` type.
 constexpr BuiltinInfo FormMakeType = {"form.make_type",
                                       ValidateSignature<auto()->Type>};
@@ -724,18 +731,16 @@ constexpr BuiltinInfo IntGreaterEq = {
     "int.greater_eq", ValidateSignature<auto(IntT, IntU)->Bool>};
 
 // "float.negate": float negation.
-constexpr BuiltinInfo FloatNegate = {
-    "float.negate", ValidateSignature<auto(SizedFloatT)->SizedFloatT>};
+constexpr BuiltinInfo FloatNegate = {"float.negate",
+                                     ValidateSignature<auto(FloatT)->FloatT>};
 
 // "float.add": float addition.
 constexpr BuiltinInfo FloatAdd = {
-    "float.add",
-    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
+    "float.add", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
 
 // "float.sub": float subtraction.
 constexpr BuiltinInfo FloatSub = {
-    "float.sub",
-    ValidateSignature<auto(SizedFloatT, SizedFloatT)->SizedFloatT>};
+    "float.sub", ValidateSignature<auto(FloatT, FloatT)->FloatT>};
 
 // "float.mul": float multiplication.
 constexpr BuiltinInfo FloatMul = {
@@ -953,6 +958,11 @@ auto BuiltinFunctionKind::IsCompTimeOnly(const File& sem_ir,
 
     case FloatConvert:
     case FloatConvertInt:
+    case FloatNegate:
+    case FloatAdd:
+    case FloatSub:
+    case FloatMul:
+    case FloatDiv:
     case IntConvert:
     case IntConvertChar:
     case IntConvertFloat:

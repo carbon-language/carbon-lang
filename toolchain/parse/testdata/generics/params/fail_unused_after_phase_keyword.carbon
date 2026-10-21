@@ -33,49 +33,48 @@ fn G[runtime unused T: type]();
 fn H(runtime unused x: i32);
 
 // CHECK:STDOUT: - filename: fail_generic_before_unused.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'UnusedPattern', text: 'unused', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │   ├─CompileTimeBindingPatternTypeStart ':' has_error
+// CHECK:STDOUT:   │ │ │   ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ │ ╭─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ ├─UnusedPattern 'unused' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_runtime_before_unused.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'G'},
-// CHECK:STDOUT:         {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'RuntimeBindingName', text: 'runtime', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'UnusedPattern', text: 'unused', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ImplicitParamList', text: ']', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'G'
+// CHECK:STDOUT:   │ │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │ │ │     ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │   ╭─RuntimeBindingName 'runtime'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':' has_error
+// CHECK:STDOUT:   │ │ │   ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ │ ╭─LetBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ ├─UnusedPattern 'unused' has_error
+// CHECK:STDOUT:   │ ├─ImplicitParamList ']' has_error
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_redundant_runtime_before_unused.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'H'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:             {kind: 'RuntimeBindingName', text: 'runtime', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'UnusedPattern', text: 'unused', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'H'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │     ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │   ╭─RuntimeBindingName 'runtime'
+// CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ╭─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─UnusedPattern 'unused'
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

@@ -8,20 +8,21 @@
 // invoked. The debugger should do namespace resolution automatically. For
 // example:
 //
-// - lldb: `expr Dump(tokens, id)`
+// - lldb: `dump tokens id`
 // - gdb: `call Dump(tokens, id)`
-//
-// The `DumpNoNewline` functions are helpers that exclude a trailing newline.
-// They're intended to be composed by `Dump` function implementations.
 
 #ifndef CARBON_TOOLCHAIN_LEX_DUMP_H_
 #define CARBON_TOOLCHAIN_LEX_DUMP_H_
 
 #ifndef NDEBUG
 
-#include "toolchain/lex/tokenized_buffer.h"
+#include <string>
+
+#include "toolchain/lex/token_index.h"
 
 namespace Carbon::Lex {
+
+class TokenizedBuffer;
 
 auto Dump(const TokenizedBuffer& tokens, TokenIndex token) -> std::string;
 

@@ -114,6 +114,12 @@ cc_test(
 )
 
 cc_library(
+    name = "checked_save_and_restore",
+    hdrs = ["checked_save_and_restore.h"],
+    deps = [":check"],
+)
+
+cc_library(
     name = "concepts",
     hdrs = ["concepts.h"],
 )
@@ -273,6 +279,7 @@ cc_binary(
     deps = [
         ":check",
         ":filesystem",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/random",
@@ -287,9 +294,9 @@ sh_test(
     srcs = [":filesystem_benchmark"],
     args = [
         "--benchmark_dry_run",
-        # Restrict the sizes to 4-digit ones or smaller to keep test times low.
+        # Restrict the sizes to 2-digit ones or smaller to keep test times low.
         # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=^[^/]+(/[0-9]{1,4}(/[0-9]+)?)?/real_time$$",
+        "--benchmark_filter=^[^/]+(/[0-9]{1,2}(/[0-9]+)?)?/real_time$$",
     ],
 )
 
@@ -342,12 +349,22 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "hashing_llvm",
+    hdrs = ["hashing_llvm.h"],
+    deps = [
+        ":hashing",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
 cc_test(
     name = "hashing_test",
     size = "small",
     srcs = ["hashing_test.cpp"],
     deps = [
         ":hashing",
+        ":hashing_llvm",
         ":raw_string_ostream",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
@@ -362,6 +379,7 @@ cc_binary(
     deps = [
         ":check",
         ":hashing",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "@abseil-cpp//absl/hash",
         "@abseil-cpp//absl/random",
@@ -384,11 +402,18 @@ cc_test(
     size = "small",
     srcs = ["hashtable_key_context_test.cpp"],
     deps = [
+        ":hashing_llvm",
         ":hashtable_key_context",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
+)
+
+cc_library(
+    name = "increment_scope",
+    hdrs = ["increment_scope.h"],
+    deps = [":check"],
 )
 
 cc_library(
@@ -460,6 +485,7 @@ cc_test(
         ":raw_hashtable_test_helpers",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -470,6 +496,7 @@ cc_binary(
     deps = [
         ":map",
         ":raw_hashtable_benchmark_helpers",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "@abseil-cpp//absl/container:flat_hash_map",
         "@abseil-cpp//absl/random",
@@ -489,7 +516,7 @@ sh_test(
     args = [
         "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
+        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,2}(/[0-9]+)?$$",
     ],
 )
 
@@ -502,6 +529,19 @@ cc_library(
     name = "ostream",
     hdrs = ["ostream.h"],
     deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "ostream_test",
+    size = "small",
+    srcs = ["ostream_test.cpp"],
+    deps = [
+        ":ostream",
+        ":raw_string_ostream",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -545,6 +585,7 @@ cc_binary(
     srcs = ["raw_hashtable_metadata_group_benchmark.cpp"],
     deps = [
         ":raw_hashtable_metadata_group",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "@abseil-cpp//absl/random",
         "@google_benchmark//:benchmark",
@@ -635,6 +676,7 @@ cc_test(
         ":set",
         "//testing/base:gtest_main",
         "@googletest//:gtest",
+        "@llvm-project//llvm:Support",
     ],
 )
 
@@ -645,6 +687,7 @@ cc_binary(
     deps = [
         ":raw_hashtable_benchmark_helpers",
         ":set",
+        "//testing/base:benchmark_helpers",
         "//testing/base:benchmark_main",
         "@abseil-cpp//absl/container:flat_hash_set",
         "@google_benchmark//:benchmark",
@@ -662,7 +705,7 @@ sh_test(
     args = [
         "--benchmark_dry_run",
         # The `$$` is repeated for Bazel escaping of `$`.
-        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,3}(/[0-9]+)?$$",
+        "--benchmark_filter=^[^/]*/[1-9][0-9]{0,2}(/[0-9]+)?$$",
     ],
 )
 

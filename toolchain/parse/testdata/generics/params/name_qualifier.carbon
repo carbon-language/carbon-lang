@@ -31,155 +31,158 @@ class OuterGeneric(T: type).InnerGeneric(U: type) {
 fn OuterGeneric(T: type).InnerGeneric(U: type).F(x: T, y: U) {}
 
 // CHECK:STDOUT: - filename: name_qualifier.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'GenericClass1'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 15},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'GenericClass1'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'IdentifierNameQualifierWithParams', text: '.', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 13},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 14},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'GenericClass2'},
-// CHECK:STDOUT:           {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'X'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 15},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 21},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'GenericClass2'},
-// CHECK:STDOUT:             {kind: 'ImplicitParamListStart', text: '['},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ImplicitParamList', text: ']', subtree_size: 6},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'X'},
-// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'IdentifierNameQualifierWithParams', text: '.', subtree_size: 14},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 19},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 20},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'OuterGeneric'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'InnerGeneric'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ClassDecl', text: ';', subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 19},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'OuterGeneric'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'IdentifierNameQualifierWithParams', text: '.', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'InnerGeneric'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 17},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'U'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 30},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'OuterGeneric'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'IdentifierNameQualifierWithParams', text: '.', subtree_size: 8},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'InnerGeneric'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
-// CHECK:STDOUT:               {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'IdentifierNameQualifierWithParams', text: '.', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'T'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'PatternListComma', text: ','},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'y'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'U'},
-// CHECK:STDOUT:           {kind: 'LetBindingPattern', text: ':', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 28},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 29},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'GenericClass1'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameMaybeBeforeSignature 'GenericClass1'
+// CHECK:STDOUT:   │   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   ├─IdentifierNameQualifierWithParams '.'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'GenericClass2'
+// CHECK:STDOUT:   │   │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ImplicitParamList ']'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'X'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │   │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameMaybeBeforeSignature 'GenericClass2'
+// CHECK:STDOUT:   │   │ │ ╭─ImplicitParamListStart '['
+// CHECK:STDOUT:   │   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   │ ├─ImplicitParamList ']'
+// CHECK:STDOUT:   │   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ │ ╭─IdentifierNameNotBeforeSignature 'X'
+// CHECK:STDOUT:   │   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ │ ├─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   ├─IdentifierNameQualifierWithParams '.'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'OuterGeneric'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'InnerGeneric'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'U'
+// CHECK:STDOUT:   │ │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ├─ClassDecl ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameMaybeBeforeSignature 'OuterGeneric'
+// CHECK:STDOUT:   │   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   ├─IdentifierNameQualifierWithParams '.'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'InnerGeneric'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'U'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─IdentifierNameExpr 'U'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameMaybeBeforeSignature 'OuterGeneric'
+// CHECK:STDOUT:   │   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   ├─IdentifierNameQualifierWithParams '.'
+// CHECK:STDOUT:   │   │ ╭─IdentifierNameMaybeBeforeSignature 'InnerGeneric'
+// CHECK:STDOUT:   │   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ │ ╭─IdentifierNameNotBeforeSignature 'U'
+// CHECK:STDOUT:   │   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │   ├─IdentifierNameQualifierWithParams '.'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─IdentifierNameExpr 'T'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   │ ├─PatternListComma ','
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │   │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─IdentifierNameExpr 'U'
+// CHECK:STDOUT:   │   │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

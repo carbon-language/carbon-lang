@@ -991,7 +991,7 @@ Each of the conversions described in this section is explicit if and only if it
 invokes another explicit type conversion. Otherwise, it is implicit.
 
 A type conversion of an expression with primitive extended type to a
-[compatible type](generics/terminology.md#compatible-types) just re-interprets
+[compatible type](classes.md#compatible-types) just re-interprets
 the expression's result with a new type, so it requires no run-time work, and
 has the same category as the input expression.
 
@@ -1044,10 +1044,10 @@ applied to phases uses the ordering "runtime" < "symbolic" < "template"):
     `(<T1, C, P1, V1>, <T2, C, P2, V2>, ... <TN, C, PN, VN>)` can be converted
     to a primitive extended type
     `<(T1, T2, ..., TN), C, min(P1, P2, ..., PN), (V1, V2, ... VN)>`.
--   An expression of struct extended type
-    `{.a = <Ta, C, Pa, Va>, .b = <Tb, C, Pb, Vb>, ... .z = <Tz, C, Pz, Vz>}` can
-    be converted to a primitive extended type
-    `<{.a = Ta, .b = Tb, ... .z = Tz}, C, min(Pa, Pb, ... Pz), {.a = Va, .b = Vb, ... .z = Vz}>`.
+-   An expression of struct extended type `{.a = <Ta, C, Pa, Va>, .b = <Tb, C,
+    Pb, Vb>, ... .z = <Tz, C, Pz, Vz>}` can be converted to a primitive extended
+    type `<{.a = Ta, .b = Tb, ... .z = Tz}, C, min(Pa, Pb, ... Pz), {.a = Va,
+    .b = Vb, ... .z = Vz}>`.
 
 When `C` is "value", composition forms a value representation of the aggregate
 from value representations of the elements. When `C` is "initializing", it
@@ -1169,8 +1169,8 @@ alternatives considered section of [P2006]:
 ### Pointer syntax
 
 The type of a pointer to a type `T` is written with a postfix `*` as in `T*`.
-Dereferencing a pointer is a [_reference expression_] and is written with a prefix
-`*` as in `*p`:
+Dereferencing a pointer is a [_reference expression_] and is written with a
+prefix `*` as in `*p`:
 
 ```carbon
 var i: i32 = 42;

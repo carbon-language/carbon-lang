@@ -107,13 +107,17 @@ library "[[@TEST_NAME]]";
 interface I { let X: type; }
 interface J { let Y: type; }
 
-// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+8]]:30: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+12]]:30: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR: fn F(generic T: I & J where .(I.X) = .(J.Y)) {
 // CHECK:STDERR:                              ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+4]]:30: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+8]]:30: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: fn F(generic T: I & J where .(I.X) = .(J.Y)) {
 // CHECK:STDERR:                              ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_dependent_rules_compound.carbon:[[@LINE+4]]:39: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fn F(generic T: I & J where .(I.X) = .(J.Y)) {
+// CHECK:STDERR:                                       ^
 // CHECK:STDERR:
 fn F(generic T: I & J where .(I.X) = .(J.Y)) {
   // Allowed since `T impls I`, `T impls J`, and has constraint providing
@@ -141,13 +145,17 @@ interface I(T: type) { let X: type; }
 
 final impl forall [J: I(())] J as I({}) where .X = {} {}
 
-// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+8]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+12]]:38: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
 // CHECK:STDERR: fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
 // CHECK:STDERR:                                      ^
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+4]]:38: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+8]]:38: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
 // CHECK:STDERR: fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
 // CHECK:STDERR:                                      ^
+// CHECK:STDERR:
+// CHECK:STDERR: fail_todo_parameterized_interface_compound.carbon:[[@LINE+4]]:58: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR: fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
+// CHECK:STDERR:                                                          ^
 // CHECK:STDERR:
 fn F(generic T: I(()) & I({}) where .(I(()).X) = () and .(I({}).X) = {}) {}
 
@@ -1170,7 +1178,7 @@ fn G(generic T: I where .X = NI({}), generic U: J where .Y = ()) {
   F(T, U);
 }
 
-// --- todo_fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_callee_access.carbon
+// --- fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_callee_access.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -1188,7 +1196,13 @@ fn G(generic T: I where .X = NI({}), generic U: I where .Y = ()) {
   // The caller's `U` has type `I where .Y = ()` but the callee wants something
   // of type `I where .Y = {}`.
   //
-  // TODO: This should fail.
+  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_callee_access.carbon:[[@LINE+7]]:3: error: cannot convert type `U` that implements `I where .(I.Y) = ()` into type implementing `NI({})` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:   F(T, U);
+  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_nested_facet_type_used_as_root_facet_type_differs_in_rewrite_callee_access.carbon:[[@LINE-9]]:53: note: initializing generic parameter `U` declared here [InitializingGenericParam]
+  // CHECK:STDERR: fn F(generic T: I where .X = NI({}), unused generic U: T.X) {}
+  // CHECK:STDERR:                                                     ^~~~~~
+  // CHECK:STDERR:
   F(T, U);
 }
 
@@ -1379,6 +1393,7 @@ fn G(generic T: N) {
 // CHECK:STDOUT: --- rewrite_provided_by_facet_type.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]

@@ -118,10 +118,12 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: --- fail_abstract_field.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract1: type = class_type @Abstract1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Contains: type = class_type @Contains [concrete]
+// CHECK:STDOUT:   %struct_type.m1.868: type = struct_type {.m1: %Abstract1} [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -142,19 +144,23 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Contains {
-// CHECK:STDOUT:   %.loc13: <error> = field_decl a, element0 [concrete]
+// CHECK:STDOUT:   %field_decl: <error> = field_decl a, element0, %struct_type.m1 in [concrete] {
+// CHECK:STDOUT:     %Abstract1.ref: type = name_ref Abstract1, file.%Abstract1.decl [concrete = constants.%Abstract1]
+// CHECK:STDOUT:     %struct_type.m1: type = struct_type {.m1: %Abstract1} [concrete = constants.%struct_type.m1.868]
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness <error> [concrete = <error>]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Contains
 // CHECK:STDOUT:   .Abstract1 = <poisoned>
-// CHECK:STDOUT:   .a = %.loc13
+// CHECK:STDOUT:   .a = %field_decl
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_abstract_var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract2: type = class_type @Abstract2 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -196,12 +202,13 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: --- abstract_let.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract3: type = class_type @Abstract3 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %pattern_type.457: type = pattern_type %Abstract3 [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.457 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.457 = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.457 = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %struct_type.m3.937: type = struct_type {.m3: %Abstract3} [concrete]
@@ -217,7 +224,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT:   %Abstract3.decl: type = class_decl @Abstract3 [concrete = constants.%Abstract3] {} {}
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.457 = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.457 = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.457 = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %a.param: %Abstract3 = value_param call_param0
 // CHECK:STDOUT:     %Abstract3.ref.loc6: type = name_ref Abstract3, file.%Abstract3.decl [concrete = constants.%Abstract3]
@@ -253,6 +260,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: --- fail_abstract_twice.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract4: type = class_type @Abstract4 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -306,6 +314,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: --- fail_abstract_first.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract6: type = class_type @Abstract6 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -351,6 +360,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: --- fail_abstract_second.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract7: type = class_type @Abstract7 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -396,6 +406,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: --- lib.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
@@ -419,6 +430,7 @@ var v5: {.m: Abstract};
 // CHECK:STDOUT: --- fail_import.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Abstract: type = class_type @Abstract [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]

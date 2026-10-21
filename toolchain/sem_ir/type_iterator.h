@@ -168,12 +168,12 @@ class TypeIterator::Step {
   struct ConcreteType {
     TypeId type_id;
   };
-  // A symbolic type value, constrained by `facet_type_id`.
+  // A symbolic type value, constrained by the `facet`'s type.
   struct SymbolicType {
     // If the symbolic type is simply a reference to a symbolic binding, this is
     // the entity name of that binding. Otherwise, it is None.
     EntityNameId entity_name_id;
-    // The facet, whose type is either a FacetType or the TypeType singleton.
+    // The facet, whose type is a FacetType.
     InstId facet;
   };
   // A symbolic template type value.

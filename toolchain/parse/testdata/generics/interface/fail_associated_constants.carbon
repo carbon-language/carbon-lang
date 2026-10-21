@@ -118,130 +118,121 @@ interface I {
 
 
 // CHECK:STDOUT: - filename: fail_tuple_pattern.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"tuple_pattern"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"tuple_pattern"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_tuple_pattern_with_default.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"tuple_pattern_with_default"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'DefaultModifier', text: 'default'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"tuple_pattern_with_default"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ │ ├─DefaultModifier 'default'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_var_pattern.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"var_pattern"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"var_pattern"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_var_pattern_with_default.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"var_pattern_with_default"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:         {kind: 'DefaultModifier', text: 'default'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"var_pattern_with_default"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ │ ├─DefaultModifier 'default'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_not_constant.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"not_constant"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"not_constant"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_template.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"template"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"template"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_generic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"generic"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"generic"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_underscore.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"underscore"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"underscore"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_missing_colon.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'LibraryIntroducer', text: 'library'},
-// CHECK:STDOUT:       {kind: 'LibraryName', text: '"missing_colon"'},
-// CHECK:STDOUT:     {kind: 'LibraryDecl', text: ';', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', has_error: yes, subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LibraryIntroducer 'library'
+// CHECK:STDOUT:   │ ├─LibraryName '"missing_colon"'
+// CHECK:STDOUT:   ├─LibraryDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

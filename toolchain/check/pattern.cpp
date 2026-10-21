@@ -92,8 +92,9 @@ auto MakeEmptyRegion(Context& context, SemIR::InstId result_id)
 }
 
 auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
-                          SemIR::InstId form_id, bool is_unused,
-                          BindingPhase phase) -> SemIR::EntityNameId {
+                          SemIR::TypeInstId type_inst_id, SemIR::InstId form_id,
+                          bool is_unused, BindingPhase phase)
+    -> SemIR::EntityNameId {
   SemIR::EntityName entity_name = {
       .name_id = name_id,
       .parent_scope_id = context.scope_stack().PeekNameScopeId(),
@@ -104,6 +105,7 @@ auto AddBindingEntityName(Context& context, SemIR::NameId name_id,
     entity_name.is_template = phase == BindingPhase::Template;
   }
   entity_name.form_id = form_id;
+  entity_name.type_inst_id = type_inst_id;
   return context.entity_names().Add(entity_name);
 }
 
@@ -126,33 +128,6 @@ auto AddBindingForPattern(Context& context, SemIR::LocId name_loc,
                    pattern.kind);
   }
 
-  // Handle non-static `var` decls in a class by creating a `FieldDecl`.
-  if (InNonStaticFieldDecl(context)) {
-    auto class_decl =
-        context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>();
-    auto name_id = context.entity_names().Get(pattern.entity_name_id).name_id;
-    auto& class_info = context.classes().Get(class_decl->class_id);
-    auto field_type_id = GetUnboundElementType(
-        context, context.types().GetTypeInstId(class_info.self_type_id),
-        context.types().GetTypeInstId(binding_type_id));
-
-    if (name_id == SemIR::NameId::Underscore) {
-      CARBON_DIAGNOSTIC(FieldNamedUnderscore, Error,
-                        "expected identifier in field declaration");
-      context.emitter().Emit(name_loc, FieldNamedUnderscore);
-    }
-
-    auto field_id =
-        context.fields().Add({.index = SemIR::ElementIndex::None,
-                              .initializer_id = SemIR::InstId::None});
-    auto field_decl_id = AddInst<SemIR::FieldDecl>(
-        context, name_loc,
-        {.type_id = field_type_id, .name_id = name_id, .field_id = field_id});
-    context.field_decls_stack().AppendToTop(field_decl_id);
-
-    return field_decl_id;
-  }
-
   auto bind_id = AddInstInNoBlock(
       context, SemIR::LocIdAndInst::RuntimeVerified(
                    context.sem_ir(), name_loc,
@@ -172,6 +147,38 @@ auto AddBindingPattern(Context& context, SemIR::LocId name_loc,
                        SemIR::ExprRegionId type_region_id,
                        SemIR::TypeId scrutinee_type_id,
                        SemIR::AnyBindingPattern pattern) -> BindingPatternInfo {
+  // Handle non-static `var` decls in a class by creating a `FieldDecl`.
+  if (InNonStaticFieldDecl(context)) {
+    auto class_decl =
+        context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>();
+    auto name_id = context.entity_names().Get(pattern.entity_name_id).name_id;
+    auto& class_info = context.classes().Get(class_decl->class_id);
+    auto field_type_id = GetUnboundElementType(
+        context, context.types().GetTypeInstId(class_info.self_type_id),
+        context.types().GetTypeInstId(scrutinee_type_id));
+
+    if (name_id == SemIR::NameId::Underscore) {
+      CARBON_DIAGNOSTIC(FieldNamedUnderscore, Error,
+                        "expected identifier in field declaration");
+      context.emitter().Emit(name_loc, FieldNamedUnderscore);
+    }
+
+    auto field_id =
+        context.fields().Add({.index = SemIR::ElementIndex::None,
+                              .name_id = name_id,
+                              .initializer_id = SemIR::InstId::None});
+    auto field_decl_id =
+        AddInst<SemIR::FieldDecl>(context, name_loc,
+                                  {
+                                      .type_id = field_type_id,
+                                      .field_id = field_id,
+                                      .type_region_id = type_region_id,
+                                  });
+    context.field_decls_stack().AppendToTop(field_decl_id);
+
+    return {.pattern_id = field_decl_id, .bind_id = field_decl_id};
+  }
+
   auto binding_pattern_id =
       AddInst(context, SemIR::LocIdAndInst::RuntimeVerified(context.sem_ir(),
                                                             name_loc, pattern));
@@ -217,6 +224,9 @@ auto GetParamPatternKind(Context& context, SemIR::InstId param_inst_id)
       return ParamPatternKind::Var;
     case SemIR::ValueParamPattern::Kind:
       return ParamPatternKind::Value;
+    case SemIR::ErrorInst::Kind:
+      // For error recovery, treat errors as values.
+      return ParamPatternKind::Value;
     default:
       CARBON_FATAL("Unexpected pattern kind: {0}", param);
   }
@@ -238,10 +248,14 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
     }
   }();
 
-  auto entity_name_id = AddBindingEntityName(context, name_id,
-                                             /*form_id=*/SemIR::InstId::None,
-                                             /*is_unused=*/false,
-                                             /*phase=*/BindingPhase::Runtime);
+  // This pattern is synthesized rather than written in the source, so there is
+  // no spelling to record for its type.
+  auto entity_name_id =
+      AddBindingEntityName(context, name_id,
+                           /*type_inst_id=*/SemIR::TypeInstId::None,
+                           /*form_id=*/SemIR::InstId::None,
+                           /*is_unused=*/false,
+                           /*phase=*/BindingPhase::Runtime);
 
   auto pattern_type_id = GetPatternType(context, type_id);
   if (kind == ParamPatternKind::Var) {

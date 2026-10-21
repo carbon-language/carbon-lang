@@ -16,6 +16,12 @@ class SpecificStore::KeyContext : public TranslatingKeyContext<KeyContext> {
   struct Key {
     GenericId generic_id;
     InstBlockId args_id;
+    // Whether a specific was created by identifying a facet type, which changes
+    // the behaviour of eval while resolving the specific. So this is part of
+    // the specific's key in order to differentiate from specifics with the same
+    // arguments but which are not created by identifying a facet type, and thus
+    // may have different evaluated constants.
+    int32_t identified;
 
     friend auto operator==(const Key&, const Key&) -> bool = default;
   };
@@ -24,22 +30,27 @@ class SpecificStore::KeyContext : public TranslatingKeyContext<KeyContext> {
 
   auto TranslateKey(SpecificId id) const -> Key {
     const auto& specific = specifics_->Get(id);
-    return {.generic_id = specific.generic_id, .args_id = specific.args_id};
+    return {.generic_id = specific.generic_id,
+            .args_id = specific.args_id,
+            .identified = specific.identified};
   }
 
  private:
   const ValueStore* specifics_;
 };
 
-auto SpecificStore::GetOrAdd(GenericId generic_id, InstBlockId args_id)
-    -> SpecificId {
+auto SpecificStore::GetOrAdd(GenericId generic_id, InstBlockId args_id,
+                             bool identified) -> SpecificId {
   CARBON_CHECK(generic_id.has_value());
   return lookup_table_
       .Insert(
-          KeyContext::Key{.generic_id = generic_id, .args_id = args_id},
+          KeyContext::Key{.generic_id = generic_id,
+                          .args_id = args_id,
+                          .identified = identified},
           [&] {
-            return specifics_.Add(
-                {.generic_id = generic_id, .args_id = args_id});
+            return specifics_.Add({.generic_id = generic_id,
+                                   .args_id = args_id,
+                                   .identified = identified});
           },
           KeyContext(&specifics_))
       .key();
@@ -99,9 +110,14 @@ static auto GetConstantInSpecific(const File& specific_ir,
     // specific.
     return {&const_ir, const_ir.constant_values().Get(symbolic.inst_id)};
   }
-  return {&specific_ir,
-          specific_ir.constant_values().Get(specific_ir.inst_blocks().Get(
-              value_block_id)[symbolic.index.index()])};
+  // TODO: Distinguish between parts of the instruction block that we've not
+  // reached yet during eval and values that evaluated successfully to
+  // ConstantId::NotConstant.
+  auto value_id =
+      specific_ir.inst_blocks().Get(value_block_id)[symbolic.index.index()];
+  return {&specific_ir, value_id.has_value()
+                            ? specific_ir.constant_values().Get(value_id)
+                            : SemIR::ConstantId::NotConstant};
 }
 
 auto GetConstantValueInSpecific(const File& sem_ir, SpecificId specific_id,

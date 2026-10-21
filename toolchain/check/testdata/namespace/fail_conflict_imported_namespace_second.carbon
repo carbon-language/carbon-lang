@@ -47,6 +47,7 @@ fn NS.Foo();
 // CHECK:STDOUT: --- fn.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [concrete]
 // CHECK:STDOUT:   %NS: %NS.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -72,6 +73,7 @@ fn NS.Foo();
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NS.type: type = fn_type @NS [concrete]
 // CHECK:STDOUT:   %NS: %NS.type = struct_value () [concrete]
 // CHECK:STDOUT:   %Foo.type: type = fn_type @Foo [concrete]

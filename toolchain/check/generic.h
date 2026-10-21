@@ -53,6 +53,15 @@ struct DependentInst {
 auto AttachDependentInstToCurrentGeneric(Context& context,
                                          DependentInst dependent_inst) -> void;
 
+// Given an instruction that might have a generic constant value, returns an
+// instruction that has the corresponding specific constant value in the current
+// generic, if any. This is typically not necessary except when manually adding
+// instructions directly to the eval block, for example when building an Action
+// instruction.
+auto GetOrAddInstWithSpecificConstantValue(Context& context,
+                                           SemIR::InstId inst_id)
+    -> SemIR::InstId;
+
 // Discard the information about the current generic entity. This should be
 // called instead of `FinishGenericDecl` if the corresponding `Generic` object
 // would not actually be used, or when recovering from an error.
@@ -93,14 +102,15 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
 // substitution into the declaration, but not the definition, of the generic.
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
                   SemIR::GenericId generic_id,
-                  llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId;
+                  llvm::ArrayRef<SemIR::InstId> args,
+                  bool make_identified_specific = false) -> SemIR::SpecificId;
 
 // Builds a new specific or finds an existing one in the case where the argument
 // list has already been converted into an instruction block. `args_id` should
 // be a canonical instruction block referring to constants.
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
-                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id)
-    -> SemIR::SpecificId;
+                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id,
+                  bool make_identified_specific = false) -> SemIR::SpecificId;
 
 // Builds the specific that describes how the generic should refer to itself.
 // For example, for a generic `G(T: type)`, this is the specific `G(T)`. If
@@ -153,7 +163,8 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                                SemIR::GenericId generic_without_self_id,
                                SemIR::GenericId generic_with_self_id,
                                SemIR::SpecificId specific_without_self_id,
-                               SemIR::ConstantId self_facet)
+                               SemIR::ConstantId self_facet,
+                               bool make_identified_specific = false)
     -> SemIR::SpecificId;
 
 // Copy the arguments of a specific into the context of another generic. The
@@ -165,7 +176,8 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
 // instantiation.
 auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
                            SemIR::SpecificId specific_id,
-                           SemIR::GenericId target_generic_id)
+                           SemIR::GenericId target_generic_id,
+                           bool make_identified_specific = false)
     -> SemIR::SpecificId;
 
 auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id) -> void;

@@ -56,7 +56,9 @@ for dep in deps:
             package == "third-party"
             and rule
             not in (
-                # LLVM wrappers for zlib-ng and zstd, which are fine as linked.
+                # LLVM wrappers for libraries, which are fine as linked.
+                "libxml2",
+                "lzma",
                 "zlib",
                 "zstd",
             )
@@ -90,6 +92,8 @@ for dep in deps:
     # These libraries have compatible licenses and are linked in without copying
     # source, so fine for our binaries.
     if repo in (
+        "@@libxml2+",
+        "@@xz+",
         "@@zlib-ng+",
         "@@zstd+",
     ):

@@ -34,9 +34,10 @@ auto LLVMRunner::Run(LLVMTool tool, llvm::ArrayRef<llvm::StringRef> args)
     CARBON_VLOG("    '{0}'\n", cstr_arg);
   }
 
-  int exit_code = tool.main_fn()(
-      cstr_args.size(), const_cast<char**>(cstr_args.data()),
-      {.Path = path.c_str(), .PrependArg = nullptr, .NeedsPrependArg = false});
+  int exit_code =
+      tool.main_fn()(cstr_args.size(), const_cast<char**>(cstr_args.data()),
+                     llvm::ToolContext{path.c_str(), /*PrependArg=*/nullptr,
+                                       /*NeedsPrependArg=*/false});
 
   // TODO: Should this be forwarding the full exit code?
   return exit_code == 0;

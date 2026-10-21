@@ -46,6 +46,7 @@ fn F() -> () {
 // CHECK:STDOUT: --- global.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -64,6 +65,7 @@ fn F() -> () {
 // CHECK:STDOUT: --- fail_local.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

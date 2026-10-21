@@ -8,6 +8,7 @@
 #include "common/array_stack.h"
 #include "common/check.h"
 #include "toolchain/check/lexical_lookup.h"
+#include "toolchain/sem_ir/id_kind.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {

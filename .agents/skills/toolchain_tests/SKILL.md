@@ -23,6 +23,11 @@ Toolchain tests evaluate Carbon source files through Lexing, Parsing, Checking,
 and optionally Lowering. Output (for example SemIR dumps, Clang errors) is
 captured and validated using inline CHECK records.
 
+Language server tests also use `file_test`, but with quite different
+conventions (an LSP message stream, `AUTOUPDATE-SPLIT`, `FROM_FILE_SPLIT`).
+Refer to the **Language server** skill
+([SKILL.md](../language_server/SKILL.md)) for those.
+
 ## Structure and Authoring
 
 ### File Layout and Headers
@@ -182,3 +187,7 @@ updater:
 Review the updated test outputs (for example, by way of `git diff`). Ensure
 logic paths are correctly tested rather than producing massive boilerplate
 blocks.
+
+Autoupdating makes the tests pass whether or not the new behavior is correct, so
+deciding that the new output is the output you wanted is a separate step. See
+the [Review testdata changes](../review_testdata_changes/SKILL.md) skill.

@@ -13,20 +13,19 @@ private extern abstract base default final namespace Foo;
 impl namespace Foo;
 
 // CHECK:STDOUT: - filename: modifiers.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'PrivateModifier', text: 'private'},
-// CHECK:STDOUT:       {kind: 'ExternModifier', text: 'extern'},
-// CHECK:STDOUT:       {kind: 'AbstractModifier', text: 'abstract'},
-// CHECK:STDOUT:       {kind: 'BaseModifier', text: 'base'},
-// CHECK:STDOUT:       {kind: 'DefaultModifier', text: 'default'},
-// CHECK:STDOUT:       {kind: 'FinalModifier', text: 'final'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:     {kind: 'Namespace', text: ';', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'NamespaceStart', text: 'namespace'},
-// CHECK:STDOUT:       {kind: 'ImplModifier', text: 'impl'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:     {kind: 'Namespace', text: ';', subtree_size: 4},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ ├─PrivateModifier 'private'
+// CHECK:STDOUT:   │ ├─ExternModifier 'extern'
+// CHECK:STDOUT:   │ ├─AbstractModifier 'abstract'
+// CHECK:STDOUT:   │ ├─BaseModifier 'base'
+// CHECK:STDOUT:   │ ├─DefaultModifier 'default'
+// CHECK:STDOUT:   │ ├─FinalModifier 'final'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   ├─Namespace ';'
+// CHECK:STDOUT:   │ ╭─NamespaceStart 'namespace'
+// CHECK:STDOUT:   │ ├─ImplModifier 'impl'
+// CHECK:STDOUT:   │ ├─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   ├─Namespace ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

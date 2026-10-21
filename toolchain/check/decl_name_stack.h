@@ -279,6 +279,9 @@ class DeclNameStack {
                       const NameComponent& name) const
       -> std::pair<SemIR::NameScopeId, SemIR::GenericId>;
 
+  // Update `Context.access_context` to the current NameContext's parent scope.
+  auto UpdateAccessContext() const -> void;
+
   // The linked context.
   Context* context_;
 

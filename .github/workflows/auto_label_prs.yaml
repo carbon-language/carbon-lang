@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@58077d3c7e43986b6b15fba718e8ea69e387dfcc # v2.15.1
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           disable-sudo: true
           egress-policy: block
@@ -48,7 +48,7 @@ jobs:
               - 'WORKSPACE'
               - 'bazel/**'
               - 'github_tools/**'
-              - 'proposal/scripts/**'
+              - 'proposals/scripts/**'
               - 'scripts/**'
 
             # Here we only want the `proposal` label when a *new* file is added
@@ -111,12 +111,12 @@ jobs:
 
       # Note that this is not a path-based label, but an *author* based label,
       # and it applies orthogonally to the others.
-      - id: automated
+      - id: bot
         if:
           contains(fromJSON('["CarbonInfraBot", "dependabot"]'),
           github.event.pull_request.user.login)
         run: |
-          gh pr edit "${PR}" --add-label "automated" --repo carbon-language/carbon-lang
+          gh pr edit "${PR}" --add-label "bot" --repo carbon-language/carbon-lang
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ github.event.pull_request.html_url }}

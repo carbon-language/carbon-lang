@@ -72,7 +72,7 @@ If you're looking for a quick way to contribute, commenting on proposals is a
 way to provide proposal authors with a breadth of feedback. The
 ["leads questions" label](https://github.com/carbon-language/carbon-lang/issues?q=is%3Aissue+is%3Aopen+label%3A%22leads+question%22)
 has questions the community is looking for a decision on. The
-[list of open proposals](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+is%3Aopen+label%3A%22proposal+rfc%22)
+[list of open proposals](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse+label%3Aproposal)
 will have more mature proposals that are nearing a decision. For more about the
 difference, see the [evolution process](docs/project/evolution.md).
 
@@ -250,21 +250,21 @@ below. We also emphasize two additional requirements for contributors operating
 or using AI-based tools:
 
 1.  **Contributions should not become extractive of the project and community**:
-    the value added should outweigh the overhead of landing the contribution. The
-    overhead of landing contributions ranges from code review, to discussions,
-    distractions from the current project priorities, or growing maintenance
-    burden without growing maintainers.
+    the value added should outweigh the overhead of landing the contribution.
+    The overhead of landing contributions ranges from code review, to
+    discussions, distractions from the current project priorities, or growing
+    maintenance burden without growing maintainers.
 
-2.  **Each PR should be transparent about the tooling used** in proportion to how
-    much of the PR was produced by the tool and whether the tool is a standard
-    one for the project. For example, formatting with the standard tools is
-    reasonable to assume without further comment. But if a PR is largely derived
-    from running a specific Python script, regular expression, or AI-based tool
-    over the codebase, we ask that its commit message is transparent about this
-    and include a description of how the tool was used to formulate the change.
-    For PRs largely derived from AI-based tooling, we suggest following the
-    pattern established by the Fedora Project to mark commits with
-    `Assisted-by: ...`.
+2.  **Each PR should be transparent about the tooling used** in proportion to
+    how much of the PR was produced by the tool and whether the tool is a
+    standard one for the project. For example, formatting with the standard
+    tools is reasonable to assume without further comment. But if a PR is
+    largely derived from running a specific Python script, regular expression,
+    or AI-based tool over the codebase, we ask that its commit message is
+    transparent about this and include a description of how the tool was used to
+    formulate the change. For PRs largely derived from AI-based tooling, we
+    suggest following the pattern established by the Fedora Project to mark
+    commits with `Assisted-by: ...`.
 
 Our policies and practices here are inspired by and aim to be roughly compatible
 with several other open source projects:
@@ -405,8 +405,8 @@ respectful, and don't drown out other discussion.
 Changes to Carbon documentation follow the
 [Google developer documentation style guide](https://developers.google.com/style).
 
-Markdown files should additionally use [rumdl](https://github.com/rvben/rumdl) for
-formatting, which we automate with
+Markdown files should additionally use [rumdl](https://github.com/rvben/rumdl)
+for formatting, which we automate with
 [prek](/docs/project/contribution_tools.md#running-prek).
 
 Other style points to be aware of are:

@@ -63,20 +63,18 @@ auto PopNameComponent(Context& context, SemIR::InstId return_pattern_id)
   auto [name_loc_id, name_id] =
       context.node_stack().PopWithNodeId<Parse::NodeCategory::NonExprName>();
 
-  return {
-      .name_loc_id = name_loc_id,
-      .name_id = name_id,
-      .first_param_node_id = first_param_node_id,
-      .last_param_node_id = last_param_node_id,
-      .implicit_params_loc_id = implicit_params_node_id,
-      .implicit_param_patterns_id = *implicit_param_patterns_id,
-      .params_loc_id = params_node_id,
-      .param_patterns_id = *param_patterns_id,
-      .call_param_patterns_id = call_param_patterns_id,
-      .call_params_id = call_params_id,
-      .param_ranges = param_ranges,
-      .pattern_block_id = pattern_block_id,
-  };
+  return {.name_loc_id = name_loc_id,
+          .name_id = name_id,
+          .first_param_node_id = first_param_node_id,
+          .last_param_node_id = last_param_node_id,
+          .implicit_params_loc_id = implicit_params_node_id,
+          .implicit_param_patterns_id = *implicit_param_patterns_id,
+          .params_loc_id = params_node_id,
+          .param_patterns_id = *param_patterns_id,
+          .call_param_patterns_id = call_param_patterns_id,
+          .call_params_id = call_params_id,
+          .param_ranges = param_ranges,
+          .pattern_block_id = pattern_block_id};
 }
 
 // Pop the name of a declaration from the node stack, and diagnose if it has

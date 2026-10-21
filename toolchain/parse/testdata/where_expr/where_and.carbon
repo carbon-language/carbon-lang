@@ -39,111 +39,107 @@ fn AndSuffix(generic Y: I where .J impls K and);
 fn AndEarly(generic Z: L where .M and N);
 
 // CHECK:STDOUT: - filename: success.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'OneAnd'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'RequirementEqual', text: '=', subtree_size: 4},
-// CHECK:STDOUT:             {kind: 'RequirementAnd', text: 'and'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'V'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'W'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'RequirementEqualEqual', text: '==', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 13},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 16},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 18},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 21},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'TwoAnd'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'J'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'K'},
-// CHECK:STDOUT:             {kind: 'RequirementImpls', text: 'impls', subtree_size: 4},
-// CHECK:STDOUT:             {kind: 'RequirementAnd', text: 'and'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'L'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'M'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'RequirementEqualEqual', text: '==', subtree_size: 5},
-// CHECK:STDOUT:             {kind: 'RequirementAnd', text: 'and'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'N'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:             {kind: 'RequirementEqual', text: '=', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 18},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 21},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 23},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 26},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'OneAnd'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │   ╭─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'U'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementEqual '='
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementAnd 'and'
+// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'V'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'W'
+// CHECK:STDOUT:   │ │ │ │ │ ├─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementEqualEqual '=='
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'TwoAnd'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'I'
+// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'J'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ │ ├─IdentifierNameExpr 'K'
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementImpls 'impls'
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementAnd 'and'
+// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'L'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'M'
+// CHECK:STDOUT:   │ │ │ │ │ ├─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementEqualEqual '=='
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementAnd 'and'
+// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'N'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ │ ├─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementEqual '='
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_and_prefix.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'AndPrefix'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: 'and', has_error: yes},
-// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 7},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 12},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'AndPrefix'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │   ╭─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │ │ ├─InvalidParse 'and' has_error
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_and_suffix.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'AndSuffix'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'Y'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'I'},
-// CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'J'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'K'},
-// CHECK:STDOUT:             {kind: 'RequirementImpls', text: 'impls', subtree_size: 4},
-// CHECK:STDOUT:             {kind: 'RequirementAnd', text: 'and'},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: ')', has_error: yes},
-// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 12},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 14},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 17},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'AndSuffix'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'Y'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'I'
+// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'J'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ │ ├─IdentifierNameExpr 'K'
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementImpls 'impls'
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementAnd 'and'
+// CHECK:STDOUT:   │ │ │ │ ├─InvalidParse ')' has_error
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
 // CHECK:STDOUT: - filename: fail_and_early.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'AndEarly'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'Z'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'L'},
-// CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'M'},
-// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', has_error: yes, subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', has_error: yes, subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 13},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'AndEarly'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'Z'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameExpr 'L'
+// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'M'
+// CHECK:STDOUT:   │ │ │ │ ├─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where' has_error
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':' has_error
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')' has_error
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

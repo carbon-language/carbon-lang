@@ -144,6 +144,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::DollarIntLiteral: {
+      context.AddLeafNode(NodeKind::PositionalParamExpr, context.Consume());
+      context.PushState(state);
+      break;
+    }
     case Lex::TokenKind::Str: {
       context.AddLeafNode(NodeKind::StringTypeLiteral, context.Consume());
       context.PushState(state);
@@ -177,6 +182,11 @@ auto HandleExprInPostfix(Context& context) -> void {
     case Lex::TokenKind::Form: {
       context.PushState(state);
       context.PushState(StateKind::FormLiteral);
+      break;
+    }
+    case Lex::TokenKind::TypeOf: {
+      context.PushState(state);
+      context.PushState(StateKind::TypeOfExpr);
       break;
     }
     case Lex::TokenKind::Package: {

@@ -80,29 +80,30 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT: --- member_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %pattern_type.e81: type = pattern_type %Copy.type [concrete]
 // CHECK:STDOUT:   %T.patt.fe6: %pattern_type.e81 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.f84: %Copy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.f84 [symbolic]
-// CHECK:STDOUT:   %Derived.e87: type = class_type @Derived, @Derived(%T.as_type) [symbolic]
-// CHECK:STDOUT:   %pattern_type.ebc: type = pattern_type %Derived.e87 [symbolic]
-// CHECK:STDOUT:   %x.param_patt.203: %pattern_type.ebc = value_param_pattern [symbolic]
-// CHECK:STDOUT:   %x.patt.c37: %pattern_type.ebc = at_binding_pattern x, %x.param_patt.203 [symbolic]
+// CHECK:STDOUT:   %Derived.f3f: type = class_type @Derived, @Derived(%T.as_type) [symbolic]
+// CHECK:STDOUT:   %pattern_type.dbd: type = pattern_type %Derived.f3f [symbolic]
+// CHECK:STDOUT:   %x.param_patt.a99: %pattern_type.dbd = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %x.patt.9e0: %pattern_type.dbd = wrapper_binding_pattern x, %x.param_patt.a99 [symbolic]
 // CHECK:STDOUT:   %.1ce700.2: Core.Form = init_form %T.as_type [symbolic]
 // CHECK:STDOUT:   %pattern_type.2c66b4.2: type = pattern_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %return.param_patt.bf4475.2: %pattern_type.2c66b4.2 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.f44: %pattern_type.2c66b4.2 = return_slot_pattern %return.param_patt.bf4475.2, %T.as_type [symbolic]
-// CHECK:STDOUT:   %Base.146: type = class_type @Base, @Base(%T.as_type) [symbolic]
-// CHECK:STDOUT:   %require_complete.0fb: <witness> = require_complete_type %Base.146 [symbolic]
+// CHECK:STDOUT:   %Base.962: type = class_type @Base, @Base(%T.as_type) [symbolic]
+// CHECK:STDOUT:   %require_complete.a0a: <witness> = require_complete_type %Base.962 [symbolic]
 // CHECK:STDOUT:   %require_complete.d83: <witness> = require_complete_type %T.as_type [symbolic]
-// CHECK:STDOUT:   %Derived.elem.eb3: type = unbound_element_type %Derived.e87, %T.as_type [symbolic]
-// CHECK:STDOUT:   %Base.elem.209: type = unbound_element_type %Base.146, %T.as_type [symbolic]
+// CHECK:STDOUT:   %Derived.elem.be1: type = unbound_element_type %Derived.f3f, %T.as_type [symbolic]
+// CHECK:STDOUT:   %Base.elem.be7: type = unbound_element_type %Base.962, %T.as_type [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.d9c: <witness> = lookup_impl_witness %T.f84, @Copy [symbolic]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.c85f21.2: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.f84) [symbolic]
-// CHECK:STDOUT:   %.c29: type = fn_type_with_self_type %Copy.WithSelf.Op.type.c85f21.2, %T.f84 [symbolic]
-// CHECK:STDOUT:   %impl.elem0.bd2: %.c29 = impl_witness_access %Copy.lookup_impl_witness.d9c, element0 [symbolic]
-// CHECK:STDOUT:   %specific_impl_fn.e2a: <specific function> = specific_impl_function %impl.elem0.bd2, @Copy.WithSelf.Op(%T.f84) [symbolic]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d2f9c3.2: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.f84) [symbolic]
+// CHECK:STDOUT:   %.8bf: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d2f9c3.2, %T.f84 [symbolic]
+// CHECK:STDOUT:   %impl.elem0.bb5: %.8bf = impl_witness_access %Copy.lookup_impl_witness.d9c, element0 [symbolic]
+// CHECK:STDOUT:   %specific_impl_fn.2ac: <specific function> = specific_impl_function %impl.elem0.bb5, @Copy.WithSelf.Op(%T.f84) [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @AccessDerived(%T.loc13_19.2: %Copy.type) {
@@ -110,25 +111,25 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived.loc13_44.1, %T.as_type.loc13_44.1 [symbolic = %Derived.elem (constants.%Derived.elem.eb3)]
+// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived.loc13_44.1, %T.as_type.loc13_44.1 [symbolic = %Derived.elem (constants.%Derived.elem.be1)]
 // CHECK:STDOUT:   %require_complete.loc15: <witness> = require_complete_type %T.as_type.loc13_44.1 [symbolic = %require_complete.loc15 (constants.%require_complete.d83)]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc13_19.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.c85f21.2)]
-// CHECK:STDOUT:   %.loc15_11.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc13_19.1 [symbolic = %.loc15_11.5 (constants.%.c29)]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc13_19.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
+// CHECK:STDOUT:   %.loc15_11.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc13_19.1 [symbolic = %.loc15_11.5 (constants.%.8bf)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_19.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c)]
-// CHECK:STDOUT:   %impl.elem0.loc15_11.2: @AccessDerived.%.loc15_11.5 (%.c29) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_11.2 (constants.%impl.elem0.bd2)]
-// CHECK:STDOUT:   %specific_impl_fn.loc15_11.2: <specific function> = specific_impl_function %impl.elem0.loc15_11.2, @Copy.WithSelf.Op(%T.loc13_19.1) [symbolic = %specific_impl_fn.loc15_11.2 (constants.%specific_impl_fn.e2a)]
+// CHECK:STDOUT:   %impl.elem0.loc15_11.2: @AccessDerived.%.loc15_11.5 (%.8bf) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_11.2 (constants.%impl.elem0.bb5)]
+// CHECK:STDOUT:   %specific_impl_fn.loc15_11.2: <specific function> = specific_impl_function %impl.elem0.loc15_11.2, @Copy.WithSelf.Op(%T.loc13_19.1) [symbolic = %specific_impl_fn.loc15_11.2 (constants.%specific_impl_fn.2ac)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @AccessDerived.%Derived.loc13_44.1 (%Derived.e87)) -> out %return.param: @AccessDerived.%T.as_type.loc13_44.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%x.param: @AccessDerived.%Derived.loc13_44.1 (%Derived.f3f)) -> out %return.param: @AccessDerived.%T.as_type.loc13_44.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref: @AccessDerived.%Derived.loc13_44.1 (%Derived.e87) = name_ref x, %x
-// CHECK:STDOUT:     %d.ref: @AccessDerived.%Derived.elem (%Derived.elem.eb3) = name_ref d, @Derived.%.loc10 [concrete = @Derived.%.loc10]
+// CHECK:STDOUT:     %x.ref: @AccessDerived.%Derived.loc13_44.1 (%Derived.f3f) = name_ref x, %x
+// CHECK:STDOUT:     %d.ref: @AccessDerived.%Derived.elem (%Derived.elem.be1) = name_ref d, @Derived.%field_decl [concrete = @Derived.%field_decl]
 // CHECK:STDOUT:     %.loc15_11.1: ref @AccessDerived.%T.as_type.loc13_44.1 (%T.as_type) = class_element_access %x.ref, element1
 // CHECK:STDOUT:     %.loc15_11.2: @AccessDerived.%T.as_type.loc13_44.1 (%T.as_type) = acquire_value %.loc15_11.1
-// CHECK:STDOUT:     %impl.elem0.loc15_11.1: @AccessDerived.%.loc15_11.5 (%.c29) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c, element0 [symbolic = %impl.elem0.loc15_11.2 (constants.%impl.elem0.bd2)]
+// CHECK:STDOUT:     %impl.elem0.loc15_11.1: @AccessDerived.%.loc15_11.5 (%.8bf) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c, element0 [symbolic = %impl.elem0.loc15_11.2 (constants.%impl.elem0.bb5)]
 // CHECK:STDOUT:     %bound_method.loc15_11.1: <bound method> = bound_method %.loc15_11.2, %impl.elem0.loc15_11.1
 // CHECK:STDOUT:     %.loc15_11.3: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T.loc13_19.1 (constants.%T.f84)]
 // CHECK:STDOUT:     %.loc15_11.4: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T.loc13_19.1 (constants.%T.f84)]
-// CHECK:STDOUT:     %specific_impl_fn.loc15_11.1: <specific function> = specific_impl_function %impl.elem0.loc15_11.1, @Copy.WithSelf.Op(constants.%T.f84) [symbolic = %specific_impl_fn.loc15_11.2 (constants.%specific_impl_fn.e2a)]
+// CHECK:STDOUT:     %specific_impl_fn.loc15_11.1: <specific function> = specific_impl_function %impl.elem0.loc15_11.1, @Copy.WithSelf.Op(constants.%T.f84) [symbolic = %specific_impl_fn.loc15_11.2 (constants.%specific_impl_fn.2ac)]
 // CHECK:STDOUT:     %bound_method.loc15_11.2: <bound method> = bound_method %.loc15_11.2, %specific_impl_fn.loc15_11.1
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @AccessDerived.%T.as_type.loc13_44.1 (%T.as_type) to %.loc13_50.1 = call %bound_method.loc15_11.2(%.loc15_11.2)
@@ -141,33 +142,32 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.as_type.loc19_41.1) [symbolic = %Base (constants.%Base.146)]
-// CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %T.as_type.loc19_41.1 [symbolic = %Base.elem (constants.%Base.elem.209)]
-// CHECK:STDOUT:   %require_complete.loc21_11: <witness> = require_complete_type %Base [symbolic = %require_complete.loc21_11 (constants.%require_complete.0fb)]
+// CHECK:STDOUT:   %Base: type = class_type @Base, @Base(%T.as_type.loc19_41.1) [symbolic = %Base (constants.%Base.962)]
+// CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %T.as_type.loc19_41.1 [symbolic = %Base.elem (constants.%Base.elem.be7)]
+// CHECK:STDOUT:   %require_complete.loc21_11: <witness> = require_complete_type %Base [symbolic = %require_complete.loc21_11 (constants.%require_complete.a0a)]
 // CHECK:STDOUT:   %require_complete.loc21_13: <witness> = require_complete_type %T.as_type.loc19_41.1 [symbolic = %require_complete.loc21_13 (constants.%require_complete.d83)]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc19_16.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.c85f21.2)]
-// CHECK:STDOUT:   %.loc21_11.8: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc19_16.1 [symbolic = %.loc21_11.8 (constants.%.c29)]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc19_16.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
+// CHECK:STDOUT:   %.loc21_11.7: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc19_16.1 [symbolic = %.loc21_11.7 (constants.%.8bf)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc19_16.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c)]
-// CHECK:STDOUT:   %impl.elem0.loc21_11.2: @AccessBase.%.loc21_11.8 (%.c29) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc21_11.2 (constants.%impl.elem0.bd2)]
-// CHECK:STDOUT:   %specific_impl_fn.loc21_11.2: <specific function> = specific_impl_function %impl.elem0.loc21_11.2, @Copy.WithSelf.Op(%T.loc19_16.1) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.e2a)]
+// CHECK:STDOUT:   %impl.elem0.loc21_11.2: @AccessBase.%.loc21_11.7 (%.8bf) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc21_11.2 (constants.%impl.elem0.bb5)]
+// CHECK:STDOUT:   %specific_impl_fn.loc21_11.2: <specific function> = specific_impl_function %impl.elem0.loc21_11.2, @Copy.WithSelf.Op(%T.loc19_16.1) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.2ac)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%x.param: @AccessBase.%Derived.loc19_41.1 (%Derived.e87)) -> out %return.param: @AccessBase.%T.as_type.loc19_41.1 (%T.as_type) {
+// CHECK:STDOUT:   fn(%x.param: @AccessBase.%Derived.loc19_41.1 (%Derived.f3f)) -> out %return.param: @AccessBase.%T.as_type.loc19_41.1 (%T.as_type) {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %x.ref: @AccessBase.%Derived.loc19_41.1 (%Derived.e87) = name_ref x, %x
-// CHECK:STDOUT:     %b.ref: @AccessBase.%Base.elem (%Base.elem.209) = name_ref b, @Base.%.loc5 [concrete = @Base.%.loc5]
-// CHECK:STDOUT:     %.loc21_11.1: @AccessBase.%Base (%Base.146) = as_compatible %x.ref
-// CHECK:STDOUT:     %.loc21_11.2: ref @AccessBase.%Base (%Base.146) = class_element_access %.loc21_11.1, element0
-// CHECK:STDOUT:     %.loc21_11.3: ref @AccessBase.%Base (%Base.146) = converted %x.ref, %.loc21_11.2
-// CHECK:STDOUT:     %.loc21_11.4: ref @AccessBase.%T.as_type.loc19_41.1 (%T.as_type) = class_element_access %.loc21_11.3, element0
-// CHECK:STDOUT:     %.loc21_11.5: @AccessBase.%T.as_type.loc19_41.1 (%T.as_type) = acquire_value %.loc21_11.4
-// CHECK:STDOUT:     %impl.elem0.loc21_11.1: @AccessBase.%.loc21_11.8 (%.c29) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c, element0 [symbolic = %impl.elem0.loc21_11.2 (constants.%impl.elem0.bd2)]
-// CHECK:STDOUT:     %bound_method.loc21_11.1: <bound method> = bound_method %.loc21_11.5, %impl.elem0.loc21_11.1
+// CHECK:STDOUT:     %x.ref: @AccessBase.%Derived.loc19_41.1 (%Derived.f3f) = name_ref x, %x
+// CHECK:STDOUT:     %b.ref: @AccessBase.%Base.elem (%Base.elem.be7) = name_ref b, @Base.%field_decl [concrete = @Base.%field_decl]
+// CHECK:STDOUT:     %.loc21_11.1: ref @AccessBase.%Base (%Base.962) = class_element_access %x.ref, element0
+// CHECK:STDOUT:     %.loc21_11.2: ref @AccessBase.%Base (%Base.962) = converted %x.ref, %.loc21_11.1
+// CHECK:STDOUT:     %.loc21_11.3: ref @AccessBase.%T.as_type.loc19_41.1 (%T.as_type) = class_element_access %.loc21_11.2, element0
+// CHECK:STDOUT:     %.loc21_11.4: @AccessBase.%T.as_type.loc19_41.1 (%T.as_type) = acquire_value %.loc21_11.3
+// CHECK:STDOUT:     %impl.elem0.loc21_11.1: @AccessBase.%.loc21_11.7 (%.8bf) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c, element0 [symbolic = %impl.elem0.loc21_11.2 (constants.%impl.elem0.bb5)]
+// CHECK:STDOUT:     %bound_method.loc21_11.1: <bound method> = bound_method %.loc21_11.4, %impl.elem0.loc21_11.1
+// CHECK:STDOUT:     %.loc21_11.5: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T.loc19_16.1 (constants.%T.f84)]
 // CHECK:STDOUT:     %.loc21_11.6: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T.loc19_16.1 (constants.%T.f84)]
-// CHECK:STDOUT:     %.loc21_11.7: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T.loc19_16.1 (constants.%T.f84)]
-// CHECK:STDOUT:     %specific_impl_fn.loc21_11.1: <specific function> = specific_impl_function %impl.elem0.loc21_11.1, @Copy.WithSelf.Op(constants.%T.f84) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.e2a)]
-// CHECK:STDOUT:     %bound_method.loc21_11.2: <bound method> = bound_method %.loc21_11.5, %specific_impl_fn.loc21_11.1
+// CHECK:STDOUT:     %specific_impl_fn.loc21_11.1: <specific function> = specific_impl_function %impl.elem0.loc21_11.1, @Copy.WithSelf.Op(constants.%T.f84) [symbolic = %specific_impl_fn.loc21_11.2 (constants.%specific_impl_fn.2ac)]
+// CHECK:STDOUT:     %bound_method.loc21_11.2: <bound method> = bound_method %.loc21_11.4, %specific_impl_fn.loc21_11.1
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @AccessBase.%T.as_type.loc19_41.1 (%T.as_type) to %.loc19_47.1 = call %bound_method.loc21_11.2(%.loc21_11.5)
+// CHECK:STDOUT:     %Copy.WithSelf.Op.call: init @AccessBase.%T.as_type.loc19_41.1 (%T.as_type) to %.loc19_47.1 = call %bound_method.loc21_11.2(%.loc21_11.4)
 // CHECK:STDOUT:     return %Copy.WithSelf.Op.call to %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -176,10 +176,10 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc13_19.2 => constants.%T.patt.fe6
 // CHECK:STDOUT:   %T.loc13_19.1 => constants.%T.f84
 // CHECK:STDOUT:   %T.as_type.loc13_44.1 => constants.%T.as_type
-// CHECK:STDOUT:   %Derived.loc13_44.1 => constants.%Derived.e87
-// CHECK:STDOUT:   %pattern_type.loc13_33 => constants.%pattern_type.ebc
-// CHECK:STDOUT:   %x.param_patt.loc13_33.2 => constants.%x.param_patt.203
-// CHECK:STDOUT:   %x.patt.loc13_33.2 => constants.%x.patt.c37
+// CHECK:STDOUT:   %Derived.loc13_44.1 => constants.%Derived.f3f
+// CHECK:STDOUT:   %pattern_type.loc13_33 => constants.%pattern_type.dbd
+// CHECK:STDOUT:   %x.param_patt.loc13_33.2 => constants.%x.param_patt.a99
+// CHECK:STDOUT:   %x.patt.loc13_33.2 => constants.%x.patt.9e0
 // CHECK:STDOUT:   %.loc13_50.2 => constants.%.1ce700.2
 // CHECK:STDOUT:   %pattern_type.loc13_50 => constants.%pattern_type.2c66b4.2
 // CHECK:STDOUT:   %return.param_patt.loc13_50.2 => constants.%return.param_patt.bf4475.2
@@ -190,10 +190,10 @@ fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
 // CHECK:STDOUT:   %T.patt.loc19_16.2 => constants.%T.patt.fe6
 // CHECK:STDOUT:   %T.loc19_16.1 => constants.%T.f84
 // CHECK:STDOUT:   %T.as_type.loc19_41.1 => constants.%T.as_type
-// CHECK:STDOUT:   %Derived.loc19_41.1 => constants.%Derived.e87
-// CHECK:STDOUT:   %pattern_type.loc19_30 => constants.%pattern_type.ebc
-// CHECK:STDOUT:   %x.param_patt.loc19_30.2 => constants.%x.param_patt.203
-// CHECK:STDOUT:   %x.patt.loc19_30.2 => constants.%x.patt.c37
+// CHECK:STDOUT:   %Derived.loc19_41.1 => constants.%Derived.f3f
+// CHECK:STDOUT:   %pattern_type.loc19_30 => constants.%pattern_type.dbd
+// CHECK:STDOUT:   %x.param_patt.loc19_30.2 => constants.%x.param_patt.a99
+// CHECK:STDOUT:   %x.patt.loc19_30.2 => constants.%x.patt.9e0
 // CHECK:STDOUT:   %.loc19_47.2 => constants.%.1ce700.2
 // CHECK:STDOUT:   %pattern_type.loc19_47 => constants.%pattern_type.2c66b4.2
 // CHECK:STDOUT:   %return.param_patt.loc19_47.2 => constants.%return.param_patt.bf4475.2

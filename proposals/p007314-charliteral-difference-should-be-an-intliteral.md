@@ -71,8 +71,9 @@ literals was defined as producing `i32`, with the rationale:
 > two `Core.CharLiteral` values.
 
 `CharLiteral` values are in the range [0, 0x10FFFF], so the smallest fixed-width
-power-of-two-sized type their differences fit within is indeed `i32`. However, we
-did not consider using a literal type, nor the layering impact of this choice.
+power-of-two-sized type their differences fit within is indeed `i32`. However,
+we did not consider using a literal type, nor the layering impact of this
+choice.
 
 ## Proposal
 

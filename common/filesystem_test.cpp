@@ -411,6 +411,58 @@ TEST_F(FilesystemTest, WriteStream) {
   EXPECT_THAT(dir_.ReadFileToString("test"), IsSuccess(Eq(content_str)));
 }
 
+TEST_F(FilesystemTest, WriteCompleteBuffer) {
+  std::string content_str = "0123456789";
+  auto bytes = llvm::ArrayRef<std::byte>(
+      reinterpret_cast<const std::byte*>(content_str.data()),
+      content_str.size());
+
+  auto write = dir_.OpenWriteOnly("test", CreationOptions::CreateNew);
+  ASSERT_THAT(write, IsSuccess(_));
+  EXPECT_THAT(write->WriteCompleteBuffer(bytes), IsSuccess(_));
+  // Writing appends rather than replacing, unlike `WriteFileFromString`.
+  EXPECT_THAT(write->WriteCompleteBuffer(bytes), IsSuccess(_));
+  // An empty buffer is a no-op rather than an error.
+  EXPECT_THAT(write->WriteCompleteBuffer(llvm::ArrayRef<std::byte>()),
+              IsSuccess(_));
+  (*std::move(write)).Close().Check();
+
+  EXPECT_THAT(dir_.ReadFileToString("test"),
+              IsSuccess(Eq(content_str + content_str)));
+}
+
+TEST_F(FilesystemTest, StandardStreams) {
+  // The standard streams name descriptors the process already has, so these
+  // are constants and never open or close anything.
+  static_assert(Stdin().unix_fd() == STDIN_FILENO);
+  static_assert(Stdout().unix_fd() == STDOUT_FILENO);
+  static_assert(Stderr().unix_fd() == STDERR_FILENO);
+  EXPECT_TRUE(Stderr().is_valid());
+
+  // Writing through one reaches the descriptor. Tests run with stdout captured,
+  // so this uses a pipe put in its place for the duration.
+  int fds[2];
+  ASSERT_EQ(pipe(fds), 0);
+  int saved = dup(STDOUT_FILENO);
+  ASSERT_GE(saved, 0);
+  ASSERT_GE(dup2(fds[1], STDOUT_FILENO), 0);
+
+  llvm::StringRef message = "through stdout";
+  auto result = Stdout().WriteCompleteBuffer(llvm::ArrayRef<std::byte>(
+      reinterpret_cast<const std::byte*>(message.data()), message.size()));
+
+  ASSERT_GE(dup2(saved, STDOUT_FILENO), 0);
+  ASSERT_EQ(close(saved), 0);
+  ASSERT_EQ(close(fds[1]), 0);
+  EXPECT_THAT(result, IsSuccess(_));
+
+  char buffer[64];
+  ssize_t n = read(fds[0], buffer, sizeof(buffer));
+  ASSERT_EQ(close(fds[0]), 0);
+  ASSERT_GT(n, 0);
+  EXPECT_EQ(llvm::StringRef(buffer, n), message);
+}
+
 TEST_F(FilesystemTest, Rename) {
   // Rename a file within a directory.
   ASSERT_THAT(dir_.WriteFileFromString("file1", "content1"), IsSuccess(_));

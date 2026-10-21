@@ -90,6 +90,33 @@ fn Test() {
   Core.AssertIsRange(Cpp.ConstRangeWithSentinel);
 }
 
+// --- methods_overloaded.carbon
+library "[[@TEST_NAME]]";
+
+import Core library "cpp_range_for_iterate";
+
+import Cpp inline '''c++
+struct OverloadedRange {
+  struct ConstIterator {};
+  struct ConstSentinel {};
+  struct Iterator {};
+  struct Sentinel {};
+
+  auto begin() -> Iterator;
+  auto end() -> Sentinel;
+  auto begin() const -> ConstIterator;
+  auto end() const -> ConstSentinel;
+};
+''';
+
+fn Test() {
+  Core.AssertIsRange(Cpp.OverloadedRange);
+  // We should pick the const overloads.
+  let _: Core.CppRangeForIterate where
+    .Iterator = Cpp.OverloadedRange.ConstIterator and
+    .Sentinel = Cpp.OverloadedRange.ConstSentinel = Cpp.OverloadedRange;
+}
+
 // --- adl_return_same_types.carbon
 library "[[@TEST_NAME]]";
 

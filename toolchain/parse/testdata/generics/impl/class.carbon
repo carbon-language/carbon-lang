@@ -20,43 +20,42 @@ class C {
 }
 
 // CHECK:STDOUT: - filename: class.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:         {kind: 'ImplDefaultSelfAs', text: 'as'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'ForwardDeclared'},
-// CHECK:STDOUT:       {kind: 'ImplDecl', text: ';', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameExpr', text: 'C'},
-// CHECK:STDOUT:           {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'ExplicitType'},
-// CHECK:STDOUT:         {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ImplDefinition', text: '}', subtree_size: 6},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'ExplicitSelf'},
-// CHECK:STDOUT:       {kind: 'ImplDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:           {kind: 'ExtendModifier', text: 'extend'},
-// CHECK:STDOUT:           {kind: 'ImplDefaultSelfAs', text: 'as'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'ExtendImpl'},
-// CHECK:STDOUT:         {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ImplDefinition', text: '}', subtree_size: 11},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:         {kind: 'ExtendModifier', text: 'extend'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'C'},
-// CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'InvalidButDiagnosedInCheck'},
-// CHECK:STDOUT:       {kind: 'ImplDecl', text: ';', subtree_size: 6},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 36},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │ ├─ImplDefaultSelfAs 'as'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'ForwardDeclared'
+// CHECK:STDOUT:   │ ├─ImplDecl ';'
+// CHECK:STDOUT:   │ │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │   │ ╭─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │ │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'ExplicitType'
+// CHECK:STDOUT:   │ │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ ├─ImplDefinition '}'
+// CHECK:STDOUT:   │ │ ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │ │ ╭─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │ ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'ExplicitSelf'
+// CHECK:STDOUT:   │ ├─ImplDecl ';'
+// CHECK:STDOUT:   │ │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │   ├─ExtendModifier 'extend'
+// CHECK:STDOUT:   │ │   ├─ImplDefaultSelfAs 'as'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'ExtendImpl'
+// CHECK:STDOUT:   │ │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ├─ImplDefinition '}'
+// CHECK:STDOUT:   │ │ ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │ ├─ExtendModifier 'extend'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameExpr 'C'
+// CHECK:STDOUT:   │ │ ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'InvalidButDiagnosedInCheck'
+// CHECK:STDOUT:   │ ├─ImplDecl ';'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

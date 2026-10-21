@@ -77,28 +77,35 @@ auto RequireConcreteType(Context& context, SemIR::TypeId type_id,
 // the middle of being defined.
 auto TryToIdentifyFacetType(Context& context, SemIR::LocId loc_id,
                             SemIR::ConstantId self_const_id,
-                            SemIR::TypeInstId facet_type_inst_id,
+                            SemIR::TypeId facet_type_type_id,
                             bool allow_partially_identified)
     -> SemIR::IdentifiedFacetTypeId;
 
 // Requires the named constraints in the facet type to be complete, so that the
 // set of interfaces the facet type requires is known. The `self_const_id` is a
-// type or facet type expression that is the self that the FacetType is
-// constraining. The `facet_type_inst_id` must be a FacetType (and cannot be an
-// ErrorInst). Produces a set of interfaces that must be implemented for a set
-// of types, most of them for the `self_const_id`. Diagnoses an error and
-// returns None if any error is found.
+// facet expression that is the self that the FacetType is constraining. The
+// `facet_type_inst_id` must be a FacetType (or ErrorInst). Produces a set of
+// interfaces that must be implemented for a set of facets, most of them for the
+// `self_const_id`. Diagnoses an error and returns None if any error is found.
 //
-// The `self_const_id` is converted to the canonical facet value (if it's a
-// facet-value-as-type, the as-type is stripped off), and this is visible in the
-// resulting IdentifiedFacetType. Comparing the `self_const_id` against the
-// output self values requires the caller to also canonicalize the
-// `self_const_id`.
+// The `self_const_id` is converted to its canonical facet representation (any
+// `as type` conversion is stripped off), and this is visible in the resulting
+// IdentifiedFacetType. Comparing the `self_const_id` against the output self
+// values requires the caller to also canonicalize the `self_const_id`.
+//
+// Any symbolic witness (LookupImplWitness) in the IdentifiedFacetType that is
+// modified by identification, by having `.Self` substituted, will be returned
+// as an IdentifiedWitness instruction. This allows the caller control over how
+// to resolve those witnesses, either by evaluating them as a LookupImplWitness
+// which performs the impl lookup operation, or by replacing them with an
+// already-known witness. All values on the IdentifiedFacetType should be
+// modified by `EvaluateIdentifiedWitnesses` or `SubstIdentifiedWitnesses` to
+// replace those temporary witnesses.
 //
 // TODO: Remove `diagnose` and split into `TryIdentifyFacetType`.
 auto RequireIdentifiedFacetType(Context& context, SemIR::LocId loc_id,
                                 SemIR::ConstantId self_const_id,
-                                SemIR::TypeInstId facet_type_inst_id,
+                                SemIR::TypeId facet_type_type_id,
                                 DiagnosticContextFn diagnostic_context,
                                 bool diagnose = true)
     -> SemIR::IdentifiedFacetTypeId;

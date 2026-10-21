@@ -83,33 +83,34 @@ var s: Cpp.Simple({} as C) = Cpp.MakeSimple123();
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<bool B> struct Struct {};
-Struct<true> MakeStruct() { return Struct<true>(); }
+template<bool B> struct BoolStruct {};
+BoolStruct<true> MakeBoolStruct() { return BoolStruct<true>(); }
 ''';
 
-var s: Cpp.Struct(true) = Cpp.MakeStruct();
+var s: Cpp.BoolStruct(true) = Cpp.MakeBoolStruct();
 
 // --- float.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<float N> struct Struct {};
-Struct<123.5f> MakeStruct() { return Struct<123.5f>(); }
+template<float N> struct FloatStruct {};
+FloatStruct<123.5f> MakeFloatStruct() { return FloatStruct<123.5f>(); }
 ''';
-let v: Cpp.Struct(123.5) = Cpp.MakeStruct();
+
+let v: Cpp.FloatStruct(123.5) = Cpp.MakeFloatStruct();
 
 // --- pointer.carbon
 
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-template<const int* _Nonnull P> struct Struct {};
+template<const int* _Nonnull P> struct PtrStruct {};
 static int i = 123;
-Struct<&i> MakeStruct() { return Struct<&i>(); }
+PtrStruct<&i> MakePtrStruct() { return PtrStruct<&i>(); }
 ''';
 
-let xyz: Cpp.Struct(&Cpp.i) = Cpp.MakeStruct();
+let xyz: Cpp.PtrStruct(&Cpp.i) = Cpp.MakePtrStruct();
 
 // --- valid.carbon
 
@@ -181,6 +182,7 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- valid.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %TwoNonType: type = class_type @TwoNonType [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.2aa: type = pattern_type %TwoNonType [concrete]
@@ -211,12 +213,13 @@ fn G() -> i32 {
 // CHECK:STDOUT: --- dependent.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %DependentNonType.type: type = cpp_type_template_type DependentNonType [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %DependentNonType.template: %DependentNonType.type = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %DependentNonType.43e: type = class_type @DependentNonType.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %pattern_type.eef: type = pattern_type %DependentNonType.43e [concrete]
@@ -227,8 +230,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   %ptr.f0c: type = ptr_type %DependentNonType.43e [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk.type: type = fn_type @MakeDependentNonType123__carbon_thunk [concrete]
 // CHECK:STDOUT:   %MakeDependentNonType123__carbon_thunk: %MakeDependentNonType123__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.6b6 = ref_binding_pattern StaticInt [concrete]
-// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.6b6 = var_pattern %StaticInt.patt [concrete]
+// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.d94 = ref_binding_pattern StaticInt [concrete]
+// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.d94 = var_pattern %StaticInt.patt [concrete]
 // CHECK:STDOUT:   %DependentNonType.d43: type = class_type @DependentNonType.2 [concrete]
 // CHECK:STDOUT:   %pattern_type.70d: type = pattern_type %DependentNonType.d43 [concrete]
 // CHECK:STDOUT:   %y.patt: %pattern_type.70d = ref_binding_pattern y [concrete]
@@ -251,8 +254,8 @@ fn G() -> i32 {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.6b6 = ref_binding_pattern StaticInt [concrete = constants.%StaticInt.patt]
-// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.6b6 = var_pattern %StaticInt.patt [concrete = constants.%StaticInt.var_patt]
+// CHECK:STDOUT:   %StaticInt.patt: %pattern_type.d94 = ref_binding_pattern StaticInt [concrete = constants.%StaticInt.patt]
+// CHECK:STDOUT:   %StaticInt.var_patt: %pattern_type.d94 = var_pattern %StaticInt.patt [concrete = constants.%StaticInt.var_patt]
 // CHECK:STDOUT:   %StaticInt.var: ref %i32 = var_storage %StaticInt.var_patt [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

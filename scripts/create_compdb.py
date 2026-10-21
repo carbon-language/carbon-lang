@@ -29,11 +29,70 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 """
 
 import argparse
+import json
+import os
+import pathlib
 import subprocess
 import sys
 from typing import Any, Dict
 
 import scripts_utils
+
+_CPP_EXTENSIONS = {
+    ".c",
+    ".cc",
+    ".cpp",
+    ".cxx",
+    ".c++",
+    ".C",
+    ".h",
+    ".hpp",
+    ".hxx",
+    ".h++",
+    ".hh",
+    ".H",
+    ".inc",
+    ".def",
+    ".ipp",
+    ".s",
+    ".S",
+    ".asm",
+}
+
+
+def _is_cpp_source_or_header(path: pathlib.Path) -> bool:
+    """Returns True if path is a C/C++/Assembly source or header file."""
+    if path.suffix:
+        return path.suffix in _CPP_EXTENSIONS
+    # Extensionless files (e.g. C++ standard library headers like <vector>,
+    # <string>, or CUDA/OpenMP wrappers) are headers only if located within an
+    # include directory.
+    return "include" in path.parts
+
+
+def _filter_compile_commands(
+    compdb_path: str = "compile_commands.json",
+) -> None:
+    """Removes non-source/non-header entries from compile_commands.json."""
+    if not os.path.exists(compdb_path):
+        return
+    with open(compdb_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    filtered = [
+        entry
+        for entry in data
+        if _is_cpp_source_or_header(pathlib.Path(entry.get("file", "")))
+    ]
+    removed_count = len(data) - len(filtered)
+    if removed_count > 0:
+        print(
+            f"Filtered out {removed_count} non-source/non-header entries "
+            f"from {compdb_path}."
+        )
+        with open(compdb_path, "w", encoding="utf-8") as f:
+            json.dump(filtered, f, separators=(",", ":"))
+            f.write("\n")
 
 
 def _build_generated_files(
@@ -137,10 +196,7 @@ def main() -> None:
         bazel, args.alsologtostderr, args.dump_files, args.extra_bazel_flag
     )
 
-    print(
-        "Generating compile_commands.json (may take a few minutes)...",
-        flush=True,
-    )
+    print("Generating compile_commands.json...", flush=True)
     subprocess.run(
         [
             bazel,
@@ -150,9 +206,13 @@ def main() -> None:
         + [
             "//:generate_compile_commands",
             "--",
+            "//... except attr(tags, '\\bmanual\\b', //...) "
+            "+ //utils/tree_sitter:test_runner",
         ]
         + [f"--extra_aquery_arg={arg}" for arg in args.extra_bazel_flag]
     )
+
+    _filter_compile_commands()
 
 
 if __name__ == "__main__":

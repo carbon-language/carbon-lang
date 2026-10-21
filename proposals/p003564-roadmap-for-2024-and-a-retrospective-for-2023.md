@@ -53,12 +53,13 @@ evaluation, and building of context in the C++ community to support that
 evaluation. We executed on this really well, but with mixed results.
 
 [Roadmap for 2023]:
-    https://github.com/carbon-language/carbon-lang/blob/840cb1bed7cf9bd57e000cb4a61e986c383d3038/docs/project/roadmap.md
+https://github.com/carbon-language/carbon-lang/blob/840cb1bed7cf9bd57e000cb4a61e986c383d3038/docs/project/roadmap.md
 
 On getting ready for evaluation, we made fantastic progress on getting the
-language (design) ready. We have [milestone definitions], and closed the most critical
-gaps in the design from the start of the year. The remaining gaps are either lower
-risk, almost finished, or really need interop to effectively explore.
+language (design) ready. We have [milestone definitions], and closed the most
+critical gaps in the design from the start of the year. The remaining gaps are
+either lower risk, almost finished, or really need interop to effectively
+explore.
 
 [milestone definitions]: /docs/project/milestones.md
 
@@ -98,7 +99,7 @@ Breaking down the specific key results we aimed at for 2023:
         relevant topics for more conferences.
 
 [mvp-milestone]:
-    /docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation
+/docs/project/milestones.md#milestone-01-a-minimum-viable-product-mvp-for-evaluation
 [toolchain-pivot]:
     /proposals/p003532-focus-implementation-effort-on-the-toolchain.md
 

@@ -37,8 +37,8 @@ documentation.
 
 -   Links to issues and to complete proposals should use the text `#nnnn`, where
     `nnnn` is the issue number, optionally followed by the proposal title, and
-    should link to the issue or pull request on GitHub. For example,
-    `[#123: widget painting](https://github.com/carbon-language/carbon-lang/pull/123)`.
+    should link to the issue or pull request on GitHub. For example, `[#123:
+    widget painting](https://github.com/carbon-language/carbon-lang/pull/123)`.
 -   Links to specific sections of a proposal should link to the repository copy
     of the proposal file, using the section title or other appropriate link
     text. For example,

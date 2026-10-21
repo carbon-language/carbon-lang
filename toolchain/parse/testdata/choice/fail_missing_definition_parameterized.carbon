@@ -15,17 +15,16 @@
 choice MissingDefinition(T: type);
 
 // CHECK:STDOUT: - filename: fail_missing_definition_parameterized.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'ChoiceIntroducer', text: 'choice'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'MissingDefinition'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:             {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 4},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 6},
-// CHECK:STDOUT:       {kind: 'ChoiceDefinitionStart', text: ';', has_error: yes, subtree_size: 9},
-// CHECK:STDOUT:     {kind: 'ChoiceDefinition', text: ';', has_error: yes, subtree_size: 10},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─ChoiceIntroducer 'choice'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'MissingDefinition'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │   │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │   │ │ ├─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │   │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─ChoiceDefinitionStart ';' has_error
+// CHECK:STDOUT:   ├─ChoiceDefinition ';' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

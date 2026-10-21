@@ -9,8 +9,8 @@
 
 #include "common/map.h"
 #include "toolchain/base/value_store.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
-#include "toolchain/sem_ir/facet_type_info.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::SemIR {
@@ -45,13 +45,24 @@ struct ImplFields {
 
   // The type for which the impl is implementing a constraint.
   TypeInstId self_id;
-  // The constraint that the impl implements.
+  // The constraint that the impl implements, which only contains extended
+  // interfaces or named constraints. Other constraints such as rewrites are not
+  // preserved in this instruction, as they contain `.Self` and thus only make
+  // sense internally.
   TypeInstId constraint_id;
 
-  // The single interface to implement from `constraint_id`.
-  // The members are `None` if `constraint_id` isn't complete or doesn't
-  // correspond to a single interface.
+  // The single interface to implement from `constraint_id`. This comes from the
+  // IdentifiedFacetType of the constraint, so any `.Self` are replaced by the
+  // impl's self type.
+  //
+  // May be `None` if the impl's constraint is not valid.
   SpecificInterface interface;
+  // An `ImplSelfWitness` instruction, which contains the SpecificInterface
+  // inside it. If the impl is generic, the constant value of the instruction
+  // has the impl's specific applied to it, so that GetConstantValueInSpecific
+  // can be used to get the `interface` being implemented after deducing the
+  // impl's generic arguments.
+  InstId interface_inst_id;
 
   // The witness for the impl. This can be `BuiltinErrorInst` or an import
   // reference. Note that the entries in the witness are updated at the end of

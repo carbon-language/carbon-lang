@@ -37,41 +37,41 @@ fn While() {
 // CHECK:STDOUT: declare void @_CH.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CWhile.Main() #0 !dbg !4 {
+// CHECK:STDOUT: define void @_CWhile.Main() #0 !dbg !23 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CF.Main(), !dbg !7
-// CHECK:STDOUT:   br label %while.cond, !dbg !8
+// CHECK:STDOUT:   call void @_CF.Main(), !dbg !24
+// CHECK:STDOUT:   br label %while.cond, !dbg !25
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.cond:                                       ; preds = %while.body, %entry
-// CHECK:STDOUT:   %Cond.call = call i1 @_CCond.Main(), !dbg !9
-// CHECK:STDOUT:   br i1 %Cond.call, label %while.body, label %while.done, !dbg !8
+// CHECK:STDOUT:   %Cond.call = call i1 @_CCond.Main(), !dbg !26
+// CHECK:STDOUT:   br i1 %Cond.call, label %while.body, label %while.done, !dbg !25
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %while.cond
-// CHECK:STDOUT:   call void @_CG.Main(), !dbg !10
-// CHECK:STDOUT:   br label %while.cond, !dbg !11
+// CHECK:STDOUT:   call void @_CG.Main(), !dbg !27
+// CHECK:STDOUT:   br label %while.cond, !dbg !28
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.cond
-// CHECK:STDOUT:   call void @_CH.Main(), !dbg !12
-// CHECK:STDOUT:   ret void, !dbg !13
+// CHECK:STDOUT:   call void @_CH.Main(), !dbg !29
+// CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!0}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!17}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
 // CHECK:STDOUT:
-// CHECK:STDOUT: !0 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !1, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !1 = !DIFile(filename: "while.carbon", directory: "")
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !4 = distinct !DISubprogram(name: "While", linkageName: "_CWhile.Main", scope: null, file: !1, line: 19, type: !5, spFlags: DISPFlagDefinition, unit: !0)
-// CHECK:STDOUT: !5 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !6 = !{null}
-// CHECK:STDOUT: !7 = !DILocation(line: 20, column: 3, scope: !4)
-// CHECK:STDOUT: !8 = !DILocation(line: 21, column: 9, scope: !4)
-// CHECK:STDOUT: !9 = !DILocation(line: 21, column: 10, scope: !4)
-// CHECK:STDOUT: !10 = !DILocation(line: 22, column: 5, scope: !4)
-// CHECK:STDOUT: !11 = !DILocation(line: 21, column: 3, scope: !4)
-// CHECK:STDOUT: !12 = !DILocation(line: 24, column: 3, scope: !4)
-// CHECK:STDOUT: !13 = !DILocation(line: 19, column: 1, scope: !4)
+// CHECK:STDOUT: !16 = !DIFile(filename: "while.carbon", directory: "")
+// CHECK:STDOUT: !17 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !16, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !21 = !{null}
+// CHECK:STDOUT: !22 = !DISubroutineType(types: !21)
+// CHECK:STDOUT: !23 = distinct !DISubprogram(name: "While", linkageName: "_CWhile.Main", scope: null, file: !16, line: 19, type: !22, spFlags: DISPFlagDefinition, unit: !17)
+// CHECK:STDOUT: !24 = !DILocation(line: 20, column: 3, scope: !23)
+// CHECK:STDOUT: !25 = !DILocation(line: 21, column: 9, scope: !23)
+// CHECK:STDOUT: !26 = !DILocation(line: 21, column: 10, scope: !23)
+// CHECK:STDOUT: !27 = !DILocation(line: 22, column: 5, scope: !23)
+// CHECK:STDOUT: !28 = !DILocation(line: 21, column: 3, scope: !23)
+// CHECK:STDOUT: !29 = !DILocation(line: 24, column: 3, scope: !23)
+// CHECK:STDOUT: !30 = !DILocation(line: 19, column: 1, scope: !23)
 // CHECK:STDOUT:

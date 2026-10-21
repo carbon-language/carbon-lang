@@ -13,18 +13,17 @@ interface Foo {
 }
 
 // CHECK:STDOUT: - filename: non_instance_fn.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'FooFactory'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:         {kind: 'ReturnType', text: '->', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 7},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'FooFactory'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ │ ╭─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │ ├─ReturnType '->'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

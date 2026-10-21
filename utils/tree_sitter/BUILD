@@ -2,7 +2,9 @@
 # Exceptions. See /LICENSE for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+load("@rules_cc//cc:cc_shared_library.bzl", "cc_shared_library")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
+load("//bazel/cc_toolchains:make_include_copts.bzl", "make_include_copts")
 
 package(default_visibility = ["//bazel/check_deps:__pkg__"])
 
@@ -34,12 +36,10 @@ genrule(
     name = "parser_files",
     srcs = ["grammar.js"],
     outs = [
-        "src/parser.c",
-        "src/tree_sitter/parser.h",
+        "parser.c",
+        "tree_sitter/parser.h",
     ],
-    cmd = "tree-sitter generate $(location grammar.js) &&\n" +
-          "cp src/parser.c $(location src/parser.c) &&\n" +
-          "cp src/tree_sitter/parser.h $(location src/tree_sitter/parser.h)",
+    cmd = "tree-sitter generate $(location grammar.js) -o $(RULEDIR)",
     tags = ["manual"],
 )
 
@@ -47,12 +47,19 @@ cc_library(
     name = "parser",
     srcs = [
         "src/scanner.c",
-        ":src/parser.c",
+        ":parser.c",
     ],
-    hdrs = [":src/tree_sitter/parser.h"],
-    copts = ["-Wno-missing-prototypes"],
+    hdrs = [":tree_sitter/parser.h"],
+    copts = make_include_copts(["."]) + ["-Wno-missing-prototypes"],
     tags = ["manual"],
     deps = ["@tree-sitter-bazel//:tree-sitter"],
+)
+
+cc_shared_library(
+    name = "parser_shared",
+    shared_lib_name = "carbon.so",
+    tags = ["manual"],
+    deps = [":parser"],
 )
 
 cc_binary(
@@ -66,18 +73,32 @@ cc_binary(
     ],
 )
 
-# TODO: This test is expected to fail. tree-sitter support has fallen
-# significantly behind the toolchain. Anybody looking at this can still use
-# these tests to work on improving support, but also, it may be worth improving
-# the test setup to:
-# - Support file_test's split files.
-# - Better understand when the toolchain doesn't expect a test file to parse.
+# Parses the toolchain's testdata. Files and split files named `fail_*` are
+# skipped, as are non-Carbon split files; everything else is expected to parse
+# without errors.
+#
+# Some testdata is excluded because it isn't expected to parse:
+# - lex and format tests only tokenize their input.
+# - language_server tests don't follow the `fail_*` naming convention for files
+#   that are not expected to parse.
 cc_test(
     name = "toolchain_testdata_tests",
     size = "small",
     srcs = ["test_runner.cpp"],
-    args = ["$(locations //toolchain/testing:all_testdata)"],
-    data = ["//toolchain/testing:all_testdata"],
+    args = [
+        "$(locations //toolchain/check:testdata)",
+        "$(locations //toolchain/codegen:testdata)",
+        "$(locations //toolchain/driver:testdata)",
+        "$(locations //toolchain/lower:testdata)",
+        "$(locations //toolchain/parse:testdata)",
+    ],
+    data = [
+        "//toolchain/check:testdata",
+        "//toolchain/codegen:testdata",
+        "//toolchain/driver:testdata",
+        "//toolchain/lower:testdata",
+        "//toolchain/parse:testdata",
+    ],
     tags = ["manual"],
     deps = [
         ":parser",

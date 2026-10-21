@@ -178,11 +178,12 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: --- base.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %.331: type = partial_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.331 [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -190,7 +191,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.331 = value_param call_param0
 // CHECK:STDOUT:     %.loc6_9.1: type = splice_block %.loc6_9.2 [concrete = constants.%.331] {
@@ -206,11 +207,12 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: --- abstract.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %.331: type = partial_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.331 [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %A.type: type = fn_type @A [concrete]
 // CHECK:STDOUT:   %A: %A.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -218,7 +220,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %A.decl: %A.type = fn_decl @A [concrete = constants.%A] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.331 = value_param call_param0
 // CHECK:STDOUT:     %.loc6_9.1: type = splice_block %.loc6_9.2 [concrete = constants.%.331] {
@@ -234,6 +236,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: --- abstract_var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %.331: type = partial_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.331 [concrete]
@@ -262,11 +265,12 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: --- fail_partial_nondynamic.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %.331: type = partial_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.331 [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -274,7 +278,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.331 = value_param call_param0
 // CHECK:STDOUT:     %.loc10_9.1: type = splice_block %.loc10_9.2 [concrete = constants.%.331] {
@@ -290,11 +294,12 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: --- fail_partial_final.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
 // CHECK:STDOUT:   %.546: type = partial_type %Derived [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.546 [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -302,7 +307,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.546 = value_param call_param0
 // CHECK:STDOUT:     %.loc13_9.1: type = splice_block %.loc13_9.2 [concrete = constants.%.546] {
@@ -318,11 +323,12 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: --- fail_partial_decl.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %.331: type = partial_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.331 [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -330,7 +336,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.331 = value_param call_param0
 // CHECK:STDOUT:     %.loc13_9.1: type = splice_block %.loc13_9.2 [concrete = constants.%.331] {
@@ -346,14 +352,15 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: --- fail_partial_tuple.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
-// CHECK:STDOUT:   %tuple.type.24b: type = tuple_type (type, type) [concrete]
-// CHECK:STDOUT:   %tuple: %tuple.type.24b = tuple_value (%C, %C) [concrete]
+// CHECK:STDOUT:   %tuple.type.693: type = tuple_type (type, type) [concrete]
+// CHECK:STDOUT:   %tuple: %tuple.type.693 = tuple_value (%C, %C) [concrete]
 // CHECK:STDOUT:   %tuple.type.748: type = tuple_type (%C, %C) [concrete]
 // CHECK:STDOUT:   %.8dc: type = partial_type %tuple.type.748 [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.8dc [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -361,13 +368,13 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.8dc = value_param call_param0
 // CHECK:STDOUT:     %.loc10_9.1: type = splice_block %.loc10_9.3 [concrete = constants.%.8dc] {
 // CHECK:STDOUT:       %C.ref.loc10_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:       %C.ref.loc10_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %.loc10_22: %tuple.type.24b = tuple_literal (%C.ref.loc10_18, %C.ref.loc10_21) [concrete = constants.%tuple]
+// CHECK:STDOUT:       %.loc10_22: %tuple.type.693 = tuple_literal (%C.ref.loc10_18, %C.ref.loc10_21) [concrete = constants.%tuple]
 // CHECK:STDOUT:       %.loc10_9.2: type = converted %.loc10_22, constants.%tuple.type.748 [concrete = constants.%tuple.type.748]
 // CHECK:STDOUT:       %.loc10_9.3: type = partial_type %.loc10_9.2 [concrete = constants.%.8dc]
 // CHECK:STDOUT:     }
@@ -380,12 +387,13 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: --- fail_partial_struct.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %C} [concrete]
 // CHECK:STDOUT:   %.91f: type = partial_type %struct_type.x [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.91f [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -393,7 +401,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.91f = value_param call_param0
 // CHECK:STDOUT:     %.loc10_9.1: type = splice_block %.loc10_9.2 [concrete = constants.%.91f] {
@@ -410,12 +418,13 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: --- fail_duplicate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %.331: type = partial_type %C [concrete]
 // CHECK:STDOUT:   %.d52: type = partial_type %.331 [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %.d52 [concrete]
 // CHECK:STDOUT:   %p.param_patt: %pattern_type = value_param_pattern [concrete]
-// CHECK:STDOUT:   %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete]
+// CHECK:STDOUT:   %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -423,7 +432,7 @@ fn F[T: type](p: partial T*);
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
 // CHECK:STDOUT:     %p.param_patt: %pattern_type = value_param_pattern [concrete = constants.%p.param_patt]
-// CHECK:STDOUT:     %p.patt: %pattern_type = at_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
+// CHECK:STDOUT:     %p.patt: %pattern_type = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %p.param: %.d52 = value_param call_param0
 // CHECK:STDOUT:     %.loc10_9.1: type = splice_block %.loc10_9.2 [concrete = constants.%.d52] {

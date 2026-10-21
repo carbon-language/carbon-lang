@@ -75,6 +75,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: --- pass_and_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
@@ -85,10 +86,10 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete]
 // CHECK:STDOUT:   %u8: type = class_type @UInt, @UInt(%int_8) [concrete]
-// CHECK:STDOUT:   %ptr.093: type = ptr_type %u8 [concrete]
-// CHECK:STDOUT:   %str.f81: %ptr.093 = string_literal "hello" [concrete]
+// CHECK:STDOUT:   %ptr.22f: type = ptr_type %u8 [concrete]
+// CHECK:STDOUT:   %str.5d7: %ptr.22f = string_literal "hello" [concrete]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete]
-// CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.f81, %int_5) [concrete]
+// CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.5d7, %int_5) [concrete]
 // CHECK:STDOUT:   %pattern_type.adf: type = pattern_type %str.3d4 [concrete]
 // CHECK:STDOUT:   %ptr.e6f: type = ptr_type %str.3d4 [concrete]
 // CHECK:STDOUT:   %Consume__carbon_thunk.type: type = fn_type @Consume__carbon_thunk [concrete]
@@ -141,7 +142,7 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Consume.ref: %Consume.cpp_overload_set.type = name_ref Consume, imports.%Consume.cpp_overload_set.value [concrete = constants.%Consume.cpp_overload_set.value]
-// CHECK:STDOUT:   %str: %ptr.093 = string_literal "hello" [concrete = constants.%str.f81]
+// CHECK:STDOUT:   %str: %ptr.22f = string_literal "hello" [concrete = constants.%str.5d7]
 // CHECK:STDOUT:   %int_5: %u64 = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str, %int_5) [concrete = constants.%String.val]
 // CHECK:STDOUT:   %.loc8: ref %str.3d4 = value_as_ref %String.val
@@ -164,13 +165,14 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: --- call_base_method.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %str: type = class_type @String [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %pattern_type.adf: type = pattern_type %str [concrete]
 // CHECK:STDOUT:   %a.param_patt: %pattern_type.adf = value_param_pattern [concrete]
-// CHECK:STDOUT:   %a.patt: %pattern_type.adf = at_binding_pattern a, %a.param_patt [concrete]
+// CHECK:STDOUT:   %a.patt: %pattern_type.adf = wrapper_binding_pattern a, %a.param_patt [concrete]
 // CHECK:STDOUT:   %b.param_patt: %pattern_type.adf = value_param_pattern [concrete]
-// CHECK:STDOUT:   %b.patt: %pattern_type.adf = at_binding_pattern b, %b.param_patt [concrete]
+// CHECK:STDOUT:   %b.patt: %pattern_type.adf = wrapper_binding_pattern b, %b.param_patt [concrete]
 // CHECK:STDOUT:   %.f34: Core.Form = init_form bool [concrete]
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %return.param_patt.5a1: %pattern_type.831 = out_param_pattern [concrete]
@@ -203,9 +205,9 @@ fn StarstWith(a: str, b: str) -> bool {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %StarstWith.decl: %StarstWith.type = fn_decl @StarstWith [concrete = constants.%StarstWith] {
 // CHECK:STDOUT:     %a.param_patt: %pattern_type.adf = value_param_pattern [concrete = constants.%a.param_patt]
-// CHECK:STDOUT:     %a.patt: %pattern_type.adf = at_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
+// CHECK:STDOUT:     %a.patt: %pattern_type.adf = wrapper_binding_pattern a, %a.param_patt [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.adf = value_param_pattern [concrete = constants.%b.param_patt]
-// CHECK:STDOUT:     %b.patt: %pattern_type.adf = at_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
+// CHECK:STDOUT:     %b.patt: %pattern_type.adf = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.831 = out_param_pattern [concrete = constants.%return.param_patt.5a1]
 // CHECK:STDOUT:     %return.patt: %pattern_type.831 = return_slot_pattern %return.param_patt, %.loc7_34.1 [concrete = constants.%return.patt.c0c]
 // CHECK:STDOUT:   } {

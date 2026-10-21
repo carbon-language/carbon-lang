@@ -22,7 +22,7 @@
 // CHECK:STDOUT:   clang_decls:     {}
 // CHECK:STDOUT:   clang_decl_signatures: {}
 // CHECK:STDOUT:   name_scopes:
-// CHECK:STDOUT:     name_scope0:     {inst: instF, parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
+// CHECK:STDOUT:     name_scope0:     {inst: inst(Package), parent_scope: name_scope<none>, has_error: false, extended_scopes: [], names: {}}
 // CHECK:STDOUT:   entity_names:    {}
 // CHECK:STDOUT:   functions:       {}
 // CHECK:STDOUT:   classes:         {}
@@ -60,9 +60,10 @@
 // CHECK:STDOUT:       object_layout:
 // CHECK:STDOUT:         size:            0
 // CHECK:STDOUT:         alignment:       1
-// CHECK:STDOUT:   facet_types:     {}
+// CHECK:STDOUT:   declared_facet_types:
+// CHECK:STDOUT:     'declared_facet_type(Empty)': {}
 // CHECK:STDOUT:   insts:
-// CHECK:STDOUT:     'inst(TypeType)':  {kind: TypeType, type: type(TypeType)}
+// CHECK:STDOUT:     'inst(TypeType)':  {kind: FacetType, arg0: declared_facet_type(Empty), type: type(TypeType)}
 // CHECK:STDOUT:     'inst(AutoType)':  {kind: AutoType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(BoolType)':  {kind: BoolType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(BoundMethodType)': {kind: BoundMethodType, type: type(TypeType)}
@@ -77,7 +78,7 @@
 // CHECK:STDOUT:     'inst(SpecificFunctionType)': {kind: SpecificFunctionType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(VtableType)': {kind: VtableType, type: type(TypeType)}
 // CHECK:STDOUT:     'inst(WitnessType)': {kind: WitnessType, type: type(TypeType)}
-// CHECK:STDOUT:     instF:           {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
+// CHECK:STDOUT:     'inst(Package)':   {kind: Namespace, arg0: name_scope0, type: type(inst(NamespaceType))}
 // CHECK:STDOUT:   bundles:         {}
 // CHECK:STDOUT:   constant_values:
 // CHECK:STDOUT:     values:
@@ -96,7 +97,7 @@
 // CHECK:STDOUT:       'inst(SpecificFunctionType)': concrete_constant(inst(SpecificFunctionType))
 // CHECK:STDOUT:       'inst(VtableType)': concrete_constant(inst(VtableType))
 // CHECK:STDOUT:       'inst(WitnessType)': concrete_constant(inst(WitnessType))
-// CHECK:STDOUT:       instF:           concrete_constant(instF)
+// CHECK:STDOUT:       'inst(Package)':   concrete_constant(inst(Package))
 // CHECK:STDOUT:     symbolic_constants: {}
 // CHECK:STDOUT:   inst_blocks:
 // CHECK:STDOUT:     inst_block_empty: {}
@@ -105,7 +106,7 @@
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
 // CHECK:STDOUT:     inst_block50000005:
-// CHECK:STDOUT:       0:               instF
+// CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:   value_stores:
 // CHECK:STDOUT:     shared_values:
 // CHECK:STDOUT:       ints:            {}

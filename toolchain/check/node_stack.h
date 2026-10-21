@@ -431,6 +431,7 @@ class NodeStack {
         return Id::KindFor<SemIR::InstBlockId>();
       case Parse::NodeKind::FunctionDefinitionStart:
       case Parse::NodeKind::BuiltinFunctionDefinitionStart:
+      case Parse::NodeKind::LambdaDefinitionStart:
         return Id::KindFor<SemIR::FunctionId>();
       case Parse::NodeKind::ChoiceDefinitionStart:
         // TODO: Should we have a separate SemIR::ChoiceId?
@@ -448,6 +449,9 @@ class NodeStack {
       case Parse::NodeKind::DefaultLibrary:
       case Parse::NodeKind::LibraryName:
         return Id::KindFor<SemIR::LibraryNameId>();
+      case Parse::NodeKind::BindingPatternTypeStart:
+      case Parse::NodeKind::CompileTimeBindingPatternTypeStart:
+        return Id::KindFor<SemIR::ElementIndex>();
       case Parse::NodeKind::AssociatedConstantInitializer:
       case Parse::NodeKind::AssociatedConstantIntroducer:
       case Parse::NodeKind::BuiltinName:
@@ -465,10 +469,13 @@ class NodeStack {
       case Parse::NodeKind::LetInitializer:
       case Parse::NodeKind::LetIntroducer:
       case Parse::NodeKind::NamedConstraintIntroducer:
+      case Parse::NodeKind::PackExpansionStart:
       case Parse::NodeKind::RefBindingName:
       case Parse::NodeKind::RuntimeBindingName:
       case Parse::NodeKind::ReturnStatementStart:
       case Parse::NodeKind::StructLiteralStart:
+      case Parse::NodeKind::StructPatternStart:
+      case Parse::NodeKind::StructPatternDesignatedField:
       case Parse::NodeKind::StructTypeLiteralField:
       case Parse::NodeKind::StructTypeLiteralStart:
       case Parse::NodeKind::TemplateBindingName:
@@ -478,7 +485,6 @@ class NodeStack {
       case Parse::NodeKind::VariableIntroducer:
       case Parse::NodeKind::InlineImportBody:
       case Parse::NodeKind::InlineIntroducer:
-      case Parse::NodeKind::WhereOperand:
         return Id::Kind::None;
       case Parse::NodeKind::AdaptIntroducer:
       case Parse::NodeKind::AliasInitializer:
@@ -491,10 +497,10 @@ class NodeStack {
       case Parse::NodeKind::BreakStatementStart:
       case Parse::NodeKind::ChoiceAlternativeListComma:
       case Parse::NodeKind::CodeBlock:
-      case Parse::NodeKind::CompileTimeBindingPatternStart:
       case Parse::NodeKind::ContinueStatementStart:
       case Parse::NodeKind::CorePackageName:
       case Parse::NodeKind::CppPackageName:
+      case Parse::NodeKind::DefaultValueExprStart:
       case Parse::NodeKind::ExportIntroducer:
       case Parse::NodeKind::FileEnd:
       case Parse::NodeKind::FileStart:
@@ -503,6 +509,7 @@ class NodeStack {
       case Parse::NodeKind::Forall:
       case Parse::NodeKind::FormLiteralKeyword:
       case Parse::NodeKind::FormLiteralOpenParen:
+      case Parse::NodeKind::FriendIntroducer:
       case Parse::NodeKind::IdentifierNameQualifierWithParams:
       case Parse::NodeKind::IdentifierNameQualifierWithoutParams:
       case Parse::NodeKind::IdentifierPackageName:
@@ -539,8 +546,10 @@ class NodeStack {
       case Parse::NodeKind::StructLiteralComma:
       case Parse::NodeKind::StructFieldDesignator:
       case Parse::NodeKind::StructTypeLiteralComma:
-      case Parse::NodeKind::TerseBodyArrow:
       case Parse::NodeKind::TupleLiteralComma:
+      case Parse::NodeKind::TypeOfExprKeyword:
+      case Parse::NodeKind::TypeOfExprOpenParen:
+      case Parse::NodeKind::WhereOperand:
       case Parse::NodeKind::WhileCondition:
         return Id::Kind::Invalid;
       default:

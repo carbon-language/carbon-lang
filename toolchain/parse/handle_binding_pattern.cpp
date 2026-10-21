@@ -26,6 +26,7 @@ static auto ResolveBindingPhase(Context& context, Context::State& state,
                                 std::optional<Lex::TokenIndex> template_token,
                                 std::optional<Lex::TokenIndex> generic_token,
                                 std::optional<Lex::TokenIndex> runtime_token,
+                                std::optional<Lex::TokenIndex> self_token,
                                 bool& redundant_modifier) -> bool {
   // `template`/`generic` force a generic binding, `runtime` forces a runtime
   // binding, and otherwise the context's default applies.
@@ -35,7 +36,11 @@ static auto ResolveBindingPhase(Context& context, Context::State& state,
   } else if (runtime_token) {
     resolved_generic = false;
   } else {
-    resolved_generic = state.binding_context != BindingContext::ExplicitParam;
+    // For `self`, the default is always `runtime` so that `[ref self]` is
+    // diagnosed for being in the wrong place, not for being a generic ref
+    // binding.
+    resolved_generic =
+        state.binding_context != BindingContext::ExplicitParam && !self_token;
   }
 
   // A form binding's phase is fixed, so phase keywords don't apply to it, and
@@ -125,6 +130,15 @@ auto HandleBindingPattern(Context& context) -> void {
     self_token = *self;
     context.AddLeafNode(NodeKind::SelfValueName, *self);
   } else if (auto underscore = context.ConsumeIf(Lex::TokenKind::Underscore)) {
+    if (state.in_field_shorthand_pattern) {
+      CARBON_DIAGNOSTIC(
+          AnonymousBindingInStructPattern, Error,
+          "Anonymous binding found in struct pattern. Use `.field = "
+          "_: field_type` or `unused field: field_type`");
+      context.emitter().Emit(*context.position(),
+                             AnonymousBindingInStructPattern);
+      state.has_error = true;
+    }
     context.AddLeafNode(NodeKind::UnderscoreName, *underscore);
   } else if (context.PositionKind().is_word() &&
              context.PositionKind(Lookahead::NextToken)
@@ -148,6 +162,7 @@ auto HandleBindingPattern(Context& context) -> void {
 
   auto token_kind = context.PositionKind();
   if (!token_kind.is_binding_pattern_operator()) {
+    // TODO: We should allow omitting the type in a generic `self` binding.
     if (self_token && !template_token && !generic_token && !runtime_token) {
       // A `self` binding may omit its type; checking supplies the implicit
       // `Self` type. There is no type node, so this produces a
@@ -163,7 +178,8 @@ auto HandleBindingPattern(Context& context) -> void {
       return;
     }
     on_error(/*expected_name=*/false);
-    // Add a substitute for a type node.
+    // Add a substitute for the identifier name and virtual type-start nodes.
+    context.AddInvalidParse(*context.position());
     context.AddInvalidParse(*context.position());
     context.PushState(state, StateKind::BindingPatternFinishAsRegular);
     return;
@@ -176,19 +192,9 @@ auto HandleBindingPattern(Context& context) -> void {
   bool is_form = token_kind == Lex::TokenKind::ColonQuestion;
 
   bool redundant_modifier = false;
-  bool resolved_generic =
-      ResolveBindingPhase(context, state, is_form, template_token,
-                          generic_token, runtime_token, redundant_modifier);
-
-  // `self` is always a runtime receiver binding; its phase never comes from the
-  // enclosing context's default. Forcing runtime here means that a misplaced
-  // `self` (in a deduced `[]` list or a compile-time entity's parameters, where
-  // the default would otherwise be generic) is reported by `check` as a
-  // misplaced `self` — the relevant error — rather than also producing a
-  // `ref`-on-generic error from that default.
-  if (self_token) {
-    resolved_generic = false;
-  }
+  bool resolved_generic = ResolveBindingPhase(
+      context, state, is_form, template_token, generic_token, runtime_token,
+      self_token, redundant_modifier);
 
   // `template` and `ref` wrap the binding name, and each is only meaningful on
   // a particular kind of binding: `template` on a generic binding, and `ref` on
@@ -255,10 +261,13 @@ auto HandleBindingPattern(Context& context) -> void {
   // Use the `:` or `:?` for the root node.
   state.token = context.Consume();
 
+  // Add a virtual node before the binding's type expression.
   if (!is_form && resolved_generic) {
-    // Add a virtual node before the compile time binding's type expression.
-    context.AddNode(NodeKind::CompileTimeBindingPatternStart, state.token,
-                    state.has_error);
+    context.AddLeafNode(NodeKind::CompileTimeBindingPatternTypeStart,
+                        state.token, state.has_error);
+  } else {
+    context.AddLeafNode(NodeKind::BindingPatternTypeStart, state.token,
+                        state.has_error);
   }
 
   context.PushState(state);

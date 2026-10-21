@@ -43,8 +43,8 @@ Statements need some system for separation. There are two main options for this:
 
 1.  Require semicolons to terminate statements.
 2.  Automatically determine where statements terminate.
-    -   Some languages, such as Python, define a syntax where a newline terminates
-        statements.
+    -   Some languages, such as Python, define a syntax where a newline
+        terminates statements.
     -   Other languages, such as Javascript, require semicolons but define rules
         for semicolon insertion.
 

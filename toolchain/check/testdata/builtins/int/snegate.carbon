@@ -138,6 +138,7 @@ let b: i32 = Negate(-0x8000_0000);
 // CHECK:STDOUT: --- int_negate.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Negate.type: type = fn_type @Negate [concrete]

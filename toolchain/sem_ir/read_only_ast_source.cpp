@@ -4,21 +4,83 @@
 
 #include "toolchain/sem_ir/read_only_ast_source.h"
 
+#include <optional>
+
+#include "clang/AST/Decl.h"
+#include "clang/AST/DeclBase.h"
+#include "clang/AST/DeclContextInternals.h"
+
 namespace Carbon::SemIR {
 
 char ReadOnlyASTSource::id;
+
+auto ReadOnlyASTSource::GetCarbonOwnedDecl(
+    const clang::DeclContext* decl_context) const -> std::optional<ClangDecl> {
+  auto* decl = cast<clang::Decl>(
+      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
+  if (isa<clang::FunctionDecl>(decl)) {
+    // Functions don't meaningfully have visible decls, but bail out early since
+    // we can't form a `ClangDeclKey` for a function in the abstract.
+    return std::nullopt;
+  }
+  auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
+  auto decl_id = sem_ir_.clang_decls().LookupId(key);
+  if (!decl_id.has_value()) {
+    return std::nullopt;
+  }
+  auto clang_decl = sem_ir_.clang_decls().Get(decl_id);
+  if (clang_decl.is_imported) {
+    // This is imported from C++, presumably from a Clang AST file, so it's not
+    // our responsibility to provide its name lookup results.
+    return std::nullopt;
+  }
+  return clang_decl;
+}
+
+auto ReadOnlyASTSource::completeVisibleDeclsMap(
+    const clang::DeclContext* decl_context) -> void {
+  if (!GetCarbonOwnedDecl(decl_context)) {
+    return;
+  }
+
+  // `ASTReader::completeVisibleDeclsMap` unconditionally clears external
+  // visible storage, even for DeclContexts it does not own. Restore it for
+  // Carbon-owned DeclContexts so future lookups continue to query us.
+  auto* primary_context =
+      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext());
+  primary_context->setHasExternalVisibleStorage(true);
+
+  if (auto* lookup_map = primary_context->getLookupPtr();
+      lookup_map && !lookup_map->empty()) {
+    // `setHasExternalVisibleStorage(true)` sets
+    // `NeedToReconcileExternalVisibleStorage`, which would otherwise mark all
+    // already-resolved entries as needing another external lookup. Trigger
+    // reconciliation now and clear `hasExternalDecls` on all existing entries
+    // so we don't re-export or re-diagnose them.
+    //
+    // Note that this only clears out external decls from an AST file, despite
+    // its name. External visible decls already added by other AST sources, such
+    // as this one, are retained.
+    SetNoExternalVisibleDeclsForName(primary_context,
+                                     lookup_map->begin()->first);
+    for (auto& [_, decls] : *lookup_map) {
+      decls.removeExternalDecls();
+    }
+  }
+}
 
 // Get the field offset for each field in a class.
 //
 // Returns true on success, false if any error occurs.
 static auto CalculateCppFieldOffsets(
-    const File& sem_ir, SemIR::ClassId class_id,
+    const File& sem_ir, ClassType class_type,
     llvm::DenseMap<const clang::FieldDecl*, uint64_t>& field_offsets) -> bool {
-  auto class_info = sem_ir.classes().Get(class_id);
+  auto class_info = sem_ir.classes().Get(class_type.class_id);
   const auto& class_scope = sem_ir.name_scopes().Get(class_info.scope_id);
 
   auto class_layout = SemIR::ObjectLayout::Empty();
-  for (const auto& struct_field : class_info.GetStructTypeFields(sem_ir)) {
+  for (const auto& struct_field :
+       class_info.GetStructTypeFields(sem_ir, class_type.specific_id)) {
     auto field_type_id =
         sem_ir.types().GetTypeIdForTypeInstId(struct_field.type_inst_id);
     auto field_layout =
@@ -30,8 +92,8 @@ static auto CalculateCppFieldOffsets(
     auto class_field =
         LookupClassFieldByStructField(sem_ir, class_scope, struct_field);
     if (class_field) {
-      const auto* clang_decl =
-          sem_ir.clang_decls().Lookup(class_field->inst_id);
+      const auto* clang_decl = sem_ir.clang_decls().Lookup(
+          class_field->inst_id, class_type.specific_id);
       if (!clang_decl) {
         return false;
       }
@@ -67,7 +129,7 @@ auto ReadOnlyASTSource::layoutRecordType(
   alignment = layout.alignment.bits();
 
   // Fill in `field_offsets`.
-  CalculateCppFieldOffsets(sem_ir_, class_type.class_id, field_offsets);
+  CalculateCppFieldOffsets(sem_ir_, class_type, field_offsets);
 
   // Add offset for base class, if any.
   if (const auto* class_decl = dyn_cast<clang::CXXRecordDecl>(record_decl);

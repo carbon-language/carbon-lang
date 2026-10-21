@@ -8,10 +8,15 @@
 #include <memory>
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Target/TargetMachine.h"
 #include "toolchain/diagnostics/sorting_consumer.h"
 #include "toolchain/driver/compile_options.h"
 #include "toolchain/driver/driver_env.h"
+
+namespace llvm {
+class LLVMContext;
+class Module;
+class TargetMachine;
+}  // namespace llvm
 
 namespace Carbon {
 
@@ -20,13 +25,18 @@ class MultiUnitCache;
 // Ties together information for a file being compiled.
 class CompilationUnit {
  public:
-  // `driver_env`, `options`, `consumer`, and `target` must be non-null.
+  // `driver_env`, `options`, `consumer`, and `target` must be non-null. If
+  // `output_filename` is empty, no output will be generated for this file. This
+  // is used for inputs that are only used as dependencies of the current
+  // compilation.
   explicit CompilationUnit(SemIR::CheckIRId check_ir_id, int total_ir_count,
                            DriverEnv* driver_env, const CompileOptions* options,
                            Diagnostics::Consumer* consumer,
                            llvm::StringRef input_filename,
                            std::string output_filename,
-                           const llvm::Target* target);
+                           const llvm::Target* target,
+                           llvm::LLVMContext* llvm_context);
+  ~CompilationUnit();
 
   // Sets the multi-unit cache and initializes dependent member state.
   auto SetMultiUnitCache(MultiUnitCache* cache) -> void;
@@ -66,6 +76,7 @@ class CompilationUnit {
 
   auto input_filename() -> llvm::StringRef { return input_filename_; }
   auto output_filename() -> llvm::StringRef { return output_filename_; }
+  auto is_lowered() -> bool { return !output_filename_.empty(); }
   auto has_include_in_dumps() -> bool {
     return tokens_ && tokens_->has_include_in_dumps();
   }
@@ -81,6 +92,9 @@ class CompilationUnit {
   auto parse_tree_and_subtrees() const -> const Parse::TreeAndSubtrees& {
     return GetParseTreeAndSubtrees();
   }
+  // Only present once the check phase has run.
+  auto has_sem_ir() const -> bool { return sem_ir_.has_value(); }
+  auto sem_ir() const -> const SemIR::File& { return *sem_ir_; }
 
  private:
   // Do codegen. Returns true on success.
@@ -146,7 +160,7 @@ class CompilationUnit {
   mutable std::optional<Parse::TreeAndSubtrees> parse_tree_and_subtrees_;
   std::optional<std::function<auto()->const Parse::TreeAndSubtrees&>>
       tree_and_subtrees_getter_;
-  std::unique_ptr<llvm::LLVMContext> llvm_context_;
+  llvm::LLVMContext* llvm_context_ = nullptr;
   std::optional<SemIR::File> sem_ir_;
   std::unique_ptr<llvm::Module> module_;
   std::unique_ptr<llvm::TargetMachine> target_machine_;
@@ -233,10 +247,10 @@ class MultiUnitCache {
 class CompileDriver {
  public:
   explicit CompileDriver(CompileOptions* options);
+  ~CompileDriver();
 
   // Configure the toolchain to compile all input files and dependencies.
-  // The `map_input` function maps an input file name to an output static
-  // object name.
+  // The `map_input` function maps an input file name to an output file name.
   // Returns `false` on configuration error.
   [[nodiscard]] auto Initialize(
       DriverEnv& driver_env,
@@ -260,6 +274,7 @@ class CompileDriver {
  private:
   CompileOptions* options_;
   size_t input_filenames_index_ = 0;
+  std::unique_ptr<llvm::LLVMContext> llvm_context_;
   llvm::SmallVector<std::unique_ptr<CompilationUnit>, 256> units_;
   std::unique_ptr<MultiUnitCache> cache_;
   std::shared_ptr<clang::CompilerInvocation> clang_invocation_;

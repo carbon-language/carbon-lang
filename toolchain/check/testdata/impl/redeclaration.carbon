@@ -246,7 +246,7 @@ interface Z {}
 fn F() {
   class C {}
   impl C as Z;
-  // CHECK:STDERR: fail_redecl_in_fn_scope.carbon:[[@LINE+8]]:3: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
+  // CHECK:STDERR: fail_redecl_in_fn_scope.carbon:[[@LINE+8]]:3: error: impl redeclaration not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
   // CHECK:STDERR:   impl C as Z {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -268,7 +268,7 @@ fn F() {
 }
 
 fn G() {
-  // CHECK:STDERR: fail_redecl_in_different_fn_scope.carbon:[[@LINE+8]]:3: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
+  // CHECK:STDERR: fail_redecl_in_different_fn_scope.carbon:[[@LINE+8]]:3: error: impl redeclaration not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
   // CHECK:STDERR:   impl C as Z {}
   // CHECK:STDERR:   ^~~~~~~~~~~~~
   // CHECK:STDERR:
@@ -288,7 +288,7 @@ fn F() {
   if (true) {
     class C {}
     impl C as Z;
-    // CHECK:STDERR: fail_redecl_in_block_scope.carbon:[[@LINE+8]]:5: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
+    // CHECK:STDERR: fail_redecl_in_block_scope.carbon:[[@LINE+8]]:5: error: impl redeclaration not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
     // CHECK:STDERR:     impl C as Z {}
     // CHECK:STDERR:     ^~~~~~~~~~~~~
     // CHECK:STDERR:
@@ -311,7 +311,7 @@ fn F() {
     impl C as Z;
   }
   if (true) {
-    // CHECK:STDERR: fail_redecl_in_different_block_scope.carbon:[[@LINE+8]]:5: error: impl redeclation not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
+    // CHECK:STDERR: fail_redecl_in_different_block_scope.carbon:[[@LINE+8]]:5: error: impl redeclaration not in a declarative scope; redeclaration is allowed only in a class or namespace [ImplDeclInInvalidScope]
     // CHECK:STDERR:     impl C as Z {}
     // CHECK:STDERR:     ^~~~~~~~~~~~~
     // CHECK:STDERR:

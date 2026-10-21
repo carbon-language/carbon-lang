@@ -25,6 +25,7 @@ fn Foo.Bar.Baz() {
 // CHECK:STDOUT: --- nested.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %Wiz.type: type = fn_type @Wiz [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %Wiz: %Wiz.type = struct_value () [concrete]

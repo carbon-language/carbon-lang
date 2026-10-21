@@ -32,7 +32,7 @@ repos:
   # Run markdown linting early so that doc style and table-of-contents see the
   # linted state.
   - repo: https://github.com/rvben/rumdl-pre-commit
-    rev: v0.2.22
+    rev: v0.2.58
     hooks:
       - id: rumdl
         args: [--fix]
@@ -51,7 +51,7 @@ repos:
   # Re-run markdown linting to fix any issues caused by doc style and TOC. This
   # is very fast, so it shouldn't be problematic to run twice.
   - repo: https://github.com/rvben/rumdl-pre-commit
-    rev: v0.2.30
+    rev: v0.2.58
     hooks:
       - id: rumdl
         args: [--fix]

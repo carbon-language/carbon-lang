@@ -73,6 +73,7 @@ fn NS();
 // CHECK:STDOUT: --- fail_conflict.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %NS.type.20a02b.1: type = fn_type @NS.loc18 [concrete]
 // CHECK:STDOUT:   %NS.bab1af.1: %NS.type.20a02b.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %NS.type.20a02b.2: type = fn_type @NS.loc32 [concrete]

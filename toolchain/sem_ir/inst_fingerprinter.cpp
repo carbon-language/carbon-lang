@@ -11,18 +11,22 @@
 
 #include "common/concepts.h"
 #include "common/ostream.h"
+#include "common/raw_string_ostream.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StableHashing.h"
 #include "llvm/Support/SaveAndRestore.h"
+#include "llvm/Support/TypeName.h"
 #include "llvm/Support/raw_ostream.h"
 #include "toolchain/base/fixed_size_value_store.h"
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/base/value_ids.h"
 #include "toolchain/sem_ir/cpp_overload_set.h"
+#include "toolchain/sem_ir/dump.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/name_scope.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -147,12 +151,12 @@ class StringFingerprintStore {
     bool first = true;
     for (const auto& item : contents_) {
       if (!first) {
-        result += ",";
+        result.push_back(',');
       }
       first = false;
       result += item;
     }
-    result += "}";
+    result.push_back('}');
     return SaveString(std::move(result));
   }
 
@@ -327,7 +331,7 @@ struct Worklist {
 
   template <typename T>
   auto AddBlock(llvm::ArrayRef<T> block) -> void {
-    store->AddInteger(block.size());
+    AddInteger(block.size());
     for (auto inner_id : block) {
       Add(inner_id);
     }
@@ -360,9 +364,9 @@ struct Worklist {
       return;
     }
     auto block = sem_ir->custom_layouts().Get(custom_layout_id);
-    store->AddInteger(block.size());
+    AddInteger(block.size());
     for (auto size : block) {
-      store->AddInteger(size.bits());
+      AddInteger(size.bits());
     }
   }
 
@@ -418,7 +422,19 @@ struct Worklist {
   }
 
   auto Add(FunctionId function_id) -> void {
-    AddEntity(sem_ir->functions().Get(function_id));
+    const auto& function = sem_ir->functions().Get(function_id);
+    if (!function.name_id.has_value()) {
+      auto [canonical_ir, canonical_decl_id] =
+          GetCanonicalFileAndInstId(sem_ir, function.first_decl_id());
+      llvm::SaveAndRestore in_file(sem_ir, canonical_ir);
+      AddPackage(NameScopeId::Package);
+      AddLibrary(canonical_ir);
+      // TODO: Find a more stable way to assign fingerprints to unnamed
+      // functions.
+      AddInteger(canonical_decl_id.index);
+      return;
+    }
+    AddEntity(function);
   }
 
   auto Add(CppOverloadSetId cpp_overload_set_id) -> void {
@@ -433,6 +449,11 @@ struct Worklist {
     // `decl_id`, because fingerprinting the `NameId` is sufficient to identify
     // the template, but this won't necessarily be true for other
     // `ClangDeclId`s.
+    // See also: https://github.com/carbon-language/carbon-lang/issues/6728
+  }
+
+  auto Add(ClangFunctionPointerTypeId /*type_id*/) -> void {
+    // TODO: Add fingerprinting for `ClangFunctionPointerTypeId`.
     // See also: https://github.com/carbon-language/carbon-lang/issues/6728
   }
 
@@ -471,6 +492,21 @@ struct Worklist {
     AddEntity(sem_ir->interfaces().Get(interface_id));
   }
 
+  auto Add(MetaInstId /*meta_inst_id*/) -> void {
+    // TODO: Add some mechanism to fingerprint the target instruction. We allow
+    // "cycles" via `MetaInstId`, so we can't profile it here, and `MetaInstId`
+    // refers to the identity of the instruction, not merely its abstract value,
+    // so profiling it recursively wouldn't be correct either.
+  }
+
+  auto Add(MetaInstBlockId meta_inst_block_id) -> void {
+    if (!meta_inst_block_id.has_value()) {
+      AddInvalid();
+      return;
+    }
+    AddBlock(sem_ir->inst_blocks().Get(meta_inst_block_id));
+  }
+
   auto Add(NamedConstraintId named_constraint_id) -> void {
     AddEntity(sem_ir->named_constraints().Get(named_constraint_id));
   }
@@ -480,7 +516,7 @@ struct Worklist {
     const auto& require = sem_ir->require_impls().Get(require_id);
     Add(sem_ir->constant_values().Get(require.self_id));
     Add(sem_ir->constant_values().Get(require.facet_type_inst_id));
-    store->AddInteger(require.extend_self);
+    AddInteger(require.extend_self);
     Add(require.parent_scope_id);
   }
 
@@ -518,13 +554,14 @@ struct Worklist {
     // we could just number them sequentially, in the order we encounter them,
     // but that would require a persistent cache to ensure we use the same
     // number on subsequent encounters.
-    store->AddInteger(block_id.index);
+    AddInteger(block_id.index);
   }
 
-  auto Add(FacetTypeId facet_type_id) -> void {
-    const auto& facet_type = sem_ir->facet_types().Get(facet_type_id);
+  auto Add(DeclaredFacetTypeId declared_facet_type_id) -> void {
+    const auto& facet_type =
+        sem_ir->declared_facet_types().Get(declared_facet_type_id);
     auto add_constraints = [&](auto constraints) {
-      store->AddInteger(constraints.size());
+      AddInteger(constraints.size());
       for (auto [first, second] : constraints) {
         Add(first);
         Add(second);
@@ -533,7 +570,7 @@ struct Worklist {
     add_constraints(facet_type.extend_constraints);
     add_constraints(facet_type.self_impls_constraints);
     add_constraints(facet_type.rewrite_constraints);
-    store->AddInteger(facet_type.other_requirements);
+    AddInteger(facet_type.other_requirements);
   }
 
   auto Add(GenericId generic_id) -> void {
@@ -552,6 +589,12 @@ struct Worklist {
     const auto& specific = sem_ir->specifics().Get(specific_id);
     Add(specific.generic_id);
     Add(specific.args_id);
+    AddInteger(specific.identified);
+  }
+
+  auto Add(SpecificInterface specific_interface) -> void {
+    Add(specific_interface.interface_id);
+    Add(specific_interface.specific_id);
   }
 
   auto Add(SpecificInterfaceId specific_interface_id) -> void {
@@ -559,10 +602,7 @@ struct Worklist {
       AddInvalid();
       return;
     }
-    const auto& interface =
-        sem_ir->specific_interfaces().Get(specific_interface_id);
-    Add(interface.interface_id);
-    Add(interface.specific_id);
+    Add(sem_ir->specific_interfaces().Get(specific_interface_id));
   }
 
   auto Add(const llvm::APInt& value) -> void { store->AddAPInt(value); }
@@ -577,7 +617,7 @@ struct Worklist {
     const auto& real = sem_ir->reals().Get(real_id);
     Add(real.mantissa);
     Add(real.exponent);
-    store->AddInteger(real.is_decimal);
+    AddInteger(real.is_decimal);
   }
 
   auto Add(PackageNameId package_id) -> void {
@@ -636,7 +676,7 @@ struct Worklist {
                          ElementIndex, FloatKind, IntKind, CallParamIndex>)
   auto Add(T arg) -> void {
     // Index-like ID: just include the value directly.
-    store->AddInteger(arg.index);
+    AddInteger(arg.index);
   }
 
   auto Add(ExprRegionId region_id) -> void {
@@ -650,7 +690,8 @@ struct Worklist {
   template <typename T>
     requires(SameAsOneOf<T, AnyRawId, LocId>)
   auto Add(T /*arg*/) -> void {
-    CARBON_FATAL("Unexpected instruction operand kind {0}", typeid(T).name());
+    CARBON_FATAL("Unexpected instruction operand kind {0}",
+                 llvm::getTypeName<T>());
   }
 
   auto Add(IdAndKind::InvalidType /*invalid*/) -> void {
@@ -667,11 +708,49 @@ struct Worklist {
   // Ensure all the instructions on the todo list have fingerprints. To avoid a
   // re-lookup, returns the fingerprint of the first instruction on the todo
   // list, and requires the todo list to be non-empty.
+  //
+  // To avoid runaway fingerprinting, we use a cycle detector based on Brent's
+  // algorithm.
   auto Run() -> ResultType {
     CARBON_CHECK(!todo.empty());
+
+    // The index of an enclosing item we are visiting. If we see this again at
+    // an index in
+    //   [cycle_detector_index + 1, 2 * cycle_detector_index),
+    // we have found a cycle, and if we go deeper than that, we pick a new index
+    // and watch it for longer.
+    int cycle_detector_index = todo.size() - 1;
+
     while (true) {
-      const size_t init_size = todo.size();
+      const int init_size = todo.size();
       auto [next_sem_ir, next] = todo.back();
+
+      // Check that we're not in a cycle.
+      if (cycle_detector_index < init_size - 1 &&
+          init_size - 1 < cycle_detector_index * 2) {
+        CARBON_CHECK(
+            todo[init_size - 1] != todo[cycle_detector_index],
+            "Fingerprinting got stuck in a cycle"
+#ifndef NDEBUG
+            ":{0}",
+            [&]() -> std::string {
+              RawStringOstream out;
+              for (auto [next_sem_ir, next] : llvm::ArrayRef(todo).slice(
+                       cycle_detector_index,
+                       init_size - cycle_detector_index)) {
+                out << "\n";
+                std::visit([&](auto id) { out << Dump(*next_sem_ir, id); },
+                           next);
+              }
+              return out.TakeStr();
+            }()
+#endif
+        );
+      } else {
+        // We've left the region of the stack in which we're looking for this
+        // item. Switch to looking for the current item.
+        cycle_detector_index = init_size - 1;
+      }
 
       sem_ir = next_sem_ir;
       store->Prepare();
@@ -700,7 +779,7 @@ struct Worklist {
         // the fingerprint for things other than `InstId`, but we really only
         // expect other `next` types to be at the bottom of the `todo` stack
         // since they are not added to `todo` during Run().
-        if (todo.size() == init_size) {
+        if (static_cast<int>(todo.size()) == init_size) {
           auto fingerprint = Finish();
           todo.pop_back();
           CARBON_CHECK(todo.empty(),
@@ -740,13 +819,19 @@ struct Worklist {
         Add(inst.type_id());
       }
 
-      AddWithKind(inst.arg0_and_kind());
-      AddWithKind(inst.arg1_and_kind());
+      // TODO: change `ImplWitnessTable::elements_id` type with a new type whose
+      // value is not a part of the identity of the instruction.
+      if (auto impl_witness_table = inst.TryAs<SemIR::ImplWitnessTable>()) {
+        Add(impl_witness_table->impl_id);
+      } else {
+        AddWithKind(inst.arg0_and_kind());
+        AddWithKind(inst.arg1_and_kind());
+      }
 
       // If we didn't add any work, we have a fingerprint for this instruction;
       // pop it from the todo list. Otherwise, we leave it on the todo list so
       // we can compute its fingerprint once we've finished the work we added.
-      if (todo.size() == init_size) {
+      if (static_cast<int>(todo.size()) == init_size) {
         ResultType fingerprint = Finish();
         SetFingerprint(next_sem_ir, next_inst_id, fingerprint);
         todo.pop_back();

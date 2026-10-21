@@ -59,40 +59,14 @@ auto EvalConstantInst(Context& /*context*/, SemIR::ArrayInit inst)
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::ArrayType inst) -> ConstantEvalResult {
-  auto bound_inst = context.insts().Get(inst.bound_id);
-  auto int_bound = bound_inst.TryAs<SemIR::IntValue>();
-  if (!int_bound) {
-    CARBON_CHECK(context.constant_values().Get(inst.bound_id).is_symbolic(),
-                 "Unexpected inst {0} for template constant int", bound_inst);
-    return ConstantEvalResult::NewSamePhase(inst);
-  }
-
   auto orig_inst = context.insts().GetAs<SemIR::ArrayType>(inst_id);
   auto error_loc =
       context.insts().GetCanonicalLocId(orig_inst.bound_id).has_value()
           ? orig_inst.bound_id
           : inst_id;
-
-  // TODO: We should check that the size of the resulting array type
-  // fits in 64 bits, not just that the bound does. Should we use a
-  // 32-bit limit for 32-bit targets?
-  const auto& bound_val = context.ints().Get(int_bound->int_id);
-  if (context.types().IsSignedInt(int_bound->type_id) &&
-      bound_val.isNegative()) {
-    CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
-                      "array bound of {0} is negative", TypedInt);
-    context.emitter().Emit(error_loc, ArrayBoundNegative,
-                           {.type = int_bound->type_id, .value = bound_val});
-    return ConstantEvalResult::Error;
-  }
-  if (bound_val.getActiveBits() > 64) {
-    CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
-                      "array bound of {0} is too large", TypedInt);
-    context.emitter().Emit(error_loc, ArrayBoundTooLarge,
-                           {.type = int_bound->type_id, .value = bound_val});
-    return ConstantEvalResult::Error;
-  }
-  return ConstantEvalResult::NewSamePhase(inst);
+  return ValidateArrayType(context, SemIR::LocId(error_loc), inst)
+             ? ConstantEvalResult::NewSamePhase(inst)
+             : ConstantEvalResult::Error;
 }
 
 auto EvalConstantInst(Context& context, SemIR::AsCompatible inst)
@@ -214,24 +188,37 @@ auto EvalConstantInst(Context& context, SemIR::ExportDecl inst)
 
 auto EvalConstantInst(Context& context, SemIR::FacetAccessType inst)
     -> ConstantEvalResult {
-  if (auto facet_value = context.insts().TryGetAs<SemIR::FacetValue>(
-          inst.facet_value_inst_id)) {
+  auto facet = context.insts().Get(inst.facet_value_inst_id);
+  CARBON_CHECK(context.types().Is<SemIR::FacetType>(facet.type_id()));
+
+  // If the facet is a `type`, we can evaluate to the facet.
+  if (facet.type_id() == SemIR::TypeType::TypeId) {
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(inst.facet_value_inst_id));
+  }
+
+  // If the facet is a FacetValue, it wraps a `type`, and we can evaluate to
+  // that `type`.
+  if (auto facet_value = facet.TryAs<SemIR::FacetValue>()) {
     return ConstantEvalResult::Existing(
         context.constant_values().Get(facet_value->type_inst_id));
   }
 
-  // The `facet_value_inst_id` is always a facet value (has type facet type).
-  CARBON_CHECK(context.types().Is<SemIR::FacetType>(
-      context.insts().Get(inst.facet_value_inst_id).type_id()));
-
-  // Other instructions (e.g. ImplWitnessAccess) of type FacetType can appear
-  // here, in which case the constant inst is a FacetAccessType until those
+  // Other instructions (e.g. ImplWitnessAccess) of type `FacetType` can appear
+  // here, in which case the constant inst is a `FacetAccessType` until those
   // instructions resolve to one of the above.
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIR::FacetValue inst)
     -> ConstantEvalResult {
+  // If the FacetValue is of type `type`, then it evaluates to the type inside
+  // it.
+  if (inst.type_id == SemIR::TypeType::TypeId) {
+    return ConstantEvalResult::Existing(
+        context.constant_values().Get(inst.type_inst_id));
+  }
+
   // A FacetValue that just wraps a facet without adding/removing any witnesses
   // (which means they have the same type) is evaluated to the facet itself.
   if (auto access =
@@ -260,6 +247,15 @@ auto EvalConstantInst(Context& /*context*/, SemIR::FunctionDecl inst)
   // TODO: Eventually we may need to handle captures here.
   return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
       .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
+}
+
+auto EvalConstantInst(Context& context, SemIR::ImplSelfWitness inst)
+    -> ConstantEvalResult {
+  // Canonicalize the self in the same way as LookupImplWitness.
+  inst.period_self = context.constant_values().GetInstId(
+      GetCanonicalQuerySelfForLookupImplWitness(
+          context, context.constant_values().Get(inst.period_self), nullptr));
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
@@ -296,7 +292,7 @@ static auto TryFindValueInRewriteConstraints(
     SemIR::ElementIndex interface_index, SemIR::InstId search_facet)
     -> SemIR::ConstantId {
   auto access_self_type_id = context.insts().Get(search_facet).type_id();
-  if (context.types().Is<SemIR::TypeType>(access_self_type_id)) {
+  if (access_self_type_id == SemIR::TypeType::TypeId) {
     // A self facet of type `type` has no rewrite constraints to look in.
     return SemIR::ConstantId::None;
   }
@@ -306,10 +302,10 @@ static auto TryFindValueInRewriteConstraints(
   auto access_interface =
       context.specific_interfaces().Get(specific_interface_id);
 
-  auto access_self_facet_type_id =
+  auto access_self_declared_facet_type_id =
       context.types()
           .GetAs<SemIR::FacetType>(access_self_type_id)
-          .facet_type_id;
+          .declared_facet_type_id;
   // TODO: We could consider something better than linear search here, such as a
   // map. However that would probably require heap allocations which may be
   // worse overall since the number of rewrite constraints is generally low. If
@@ -317,8 +313,11 @@ static auto TryFindValueInRewriteConstraints(
   // grouped together, as in ResolveFacetTypeRewriteConstraints(), and limited
   // to just the `ImplWitnessAccess` entries, then a binary search may work
   // here.
-  for (const auto& rewrite : context.facet_types()
-                                 .Get(access_self_facet_type_id)
+  //
+  // TODO: Use the identified facet type so we can find rewrites from named
+  // constraints too. Then we don't need to SubstPeriodSelf below anymore.
+  for (const auto& rewrite : context.declared_facet_types()
+                                 .Get(access_self_declared_facet_type_id)
                                  .rewrite_constraints) {
     // Look at each rewrite constraint in the self facet's type. If the LHS is
     // an `ImplWitnessAccess` into the same interface that `inst` is indexing
@@ -736,13 +735,21 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                               .specific_id = specific_id});
 }
 
+auto EvalConstantInst(Context& context, SemIR::SpecificInst inst)
+    -> ConstantEvalResult {
+  // Pull the constant value out of the specific.
+  return ConstantEvalResult::Existing(SemIR::GetConstantValueInSpecific(
+      context.sem_ir(), inst.specific_id, inst.inst_id));
+}
+
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
                       SemIR::SpecificFunction inst) -> ConstantEvalResult {
   auto callee_function =
       SemIR::GetCalleeAsFunction(context.sem_ir(), inst.callee_id);
   const auto& fn = context.functions().Get(callee_function.function_id);
   if (!callee_function.self_type_id.has_value() &&
-      fn.builtin_function_kind() != SemIR::BuiltinFunctionKind::NoOp &&
+      fn.GetBuiltinFunctionKind(context.sem_ir()) !=
+          SemIR::BuiltinFunctionKind::NoOp &&
       fn.virtual_modifier != SemIR::Function::VirtualModifier::Abstract) {
     // This is not an associated function. Those will be required to be defined
     // as part of checking that the impl is complete.
@@ -773,17 +780,7 @@ auto EvalConstantInst(Context& context, SemIR::SpliceInst inst)
     return ConstantEvalResult::Existing(
         context.constant_values().Get(inst_value->inst_id));
   }
-  switch (nested_inst.kind().constant_kind()) {
-    case SemIR::InstConstantKind::ConstantInstAction:
-      return ConstantEvalResult::NewSamePhase(inst);
-    case SemIR::InstConstantKind::InstAction:
-      // TODO: Consider creating a new `ValueOfInst` instruction analogous to
-      // `TypeOfInst` to defer determining the constant value until we know the
-      // instruction. Alternatively, produce a symbolic `SpliceInst` constant.
-      return ConstantEvalResult::NotConstant;
-    default:
-      CARBON_FATAL("Unexpected inst kind for inst splice: {0}", nested_inst);
-  }
+  return ConstantEvalResult::NewSamePhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIR::StructAccess inst)
@@ -801,6 +798,16 @@ auto EvalConstantInst(Context& /*context*/, SemIR::StructLiteral inst)
     -> ConstantEvalResult {
   return ConstantEvalResult::NewSamePhase(SemIR::StructValue{
       .type_id = inst.type_id, .elements_id = inst.elements_id});
+}
+
+auto EvalConstantInst(Context& context, SemIR::TemplateInst inst)
+    -> ConstantEvalResult {
+  auto const_id = context.constant_values().Get(inst.inst_id);
+  if (const_id.is_concrete()) {
+    return ConstantEvalResult::Existing(const_id);
+  }
+
+  return ConstantEvalResult::NewAnyPhase(inst);
 }
 
 auto EvalConstantInst(Context& context, SemIR::TupleAccess inst)

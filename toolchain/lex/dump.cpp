@@ -9,6 +9,7 @@
 #include <string>
 
 #include "common/raw_string_ostream.h"
+#include "toolchain/lex/tokenized_buffer.h"
 
 namespace Carbon::Lex {
 

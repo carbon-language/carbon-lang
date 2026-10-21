@@ -30,6 +30,7 @@ let f: FloatLiteral = 1.0;
 // CHECK:STDOUT: --- use_types.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type Core.FloatLiteral [concrete]
 // CHECK:STDOUT:   %f.patt: %pattern_type = value_binding_pattern f [concrete]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete]

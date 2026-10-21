@@ -124,10 +124,11 @@ cc_library(
     hdrs = ["dump.h"],
     deps = [
         ":context",
+        ":node_kind",
         ":tree",
-        "//common:ostream",
         "//common:raw_string_ostream",
         "//toolchain/lex:dump",
+        "//toolchain/lex:token_index",
     ],
     # Always link dump methods.
     alwayslink = 1,
@@ -145,14 +146,20 @@ cc_library(
     name = "tree",
     srcs = [
         "extract.cpp",
+        "extract_declarations.cpp",
+        "extract_expressions.cpp",
+        "extract_patterns.cpp",
+        "extract_statements.cpp",
         "tree.cpp",
         "tree_and_subtrees.cpp",
     ],
     hdrs = [
+        "extract.h",
         "tree.h",
         "tree_and_subtrees.h",
     ],
     deps = [
+        ":node_category",
         ":node_kind",
         "//common:check",
         "//common:error",
@@ -162,6 +169,7 @@ cc_library(
         "//toolchain/base:fixed_size_value_store",
         "//toolchain/base:value_store",
         "//toolchain/lex:token_index",
+        "//toolchain/lex:token_kind",
         "//toolchain/lex:tokenized_buffer",
         "@llvm-project//llvm:Support",
     ],

@@ -37,50 +37,49 @@ class C {
 fn C.(Self as Interface).F() {}
 
 // CHECK:STDOUT: - filename: fail_out_of_line_member.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'Interface'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 9},
-// CHECK:STDOUT:         {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:           {kind: 'BoolTypeLiteral', text: 'bool'},
-// CHECK:STDOUT:         {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:       {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'ImplDefinition', text: '}', subtree_size: 11},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: '}', has_error: yes, subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'ClassIntroducer', text: 'class'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'ClassDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:           {kind: 'ImplIntroducer', text: 'impl'},
-// CHECK:STDOUT:             {kind: 'SelfTypeNameExpr', text: 'Self'},
-// CHECK:STDOUT:           {kind: 'ImplTypeAs', text: 'as', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'IdentifierNameExpr', text: 'Interface'},
-// CHECK:STDOUT:         {kind: 'ImplDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:             {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:         {kind: 'FunctionDecl', text: ';', subtree_size: 5},
-// CHECK:STDOUT:       {kind: 'ImplDefinition', text: '}', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'ClassDefinition', text: '}', subtree_size: 15},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'C'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameQualifierWithoutParams', text: '.', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'InvalidParse', text: '(', has_error: yes},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: '}', has_error: yes, subtree_size: 5},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'Interface'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │   │ ╭─BoolTypeLiteral 'bool'
+// CHECK:STDOUT:   │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │   ├─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   ├─ImplDefinition '}'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   ├─FunctionDecl '}' has_error
+// CHECK:STDOUT:   │   ╭─ClassIntroducer 'class'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
+// CHECK:STDOUT:   │ │   ╭─ImplIntroducer 'impl'
+// CHECK:STDOUT:   │ │   │ ╭─SelfTypeNameExpr 'Self'
+// CHECK:STDOUT:   │ │   ├─ImplTypeAs 'as'
+// CHECK:STDOUT:   │ │   ├─IdentifierNameExpr 'Interface'
+// CHECK:STDOUT:   │ │ ╭─ImplDefinitionStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ │ ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │ │ │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ │ ├─FunctionDecl ';'
+// CHECK:STDOUT:   │ ├─ImplDefinition '}'
+// CHECK:STDOUT:   ├─ClassDefinition '}'
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'C'
+// CHECK:STDOUT:   │ ├─IdentifierNameQualifierWithoutParams '.'
+// CHECK:STDOUT:   │ ├─InvalidParse '(' has_error
+// CHECK:STDOUT:   ├─FunctionDecl '}' has_error
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

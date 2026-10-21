@@ -46,9 +46,7 @@ static auto FinishInst(Context& context, SemIR::InstId inst_id,
   // Template-dependent instructions are handled separately by
   // `AddDependentActionInst`.
   CARBON_CHECK(
-      inst.kind().constant_kind() !=
-              SemIR::InstConstantKind::ConstantInstAction &&
-          inst.kind().constant_kind() != SemIR::InstConstantKind::InstAction,
+      inst.kind().constant_kind() != SemIR::InstConstantKind::InstAction,
       "Use AddDependentActionInst to add an action instruction");
 
   // Keep track of dependent instructions.
@@ -83,11 +81,12 @@ auto AddInstInNoBlock(Context& context, SemIR::LocIdAndInst loc_id_and_inst)
   return inst_id;
 }
 
-auto AddDependentActionInst(Context& context,
-                            SemIR::LocIdAndInst loc_id_and_inst)
+auto AddTemplateConstantInstToEvalBlock(Context& context,
+                                        SemIR::LocIdAndInst loc_id_and_inst)
     -> SemIR::InstId {
   auto inst_id = context.sem_ir().insts().AddInNoBlock(loc_id_and_inst);
-  CARBON_VLOG_TO(context.vlog_stream(), "AddDependentActionInst: {0}\n",
+  CARBON_VLOG_TO(context.vlog_stream(),
+                 "AddTemplateConstantInstToEvalBlock: {0}\n",
                  loc_id_and_inst.inst);
 
   // Set the constant value of this instruction to point back to itself.

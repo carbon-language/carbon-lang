@@ -25,6 +25,7 @@ fn F() {}
 // CHECK:STDOUT: --- fail_redef.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %F.type.eb3ec9.1: type = fn_type @F.loc15 [concrete]
 // CHECK:STDOUT:   %F.7088cc.1: %F.type.eb3ec9.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %F.type.eb3ec9.2: type = fn_type @F.loc23 [concrete]

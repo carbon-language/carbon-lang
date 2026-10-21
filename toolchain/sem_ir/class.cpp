@@ -52,7 +52,8 @@ auto Class::GetObjectRepr(const File& file, SpecificId specific_id) const
           .object_repr_type_inst_id);
 }
 
-auto Class::GetStructTypeFields(const File& sem_ir) const
+auto Class::GetStructTypeFields(const File& sem_ir,
+                                SpecificId specific_id) const
     -> llvm::ArrayRef<SemIR::StructTypeField> {
   if (adapt_id.has_value()) {
     // The representation of an adapter won't necessarily be a
@@ -61,7 +62,7 @@ auto Class::GetStructTypeFields(const File& sem_ir) const
     return {};
   }
 
-  auto object_repr_type_id = GetObjectRepr(sem_ir, SemIR::SpecificId::None);
+  auto object_repr_type_id = GetObjectRepr(sem_ir, specific_id);
   if (object_repr_type_id == SemIR::ErrorInst::TypeId) {
     return {};
   }
@@ -72,9 +73,9 @@ auto Class::GetStructTypeFields(const File& sem_ir) const
 
 auto GetAsCarbonOwnedClass(const File& sem_ir, const clang::TagDecl* tag_decl)
     -> std::optional<std::pair<SemIR::TypeId, SemIR::ClassType>> {
-  // Quickly check whether we could possibly own this class.
-  // TODO: Once we multiplex with the ASTReader, handle
-  // ASTReader::completeVisibleDeclsMap setting this to `false`.
+  // Quickly check whether we could possibly own this class. Carbon-owned
+  // classes always have external visible storage (preserved across
+  // `ASTReader::completeVisibleDeclsMap` by `ReadOnlyASTSource`).
   if (!tag_decl->hasExternalVisibleStorage()) {
     return std::nullopt;
   }

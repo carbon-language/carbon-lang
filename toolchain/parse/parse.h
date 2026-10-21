@@ -25,8 +25,13 @@ struct ParseOptions {
   // If set, the parse tree will be dumped to this.
   llvm::raw_ostream* dump_stream = nullptr;
 
-  // When dumping, whether to dump in preorder; otherwise, postorder is used.
-  bool dump_preorder_parse_tree = false;
+  // The format to dump the parse tree in if `dump_stream` is set.
+  enum class DumpFormat {
+    PrettyPostorder,
+    YamlPostorder,
+    YamlPreorder,
+  };
+  DumpFormat dump_format;
 };
 
 // Parses the token buffer into a `Tree`.

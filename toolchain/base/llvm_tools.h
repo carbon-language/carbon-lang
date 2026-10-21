@@ -11,7 +11,7 @@
 #include "common/enum_base.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Support/LLVMDriver.h"
+#include "llvm/Support/Driver.h"
 
 namespace Carbon {
 

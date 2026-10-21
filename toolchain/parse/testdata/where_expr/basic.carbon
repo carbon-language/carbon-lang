@@ -21,68 +21,68 @@ fn F() {
 }
 
 // CHECK:STDOUT: - filename: basic.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:       {kind: 'IdentifierNameMaybeBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:         {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'SelfTypeName', text: 'Self'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IntTypeLiteral', text: 'i32'},
-// CHECK:STDOUT:             {kind: 'RequirementEqualEqual', text: '==', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'LetBindingPattern', text: ':', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'ExplicitParamList', text: ')', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'FunctionDecl', text: ';', subtree_size: 14},
-// CHECK:STDOUT:         {kind: 'InterfaceIntroducer', text: 'interface'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameNotBeforeSignature', text: 'I'},
-// CHECK:STDOUT:       {kind: 'InterfaceDefinitionStart', text: '{', subtree_size: 3},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'Foo'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameExpr', text: 'Bar'},
-// CHECK:STDOUT:             {kind: 'RequirementImpls', text: 'impls', subtree_size: 4},
-// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 7},
-// CHECK:STDOUT:         {kind: 'AssociatedConstantNameAndType', text: ':', subtree_size: 9},
-// CHECK:STDOUT:       {kind: 'AssociatedConstantDecl', text: ';', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'InterfaceDefinition', text: '}', subtree_size: 15},
-// CHECK:STDOUT:       {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'T'},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:           {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
-// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IdentifierNameNotBeforeSignature', text: 'V'},
-// CHECK:STDOUT:             {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:           {kind: 'RequirementEqual', text: '=', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'WhereExpr', text: 'where', subtree_size: 8},
-// CHECK:STDOUT:       {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 11},
-// CHECK:STDOUT:     {kind: 'LetDecl', text: ';', subtree_size: 13},
-// CHECK:STDOUT:         {kind: 'FunctionIntroducer', text: 'fn'},
-// CHECK:STDOUT:         {kind: 'IdentifierNameMaybeBeforeSignature', text: 'F'},
-// CHECK:STDOUT:           {kind: 'ExplicitParamListStart', text: '('},
-// CHECK:STDOUT:         {kind: 'ExplicitParamList', text: ')', subtree_size: 2},
-// CHECK:STDOUT:       {kind: 'FunctionDefinitionStart', text: '{', subtree_size: 5},
-// CHECK:STDOUT:         {kind: 'LetIntroducer', text: 'let'},
-// CHECK:STDOUT:             {kind: 'IdentifierNameNotBeforeSignature', text: 'U'},
-// CHECK:STDOUT:           {kind: 'CompileTimeBindingPatternStart', text: ':', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'TypeTypeLiteral', text: 'type'},
-// CHECK:STDOUT:             {kind: 'WhereOperand', text: 'where', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'W'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'X'},
-// CHECK:STDOUT:               {kind: 'DesignatorExpr', text: '.', subtree_size: 2},
-// CHECK:STDOUT:             {kind: 'RequirementEqualEqual', text: '==', subtree_size: 5},
-// CHECK:STDOUT:           {kind: 'WhereExpr', text: 'where', subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'CompileTimeBindingPattern', text: ':', subtree_size: 11},
-// CHECK:STDOUT:       {kind: 'LetDecl', text: ';', subtree_size: 13},
-// CHECK:STDOUT:     {kind: 'FunctionDefinition', text: '}', subtree_size: 19},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │ ├─IdentifierNameMaybeBeforeSignature 'Foo'
+// CHECK:STDOUT:   │ │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │   ╭─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │ │ │   ╭─SelfTypeName 'Self'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementEqualEqual '=='
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where'
+// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ ├─ExplicitParamList ')'
+// CHECK:STDOUT:   ├─FunctionDecl ';'
+// CHECK:STDOUT:   │   ╭─InterfaceIntroducer 'interface'
+// CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
+// CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ │ │   ╭─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'Foo'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ │ ├─IdentifierNameExpr 'Bar'
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementImpls 'impls'
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where'
+// CHECK:STDOUT:   │ │ ├─AssociatedConstantNameAndType ':'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';'
+// CHECK:STDOUT:   ├─InterfaceDefinition '}'
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'T'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │   ╭─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'U'
+// CHECK:STDOUT:   │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'V'
+// CHECK:STDOUT:   │ │ │ │ ├─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ ├─RequirementEqual '='
+// CHECK:STDOUT:   │ │ ├─WhereExpr 'where'
+// CHECK:STDOUT:   │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   │   ╭─FunctionIntroducer 'fn'
+// CHECK:STDOUT:   │   ├─IdentifierNameMaybeBeforeSignature 'F'
+// CHECK:STDOUT:   │   │ ╭─ExplicitParamListStart '('
+// CHECK:STDOUT:   │   ├─ExplicitParamList ')'
+// CHECK:STDOUT:   │ ╭─FunctionDefinitionStart '{'
+// CHECK:STDOUT:   │ │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'U'
+// CHECK:STDOUT:   │ │ │ ├─CompileTimeBindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │   ╭─TypeTypeLiteral 'type'
+// CHECK:STDOUT:   │ │ │ │ ╭─WhereOperand 'where'
+// CHECK:STDOUT:   │ │ │ │ │   ╭─IdentifierNameNotBeforeSignature 'W'
+// CHECK:STDOUT:   │ │ │ │ │ ╭─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'X'
+// CHECK:STDOUT:   │ │ │ │ │ ├─DesignatorExpr '.'
+// CHECK:STDOUT:   │ │ │ │ ├─RequirementEqualEqual '=='
+// CHECK:STDOUT:   │ │ │ ├─WhereExpr 'where'
+// CHECK:STDOUT:   │ │ ├─CompileTimeBindingPattern ':'
+// CHECK:STDOUT:   │ ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FunctionDefinition '}'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

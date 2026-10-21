@@ -123,8 +123,9 @@ instructions needs to be closely associated, such as a parameter list.
 
 A number of instruction types in
 [sem_ir/typed_insts.h](/toolchain/sem_ir/typed_insts.h) are builtin
-instructions, such as `SemIR::TypeType` which represents the unconstrained facet
-type `type`. Builtins have stable ids in the `SemIR::InstStore` across `SemIR`
+instructions, which are called singletons. We also have a builtin `FacetType`
+instruction we call `TypeType` to represent the unconstrained facet type
+`type`. Builtins have stable ids in the `SemIR::InstStore` across `SemIR`
 instances.
 
 ### Instruction operands
@@ -137,6 +138,9 @@ listed in the `SemIR::IdKind` enumeration defined in
 -   `SemIR::InstId`: Refers to a specific instance of an instruction. For
     example, this should be used if the operand may have side-effects or a
     meaningful location.
+-   `SemIR::TypeInstId`: Refers to a specific instance of an instruction of type
+    `type`. This should be used instead of `InstId` if you know that the type of
+    the instruction is always `type` (or the "error" type).
 -   `SemIR::ConstantId`: An abstract reference to a known constant value. This
     should be used instead of `InstId` if you care only about the identity of
     the value and not how it was formed.
@@ -280,7 +284,7 @@ you would look for a `struct` definition that uses `"assoc_const_decl"` as its
 `ir_name`. In this case, this is the `AssociatedConstantDecl` instruction:
 
 ```cpp
-// An associated constant declaration in an interface, such as `let T:! type;`.
+// An associated constant declaration in an interface, such as `let T: type;`.
 struct AssociatedConstantDecl {
   static constexpr auto Kind =
       InstKind::AssociatedConstantDecl.Define<Parse::NodeId>(
@@ -296,7 +300,7 @@ corresponds to the type written between the `:` and the `=`. In the example
 above, that type is `i32`. The other arguments to the instruction are written
 after the `ir_name` -- in this example the `name_id` is `N`. From this we find
 that the instruction corresponds to an associated constant declaration in an
-interface like `let N:! i32;`.
+interface like `let N: i32;`.
 
 In fact, the notation after the `:` records not just the instruction's type, but
 also some information about its category, and the storage argument if it's an

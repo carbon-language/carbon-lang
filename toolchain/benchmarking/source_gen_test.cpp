@@ -10,11 +10,16 @@
 #include <optional>
 #include <string>
 
+#include "common/error.h"
+#include "common/raw_string_ostream.h"
 #include "common/set.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/FormatVariadic.h"
+#include "llvm/Support/VirtualFileSystem.h"
+#include "testing/base/capture_std_streams.h"
 #include "testing/base/global_exe_path.h"
 #include "toolchain/base/install_paths_test_helpers.h"
+#include "toolchain/driver/clang_runner.h"
 #include "toolchain/driver/driver.h"
 
 namespace Carbon::Testing {
@@ -27,9 +32,14 @@ using ::testing::Each;
 using ::testing::Eq;
 using ::testing::Ge;
 using ::testing::Gt;
+using ::testing::HasSubstr;
 using ::testing::Le;
 using ::testing::MatchesRegex;
 using ::testing::SizeIs;
+using ::testing::StrEq;
+using ::testing::TestParamInfo;
+using ::testing::TestWithParam;
+using ::testing::Values;
 
 // Tiny helper to sum the sizes of a range of ranges. Uses a template to avoid
 // hard coding any specific types for the two ranges.
@@ -75,7 +85,7 @@ TEST(SourceGenTest, Identifiers) {
   // Check that repeated calls are different in interesting ways, but have the
   // exact same total bytes.
   ssize_t idents_size_sum = SumSizes(idents);
-  for ([[maybe_unused]] auto _ : llvm::seq(10)) {
+  for (auto _ : llvm::seq(10)) {
     auto idents2 = gen.GetShuffledIdentifiers(1000);
     EXPECT_THAT(idents2, SizeIs(1000));
     // Should be (at least) a different shuffle of identifiers.
@@ -229,23 +239,45 @@ TEST(SourceGenTest, UniqueIdentifiers) {
   }
 }
 
-// Check that the source code doesn't have compiler errors.
-auto TestCompile(llvm::StringRef source) -> bool {
+// Compiles `source` and returns whether it compiled with no diagnostics at all.
+// Generated code should be warning-free: warnings would add diagnostic
+// emission to the compile benchmarks.
+auto TestCompile(SourceGen::Language language, llvm::StringRef source) -> bool {
   llvm::IntrusiveRefCntPtr<llvm::vfs::InMemoryFileSystem> fs =
       new llvm::vfs::InMemoryFileSystem;
   InstallPaths installation(
       InstallPaths::MakeForBazelRunfiles(Testing::GetExePath()));
-  Driver driver(fs, &installation, /*input_stream=*/nullptr, &llvm::outs(),
-                &llvm::errs());
 
-  AddPreludeFilesToVfs(installation, fs);
+  if (language == SourceGen::Language::Carbon) {
+    RawStringOstream diagnostics;
+    Driver driver(fs, &installation, /*input_stream=*/nullptr, &llvm::outs(),
+                  &diagnostics);
+    AddPreludeFilesToVfs(installation, fs);
+    fs->addFile("test.carbon", /*ModificationTime=*/0,
+                llvm::MemoryBuffer::getMemBuffer(source));
+    bool success = driver
+                       .RunCommand({"compile", "--phase=check",
+                                    "--no-include-carbon-core", "test.carbon"})
+                       .success;
+    std::string output = diagnostics.TakeStr();
+    EXPECT_THAT(output, StrEq(""));
+    return success && output.empty();
+  }
 
-  fs->addFile("test.carbon", /*ModificationTime=*/0,
+  // Clang reads the system headers from the real filesystem.
+  llvm::IntrusiveRefCntPtr<llvm::vfs::OverlayFileSystem> overlay_fs =
+      new llvm::vfs::OverlayFileSystem(llvm::vfs::getRealFileSystem());
+  overlay_fs->pushOverlay(fs);
+  fs->addFile("test.cpp", /*ModificationTime=*/0,
               llvm::MemoryBuffer::getMemBuffer(source));
-  return driver
-      .RunCommand({"compile", "--phase=check", "--no-include-carbon-core",
-                   "test.carbon"})
-      .success;
+  ClangRunner runner(&installation, overlay_fs);
+  std::string out;
+  std::string err;
+  ErrorOr<bool> result = CallWithCapturedOutput(out, err, [&] {
+    return runner.RunWithNoRuntimes({"-fsyntax-only", "test.cpp"});
+  });
+  EXPECT_THAT(err, StrEq(""));
+  return result.ok() && *result && err.empty();
 }
 
 TEST(SourceGenTest, GenApiFileDenseDeclsTest) {
@@ -256,8 +288,7 @@ TEST(SourceGenTest, GenApiFileDenseDeclsTest) {
   // Should be within 1% of the requested line count.
   EXPECT_THAT(source, Contains('\n').Times(AllOf(Ge(950), Le(1050))));
 
-  // Make sure we generated valid Carbon code.
-  EXPECT_TRUE(TestCompile(source));
+  EXPECT_TRUE(TestCompile(SourceGen::Language::Carbon, source));
 }
 
 TEST(SourceGenTest, GenApiFileDenseDeclsCppTest) {
@@ -270,8 +301,300 @@ TEST(SourceGenTest, GenApiFileDenseDeclsCppTest) {
   // Should be within 10% of the requested line count.
   EXPECT_THAT(source, Contains('\n').Times(AllOf(Ge(900), Le(1100))));
 
-  // TODO: When the driver supports compiling C++ code as easily as Carbon, we
-  // should test that the generated C++ code is valid.
+  EXPECT_TRUE(TestCompile(SourceGen::Language::Cpp, source));
+}
+
+static auto CountLines(llvm::StringRef source) -> ssize_t {
+  return llvm::count(source, '\n');
+}
+
+// Matches a `SourceGen::Language` for which
+// `GenApiFileDenseDecls(target_lines, params)` generates files with the same
+// byte and line counts using each of `num_seeds` independently seeded
+// generators. The files must not all have the same content, which would make
+// that match vacuous.
+// NOLINTNEXTLINE(modernize-use-trailing-return-type): Macro based function.
+MATCHER_P3(GeneratesSeedIndependentSize, target_lines, params, num_seeds,
+           "generates files of the same size with every seed") {
+  SourceGen::Language language = arg;
+  std::string first =
+      SourceGen(language).GenApiFileDenseDecls(target_lines, params);
+  bool any_different = false;
+  for (int i : llvm::seq(1, num_seeds)) {
+    std::string source =
+        SourceGen(language).GenApiFileDenseDecls(target_lines, params);
+    if (source.size() != first.size() ||
+        CountLines(source) != CountLines(first)) {
+      *result_listener << "where seed iteration " << i << " generated "
+                       << source.size() << " bytes and " << CountLines(source)
+                       << " lines, but seed iteration 0 generated "
+                       << first.size() << " bytes and " << CountLines(first)
+                       << " lines";
+      return false;
+    }
+    any_different = any_different || source != first;
+  }
+  if (!any_different) {
+    *result_listener << "where all files have the same content";
+    return false;
+  }
+  return true;
+}
+
+// Each test generates files with one set of parameters, and checks that they
+// compile cleanly and have the same size for any seed, which benchmarks need to
+// be comparable. Each test runs for both languages.
+using GenApiFileDenseDeclsParamsTest = TestWithParam<SourceGen::Language>;
+
+INSTANTIATE_TEST_SUITE_P(
+    Languages, GenApiFileDenseDeclsParamsTest,
+    Values(SourceGen::Language::Carbon, SourceGen::Language::Cpp),
+    [](const TestParamInfo<SourceGen::Language>& info) -> std::string {
+      return info.param == SourceGen::Language::Carbon ? "Carbon" : "Cpp";
+    });
+
+// Barely enough lines for one class.
+TEST_P(GenApiFileDenseDeclsParamsTest, DefaultParamsAt200Lines) {
+  SourceGen::DenseDeclParams params;
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(200, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(200, params)));
+}
+
+TEST_P(GenApiFileDenseDeclsParamsTest, DefaultParamsAt1000Lines) {
+  SourceGen::DenseDeclParams params;
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(1000, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(1000, params)));
+}
+
+TEST_P(GenApiFileDenseDeclsParamsTest, DefaultParamsAt5000Lines) {
+  SourceGen::DenseDeclParams params;
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(5000, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(5000, params)));
+}
+
+TEST_P(GenApiFileDenseDeclsParamsTest, DefaultParamsAt20000Lines) {
+  SourceGen::DenseDeclParams params;
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(20000, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(20000, params)));
+}
+
+// Function declarations only: no methods and no fields.
+TEST_P(GenApiFileDenseDeclsParamsTest, OnlyFunctions) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 20,
+                       .public_method_decls = 0,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 0}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(5000, params, 12));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(5000, params)));
+}
+
+// Large parameter counts, which wrap onto several lines.
+TEST_P(GenApiFileDenseDeclsParamsTest, WrappedParamLists) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 2,
+                       .public_function_decl_params = {.max_params = 16},
+                       .public_method_decls = 4,
+                       .public_method_decl_params = {.max_params = 16},
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 0}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(5000, params, 12));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(5000, params)));
+}
+
+// The default shape scaled up 2x.
+TEST_P(GenApiFileDenseDeclsParamsTest, DoubledDefaultShape) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 8,
+                       .public_method_decls = 20,
+                       .private_function_decls = 4,
+                       .private_method_decls = 16,
+                       .private_field_decls = 12}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(5000, params, 12));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(5000, params)));
+}
+
+// A class's fields can't reference it or any later class, so field-heavy
+// classes leave few type uses for references to a class. Whether the valid type
+// names run out depends on the shuffle, so these tests use many seeds.
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyFieldsAndTwoFunctions) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 30}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 32));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyFieldsAndOneMethod) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 0,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 50}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 32));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// No functions or methods, so every type use is a fixed type.
+TEST_P(GenApiFileDenseDeclsParamsTest, OnlyFields) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 0,
+                       .public_method_decls = 0,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 16}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 32));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Bodies read class-typed parameters through `Checksum`, and return class
+// values through `Make`.
+static auto InlineBodiesParams() -> SourceGen::DenseDeclParams {
+  return {.class_params = {.inline_function_defs = 3,
+                           .max_body_locals = 4,
+                           .inline_getters = 2,
+                           .inline_predicates = 2,
+                           .inline_forwarders = 2}};
+}
+
+TEST_P(GenApiFileDenseDeclsParamsTest, InlineBodies) {
+  SourceGen::DenseDeclParams params = InlineBodiesParams();
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(2000, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(2000, params)));
+}
+
+TEST(SourceGenTest, GenApiFileDenseDeclsInlineBodies) {
+  SourceGen gen;
+  std::string source = gen.GenApiFileDenseDecls(2000, InlineBodiesParams());
+  EXPECT_THAT(source, HasSubstr("acc = acc + "));
+  EXPECT_THAT(source, HasSubstr(".Checksum()"));
+  EXPECT_THAT(source, HasSubstr(".Make()"));
+  EXPECT_THAT(source, HasSubstr("Impl("));
+}
+
+// C++ initializes a class with a default constructor in place of `Make`, which
+// leaves the fields private.
+TEST(SourceGenTest, GenApiFileDenseDeclsInlineBodiesCpp) {
+  SourceGen gen(SourceGen::Language::Cpp);
+  std::string source = gen.GenApiFileDenseDecls(2000, InlineBodiesParams());
+  EXPECT_THAT(source, HasSubstr("()\n      : tag(0)"));
+  EXPECT_THAT(source, HasSubstr("\n private:\n  int tag;\n"));
+}
+
+// Many large bodies and few other declarations.
+TEST_P(GenApiFileDenseDeclsParamsTest, LargeInlineBodies) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 4,
+                       .inline_function_defs = 8,
+                       .max_body_locals = 12}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Many fields, which `Make` initializes, often with an earlier class's
+// `Make`.
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyFieldsToMake) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 24,
+                       .inline_function_defs = 2,
+                       .max_body_locals = 3}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Many getters and predicates, and no other fields.
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyGettersAndPredicates) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.private_field_decls = 0,
+                       .inline_getters = 8,
+                       .inline_predicates = 8}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Many forwarders with many parameters, which can have class types.
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyForwarders) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.inline_forwarders = 8,
+                       .inline_forwarder_params = {.max_params = 8}}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Locals and parameters draw from the same identifiers of each length, and C++
+// rejects a local that redeclares a parameter. Whether a local could do so
+// depends on the shuffle, so compile many seeds.
+TEST(SourceGenTest, GenApiFileDenseDeclsInlineBodiesCppCompiles) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 4,
+                       .inline_function_defs = 8,
+                       .max_body_locals = 12}};
+  for (int _ : llvm::seq(8)) {
+    SourceGen gen(SourceGen::Language::Cpp);
+    EXPECT_TRUE(TestCompile(SourceGen::Language::Cpp,
+                            gen.GenApiFileDenseDecls(5000, params)));
+  }
+}
+
+// The line estimates have to track the emitted lines closely, or files miss
+// their target size. The target is large so that rounding to a whole number of
+// classes is small next to the tolerance. C++ gets a larger tolerance for its
+// access specifier lines, which the estimates don't count.
+TEST(SourceGenTest, GenApiFileDenseDeclsLineTargetAccuracy) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.inline_function_defs = 1,
+                       .max_body_locals = 3,
+                       .inline_getters = 1,
+                       .inline_predicates = 1,
+                       .inline_forwarders = 1}};
+
+  constexpr int TargetLines = 20000;
+  for (SourceGen::Language language :
+       {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
+    SourceGen gen(language);
+    std::string source = gen.GenApiFileDenseDecls(TargetLines, params);
+    ssize_t lines = CountLines(source);
+    if (language == SourceGen::Language::Carbon) {
+      // Within 2% of the requested line count.
+      EXPECT_THAT(lines, AllOf(Ge(19600), Le(20400)));
+    } else {
+      // Within 10% of the requested line count.
+      EXPECT_THAT(lines, AllOf(Ge(18000), Le(22000)));
+    }
+  }
 }
 
 }  // namespace

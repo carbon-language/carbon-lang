@@ -38,8 +38,8 @@ struct TestData : Printable<TestData> {
     return lhs.value <=> rhs.value;
   }
 
-  friend auto CarbonHashValue(TestData data, uint64_t seed) -> HashCode {
-    return Carbon::HashValue(data.value, seed);
+  friend auto CarbonHashValue(TestData data) -> HashCode {
+    return Carbon::HashValue(data.value);
   }
 };
 
@@ -70,19 +70,12 @@ struct MoveOnlyTestData : Printable<TestData> {
   }
   auto Print(llvm::raw_ostream& out) const -> void { out << value; }
 
-  friend auto operator==(const MoveOnlyTestData& lhs,
-                         const MoveOnlyTestData& rhs) -> bool {
-    return lhs.value == rhs.value;
-  }
-
   friend auto operator<=>(const MoveOnlyTestData& lhs,
-                          const MoveOnlyTestData& rhs) -> std::strong_ordering {
-    return lhs.value <=> rhs.value;
-  }
+                          const MoveOnlyTestData& rhs)
+      -> std::strong_ordering = default;
 
-  friend auto CarbonHashValue(const MoveOnlyTestData& data, uint64_t seed)
-      -> HashCode {
-    return Carbon::HashValue(data.value, seed);
+  friend auto CarbonHashValue(const MoveOnlyTestData& data) -> HashCode {
+    return Carbon::HashValue(data.value);
   }
 };
 
@@ -98,8 +91,8 @@ inline auto CarbonHashtableEq(int lhs, const MoveOnlyTestData& rhs) -> bool {
 // fails to be used.
 struct TestKeyContext : DefaultKeyContext {
   template <typename KeyT>
-  auto HashKey(const KeyT& key, uint64_t seed) const -> HashCode {
-    Hasher hash(seed);
+  auto HashKey(const KeyT& key) const -> HashCode {
+    Hasher hash;
     // Inject some other data to the hash.
     hash.HashRaw(42);
     hash.HashRaw(HashValue(key));
@@ -114,8 +107,8 @@ struct TestKeyContext : DefaultKeyContext {
 template <int TagBits, bool FixIndexBits, bool FixTagBits, uint64_t FixedVal>
 struct FixedHashKeyContext : DefaultKeyContext {
   template <typename KeyT>
-  auto HashKey(const KeyT& key, uint64_t seed) const -> HashCode {
-    HashCode original_hash = HashValue(key, seed);
+  auto HashKey(const KeyT& key) const -> HashCode {
+    HashCode original_hash = HashValue(key);
     auto raw_hash = static_cast<uint64_t>(original_hash);
 
     constexpr uint64_t TagMask = (1U << TagBits) - 1;

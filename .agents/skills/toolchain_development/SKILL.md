@@ -35,6 +35,10 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     ([SKILL.md](../builtins/SKILL.md)) for guidelines on registering, mapping,
     constant evaluating, and lowering compiler builtin primitives (e.g.
     `"int.convert_float"`).
+-   **Language server**: Refer to the **Language server** skill
+    ([SKILL.md](../language_server/SKILL.md)) before working on
+    `toolchain/language_server/` or `utils/vscode/`. Neither follows the
+    patterns described here.
 -   **Phases**: Lex -> Parse -> Check -> Lower.
 -   **Definitions**: Many kinds (tokens, parse nodes, SemIR instructions) are
     defined in `.def` files and expanded by way of macros.
@@ -49,8 +53,8 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 -   **Test everything**: `bazelisk test //...`
 -   **Test specific target**: `bazelisk test //toolchain/testing:file_test`
--   **Test specific file**:
-    `bazelisk test //toolchain/testing:file_test --test_arg=--file_tests=<path_to_carbon_file>`
+-   **Test specific file**: `bazelisk test //toolchain/testing:file_test
+    --test_arg=--file_tests=<path_to_carbon_file>`
 -   **Build toolchain**: `bazelisk build //toolchain/...`
 
 ### Updating test data
@@ -158,3 +162,8 @@ operations, inspect target LLVM ADT class APIs:
 8.  **Redundant bounds calculations**: Avoid repeating calculations of complex
     boundary estimations (such as lower and upper bound estimations). Refactor
     the logic to calculate unified values once, preserving compactness.
+9.  **Trusting stale `clangd` diagnostics**: In-editor diagnostics are only as
+    good as `compile_commands.json`. If it predates a newly added file, `clangd`
+    falls back to a default command and reports nonsense, such as missing
+    standard headers or "no member named `None`". Regenerate it with
+    `./scripts/create_compdb.py`, which only takes a few seconds.

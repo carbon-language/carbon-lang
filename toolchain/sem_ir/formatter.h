@@ -226,6 +226,8 @@ class Formatter {
 
   // Standard formatting for a declaration instruction's arguments.
   template <typename IdT>
+  // TODO: Recursive cycle when we format any decls inside the RHS.
+  // NOLINTNEXTLINE(misc-no-recursion)
   auto FormatDeclRhs(IdT decl_id, InstBlockId pattern_block_id,
                      InstBlockId decl_block_id) {
     FormatArgs(decl_id);
@@ -272,7 +274,7 @@ class Formatter {
   auto FormatArg(BoolValue v) -> void { out() << v; }
   auto FormatArg(CharId c) -> void { out() << c; }
   auto FormatArg(EntityNameId id) -> void;
-  auto FormatArg(FacetTypeId id) -> void;
+  auto FormatArg(DeclaredFacetTypeId id) -> void;
   auto FormatArg(FieldId id) -> void;
   auto FormatArg(IntKind k) -> void { k.Print(out()); }
   auto FormatArg(FloatKind k) -> void { k.Print(out()); }
@@ -287,13 +289,19 @@ class Formatter {
   auto FormatArg(RealId id) -> void;
   auto FormatArg(StringLiteralValueId id) -> void;
   auto FormatArg(ConstantId id) -> void { FormatConstant(id); }
+  auto FormatArg(ClangDeclId id) -> void;
+  auto FormatArg(ClangFunctionPointerTypeId id) -> void;
 
   template <typename BundleT>
   auto FormatArg(BundleId<BundleT> bundle_id) -> void {
     llvm::ListSeparator sep;
     auto format_with_sep = [&](auto id) {
       out() << sep;
-      FormatArg(id);
+      if (id.has_value()) {
+        FormatArg(id);
+      } else {
+        out() << "none";
+      }
     };
     std::apply([&](auto... id) -> void { (..., format_with_sep(id)); },
                sem_ir_->bundles().GetAsTuple(bundle_id));

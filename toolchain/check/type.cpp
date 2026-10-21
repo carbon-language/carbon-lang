@@ -4,12 +4,15 @@
 
 #include "toolchain/check/type.h"
 
+#include "toolchain/check/control_flow.h"
 #include "toolchain/check/eval.h"
 #include "toolchain/check/facet_type.h"
+#include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/type_completion.h"
-#include "toolchain/sem_ir/facet_type_info.h"
+#include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
+#include "toolchain/sem_ir/type_info.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
@@ -41,6 +44,36 @@ auto ValidateIntType(Context& context, SemIR::LocId loc_id,
     context.emitter().Emit(loc_id, IntWidthTooLarge,
                            {.type = bit_width->type_id, .value = bit_width_val},
                            IntStore::MaxIntWidth);
+    return false;
+  }
+  return true;
+}
+
+auto ValidateArrayType(Context& context, SemIR::LocId loc_id,
+                       SemIR::ArrayType result) -> bool {
+  auto int_bound = context.insts().TryGetAs<SemIR::IntValue>(result.bound_id);
+  if (!int_bound) {
+    // Symbolic or erroneous bound.
+    return result.bound_id != SemIR::ErrorInst::InstId;
+  }
+
+  // TODO: We should check that the size of the resulting array type
+  // fits in 64 bits, not just that the bound does. Should we use a
+  // 32-bit limit for 32-bit targets?
+  const auto& bound_val = context.ints().Get(int_bound->int_id);
+  if (context.types().IsSignedInt(int_bound->type_id) &&
+      bound_val.isNegative()) {
+    CARBON_DIAGNOSTIC(ArrayBoundNegative, Error,
+                      "array bound of {0} is negative", TypedInt);
+    context.emitter().Emit(loc_id, ArrayBoundNegative,
+                           {.type = int_bound->type_id, .value = bound_val});
+    return false;
+  }
+  if (bound_val.getActiveBits() > 64) {
+    CARBON_DIAGNOSTIC(ArrayBoundTooLarge, Error,
+                      "array bound of {0} is too large", TypedInt);
+    context.emitter().Emit(loc_id, ArrayBoundTooLarge,
+                           {.type = int_bound->type_id, .value = bound_val});
     return false;
   }
   return true;
@@ -177,6 +210,12 @@ auto GetClassType(Context& context, SemIR::ClassId class_id,
   return GetTypeImpl<SemIR::ClassType>(context, class_id, specific_id);
 }
 
+auto GetCppFunctionPointerType(Context& context,
+                               SemIR::ClangFunctionPointerTypeId clang_type_id)
+    -> SemIR::TypeId {
+  return GetTypeImpl<SemIR::CppFunctionPointerType>(context, clang_type_id);
+}
+
 auto GetCppOverloadSetType(Context& context,
                            SemIR::CppOverloadSetId overload_set_id,
                            SemIR::SpecificId specific_id) -> SemIR::TypeId {
@@ -202,11 +241,11 @@ auto GetFunctionTypeWithSelfType(Context& context,
       context, interface_function_type_id, self_id);
 }
 
-auto GetGenericClassType(Context& context, SemIR::ClassId class_id,
-                         SemIR::SpecificId enclosing_specific_id)
+auto GetParameterizedClassType(Context& context, SemIR::ClassId class_id,
+                               SemIR::SpecificId enclosing_specific_id)
     -> SemIR::TypeId {
-  return GetCompleteTypeImpl<SemIR::GenericClassType>(context, class_id,
-                                                      enclosing_specific_id);
+  return GetCompleteTypeImpl<SemIR::ParameterizedClassType>(
+      context, class_id, enclosing_specific_id);
 }
 
 auto GetGenericInterfaceType(Context& context, SemIR::InterfaceId interface_id,
@@ -227,8 +266,8 @@ auto GetGenericNamedConstraintType(Context& context,
 auto GetInterfaceType(Context& context, SemIR::InterfaceId interface_id,
                       SemIR::SpecificId specific_id) -> SemIR::TypeId {
   return GetTypeImpl<SemIR::FacetType>(
-      context,
-      FacetTypeFromInterface(context, interface_id, specific_id).facet_type_id);
+      context, FacetTypeFromInterface(context, interface_id, specific_id)
+                   .declared_facet_type_id);
 }
 
 auto GetNamedConstraintType(Context& context,
@@ -237,13 +276,14 @@ auto GetNamedConstraintType(Context& context,
   return GetTypeImpl<SemIR::FacetType>(
       context,
       FacetTypeFromNamedConstraint(context, named_constraint_id, specific_id)
-          .facet_type_id);
+          .declared_facet_type_id);
 }
 
-auto GetFacetType(Context& context, const SemIR::FacetTypeInfo& info)
+auto GetFacetType(Context& context,
+                  const SemIR::DeclaredFacetType& declared_facet_type)
     -> SemIR::TypeId {
-  return GetTypeImpl<SemIR::FacetType>(context,
-                                       context.facet_types().Add(info));
+  return GetTypeImpl<SemIR::FacetType>(
+      context, context.declared_facet_types().Add(declared_facet_type));
 }
 
 auto GetFacetAccessType(Context& context, SemIR::InstId facet_value_inst_id)
@@ -256,13 +296,19 @@ auto GetPointerType(Context& context, SemIR::TypeInstId pointee_type_id)
   return GetCompleteTypeImpl<SemIR::PointerType>(context, pointee_type_id);
 }
 
-auto GetArrayType(Context& context, SemIR::InstId bound_id,
-                  SemIR::TypeInstId element_type_inst_id) -> SemIR::TypeId {
-  SemIR::ArrayType inst = {.type_id = SemIR::TypeType::TypeId,
-                           .bound_id = bound_id,
-                           .element_type_inst_id = element_type_inst_id};
-  return context.types().GetTypeIdForTypeConstantId(
-      EvalOrAddInst(context, SemIR::LocIdAndInst::NoLoc(inst)));
+auto TryGetAsArrayType(Context& context, SemIR::LocId loc_id,
+                       SemIR::TypeId type_id)
+    -> std::optional<SemIR::ArrayType> {
+  if (auto class_type = context.types().TryGetAs<SemIR::ClassType>(type_id);
+      class_type &&
+      SemIR::RecognizedTypeInfo::ForType(context.sem_ir(), *class_type).kind ==
+          SemIR::RecognizedTypeInfo::Array) {
+    // Resolve the definition of the specific class so we can determine which
+    // type is being adapted.
+    ResolveSpecificDefinition(context, loc_id, class_type->specific_id);
+    type_id = context.types().GetAdaptedType(type_id);
+  }
+  return context.types().TryGetAs<SemIR::ArrayType>(type_id);
 }
 
 auto GetPatternType(Context& context, SemIR::TypeId scrutinee_type_id)
@@ -282,7 +328,7 @@ auto GetUnboundElementType(Context& context, SemIR::TypeInstId class_type_id,
                                                 element_type_id);
 }
 
-auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
+auto GetCanonicalFacet(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
   CARBON_DCHECK(const_inst_id.has_value());
@@ -295,17 +341,28 @@ auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::InstId inst_id)
   return const_inst_id;
 }
 
-auto GetCanonicalFacetOrTypeValue(Context& context, SemIR::ConstantId const_id)
+auto GetCanonicalFacet(Context& context, SemIR::ConstantId const_id)
     -> SemIR::ConstantId {
-  return context.constant_values().Get(GetCanonicalFacetOrTypeValue(
+  return context.constant_values().Get(GetCanonicalFacet(
       context, context.constant_values().GetInstId(const_id)));
 }
 
-auto TryGetCanonicalFacetValue(Context& context, SemIR::InstId inst_id)
+auto TryGetCanonicalFacet(Context& context, SemIR::InstId inst_id)
     -> SemIR::InstId {
-  if (context.insts().Get(inst_id).type_id() == SemIR::TypeType::TypeId) {
-    return GetCanonicalFacetOrTypeValue(context, inst_id);
+  if (context.insts().Get(inst_id).type_id() != SemIR::TypeType::TypeId) {
+    return SemIR::InstId::None;
   }
+
+  auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
+  if (!const_inst_id.has_value()) {
+    return SemIR::InstId::None;
+  }
+
+  if (auto access =
+          context.insts().TryGetAs<SemIR::FacetAccessType>(const_inst_id)) {
+    return access->facet_value_inst_id;
+  }
+
   return SemIR::InstId::None;
 }
 

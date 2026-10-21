@@ -34,7 +34,6 @@ load(
 load("@llvm-project//libcxx:libcxx_library.bzl", "libcxx_and_abi_copts")
 load("@llvm-project//libunwind:libunwind_library.bzl", "libunwind_copts")
 load("@rules_python//python:defs.bzl", "py_test")
-load("//bazel/carbon_rules:defs.bzl", "carbon_prelude")
 load("//bazel/cc_rules:defs.bzl", "cc_binary", "cc_library", "cc_test")
 load(
     "//bazel/cc_toolchains:carbon_bootstrapping.bzl",
@@ -42,13 +41,13 @@ load(
     "filegroup_with_stage",
     "gen_cc_toolchain_paths_with_stage",
 )
+load("//bazel/cc_toolchains:make_include_copts.bzl", "make_include_copts")
 load("//bazel/manifest:defs.bzl", "manifest")
 load(
     "//toolchain/base:runtimes_build_info.bzl",
     "generate_runtimes_build_vars",
 )
-load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_runtimes_config")
-load("bazel/make_include_copts.bzl", "make_include_copts")
+load("//toolchain/runtimes:carbon_runtimes.bzl", "carbon_prelude", "carbon_runtimes_config")
 load(
     "install_filegroups.bzl",
     "filtered_toolchain_files",
@@ -324,7 +323,6 @@ toolchain_files(
         "bazel/carbon_clang_variables.bzl",
         "bazel/carbon_detected_variables.tpl.bzl",
         "bazel/carbon_toolchain.bzl",
-        "bazel/make_include_copts.bzl",
     ],
 )
 
@@ -568,6 +566,16 @@ cc_library(
 
         # TODO: Remove this once we are building sanitizer runtime libraries.
         "-fno-sanitize=all",
+
+        # While the toolchain is built without exceptions, libc++ internally
+        # must be built with them enabled. It's explicitly allowed to build the
+        # libc++ and libc++abi library implementations with different flags
+        # than the client (our toolchain) uses, even though they both include
+        # the same headers from the libraries.
+        "-fexceptions",
+        # Like exceptions, these libraries are built internally with RTTI
+        # enabled, while the toolchain is built without.
+        "-frtti",
     ],
     hdrs_check = "strict",
     includes = [

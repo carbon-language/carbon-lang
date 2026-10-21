@@ -15,23 +15,23 @@
 var x: {.a = 0, b: i32} = {};
 
 // CHECK:STDOUT: - filename: fail_mix_value_and_type.carbon
-// CHECK:STDOUT:   parse_tree: [
-// CHECK:STDOUT:     {kind: 'FileStart', text: ''},
-// CHECK:STDOUT:       {kind: 'VariableIntroducer', text: 'var'},
-// CHECK:STDOUT:           {kind: 'IdentifierNameNotBeforeSignature', text: 'x'},
-// CHECK:STDOUT:             {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:                 {kind: 'IdentifierNameNotBeforeSignature', text: 'a'},
-// CHECK:STDOUT:               {kind: 'StructFieldDesignator', text: '.', subtree_size: 2},
-// CHECK:STDOUT:               {kind: 'IntLiteral', text: '0'},
-// CHECK:STDOUT:             {kind: 'StructLiteralField', text: '=', subtree_size: 4},
-// CHECK:STDOUT:             {kind: 'StructLiteralComma', text: ','},
-// CHECK:STDOUT:             {kind: 'InvalidParse', text: 'b', has_error: yes},
-// CHECK:STDOUT:           {kind: 'StructLiteral', text: '}', has_error: yes, subtree_size: 8},
-// CHECK:STDOUT:         {kind: 'VarBindingPattern', text: ':', subtree_size: 10},
-// CHECK:STDOUT:       {kind: 'VariablePattern', text: 'var', subtree_size: 11},
-// CHECK:STDOUT:       {kind: 'VariableInitializer', text: '='},
-// CHECK:STDOUT:         {kind: 'StructLiteralStart', text: '{'},
-// CHECK:STDOUT:       {kind: 'StructLiteral', text: '}', subtree_size: 2},
-// CHECK:STDOUT:     {kind: 'VariableDecl', text: ';', subtree_size: 16},
-// CHECK:STDOUT:     {kind: 'FileEnd', text: ''},
-// CHECK:STDOUT:   ]
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │   │ │   ╭─IdentifierNameNotBeforeSignature 'a'
+// CHECK:STDOUT:   │ │   │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │   │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │   │ ├─StructLiteralField '='
+// CHECK:STDOUT:   │ │   │ ├─StructLiteralComma ','
+// CHECK:STDOUT:   │ │   │ ├─InvalidParse 'b' has_error
+// CHECK:STDOUT:   │ │   ├─StructLiteral '}' has_error
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
+// CHECK:STDOUT:   │ ├─VariableInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)

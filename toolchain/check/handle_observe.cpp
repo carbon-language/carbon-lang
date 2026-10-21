@@ -58,9 +58,8 @@ auto HandleParseNode(Context& context, Parse::ObserveEqualEqualId node_id)
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::ObserveEquivalent>(
           context, node_id,
-          {.lhs_id = GetCanonicalFacetOrTypeValue(context, lhs_as_type.inst_id),
-           .rhs_id =
-               GetCanonicalFacetOrTypeValue(context, rhs_as_type.inst_id)}));
+          {.lhs_id = GetCanonicalFacet(context, lhs_as_type.inst_id),
+           .rhs_id = GetCanonicalFacet(context, rhs_as_type.inst_id)}));
   return true;
 }
 
@@ -90,9 +89,8 @@ auto HandleParseNode(Context& context, Parse::ObserveImplsId node_id) -> bool {
   context.args_type_info_stack().AddInstId(
       AddInstInNoBlock<SemIR::ObserveImpls>(
           context, node_id,
-          {.lhs_id = GetCanonicalFacetOrTypeValue(context, lhs_as_type.inst_id),
-           .rhs_id =
-               GetCanonicalFacetOrTypeValue(context, rhs_as_type.inst_id)}));
+          {.lhs_id = GetCanonicalFacet(context, lhs_as_type.inst_id),
+           .rhs_id = GetCanonicalFacet(context, rhs_as_type.inst_id)}));
   return true;
 }
 
