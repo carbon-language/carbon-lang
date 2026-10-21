@@ -359,8 +359,17 @@ static auto ExportClassSpecificToCpp(Context& context, SemIR::LocId loc_id,
     // TODO: also handle non-type args. Such args can't happen here yet, since
     // the `ExportGenericClassToCpp` call above already checks for them.
 
-    auto cpp_type = MapToCppType(
-        context, context.types().GetTypeIdForTypeInstId(specific_arg_inst_id));
+    // Extract the access type from constrained types.
+    SemIR::TypeId specific_arg_type_id = SemIR::TypeId::None;
+    if (context.types().IsConstrainedFacetType(
+            context.insts().GetAttachedType(specific_arg_inst_id))) {
+      specific_arg_type_id = GetFacetAccessType(context, specific_arg_inst_id);
+    } else {
+      specific_arg_type_id =
+          context.types().GetTypeIdForTypeInstId(specific_arg_inst_id);
+    }
+
+    auto cpp_type = MapToCppType(context, specific_arg_type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map specific type arg to C++");
       return nullptr;
