@@ -144,7 +144,7 @@ static constexpr llvm::StringLiteral PlanConds[] = {"{0} > 3", "{0} < 9",
 // returns or exits with is one depth below the guard, and isn't listed.
 struct DefPlan {
   llvm::SmallVector<llvm::SmallVector<PlanStmt>> levels;
-  // The number of lines, and of locals, in the plan's statements.
+  // The number of lines and locals in the plan's statements.
   int lines = 0;
   int locals = 0;
 };
@@ -1831,7 +1831,7 @@ auto SourceGen::EmitFunctionDecl(llvm::StringRef name, bool is_private,
 //
 // The declaration can be configured with a function name, private modifier,
 // whether it is a method, the parameter count, and how indented it is. Its
-// parameter names and types come from `state`. With `captured`, the declaration
+// parameter names and types come from `state`. When `captured` is not null, the declaration
 // has an out-of-line definition, and records its signature in `captured`.
 auto SourceGen::GenerateFunctionDecl(ClassGenState& state, llvm::StringRef name,
                                      bool is_private, bool is_method,
@@ -1883,9 +1883,9 @@ struct ArrangedStmt {
   int first_block = -1;
 };
 
-// A block of an arranged definition: its statements, and whether it is a loop's
-// block.
+// A block of an arranged definition
 struct ArrangedBlock {
+  // <FIXME: how is a statement an integer?>
   llvm::SmallVector<int> stmts;
   bool is_loop_block = false;
 };

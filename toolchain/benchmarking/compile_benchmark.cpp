@@ -418,7 +418,7 @@ static auto BM_CompileExecApiFileDenseDecls(benchmark::State& state) -> void {
 
 // Applies the range configuration of the dense declarations benchmarks:
 // 256-line test cases through 256k-line test cases.
-static auto ConfigureCompileBenchmark(benchmark::Benchmark* b) -> void {
+static auto ConfigureDenseDeclBenchmark(benchmark::Benchmark* b) -> void {
   b->RangeMultiplier(4)->Range(256, static_cast<int64_t>(256 * 1024));
 }
 
