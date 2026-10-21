@@ -2096,7 +2096,7 @@ let five: f32 = p->Distance(3, 4);
 // from `const Point` API.
 p->Offset(3, 4);
 
-// ❌ Error: mutating method `AssignAdd.Op`
+// ❌ Error: mutating method `AddAssignWith.AddAssignWith`
 // excluded from `const i32` API.
 p->x += 2;
 ```
@@ -2628,8 +2628,8 @@ or [named constraint](generics/details.md#named-constraints), possibly renamed:
 
 ```carbon
 class ContactInfo {
-  impl as Printable;
-  impl as ToPrinterDevice;
+  impl Self as Printable;
+  impl Self as ToPrinterDevice;
   alias PrintToScreen = Printable.Print;
   alias PrintToPrinter = ToPrinterDevice.Print;
   ...
@@ -2899,7 +2899,7 @@ class Circle {
 
   // This `impl` declaration establishes that `Circle` implements
   // `Printable`.
-  impl as Printable {
+  impl Self as Printable {
     fn Print(self) {
       Core.Print("Circle with radius: {0}", self.radius);
     }
@@ -2934,8 +2934,8 @@ In this case, `Print` is not a direct member of `Circle`, but:
 
 To include the members of the interface as direct members of the type, use the
 [`extend`](generics/details.md#extend-impl) keyword, as in
-`extend impl as Printable`. This is only permitted on `impl` declarations in the
-body of a class definition.
+`extend impl Self as Printable` (or `extend impl fn ...`). This is only
+permitted on `impl` declarations in the body of a class definition.
 
 Without `extend`, implementations don't have to be in the same library as the
 type definition, subject to the [orphan rule](generics/details.md#orphan-rule)
@@ -3019,7 +3019,7 @@ semantics similar to C++ templates.
 ```carbon
 class Game {
   fn Draw(self) -> bool;
-  impl as Renderable {
+  impl Self as Renderable {
     fn Draw(self);
   }
 }
@@ -3083,14 +3083,14 @@ for the `ElementType` member of the interface using a `where` clause:
 
 ```carbon
 class IntStack {
-  extend impl as StackInterface where .ElementType = i32 {
+  extend impl Self as StackInterface where .ElementType = i32 {
     fn Push(ref self, value: i32);
     // ...
   }
 }
 
 class FruitStack {
-  extend impl as StackInterface where .ElementType = Fruit {
+  extend impl Self as StackInterface where .ElementType = Fruit {
     fn Push(ref self, value: Fruit);
     // ...
   }
@@ -3317,7 +3317,7 @@ declaration may be used to
 
 Uses of an operator in an [expression](#expressions) is translated into a call
 to a method of an interface. For example, if `x` has type `T` and `y` has type
-`U`, then `x + y` is translated into a call to `x.(AddWith(U).Op)(y)`. So
+`U`, then `x + y` is translated into a call to `x.(AddWith(U).AddWith)(y)`. So
 overloading of the `+` operator is accomplished by implementing interface
 `AddWith(U)` for type `T`. In order to support
 [implicit conversion](expressions/implicit_conversions.md) of the first operand
@@ -3325,19 +3325,16 @@ to type `T` and the second argument to type `U`, add the `like` keyword to both
 types in the `impl` declaration, as in:
 
 ```carbon
-impl like T as AddWith(like U) where .Result = V {
-  // `Self` is `T` here
-  fn Op(self, other: U) -> V { ... }
-}
+impl like T as AddWith(like U)
+    // `Self` is `T` here
+    fn (self, other: U) -> V { ... }
 ```
 
 When the operand types and result type are all the same, this is equivalent to
-implementing the `Add` interface:
+implementing the `Add` constraint:
 
 ```carbon
-impl T as Add {
-  fn Op(self, other: Self) -> Self { ... }
-}
+impl T as Add fn (self, other: Self) -> Self { ... }
 ```
 
 The interfaces that correspond to each operator are given by:
@@ -3406,6 +3403,8 @@ implementing corresponding interfaces for the value's type.
 >     [#1191: Bitwise operators](https://github.com/carbon-language/carbon-lang/pull/1191)
 > -   Proposal
 >     [#1178: Rework operator interfaces](https://github.com/carbon-language/carbon-lang/pull/1178)
+> -   Proposal
+>     [#7896: Abbreviated `interface` and `impl` syntax](https://github.com/carbon-language/carbon-lang/pull/7896)
 
 #### Common type
 

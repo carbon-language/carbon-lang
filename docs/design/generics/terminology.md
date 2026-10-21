@@ -747,7 +747,7 @@ class Fruit;
 class FruitStack {
   // Implement `Stack` for `FruitStack`
   // with `ElementType` set to `Fruit`.
-  extend impl as Stack where .ElementType == Fruit { ... }
+  extend impl Self as Stack where .ElementType == Fruit { ... }
 }
 ```
 
