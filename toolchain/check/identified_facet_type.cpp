@@ -11,6 +11,7 @@
 #include "toolchain/check/generic.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/subst.h"
+#include "toolchain/sem_ir/specific_interface.h"
 
 namespace Carbon::Check {
 
@@ -36,26 +37,26 @@ static auto InterfaceLess(const SemIR::SpecificInterface& lhs,
 // Canonically ordered by the numerical ids.
 static auto RequiredLess(const IdentifiedFacetType::RequiredImpl& lhs,
                          const IdentifiedFacetType::RequiredImpl& rhs) -> bool {
-  return std::tie(lhs.self_facet_value.index,
-                  lhs.specific_interface.interface_id.index,
-                  lhs.specific_interface.specific_id.index) <
-         std::tie(rhs.self_facet_value.index,
-                  rhs.specific_interface.interface_id.index,
-                  rhs.specific_interface.specific_id.index);
+  return std::tuple(lhs.self_facet.RawValue().index,
+                    lhs.interface.RawValue().interface_id.index,
+                    lhs.interface.RawValue().specific_id.index) <
+         std::tuple(rhs.self_facet.RawValue().index,
+                    rhs.interface.RawValue().interface_id.index,
+                    rhs.interface.RawValue().specific_id.index);
 }
 
 // Canonically ordered by the numerical ids.
 static auto RewriteLess(const IdentifiedFacetType::Rewrite& lhs,
                         const IdentifiedFacetType::Rewrite& rhs) -> bool {
-  return std::tie(lhs.lhs.index, lhs.rhs.index) <
-         std::tie(rhs.lhs.index, rhs.rhs.index);
+  return std::tuple(lhs.lhs.RawValue().index, lhs.rhs.RawValue().index) <
+         std::tuple(rhs.lhs.RawValue().index, rhs.rhs.RawValue().index);
 }
 
 // Canonically ordered by the numerical ids.
 static auto EquivalentLess(const IdentifiedFacetType::Equivalent& lhs,
                            const IdentifiedFacetType::Equivalent& rhs) -> bool {
-  return std::tie(lhs.lhs.index, lhs.rhs.index) <
-         std::tie(rhs.lhs.index, rhs.rhs.index);
+  return std::tuple(lhs.lhs.RawValue().index, lhs.rhs.RawValue().index) <
+         std::tuple(rhs.lhs.RawValue().index, rhs.rhs.RawValue().index);
 }
 
 IdentifiedFacetType::IdentifiedFacetType(
@@ -66,20 +67,7 @@ IdentifiedFacetType::IdentifiedFacetType(
     : key_(key) {
   required_impls_.reserve(extends.size() + self_impls.size());
   llvm::append_range(required_impls_, extends);
-  SortAndDeduplicate(required_impls_, RequiredLess);
-
-  // If there's a single extended interface then we present as that interface.
-  // Otherwise, we record the number extended interfaces.
-  if (required_impls_.size() == 1) {
-    interface_id_ = required_impls_.front().specific_interface.interface_id;
-    specific_id_ = required_impls_.front().specific_interface.specific_id;
-  } else {
-    interface_id_ = SemIR::InterfaceId::None;
-    num_interface_to_impl_ = required_impls_.size();
-  }
-
   llvm::append_range(required_impls_, self_impls);
-  SortAndDeduplicate(required_impls_, RequiredLess);
   SortAndDeduplicate(required_impls_, RequiredLess);
 
   if (partially_identified) {
@@ -90,67 +78,16 @@ IdentifiedFacetType::IdentifiedFacetType(
     key_.num_require_impls = required_impls_.size();
   }
 
+  // We can drop the self facet for these as an extending impls requirement
+  // always contains the identified self.
+  llvm::append_range(
+      extend_impls_,
+      llvm::map_range(extends, [](RequiredImpl req) { return req.interface; }));
+
   rewrites_.assign(rewrites);
   SortAndDeduplicate(rewrites_, RewriteLess);
   equivalents_.assign(equivalents);
   SortAndDeduplicate(equivalents_, EquivalentLess);
-}
-
-auto AddCanonicalWitnessesBlock(Context& context,
-                                llvm::SmallVector<SemIR::InstId>& witnesses)
-    -> SemIR::InstBlockId {
-  // Small blocks don't need to be sorted.
-  if (witnesses.size() <= 1) {
-    return context.inst_blocks().AddCanonical(witnesses);
-  }
-
-  llvm::SmallVector<std::pair<SemIR::SpecificInterface, SemIR::InstId>>
-      sortable;
-  sortable.reserve(witnesses.size());
-
-  // Produce the sorted order based on the witness's SpecificInterface.
-  for (auto witness_id : witnesses) {
-    auto inst = context.insts().Get(witness_id);
-    CARBON_KIND_SWITCH(inst) {
-      case CARBON_KIND(SemIR::CustomWitness witness): {
-        sortable.push_back({context.specific_interfaces().Get(
-                                witness.query_specific_interface_id),
-                            witness_id});
-        break;
-      }
-      case CARBON_KIND(SemIR::ImplWitness witness): {
-        auto table = context.insts().GetAs<SemIR::ImplWitnessTable>(
-            witness.witness_table_id);
-        sortable.push_back(
-            {context.impls().Get(table.impl_id).interface, witness_id});
-        break;
-      }
-      case CARBON_KIND(SemIR::LookupImplWitness witness): {
-        sortable.push_back({context.specific_interfaces().Get(
-                                witness.query_specific_interface_id),
-                            witness_id});
-        break;
-      }
-      default:
-        CARBON_FATAL("Unhandled inst: {0}", inst);
-    }
-  }
-  // This matches the sort order of IdentifiedFacetType::required_interfaces,
-  // which is the order of the witnesses returned from impl lookup, and is
-  // canonical order in which the witnesses must appear for a given facet type
-  // so that ImplWitnessAccess can find the appropriate witness.
-  llvm::sort(sortable, [](auto& lhs, auto& rhs) {
-    return InterfaceLess(lhs.first, rhs.first);
-  });
-
-  // Update the original list with the new order (reusing to avoid an
-  // allocation).
-  for (auto [witness_id, sortable_entry] :
-       llvm::zip_equal(witnesses, sortable)) {
-    witness_id = sortable_entry.second;
-  }
-
-  return context.inst_blocks().AddCanonical(witnesses);
 }
 
 class EvaluateSubstCallbacks : public SubstInstCallbacks {
@@ -242,129 +179,35 @@ class EvaluateSubstCallbacks : public SubstInstCallbacks {
   SubstIdentifiedWitnessesCallbacks* subst_callbacks_;
 };
 
-auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
-                                 IdentifiedFacetType::RequiredImpl req)
-    -> IdentifiedFacetType::RequiredImpl {
-  if (context.eval_impl_lookup_to_identified_witness()) {
-    return req;
+auto IdentifiedFacetType::EvaluateImplWitnessesToGetImplAsTarget(
+    Context& context, SemIR::LocId loc_id) const -> ImplAsTarget {
+  llvm::SmallVector<SemIR::SpecificInterface> targets;
+  targets.reserve(extend_impls_.size());
+  for (auto interface : extend_impls_) {
+    targets.push_back(interface.EvaluateIdentifiedWitnesses(context, loc_id));
   }
-  EvaluateSubstCallbacks callbacks(&context, loc_id);
-  auto self_id = SubstInst(
-      context, context.constant_values().GetInstId(req.self_facet_value),
-      callbacks);
-  auto interface =
-      EvaluateIdentifiedWitnesses(context, loc_id, req.specific_interface);
-  return {.self_facet_value = context.constant_values().Get(self_id),
-          .specific_interface = interface};
+  SortAndDeduplicate(
+      targets, [](SemIR::SpecificInterface lhs, SemIR::SpecificInterface rhs) {
+        return std::tie(lhs.interface_id.index, lhs.specific_id.index) <
+               std::tie(rhs.interface_id.index, rhs.specific_id.index);
+      });
+  return ImplAsTarget(std::move(targets));
 }
 
-auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
-                                 IdentifiedFacetType::Rewrite rewrite)
-    -> IdentifiedFacetType::Rewrite {
+auto ConstantWithIdentifiedWitnesses::EvaluateIdentifiedWitnesses(
+    Context& context, SemIR::LocId loc_id) const -> SemIR::ConstantId {
   if (context.eval_impl_lookup_to_identified_witness()) {
-    return rewrite;
+    return const_id_;
   }
   EvaluateSubstCallbacks callbacks(&context, loc_id);
-  auto lhs_id = SubstInst(
-      context, context.constant_values().GetInstId(rewrite.lhs), callbacks);
-  auto rhs_id = SubstInst(
-      context, context.constant_values().GetInstId(rewrite.rhs), callbacks);
-  return {.lhs = context.constant_values().Get(lhs_id),
-          .rhs = context.constant_values().Get(rhs_id)};
-}
-
-auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
-                                 SemIR::SpecificInterface interface)
-    -> SemIR::SpecificInterface {
-  if (context.eval_impl_lookup_to_identified_witness()) {
-    return interface;
-  }
-  EvaluateSubstCallbacks callbacks(&context, loc_id);
-  auto specific_id = interface.specific_id;
-  if (specific_id.has_value()) {
-    const auto& specific = context.specifics().Get(specific_id);
-    llvm::SmallVector<SemIR::InstId> args(
-        context.inst_blocks().Get(specific.args_id));
-    for (auto& arg_id : args) {
-      arg_id = SubstInst(context, arg_id, callbacks);
-    }
-    specific_id = MakeSpecific(context, loc_id, specific.generic_id, args);
-  }
-  return {.interface_id = interface.interface_id, .specific_id = specific_id};
-}
-
-auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
-                                 SemIR::ConstantId const_id)
-    -> SemIR::ConstantId {
-  if (context.eval_impl_lookup_to_identified_witness()) {
-    return const_id;
-  }
-  EvaluateSubstCallbacks callbacks(&context, loc_id);
-  auto inst_id = context.constant_values().GetInstId(const_id);
-  inst_id = SubstInst(context, inst_id, callbacks);
+  auto inst_id = SubstInst(
+      context, context.constant_values().GetInstId(const_id_), callbacks);
   return context.constant_values().Get(inst_id);
 }
 
-auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
-                              IdentifiedFacetType::RequiredImpl req,
-                              SubstIdentifiedWitnessesCallbacks& callbacks)
-    -> IdentifiedFacetType::RequiredImpl {
-  // SubstIdentifiedWitnesses allows the caller to cleverly replace witnesses
-  // coming from identify with their own. If we do this in the middle of
-  // identify, it means there is another caller waiting for identify and they
-  // may also want to do their own replacements. This would be problematic! But
-  // since during identify we only create specifics, and resolving them through
-  // eval should not end up here, we make note of that.
-  CARBON_CHECK(!context.eval_impl_lookup_to_identified_witness(),
-               "SubstIdentifiedWitnesses called during identify");
-
-  EvaluateSubstCallbacks subst_callbacks(&context, loc_id, &callbacks);
-  auto self_id = SubstInst(
-      context, context.constant_values().GetInstId(req.self_facet_value),
-      subst_callbacks);
-
-  auto interface_id = req.specific_interface.interface_id;
-  auto specific_id = req.specific_interface.specific_id;
-  if (specific_id.has_value()) {
-    const auto& specific = context.specifics().Get(specific_id);
-    llvm::SmallVector<SemIR::InstId> args(
-        context.inst_blocks().Get(specific.args_id));
-    for (auto& arg_id : args) {
-      arg_id = SubstInst(context, arg_id, subst_callbacks);
-    }
-    specific_id = MakeSpecific(context, loc_id, specific.generic_id, args);
-  }
-  return {.self_facet_value = context.constant_values().Get(self_id),
-          .specific_interface = {.interface_id = interface_id,
-                                 .specific_id = specific_id}};
-}
-
-auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
-                              IdentifiedFacetType::Equivalent equiv,
-                              SubstIdentifiedWitnessesCallbacks& callbacks)
-    -> IdentifiedFacetType::Equivalent {
-  // SubstIdentifiedWitnesses allows the caller to cleverly replace witnesses
-  // coming from identify with their own. If we do this in the middle of
-  // identify, it means there is another caller waiting for identify and they
-  // may also want to do their own replacements. This would be problematic! But
-  // since during identify we only create specifics, and resolving them through
-  // eval should not end up here, we make note of that.
-  CARBON_CHECK(!context.eval_impl_lookup_to_identified_witness(),
-               "SubstIdentifiedWitnesses called during identify");
-
-  EvaluateSubstCallbacks subst_callbacks(&context, loc_id, &callbacks);
-  auto lhs_inst_id = SubstInst(
-      context, context.constant_values().GetInstId(equiv.lhs), subst_callbacks);
-  auto rhs_inst_id = SubstInst(
-      context, context.constant_values().GetInstId(equiv.rhs), subst_callbacks);
-  return {context.constant_values().Get(lhs_inst_id),
-          context.constant_values().Get(rhs_inst_id)};
-}
-
-auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
-                              SemIR::ConstantId const_id,
-                              SubstIdentifiedWitnessesCallbacks& callbacks)
-    -> SemIR::ConstantId {
+auto ConstantWithIdentifiedWitnesses::SubstIdentifiedWitnesses(
+    Context& context, SemIR::LocId loc_id,
+    SubstIdentifiedWitnessesCallbacks& callbacks) const -> SemIR::ConstantId {
   // SubstIdentifiedWitnesses allows the caller to cleverly replace witnesses
   // coming from identify with their own. If we do this in the middle of
   // identify, it means there is another caller waiting for identify and they
@@ -376,8 +219,118 @@ auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
 
   EvaluateSubstCallbacks subst_callbacks(&context, loc_id, &callbacks);
   auto inst_id = SubstInst(
-      context, context.constant_values().GetInstId(const_id), subst_callbacks);
+      context, context.constant_values().GetInstId(const_id_), subst_callbacks);
   return context.constant_values().Get(inst_id);
+}
+
+auto InterfaceWithIdentifiedWitnesses::EvaluateIdentifiedWitnesses(
+    Context& context, SemIR::LocId loc_id) const -> SemIR::SpecificInterface {
+  if (context.eval_impl_lookup_to_identified_witness()) {
+    return interface_;
+  }
+  EvaluateSubstCallbacks callbacks(&context, loc_id);
+  auto specific_id = interface_.specific_id;
+  if (specific_id.has_value()) {
+    const auto& specific = context.specifics().Get(specific_id);
+    llvm::SmallVector<SemIR::InstId> args(
+        context.inst_blocks().Get(specific.args_id));
+    for (auto& arg_id : args) {
+      arg_id = SubstInst(context, arg_id, callbacks);
+    }
+    specific_id = MakeSpecific(context, loc_id, specific.generic_id, args);
+  }
+  return {.interface_id = interface_.interface_id, .specific_id = specific_id};
+}
+
+auto InterfaceWithIdentifiedWitnesses::SubstIdentifiedWitnesses(
+    Context& context, SemIR::LocId loc_id,
+    SubstIdentifiedWitnessesCallbacks& callbacks) const
+    -> SemIR::SpecificInterface {
+  // SubstIdentifiedWitnesses allows the caller to cleverly replace witnesses
+  // coming from identify with their own. If we do this in the middle of
+  // identify, it means there is another caller waiting for identify and they
+  // may also want to do their own replacements. This would be problematic! But
+  // since during identify we only create specifics, and resolving them through
+  // eval should not end up here, we make note of that.
+  CARBON_CHECK(!context.eval_impl_lookup_to_identified_witness(),
+               "SubstIdentifiedWitnesses called during identify");
+
+  EvaluateSubstCallbacks subst_callbacks(&context, loc_id, &callbacks);
+  auto specific_id = interface_.specific_id;
+  if (specific_id.has_value()) {
+    const auto& specific = context.specifics().Get(specific_id);
+    llvm::SmallVector<SemIR::InstId> args(
+        context.inst_blocks().Get(specific.args_id));
+    for (auto& arg_id : args) {
+      arg_id = SubstInst(context, arg_id, subst_callbacks);
+    }
+    specific_id = MakeSpecific(context, loc_id, specific.generic_id, args);
+  }
+  return {.interface_id = interface_.interface_id, .specific_id = specific_id};
+}
+
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::SpecificInterface interface)
+    -> SemIR::SpecificInterface {
+  return InterfaceWithIdentifiedWitnesses(interface)
+      .EvaluateIdentifiedWitnesses(context, loc_id);
+}
+
+auto AddCanonicalWitnessesBlock(Context& context,
+                                llvm::SmallVector<SemIR::InstId>& witnesses)
+    -> SemIR::InstBlockId {
+  // Small blocks don't need to be sorted.
+  if (witnesses.size() <= 1) {
+    return context.inst_blocks().AddCanonical(witnesses);
+  }
+
+  llvm::SmallVector<std::pair<SemIR::SpecificInterface, SemIR::InstId>>
+      sortable;
+  sortable.reserve(witnesses.size());
+
+  // Produce the sorted order based on the witness's SpecificInterface.
+  for (auto witness_id : witnesses) {
+    auto inst = context.insts().Get(witness_id);
+    CARBON_KIND_SWITCH(inst) {
+      case CARBON_KIND(SemIR::CustomWitness witness): {
+        sortable.push_back({context.specific_interfaces().Get(
+                                witness.query_specific_interface_id),
+                            witness_id});
+        break;
+      }
+      case CARBON_KIND(SemIR::ImplWitness witness): {
+        auto table = context.insts().GetAs<SemIR::ImplWitnessTable>(
+            witness.witness_table_id);
+        sortable.push_back(
+            {context.impls().Get(table.impl_id).interface, witness_id});
+        break;
+      }
+      case CARBON_KIND(SemIR::LookupImplWitness witness): {
+        sortable.push_back({context.specific_interfaces().Get(
+                                witness.query_specific_interface_id),
+                            witness_id});
+        break;
+      }
+      default:
+        CARBON_FATAL("Unhandled inst: {0}", inst);
+    }
+  }
+  // This matches the sort order of IdentifiedFacetType::required_interfaces,
+  // which is the order of the witnesses returned from impl lookup, and is
+  // canonical order in which the witnesses must appear for a given facet type
+  // so that ImplWitnessAccess can find the appropriate witness.
+  llvm::sort(sortable, [](auto& lhs, auto& rhs) {
+    return InterfaceLess(lhs.first, rhs.first);
+  });
+
+  // Update the original list with the new order (reusing to avoid an
+  // allocation).
+  for (auto [witness_id, sortable_entry] :
+       llvm::zip_equal(witnesses, sortable)) {
+    witness_id = sortable_entry.second;
+  }
+
+  return context.inst_blocks().AddCanonical(witnesses);
 }
 
 }  // namespace Carbon::Check

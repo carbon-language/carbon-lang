@@ -321,7 +321,7 @@ static auto TryFindValueInRewriteConstraints(
   for (auto rewrite : access_identified.rewrites()) {
     auto rewrite_lhs_access =
         context.constant_values().TryGetInstAs<SemIR::ImplWitnessAccess>(
-            rewrite.lhs);
+            rewrite.lhs.RawValue());
     if (!rewrite_lhs_access) {
       continue;
     }
@@ -415,7 +415,7 @@ static auto TryFindValueInRewriteConstraints(
       continue;
     }
 
-    return EvaluateIdentifiedWitnesses(context, loc_id, rewrite.rhs);
+    return rewrite.rhs.EvaluateIdentifiedWitnesses(context, loc_id);
   }
 
   return SemIR::ConstantId::None;

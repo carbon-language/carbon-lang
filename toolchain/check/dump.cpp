@@ -110,23 +110,18 @@ LLVM_DUMP_METHOD static auto Dump(
 
   const auto& identified_facet_type =
       context.identified_facet_types().Get(identified_facet_type_id);
-  for (auto [i, req_impl] :
-       llvm::enumerate(identified_facet_type.required_impls())) {
+  for (auto req_impl : identified_facet_type.required_impls()) {
     auto [self, req_interface] = req_impl;
-    out << "\n  - self: " << DumpConstantSummary(context.sem_ir(), self);
+    out << "\n  - self: "
+        << DumpConstantSummary(context.sem_ir(), self.RawValue());
     out << "\n    impls: "
-        << DumpInterfaceSummary(context.sem_ir(), req_interface.interface_id);
-    if (req_interface.specific_id.has_value()) {
+        << DumpInterfaceSummary(context.sem_ir(),
+                                req_interface.RawValue().interface_id);
+    if (req_interface.RawValue().specific_id.has_value()) {
       out << "; "
-          << DumpSpecificSummary(context.sem_ir(), req_interface.specific_id);
+          << DumpSpecificSummary(context.sem_ir(),
+                                 req_interface.RawValue().specific_id);
     }
-    if (req_interface == identified_facet_type.impl_as_target_interface()) {
-      out << "\n     - `impl as` target";
-    }
-  }
-  if (!identified_facet_type.is_valid_impl_as_target()) {
-    out << "\n  - " << identified_facet_type.num_interfaces_to_impl()
-        << " possible `impl as` targets";
   }
   return out.TakeStr();
 }

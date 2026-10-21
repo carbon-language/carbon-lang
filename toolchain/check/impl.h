@@ -96,12 +96,12 @@ auto CheckConstraintIsFacetType(Context& context, SemIR::LocId loc_id,
 
 // Checks that the constraint specified for the impl is a valid, identified
 // facet type that extends a single interface. Returns the IdentifiedFacetType
-// which contains the interface that the impl implements. On error, issues a
+// and the single interface that the impl implements. On error, issues a
 // diagnostic and returns `None`.
 auto CheckConstraintIsInterface(Context& context, SemIR::LocId loc_id,
                                 SemIR::InstId self_id,
                                 SemIR::TypeInstId full_constraint_id)
-    -> IdentifiedFacetTypeId;
+    -> std::pair<IdentifiedFacetTypeId, SemIR::SpecificInterface>;
 
 // Given a specific for the impl, returns the specific interface that the impl
 // declaration is implementing. Returns None in the case of an error being
