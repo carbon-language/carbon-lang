@@ -43,9 +43,7 @@ fn F(generic B: Y) {
   // Y` since the identified facet type doesn't include Z. We need to be able to
   // find a symbolic facet from the require decl in Y during impl lookup.
   //
-  // CHECK:STDERR: fail_todo_symbolic_facet_interface_requires_interface.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Z(B)` in type `B` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   B.F();
-  // CHECK:STDERR:   ^~~
+  // CHECK:STDERR: fail_todo_symbolic_facet_interface_requires_interface.carbon:[[@LINE+2]]:3-5: error: cannot access member of interface `Z(B)` in type `B` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   B.F();
 }
@@ -91,6 +89,8 @@ fn F(generic B: Y) {
 // CHECK:STDOUT:   %Z.assoc_type.4e0: type = assoc_entity_type @Z, @Z(%A.as_type) [symbolic]
 // CHECK:STDOUT:   %assoc0.de7: %Z.assoc_type.4e0 = assoc_entity element0, imports.%Main.import_ref.7eb [symbolic]
 // CHECK:STDOUT:   %assoc0.a64: %Z.assoc_type.795 = assoc_entity element0, imports.%Main.import_ref.f35 [symbolic]
+// CHECK:STDOUT:   %Z.type.67e: type = facet_type <@Z, @Z(%A.as_type):identified> [symbolic]
+// CHECK:STDOUT:   %require_complete.d81: <witness> = require_complete_type %Z.type.67e [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %A, @Z, @Z(%A.as_type) [symbolic]
 // CHECK:STDOUT:   %Z.facet: %Z.type.56f318.2 = facet_value %A.as_type, (%Z.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %Z.WithSelf.F.type.20b: type = fn_type @Z.WithSelf.F, @Z.WithSelf(%A.as_type, %Z.facet) [symbolic]
@@ -320,18 +320,23 @@ fn F(generic B: Y) {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.de7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X.WithSelf(constants.%A) [identified] {
+// CHECK:STDOUT: specific @X.WithSelf(constants.%A):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%A
 // CHECK:STDOUT:   %Self.as_type => constants.%A.as_type
-// CHECK:STDOUT:   %Z.type => constants.%Z.type.56f318.2
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.327231.2
+// CHECK:STDOUT:   %Z.type => constants.%Z.type.67e
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.d81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @X.WithSelf.Self.as_type.impls.Z.type.require(constants.%A) [identified] {
+// CHECK:STDOUT: specific @Z(constants.%A.as_type):identified {
+// CHECK:STDOUT:   %T.patt => constants.%T.patt
+// CHECK:STDOUT:   %T => constants.%A.as_type
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @X.WithSelf.Self.as_type.impls.Z.type.require(constants.%A):identified {
 // CHECK:STDOUT:   %Self => constants.%A
 // CHECK:STDOUT:   %Self.as_type => constants.%A.as_type
-// CHECK:STDOUT:   %Z.type => constants.%Z.type.56f318.2
+// CHECK:STDOUT:   %Z.type => constants.%Z.type.67e
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%A.as_type, constants.%Z.facet) {

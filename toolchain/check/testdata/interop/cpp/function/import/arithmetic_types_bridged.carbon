@@ -123,9 +123,7 @@ import Cpp library "wchar_t_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_wchar_t_param.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: wchar_t` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo('X');
-  // CHECK:STDERR:   ^~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_wchar_t_param.carbon:[[@LINE+2]]:3-14: error: semantics TODO: `Unsupported: parameter type: wchar_t` [SemanticsTodo]
   // CHECK:STDERR:
   Cpp.foo('X');
   //@dump-sem-ir-end
@@ -143,10 +141,8 @@ auto foo(char8_t c) -> void;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_import_char8_t_param.carbon:[[@LINE+5]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: included from: fail_todo_import_char8_t_param.carbon:[[@LINE+3]]:10 [InCppInclude]
 // CHECK:STDERR: ./char8_t_param.h:2:10: error: unknown type name 'char8_t' [CppInteropParseError]
-// CHECK:STDERR:     2 | auto foo(char8_t c) -> void;
-// CHECK:STDERR:       |          ^
 // CHECK:STDERR:
 import Cpp library "char8_t_param.h";
 
@@ -172,9 +168,7 @@ import Cpp library "char16_t_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_char16_t_param.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: char16_t` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(1);
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_char16_t_param.carbon:[[@LINE+2]]:3-12: error: semantics TODO: `Unsupported: parameter type: char16_t` [SemanticsTodo]
   // CHECK:STDERR:
   Cpp.foo(1);
   //@dump-sem-ir-end
@@ -196,9 +190,7 @@ import Cpp library "char32_t_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_char32_t_param.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: char32_t` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(1);
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_char32_t_param.carbon:[[@LINE+2]]:3-12: error: semantics TODO: `Unsupported: parameter type: char32_t` [SemanticsTodo]
   // CHECK:STDERR:
   Cpp.foo(1);
   //@dump-sem-ir-end
@@ -242,13 +234,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_overflow_max.carbon:[[@LINE+8]]:11: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
-  // CHECK:STDERR:   Cpp.foo(0x8000);
-  // CHECK:STDERR:           ^~~~~~
-  // CHECK:STDERR: fail_import_short_param_overflow_max.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_short_param_overflow_max.carbon:[[@LINE+4]]:11-16: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
+  // CHECK:STDERR: included from: fail_import_short_param_overflow_max.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo(short a) -> void;
-  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   Cpp.foo(0x8000);
 }
@@ -272,13 +260,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_overflow_min.carbon:[[@LINE+8]]:11: error: integer value -32769 too large for type `i16` [IntTooLargeForType]
-  // CHECK:STDERR:   Cpp.foo(-0x8001);
-  // CHECK:STDERR:           ^~~~~~~
-  // CHECK:STDERR: fail_import_short_param_overflow_min.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_short_param_overflow_min.carbon:[[@LINE+4]]:11-17: error: integer value -32769 too large for type `i16` [IntTooLargeForType]
+  // CHECK:STDERR: included from: fail_import_short_param_overflow_min.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo(short a) -> void;
-  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   Cpp.foo(-0x8001);
 }
@@ -290,16 +274,10 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+11]]:11: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
-  // CHECK:STDERR:   Cpp.foo(1 as i32);
-  // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+8]]:11: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   Cpp.foo(1 as i32);
-  // CHECK:STDERR:           ^~~~~~~~
-  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+5]]:11-18: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
+  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+4]]:11-18: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR: included from: fail_import_short_param_int32_arg.carbon:[[@LINE-5]]:10 [InCppInclude]
   // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: auto foo(short a) -> void;
-  // CHECK:STDERR:                ^
   // CHECK:STDERR:
   Cpp.foo(1 as i32);
 }
@@ -527,9 +505,7 @@ import Cpp library "bit_int_24_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_bit_int_24_param.carbon:[[@LINE+4]]:3: error: semantics TODO: `Unsupported: parameter type: bit_int_24` [SemanticsTodo]
-  // CHECK:STDERR:   Cpp.foo(1);
-  // CHECK:STDERR:   ^~~~~~~~~~
+  // CHECK:STDERR: fail_todo_import_bit_int_24_param.carbon:[[@LINE+2]]:3-12: error: semantics TODO: `Unsupported: parameter type: bit_int_24` [SemanticsTodo]
   // CHECK:STDERR:
   Cpp.foo(1);
   //@dump-sem-ir-end
@@ -768,6 +744,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.549: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_8) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.173: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_8) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.fae: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.173 = struct_value () [concrete]
@@ -778,14 +756,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.fae, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_8) [concrete]
 // CHECK:STDOUT:   %bound_method.687: <bound method> = bound_method %int_-1.638, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_-1.f9e: %i8 = int_value -1 [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.b0a: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_8) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.12c: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_8) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.534: %Int.as.Copy.impl.Op.type.12c = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i8, (%Copy.impl_witness.b0a) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d57: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.38e: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d57, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.facet.fb6: %Copy.type = facet_value %i8, (%Copy.impl_witness.b0a) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.d57: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.fb6) [concrete]
+// CHECK:STDOUT:   %.38e: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d57, %Copy.facet.fb6 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound: <bound method> = bound_method %int_-1.f9e, %Int.as.Copy.impl.Op.534 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.534, @Int.as.Copy.impl.Op(%int_8) [concrete]
 // CHECK:STDOUT:   %bound_method.3ef: <bound method> = bound_method %int_-1.f9e, %Int.as.Copy.impl.Op.specific_fn [concrete]
@@ -1030,9 +1006,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %.d16, %Core.CharLiteral.as.ImplicitAs.impl.Convert [concrete]
 // CHECK:STDOUT:   %int_88: %char = int_value 88 [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.58a: <witness> = impl_witness imports.%Copy.impl_witness_table.893 [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %char, (%Copy.impl_witness.58a) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.da7: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.453: type = fn_type_with_self_type %Copy.WithSelf.Op.type.da7, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.facet.569: %Copy.type = facet_value %char, (%Copy.impl_witness.58a) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.da7: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.569) [concrete]
+// CHECK:STDOUT:   %.453: type = fn_type_with_self_type %Copy.WithSelf.Op.type.da7, %Copy.facet.569 [concrete]
 // CHECK:STDOUT:   %char.as.Copy.impl.Op.type: type = fn_type @char.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %char.as.Copy.impl.Op: %char.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %char.as.Copy.impl.Op.bound: <bound method> = bound_method %int_88, %char.as.Copy.impl.Op [concrete]
@@ -1168,7 +1144,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc12: Core.CharLiteral = char_value U+0058 [concrete = constants.%.d16]
+// CHECK:STDOUT:   %.loc10: Core.CharLiteral = char_value U+0058 [concrete = constants.%.d16]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1221,13 +1197,13 @@ fn F() {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc13_11.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc11_11.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc13_11.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc13_11.2(%int_1) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc13_11.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc13_11.2: %i32 = converted %int_1, %.loc13_11.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc13_11.2)
+// CHECK:STDOUT:   %bound_method.loc11_11.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc11_11.2(%int_1) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc11_11.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc11_11.2: %i32 = converted %int_1, %.loc11_11.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc11_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1426,6 +1402,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.610: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_16) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9e0: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_16) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.e71: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9e0 = struct_value () [concrete]
@@ -1436,14 +1414,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e71, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_16) [concrete]
 // CHECK:STDOUT:   %bound_method.2ce: <bound method> = bound_method %int_32767.f4b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_32767.15e: %i16 = int_value 32767 [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.21d: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_16) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.6f7: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_16) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.5fe: %Int.as.Copy.impl.Op.type.6f7 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i16, (%Copy.impl_witness.21d) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.64d: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.376: type = fn_type_with_self_type %Copy.WithSelf.Op.type.64d, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.facet.c44: %Copy.type = facet_value %i16, (%Copy.impl_witness.21d) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.64d: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.c44) [concrete]
+// CHECK:STDOUT:   %.376: type = fn_type_with_self_type %Copy.WithSelf.Op.type.64d, %Copy.facet.c44 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound: <bound method> = bound_method %int_32767.15e, %Int.as.Copy.impl.Op.5fe [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.5fe, @Int.as.Copy.impl.Op(%int_16) [concrete]
 // CHECK:STDOUT:   %bound_method.1f5: <bound method> = bound_method %int_32767.15e, %Int.as.Copy.impl.Op.specific_fn [concrete]
@@ -1559,6 +1535,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.610: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_16) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9e0: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_16) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.e71: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.9e0 = struct_value () [concrete]
@@ -1569,14 +1547,12 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e71, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_16) [concrete]
 // CHECK:STDOUT:   %bound_method.cae: <bound method> = bound_method %int_-32768.882, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_-32768.827: %i16 = int_value -32768 [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.21d: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_16) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.6f7: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_16) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.5fe: %Int.as.Copy.impl.Op.type.6f7 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i16, (%Copy.impl_witness.21d) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.64d: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.376: type = fn_type_with_self_type %Copy.WithSelf.Op.type.64d, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.facet.c44: %Copy.type = facet_value %i16, (%Copy.impl_witness.21d) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.64d: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.c44) [concrete]
+// CHECK:STDOUT:   %.376: type = fn_type_with_self_type %Copy.WithSelf.Op.type.64d, %Copy.facet.c44 [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.bound: <bound method> = bound_method %int_-32768.827, %Int.as.Copy.impl.Op.5fe [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.5fe, @Int.as.Copy.impl.Op(%int_16) [concrete]
 // CHECK:STDOUT:   %bound_method.a80: <bound method> = bound_method %int_-32768.827, %Int.as.Copy.impl.Op.specific_fn [concrete]

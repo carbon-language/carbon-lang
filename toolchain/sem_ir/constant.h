@@ -332,6 +332,10 @@ class ConstantStore {
   // constant is new.
   auto GetOrAdd(Inst inst, ConstantDependence dependence) -> ConstantId;
 
+  // Gets the existing constant ID for this value. The constant is required to
+  // already exist.
+  auto Get(Inst inst) const -> ConstantId;
+
   // Collects memory usage of members.
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {

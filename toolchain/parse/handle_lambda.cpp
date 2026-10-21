@@ -45,10 +45,10 @@ static auto ParseLambdaBody(Context& context, Context::State state,
                             bool has_return_type) -> void {
   if (context.PositionIs(Lex::TokenKind::EqualGreater)) {
     // Terse body `=> expr`
-    context.AddNode(NodeKind::LambdaDefinitionStart, context.Consume(),
+    context.AddNode(NodeKind::LambdaTerseDefinitionStart, context.Consume(),
                     state.has_error);
     state.has_error = false;
-    context.PushState(state, StateKind::LambdaBodyFinish);
+    context.PushState(state, StateKind::LambdaTerseBodyFinish);
     context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
   } else if (context.PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
     // Block body `{ ... }`
@@ -59,7 +59,7 @@ static auto ParseLambdaBody(Context& context, Context::State state,
   } else {
     if (has_return_type) {
       CARBON_DIAGNOSTIC(ExpectedLambdaBodyAfterReturnType, Error,
-                        "expected `=>` or `{{` after return type");
+                        "expected `{{` after return type");
       context.emitter().Emit(*context.position(),
                              ExpectedLambdaBodyAfterReturnType);
     } else {
@@ -104,11 +104,13 @@ auto HandleLambdaBody(Context& context) -> void {
 
 auto HandleLambdaBodyFinish(Context& context) -> void {
   auto state = context.PopState();
-  if (context.tokens().GetKind(state.token) == Lex::TokenKind::OpenCurlyBrace) {
-    context.AddNode(NodeKind::Lambda, context.Consume(), state.has_error);
-  } else {
-    context.AddNode(NodeKind::Lambda, state.token, state.has_error);
-  }
+  context.AddNode(NodeKind::Lambda, context.Consume(), state.has_error);
+}
+
+auto HandleLambdaTerseBodyFinish(Context& context) -> void {
+  auto state = context.PopState();
+  context.AddNode(NodeKind::LambdaTerseDefinition, state.token,
+                  state.has_error);
 }
 
 }  // namespace Carbon::Parse

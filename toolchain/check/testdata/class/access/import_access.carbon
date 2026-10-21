@@ -52,9 +52,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+4]]:8: error: name `Def` not found [NameNotFound]
-// CHECK:STDERR: var c: Def = {};
-// CHECK:STDERR:        ^~~
+// CHECK:STDERR: fail_local_def.carbon:[[@LINE+2]]:8-10: error: name `Def` not found [NameNotFound]
 // CHECK:STDERR:
 var c: Def = {};
 
@@ -64,9 +62,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+4]]:8: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: var c: Test.Def = {};
-// CHECK:STDERR:        ^~~~~~~~
+// CHECK:STDERR: fail_other_def.carbon:[[@LINE+2]]:8-15: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 var c: Test.Def = {};
 
@@ -82,9 +78,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
-// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+4]]:8: error: name `ForwardWithDef` not found [NameNotFound]
-// CHECK:STDERR: var c: ForwardWithDef = {};
-// CHECK:STDERR:        ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+2]]:8-21: error: name `ForwardWithDef` not found [NameNotFound]
 // CHECK:STDERR:
 var c: ForwardWithDef = {};
 
@@ -94,9 +88,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+4]]:8: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: var c: Test.ForwardWithDef = {};
-// CHECK:STDERR:        ^~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+2]]:8-26: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 var c: Test.ForwardWithDef = {};
 
@@ -114,9 +106,7 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
-// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+4]]:16: error: name `Forward` not found [NameNotFound]
-// CHECK:STDERR: fn F(unused c: Forward*) {}
-// CHECK:STDERR:                ^~~~~~~
+// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+2]]:16-22: error: name `Forward` not found [NameNotFound]
 // CHECK:STDERR:
 fn F(unused c: Forward*) {}
 
@@ -126,9 +116,7 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+4]]:16: error: member name `Forward` not found in `Test` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fn F(unused c: Test.Forward*) {}
-// CHECK:STDERR:                ^~~~~~~~~~~~
+// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+2]]:16-27: error: member name `Forward` not found in `Test` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 fn F(unused c: Test.Forward*) {}
 
@@ -282,7 +270,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -322,7 +310,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -404,7 +392,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -444,7 +432,7 @@ private class Redecl {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc10: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -521,7 +509,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.patt: <error> = wrapper_binding_pattern c, %c.param_patt [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %.loc8: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
@@ -560,7 +548,7 @@ private class Redecl {}
 // CHECK:STDOUT:     %c.patt: <error> = wrapper_binding_pattern c, %c.param_patt [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc10: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %.loc8: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Test.ref: <namespace> = name_ref Test, imports.%Test [concrete = imports.%Test]
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]

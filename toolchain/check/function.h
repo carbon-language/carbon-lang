@@ -29,6 +29,66 @@ auto FindSelfPattern(Context& context,
 auto AddReturnPattern(Context& context, SemIR::LocId loc_id,
                       Context::FormExpr form_expr) -> SemIR::InstId;
 
+// Information about the return specifier of a function, as popped by
+// `PopReturnSpecifier`.
+struct ReturnSpecifierInfo {
+  // The return specifier, or `None` if there is none.
+  Parse::NodeId node_id = Parse::NoneNodeId();
+  // Whether, and how, the return type is deduced from the body, as in
+  // `-> auto` or `-> ref auto`.
+  SemIR::Function::DeducedReturnKind deduced_return_kind =
+      SemIR::Function::DeducedReturnKind::None;
+  // The declared return pattern. `None` if there is no return specifier or
+  // the return type is deduced.
+  SemIR::InstId pattern_id = SemIR::InstId::None;
+  // The declared return form. `None` if there is no return specifier or the
+  // return type is deduced.
+  Context::FormExpr form = Context::FormExpr::None;
+
+  auto has_return_specifier() const -> bool { return node_id.has_value(); }
+  auto is_deduced() const -> bool {
+    return deduced_return_kind != SemIR::Function::DeducedReturnKind::None;
+  }
+};
+
+// Pops the return specifier of a function declaration or function expression
+// from the node stack, if it has one.
+auto PopReturnSpecifier(Context& context) -> ReturnSpecifierInfo;
+
+// Adjusts the popped return specifier of a terse `=> expr` function definition
+// or function expression starting at `start_node_id`. A return specifier is
+// diagnosed, because it can't be combined with `=>`. Otherwise, the return type
+// is deduced from the body, as if `-> auto` were specified.
+auto AdjustReturnSpecifierForTerseDefinition(
+    Context& context, Parse::NodeId start_node_id,
+    ReturnSpecifierInfo& return_specifier) -> void;
+
+// Sets the return type of a function whose return type is deduced, once that
+// type is known. `type_id` is the deduced type, or the error type if deduction
+// failed, and `loc_id` is the location it was deduced from.
+//
+// This creates the function's return form, return pattern and return `Call`
+// parameter, just as if the return type had been declared explicitly. Within a
+// generic function's definition, the return type is computed in the
+// definition's eval block.
+auto SetDeducedReturnType(Context& context, SemIR::FunctionId function_id,
+                          SemIR::LocId loc_id, SemIR::TypeId type_id) -> void;
+
+// Ensures that the return type of `function` is known in `specific_id`, so that
+// it can be queried with `GetDeclaredReturnType` and similar. If the return
+// type was deduced and depends on the function's generic parameters, it's
+// computed by the definition's eval block, so this resolves the definition of
+// the specific.
+//
+// Returns false if the return type isn't known yet. This happens if it hasn't
+// been deduced yet, and for uses of a specific other than the self specific
+// from within the function's own definition. It also happens for uses of a
+// specific while instantiating its own definition, if that instantiation hasn't
+// yet reached the point where the return type is deduced.
+auto ResolveReturnTypeInSpecific(Context& context, SemIR::LocId loc_id,
+                                 const SemIR::Function& function,
+                                 SemIR::SpecificId specific_id) -> bool;
+
 // Returns whether `function` is a valid declaration of `builtin_kind`.
 auto IsValidBuiltinDeclaration(Context& context,
                                const SemIR::Function& function,
@@ -136,9 +196,18 @@ auto StartFunctionDefinition(Context& context, SemIR::InstId decl_id,
                              SemIR::FunctionId function_id) -> void;
 
 // Checks that a function definition has a `return` at the end if required, or
-// adds an implicit `return;` if reachable.
+// adds an implicit `return;` if reachable. If the function's return type is
+// deduced and hasn't been deduced yet, deduces it from the function's `return`
+// statements first.
 auto CheckFunctionReturnOnFinish(Context& context, Parse::NodeId node_id,
                                  SemIR::FunctionId function_id) -> void;
+
+// Checks the body of a terse `=> expr` function or lambda definition, which
+// behaves like `{ return expr; }`, deducing the return type if necessary.
+auto CheckFunctionTerseBody(Context& context,
+                            Parse::AnyTerseFunctionDefinitionId node_id,
+                            SemIR::FunctionId function_id,
+                            SemIR::InstId body_expr_id) -> void;
 
 // Finishes definitions started by `StartFunctionDefinition`.
 auto FinishFunctionDefinition(Context& context, SemIR::FunctionId function_id)

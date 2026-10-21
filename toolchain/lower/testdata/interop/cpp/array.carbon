@@ -41,7 +41,7 @@ int H() {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %arr = alloca [5 x i32], align 16
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %arr) #3
-// CHECK:STDOUT:   %call = call noundef i32 @_ZN6CarbonL1FERA5_Ki(ptr noundef nonnull align 4 dereferenceable(20) %arr)
+// CHECK:STDOUT:   %call = call noundef i32 @_ZN6Carbon4MainL1FERA5_Ki(ptr noundef nonnull align 4 dereferenceable(20) %arr)
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %arr) #3
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }
@@ -50,7 +50,7 @@ int H() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal noundef i32 @_ZN6CarbonL1FERA5_Ki(ptr noundef nonnull align 4 dereferenceable(20) %0) #2 {
+// CHECK:STDOUT: define internal noundef i32 @_ZN6Carbon4MainL1FERA5_Ki(ptr noundef nonnull align 4 dereferenceable(20) %0) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca i32, align 4
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
@@ -70,7 +70,7 @@ int H() {
 // CHECK:STDOUT:   %ref.tmp = alloca [5 x i32], align 4
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %ref.tmp) #3
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %ref.tmp, ptr align 4 @constinit, i64 20, i1 false), !tbaa.struct !3
-// CHECK:STDOUT:   %call = call noundef i32 @_ZN6CarbonL1FERA5_Ki(ptr noundef nonnull align 4 dereferenceable(20) %ref.tmp)
+// CHECK:STDOUT:   %call = call noundef i32 @_ZN6Carbon4MainL1FERA5_Ki(ptr noundef nonnull align 4 dereferenceable(20) %ref.tmp)
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %ref.tmp) #3
 // CHECK:STDOUT:   ret i32 %call
 // CHECK:STDOUT: }

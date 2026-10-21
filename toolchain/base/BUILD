@@ -72,7 +72,9 @@ cc_library(
         "@llvm-project//clang:basic",
         "@llvm-project//clang:driver",
         "@llvm-project//clang:frontend",
+        "@llvm-project//llvm:MC",
         "@llvm-project//llvm:Support",
+        "@llvm-project//llvm:TargetParser",
     ],
 )
 

@@ -74,12 +74,8 @@ let T: type = Y;
 fn F(template T: type, unused y: T) {}
 
 fn H(y: Y) {
-  // CHECK:STDERR: fail_non_constant_type_argument.carbon:[[@LINE+7]]:3: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
-  // CHECK:STDERR:   F(T, y);
-  // CHECK:STDERR:   ^~~~~~~
-  // CHECK:STDERR: fail_non_constant_type_argument.carbon:[[@LINE-6]]:6: note: initializing generic parameter `T` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(template T: type, unused y: T) {}
-  // CHECK:STDERR:      ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_non_constant_type_argument.carbon:[[@LINE+3]]:3-9: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
+  // CHECK:STDERR: fail_non_constant_type_argument.carbon:[[@LINE-4]]:6-21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   F(T, y);
 }
@@ -92,12 +88,8 @@ class Y {}
 fn F(unused template X: Y) {}
 
 fn H(y: Y) {
-  // CHECK:STDERR: fail_non_constant_nontype_argument.carbon:[[@LINE+7]]:3: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
-  // CHECK:STDERR:   F(y);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_non_constant_nontype_argument.carbon:[[@LINE-6]]:13: note: initializing generic parameter `X` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(unused template X: Y) {}
-  // CHECK:STDERR:             ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_non_constant_nontype_argument.carbon:[[@LINE+3]]:3-6: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
+  // CHECK:STDERR: fail_non_constant_nontype_argument.carbon:[[@LINE-4]]:13-25: note: initializing generic parameter `X` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   F(y);
 }

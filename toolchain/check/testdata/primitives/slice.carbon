@@ -129,9 +129,7 @@ fn TakesSlice(s: Core.Slice(i32)) -> i32;
 
 fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
   // NOTE: This is expected to fail because parameters are non-references in Carbon.
-  // CHECK:STDERR: fail_array_to_slice_param.carbon:[[@LINE+4]]:21: error: cannot take the address of non-reference expression [AddrOfNonRef]
-  // CHECK:STDERR:   return TakesSlice(&a);
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: fail_array_to_slice_param.carbon:[[@LINE+2]]:21: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:
   return TakesSlice(&a);
 }
@@ -280,6 +278,10 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %From.170: %facet_type.08a = symbolic_binding From, 1 [symbolic]
 // CHECK:STDOUT:   %From.as_type.as.ImplicitAs.impl.Convert.type.386: type = fn_type @From.as_type.as.ImplicitAs.impl.Convert, @From.as_type.as.ImplicitAs.impl(%To, %From.170) [symbolic]
 // CHECK:STDOUT:   %From.as_type.as.ImplicitAs.impl.Convert.85a: %From.as_type.as.ImplicitAs.impl.Convert.type.386 = struct_value () [symbolic]
+// CHECK:STDOUT:   %Int.as.AnyInt.impl.AsInt.type.0ee: type = fn_type @Int.as.AnyInt.impl.AsInt, @Int.as.AnyInt.impl(%N.fe9) [symbolic]
+// CHECK:STDOUT:   %Int.as.AnyInt.impl.AsInt.497: %Int.as.AnyInt.impl.AsInt.type.0ee = struct_value () [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N.fe9) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete]
 // CHECK:STDOUT:   %Iterate.type: type = facet_type <@Iterate> [concrete]
 // CHECK:STDOUT:   %OptionalStorage.type: type = facet_type <@OptionalStorage> [concrete]
@@ -321,8 +323,6 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %Slice.as.Iterate.impl.NewCursor.57e: %Slice.as.Iterate.impl.NewCursor.type.136 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.3 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N.fe9) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %facet_value.090: %facet_type.a1a = facet_value %i32, (%Copy.impl_witness.8af, %custom_witness.f8f19d.1) [concrete]
 // CHECK:STDOUT:   %Iterate.impl_witness.a42: <witness> = impl_witness imports.%Iterate.impl_witness_table.5a1, @Slice.as.Iterate.impl(%facet_value.090) [concrete]
@@ -362,8 +362,6 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %Int.as.AddAssignWith.impl.Op.75e08e.2: %Int.as.AddAssignWith.impl.Op.type.93140c.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %facet_type.0f0: type = facet_type <@IntFitsIn, @IntFitsIn(%i32) & @AnyInt> [concrete]
 // CHECK:STDOUT:   %custom_witness.633: <witness> = custom_witness (), @IntFitsIn, @IntFitsIn(%i32) [concrete]
-// CHECK:STDOUT:   %Int.as.AnyInt.impl.AsInt.type.0ee: type = fn_type @Int.as.AnyInt.impl.AsInt, @Int.as.AnyInt.impl(%N.fe9) [symbolic]
-// CHECK:STDOUT:   %Int.as.AnyInt.impl.AsInt.497: %Int.as.AnyInt.impl.AsInt.type.0ee = struct_value () [symbolic]
 // CHECK:STDOUT:   %AnyInt.impl_witness.83b: <witness> = impl_witness imports.%AnyInt.impl_witness_table, @Int.as.AnyInt.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %facet_value.709: %facet_type.0f0 = facet_value %i32, (%custom_witness.633, %AnyInt.impl_witness.83b) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.943: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.8f1, @From.as_type.as.ImplicitAs.impl(%int_32, %facet_value.709) [concrete]
@@ -429,30 +427,30 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core.import_ref.39b: @From.as_type.as.ImplicitAs.impl.%From.as_type.as.ImplicitAs.impl.Convert.type (%From.as_type.as.ImplicitAs.impl.Convert.type.386) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @From.as_type.as.ImplicitAs.impl.%From.as_type.as.ImplicitAs.impl.Convert (constants.%From.as_type.as.ImplicitAs.impl.Convert.85a)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.8f1 = impl_witness_table (%Core.import_ref.39b), @From.as_type.as.ImplicitAs.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.47b: Core.IntLiteral = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.AnyInt.impl.%N (constants.%N.fe9)]
+// CHECK:STDOUT:   %Core.import_ref.323: @Int.as.AnyInt.impl.%Int.as.AnyInt.impl.AsInt.type (%Int.as.AnyInt.impl.AsInt.type.0ee) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.AnyInt.impl.%Int.as.AnyInt.impl.AsInt (constants.%Int.as.AnyInt.impl.AsInt.497)]
+// CHECK:STDOUT:   %AnyInt.impl_witness_table = impl_witness_table (%Core.import_ref.47b, %Core.import_ref.323), @Int.as.AnyInt.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.72f: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.a1d) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.3c1)]
+// CHECK:STDOUT:   %Copy.impl_witness_table.f44 = impl_witness_table (%Core.import_ref.72f), @Int.as.Copy.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.02f: type = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%DefaultOptionalStorage (constants.%DefaultOptionalStorage.b57)]
+// CHECK:STDOUT:   %Core.import_ref.bd5: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.None.type (%T.as_type.as.OptionalStorage.impl.None.type.6a1) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.None (constants.%T.as_type.as.OptionalStorage.impl.None.87e)]
+// CHECK:STDOUT:   %Core.import_ref.3c9: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Some.type (%T.as_type.as.OptionalStorage.impl.Some.type.91d) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Some (constants.%T.as_type.as.OptionalStorage.impl.Some.a45)]
+// CHECK:STDOUT:   %Core.import_ref.d9b: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Has.type (%T.as_type.as.OptionalStorage.impl.Has.type.d98) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Has (constants.%T.as_type.as.OptionalStorage.impl.Has.b3f)]
+// CHECK:STDOUT:   %Core.import_ref.c0b: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get.type (%T.as_type.as.OptionalStorage.impl.Get.type.428) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get (constants.%T.as_type.as.OptionalStorage.impl.Get.736)]
+// CHECK:STDOUT:   %Core.import_ref.af7 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
+// CHECK:STDOUT:   %OptionalStorage.impl_witness_table.0d6 = impl_witness_table (%Core.import_ref.02f, %Core.import_ref.bd5, %Core.import_ref.3c9, %Core.import_ref.d9b, %Core.import_ref.c0b, %Core.import_ref.af7), @T.as_type.as.OptionalStorage.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.c2a: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.08b) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [concrete = %field_decl.7cb]
+// CHECK:STDOUT:   %Core.import_ref.41b: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.527) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [concrete = %field_decl.06c]
 // CHECK:STDOUT:   %Core.import_ref.c82: @Optional.%Optional.HasValue.type (%Optional.HasValue.type.3ea) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.HasValue (constants.%Optional.HasValue.f2f)]
-// CHECK:STDOUT:   %Core.import_ref.29e: @Optional.%Optional.Get.type (%Optional.Get.type.786) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.2d0)]
-// CHECK:STDOUT:   %Core.import_ref.2e7: type = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%DefaultOptionalStorage (constants.%DefaultOptionalStorage.b57)]
-// CHECK:STDOUT:   %Core.import_ref.4c9: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.None.type (%T.as_type.as.OptionalStorage.impl.None.type.6a1) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.None (constants.%T.as_type.as.OptionalStorage.impl.None.87e)]
-// CHECK:STDOUT:   %Core.import_ref.e5d: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Some.type (%T.as_type.as.OptionalStorage.impl.Some.type.91d) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Some (constants.%T.as_type.as.OptionalStorage.impl.Some.a45)]
-// CHECK:STDOUT:   %Core.import_ref.1459: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Has.type (%T.as_type.as.OptionalStorage.impl.Has.type.d98) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Has (constants.%T.as_type.as.OptionalStorage.impl.Has.b3f)]
-// CHECK:STDOUT:   %Core.import_ref.732: @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get.type (%T.as_type.as.OptionalStorage.impl.Get.type.428) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.OptionalStorage.impl.%T.as_type.as.OptionalStorage.impl.Get (constants.%T.as_type.as.OptionalStorage.impl.Get.736)]
-// CHECK:STDOUT:   %Core.import_ref.554 = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], unloaded
-// CHECK:STDOUT:   %OptionalStorage.impl_witness_table.0d6 = impl_witness_table (%Core.import_ref.2e7, %Core.import_ref.4c9, %Core.import_ref.e5d, %Core.import_ref.1459, %Core.import_ref.732, %Core.import_ref.554), @T.as_type.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.897: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.1 (%DefaultOptionalStorage.elem.08b) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.7cb]
-// CHECK:STDOUT:   %Core.import_ref.1ec4: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.527) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [concrete = %field_decl.06c]
+// CHECK:STDOUT:   %Core.import_ref.29e9: @Optional.%Optional.Get.type (%Optional.Get.type.786) = import_ref Core//prelude/iterate, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @Optional.%Optional.Get (constants.%Optional.Get.2d0)]
 // CHECK:STDOUT:   %Core.import_ref.9a513d.2 = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.18e = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.628: @Slice.as.Iterate.impl.%Slice.as.Iterate.impl.NewCursor.type (%Slice.as.Iterate.impl.NewCursor.type.136) = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @Slice.as.Iterate.impl.%Slice.as.Iterate.impl.NewCursor (constants.%Slice.as.Iterate.impl.NewCursor.57e)]
 // CHECK:STDOUT:   %Core.import_ref.7619: @Slice.as.Iterate.impl.%Slice.as.Iterate.impl.Next.type (%Slice.as.Iterate.impl.Next.type.15f) = import_ref Core//prelude/iterate, loc{{\d+_\d+}}, loaded [symbolic = @Slice.as.Iterate.impl.%Slice.as.Iterate.impl.Next (constants.%Slice.as.Iterate.impl.Next.876)]
 // CHECK:STDOUT:   %Iterate.impl_witness_table.5a1 = impl_witness_table (%Core.import_ref.9a513d.2, %Core.import_ref.18e, %Core.import_ref.628, %Core.import_ref.7619), @Slice.as.Iterate.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.72f: @Int.as.Copy.impl.%Int.as.Copy.impl.Op.type (%Int.as.Copy.impl.Op.type.a1d) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.Copy.impl.%Int.as.Copy.impl.Op (constants.%Int.as.Copy.impl.Op.3c1)]
-// CHECK:STDOUT:   %Copy.impl_witness_table.f44 = impl_witness_table (%Core.import_ref.72f), @Int.as.Copy.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.b25: @Int.as.AddAssignWith.impl.%Int.as.AddAssignWith.impl.Op.type.2 (%Int.as.AddAssignWith.impl.Op.type.93140c.1) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.AddAssignWith.impl.%Int.as.AddAssignWith.impl.Op.2 (constants.%Int.as.AddAssignWith.impl.Op.75e08e.1)]
 // CHECK:STDOUT:   %AddAssignWith.impl_witness_table = impl_witness_table (%Core.import_ref.b25), @Int.as.AddAssignWith.impl [concrete]
 // CHECK:STDOUT:   %Core.Op.da0: @Int.as.AddAssignWith.impl.%Int.as.AddAssignWith.impl.Op.type.1 (%Int.as.AddAssignWith.impl.Op.type.93140c.2) = import_ref Core//prelude/types/int, Op, loaded [symbolic = @Int.as.AddAssignWith.impl.%Int.as.AddAssignWith.impl.Op.1 (constants.%Int.as.AddAssignWith.impl.Op.75e08e.2)]
-// CHECK:STDOUT:   %Core.import_ref.47b: Core.IntLiteral = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.AnyInt.impl.%N (constants.%N.fe9)]
-// CHECK:STDOUT:   %Core.import_ref.323: @Int.as.AnyInt.impl.%Int.as.AnyInt.impl.AsInt.type (%Int.as.AnyInt.impl.AsInt.type.0ee) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Int.as.AnyInt.impl.%Int.as.AnyInt.impl.AsInt (constants.%Int.as.AnyInt.impl.AsInt.497)]
-// CHECK:STDOUT:   %AnyInt.impl_witness_table = impl_witness_table (%Core.import_ref.47b, %Core.import_ref.323), @Int.as.AnyInt.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.b0d0 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %field_decl.06c: @DefaultOptionalStorage.%DefaultOptionalStorage.elem.2 (%DefaultOptionalStorage.elem.527) = field_decl has_value, element1, %Core.import_ref.b0d0 in [concrete] {}
 // CHECK:STDOUT:   %Core.import_ref.ab7 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
@@ -590,7 +588,7 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   if %.loc7_19.10 br !for.body else br !for.done
 // CHECK:STDOUT:
 // CHECK:STDOUT: !for.body:
-// CHECK:STDOUT:   %.loc7_19.11: %Optional.Get.type.4fb = specific_constant imports.%Core.import_ref.29e, @Optional(constants.%OptionalStorage.facet.ae9) [concrete = constants.%Optional.Get.65d]
+// CHECK:STDOUT:   %.loc7_19.11: %Optional.Get.type.4fb = specific_constant imports.%Core.import_ref.29e9, @Optional(constants.%OptionalStorage.facet.ae9) [concrete = constants.%Optional.Get.65d]
 // CHECK:STDOUT:   %Get.ref: %Optional.Get.type.4fb = name_ref Get, %.loc7_19.11 [concrete = constants.%Optional.Get.65d]
 // CHECK:STDOUT:   %Optional.Get.bound: <bound method> = bound_method %.loc7_19.6, %Get.ref
 // CHECK:STDOUT:   %Optional.Get.specific_fn: <specific function> = specific_function %Get.ref, @Optional.Get(constants.%OptionalStorage.facet.ae9) [concrete = constants.%Optional.Get.specific_fn]
@@ -683,11 +681,11 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc7_19.5(%self.param: ref %DefaultOptionalStorage.d2f) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %has_value.ref: %DefaultOptionalStorage.elem.93e = name_ref has_value, imports.%Core.import_ref.1ec4 [concrete = imports.%field_decl.06c]
+// CHECK:STDOUT:   %has_value.ref: %DefaultOptionalStorage.elem.93e = name_ref has_value, imports.%Core.import_ref.41b [concrete = imports.%field_decl.06c]
 // CHECK:STDOUT:   %.loc7_19.1: ref bool = class_element_access %self.param, element1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc7_19.1: <bound method> = bound_method %.loc7_19.1, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.5
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc7_19.1: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc7_19.1(%.loc7_19.1)
-// CHECK:STDOUT:   %value.ref: %DefaultOptionalStorage.elem.079 = name_ref value, imports.%Core.import_ref.897 [concrete = imports.%field_decl.7cb]
+// CHECK:STDOUT:   %value.ref: %DefaultOptionalStorage.elem.079 = name_ref value, imports.%Core.import_ref.c2a [concrete = imports.%field_decl.7cb]
 // CHECK:STDOUT:   %.loc7_19.2: ref %MaybeUnformed.993 = class_element_access %self.param, element0
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc7_19.2: <bound method> = bound_method %.loc7_19.2, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.4
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc7_19.2: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc7_19.2(%.loc7_19.2)
@@ -1084,24 +1082,11 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
 // CHECK:STDOUT:   %u64: type = class_type @UInt, @UInt(%int_64) [concrete]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %Slice.5af: type = class_type @Slice, @Slice(%i32) [concrete]
-// CHECK:STDOUT:   %SubscriptType: type = symbolic_binding SubscriptType, 0 [symbolic]
-// CHECK:STDOUT:   %IndexWith.type.0fe: type = facet_type <@IndexWith, @IndexWith(%u64)> [concrete]
-// CHECK:STDOUT:   %IndirectIndexWith.type.57f: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(%SubscriptType)> [symbolic]
-// CHECK:STDOUT:   %.Self.16c: %IndirectIndexWith.type.57f = symbolic_binding .Self [symbolic]
-// CHECK:STDOUT:   %IndirectIndexWith.lookup_impl_witness.e21: <witness> = lookup_impl_witness %.Self.16c, @IndirectIndexWith, @IndirectIndexWith(%SubscriptType) [symbolic]
-// CHECK:STDOUT:   %impl.elem0.a07: type = impl_witness_access %IndirectIndexWith.lookup_impl_witness.e21, element0 [symbolic]
-// CHECK:STDOUT:   %IndirectIndexWith_where.type.57f: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(%SubscriptType) where %impl.elem0.a07 impls @Copy> [symbolic]
-// CHECK:STDOUT:   %T.2fa: %IndirectIndexWith_where.type.57f = symbolic_binding T, 1 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.type.152: type = fn_type @T.as_type.as.IndexWith.impl.At, @T.as_type.as.IndexWith.impl(%SubscriptType, %T.2fa) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.68d: %T.as_type.as.IndexWith.impl.At.type.152 = struct_value () [symbolic]
 // CHECK:STDOUT:   %IndirectIndexWith.type.373: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(%u64)> [concrete]
-// CHECK:STDOUT:   %.Self.6ab: %IndirectIndexWith.type.373 = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %IndirectIndexWith.lookup_impl_witness.874: <witness> = lookup_impl_witness %.Self.6ab, @IndirectIndexWith, @IndirectIndexWith(%u64) [symbolic_self]
-// CHECK:STDOUT:   %impl.elem0.bdb: type = impl_witness_access %IndirectIndexWith.lookup_impl_witness.874, element0 [symbolic_self]
-// CHECK:STDOUT:   %IndirectIndexWith_where.type.373acd.1: type = facet_type <@IndirectIndexWith, @IndirectIndexWith(%u64) where %impl.elem0.bdb impls @Copy> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.1b9: type = facet_type <@ImplicitAs, @ImplicitAs(%u64)> [concrete]
 // CHECK:STDOUT:   %Subscript: %ImplicitAs.type.1b9 = symbolic_binding Subscript, 1 [symbolic]
 // CHECK:STDOUT:   %Slice.as.IndirectIndexWith.impl.Ref.type.870: type = fn_type @Slice.as.IndirectIndexWith.impl.Ref, @Slice.as.IndirectIndexWith.impl(%T.67d, %Subscript) [symbolic]
@@ -1119,37 +1104,38 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT:   %From.26a: %facet_type.990 = symbolic_binding From, 1 [symbolic]
 // CHECK:STDOUT:   %UInt.as.FromUInt.impl.Convert.type.89b: type = fn_type @UInt.as.FromUInt.impl.Convert, @UInt.as.FromUInt.impl(%To.fe9, %From.26a) [symbolic]
 // CHECK:STDOUT:   %UInt.as.FromUInt.impl.Convert.e69: %UInt.as.FromUInt.impl.Convert.type.89b = struct_value () [symbolic]
-// CHECK:STDOUT:   %facet_type.568: type = facet_type <@IntFitsIn, @IntFitsIn(%u64) & @AnyUInt> [concrete]
-// CHECK:STDOUT:   %custom_witness: <witness> = custom_witness (), @IntFitsIn, @IntFitsIn(%u64) [concrete]
 // CHECK:STDOUT:   %UInt.as.AnyUInt.impl.AsUInt.type.32d: type = fn_type @UInt.as.AnyUInt.impl.AsUInt, @UInt.as.AnyUInt.impl(%N) [symbolic]
 // CHECK:STDOUT:   %UInt.as.AnyUInt.impl.AsUInt.523: %UInt.as.AnyUInt.impl.AsUInt.type.32d = struct_value () [symbolic]
+// CHECK:STDOUT:   %facet_type.568: type = facet_type <@IntFitsIn, @IntFitsIn(%u64) & @AnyUInt> [concrete]
+// CHECK:STDOUT:   %custom_witness: <witness> = custom_witness (), @IntFitsIn, @IntFitsIn(%u64) [concrete]
 // CHECK:STDOUT:   %AnyUInt.impl_witness.2b1: <witness> = impl_witness imports.%AnyUInt.impl_witness_table, @UInt.as.AnyUInt.impl(%int_64) [concrete]
-// CHECK:STDOUT:   %facet_value.3f8: %facet_type.568 = facet_value %u64, (%custom_witness, %AnyUInt.impl_witness.2b1) [concrete]
-// CHECK:STDOUT:   %FromUInt.impl_witness.431: <witness> = impl_witness imports.%FromUInt.impl_witness_table.fa5, @UInt.as.FromUInt.impl(%int_64, %facet_value.3f8) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type.568 = facet_value %u64, (%custom_witness, %AnyUInt.impl_witness.2b1) [concrete]
+// CHECK:STDOUT:   %FromUInt.impl_witness.431: <witness> = impl_witness imports.%FromUInt.impl_witness_table.fa5, @UInt.as.FromUInt.impl(%int_64, %facet_value) [concrete]
 // CHECK:STDOUT:   %FromUInt.facet: %FromUInt.type.a89 = facet_value %u64, (%FromUInt.impl_witness.431) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.859: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.803, @UInt.as.ImplicitAs.impl.544(%int_64, %FromUInt.facet) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.1b9 = facet_value %u64, (%ImplicitAs.impl_witness.859) [concrete]
 // CHECK:STDOUT:   %IndirectIndexWith.impl_witness.306: <witness> = impl_witness imports.%IndirectIndexWith.impl_witness_table, @Slice.as.IndirectIndexWith.impl(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %Slice.as.IndirectIndexWith.impl.Ref.type.977: type = fn_type @Slice.as.IndirectIndexWith.impl.Ref, @Slice.as.IndirectIndexWith.impl(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %Slice.as.IndirectIndexWith.impl.Ref.9a7: %Slice.as.IndirectIndexWith.impl.Ref.type.977 = struct_value () [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.facet: %IndirectIndexWith.type.373 = facet_value %Slice.5af, (%IndirectIndexWith.impl_witness.306) [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.WithSelf.Ref.type.d29: type = fn_type @IndirectIndexWith.WithSelf.Ref, @IndirectIndexWith.WithSelf(%u64, %IndirectIndexWith.facet) [concrete]
+// CHECK:STDOUT:   %.2da: type = fn_type_with_self_type %IndirectIndexWith.WithSelf.Ref.type.d29, %IndirectIndexWith.facet [concrete]
+// CHECK:STDOUT:   %Slice.as.IndirectIndexWith.impl.Ref.specific_fn: <specific function> = specific_function %Slice.as.IndirectIndexWith.impl.Ref.9a7, @Slice.as.IndirectIndexWith.impl.Ref(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %facet_value.086: %IndirectIndexWith_where.type.373acd.1 = facet_value %Slice.5af, (%IndirectIndexWith.impl_witness.306, %Copy.impl_witness.8af) [concrete]
-// CHECK:STDOUT:   %IndexWith.impl_witness.ed8: <witness> = impl_witness imports.%IndexWith.impl_witness_table, @T.as_type.as.IndexWith.impl(%u64, %facet_value.086) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.type.100: type = fn_type @T.as_type.as.IndexWith.impl.At, @T.as_type.as.IndexWith.impl(%u64, %facet_value.086) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.a5c: %T.as_type.as.IndexWith.impl.At.type.100 = struct_value () [concrete]
-// CHECK:STDOUT:   %IndexWith.facet.3a7: %IndexWith.type.0fe = facet_value %Slice.5af, (%IndexWith.impl_witness.ed8) [concrete]
-// CHECK:STDOUT:   %IndexWith.WithSelf.At.type.74d: type = fn_type @IndexWith.WithSelf.At, @IndexWith.WithSelf(%u64, %IndexWith.facet.3a7) [concrete]
-// CHECK:STDOUT:   %.5771: type = fn_type_with_self_type %IndexWith.WithSelf.At.type.74d, %IndexWith.facet.3a7 [concrete]
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.specific_fn: <specific function> = specific_function %T.as_type.as.IndexWith.impl.At.a5c, @T.as_type.as.IndexWith.impl.At(%u64, %facet_value.086) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet.95d: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.95d) [concrete]
+// CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet.95d [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.44f = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, unloaded
-// CHECK:STDOUT:   %Core.import_ref.630: @T.as_type.as.IndexWith.impl.%T.as_type.as.IndexWith.impl.At.type (%T.as_type.as.IndexWith.impl.At.type.152) = import_ref Core//prelude/operators/index, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.IndexWith.impl.%T.as_type.as.IndexWith.impl.At (constants.%T.as_type.as.IndexWith.impl.At.68d)]
-// CHECK:STDOUT:   %IndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.44f, %Core.import_ref.630), @T.as_type.as.IndexWith.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.6f1: type = import_ref Core//prelude/types/slice, loc{{\d+_\d+}}, loaded [symbolic = @Slice.as.IndirectIndexWith.impl.%T (constants.%T.67d)]
+// CHECK:STDOUT:   %Core.import_ref.0b3 = import_ref Core//prelude/types/slice, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.3f1: @Slice.as.IndirectIndexWith.impl.%Slice.as.IndirectIndexWith.impl.Ref.type (%Slice.as.IndirectIndexWith.impl.Ref.type.870) = import_ref Core//prelude/types/slice, loc{{\d+_\d+}}, loaded [symbolic = @Slice.as.IndirectIndexWith.impl.%Slice.as.IndirectIndexWith.impl.Ref (constants.%Slice.as.IndirectIndexWith.impl.Ref.5f9)]
-// CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.6f1, %Core.import_ref.3f1), @Slice.as.IndirectIndexWith.impl [concrete]
+// CHECK:STDOUT:   %IndirectIndexWith.impl_witness_table = impl_witness_table (%Core.import_ref.0b3, %Core.import_ref.3f1), @Slice.as.IndirectIndexWith.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.b70: @UInt.as.ImplicitAs.impl.544.%UInt.as.ImplicitAs.impl.Convert.type (%UInt.as.ImplicitAs.impl.Convert.type.2cf) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @UInt.as.ImplicitAs.impl.544.%UInt.as.ImplicitAs.impl.Convert (constants.%UInt.as.ImplicitAs.impl.Convert.807)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.803 = impl_witness_table (%Core.import_ref.b70), @UInt.as.ImplicitAs.impl.544 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.dad: @UInt.as.FromUInt.impl.%UInt.as.FromUInt.impl.Convert.type (%UInt.as.FromUInt.impl.Convert.type.89b) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @UInt.as.FromUInt.impl.%UInt.as.FromUInt.impl.Convert (constants.%UInt.as.FromUInt.impl.Convert.e69)]
@@ -1165,12 +1151,22 @@ fn CallWithAddressOfParameter(a: array(i32, 5)) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Slice.5af = name_ref s, %s
 // CHECK:STDOUT:   %i.ref: %u64 = name_ref i, %i
-// CHECK:STDOUT:   %impl.elem1: %.5771 = impl_witness_access constants.%IndexWith.impl_witness.ed8, element1 [concrete = constants.%T.as_type.as.IndexWith.impl.At.a5c]
+// CHECK:STDOUT:   %impl.elem1: %.2da = impl_witness_access constants.%IndirectIndexWith.impl_witness.306, element1 [concrete = constants.%Slice.as.IndirectIndexWith.impl.Ref.9a7]
 // CHECK:STDOUT:   %bound_method.loc6_13.1: <bound method> = bound_method %s.ref, %impl.elem1
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem1, @T.as_type.as.IndexWith.impl.At(constants.%u64, constants.%facet_value.086) [concrete = constants.%T.as_type.as.IndexWith.impl.At.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc6_13.2: <bound method> = bound_method %s.ref, %specific_fn
-// CHECK:STDOUT:   %T.as_type.as.IndexWith.impl.At.call: init %i32 = call %bound_method.loc6_13.2(%s.ref, %i.ref)
-// CHECK:STDOUT:   return %T.as_type.as.IndexWith.impl.At.call
+// CHECK:STDOUT:   %ImplicitAs.facet.loc6_13.1: %ImplicitAs.type.1b9 = facet_value constants.%u64, (constants.%ImplicitAs.impl_witness.859) [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %.loc6_13.1: %ImplicitAs.type.1b9 = converted constants.%u64, %ImplicitAs.facet.loc6_13.1 [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %ImplicitAs.facet.loc6_13.2: %ImplicitAs.type.1b9 = facet_value constants.%u64, (constants.%ImplicitAs.impl_witness.859) [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %.loc6_13.2: %ImplicitAs.type.1b9 = converted constants.%u64, %ImplicitAs.facet.loc6_13.2 [concrete = constants.%ImplicitAs.facet]
+// CHECK:STDOUT:   %specific_fn.loc6_13.1: <specific function> = specific_function %impl.elem1, @Slice.as.IndirectIndexWith.impl.Ref(constants.%i32, constants.%ImplicitAs.facet) [concrete = constants.%Slice.as.IndirectIndexWith.impl.Ref.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc6_13.2: <bound method> = bound_method %s.ref, %specific_fn.loc6_13.1
+// CHECK:STDOUT:   %Slice.as.IndirectIndexWith.impl.Ref.call: ref %i32 = call %bound_method.loc6_13.2(%s.ref, %i.ref)
+// CHECK:STDOUT:   %.loc6_13.3: %i32 = acquire_value %Slice.as.IndirectIndexWith.impl.Ref.call
+// CHECK:STDOUT:   %impl.elem0: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
+// CHECK:STDOUT:   %bound_method.loc6_13.3: <bound method> = bound_method %.loc6_13.3, %impl.elem0
+// CHECK:STDOUT:   %specific_fn.loc6_13.2: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc6_13.4: <bound method> = bound_method %.loc6_13.3, %specific_fn.loc6_13.2
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc6_13.4(%.loc6_13.3)
+// CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- array_to_slice_pointer.carbon

@@ -29,12 +29,8 @@ library "[[@TEST_NAME]]";
 
 class ForwardDeclared;
 
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+7]]:12: error: duplicate name `ForwardDeclared` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: constraint ForwardDeclared {}
-// CHECK:STDERR:            ^~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-5]]:1: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR: class ForwardDeclared;
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+3]]:12-26: error: duplicate name `ForwardDeclared` being declared in the same scope [NameDeclDuplicate]
+// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-3]]:1-22: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 constraint ForwardDeclared {}
 
@@ -43,12 +39,8 @@ library "[[@TEST_NAME]]";
 
 constraint Declared {}
 
-// CHECK:STDERR: fail_defined_twice.carbon:[[@LINE+7]]:1: error: redefinition of `constraint Declared` [RedeclRedef]
-// CHECK:STDERR: constraint Declared {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_defined_twice.carbon:[[@LINE-5]]:1: note: previously defined here [RedeclPrevDef]
-// CHECK:STDERR: constraint Declared {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_defined_twice.carbon:[[@LINE+3]]:1-21: error: redefinition of `constraint Declared` [RedeclRedef]
+// CHECK:STDERR: fail_defined_twice.carbon:[[@LINE-3]]:1-21: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR:
 constraint Declared {}
 

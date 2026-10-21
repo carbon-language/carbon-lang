@@ -13,40 +13,28 @@
 base class B {}
 
 class C1 {
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: error: `private` not allowed on `base` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   private extend base: B;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+2]]:3-9: error: `private` not allowed on `base` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   private extend base: B;
 }
 
 class C2 {
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+8]]:3: error: `abstract` not allowed on `base` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   abstract base: B;
-  // CHECK:STDERR:   ^~~~~~~~
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3-10: error: `abstract` not allowed on `base` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: error: missing `extend` before `base` declaration [BaseMissingExtend]
-  // CHECK:STDERR:   abstract base: B;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+2]]:3-19: error: missing `extend` before `base` declaration [BaseMissingExtend]
   // CHECK:STDERR:
   abstract base: B;
 }
 
 class C3 {
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:10: error: `default` not allowed on `base` declaration [ModifierNotAllowedOnDeclaration]
-  // CHECK:STDERR:   extend default base: B;
-  // CHECK:STDERR:          ^~~~~~~
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+2]]:10-16: error: `default` not allowed on `base` declaration [ModifierNotAllowedOnDeclaration]
   // CHECK:STDERR:
   extend default base: B;
 }
 
 class C4 {
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+7]]:10: error: `extend` repeated on declaration [ModifierRepeated]
-  // CHECK:STDERR:   extend extend base: B;
-  // CHECK:STDERR:          ^~~~~~
-  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+4]]:3: note: `extend` previously appeared here [ModifierPrevious]
-  // CHECK:STDERR:   extend extend base: B;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+3]]:10-15: error: `extend` repeated on declaration [ModifierRepeated]
+  // CHECK:STDERR: fail_base_modifiers.carbon:[[@LINE+2]]:3-8: note: `extend` previously appeared here [ModifierPrevious]
   // CHECK:STDERR:
   extend extend base: B;
 }

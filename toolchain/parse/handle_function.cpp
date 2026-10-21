@@ -35,8 +35,10 @@ auto HandleFunctionAfterParams(Context& context) -> void {
 auto HandleReturnTypeOrFormExpr(Context& context) -> void {
   context.PopAndDiscardState();
 
-  // `-> ref T` specifies a primitive return form.
-  if (context.PositionIs(Lex::TokenKind::Ref)) {
+  // `-> val T`, `-> ref T`, and `-> var T` specify a primitive return form.
+  if (context.PositionIs(Lex::TokenKind::Val) ||
+      context.PositionIs(Lex::TokenKind::Ref) ||
+      context.PositionIs(Lex::TokenKind::Var)) {
     context.PushState(StateKind::PrimitiveFormFinish, context.Consume());
   }
   context.PushStateForExpr(PrecedenceGroup::ForType());
@@ -72,7 +74,10 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::EqualGreater: {
-      context.AddFunctionDefinitionStart(context.Consume(), state.has_error);
+      context.AddFunctionTerseDefinitionStart(context.Consume(),
+                                              state.has_error);
+      // Any error is recorded on the FunctionTerseDefinitionStart.
+      state.has_error = false;
       context.PushState(state, StateKind::FunctionTerseBodyFinish);
       context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
       break;

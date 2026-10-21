@@ -101,9 +101,7 @@ fn F() {
 // CHECK:STDOUT: - filename: fail_binary_real.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_binary_real.carbon:[[@LINE+4]]:4: error: binary real number literals are not supported [InvalidRealLiteralRadix]
-// CHECK:STDERR: 0b1.0
-// CHECK:STDERR:    ^
+// CHECK:STDERR: fail_binary_real.carbon:[[@LINE+2]]:4: error: binary real number literals are not supported [InvalidRealLiteralRadix]
 // CHECK:STDERR:
 0b1.0
 // CHECK:STDOUT:   - { index: 1, kind: "RealLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "0b1.0", value: "2*2^-1", has_leading_space: true }
@@ -112,9 +110,7 @@ fn F() {
 // CHECK:STDOUT: - filename: fail_octal_real.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_octal_real.carbon:[[@LINE+4]]:4: error: octal real number literals are not supported [InvalidRealLiteralRadix]
-// CHECK:STDERR: 0o1.0
-// CHECK:STDERR:    ^
+// CHECK:STDERR: fail_octal_real.carbon:[[@LINE+2]]:4: error: octal real number literals are not supported [InvalidRealLiteralRadix]
 // CHECK:STDERR:
 0o1.0
 // CHECK:STDOUT:   - { index: 1, kind: "RealLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "0o1.0", value: "8*2^-3", has_leading_space: true }
@@ -124,9 +120,7 @@ fn F() {
 // CHECK:STDOUT: - filename: fail_wrong_real_exponent.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_wrong_real_exponent.carbon:[[@LINE+4]]:4: error: expected 'e' to introduce exponent [WrongRealLiteralExponent]
-// CHECK:STDERR: 1.0r3
-// CHECK:STDERR:    ^
+// CHECK:STDERR: fail_wrong_real_exponent.carbon:[[@LINE+2]]:4: error: expected 'e' to introduce exponent [WrongRealLiteralExponent]
 // CHECK:STDERR:
 1.0r3
 // CHECK:STDOUT:   - { index: 1, kind:     "Error", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "1.0r3", has_leading_space: true }
@@ -135,9 +129,7 @@ fn F() {
 // CHECK:STDOUT: - filename: fail_invalid_digit.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_invalid_digit.carbon:[[@LINE+4]]:4: error: invalid digit 'a' in hexadecimal numeric literal [InvalidDigit]
-// CHECK:STDERR: 0x1a
-// CHECK:STDERR:    ^
+// CHECK:STDERR: fail_invalid_digit.carbon:[[@LINE+2]]:4: error: invalid digit 'a' in hexadecimal numeric literal [InvalidDigit]
 // CHECK:STDERR:
 0x1a
 // CHECK:STDOUT:   - { index: 1, kind:     "Error", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "0x1a", has_leading_space: true }
@@ -146,9 +138,7 @@ fn F() {
 // CHECK:STDOUT: - filename: fail_invalid_separator.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_invalid_separator.carbon:[[@LINE+4]]:3: error: misplaced digit separator in numeric literal [InvalidDigitSeparator]
-// CHECK:STDERR: 1__2
-// CHECK:STDERR:   ^
+// CHECK:STDERR: fail_invalid_separator.carbon:[[@LINE+2]]:3: error: misplaced digit separator in numeric literal [InvalidDigitSeparator]
 // CHECK:STDERR:
 1__2
 // CHECK:STDOUT:   - { index: 1, kind: "IntLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "1__2", value: "12", has_leading_space: true }
@@ -156,9 +146,7 @@ fn F() {
 // --- fail_fraction_separator.carbon
 // CHECK:STDOUT: - filename: fail_fraction_separator.carbon
 // CHECK:STDOUT:   tokens:
-// CHECK:STDERR: fail_fraction_separator.carbon:[[@LINE+4]]:7: error: misplaced digit separator in numeric literal [InvalidDigitSeparator]
-// CHECK:STDERR: 1.0000_0000
-// CHECK:STDERR:       ^
+// CHECK:STDERR: fail_fraction_separator.carbon:[[@LINE+2]]:7: error: misplaced digit separator in numeric literal [InvalidDigitSeparator]
 // CHECK:STDERR:
 1.0000_0000
 // CHECK:STDOUT:   - { index: 1, kind: "RealLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "1.0000_0000", value: "100000000*10^-9", has_leading_space: true }
@@ -166,9 +154,7 @@ fn F() {
 // --- fail_fraction_separator_at_end.carbon
 // CHECK:STDOUT: - filename: fail_fraction_separator_at_end.carbon
 // CHECK:STDOUT:   tokens:
-// CHECK:STDERR: fail_fraction_separator_at_end.carbon:[[@LINE+4]]:6: error: misplaced digit separator in numeric literal [InvalidDigitSeparator]
-// CHECK:STDERR: 1.000_
-// CHECK:STDERR:      ^
+// CHECK:STDERR: fail_fraction_separator_at_end.carbon:[[@LINE+2]]:6: error: misplaced digit separator in numeric literal [InvalidDigitSeparator]
 // CHECK:STDERR:
 1.000_
 // CHECK:STDOUT:   - { index: 1, kind: "RealLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "1.000_", value: "1000*10^-4", has_leading_space: true }
@@ -177,9 +163,7 @@ fn F() {
 // CHECK:STDOUT: - filename: fail_unknown_base.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_unknown_base.carbon:[[@LINE+4]]:1: error: unknown base specifier in numeric literal [UnknownBaseSpecifier]
-// CHECK:STDERR: 05
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_unknown_base.carbon:[[@LINE+2]]:1: error: unknown base specifier in numeric literal [UnknownBaseSpecifier]
 // CHECK:STDERR:
 05
 // CHECK:STDOUT:   - { index: 1, kind:     "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "05", has_leading_space: true }

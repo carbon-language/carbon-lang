@@ -50,9 +50,9 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CCallNoInlineWithOptSize.Main() local_unnamed_addr #0 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc4_15.i = tail call i32 @_CRand.Main() #0, !dbg !81
-// CHECK:STDOUT:   %Rand.call.loc4_24.i = tail call i32 @_CRand.Main() #0, !dbg !82
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc4_24.i, %Rand.call.loc4_15.i, !dbg !81
+// CHECK:STDOUT:   %Rand.call.loc4_15.i = tail call i32 @_CRand.Main() #0, !dbg !80
+// CHECK:STDOUT:   %Rand.call.loc4_24.i = tail call i32 @_CRand.Main() #0, !dbg !81
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc4_24.i, %Rand.call.loc4_15.i, !dbg !80
 // CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.i, !dbg !20
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -68,7 +68,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc16_11.array.index, align 4, !dbg !31
 // CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = shl i32 %Int.as.MulAssignWith.impl.Op.call, 1, !dbg !31
 // CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc16_11.array.index, align 4, !dbg !31
-// CHECK:STDOUT:   %1 = add nuw nsw i32 %n.var.03, 1, !dbg !90
+// CHECK:STDOUT:   %1 = add nuw nsw i32 %n.var.03, 1, !dbg !89
 // CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp samesign ult i32 %n.var.03, 65535, !dbg !27
 // CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !26
 // CHECK:STDOUT:
@@ -132,10 +132,10 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !57 = !{!51, !52}
 // CHECK:STDOUT: !75 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !76 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !80 = distinct !DILocation(line: 9, column: 10, scope: !16)
-// CHECK:STDOUT: !81 = distinct !DILocation(line: 4, column: 10, scope: !10, inlinedAt: !80)
-// CHECK:STDOUT: !82 = distinct !DILocation(line: 4, column: 19, scope: !10, inlinedAt: !80)
-// CHECK:STDOUT: !88 = distinct !DILocation(line: 17, column: 5, scope: !21)
-// CHECK:STDOUT: !89 = distinct !DILocation(line: 398, column: 5, scope: !42, inlinedAt: !88)
-// CHECK:STDOUT: !90 = distinct !DILocation(line: 331, column: 3, scope: !50, inlinedAt: !89)
+// CHECK:STDOUT: !79 = distinct !DILocation(line: 9, column: 10, scope: !16)
+// CHECK:STDOUT: !80 = distinct !DILocation(line: 4, column: 10, scope: !10, inlinedAt: !79)
+// CHECK:STDOUT: !81 = distinct !DILocation(line: 4, column: 19, scope: !10, inlinedAt: !79)
+// CHECK:STDOUT: !87 = distinct !DILocation(line: 17, column: 5, scope: !21)
+// CHECK:STDOUT: !88 = distinct !DILocation(line: 398, column: 5, scope: !42, inlinedAt: !87)
+// CHECK:STDOUT: !89 = distinct !DILocation(line: 331, column: 3, scope: !50, inlinedAt: !88)
 // CHECK:STDOUT:

@@ -17,9 +17,7 @@ class Foo {
 // --- fail_todo_qualified.carbon
 
 class Baz {
-  // CHECK:STDERR: fail_todo_qualified.carbon:[[@LINE+4]]:11: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   friend P.Q;
-  // CHECK:STDERR:           ^
+  // CHECK:STDERR: fail_todo_qualified.carbon:[[@LINE+2]]:11: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   friend P.Q;
 }
@@ -27,41 +25,31 @@ class Baz {
 // --- fail_bad_syntax.carbon
 
 class A {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:9: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
-  // CHECK:STDERR:   friend;
-  // CHECK:STDERR:         ^
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:9: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
   // CHECK:STDERR:
   friend;
 }
 
 class B {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:12: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   friend X extra_token;
-  // CHECK:STDERR:            ^~~~~~~~~~~
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:12-22: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   friend X extra_token;
 }
 
 class C {
   friend
-// CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:1: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:1: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
 // CHECK:STDERR:
 }
 
 class D {
   friend X
-// CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:1: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:1: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
 // CHECK:STDERR:
 }
 
 class E {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:10: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
-  // CHECK:STDERR:   friend class;
-  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:10-14: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
   // CHECK:STDERR:
   friend class;
 }

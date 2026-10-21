@@ -531,7 +531,7 @@ fn IterateSlice(s: Core.Slice(i32)) -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define linkonce_odr void @"_COp:thunk:AddAssignWith.03689a112aff8ff9.Core:UInt.9452f4c51951679b.Core:AddAssignWith.1d47ea6b06d1da31.Core.6c4979b2d311a38e"(ptr %self, i64 %other) #2 !dbg !311 {
-// CHECK:STDOUT:   %1 = call i64 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.3260578ee2895055.Core.89b00b8a376d67f1"(i64 %other), !dbg !314
+// CHECK:STDOUT:   %1 = call i64 @"_CConvert.UInt.9452f4c51951679b.Core:ImplicitAs.3260578ee2895055.Core.89b00b8a376d67f1"(i64 %other), !dbg !315
 // CHECK:STDOUT:   %2 = load i64, ptr %self, align 8, !dbg !315
 // CHECK:STDOUT:   %3 = add i64 %2, %1, !dbg !315
 // CHECK:STDOUT:   store i64 %3, ptr %self, align 8, !dbg !315
@@ -726,7 +726,6 @@ fn IterateSlice(s: Core.Slice(i32)) -> i32 {
 // CHECK:STDOUT: !311 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.03689a112aff8ff9.Core:UInt.9452f4c51951679b.Core:AddAssignWith.1d47ea6b06d1da31.Core.6c4979b2d311a38e", scope: null, file: !265, line: 393, type: !271, spFlags: DISPFlagDefinition, unit: !145, retainedNodes: !318)
 // CHECK:STDOUT: !312 = !DILocalVariable(arg: 1, scope: !311, type: !6)
 // CHECK:STDOUT: !313 = !DILocalVariable(arg: 2, scope: !311, type: !6)
-// CHECK:STDOUT: !314 = !DILocation(line: 0, scope: !311)
 // CHECK:STDOUT: !315 = !DILocation(line: 393, column: 3, scope: !311)
 // CHECK:STDOUT: !316 = !{!6, !6}
 // CHECK:STDOUT: !317 = !DISubroutineType(types: !316)

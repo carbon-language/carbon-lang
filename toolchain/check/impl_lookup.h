@@ -8,7 +8,7 @@
 #include <variant>
 
 #include "toolchain/check/context.h"
-#include "toolchain/sem_ir/identified_facet_type.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"

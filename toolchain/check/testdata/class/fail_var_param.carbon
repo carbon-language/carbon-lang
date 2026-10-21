@@ -12,11 +12,7 @@
 
 // A `var` parameter is not constant, so it is not allowed as a parameter of a
 // generic type.
-// CHECK:STDERR: fail_var_param.carbon:[[@LINE+7]]:13: error: parameters of generic types must be constant [GenericParamMustBeConstant]
-// CHECK:STDERR: class C(var x: i32);
-// CHECK:STDERR:             ^~~~~~
-// CHECK:STDERR: fail_var_param.carbon:[[@LINE+4]]:13: note: `var` parameters are runtime [VarParamIsRuntime]
-// CHECK:STDERR: class C(var x: i32);
-// CHECK:STDERR:             ^~~~~~
+// CHECK:STDERR: fail_var_param.carbon:[[@LINE+3]]:13-18: error: parameters of generic types must be constant [GenericParamMustBeConstant]
+// CHECK:STDERR: fail_var_param.carbon:[[@LINE+2]]:13-18: note: `var` parameters are runtime [VarParamIsRuntime]
 // CHECK:STDERR:
 class C(var x: i32);

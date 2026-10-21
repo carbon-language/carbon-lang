@@ -47,15 +47,11 @@ fn F1();
 
 namespace N;
 // Use `package.F1` and poison `N.F1`.
-// CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+3]]:14: error: name `F1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N.F2 = F1;
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+1]]:14-15: error: name `F1` used before it was declared [NameUseBeforeDecl]
 alias N.F2 = F1;
 
 // Failure: `N.F1` declared after it was poisoned.
-// CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+4]]:6: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn N.F1();
-// CHECK:STDERR:      ^~
+// CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+2]]:6-7: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 fn N.F1();
 
@@ -69,9 +65,7 @@ fn F1();
 namespace N;
 alias N.F2 = F1;
 
-// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+4]]:14: error: member name `F1` not found in `N` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: alias N.F3 = N.F1;
-// CHECK:STDERR:              ^~~~
+// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+2]]:14-17: error: member name `F1` not found in `N` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 alias N.F3 = N.F1;
 
@@ -83,15 +77,11 @@ fn F1();
 
 namespace N;
 // Use `package.F1` and poison `N.F1`.
-// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+3]]:14: error: name `F1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N.F2 = F1;
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+1]]:14-15: error: name `F1` used before it was declared [NameUseBeforeDecl]
 alias N.F2 = F1;
 
 // Failure: `N.F1` declared after it was poisoned.
-// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+4]]:6: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn N.F1();
-// CHECK:STDERR:      ^~
+// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+2]]:6-7: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 fn N.F1();
 
@@ -111,30 +101,18 @@ namespace N1.N2.N3;
 // * `N1.F1`
 // * `N1.N2.F1`
 // * `N1.N2.N3.F1`
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:21: error: name `F1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N1.N2.N3.F2 = F1;
-// CHECK:STDERR:                     ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+1]]:21-22: error: name `F1` used before it was declared [NameUseBeforeDecl]
 alias N1.N2.N3.F2 = F1;
 
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:7: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn N1.F1();
-// CHECK:STDERR:       ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:7-8: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-6]]:21: error: name `F1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N1.N2.N3.F2 = F1;
-// CHECK:STDERR:                     ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-4]]:21-22: error: name `F1` used before it was declared [NameUseBeforeDecl]
 fn N1.F1();
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+7]]:10: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn N1.N2.F1();
-// CHECK:STDERR:          ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:10-11: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-14]]:21: error: name `F1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N1.N2.N3.F2 = F1;
-// CHECK:STDERR:                     ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-8]]:21-22: error: name `F1` used before it was declared [NameUseBeforeDecl]
 fn N1.N2.F1();
-// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+4]]:13: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn N1.N2.N3.F1();
-// CHECK:STDERR:             ^~
+// CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+2]]:13-14: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 fn N1.N2.N3.F1();
 
@@ -145,12 +123,8 @@ library "[[@TEST_NAME]]";
 fn F();
 
 namespace N;
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+7]]:13: error: name `F` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N.F = F;
-// CHECK:STDERR:             ^
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+4]]:9: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: alias N.F = F;
-// CHECK:STDERR:         ^
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+3]]:13: error: name `F` used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR: fail_alias.carbon:[[@LINE+2]]:9: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 alias N.F = F;
 
@@ -175,27 +149,17 @@ library "[[@TEST_NAME]]";
 
 namespace N;
 // `N.F1` poisoned when not found.
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:14: error: name `F1` not found [NameNotFound]
-// CHECK:STDERR: alias N.F2 = F1;
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:14-15: error: name `F1` not found [NameNotFound]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:14: error: name `F1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N.F2 = F1;
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+1]]:14-15: error: name `F1` used before it was declared [NameUseBeforeDecl]
 alias N.F2 = F1;
 
 // TODO: We should ideally only produce one diagnostic here.
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+7]]:4: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn F1();
-// CHECK:STDERR:    ^~
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:4-5: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE-7]]:14: error: name `F1` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: alias N.F2 = F1;
-// CHECK:STDERR:              ^~
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE-5]]:14-15: error: name `F1` used before it was declared [NameUseBeforeDecl]
 fn F1();
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+4]]:6: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR: fn N.F1();
-// CHECK:STDERR:      ^~
+// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+2]]:6-7: note: declared here [NameUseBeforeDeclNote]
 // CHECK:STDERR:
 fn N.F1();
 
@@ -207,14 +171,10 @@ fn F1() {
   fn F2();
 
   class C {
-    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+3]]:16: error: name `F2` used before it was declared [NameUseBeforeDecl]
-    // CHECK:STDERR:     alias F3 = F2;
-    // CHECK:STDERR:                ^~
+    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+1]]:16-17: error: name `F2` used before it was declared [NameUseBeforeDecl]
     alias F3 = F2;
 
-    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+4]]:8: note: declared here [NameUseBeforeDeclNote]
-    // CHECK:STDERR:     fn F2();
-    // CHECK:STDERR:        ^~
+    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+2]]:8-9: note: declared here [NameUseBeforeDeclNote]
     // CHECK:STDERR:
     fn F2();
   }
