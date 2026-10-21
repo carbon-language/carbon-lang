@@ -247,6 +247,32 @@ class B {
   }
 }
 
+// --- fail_access_private_parent_in_generic.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+struct A {
+  bool X() const;
+};
+struct B : private A {};
+
+template<typename T>
+void F(T* _Nonnull t) {
+    t->X();
+}
+''';
+
+class C(T: type) {
+  extend base: Cpp.B;
+};
+
+fn G() {
+    var d: C(i32) = {
+        .base = Cpp.B.B(),
+    };
+    Cpp.F(&d);
+}
 
 // CHECK:STDOUT: --- instance_protected_field_access.carbon
 // CHECK:STDOUT:
