@@ -26,6 +26,7 @@
 #include "toolchain/check/pattern.h"
 #include "toolchain/check/thunk.h"
 #include "toolchain/check/type.h"
+#include "toolchain/check/type_completion.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/mangler.h"
@@ -780,10 +781,12 @@ struct FunctionInfo {
   };
 
   explicit FunctionInfo(Context& context, SemIR::FunctionId function_id,
+                        SemIR::SpecificId specific_id,
                         const SemIR::Function& function,
                         clang::DeclContext* decl_context,
                         bool export_as_constructor)
       : function_id(function_id),
+        specific_id(specific_id),
         function(function),
         decl_context(decl_context),
         return_type_id(function.GetDeclaredReturnType(context.sem_ir())),
@@ -858,6 +861,7 @@ struct FunctionInfo {
   }
 
   SemIR::FunctionId function_id;
+  SemIR::SpecificId specific_id;
   const SemIR::Function& function;
 
   // Parent scope in the C++ AST where a C++ thunk for this function can
@@ -900,7 +904,8 @@ static auto MapToCppThunkParamType(Context& context, SemIR::TypeId type_id)
 // Build FunctionInfo for an export of the given Carbon function. Exports the
 // name scope if necessary. Returns `nullopt` if an error was diagnosed.
 static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
-                              SemIR::FunctionId callee_function_id)
+                              SemIR::FunctionId callee_function_id,
+                              SemIR::SpecificId callee_specific_id)
     -> std::optional<FunctionInfo> {
   const SemIR::Function& callee = context.functions().Get(callee_function_id);
 
@@ -948,22 +953,138 @@ static auto BuildFunctionInfo(Context& context, SemIR::LocId loc_id,
     }
   }
 
-  return FunctionInfo(context, callee_function_id, callee, decl_context,
-                      export_as_constructor);
+  return FunctionInfo(context, callee_function_id, callee_specific_id, callee,
+                      decl_context, export_as_constructor);
+}
+
+// Synthesizes a global variable with a value of `value_id` and exports it to
+// clang. To generate a unique name, `parameter_index` should be the index of
+// the parameter within the function. `pattern_id` is the parameter pattern.
+// Returns a `clang::Expr*` suitable for conversion into an argument default
+// value to provide to clang, or `nullptr` if `value_id` is None.
+static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
+                                  const FunctionInfo& target,
+                                  int32_t parameter_index,
+                                  SemIR::InstId pattern_id,
+                                  SemIR::ConstantId value_id) -> clang::Expr* {
+  if (!value_id.has_value()) {
+    return nullptr;
+  }
+
+  CARBON_CHECK(!context.clang_sema().isUnevaluatedContext());
+
+  // TODO: add support for generic types, remove this check.
+  auto value_inst_id = context.constant_values().GetInstId(value_id);
+  CARBON_CHECK(TryIsConcreteType(
+      context, context.insts().Get(value_inst_id).type_id(), loc_id));
+
+  llvm::errs() << "** i: " << parameter_index << " pattern_id: ";
+  pattern_id.Print(llvm::errs());
+  llvm::errs() << " value_id: ";
+  value_id.Print(llvm::errs());
+
+  // Synthesize a global variable, initialized to the default value, for export
+  // to C++.
+  // TODO: making the mangler is expensive, we should cache and reuse it.
+  SemIR::Mangler mangler(context.sem_ir(), context.total_ir_count(),
+                         context.mangle_string_fingerprint());
+  auto mangled_fn_name = mangler.Mangle(target.function_id, target.specific_id);
+  llvm::SmallString<64> var_name = llvm::formatv(
+      "__carbon_default_value_{}_{}", mangled_fn_name, parameter_index);
+
+  llvm::errs() << " name: '" << var_name << "'\n";
+
+  // Look for already-exported default value, and re-use if present.
+  auto existing_id = context.identifiers().Lookup(var_name);
+  CARBON_CHECK(!existing_id.has_value());
+
+  auto name_id = SemIR::NameId::ForIdentifier(
+      existing_id.has_value() ? existing_id
+                              : context.identifiers().Add(var_name));
+
+  // First we synthesize the variable definition by creating an EntityName from
+  // the generated name stored in `var_name`. We want to generate a
+  // `SemIR::VarStorage` instruction in the `InstBlockId::ExtraGlobalVariables`
+  // special block. During lowering this block is scanned for `VarStorage`
+  // instructions, and each one encountered is exported as a global variable
+  // with the associated typed storage.
+  auto pattern_type_id = context.insts().Get(pattern_id).type_id();
+
+  // TODO: we are not storing the original TypeInstIds of the parameter patterns
+  // with the function, so the location of those instructions are lost in this
+  // entity. If we ever need to know that location (e.g. for diagnostics), we
+  // will need to preserve them with functions and then pipe that through here.
+  SemIR::EntityName entity_name = {
+      .name_id = name_id,
+      .parent_scope_id = SemIR::NameScopeId::Package,
+      .type_inst_id = context.types().GetTypeInstId(pattern_type_id),
+  };
+
+  auto entity_name_id = context.entity_names().AddCanonical(entity_name);
+
+  auto binding_pattern_id = AddInstInNoBlock<SemIR::RefBindingPattern>(
+      context, loc_id,
+      {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
+  context.extra_global_variables().push_back(binding_pattern_id);
+
+  auto var_pattern_id = AddInstInNoBlock(
+      context, SemIR::LocIdAndInst::RuntimeVerified(
+                   context.sem_ir(), loc_id,
+                   SemIR::VarPattern({.type_id = pattern_type_id,
+                                      .subpattern_id = binding_pattern_id})));
+  context.extra_global_variables().push_back(var_pattern_id);
+  // GetOrAddVarStorage(Context &context, SemIR::InstId var_pattern_id, bool
+  // is_returned_var)
+  auto var_storage_id = AddInstInNoBlock(
+      context,
+      SemIR::LocIdAndInst(
+          loc_id, SemIR::VarStorage({.type_id = ExtractScrutineeType(
+                                         context.sem_ir(), pattern_type_id),
+                                     .pattern_id = var_pattern_id})));
+  context.extra_global_variables().push_back(var_storage_id);
+
+  // Add the variable initialization commands to the global initialization
+  // section so that it will have its value set before being referenced by the
+  // C++ code. Because we are exporting variables (vs. constants), we don't
+  // export the value of that default value, only the location of the global
+  // storage for that value. As a result, we must add instructions to
+  // the global initialization table to actually initialize that storage
+  // at binary startup time, so that when the C++ code dereferences
+  // it, the value is correct.
+  context.global_init().Resume();
+  auto init_id = InitializeExisting(context, loc_id, var_storage_id,
+                                    value_inst_id, /*for_return=*/false);
+  AddInst<SemIR::Assign>(context, loc_id,
+                         {.lhs_id = var_storage_id, .rhs_id = init_id});
+  context.global_init().Suspend();
+
+  auto* var_decl =
+      ExportVarToCpp(context, var_storage_id,
+                     context.insts().GetAs<SemIR::VarStorage>(var_storage_id));
+  auto decl_ref_expr = context.clang_sema().BuildDeclarationNameExpr(
+      clang::CXXScopeSpec(),
+      clang::DeclarationNameInfo(var_decl->getDeclName(),
+                                 clang::SourceLocation()),
+      var_decl);
+  return decl_ref_expr.get();
 }
 
 // Create a `clang::FunctionDecl` with the given parameter types and
 // return type.
 //
 // The function's name will match the one referenced by `function_name_id`,
-// and the function will be added to the given `decl_context`.
-static auto BuildCppFunctionDecl(Context& context,
-                                 clang::DeclContext* decl_context,
-                                 SemIR::LocId loc_id,
-                                 clang::DeclarationName declaration_name,
-                                 clang::ArrayRef<clang::QualType> param_types,
-                                 clang::QualType return_type,
-                                 bool export_as_constructor) {
+// and the function will be added to the given `decl_context`. If provided,
+// `default_value_exprs` must be index-aligned with `param_types`, and at every
+// index must have either a `clang::Expr*` suitable for use as a default value
+// for that parameter, or `nullptr` if no default value is specified.
+static auto BuildCppFunctionDecl(
+    Context& context, clang::DeclContext* decl_context, SemIR::LocId loc_id,
+    clang::DeclarationName declaration_name,
+    clang::ArrayRef<clang::QualType> param_types,
+    std::optional<clang::ArrayRef<clang::Expr*>> default_value_exprs,
+    clang::QualType return_type, bool export_as_constructor) {
+  CARBON_CHECK(!default_value_exprs.has_value() ||
+               default_value_exprs->size() == param_types.size());
   auto clang_loc = GetCppLocation(context, loc_id);
 
   auto cpp_function_type = context.ast_context().getFunctionType(
@@ -992,13 +1113,22 @@ static auto BuildCppFunctionDecl(Context& context,
 
   // Build parameter decls.
   llvm::SmallVector<clang::ParmVarDecl*> param_var_decls;
-  for (auto type : param_types) {
+  for (auto [i, type] : llvm::enumerate(param_types)) {
     auto* param_tinfo =
         context.ast_context().getTrivialTypeSourceInfo(type, clang_loc);
     clang::ParmVarDecl* param = clang::ParmVarDecl::Create(
         context.ast_context(), function_decl, /*StartLoc=*/clang_loc,
         /*IdLoc=*/clang_loc, /*Id=*/nullptr, type, param_tinfo, clang::SC_None,
         /*DefArg=*/nullptr);
+    auto* default_value_expr =
+        default_value_exprs ? default_value_exprs.value()[i] : nullptr;
+    if (default_value_expr) {
+      auto converted_result = context.clang_sema().ConvertParamDefaultArgument(
+          param, default_value_expr, clang_loc);
+      CARBON_CHECK(!converted_result.isInvalid());
+      context.clang_sema().SetParamDefaultArgument(
+          param, converted_result.get(), clang_loc);
+    }
     param_var_decls.push_back(param);
   }
   function_decl->setParams(param_var_decls);
@@ -1051,7 +1181,8 @@ static auto BuildCppFunctionDeclForNonGenericCarbonFn(Context& context,
                            : context.ast_context().getTranslationUnitDecl();
   auto* function_decl = BuildCppFunctionDecl(
       context, decl_context, loc_id, target.GetCppName(context),
-      cpp_param_types, cpp_return_type, target.export_as_constructor);
+      cpp_param_types, std::nullopt, cpp_return_type,
+      target.export_as_constructor);
 
   // Mangle the function name and attach it to the `FunctionDecl`.
   SemIR::Mangler m(context.sem_ir(), context.total_ir_count(),
@@ -1075,6 +1206,11 @@ static auto BuildCppFunctionDeclForGenericCarbonFn(Context& context,
     -> clang::FunctionDecl* {
   CARBON_CHECK(callee.function.generic_id.has_value());
 
+  llvm::errs() << "calling BuildCppFunctionDeclForGenericCarbonFn for: `";
+  llvm::errs() << context.names().GetAsStringIfIdentifier(
+      callee.function.name_id);
+  llvm::errs() << "\n";
+
   // Get parameters types.
   //
   // TODO: currently this matches the behavior of
@@ -1082,6 +1218,7 @@ static auto BuildCppFunctionDeclForGenericCarbonFn(Context& context,
   // irrelevant, and the parameter should instead map to something that will
   // guide C++ template argument deduction into doing the right thing.
   llvm::SmallVector<clang::QualType> cpp_param_types;
+  llvm::SmallVector<clang::Expr*> cpp_default_values;
   if (callee.self_param) {
     auto cpp_type = MapToCppThunkParamType(context, callee.self_param->type_id);
     if (cpp_type.isNull()) {
@@ -1089,14 +1226,18 @@ static auto BuildCppFunctionDeclForGenericCarbonFn(Context& context,
       return nullptr;
     }
     cpp_param_types.push_back(cpp_type);
+    cpp_default_values.push_back(nullptr);
   }
-  for (auto param : callee.explicit_params) {
+  for (auto [i, param] : llvm::enumerate(callee.explicit_params)) {
     auto cpp_type = MapToCppThunkParamType(context, param.type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map Carbon type to C++");
       return nullptr;
     }
     cpp_param_types.push_back(cpp_type);
+    cpp_default_values.push_back(
+        BuildDefaultValueExpr(context, loc_id, callee, i, param.pattern_inst_id,
+                              param.default_value_const_id));
   }
 
   clang::QualType cpp_return_type = context.ast_context().VoidTy;
@@ -1115,7 +1256,8 @@ static auto BuildCppFunctionDeclForGenericCarbonFn(Context& context,
                            : context.ast_context().getTranslationUnitDecl();
   return BuildCppFunctionDecl(context, decl_context, loc_id,
                               callee.GetCppName(context), cpp_param_types,
-                              cpp_return_type, callee.export_as_constructor);
+                              cpp_default_values, cpp_return_type,
+                              callee.export_as_constructor);
 }
 
 // Returns whether the given Carbon parameter should be passed as a C++ const
@@ -1201,95 +1343,6 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
       ->getAs<clang::FunctionProtoType>();
 }
 
-// Synthesizes a global variable with a value of `value_id` and exports it to
-// clang. To generate a unique name, `parameter_index` should be the index of
-// the parameter within the function. `pattern_id` is the parameter pattern.
-// Returns a `clang::Expr*` suitable for conversion into an argument default
-// value to provide to clang, or `nullptr` if `value_id` is None.
-static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
-                                  const FunctionInfo& target,
-                                  int32_t parameter_index,
-                                  SemIR::InstId pattern_id,
-                                  SemIR::ConstantId value_id) -> clang::Expr* {
-  if (!value_id.has_value()) {
-    return nullptr;
-  }
-
-  // Synthesize a global variable, initialized to the default value, for export
-  // to C++.
-  // TODO: making the mangler is expensive, we should cache and reuse it.
-  SemIR::Mangler mangler(context.sem_ir(), context.total_ir_count(),
-                         context.mangle_string_fingerprint());
-  auto mangled_fn_name =
-      mangler.Mangle(target.function_id, SemIR::SpecificId::None);
-  llvm::SmallString<64> var_name = llvm::formatv(
-      "__carbon_default_value_{}_{}", mangled_fn_name, parameter_index);
-  auto name_id =
-      SemIR::NameId::ForIdentifier(context.identifiers().Add(var_name));
-
-  // First we synthesize the variable definition by creating an EntityName from
-  // the generated name stored in `var_name`. We want to generate a
-  // `SemIR::VarStorage` instruction in the `InstBlockId::ExtraGlobalVariables`
-  // special block. During lowering this block is scanned for `VarStorage`
-  // instructions, and each one encountered is exported as a global variable
-  // with the associated typed storage.
-  auto pattern_type_id = context.insts().Get(pattern_id).type_id();
-  // TODO: we are not storing the original TypeInstIds of the parameter patterns
-  // with the function, so the location of those instructions are lost in this
-  // entity. If we ever need to know that location (e.g. for diagnostics), we
-  // will need to preserve them with functions and then pipe that through here.
-  SemIR::EntityName entity_name = {
-      .name_id = name_id,
-      .parent_scope_id = SemIR::NameScopeId::Package,
-      .type_inst_id = context.types().GetTypeInstId(pattern_type_id),
-  };
-  auto entity_name_id = context.entity_names().AddCanonical(entity_name);
-
-  auto binding_pattern_id = AddInstInNoBlock<SemIR::RefBindingPattern>(
-      context, loc_id,
-      {.type_id = pattern_type_id, .entity_name_id = entity_name_id});
-  context.extra_global_variables().push_back(binding_pattern_id);
-
-  auto var_pattern_id = AddInstInNoBlock(
-      context, SemIR::LocIdAndInst::RuntimeVerified(
-                   context.sem_ir(), loc_id,
-                   SemIR::VarPattern({.type_id = pattern_type_id,
-                                      .subpattern_id = binding_pattern_id})));
-  context.extra_global_variables().push_back(var_pattern_id);
-
-  auto var_storage_id = AddInstWithCleanupInNoBlock<SemIR::VarStorage>(
-      context, loc_id,
-      {.type_id = ExtractScrutineeType(context.sem_ir(), pattern_type_id),
-       .pattern_id = var_pattern_id});
-  context.extra_global_variables().push_back(var_storage_id);
-
-  // Add the variable initialization commands to the global initialization
-  // section so that it will have its value set before being referenced by the
-  // C++ code. Because we are exporting variables (vs. constants), we don't
-  // export the value of that default value, only the location of the global
-  // storage for that value. As a result, we must add instructions to
-  // the global initialization table to actually initialize that storage
-  // at binary startup time, so that when the C++ code dereferences
-  // it, the value is correct.
-  context.global_init().Resume();
-  auto init_id = InitializeExisting(
-      context, loc_id, var_storage_id,
-      context.constant_values().GetInstId(value_id), /*for_return=*/false);
-  AddInst<SemIR::Assign>(context, loc_id,
-                         {.lhs_id = var_storage_id, .rhs_id = init_id});
-  context.global_init().Suspend();
-
-  auto* var_decl =
-      ExportVarToCpp(context, var_storage_id,
-                     context.insts().GetAs<SemIR::VarStorage>(var_storage_id));
-  auto decl_ref_expr = context.clang_sema().BuildDeclarationNameExpr(
-      clang::CXXScopeSpec(),
-      clang::DeclarationNameInfo(var_decl->getDeclName(),
-                                 clang::SourceLocation()),
-      var_decl);
-  return decl_ref_expr.get();
-}
-
 // Create the declaration of the C++ thunk.
 static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
                                       const FunctionInfo& target,
@@ -1298,6 +1351,9 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
   clang::ASTContext& ast_context = context.ast_context();
 
   auto clang_loc = GetCppLocation(context, loc_id);
+
+  llvm::errs() << "BuildCppToCarbonThunkDecl: " << thunk_name.getAsString()
+               << "\n";
 
   // If the signature was imported from C++, use that declaration to form the
   // parameter types rather than (lossily) re-exporting the Carbon signature
@@ -1375,9 +1431,16 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
         ast_context, thunk_function_decl, /*StartLoc=*/clang_loc,
         /*IdLoc=*/clang_loc, /*Id=*/nullptr, type,
         /*TInfo=*/nullptr, clang::SC_None, /*DefArg=*/nullptr);
-    if (auto* default_value_expr = BuildDefaultValueExpr(
-            context, loc_id, target, i, param.pattern_inst_id,
-            param.default_value_const_id)) {
+    if (param.default_value_const_id.has_value()) {
+      clang::Sema& sema = context.clang_sema();
+      clang::Sema::ContextRAII context_raii(sema, thunk_function_decl);
+      // Ensure that the evaluation context is not `Unevaluated`, as that
+      // would cause code generation to fail.
+      clang::EnterExpressionEvaluationContext evaluated(
+          sema, clang::Sema::ExpressionEvaluationContext::PotentiallyEvaluated);
+      auto* default_value_expr = BuildDefaultValueExpr(
+          context, loc_id, target, i, param.pattern_inst_id,
+          param.default_value_const_id);
       auto converted_result = context.clang_sema().ConvertParamDefaultArgument(
           thunk_param, default_value_expr, clang_loc);
       CARBON_CHECK(!converted_result.isInvalid());
@@ -1589,6 +1652,7 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
       target.function.first_decl_id(), target.export_as_constructor);
 
   return FunctionInfo(context, carbon_thunk_function_id,
+                      SemIR::SpecificId::None,
                       context.functions().Get(carbon_thunk_function_id),
                       target.decl_context, target.export_as_constructor);
 }
@@ -1605,7 +1669,7 @@ auto ExportVirtualFunctionDeclToCpp(Context& context, SemIR::LocId loc_id,
                                     clang::CXXRecordDecl* parent,
                                     SemIR::FunctionId function_id)
     -> clang::CXXMethodDecl* {
-  FunctionInfo target(context, function_id,
+  FunctionInfo target(context, function_id, SemIR::SpecificId::None,
                       context.functions().Get(function_id), parent,
                       /*export_as_constructor=*/false);
   return cast_or_null<clang::CXXMethodDecl>(
@@ -1649,7 +1713,8 @@ auto DefineExportedVirtualFunction(Context& context, SemIR::LocId loc_id,
                                    SemIR::FunctionId callee_function_id,
                                    clang::CXXMethodDecl* method_decl) -> void {
   const SemIR::Function& callee = context.functions().Get(callee_function_id);
-  FunctionInfo target_function_info(context, callee_function_id, callee,
+  FunctionInfo target_function_info(context, callee_function_id,
+                                    SemIR::SpecificId::None, callee,
                                     method_decl->getDeclContext(),
                                     /*export_as_constructor=*/false);
   BuildCppToCarbonThunk(context, loc_id, target_function_info, method_decl, "");
@@ -1664,6 +1729,10 @@ auto ExportNonGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
                                    const FunctionInfo& target,
                                    std::string_view extra_name = "")
     -> clang::FunctionDecl* {
+  llvm::errs() << "ExportNonGenericFunctionToCpp for: "
+               << target.GetCppName(context).getAsString();
+  llvm::errs() << "\n";
+
   auto* thunk_function_decl =
       ExportNonGenericFunctionDeclToCpp(context, loc_id, target);
   if (!thunk_function_decl) {
@@ -1691,20 +1760,21 @@ auto ExportFunctionSpecializationToCpp(
   auto target_function =
       context.functions().Get(target_function_decl.function_id);
 
-  auto* decl_context = function_template_decl->getDeclContext();
-  FunctionInfo target(context, target_function_decl.function_id,
-                      target_function, decl_context,
-                      llvm::isa<clang::CXXConstructorDecl>(
-                          function_template_decl->getTemplatedDecl()));
-  SemIR::LocId loc_id(target.function.first_decl_id());
+  SemIR::LocId loc_id(target_function.first_decl_id());
 
   // Create a specific, and use that to convert return type and
   // parameters with symbolic types to concrete types.
   auto specific_id = MakeSpecificForTemplateArgs(
-      context, loc_id, target.function.generic_id, template_args);
+      context, loc_id, target_function.generic_id, template_args);
   if (specific_id == SemIR::SpecificId::None) {
     return false;
   }
+  auto* decl_context = function_template_decl->getDeclContext();
+  FunctionInfo target(context, target_function_decl.function_id, specific_id,
+                      target_function, decl_context,
+                      llvm::isa<clang::CXXConstructorDecl>(
+                          function_template_decl->getTemplatedDecl()));
+
   if (!ResolveReturnTypeInSpecific(context, loc_id, target.function,
                                    specific_id)) {
     return false;
@@ -1745,6 +1815,9 @@ auto ExportFunctionSpecializationToCpp(
 static auto ExportGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
                                        const FunctionInfo& callee)
     -> clang::FunctionTemplateDecl* {
+  llvm::errs() << "ExportGenericFunctionToCpp for: "
+               << callee.GetCppName(context).getAsString() << "\n";
+
   auto clang_loc = GetCppLocation(context, loc_id);
 
   auto* template_param_list = ExportGenericBindings(
@@ -1780,7 +1853,8 @@ static auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
     return nullptr;
   }
 
-  auto target = BuildFunctionInfo(context, loc_id, callee_function_id);
+  auto target = BuildFunctionInfo(context, loc_id, callee_function_id,
+                                  SemIR::SpecificId::None);
   if (!target) {
     return nullptr;
   }
@@ -1806,6 +1880,14 @@ auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
     return llvm::cast<clang::NamedDecl>(
         context.clang_decls().Get(clang_decl_id).decl());
   }
+
+  llvm::errs() << "GetOrExportFunctionToCpp cache miss for: `";
+  llvm::errs() << context.names().GetAsStringIfIdentifier(function.name_id);
+  llvm::errs() << "` id: ";
+  function_id.Print(llvm::errs());
+  llvm::errs() << " first decl id: ";
+  function.first_decl_id().Print(llvm::errs());
+  llvm::errs() << "\n";
 
   auto* named_decl = ExportFunctionToCpp(context, loc_id, function_id);
   if (!named_decl) {
@@ -1947,8 +2029,8 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
   auto* cpp_destructor_decl = clang::CXXDestructorDecl::Create(
       context.ast_context(), record_decl,
       /*StartLoc=*/clang_loc, name_info, type, /*TInfo=*/nullptr,
-      /*UsesFPIntrin=*/false, /*isInline=*/true, /*isImplicitlyDeclared=*/true,
-      clang::ConstexprSpecKind::Unspecified);
+      /*UsesFPIntrin=*/false, /*isInline=*/true,
+      /*isImplicitlyDeclared=*/true, clang::ConstexprSpecKind::Unspecified);
   cpp_destructor_decl->setAccess(clang::AS_public);
 
   clang::Sema& sema = context.clang_sema();
@@ -1975,7 +2057,7 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
   // TODO: Once we support exporting specific classes, export the specific
   // destructor here rather than a generic one.
   auto thunk_function_id = BuildDestroyThunk(context, loc_id, class_info);
-  FunctionInfo thunk_target(context, thunk_function_id,
+  FunctionInfo thunk_target(context, thunk_function_id, SemIR::SpecificId::None,
                             context.functions().Get(thunk_function_id),
                             record_decl, /*export_as_constructor=*/false);
   auto* cpp_function_decl =
