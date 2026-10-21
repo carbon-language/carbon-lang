@@ -9,6 +9,7 @@
 #include "toolchain/check/context.h"
 #include "toolchain/check/convert.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/pattern.h"
 #include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/diagnostic.h"
@@ -622,6 +623,7 @@ auto DeduceGenericCallArguments(
                              enclosing_specific_id,
                              /*diagnose=*/true);
 
+  auto argument_count = arg_ids.size();
   // Prepare to perform deduction of the parameters against the explicit
   // arguments. When `self` is provided as the method-call receiver it is
   // prepended to the explicit argument list to match the leading `self`
@@ -629,11 +631,34 @@ auto DeduceGenericCallArguments(
   llvm::ArrayRef<SemIR::InstId> self_refs = {};
   if (self_id.has_value()) {
     self_refs = self_id;
+    ++argument_count;
   }
-  deduction.AddAll(context.inst_blocks().GetOrEmpty(param_patterns_id),
-                   llvm::ArrayRef<SemIR::InstId>(llvm::to_vector<8>(
-                       llvm::concat<const SemIR::InstId>(self_refs, arg_ids))),
-                   /*want_value=*/false);
+
+  auto param_patterns_block =
+      context.inst_blocks().GetOrEmpty(param_patterns_id);
+
+  // If we are short on arguments, check if we can append default values for
+  // deduction.
+  llvm::SmallVector<SemIR::InstId> default_values;
+  if (argument_count < param_patterns_block.size()) {
+    for (auto i = argument_count; i < param_patterns_block.size(); ++i) {
+      auto default_value =
+          ExtractParameterDefault(context, param_patterns_block[i]);
+      if (!default_value.has_value()) {
+        break;
+      }
+      default_values.push_back(
+          context.constant_values().GetInstId(default_value));
+    }
+  }
+
+  deduction.AddAll(
+      param_patterns_block,
+      llvm::ArrayRef<SemIR::InstId>(
+          llvm::to_vector<8>(llvm::concat<const SemIR::InstId>(
+              llvm::concat<const SemIR::InstId>(self_refs, arg_ids),
+              default_values))),
+      /*want_value=*/false);
 
   if (!deduction.Deduce() || !deduction.CheckDeductionIsComplete()) {
     return SemIR::SpecificId::None;
