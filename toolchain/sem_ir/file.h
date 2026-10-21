@@ -29,7 +29,6 @@
 #include "toolchain/sem_ir/field.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
-#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/import_cpp.h"
@@ -241,12 +240,6 @@ class File : public Printable<File> {
   auto AppendCppMangledTypeName(ClassId class_id, llvm::raw_ostream& out) const
       -> bool;
 
-  auto identified_facet_types() -> IdentifiedFacetTypeStore& {
-    return identified_facet_types_;
-  }
-  auto identified_facet_types() const -> const IdentifiedFacetTypeStore& {
-    return identified_facet_types_;
-  }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
   auto specific_interfaces() -> SpecificInterfaceStore& {
@@ -428,9 +421,6 @@ class File : public Printable<File> {
 
   // Storage for declared facet types.
   DeclaredFacetTypeStore declared_facet_types_;
-
-  // Storage for identified facet types.
-  IdentifiedFacetTypeStore identified_facet_types_;
 
   // Storage for impls.
   ImplStore impls_;

@@ -8,6 +8,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"

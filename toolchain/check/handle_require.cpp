@@ -106,7 +106,7 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
 
 static auto TypeStructureReferencesSelf(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId const_id,
-    const SemIR::IdentifiedFacetType& identified_facet_type) -> bool {
+    const IdentifiedFacetType& identified_facet_type) -> bool {
   auto find_self = [&](SemIR::TypeIterator& type_iter) -> bool {
     while (true) {
       auto step = type_iter.Next();
@@ -173,7 +173,7 @@ static auto TypeStructureReferencesSelf(
 }
 
 struct ValidateRequireResult {
-  const SemIR::IdentifiedFacetType* identified_facet_type;
+  const IdentifiedFacetType* identified_facet_type;
 };
 
 // Returns nullopt if a diagnostic has been emitted and the `require` decl is

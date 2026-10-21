@@ -2,22 +2,32 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-#ifndef CARBON_TOOLCHAIN_SEM_IR_IDENTIFIED_FACET_TYPE_H_
-#define CARBON_TOOLCHAIN_SEM_IR_IDENTIFIED_FACET_TYPE_H_
+#ifndef CARBON_TOOLCHAIN_CHECK_IDENTIFIED_FACET_TYPE_H_
+#define CARBON_TOOLCHAIN_CHECK_IDENTIFIED_FACET_TYPE_H_
 
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/canonical_value_store.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/specific_interface.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
-namespace Carbon::SemIR {
+namespace Carbon::Check {
 
-class File;
+// The ID of an identified facet type, which flattens referenced named
+// constraints together into a single structure, and replaces any `.Self`
+// references with a self facet.
+struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
+  static constexpr llvm::StringLiteral Label = "identified_facet_type";
+
+  using IdBase::IdBase;
+};
+
+class Context;
 
 struct IdentifiedFacetTypeKey {
-  DeclaredFacetTypeId declared_facet_type_id;
-  ConstantId self_const_id;
+  SemIR::DeclaredFacetTypeId declared_facet_type_id;
+  SemIR::ConstantId self_const_id;
   // Inside a named constraint, each identification of the `Self` facet type can
   // be unique, as it can be modified by each require declaration seen so far.
   // Uses -1 for identifying a facet type with a self-type from outside the
@@ -36,22 +46,22 @@ struct IdentifiedFacetTypeKey {
 struct IdentifiedFacetType {
   // A requirement that `self_facet_value` implements the `specific_interface`.
   struct RequiredImpl {
-    ConstantId self_facet_value;
-    SpecificInterface specific_interface;
+    SemIR::ConstantId self_facet_value;
+    SemIR::SpecificInterface specific_interface;
 
     friend auto operator==(const RequiredImpl& lhs, const RequiredImpl& rhs)
         -> bool = default;
   };
   struct Rewrite {
-    ConstantId lhs;
-    ConstantId rhs;
+    SemIR::ConstantId lhs;
+    SemIR::ConstantId rhs;
 
     friend auto operator==(const Rewrite& lhs, const Rewrite& rhs)
         -> bool = default;
   };
   struct Equivalent {
-    ConstantId lhs;
-    ConstantId rhs;
+    SemIR::ConstantId lhs;
+    SemIR::ConstantId rhs;
 
     friend auto operator==(const Equivalent& lhs, const Equivalent& rhs)
         -> bool = default;
@@ -80,11 +90,11 @@ struct IdentifiedFacetType {
 
   // The interface to implement when this facet type is used in an `impl`
   // declaration.
-  auto impl_as_target_interface() const -> SpecificInterface {
+  auto impl_as_target_interface() const -> SemIR::SpecificInterface {
     if (is_valid_impl_as_target()) {
       return {.interface_id = interface_id_, .specific_id = specific_id_};
     } else {
-      return SpecificInterface::None;
+      return SemIR::SpecificInterface::None;
     }
   }
 
@@ -125,38 +135,93 @@ struct IdentifiedFacetType {
   // The single interface from `required_impls` to implement if this is
   // the facet type to the right of an `impl`...`as`, or `None` if no such
   // single interface.
-  InterfaceId interface_id_ = InterfaceId::None;
+  SemIR::InterfaceId interface_id_ = SemIR::InterfaceId::None;
   union {
     // If `interface_id` is `None`, the number of interfaces to report in a
     // diagnostic about why this facet type can't be implemented.
     int num_interface_to_impl_ = 0;
     // If `interface_id` is not `None`, the specific for that interface.
-    SpecificId specific_id_;
+    SemIR::SpecificId specific_id_;
   };
 };
 
 using IdentifiedFacetTypeStore =
     CanonicalValueStore<IdentifiedFacetTypeId, IdentifiedFacetTypeKey,
-                        Tag<CheckIRId>, IdentifiedFacetType>;
+                        Tag<SemIR::CheckIRId>, IdentifiedFacetType>;
 
 // Given an array of witnesses, sorts them to match the ordering of the specific
 // interfaces in the IdentifiedFacetType that produced the witness set, which is
 // the canonical witness order, and returns the resulting block ID. This assumes
 // witnesses have already been deduplicated, and do not contain errors, because
 // it's mainly for imports.
-auto AddCanonicalWitnessesBlock(File& sem_ir,
-                                llvm::SmallVector<InstId>& witnesses)
-    -> InstBlockId;
+auto AddCanonicalWitnessesBlock(Context& context,
+                                llvm::SmallVector<SemIR::InstId>& witnesses)
+    -> SemIR::InstBlockId;
 
-}  // namespace Carbon::SemIR
+// Replace all IdentifiedWitnesses with LookupImplWitnesses, which will evaluate
+// and perform an impl lookup. If part of an ImplWitnessAccess, the result may
+// replace the access and witness with the value of an associated constant from
+// an impl.
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 IdentifiedFacetType::RequiredImpl req)
+    -> IdentifiedFacetType::RequiredImpl;
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 IdentifiedFacetType::Rewrite rewrite)
+    -> IdentifiedFacetType::Rewrite;
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::SpecificInterface interface)
+    -> SemIR::SpecificInterface;
+auto EvaluateIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                                 SemIR::ConstantId const_id)
+    -> SemIR::ConstantId;
+
+class SubstIdentifiedWitnessesCallbacks {
+ public:
+  explicit SubstIdentifiedWitnessesCallbacks(Context* context)
+      : context_(context) {}
+
+  auto context() const -> Context& { return *context_; }
+
+  // Callback to return an InstId to use in place of the IdentifiedWitness. If
+  // it returns None, the substitution will replace it with a LookupImplWitness
+  // which will be evaluated to perform an impl lookup.
+  virtual auto ReplaceIdentified(SemIR::IdentifiedWitness witness)
+      -> SemIR::InstId = 0;
+
+  // Callback to return an InstId to use in place of the ImplSelfWitness. If it
+  // returns None, the ImplSelfWitness will be left in place.
+  virtual auto ReplaceImplSelfWitness(SemIR::ImplSelfWitness witness)
+      -> SemIR::InstId = 0;
+
+ private:
+  Context* context_;
+};
+
+// Replace all IdentifiedWitnesses based on the behaviour of a callback that is
+// run as each witness is visited. Also gives the opportunity to replace
+// ImplSelfWitness in the same substitution pass.
+auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                              IdentifiedFacetType::RequiredImpl req,
+                              SubstIdentifiedWitnessesCallbacks& callbacks)
+    -> IdentifiedFacetType::RequiredImpl;
+auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                              IdentifiedFacetType::Equivalent equiv,
+                              SubstIdentifiedWitnessesCallbacks& callbacks)
+    -> IdentifiedFacetType::Equivalent;
+auto SubstIdentifiedWitnesses(Context& context, SemIR::LocId loc_id,
+                              SemIR::ConstantId const_id,
+                              SubstIdentifiedWitnessesCallbacks& callbacks)
+    -> SemIR::ConstantId;
+
+}  // namespace Carbon::Check
 
 namespace Carbon {
 extern template class CanonicalValueStore<
-    SemIR::IdentifiedFacetTypeId, SemIR::IdentifiedFacetTypeKey,
-    Tag<SemIR::CheckIRId>, SemIR::IdentifiedFacetType>;
-extern template class ValueStore<SemIR::IdentifiedFacetTypeId,
-                                 SemIR::IdentifiedFacetType,
+    Check::IdentifiedFacetTypeId, Check::IdentifiedFacetTypeKey,
+    Tag<SemIR::CheckIRId>, Check::IdentifiedFacetType>;
+extern template class ValueStore<Check::IdentifiedFacetTypeId,
+                                 Check::IdentifiedFacetType,
                                  Tag<SemIR::CheckIRId>>;
 }  // namespace Carbon
 
-#endif  // CARBON_TOOLCHAIN_SEM_IR_IDENTIFIED_FACET_TYPE_H_
+#endif  // CARBON_TOOLCHAIN_CHECK_IDENTIFIED_FACET_TYPE_H_

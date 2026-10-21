@@ -100,9 +100,35 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 }
 
 LLVM_DUMP_METHOD static auto Dump(
-    const Context& context,
-    SemIR::IdentifiedFacetTypeId identified_facet_type_id) -> std::string {
-  return SemIR::Dump(context.sem_ir(), identified_facet_type_id);
+    const Context& context, IdentifiedFacetTypeId identified_facet_type_id)
+    -> std::string {
+  RawStringOstream out;
+  out << identified_facet_type_id;
+  if (!identified_facet_type_id.has_value()) {
+    return out.TakeStr();
+  }
+
+  const auto& identified_facet_type =
+      context.identified_facet_types().Get(identified_facet_type_id);
+  for (auto [i, req_impl] :
+       llvm::enumerate(identified_facet_type.required_impls())) {
+    auto [self, req_interface] = req_impl;
+    out << "\n  - self: " << DumpConstantSummary(context.sem_ir(), self);
+    out << "\n    impls: "
+        << DumpInterfaceSummary(context.sem_ir(), req_interface.interface_id);
+    if (req_interface.specific_id.has_value()) {
+      out << "; "
+          << DumpSpecificSummary(context.sem_ir(), req_interface.specific_id);
+    }
+    if (req_interface == identified_facet_type.impl_as_target_interface()) {
+      out << "\n     - `impl as` target";
+    }
+  }
+  if (!identified_facet_type.is_valid_impl_as_target()) {
+    out << "\n  - " << identified_facet_type.num_interfaces_to_impl()
+        << " possible `impl as` targets";
+  }
+  return out.TakeStr();
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::ImplId impl_id)
@@ -205,6 +231,11 @@ LLVM_DUMP_METHOD static auto Dump(
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::TypeId type_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), type_id);
+}
+
+LLVM_DUMP_METHOD static auto MakeIdentifiedFacetTypeId(int id)
+    -> IdentifiedFacetTypeId {
+  return IdentifiedFacetTypeId(id);
 }
 
 }  // namespace Carbon::Check

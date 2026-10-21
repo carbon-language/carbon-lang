@@ -97,7 +97,7 @@ Example usage:
         "function": "SemIR::MakeFunctionId",
         "generated_function": "SemIR::MakeGeneratedFunctionId",
         "generic": "SemIR::MakeGenericId",
-        "identified_facet_type": "SemIR::MakeIdentifiedFacetTypeId",
+        "identified_facet_type": "Check::MakeIdentifiedFacetTypeId",
         "impl": "SemIR::MakeImplId",
         "inst": "SemIR::MakeInstId",
         "inst_block": "SemIR::MakeInstBlockId",

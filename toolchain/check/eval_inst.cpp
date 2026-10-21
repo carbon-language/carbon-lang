@@ -14,6 +14,7 @@
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/impl_lookup.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"

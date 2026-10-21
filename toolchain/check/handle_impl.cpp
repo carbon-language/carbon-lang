@@ -12,6 +12,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/impl.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/modifiers.h"
@@ -209,7 +210,7 @@ struct BuildImplDeclResult {
   SemIR::ImplId impl_id;
   SemIR::InstId impl_decl_id;
   SemIR::TypeInstId full_constraint_type_inst_id;
-  SemIR::IdentifiedFacetTypeId identified_id;
+  IdentifiedFacetTypeId identified_id;
 };
 
 // Build an ImplDecl describing the signature of an impl. This handles the

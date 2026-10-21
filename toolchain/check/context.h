@@ -21,6 +21,7 @@
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
@@ -33,7 +34,6 @@
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
@@ -367,6 +367,13 @@ class Context {
 
   auto access_context() -> SemIR::NameScopeId& { return access_context_; }
 
+  auto identified_facet_types() -> IdentifiedFacetTypeStore& {
+    return identified_facet_types_;
+  }
+  auto identified_facet_types() const -> const IdentifiedFacetTypeStore& {
+    return identified_facet_types_;
+  }
+
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
   // --------------------------------------------------------------------------
@@ -413,9 +420,6 @@ class Context {
   }
   auto declared_facet_types() -> SemIR::DeclaredFacetTypeStore& {
     return sem_ir().declared_facet_types();
-  }
-  auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
-    return sem_ir().identified_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto specific_interfaces() -> SemIR::SpecificInterfaceStore& {
@@ -671,6 +675,9 @@ class Context {
   // This is updated by `DeclNameStack`. During monomorphization, it is updated
   // by `TryEvalBlockForSpecific`.
   SemIR::NameScopeId access_context_ = SemIR::NameScopeId::None;
+
+  // Storage for identified facet types.
+  IdentifiedFacetTypeStore identified_facet_types_;
 };
 
 inline constexpr Context::FormExpr Context::FormExpr::Error = {

@@ -59,7 +59,6 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       associated_constants_(check_ir_id),
       // 1 reserved id for `DeclaredFacetTypeId::Empty`.
       declared_facet_types_(check_ir_id, 1),
-      identified_facet_types_(check_ir_id),
       impls_(*this),
       specific_interfaces_(check_ir_id),
       generics_(check_ir_id),
