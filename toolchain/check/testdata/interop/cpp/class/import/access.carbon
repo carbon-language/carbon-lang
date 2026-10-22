@@ -1183,6 +1183,32 @@ fn Call(var instance: Cpp.PublicPrivate) {
   instance.PrivateInstance();
 }
 
+// --- cpp_friend_decl_for_carbon_generic_class.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class B(T: type);
+
+inline Cpp '''
+class A {
+  template<typename T>
+  friend class Carbon::B;
+
+private:
+  int i;
+};
+''';
+
+class B(T: type) {
+  fn F() {
+    var a: Cpp.A = Cpp.A.A();
+    // CHECK:STDERR: cpp_friend_decl_for_carbon_generic_class.carbon:[[@LINE+3]]:5-7: error: cannot access private member `i` of type `Cpp.A` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: cpp_friend_decl_for_carbon_generic_class.carbon:[[@LINE-13]]:7: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:
+    a.i = 1;
+  }
+}
+
 // --- cpp_friend_decl_for_carbon_class.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
