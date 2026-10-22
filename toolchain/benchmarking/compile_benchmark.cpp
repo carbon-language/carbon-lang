@@ -297,8 +297,7 @@ static auto ImplFileParams() -> SourceGen::DenseDeclParams {
 // For simplicity, we compute a number of files from the target line count as a
 // heuristic, clamped to the `[min_files, max_files]` range provided by the
 // compilation harness.
-template <Lang L>
-static auto ComputeFileCount(int target_lines, int min_files,
+static auto ComputeFileCount(Lang lang, int target_lines, int min_files,
                              [[maybe_unused]] int max_files) -> int {
   if (IsBenchmarkDryRun()) {
     // Dry runs only smoke-test that the benchmark runs cleanly, so generate and
@@ -307,18 +306,18 @@ static auto ComputeFileCount(int target_lines, int min_files,
     return 2;
   }
   int file_count = (1024 * 1024) / target_lines;
+  if (lang == Lang::Cpp) {
+    // Reduce the number of files with C++ to balance the longer compile times.
+    file_count /= 2;
+  }
 #ifndef NDEBUG
   // Use a smaller number of files in debug builds where compiles are slower,
   // capping at the release-mode minimum.
   file_count = std::min(min_files, file_count);
 #else
-  file_count = std::max(min_files, std::min(max_files, file_count));
+  file_count = std::min(max_files, file_count);
 #endif
-  if constexpr (L == Lang::Cpp) {
-    // Reduce the number of files with C++ to balance the longer compile times.
-    file_count /= 2;
-  }
-  return std::max(1, file_count);
+  return std::max(min_files, file_count);
 }
 
 template <Lang L, Phase P, Mode M = Mode::InProcess>
@@ -330,7 +329,7 @@ static auto RunApiFileBenchmark(benchmark::State& state,
 
   int target_lines = state.range(0);
   int num_files =
-      ComputeFileCount<L>(target_lines, Compiler::MinFiles, Compiler::MaxFiles);
+      ComputeFileCount(L, target_lines, Compiler::MinFiles, Compiler::MaxFiles);
 
   llvm::SmallVector<std::string> sources;
   sources.reserve(num_files);
