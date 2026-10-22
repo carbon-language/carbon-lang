@@ -13,9 +13,8 @@ static constinit std::optional<bool> benchmark_dry_run = {};
 namespace Carbon::Testing {
 
 auto IsBenchmarkDryRun() -> bool {
-  CARBON_CHECK(
-      benchmark_dry_run,
-      "queried `IsBenchmarkDryRun` before it was set");
+  CARBON_CHECK(benchmark_dry_run,
+               "queried `IsBenchmarkDryRun` before it was set");
   return *benchmark_dry_run;
 }
 
