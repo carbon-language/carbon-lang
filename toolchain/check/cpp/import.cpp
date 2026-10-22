@@ -1016,8 +1016,8 @@ static auto BuildClassDefinition(Context& context,
   }
 
   // Import friend declarations.
-  for (auto f : clang_def->friends()) {
-    if (auto* type_source_info = f->getFriendType()) {
+  for (const auto* f : clang_def->friends()) {
+    if (const auto* type_source_info = f->getFriendType()) {
       auto [friend_type_inst_id, friend_type_id] =
           ImportCppType(context, SemIR::LocId(import_ir_inst_id),
                         type_source_info->getType());
