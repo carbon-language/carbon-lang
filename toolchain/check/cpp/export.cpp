@@ -675,6 +675,11 @@ auto ExportAllFieldsToCpp(Context& context,
 
   for (const auto& struct_field : class_info.GetStructTypeFields(
            context.sem_ir(), class_type.specific_id)) {
+    // If the class was imported, make sure the field has been imported too.
+    if (auto entry_id = class_scope.Lookup(struct_field.name_id)) {
+      LoadImportRef(context,
+                    class_scope.GetEntry(*entry_id).result.target_inst_id());
+    }
     auto class_field = LookupClassFieldByStructField(context.sem_ir(),
                                                      class_scope, struct_field);
     if (!class_field) {

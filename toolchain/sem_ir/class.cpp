@@ -120,8 +120,14 @@ auto LookupClassFieldByStructField(const File& sem_ir,
                                    const SemIR::StructTypeField& struct_field)
     -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
   if (auto entry_id = class_scope.Lookup(struct_field.name_id)) {
-    auto field_inst_id =
-        class_scope.GetEntry(*entry_id).result.target_inst_id();
+    // If the class was imported, the scope entry is an import reference, so
+    // use its constant value, which is the local `FieldDecl`. For a local
+    // class, this is the `FieldDecl` itself.
+    auto field_inst_id = sem_ir.constant_values().GetConstantInstId(
+        class_scope.GetEntry(*entry_id).result.target_inst_id());
+    if (!field_inst_id.has_value()) {
+      return std::nullopt;
+    }
     return sem_ir.insts().TryGetAsWithId<SemIR::FieldDecl>(field_inst_id);
   }
   return std::nullopt;
