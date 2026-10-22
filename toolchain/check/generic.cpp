@@ -75,9 +75,11 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
  public:
   // `context` must not be null.
   RebuildGenericConstantInEvalBlockCallbacks(Context* context,
-                                             SemIR::LocId loc_id)
+                                             SemIR::LocId loc_id,
+                                             bool importing)
       : SubstInstCallbacks(context),
         loc_id_(loc_id),
+        importing_(importing),
         constants_in_generic_(
             context->generic_region_stack().PeekConstantsInGenericMap()) {}
 
@@ -145,6 +147,22 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
       auto const_id = AddGenericConstantInstToEvalBlock(
           context(), const_inst_id, inst_id, dependence);
       context().constant_values().Set(inst_id, const_id);
+
+      if (!importing_ && new_inst.kind().IsAnyOf<SemIR::LookupImplWitness>()) {
+        auto req_inst_id = context().sem_ir().insts().AddInNoBlock(
+            SemIR::LocIdAndInst::RuntimeVerified(
+                context().sem_ir(), loc_id_,
+                SemIR::RequireImplWitnessSpecificDefinition{
+                    .type_id = GetSingletonType(
+                        context(),
+                        SemIR::RequireImplWitnessSpecificDefinitionType::
+                            TypeInstId),
+                    .witness_id = inst_id}));
+        auto req_const_id = AddGenericConstantInstToEvalBlock(
+            context(), req_inst_id, req_inst_id, dependence);
+        context().constant_values().Set(req_inst_id, req_const_id);
+      }
+
       return inst_id;
     });
     return result.value();
@@ -187,6 +205,7 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
 
  private:
   SemIR::LocId loc_id_;
+  bool importing_;
   ConstantsInGenericMap& constants_in_generic_;
 };
 
@@ -199,7 +218,8 @@ class RebuildTemplateActionInEvalBlockCallbacks final
   RebuildTemplateActionInEvalBlockCallbacks(Context* context,
                                             SemIR::LocId loc_id,
                                             SemIR::InstId action_inst_id)
-      : RebuildGenericConstantInEvalBlockCallbacks(context, loc_id),
+      : RebuildGenericConstantInEvalBlockCallbacks(context, loc_id,
+                                                   /*importing=*/false),
         action_inst_id_(action_inst_id) {}
 
   auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
@@ -235,7 +255,8 @@ static auto AddGenericTypeToEvalBlock(Context& context, SemIR::LocId loc_id,
   // Substitute into the type's constant instruction and rebuild it in the eval
   // block.
   auto rebuild_generic_constant_callbacks =
-      RebuildGenericConstantInEvalBlockCallbacks(&context, loc_id);
+      RebuildGenericConstantInEvalBlockCallbacks(&context, loc_id,
+                                                 /*importing=*/false);
   auto type_inst_id = SubstInst(context, context.types().GetTypeInstId(type_id),
                                 rebuild_generic_constant_callbacks);
   return context.types().GetTypeIdForTypeConstantId(
@@ -247,8 +268,8 @@ static auto AddGenericTypeToEvalBlock(Context& context, SemIR::LocId loc_id,
 // instruction within the eval block that computes the substituted constant.
 // `inst_id` must be a symbolic constant, or `ErrorInst::InstId`.
 static auto AddGenericConstantInstToEvalBlock(Context& context,
-                                              SemIR::InstId inst_id)
-    -> SemIR::InstId {
+                                              SemIR::InstId inst_id,
+                                              bool importing) -> SemIR::InstId {
   CARBON_CHECK(context.constant_values().Get(inst_id).is_symbolic() ||
                    inst_id == SemIR::ErrorInst::InstId,
                "Adding generic constant {0} with non-symbolic value {1}",
@@ -259,7 +280,7 @@ static auto AddGenericConstantInstToEvalBlock(Context& context,
   // we've not encountered it before.
   auto const_inst_id = context.constant_values().GetConstantInstId(inst_id);
   auto callbacks = RebuildGenericConstantInEvalBlockCallbacks(
-      &context, SemIR::LocId(inst_id));
+      &context, SemIR::LocId(inst_id), importing);
   auto new_inst_id = SubstInst(context, const_inst_id, callbacks);
   CARBON_CHECK(
       new_inst_id != const_inst_id || new_inst_id == SemIR::ErrorInst::InstId,
@@ -273,9 +294,10 @@ static auto AddGenericConstantInstToEvalBlock(Context& context,
 // symbolic constant instruction ID that refers to the substituted constant
 // value in each specific.
 static auto AddGenericConstantToEvalBlock(Context& context,
-                                          SemIR::InstId inst_id)
+                                          SemIR::InstId inst_id, bool importing)
     -> SemIR::ConstantId {
-  auto new_inst_id = AddGenericConstantInstToEvalBlock(context, inst_id);
+  auto new_inst_id =
+      AddGenericConstantInstToEvalBlock(context, inst_id, importing);
   return context.constant_values().GetAttached(new_inst_id);
 }
 
@@ -299,7 +321,8 @@ auto GetOrAddInstWithSpecificConstantValue(Context& context,
     inst_id = symbolic.inst_id;
   }
 
-  return AddGenericConstantInstToEvalBlock(context, inst_id);
+  return AddGenericConstantInstToEvalBlock(context, inst_id,
+                                           /*importing=*/false);
 }
 
 // Adds an instruction that performs a template action to the eval block for the
@@ -393,7 +416,8 @@ auto AttachDependentInstToCurrentGeneric(Context& context,
   if (dep_kind.HasAnyOf(DependentInstKind::SymbolicConstant)) {
     // Update the constant value to refer to this generic.
     context.constant_values().Set(
-        inst_id, AddGenericConstantToEvalBlock(context, inst_id));
+        inst_id,
+        AddGenericConstantToEvalBlock(context, inst_id, /*importing=*/false));
   }
 
   // If the instruction is a template action, add it directly to this position
@@ -431,7 +455,9 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
   constants_in_generic.GrowForInsertCount(const_ids.size());
   for (auto [i, inst_id] : llvm::enumerate(const_ids)) {
     // Build a constant in the inst block.
-    AddGenericConstantToEvalBlock(context, inst_id);
+    // FIXME MUST NOT CREATE NEW REQUIREIMPLWITNESSSPECIFICDEFINITIONS HERE.
+    // IMPORT SHOULD ALREADY HAVE WHATEVER IS NEEDED IN THE EVAL BLOCK.
+    AddGenericConstantToEvalBlock(context, inst_id, true);
     CARBON_CHECK(context.generic_region_stack().PeekEvalBlock().size() == i + 1,
                  "Produced {0} instructions when importing {1}",
                  (context.generic_region_stack().PeekEvalBlock().size() - i),
@@ -751,7 +777,8 @@ static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
   auto args_id = context.inst_blocks().AddCanonical(arg_ids);
   // Self specifics are not created as part of identifying a facet type.
   CARBON_CHECK(!context.eval_impl_lookup_to_identified_witness());
-  return context.specifics().GetOrAdd(generic_id, args_id, false);
+  return context.specifics().GetOrAdd(generic_id, args_id,
+                                      /*identified=*/false);
 }
 
 auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,

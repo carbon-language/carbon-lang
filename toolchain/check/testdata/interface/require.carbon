@@ -658,6 +658,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Y.lookup_impl_witness.253: <witness> = lookup_impl_witness %Self.cb6, @Y [symbolic]
 // CHECK:STDOUT:   %impl.elem0.060: type = impl_witness_access %Y.lookup_impl_witness.253, element0 [symbolic]
 // CHECK:STDOUT:   %Y_where.type.bc8: type = facet_type <@Y where %impl.elem0.060 = %empty_tuple.type> [symbolic]
+// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Y.lookup_impl_witness.253 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -709,6 +710,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.cb6)]
 // CHECK:STDOUT:   %Self.as_type.loc7_11.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc7_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.253)]
+// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Y.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc7_19: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_19 (constants.%impl.elem0.060)]
 // CHECK:STDOUT:   %Y_where.type.loc7_19.2: type = facet_type <@Y where %impl.elem0.loc7_19 = constants.%empty_tuple.type> [symbolic = %Y_where.type.loc7_19.2 (constants.%Y_where.type.bc8)]
 // CHECK:STDOUT: }
@@ -719,6 +721,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Self => constants.%Self.cb6
 // CHECK:STDOUT:   %Self.as_type.loc7_11.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.253
+// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn
 // CHECK:STDOUT:   %impl.elem0.loc7_19 => constants.%impl.elem0.060
 // CHECK:STDOUT:   %Y_where.type.loc7_19.2 => constants.%Y_where.type.bc8
 // CHECK:STDOUT: }
@@ -841,6 +844,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Y.lookup_impl_witness.253: <witness> = lookup_impl_witness %Self.cb6, @Y [symbolic]
 // CHECK:STDOUT:   %impl.elem0.060: type = impl_witness_access %Y.lookup_impl_witness.253, element0 [symbolic]
 // CHECK:STDOUT:   %Y_where.type.061: type = facet_type <@Y where %impl.elem0.060 = %Self.as_type> [symbolic]
+// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Y.lookup_impl_witness.253 [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -894,6 +898,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc10_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %Y_where.type.loc10_19.2: type = facet_type <@Y where constants.%impl.elem0.591 = %Self.as_type.loc10_11.2> [symbolic = %Y_where.type.loc10_19.2 (constants.%Y_where.type.d91)]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.253)]
+// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Y.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc10_19: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_19 (constants.%impl.elem0.060)]
 // CHECK:STDOUT:   %Y_where.type.loc10_19.3: type = facet_type <@Y where %impl.elem0.loc10_19 = %Self.as_type.loc10_11.2> [symbolic = %Y_where.type.loc10_19.3 (constants.%Y_where.type.061)]
 // CHECK:STDOUT: }
@@ -905,6 +910,7 @@ interface Z(T: type) {
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %Y_where.type.loc10_19.2 => constants.%Y_where.type.d91
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.253
+// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn
 // CHECK:STDOUT:   %impl.elem0.loc10_19 => constants.%impl.elem0.060
 // CHECK:STDOUT:   %Y_where.type.loc10_19.3 => constants.%Y_where.type.061
 // CHECK:STDOUT: }

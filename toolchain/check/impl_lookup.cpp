@@ -1012,7 +1012,7 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       break;
     }
 
-    if (witness_const_id.is_symbolic()) {
+    if (witness_const_id.is_symbolic() && false) {
       AddInstInNoBlock<SemIR::RequireImplWitnessSpecificDefinition>(
           context, loc_id,
           {.type_id = GetSingletonType(

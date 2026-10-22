@@ -131,7 +131,6 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %HandleAnimal: %HandleAnimal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.ad2: <witness> = require_complete_type %U.as_type [symbolic]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %U, @Eats [symbolic]
-// CHECK:STDOUT:   %.b17: require_witness_defn_type = require_witness_defn %Eats.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Eats.facet: %Eats.type = facet_value %U.as_type, (%Eats.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %e.param_patt.80a: %pattern_type.c56 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %e.patt.691: %pattern_type.c56 = wrapper_binding_pattern e, %e.param_patt.80a [symbolic]
@@ -254,7 +253,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %U.as_type.loc8_38.1 [symbolic = %require_complete (constants.%require_complete.ad2)]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc8_18.1, @Eats [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
-// CHECK:STDOUT:   %.loc8_49.3: require_witness_defn_type = require_witness_defn %Eats.lookup_impl_witness [symbolic = %.loc8_49.3 (constants.%.b17)]
+// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Eats.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Eats.facet.loc8_49.3: %Eats.type = facet_value %U.as_type.loc8_38.1, (%Eats.lookup_impl_witness) [symbolic = %Eats.facet.loc8_49.3 (constants.%Eats.facet)]
 // CHECK:STDOUT:   %Feed.specific_fn.loc8_43.2: <specific function> = specific_function constants.%Feed, @Feed(%Eats.facet.loc8_49.3) [symbolic = %Feed.specific_fn.loc8_43.2 (constants.%Feed.specific_fn)]
 // CHECK:STDOUT:
@@ -354,9 +353,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %HandleTameAnimal: %HandleTameAnimal.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.ec1: <witness> = require_complete_type %W.as_type [symbolic]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Eats [symbolic]
-// CHECK:STDOUT:   %.598: require_witness_defn_type = require_witness_defn %Eats.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Tame.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Tame [symbolic]
-// CHECK:STDOUT:   %.cb2: require_witness_defn_type = require_witness_defn %Tame.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %facet_value: %facet_type.bbb = facet_value %W.as_type, (%Eats.lookup_impl_witness, %Tame.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %v.param_patt.631: %pattern_type.b23 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %v.patt.aad: %pattern_type.b23 = wrapper_binding_pattern v, %v.param_patt.631 [symbolic]
@@ -504,9 +501,9 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %W.as_type.loc9_49.1 [symbolic = %require_complete (constants.%require_complete.ec1)]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc9_22.1, @Eats [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
-// CHECK:STDOUT:   %.loc10_13.3: require_witness_defn_type = require_witness_defn %Eats.lookup_impl_witness [symbolic = %.loc10_13.3 (constants.%.598)]
+// CHECK:STDOUT:   %require_witness_defn.loc10_13.1: require_witness_defn_type = require_witness_defn %Eats.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Tame.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc9_22.1, @Tame [symbolic = %Tame.lookup_impl_witness (constants.%Tame.lookup_impl_witness)]
-// CHECK:STDOUT:   %.loc10_13.4: require_witness_defn_type = require_witness_defn %Tame.lookup_impl_witness [symbolic = %.loc10_13.4 (constants.%.cb2)]
+// CHECK:STDOUT:   %require_witness_defn.loc10_13.2: require_witness_defn_type = require_witness_defn %Tame.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %facet_value.loc10_13.3: %facet_type.bbb = facet_value %W.as_type.loc9_49.1, (%Eats.lookup_impl_witness, %Tame.lookup_impl_witness) [symbolic = %facet_value.loc10_13.3 (constants.%facet_value)]
 // CHECK:STDOUT:   %FeedTame.specific_fn.loc10_3.2: <specific function> = specific_function constants.%FeedTame, @FeedTame(%facet_value.loc10_13.3) [symbolic = %FeedTame.specific_fn.loc10_3.2 (constants.%FeedTame.specific_fn)]
 // CHECK:STDOUT:
@@ -617,9 +614,7 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %Animal.facet: %Animal.type = facet_value %W.as_type, (%Animal.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %.c97: <witness> = impl_self_witness %W, @Eats [symbolic]
 // CHECK:STDOUT:   %Eats.impl_witness.31e: <witness> = impl_witness @A.as_type.as.Eats.impl.%Eats.impl_witness_table, @A.as_type.as.Eats.impl(%Animal.facet) [symbolic]
-// CHECK:STDOUT:   %.5f7: require_witness_defn_type = require_witness_defn %Eats.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Tame.lookup_impl_witness: <witness> = lookup_impl_witness %W, @Tame [symbolic]
-// CHECK:STDOUT:   %.8d4: require_witness_defn_type = require_witness_defn %Tame.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %facet_value: %facet_type.bbb = facet_value %W.as_type, (%Eats.lookup_impl_witness, %Tame.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %v.param_patt.ef6: %pattern_type.493 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %v.patt.f02: %pattern_type.493 = wrapper_binding_pattern v, %v.param_patt.ef6 [symbolic]
@@ -794,9 +789,9 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %W.as_type.loc11_43.1 [symbolic = %require_complete (constants.%require_complete.837)]
 // CHECK:STDOUT:   %Eats.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc11_23.1, @Eats [symbolic = %Eats.lookup_impl_witness (constants.%Eats.lookup_impl_witness)]
-// CHECK:STDOUT:   %.loc12_14.3: require_witness_defn_type = require_witness_defn %Eats.lookup_impl_witness [symbolic = %.loc12_14.3 (constants.%.5f7)]
+// CHECK:STDOUT:   %require_witness_defn.loc12_14.1: require_witness_defn_type = require_witness_defn %Eats.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Tame.lookup_impl_witness: <witness> = lookup_impl_witness %W.loc11_23.1, @Tame [symbolic = %Tame.lookup_impl_witness (constants.%Tame.lookup_impl_witness)]
-// CHECK:STDOUT:   %.loc12_14.4: require_witness_defn_type = require_witness_defn %Tame.lookup_impl_witness [symbolic = %.loc12_14.4 (constants.%.8d4)]
+// CHECK:STDOUT:   %require_witness_defn.loc12_14.2: require_witness_defn_type = require_witness_defn %Tame.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %facet_value.loc12_14.3: %facet_type.bbb = facet_value %W.as_type.loc11_43.1, (%Eats.lookup_impl_witness, %Tame.lookup_impl_witness) [symbolic = %facet_value.loc12_14.3 (constants.%facet_value)]
 // CHECK:STDOUT:   %FeedTame2.specific_fn.loc12_3.2: <specific function> = specific_function constants.%FeedTame2, @FeedTame2(%facet_value.loc12_14.3) [symbolic = %FeedTame2.specific_fn.loc12_3.2 (constants.%FeedTame2.specific_fn)]
 // CHECK:STDOUT:

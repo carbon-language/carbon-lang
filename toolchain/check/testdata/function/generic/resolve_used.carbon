@@ -56,7 +56,6 @@ fn CallNegative() {
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.5f6: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.5c0: %T.as.DefaultOrUnformed.impl.Op.type.5f6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness: <witness> = lookup_impl_witness %Int, @DefaultOrUnformed [symbolic]
-// CHECK:STDOUT:   %.ba9: require_witness_defn_type = require_witness_defn %DefaultOrUnformed.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.67a: %DefaultOrUnformed.type = facet_value %Int, (%DefaultOrUnformed.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type.cb5: type = fn_type @DefaultOrUnformed.WithSelf.Op, @DefaultOrUnformed.WithSelf(%DefaultOrUnformed.facet.67a) [symbolic]
 // CHECK:STDOUT:   %.b59: type = fn_type_with_self_type %DefaultOrUnformed.WithSelf.Op.type.cb5, %DefaultOrUnformed.facet.67a [symbolic]
@@ -64,7 +63,6 @@ fn CallNegative() {
 // CHECK:STDOUT:   %specific_impl_fn.4db: <specific function> = specific_impl_function %impl.elem0.f8f, @DefaultOrUnformed.WithSelf.Op(%DefaultOrUnformed.facet.67a) [symbolic]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness.053: <witness> = lookup_impl_witness %Int, @Destroy [symbolic]
-// CHECK:STDOUT:   %.868: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness.053 [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.e3e: %Destroy.type = facet_value %Int, (%Destroy.lookup_impl_witness.053) [symbolic]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.1da: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.e3e) [symbolic]
 // CHECK:STDOUT:   %.085: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.1da, %Destroy.facet.e3e [symbolic]
@@ -81,7 +79,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.a20: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.856, @T.as.DefaultOrUnformed.impl(%i0) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.type.260: type = fn_type @T.as.DefaultOrUnformed.impl.Op, @T.as.DefaultOrUnformed.impl(%i0) [concrete]
 // CHECK:STDOUT:   %T.as.DefaultOrUnformed.impl.Op.353: %T.as.DefaultOrUnformed.impl.Op.type.260 = struct_value () [concrete]
-// CHECK:STDOUT:   %.fe7: require_witness_defn_type = require_witness_defn %DefaultOrUnformed.impl_witness.a20 [concrete]
+// CHECK:STDOUT:   %require_witness_defn.fe7: require_witness_defn_type = require_witness_defn %DefaultOrUnformed.impl_witness.a20 [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.d1a: %DefaultOrUnformed.type = facet_value %i0, (%DefaultOrUnformed.impl_witness.a20) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type.d5c: type = fn_type @DefaultOrUnformed.WithSelf.Op, @DefaultOrUnformed.WithSelf(%DefaultOrUnformed.facet.d1a) [concrete]
 // CHECK:STDOUT:   %.3e6: type = fn_type_with_self_type %DefaultOrUnformed.WithSelf.Op.type.d5c, %DefaultOrUnformed.facet.d1a [concrete]
@@ -95,7 +93,7 @@ fn CallNegative() {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc9 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.f8f: <witness> = custom_witness (%Destroy.WithSelf.Op.403, %Destroy.WithSelf.SubobjectDestroy.d01, %Destroy.WithSelf.SelfDestruct.db3), @Destroy [concrete]
-// CHECK:STDOUT:   %.b54: require_witness_defn_type = require_witness_defn %custom_witness.f8f [concrete]
+// CHECK:STDOUT:   %empty_struct: require_witness_defn_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.2cf: %Destroy.type = facet_value %i0, (%custom_witness.f8f) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.496: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.2cf) [concrete]
 // CHECK:STDOUT:   %.2ec: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.496, %Destroy.facet.2cf [concrete]
@@ -166,18 +164,18 @@ fn CallNegative() {
 // CHECK:STDOUT:   %v.patt.loc9_15.2: @ErrorIfNIsZero.%pattern_type (%pattern_type.551) = ref_binding_pattern v [symbolic = %v.patt.loc9_15.2 (constants.%v.patt.fc3)]
 // CHECK:STDOUT:   %v.var_patt.loc9_3.2: @ErrorIfNIsZero.%pattern_type (%pattern_type.551) = var_pattern %v.patt.loc9_15.2 [symbolic = %v.var_patt.loc9_3.2 (constants.%v.var_patt.c99)]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_27.2, @DefaultOrUnformed [symbolic = %DefaultOrUnformed.lookup_impl_witness (constants.%DefaultOrUnformed.lookup_impl_witness)]
-// CHECK:STDOUT:   %.loc9_28.3: require_witness_defn_type = require_witness_defn %DefaultOrUnformed.lookup_impl_witness [symbolic = %.loc9_28.3 (constants.%.ba9)]
+// CHECK:STDOUT:   %require_witness_defn.loc9_28: require_witness_defn_type = require_witness_defn %DefaultOrUnformed.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc9_28.2: %DefaultOrUnformed.type = facet_value %Int.loc9_27.2, (%DefaultOrUnformed.lookup_impl_witness) [symbolic = %DefaultOrUnformed.facet.loc9_28.2 (constants.%DefaultOrUnformed.facet.67a)]
 // CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type: type = fn_type @DefaultOrUnformed.WithSelf.Op, @DefaultOrUnformed.WithSelf(%DefaultOrUnformed.facet.loc9_28.2) [symbolic = %DefaultOrUnformed.WithSelf.Op.type (constants.%DefaultOrUnformed.WithSelf.Op.type.cb5)]
-// CHECK:STDOUT:   %.loc9_28.4: type = fn_type_with_self_type %DefaultOrUnformed.WithSelf.Op.type, %DefaultOrUnformed.facet.loc9_28.2 [symbolic = %.loc9_28.4 (constants.%.b59)]
-// CHECK:STDOUT:   %impl.elem0.loc9_28.2: @ErrorIfNIsZero.%.loc9_28.4 (%.b59) = impl_witness_access %DefaultOrUnformed.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_28.2 (constants.%impl.elem0.f8f)]
+// CHECK:STDOUT:   %.loc9_28.3: type = fn_type_with_self_type %DefaultOrUnformed.WithSelf.Op.type, %DefaultOrUnformed.facet.loc9_28.2 [symbolic = %.loc9_28.3 (constants.%.b59)]
+// CHECK:STDOUT:   %impl.elem0.loc9_28.2: @ErrorIfNIsZero.%.loc9_28.3 (%.b59) = impl_witness_access %DefaultOrUnformed.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_28.2 (constants.%impl.elem0.f8f)]
 // CHECK:STDOUT:   %specific_impl_fn.loc9_28.2: <specific function> = specific_impl_function %impl.elem0.loc9_28.2, @DefaultOrUnformed.WithSelf.Op(%DefaultOrUnformed.facet.loc9_28.2) [symbolic = %specific_impl_fn.loc9_28.2 (constants.%specific_impl_fn.4db)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %Int.loc9_27.2, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.053)]
-// CHECK:STDOUT:   %.loc9_3.3: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic = %.loc9_3.3 (constants.%.868)]
+// CHECK:STDOUT:   %require_witness_defn.loc9_3: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.loc9_3.3: %Destroy.type = facet_value %Int.loc9_27.2, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet.e3e)]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.loc9_3.3) [symbolic = %Destroy.WithSelf.SelfDestruct.type (constants.%Destroy.WithSelf.SelfDestruct.type.1da)]
-// CHECK:STDOUT:   %.loc9_3.4: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %Destroy.facet.loc9_3.3 [symbolic = %.loc9_3.4 (constants.%.085)]
-// CHECK:STDOUT:   %impl.elem2.loc9_3.2: @ErrorIfNIsZero.%.loc9_3.4 (%.085) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc9_3.2 (constants.%impl.elem2)]
+// CHECK:STDOUT:   %.loc9_3.3: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %Destroy.facet.loc9_3.3 [symbolic = %.loc9_3.3 (constants.%.085)]
+// CHECK:STDOUT:   %impl.elem2.loc9_3.2: @ErrorIfNIsZero.%.loc9_3.3 (%.085) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc9_3.2 (constants.%impl.elem2)]
 // CHECK:STDOUT:   %specific_impl_fn.loc9_3.2: <specific function> = specific_impl_function %impl.elem2.loc9_3.2, @Destroy.WithSelf.SelfDestruct.1(%Destroy.facet.loc9_3.3) [symbolic = %specific_impl_fn.loc9_3.2 (constants.%specific_impl_fn.380)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -187,7 +185,7 @@ fn CallNegative() {
 // CHECK:STDOUT:     %.loc9_28.1: %DefaultOrUnformed.type = converted constants.%Int, %DefaultOrUnformed.facet.loc9_28.1 [symbolic = %DefaultOrUnformed.facet.loc9_28.2 (constants.%DefaultOrUnformed.facet.67a)]
 // CHECK:STDOUT:     %as_type: type = facet_access_type %.loc9_28.1 [symbolic = %Int.loc9_27.2 (constants.%Int)]
 // CHECK:STDOUT:     %.loc9_28.2: type = converted %.loc9_28.1, %as_type [symbolic = %Int.loc9_27.2 (constants.%Int)]
-// CHECK:STDOUT:     %impl.elem0.loc9_28.1: @ErrorIfNIsZero.%.loc9_28.4 (%.b59) = impl_witness_access constants.%DefaultOrUnformed.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_28.2 (constants.%impl.elem0.f8f)]
+// CHECK:STDOUT:     %impl.elem0.loc9_28.1: @ErrorIfNIsZero.%.loc9_28.3 (%.b59) = impl_witness_access constants.%DefaultOrUnformed.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_28.2 (constants.%impl.elem0.f8f)]
 // CHECK:STDOUT:     %specific_impl_fn.loc9_28.1: <specific function> = specific_impl_function %impl.elem0.loc9_28.1, @DefaultOrUnformed.WithSelf.Op(constants.%DefaultOrUnformed.facet.67a) [symbolic = %specific_impl_fn.loc9_28.2 (constants.%specific_impl_fn.4db)]
 // CHECK:STDOUT:     %DefaultOrUnformed.WithSelf.Op.call: init @ErrorIfNIsZero.%Int.loc9_27.2 (%Int) = call %specific_impl_fn.loc9_28.1()
 // CHECK:STDOUT:     assign %v.var, %DefaultOrUnformed.WithSelf.Op.call
@@ -202,7 +200,7 @@ fn CallNegative() {
 // CHECK:STDOUT:       %v.patt.loc9_15.1: @ErrorIfNIsZero.%pattern_type (%pattern_type.551) = ref_binding_pattern v [symbolic = %v.patt.loc9_15.2 (constants.%v.patt.fc3)]
 // CHECK:STDOUT:       %v.var_patt.loc9_3.1: @ErrorIfNIsZero.%pattern_type (%pattern_type.551) = var_pattern %v.patt.loc9_15.1 [symbolic = %v.var_patt.loc9_3.2 (constants.%v.var_patt.c99)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %impl.elem2.loc9_3.1: @ErrorIfNIsZero.%.loc9_3.4 (%.085) = impl_witness_access constants.%Destroy.lookup_impl_witness.053, element2 [symbolic = %impl.elem2.loc9_3.2 (constants.%impl.elem2)]
+// CHECK:STDOUT:     %impl.elem2.loc9_3.1: @ErrorIfNIsZero.%.loc9_3.3 (%.085) = impl_witness_access constants.%Destroy.lookup_impl_witness.053, element2 [symbolic = %impl.elem2.loc9_3.2 (constants.%impl.elem2)]
 // CHECK:STDOUT:     %bound_method.loc9_3.1: <bound method> = bound_method %v.var, %impl.elem2.loc9_3.1
 // CHECK:STDOUT:     %Destroy.facet.loc9_3.1: %Destroy.type = facet_value constants.%Int, (constants.%Destroy.lookup_impl_witness.053) [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet.e3e)]
 // CHECK:STDOUT:     %.loc9_3.1: %Destroy.type = converted constants.%Int, %Destroy.facet.loc9_3.1 [symbolic = %Destroy.facet.loc9_3.3 (constants.%Destroy.facet.e3e)]
@@ -251,17 +249,17 @@ fn CallNegative() {
 // CHECK:STDOUT:   %v.patt.loc9_15.2 => constants.%v.patt.661
 // CHECK:STDOUT:   %v.var_patt.loc9_3.2 => constants.%v.var_patt.2b3
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness => constants.%DefaultOrUnformed.impl_witness.a20
-// CHECK:STDOUT:   %.loc9_28.3 => constants.%.fe7
+// CHECK:STDOUT:   %require_witness_defn.loc9_28 => constants.%require_witness_defn.fe7
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc9_28.2 => constants.%DefaultOrUnformed.facet.d1a
 // CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type => constants.%DefaultOrUnformed.WithSelf.Op.type.d5c
-// CHECK:STDOUT:   %.loc9_28.4 => constants.%.3e6
+// CHECK:STDOUT:   %.loc9_28.3 => constants.%.3e6
 // CHECK:STDOUT:   %impl.elem0.loc9_28.2 => constants.%T.as.DefaultOrUnformed.impl.Op.353
 // CHECK:STDOUT:   %specific_impl_fn.loc9_28.2 => constants.%T.as.DefaultOrUnformed.impl.Op.specific_fn
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f
-// CHECK:STDOUT:   %.loc9_3.3 => constants.%.b54
+// CHECK:STDOUT:   %require_witness_defn.loc9_3 => constants.%empty_struct
 // CHECK:STDOUT:   %Destroy.facet.loc9_3.3 => constants.%Destroy.facet.2cf
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.496
-// CHECK:STDOUT:   %.loc9_3.4 => constants.%.2ec
+// CHECK:STDOUT:   %.loc9_3.3 => constants.%.2ec
 // CHECK:STDOUT:   %impl.elem2.loc9_3.2 => constants.%Destroy.WithSelf.SelfDestruct.db3
 // CHECK:STDOUT:   %specific_impl_fn.loc9_3.2 => constants.%Destroy.WithSelf.SelfDestruct.db3
 // CHECK:STDOUT: }

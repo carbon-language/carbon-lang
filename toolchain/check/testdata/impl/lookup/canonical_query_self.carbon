@@ -95,10 +95,8 @@ fn G() {
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete.b4a: <witness> = require_complete_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T, @I [symbolic]
-// CHECK:STDOUT:   %.ea3: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %I.facet.d3d: %I.type = facet_value %T.as_type, (%I.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %J.lookup_impl_witness: <witness> = lookup_impl_witness %T, @J [symbolic]
-// CHECK:STDOUT:   %.c04: require_witness_defn_type = require_witness_defn %J.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %J.facet.cbc: %J.type = facet_value %T.as_type, (%J.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.II.type.42e: type = fn_type @I.WithSelf.II, @I.WithSelf(%T) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.II.6c1: %I.WithSelf.II.type.42e = struct_value () [symbolic]
@@ -163,8 +161,8 @@ fn G() {
 // CHECK:STDOUT:   %t.param_patt.5f8: %pattern_type.f79 = value_param_pattern [concrete]
 // CHECK:STDOUT:   %t.patt.094: %pattern_type.f79 = wrapper_binding_pattern t, %t.param_patt.5f8 [concrete]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F, @F(%facet_value) [concrete]
-// CHECK:STDOUT:   %.35c: require_witness_defn_type = require_witness_defn %I.impl_witness [concrete]
-// CHECK:STDOUT:   %.15a: require_witness_defn_type = require_witness_defn %J.impl_witness [concrete]
+// CHECK:STDOUT:   %require_witness_defn.35c: require_witness_defn_type = require_witness_defn %I.impl_witness [concrete]
+// CHECK:STDOUT:   %require_witness_defn.15a: require_witness_defn_type = require_witness_defn %J.impl_witness [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -395,10 +393,10 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc22_27.1 [symbolic = %require_complete (constants.%require_complete.b4a)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc22_15.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %.loc26_18.2: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic = %.loc26_18.2 (constants.%.ea3)]
+// CHECK:STDOUT:   %require_witness_defn.loc26_18: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %I.facet.loc26_18.2: %I.type = facet_value %T.as_type.loc22_27.1, (%I.lookup_impl_witness) [symbolic = %I.facet.loc26_18.2 (constants.%I.facet.d3d)]
 // CHECK:STDOUT:   %J.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc22_15.1, @J [symbolic = %J.lookup_impl_witness (constants.%J.lookup_impl_witness)]
-// CHECK:STDOUT:   %.loc26_33.2: require_witness_defn_type = require_witness_defn %J.lookup_impl_witness [symbolic = %.loc26_33.2 (constants.%.c04)]
+// CHECK:STDOUT:   %require_witness_defn.loc26_33: require_witness_defn_type = require_witness_defn %J.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %J.facet.loc26_33.2: %J.type = facet_value %T.as_type.loc22_27.1, (%J.lookup_impl_witness) [symbolic = %J.facet.loc26_33.2 (constants.%J.facet.cbc)]
 // CHECK:STDOUT:   %J.WithSelf.JJ.type: type = fn_type @J.WithSelf.JJ, @J.WithSelf(%J.facet.loc26_33.2) [symbolic = %J.WithSelf.JJ.type (constants.%J.WithSelf.JJ.type.0f6)]
 // CHECK:STDOUT:   %.loc26_69: type = fn_type_with_self_type %J.WithSelf.JJ.type, %J.facet.loc26_33.2 [symbolic = %.loc26_69 (constants.%.b3e)]
@@ -412,16 +410,16 @@ fn G() {
 // CHECK:STDOUT:     %I.ref.loc26_21: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %T.as_type.loc26: type = facet_access_type %T.ref.loc26 [symbolic = %T.as_type.loc22_27.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     %I.facet.loc26_18.1: %I.type = facet_value %T.as_type.loc26, (constants.%I.lookup_impl_witness) [symbolic = %I.facet.loc26_18.2 (constants.%I.facet.d3d)]
-// CHECK:STDOUT:     %.loc26_18.1: %I.type = converted %T.ref.loc26, %I.facet.loc26_18.1 [symbolic = %I.facet.loc26_18.2 (constants.%I.facet.d3d)]
+// CHECK:STDOUT:     %.loc26_18: %I.type = converted %T.ref.loc26, %I.facet.loc26_18.1 [symbolic = %I.facet.loc26_18.2 (constants.%I.facet.d3d)]
 // CHECK:STDOUT:     %.loc26_27: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %as_type.loc26_24: type = facet_access_type %.loc26_18.1 [symbolic = %T.as_type.loc22_27.1 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc26_24: type = converted %.loc26_18.1, %as_type.loc26_24 [symbolic = %T.as_type.loc22_27.1 (constants.%T.as_type)]
+// CHECK:STDOUT:     %as_type.loc26_24: type = facet_access_type %.loc26_18 [symbolic = %T.as_type.loc22_27.1 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc26_24: type = converted %.loc26_18, %as_type.loc26_24 [symbolic = %T.as_type.loc22_27.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     %J.ref.loc26_36: type = name_ref J, file.%J.decl [concrete = constants.%J.type]
 // CHECK:STDOUT:     %J.facet.loc26_33.1: %J.type = facet_value %.loc26_24, (constants.%J.lookup_impl_witness) [symbolic = %J.facet.loc26_33.2 (constants.%J.facet.cbc)]
-// CHECK:STDOUT:     %.loc26_33.1: %J.type = converted %.loc26_24, %J.facet.loc26_33.1 [symbolic = %J.facet.loc26_33.2 (constants.%J.facet.cbc)]
+// CHECK:STDOUT:     %.loc26_33: %J.type = converted %.loc26_24, %J.facet.loc26_33.1 [symbolic = %J.facet.loc26_33.2 (constants.%J.facet.cbc)]
 // CHECK:STDOUT:     %.loc26_42: type = type_literal type [concrete = type]
-// CHECK:STDOUT:     %as_type.loc26_39: type = facet_access_type %.loc26_33.1 [symbolic = %T.as_type.loc22_27.1 (constants.%T.as_type)]
-// CHECK:STDOUT:     %.loc26_39: type = converted %.loc26_33.1, %as_type.loc26_39 [symbolic = %T.as_type.loc22_27.1 (constants.%T.as_type)]
+// CHECK:STDOUT:     %as_type.loc26_39: type = facet_access_type %.loc26_33 [symbolic = %T.as_type.loc22_27.1 (constants.%T.as_type)]
+// CHECK:STDOUT:     %.loc26_39: type = converted %.loc26_33, %as_type.loc26_39 [symbolic = %T.as_type.loc22_27.1 (constants.%T.as_type)]
 // CHECK:STDOUT:     %I.ref.loc26_51: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %I.facet.loc26_48: %I.type = facet_value %.loc26_39, (constants.%I.lookup_impl_witness) [symbolic = %I.facet.loc26_18.2 (constants.%I.facet.d3d)]
 // CHECK:STDOUT:     %.loc26_48: %I.type = converted %.loc26_39, %I.facet.loc26_48 [symbolic = %I.facet.loc26_18.2 (constants.%I.facet.d3d)]
@@ -662,10 +660,10 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness
-// CHECK:STDOUT:   %.loc26_18.2 => constants.%.35c
+// CHECK:STDOUT:   %require_witness_defn.loc26_18 => constants.%require_witness_defn.35c
 // CHECK:STDOUT:   %I.facet.loc26_18.2 => constants.%I.facet.bae
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.impl_witness
-// CHECK:STDOUT:   %.loc26_33.2 => constants.%.15a
+// CHECK:STDOUT:   %require_witness_defn.loc26_33 => constants.%require_witness_defn.15a
 // CHECK:STDOUT:   %J.facet.loc26_33.2 => constants.%J.facet.85d
 // CHECK:STDOUT:   %J.WithSelf.JJ.type => constants.%J.WithSelf.JJ.type.a9e
 // CHECK:STDOUT:   %.loc26_69 => constants.%.df5

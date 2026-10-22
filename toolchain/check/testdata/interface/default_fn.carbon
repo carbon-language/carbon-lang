@@ -300,7 +300,6 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.WithSelf.%I.WithSelf.G.decl [concrete]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I [symbolic]
-// CHECK:STDOUT:   %.5c7: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %.b7e: type = fn_type_with_self_type %I.WithSelf.F.type.de2, %Self [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.b7e = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @I.WithSelf.F(%Self) [symbolic]
@@ -326,8 +325,8 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %I.WithSelf.G.861: %I.WithSelf.G.type.c3e = struct_value () [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.0a9: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.b01) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.1d9: %I.WithSelf.F.type.0a9 = struct_value () [concrete]
-// CHECK:STDOUT:   %.682: require_witness_defn_type = require_witness_defn %I.impl_witness.e63 [concrete]
 // CHECK:STDOUT:   %.aab: type = fn_type_with_self_type %I.WithSelf.F.type.0a9, %I.facet.b01 [concrete]
+// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %I.impl_witness.e63 [concrete]
 // CHECK:STDOUT:   %T.as.I.impl.F.specific_fn: <specific function> = specific_function %T.as.I.impl.F.20e, @T.as.I.impl.F(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -391,11 +390,11 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %Self.as_type.loc6_24.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc6_24.2 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %.loc6_24.2: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic = %.loc6_24.2 (constants.%.5c7)]
 // CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self) [symbolic = %I.WithSelf.F.type (constants.%I.WithSelf.F.type.de2)]
-// CHECK:STDOUT:   %.loc6_24.3: type = fn_type_with_self_type %I.WithSelf.F.type, %Self [symbolic = %.loc6_24.3 (constants.%.b7e)]
-// CHECK:STDOUT:   %impl.elem0.loc6_24.2: @I.WithSelf.G.%.loc6_24.3 (%.b7e) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_24.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %.loc6_24.2: type = fn_type_with_self_type %I.WithSelf.F.type, %Self [symbolic = %.loc6_24.2 (constants.%.b7e)]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
+// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
+// CHECK:STDOUT:   %impl.elem0.loc6_24.2: @I.WithSelf.G.%.loc6_24.2 (%.b7e) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_24.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc6_24.2: <specific function> = specific_impl_function %impl.elem0.loc6_24.2, @I.WithSelf.F(%Self) [symbolic = %specific_impl_fn.loc6_24.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
@@ -404,7 +403,7 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:     %Self.as_type.loc6_24.1: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc6_24.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %.loc6_24.1: type = converted %Self.ref, %Self.as_type.loc6_24.1 [symbolic = %Self.as_type.loc6_24.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc6_24.1: @I.WithSelf.G.%.loc6_24.3 (%.b7e) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_24.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc6_24.1: @I.WithSelf.G.%.loc6_24.2 (%.b7e) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_24.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %specific_impl_fn.loc6_24.1: <specific function> = specific_impl_function %impl.elem0.loc6_24.1, @I.WithSelf.F(constants.%Self) [symbolic = %specific_impl_fn.loc6_24.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:     %I.WithSelf.F.call: init %empty_tuple.type = call %specific_impl_fn.loc6_24.1()
 // CHECK:STDOUT:     return
@@ -483,10 +482,10 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%I.facet.b01
 // CHECK:STDOUT:   %Self.as_type.loc6_24.2 => constants.%empty_tuple.type
-// CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness.e63
-// CHECK:STDOUT:   %.loc6_24.2 => constants.%.682
 // CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.0a9
-// CHECK:STDOUT:   %.loc6_24.3 => constants.%.aab
+// CHECK:STDOUT:   %.loc6_24.2 => constants.%.aab
+// CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness.e63
+// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn
 // CHECK:STDOUT:   %impl.elem0.loc6_24.2 => constants.%T.as.I.impl.F.20e
 // CHECK:STDOUT:   %specific_impl_fn.loc6_24.2 => constants.%T.as.I.impl.F.specific_fn
 // CHECK:STDOUT: }

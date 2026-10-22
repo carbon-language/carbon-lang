@@ -83,7 +83,6 @@ fn H(generic U: Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %.1ce700.2: Core.Form = init_form %T.as_type [symbolic]
 // CHECK:STDOUT:   %return.param_patt.bf4475.2: %pattern_type.2c66b4.2 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.2acc20.1: <specific function> = specific_impl_function %impl.elem0.bb582d.1, @Copy.WithSelf.Op(%T.f84) [symbolic]
-// CHECK:STDOUT:   %.24ecc0.1: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness.d9c332.1 [symbolic]
 // CHECK:STDOUT:   %require_complete.d83f06.1: <witness> = require_complete_type %T.as_type [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
@@ -122,7 +121,6 @@ fn H(generic U: Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %complete_type.b8dd1a.2: <witness> = complete_type_witness %struct_type.x.ac1e9e.2 [symbolic]
 // CHECK:STDOUT:   %require_complete.8b1fe6.2: <witness> = require_complete_type %Class.7ff32e.2 [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.d9c332.2: <witness> = lookup_impl_witness %U.f84, @Copy [symbolic]
-// CHECK:STDOUT:   %.24ecc0.2: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness.d9c332.2 [symbolic]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.d2f9c3.3: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%U.f84) [symbolic]
 // CHECK:STDOUT:   %.8bf935.2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d2f9c3.3, %U.f84 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.bb582d.2: %.8bf935.2 = impl_witness_access %Copy.lookup_impl_witness.d9c332.2, element0 [symbolic]
@@ -286,11 +284,11 @@ fn H(generic U: Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %require_complete.loc13: <witness> = require_complete_type %Class.loc13_38.1 [symbolic = %require_complete.loc13 (constants.%require_complete.8b1fe6.1)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc13_38.1, %T.as_type.loc13_38.1 [symbolic = %Class.elem (constants.%Class.elem.926b39.1)]
 // CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type %T.as_type.loc13_38.1 [symbolic = %require_complete.loc14 (constants.%require_complete.d83f06.1)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_15.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c332.1)]
-// CHECK:STDOUT:   %.loc14_11.5: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic = %.loc14_11.5 (constants.%.24ecc0.1)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc13_15.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
-// CHECK:STDOUT:   %.loc14_11.6: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc13_15.1 [symbolic = %.loc14_11.6 (constants.%.8bf935.1)]
-// CHECK:STDOUT:   %impl.elem0.loc14_11.2: @G.%.loc14_11.6 (%.8bf935.1) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.bb582d.1)]
+// CHECK:STDOUT:   %.loc14_11.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc13_15.1 [symbolic = %.loc14_11.5 (constants.%.8bf935.1)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_15.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c332.1)]
+// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
+// CHECK:STDOUT:   %impl.elem0.loc14_11.2: @G.%.loc14_11.5 (%.8bf935.1) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.bb582d.1)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_11.2: <specific function> = specific_impl_function %impl.elem0.loc14_11.2, @Copy.WithSelf.Op(%T.loc13_15.1) [symbolic = %specific_impl_fn.loc14_11.2 (constants.%specific_impl_fn.2acc20.1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%c.param: @G.%Class.loc13_38.1 (%Class.7ff32e.1)) -> out %return.param: @G.%T.as_type.loc13_38.1 (%T.as_type) {
@@ -299,7 +297,7 @@ fn H(generic U: Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:     %x.ref: @G.%Class.elem (%Class.elem.926b39.1) = name_ref x, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:     %.loc14_11.1: ref @G.%T.as_type.loc13_38.1 (%T.as_type) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc14_11.2: @G.%T.as_type.loc13_38.1 (%T.as_type) = acquire_value %.loc14_11.1
-// CHECK:STDOUT:     %impl.elem0.loc14_11.1: @G.%.loc14_11.6 (%.8bf935.1) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c332.1, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.bb582d.1)]
+// CHECK:STDOUT:     %impl.elem0.loc14_11.1: @G.%.loc14_11.5 (%.8bf935.1) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c332.1, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.bb582d.1)]
 // CHECK:STDOUT:     %bound_method.loc14_11.1: <bound method> = bound_method %.loc14_11.2, %impl.elem0.loc14_11.1
 // CHECK:STDOUT:     %.loc14_11.3: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T.loc13_15.1 (constants.%T.f84)]
 // CHECK:STDOUT:     %.loc14_11.4: %Copy.type = converted constants.%T.as_type, constants.%T.f84 [symbolic = %T.loc13_15.1 (constants.%T.f84)]
@@ -328,11 +326,11 @@ fn H(generic U: Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %require_complete.loc17: <witness> = require_complete_type %Class.loc17_38.1 [symbolic = %require_complete.loc17 (constants.%require_complete.8b1fe6.2)]
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class.loc17_38.1, %U.as_type.loc17_38.1 [symbolic = %Class.elem (constants.%Class.elem.926b39.2)]
 // CHECK:STDOUT:   %require_complete.loc18: <witness> = require_complete_type %U.as_type.loc17_38.1 [symbolic = %require_complete.loc18 (constants.%require_complete.d83f06.2)]
-// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc17_15.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c332.2)]
-// CHECK:STDOUT:   %.loc18_11.5: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic = %.loc18_11.5 (constants.%.24ecc0.2)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%U.loc17_15.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.3)]
-// CHECK:STDOUT:   %.loc18_11.6: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %U.loc17_15.1 [symbolic = %.loc18_11.6 (constants.%.8bf935.2)]
-// CHECK:STDOUT:   %impl.elem0.loc18_11.2: @H.%.loc18_11.6 (%.8bf935.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.bb582d.2)]
+// CHECK:STDOUT:   %.loc18_11.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %U.loc17_15.1 [symbolic = %.loc18_11.5 (constants.%.8bf935.2)]
+// CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc17_15.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c332.2)]
+// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
+// CHECK:STDOUT:   %impl.elem0.loc18_11.2: @H.%.loc18_11.5 (%.8bf935.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.bb582d.2)]
 // CHECK:STDOUT:   %specific_impl_fn.loc18_11.2: <specific function> = specific_impl_function %impl.elem0.loc18_11.2, @Copy.WithSelf.Op(%U.loc17_15.1) [symbolic = %specific_impl_fn.loc18_11.2 (constants.%specific_impl_fn.2acc20.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%c.param: @H.%Class.loc17_38.1 (%Class.7ff32e.2)) -> out %return.param: @H.%U.as_type.loc17_38.1 (%U.as_type.c1c) {
@@ -341,7 +339,7 @@ fn H(generic U: Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:     %x.ref: @H.%Class.elem (%Class.elem.926b39.2) = name_ref x, @Class.%field_decl [concrete = @Class.%field_decl]
 // CHECK:STDOUT:     %.loc18_11.1: ref @H.%U.as_type.loc17_38.1 (%U.as_type.c1c) = class_element_access %c.ref, element0
 // CHECK:STDOUT:     %.loc18_11.2: @H.%U.as_type.loc17_38.1 (%U.as_type.c1c) = acquire_value %.loc18_11.1
-// CHECK:STDOUT:     %impl.elem0.loc18_11.1: @H.%.loc18_11.6 (%.8bf935.2) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c332.2, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.bb582d.2)]
+// CHECK:STDOUT:     %impl.elem0.loc18_11.1: @H.%.loc18_11.5 (%.8bf935.2) = impl_witness_access constants.%Copy.lookup_impl_witness.d9c332.2, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.bb582d.2)]
 // CHECK:STDOUT:     %bound_method.loc18_11.1: <bound method> = bound_method %.loc18_11.2, %impl.elem0.loc18_11.1
 // CHECK:STDOUT:     %.loc18_11.3: %Copy.type = converted constants.%U.as_type.c1c, constants.%U.f84 [symbolic = %U.loc17_15.1 (constants.%U.f84)]
 // CHECK:STDOUT:     %.loc18_11.4: %Copy.type = converted constants.%U.as_type.c1c, constants.%U.f84 [symbolic = %U.loc17_15.1 (constants.%U.f84)]

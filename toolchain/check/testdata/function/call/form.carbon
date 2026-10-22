@@ -863,7 +863,6 @@ fn G() {
 // CHECK:STDOUT:   %x.patt: %pattern_type.b3a = wrapper_binding_pattern x, %x.param_patt [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type.eae: type = fn_type @I.WithSelf.F, @I.WithSelf(%T) [symbolic]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T, @I [symbolic]
-// CHECK:STDOUT:   %.18c: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %.b94: type = fn_type_with_self_type %I.WithSelf.F.type.eae, %T [symbolic]
 // CHECK:STDOUT:   %impl.elem0: %.b94 = impl_witness_access %I.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @I.WithSelf.F(%T) [symbolic]
@@ -874,18 +873,18 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc9_7.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %.loc11_4.1: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic = %.loc11_4.1 (constants.%.18c)]
 // CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%T.loc9_7.1) [symbolic = %I.WithSelf.F.type (constants.%I.WithSelf.F.type.eae)]
-// CHECK:STDOUT:   %.loc11_4.2: type = fn_type_with_self_type %I.WithSelf.F.type, %T.loc9_7.1 [symbolic = %.loc11_4.2 (constants.%.b94)]
-// CHECK:STDOUT:   %impl.elem0.loc11_4.2: @G.%.loc11_4.2 (%.b94) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:   %.loc11_4: type = fn_type_with_self_type %I.WithSelf.F.type, %T.loc9_7.1 [symbolic = %.loc11_4 (constants.%.b94)]
+// CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc9_7.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
+// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
+// CHECK:STDOUT:   %impl.elem0.loc11_4.2: @G.%.loc11_4 (%.b94) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc11_4.2: <specific function> = specific_impl_function %impl.elem0.loc11_4.2, @I.WithSelf.F(%T.loc9_7.1) [symbolic = %specific_impl_fn.loc11_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn(%x.param: @G.%T.as_type.loc9_15.1 (%T.as_type)) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %x.ref: @G.%T.as_type.loc9_15.1 (%T.as_type) = name_ref x, %x
 // CHECK:STDOUT:     %F.ref: %I.assoc_type = name_ref F, @I.WithSelf.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc11_4.1: @G.%.loc11_4.2 (%.b94) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
+// CHECK:STDOUT:     %impl.elem0.loc11_4.1: @G.%.loc11_4 (%.b94) = impl_witness_access constants.%I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:     %bound_method.loc11_4: <bound method> = bound_method %x.ref, %impl.elem0.loc11_4.1
 // CHECK:STDOUT:     %.loc11_7.1: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc9_7.1 (constants.%T)]
 // CHECK:STDOUT:     %.loc11_7.2: %I.type = converted constants.%T.as_type, constants.%T [symbolic = %T.loc9_7.1 (constants.%T)]

@@ -465,7 +465,6 @@ fn F() {
 // CHECK:STDOUT:   %self.param_patt.091: %pattern_type.506 = value_param_pattern [symbolic]
 // CHECK:STDOUT:   %self.patt.f35: %pattern_type.506 = wrapper_binding_pattern self, %self.param_patt.091 [symbolic]
 // CHECK:STDOUT:   %J.lookup_impl_witness: <witness> = lookup_impl_witness %Self.653, @J [symbolic]
-// CHECK:STDOUT:   %.d0f: require_witness_defn_type = require_witness_defn %J.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.c15: type = impl_witness_access %J.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.a39: type = pattern_type %impl.elem0.c15 [symbolic]
 // CHECK:STDOUT:   %u.param_patt.81e: %pattern_type.a39 = value_param_pattern [symbolic]
@@ -473,6 +472,7 @@ fn F() {
 // CHECK:STDOUT:   %.eb9: Core.Form = init_form %impl.elem0.c15 [symbolic]
 // CHECK:STDOUT:   %return.param_patt.740: %pattern_type.a39 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.cdd: %pattern_type.a39 = return_slot_pattern %return.param_patt.740, %impl.elem0.c15 [symbolic]
+// CHECK:STDOUT:   %require_witness_defn.d0f: require_witness_defn_type = require_witness_defn %J.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %J.WithSelf.F.type.e09: type = fn_type @J.WithSelf.F, @J.WithSelf(%Self.653) [symbolic]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %J.WithSelf.F.e79: %J.WithSelf.F.type.e09 = struct_value () [symbolic]
@@ -498,7 +498,7 @@ fn F() {
 // CHECK:STDOUT:   %J.facet.77b: %J.type = facet_value %empty_tuple.type, (%J.impl_witness.a51) [concrete]
 // CHECK:STDOUT:   %J.WithSelf.F.type.42a: type = fn_type @J.WithSelf.F, @J.WithSelf(%J.facet.77b) [concrete]
 // CHECK:STDOUT:   %J.WithSelf.F.93e: %J.WithSelf.F.type.42a = struct_value () [concrete]
-// CHECK:STDOUT:   %.222: require_witness_defn_type = require_witness_defn %J.impl_witness.a51 [concrete]
+// CHECK:STDOUT:   %require_witness_defn.222: require_witness_defn_type = require_witness_defn %J.impl_witness.a51 [concrete]
 // CHECK:STDOUT:   %Negate.type: type = facet_type <@Negate> [concrete]
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.type.629: type = fn_type @Int.as.Negate.impl.Op, @Int.as.Negate.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Negate.impl.Op.415: %Int.as.Negate.impl.Op.type.629 = struct_value () [symbolic]
@@ -542,7 +542,7 @@ fn F() {
 // CHECK:STDOUT:   %J.facet.0da: %J.type = facet_value %C, (%J.impl_witness.90c) [concrete]
 // CHECK:STDOUT:   %J.WithSelf.F.type.7c7: type = fn_type @J.WithSelf.F, @J.WithSelf(%J.facet.0da) [concrete]
 // CHECK:STDOUT:   %J.WithSelf.F.a53: %J.WithSelf.F.type.7c7 = struct_value () [concrete]
-// CHECK:STDOUT:   %.f57: require_witness_defn_type = require_witness_defn %J.impl_witness.90c [concrete]
+// CHECK:STDOUT:   %require_witness_defn.f57: require_witness_defn_type = require_witness_defn %J.impl_witness.90c [concrete]
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -578,7 +578,7 @@ fn F() {
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %self: @J.WithSelf.F.%Self.as_type.loc6_8.1 (%Self.as_type.976) = wrapper_binding self, %self.param
 // CHECK:STDOUT:     %u.param: @J.WithSelf.F.%impl.elem0.loc6_17.1 (%impl.elem0.c15) = value_param call_param1
-// CHECK:STDOUT:     %.loc6_17.2: type = splice_block %U.ref.loc6_17 [symbolic = %impl.elem0.loc6_17.1 (constants.%impl.elem0.c15)] {
+// CHECK:STDOUT:     %.loc6_17: type = splice_block %U.ref.loc6_17 [symbolic = %impl.elem0.loc6_17.1 (constants.%impl.elem0.c15)] {
 // CHECK:STDOUT:       %impl.elem0.loc6_17.2: type = impl_witness_access constants.%J.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_17.1 (constants.%impl.elem0.c15)]
 // CHECK:STDOUT:       %U.ref.loc6_17: type = name_ref U, %impl.elem0.loc6_17.2 [symbolic = %impl.elem0.loc6_17.1 (constants.%impl.elem0.c15)]
 // CHECK:STDOUT:     }
@@ -662,7 +662,7 @@ fn F() {
 // CHECK:STDOUT:   %self.param_patt.loc6_8.2: @J.WithSelf.F.%pattern_type.loc6_8 (%pattern_type.506) = value_param_pattern [symbolic = %self.param_patt.loc6_8.2 (constants.%self.param_patt.091)]
 // CHECK:STDOUT:   %self.patt.loc6_8.2: @J.WithSelf.F.%pattern_type.loc6_8 (%pattern_type.506) = wrapper_binding_pattern self, %self.param_patt.loc6_8.2 [symbolic = %self.patt.loc6_8.2 (constants.%self.patt.f35)]
 // CHECK:STDOUT:   %J.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @J [symbolic = %J.lookup_impl_witness (constants.%J.lookup_impl_witness)]
-// CHECK:STDOUT:   %.loc6_17.1: require_witness_defn_type = require_witness_defn %J.lookup_impl_witness [symbolic = %.loc6_17.1 (constants.%.d0f)]
+// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %J.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc6_17.1: type = impl_witness_access %J.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_17.1 (constants.%impl.elem0.c15)]
 // CHECK:STDOUT:   %pattern_type.loc6_15: type = pattern_type %impl.elem0.loc6_17.1 [symbolic = %pattern_type.loc6_15 (constants.%pattern_type.a39)]
 // CHECK:STDOUT:   %u.param_patt.loc6_15.2: @J.WithSelf.F.%pattern_type.loc6_15 (%pattern_type.a39) = value_param_pattern [symbolic = %u.param_patt.loc6_15.2 (constants.%u.param_patt.81e)]
@@ -728,7 +728,7 @@ fn F() {
 // CHECK:STDOUT:   %self.param_patt.loc6_8.2 => constants.%self.param_patt.091
 // CHECK:STDOUT:   %self.patt.loc6_8.2 => constants.%self.patt.f35
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.lookup_impl_witness
-// CHECK:STDOUT:   %.loc6_17.1 => constants.%.d0f
+// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.d0f
 // CHECK:STDOUT:   %impl.elem0.loc6_17.1 => constants.%impl.elem0.c15
 // CHECK:STDOUT:   %pattern_type.loc6_15 => constants.%pattern_type.a39
 // CHECK:STDOUT:   %u.param_patt.loc6_15.2 => constants.%u.param_patt.81e
@@ -759,7 +759,7 @@ fn F() {
 // CHECK:STDOUT:   %self.param_patt.loc6_8.2 => constants.%self.param_patt.154
 // CHECK:STDOUT:   %self.patt.loc6_8.2 => constants.%self.patt.462
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.impl_witness.a51
-// CHECK:STDOUT:   %.loc6_17.1 => constants.%.222
+// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.222
 // CHECK:STDOUT:   %impl.elem0.loc6_17.1 => constants.%i32
 // CHECK:STDOUT:   %pattern_type.loc6_15 => constants.%pattern_type.d94
 // CHECK:STDOUT:   %u.param_patt.loc6_15.2 => constants.%u.param_patt.68b
@@ -783,7 +783,7 @@ fn F() {
 // CHECK:STDOUT:   %self.param_patt.loc6_8.2 => constants.%self.param_patt.303
 // CHECK:STDOUT:   %self.patt.loc6_8.2 => constants.%self.patt.36a
 // CHECK:STDOUT:   %J.lookup_impl_witness => constants.%J.impl_witness.90c
-// CHECK:STDOUT:   %.loc6_17.1 => constants.%.f57
+// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.f57
 // CHECK:STDOUT:   %impl.elem0.loc6_17.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type.loc6_15 => constants.%pattern_type.98b
 // CHECK:STDOUT:   %u.param_patt.loc6_15.2 => constants.%u.param_patt.162
