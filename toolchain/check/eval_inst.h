@@ -137,7 +137,8 @@ struct FunctionTypeForEvalConstantInstImpl<InstT, true, false> {
 template <typename InstT>
 struct FunctionTypeForEvalConstantInstImpl<InstT, true, true> {
   // Can be evaluated, evaluation needs InstId.
-  using Type = auto(Context& context, SemIR::InstId inst_id, InstT inst)
+  using Type = auto(Context& context, SemIR::ImportIRId import_ir_id,
+                    SemIR::InstId source_inst_id, InstT inst)
       -> ConstantEvalResult;
 };
 template <typename InstT>
