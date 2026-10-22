@@ -258,7 +258,7 @@ struct A {
 struct B : private A {};
 
 template<typename T>
-void F(T* _Nonnull t) {
+auto F(T* _Nonnull t) -> void {
     t->X();
 }
 ''';
