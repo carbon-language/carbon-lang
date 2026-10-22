@@ -56,7 +56,7 @@ void f() {
 // CHECK:STDOUT: declare ptr @_CGet.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CGet__carbon_thunk.Main(ptr %_) #1 !dbg !14 {
+// CHECK:STDOUT: define linkonce_odr void @_CGet__carbon_thunk.Main(ptr %_) #1 !dbg !14 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Get.call = call ptr @_CGet.Main(), !dbg !16
 // CHECK:STDOUT:   store ptr %Get.call, ptr %_, align 8, !dbg !16

@@ -1611,6 +1611,9 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
            .param_type_ids = thunk_param_type_ids,
            .param_kinds = thunk_param_kinds})
           .second;
+  context.functions()
+      .Get(carbon_thunk_function_id)
+      .SetCppThunk(target.function.first_decl_id());
 
   BuildThunkDefinitionForExport(
       context, carbon_thunk_function_id, target.function_id,

@@ -255,7 +255,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.Final.Main(ptr %self) #8 !dbg !61 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Final.Main(ptr %self) #8 !dbg !61 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Final.Main(ptr %self), !dbg !63
 // CHECK:STDOUT:   ret void, !dbg !63
@@ -293,7 +293,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.Base.Main(ptr %self) #8 !dbg !82 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Base.Main(ptr %self) #8 !dbg !82 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Base.Main(ptr %self), !dbg !84
 // CHECK:STDOUT:   ret void, !dbg !84

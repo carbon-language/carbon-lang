@@ -96,7 +96,7 @@ void f() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_COneArg__carbon_thunk.OneArg.Main(ptr %_, ptr %_1) #5 !dbg !27 {
+// CHECK:STDOUT: define linkonce_odr void @_COneArg__carbon_thunk.OneArg.Main(ptr %_, ptr %_1) #5 !dbg !27 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_28.2 = load i32, ptr %_1, align 4, !dbg !30
 // CHECK:STDOUT:   call void @_COneArg.OneArg.Main(ptr %_, i32 %.loc6_28.2), !dbg !30

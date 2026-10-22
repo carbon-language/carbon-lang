@@ -145,14 +145,14 @@ fn DoThing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_Cfunc__carbon_thunk.Derived.Main(ptr %self) #2 !dbg !86 {
+// CHECK:STDOUT: define linkonce_odr void @_Cfunc__carbon_thunk.Derived.Main(ptr %self) #2 !dbg !86 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Cfunc.Derived.Main(ptr %self), !dbg !88
 // CHECK:STDOUT:   ret void, !dbg !88
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_Cother_func__carbon_thunk.Derived.Main(ptr %self) #2 !dbg !90 {
+// CHECK:STDOUT: define linkonce_odr void @_Cother_func__carbon_thunk.Derived.Main(ptr %self) #2 !dbg !90 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Derived.other_func.call.vtable = load ptr, ptr %self, align 8, !dbg !92
 // CHECK:STDOUT:   %Derived.other_func.call = call ptr @llvm.load.relative.i32(ptr %Derived.other_func.call.vtable, i32 8), !dbg !92

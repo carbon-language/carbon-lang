@@ -327,7 +327,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallLayoutA__carbon_thunk.Main(ptr %_) #5 !dbg !83 {
+// CHECK:STDOUT: define linkonce_odr void @_CCallLayoutA__carbon_thunk.Main(ptr %_) #5 !dbg !83 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc21 = load ptr, ptr %_, align 8, !dbg !85
 // CHECK:STDOUT:   call void @_CCallLayoutA.Main(ptr %.loc21), !dbg !85
@@ -376,7 +376,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallLayoutB__carbon_thunk.Main(ptr %_) #5 !dbg !107 {
+// CHECK:STDOUT: define linkonce_odr void @_CCallLayoutB__carbon_thunk.Main(ptr %_) #5 !dbg !107 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22 = load ptr, ptr %_, align 8, !dbg !109
 // CHECK:STDOUT:   call void @_CCallLayoutB.Main(ptr %.loc22), !dbg !109
@@ -425,7 +425,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallLayoutC__carbon_thunk.Main(ptr %_) #5 !dbg !131 {
+// CHECK:STDOUT: define linkonce_odr void @_CCallLayoutC__carbon_thunk.Main(ptr %_) #5 !dbg !131 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc23 = load ptr, ptr %_, align 8, !dbg !133
 // CHECK:STDOUT:   call void @_CCallLayoutC.Main(ptr %.loc23), !dbg !133

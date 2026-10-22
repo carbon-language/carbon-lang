@@ -212,7 +212,7 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: declare void @_CNoArgs.Other()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CNoArgs__carbon_thunk.Other() #2 !dbg !42 {
+// CHECK:STDOUT: define linkonce_odr void @_CNoArgs__carbon_thunk.Other() #2 !dbg !42 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CNoArgs.Other(), !dbg !43
 // CHECK:STDOUT:   ret void, !dbg !43
@@ -221,7 +221,7 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: declare void @_CBoolArg.Other(i1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CBoolArg__carbon_thunk.Other(ptr %_) #2 !dbg !44 {
+// CHECK:STDOUT: define linkonce_odr void @_CBoolArg__carbon_thunk.Other(ptr %_) #2 !dbg !44 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.1 = load i8, ptr %_, align 1, !dbg !46
 // CHECK:STDOUT:   %.11 = trunc i8 %.1 to i1, !dbg !46
@@ -232,7 +232,7 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: declare void @_CIntArg.Other(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CIntArg__carbon_thunk.Other(ptr %_) #2 !dbg !48 {
+// CHECK:STDOUT: define linkonce_odr void @_CIntArg__carbon_thunk.Other(ptr %_) #2 !dbg !48 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !50
 // CHECK:STDOUT:   call void @_CIntArg.Other(i32 %.1), !dbg !50
@@ -242,7 +242,7 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: declare void @_CFloatArg.Other(float)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CFloatArg__carbon_thunk.Other(ptr %_) #2 !dbg !52 {
+// CHECK:STDOUT: define linkonce_odr void @_CFloatArg__carbon_thunk.Other(ptr %_) #2 !dbg !52 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.1 = load float, ptr %_, align 4, !dbg !54
 // CHECK:STDOUT:   call void @_CFloatArg.Other(float %.1), !dbg !54
@@ -252,7 +252,7 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: declare i32 @_CIntReturn.Other()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CIntReturn__carbon_thunk.Other(ptr %_) #2 !dbg !56 {
+// CHECK:STDOUT: define linkonce_odr void @_CIntReturn__carbon_thunk.Other(ptr %_) #2 !dbg !56 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %IntReturn.call = call i32 @_CIntReturn.Other(), !dbg !58
 // CHECK:STDOUT:   store i32 %IntReturn.call, ptr %_, align 4, !dbg !58
@@ -329,7 +329,7 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.Main() #0 !dbg !77 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Main() #0 !dbg !77 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main(), !dbg !78
 // CHECK:STDOUT:   ret void, !dbg !78
@@ -408,7 +408,7 @@ fn CallCallBase() { Cpp.CallBase(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_Cbase__carbon_thunk.Main() #0 !dbg !86 {
+// CHECK:STDOUT: define linkonce_odr void @_Cbase__carbon_thunk.Main() #0 !dbg !86 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Cbase.Main(), !dbg !87
 // CHECK:STDOUT:   ret void, !dbg !87
