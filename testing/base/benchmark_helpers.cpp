@@ -15,13 +15,13 @@ namespace Carbon::Testing {
 auto IsBenchmarkDryRun() -> bool {
   CARBON_CHECK(
       benchmark_dry_run,
-      "Must not query `IsBenchmarkDryRun` until after it has been set!");
+      "queried `IsBenchmarkDryRun` before it was set");
   return *benchmark_dry_run;
 }
 
 auto SetBenchmarkDryRun(bool is_dry_run) -> void {
   CARBON_CHECK(!benchmark_dry_run,
-               "Must not call `SetBenchmarkDryRun` more than once!");
+               "called `SetBenchmarkDryRun` more than once");
   benchmark_dry_run = is_dry_run;
 }
 
