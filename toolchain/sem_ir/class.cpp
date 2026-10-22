@@ -117,6 +117,11 @@ auto GetAsCarbonOwnedClass(const File& sem_ir, const clang::TagDecl* tag_decl)
 
 auto GetClassFieldFromScopeEntry(const File& sem_ir, InstId entry_inst_id)
     -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
+  // An unloaded import reference has no constant value, so we can't tell
+  // whether it's a field. Callers are responsible for loading it first.
+  CARBON_CHECK(!sem_ir.insts().Is<SemIR::ImportRefUnloaded>(entry_inst_id),
+               "Class field must be loaded before it is looked up");
+
   // If the class was imported, the scope entry is an import reference, so use
   // its constant value, which is the local `FieldDecl`. For a local class, this
   // is the `FieldDecl` itself.
