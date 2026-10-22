@@ -1874,7 +1874,7 @@ An unsafe adapter has all the same properties as a normal adapter, except that
 any conversion between compatible types that crosses an `unsafe adapt` is only
 available with
 [`unsafe as`](/docs/design/expressions/as_expressions.md#unsafe-as-expressions).
-An unsafe adapter can then explicitly implement `As` or `ImplicitAs` to make a
+An unsafe adapter can then explicitly implement `As` or `ImplicitAs` to mark a
 conversion safe, potentially in only one direction or only under a condition.
 
 ### Destructors

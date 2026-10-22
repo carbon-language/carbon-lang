@@ -101,7 +101,7 @@ var v: T;
 v = init;
 ```
 
-An implementation of `AssignWith` may declare its object parameter as
+An implementation of `AssignWith` may declare its `self` parameter as
 [`Core.MaybeUnformed(Self)`](/docs/design/values.md#using-an-object-that-might-be-unformed),
 in which case it is called whether or not the object is unformed and is
 responsible for handling both cases, leaving the object initialized on return.

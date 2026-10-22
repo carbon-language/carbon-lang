@@ -331,7 +331,7 @@ into a formed `T`) is only safe in specific cases:
 -   Removing `const` requires `unsafe as` when the result is still a reference
     expression. When the conversion converts a reference expression to a value
     or initializing expression, removing `const` is safe because the result does
-    not refer to the original object.
+    not allow modification of the original object.
 -   Removing `partial` requires `unsafe as` for a non-initializing expression
     when the class is not `final`. It is safe when the class is `final` (per
     [#6161](https://github.com/carbon-language/carbon-lang/issues/6161)) or for
@@ -368,8 +368,7 @@ We combine unsafe conversions with the concept of
 the `adapt` declaration with the `unsafe` keyword. Such an adapter has all the
 same properties as a normal adapter, except that any conversion between
 compatible types that crosses an `unsafe adapt` step is only available with
-`unsafe as` (so an `unsafe adapt` cannot be bypassed by converting through a
-second, safe adapter of the same underlying type). These adapters can then
+`unsafe as`. These adapters can then
 explicitly implement `As` or `ImplicitAs`, potentially doing so _conditionally_
 or imposing other restrictions such as only allowing conversion in one
 direction.
@@ -566,15 +565,15 @@ interface UnformedNoop {
 
 // A type may implement both, so these are prioritized rather than each `final`.
 final match_first {
-  impl forall [T: UnformedInvalid] T as UnformedInit
-      where .StructT = T.impl(UnformedInvalid.StructT) {
+  impl forall [T: UnformedInvalid] T as UnformedInit {
+    where StructT = T.impl(UnformedInvalid.StructT);
     fn Op() -> Core.MaybeUnformed(Self) {
       return T.impl(UnformedInvalid.Value) unsafe as Core.MaybeUnformed(Self);
     }
   }
 
-  impl forall [T: UnformedNoop] T as UnformedInit
-      where .StructT = T.impl(UnformedNoop.StructT) {
+  impl forall [T: UnformedNoop] T as UnformedInit {
+    where StructT = T.impl(UnformedNoop.StructT);
     fn Op() -> Core.MaybeUnformed(Self) {
       return T.impl(UnformedNoop.Value) unsafe as Core.MaybeUnformed(Self);
     }
@@ -887,7 +886,7 @@ var object: SomeType;
 > **Future work:** We also expect to add operations to Carbon that put objects
 > into this state without a declaration, as we would like to use unformed state
 > for non-destructively-moved-from objects as well, but those will come in
-> subsequent and separate proposals.
+> subsequent proposals.
 
 Carbon's memory safety model is planned to include flow-sensitive checking, and
 this proposal states its unformed-state rules in that model's terms, leaving the
@@ -920,7 +919,7 @@ in overload resolution or `impl` selection:
     requires `unsafe as T` to be converted to `T`.
 
 A function's effect on the initialization state of its arguments is declared in
-its signature rather than inferred from how an argument is passed. A function
+its signature. A function
 that initializes an argument or leaves a formed argument unformed declares that
 effect in its signature. Passing a place of type `T` as a mutable
 `ref Core.MaybeUnformed(T)` leaves the place definitely initialized if the
@@ -1337,10 +1336,10 @@ but distinct roles:
 
 -   [Performance-critical software](/docs/project/goals.md#performance-critical-software)
     -   Customizing the exact hardening approach gives added per-type control to
-        library authors to get the best cost/benefit tradeoff between
+        library authors to get their desired cost/benefit tradeoff between
         performance and security.
     -   Exposing an unformed state can reduce the branching required to
-        represent control-dependent initialized objects.
+        represent objects whose initialization is control dependent.
     -   Strict handling of unformed state can reduce the need for defensive
         hardening of objects, providing the developer control over the costs of
         their code without loss of safety.

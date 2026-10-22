@@ -930,7 +930,7 @@ also customize the representation used when hardening by implementing
 `Core.UnformedInvalid` and `Core.UnformedInit`.
 
 The hardened `StructT` must be a superset of `UnformedInit.StructT`, since
-hardening may initialize additional fields of the object. Any automatic fill
+hardening may initialize additional fields of the object, but can never initialize fewer. Any automatic fill
 performed by the compiler is applied before (or only to bytes outside) the
 `StructT` fields written by `UnformedInit.Op` or `UnformedHardenInit.Op`, so
 that `Core.IsUnformed` continues to recognize the object. Hardening applies only

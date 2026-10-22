@@ -1194,7 +1194,7 @@ x = 7;
 ```
 
 A variable declaration may omit its initializer. If the type has
-[a default value](values.md#declaring-a-variable-with-no-initializer) the
+[a default value](values.md#declaring-a-variable-with-no-initializer), the
 variable is initialized to it; otherwise, if the type has
 [an unformed state](#unformed-state), the variable is left unformed and needs to
 be assigned or initialized before it is used. See
