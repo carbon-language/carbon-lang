@@ -115,20 +115,26 @@ auto GetAsCarbonOwnedClass(const File& sem_ir, const clang::TagDecl* tag_decl)
   return std::make_pair(class_type_id, *class_type);
 }
 
+auto GetClassFieldFromScopeEntry(const File& sem_ir, InstId entry_inst_id)
+    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
+  // If the class was imported, the scope entry is an import reference, so use
+  // its constant value, which is the local `FieldDecl`. For a local class, this
+  // is the `FieldDecl` itself.
+  auto field_inst_id =
+      sem_ir.constant_values().GetConstantInstId(entry_inst_id);
+  if (!field_inst_id.has_value()) {
+    return std::nullopt;
+  }
+  return sem_ir.insts().TryGetAsWithId<SemIR::FieldDecl>(field_inst_id);
+}
+
 auto LookupClassFieldByStructField(const File& sem_ir,
                                    const SemIR::NameScope& class_scope,
                                    const SemIR::StructTypeField& struct_field)
     -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
   if (auto entry_id = class_scope.Lookup(struct_field.name_id)) {
-    // If the class was imported, the scope entry is an import reference, so
-    // use its constant value, which is the local `FieldDecl`. For a local
-    // class, this is the `FieldDecl` itself.
-    auto field_inst_id = sem_ir.constant_values().GetConstantInstId(
-        class_scope.GetEntry(*entry_id).result.target_inst_id());
-    if (!field_inst_id.has_value()) {
-      return std::nullopt;
-    }
-    return sem_ir.insts().TryGetAsWithId<SemIR::FieldDecl>(field_inst_id);
+    return GetClassFieldFromScopeEntry(
+        sem_ir, class_scope.GetEntry(*entry_id).result.target_inst_id());
   }
   return std::nullopt;
 }
