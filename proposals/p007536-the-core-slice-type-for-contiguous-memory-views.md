@@ -36,6 +36,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
     -   [Safety](#safety)
     -   [Static bound](#static-bound)
     -   [C++ interop](#c-interop)
+    -   [Mutable iteration](#mutable-iteration)
     -   [Syntax](#syntax)
 -   [Rationale](#rationale)
 -   [Alternatives considered](#alternatives-considered)
@@ -140,11 +141,12 @@ length.
 
 ## Proposal
 
-We propose to introduce the `Core.Slice(T)` type in the `Core` prelude, alongside
-a `slice` keyword that maps to `Core.Slice` (such that `slice(T)` evaluates to
-`Core.Slice(T)`, similar to `str` mapping to `Core.Str`).
+We propose to introduce the `Core.Slice(T)` type in the `Core` prelude,
+alongside a `slice` keyword that maps to `Core.Slice` (such that `slice(T)`
+evaluates to `Core.Slice(T)`, similar to `str` mapping to `Core.Str`).
 
-This follows the [All APIs are library APIs principle](/docs/project/principles/library_apis_only.md)
+This follows the
+[All APIs are library APIs principle](/docs/project/principles/library_apis_only.md)
 by defining the underlying type in the standard library while providing a
 primitive keyword alias.
 
@@ -208,9 +210,12 @@ Slices also support unformed initialization.
 
 ### Conversions
 
-An array type `[T; N]` (written as `array(T, N)` in the prelude) can be implicitly converted to a `Slice(T)` (written as `slice(T)`). The resulting slice points to the first element of the array and has a size of `N`.
+An array type `[T; N]` (written as `array(T, N)` in the prelude) can be
+implicitly converted to a `Slice(T)` (written as `slice(T)`). The resulting
+slice points to the first element of the array and has a size of `N`.
 
-This conversion is valid if the elements of the array are compatible with the elements of the slice.
+This conversion is valid if the elements of the array are compatible with the
+elements of the slice.
 
 This allows passing an array directly to a function taking a slice:
 
@@ -251,25 +256,30 @@ fn Main() -> i32 {
 ### Safety
 
 This type should eventually support
-[spatial](/docs/design/safety/terminology.md#spatial-safety) and [temporal](/docs/design/safety/terminology.md#temporal-safety) [safety](/docs/design/safety/README.md#memory-safety-model)
-in some form, similarly applicable to (but not yet specified for)
+[spatial](/docs/design/safety/terminology.md#spatial-safety) and
+[temporal](/docs/design/safety/terminology.md#temporal-safety)
+[safety](/docs/design/safety/README.md#memory-safety-model) in some form,
+similarly applicable to (but not yet specified for)
 [`str`](/proposals/p006177-c-interop-mapping-std-string-view-to-core-str.md) -
-but the specifics of that safety
-(per Carbon's [safety strategy](/docs/project/principles/safety_strategy.md) as
-updated in [p005914](/proposals/p005914-updating-carbon-s-safety-strategy.md))
-are left out of scope for this proposal, though it's part of the motivation for
-the specific direction of this proposal (without safety in mind, perhaps the
-pointer+length tuple would be less problematic).
+but the specifics of that safety (per Carbon's
+[safety strategy](/docs/project/principles/safety_strategy.md) as updated in
+[p005914](/proposals/p005914-updating-carbon-s-safety-strategy.md)) are left out
+of scope for this proposal, though it's part of the motivation for the specific
+direction of this proposal (without safety in mind, perhaps the pointer+length
+tuple would be less problematic).
 
 ### Static bound
 
-A type similar to `Slice`, but [supporting a compile-time bound](https://docs.google.com/document/d/1hdYyCLmzEOj9gDulm7Eo1SVNc0pY7zbMvFmEzenMhYE/edit?usp=sharing)
-should be provided, but may be a [distinct/unrelated type](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#absence-of-syntax-should-make-clear-defaults)
+A type similar to `Slice`, but
+[supporting a compile-time bound](https://docs.google.com/document/d/1hdYyCLmzEOj9gDulm7Eo1SVNc0pY7zbMvFmEzenMhYE/edit?usp=sharing)
+should be provided, but may be a
+[distinct/unrelated type](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#absence-of-syntax-should-make-clear-defaults)
 from this one (more like Rust's `&[T; N]` versus `&[T]`, and unlike C++'s
-[`std::span`](https://en.cppreference.com/cpp/container/span) that uses a template parameter to
-represent either the specific static bound, or the absence of a static bound -
-which seems like it might complicate the interface more than providing some
-generality over the two scenarios; see also the [`[T; N]` discussion in p004682](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#t-n-builtin-syntax)).
+[`std::span`](https://en.cppreference.com/cpp/container/span) that uses a
+template parameter to represent either the specific static bound, or the absence
+of a static bound - which seems like it might complicate the interface more than
+providing some generality over the two scenarios; see also the
+[`[T; N]` discussion in p004682](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#t-n-builtin-syntax)).
 
 ### C++ interop
 
@@ -286,25 +296,49 @@ the representation of `Slice`, are left to a future proposal.
 A `std::span<T, N>` with static extent would more naturally map to the
 [statically bounded type](#static-bound) described above.
 
+### Mutable iteration
+
+[Iteration](#iteration) currently visits copies of the elements, because
+`Core.Iterate` produces elements by value and requires them to be copyable. Once
+`Core.Iterate` supports producing elements by reference, iterating over a slice
+should produce reference expressions referring to its elements, even if the
+slice is a value, because the slice doesn't own its elements (as with
+[element access](#element-access)). This would also allow iterating over slices
+of non-copyable elements.
+
 ### Syntax
 
-[p004682](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#proposal) and
-['Pointers Arrays, and Slices'](https://docs.google.com/document/d/1hdYyCLmzEOj9gDulm7Eo1SVNc0pY7zbMvFmEzenMhYE/edit?tab=t.0#heading=h.fahgww8db6f0) refer to some possible builtin syntax (such as `[T]` or `[T]*`) for referring to specific Spans/Slices, but that isn't covered here and is left for future proposals.
+[p004682](/proposals/p004682-the-core-array-type-for-direct-storage-immutably-sized-buffers.md#proposal)
+and
+['Pointers Arrays, and Slices'](https://docs.google.com/document/d/1hdYyCLmzEOj9gDulm7Eo1SVNc0pY7zbMvFmEzenMhYE/edit?tab=t.0#heading=h.fahgww8db6f0)
+refer to some possible builtin syntax (such as `[T]` or `[T]*`) for referring to
+specific Spans/Slices, but that isn't covered here and is left for future
+proposals.
 
 ## Rationale
 
 This proposal advances the following Carbon goals:
 
--   **Performance-critical software**: Slices are lightweight (typically two words: pointer + size) and passed by value, avoiding allocation and indirection.
--   **Practical safety and testing mechanisms**: Slices carry their size, allowing for runtime bounds checking (in debug modes) to prevent buffer overflows.
--   **Code that is easy to read, understand, and write**: A single type `Slice(T)` replaces various ad-hoc patterns for passing array views.
+-   **Performance-critical software**: Slices are lightweight (typically two
+    words: pointer + size) and passed by value, avoiding allocation and
+    indirection.
+-   **Practical safety and testing mechanisms**: Slices carry their size,
+    allowing for runtime bounds checking (in debug modes) to prevent buffer
+    overflows.
+-   **Code that is easy to read, understand, and write**: A single type
+    `Slice(T)` replaces various ad-hoc patterns for passing array views.
 
 ## Alternatives considered
 
 ### Raw pointer and size
 
-We could rely on passing `(T*, u64)` pairs. This is rejected because it is unsafe (no bounds checking possible at the type level), verbose, and not idiomatic.
+We could rely on passing `(T*, u64)` pairs. This is rejected because it is
+unsafe (no bounds checking possible at the type level), verbose, and not
+idiomatic.
 
 ### Builtin slice syntax only
 
-We could introduce `[T]` as a builtin type without a library representation. This is rejected because it violates the "All APIs are library APIs" principle and makes it harder to define methods or implement interfaces (like `Copy`) on the slice type itself.
+We could introduce `[T]` as a builtin type without a library representation.
+This is rejected because it violates the "All APIs are library APIs" principle
+and makes it harder to define methods or implement interfaces (like `Copy`) on
+the slice type itself.
