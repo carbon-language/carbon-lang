@@ -625,6 +625,8 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
   context_.inst_block_stack().PopAndDiscard();
 }
 
+auto CheckUnit::CheckImpls() -> void { ValidateImplsInFile(context_); }
+
 auto CheckUnit::FinishRun() -> void {
   // TODO: Find a more optimal way to evaluate mutually-dependent interop
   // between Carbon and C++.
@@ -672,11 +674,7 @@ auto CheckUnit::FinishRun() -> void {
 
   CheckRequiredDeclarations();
   CheckPoisonedConcreteImplLookupQueries();
-
-  // Validate `impl`s once, after the loop has imported every `final impl` that
-  // they need to be checked against. Validating on each pass would repeat the
-  // same diagnostics.
-  ValidateImplsInFile(context_);
+  CheckImpls();
 
   // Disconnects AST generation from the context before popping the file-level
   // scope and destroying the context.
