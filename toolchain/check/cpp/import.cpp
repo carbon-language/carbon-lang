@@ -1030,11 +1030,15 @@ static auto BuildClassDefinition(Context& context,
       class_info.friend_scopes.Insert(
           context.types().GetConstantId(friend_type_id));
     } else {
-      auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(f->getFriendDecl());
-      auto inst_id =
-          ImportCppDecl(context, SemIR::LocId(import_ir_inst_id), key);
+      auto* friend_decl = f->getFriendDecl();
+      // TODO: support function friend decls.
+      if (!friend_decl->isFunctionOrFunctionTemplate()) {
+        auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(friend_decl);
+        auto inst_id =
+            ImportCppDecl(context, SemIR::LocId(import_ir_inst_id), key);
 
-      class_info.friend_scopes.Insert(context.constant_values().Get(inst_id));
+        class_info.friend_scopes.Insert(context.constant_values().Get(inst_id));
+      }
     }
   }
 
