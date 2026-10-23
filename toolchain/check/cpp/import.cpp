@@ -1015,6 +1015,23 @@ static auto BuildClassDefinition(Context& context,
                                                .vtable_id = vtable_id}));
   }
 
+  // Import friend declarations.
+  for (const auto* f : clang_def->friends()) {
+    if (const auto* type_source_info = f->getFriendType()) {
+      auto [friend_type_inst_id, friend_type_id] =
+          ImportCppType(context, SemIR::LocId(import_ir_inst_id),
+                        type_source_info->getType());
+
+      if (!friend_type_id.has_value()) {
+        // TODO: For now, just skip over friends whose types we can't map.
+        continue;
+      }
+
+      class_info.friend_scopes.Insert(
+          context.types().GetConstantId(friend_type_id));
+    }
+  }
+
   class_info.body_block_id = context.inst_block_stack().Pop();
 }
 
