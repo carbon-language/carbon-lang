@@ -196,7 +196,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyCallback__carbon_thunk.Main(ptr %_, ptr %_1) #0 !dbg !36 {
+// CHECK:STDOUT: define linkonce_odr void @_CMyCallback__carbon_thunk.Main(ptr %_, ptr %_1) #0 !dbg !36 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc8 = load float, ptr %_, align 4, !dbg !39
 // CHECK:STDOUT:   %MyCallback.call = call i32 @_CMyCallback.Main(float %.loc8), !dbg !40
@@ -270,7 +270,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyCallback__carbon_thunk.Main(ptr %_, ptr %_1) #0 !dbg !51 {
+// CHECK:STDOUT: define linkonce_odr void @_CMyCallback__carbon_thunk.Main(ptr %_, ptr %_1) #0 !dbg !51 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc5 = load float, ptr %_, align 4, !dbg !54
 // CHECK:STDOUT:   %MyCallback.call = call i32 @_CMyCallback.Main(float %.loc5), !dbg !54
@@ -483,7 +483,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyCallback__carbon_thunk.Main(ptr %_, ptr %_1) #0 !dbg !98 {
+// CHECK:STDOUT: define linkonce_odr void @_CMyCallback__carbon_thunk.Main(ptr %_, ptr %_1) #0 !dbg !98 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CMyCallback.Main(ptr %_1, ptr %_), !dbg !102
 // CHECK:STDOUT:   ret void, !dbg !102
@@ -553,7 +553,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyCallback__carbon_thunk.Main(ptr %_, ptr %_1) #0 !dbg !113 {
+// CHECK:STDOUT: define linkonce_odr void @_CMyCallback__carbon_thunk.Main(ptr %_, ptr %_1) #0 !dbg !113 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CMyCallback.Main(ptr %_1, ptr %_), !dbg !116
 // CHECK:STDOUT:   ret void, !dbg !116

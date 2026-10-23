@@ -214,14 +214,14 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.26f2099a79512a5d.Main(ptr %_) #4 !dbg !48 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.26f2099a79512a5d.Main(ptr %_) #4 !dbg !48 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main.6662a1ffb773360a(ptr %_), !dbg !50
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.7a3b9f04ddf4269e.Main(ptr %_) #4 !dbg !52 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.7a3b9f04ddf4269e.Main(ptr %_) #4 !dbg !52 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main.d53b17eed3ce903c(ptr %_), !dbg !54
 // CHECK:STDOUT:   ret void, !dbg !54

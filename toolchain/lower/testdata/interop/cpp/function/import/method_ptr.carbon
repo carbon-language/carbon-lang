@@ -206,7 +206,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMethod__carbon_thunk.C.Main(ptr %self) #0 !dbg !48 {
+// CHECK:STDOUT: define linkonce_odr void @_CMethod__carbon_thunk.C.Main(ptr %self) #0 !dbg !48 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CMethod.C.Main(ptr %self), !dbg !51
 // CHECK:STDOUT:   ret void, !dbg !51
@@ -310,7 +310,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMethod__carbon_thunk.C.Main(ptr %self) #0 !dbg !75 {
+// CHECK:STDOUT: define linkonce_odr void @_CMethod__carbon_thunk.C.Main(ptr %self) #0 !dbg !75 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CMethod.C.Main(ptr %self), !dbg !77
 // CHECK:STDOUT:   ret void, !dbg !77
