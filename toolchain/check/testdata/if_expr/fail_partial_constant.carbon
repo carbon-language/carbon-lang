@@ -121,9 +121,9 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %t.param_patt.277: %pattern_type.9a5 = value_param_pattern [concrete]
-// CHECK:STDOUT:   %t.patt.3a0: %pattern_type.9a5 = wrapper_binding_pattern t, %t.param_patt.277 [concrete]
+// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %t.param_patt.277: %pattern_type.9a587c.1 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %t.patt.3a0: %pattern_type.9a587c.1 = wrapper_binding_pattern t, %t.param_patt.277 [concrete]
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.type: type = fn_type @ChosenBranchIsNonConstant [concrete]
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant: %ChosenBranchIsNonConstant.type = struct_value () [concrete]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]
@@ -155,8 +155,8 @@ fn ChosenBranchIsNonConstant(t: type) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %ChosenBranchIsNonConstant.decl: %ChosenBranchIsNonConstant.type = fn_decl @ChosenBranchIsNonConstant [concrete = constants.%ChosenBranchIsNonConstant] {
-// CHECK:STDOUT:     %t.param_patt: %pattern_type.9a5 = value_param_pattern [concrete = constants.%t.param_patt.277]
-// CHECK:STDOUT:     %t.patt: %pattern_type.9a5 = wrapper_binding_pattern t, %t.param_patt [concrete = constants.%t.patt.3a0]
+// CHECK:STDOUT:     %t.param_patt: %pattern_type.9a587c.1 = value_param_pattern [concrete = constants.%t.param_patt.277]
+// CHECK:STDOUT:     %t.patt: %pattern_type.9a587c.1 = wrapper_binding_pattern t, %t.param_patt [concrete = constants.%t.patt.3a0]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %t.param: type = value_param call_param0
 // CHECK:STDOUT:     %.loc4: type = type_literal type [concrete = type]

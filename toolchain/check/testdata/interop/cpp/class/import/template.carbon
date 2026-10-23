@@ -695,8 +695,8 @@ fn G() {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -721,8 +721,8 @@ fn G() {
 // CHECK:STDOUT:   %.5d6: %.537 = splice_inst @F.%tuple.elem0 [template]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %.700: type = type_of_inst @F.%.loc10_3.6 [template]
 // CHECK:STDOUT:   %.180: %.700 = splice_inst @F.%.loc10_3.6 [template]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -770,16 +770,16 @@ fn G() {
 // CHECK:STDOUT:   %custom_witness.fe1: <witness> = custom_witness (%E.cpp_destructor), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.09b: %SubobjectDestroy.type = facet_value %E, (%custom_witness.fe1) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.6e5: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.09b) [concrete]
-// CHECK:STDOUT:   %facet_value.1cd216.1: %facet_type = facet_value %E, (%DestroyImpl.impl_witness.6e5, %custom_witness.fe1) [concrete]
+// CHECK:STDOUT:   %Destroy.facet.ac4b54.1: %Destroy.type = facet_value %E, (%DestroyImpl.impl_witness.6e5, %custom_witness.fe1) [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.6: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.9de: init %empty_tuple.type = splice_block %SelfDestruct.call {
+// CHECK:STDOUT:     %.79f: init %empty_tuple.type = splice_block %SelfDestruct.call {
 // CHECK:STDOUT:       %.efc445.1: ref %E = specific_inst @F.%a.var, @F(%i32)
-// CHECK:STDOUT:       %facet_value.1cd216.2: %facet_type = facet_value %E, (%DestroyImpl.impl_witness.6e5, %custom_witness.fe1) [concrete = %facet_value.1cd216.1]
-// CHECK:STDOUT:       %.dc884e.1: %facet_type = converted %E, %facet_value.1cd216.2 [concrete = %facet_value.1cd216.1]
-// CHECK:STDOUT:       %facet_value.1cd216.3: %facet_type = facet_value %E, (%DestroyImpl.impl_witness.6e5, %custom_witness.fe1) [concrete = %facet_value.1cd216.1]
-// CHECK:STDOUT:       %.dc884e.2: %facet_type = converted %E, %facet_value.1cd216.3 [concrete = %facet_value.1cd216.1]
+// CHECK:STDOUT:       %Destroy.facet.ac4b54.2: %Destroy.type = facet_value %E, (%DestroyImpl.impl_witness.6e5, %custom_witness.fe1) [concrete = %Destroy.facet.ac4b54.1]
+// CHECK:STDOUT:       %.8fdcd6.1: %Destroy.type = converted %E, %Destroy.facet.ac4b54.2 [concrete = %Destroy.facet.ac4b54.1]
+// CHECK:STDOUT:       %Destroy.facet.ac4b54.3: %Destroy.type = facet_value %E, (%DestroyImpl.impl_witness.6e5, %custom_witness.fe1) [concrete = %Destroy.facet.ac4b54.1]
+// CHECK:STDOUT:       %.8fdcd6.2: %Destroy.type = converted %E, %Destroy.facet.ac4b54.3 [concrete = %Destroy.facet.ac4b54.1]
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn.c44054.2(%.efc445.1)
+// CHECK:STDOUT:       %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn.1f11d4.2(%.efc445.1)
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -803,7 +803,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc9_15.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_15.2 (constants.%T.patt.3a0)]
+// CHECK:STDOUT:     %T.patt.loc9_15.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_15.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc9_17.1: type = splice_block %.loc9_17.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -814,7 +814,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc9_15.2: type) {
-// CHECK:STDOUT:   %T.patt.loc9_15.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_15.2 (constants.%T.patt.3a0)]
+// CHECK:STDOUT:   %T.patt.loc9_15.2: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc9_15.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:   %T.loc9_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc9_15.1 (constants.%T.67d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -880,12 +880,12 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67d) {
-// CHECK:STDOUT:   %T.patt.loc9_15.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt.loc9_15.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc9_15.1 => constants.%T.67d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%i32) {
-// CHECK:STDOUT:   %T.patt.loc9_15.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt.loc9_15.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc9_15.1 => constants.%i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:

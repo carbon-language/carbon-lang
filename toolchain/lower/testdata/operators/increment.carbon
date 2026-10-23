@@ -30,7 +30,7 @@ fn IncrSigned() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %from.var), !dbg !10
 // CHECK:STDOUT:   store i32 0, ptr %from.var, align 4, !dbg !10
 // CHECK:STDOUT:   call void @"_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8"(ptr %from.var), !dbg !13
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %from.var), !dbg !10
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %from.var), !dbg !10
 // CHECK:STDOUT:   ret void, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -44,7 +44,7 @@ fn IncrSigned() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %t) #0 !dbg !27 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #0 !dbg !27 {
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -97,9 +97,9 @@ fn IncrSigned() {
 // CHECK:STDOUT: !24 = !DILocation(line: 396, column: 3, scope: !18)
 // CHECK:STDOUT: !25 = !{!19}
 // CHECK:STDOUT: !26 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.dc5658e0ac74b2aa", scope: null, file: !26, line: 34, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
+// CHECK:STDOUT: !27 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !26, line: 36, type: !15, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !33)
 // CHECK:STDOUT: !28 = !DILocalVariable(arg: 1, scope: !27, type: !6)
-// CHECK:STDOUT: !32 = !DILocation(line: 34, column: 1, scope: !27)
+// CHECK:STDOUT: !32 = !DILocation(line: 36, column: 1, scope: !27)
 // CHECK:STDOUT: !33 = !{!28}
 // CHECK:STDOUT: !34 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !17, line: 331, type: !23, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !41)
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !34, type: !6)

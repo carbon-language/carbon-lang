@@ -180,8 +180,8 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.95d) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet.95d [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %facet_type.ece: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
@@ -190,7 +190,7 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT:   %custom_witness.576: <witness> = custom_witness (%ConstexprC.Op), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.0ab: %SubobjectDestroy.type = facet_value %ConstexprC, (%custom_witness.576) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.a0d: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.0ab) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type.ece = facet_value %ConstexprC, (%DestroyImpl.impl_witness.a0d, %custom_witness.576) [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %ConstexprC, (%DestroyImpl.impl_witness.a0d, %custom_witness.576) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -246,10 +246,10 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
 // CHECK:STDOUT:   %bound_method.loc18_11.2: <bound method> = bound_method %.loc18_11.2, %specific_fn.loc18
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc18_11.2(%.loc18_11.2)
-// CHECK:STDOUT:   %facet_value.loc17_27.1: %facet_type.ece = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.a0d, constants.%custom_witness.576) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc17_27.8: %facet_type.ece = converted constants.%ConstexprC, %facet_value.loc17_27.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc17_27.2: %facet_type.ece = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.a0d, constants.%custom_witness.576) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc17_27.9: %facet_type.ece = converted constants.%ConstexprC, %facet_value.loc17_27.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %Destroy.facet.loc17_27.1: %Destroy.type = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.a0d, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc17_27.8: %Destroy.type = converted constants.%ConstexprC, %Destroy.facet.loc17_27.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc17_27.2: %Destroy.type = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.a0d, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc17_27.9: %Destroy.type = converted constants.%ConstexprC, %Destroy.facet.loc17_27.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc17_27.6)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call

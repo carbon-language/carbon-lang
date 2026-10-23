@@ -119,7 +119,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #5 !dbg !31 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e517637b3b58cb2c(ptr %self), !dbg !33
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6b8b385dcf82cc70(ptr %self), !dbg !33
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -131,7 +131,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.e517637b3b58cb2c(ptr %t) #4 !dbg !39 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6b8b385dcf82cc70(ptr %t) #4 !dbg !39 {
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -166,9 +166,9 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !35, type: !22)
 // CHECK:STDOUT: !37 = !DILocation(line: 6, column: 3, scope: !35)
 // CHECK:STDOUT: !38 = !{!36}
-// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.e517637b3b58cb2c", scope: null, file: !12, line: 30, type: !24, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !45)
+// CHECK:STDOUT: !39 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6b8b385dcf82cc70", scope: null, file: !12, line: 32, type: !24, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !45)
 // CHECK:STDOUT: !40 = !DILocalVariable(arg: 1, scope: !39, type: !22)
-// CHECK:STDOUT: !44 = !DILocation(line: 30, column: 1, scope: !39)
+// CHECK:STDOUT: !44 = !DILocation(line: 32, column: 1, scope: !39)
 // CHECK:STDOUT: !45 = !{!40}
 // CHECK:STDOUT: !46 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !47 = !{!"omnipotent char", !46, i64 0}
@@ -242,7 +242,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.ArgsA.Main"(ptr %self) #5 !dbg !77 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ae92fc1b627ef594(ptr %self), !dbg !79
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.cf5113b5b8a292cd(ptr %self), !dbg !79
 // CHECK:STDOUT:   ret void, !dbg !79
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -263,7 +263,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.ae92fc1b627ef594(ptr %t) #4 !dbg !92 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.cf5113b5b8a292cd(ptr %t) #4 !dbg !92 {
 // CHECK:STDOUT:   ret void, !dbg !97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -320,9 +320,9 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: !87 = distinct !DISubprogram(name: "CallCallF", linkageName: "_CCallCallF.Main", scope: null, file: !57, line: 18, type: !65, spFlags: DISPFlagDefinition, unit: !58)
 // CHECK:STDOUT: !90 = !DILocation(line: 18, column: 32, scope: !87)
 // CHECK:STDOUT: !91 = !DILocation(line: 18, column: 25, scope: !87)
-// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ae92fc1b627ef594", scope: null, file: !12, line: 30, type: !24, spFlags: DISPFlagDefinition, unit: !58, retainedNodes: !98)
+// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.cf5113b5b8a292cd", scope: null, file: !12, line: 32, type: !24, spFlags: DISPFlagDefinition, unit: !58, retainedNodes: !98)
 // CHECK:STDOUT: !93 = !DILocalVariable(arg: 1, scope: !92, type: !22)
-// CHECK:STDOUT: !97 = !DILocation(line: 30, column: 1, scope: !92)
+// CHECK:STDOUT: !97 = !DILocation(line: 32, column: 1, scope: !92)
 // CHECK:STDOUT: !98 = !{!93}
 // CHECK:STDOUT: !99 = !{!"p1 _ZTSN6Carbon4Main5ArgsAE", !48, i64 0}
 // CHECK:STDOUT: !100 = !{!99, !99, i64 0}
@@ -357,7 +357,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.StaticA.Main"(ptr %self) #3 !dbg !108 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.9de307afd6901b52(ptr %self), !dbg !110
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6cfb2148c863a5b2(ptr %self), !dbg !110
 // CHECK:STDOUT:   ret void, !dbg !110
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -376,7 +376,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.9de307afd6901b52(ptr %t) #2 !dbg !117 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6cfb2148c863a5b2(ptr %t) #2 !dbg !117 {
 // CHECK:STDOUT:   ret void, !dbg !122
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -418,8 +418,8 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: !114 = distinct !DISubprogram(name: "CallCallF", linkageName: "_CCallCallF.Main", scope: null, file: !102, line: 15, type: !105, spFlags: DISPFlagDefinition, unit: !103)
 // CHECK:STDOUT: !115 = !DILocation(line: 15, column: 18, scope: !114)
 // CHECK:STDOUT: !116 = !DILocation(line: 15, column: 1, scope: !114)
-// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9de307afd6901b52", scope: null, file: !12, line: 30, type: !24, spFlags: DISPFlagDefinition, unit: !103, retainedNodes: !123)
+// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6cfb2148c863a5b2", scope: null, file: !12, line: 32, type: !24, spFlags: DISPFlagDefinition, unit: !103, retainedNodes: !123)
 // CHECK:STDOUT: !118 = !DILocalVariable(arg: 1, scope: !117, type: !22)
-// CHECK:STDOUT: !122 = !DILocation(line: 30, column: 1, scope: !117)
+// CHECK:STDOUT: !122 = !DILocation(line: 32, column: 1, scope: !117)
 // CHECK:STDOUT: !123 = !{!118}
 // CHECK:STDOUT:

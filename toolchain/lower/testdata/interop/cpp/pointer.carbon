@@ -229,7 +229,7 @@ fn Convert() {
 // CHECK:STDOUT:   store ptr %U.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc22_23.2.temp, align 8, !dbg !56
 // CHECK:STDOUT:   %.loc22_23.4 = load ptr, ptr %.loc22_23.2.temp, align 8, !dbg !56
 // CHECK:STDOUT:   call void @_Z15TakeNullablePtrP9NullableC(ptr %.loc22_23.4), !dbg !59
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b87d2286d96aaebc(ptr %.loc22_23.2.temp), !dbg !56
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.bbc536feb16fa006(ptr %.loc22_23.2.temp), !dbg !56
 // CHECK:STDOUT:   ret void, !dbg !60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -259,7 +259,7 @@ fn Convert() {
 // CHECK:STDOUT:   store ptr %U.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc35_32.2.temp, align 8, !dbg !75
 // CHECK:STDOUT:   %.loc35_32.4 = load ptr, ptr %.loc35_32.2.temp, align 8, !dbg !75
 // CHECK:STDOUT:   call void @_Z24TakeNullablePtrWithThunkP9NullableCi.carbon_thunk._(ptr %.loc35_32.4), !dbg !76
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b87d2286d96aaebc(ptr %.loc35_32.2.temp), !dbg !75
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.bbc536feb16fa006(ptr %.loc35_32.2.temp), !dbg !75
 // CHECK:STDOUT:   ret void, !dbg !77
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -297,7 +297,7 @@ fn Convert() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b87d2286d96aaebc(ptr %t) #0 !dbg !94 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.bbc536feb16fa006(ptr %t) #0 !dbg !94 {
 // CHECK:STDOUT:   ret void, !dbg !99
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -320,12 +320,12 @@ fn Convert() {
 // CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !123
 // CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !127
 // CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !125
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.1e8c321500f3f7c6(ptr %1), !dbg !123
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.9abdc217755355a3(ptr %1), !dbg !123
 // CHECK:STDOUT:   ret ptr %2, !dbg !129
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.1e8c321500f3f7c6(ptr %t) #0 !dbg !131 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.9abdc217755355a3(ptr %t) #0 !dbg !131 {
 // CHECK:STDOUT:   ret void, !dbg !136
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -336,7 +336,7 @@ fn Convert() {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @"_CConvert.ea416314509b9f57:ImplicitAs.1863e1559591c4e5.Core.4e9bbab1c7c88cc2", { 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 0, 2, 1 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.b87d2286d96aaebc, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.bbc536feb16fa006, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -400,9 +400,9 @@ fn Convert() {
 // CHECK:STDOUT: !91 = !DILocation(line: 106, column: 5, scope: !85)
 // CHECK:STDOUT: !92 = !{!86}
 // CHECK:STDOUT: !93 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !94 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b87d2286d96aaebc", scope: null, file: !93, line: 34, type: !8, spFlags: DISPFlagDefinition, unit: !47, retainedNodes: !100)
+// CHECK:STDOUT: !94 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.bbc536feb16fa006", scope: null, file: !93, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !47, retainedNodes: !100)
 // CHECK:STDOUT: !95 = !DILocalVariable(arg: 1, scope: !94, type: !6)
-// CHECK:STDOUT: !99 = !DILocation(line: 34, column: 1, scope: !94)
+// CHECK:STDOUT: !99 = !DILocation(line: 36, column: 1, scope: !94)
 // CHECK:STDOUT: !100 = !{!95}
 // CHECK:STDOUT: !101 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.9fdaf39d07a1dc4e:OptionalAs.24b7347a93330e68.Core.059052cdc9a4441d", scope: null, file: !84, line: 80, type: !58, spFlags: DISPFlagDefinition, unit: !47, retainedNodes: !109)
 // CHECK:STDOUT: !102 = !DILocalVariable(arg: 1, scope: !101, type: !6)
@@ -421,9 +421,9 @@ fn Convert() {
 // CHECK:STDOUT: !127 = !DILocation(line: 169, column: 5, scope: !118)
 // CHECK:STDOUT: !129 = !DILocation(line: 170, column: 5, scope: !118)
 // CHECK:STDOUT: !130 = !{!119}
-// CHECK:STDOUT: !131 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.1e8c321500f3f7c6", scope: null, file: !93, line: 34, type: !8, spFlags: DISPFlagDefinition, unit: !47, retainedNodes: !137)
+// CHECK:STDOUT: !131 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9abdc217755355a3", scope: null, file: !93, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !47, retainedNodes: !137)
 // CHECK:STDOUT: !132 = !DILocalVariable(arg: 1, scope: !131, type: !6)
-// CHECK:STDOUT: !136 = !DILocation(line: 34, column: 1, scope: !131)
+// CHECK:STDOUT: !136 = !DILocation(line: 36, column: 1, scope: !131)
 // CHECK:STDOUT: !137 = !{!132}
 // CHECK:STDOUT: !138 = !{!"p1 _ZTS9NullableC", !37, i64 0}
 // CHECK:STDOUT: !139 = !{!138, !138, i64 0}
@@ -443,13 +443,13 @@ fn Convert() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_21.1.temp), !dbg !145
 // CHECK:STDOUT:   store ptr %make.call, ptr %.loc11_21.1.temp, align 8, !dbg !145
 // CHECK:STDOUT:   %.loc11_21.3 = load ptr, ptr %.loc11_21.1.temp, align 8, !dbg !145
-// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.ea416314509b9f57:ImplicitAs.1863e1559591c4e5.Core.4008c0f6a593a7b6"(ptr %.loc11_21.3), !dbg !145
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.call = call ptr @"_CConvert.ea416314509b9f57:ImplicitAs.1863e1559591c4e5.Core.470ca455cde45499"(ptr %.loc11_21.3), !dbg !145
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc11_21.5.temp), !dbg !145
 // CHECK:STDOUT:   store ptr %U.as_type.as.ImplicitAs.impl.Convert.call, ptr %.loc11_21.5.temp, align 8, !dbg !145
 // CHECK:STDOUT:   %.loc11_21.7 = load ptr, ptr %.loc11_21.5.temp, align 8, !dbg !145
 // CHECK:STDOUT:   call void @_Z4takePK6ConstC(ptr %.loc11_21.7), !dbg !146
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4e4fd01c6aa7a1c1(ptr %.loc11_21.5.temp), !dbg !145
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.00f8a3cac32205df(ptr %.loc11_21.1.temp), !dbg !145
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.55cdda357d448221(ptr %.loc11_21.5.temp), !dbg !145
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.63d1d3e401037503(ptr %.loc11_21.1.temp), !dbg !145
 // CHECK:STDOUT:   ret void, !dbg !147
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -461,23 +461,23 @@ fn Convert() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.ea416314509b9f57:ImplicitAs.1863e1559591c4e5.Core.4008c0f6a593a7b6"(ptr %self) #0 !dbg !148 {
-// CHECK:STDOUT:   %1 = call ptr @"_CConvert.Optional.d6670198916a9cca.Core:OptionalAs.f29bb853b5a0796c.Core.81b8f5081673e7a1"(ptr %self), !dbg !153
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.ea416314509b9f57:ImplicitAs.1863e1559591c4e5.Core.470ca455cde45499"(ptr %self) #0 !dbg !148 {
+// CHECK:STDOUT:   %1 = call ptr @"_CConvert.Optional.d1728a6b8ac984c6.Core:OptionalAs.5cc57aaa5e35eede.Core.397ceadf3cc9326d"(ptr %self), !dbg !153
 // CHECK:STDOUT:   ret ptr %1, !dbg !154
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.4e4fd01c6aa7a1c1(ptr %t) #0 !dbg !156 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.55cdda357d448221(ptr %t) #0 !dbg !156 {
 // CHECK:STDOUT:   ret void, !dbg !161
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.00f8a3cac32205df(ptr %t) #0 !dbg !163 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.63d1d3e401037503(ptr %t) #0 !dbg !163 {
 // CHECK:STDOUT:   ret void, !dbg !168
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.Optional.d6670198916a9cca.Core:OptionalAs.f29bb853b5a0796c.Core.81b8f5081673e7a1"(ptr %self) #0 !dbg !170 {
+// CHECK:STDOUT: define linkonce_odr ptr @"_CConvert.Optional.d1728a6b8ac984c6.Core:OptionalAs.5cc57aaa5e35eede.Core.397ceadf3cc9326d"(ptr %self) #0 !dbg !170 {
 // CHECK:STDOUT:   %temp = alloca ptr, align 8, !dbg !177
 // CHECK:STDOUT:   %temp1 = alloca ptr, align 8, !dbg !177
 // CHECK:STDOUT:   %1 = call i1 @_CHasValue.Optional.Core.128f4c34f2ac2dc8(ptr %self), !dbg !175
@@ -492,8 +492,8 @@ fn Convert() {
 // CHECK:STDOUT:   store ptr %4, ptr %temp1, align 8, !dbg !177
 // CHECK:STDOUT:   %5 = load ptr, ptr %temp1, align 8, !dbg !177
 // CHECK:STDOUT:   %6 = call ptr @_CSome.Optional.Core.1c39bd137e62c6ea(ptr %5), !dbg !178
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.059fead34e215654(ptr %temp1), !dbg !177
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.32b3354f9375cacd(ptr %temp), !dbg !177
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.c9c637f86feae476(ptr %temp1), !dbg !177
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.afe76cd75c1d6f19(ptr %temp), !dbg !177
 // CHECK:STDOUT:   ret ptr %6, !dbg !179
 // CHECK:STDOUT:
 // CHECK:STDOUT: 7:                                                ; preds = %0
@@ -520,12 +520,12 @@ fn Convert() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.059fead34e215654(ptr %t) #0 !dbg !209 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.c9c637f86feae476(ptr %t) #0 !dbg !209 {
 // CHECK:STDOUT:   ret void, !dbg !214
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.32b3354f9375cacd(ptr %t) #0 !dbg !216 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.afe76cd75c1d6f19(ptr %t) #0 !dbg !216 {
 // CHECK:STDOUT:   ret void, !dbg !221
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -553,12 +553,12 @@ fn Convert() {
 // CHECK:STDOUT:   store ptr poison, ptr %1, align 8, !dbg !251
 // CHECK:STDOUT:   store ptr %self, ptr %1, align 8, !dbg !255
 // CHECK:STDOUT:   %2 = load ptr, ptr %1, align 8, !dbg !253
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f6d9f213e21497da(ptr %1), !dbg !251
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4d5bd971f411a76b(ptr %1), !dbg !251
 // CHECK:STDOUT:   ret ptr %2, !dbg !257
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f6d9f213e21497da(ptr %t) #0 !dbg !259 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.4d5bd971f411a76b(ptr %t) #0 !dbg !259 {
 // CHECK:STDOUT:   ret void, !dbg !264
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -600,20 +600,20 @@ fn Convert() {
 // CHECK:STDOUT: !145 = !DILocation(line: 11, column: 12, scope: !144)
 // CHECK:STDOUT: !146 = !DILocation(line: 11, column: 3, scope: !144)
 // CHECK:STDOUT: !147 = !DILocation(line: 10, column: 1, scope: !144)
-// CHECK:STDOUT: !148 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.ea416314509b9f57:ImplicitAs.1863e1559591c4e5.Core.4008c0f6a593a7b6", scope: null, file: !84, line: 105, type: !58, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !155)
+// CHECK:STDOUT: !148 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.ea416314509b9f57:ImplicitAs.1863e1559591c4e5.Core.470ca455cde45499", scope: null, file: !84, line: 105, type: !58, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !155)
 // CHECK:STDOUT: !149 = !DILocalVariable(arg: 1, scope: !148, type: !6)
 // CHECK:STDOUT: !153 = !DILocation(line: 106, column: 12, scope: !148)
 // CHECK:STDOUT: !154 = !DILocation(line: 106, column: 5, scope: !148)
 // CHECK:STDOUT: !155 = !{!149}
-// CHECK:STDOUT: !156 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4e4fd01c6aa7a1c1", scope: null, file: !93, line: 34, type: !8, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !162)
+// CHECK:STDOUT: !156 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.55cdda357d448221", scope: null, file: !93, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !162)
 // CHECK:STDOUT: !157 = !DILocalVariable(arg: 1, scope: !156, type: !6)
-// CHECK:STDOUT: !161 = !DILocation(line: 34, column: 1, scope: !156)
+// CHECK:STDOUT: !161 = !DILocation(line: 36, column: 1, scope: !156)
 // CHECK:STDOUT: !162 = !{!157}
-// CHECK:STDOUT: !163 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.00f8a3cac32205df", scope: null, file: !93, line: 34, type: !8, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !169)
+// CHECK:STDOUT: !163 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.63d1d3e401037503", scope: null, file: !93, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !169)
 // CHECK:STDOUT: !164 = !DILocalVariable(arg: 1, scope: !163, type: !6)
-// CHECK:STDOUT: !168 = !DILocation(line: 34, column: 1, scope: !163)
+// CHECK:STDOUT: !168 = !DILocation(line: 36, column: 1, scope: !163)
 // CHECK:STDOUT: !169 = !{!164}
-// CHECK:STDOUT: !170 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Optional.d6670198916a9cca.Core:OptionalAs.f29bb853b5a0796c.Core.81b8f5081673e7a1", scope: null, file: !84, line: 95, type: !58, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !182)
+// CHECK:STDOUT: !170 = distinct !DISubprogram(name: "Convert", linkageName: "_CConvert.Optional.d1728a6b8ac984c6.Core:OptionalAs.5cc57aaa5e35eede.Core.397ceadf3cc9326d", scope: null, file: !84, line: 95, type: !58, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !182)
 // CHECK:STDOUT: !171 = !DILocalVariable(arg: 1, scope: !170, type: !6)
 // CHECK:STDOUT: !175 = !DILocation(line: 96, column: 9, scope: !170)
 // CHECK:STDOUT: !176 = !DILocation(line: 96, column: 8, scope: !170)
@@ -638,13 +638,13 @@ fn Convert() {
 // CHECK:STDOUT: !206 = !DILocation(line: 34, column: 12, scope: !201)
 // CHECK:STDOUT: !207 = !DILocation(line: 34, column: 5, scope: !201)
 // CHECK:STDOUT: !208 = !{!202}
-// CHECK:STDOUT: !209 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.059fead34e215654", scope: null, file: !93, line: 34, type: !8, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !215)
+// CHECK:STDOUT: !209 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c9c637f86feae476", scope: null, file: !93, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !215)
 // CHECK:STDOUT: !210 = !DILocalVariable(arg: 1, scope: !209, type: !6)
-// CHECK:STDOUT: !214 = !DILocation(line: 34, column: 1, scope: !209)
+// CHECK:STDOUT: !214 = !DILocation(line: 36, column: 1, scope: !209)
 // CHECK:STDOUT: !215 = !{!210}
-// CHECK:STDOUT: !216 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.32b3354f9375cacd", scope: null, file: !93, line: 34, type: !8, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !222)
+// CHECK:STDOUT: !216 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.afe76cd75c1d6f19", scope: null, file: !93, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !222)
 // CHECK:STDOUT: !217 = !DILocalVariable(arg: 1, scope: !216, type: !6)
-// CHECK:STDOUT: !221 = !DILocation(line: 34, column: 1, scope: !216)
+// CHECK:STDOUT: !221 = !DILocation(line: 36, column: 1, scope: !216)
 // CHECK:STDOUT: !222 = !{!217}
 // CHECK:STDOUT: !223 = distinct !DISubprogram(name: "None", linkageName: "_CNone.Optional.Core.1c39bd137e62c6ea", scope: null, file: !84, line: 30, type: !10, spFlags: DISPFlagDefinition, unit: !141)
 // CHECK:STDOUT: !227 = !DILocation(line: 31, column: 5, scope: !223)
@@ -665,8 +665,8 @@ fn Convert() {
 // CHECK:STDOUT: !255 = !DILocation(line: 169, column: 5, scope: !246)
 // CHECK:STDOUT: !257 = !DILocation(line: 170, column: 5, scope: !246)
 // CHECK:STDOUT: !258 = !{!247}
-// CHECK:STDOUT: !259 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f6d9f213e21497da", scope: null, file: !93, line: 34, type: !8, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !265)
+// CHECK:STDOUT: !259 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4d5bd971f411a76b", scope: null, file: !93, line: 36, type: !8, spFlags: DISPFlagDefinition, unit: !141, retainedNodes: !265)
 // CHECK:STDOUT: !260 = !DILocalVariable(arg: 1, scope: !259, type: !6)
-// CHECK:STDOUT: !264 = !DILocation(line: 34, column: 1, scope: !259)
+// CHECK:STDOUT: !264 = !DILocation(line: 36, column: 1, scope: !259)
 // CHECK:STDOUT: !265 = !{!260}
 // CHECK:STDOUT:

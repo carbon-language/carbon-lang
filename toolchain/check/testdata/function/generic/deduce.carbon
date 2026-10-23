@@ -549,8 +549,8 @@ fn F() {
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T.67d [symbolic]
 // CHECK:STDOUT:   %x.param_patt.91d: %pattern_type.51d = value_param_pattern [symbolic]
@@ -582,8 +582,8 @@ fn F() {
 // CHECK:STDOUT:   %.367: ref %A = temporary invalid, %A.val [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
@@ -592,8 +592,8 @@ fn F() {
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.9bf: %SubobjectDestroy.type = facet_value %A, (%custom_witness.b80ef6.2) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.6d1: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.9bf) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %A, (%DestroyImpl.impl_witness.6d1, %custom_witness.b80ef6.2) [concrete]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%facet_value) [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %A, (%DestroyImpl.impl_witness.6d1, %custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet) [concrete]
 // CHECK:STDOUT:   %complete_type.a75: <witness> = complete_type_witness %ptr.d43 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -618,7 +618,7 @@ fn F() {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.decl: %ExplicitAndAlsoDeduced.type = fn_decl @ExplicitAndAlsoDeduced [concrete = constants.%ExplicitAndAlsoDeduced] {
-// CHECK:STDOUT:     %T.patt.loc6_36.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_36.2 (constants.%T.patt.3a0)]
+// CHECK:STDOUT:     %T.patt.loc6_36.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_36.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:     %x.param_patt.loc6_45.1: @ExplicitAndAlsoDeduced.%pattern_type.loc6_45 (%pattern_type.51d) = value_param_pattern [symbolic = %x.param_patt.loc6_45.2 (constants.%x.param_patt.91d)]
 // CHECK:STDOUT:     %x.patt.loc6_45.1: @ExplicitAndAlsoDeduced.%pattern_type.loc6_45 (%pattern_type.51d) = wrapper_binding_pattern x, %x.param_patt.loc6_45.1 [symbolic = %x.patt.loc6_45.2 (constants.%x.patt.260)]
 // CHECK:STDOUT:     %return.param_patt.loc6_54.1: @ExplicitAndAlsoDeduced.%pattern_type.loc6_54 (%pattern_type.4f4) = out_param_pattern [symbolic = %return.param_patt.loc6_54.2 (constants.%return.param_patt.27f)]
@@ -659,7 +659,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @ExplicitAndAlsoDeduced(%T.loc6_36.2: type) {
-// CHECK:STDOUT:   %T.patt.loc6_36.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_36.2 (constants.%T.patt.3a0)]
+// CHECK:STDOUT:   %T.patt.loc6_36.2: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc6_36.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:   %T.loc6_36.1: type = symbolic_binding T, 0 [symbolic = %T.loc6_36.1 (constants.%T.67d)]
 // CHECK:STDOUT:   %pattern_type.loc6_45: type = pattern_type %T.loc6_36.1 [symbolic = %pattern_type.loc6_45 (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %x.param_patt.loc6_45.2: @ExplicitAndAlsoDeduced.%pattern_type.loc6_45 (%pattern_type.51d) = value_param_pattern [symbolic = %x.param_patt.loc6_45.2 (constants.%x.param_patt.91d)]
@@ -698,11 +698,11 @@ fn F() {
 // CHECK:STDOUT:   %.loc11_37.5: ref %A = temporary %.loc11_37.2, %.loc11_37.4 [concrete = constants.%.367]
 // CHECK:STDOUT:   %.loc11_37.6: %A = acquire_value %.loc11_37.5 [concrete = constants.%A.val]
 // CHECK:STDOUT:   %ExplicitAndAlsoDeduced.call: init %ptr.d43 = call %ExplicitAndAlsoDeduced.specific_fn(%.loc11_37.6)
-// CHECK:STDOUT:   %facet_value.loc11_37.1: %facet_type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc11_37.7: %facet_type = converted constants.%A, %facet_value.loc11_37.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc11_37.2: %facet_type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc11_37.8: %facet_type = converted constants.%A, %facet_value.loc11_37.2 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%facet_value) [concrete = constants.%SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %Destroy.facet.loc11_37.1: %Destroy.type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc11_37.7: %Destroy.type = converted constants.%A, %Destroy.facet.loc11_37.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc11_37.2: %Destroy.type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc11_37.8: %Destroy.type = converted constants.%A, %Destroy.facet.loc11_37.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet) [concrete = constants.%SelfDestruct.specific_fn]
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc11_37.5)
 // CHECK:STDOUT:   return %ExplicitAndAlsoDeduced.call
 // CHECK:STDOUT: }
@@ -712,7 +712,7 @@ fn F() {
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc11_37.2(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(constants.%T.67d) {
-// CHECK:STDOUT:   %T.patt.loc6_36.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt.loc6_36.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc6_36.1 => constants.%T.67d
 // CHECK:STDOUT:   %pattern_type.loc6_45 => constants.%pattern_type.51d
 // CHECK:STDOUT:   %x.param_patt.loc6_45.2 => constants.%x.param_patt.91d
@@ -730,7 +730,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @ExplicitAndAlsoDeduced(constants.%A) {
-// CHECK:STDOUT:   %T.patt.loc6_36.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt.loc6_36.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc6_36.1 => constants.%A
 // CHECK:STDOUT:   %pattern_type.loc6_45 => constants.%pattern_type.9ef
 // CHECK:STDOUT:   %x.param_patt.loc6_45.2 => constants.%x.param_patt.4c3

@@ -90,7 +90,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT:   %a.var = alloca [4 x i8], align 4, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !29
 // CHECK:STDOUT:   call void @_ZNK1Bcv1AEv.carbon_thunk._(ptr %b, ptr %a.var), !dbg !29
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.40d7b7e27255374c(ptr %a.var), !dbg !29
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %a.var), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -116,7 +116,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT:   %.loc20_25.1.temp = alloca [4 x i8], align 4, !dbg !37
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_25.1.temp), !dbg !37
 // CHECK:STDOUT:   call void @_ZNK1Bcv1AEv.carbon_thunk._(ptr %b, ptr %.loc20_25.1.temp), !dbg !37
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.40d7b7e27255374c(ptr %.loc20_25.1.temp), !dbg !37
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %.loc20_25.1.temp), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,7 +124,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.40d7b7e27255374c(ptr %t) #0 !dbg !42 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.e885b4b34ded440e(ptr %t) #0 !dbg !42 {
 // CHECK:STDOUT:   call void @_ZN1AD1Ev(ptr %t), !dbg !46
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
@@ -133,7 +133,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.40d7b7e27255374c, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.e885b4b34ded440e, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -163,10 +163,10 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: !37 = !DILocation(line: 20, column: 25, scope: !34)
 // CHECK:STDOUT: !40 = !DILocation(line: 19, column: 1, scope: !34)
 // CHECK:STDOUT: !41 = !{!35}
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.40d7b7e27255374c", scope: null, file: !10, line: 30, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !48)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.e885b4b34ded440e", scope: null, file: !10, line: 32, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !48)
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !42, type: !21)
-// CHECK:STDOUT: !46 = !DILocation(line: 32, column: 5, scope: !42)
-// CHECK:STDOUT: !47 = !DILocation(line: 30, column: 1, scope: !42)
+// CHECK:STDOUT: !46 = !DILocation(line: 34, column: 5, scope: !42)
+// CHECK:STDOUT: !47 = !DILocation(line: 32, column: 1, scope: !42)
 // CHECK:STDOUT: !48 = !{!43}
 // CHECK:STDOUT: !49 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !50 = !{!"omnipotent char", !49, i64 0}
@@ -198,8 +198,8 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT:   call void @_ZNK5EnumBcv1SEv.carbon_thunk._(ptr %b, ptr %s.var), !dbg !71
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %i.var), !dbg !74
 // CHECK:STDOUT:   call void @_ZNK5EnumBcv1IEv.carbon_thunk._(ptr %b, ptr %i.var), !dbg !74
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.95c064da563d2e3a(ptr %i.var), !dbg !74
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dd7a5001a6a4ec15(ptr %s.var), !dbg !71
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b6485bbba53783ee(ptr %i.var), !dbg !74
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e9921dfc7dd957f8(ptr %s.var), !dbg !71
 // CHECK:STDOUT:   ret void, !dbg !79
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -242,8 +242,8 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_25.1.temp), !dbg !87
 // CHECK:STDOUT:   call void @_ZNK5EnumBcv1IEv.carbon_thunk._(ptr %b, ptr %.loc21_25.1.temp), !dbg !87
 // CHECK:STDOUT:   %.loc21_25.5 = load i16, ptr %.loc21_25.1.temp, align 2, !dbg !87
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.95c064da563d2e3a(ptr %.loc21_25.1.temp), !dbg !87
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dd7a5001a6a4ec15(ptr %.loc20_25.1.temp), !dbg !84
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b6485bbba53783ee(ptr %.loc21_25.1.temp), !dbg !87
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e9921dfc7dd957f8(ptr %.loc20_25.1.temp), !dbg !84
 // CHECK:STDOUT:   ret void, !dbg !90
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -251,12 +251,12 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.95c064da563d2e3a(ptr %t) #0 !dbg !92 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b6485bbba53783ee(ptr %t) #0 !dbg !92 {
 // CHECK:STDOUT:   ret void, !dbg !97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.dd7a5001a6a4ec15(ptr %t) #0 !dbg !99 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.e9921dfc7dd957f8(ptr %t) #0 !dbg !99 {
 // CHECK:STDOUT:   ret void, !dbg !104
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -266,8 +266,8 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 3, 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.95c064da563d2e3a, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.dd7a5001a6a4ec15, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.b6485bbba53783ee, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.e9921dfc7dd957f8, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -311,13 +311,13 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: !87 = !DILocation(line: 21, column: 25, scope: !81)
 // CHECK:STDOUT: !90 = !DILocation(line: 19, column: 1, scope: !81)
 // CHECK:STDOUT: !91 = !{!82}
-// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.95c064da563d2e3a", scope: null, file: !10, line: 30, type: !78, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !98)
+// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b6485bbba53783ee", scope: null, file: !10, line: 32, type: !78, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !98)
 // CHECK:STDOUT: !93 = !DILocalVariable(arg: 1, scope: !92, type: !67)
-// CHECK:STDOUT: !97 = !DILocation(line: 30, column: 1, scope: !92)
+// CHECK:STDOUT: !97 = !DILocation(line: 32, column: 1, scope: !92)
 // CHECK:STDOUT: !98 = !{!93}
-// CHECK:STDOUT: !99 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.dd7a5001a6a4ec15", scope: null, file: !10, line: 30, type: !78, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !105)
+// CHECK:STDOUT: !99 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.e9921dfc7dd957f8", scope: null, file: !10, line: 32, type: !78, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !105)
 // CHECK:STDOUT: !100 = !DILocalVariable(arg: 1, scope: !99, type: !67)
-// CHECK:STDOUT: !104 = !DILocation(line: 30, column: 1, scope: !99)
+// CHECK:STDOUT: !104 = !DILocation(line: 32, column: 1, scope: !99)
 // CHECK:STDOUT: !105 = !{!100}
 // CHECK:STDOUT: !106 = !{!"p1 _ZTS5EnumB", !51, i64 0}
 // CHECK:STDOUT: !107 = !{!106, !106, i64 0}
@@ -340,7 +340,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a.var), !dbg !121
 // CHECK:STDOUT:   %__carbon_thunk.call = call i32 @_ZNK4IntBcviEv.carbon_thunk._(ptr %b), !dbg !121
 // CHECK:STDOUT:   store i32 %__carbon_thunk.call, ptr %a.var, align 4, !dbg !121
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %a.var), !dbg !121
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %a.var), !dbg !121
 // CHECK:STDOUT:   ret void, !dbg !126
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -365,7 +365,7 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %t) #0 !dbg !136 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #0 !dbg !136 {
 // CHECK:STDOUT:   ret void, !dbg !141
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -411,9 +411,9 @@ fn ConvertToValue(b: Cpp.IntB) {
 // CHECK:STDOUT: !131 = !DILocation(line: 16, column: 27, scope: !128)
 // CHECK:STDOUT: !134 = !DILocation(line: 15, column: 1, scope: !128)
 // CHECK:STDOUT: !135 = !{!129}
-// CHECK:STDOUT: !136 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.dc5658e0ac74b2aa", scope: null, file: !10, line: 30, type: !125, spFlags: DISPFlagDefinition, unit: !115, retainedNodes: !142)
+// CHECK:STDOUT: !136 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !125, spFlags: DISPFlagDefinition, unit: !115, retainedNodes: !142)
 // CHECK:STDOUT: !137 = !DILocalVariable(arg: 1, scope: !136, type: !20)
-// CHECK:STDOUT: !141 = !DILocation(line: 30, column: 1, scope: !136)
+// CHECK:STDOUT: !141 = !DILocation(line: 32, column: 1, scope: !136)
 // CHECK:STDOUT: !142 = !{!137}
 // CHECK:STDOUT: !143 = !{!"p1 _ZTS4IntB", !51, i64 0}
 // CHECK:STDOUT: !144 = !{!143, !143, i64 0}

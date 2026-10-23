@@ -52,8 +52,8 @@ fn M() {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T.67d [symbolic]
@@ -86,7 +86,7 @@ fn M() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %T.patt.loc19_7.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_7.2 (constants.%T.patt.3a0)]
+// CHECK:STDOUT:     %T.patt.loc19_7.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_7.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:     %x.param_patt.loc19_23.1: @F.%pattern_type (%pattern_type.51d) = value_param_pattern [symbolic = %x.param_patt.loc19_23.2 (constants.%x.param_patt.91d)]
 // CHECK:STDOUT:     %x.patt.loc19_23.1: @F.%pattern_type (%pattern_type.51d) = wrapper_binding_pattern x, %x.param_patt.loc19_23.1 [symbolic = %x.patt.loc19_23.2 (constants.%x.patt.26065e.2)]
 // CHECK:STDOUT:   } {
@@ -102,7 +102,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @F(%T.loc19_7.2: type) {
-// CHECK:STDOUT:   %T.patt.loc19_7.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_7.2 (constants.%T.patt.3a0)]
+// CHECK:STDOUT:   %T.patt.loc19_7.2: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc19_7.2 (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:   %T.loc19_7.1: type = symbolic_binding T, 0 [symbolic = %T.loc19_7.1 (constants.%T.67d)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T.loc19_7.1 [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %x.param_patt.loc19_23.2: @F.%pattern_type (%pattern_type.51d) = value_param_pattern [symbolic = %x.param_patt.loc19_23.2 (constants.%x.param_patt.91d)]
@@ -174,7 +174,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67d) {
-// CHECK:STDOUT:   %T.patt.loc19_7.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt.loc19_7.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc19_7.1 => constants.%T.67d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:   %x.param_patt.loc19_23.2 => constants.%x.param_patt.91d
@@ -185,7 +185,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%T.67d) {
-// CHECK:STDOUT:   %T.patt.loc23_7.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt.loc23_7.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc23_7.1 => constants.%T.67d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:   %x.param_patt.loc23_16.2 => constants.%x.param_patt.91d
@@ -197,7 +197,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%T.67d) {
-// CHECK:STDOUT:   %T.patt.loc29_7.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt.loc29_7.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc29_7.1 => constants.%T.67d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:   %x.param_patt.loc29_16.2 => constants.%x.param_patt.91d
@@ -205,7 +205,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%C) {
-// CHECK:STDOUT:   %T.patt.loc19_7.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt.loc19_7.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc19_7.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98b
 // CHECK:STDOUT:   %x.param_patt.loc19_23.2 => constants.%x.param_patt.0f9
@@ -216,7 +216,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @G(constants.%C) {
-// CHECK:STDOUT:   %T.patt.loc29_7.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt.loc29_7.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc29_7.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98b
 // CHECK:STDOUT:   %x.param_patt.loc29_16.2 => constants.%x.param_patt.0f9
@@ -230,7 +230,7 @@ fn M() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @H(constants.%C) {
-// CHECK:STDOUT:   %T.patt.loc23_7.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt.loc23_7.2 => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T.loc23_7.1 => constants.%C
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.98b
 // CHECK:STDOUT:   %x.param_patt.loc23_16.2 => constants.%x.param_patt.0f9
