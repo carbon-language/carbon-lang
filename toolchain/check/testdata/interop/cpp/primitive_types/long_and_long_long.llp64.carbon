@@ -79,12 +79,8 @@ import Cpp;
 
 fn F() {
   let cpp_long: Cpp.long = 1;
-  // CHECK:STDERR: fail_implicit_conversion_long_to_i32.carbon:[[@LINE+7]]:32: error: cannot implicitly convert expression of type `long` to `i32` [ConversionFailure]
-  // CHECK:STDERR:   let unused carbon_i32: i32 = cpp_long;
-  // CHECK:STDERR:                                ^~~~~~~~
-  // CHECK:STDERR: fail_implicit_conversion_long_to_i32.carbon:[[@LINE+4]]:32: note: type `Cpp.long` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   let unused carbon_i32: i32 = cpp_long;
-  // CHECK:STDERR:                                ^~~~~~~~
+  // CHECK:STDERR: fail_implicit_conversion_long_to_i32.carbon:[[@LINE+3]]:32-39: error: cannot implicitly convert expression of type `long` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_implicit_conversion_long_to_i32.carbon:[[@LINE+2]]:32-39: note: type `Cpp.long` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   let unused carbon_i32: i32 = cpp_long;
 }
@@ -195,14 +191,10 @@ import Cpp;
 fn ComparisonsHeterogeneousLongAndI16() {
   let a: Cpp.long = 1;
   let b: i16 = 1;
-  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_and_i16.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.EqWith(i16)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   a == b;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_and_i16.carbon:[[@LINE+2]]:3-8: error: cannot access member of interface `Core.EqWith(i16)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   a == b;
-  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_and_i16.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.EqWith(Cpp.long)` in type `i16` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   b == a;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_and_i16.carbon:[[@LINE+2]]:3-8: error: cannot access member of interface `Core.EqWith(Cpp.long)` in type `i16` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   b == a;
 }
@@ -216,14 +208,10 @@ import Cpp;
 fn ComparisonsHeterogeneousLongAndI128() {
   let a: Cpp.long = 1;
   let b: i128 = 1;
-  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_and_i128.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.EqWith(i128)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   a == b;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_and_i128.carbon:[[@LINE+2]]:3-8: error: cannot access member of interface `Core.EqWith(i128)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   a == b;
-  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_and_i128.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.EqWith(Cpp.long)` in type `i128` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   b == a;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_todo_comparisons_heterogeneous_long_and_i128.carbon:[[@LINE+2]]:3-8: error: cannot access member of interface `Core.EqWith(Cpp.long)` in type `i128` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   b == a;
 }
@@ -325,15 +313,11 @@ fn AssertSameType[T: type](unused a: T, unused b: T) {}
 fn ArithmeticHeterogeneousLongAndI16() {
   let x: Cpp.long = 1;
   let y: i16 = 1;
-  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i16.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(i16)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   AssertSameType(x + y, x);
-  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i16.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.AddWith(i16)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   AssertSameType(x + y, x);
 
-  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i16.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(Cpp.long)` in type `i16` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   AssertSameType(y + x, x);
-  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i16.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.AddWith(Cpp.long)` in type `i16` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   AssertSameType(y + x, x);
 }
@@ -349,15 +333,11 @@ fn AssertSameType[T: type](unused a: T, unused b: T) {}
 fn ArithmeticHeterogeneousLongAndI128() {
   let x: Cpp.long = 1;
   let y: i128 = 1;
-  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i128.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(i128)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   AssertSameType(x + y, y);
-  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i128.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.AddWith(i128)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   AssertSameType(x + y, y);
 
-  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i128.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.AddWith(Cpp.long)` in type `i128` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   AssertSameType(y + x, y);
-  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR: fail_todo_arithmetic_heterogeneous_long_and_i128.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.AddWith(Cpp.long)` in type `i128` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   AssertSameType(y + x, y);
 }
@@ -461,14 +441,10 @@ fn BitWiseHeterogeneousLongAndI16() {
   let a: Cpp.long = 1;
   let b: i16 = 1;
 
-  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long_and_i16.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.BitAndWith(i16)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   AssertSameType(a & b, a);
-  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long_and_i16.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.BitAndWith(i16)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   AssertSameType(a & b, a);
-  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long_and_i16.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.BitAndWith(Cpp.long)` in type `i16` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   AssertSameType(b & a, a);
-  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long_and_i16.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.BitAndWith(Cpp.long)` in type `i16` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   AssertSameType(b & a, a);
 }
@@ -485,14 +461,10 @@ fn BitWiseHeterogeneousLongAndI128() {
   let a: Cpp.long = 1;
   let b: i128 = 1;
 
-  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long_and_i128.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.BitAndWith(i128)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   AssertSameType(a & b, b);
-  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long_and_i128.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.BitAndWith(i128)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   AssertSameType(a & b, b);
-  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long_and_i128.carbon:[[@LINE+4]]:18: error: cannot access member of interface `Core.BitAndWith(Cpp.long)` in type `i128` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   AssertSameType(b & a, b);
-  // CHECK:STDERR:                  ^~~~~
+  // CHECK:STDERR: fail_todo_bitwise_heterogeneous_long_and_i128.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.BitAndWith(Cpp.long)` in type `i128` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   AssertSameType(b & a, b);
 }
@@ -581,9 +553,7 @@ import Cpp;
 
 fn CompoundAssignmentHeterogeneousI16Long() {
   var a: Cpp.long = 1;
-  // CHECK:STDERR: fail_todo_compound_assignment_heterogeneous_long_and_i16.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.AddAssignWith(i16)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   a += (1 as i16);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_compound_assignment_heterogeneous_long_and_i16.carbon:[[@LINE+2]]:3-17: error: cannot access member of interface `Core.AddAssignWith(i16)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   a += (1 as i16);
 }
@@ -596,9 +566,7 @@ import Cpp;
 
 fn CompoundAssignmentHeterogeneousI64Long() {
   var a: Cpp.long = 1;
-  // CHECK:STDERR: fail_compound_assignment_heterogeneous_long_and_i64.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.AddAssignWith(i64)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   a += (1 as i64);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_compound_assignment_heterogeneous_long_and_i64.carbon:[[@LINE+2]]:3-17: error: cannot access member of interface `Core.AddAssignWith(i64)` in type `Cpp.long` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   a += (1 as i64);
 }
@@ -656,16 +624,10 @@ fn F() {
 
   // For portability reasons, this is not allowed even though `unsigned long`
   // happens to fit in `u32` on this target.
-  // CHECK:STDERR: fail_no_ulong_to_u32.carbon:[[@LINE+11]]:25: error: cannot implicitly convert expression of type `unsigned_long` to `u32` [ConversionFailure]
-  // CHECK:STDERR:   let carbon_u32: u32 = cpp_unsigned_long;
-  // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_no_ulong_to_u32.carbon:[[@LINE+8]]:25: note: type `Cpp.unsigned_long` does not implement interface `Core.ImplicitAs(u32)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   let carbon_u32: u32 = cpp_unsigned_long;
-  // CHECK:STDERR:                         ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_no_ulong_to_u32.carbon:[[@LINE+5]]:25-41: error: cannot implicitly convert expression of type `unsigned_long` to `u32` [ConversionFailure]
+  // CHECK:STDERR: fail_no_ulong_to_u32.carbon:[[@LINE+4]]:25-41: note: type `Cpp.unsigned_long` does not implement interface `Core.ImplicitAs(u32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_no_ulong_to_u32.carbon:[[@LINE+4]]:7: warning: binding `carbon_u32` unused [UnusedBinding]
-  // CHECK:STDERR:   let carbon_u32: u32 = cpp_unsigned_long;
-  // CHECK:STDERR:       ^~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_no_ulong_to_u32.carbon:[[@LINE+2]]:7-21: warning: binding `carbon_u32` unused [UnusedBinding]
   // CHECK:STDERR:
   let carbon_u32: u32 = cpp_unsigned_long;
 }
@@ -967,8 +929,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import_ref.685: @Core.IntLiteral.as.ImplicitAs.impl.bd8.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.be5) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.bd8.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.60e)]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness_table.79a = impl_witness_table (%Core.import_ref.685), @Core.IntLiteral.as.ImplicitAs.impl.bd8 [concrete]
-// CHECK:STDOUT:   %Core.import_ref.b7af0: @UInt.as.ImplicitAs.impl.d6a.%UInt.as.ImplicitAs.impl.Convert.type (%UInt.as.ImplicitAs.impl.Convert.type.802) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @UInt.as.ImplicitAs.impl.d6a.%UInt.as.ImplicitAs.impl.Convert (constants.%UInt.as.ImplicitAs.impl.Convert.7a2)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.7eb = impl_witness_table (%Core.import_ref.b7af0), @UInt.as.ImplicitAs.impl.d6a [concrete]
+// CHECK:STDOUT:   %Core.import_ref.b7af: @UInt.as.ImplicitAs.impl.d6a.%UInt.as.ImplicitAs.impl.Convert.type (%UInt.as.ImplicitAs.impl.Convert.type.802) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @UInt.as.ImplicitAs.impl.d6a.%UInt.as.ImplicitAs.impl.Convert (constants.%UInt.as.ImplicitAs.impl.Convert.7a2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.7eb = impl_witness_table (%Core.import_ref.b7af), @UInt.as.ImplicitAs.impl.d6a [concrete]
 // CHECK:STDOUT:   %Core.import_ref.d9c7: @Core.IntLiteral.as.As.impl.d83.%Core.IntLiteral.as.As.impl.Convert.type (%Core.IntLiteral.as.As.impl.Convert.type.16e) = import_ref Core//prelude/types/uint, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.As.impl.d83.%Core.IntLiteral.as.As.impl.Convert (constants.%Core.IntLiteral.as.As.impl.Convert.81c)]
 // CHECK:STDOUT:   %As.impl_witness_table.43c = impl_witness_table (%Core.import_ref.d9c7), @Core.IntLiteral.as.As.impl.d83 [concrete]
 // CHECK:STDOUT:   %Core.import_ref.0c7: @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type (%Core.FloatLiteral.as.ImplicitAs.impl.Convert.type.c1a) = import_ref Core//prelude/types/float, loc{{\d+_\d+}}, loaded [symbolic = @Core.FloatLiteral.as.ImplicitAs.impl.%Core.FloatLiteral.as.ImplicitAs.impl.Convert (constants.%Core.FloatLiteral.as.ImplicitAs.impl.Convert.48f)]
@@ -2318,8 +2280,8 @@ fn CopyUnsignedLong() {
 // CHECK:STDOUT:   %Core.import_ref.1d33: @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.Less.type.2 (%T.as_type.as.OrderedWith.impl.Less.type.5accdd.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.Less.2 (constants.%T.as_type.as.OrderedWith.impl.Less.1112a9.1)]
 // CHECK:STDOUT:   %Core.import_ref.dea: @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.type.2 (%T.as_type.as.OrderedWith.impl.LessOrEquivalent.type.851dcb.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.2 (constants.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.d2878e.1)]
 // CHECK:STDOUT:   %Core.import_ref.154: @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.Greater.type.2 (%T.as_type.as.OrderedWith.impl.Greater.type.621e88.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.Greater.2 (constants.%T.as_type.as.OrderedWith.impl.Greater.35aaff.1)]
-// CHECK:STDOUT:   %Core.import_ref.9d4: @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.type.2 (%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.type.97df82.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.2 (constants.%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.9b73bb.1)]
-// CHECK:STDOUT:   %OrderedWith.impl_witness_table.00a = impl_witness_table (%Core.import_ref.1d33, %Core.import_ref.dea, %Core.import_ref.154, %Core.import_ref.9d4), @T.as_type.as.OrderedWith.impl.800 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.9d4e: @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.type.2 (%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.type.97df82.1) = import_ref Core//prelude/types/cpp/int, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.2 (constants.%T.as_type.as.OrderedWith.impl.GreaterOrEquivalent.9b73bb.1)]
+// CHECK:STDOUT:   %OrderedWith.impl_witness_table.00a = impl_witness_table (%Core.import_ref.1d33, %Core.import_ref.dea, %Core.import_ref.154, %Core.import_ref.9d4e), @T.as_type.as.OrderedWith.impl.800 [concrete]
 // CHECK:STDOUT:   %Core.Less.a83: @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.Less.type.1 (%T.as_type.as.OrderedWith.impl.Less.type.5accdd.2) = import_ref Core//prelude/types/cpp/int, Less, loaded [symbolic = @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.Less.1 (constants.%T.as_type.as.OrderedWith.impl.Less.1112a9.2)]
 // CHECK:STDOUT:   %Core.LessOrEquivalent.551: @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.type.1 (%T.as_type.as.OrderedWith.impl.LessOrEquivalent.type.851dcb.2) = import_ref Core//prelude/types/cpp/int, LessOrEquivalent, loaded [symbolic = @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.1 (constants.%T.as_type.as.OrderedWith.impl.LessOrEquivalent.d2878e.2)]
 // CHECK:STDOUT:   %Core.Greater.233: @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.Greater.type.1 (%T.as_type.as.OrderedWith.impl.Greater.type.621e88.2) = import_ref Core//prelude/types/cpp/int, Greater, loaded [symbolic = @T.as_type.as.OrderedWith.impl.800.%T.as_type.as.OrderedWith.impl.Greater.1 (constants.%T.as_type.as.OrderedWith.impl.Greater.35aaff.2)]

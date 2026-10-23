@@ -50,9 +50,7 @@ class Class {
   var field: i32 = 123;
 }
 
-// CHECK:STDERR: fail_field_initializer_invalid_name.carbon:[[@LINE+4]]:16: error: struct `Class` has no field named `not_a_field` [StructInitUnexpectedFieldInLiteral]
-// CHECK:STDERR: var C: Class = {.not_a_field = 456};
-// CHECK:STDERR:                ^~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_field_initializer_invalid_name.carbon:[[@LINE+2]]:16-35: error: struct `Class` has no field named `not_a_field` [StructInitUnexpectedFieldInLiteral]
 // CHECK:STDERR:
 var C: Class = {.not_a_field = 456};
 
@@ -60,12 +58,8 @@ var C: Class = {.not_a_field = 456};
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_field_initializer_wrong_type.carbon:[[@LINE+7]]:20: error: cannot implicitly convert expression of type `()` to `i32` [ConversionFailure]
-  // CHECK:STDERR:   var field: i32 = ();
-  // CHECK:STDERR:                    ^~
-  // CHECK:STDERR: fail_field_initializer_wrong_type.carbon:[[@LINE+4]]:20: note: type `()` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   var field: i32 = ();
-  // CHECK:STDERR:                    ^~
+  // CHECK:STDERR: fail_field_initializer_wrong_type.carbon:[[@LINE+3]]:20-21: error: cannot implicitly convert expression of type `()` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_field_initializer_wrong_type.carbon:[[@LINE+2]]:20-21: note: type `()` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   var field: i32 = ();
 }
@@ -75,9 +69,7 @@ library "[[@TEST_NAME]]";
 
 var x: i32;
 class Class {
-  // CHECK:STDERR: fail_field_initializer_not_constant.carbon:[[@LINE+4]]:20: error: semantics TODO: `field initializer is not constant` [SemanticsTodo]
-  // CHECK:STDERR:   var field: i32 = x;
-  // CHECK:STDERR:                    ^
+  // CHECK:STDERR: fail_field_initializer_not_constant.carbon:[[@LINE+2]]:20: error: semantics TODO: `field initializer is not constant` [SemanticsTodo]
   // CHECK:STDERR:
   var field: i32 = x;
 }

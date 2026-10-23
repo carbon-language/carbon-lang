@@ -75,22 +75,14 @@ library "[[@TEST_NAME]]";
 import Cpp library "method_ptr.h";
 
 fn F(c: Cpp.C) {
-  // CHECK:STDERR: fail_todo_call_method_ptr.carbon:[[@LINE+18]]:3: error: member name of type `<C++ type void (C::*)(void) const>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
-  // CHECK:STDERR:   c.(Cpp.GetMethodPtr())(42);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_call_method_ptr.carbon:[[@LINE+10]]:3-24: error: member name of type `<C++ type void (C::*)(void) const>` in compound member access is not an instance member or an interface member [CompoundMemberAccessDoesNotUseBase]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_call_method_ptr.carbon:[[@LINE+14]]:3: error: semantics TODO: `invoking a C++ member function pointer is unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   c.(Cpp.GetMethodPtr())(42);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_call_method_ptr.carbon:[[@LINE+8]]:3-28: error: semantics TODO: `invoking a C++ member function pointer is unsupported` [SemanticsTodo]
   // CHECK:STDERR:
   // CHECK:STDERR: error: called object type 'void (C::*)() const' is not a function or function pointer [CppInteropParseError]
-  // CHECK:STDERR: fail_todo_call_method_ptr.carbon:[[@LINE+9]]:3: note: in thunk for C++ function pointer type used here [InCppFunctionPointerThunk]
-  // CHECK:STDERR:   c.(Cpp.GetMethodPtr())(42);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_call_method_ptr.carbon:[[@LINE+5]]:3-28: note: in thunk for C++ function pointer type used here [InCppFunctionPointerThunk]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_call_method_ptr.carbon:[[@LINE+5]]:3: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
-  // CHECK:STDERR:   c.(Cpp.GetMethodPtr())(42);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_call_method_ptr.carbon:[[@LINE+3]]:3-28: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
   // CHECK:STDERR: fail_todo_call_method_ptr.carbon: note: calling function declared here [InCallToEntity]
   // CHECK:STDERR:
   c.(Cpp.GetMethodPtr())(42);
@@ -104,12 +96,8 @@ import Cpp library "method_ptr.h";
 fn F(ref c: Cpp.C);
 
 fn G() {
-  // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE+7]]:39: error: can't convert exported function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
-  // CHECK:STDERR:   var unused ptr: Cpp.MethodPtrType = F;
-  // CHECK:STDERR:                                       ^
-  // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE-6]]:1: note: function exported with pointer type `void (*)(class C &)` [ExportedFromFunction]
-  // CHECK:STDERR: fn F(ref c: Cpp.C);
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE+3]]:39: error: can't convert exported function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR: fail_pass_function_for_method.carbon:[[@LINE-4]]:1-19: note: function exported with pointer type `void (*)(class C &)` [ExportedFromFunction]
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = F;
 }
@@ -124,12 +112,8 @@ class C {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE+7]]:39: error: can't convert exported member function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
-  // CHECK:STDERR:   var unused ptr: Cpp.MethodPtrType = C.Method;
-  // CHECK:STDERR:                                       ^~~~~~~~
-  // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE-7]]:3: note: function exported with pointer type `void (Carbon::C::*)(void) const` [ExportedFromFunction]
-  // CHECK:STDERR:   fn Method(self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE+3]]:39-46: error: can't convert exported member function pointer to `void (C::*)(void) const` [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR: fail_wrong_parent_type.carbon:[[@LINE-5]]:3-18: note: function exported with pointer type `void (Carbon::Main::C::*)(void) const` [ExportedFromFunction]
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = C.Method;
 }
@@ -149,12 +133,8 @@ using MethodPtrType = void(Carbon::C::*)(float) const;
 
 fn G() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+7]]:39: error: can't convert exported member function pointer to `void (Carbon::C::*)(float) const` [ExportedFunctionPtrTypeMismatch]
-  // CHECK:STDERR:   var unused ptr: Cpp.MethodPtrType = C.Method;
-  // CHECK:STDERR:                                       ^~~~~~~~
-  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-12]]:3: note: function exported with pointer type `void (Carbon::C::*)(int) const` [ExportedFromFunction]
-  // CHECK:STDERR:   fn Method(self, i: i32);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE+3]]:39-46: error: can't convert exported member function pointer to `void (Carbon::Main::C::*)(float) const` [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR: fail_type_mismatch.carbon:[[@LINE-10]]:3-26: note: function exported with pointer type `void (Carbon::Main::C::*)(int) const` [ExportedFromFunction]
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = C.Method;
   //@dump-sem-ir-end
@@ -435,7 +415,7 @@ fn G() {
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc22 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc18 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.886: %SubobjectDestroy.type = facet_value %.659, (%custom_witness.b80ef6.3) [concrete]
@@ -458,7 +438,7 @@ fn G() {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Method.ref: %C.Method.type = name_ref Method, @C.%C.Method.decl [concrete = constants.%C.Method]
 // CHECK:STDOUT:   assign %ptr.var, <error>
-// CHECK:STDOUT:   %.loc22_22: type = splice_block %MethodPtrType.ref [concrete = constants.%.659] {
+// CHECK:STDOUT:   %.loc18_22: type = splice_block %MethodPtrType.ref [concrete = constants.%.659] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %MethodPtrType.ref: type = name_ref MethodPtrType, constants.%.659 [concrete = constants.%.659]
 // CHECK:STDOUT:   }
@@ -467,10 +447,10 @@ fn G() {
 // CHECK:STDOUT:     %ptr.patt: %pattern_type.4b7 = ref_binding_pattern ptr [concrete = constants.%ptr.patt]
 // CHECK:STDOUT:     %ptr.var_patt: %pattern_type.4b7 = var_pattern %ptr.patt [concrete = constants.%ptr.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc22_3.1: %facet_type = facet_value constants.%.659, (constants.%DestroyImpl.impl_witness.381, constants.%custom_witness.b80ef6.3) [concrete = constants.%facet_value.346]
-// CHECK:STDOUT:   %.loc22_3.1: %facet_type = converted constants.%.659, %facet_value.loc22_3.1 [concrete = constants.%facet_value.346]
-// CHECK:STDOUT:   %facet_value.loc22_3.2: %facet_type = facet_value constants.%.659, (constants.%DestroyImpl.impl_witness.381, constants.%custom_witness.b80ef6.3) [concrete = constants.%facet_value.346]
-// CHECK:STDOUT:   %.loc22_3.2: %facet_type = converted constants.%.659, %facet_value.loc22_3.2 [concrete = constants.%facet_value.346]
+// CHECK:STDOUT:   %facet_value.loc18_3.1: %facet_type = facet_value constants.%.659, (constants.%DestroyImpl.impl_witness.381, constants.%custom_witness.b80ef6.3) [concrete = constants.%facet_value.346]
+// CHECK:STDOUT:   %.loc18_3.1: %facet_type = converted constants.%.659, %facet_value.loc18_3.1 [concrete = constants.%facet_value.346]
+// CHECK:STDOUT:   %facet_value.loc18_3.2: %facet_type = facet_value constants.%.659, (constants.%DestroyImpl.impl_witness.381, constants.%custom_witness.b80ef6.3) [concrete = constants.%facet_value.346]
+// CHECK:STDOUT:   %.loc18_3.2: %facet_type = converted constants.%.659, %facet_value.loc18_3.2 [concrete = constants.%facet_value.346]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%ptr.var)
 // CHECK:STDOUT:   <elided>
@@ -479,10 +459,10 @@ fn G() {
 // CHECK:STDOUT: fn @C.Method__carbon_thunk(%self.param: ref %C, %_.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc22_40.1: %C = acquire_value %self.param
-// CHECK:STDOUT:   %.loc22_40.2: %i32 = acquire_value %_.param
+// CHECK:STDOUT:   %.loc18_40.1: %C = acquire_value %self.param
+// CHECK:STDOUT:   %.loc18_40.2: %i32 = acquire_value %_.param
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc22(%self.param: ref %.659) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc18(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:

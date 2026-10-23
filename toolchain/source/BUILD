@@ -26,6 +26,7 @@ cc_test(
         "//common:check",
         "//testing/base:gtest_main",
         "//toolchain/diagnostics:emitter",
+        "//toolchain/diagnostics:renderer",
         "@googletest//:gtest",
         "@llvm-project//llvm:Support",
     ],

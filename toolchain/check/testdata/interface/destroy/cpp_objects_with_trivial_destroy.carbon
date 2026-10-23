@@ -222,13 +222,9 @@ struct CppHoldsCarbonHoldsTrivialDestructor {
 // TODO: This should have trivial destruction, because every subobject does.
 fn TestCppHoldsCarbonHoldsTrivialDestructor(
     x: Cpp.CppHoldsCarbonHoldsTrivialDestructor) {
-  // CHECK:STDERR: fail_todo_class_cpp_carbon_cpp.carbon:[[@LINE+8]]:3: error: cannot convert type `Cpp.CppHoldsCarbonHoldsTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_class_cpp_carbon_cpp.carbon:[[@LINE-17]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_class_cpp_carbon_cpp.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.CppHoldsCarbonHoldsTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_todo_class_cpp_carbon_cpp.carbon:[[@LINE-15]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }

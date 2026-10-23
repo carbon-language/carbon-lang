@@ -83,12 +83,8 @@ class Square {
   extend base: Shape;
 
   fn GetPosition(self) -> i32 {
-    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE+7]]:12: error: cannot access private member `y` of type `Shape` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     return self.y;
-    // CHECK:STDERR:            ^~~~~~
-    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE-10]]:15: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   private var y: i32;
-    // CHECK:STDERR:               ^~~~~~
+    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE+3]]:12-17: error: cannot access private member `y` of type `Shape` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_inherited_private_field_access.carbon:[[@LINE-8]]:15-20: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     return self.y;
   }
@@ -128,12 +124,8 @@ base class B {
 
 class C {
   extend base: B;
-  // CHECK:STDERR: fail_noninstance_private_on_parent_qualified.carbon:[[@LINE+7]]:12: error: cannot access private member `F` of type `B` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   fn G() { Self.F(); }
-  // CHECK:STDERR:            ^~~~~~
-  // CHECK:STDERR: fail_noninstance_private_on_parent_qualified.carbon:[[@LINE-8]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private fn F() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_noninstance_private_on_parent_qualified.carbon:[[@LINE+3]]:12-17: error: cannot access private member `F` of type `B` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_noninstance_private_on_parent_qualified.carbon:[[@LINE-6]]:3-18: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   fn G() { Self.F(); }
 }
@@ -156,30 +148,18 @@ base class B {
 class C {
   extend base: B;
 
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+7]]:27: error: cannot access private member `SOME_PRIVATE_CONSTANT` of type `B` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   fn G1() -> i32 { return SOME_PRIVATE_CONSTANT; }
-  // CHECK:STDERR:                           ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-10]]:15: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private let SOME_PRIVATE_CONSTANT: i32 = 86;
-  // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+3]]:27-47: error: cannot access private member `SOME_PRIVATE_CONSTANT` of type `B` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-8]]:15-40: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   fn G1() -> i32 { return SOME_PRIVATE_CONSTANT; }
 
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+7]]:13: error: cannot access private member `Fa` of type `A` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   fn G2() { Fa(); }
-  // CHECK:STDERR:             ^~
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-25]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private fn Fa() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+3]]:13-14: error: cannot access private member `Fa` of type `A` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-19]]:3-19: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   fn G2() { Fa(); }
 
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+7]]:13: error: cannot access private member `Fb` of type `B` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   fn G3() { Fb(); }
-  // CHECK:STDERR:             ^~
-  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-27]]:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   private fn Fb() {}
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE+3]]:13-14: error: cannot access private member `Fb` of type `B` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: fail_noninstance_private_on_parent_unqualified.carbon:[[@LINE-17]]:3-19: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   fn G3() { Fb(); }
 }
@@ -214,32 +194,20 @@ class B {
   private var internal: Internal;
 
   fn G() -> i32 {
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:5: error: cannot access private member `SOME_PRIVATE_CONSTANT` of type `A` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     A.SOME_PRIVATE_CONSTANT;
-    // CHECK:STDERR:     ^~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-14]]:15: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   private let SOME_PRIVATE_CONSTANT: i32 = 5;
-    // CHECK:STDERR:               ^~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+3]]:5-27: error: cannot access private member `SOME_PRIVATE_CONSTANT` of type `A` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-12]]:15-40: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     A.SOME_PRIVATE_CONSTANT;
 
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:12: error: cannot access protected member `SOME_PROTECTED_CONSTANT` of type `A` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     return A.SOME_PROTECTED_CONSTANT;
-    // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-24]]:17: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   protected let SOME_PROTECTED_CONSTANT: i32 = 5;
-    // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+3]]:12-36: error: cannot access protected member `SOME_PROTECTED_CONSTANT` of type `A` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-18]]:17-44: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     return A.SOME_PROTECTED_CONSTANT;
   }
 
   fn SomeFunc(self) -> i32{
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+7]]:12: error: cannot access protected member `INTERNAL_CONSTANT` of type `Internal` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     return self.internal.INTERNAL_CONSTANT;
-    // CHECK:STDERR:            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-30]]:17: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   protected let INTERNAL_CONSTANT: i32 = 5;
-    // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE+3]]:12-42: error: cannot access protected member `INTERNAL_CONSTANT` of type `Internal` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_non_inherited_access.carbon:[[@LINE-20]]:17-38: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     return self.internal.INTERNAL_CONSTANT;
   }
@@ -256,12 +224,8 @@ base class A {
 class B {
   extend base: A;
   fn F(self) {
-    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE+7]]:11: error: cannot access private member `x` of type `A` [ClassInvalidMemberAccess]
-    // CHECK:STDERR:     self.(A.x);
-    // CHECK:STDERR:           ^~~
-    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE-9]]:15: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:   private var x: i32;
-    // CHECK:STDERR:               ^~~~~~
+    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE+3]]:11-13: error: cannot access private member `x` of type `A` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_compound_member_access.carbon:[[@LINE-7]]:15-20: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     self.(A.x);
   }
@@ -283,6 +247,40 @@ class B {
   }
 }
 
+// --- fail_access_private_parent_in_generic.carbon
+
+library "[[@TEST_NAME]]";
+
+import Cpp inline '''
+struct A {
+  bool X() const;
+};
+struct B : private A {};
+
+template<typename T>
+auto F(T* _Nonnull t) -> void {
+    t->X();
+}
+''';
+
+class C(T: type) {
+  extend base: Cpp.B;
+};
+
+fn G() {
+    var d: C(i32) = {
+        .base = Cpp.B.B(),
+    };
+    // CHECK:STDERR: fail_access_private_parent_in_generic.carbon:[[@LINE+8]]:13: error: cannot access private member `X` of type `Cpp.B` [ClassInvalidMemberAccess]
+    // CHECK:STDERR: fail_access_private_parent_in_generic.carbon:[[@LINE+7]]:13: note: declared here [ClassMemberDeclaration]
+    // CHECK:STDERR:
+    // CHECK:STDERR: fail_access_private_parent_in_generic.carbon:[[@LINE-15]]:8: error: 'X' is a private member of 'A' [CppInteropParseError]
+    // CHECK:STDERR: fail_access_private_parent_in_generic.carbon:[[@LINE+4]]:13: note: in instantiation of function template specialization 'F<Carbon::Main::C<int>>' requested here [CppInteropParseNote]
+    // CHECK:STDERR: fail_access_private_parent_in_generic.carbon:[[@LINE-21]]:12-20: note: constrained by private inheritance here [CppInteropParseNote]
+    // CHECK:STDERR: fail_access_private_parent_in_generic.carbon:[[@LINE-24]]:8: note: member is declared here [CppInteropParseNote]
+    // CHECK:STDERR:
+    Cpp.F(&d);
+}
 
 // CHECK:STDOUT: --- instance_protected_field_access.carbon
 // CHECK:STDOUT:
@@ -1162,7 +1160,7 @@ class B {
 // CHECK:STDOUT:     %return.patt: %pattern_type.d94 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.6fa]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc25: Core.Form = init_form %i32 [concrete = constants.%.0b3]
+// CHECK:STDOUT:     %.loc21: Core.Form = init_form %i32 [concrete = constants.%.0b3]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -1440,7 +1438,7 @@ class B {
 // CHECK:STDOUT:     %return.patt: %pattern_type.d94 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt.6fa]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc36: Core.Form = init_form %i32 [concrete = constants.%.0b3]
+// CHECK:STDOUT:     %.loc28: Core.Form = init_form %i32 [concrete = constants.%.0b3]
 // CHECK:STDOUT:     %self.param: %B = value_param call_param0
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%B [concrete = constants.%B]
 // CHECK:STDOUT:     %self: %B = wrapper_binding self, %self.param
@@ -1461,9 +1459,9 @@ class B {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B.G() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc24: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc20: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT.ref: <error> = name_ref SOME_PRIVATE_CONSTANT, <error> [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc33: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref.loc25: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %SOME_PROTECTED_CONSTANT.ref: <error> = name_ref SOME_PROTECTED_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -1472,8 +1470,8 @@ class B {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %B = name_ref self, %self
 // CHECK:STDOUT:   %internal.ref: %B.elem = name_ref internal, @B.%field_decl [concrete = @B.%field_decl]
-// CHECK:STDOUT:   %.loc44_16.1: ref %Internal = class_element_access %self.ref, element0
-// CHECK:STDOUT:   %.loc44_16.2: %Internal = acquire_value %.loc44_16.1
+// CHECK:STDOUT:   %.loc32_16.1: ref %Internal = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc32_16.2: %Internal = acquire_value %.loc32_16.1
 // CHECK:STDOUT:   %INTERNAL_CONSTANT.ref: <error> = name_ref INTERNAL_CONSTANT, <error> [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
@@ -1651,5 +1649,249 @@ class B {
 // CHECK:STDOUT:   %.loc12_9.2: ref %A = converted %self.ref, %.loc12_9.1
 // CHECK:STDOUT:   %.loc12_9.3: ref %i32 = class_element_access %.loc12_9.2, element0
 // CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- fail_access_private_parent_in_generic.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %C.type: type = parameterized_class_name_type @C [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.04a: type = class_type @C, @C(%T.67d) [symbolic]
+// CHECK:STDOUT:   %B: type = class_type @B [concrete]
+// CHECK:STDOUT:   %A: type = class_type @A [concrete]
+// CHECK:STDOUT:   %B.elem: type = unbound_element_type %B, %A [concrete]
+// CHECK:STDOUT:   %.c9a: type = custom_layout_type {size=1, align=1, .base@0: %A} [concrete]
+// CHECK:STDOUT:   %complete_type.39d: <witness> = complete_type_witness %.c9a [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %C.elem.bb6: type = unbound_element_type %C.04a, %B [symbolic]
+// CHECK:STDOUT:   %struct_type.base.9aa: type = struct_type {.base: %B} [concrete]
+// CHECK:STDOUT:   %complete_type.0ba: <witness> = complete_type_witness %struct_type.base.9aa [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %C.4da: type = class_type @C, @C(%i32) [concrete]
+// CHECK:STDOUT:   %C.elem.79b: type = unbound_element_type %C.4da, %B [concrete]
+// CHECK:STDOUT:   %pattern_type.b1b: type = pattern_type %C.4da [concrete]
+// CHECK:STDOUT:   %d.patt: %pattern_type.b1b = ref_binding_pattern d [concrete]
+// CHECK:STDOUT:   %d.var_patt: %pattern_type.b1b = var_pattern %d.patt [concrete]
+// CHECK:STDOUT:   %B.B.cpp_overload_set.type: type = cpp_overload_set_type @B.B.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %B.B.cpp_overload_set.value: %B.B.cpp_overload_set.type = cpp_overload_set_value @B.B.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %ptr.dc0: type = ptr_type %B [concrete]
+// CHECK:STDOUT:   %pattern_type.733: type = pattern_type %ptr.dc0 [concrete]
+// CHECK:STDOUT:   %return.param_patt.6fe: %pattern_type.733 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.61d: %pattern_type.733 = wrapper_binding_pattern r#return, %return.param_patt.6fe [concrete]
+// CHECK:STDOUT:   %B__carbon_thunk.type: type = fn_type @B__carbon_thunk [concrete]
+// CHECK:STDOUT:   %B__carbon_thunk: %B__carbon_thunk.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.ab8: type = partial_type %B [concrete]
+// CHECK:STDOUT:   %F.cpp_overload_set.type: type = cpp_overload_set_type @F.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %F.cpp_overload_set.value: %F.cpp_overload_set.type = cpp_overload_set_value @F.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %ptr.434: type = ptr_type %C.4da [concrete]
+// CHECK:STDOUT:   %pattern_type.c84: type = pattern_type %ptr.434 [concrete]
+// CHECK:STDOUT:   %t.param_patt.6a0: %pattern_type.c84 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %t.patt.1a9: %pattern_type.c84 = wrapper_binding_pattern t, %t.param_patt.6a0 [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc21_5.3 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.918: %SubobjectDestroy.type = facet_value %C.4da, (%custom_witness.b80ef6.3) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.755: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.918) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %C.4da, (%DestroyImpl.impl_witness.755, %custom_witness.b80ef6.3) [concrete]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%facet_value) [concrete]
+// CHECK:STDOUT:   %B.X.cpp_overload_set.type: type = cpp_overload_set_type @B.X.cpp_overload_set [concrete]
+// CHECK:STDOUT:   %B.X.cpp_overload_set.value: %B.X.cpp_overload_set.type = cpp_overload_set_value @B.X.cpp_overload_set [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
+// CHECK:STDOUT:     .SubobjectDestroy = %Core.SubobjectDestroy
+// CHECK:STDOUT:     .DestroyImpl = %Core.DestroyImpl
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     .B = %B.decl
+// CHECK:STDOUT:     .F = %F.cpp_overload_set.value
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B.decl: type = class_decl @B [concrete = constants.%B] {} {}
+// CHECK:STDOUT:   %A.decl: type = class_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT:   %B.B.cpp_overload_set.value: %B.B.cpp_overload_set.type = cpp_overload_set_value @B.B.cpp_overload_set [concrete = constants.%B.B.cpp_overload_set.value]
+// CHECK:STDOUT:   %B__carbon_thunk.decl: %B__carbon_thunk.type = fn_decl @B__carbon_thunk [concrete = constants.%B__carbon_thunk] {
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.733 = value_param_pattern [concrete = constants.%return.param_patt.6fe]
+// CHECK:STDOUT:     %return.patt: %pattern_type.733 = wrapper_binding_pattern r#return, %return.param_patt [concrete = constants.%return.patt.61d]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %return.param: %ptr.dc0 = value_param call_param0
+// CHECK:STDOUT:     %return: %ptr.dc0 = wrapper_binding r#return, %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %F.cpp_overload_set.value: %F.cpp_overload_set.type = cpp_overload_set_value @F.cpp_overload_set [concrete = constants.%F.cpp_overload_set.value]
+// CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
+// CHECK:STDOUT:     %t.param_patt: %pattern_type.c84 = value_param_pattern [concrete = constants.%t.param_patt.6a0]
+// CHECK:STDOUT:     %t.patt: %pattern_type.c84 = wrapper_binding_pattern t, %t.param_patt [concrete = constants.%t.patt.1a9]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %t.param: %ptr.434 = value_param call_param0
+// CHECK:STDOUT:     %t: %ptr.434 = wrapper_binding t, %t.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/parts/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.SubobjectDestroy: type = import_ref Core//prelude/parts/destroy, SubobjectDestroy, loaded [concrete = constants.%SubobjectDestroy.type]
+// CHECK:STDOUT:   %Core.DestroyImpl: type = import_ref Core//prelude/parts/destroy, DestroyImpl, loaded [concrete = constants.%DestroyImpl.type]
+// CHECK:STDOUT:   %B.X.cpp_overload_set.value: %B.X.cpp_overload_set.type = cpp_overload_set_value @B.X.cpp_overload_set [concrete = constants.%B.X.cpp_overload_set.value]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Cpp = imports.%Cpp
+// CHECK:STDOUT:     .C = %C.decl
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
+// CHECK:STDOUT:     import Cpp inline
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
+// CHECK:STDOUT:     %T.patt.loc16_10.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_10.2 (constants.%T.patt.3a0)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc16_12.1: type = splice_block %.loc16_12.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc16_12.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc16_10.2: type = symbolic_binding T, 0 [symbolic = %T.loc16_10.1 (constants.%T.67d)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @C(%T.loc16_10.2: type) {
+// CHECK:STDOUT:   %T.patt.loc16_10.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc16_10.2 (constants.%T.patt.3a0)]
+// CHECK:STDOUT:   %T.loc16_10.1: type = symbolic_binding T, 0 [symbolic = %T.loc16_10.1 (constants.%T.67d)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %C: type = class_type @C, @C(%T.loc16_10.1) [symbolic = %C (constants.%C.04a)]
+// CHECK:STDOUT:   %C.elem: type = unbound_element_type %C, constants.%B [symbolic = %C.elem (constants.%C.elem.bb6)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %B.ref: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:     %.loc17: @C.%C.elem (%C.elem.bb6) = base_decl %B.ref, element0 [concrete]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.base.9aa [concrete = constants.%complete_type.0ba]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%C.04a
+// CHECK:STDOUT:     .base = %.loc17
+// CHECK:STDOUT:     .X = <poisoned>
+// CHECK:STDOUT:     extend %B.ref
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @B {
+// CHECK:STDOUT:   %.1: %B.elem = base_decl imports.%A.decl, element0 [concrete]
+// CHECK:STDOUT:   %.2: type = custom_layout_type {size=1, align=1, .base@0: %A} [concrete = constants.%.c9a]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %.2 [concrete = constants.%complete_type.39d]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .B = imports.%B.B.cpp_overload_set.value
+// CHECK:STDOUT:   .X [private] = imports.%B.X.cpp_overload_set.value
+// CHECK:STDOUT:   import Cpp//...
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   import Cpp//...
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %d.var: ref %C.4da = var_storage %d.var_patt
+// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %B.ref.loc22_20: type = name_ref B, imports.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc22_22: %B.B.cpp_overload_set.type = name_ref B, imports.%B.B.cpp_overload_set.value [concrete = constants.%B.B.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc23_5.1: ref %.ab8 = class_element_access %d.var, element0
+// CHECK:STDOUT:   %addr.loc22: %ptr.dc0 = addr_of %.loc23_5.1
+// CHECK:STDOUT:   %B__carbon_thunk.call: init %empty_tuple.type = call imports.%B__carbon_thunk.decl(%addr.loc22)
+// CHECK:STDOUT:   %.loc22: init %B to %.loc23_5.1 = mark_in_place_init %B__carbon_thunk.call
+// CHECK:STDOUT:   %.loc23_5.2: %struct_type.base.9aa = struct_literal (%.loc22)
+// CHECK:STDOUT:   %.loc23_5.3: init %.ab8 = as_compatible %.loc22
+// CHECK:STDOUT:   %.loc23_5.4: init %.ab8 = converted %.loc22, %.loc23_5.3
+// CHECK:STDOUT:   %.loc23_5.5: init %B = as_compatible %.loc23_5.4
+// CHECK:STDOUT:   %.loc23_5.6: init %C.4da to %d.var = class_init (%.loc23_5.5)
+// CHECK:STDOUT:   %.loc21_5.1: init %C.4da = converted %.loc23_5.2, %.loc23_5.6
+// CHECK:STDOUT:   assign %d.var, %.loc21_5.1
+// CHECK:STDOUT:   %.loc21_17: type = splice_block %C [concrete = constants.%C.4da] {
+// CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
+// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %C: type = class_type @C, @C(constants.%i32) [concrete = constants.%C.4da]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %d: ref %C.4da = wrapper_binding d, %d.var
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %d.patt: %pattern_type.b1b = ref_binding_pattern d [concrete = constants.%d.patt]
+// CHECK:STDOUT:     %d.var_patt: %pattern_type.b1b = var_pattern %d.patt [concrete = constants.%d.var_patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref.loc32: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %F.ref: %F.cpp_overload_set.type = name_ref F, imports.%F.cpp_overload_set.value [concrete = constants.%F.cpp_overload_set.value]
+// CHECK:STDOUT:   %d.ref: ref %C.4da = name_ref d, %d
+// CHECK:STDOUT:   %addr.loc32: %ptr.434 = addr_of %d.ref
+// CHECK:STDOUT:   %F.call: init %empty_tuple.type = call imports.%F.decl(%addr.loc32)
+// CHECK:STDOUT:   %facet_value.loc21_5.1: %facet_type = facet_value constants.%C.4da, (constants.%DestroyImpl.impl_witness.755, constants.%custom_witness.b80ef6.3) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc21_5.2: %facet_type = converted constants.%C.4da, %facet_value.loc21_5.1 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc21_5.2: %facet_type = facet_value constants.%C.4da, (constants.%DestroyImpl.impl_witness.755, constants.%custom_witness.b80ef6.3) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc21_5.3: %facet_type = converted constants.%C.4da, %facet_value.loc21_5.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%facet_value) [concrete = constants.%SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%d.var)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B.B() -> out %return.param: %B;
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @B__carbon_thunk(%return.param: %ptr.dc0);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F(%t.param: %ptr.434);
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc21_5.1(%self.param: ref %B) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc21_5.2(%self.param: ref %struct_type.base.9aa) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc21_5.3(%self.param: ref %C.4da) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%T.67d) {
+// CHECK:STDOUT:   %T.patt.loc16_10.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.loc16_10.1 => constants.%T.67d
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%i32) {
+// CHECK:STDOUT:   %T.patt.loc16_10.2 => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.loc16_10.1 => constants.%i32
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %C => constants.%C.4da
+// CHECK:STDOUT:   %C.elem => constants.%C.elem.79b
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

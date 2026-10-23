@@ -995,14 +995,14 @@ fn Use() {
 // CHECK:STDOUT: define weak_odr void @"_CF:thunk:Base.Main:Derived.Main"(ptr sret({}) %return, ptr %self, ptr %n) #1 !dbg !285 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc17_52.2.temp = alloca {}, align 1, !dbg !289
-// CHECK:STDOUT:   %.5.temp = alloca {}, align 1, !dbg !288
+// CHECK:STDOUT:   %.loc17_52.4.temp = alloca {}, align 1, !dbg !289
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_52.2.temp), !dbg !289
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.5.temp), !dbg !288
-// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %.5.temp, ptr %n), !dbg !288
-// CHECK:STDOUT:   call void @_CF.Derived.Main(ptr %.loc17_52.2.temp, ptr %self, ptr %.5.temp), !dbg !289
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_52.4.temp), !dbg !289
+// CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %.loc17_52.4.temp, ptr %n), !dbg !289
+// CHECK:STDOUT:   call void @_CF.Derived.Main(ptr %.loc17_52.2.temp, ptr %self, ptr %.loc17_52.4.temp), !dbg !289
 // CHECK:STDOUT:   call void @"_CConvert.From.Main:ImplicitAs.a3bb440f6426a7d6.Core"(ptr %return, ptr %.loc17_52.2.temp), !dbg !289
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.3f61691f292a1f88(ptr %.loc17_52.2.temp), !dbg !289
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.36c1478c1cb9545e(ptr %.5.temp), !dbg !288
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.36c1478c1cb9545e(ptr %.loc17_52.4.temp), !dbg !289
 // CHECK:STDOUT:   ret void, !dbg !289
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1089,7 +1089,6 @@ fn Use() {
 // CHECK:STDOUT: !285 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:Base.Main:Derived.Main", scope: null, file: !270, line: 17, type: !275, spFlags: DISPFlagDefinition, unit: !271, retainedNodes: !290)
 // CHECK:STDOUT: !286 = !DILocalVariable(arg: 1, scope: !285, type: !20)
 // CHECK:STDOUT: !287 = !DILocalVariable(arg: 2, scope: !285, type: !20)
-// CHECK:STDOUT: !288 = !DILocation(line: 0, scope: !285)
 // CHECK:STDOUT: !289 = !DILocation(line: 17, column: 3, scope: !285)
 // CHECK:STDOUT: !290 = !{!286, !287}
 // CHECK:STDOUT: !291 = distinct !DISubprogram(name: "Use", linkageName: "_CUse.Main", scope: null, file: !270, line: 22, type: !41, spFlags: DISPFlagDefinition, unit: !271)

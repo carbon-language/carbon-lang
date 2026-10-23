@@ -378,13 +378,6 @@ struct DeclaredFacetTypeId : public IdBase<DeclaredFacetTypeId> {
 inline constexpr DeclaredFacetTypeId DeclaredFacetTypeId::Empty =
     DeclaredFacetTypeId(0);
 
-// The ID of an resolved facet type value.
-struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
-  static constexpr llvm::StringLiteral Label = "identified_facet_type";
-
-  using IdBase::IdBase;
-};
-
 // The ID of an `Impl`.
 struct ImplId : public IdBase<ImplId> {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
@@ -803,8 +796,14 @@ struct InstBlockId : public IdBase<InstBlockId> {
   // be inserted into it.
   static const InstBlockId GlobalInit;
 
+  // Stores instructions defining global variables that might otherwise be
+  // defined in contexts where they won't be exported during lowering. This is
+  // useful, for example, when synthesizing function argument default values for
+  // export to C++.
+  static const InstBlockId ExtraGlobalVariables;
+
   // A convenience list of reserved IDs.
-  static const std::array<InstBlockId, 5> ReservedIds;
+  static const std::array<InstBlockId, 6> ReservedIds;
 
   // An ID for unreachable code.
   static const InstBlockId Unreachable;
@@ -823,10 +822,11 @@ inline constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
 inline constexpr InstBlockId InstBlockId::Generated = InstBlockId(2);
 inline constexpr InstBlockId InstBlockId::Imports = InstBlockId(3);
 inline constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(4);
+inline constexpr InstBlockId InstBlockId::ExtraGlobalVariables = InstBlockId(5);
 inline constexpr InstBlockId InstBlockId::Unreachable =
     InstBlockId(NoneIndex - 1);
-inline constexpr std::array<InstBlockId, 5> InstBlockId::ReservedIds = {
-    Empty, Exports, Generated, Imports, GlobalInit};
+inline constexpr std::array<InstBlockId, 6> InstBlockId::ReservedIds = {
+    Empty, Exports, Generated, Imports, GlobalInit, ExtraGlobalVariables};
 
 // Contains either an `InstBlockId` value, an error value, or
 // `InstBlockId::None`.
@@ -1007,7 +1007,7 @@ struct TypeId : public IdBase<TypeId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-// The ID of a `clang::SourceLocation`.
+// The ID of a range of C++ source, held as a `clang::SourceRange`.
 struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
   static constexpr llvm::StringLiteral Label = "clang_source_loc";
 

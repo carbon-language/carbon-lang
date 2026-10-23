@@ -29,12 +29,8 @@ class Class {
 }
 
 fn G(c: Class) {
-  // CHECK:STDERR: fail_runtime_arg.carbon:[[@LINE+7]]:3: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
-  // CHECK:STDERR:   c.F();
-  // CHECK:STDERR:   ^~~~~
-  // CHECK:STDERR: fail_runtime_arg.carbon:[[@LINE-7]]:23: note: initializing generic parameter `self` declared here [InitializingGenericParam]
-  // CHECK:STDERR:   fn F(unused generic self: Self) {}
-  // CHECK:STDERR:                       ^~~~~~~~~~
+  // CHECK:STDERR: fail_runtime_arg.carbon:[[@LINE+3]]:3-7: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
+  // CHECK:STDERR: fail_runtime_arg.carbon:[[@LINE-5]]:23-32: note: initializing generic parameter `self` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   c.F();
 }

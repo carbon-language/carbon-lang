@@ -96,6 +96,26 @@ auto LookupNameInDecl(Context& context, SemIR::LocId loc_id,
   }
 }
 
+// Returns the generic that `inst_id` is attached to, if any.
+static auto GetGenericForInst(Context& context, SemIR::InstId inst_id)
+    -> SemIR::GenericId {
+  auto const_id = context.constant_values().GetAttached(inst_id);
+  if (const_id.has_value() && const_id.is_symbolic()) {
+    if (auto generic_id =
+            context.constant_values().GetSymbolicConstant(const_id).generic_id;
+        generic_id.has_value()) {
+      return generic_id;
+    }
+  }
+  auto type_id = context.insts().GetAttachedType(inst_id);
+  if (type_id.has_value() && type_id.is_symbolic()) {
+    return context.constant_values()
+        .GetSymbolicConstant(context.types().GetConstantId(type_id))
+        .generic_id;
+  }
+  return SemIR::GenericId::None;
+}
+
 auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                            SemIR::NameId name_id, bool required)
     -> LookupResult {
@@ -156,10 +176,18 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
   }
 
   if (lexical_result.has_value()) {
-    // A lexical scope never needs an associated specific. If there's a
-    // lexically enclosing generic, then it also encloses the point of use of
-    // the name.
-    return {.specific_id = SemIR::SpecificId::None,
+    // If the instruction belongs to an enclosing generic rather than the
+    // current generic, pair it with the enclosing generic's self-specific.
+    auto specific_id = SemIR::SpecificId::None;
+    auto decl_generic_id = GetGenericForInst(context, lexical_result);
+    auto current_generic_id =
+        context.generic_region_stack().Empty()
+            ? SemIR::GenericId::None
+            : context.generic_region_stack().PeekPendingGeneric().generic_id;
+    if (decl_generic_id.has_value() && decl_generic_id != current_generic_id) {
+      specific_id = context.generics().GetSelfSpecific(decl_generic_id);
+    }
+    return {.specific_id = specific_id,
             .scope_result = SemIR::ScopeLookupResult::MakeFound(
                 lexical_result, SemIR::AccessKind::Public)};
   }
@@ -212,21 +240,33 @@ static auto DiagnoseInvalidQualifiedNameAccess(
   // TODO: Will an access scope always be a type? Should we support access
   // within `impl` scopes?
   auto scope_type_id =
-      context.types().GetTypeIdForTypeConstantId(access_info.constant_id);
+      context.types().TryGetTypeIdForTypeConstantId(access_info.constant_id);
 
   if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
     // TODO: Do we need to support parent access for entities other than
     // classes?
-    auto class_type = context.constant_values().GetInstAs<SemIR::ClassType>(
-        access_info.constant_id);
-    const auto& class_info = context.classes().Get(class_type.class_id);
+    auto class_id = SemIR::ClassId::None;
+    auto specific_id = SemIR::SpecificId::None;
+    auto inst = context.constant_values().GetInst(access_info.constant_id);
+    if (auto class_type = inst.TryAs<SemIR::ClassType>()) {
+      class_id = class_type->class_id;
+      specific_id = class_type->specific_id;
+    } else if (auto param_class_type =
+                   context.insts().TryGetAs<SemIR::ParameterizedClassType>(
+                       context.types().GetTypeInstId(inst.type_id()))) {
+      class_id = param_class_type->class_id;
+    } else {
+      CARBON_FATAL("Expected either ClassType or ParameterizedClassType");
+    }
+
+    const auto& class_info = context.classes().Get(class_id);
 
     if (auto base_type_id =
-            class_info.GetBaseType(context.sem_ir(), class_type.specific_id);
+            class_info.GetBaseType(context.sem_ir(), specific_id);
         base_type_id.has_value()) {
       scope_type_id = base_type_id;
-    } else if (auto adapted_type_id = class_info.GetAdaptedType(
-                   context.sem_ir(), class_type.specific_id);
+    } else if (auto adapted_type_id =
+                   class_info.GetAdaptedType(context.sem_ir(), specific_id);
                adapted_type_id.has_value()) {
       scope_type_id = adapted_type_id;
     } else {
@@ -238,11 +278,11 @@ static auto DiagnoseInvalidQualifiedNameAccess(
       ClassInvalidMemberAccess, Error,
       "cannot access {0:private|protected} member `{1}` of type {2}",
       Diagnostics::BoolAsSelect, SemIR::NameId, SemIR::TypeId);
-  CARBON_DIAGNOSTIC(ClassMemberDeclaration, Note, "declared here");
+  CARBON_DIAGNOSTIC_LABEL(ClassMemberDeclaration, Info, "declared here");
   context.emitter()
       .Build(loc_id, ClassInvalidMemberAccess,
              access_kind == SemIR::AccessKind::Private, name_id, scope_type_id)
-      .Note(member_loc_id, ClassMemberDeclaration)
+      .Attach(member_loc_id, ClassMemberDeclaration)
       .Emit();
 }
 
@@ -340,11 +380,11 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
       RequireCompleteType(
           context, context.types().GetTypeIdForTypeConstantId(lookup_const_id),
           loc_id, [&](auto& builder) {
-            CARBON_DIAGNOSTIC(QualifiedExprInIncompleteClassScope, Context,
-                              "member access into incomplete class {0}",
-                              InstIdAsType);
-            builder.Context(loc_id, QualifiedExprInIncompleteClassScope,
-                            lookup_inst_id);
+            CARBON_DIAGNOSTIC_CONTEXT(QualifiedExprInIncompleteClassScope,
+                                      "member access into incomplete class {0}",
+                                      InstIdAsType);
+            builder.Attach(loc_id, QualifiedExprInIncompleteClassScope,
+                           lookup_inst_id);
           });
     }
     auto& class_info = context.classes().Get(class_ty->class_id);
@@ -368,12 +408,12 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
               context,
               context.types().GetTypeIdForTypeConstantId(lookup_const_id),
               loc_id, [&](auto& builder) {
-                CARBON_DIAGNOSTIC(
-                    QualifiedExprInIncompleteFacetTypeScope, Context,
+                CARBON_DIAGNOSTIC_CONTEXT(
+                    QualifiedExprInIncompleteFacetTypeScope,
                     "member access into incomplete facet type {0}",
                     InstIdAsType);
-                builder.Context(loc_id, QualifiedExprInIncompleteFacetTypeScope,
-                                lookup_inst_id);
+                builder.Attach(loc_id, QualifiedExprInIncompleteFacetTypeScope,
+                               lookup_inst_id);
               })) {
         // Lookup into this scope should fail without producing an error since
         // `RequireCompleteFacetType` has already issued a diagnostic.
@@ -682,10 +722,11 @@ auto DiagnoseDuplicateName(Context& context, SemIR::NameId name_id,
   CARBON_DIAGNOSTIC(NameDeclDuplicate, Error,
                     "duplicate name `{0}` being declared in the same scope",
                     SemIR::NameId);
-  CARBON_DIAGNOSTIC(NameDeclPrevious, Note, "name is previously declared here");
+  CARBON_DIAGNOSTIC_LABEL(NameDeclPrevious, Info,
+                          "name is previously declared here");
   context.emitter()
       .Build(dup_def, NameDeclDuplicate, name_id)
-      .Note(prev_def, NameDeclPrevious)
+      .Attach(prev_def, NameDeclPrevious)
       .Emit();
 }
 
@@ -696,10 +737,10 @@ auto DiagnosePoisonedName(Context& context, SemIR::NameId name_id,
                "Trying to diagnose poisoned name with no poisoning location");
   CARBON_DIAGNOSTIC(NameUseBeforeDecl, Error,
                     "name `{0}` used before it was declared", SemIR::NameId);
-  CARBON_DIAGNOSTIC(NameUseBeforeDeclNote, Note, "declared here");
+  CARBON_DIAGNOSTIC_LABEL(NameUseBeforeDeclNote, Info, "declared here");
   context.emitter()
       .Build(poisoning_loc_id, NameUseBeforeDecl, name_id)
-      .Note(decl_name_loc_id, NameUseBeforeDeclNote)
+      .Attach(decl_name_loc_id, NameUseBeforeDeclNote)
       .Emit();
 }
 

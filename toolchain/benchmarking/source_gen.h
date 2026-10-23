@@ -69,15 +69,21 @@ class SourceGen {
     int max_params = 4;
   };
 
+  // A definition size in a histogram of definition sizes, with its weight.
+  // `statements` counts the statements in a plan-based definition beyond the
+  // three that every such definition has: an accumulator, a statement reading
+  // the parameters, and the final `return`.
+  struct DefSizeWeight {
+    int statements;
+    int weight;
+  };
+
   // Parameters used to generate a class in a generated file.
   //
   // Currently, this uses a fixed number of each kind of declaration, with
   // arbitrary defaults chosen. The defaults currently skew towards large
   // classes with lots of nested declarations.
   // TODO: Switch these to distributions based on data.
-  //
-  // TODO: Add support for generating definitions and parameters to control
-  // them.
   //
   // TODO: Add heuristic for how many functions have return types.
   struct ClassParams {
@@ -94,6 +100,46 @@ class SourceGen {
     MethodDeclParams private_method_decl_params = {.max_params = 6};
 
     int private_field_decls = 6;
+
+    // The number of general public class functions to define inline. Unlike the
+    // single-expression member idioms below (`inline_getters`,
+    // `inline_predicates`, and `inline_forwarders`), which have fixed
+    // signatures coupled to paired fields or private declarations on the class,
+    // these take arbitrary parameter lists and have multi-statement definitions
+    // generated from `DefPlan`s (sharing the plan builder with out-of-line
+    // definitions).
+    int inline_function_defs = 0;
+    FunctionDeclParams inline_function_decl_params = {.max_params = 4};
+
+    // The histogram of plan sizes for `inline_function_defs`. A file's inline
+    // function definitions follow it as closely as their number allows.
+    //
+    // The default weights are percentages (rounded to sum to 100) of the
+    // multi-statement function definitions defined in classes in the headers
+    // included by a sample of the Carbon toolchain's, LLVM's, and Clang's
+    // implementation files (single-statement inline definitions are modeled by
+    // `inline_getters`, `inline_predicates`, and `inline_forwarders` below).
+    // Each size is a bucket's median, less the three statements that every
+    // plan-based definition has. The 68% of multi-statement inline definitions
+    // that have two or three statements get `.statements = 0`.
+    llvm::SmallVector<DefSizeWeight> inline_function_def_sizes = {
+        {.statements = 0, .weight = 68}, {.statements = 1, .weight = 23},
+        {.statements = 4, .weight = 5},  {.statements = 8, .weight = 2},
+        {.statements = 13, .weight = 1}, {.statements = 23, .weight = 1},
+    };
+
+    // The number of public methods to define inline that return a field. Each
+    // one returns a field of its own, in addition to `private_field_decls`.
+    int inline_getters = 0;
+
+    // The number of public methods to define inline that test a field with the
+    // field type's predicate template. Each one tests a field of its own.
+    int inline_predicates = 0;
+
+    // The number of public methods to define inline that pass their parameters
+    // on to a private method declaration with the same signature.
+    int inline_forwarders = 0;
+    MethodDeclParams inline_forwarder_params = {.max_params = 4};
   };
 
   // Parameters used to select type _uses_, as opposed to definitions.
@@ -121,32 +167,98 @@ class SourceGen {
   struct TypeUseParams {
     // The weights in the histogram start with a sequence fixed types described
     // with a Carbon and C++ string, and their associated weight.
+    //
+    // Each type also has a value expression, which a definition uses to produce
+    // a value of the type, such as a return value. Types without one, like
+    // pointers, are only used where no value is produced.
+    //
+    // Each type also has consumer templates, which a definition uses to read a
+    // parameter of the type so that no parameter is unused. A template is an
+    // `i32` expression (`int` in C++) with a `{0}` placeholder for the
+    // parameter name. Every type needs at least one.
+    //
+    // A type can also have a predicate template, a `bool` expression with a
+    // `{0}` placeholder for a value of the type. Only types with a predicate
+    // template and a value expression are used for the fields that predicates
+    // test.
     struct FixedTypeWeight {
       llvm::StringRef carbon_spelling;
       llvm::StringRef cpp_spelling;
       int weight;
+      llvm::StringRef carbon_value;
+      llvm::StringRef cpp_value;
+      llvm::SmallVector<llvm::StringRef> carbon_consumers;
+      llvm::SmallVector<llvm::StringRef> cpp_consumers;
+      llvm::StringRef carbon_predicate;
+      llvm::StringRef cpp_predicate;
     };
 
     llvm::SmallVector<FixedTypeWeight> fixed_type_weights = {
         // Combined weight of 65 for a core set of builtin types.
-        {.carbon_spelling = "bool", .cpp_spelling = "bool", .weight = 25},
-        {.carbon_spelling = "i32", .cpp_spelling = "int", .weight = 20},
+        {.carbon_spelling = "bool",
+         .cpp_spelling = "bool",
+         .weight = 25,
+         .carbon_value = "true",
+         .cpp_value = "true",
+         .carbon_consumers = {"(if {0} then 1 else 0)",
+                              "(if {0} then 2 else 3)"},
+         .cpp_consumers = {"({0} ? 1 : 0)", "({0} ? 2 : 3)"},
+         .carbon_predicate = "not {0}",
+         .cpp_predicate = "!{0}"},
+        {.carbon_spelling = "i32",
+         .cpp_spelling = "int",
+         .weight = 20,
+         .carbon_value = "0",
+         .cpp_value = "0",
+         .carbon_consumers = {"{0} + 1", "{0} * 2", "({0} % 7) + 1"},
+         .cpp_consumers = {"{0} + 1", "{0} * 2", "({0} % 7) + 1"},
+         .carbon_predicate = "{0} == 0",
+         .cpp_predicate = "{0} == 0"},
         {.carbon_spelling = "i64",
          .cpp_spelling = "std::int64_t",
-         .weight = 10},
-        {.carbon_spelling = "i32*", .cpp_spelling = "int*", .weight = 5},
+         .weight = 10,
+         .carbon_value = "0",
+         .cpp_value = "0",
+         .carbon_consumers = {"({0} as i32) - 2", "(({0} + 1) as i32)"},
+         .cpp_consumers = {"static_cast<int>({0}) - 2",
+                           "static_cast<int>({0} + 1)"},
+         .carbon_predicate = "{0} > 0",
+         .cpp_predicate = "{0} > 0"},
+        {.carbon_spelling = "i32*",
+         .cpp_spelling = "int*",
+         .weight = 5,
+         .carbon_consumers = {"*{0} + 1", "*{0} * 2"},
+         .cpp_consumers = {"*{0} + 1", "*{0} * 2"}},
         {.carbon_spelling = "i64*",
          .cpp_spelling = "std::int64_t*",
-         .weight = 5},
+         .weight = 5,
+         .carbon_consumers = {"(*{0} as i32) - 2", "((*{0} * 2) as i32)"},
+         .cpp_consumers = {"static_cast<int>(*{0}) - 2",
+                           "static_cast<int>(*{0} * 2)"}},
 
         // A weight of 5 distributed across tuple structures
         {.carbon_spelling = "(bool, i64)",
          .cpp_spelling = "std::pair<bool, std::int64_t>",
-         .weight = 2},
+         .weight = 2,
+         .carbon_value = "(true, 0)",
+         .cpp_value = "{true, 0}",
+         .carbon_consumers = {"(if {0}.0 then 1 else 0)", "({0}.1 as i32) + 1"},
+         .cpp_consumers = {"({0}.first ? 1 : 0)",
+                           "static_cast<int>({0}.second) + 1"},
+         .carbon_predicate = "{0}.1 > 0",
+         .cpp_predicate = "{0}.second > 0"},
         {.carbon_spelling = "(i32, i64*)",
          .cpp_spelling = "std::pair<int, std::int64_t*>",
-         .weight = 3},
+         .weight = 3,
+         .carbon_consumers = {"{0}.0 + 1", "{0}.0 * 2", "(*{0}.1 as i32) - 1"},
+         .cpp_consumers = {"{0}.first + 1", "{0}.first * 2",
+                           "static_cast<int>(*{0}.second) - 1"}},
     };
+
+    // Consumer templates for class types, in both languages. These call the
+    // generated `Checksum` method, which is the same in every class.
+    llvm::SmallVector<llvm::StringRef> class_consumers = {
+        "{0}.Checksum()", "{0}.Checksum() + 1", "{0}.Checksum() * 2"};
 
     // The weight for using types declared in the file. These will be randomly
     // shuffled references, and when there are more type references than
@@ -164,6 +276,28 @@ class SourceGen {
 
     // Parameters used to guide the selection of types for use in declarations.
     TypeUseParams type_use_params = {};
+
+    // Whether to define each declared function and method out-of-line, after
+    // every class.
+    bool define_decls_out_of_line = false;
+
+    // The histogram of sizes of out-of-line definitions. A file's definitions
+    // follow it as closely as their number allows.
+    //
+    // The default weights are percentages (rounded to sum to 100, with the
+    // 0.4% tail bucket rounded up to 1%) of the function definitions in a
+    // sample of the Carbon toolchain's, LLVM's, and Clang's implementation
+    // files, in buckets of their statement counts. Each size is a bucket's
+    // median, less the three statements that every generated definition has.
+    // The 43% of real definitions that have at most three statements get no
+    // more statements.
+    llvm::SmallVector<DefSizeWeight> out_of_line_def_sizes = {
+        {.statements = 0, .weight = 43}, {.statements = 2, .weight = 18},
+        {.statements = 5, .weight = 11}, {.statements = 8, .weight = 9},
+        {.statements = 13, .weight = 7}, {.statements = 20, .weight = 5},
+        {.statements = 29, .weight = 3}, {.statements = 43, .weight = 2},
+        {.statements = 67, .weight = 1}, {.statements = 125, .weight = 1},
+    };
   };
 
   // Access a global instance of this type to generate Carbon code for
@@ -276,14 +410,64 @@ class SourceGen {
 
   auto GetShuffledInts(int number, int min, int max) -> llvm::SmallVector<int>;
 
-  auto GenerateFunctionDecl(
-      llvm::StringRef name, bool is_private, bool is_method, int param_count,
-      llvm::StringRef indent,
-      llvm::SmallVectorImpl<llvm::StringRef>& param_names,
-      llvm::function_ref<auto()->llvm::StringRef> get_type_name,
-      llvm::raw_ostream& os) -> void;
-  auto GenerateClassDef(const ClassParams& params, ClassGenState& state,
+  // A parameter or a field: its name, and the spelling of its type.
+  struct TypedName {
+    llvm::StringRef name;
+    llvm::StringRef type;
+  };
+
+  // A function's signature, and the index of its definition plan.
+  struct FunctionSig {
+    llvm::StringRef name;
+    bool is_method;
+    llvm::SmallVector<TypedName> params;
+    llvm::SmallVector<llvm::StringRef> param_consumers;
+    llvm::StringRef return_type;
+    int def_plan;
+  };
+
+  // A declaration to define out-of-line, after every class: the name of its
+  // class, and its signature.
+  struct OutOfLineDef {
+    llvm::StringRef class_name;
+    FunctionSig sig;
+  };
+
+  auto EmitParams(bool is_method, llvm::ArrayRef<TypedName> params,
+                  llvm::StringRef indent, llvm::raw_ostream& os) -> void;
+  auto EmitFunctionDecl(llvm::StringRef name, bool is_private, bool is_method,
+                        llvm::ArrayRef<TypedName> params,
+                        llvm::StringRef return_type, llvm::StringRef indent,
                         llvm::raw_ostream& os) -> void;
+  auto GenerateFunctionDecl(ClassGenState& state, llvm::StringRef name,
+                            bool is_private, bool is_method, int param_count,
+                            llvm::StringRef indent, llvm::raw_ostream& os,
+                            FunctionSig* captured = nullptr) -> void;
+  auto GenerateFunctionDef(ClassGenState& state, const FunctionSig& sig,
+                           llvm::StringRef indent, llvm::raw_ostream& os)
+      -> void;
+  auto GenerateOutOfLineDef(ClassGenState& state, llvm::StringRef class_name,
+                            const FunctionSig& sig, llvm::raw_ostream& os)
+      -> void;
+  auto GenerateInlineFunctionDef(ClassGenState& state, llvm::StringRef name,
+                                 int param_count, llvm::StringRef indent,
+                                 llvm::raw_ostream& os) -> void;
+  auto GenerateGetter(llvm::StringRef name, TypedName field,
+                      llvm::raw_ostream& os) -> void;
+  auto GeneratePredicate(llvm::StringRef name, TypedName field,
+                         llvm::StringRef predicate, llvm::raw_ostream& os)
+      -> void;
+  auto GenerateForwarder(llvm::StringRef name, llvm::ArrayRef<TypedName> params,
+                         llvm::StringRef return_type, llvm::raw_ostream& os)
+      -> void;
+  auto GenerateMakeFunction(ClassGenState& state, llvm::StringRef class_name,
+                            llvm::ArrayRef<TypedName> fields,
+                            llvm::raw_ostream& os) -> void;
+  auto GenerateChecksumFunction(llvm::raw_ostream& os) -> void;
+  auto GenerateClassDef(const ClassParams& params, ClassGenState& state,
+                        llvm::raw_ostream& os,
+                        llvm::SmallVectorImpl<OutOfLineDef>& out_of_line_defs)
+      -> void;
 
   absl::BitGen rng_;
   llvm::BumpPtrAllocator storage_;

@@ -59,23 +59,15 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestAssociatedEntity() {
-  // CHECK:STDERR: fail_associated_entity.carbon:[[@LINE+8]]:3: error: cannot convert type `<associated entity in I>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasDestruction(I.F);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_associated_entity.carbon:[[@LINE-7]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:8:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasDestruction[T: Core.Destroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_associated_entity.carbon:[[@LINE+4]]:3-26: error: cannot convert type `<associated entity in I>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_associated_entity.carbon:[[@LINE-5]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasDestruction(I.F);
 
-  // CHECK:STDERR: fail_associated_entity.carbon:[[@LINE+8]]:3: error: cannot convert type `<associated entity in I>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(I.F);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_associated_entity.carbon:[[@LINE-17]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_associated_entity.carbon:[[@LINE+4]]:3-33: error: cannot convert type `<associated entity in I>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_associated_entity.carbon:[[@LINE-11]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(I.F);
 }
@@ -88,23 +80,15 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestGenericInterface() {
-  // CHECK:STDERR: fail_generic_interface.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of GenericInterface>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasDestruction(GenericInterface);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic_interface.carbon:[[@LINE-7]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:8:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasDestruction[T: Core.Destroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_generic_interface.carbon:[[@LINE+4]]:3-39: error: cannot convert type `<type of GenericInterface>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_generic_interface.carbon:[[@LINE-5]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasDestruction(GenericInterface);
 
-  // CHECK:STDERR: fail_generic_interface.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of GenericInterface>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(GenericInterface);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic_interface.carbon:[[@LINE-17]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_generic_interface.carbon:[[@LINE+4]]:3-46: error: cannot convert type `<type of GenericInterface>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_generic_interface.carbon:[[@LINE-11]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(GenericInterface);
 }
@@ -117,23 +101,15 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestGenericNamedConstraint() {
-  // CHECK:STDERR: fail_generic_named_constraint.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of GenericConstraint>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasDestruction(GenericConstraint);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic_named_constraint.carbon:[[@LINE-7]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:8:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasDestruction[T: Core.Destroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_generic_named_constraint.carbon:[[@LINE+4]]:3-40: error: cannot convert type `<type of GenericConstraint>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_generic_named_constraint.carbon:[[@LINE-5]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasDestruction(GenericConstraint);
 
-  // CHECK:STDERR: fail_generic_named_constraint.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of GenericConstraint>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(GenericConstraint);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic_named_constraint.carbon:[[@LINE-17]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_generic_named_constraint.carbon:[[@LINE+4]]:3-47: error: cannot convert type `<type of GenericConstraint>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_generic_named_constraint.carbon:[[@LINE-11]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(GenericConstraint);
 }
@@ -147,23 +123,15 @@ import library "check_destroy_format";
 namespace N;
 
 fn TestNamespace() {
-  // CHECK:STDERR: fail_namespace.carbon:[[@LINE+8]]:3: error: cannot convert type `<namespace>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasDestruction(N);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_namespace.carbon:[[@LINE-8]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:8:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasDestruction[T: Core.Destroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_namespace.carbon:[[@LINE+4]]:3-24: error: cannot convert type `<namespace>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_namespace.carbon:[[@LINE-6]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasDestruction(N);
 
-  // CHECK:STDERR: fail_namespace.carbon:[[@LINE+8]]:3: error: cannot convert type `<namespace>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(N);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_namespace.carbon:[[@LINE-18]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_namespace.carbon:[[@LINE+4]]:3-31: error: cannot convert type `<namespace>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_namespace.carbon:[[@LINE-12]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(N);
 }
@@ -176,23 +144,15 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestGenericClass() {
-  // CHECK:STDERR: fail_parameterized_class.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of Generic>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasDestruction(Generic);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_parameterized_class.carbon:[[@LINE-7]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:8:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasDestruction[T: Core.Destroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_parameterized_class.carbon:[[@LINE+4]]:3-30: error: cannot convert type `<type of Generic>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_parameterized_class.carbon:[[@LINE-5]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasDestruction(Generic);
 
-  // CHECK:STDERR: fail_parameterized_class.carbon:[[@LINE+8]]:3: error: cannot convert type `<type of Generic>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(Generic);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_parameterized_class.carbon:[[@LINE-17]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_parameterized_class.carbon:[[@LINE+4]]:3-37: error: cannot convert type `<type of Generic>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_parameterized_class.carbon:[[@LINE-11]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(Generic);
 }
@@ -205,23 +165,15 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestUnboundElement() {
-  // CHECK:STDERR: fail_unbound_element.carbon:[[@LINE+8]]:3: error: cannot convert type `<unbound element of class C>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasDestruction(C.x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_unbound_element.carbon:[[@LINE-7]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:8:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasDestruction[T: Core.Destroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_unbound_element.carbon:[[@LINE+4]]:3-26: error: cannot convert type `<unbound element of class C>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_unbound_element.carbon:[[@LINE-5]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasDestruction(C.x);
 
-  // CHECK:STDERR: fail_unbound_element.carbon:[[@LINE+8]]:3: error: cannot convert type `<unbound element of class C>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(C.x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_unbound_element.carbon:[[@LINE-17]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_unbound_element.carbon:[[@LINE+4]]:3-33: error: cannot convert type `<unbound element of class C>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_unbound_element.carbon:[[@LINE-11]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(C.x);
 }

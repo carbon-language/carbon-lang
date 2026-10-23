@@ -77,16 +77,10 @@ class Derived {
 
 fn DestroyClassWithProtectedBaseDestructor() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_destroy_protected_base_destructor.carbon:[[@LINE+11]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   var unused a: Derived = {.base = {}};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_destroy_protected_base_destructor.carbon:[[@LINE-11]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_todo_destroy_protected_base_destructor.carbon:[[@LINE+5]]:3-23: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_todo_destroy_protected_base_destructor.carbon:[[@LINE-9]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:33:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   ~ProtectedDestructor();
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   var unused a: Derived = {.base = {}};
   //@dump-sem-ir-end
@@ -105,16 +99,10 @@ class Derived {
 fn DestroyClassWithPrivateBaseDestructor() {
   //@dump-sem-ir-begin
   // TODO: We should not allow this, as the destructor of the base class is private.
-  // CHECK:STDERR: fail_destroy_private_base_destructor.carbon:[[@LINE+11]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   var unused a: Derived = {.base = {}};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_private_base_destructor.carbon:[[@LINE-12]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_private_base_destructor.carbon:[[@LINE+5]]:3-23: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_destroy_private_base_destructor.carbon:[[@LINE-10]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:28:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   ~PrivateDestructor();
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   var unused a: Derived = {.base = {}};
   //@dump-sem-ir-end
@@ -127,77 +115,42 @@ library "[[@TEST_NAME]]";
 import Cpp library "types.h";
 
 fn AmbiguousDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+20]]:17: error: binding pattern has incomplete type `AmbiguousDestructor` in name binding declaration [IncompleteTypeInBindingDecl]
-  // CHECK:STDERR:   var unused a: Cpp.AmbiguousDestructor = {};
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+7]]:17-39: error: binding pattern has incomplete type `AmbiguousDestructor` in name binding declaration [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR: included from: fail_destroy_nondestroyable.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:13:7: note: destructor of class 'AmbiguousDestructorT<>' is ambiguous [CppInteropParseError]
-  // CHECK:STDERR:    13 | class AmbiguousDestructorT {
-  // CHECK:STDERR:       |       ^
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-10]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./types.h:13:7: note: in instantiation of template class 'AmbiguousDestructorT<>' requested here [CppInteropParseNote]
-  // CHECK:STDERR:    13 | class AmbiguousDestructorT {
-  // CHECK:STDERR:       |       ^
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-14]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./types.h:15:3: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:    15 |   ~AmbiguousDestructorT() requires (N != 1);
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-18]]:10: in file included here [InCppInclude]
   // CHECK:STDERR: ./types.h:16:3: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:    16 |   ~AmbiguousDestructorT() requires (N != 2);
-  // CHECK:STDERR:       |   ^
   // CHECK:STDERR:
   var unused a: Cpp.AmbiguousDestructor = {};
 }
 
 fn DeletedDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+18]]:3: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    49 |   var unused a: Cpp.DeletedDestructor = {};
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-30]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+8]]:3: error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_destroy_nondestroyable.carbon:[[@LINE-15]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:23:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
-  // CHECK:STDERR:    23 |   ~DeletedDestructor() = delete;
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+7]]:3: error: cannot convert type `Cpp.DeletedDestructor` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   var unused a: Cpp.DeletedDestructor = {};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+3]]:3-37: error: cannot convert type `Cpp.DeletedDestructor` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   var unused a: Cpp.DeletedDestructor = {};
 }
 
 fn PrivateDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+11]]:3: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   var unused a: Cpp.PrivateDestructor = {};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-52]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+5]]:3-37: error: cannot access private member `<C++ destructor>` of type `Cpp.PrivateDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_destroy_nondestroyable.carbon:[[@LINE-27]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:28:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   ~PrivateDestructor();
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   var unused a: Cpp.PrivateDestructor = {};
 }
 
 fn ProtectedDestroy() {
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+11]]:3: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
-  // CHECK:STDERR:   var unused a: Cpp.ProtectedDestructor = {};
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE-67]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_destroy_nondestroyable.carbon:[[@LINE+5]]:3-39: error: cannot access protected member `<C++ destructor>` of type `Cpp.ProtectedDestructor` [ClassInvalidMemberAccess]
+  // CHECK:STDERR: included from: fail_destroy_nondestroyable.carbon:[[@LINE-36]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:33:3: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:   ~ProtectedDestructor();
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   var unused a: Cpp.ProtectedDestructor = {};
 }
@@ -235,16 +188,10 @@ class AdaptNoDestroy {
 fn Make() -> AdaptNoDestroy;
 
 fn F() {
-  // CHECK:STDERR: fail_no_destroy.carbon:[[@LINE+11]]:3: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR:    24 |   var _: AdaptNoDestroy = Make();
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: fail_no_destroy.carbon:[[@LINE-12]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_no_destroy.carbon:[[@LINE+5]]:3: error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR: included from: fail_no_destroy.carbon:[[@LINE-10]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:23:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
-  // CHECK:STDERR:    23 |   ~DeletedDestructor() = delete;
-  // CHECK:STDERR:       |   ^
-  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn SelfDestruct[T: Destroy](ref t: T) {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: min_prelude/parts/destroy.carbon:30:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   var _: AdaptNoDestroy = Make();
 }
@@ -435,7 +382,7 @@ fn F() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.e5d: %SubobjectDestroy.type = facet_value %ProtectedDestructor, (%custom_witness.fe1) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.721: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.e5d) [concrete]
 // CHECK:STDOUT:   %facet_value.c56: %facet_type = facet_value %ProtectedDestructor, (%DestroyImpl.impl_witness.721, %custom_witness.fe1) [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc23_3.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc17_3.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.1fc: %SubobjectDestroy.type = facet_value %Derived, (%custom_witness.b80ef6.2) [concrete]
@@ -451,52 +398,52 @@ fn F() {
 // CHECK:STDOUT: fn @DestroyClassWithProtectedBaseDestructor() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.var: ref %Derived = var_storage %a.var_patt
-// CHECK:STDOUT:   %.loc23_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc23_38.1: %struct_type.base.f5e = struct_literal (%.loc23_37.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc23_38.2: ref %.a6c = class_element_access %a.var, element0
-// CHECK:STDOUT:   %.loc23_37.2: init %.a6c to %.loc23_38.2 = class_init () [concrete = constants.%empty_struct.ec1]
-// CHECK:STDOUT:   %.loc23_38.3: init %.a6c = converted %.loc23_37.1, %.loc23_37.2 [concrete = constants.%empty_struct.ec1]
-// CHECK:STDOUT:   %.loc23_38.4: init %ProtectedDestructor = as_compatible %.loc23_38.3 [concrete = constants.%ProtectedDestructor.val]
-// CHECK:STDOUT:   %.loc23_38.5: init %Derived to %a.var = class_init (%.loc23_38.4) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc23_3.1: init %Derived = converted %.loc23_38.1, %.loc23_38.5 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   assign %a.var, %.loc23_3.1
+// CHECK:STDOUT:   %.loc17_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc17_38.1: %struct_type.base.f5e = struct_literal (%.loc17_37.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc17_38.2: ref %.a6c = class_element_access %a.var, element0
+// CHECK:STDOUT:   %.loc17_37.2: init %.a6c to %.loc17_38.2 = class_init () [concrete = constants.%empty_struct.ec1]
+// CHECK:STDOUT:   %.loc17_38.3: init %.a6c = converted %.loc17_37.1, %.loc17_37.2 [concrete = constants.%empty_struct.ec1]
+// CHECK:STDOUT:   %.loc17_38.4: init %ProtectedDestructor = as_compatible %.loc17_38.3 [concrete = constants.%ProtectedDestructor.val]
+// CHECK:STDOUT:   %.loc17_38.5: init %Derived to %a.var = class_init (%.loc17_38.4) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc17_3.1: init %Derived = converted %.loc17_38.1, %.loc17_38.5 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   assign %a.var, %.loc17_3.1
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %a: ref %Derived = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc23_3.1: %facet_type = facet_value constants.%Derived, (constants.%DestroyImpl.impl_witness.660, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.bbd]
-// CHECK:STDOUT:   %.loc23_3.2: %facet_type = converted constants.%Derived, %facet_value.loc23_3.1 [concrete = constants.%facet_value.bbd]
-// CHECK:STDOUT:   %facet_value.loc23_3.2: %facet_type = facet_value constants.%Derived, (constants.%DestroyImpl.impl_witness.660, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.bbd]
-// CHECK:STDOUT:   %.loc23_3.3: %facet_type = converted constants.%Derived, %facet_value.loc23_3.2 [concrete = constants.%facet_value.bbd]
+// CHECK:STDOUT:   %facet_value.loc17_3.1: %facet_type = facet_value constants.%Derived, (constants.%DestroyImpl.impl_witness.660, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.bbd]
+// CHECK:STDOUT:   %.loc17_3.2: %facet_type = converted constants.%Derived, %facet_value.loc17_3.1 [concrete = constants.%facet_value.bbd]
+// CHECK:STDOUT:   %facet_value.loc17_3.2: %facet_type = facet_value constants.%Derived, (constants.%DestroyImpl.impl_witness.660, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.bbd]
+// CHECK:STDOUT:   %.loc17_3.3: %facet_type = converted constants.%Derived, %facet_value.loc17_3.2 [concrete = constants.%facet_value.bbd]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc23_3.1(%self.param: ref %struct_type.base.454) {
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc17_3.1(%self.param: ref %struct_type.base.454) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc23_3.1: ref %ProtectedDestructor = struct_access %self.param, element0
-// CHECK:STDOUT:   %facet_value.loc23_3.1: %facet_type = facet_value constants.%ProtectedDestructor, (constants.%DestroyImpl.impl_witness.721, constants.%custom_witness.fe1) [concrete = constants.%facet_value.c56]
-// CHECK:STDOUT:   %.loc23_3.2: %facet_type = converted constants.%ProtectedDestructor, %facet_value.loc23_3.1 [concrete = constants.%facet_value.c56]
-// CHECK:STDOUT:   %facet_value.loc23_3.2: %facet_type = facet_value constants.%ProtectedDestructor, (constants.%DestroyImpl.impl_witness.721, constants.%custom_witness.fe1) [concrete = constants.%facet_value.c56]
-// CHECK:STDOUT:   %.loc23_3.3: %facet_type = converted constants.%ProtectedDestructor, %facet_value.loc23_3.2 [concrete = constants.%facet_value.c56]
+// CHECK:STDOUT:   %.loc17_3.1: ref %ProtectedDestructor = struct_access %self.param, element0
+// CHECK:STDOUT:   %facet_value.loc17_3.1: %facet_type = facet_value constants.%ProtectedDestructor, (constants.%DestroyImpl.impl_witness.721, constants.%custom_witness.fe1) [concrete = constants.%facet_value.c56]
+// CHECK:STDOUT:   %.loc17_3.2: %facet_type = converted constants.%ProtectedDestructor, %facet_value.loc17_3.1 [concrete = constants.%facet_value.c56]
+// CHECK:STDOUT:   %facet_value.loc17_3.2: %facet_type = facet_value constants.%ProtectedDestructor, (constants.%DestroyImpl.impl_witness.721, constants.%custom_witness.fe1) [concrete = constants.%facet_value.c56]
+// CHECK:STDOUT:   %.loc17_3.3: %facet_type = converted constants.%ProtectedDestructor, %facet_value.loc17_3.2 [concrete = constants.%facet_value.c56]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc23_3.1)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc17_3.1)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc23_3.2(%self.param: ref %Derived) {
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc17_3.2(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %base.ref: %Derived.elem = name_ref base, @Derived.%.loc7 [concrete = @Derived.%.loc7]
-// CHECK:STDOUT:   %.loc23_3.1: ref %ProtectedDestructor = class_element_access %self.param, element0
-// CHECK:STDOUT:   %facet_value.loc23_3.1: %facet_type = facet_value constants.%ProtectedDestructor, (constants.%DestroyImpl.impl_witness.721, constants.%custom_witness.fe1) [concrete = constants.%facet_value.c56]
-// CHECK:STDOUT:   %.loc23_3.2: %facet_type = converted constants.%ProtectedDestructor, %facet_value.loc23_3.1 [concrete = constants.%facet_value.c56]
-// CHECK:STDOUT:   %facet_value.loc23_3.2: %facet_type = facet_value constants.%ProtectedDestructor, (constants.%DestroyImpl.impl_witness.721, constants.%custom_witness.fe1) [concrete = constants.%facet_value.c56]
-// CHECK:STDOUT:   %.loc23_3.3: %facet_type = converted constants.%ProtectedDestructor, %facet_value.loc23_3.2 [concrete = constants.%facet_value.c56]
+// CHECK:STDOUT:   %.loc17_3.1: ref %ProtectedDestructor = class_element_access %self.param, element0
+// CHECK:STDOUT:   %facet_value.loc17_3.1: %facet_type = facet_value constants.%ProtectedDestructor, (constants.%DestroyImpl.impl_witness.721, constants.%custom_witness.fe1) [concrete = constants.%facet_value.c56]
+// CHECK:STDOUT:   %.loc17_3.2: %facet_type = converted constants.%ProtectedDestructor, %facet_value.loc17_3.1 [concrete = constants.%facet_value.c56]
+// CHECK:STDOUT:   %facet_value.loc17_3.2: %facet_type = facet_value constants.%ProtectedDestructor, (constants.%DestroyImpl.impl_witness.721, constants.%custom_witness.fe1) [concrete = constants.%facet_value.c56]
+// CHECK:STDOUT:   %.loc17_3.3: %facet_type = converted constants.%ProtectedDestructor, %facet_value.loc17_3.2 [concrete = constants.%facet_value.c56]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc23_3.1)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc17_3.1)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -531,7 +478,7 @@ fn F() {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.be1: %SubobjectDestroy.type = facet_value %PrivateDestructor, (%custom_witness.fe1) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.a8a: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.be1) [concrete]
 // CHECK:STDOUT:   %facet_value.636: %facet_type = facet_value %PrivateDestructor, (%DestroyImpl.impl_witness.a8a, %custom_witness.fe1) [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc24_3.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc18_3.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.1fc: %SubobjectDestroy.type = facet_value %Derived, (%custom_witness.b80ef6.2) [concrete]
@@ -547,52 +494,52 @@ fn F() {
 // CHECK:STDOUT: fn @DestroyClassWithPrivateBaseDestructor() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.var: ref %Derived = var_storage %a.var_patt
-// CHECK:STDOUT:   %.loc24_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc24_38.1: %struct_type.base.f5e = struct_literal (%.loc24_37.1) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc24_38.2: ref %.c73 = class_element_access %a.var, element0
-// CHECK:STDOUT:   %.loc24_37.2: init %.c73 to %.loc24_38.2 = class_init () [concrete = constants.%empty_struct.d8b]
-// CHECK:STDOUT:   %.loc24_38.3: init %.c73 = converted %.loc24_37.1, %.loc24_37.2 [concrete = constants.%empty_struct.d8b]
-// CHECK:STDOUT:   %.loc24_38.4: init %PrivateDestructor = as_compatible %.loc24_38.3 [concrete = constants.%PrivateDestructor.val]
-// CHECK:STDOUT:   %.loc24_38.5: init %Derived to %a.var = class_init (%.loc24_38.4) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc24_3.1: init %Derived = converted %.loc24_38.1, %.loc24_38.5 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   assign %a.var, %.loc24_3.1
+// CHECK:STDOUT:   %.loc18_37.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc18_38.1: %struct_type.base.f5e = struct_literal (%.loc18_37.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc18_38.2: ref %.c73 = class_element_access %a.var, element0
+// CHECK:STDOUT:   %.loc18_37.2: init %.c73 to %.loc18_38.2 = class_init () [concrete = constants.%empty_struct.d8b]
+// CHECK:STDOUT:   %.loc18_38.3: init %.c73 = converted %.loc18_37.1, %.loc18_37.2 [concrete = constants.%empty_struct.d8b]
+// CHECK:STDOUT:   %.loc18_38.4: init %PrivateDestructor = as_compatible %.loc18_38.3 [concrete = constants.%PrivateDestructor.val]
+// CHECK:STDOUT:   %.loc18_38.5: init %Derived to %a.var = class_init (%.loc18_38.4) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc18_3.1: init %Derived = converted %.loc18_38.1, %.loc18_38.5 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   assign %a.var, %.loc18_3.1
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %a: ref %Derived = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.746 = ref_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.746 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %facet_value.loc24_3.1: %facet_type = facet_value constants.%Derived, (constants.%DestroyImpl.impl_witness.660, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.bbd]
-// CHECK:STDOUT:   %.loc24_3.2: %facet_type = converted constants.%Derived, %facet_value.loc24_3.1 [concrete = constants.%facet_value.bbd]
-// CHECK:STDOUT:   %facet_value.loc24_3.2: %facet_type = facet_value constants.%Derived, (constants.%DestroyImpl.impl_witness.660, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.bbd]
-// CHECK:STDOUT:   %.loc24_3.3: %facet_type = converted constants.%Derived, %facet_value.loc24_3.2 [concrete = constants.%facet_value.bbd]
+// CHECK:STDOUT:   %facet_value.loc18_3.1: %facet_type = facet_value constants.%Derived, (constants.%DestroyImpl.impl_witness.660, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.bbd]
+// CHECK:STDOUT:   %.loc18_3.2: %facet_type = converted constants.%Derived, %facet_value.loc18_3.1 [concrete = constants.%facet_value.bbd]
+// CHECK:STDOUT:   %facet_value.loc18_3.2: %facet_type = facet_value constants.%Derived, (constants.%DestroyImpl.impl_witness.660, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value.bbd]
+// CHECK:STDOUT:   %.loc18_3.3: %facet_type = converted constants.%Derived, %facet_value.loc18_3.2 [concrete = constants.%facet_value.bbd]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%a.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc24_3.1(%self.param: ref %struct_type.base.9aa) {
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc18_3.1(%self.param: ref %struct_type.base.9aa) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc24_3.1: ref %PrivateDestructor = struct_access %self.param, element0
-// CHECK:STDOUT:   %facet_value.loc24_3.1: %facet_type = facet_value constants.%PrivateDestructor, (constants.%DestroyImpl.impl_witness.a8a, constants.%custom_witness.fe1) [concrete = constants.%facet_value.636]
-// CHECK:STDOUT:   %.loc24_3.2: %facet_type = converted constants.%PrivateDestructor, %facet_value.loc24_3.1 [concrete = constants.%facet_value.636]
-// CHECK:STDOUT:   %facet_value.loc24_3.2: %facet_type = facet_value constants.%PrivateDestructor, (constants.%DestroyImpl.impl_witness.a8a, constants.%custom_witness.fe1) [concrete = constants.%facet_value.636]
-// CHECK:STDOUT:   %.loc24_3.3: %facet_type = converted constants.%PrivateDestructor, %facet_value.loc24_3.2 [concrete = constants.%facet_value.636]
+// CHECK:STDOUT:   %.loc18_3.1: ref %PrivateDestructor = struct_access %self.param, element0
+// CHECK:STDOUT:   %facet_value.loc18_3.1: %facet_type = facet_value constants.%PrivateDestructor, (constants.%DestroyImpl.impl_witness.a8a, constants.%custom_witness.fe1) [concrete = constants.%facet_value.636]
+// CHECK:STDOUT:   %.loc18_3.2: %facet_type = converted constants.%PrivateDestructor, %facet_value.loc18_3.1 [concrete = constants.%facet_value.636]
+// CHECK:STDOUT:   %facet_value.loc18_3.2: %facet_type = facet_value constants.%PrivateDestructor, (constants.%DestroyImpl.impl_witness.a8a, constants.%custom_witness.fe1) [concrete = constants.%facet_value.636]
+// CHECK:STDOUT:   %.loc18_3.3: %facet_type = converted constants.%PrivateDestructor, %facet_value.loc18_3.2 [concrete = constants.%facet_value.636]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc24_3.1)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc18_3.1)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc24_3.2(%self.param: ref %Derived) {
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc18_3.2(%self.param: ref %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %base.ref: %Derived.elem = name_ref base, @Derived.%.loc7 [concrete = @Derived.%.loc7]
-// CHECK:STDOUT:   %.loc24_3.1: ref %PrivateDestructor = class_element_access %self.param, element0
-// CHECK:STDOUT:   %facet_value.loc24_3.1: %facet_type = facet_value constants.%PrivateDestructor, (constants.%DestroyImpl.impl_witness.a8a, constants.%custom_witness.fe1) [concrete = constants.%facet_value.636]
-// CHECK:STDOUT:   %.loc24_3.2: %facet_type = converted constants.%PrivateDestructor, %facet_value.loc24_3.1 [concrete = constants.%facet_value.636]
-// CHECK:STDOUT:   %facet_value.loc24_3.2: %facet_type = facet_value constants.%PrivateDestructor, (constants.%DestroyImpl.impl_witness.a8a, constants.%custom_witness.fe1) [concrete = constants.%facet_value.636]
-// CHECK:STDOUT:   %.loc24_3.3: %facet_type = converted constants.%PrivateDestructor, %facet_value.loc24_3.2 [concrete = constants.%facet_value.636]
+// CHECK:STDOUT:   %.loc18_3.1: ref %PrivateDestructor = class_element_access %self.param, element0
+// CHECK:STDOUT:   %facet_value.loc18_3.1: %facet_type = facet_value constants.%PrivateDestructor, (constants.%DestroyImpl.impl_witness.a8a, constants.%custom_witness.fe1) [concrete = constants.%facet_value.636]
+// CHECK:STDOUT:   %.loc18_3.2: %facet_type = converted constants.%PrivateDestructor, %facet_value.loc18_3.1 [concrete = constants.%facet_value.636]
+// CHECK:STDOUT:   %facet_value.loc18_3.2: %facet_type = facet_value constants.%PrivateDestructor, (constants.%DestroyImpl.impl_witness.a8a, constants.%custom_witness.fe1) [concrete = constants.%facet_value.636]
+// CHECK:STDOUT:   %.loc18_3.3: %facet_type = converted constants.%PrivateDestructor, %facet_value.loc18_3.2 [concrete = constants.%facet_value.636]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc24_3.1)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc18_3.1)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

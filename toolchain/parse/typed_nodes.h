@@ -128,7 +128,7 @@ using EmptyDecl =
     LeafNode<NodeKind::EmptyDecl, Lex::SemiTokenIndex, NodeCategory::Decl>;
 
 // A name that may be immediately followed by a signature (i.e. parameter lists
-// and/or a return declaration). There may be false positives, because we make
+// and/or a return specifier). There may be false positives, because we make
 // this determination based on the context and a single token of lookahead.
 using IdentifierNameMaybeBeforeSignature =
     LeafNode<NodeKind::IdentifierNameMaybeBeforeSignature,
@@ -136,7 +136,7 @@ using IdentifierNameMaybeBeforeSignature =
              NodeCategory::MemberName | NodeCategory::NonExprName>;
 
 // A name that is known not to be immediately followed by a signature (i.e.
-// parameter lists and/or a return declaration).
+// parameter lists and/or a return specifier).
 using IdentifierNameNotBeforeSignature =
     LeafNode<NodeKind::IdentifierNameNotBeforeSignature,
              Lex::IdentifierTokenIndex,
@@ -574,7 +574,7 @@ using FunctionIntroducer =
 // A return type: `-> i32`.
 struct ReturnType {
   static constexpr auto Kind = NodeKind::ReturnType.Define(
-      {.category = NodeCategory::ReturnDecl, .child_count = 1});
+      {.category = NodeCategory::ReturnSpecifier, .child_count = 1});
 
   Lex::MinusGreaterTokenIndex token;
   AnyExprId type;
@@ -583,7 +583,7 @@ struct ReturnType {
 // A return form: `->? form(var i32)`
 struct ReturnForm {
   static constexpr auto Kind = NodeKind::ReturnForm.Define(
-      {.category = NodeCategory::ReturnDecl, .child_count = 1});
+      {.category = NodeCategory::ReturnSpecifier, .child_count = 1});
 
   Lex::MinusGreaterQuestionTokenIndex token;
   AnyExprId type;
@@ -599,15 +599,15 @@ struct FunctionSignature {
   FunctionIntroducerId introducer;
   llvm::SmallVector<AnyModifierId> modifiers;
   DeclName name;
-  std::optional<AnyReturnDeclId> return_type;
+  std::optional<AnyReturnSpecifierId> return_type;
   TokenKind token;
 };
 
 using FunctionDecl = FunctionSignature<NodeKind::FunctionDecl,
                                        Lex::SemiTokenIndex, NodeCategory::Decl>;
 using FunctionDefinitionStart =
-    FunctionSignature<NodeKind::FunctionDefinitionStart, Lex::TokenIndex,
-                      NodeCategory::None>;
+    FunctionSignature<NodeKind::FunctionDefinitionStart,
+                      Lex::OpenCurlyBraceTokenIndex, NodeCategory::None>;
 
 // A function definition: `fn F() -> i32 { ... }`.
 struct FunctionDefinition {
@@ -620,13 +620,18 @@ struct FunctionDefinition {
   Lex::CloseCurlyBraceTokenIndex token;
 };
 
-// A terse function definition: `fn F() -> i32 => expr;`.
+using FunctionTerseDefinitionStart =
+    FunctionSignature<NodeKind::FunctionTerseDefinitionStart,
+                      Lex::EqualGreaterTokenIndex, NodeCategory::None>;
+
+// A terse function definition: `fn F() => expr;`.
 struct FunctionTerseDefinition {
   static constexpr auto Kind = NodeKind::FunctionTerseDefinition.Define(
       {.category = NodeCategory::Decl,
-       .bracketed_by = FunctionDefinitionStart::Kind});
+       .bracketed_by = FunctionTerseDefinitionStart::Kind,
+       .child_count = 2});
 
-  FunctionDefinitionStartId signature;
+  FunctionTerseDefinitionStartId signature;
   AnyExprId body;
   Lex::SemiTokenIndex token;
 };
@@ -788,16 +793,20 @@ struct CodeBlock {
 using LambdaIntroducer =
     LeafNode<NodeKind::LambdaIntroducer, Lex::FnTokenIndex>;
 
-struct LambdaDefinitionStart {
-  static constexpr auto Kind = NodeKind::LambdaDefinitionStart.Define(
-      {.bracketed_by = LambdaIntroducer::Kind});
+template <const NodeKind& KindT, typename TokenKind>
+struct LambdaSignature {
+  static constexpr auto Kind =
+      KindT.Define({.bracketed_by = LambdaIntroducer::Kind});
 
   LambdaIntroducerId introducer;
   std::optional<ImplicitParamListId> implicit_params;
   std::optional<ExplicitParamListId> explicit_params;
-  std::optional<AnyReturnDeclId> return_type;
-  Lex::TokenIndex token;
+  std::optional<AnyReturnSpecifierId> return_type;
+  TokenKind token;
 };
+
+using LambdaDefinitionStart = LambdaSignature<NodeKind::LambdaDefinitionStart,
+                                              Lex::OpenCurlyBraceTokenIndex>;
 
 struct Lambda {
   static constexpr auto Kind =
@@ -805,10 +814,23 @@ struct Lambda {
                                .bracketed_by = LambdaDefinitionStart::Kind});
 
   LambdaDefinitionStartId signature;
-  std::optional<AnyExprId> terse_body;
   llvm::SmallVector<AnyStatementId> body;
-  // Use a generic token index because the token might be `}` or `fn`.
-  Lex::TokenIndex token;
+  Lex::CloseCurlyBraceTokenIndex token;
+};
+
+using LambdaTerseDefinitionStart =
+    LambdaSignature<NodeKind::LambdaTerseDefinitionStart,
+                    Lex::EqualGreaterTokenIndex>;
+
+struct LambdaTerseDefinition {
+  static constexpr auto Kind = NodeKind::LambdaTerseDefinition.Define(
+      {.category = NodeCategory::Expr,
+       .bracketed_by = LambdaTerseDefinitionStart::Kind,
+       .child_count = 2});
+
+  LambdaTerseDefinitionStartId signature;
+  AnyExprId body;
+  Lex::FnTokenIndex token;
 };
 
 // An expression statement: `F(x);`.

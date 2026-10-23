@@ -18,14 +18,10 @@ class C {
 // --- fail_todo_generic_self_no_type.carbon
 
 class C {
-  // CHECK:STDERR: fail_todo_generic_self_no_type.carbon:[[@LINE+4]]:20: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
-  // CHECK:STDERR:   fn A(generic self);
-  // CHECK:STDERR:                    ^
+  // CHECK:STDERR: fail_todo_generic_self_no_type.carbon:[[@LINE+2]]:20: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
   // CHECK:STDERR:
   fn A(generic self);
-  // CHECK:STDERR: fail_todo_generic_self_no_type.carbon:[[@LINE+4]]:21: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
-  // CHECK:STDERR:   fn B(template self);
-  // CHECK:STDERR:                     ^
+  // CHECK:STDERR: fail_todo_generic_self_no_type.carbon:[[@LINE+2]]:21: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
   // CHECK:STDERR:
   fn B(template self);
 }

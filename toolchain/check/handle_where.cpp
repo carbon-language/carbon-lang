@@ -8,6 +8,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"
@@ -99,14 +100,14 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     if (identified_id.has_value()) {
       const auto& identified =
           context.identified_facet_types().Get(identified_id);
-      if (identified.is_valid_impl_as_target()) {
-        auto impl_as_target = EvaluateIdentifiedWitnesses(
-            context, node_id, identified.impl_as_target_interface());
+      auto impl_as_target =
+          identified.EvaluateImplWitnessesToGetImplAsTarget(context, node_id);
+      if (impl_as_target.is_valid()) {
         auto& declaring = context.declaring_impl_decls().back();
         if (declaring.specific_interface != SemIR::SpecificInterface::None) {
-          CARBON_CHECK(declaring.specific_interface == impl_as_target);
+          CARBON_CHECK(declaring.specific_interface == impl_as_target.target());
         }
-        declaring.specific_interface = impl_as_target;
+        declaring.specific_interface = impl_as_target.target();
       }
     }
   }
@@ -407,35 +408,33 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
   auto [rhs_node, rhs_id] = context.node_stack().PopExprWithNodeId();
   auto [lhs_node, lhs_id] = context.node_stack().PopExprWithNodeId();
 
-  if (!FindDesignator(context, lhs_id)) {
-    bool found_designator = false;
-    auto const_rhs_id = context.constant_values().Get(rhs_id);
-    if (auto facet_type =
-            context.constant_values().TryGetInstAs<SemIR::FacetType>(
-                const_rhs_id)) {
-      found_designator =
-          FindDesignatorInEveryExtendConstraint(context, *facet_type);
-    }
-    if (!found_designator) {
-      auto const_lhs_id = context.constant_values().Get(lhs_id);
-      if (const_lhs_id != SemIR::ErrorInst::ConstantId &&
-          const_rhs_id != SemIR::ErrorInst::ConstantId) {
-        // TODO: Can we diagnose the specific constraint that was missing the
-        // `.Self`?
-        DiagnoseMissingDesignator(context, node_id);
-      }
-      lhs_id = rhs_id = SemIR::ErrorInst::InstId;
-    }
-  }
-
   // Check lhs is a facet and rhs is a facet type.
   auto lhs_as_type = ExprAsType(context, lhs_node, lhs_id);
   auto rhs_as_type = ExprAsType(context, rhs_node, rhs_id);
   if (!context.types().IsFacetTypeOrError(rhs_as_type.type_id)) {
     DiagnoseImplsOnNonFacetType(context, rhs_node);
-    rhs_as_type.type_id = SemIR::ErrorInst::TypeId;
-    rhs_as_type.inst_id = SemIR::ErrorInst::TypeInstId;
+    rhs_as_type.SetError();
   }
+
+  if (!FindDesignator(context, lhs_as_type.inst_id)) {
+    bool found_designator = false;
+    if (auto facet_type =
+            context.types().TryGetAs<SemIR::FacetType>(rhs_as_type.type_id)) {
+      found_designator =
+          FindDesignatorInEveryExtendConstraint(context, *facet_type);
+    }
+    if (!found_designator) {
+      if (lhs_as_type.type_id != SemIR::ErrorInst::TypeId &&
+          rhs_as_type.type_id != SemIR::ErrorInst::TypeId) {
+        // TODO: Can we diagnose the specific constraint that was missing the
+        // `.Self`?
+        DiagnoseMissingDesignator(context, node_id);
+      }
+      lhs_as_type.SetError();
+      rhs_as_type.SetError();
+    }
+  }
+
   // TODO: For things like `HashSet(.T) as type`, add an implied constraint
   // that `.T impls Hash`.
 
@@ -498,9 +497,9 @@ static auto DiagnoseNestedWhere(Context& context, SemIR::LocId loc_id,
       NestedWhereInsideWhere, Error,
       "found `where` expression nested on the right-hand side of `where`");
   auto builder = context.emitter().Build(loc_id, NestedWhereInsideWhere);
-  CARBON_DIAGNOSTIC(NestedWhereInsideWhereOuterNote, Note,
-                    "on right-hand side of `where` here");
-  builder.Note(outer_loc_id, NestedWhereInsideWhereOuterNote);
+  CARBON_DIAGNOSTIC_LABEL(NestedWhereInsideWhereOuterNote, Info,
+                          "on right-hand side of `where` here");
+  builder.Attach(outer_loc_id, NestedWhereInsideWhereOuterNote);
   builder.Emit();
 }
 

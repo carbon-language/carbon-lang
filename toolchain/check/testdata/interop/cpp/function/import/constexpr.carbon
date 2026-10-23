@@ -72,9 +72,7 @@ constexpr int invalid_const_fn(int a) {
 }
 ''';
 
-// CHECK:STDERR: fail_invalid_constant_eval.carbon:[[@LINE+4]]:19: error: array bound is not a constant [InvalidArrayExpr]
-// CHECK:STDERR: let a: array(i32, Cpp.invalid_const_fn(5)) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_invalid_constant_eval.carbon:[[@LINE+2]]:19-41: error: array bound is not a constant [InvalidArrayExpr]
 // CHECK:STDERR:
 let a: array(i32, Cpp.invalid_const_fn(5)) = (1, 2, 3);
 
@@ -103,28 +101,16 @@ var a: i32 = 0;
 
 // TODO: This is failing when building the thunk, not when calling it.
 inline Cpp '''
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+9]]:15: error: call to consteval function 'nonconst_consteval_fn' is not a constant expression [CppInteropParseError]
-// CHECK:STDERR:    19 | consteval int nonconst_consteval_fn(const int &r) { return r; }
-// CHECK:STDERR:       |               ^
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+6]]:15: note: function parameter 'r' with unknown value cannot be used in a constant expression [CppInteropParseNote]
-// CHECK:STDERR:    19 | consteval int nonconst_consteval_fn(const int &r) { return r; }
-// CHECK:STDERR:       |               ^
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+3]]:15: note: declared here [CppInteropParseNote]
-// CHECK:STDERR:    19 | consteval int nonconst_consteval_fn(const int &r) { return r; }
-// CHECK:STDERR:       |               ^
+// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+3]]:15: error: call to consteval function 'nonconst_consteval_fn' is not a constant expression [CppInteropParseError]
+// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+2]]:15: note: function parameter 'r' with unknown value cannot be used in a constant expression [CppInteropParseNote]
+// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+1]]:15: note: declared here [CppInteropParseNote]
 consteval int nonconst_consteval_fn(const int &r) { return r; }
 ''';
 
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+11]]:14: note: in thunk for C++ function used here [InCppThunk]
-// CHECK:STDERR: var b: i32 = Cpp.nonconst_consteval_fn(a);
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+5]]:14-41: note: in thunk for C++ function used here [InCppThunk]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+7]]:14: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: var b: i32 = Cpp.nonconst_consteval_fn(a);
-// CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE-10]]:15: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-// CHECK:STDERR: consteval int nonconst_consteval_fn(const int &r) { return r; }
-// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+3]]:14-41: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE-6]]:15: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 var b: i32 = Cpp.nonconst_consteval_fn(a);
 
@@ -144,17 +130,13 @@ struct ConstexprC {
 // TODO: This should probably be allowed.
 eval fn F() -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_constructor.carbon:[[@LINE+3]]:27: error: expression is runtime; expected constant [EvalRequiresConstantValue]
-  // CHECK:STDERR:   let c: Cpp.ConstexprC = 3;
-  // CHECK:STDERR:                           ^
+  // CHECK:STDERR: fail_todo_constructor.carbon:[[@LINE+1]]:27: error: expression is runtime; expected constant [EvalRequiresConstantValue]
   let c: Cpp.ConstexprC = 3;
   return c.a;
   //@dump-sem-ir-end
 }
 
-// CHECK:STDERR: fail_todo_constructor.carbon:[[@LINE+4]]:19: note: in call to F here [InCallToEvalFn]
-// CHECK:STDERR: let a: array(i32, F()) = (1, 2, 3);
-// CHECK:STDERR:                   ^~~
+// CHECK:STDERR: fail_todo_constructor.carbon:[[@LINE+2]]:19-21: note: in call to F here [InCallToEvalFn]
 // CHECK:STDERR:
 let a: array(i32, F()) = (1, 2, 3);
 
@@ -179,6 +161,8 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_32) [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
@@ -189,21 +173,19 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_3.9f3: %i32 = int_value 3 [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Copy.facet.95d: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.95d) [concrete]
+// CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet.95d [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %facet_type.ece: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.687: type = fn_type @SubobjectDestroy.WithSelf.Op.loc19 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.687: type = fn_type @SubobjectDestroy.WithSelf.Op.loc17 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f: %SubobjectDestroy.WithSelf.Op.type.687 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.883: %SubobjectDestroy.type = facet_value %ConstexprC, (%custom_witness.b80) [concrete]
@@ -233,47 +215,47 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %.loc19_27.1: ref %ConstexprC = temporary_storage
-// CHECK:STDOUT:   %impl.elem0.loc19: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc19_27.1: <bound method> = bound_method %int_3, %impl.elem0.loc19 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc19: <specific function> = specific_function %impl.elem0.loc19, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc19_27.2: <bound method> = bound_method %int_3, %specific_fn.loc19 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc19_27.2(%int_3) [concrete = constants.%int_3.9f3]
-// CHECK:STDOUT:   %.loc19_27.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_3.9f3]
-// CHECK:STDOUT:   %.loc19_27.3: %i32 = converted %int_3, %.loc19_27.2 [concrete = constants.%int_3.9f3]
-// CHECK:STDOUT:   %addr: %ptr.0b8 = addr_of %.loc19_27.1
-// CHECK:STDOUT:   %ConstexprC__carbon_thunk.call: init %empty_tuple.type = call imports.%ConstexprC__carbon_thunk.decl(%.loc19_27.3, %addr)
-// CHECK:STDOUT:   %.loc19_27.4: init %ConstexprC to %.loc19_27.1 = mark_in_place_init %ConstexprC__carbon_thunk.call
-// CHECK:STDOUT:   %.loc19_27.5: init %ConstexprC = converted %int_3, %.loc19_27.4
-// CHECK:STDOUT:   %.loc19_27.6: ref %ConstexprC = temporary %.loc19_27.1, %.loc19_27.5
-// CHECK:STDOUT:   %.loc19_27.7: %ConstexprC = acquire_value %.loc19_27.6
-// CHECK:STDOUT:   %.loc19_13: type = splice_block %ConstexprC.ref [concrete = constants.%ConstexprC] {
+// CHECK:STDOUT:   %.loc17_27.1: ref %ConstexprC = temporary_storage
+// CHECK:STDOUT:   %impl.elem0.loc17: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc17_27.1: <bound method> = bound_method %int_3, %impl.elem0.loc17 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc17_27.2: <bound method> = bound_method %int_3, %specific_fn.loc17 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc17_27.2(%int_3) [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %.loc17_27.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %.loc17_27.3: %i32 = converted %int_3, %.loc17_27.2 [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %addr: %ptr.0b8 = addr_of %.loc17_27.1
+// CHECK:STDOUT:   %ConstexprC__carbon_thunk.call: init %empty_tuple.type = call imports.%ConstexprC__carbon_thunk.decl(%.loc17_27.3, %addr)
+// CHECK:STDOUT:   %.loc17_27.4: init %ConstexprC to %.loc17_27.1 = mark_in_place_init %ConstexprC__carbon_thunk.call
+// CHECK:STDOUT:   %.loc17_27.5: init %ConstexprC = converted %int_3, %.loc17_27.4
+// CHECK:STDOUT:   %.loc17_27.6: ref %ConstexprC = temporary %.loc17_27.1, %.loc17_27.5
+// CHECK:STDOUT:   %.loc17_27.7: %ConstexprC = acquire_value %.loc17_27.6
+// CHECK:STDOUT:   %.loc17_13: type = splice_block %ConstexprC.ref [concrete = constants.%ConstexprC] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ConstexprC.ref: type = name_ref ConstexprC, imports.%ConstexprC.decl [concrete = constants.%ConstexprC]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %ConstexprC = wrapper_binding c, %.loc19_27.7
+// CHECK:STDOUT:   %c: %ConstexprC = wrapper_binding c, %.loc17_27.7
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.3cc = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %ConstexprC = name_ref c, %c
 // CHECK:STDOUT:   %a.ref: %ConstexprC.elem = name_ref a, @ConstexprC.%field_decl [concrete = @ConstexprC.%field_decl]
-// CHECK:STDOUT:   %.loc20_11.1: ref %i32 = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc20_11.2: %i32 = acquire_value %.loc20_11.1
-// CHECK:STDOUT:   %impl.elem0.loc20: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
-// CHECK:STDOUT:   %bound_method.loc20_11.1: <bound method> = bound_method %.loc20_11.2, %impl.elem0.loc20
-// CHECK:STDOUT:   %specific_fn.loc20: <specific function> = specific_function %impl.elem0.loc20, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc20_11.2: <bound method> = bound_method %.loc20_11.2, %specific_fn.loc20
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc20_11.2(%.loc20_11.2)
-// CHECK:STDOUT:   %facet_value.loc19_27.1: %facet_type.ece = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.025, constants.%custom_witness.b80) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc19_27.8: %facet_type.ece = converted constants.%ConstexprC, %facet_value.loc19_27.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc19_27.2: %facet_type.ece = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.025, constants.%custom_witness.b80) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc19_27.9: %facet_type.ece = converted constants.%ConstexprC, %facet_value.loc19_27.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc18_11.1: ref %i32 = class_element_access %c.ref, element0
+// CHECK:STDOUT:   %.loc18_11.2: %i32 = acquire_value %.loc18_11.1
+// CHECK:STDOUT:   %impl.elem0.loc18: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
+// CHECK:STDOUT:   %bound_method.loc18_11.1: <bound method> = bound_method %.loc18_11.2, %impl.elem0.loc18
+// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc18_11.2: <bound method> = bound_method %.loc18_11.2, %specific_fn.loc18
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc18_11.2(%.loc18_11.2)
+// CHECK:STDOUT:   %facet_value.loc17_27.1: %facet_type.ece = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.025, constants.%custom_witness.b80) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc17_27.8: %facet_type.ece = converted constants.%ConstexprC, %facet_value.loc17_27.1 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc17_27.2: %facet_type.ece = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.025, constants.%custom_witness.b80) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc17_27.9: %facet_type.ece = converted constants.%ConstexprC, %facet_value.loc17_27.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc19_27.6)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc17_27.6)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc19(%self.param: ref %ConstexprC) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc17(%self.param: ref %ConstexprC) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

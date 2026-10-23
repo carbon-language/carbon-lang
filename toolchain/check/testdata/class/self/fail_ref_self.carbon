@@ -19,12 +19,8 @@ class Class {
 fn Make() -> Class;
 
 fn F(c: Class, p: Class*) {
-  // CHECK:STDERR: fail_ref_self.carbon:[[@LINE+7]]:3: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR:   c.F();
-  // CHECK:STDERR:   ^
-  // CHECK:STDERR: fail_ref_self.carbon:[[@LINE-9]]:8: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR:   fn F(ref self);
-  // CHECK:STDERR:        ^~~~~~~~
+  // CHECK:STDERR: fail_ref_self.carbon:[[@LINE+3]]:3: error: value expression passed to reference parameter [ValueForRefParam]
+  // CHECK:STDERR: fail_ref_self.carbon:[[@LINE-7]]:8-15: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   c.F();
 
@@ -69,7 +65,7 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc35_8.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc31_8.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.3a1: %SubobjectDestroy.type = facet_value %Class, (%custom_witness.b80ef6.2) [concrete]
@@ -153,31 +149,31 @@ fn F(c: Class, p: Class*) {
 // CHECK:STDOUT: fn @F(%c.param: %Class, %p.param: %ptr.7ee) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %Class = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc29: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
-// CHECK:STDOUT:   %Class.F.bound.loc29: <bound method> = bound_method %c.ref, %F.ref.loc29
-// CHECK:STDOUT:   %Class.F.call.loc29: init %empty_tuple.type = call %Class.F.bound.loc29(<error>)
+// CHECK:STDOUT:   %F.ref.loc25: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
+// CHECK:STDOUT:   %Class.F.bound.loc25: <bound method> = bound_method %c.ref, %F.ref.loc25
+// CHECK:STDOUT:   %Class.F.call.loc25: init %empty_tuple.type = call %Class.F.bound.loc25(<error>)
 // CHECK:STDOUT:   %p.ref: %ptr.7ee = name_ref p, %p
-// CHECK:STDOUT:   %.loc32: ref %Class = deref %p.ref
-// CHECK:STDOUT:   %F.ref.loc32: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
-// CHECK:STDOUT:   %Class.F.bound.loc32: <bound method> = bound_method %.loc32, %F.ref.loc32
-// CHECK:STDOUT:   %Class.F.call.loc32: init %empty_tuple.type = call %Class.F.bound.loc32(%.loc32)
+// CHECK:STDOUT:   %.loc28: ref %Class = deref %p.ref
+// CHECK:STDOUT:   %F.ref.loc28: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
+// CHECK:STDOUT:   %Class.F.bound.loc28: <bound method> = bound_method %.loc28, %F.ref.loc28
+// CHECK:STDOUT:   %Class.F.call.loc28: init %empty_tuple.type = call %Class.F.bound.loc28(%.loc28)
 // CHECK:STDOUT:   %Make.ref: %Make.type = name_ref Make, file.%Make.decl [concrete = constants.%Make]
-// CHECK:STDOUT:   %.loc35_8.1: ref %Class = temporary_storage
-// CHECK:STDOUT:   %Make.call: init %Class to %.loc35_8.1 = call %Make.ref()
-// CHECK:STDOUT:   %.loc35_8.2: ref %Class = temporary %.loc35_8.1, %Make.call
-// CHECK:STDOUT:   %F.ref.loc35: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
-// CHECK:STDOUT:   %Class.F.bound.loc35: <bound method> = bound_method %.loc35_8.2, %F.ref.loc35
-// CHECK:STDOUT:   %Class.F.call.loc35: init %empty_tuple.type = call %Class.F.bound.loc35(%.loc35_8.2)
-// CHECK:STDOUT:   %facet_value.loc35_8.1: %facet_type = facet_value constants.%Class, (constants.%DestroyImpl.impl_witness.66c, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc35_8.3: %facet_type = converted constants.%Class, %facet_value.loc35_8.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc35_8.2: %facet_type = facet_value constants.%Class, (constants.%DestroyImpl.impl_witness.66c, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc35_8.4: %facet_type = converted constants.%Class, %facet_value.loc35_8.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc31_8.1: ref %Class = temporary_storage
+// CHECK:STDOUT:   %Make.call: init %Class to %.loc31_8.1 = call %Make.ref()
+// CHECK:STDOUT:   %.loc31_8.2: ref %Class = temporary %.loc31_8.1, %Make.call
+// CHECK:STDOUT:   %F.ref.loc31: %Class.F.type = name_ref F, @Class.%Class.F.decl [concrete = constants.%Class.F]
+// CHECK:STDOUT:   %Class.F.bound.loc31: <bound method> = bound_method %.loc31_8.2, %F.ref.loc31
+// CHECK:STDOUT:   %Class.F.call.loc31: init %empty_tuple.type = call %Class.F.bound.loc31(%.loc31_8.2)
+// CHECK:STDOUT:   %facet_value.loc31_8.1: %facet_type = facet_value constants.%Class, (constants.%DestroyImpl.impl_witness.66c, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc31_8.3: %facet_type = converted constants.%Class, %facet_value.loc31_8.1 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc31_8.2: %facet_type = facet_value constants.%Class, (constants.%DestroyImpl.impl_witness.66c, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc31_8.4: %facet_type = converted constants.%Class, %facet_value.loc31_8.2 [concrete = constants.%facet_value]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%facet_value) [concrete = constants.%SelfDestruct.specific_fn]
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc35_8.2)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc31_8.2)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc35_8.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc31_8.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc35_8.2(%self.param: ref %Class) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc31_8.2(%self.param: ref %Class) = "no_op";
 // CHECK:STDOUT:

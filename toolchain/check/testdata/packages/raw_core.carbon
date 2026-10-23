@@ -34,15 +34,11 @@ library "[[@TEST_NAME]]";
 
 import r#Core;
 
-// CHECK:STDERR: fail_raw_core_not_core.carbon:[[@LINE+4]]:10: error: member name `F` not found in `Core` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fn G() { Core.F(); }
-// CHECK:STDERR:          ^~~~~~
+// CHECK:STDERR: fail_raw_core_not_core.carbon:[[@LINE+2]]:10-15: error: member name `F` not found in `Core` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 fn G() { Core.F(); }
 
-// CHECK:STDERR: fail_raw_core_not_core.carbon:[[@LINE+4]]:10: error: member name `Int` not found in `r#Core` [MemberNameNotFoundInInstScope]
-// CHECK:STDERR: fn H() { r#Core.Int(32); }
-// CHECK:STDERR:          ^~~~~~~~~~
+// CHECK:STDERR: fail_raw_core_not_core.carbon:[[@LINE+2]]:10-19: error: member name `Int` not found in `r#Core` [MemberNameNotFoundInInstScope]
 // CHECK:STDERR:
 fn H() { r#Core.Int(32); }
 

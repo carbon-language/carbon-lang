@@ -14,13 +14,13 @@ namespace Carbon::SemIR {
 
 char ReadOnlyASTSource::id;
 
-auto ReadOnlyASTSource::GetCarbonOwnedDecl(
-    const clang::DeclContext* decl_context) const -> std::optional<ClangDecl> {
+auto ReadOnlyASTSource::GetCarbonOwnedDeclAsLookupContext(
+    clang::DeclContext* decl_context) const -> std::optional<ClangDecl> {
   auto* decl = cast<clang::Decl>(
       const_cast<clang::DeclContext*>(decl_context->getPrimaryContext()));
   if (isa<clang::FunctionDecl>(decl)) {
-    // Functions don't meaningfully have visible decls, but bail out early since
-    // we can't form a `ClangDeclKey` for a function in the abstract.
+    // We can't perform name lookups into a function, and they don't have
+    // `ClangDeclKey`s in the abstract anyway.
     return std::nullopt;
   }
   auto key = SemIR::ClangDeclKey::ForNonFunctionDecl(decl);
@@ -38,16 +38,19 @@ auto ReadOnlyASTSource::GetCarbonOwnedDecl(
 }
 
 auto ReadOnlyASTSource::completeVisibleDeclsMap(
-    const clang::DeclContext* decl_context) -> void {
-  if (!GetCarbonOwnedDecl(decl_context)) {
+    const clang::DeclContext* const_decl_context) -> void {
+  // Clang expects us to modify the DeclContext but passes it as `const`.
+  // TODO: Fix clang to pass in a mutable DeclContext.
+  auto* decl_context = const_cast<clang::DeclContext*>(const_decl_context);
+
+  if (!GetCarbonOwnedDeclAsLookupContext(decl_context)) {
     return;
   }
 
   // `ASTReader::completeVisibleDeclsMap` unconditionally clears external
   // visible storage, even for DeclContexts it does not own. Restore it for
   // Carbon-owned DeclContexts so future lookups continue to query us.
-  auto* primary_context =
-      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext());
+  auto* primary_context = decl_context->getPrimaryContext();
   primary_context->setHasExternalVisibleStorage(true);
 
   if (auto* lookup_map = primary_context->getLookupPtr();

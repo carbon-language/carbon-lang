@@ -29,7 +29,6 @@
 #include "toolchain/sem_ir/field.h"
 #include "toolchain/sem_ir/function.h"
 #include "toolchain/sem_ir/generic.h"
-#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/impl.h"
 #include "toolchain/sem_ir/import_cpp.h"
@@ -241,12 +240,6 @@ class File : public Printable<File> {
   auto AppendCppMangledTypeName(ClassId class_id, llvm::raw_ostream& out) const
       -> bool;
 
-  auto identified_facet_types() -> IdentifiedFacetTypeStore& {
-    return identified_facet_types_;
-  }
-  auto identified_facet_types() const -> const IdentifiedFacetTypeStore& {
-    return identified_facet_types_;
-  }
   auto impls() -> ImplStore& { return impls_; }
   auto impls() const -> const ImplStore& { return impls_; }
   auto specific_interfaces() -> SpecificInterfaceStore& {
@@ -312,8 +305,11 @@ class File : public Printable<File> {
   auto expr_regions() -> ExprRegionStore& { return expr_regions_; }
   auto expr_regions() const -> const ExprRegionStore& { return expr_regions_; }
 
+  // A C++ location is a range, the way a parse node is a subtree: the extent is
+  // what a diagnostic underlines. Most of them are a single position, stored as
+  // a range that begins and ends there.
   using ClangSourceLocStore =
-      ValueStore<ClangSourceLocId, clang::SourceLocation, Tag<CheckIRId>>;
+      ValueStore<ClangSourceLocId, clang::SourceRange, Tag<CheckIRId>>;
   auto clang_source_locs() -> ClangSourceLocStore& {
     return clang_source_locs_;
   }
@@ -335,6 +331,12 @@ class File : public Printable<File> {
   auto top_inst_block_id() const -> InstBlockId { return top_inst_block_id_; }
   auto set_top_inst_block_id(InstBlockId block_id) -> void {
     top_inst_block_id_ = block_id;
+  }
+  auto default_value_globals_exported_to_cpp() const -> InstBlockId {
+    return default_value_globals_exported_to_cpp_;
+  }
+  auto set_default_value_globals_exports_to_cpp(InstBlockId block_id) -> void {
+    default_value_globals_exported_to_cpp_ = block_id;
   }
   auto global_ctor_id() const -> FunctionId { return global_ctor_id_; }
   auto set_global_ctor_id(FunctionId function_id) -> void {
@@ -420,9 +422,6 @@ class File : public Printable<File> {
   // Storage for declared facet types.
   DeclaredFacetTypeStore declared_facet_types_;
 
-  // Storage for identified facet types.
-  IdentifiedFacetTypeStore identified_facet_types_;
-
   // Storage for impls.
   ImplStore impls_;
 
@@ -474,6 +473,10 @@ class File : public Printable<File> {
   // The top instruction block ID.
   InstBlockId top_inst_block_id_ = InstBlockId::None;
 
+  // An instruction block for storing any global variables used for exporting
+  // default values for function parameters to C++.
+  InstBlockId default_value_globals_exported_to_cpp_ = InstBlockId::None;
+
   // The global constructor function id.
   FunctionId global_ctor_id_ = FunctionId::None;
 
@@ -509,7 +512,7 @@ class File : public Printable<File> {
 namespace Carbon {
 extern template class ValueStore<SemIR::ExprRegionId, SemIR::ExprRegion,
                                  Tag<SemIR::CheckIRId>>;
-extern template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
+extern template class ValueStore<SemIR::ClangSourceLocId, clang::SourceRange,
                                  Tag<SemIR::CheckIRId>>;
 extern template class ValueStore<SemIR::CustomLayoutId,
                                  llvm::MutableArrayRef<SemIR::ObjectSize>,

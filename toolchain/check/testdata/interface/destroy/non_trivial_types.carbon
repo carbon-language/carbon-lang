@@ -112,13 +112,9 @@ import library "types";
 fn TestPartialNonTrivialMemberBase() {
   CheckTypeHasDestruction(partial NonTrivialMemberBase);
 
-  // CHECK:STDERR: fail_partial.carbon:[[@LINE+8]]:34: error: cannot convert type `partial NonTrivialMemberBase` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckTypeHasTrivialDestruction(partial NonTrivialMemberBase);
-  // CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_partial.carbon:[[@LINE-9]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:42: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fn CheckTypeHasTrivialDestruction(unused T: Core.TrivialDestroy) {}
-  // CHECK:STDERR:                                          ^~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_partial.carbon:[[@LINE+4]]:34-61: error: cannot convert type `partial NonTrivialMemberBase` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_partial.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:42-63: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   CheckTypeHasTrivialDestruction(partial NonTrivialMemberBase);
 }

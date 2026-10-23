@@ -35,9 +35,7 @@ library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
 class C(T: Core.Copy) {
   fn F() {
-    // CHECK:STDERR: fail_member_inline_missing_self_dot.carbon:[[@LINE+4]]:5: error: expression cannot be used as a value [UseOfNonExprAsValue]
-    // CHECK:STDERR:     data;
-    // CHECK:STDERR:     ^~~~
+    // CHECK:STDERR: fail_member_inline_missing_self_dot.carbon:[[@LINE+2]]:5-8: error: expression cannot be used as a value [UseOfNonExprAsValue]
     // CHECK:STDERR:
     data;
   }
@@ -127,17 +125,19 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:       %n.param_patt.loc6_9.1: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = value_param_pattern [symbolic = %n.param_patt.loc6_9.2 (constants.%n.param_patt)]
 // CHECK:STDOUT:       %n.patt.loc6_9.1: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = wrapper_binding_pattern n, %n.param_patt.loc6_9.1 [symbolic = %n.patt.loc6_9.2 (constants.%n.patt)]
 // CHECK:STDOUT:       %return.param_patt.loc6_17.1: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc6_17.2 (constants.%return.param_patt.bf4475.2)]
-// CHECK:STDOUT:       %return.patt.loc6_14.1: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc6_17.1, %.loc6_17.3 [symbolic = %return.patt.loc6_14.2 (constants.%return.patt.f44)]
+// CHECK:STDOUT:       %return.patt.loc6_14.1: @Class.F.%pattern_type (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc6_17.1, %.loc6_17.4 [symbolic = %return.patt.loc6_14.2 (constants.%return.patt.f44)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref.loc6_17: %Copy.type = name_ref T, @Class.%T.loc5_14.2 [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %.loc6_17.3: %Copy.type = specific_constant @Class.%T.loc5_14.2, @Class(constants.%T.f84) [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %T.ref.loc6_17: %Copy.type = name_ref T, %.loc6_17.3 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:       %T.as_type.loc6_17: type = facet_access_type %T.ref.loc6_17 [symbolic = %T.as_type.loc6_11.1 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc6_17.3: type = converted %T.ref.loc6_17, %T.as_type.loc6_17 [symbolic = %T.as_type.loc6_11.1 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc6_17.4: Core.Form = init_form %.loc6_17.3 [symbolic = %.loc6_17.2 (constants.%.1ce700.2)]
+// CHECK:STDOUT:       %.loc6_17.4: type = converted %T.ref.loc6_17, %T.as_type.loc6_17 [symbolic = %T.as_type.loc6_11.1 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc6_17.5: Core.Form = init_form %.loc6_17.4 [symbolic = %.loc6_17.2 (constants.%.1ce700.2)]
 // CHECK:STDOUT:       %n.param: @Class.F.%T.as_type.loc6_11.1 (%T.as_type) = value_param call_param0
-// CHECK:STDOUT:       %.loc6_11.1: type = splice_block %.loc6_11.2 [symbolic = %T.as_type.loc6_11.1 (constants.%T.as_type)] {
-// CHECK:STDOUT:         %T.ref.loc6_11: %Copy.type = name_ref T, @Class.%T.loc5_14.2 [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %.loc6_11.1: type = splice_block %.loc6_11.3 [symbolic = %T.as_type.loc6_11.1 (constants.%T.as_type)] {
+// CHECK:STDOUT:         %.loc6_11.2: %Copy.type = specific_constant @Class.%T.loc5_14.2, @Class(constants.%T.f84) [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:         %T.ref.loc6_11: %Copy.type = name_ref T, %.loc6_11.2 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:         %T.as_type.loc6_11.2: type = facet_access_type %T.ref.loc6_11 [symbolic = %T.as_type.loc6_11.1 (constants.%T.as_type)]
-// CHECK:STDOUT:         %.loc6_11.2: type = converted %T.ref.loc6_11, %T.as_type.loc6_11.2 [symbolic = %T.as_type.loc6_11.1 (constants.%T.as_type)]
+// CHECK:STDOUT:         %.loc6_11.3: type = converted %T.ref.loc6_11, %T.as_type.loc6_11.2 [symbolic = %T.as_type.loc6_11.1 (constants.%T.as_type)]
 // CHECK:STDOUT:       }
 // CHECK:STDOUT:       %n: @Class.F.%T.as_type.loc6_11.1 (%T.as_type) = wrapper_binding n, %n.param
 // CHECK:STDOUT:       %return.param: ref @Class.F.%T.as_type.loc6_11.1 (%T.as_type) = out_param call_param1
@@ -147,12 +147,13 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:       %self.param_patt.loc10_8.1: @Class.G.%pattern_type.loc10_8 (%pattern_type.f62) = value_param_pattern [symbolic = %self.param_patt.loc10_8.2 (constants.%self.param_patt.4c1)]
 // CHECK:STDOUT:       %self.patt.loc10_8.1: @Class.G.%pattern_type.loc10_8 (%pattern_type.f62) = wrapper_binding_pattern self, %self.param_patt.loc10_8.1 [symbolic = %self.patt.loc10_8.2 (constants.%self.patt.f3a)]
 // CHECK:STDOUT:       %return.param_patt.loc10_17.1: @Class.G.%pattern_type.loc10_17 (%pattern_type.2c66b4.2) = out_param_pattern [symbolic = %return.param_patt.loc10_17.2 (constants.%return.param_patt.bf4475.2)]
-// CHECK:STDOUT:       %return.patt.loc10_14.1: @Class.G.%pattern_type.loc10_17 (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc10_17.1, %.loc10_17.3 [symbolic = %return.patt.loc10_14.2 (constants.%return.patt.f44)]
+// CHECK:STDOUT:       %return.patt.loc10_14.1: @Class.G.%pattern_type.loc10_17 (%pattern_type.2c66b4.2) = return_slot_pattern %return.param_patt.loc10_17.1, %.loc10_17.4 [symbolic = %return.patt.loc10_14.2 (constants.%return.patt.f44)]
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, @Class.%T.loc5_14.2 [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %.loc10_17.3: %Copy.type = specific_constant @Class.%T.loc5_14.2, @Class(constants.%T.f84) [symbolic = %T (constants.%T.f84)]
+// CHECK:STDOUT:       %T.ref: %Copy.type = name_ref T, %.loc10_17.3 [symbolic = %T (constants.%T.f84)]
 // CHECK:STDOUT:       %T.as_type.loc10_17.2: type = facet_access_type %T.ref [symbolic = %T.as_type.loc10_17.1 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc10_17.3: type = converted %T.ref, %T.as_type.loc10_17.2 [symbolic = %T.as_type.loc10_17.1 (constants.%T.as_type)]
-// CHECK:STDOUT:       %.loc10_17.4: Core.Form = init_form %.loc10_17.3 [symbolic = %.loc10_17.2 (constants.%.1ce700.2)]
+// CHECK:STDOUT:       %.loc10_17.4: type = converted %T.ref, %T.as_type.loc10_17.2 [symbolic = %T.as_type.loc10_17.1 (constants.%T.as_type)]
+// CHECK:STDOUT:       %.loc10_17.5: Core.Form = init_form %.loc10_17.4 [symbolic = %.loc10_17.2 (constants.%.1ce700.2)]
 // CHECK:STDOUT:       %self.param: @Class.G.%Class (%Class) = value_param call_param0
 // CHECK:STDOUT:       %.loc10_8.1: type = splice_block %Self.ref [symbolic = %Class (constants.%Class)] {
 // CHECK:STDOUT:         %.loc10_8.2: type = specific_constant constants.%Class, @Class(constants.%T.f84) [symbolic = %Class (constants.%Class)]
@@ -348,9 +349,9 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
 // CHECK:STDOUT:     %C.F.decl: @C.%C.F.type (%C.F.type) = fn_decl @C.F [symbolic = @C.%C.F (constants.%C.F)] {} {}
-// CHECK:STDOUT:     %field_decl: @C.%C.elem (%C.elem) = field_decl data, element0, %.loc13_14.2 in [concrete] {
-// CHECK:STDOUT:       %.loc13_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc13_14.2: type = converted %.loc13_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %field_decl: @C.%C.elem (%C.elem) = field_decl data, element0, %.loc11_14.2 in [concrete] {
+// CHECK:STDOUT:       %.loc11_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc11_14.2: type = converted %.loc11_14.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%struct_type.data [concrete = constants.%complete_type]
 // CHECK:STDOUT:     complete_type_witness = %complete_type
@@ -370,7 +371,8 @@ class C(T: Core.Copy) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
-// CHECK:STDOUT:     %data.ref: @C.F.%C.elem (%C.elem) = name_ref data, @C.%field_decl [concrete = @C.%field_decl]
+// CHECK:STDOUT:     %.loc9: @C.F.%C.elem (%C.elem) = specific_constant @C.%field_decl, @C(constants.%T) [concrete = @C.%field_decl]
+// CHECK:STDOUT:     %data.ref: @C.F.%C.elem (%C.elem) = name_ref data, %.loc9 [concrete = @C.%field_decl]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

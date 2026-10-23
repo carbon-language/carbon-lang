@@ -973,11 +973,10 @@ struct FormType : public SingletonTypeInst<InstKind::FormType, "Core.Form"> {
 
 // A function declaration.
 struct FunctionDecl {
-  static constexpr auto Kind =
-      InstKind::FunctionDecl.Define<Parse::AnyFunctionDeclId>(
-          {.ir_name = "fn_decl",
-           .expr_category = ExprCategory::Value,
-           .is_lowered = false});
+  static constexpr auto Kind = InstKind::FunctionDecl.Define<Parse::NodeId>(
+      {.ir_name = "fn_decl",
+       .expr_category = ExprCategory::Value,
+       .is_lowered = false});
 
   TypeId type_id;
   FunctionId function_id;
@@ -1571,7 +1570,7 @@ using NamespaceType = SingletonTypeInst<InstKind::NamespaceType, "<namespace>">;
 // `form_id`. See `AnyFormParamAction` for member documentation.
 struct OutFormParamPatternAction {
   static constexpr auto Kind =
-      // TODO: Use Parse::AnyReturnDeclId once we support passing node
+      // TODO: Use Parse::AnyReturnSpecifierId once we support passing node
       // categories to Define.
       InstKind::OutFormParamPatternAction
           .Define<Parse::NodeIdOneOf<Parse::ReturnFormId, Parse::ReturnTypeId>>(
@@ -1681,13 +1680,15 @@ struct RefBindingPattern {
   EntityNameId entity_name_id;
 };
 
+// A primitive reference form.
 struct RefForm {
-  static constexpr auto Kind =
-      InstKind::RefForm.Define<Parse::NodeIdOneOf<Parse::PrefixOperatorRefId,
-                                                  Parse::RefPrimitiveFormId>>(
-          {.ir_name = "ref_form",
-           .constant_kind = InstConstantKind::Always,
-           .is_lowered = false});
+  // The node is usually a `RefPrimitiveForm` or `ref` prefix operator, but for
+  // a deduced return form, such as `-> ref auto`, it is the expression that the
+  // type was deduced from.
+  static constexpr auto Kind = InstKind::RefForm.Define<Parse::NodeId>(
+      {.ir_name = "ref_form",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
   TypeId type_id;
   TypeInstId type_component_inst_id;
@@ -2002,9 +2003,9 @@ struct ReturnSlotPattern {
   TypeInstId type_inst_id;
 };
 
-// Given an instruction with a constant value that depends on a generic
-// parameter, selects a version of that instruction with the constant value
-// corresponding to a particular specific.
+// Given a constant instruction whose constant value or type depends on a
+// generic parameter, selects a version of that instruction with the type and
+// constant value corresponding to a particular specific.
 struct SpecificConstant {
   // TODO: Can we make Parse::NodeId more specific?
   static constexpr auto Kind = InstKind::SpecificConstant.Define<Parse::NodeId>(
@@ -2083,9 +2084,10 @@ struct SpecificImplFunction {
 // used to refer to constants and to instructions from the same scope (and hence
 // the same specific) that this instruction occupies.
 //
-// This is used as a convenience during action evaluation to allow an action to
-// refer to its `MetaInstId` operands from the generic with their specific types
-// and constant values.
+// This is used for lexical references to non-constant instructions from an
+// enclosing generic, and as a convenience during action evaluation to allow an
+// action to refer to its `MetaInstId` operands from the generic with their
+// specific types and constant values.
 struct SpecificInst {
   static constexpr auto Kind = InstKind::SpecificInst.Define<Parse::NodeId>(
       {.ir_name = "specific_inst",
@@ -2493,11 +2495,12 @@ struct ValueBindingPattern {
 
 // A primitive value form.
 struct ValueForm {
-  static constexpr auto Kind =
-      InstKind::ValueForm.Define<Parse::ValPrimitiveFormId>(
-          {.ir_name = "value_form",
-           .constant_kind = InstConstantKind::Always,
-           .is_lowered = false});
+  // The node is usually a `ValPrimitiveForm`, but for a deduced return form,
+  // such as `-> val auto`, it is the expression that the type was deduced from.
+  static constexpr auto Kind = InstKind::ValueForm.Define<Parse::NodeId>(
+      {.ir_name = "value_form",
+       .constant_kind = InstConstantKind::Always,
+       .is_lowered = false});
 
   TypeId type_id;
   TypeInstId type_component_inst_id;

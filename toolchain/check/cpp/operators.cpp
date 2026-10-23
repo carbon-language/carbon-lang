@@ -201,6 +201,12 @@ static auto GetClangOperatorKind(Context& context, SemIR::LocId loc_id,
       return clang::OO_Subscript;
     }
 
+    // C++ `operator[]` is found through `IndexWith`, which subscripting falls
+    // back to.
+    case CoreIdentifier::IndirectIndexWith: {
+      return std::nullopt;
+    }
+
     default: {
       context.TODO(loc_id, llvm::formatv("Unsupported operator interface `{0}`",
                                          interface_name));
@@ -649,12 +655,12 @@ struct DiagnoseIncompleteOperandTypeInCppOperatorLookup {
   SemIR::LocId loc_id;
 
   void operator()(auto& builder) const {
-    CARBON_DIAGNOSTIC(
-        IncompleteOperandTypeInCppOperatorLookup, Context,
+    CARBON_DIAGNOSTIC_CONTEXT(
+        IncompleteOperandTypeInCppOperatorLookup,
         "looking up a C++ operator with incomplete operand type {0}",
         SemIR::TypeId);
-    builder.Context(loc_id, IncompleteOperandTypeInCppOperatorLookup,
-                    arg_type_id);
+    builder.Attach(loc_id, IncompleteOperandTypeInCppOperatorLookup,
+                   arg_type_id);
   }
 };
 }  // namespace

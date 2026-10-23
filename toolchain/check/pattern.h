@@ -114,6 +114,13 @@ auto AddParamPattern(Context& context, SemIR::LocId loc_id,
                      SemIR::TypeId type_id, ParamPatternKind kind)
     -> SemIR::InstId;
 
+// Given any parameter pattern `InstId`, returns the constant value of the
+// associated default value for that parameter, or `None` if no default value
+// was supplied.
+auto ExtractParameterDefault(Context& context,
+                             SemIR::InstId param_pattern_inst_id)
+    -> SemIR::ConstantId;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_PATTERN_H_

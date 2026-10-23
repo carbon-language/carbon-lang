@@ -50,9 +50,9 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CCallNoInlineWithOptSize.Main() local_unnamed_addr #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc4_15.i = tail call i32 @_CRand.Main() #0, !dbg !85
-// CHECK:STDOUT:   %Rand.call.loc4_24.i = tail call i32 @_CRand.Main() #0, !dbg !86
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc4_24.i, %Rand.call.loc4_15.i, !dbg !85
+// CHECK:STDOUT:   %Rand.call.loc4_15.i = tail call i32 @_CRand.Main() #0, !dbg !84
+// CHECK:STDOUT:   %Rand.call.loc4_24.i = tail call i32 @_CRand.Main() #0, !dbg !85
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc4_24.i, %Rand.call.loc4_15.i, !dbg !84
 // CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.i, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -62,7 +62,7 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   br label %vector.body, !dbg !24
 // CHECK:STDOUT:
 // CHECK:STDOUT: vector.body:                                      ; preds = %vector.body, %entry
-// CHECK:STDOUT:   %index = phi i32 [ 0, %entry ], [ %index.next.1, %vector.body ], !dbg !94
+// CHECK:STDOUT:   %index = phi i32 [ 0, %entry ], [ %index.next.1, %vector.body ], !dbg !93
 // CHECK:STDOUT:   %0 = zext nneg i32 %index to i64, !dbg !29
 // CHECK:STDOUT:   %1 = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %0, !dbg !29
 // CHECK:STDOUT:   %2 = getelementptr inbounds nuw i8, ptr %1, i64 16, !dbg !29
@@ -82,9 +82,9 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   %10 = shl <4 x i32> %wide.load4.1, splat (i32 1), !dbg !29
 // CHECK:STDOUT:   store <4 x i32> %9, ptr %7, align 4, !dbg !29
 // CHECK:STDOUT:   store <4 x i32> %10, ptr %8, align 4, !dbg !29
-// CHECK:STDOUT:   %index.next.1 = add nuw nsw i32 %index, 16, !dbg !94
+// CHECK:STDOUT:   %index.next.1 = add nuw nsw i32 %index, 16, !dbg !93
 // CHECK:STDOUT:   %11 = icmp eq i32 %index.next.1, 65536, !dbg !24
-// CHECK:STDOUT:   br i1 %11, label %while.done, label %vector.body, !dbg !24, !llvm.loop !102
+// CHECK:STDOUT:   br i1 %11, label %while.done, label %vector.body, !dbg !24, !llvm.loop !101
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %vector.body
 // CHECK:STDOUT:   ret void, !dbg !35
@@ -137,13 +137,13 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !61 = !{!55, !56}
 // CHECK:STDOUT: !79 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !80 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !84 = distinct !DILocation(line: 9, column: 10, scope: !14)
-// CHECK:STDOUT: !85 = distinct !DILocation(line: 4, column: 10, scope: !8, inlinedAt: !84)
-// CHECK:STDOUT: !86 = distinct !DILocation(line: 4, column: 19, scope: !8, inlinedAt: !84)
-// CHECK:STDOUT: !92 = distinct !DILocation(line: 17, column: 5, scope: !19)
-// CHECK:STDOUT: !93 = distinct !DILocation(line: 398, column: 5, scope: !38, inlinedAt: !92)
-// CHECK:STDOUT: !94 = distinct !DILocation(line: 331, column: 3, scope: !54, inlinedAt: !93)
-// CHECK:STDOUT: !99 = !{!"llvm.loop.isvectorized", i32 1}
-// CHECK:STDOUT: !101 = !{!"llvm.loop.unroll.runtime.disable"}
-// CHECK:STDOUT: !102 = distinct !{!102, !99, !101}
+// CHECK:STDOUT: !83 = distinct !DILocation(line: 9, column: 10, scope: !14)
+// CHECK:STDOUT: !84 = distinct !DILocation(line: 4, column: 10, scope: !8, inlinedAt: !83)
+// CHECK:STDOUT: !85 = distinct !DILocation(line: 4, column: 19, scope: !8, inlinedAt: !83)
+// CHECK:STDOUT: !91 = distinct !DILocation(line: 17, column: 5, scope: !19)
+// CHECK:STDOUT: !92 = distinct !DILocation(line: 398, column: 5, scope: !38, inlinedAt: !91)
+// CHECK:STDOUT: !93 = distinct !DILocation(line: 331, column: 3, scope: !54, inlinedAt: !92)
+// CHECK:STDOUT: !98 = !{!"llvm.loop.isvectorized", i32 1}
+// CHECK:STDOUT: !100 = !{!"llvm.loop.unroll.runtime.disable"}
+// CHECK:STDOUT: !101 = distinct !{!101, !98, !100}
 // CHECK:STDOUT:

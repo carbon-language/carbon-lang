@@ -701,7 +701,7 @@ fn G() { F({}); }
 // CHECK:STDOUT:   %inst.splice_block.426619.2: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.0ef: init %C.664bb6.1 = splice_block %.5cd [concrete = %C.val] {
 // CHECK:STDOUT:       %.ed1955.2: ref %C.664bb6.1 = specific_inst @F.%v.var, @F(%empty_struct_type)
-// CHECK:STDOUT:       <elided>
+// CHECK:STDOUT:       %.5cd: init %C.664bb6.1 to %.ed1955.2 = class_init () [concrete = %C.val]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%inst.splice_block.426619.2) [concrete]

@@ -108,14 +108,14 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: define weak_odr void @"_CF:thunk:I.6a2feaaa6331eb92.Main:61ea2aba74ab3bf1:I.Main"(ptr sret({ i32 }) %return, ptr %a) #1 !dbg !51 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc20_19.1.temp = alloca { i32 }, align 4, !dbg !54
-// CHECK:STDOUT:   %.4.temp = alloca { i32 }, align 4, !dbg !53
+// CHECK:STDOUT:   %.loc20_19.2.temp = alloca { i32 }, align 4, !dbg !54
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.1.temp), !dbg !54
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.4.temp), !dbg !53
-// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.4.temp, ptr %a), !dbg !53
-// CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.4.temp), !dbg !54
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_19.2.temp), !dbg !54
+// CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc20_19.2.temp, ptr %a), !dbg !54
+// CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.loc20_19.2.temp), !dbg !54
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc20_19.1.temp), !dbg !54
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.loc20_19.1.temp), !dbg !54
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.4.temp), !dbg !53
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.loc20_19.2.temp), !dbg !54
 // CHECK:STDOUT:   ret void, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -183,7 +183,6 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: !50 = !{!43}
 // CHECK:STDOUT: !51 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.6a2feaaa6331eb92.Main:61ea2aba74ab3bf1:I.Main", scope: null, file: !18, line: 20, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !57)
 // CHECK:STDOUT: !52 = !DILocalVariable(arg: 1, scope: !51, type: !21)
-// CHECK:STDOUT: !53 = !DILocation(line: 0, scope: !51)
 // CHECK:STDOUT: !54 = !DILocation(line: 20, column: 3, scope: !51)
 // CHECK:STDOUT: !55 = !{null, !21}
 // CHECK:STDOUT: !56 = !DISubroutineType(types: !55)
@@ -271,14 +270,14 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: define linkonce_odr void @"_CF:thunk:I.e2e8ace3e0ca3527.Main:C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr sret({}) %return, ptr %self, ptr %x) #2 !dbg !142 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_32.2.temp = alloca {}, align 1, !dbg !146
-// CHECK:STDOUT:   %.6.temp = alloca {}, align 1, !dbg !145
+// CHECK:STDOUT:   %.loc18_32.3.temp = alloca {}, align 1, !dbg !146
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_32.2.temp), !dbg !146
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.6.temp), !dbg !145
-// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %.6.temp, ptr %x), !dbg !145
-// CHECK:STDOUT:   call void @"_CF.C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr %.loc18_32.2.temp, ptr %self, ptr %.6.temp), !dbg !146
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc18_32.3.temp), !dbg !146
+// CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %.loc18_32.3.temp, ptr %x), !dbg !146
+// CHECK:STDOUT:   call void @"_CF.C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f"(ptr %.loc18_32.2.temp, ptr %self, ptr %.loc18_32.3.temp), !dbg !146
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.bd4fb75a414fe858.Core"(ptr %return, ptr %.loc18_32.2.temp), !dbg !146
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.loc18_32.2.temp), !dbg !146
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e517637b3b58cb2c(ptr %.6.temp), !dbg !145
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e517637b3b58cb2c(ptr %.loc18_32.3.temp), !dbg !146
 // CHECK:STDOUT:   ret void, !dbg !146
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -343,7 +342,6 @@ fn CallCallGeneric(c: C(()), b: B) -> A {
 // CHECK:STDOUT: !142 = distinct !DISubprogram(name: "F", linkageName: "_CF:thunk:I.e2e8ace3e0ca3527.Main:C.eb057aa32837c84e.Main:I.eb057aa32837c84e.Main.e43630e9a6c38c3f", scope: null, file: !74, line: 18, type: !77, spFlags: DISPFlagDefinition, unit: !75, retainedNodes: !147)
 // CHECK:STDOUT: !143 = !DILocalVariable(arg: 1, scope: !142, type: !21)
 // CHECK:STDOUT: !144 = !DILocalVariable(arg: 2, scope: !142, type: !21)
-// CHECK:STDOUT: !145 = !DILocation(line: 0, scope: !142)
 // CHECK:STDOUT: !146 = !DILocation(line: 18, column: 3, scope: !142)
 // CHECK:STDOUT: !147 = !{!143, !144}
 // CHECK:STDOUT:

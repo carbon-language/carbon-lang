@@ -106,13 +106,9 @@ import Cpp library "types.h";
 fn TestArrayOfNonTrivialDestructor(x: array(Cpp.NonTrivialDestructor, 2)) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_array.carbon:[[@LINE+8]]:3: error: cannot convert type `array(Cpp.NonTrivialDestructor, 2)` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_array.carbon:[[@LINE-9]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_array.carbon:[[@LINE+4]]:3-31: error: cannot convert type `array(Cpp.NonTrivialDestructor, 2)` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_array.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -128,13 +124,9 @@ import Cpp library "types.h";
 fn TestNonTrivialDestructor(x: Cpp.NonTrivialDestructor) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:3: error: cannot convert type `Cpp.NonTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_class.carbon:[[@LINE-10]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.NonTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-8]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -142,13 +134,9 @@ fn TestNonTrivialDestructor(x: Cpp.NonTrivialDestructor) {
 fn TestUserProvidedDestructor(x: Cpp.UserProvidedDestructor) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:3: error: cannot convert type `Cpp.UserProvidedDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_class.carbon:[[@LINE-24]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.UserProvidedDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-18]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -156,13 +144,9 @@ fn TestUserProvidedDestructor(x: Cpp.UserProvidedDestructor) {
 fn TestHasNonTrivialMember(x: Cpp.HasNonTrivialMember) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:3: error: cannot convert type `Cpp.HasNonTrivialMember` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_class.carbon:[[@LINE-38]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.HasNonTrivialMember` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-28]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -170,13 +154,9 @@ fn TestHasNonTrivialMember(x: Cpp.HasNonTrivialMember) {
 fn TestDerivedFromNonTrivial(x: Cpp.DerivedFromNonTrivial) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:3: error: cannot convert type `Cpp.DerivedFromNonTrivial` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_class.carbon:[[@LINE-52]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.DerivedFromNonTrivial` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-38]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -184,13 +164,9 @@ fn TestDerivedFromNonTrivial(x: Cpp.DerivedFromNonTrivial) {
 fn TestHolderOfNonTrivialDestructor(x: Cpp.Holder(Cpp.NonTrivialDestructor)) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:3: error: cannot convert type `Cpp.Holder` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_class.carbon:[[@LINE-66]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.Holder` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-48]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -198,13 +174,9 @@ fn TestHolderOfNonTrivialDestructor(x: Cpp.Holder(Cpp.NonTrivialDestructor)) {
 fn TestHolderOfCarbonNonTrivial(x: Cpp.Holder(NonTrivial)) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:3: error: cannot convert type `Cpp.Holder` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_class.carbon:[[@LINE-80]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.Holder` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-58]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -213,13 +185,9 @@ fn TestCarbonWithNonTrivialDestructorMember(
     x: CarbonWithNonTrivialDestructorMember) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:3: error: cannot convert type `CarbonWithNonTrivialDestructorMember` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_class.carbon:[[@LINE-95]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `CarbonWithNonTrivialDestructorMember` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-69]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -228,13 +196,9 @@ fn TestCarbonDerivedFromNonTrivialDestructor(
     x: CarbonDerivedFromNonTrivialDestructor) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:3: error: cannot convert type `CarbonDerivedFromNonTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_class.carbon:[[@LINE-110]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `CarbonDerivedFromNonTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-80]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -243,13 +207,9 @@ fn TestDestroyableBoxOfNonTrivialDestructor(
     x: DestroyableBox(Cpp.NonTrivialDestructor)) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:3: error: cannot convert type `DestroyableBox(Cpp.NonTrivialDestructor as Core.SubobjectDestroy & Core.DestroyImpl)` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_class.carbon:[[@LINE-125]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `DestroyableBox(Cpp.NonTrivialDestructor as Core.SubobjectDestroy & Core.DestroyImpl)` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-91]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -265,13 +225,9 @@ fn TestCppHoldsCarbonHoldsNonTrivialDestructor(
     x: Cpp.CppHoldsCarbonHoldsNonTrivialDestructor) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+8]]:3: error: cannot convert type `Cpp.CppHoldsCarbonHoldsNonTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_class.carbon:[[@LINE-147]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.CppHoldsCarbonHoldsNonTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-109]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -302,13 +258,9 @@ import Cpp library "types.h";
 fn TestVirtualDestructor(x: Cpp.VirtualDestructor) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_todo_class_dynamic.carbon:[[@LINE+8]]:3: error: cannot convert type `Cpp.VirtualDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_class_dynamic.carbon:[[@LINE-10]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_class_dynamic.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.VirtualDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_todo_class_dynamic.carbon:[[@LINE-8]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -323,13 +275,9 @@ import Cpp library "types.h";
 fn TestConstNonTrivialDestructor(x: const Cpp.NonTrivialDestructor) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_const.carbon:[[@LINE+8]]:3: error: cannot convert type `const Cpp.NonTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_const.carbon:[[@LINE-9]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_const.carbon:[[@LINE+4]]:3-31: error: cannot convert type `const Cpp.NonTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_const.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -359,13 +307,9 @@ import Cpp library "types.h";
 fn TestStructWithNonTrivialDestructor(x: {.n: Cpp.NonTrivialDestructor}) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_struct.carbon:[[@LINE+8]]:3: error: cannot convert type `{.n: Cpp.NonTrivialDestructor}` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_struct.carbon:[[@LINE-9]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_struct.carbon:[[@LINE+4]]:3-31: error: cannot convert type `{.n: Cpp.NonTrivialDestructor}` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_struct.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
@@ -380,13 +324,9 @@ import Cpp library "types.h";
 fn TestTupleWithNonTrivialDestructor(x: (Cpp.NonTrivialDestructor,)) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_tuple.carbon:[[@LINE+8]]:3: error: cannot convert type `(Cpp.NonTrivialDestructor,)` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   CheckHasTrivialDestruction(x);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_tuple.carbon:[[@LINE-9]]:1: in import [InImport]
-  // CHECK:STDERR: check_destroy_format.carbon:19:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_tuple.carbon:[[@LINE+4]]:3-31: error: cannot convert type `(Cpp.NonTrivialDestructor,)` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_tuple.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
