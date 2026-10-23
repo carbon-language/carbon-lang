@@ -1224,8 +1224,9 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
       mangler.Mangle(target.function_id, SemIR::SpecificId::None);
   llvm::SmallString<64> var_name = llvm::formatv(
       "__carbon_default_value_{}_{}", mangled_fn_name, parameter_index);
+  auto& ident = context.ast_context().Idents.get(var_name);
   auto name_id =
-      SemIR::NameId::ForIdentifier(context.identifiers().Add(var_name));
+      SemIR::NameId::ForIdentifier(context.identifiers().Add(ident.getName()));
 
   // First we synthesize the variable definition by creating an EntityName from
   // the generated name stored in `var_name`. We want to generate a
