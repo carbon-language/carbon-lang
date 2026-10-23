@@ -113,7 +113,6 @@ fn G() {
 // CHECK:STDOUT:   %CallGenericMethod.specific_fn: <specific function> = specific_function %CallGenericMethod, @CallGenericMethod(%GenericParam, %Generic.facet) [concrete]
 // CHECK:STDOUT:   %complete_type.a7d: <witness> = complete_type_witness %Generic.type.e46 [concrete]
 // CHECK:STDOUT:   %.788: type = fn_type_with_self_type %Generic.WithSelf.F.type.ae1, %Generic.facet [concrete]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Generic.impl_witness [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -288,7 +287,6 @@ fn G() {
 // CHECK:STDOUT:   %Generic.WithSelf.F.type: type = fn_type @Generic.WithSelf.F, @Generic.WithSelf(%T.loc33_31.1, %U.loc33_48.1) [symbolic = %Generic.WithSelf.F.type (constants.%Generic.WithSelf.F.type.c83)]
 // CHECK:STDOUT:   %.loc34_4.3: type = fn_type_with_self_type %Generic.WithSelf.F.type, %U.loc33_48.1 [symbolic = %.loc34_4.3 (constants.%.39f)]
 // CHECK:STDOUT:   %Generic.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc33_48.1, @Generic, @Generic(%T.loc33_31.1) [symbolic = %Generic.lookup_impl_witness (constants.%Generic.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Generic.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc34_4.2: @CallGenericMethod.%.loc34_4.3 (%.39f) = impl_witness_access %Generic.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc34_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc34_4.2: <specific function> = specific_impl_function %impl.elem0.loc34_4.2, @Generic.WithSelf.F(%T.loc33_31.1, %U.loc33_48.1) [symbolic = %specific_impl_fn.loc34_4.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
@@ -436,7 +434,6 @@ fn G() {
 // CHECK:STDOUT:   %Generic.WithSelf.F.type => constants.%Generic.WithSelf.F.type.ae1
 // CHECK:STDOUT:   %.loc34_4.3 => constants.%.788
 // CHECK:STDOUT:   %Generic.lookup_impl_witness => constants.%Generic.impl_witness
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn
 // CHECK:STDOUT:   %impl.elem0.loc34_4.2 => constants.%ImplsGeneric.as.Generic.impl.F
 // CHECK:STDOUT:   %specific_impl_fn.loc34_4.2 => constants.%ImplsGeneric.as.Generic.impl.F
 // CHECK:STDOUT: }

@@ -326,7 +326,6 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %I.WithSelf.F.type.0a9: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.b01) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.1d9: %I.WithSelf.F.type.0a9 = struct_value () [concrete]
 // CHECK:STDOUT:   %.aab: type = fn_type_with_self_type %I.WithSelf.F.type.0a9, %I.facet.b01 [concrete]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %I.impl_witness.e63 [concrete]
 // CHECK:STDOUT:   %T.as.I.impl.F.specific_fn: <specific function> = specific_function %T.as.I.impl.F.20e, @T.as.I.impl.F(%empty_tuple.type) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -393,7 +392,6 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self) [symbolic = %I.WithSelf.F.type (constants.%I.WithSelf.F.type.de2)]
 // CHECK:STDOUT:   %.loc6_24.2: type = fn_type_with_self_type %I.WithSelf.F.type, %Self [symbolic = %.loc6_24.2 (constants.%.b7e)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc6_24.2: @I.WithSelf.G.%.loc6_24.2 (%.b7e) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_24.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc6_24.2: <specific function> = specific_impl_function %impl.elem0.loc6_24.2, @I.WithSelf.F(%Self) [symbolic = %specific_impl_fn.loc6_24.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:
@@ -485,7 +483,6 @@ fn Call() { ().(I.G)(); }
 // CHECK:STDOUT:   %I.WithSelf.F.type => constants.%I.WithSelf.F.type.0a9
 // CHECK:STDOUT:   %.loc6_24.2 => constants.%.aab
 // CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness.e63
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn
 // CHECK:STDOUT:   %impl.elem0.loc6_24.2 => constants.%T.as.I.impl.F.20e
 // CHECK:STDOUT:   %specific_impl_fn.loc6_24.2 => constants.%T.as.I.impl.F.specific_fn
 // CHECK:STDOUT: }

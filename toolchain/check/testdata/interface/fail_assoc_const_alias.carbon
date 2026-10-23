@@ -87,7 +87,6 @@ interface C {
 // CHECK:STDOUT:   %pattern_type.ff8: type = pattern_type %impl.elem0.422 [symbolic]
 // CHECK:STDOUT:   %return.param_patt: %pattern_type.ff8 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt: %pattern_type.ff8 = return_slot_pattern %return.param_patt, %impl.elem0.422 [symbolic]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %I2.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %J2.WithSelf.F2.type: type = fn_type @J2.WithSelf.F2, @J2.WithSelf(%Self.c1f) [symbolic]
 // CHECK:STDOUT:   %J2.WithSelf.F2: %J2.WithSelf.F2.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %J2.assoc_type: type = assoc_entity_type @J2 [concrete]
@@ -136,7 +135,6 @@ interface C {
 // CHECK:STDOUT:   %Self: %J2.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c1f)]
 // CHECK:STDOUT:   %Self.as_type.loc14_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %I2.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I2 [symbolic = %I2.lookup_impl_witness (constants.%I2.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %I2.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %I2.facet.loc14_14.1: %I2.type = facet_value %Self.as_type.loc14_14.1, (%I2.lookup_impl_witness) [symbolic = %I2.facet.loc14_14.1 (constants.%I2.facet.39b)]
 // CHECK:STDOUT:   %impl.elem0.loc14_14.1: type = impl_witness_access %I2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_14.1 (constants.%impl.elem0.422)]
 // CHECK:STDOUT:   %.loc14_14.1: Core.Form = init_form %impl.elem0.loc14_14.1 [symbolic = %.loc14_14.1 (constants.%.932)]
@@ -153,7 +151,6 @@ interface C {
 // CHECK:STDOUT:   %Self => constants.%Self.c1f
 // CHECK:STDOUT:   %Self.as_type.loc14_14.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %I2.lookup_impl_witness => constants.%I2.lookup_impl_witness
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn
 // CHECK:STDOUT:   %I2.facet.loc14_14.1 => constants.%I2.facet.39b
 // CHECK:STDOUT:   %impl.elem0.loc14_14.1 => constants.%impl.elem0.422
 // CHECK:STDOUT:   %.loc14_14.1 => constants.%.932
@@ -208,7 +205,6 @@ interface C {
 // CHECK:STDOUT:   %C.WithSelf.F.type: type = fn_type @C.WithSelf.F, @C.WithSelf(%Self) [symbolic = %C.WithSelf.F.type (constants.%C.WithSelf.F.type)]
 // CHECK:STDOUT:   %.loc8_9: type = fn_type_with_self_type %C.WithSelf.F.type, %Self [symbolic = %.loc8_9 (constants.%.ae6)]
 // CHECK:STDOUT:   %C.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @C [symbolic = %C.lookup_impl_witness (constants.%C.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %C.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc8_9.2: @C.WithSelf.G.%.loc8_9 (%.ae6) = impl_witness_access %C.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_9.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc8_9.2: <specific function> = specific_impl_function %impl.elem0.loc8_9.2, @C.WithSelf.F(%Self) [symbolic = %specific_impl_fn.loc8_9.2 (constants.%specific_impl_fn)]
 // CHECK:STDOUT:

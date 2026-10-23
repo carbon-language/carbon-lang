@@ -220,7 +220,6 @@ fn F(generic B: Y) {
 // CHECK:STDOUT:   %assoc0: @F.%Z.assoc_type (%Z.assoc_type.4e0) = assoc_entity element0, imports.%Main.import_ref.7eb [symbolic = %assoc0 (constants.%assoc0.de7)]
 // CHECK:STDOUT:   %Z.type: type = facet_type <@Z, @Z(%A.as_type.loc5_4.2)> [symbolic = %Z.type (constants.%Z.type.56f318.2)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %A.loc4_15.1, @Z, @Z(%A.as_type.loc5_4.2) [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Z.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Z.facet: @F.%Z.type (%Z.type.56f318.2) = facet_value %A.as_type.loc5_4.2, (%Z.lookup_impl_witness) [symbolic = %Z.facet (constants.%Z.facet)]
 // CHECK:STDOUT:   %Z.WithSelf.F.type: type = fn_type @Z.WithSelf.F, @Z.WithSelf(%A.as_type.loc5_4.2, %Z.facet) [symbolic = %Z.WithSelf.F.type (constants.%Z.WithSelf.F.type.20b)]
 // CHECK:STDOUT:   %.loc5_4.3: type = fn_type_with_self_type %Z.WithSelf.F.type, %Z.facet [symbolic = %.loc5_4.3 (constants.%.a25)]

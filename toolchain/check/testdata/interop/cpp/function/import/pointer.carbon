@@ -1837,7 +1837,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.c3f: type = pattern_type %NullableParamS [concrete]
 // CHECK:STDOUT:   %s.patt: %pattern_type.c3f = ref_binding_pattern s [concrete]
 // CHECK:STDOUT:   %s.var_patt: %pattern_type.c3f = var_pattern %s.patt [concrete]
-// CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %NullableParamS.val: %NullableParamS = struct_value () [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.cpp_overload_set.type: type = cpp_overload_set_type @nullable_param_foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.cpp_overload_set.value: %nullable_param_foo.cpp_overload_set.type = cpp_overload_set_value @nullable_param_foo.cpp_overload_set [concrete]
@@ -2009,7 +2009,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.var: ref %NullableParamS = var_storage %s.var_patt
-// CHECK:STDOUT:   %.loc8_32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc8_32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_32.2: init %NullableParamS to %s.var = class_init () [concrete = constants.%NullableParamS.val]
 // CHECK:STDOUT:   %.loc8_3: init %NullableParamS = converted %.loc8_32.1, %.loc8_32.2 [concrete = constants.%NullableParamS.val]
 // CHECK:STDOUT:   assign %s.var, %.loc8_3
@@ -2301,7 +2301,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.c3f: type = pattern_type %NullableParamS [concrete]
 // CHECK:STDOUT:   %s.patt: %pattern_type.c3f = ref_binding_pattern s [concrete]
 // CHECK:STDOUT:   %s.var_patt: %pattern_type.c3f = var_pattern %s.patt [concrete]
-// CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %NullableParamS.val: %NullableParamS = struct_value () [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.cpp_overload_set.type: type = cpp_overload_set_type @nullable_param_foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.cpp_overload_set.value: %nullable_param_foo.cpp_overload_set.type = cpp_overload_set_value @nullable_param_foo.cpp_overload_set [concrete]
@@ -2468,7 +2468,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.var: ref %NullableParamS = var_storage %s.var_patt
-// CHECK:STDOUT:   %.loc8_32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc8_32.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_32.2: init %NullableParamS to %s.var = class_init () [concrete = constants.%NullableParamS.val]
 // CHECK:STDOUT:   %.loc8_3: init %NullableParamS = converted %.loc8_32.1, %.loc8_32.2 [concrete = constants.%NullableParamS.val]
 // CHECK:STDOUT:   assign %s.var, %.loc8_3
@@ -2859,7 +2859,7 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.36d: type = pattern_type %DeducedPointerS [concrete]
 // CHECK:STDOUT:   %s.patt: %pattern_type.36d = ref_binding_pattern s [concrete]
 // CHECK:STDOUT:   %s.var_patt: %pattern_type.36d = var_pattern %s.patt [concrete]
-// CHECK:STDOUT:   %empty_struct.a40: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %DeducedPointerS.val: %DeducedPointerS = struct_value () [concrete]
 // CHECK:STDOUT:   %Direct.cpp_overload_set.type: type = cpp_overload_set_type @Direct.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Direct.cpp_overload_set.value: %Direct.cpp_overload_set.type = cpp_overload_set_value @Direct.cpp_overload_set [concrete]
@@ -3065,7 +3065,7 @@ fn F() {
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.var: ref %DeducedPointerS = var_storage %s.var_patt
-// CHECK:STDOUT:   %.loc10_33.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc10_33.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_33.2: init %DeducedPointerS to %s.var = class_init () [concrete = constants.%DeducedPointerS.val]
 // CHECK:STDOUT:   %.loc10_3: init %DeducedPointerS = converted %.loc10_33.1, %.loc10_33.2 [concrete = constants.%DeducedPointerS.val]
 // CHECK:STDOUT:   assign %s.var, %.loc10_3
@@ -3096,7 +3096,7 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc11: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc11(%.loc11_14.3)
 // CHECK:STDOUT:   %Cpp.ref.loc13_55: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %Indirect.ref: %Indirect.cpp_overload_set.type = name_ref Indirect, imports.%Indirect.cpp_overload_set.value [concrete = constants.%Indirect.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc13_69.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc13_69.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %Cpp.ref.loc13_74: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %DeducedPointerS.ref.loc13_77: type = name_ref DeducedPointerS, imports.%DeducedPointerS.decl [concrete = constants.%DeducedPointerS]
 // CHECK:STDOUT:   %.loc13_69.2: ref %DeducedPointerS = temporary_storage

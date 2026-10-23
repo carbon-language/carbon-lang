@@ -827,7 +827,6 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc14: <witness> = require_complete_type %T.as_type.loc14_26.1 [symbolic = %require_complete.loc14 (constants.%require_complete.6f0)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc14_15.1, @Z, @Z(constants.%C) [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Z.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc18_18.2: type = impl_witness_access %Z.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_18.2 (constants.%impl.elem0.5bb)]
 // CHECK:STDOUT:   %require_complete.loc18_18: <witness> = require_complete_type %impl.elem0.loc18_18.2 [symbolic = %require_complete.loc18_18 (constants.%require_complete.fee)]
 // CHECK:STDOUT:   %pattern_type.loc18: type = pattern_type %impl.elem0.loc18_18.2 [symbolic = %pattern_type.loc18 (constants.%pattern_type.58e)]
@@ -1008,6 +1007,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %.f8fe26.2: <witness> = impl_self_witness %T.67d, @Ptr [symbolic]
 // CHECK:STDOUT:   %Ptr.impl_witness.5a17a2.2: <witness> = impl_witness @U.as.Ptr.impl.%Ptr.impl_witness_table, @U.as.Ptr.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Ptr.facet.7955f3.2: %Ptr.type = facet_value %T.67d, (%Ptr.impl_witness.5a17a2.2) [symbolic]
+// CHECK:STDOUT:   %require_witness_defn: require_specific_defn_type = require_specific_defn @U.as.Ptr.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr.e8f8f9.2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f8f9.2 [symbolic]
 // CHECK:STDOUT:   %return.param_patt.27f: %pattern_type.4f4 = out_param_pattern [symbolic]
@@ -1142,6 +1142,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %t.patt.loc9_20.2: @F.%pattern_type.loc9_20 (%pattern_type.51d) = ref_binding_pattern t [symbolic = %t.patt.loc9_20.2 (constants.%t.patt)]
 // CHECK:STDOUT:   %t.param_patt.loc9_15.2: @F.%pattern_type.loc9_20 (%pattern_type.51d) = var_param_pattern %t.patt.loc9_20.2 [symbolic = %t.param_patt.loc9_15.2 (constants.%t.param_patt)]
 // CHECK:STDOUT:   %Ptr.impl_witness: <witness> = impl_witness @U.as.Ptr.impl.%Ptr.impl_witness_table, @U.as.Ptr.impl(%T.loc9_7.1) [symbolic = %Ptr.impl_witness (constants.%Ptr.impl_witness.5a17a2.2)]
+// CHECK:STDOUT:   %require_witness_defn: require_specific_defn_type = require_specific_defn @U.as.Ptr.impl(%T.loc9_7.1) [symbolic = %require_witness_defn (constants.%require_witness_defn)]
 // CHECK:STDOUT:   %Ptr.facet.loc9_29.1: %Ptr.type = facet_value %T.loc9_7.1, (%Ptr.impl_witness) [symbolic = %Ptr.facet.loc9_29.1 (constants.%Ptr.facet.7955f3.2)]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T.loc9_7.1 [symbolic = %ptr (constants.%ptr.e8f8f9.2)]
 // CHECK:STDOUT:   %.loc9_29.1: Core.Form = init_form %ptr [symbolic = %.loc9_29.1 (constants.%.cb6)]
@@ -1153,7 +1154,6 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %require_complete.loc9_15: <witness> = require_complete_type %T.loc9_7.1 [symbolic = %require_complete.loc9_15 (constants.%require_complete.944)]
 // CHECK:STDOUT:   %require_complete.loc9_25: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc9_25 (constants.%require_complete.ef1)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.1da)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Copy.facet.loc10_10.3: %Copy.type = facet_value %ptr, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc10_10.3 (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.loc10_10.3) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e38)]
 // CHECK:STDOUT:   %.loc10_10.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet.loc10_10.3 [symbolic = %.loc10_10.3 (constants.%.3f816)]
@@ -1220,6 +1220,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %t.patt.loc9_20.2 => constants.%t.patt
 // CHECK:STDOUT:   %t.param_patt.loc9_15.2 => constants.%t.param_patt
 // CHECK:STDOUT:   %Ptr.impl_witness => constants.%Ptr.impl_witness.5a17a2.2
+// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn
 // CHECK:STDOUT:   %Ptr.facet.loc9_29.1 => constants.%Ptr.facet.7955f3.2
 // CHECK:STDOUT:   %ptr => constants.%ptr.e8f8f9.2
 // CHECK:STDOUT:   %.loc9_29.1 => constants.%.cb6
@@ -1410,7 +1411,6 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %require_complete.loc9_14: <witness> = require_complete_type %T.as_type.loc9_21.1 [symbolic = %require_complete.loc9_14 (constants.%require_complete.35c)]
 // CHECK:STDOUT:   %require_complete.loc9_24: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc9_24 (constants.%require_complete.841)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d90)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Copy.facet.loc10_10.3: %Copy.type = facet_value %ptr, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc10_10.3 (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.loc10_10.3) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e45)]
 // CHECK:STDOUT:   %.loc10_10.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet.loc10_10.3 [symbolic = %.loc10_10.3 (constants.%.18f)]
@@ -1665,7 +1665,6 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %require_complete.loc9_14: <witness> = require_complete_type %T.as_type.loc9_21.1 [symbolic = %require_complete.loc9_14 (constants.%require_complete.35c)]
 // CHECK:STDOUT:   %require_complete.loc9_24: <witness> = require_complete_type %ptr [symbolic = %require_complete.loc9_24 (constants.%require_complete.841)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d90)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Copy.facet.loc10_10.3: %Copy.type = facet_value %ptr, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc10_10.3 (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.loc10_10.3) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e45)]
 // CHECK:STDOUT:   %.loc10_10.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet.loc10_10.3 [symbolic = %.loc10_10.3 (constants.%.18f)]

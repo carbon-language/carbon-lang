@@ -243,10 +243,8 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT:   %Interface.assoc_type: type = assoc_entity_type @Interface, @Interface(%T.loc8_19.1) [symbolic = %Interface.assoc_type (constants.%Interface.assoc_type.f63)]
 // CHECK:STDOUT:   %assoc0: @AccessGeneric.%Interface.assoc_type (%Interface.assoc_type.f63) = assoc_entity element0, @Interface.WithSelf.%X [symbolic = %assoc0 (constants.%assoc0.f45)]
 // CHECK:STDOUT:   %Interface.lookup_impl_witness: <witness> = lookup_impl_witness %I.loc8_36.1, @Interface, @Interface(%T.loc8_19.1) [symbolic = %Interface.lookup_impl_witness (constants.%Interface.lookup_impl_witness.e71)]
-// CHECK:STDOUT:   %require_witness_defn.loc9_11.1: require_witness_defn_type = require_witness_defn %Interface.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc9_11.3: @AccessGeneric.%ptr.loc8_56.1 (%ptr.e8f) = impl_witness_access %Interface.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_11.3 (constants.%impl.elem0.e9d)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc8_56.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.1da)]
-// CHECK:STDOUT:   %require_witness_defn.loc9_11.2: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Copy.facet.loc9_11.3: %Copy.type = facet_value %ptr.loc8_56.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc9_11.3 (constants.%Copy.facet.302)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.loc9_11.3) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e38)]
 // CHECK:STDOUT:   %.loc9_11.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet.loc9_11.3 [symbolic = %.loc9_11.5 (constants.%.3f816)]
@@ -283,7 +281,6 @@ fn AccessMissingConcrete(generic I: Interface(i32)) -> i32 {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %I.as_type.loc13_11.2: type = facet_access_type %I.loc12_28.1 [symbolic = %I.as_type.loc13_11.2 (constants.%I.as_type.bed)]
 // CHECK:STDOUT:   %Interface.lookup_impl_witness: <witness> = lookup_impl_witness %I.loc12_28.1, @Interface, @Interface(constants.%i32) [symbolic = %Interface.lookup_impl_witness (constants.%Interface.lookup_impl_witness.a30)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Interface.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc13_11.3: %ptr.a17 = impl_witness_access %Interface.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc13_11.3 (constants.%impl.elem0.085)]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.bound: <bound method> = bound_method %impl.elem0.loc13_11.3, constants.%ptr.as.Copy.impl.Op.81f [symbolic = %ptr.as.Copy.impl.Op.bound (constants.%ptr.as.Copy.impl.Op.bound)]
 // CHECK:STDOUT:   %bound_method.loc13_11.3: <bound method> = bound_method %impl.elem0.loc13_11.3, constants.%ptr.as.Copy.impl.Op.specific_fn [symbolic = %bound_method.loc13_11.3 (constants.%bound_method.d80)]

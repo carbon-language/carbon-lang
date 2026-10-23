@@ -222,11 +222,9 @@ fn L() -> (bool, bool) { return K(true); }
 // CHECK:STDOUT:   %tuple.6be: %tuple.type.56f = tuple_value (%facet_value, %facet_value) [concrete]
 // CHECK:STDOUT:   %complete_type.127: <witness> = complete_type_witness bool [concrete]
 // CHECK:STDOUT:   %complete_type.e0b: <witness> = complete_type_witness %tuple.type.784 [concrete]
-// CHECK:STDOUT:   %require_witness_defn.132: require_witness_defn_type = require_witness_defn %Copy.impl_witness.5e1 [concrete]
 // CHECK:STDOUT:   %Copy.facet.7af: %Copy.type = facet_value bool, (%Copy.impl_witness.5e1) [concrete]
 // CHECK:STDOUT:   %Id.specific_fn.06a: <specific function> = specific_function %Id, @Id(%Copy.facet.7af) [concrete]
 // CHECK:STDOUT:   %Pair.specific_fn.62b: <specific function> = specific_function %Pair, @Pair(%Copy.facet.7af) [concrete]
-// CHECK:STDOUT:   %empty_struct: require_witness_defn_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.75f: %Destroy.type = facet_value bool, (%custom_witness.f8f) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.2a2: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.75f) [concrete]
 // CHECK:STDOUT:   %.fb9: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.2a2, %Destroy.facet.75f [concrete]
@@ -366,12 +364,10 @@ fn L() -> (bool, bool) { return K(true); }
 // CHECK:STDOUT:   %require_complete.loc7_36: <witness> = require_complete_type %U.as_type.loc7_38.1 [symbolic = %require_complete.loc7_36 (constants.%require_complete.091)]
 // CHECK:STDOUT:   %require_complete.loc7_41: <witness> = require_complete_type %tuple.type [symbolic = %require_complete.loc7_41 (constants.%require_complete.8f6)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc7_7.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.fd8)]
-// CHECK:STDOUT:   %require_witness_defn.loc7_69.1: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Copy.facet.loc7_69.3: %Copy.type = facet_value %U.as_type.loc7_38.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc7_69.3 (constants.%Copy.facet.40c)]
 // CHECK:STDOUT:   %Id.specific_fn.loc7_65.2: <specific function> = specific_function constants.%Id, @Id(%Copy.facet.loc7_69.3) [symbolic = %Id.specific_fn.loc7_65.2 (constants.%Id.specific_fn.e53)]
 // CHECK:STDOUT:   %Pair.specific_fn.loc7_60.2: <specific function> = specific_function constants.%Pair, @Pair(%Copy.facet.loc7_69.3) [symbolic = %Pair.specific_fn.loc7_60.2 (constants.%Pair.specific_fn.540)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc7_7.1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.491)]
-// CHECK:STDOUT:   %require_witness_defn.loc7_69.2: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Destroy.facet.loc7_69.3: %Destroy.type = facet_value %U.as_type.loc7_38.1, (%Destroy.lookup_impl_witness) [symbolic = %Destroy.facet.loc7_69.3 (constants.%Destroy.facet.589)]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.loc7_69.3) [symbolic = %Destroy.WithSelf.SelfDestruct.type (constants.%Destroy.WithSelf.SelfDestruct.type.613)]
 // CHECK:STDOUT:   %.loc7_69.8: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %Destroy.facet.loc7_69.3 [symbolic = %.loc7_69.8 (constants.%.a48)]
@@ -445,12 +441,10 @@ fn L() -> (bool, bool) { return K(true); }
 // CHECK:STDOUT:   %require_complete.loc7_36 => constants.%complete_type.127
 // CHECK:STDOUT:   %require_complete.loc7_41 => constants.%complete_type.e0b
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.5e1
-// CHECK:STDOUT:   %require_witness_defn.loc7_69.1 => constants.%require_witness_defn.132
 // CHECK:STDOUT:   %Copy.facet.loc7_69.3 => constants.%Copy.facet.7af
 // CHECK:STDOUT:   %Id.specific_fn.loc7_65.2 => constants.%Id.specific_fn.06a
 // CHECK:STDOUT:   %Pair.specific_fn.loc7_60.2 => constants.%Pair.specific_fn.62b
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f
-// CHECK:STDOUT:   %require_witness_defn.loc7_69.2 => constants.%empty_struct
 // CHECK:STDOUT:   %Destroy.facet.loc7_69.3 => constants.%Destroy.facet.75f
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.2a2
 // CHECK:STDOUT:   %.loc7_69.8 => constants.%.fb9

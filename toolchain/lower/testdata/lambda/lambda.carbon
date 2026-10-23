@@ -40,7 +40,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_Cfn:enclosed.e6e9d7a76bf9735e"(i32 %x) #0 !dbg !31 {
+// CHECK:STDOUT: define i32 @"_Cfn:enclosed.83e951771c5c48a3"(i32 %x) #0 !dbg !31 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !34
 // CHECK:STDOUT: }
@@ -61,7 +61,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT: !24 = !DILocalVariable(arg: 1, scope: !23, type: !20)
 // CHECK:STDOUT: !29 = !DILocation(line: 3, column: 39, scope: !23)
 // CHECK:STDOUT: !30 = !{!24}
-// CHECK:STDOUT: !31 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.e6e9d7a76bf9735e", scope: null, file: !18, line: 4, type: !22, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !35)
+// CHECK:STDOUT: !31 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.83e951771c5c48a3", scope: null, file: !18, line: 4, type: !22, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !35)
 // CHECK:STDOUT: !32 = !DILocalVariable(arg: 1, scope: !31, type: !20)
 // CHECK:STDOUT: !34 = !DILocation(line: 4, column: 38, scope: !31)
 // CHECK:STDOUT: !35 = !{!32}
@@ -74,10 +74,10 @@ fn Test() -> i32 {
 // CHECK:STDOUT: define i32 @_CTest.Main() #0 !dbg !40 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %fn.call.loc10_57 = call i32 @"_Cfn:enclosed.3c14c8ca6559e7d0"(i32 1), !dbg !43
-// CHECK:STDOUT:   %fn.call.loc10_58 = call i32 @"_Cfn:enclosed.e6e9d7a76bf9735e"(i32 %fn.call.loc10_57), !dbg !44
+// CHECK:STDOUT:   %fn.call.loc10_58 = call i32 @"_Cfn:enclosed.83e951771c5c48a3"(i32 %fn.call.loc10_57), !dbg !44
 // CHECK:STDOUT:   %fn.call.loc10_59 = call i32 @"_Cfn:enclosed.78e97d08196088b9"(i32 %fn.call.loc10_58), !dbg !45
-// CHECK:STDOUT:   %fn.call.loc10_60 = call i32 @"_Cfn:enclosed.dcb7797bfe21678b"(i32 %fn.call.loc10_59), !dbg !46
-// CHECK:STDOUT:   %fn.call.loc10_61 = call i32 @"_Cfn:enclosed.0bd4d9c28727606b"(i32 %fn.call.loc10_60), !dbg !47
+// CHECK:STDOUT:   %fn.call.loc10_60 = call i32 @"_Cfn:enclosed.c81a8df220dfa49c"(i32 %fn.call.loc10_59), !dbg !46
+// CHECK:STDOUT:   %fn.call.loc10_61 = call i32 @"_Cfn:enclosed.0234da9823ac6855"(i32 %fn.call.loc10_60), !dbg !47
 // CHECK:STDOUT:   ret i32 %fn.call.loc10_61, !dbg !48
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -88,18 +88,18 @@ fn Test() -> i32 {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_Cfn:enclosed.dcb7797bfe21678b"(i32 %x) #0 !dbg !57 {
+// CHECK:STDOUT: define i32 @"_Cfn:enclosed.c81a8df220dfa49c"(i32 %x) #0 !dbg !57 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %x, !dbg !60
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_Cfn:enclosed.0bd4d9c28727606b"(i32 %y) #0 !dbg !62 {
+// CHECK:STDOUT: define i32 @"_Cfn:enclosed.0234da9823ac6855"(i32 %y) #0 !dbg !62 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   ret i32 %y, !dbg !65
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: declare i32 @"_Cfn:enclosed.e6e9d7a76bf9735e"(i32)
+// CHECK:STDOUT: declare i32 @"_Cfn:enclosed.83e951771c5c48a3"(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @"_Cfn:enclosed.3c14c8ca6559e7d0"(i32)
 // CHECK:STDOUT:
@@ -128,11 +128,11 @@ fn Test() -> i32 {
 // CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !49, type: !20)
 // CHECK:STDOUT: !55 = !DILocation(line: 7, column: 5, scope: !49)
 // CHECK:STDOUT: !56 = !{!50}
-// CHECK:STDOUT: !57 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.dcb7797bfe21678b", scope: null, file: !36, line: 9, type: !22, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !61)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.c81a8df220dfa49c", scope: null, file: !36, line: 9, type: !22, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !61)
 // CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !57, type: !20)
 // CHECK:STDOUT: !60 = !DILocation(line: 9, column: 28, scope: !57)
 // CHECK:STDOUT: !61 = !{!58}
-// CHECK:STDOUT: !62 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.0bd4d9c28727606b", scope: null, file: !36, line: 10, type: !22, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !66)
+// CHECK:STDOUT: !62 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.0234da9823ac6855", scope: null, file: !36, line: 10, type: !22, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !66)
 // CHECK:STDOUT: !63 = !DILocalVariable(arg: 1, scope: !62, type: !20)
 // CHECK:STDOUT: !65 = !DILocation(line: 10, column: 26, scope: !62)
 // CHECK:STDOUT: !66 = !{!63}

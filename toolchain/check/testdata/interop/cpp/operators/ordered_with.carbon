@@ -395,7 +395,6 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %complete_type.23a: <witness> = complete_type_witness %OrderedWith.type.431 [concrete]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.ae1: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.b02) [concrete]
 // CHECK:STDOUT:   %.05c: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.ae1, %OrderedWith.facet.b02 [concrete]
-// CHECK:STDOUT:   %empty_struct: require_witness_defn_type = struct_value () [concrete]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.cbc: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.b02) [concrete]
 // CHECK:STDOUT:   %.172: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.cbc, %OrderedWith.facet.b02 [concrete]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.b4e: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%Ordered, %OrderedWith.facet.b02) [concrete]
@@ -430,7 +429,6 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%U.loc13_17.1, %T.loc13_26.1) [symbolic = %OrderedWith.WithSelf.Less.type (constants.%OrderedWith.WithSelf.Less.type.104f17.3)]
 // CHECK:STDOUT:   %.loc15_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type, %T.loc13_26.1 [symbolic = %.loc15_5.2 (constants.%.236)]
 // CHECK:STDOUT:   %OrderedWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_26.1, @OrderedWith.1, @OrderedWith.1(%U.loc13_17.1) [symbolic = %OrderedWith.lookup_impl_witness (constants.%OrderedWith.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %OrderedWith.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc15_5.2: @OrderedWith.loc13.%.loc15_5.2 (%.236) = impl_witness_access %OrderedWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc15_5.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc15_5.2: <specific function> = specific_impl_function %impl.elem0.loc15_5.2, @OrderedWith.WithSelf.Less(%U.loc13_17.1, %T.loc13_26.1) [symbolic = %specific_impl_fn.loc15_5.2 (constants.%specific_impl_fn.15a)]
 // CHECK:STDOUT:   %assoc1: @OrderedWith.loc13.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = assoc_entity element1, imports.%Core.import_ref.ffd [symbolic = %assoc1 (constants.%assoc1.4f4378.2)]
@@ -535,7 +533,6 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.ae1
 // CHECK:STDOUT:   %.loc15_5.2 => constants.%.05c
 // CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.c96
-// CHECK:STDOUT:   %require_witness_defn => constants.%empty_struct
 // CHECK:STDOUT:   %impl.elem0.loc15_5.2 => constants.%Ordered.Less
 // CHECK:STDOUT:   %specific_impl_fn.loc15_5.2 => constants.%Ordered.Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.965
@@ -739,7 +736,6 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %complete_type.dfc: <witness> = complete_type_witness %OrderedWith.type.988 [concrete]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type.1e6: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.e28) [concrete]
 // CHECK:STDOUT:   %.a82: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type.1e6, %OrderedWith.facet.e28 [concrete]
-// CHECK:STDOUT:   %empty_struct: require_witness_defn_type = struct_value () [concrete]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.LessOrEquivalent.type.af3: type = fn_type @OrderedWith.WithSelf.LessOrEquivalent, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.e28) [concrete]
 // CHECK:STDOUT:   %.fc5: type = fn_type_with_self_type %OrderedWith.WithSelf.LessOrEquivalent.type.af3, %OrderedWith.facet.e28 [concrete]
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Greater.type.08d: type = fn_type @OrderedWith.WithSelf.Greater, @OrderedWith.WithSelf(%B1, %OrderedWith.facet.e28) [concrete]
@@ -810,7 +806,6 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type: type = fn_type @OrderedWith.WithSelf.Less, @OrderedWith.WithSelf(%U.loc54_17.1, %T.loc54_26.1) [symbolic = %OrderedWith.WithSelf.Less.type (constants.%OrderedWith.WithSelf.Less.type.104f17.3)]
 // CHECK:STDOUT:   %.loc56_5.2: type = fn_type_with_self_type %OrderedWith.WithSelf.Less.type, %T.loc54_26.1 [symbolic = %.loc56_5.2 (constants.%.236)]
 // CHECK:STDOUT:   %OrderedWith.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc54_26.1, @OrderedWith.1, @OrderedWith.1(%U.loc54_17.1) [symbolic = %OrderedWith.lookup_impl_witness (constants.%OrderedWith.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %OrderedWith.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2: @OrderedWith.loc54.%.loc56_5.2 (%.236) = impl_witness_access %OrderedWith.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc56_5.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %specific_impl_fn.loc56_5.2: <specific function> = specific_impl_function %impl.elem0.loc56_5.2, @OrderedWith.WithSelf.Less(%U.loc54_17.1, %T.loc54_26.1) [symbolic = %specific_impl_fn.loc56_5.2 (constants.%specific_impl_fn.15a)]
 // CHECK:STDOUT:   %assoc1: @OrderedWith.loc54.%OrderedWith.assoc_type (%OrderedWith.assoc_type.06a530.2) = assoc_entity element1, imports.%Core.import_ref.ffd [symbolic = %assoc1 (constants.%assoc1.4f4378.2)]
@@ -915,7 +910,6 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.1e6
 // CHECK:STDOUT:   %.loc56_5.2 => constants.%.a82
 // CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.6a8
-// CHECK:STDOUT:   %require_witness_defn => constants.%empty_struct
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2 => constants.%A1.Less
 // CHECK:STDOUT:   %specific_impl_fn.loc56_5.2 => constants.%A1.Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.2dc
@@ -959,7 +953,6 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.450
 // CHECK:STDOUT:   %.loc56_5.2 => constants.%.7bd
 // CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.47d
-// CHECK:STDOUT:   %require_witness_defn => constants.%empty_struct
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2 => constants.%B1.Less
 // CHECK:STDOUT:   %specific_impl_fn.loc56_5.2 => constants.%B1.Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.379
@@ -1003,7 +996,6 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.5d6
 // CHECK:STDOUT:   %.loc56_5.2 => constants.%.3c4
 // CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.fa3
-// CHECK:STDOUT:   %require_witness_defn => constants.%empty_struct
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2 => constants.%B2.Less
 // CHECK:STDOUT:   %specific_impl_fn.loc56_5.2 => constants.%B2.Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.a62
@@ -1047,7 +1039,6 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.5c7
 // CHECK:STDOUT:   %.loc56_5.2 => constants.%.49e
 // CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.411
-// CHECK:STDOUT:   %require_witness_defn => constants.%empty_struct
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2 => constants.%A3.Less
 // CHECK:STDOUT:   %specific_impl_fn.loc56_5.2 => constants.%A3.Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.b44
@@ -1091,7 +1082,6 @@ fn Test(missing_less: Cpp.MissingLess,
 // CHECK:STDOUT:   %OrderedWith.WithSelf.Less.type => constants.%OrderedWith.WithSelf.Less.type.d08
 // CHECK:STDOUT:   %.loc56_5.2 => constants.%.0c2
 // CHECK:STDOUT:   %OrderedWith.lookup_impl_witness => constants.%custom_witness.545
-// CHECK:STDOUT:   %require_witness_defn => constants.%empty_struct
 // CHECK:STDOUT:   %impl.elem0.loc56_5.2 => constants.%Less
 // CHECK:STDOUT:   %specific_impl_fn.loc56_5.2 => constants.%Less
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.a3a

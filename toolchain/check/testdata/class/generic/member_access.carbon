@@ -170,12 +170,10 @@ class C {
 // CHECK:STDOUT:   %return.param_patt.6e5: %pattern_type.7dc = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.1b4: %pattern_type.7dc = return_slot_pattern %return.param_patt.6e5, %ptr.a17 [concrete]
 // CHECK:STDOUT:   %Class.GetAddr.specific_fn: <specific function> = specific_function %Class.GetAddr.597, @Class.GetAddr(%Copy.facet.95d) [concrete]
-// CHECK:STDOUT:   %require_witness_defn.dbc: require_witness_defn_type = require_witness_defn %Copy.impl_witness.8af [concrete]
 // CHECK:STDOUT:   %complete_type.1b1: <witness> = complete_type_witness %ptr.a17 [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.83a: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%i32) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.dfc: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%i32) [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.81f: %ptr.as.Copy.impl.Op.type.dfc = struct_value () [concrete]
-// CHECK:STDOUT:   %require_witness_defn.d68: require_witness_defn_type = require_witness_defn %Copy.impl_witness.83a [concrete]
 // CHECK:STDOUT:   %Copy.facet.652: %Copy.type = facet_value %ptr.a17, (%Copy.impl_witness.83a) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.9a2: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.652) [concrete]
 // CHECK:STDOUT:   %.309: type = fn_type_with_self_type %Copy.WithSelf.Op.type.9a2, %Copy.facet.652 [concrete]
@@ -218,7 +216,6 @@ class C {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
 // CHECK:STDOUT:   %.loc9_16.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T [symbolic = %.loc9_16.5 (constants.%.8bf)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc9_16.2: @Class.Get.%.loc9_16.5 (%.8bf) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc9_16.2 (constants.%impl.elem0.bb5)]
 // CHECK:STDOUT:   %specific_impl_fn.loc9_16.2: <specific function> = specific_impl_function %impl.elem0.loc9_16.2, @Copy.WithSelf.Op(%T) [symbolic = %specific_impl_fn.loc9_16.2 (constants.%specific_impl_fn.2ac)]
 // CHECK:STDOUT:
@@ -247,7 +244,6 @@ class C {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Class.elem: type = unbound_element_type %Class, %T.as_type.loc13_28.1 [symbolic = %Class.elem (constants.%Class.elem.b17)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc13_28.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.cf6)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Copy.facet.loc15_12.3: %Copy.type = facet_value %ptr.loc13_28.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc15_12.3 (constants.%Copy.facet.ed3)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.loc15_12.3) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.732)]
 // CHECK:STDOUT:   %.loc15_12.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet.loc15_12.3 [symbolic = %.loc15_12.3 (constants.%.1d4)]
@@ -401,7 +397,6 @@ class C {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.f76
 // CHECK:STDOUT:   %.loc9_16.5 => constants.%.2b9
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.8af
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.dbc
 // CHECK:STDOUT:   %impl.elem0.loc9_16.2 => constants.%Int.as.Copy.impl.Op.cae
 // CHECK:STDOUT:   %specific_impl_fn.loc9_16.2 => constants.%Int.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }
@@ -424,7 +419,6 @@ class C {
 // CHECK:STDOUT:   %require_complete.loc13_24 => constants.%complete_type.1b1
 // CHECK:STDOUT:   %Class.elem => constants.%Class.elem.4b5
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.83a
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.d68
 // CHECK:STDOUT:   %Copy.facet.loc15_12.3 => constants.%Copy.facet.652
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.9a2
 // CHECK:STDOUT:   %.loc15_12.3 => constants.%.309

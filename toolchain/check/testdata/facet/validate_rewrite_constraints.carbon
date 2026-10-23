@@ -1276,7 +1276,6 @@ fn G(generic T: N) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc14_6.2: type = facet_access_type %T.loc10_15.1 [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc10_15.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness.9fe)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Z.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %facet_value.loc14_6.2: %Z_where.type.7b9 = facet_value %T.as_type.loc14_6.2, (%Z.lookup_impl_witness) [symbolic = %facet_value.loc14_6.2 (constants.%facet_value)]
 // CHECK:STDOUT:   %F.specific_fn.loc14_3.2: <specific function> = specific_function constants.%F, @F(%facet_value.loc14_6.2) [symbolic = %F.specific_fn.loc14_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:

@@ -119,7 +119,6 @@ fn Use(generic T: I) {
 // CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%T.loc8_17.1) [symbolic = %I.WithSelf.F.type (constants.%I.WithSelf.F.type.eae)]
 // CHECK:STDOUT:   %.loc11_4.2: type = fn_type_with_self_type %I.WithSelf.F.type, %T.loc8_17.1 [symbolic = %.loc11_4.2 (constants.%.b94)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc8_17.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc11_4.2: @Use.%.loc11_4.2 (%.b94) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc11_4.2 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.loc11_4.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:

@@ -410,8 +410,8 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.98e: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_42.db5: %i32 = int_value 42 [concrete]
 // CHECK:STDOUT:   %b.patt: %pattern_type.d94 = value_binding_pattern b [concrete]
-// CHECK:STDOUT:   %fn.type.75f: type = fn_type @fn.loc7 [concrete]
-// CHECK:STDOUT:   %fn.fdb: %fn.type.75f = struct_value () [concrete]
+// CHECK:STDOUT:   %fn.type.96b: type = fn_type @fn.loc7 [concrete]
+// CHECK:STDOUT:   %fn.c43: %fn.type.96b = struct_value () [concrete]
 // CHECK:STDOUT:   %int_10.64f: Core.IntLiteral = int_value 10 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.02d: <bound method> = bound_method %int_10.64f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %bound_method.002: <bound method> = bound_method %int_10.64f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -459,7 +459,7 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d94 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %fn.decl.loc7: %fn.type.75f = fn_decl @fn.loc7 [concrete = constants.%fn.fdb] {
+// CHECK:STDOUT:   %fn.decl.loc7: %fn.type.96b = fn_decl @fn.loc7 [concrete = constants.%fn.c43] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.d94 = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.d94 = out_param_pattern [concrete = constants.%return.param_patt.299]
@@ -556,14 +556,14 @@ fn F() {
 // CHECK:STDOUT:   %bound_method.98e: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_42.db5: %i32 = int_value 42 [concrete]
 // CHECK:STDOUT:   %f.patt: %pattern_type.d94 = value_binding_pattern f [concrete]
-// CHECK:STDOUT:   %fn.type.692: type = fn_type @fn.loc7 [concrete]
-// CHECK:STDOUT:   %fn.4fe: %fn.type.692 = struct_value () [concrete]
+// CHECK:STDOUT:   %fn.type.43f: type = fn_type @fn.loc7 [concrete]
+// CHECK:STDOUT:   %fn.ab0: %fn.type.43f = struct_value () [concrete]
 // CHECK:STDOUT:   %int_10.64f: Core.IntLiteral = int_value 10 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.02d: <bound method> = bound_method %int_10.64f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %bound_method.002: <bound method> = bound_method %int_10.64f, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
 // CHECK:STDOUT:   %int_10.6a3: %i32 = int_value 10 [concrete]
-// CHECK:STDOUT:   %fn.type.092: type = fn_type @fn.loc12 [concrete]
-// CHECK:STDOUT:   %fn.c95: %fn.type.092 = struct_value () [concrete]
+// CHECK:STDOUT:   %fn.type.953: type = fn_type @fn.loc12 [concrete]
+// CHECK:STDOUT:   %fn.f32: %fn.type.953 = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -574,7 +574,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %fn.decl: %fn.type.092 = fn_decl @fn.loc12 [concrete = constants.%fn.c95] {
+// CHECK:STDOUT:   %fn.decl: %fn.type.953 = fn_decl @fn.loc12 [concrete = constants.%fn.f32] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.d94 = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.d94 = out_param_pattern [concrete = constants.%return.param_patt.299]
@@ -588,7 +588,7 @@ fn F() {
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %terse_id_fn: %fn.type.092 = alias_binding terse_id_fn, %fn.decl [concrete = constants.%fn.c95]
+// CHECK:STDOUT:   %terse_id_fn: %fn.type.953 = alias_binding terse_id_fn, %fn.decl [concrete = constants.%fn.f32]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @TestTerse() {
@@ -625,7 +625,7 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.d94 = value_binding_pattern e [concrete = constants.%e.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %fn.decl.loc7: %fn.type.692 = fn_decl @fn.loc7 [concrete = constants.%fn.4fe] {
+// CHECK:STDOUT:   %fn.decl.loc7: %fn.type.43f = fn_decl @fn.loc7 [concrete = constants.%fn.ab0] {
 // CHECK:STDOUT:     %x.param_patt: %pattern_type.d94 = value_param_pattern [concrete = constants.%x.param_patt]
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = wrapper_binding_pattern x, %x.param_patt [concrete = constants.%x.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.d94 = out_param_pattern [concrete = constants.%return.param_patt.299]
@@ -772,12 +772,10 @@ fn F() {
 // CHECK:STDOUT:   %fn.specific_fn.10a: <specific function> = specific_function %fn, @fn(%Copy.facet.7af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.95d) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet.95d [concrete]
-// CHECK:STDOUT:   %require_witness_defn.dbc: require_witness_defn_type = require_witness_defn %Copy.impl_witness.8af [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %complete_type.127: <witness> = complete_type_witness bool [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.c98: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.7af) [concrete]
 // CHECK:STDOUT:   %.68a: type = fn_type_with_self_type %Copy.WithSelf.Op.type.c98, %Copy.facet.7af [concrete]
-// CHECK:STDOUT:   %require_witness_defn.132: require_witness_defn_type = require_witness_defn %Copy.impl_witness.5e1 [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.type: type = fn_type @bool.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op: %bool.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -890,7 +888,6 @@ fn F() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc5_27.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
 // CHECK:STDOUT:   %.loc5_60.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc5_27.1 [symbolic = %.loc5_60.3 (constants.%.8bf)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc5_27.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc5_60.2: @fn.%.loc5_60.3 (%.8bf) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc5_60.2 (constants.%impl.elem0.bb5)]
 // CHECK:STDOUT:   %specific_impl_fn.loc5_60.2: <specific function> = specific_impl_function %impl.elem0.loc5_60.2, @Copy.WithSelf.Op(%T.loc5_27.1) [symbolic = %specific_impl_fn.loc5_60.2 (constants.%specific_impl_fn.2ac)]
 // CHECK:STDOUT:
@@ -937,7 +934,6 @@ fn F() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.f76
 // CHECK:STDOUT:   %.loc5_60.3 => constants.%.2b9
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.8af
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.dbc
 // CHECK:STDOUT:   %impl.elem0.loc5_60.2 => constants.%Int.as.Copy.impl.Op.cae
 // CHECK:STDOUT:   %specific_impl_fn.loc5_60.2 => constants.%Int.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }
@@ -958,7 +954,6 @@ fn F() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.c98
 // CHECK:STDOUT:   %.loc5_60.3 => constants.%.68a
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.5e1
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.132
 // CHECK:STDOUT:   %impl.elem0.loc5_60.2 => constants.%bool.as.Copy.impl.Op
 // CHECK:STDOUT:   %specific_impl_fn.loc5_60.2 => constants.%bool.as.Copy.impl.Op
 // CHECK:STDOUT: }
@@ -995,7 +990,6 @@ fn F() {
 // CHECK:STDOUT:   %.8bf: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d2f9c3.2, %T.f84 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.bb5: %.8bf = impl_witness_access %Copy.lookup_impl_witness.d9c, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.2ac: <specific function> = specific_impl_function %impl.elem0.bb5, @Copy.WithSelf.Op(%T.f84) [symbolic]
-// CHECK:STDOUT:   %require_witness_defn.24e: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness.d9c [symbolic]
 // CHECK:STDOUT:   %fn.specific_fn.6d4: <specific function> = specific_function %fn.dc1, @fn.loc7(%T.f84) [symbolic]
 // CHECK:STDOUT:   %fn.specific_fn.eed: <specific function> = specific_function %fn.dd0, @fn.loc6(%T.f84) [symbolic]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
@@ -1070,11 +1064,9 @@ fn F() {
 // CHECK:STDOUT:   %fn.specific_fn.8ab: <specific function> = specific_function %fn.d5a, @fn.loc7(%Copy.facet.7af) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.95d) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet.95d [concrete]
-// CHECK:STDOUT:   %require_witness_defn.dbc: require_witness_defn_type = require_witness_defn %Copy.impl_witness.8af [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.c98: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.7af) [concrete]
 // CHECK:STDOUT:   %.68a: type = fn_type_with_self_type %Copy.WithSelf.Op.type.c98, %Copy.facet.7af [concrete]
-// CHECK:STDOUT:   %require_witness_defn.132: require_witness_defn_type = require_witness_defn %Copy.impl_witness.5e1 [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op.type: type = fn_type @bool.as.Copy.impl.Op [concrete]
 // CHECK:STDOUT:   %bool.as.Copy.impl.Op: %bool.as.Copy.impl.Op.type = struct_value () [concrete]
 // CHECK:STDOUT: }
@@ -1287,7 +1279,6 @@ fn F() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
 // CHECK:STDOUT:   %.loc8_16.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T [symbolic = %.loc8_16.3 (constants.%.8bf)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc8_16.2: @fn.loc7.%.loc8_16.3 (%.8bf) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc8_16.2 (constants.%impl.elem0.bb5)]
 // CHECK:STDOUT:   %specific_impl_fn.loc8_16.2: <specific function> = specific_impl_function %impl.elem0.loc8_16.2, @Copy.WithSelf.Op(%T) [symbolic = %specific_impl_fn.loc8_16.2 (constants.%specific_impl_fn.2ac)]
 // CHECK:STDOUT:
@@ -1350,7 +1341,6 @@ fn F() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.d2f9c3.2
 // CHECK:STDOUT:   %.loc8_16.3 => constants.%.8bf
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.lookup_impl_witness.d9c
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.24e
 // CHECK:STDOUT:   %impl.elem0.loc8_16.2 => constants.%impl.elem0.bb5
 // CHECK:STDOUT:   %specific_impl_fn.loc8_16.2 => constants.%specific_impl_fn.2ac
 // CHECK:STDOUT: }
@@ -1440,7 +1430,6 @@ fn F() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.f76
 // CHECK:STDOUT:   %.loc8_16.3 => constants.%.2b9
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.8af
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.dbc
 // CHECK:STDOUT:   %impl.elem0.loc8_16.2 => constants.%Int.as.Copy.impl.Op.cae
 // CHECK:STDOUT:   %specific_impl_fn.loc8_16.2 => constants.%Int.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }
@@ -1460,7 +1449,6 @@ fn F() {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.c98
 // CHECK:STDOUT:   %.loc8_16.3 => constants.%.68a
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.5e1
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.132
 // CHECK:STDOUT:   %impl.elem0.loc8_16.2 => constants.%bool.as.Copy.impl.Op
 // CHECK:STDOUT:   %specific_impl_fn.loc8_16.2 => constants.%bool.as.Copy.impl.Op
 // CHECK:STDOUT: }

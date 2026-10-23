@@ -843,7 +843,7 @@ template <typename InstT>
            SemIR::GenericInterfaceType, SemIR::GenericNamedConstraintType,
            SemIR::InstType, SemIR::IntLiteralType, SemIR::NamespaceType,
            SemIR::ParameterizedClassType,
-           SemIR::RequireImplWitnessSpecificDefinitionType,
+           SemIR::RequireSpecificDefinitionType,
            SemIR::SpecificFunctionType, SemIR::UnboundElementType,
            SemIR::WhereExpr, SemIR::WitnessType>())
 static auto BuildTypeForInst(FileContext& context, InstT /*inst*/)

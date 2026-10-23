@@ -284,28 +284,9 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 }
 
 auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::RequireImplWitnessSpecificDefinition inst)
+                      SemIR::RequireSpecificDefinition inst)
     -> ConstantEvalResult {
-  if (auto impl =
-          context.insts().TryGetAs<SemIR::ImplWitness>(inst.witness_id)) {
-    if (impl->specific_id.has_value()) {
-      ResolveSpecificDefinition(context, SemIR::LocId(inst_id),
-                                impl->specific_id);
-    }
-    // TODO: If the witness is concrete then we could resolve to a StructValue
-    // here to make it clear we're done. If it's symbolic, however, another
-    // specific may later be formed for this ImplWitness that we need to
-    // resolve.
-    // return ConstantEvalResult::NewAnyPhase(SemIR::StructValue{
-    //    .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
-  }
-
-  if (context.insts().Is<SemIR::CustomWitness>(inst.witness_id)) {
-    // CustomWitness is a final witness, it never resolves to an ImplWitness.
-    return ConstantEvalResult::NewAnyPhase(SemIR::StructValue{
-        .type_id = inst.type_id, .elements_id = SemIR::InstBlockId::Empty});
-  }
-
+  ResolveSpecificDefinition(context, SemIR::LocId(inst_id), inst.specific_id);
   return ConstantEvalResult::NewSamePhase(inst);
 }
 

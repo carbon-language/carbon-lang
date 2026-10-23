@@ -153,9 +153,7 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.2: type = fn_type @Destroy.WithSelf.SelfDestruct.loc45_8.2 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.2: %Destroy.WithSelf.SelfDestruct.type.fbceb5.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.115, %Destroy.WithSelf.SelfDestruct.db3fdb.2 [concrete]
-// CHECK:STDOUT:   %require_witness_defn.47e: require_witness_defn_type = require_witness_defn %A.impl_witness [concrete]
 // CHECK:STDOUT:   %.be9: type = fn_type_with_self_type %A.WithSelf.AA.type.5ec, %A.facet.7ce [concrete]
-// CHECK:STDOUT:   %require_witness_defn.7c3: require_witness_defn_type = require_witness_defn %B.impl_witness [concrete]
 // CHECK:STDOUT:   %.3d4: type = fn_type_with_self_type %B.WithSelf.BB.type.0e4, %B.facet.a13 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -381,14 +379,12 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %T.as_type.loc33_27.1 [symbolic = %require_complete (constants.%require_complete.632)]
 // CHECK:STDOUT:   %A.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc33_7.1, @A [symbolic = %A.lookup_impl_witness (constants.%A.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn.loc34: require_witness_defn_type = require_witness_defn %A.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %A.facet.loc34: %A.type = facet_value %T.as_type.loc33_27.1, (%A.lookup_impl_witness) [symbolic = %A.facet.loc34 (constants.%A.facet.7b4)]
 // CHECK:STDOUT:   %A.WithSelf.AA.type: type = fn_type @A.WithSelf.AA, @A.WithSelf(%A.facet.loc34) [symbolic = %A.WithSelf.AA.type (constants.%A.WithSelf.AA.type.bb4)]
 // CHECK:STDOUT:   %.loc34: type = fn_type_with_self_type %A.WithSelf.AA.type, %A.facet.loc34 [symbolic = %.loc34 (constants.%.31e)]
 // CHECK:STDOUT:   %impl.elem0.loc34_4.2: @G.%.loc34 (%.31e) = impl_witness_access %A.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc34_4.2 (constants.%impl.elem0.333)]
 // CHECK:STDOUT:   %specific_impl_fn.loc34_4.2: <specific function> = specific_impl_function %impl.elem0.loc34_4.2, @A.WithSelf.AA(%A.facet.loc34) [symbolic = %specific_impl_fn.loc34_4.2 (constants.%specific_impl_fn.67a)]
 // CHECK:STDOUT:   %B.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc33_7.1, @B [symbolic = %B.lookup_impl_witness (constants.%B.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn.loc35: require_witness_defn_type = require_witness_defn %B.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %B.facet.loc35: %B.type = facet_value %T.as_type.loc33_27.1, (%B.lookup_impl_witness) [symbolic = %B.facet.loc35 (constants.%B.facet.746)]
 // CHECK:STDOUT:   %B.WithSelf.BB.type: type = fn_type @B.WithSelf.BB, @B.WithSelf(%B.facet.loc35) [symbolic = %B.WithSelf.BB.type (constants.%B.WithSelf.BB.type.4db)]
 // CHECK:STDOUT:   %.loc35: type = fn_type_with_self_type %B.WithSelf.BB.type, %B.facet.loc35 [symbolic = %.loc35 (constants.%.770)]
@@ -585,14 +581,12 @@ fn F() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT:   %A.lookup_impl_witness => constants.%A.impl_witness
-// CHECK:STDOUT:   %require_witness_defn.loc34 => constants.%require_witness_defn.47e
 // CHECK:STDOUT:   %A.facet.loc34 => constants.%A.facet.7ce
 // CHECK:STDOUT:   %A.WithSelf.AA.type => constants.%A.WithSelf.AA.type.5ec
 // CHECK:STDOUT:   %.loc34 => constants.%.be9
 // CHECK:STDOUT:   %impl.elem0.loc34_4.2 => constants.%C.as.A.impl.AA
 // CHECK:STDOUT:   %specific_impl_fn.loc34_4.2 => constants.%C.as.A.impl.AA
 // CHECK:STDOUT:   %B.lookup_impl_witness => constants.%B.impl_witness
-// CHECK:STDOUT:   %require_witness_defn.loc35 => constants.%require_witness_defn.7c3
 // CHECK:STDOUT:   %B.facet.loc35 => constants.%B.facet.a13
 // CHECK:STDOUT:   %B.WithSelf.BB.type => constants.%B.WithSelf.BB.type.0e4
 // CHECK:STDOUT:   %.loc35 => constants.%.3d4

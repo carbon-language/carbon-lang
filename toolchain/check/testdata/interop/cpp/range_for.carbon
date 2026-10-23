@@ -746,7 +746,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.e75: %Optional.HasValue.type.182 = struct_value () [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.788: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet.1f7) [concrete]
 // CHECK:STDOUT:   %Optional.Get.186: %Optional.Get.type.788 = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct.f65: require_witness_defn_type = struct_value () [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.993: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.ed0) [concrete]
 // CHECK:STDOUT:   %.b31: type = maybe_unformed_type %i32 [concrete]
 // CHECK:STDOUT:   %DefaultOptionalStorage.elem.32e: type = unbound_element_type %DefaultOptionalStorage.091, %MaybeUnformed.993 [concrete]
@@ -936,9 +935,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.specific_fn.2c1: <specific function> = specific_function %T.as_type.as.Iterate.impl.Next.259, @T.as_type.as.Iterate.impl.Next(%facet_value.15e) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.b84: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.c6d) [concrete]
 // CHECK:STDOUT:   %.40c: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.b84, %Destroy.facet.c6d [concrete]
-// CHECK:STDOUT:   %require_witness_defn.a3d: require_witness_defn_type = require_witness_defn %Iterate.impl_witness.a35 [concrete]
 // CHECK:STDOUT:   %complete_type.c28: <witness> = complete_type_witness %tuple.type.508 [concrete]
-// CHECK:STDOUT:   %require_witness_defn.575: require_witness_defn_type = require_witness_defn %Iterate.impl_witness.39d [concrete]
 // CHECK:STDOUT:   %complete_type.8d5: <witness> = complete_type_witness %tuple.type.69f [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1068,7 +1065,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc30_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.550)]
-// CHECK:STDOUT:   %require_witness_defn.loc34_19.1: require_witness_defn_type = require_witness_defn %Iterate.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.loc34_19.5: %Iterate.type = facet_value %R.as_type.loc30_61.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc34_19.5 (constants.%Iterate.facet.e23)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc34_19.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.85c)]
 // CHECK:STDOUT:   %.loc34_19.19: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc34_19.5 [symbolic = %.loc34_19.19 (constants.%.85a)]
@@ -1082,7 +1078,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%impl.elem1) [symbolic = %Destroy.WithSelf.SelfDestruct.type (constants.%Destroy.WithSelf.SelfDestruct.type.656)]
 // CHECK:STDOUT:   %.loc34_19.21: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %impl.elem1 [symbolic = %.loc34_19.21 (constants.%.9eb)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.0f4)]
-// CHECK:STDOUT:   %require_witness_defn.loc34_19.2: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem2.loc34_19.4: @TestIterate.%.loc34_19.21 (%.9eb) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc34_19.4 (constants.%impl.elem2.fb6)]
 // CHECK:STDOUT:   %specific_impl_fn.loc34_19.6: <specific function> = specific_impl_function %impl.elem2.loc34_19.4, @Destroy.WithSelf.SelfDestruct.1(%impl.elem1) [symbolic = %specific_impl_fn.loc34_19.6 (constants.%specific_impl_fn.63d)]
 // CHECK:STDOUT:
@@ -1436,7 +1431,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc30 => constants.%complete_type.357
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness => constants.%Iterate.impl_witness.a35
-// CHECK:STDOUT:   %require_witness_defn.loc34_19.1 => constants.%require_witness_defn.a3d
 // CHECK:STDOUT:   %Iterate.facet.loc34_19.5 => constants.%Iterate.facet.2b0
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type => constants.%Iterate.WithSelf.NewCursor.type.ca0
 // CHECK:STDOUT:   %.loc34_19.19 => constants.%.d4c
@@ -1452,7 +1446,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.d1f
 // CHECK:STDOUT:   %.loc34_19.21 => constants.%.0dc
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f19d.8
-// CHECK:STDOUT:   %require_witness_defn.loc34_19.2 => constants.%empty_struct.f65
 // CHECK:STDOUT:   %impl.elem2.loc34_19.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.9
 // CHECK:STDOUT:   %specific_impl_fn.loc34_19.6 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.9
 // CHECK:STDOUT: }
@@ -1468,7 +1461,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc30 => constants.%complete_type.357
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness => constants.%Iterate.impl_witness.39d
-// CHECK:STDOUT:   %require_witness_defn.loc34_19.1 => constants.%require_witness_defn.575
 // CHECK:STDOUT:   %Iterate.facet.loc34_19.5 => constants.%Iterate.facet.1c8
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type => constants.%Iterate.WithSelf.NewCursor.type.97c
 // CHECK:STDOUT:   %.loc34_19.19 => constants.%.582
@@ -1484,7 +1476,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.b84
 // CHECK:STDOUT:   %.loc34_19.21 => constants.%.40c
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f19d.9
-// CHECK:STDOUT:   %require_witness_defn.loc34_19.2 => constants.%empty_struct.f65
 // CHECK:STDOUT:   %impl.elem2.loc34_19.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.11
 // CHECK:STDOUT:   %specific_impl_fn.loc34_19.6 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.11
 // CHECK:STDOUT: }
@@ -1594,7 +1585,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.660: %Optional.HasValue.type.f06 = struct_value () [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.acd: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet.9e6) [concrete]
 // CHECK:STDOUT:   %Optional.Get.a06: %Optional.Get.type.acd = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct.f65: require_witness_defn_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.be4: %Destroy.type = facet_value %DiffValueType, (%custom_witness.1bfa2a.1) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.a77: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.be4) [concrete]
 // CHECK:STDOUT:   %.a18: type = maybe_unformed_type %DiffValueType [concrete]
@@ -1778,9 +1768,7 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.specific_fn.8ee: <specific function> = specific_function %T.as_type.as.Iterate.impl.Next.d18, @T.as_type.as.Iterate.impl.Next(%facet_value.683) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.ee6: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.206) [concrete]
 // CHECK:STDOUT:   %.c1e: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.ee6, %Destroy.facet.206 [concrete]
-// CHECK:STDOUT:   %require_witness_defn.43c: require_witness_defn_type = require_witness_defn %Iterate.impl_witness.606 [concrete]
 // CHECK:STDOUT:   %complete_type.bfe: <witness> = complete_type_witness %tuple.type.b18 [concrete]
-// CHECK:STDOUT:   %require_witness_defn.69a: require_witness_defn_type = require_witness_defn %Iterate.impl_witness.9b4 [concrete]
 // CHECK:STDOUT:   %complete_type.ad6: <witness> = complete_type_witness %tuple.type.df5 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1914,7 +1902,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc40_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.d00)]
-// CHECK:STDOUT:   %require_witness_defn.loc44_33.1: require_witness_defn_type = require_witness_defn %Iterate.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.loc44_33.5: %Iterate.type = facet_value %R.as_type.loc40_79.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc44_33.5 (constants.%Iterate.facet.f03)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc44_33.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.b5e)]
 // CHECK:STDOUT:   %.loc44_33.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc44_33.5 [symbolic = %.loc44_33.20 (constants.%.c17)]
@@ -1928,7 +1915,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%impl.elem1) [symbolic = %Destroy.WithSelf.SelfDestruct.type (constants.%Destroy.WithSelf.SelfDestruct.type.e70)]
 // CHECK:STDOUT:   %.loc44_33.22: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %impl.elem1 [symbolic = %.loc44_33.22 (constants.%.99c)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.662)]
-// CHECK:STDOUT:   %require_witness_defn.loc44_33.2: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem2.loc44_33.4: @TestIterate.%.loc44_33.22 (%.99c) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc44_33.4 (constants.%impl.elem2.ff7)]
 // CHECK:STDOUT:   %specific_impl_fn.loc44_33.6: <specific function> = specific_impl_function %impl.elem2.loc44_33.4, @Destroy.WithSelf.SelfDestruct.1(%impl.elem1) [symbolic = %specific_impl_fn.loc44_33.6 (constants.%specific_impl_fn.ffc)]
 // CHECK:STDOUT:
@@ -2287,7 +2273,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc40 => constants.%complete_type.357
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness => constants.%Iterate.impl_witness.606
-// CHECK:STDOUT:   %require_witness_defn.loc44_33.1 => constants.%require_witness_defn.43c
 // CHECK:STDOUT:   %Iterate.facet.loc44_33.5 => constants.%Iterate.facet.758
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type => constants.%Iterate.WithSelf.NewCursor.type.49d
 // CHECK:STDOUT:   %.loc44_33.20 => constants.%.c05
@@ -2303,7 +2288,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.baf
 // CHECK:STDOUT:   %.loc44_33.22 => constants.%.085
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f19d.8
-// CHECK:STDOUT:   %require_witness_defn.loc44_33.2 => constants.%empty_struct.f65
 // CHECK:STDOUT:   %impl.elem2.loc44_33.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.11
 // CHECK:STDOUT:   %specific_impl_fn.loc44_33.6 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.11
 // CHECK:STDOUT: }
@@ -2319,7 +2303,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc40 => constants.%complete_type.357
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness => constants.%Iterate.impl_witness.9b4
-// CHECK:STDOUT:   %require_witness_defn.loc44_33.1 => constants.%require_witness_defn.69a
 // CHECK:STDOUT:   %Iterate.facet.loc44_33.5 => constants.%Iterate.facet.930
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type => constants.%Iterate.WithSelf.NewCursor.type.4f6
 // CHECK:STDOUT:   %.loc44_33.20 => constants.%.b0d
@@ -2335,7 +2318,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.ee6
 // CHECK:STDOUT:   %.loc44_33.22 => constants.%.c1e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f19d.9
-// CHECK:STDOUT:   %require_witness_defn.loc44_33.2 => constants.%empty_struct.f65
 // CHECK:STDOUT:   %impl.elem2.loc44_33.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.15
 // CHECK:STDOUT:   %specific_impl_fn.loc44_33.6 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.15
 // CHECK:STDOUT: }
@@ -2442,7 +2424,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.1ff: %Optional.HasValue.type.8ad = struct_value () [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.481: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet.f35) [concrete]
 // CHECK:STDOUT:   %Optional.Get.3b7: %Optional.Get.type.481 = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct.f65: require_witness_defn_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.d74: %Destroy.type = facet_value %OverloadValueType, (%custom_witness.1bfa2a.1) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.0ed: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.d74) [concrete]
 // CHECK:STDOUT:   %.8a2: type = maybe_unformed_type %OverloadValueType [concrete]
@@ -2555,7 +2536,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %T.as_type.as.Iterate.impl.Next.23c, @T.as_type.as.Iterate.impl.Next(%facet_value.8e3) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.106: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.c69) [concrete]
 // CHECK:STDOUT:   %.227: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.106, %Destroy.facet.c69 [concrete]
-// CHECK:STDOUT:   %require_witness_defn.ddf: require_witness_defn_type = require_witness_defn %Iterate.impl_witness.e03 [concrete]
 // CHECK:STDOUT:   %complete_type.e35: <witness> = complete_type_witness %tuple.type.9ef [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2682,7 +2662,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc25_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.e07)]
-// CHECK:STDOUT:   %require_witness_defn.loc27_37.1: require_witness_defn_type = require_witness_defn %Iterate.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.loc27_37.5: %Iterate.type = facet_value %R.as_type.loc25_83.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc27_37.5 (constants.%Iterate.facet.8b0)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc27_37.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.13a)]
 // CHECK:STDOUT:   %.loc27_37.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc27_37.5 [symbolic = %.loc27_37.20 (constants.%.d64)]
@@ -2696,7 +2675,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%impl.elem1) [symbolic = %Destroy.WithSelf.SelfDestruct.type (constants.%Destroy.WithSelf.SelfDestruct.type.45d)]
 // CHECK:STDOUT:   %.loc27_37.22: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %impl.elem1 [symbolic = %.loc27_37.22 (constants.%.817)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.a78)]
-// CHECK:STDOUT:   %require_witness_defn.loc27_37.2: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem2.loc27_37.4: @TestIterate.%.loc27_37.22 (%.817) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc27_37.4 (constants.%impl.elem2.25c)]
 // CHECK:STDOUT:   %specific_impl_fn.loc27_37.6: <specific function> = specific_impl_function %impl.elem2.loc27_37.4, @Destroy.WithSelf.SelfDestruct.1(%impl.elem1) [symbolic = %specific_impl_fn.loc27_37.6 (constants.%specific_impl_fn.26e)]
 // CHECK:STDOUT:
@@ -2965,7 +2943,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc25 => constants.%complete_type.357
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness => constants.%Iterate.impl_witness.e03
-// CHECK:STDOUT:   %require_witness_defn.loc27_37.1 => constants.%require_witness_defn.ddf
 // CHECK:STDOUT:   %Iterate.facet.loc27_37.5 => constants.%Iterate.facet.a3e
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type => constants.%Iterate.WithSelf.NewCursor.type.b10
 // CHECK:STDOUT:   %.loc27_37.20 => constants.%.f2a
@@ -2981,7 +2958,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.106
 // CHECK:STDOUT:   %.loc27_37.22 => constants.%.227
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f19d.8
-// CHECK:STDOUT:   %require_witness_defn.loc27_37.2 => constants.%empty_struct.f65
 // CHECK:STDOUT:   %impl.elem2.loc27_37.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.10
 // CHECK:STDOUT:   %specific_impl_fn.loc27_37.6 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.10
 // CHECK:STDOUT: }
@@ -3088,7 +3064,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.ff5: %Optional.HasValue.type.92f = struct_value () [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.695: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet.d7a) [concrete]
 // CHECK:STDOUT:   %Optional.Get.62a: %Optional.Get.type.695 = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct.f65: require_witness_defn_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.bb7: %Destroy.type = facet_value %f64.761, (%custom_witness.f8f19d.2) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.912: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.bb7) [concrete]
 // CHECK:STDOUT:   %.ecc: type = maybe_unformed_type %f64.761 [concrete]
@@ -3213,7 +3188,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %T.as_type.as.Iterate.impl.Next.9ad, @T.as_type.as.Iterate.impl.Next(%facet_value.120) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.dd4: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.362) [concrete]
 // CHECK:STDOUT:   %.38e: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.dd4, %Destroy.facet.362 [concrete]
-// CHECK:STDOUT:   %require_witness_defn.f0d: require_witness_defn_type = require_witness_defn %Iterate.impl_witness.a53 [concrete]
 // CHECK:STDOUT:   %complete_type.320: <witness> = complete_type_witness %tuple.type.005 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3337,7 +3311,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc20_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.e7e)]
-// CHECK:STDOUT:   %require_witness_defn.loc24_19.1: require_witness_defn_type = require_witness_defn %Iterate.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.loc24_19.5: %Iterate.type = facet_value %R.as_type.loc20_61.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc24_19.5 (constants.%Iterate.facet.a43)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc24_19.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.248)]
 // CHECK:STDOUT:   %.loc24_19.19: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc24_19.5 [symbolic = %.loc24_19.19 (constants.%.678)]
@@ -3351,7 +3324,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%impl.elem1) [symbolic = %Destroy.WithSelf.SelfDestruct.type (constants.%Destroy.WithSelf.SelfDestruct.type.a48)]
 // CHECK:STDOUT:   %.loc24_19.21: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %impl.elem1 [symbolic = %.loc24_19.21 (constants.%.421)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.cb1)]
-// CHECK:STDOUT:   %require_witness_defn.loc24_19.2: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem2.loc24_19.4: @TestIterate.%.loc24_19.21 (%.421) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc24_19.4 (constants.%impl.elem2.f8d)]
 // CHECK:STDOUT:   %specific_impl_fn.loc24_19.6: <specific function> = specific_impl_function %impl.elem2.loc24_19.4, @Destroy.WithSelf.SelfDestruct.1(%impl.elem1) [symbolic = %specific_impl_fn.loc24_19.6 (constants.%specific_impl_fn.6a1)]
 // CHECK:STDOUT:
@@ -3620,7 +3592,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc20 => constants.%complete_type.357
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness => constants.%Iterate.impl_witness.a53
-// CHECK:STDOUT:   %require_witness_defn.loc24_19.1 => constants.%require_witness_defn.f0d
 // CHECK:STDOUT:   %Iterate.facet.loc24_19.5 => constants.%Iterate.facet.1a5
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type => constants.%Iterate.WithSelf.NewCursor.type.793
 // CHECK:STDOUT:   %.loc24_19.19 => constants.%.588
@@ -3636,7 +3607,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.dd4
 // CHECK:STDOUT:   %.loc24_19.21 => constants.%.38e
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f19d.9
-// CHECK:STDOUT:   %require_witness_defn.loc24_19.2 => constants.%empty_struct.f65
 // CHECK:STDOUT:   %impl.elem2.loc24_19.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.10
 // CHECK:STDOUT:   %specific_impl_fn.loc24_19.6 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.10
 // CHECK:STDOUT: }
@@ -3743,7 +3713,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.ff5: %Optional.HasValue.type.92f = struct_value () [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.695: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet.d7a) [concrete]
 // CHECK:STDOUT:   %Optional.Get.62a: %Optional.Get.type.695 = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct.f65: require_witness_defn_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.bb7: %Destroy.type = facet_value %f64.761, (%custom_witness.f8f19d.2) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.912: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.bb7) [concrete]
 // CHECK:STDOUT:   %.ecc: type = maybe_unformed_type %f64.761 [concrete]
@@ -3868,7 +3837,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %T.as_type.as.Iterate.impl.Next.8a0, @T.as_type.as.Iterate.impl.Next(%facet_value.c62) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.1a9: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.f0b) [concrete]
 // CHECK:STDOUT:   %.4a2: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.1a9, %Destroy.facet.f0b [concrete]
-// CHECK:STDOUT:   %require_witness_defn.b7e: require_witness_defn_type = require_witness_defn %Iterate.impl_witness.8eb [concrete]
 // CHECK:STDOUT:   %complete_type.843: <witness> = complete_type_witness %tuple.type.dd0 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -3992,7 +3960,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc32_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.e7e)]
-// CHECK:STDOUT:   %require_witness_defn.loc36_19.1: require_witness_defn_type = require_witness_defn %Iterate.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.loc36_19.5: %Iterate.type = facet_value %R.as_type.loc32_61.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc36_19.5 (constants.%Iterate.facet.a43)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc36_19.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.248)]
 // CHECK:STDOUT:   %.loc36_19.19: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc36_19.5 [symbolic = %.loc36_19.19 (constants.%.678)]
@@ -4006,7 +3973,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%impl.elem1) [symbolic = %Destroy.WithSelf.SelfDestruct.type (constants.%Destroy.WithSelf.SelfDestruct.type.a48)]
 // CHECK:STDOUT:   %.loc36_19.21: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %impl.elem1 [symbolic = %.loc36_19.21 (constants.%.421)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.cb1)]
-// CHECK:STDOUT:   %require_witness_defn.loc36_19.2: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem2.loc36_19.4: @TestIterate.%.loc36_19.21 (%.421) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc36_19.4 (constants.%impl.elem2.f8d)]
 // CHECK:STDOUT:   %specific_impl_fn.loc36_19.6: <specific function> = specific_impl_function %impl.elem2.loc36_19.4, @Destroy.WithSelf.SelfDestruct.1(%impl.elem1) [symbolic = %specific_impl_fn.loc36_19.6 (constants.%specific_impl_fn.6a1)]
 // CHECK:STDOUT:
@@ -4277,7 +4243,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc32 => constants.%complete_type.357
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness => constants.%Iterate.impl_witness.8eb
-// CHECK:STDOUT:   %require_witness_defn.loc36_19.1 => constants.%require_witness_defn.b7e
 // CHECK:STDOUT:   %Iterate.facet.loc36_19.5 => constants.%Iterate.facet.b38
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type => constants.%Iterate.WithSelf.NewCursor.type.601
 // CHECK:STDOUT:   %.loc36_19.19 => constants.%.177
@@ -4293,7 +4258,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.1a9
 // CHECK:STDOUT:   %.loc36_19.21 => constants.%.4a2
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f19d.9
-// CHECK:STDOUT:   %require_witness_defn.loc36_19.2 => constants.%empty_struct.f65
 // CHECK:STDOUT:   %impl.elem2.loc36_19.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.10
 // CHECK:STDOUT:   %specific_impl_fn.loc36_19.6 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.10
 // CHECK:STDOUT: }
@@ -4403,7 +4367,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.766: %Optional.HasValue.type.1a1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.edf: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet.0d1) [concrete]
 // CHECK:STDOUT:   %Optional.Get.047: %Optional.Get.type.edf = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct.f65: require_witness_defn_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.c1d: %Destroy.type = facet_value %ValueType, (%custom_witness.226) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.485: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.c1d) [concrete]
 // CHECK:STDOUT:   %.be1: type = maybe_unformed_type %ValueType [concrete]
@@ -4526,7 +4489,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %T.as_type.as.Iterate.impl.Next.82c, @T.as_type.as.Iterate.impl.Next(%facet_value.d15) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.000: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.d83) [concrete]
 // CHECK:STDOUT:   %.dc3: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.000, %Destroy.facet.d83 [concrete]
-// CHECK:STDOUT:   %require_witness_defn.f92: require_witness_defn_type = require_witness_defn %Iterate.impl_witness.d1d [concrete]
 // CHECK:STDOUT:   %complete_type.cf0: <witness> = complete_type_witness %tuple.type.7a6 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -4662,7 +4624,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc27_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.01e)]
-// CHECK:STDOUT:   %require_witness_defn.loc31_37.1: require_witness_defn_type = require_witness_defn %Iterate.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.loc31_37.5: %Iterate.type = facet_value %R.as_type.loc27_79.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc31_37.5 (constants.%Iterate.facet.467)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc31_37.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.b87)]
 // CHECK:STDOUT:   %.loc31_37.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc31_37.5 [symbolic = %.loc31_37.20 (constants.%.c11)]
@@ -4676,7 +4637,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%impl.elem1) [symbolic = %Destroy.WithSelf.SelfDestruct.type (constants.%Destroy.WithSelf.SelfDestruct.type.726)]
 // CHECK:STDOUT:   %.loc31_37.22: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %impl.elem1 [symbolic = %.loc31_37.22 (constants.%.a54)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.d0e)]
-// CHECK:STDOUT:   %require_witness_defn.loc31_37.2: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem2.loc31_37.4: @TestIterate.%.loc31_37.22 (%.a54) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc31_37.4 (constants.%impl.elem2.9bf)]
 // CHECK:STDOUT:   %specific_impl_fn.loc31_37.6: <specific function> = specific_impl_function %impl.elem2.loc31_37.4, @Destroy.WithSelf.SelfDestruct.1(%impl.elem1) [symbolic = %specific_impl_fn.loc31_37.6 (constants.%specific_impl_fn.2dd)]
 // CHECK:STDOUT:
@@ -4959,7 +4919,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc27 => constants.%complete_type.357
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness => constants.%Iterate.impl_witness.d1d
-// CHECK:STDOUT:   %require_witness_defn.loc31_37.1 => constants.%require_witness_defn.f92
 // CHECK:STDOUT:   %Iterate.facet.loc31_37.5 => constants.%Iterate.facet.8d3
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type => constants.%Iterate.WithSelf.NewCursor.type.7f7
 // CHECK:STDOUT:   %.loc31_37.20 => constants.%.8c0
@@ -4975,7 +4934,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.000
 // CHECK:STDOUT:   %.loc31_37.22 => constants.%.dc3
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f19d.8
-// CHECK:STDOUT:   %require_witness_defn.loc31_37.2 => constants.%empty_struct.f65
 // CHECK:STDOUT:   %impl.elem2.loc31_37.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.11
 // CHECK:STDOUT:   %specific_impl_fn.loc31_37.6 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.11
 // CHECK:STDOUT: }
@@ -5247,7 +5205,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc37_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.711)]
-// CHECK:STDOUT:   %require_witness_defn.loc41_44.1: require_witness_defn_type = require_witness_defn %Iterate.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.loc41_44.5: %Iterate.type = facet_value %R.as_type.loc37_86.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc41_44.5 (constants.%Iterate.facet.04e)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc41_44.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.f6c)]
 // CHECK:STDOUT:   %.loc41_44.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc41_44.5 [symbolic = %.loc41_44.20 (constants.%.2577)]
@@ -5261,7 +5218,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%impl.elem1) [symbolic = %Destroy.WithSelf.SelfDestruct.type (constants.%Destroy.WithSelf.SelfDestruct.type.55d)]
 // CHECK:STDOUT:   %.loc41_44.22: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %impl.elem1 [symbolic = %.loc41_44.22 (constants.%.a44)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.696)]
-// CHECK:STDOUT:   %require_witness_defn.loc41_44.2: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem2.loc41_44.4: @TestIterate.%.loc41_44.22 (%.a44) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc41_44.4 (constants.%impl.elem2.1f1)]
 // CHECK:STDOUT:   %specific_impl_fn.loc41_44.6: <specific function> = specific_impl_function %impl.elem2.loc41_44.4, @Destroy.WithSelf.SelfDestruct.1(%impl.elem1) [symbolic = %specific_impl_fn.loc41_44.6 (constants.%specific_impl_fn.cb8)]
 // CHECK:STDOUT:
@@ -5588,7 +5544,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Optional.HasValue.994: %Optional.HasValue.type.06b = struct_value () [concrete]
 // CHECK:STDOUT:   %Optional.Get.type.a9b: type = fn_type @Optional.Get, @Optional(%OptionalStorage.facet.adc) [concrete]
 // CHECK:STDOUT:   %Optional.Get.740: %Optional.Get.type.a9b = struct_value () [concrete]
-// CHECK:STDOUT:   %empty_struct.f65: require_witness_defn_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.facet.745: %Destroy.type = facet_value %ValueType, (%custom_witness.dc3) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.e45: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.745) [concrete]
 // CHECK:STDOUT:   %.8f3: type = maybe_unformed_type %ValueType [concrete]
@@ -5703,7 +5658,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %T.as_type.as.Iterate.impl.Next.specific_fn: <specific function> = specific_function %T.as_type.as.Iterate.impl.Next.ddf, @T.as_type.as.Iterate.impl.Next(%facet_value.24f) [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.235: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%Destroy.facet.c9a) [concrete]
 // CHECK:STDOUT:   %.a38: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type.235, %Destroy.facet.c9a [concrete]
-// CHECK:STDOUT:   %require_witness_defn.b0b: require_witness_defn_type = require_witness_defn %Iterate.impl_witness.198 [concrete]
 // CHECK:STDOUT:   %complete_type.95d: <witness> = complete_type_witness %tuple.type.de6 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -5839,7 +5793,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness: <witness> = lookup_impl_witness %R.loc44_17.1, @Iterate [symbolic = %Iterate.lookup_impl_witness (constants.%Iterate.lookup_impl_witness.a99)]
-// CHECK:STDOUT:   %require_witness_defn.loc48_41.1: require_witness_defn_type = require_witness_defn %Iterate.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Iterate.facet.loc48_41.5: %Iterate.type = facet_value %R.as_type.loc44_83.1, (%Iterate.lookup_impl_witness) [symbolic = %Iterate.facet.loc48_41.5 (constants.%Iterate.facet.c55)]
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type: type = fn_type @Iterate.WithSelf.NewCursor, @Iterate.WithSelf(%Iterate.facet.loc48_41.5) [symbolic = %Iterate.WithSelf.NewCursor.type (constants.%Iterate.WithSelf.NewCursor.type.fb9)]
 // CHECK:STDOUT:   %.loc48_41.20: type = fn_type_with_self_type %Iterate.WithSelf.NewCursor.type, %Iterate.facet.loc48_41.5 [symbolic = %.loc48_41.20 (constants.%.54f)]
@@ -5853,7 +5806,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type: type = fn_type @Destroy.WithSelf.SelfDestruct.1, @Destroy.WithSelf(%impl.elem1) [symbolic = %Destroy.WithSelf.SelfDestruct.type (constants.%Destroy.WithSelf.SelfDestruct.type.4ed)]
 // CHECK:STDOUT:   %.loc48_41.22: type = fn_type_with_self_type %Destroy.WithSelf.SelfDestruct.type, %impl.elem1 [symbolic = %.loc48_41.22 (constants.%.97d)]
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness: <witness> = lookup_impl_witness %impl.elem1, @Destroy [symbolic = %Destroy.lookup_impl_witness (constants.%Destroy.lookup_impl_witness.eb0)]
-// CHECK:STDOUT:   %require_witness_defn.loc48_41.2: require_witness_defn_type = require_witness_defn %Destroy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem2.loc48_41.4: @TestIterate.%.loc48_41.22 (%.97d) = impl_witness_access %Destroy.lookup_impl_witness, element2 [symbolic = %impl.elem2.loc48_41.4 (constants.%impl.elem2.f7b)]
 // CHECK:STDOUT:   %specific_impl_fn.loc48_41.6: <specific function> = specific_impl_function %impl.elem2.loc48_41.4, @Destroy.WithSelf.SelfDestruct.1(%impl.elem1) [symbolic = %specific_impl_fn.loc48_41.6 (constants.%specific_impl_fn.577)]
 // CHECK:STDOUT:
@@ -6138,7 +6090,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %require_complete.loc44 => constants.%complete_type.357
 // CHECK:STDOUT:   %Iterate.lookup_impl_witness => constants.%Iterate.impl_witness.198
-// CHECK:STDOUT:   %require_witness_defn.loc48_41.1 => constants.%require_witness_defn.b0b
 // CHECK:STDOUT:   %Iterate.facet.loc48_41.5 => constants.%Iterate.facet.b30
 // CHECK:STDOUT:   %Iterate.WithSelf.NewCursor.type => constants.%Iterate.WithSelf.NewCursor.type.b5a
 // CHECK:STDOUT:   %.loc48_41.20 => constants.%.bc1
@@ -6154,7 +6105,6 @@ fn TestDriver(var no_begin_end: Cpp.NoBeginEnd,
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type => constants.%Destroy.WithSelf.SelfDestruct.type.235
 // CHECK:STDOUT:   %.loc48_41.22 => constants.%.a38
 // CHECK:STDOUT:   %Destroy.lookup_impl_witness => constants.%custom_witness.f8f19d.8
-// CHECK:STDOUT:   %require_witness_defn.loc48_41.2 => constants.%empty_struct.f65
 // CHECK:STDOUT:   %impl.elem2.loc48_41.4 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.10
 // CHECK:STDOUT:   %specific_impl_fn.loc48_41.6 => constants.%Destroy.WithSelf.SelfDestruct.db3fdb.10
 // CHECK:STDOUT: }

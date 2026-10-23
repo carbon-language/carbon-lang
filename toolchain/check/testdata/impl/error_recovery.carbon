@@ -184,7 +184,6 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc11_15.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Z.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Z.facet.loc17_6.2: %Z.type = facet_value %T.loc11_15.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc17_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:   %F.specific_fn.loc17_3.2: <specific function> = specific_function constants.%F, @F(%Z.facet.loc17_6.2) [symbolic = %F.specific_fn.loc17_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
@@ -242,7 +241,6 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc11_15.1, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Z.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Z.facet.loc17_6.2: %Z.type = facet_value %T.loc11_15.1, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc17_6.2 (constants.%Z.facet)]
 // CHECK:STDOUT:   %F.specific_fn.loc17_3.2: <specific function> = specific_function constants.%F, @F(%Z.facet.loc17_6.2) [symbolic = %F.specific_fn.loc17_3.2 (constants.%F.specific_fn)]
 // CHECK:STDOUT:
@@ -269,7 +267,6 @@ impl C as I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Z.lookup_impl_witness => <error>
-// CHECK:STDOUT:   %require_witness_defn => <error>
 // CHECK:STDOUT:   %Z.facet.loc17_6.2 => <error>
 // CHECK:STDOUT:   %F.specific_fn.loc17_3.2 => <error>
 // CHECK:STDOUT: }

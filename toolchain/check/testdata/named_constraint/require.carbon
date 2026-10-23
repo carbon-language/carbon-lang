@@ -760,7 +760,6 @@ constraint N {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_15.1, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Y.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Y.facet.loc15: %Y.type = facet_value %T.as_type.loc13_23.1, (%Y.lookup_impl_witness) [symbolic = %Y.facet.loc15 (constants.%Y.facet)]
 // CHECK:STDOUT:   %Y.WithSelf.YY.type: type = fn_type @Y.WithSelf.YY, @Y.WithSelf(%Y.facet.loc15) [symbolic = %Y.WithSelf.YY.type (constants.%Y.WithSelf.YY.type.041)]
 // CHECK:STDOUT:   %.loc15_4.2: type = fn_type_with_self_type %Y.WithSelf.YY.type, %Y.facet.loc15 [symbolic = %.loc15_4.2 (constants.%.b6a)]
@@ -910,7 +909,6 @@ constraint N {
 // CHECK:STDOUT:   %assoc0: @F.%Y.assoc_type (%Y.assoc_type.18b) = assoc_entity element0, @Y.WithSelf.%Y.WithSelf.YY.decl [symbolic = %assoc0 (constants.%assoc0.eff)]
 // CHECK:STDOUT:   %Y.type.loc15: type = facet_type <@Y, @Y(%T.as_type.loc13_23.1)> [symbolic = %Y.type.loc15 (constants.%Y.type.a55)]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_15.1, @Y, @Y(%T.as_type.loc13_23.1) [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Y.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Y.facet.loc15: @F.%Y.type.loc15 (%Y.type.a55) = facet_value %T.as_type.loc13_23.1, (%Y.lookup_impl_witness) [symbolic = %Y.facet.loc15 (constants.%Y.facet)]
 // CHECK:STDOUT:   %Y.WithSelf.YY.type: type = fn_type @Y.WithSelf.YY, @Y.WithSelf(%T.as_type.loc13_23.1, %Y.facet.loc15) [symbolic = %Y.WithSelf.YY.type (constants.%Y.WithSelf.YY.type.e81)]
 // CHECK:STDOUT:   %.loc15_4.3: type = fn_type_with_self_type %Y.WithSelf.YY.type, %Y.facet.loc15 [symbolic = %.loc15_4.3 (constants.%.765)]
@@ -1202,7 +1200,6 @@ constraint N {
 // CHECK:STDOUT:   %Y.lookup_impl_witness.bef: <witness> = lookup_impl_witness %Self.d87, @Y [symbolic]
 // CHECK:STDOUT:   %impl.elem0.8fc: type = impl_witness_access %Y.lookup_impl_witness.bef, element0 [symbolic]
 // CHECK:STDOUT:   %Y_where.type.11e: type = facet_type <@Y where %impl.elem0.8fc = %empty_tuple.type> [symbolic]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Y.lookup_impl_witness.bef [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1253,7 +1250,6 @@ constraint N {
 // CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.d87)]
 // CHECK:STDOUT:   %Self.as_type.loc7_11.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc7_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.bef)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Y.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc7_19: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc7_19 (constants.%impl.elem0.8fc)]
 // CHECK:STDOUT:   %Y_where.type.loc7_19.2: type = facet_type <@Y where %impl.elem0.loc7_19 = constants.%empty_tuple.type> [symbolic = %Y_where.type.loc7_19.2 (constants.%Y_where.type.11e)]
 // CHECK:STDOUT: }
@@ -1266,7 +1262,6 @@ constraint N {
 // CHECK:STDOUT:   %Self => constants.%Self.d87
 // CHECK:STDOUT:   %Self.as_type.loc7_11.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.bef
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn
 // CHECK:STDOUT:   %impl.elem0.loc7_19 => constants.%impl.elem0.8fc
 // CHECK:STDOUT:   %Y_where.type.loc7_19.2 => constants.%Y_where.type.11e
 // CHECK:STDOUT: }
@@ -1374,7 +1369,6 @@ constraint N {
 // CHECK:STDOUT:   %Y.lookup_impl_witness.bef: <witness> = lookup_impl_witness %Self.d87, @Y [symbolic]
 // CHECK:STDOUT:   %impl.elem0.8fc: type = impl_witness_access %Y.lookup_impl_witness.bef, element0 [symbolic]
 // CHECK:STDOUT:   %Y_where.type.4d3: type = facet_type <@Y where %impl.elem0.8fc = %Self.as_type> [symbolic]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Y.lookup_impl_witness.bef [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1427,7 +1421,6 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc10_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %Y_where.type.loc10_19.2: type = facet_type <@Y where constants.%impl.elem0.591 = %Self.as_type.loc10_11.2> [symbolic = %Y_where.type.loc10_19.2 (constants.%Y_where.type.0fe)]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.bef)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Y.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc10_19: type = impl_witness_access %Y.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc10_19 (constants.%impl.elem0.8fc)]
 // CHECK:STDOUT:   %Y_where.type.loc10_19.3: type = facet_type <@Y where %impl.elem0.loc10_19 = %Self.as_type.loc10_11.2> [symbolic = %Y_where.type.loc10_19.3 (constants.%Y_where.type.4d3)]
 // CHECK:STDOUT: }
@@ -1441,7 +1434,6 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %Y_where.type.loc10_19.2 => constants.%Y_where.type.0fe
 // CHECK:STDOUT:   %Y.lookup_impl_witness => constants.%Y.lookup_impl_witness.bef
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn
 // CHECK:STDOUT:   %impl.elem0.loc10_19 => constants.%impl.elem0.8fc
 // CHECK:STDOUT:   %Y_where.type.loc10_19.3 => constants.%Y_where.type.4d3
 // CHECK:STDOUT: }

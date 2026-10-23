@@ -1368,7 +1368,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("require_complete");
       return;
     }
-    case RequireImplWitnessSpecificDefinition::Kind: {
+    case RequireSpecificDefinition::Kind: {
       AddInstName("require_witness_defn");
       return;
     }

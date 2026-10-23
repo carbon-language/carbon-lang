@@ -121,7 +121,7 @@ auto Mangler::MangleInverseQualifiedNameScope(llvm::raw_ostream& os,
           case SemIR::FloatLiteralType::Kind:
           case SemIR::IntLiteralType::Kind:
           case SemIR::NamespaceType::Kind:
-          case SemIR::RequireImplWitnessSpecificDefinitionType::Kind:
+          case SemIR::RequireSpecificDefinitionType::Kind:
           case SemIR::SpecificFunctionType::Kind:
           case SemIR::VtableType::Kind:
           case SemIR::WitnessType::Kind: {

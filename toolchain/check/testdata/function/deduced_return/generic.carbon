@@ -209,7 +209,6 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc4_7.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
 // CHECK:STDOUT:   %.loc4_43.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc4_7.1 [symbolic = %.loc4_43.5 (constants.%.8bf)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc4_7.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc4_43.2: @F.%.loc4_43.5 (%.8bf) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc4_43.2 (constants.%impl.elem0.bb5)]
 // CHECK:STDOUT:   %specific_impl_fn.loc4_43.2: <specific function> = specific_impl_function %impl.elem0.loc4_43.2, @Copy.WithSelf.Op(%T.loc4_7.1) [symbolic = %specific_impl_fn.loc4_43.2 (constants.%specific_impl_fn.2ac)]
 // CHECK:STDOUT:
@@ -515,7 +514,6 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   %complete_type.fa7: <witness> = complete_type_witness %tuple.type.35f [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
-// CHECK:STDOUT:   %require_witness_defn.dbc: require_witness_defn_type = require_witness_defn %Copy.impl_witness.8af [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
 // CHECK:STDOUT:   %U.f84: %Copy.type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %U.as_type.c1c: type = facet_access_type %U.f84 [symbolic]
@@ -532,7 +530,6 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.d2f9c3.3: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%U.f84) [symbolic]
 // CHECK:STDOUT:   %.8bf935.2: type = fn_type_with_self_type %Copy.WithSelf.Op.type.d2f9c3.3, %U.f84 [symbolic]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness.d9c332.2: <witness> = lookup_impl_witness %U.f84, @Copy [symbolic]
-// CHECK:STDOUT:   %require_witness_defn.24ecc0.2: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness.d9c332.2 [symbolic]
 // CHECK:STDOUT:   %impl.elem0.bb582d.2: %.8bf935.2 = impl_witness_access %Copy.lookup_impl_witness.d9c332.2, element0 [symbolic]
 // CHECK:STDOUT:   %specific_impl_fn.2acc20.2: <specific function> = specific_impl_function %impl.elem0.bb582d.2, @Copy.WithSelf.Op(%U.f84) [symbolic]
 // CHECK:STDOUT: }
@@ -599,7 +596,6 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc6_7.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
 // CHECK:STDOUT:   %.loc6_44.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc6_7.1 [symbolic = %.loc6_44.3 (constants.%.8bf935.1)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc6_7.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c332.1)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc6_44.2: @F.%.loc6_44.3 (%.8bf935.1) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_44.2 (constants.%impl.elem0.bb582d.1)]
 // CHECK:STDOUT:   %specific_impl_fn.loc6_44.2: <specific function> = specific_impl_function %impl.elem0.loc6_44.2, @Copy.WithSelf.Op(%T.loc6_7.1) [symbolic = %specific_impl_fn.loc6_44.2 (constants.%specific_impl_fn.2acc20.1)]
 // CHECK:STDOUT:
@@ -662,7 +658,6 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.f76
 // CHECK:STDOUT:   %.loc6_44.3 => constants.%.2b9
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.impl_witness.8af
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.dbc
 // CHECK:STDOUT:   %impl.elem0.loc6_44.2 => constants.%Int.as.Copy.impl.Op.cae
 // CHECK:STDOUT:   %specific_impl_fn.loc6_44.2 => constants.%Int.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }
@@ -686,7 +681,6 @@ fn F[T: Core.Copy](x: T, b: bool) -> auto {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type => constants.%Copy.WithSelf.Op.type.d2f9c3.3
 // CHECK:STDOUT:   %.loc6_44.3 => constants.%.8bf935.2
 // CHECK:STDOUT:   %Copy.lookup_impl_witness => constants.%Copy.lookup_impl_witness.d9c332.2
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.24ecc0.2
 // CHECK:STDOUT:   %impl.elem0.loc6_44.2 => constants.%impl.elem0.bb582d.2
 // CHECK:STDOUT:   %specific_impl_fn.loc6_44.2 => constants.%specific_impl_fn.2acc20.2
 // CHECK:STDOUT: }

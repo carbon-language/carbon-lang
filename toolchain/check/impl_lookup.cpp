@@ -285,6 +285,19 @@ static auto TryGetSpecificWitnessIdForImpl(
   }
 
   if (specific_id.has_value()) {
+    // Evaluating a LookupImplWitness to an ImplWitness comes with a promise
+    // that the ImplDecl specific that the ImplWitness refers to will be
+    // resolved: both its decl and its definition blocks. This allows the
+    // evaluation of other instructions that use the witness as an operand to
+    // access values from the ImplWitness witness table, since it contains
+    // constant values that must be viewed through the specific referred to by
+    // the ImplWitness.
+    //
+    // If the ImplWitness returned here is symbolic (the specific it refers to
+    // has symbolic arguments), this promise must be maintained not just for
+    // this specific but for future specifics formed that make use of the
+    // returned ImplWitness. This is done through the RequireSpecificDefinition
+    // instruction in InstAddedToEvalBlock().
     ResolveSpecificDefinition(context, loc_id, specific_id);
   }
 
@@ -1010,15 +1023,6 @@ auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
       // At least one queried interface in the facet type has no witness for the
       // given type, we can stop looking for more.
       break;
-    }
-
-    if (witness_const_id.is_symbolic() && false) {
-      AddInstInNoBlock<SemIR::RequireImplWitnessSpecificDefinition>(
-          context, loc_id,
-          {.type_id = GetSingletonType(
-               context,
-               SemIR::RequireImplWitnessSpecificDefinitionType::TypeInstId),
-           .witness_id = result_witness_id});
     }
 
     // Save the non-final witness, which will eventually resolve to a final

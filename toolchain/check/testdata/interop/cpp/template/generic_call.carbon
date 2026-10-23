@@ -107,7 +107,6 @@ fn G() {
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.4c0: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.602) [concrete]
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.46a: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.602) [concrete]
 // CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.89b: %T.as_type.as.DefaultOrUnformed.impl.Op.type.46a = struct_value () [concrete]
-// CHECK:STDOUT:   %require_witness_defn.60d: require_witness_defn_type = require_witness_defn %DefaultOrUnformed.impl_witness.4c0 [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.dd9: %DefaultOrUnformed.type = facet_value %S, (%DefaultOrUnformed.impl_witness.4c0) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type.2e6: type = fn_type @DefaultOrUnformed.WithSelf.Op, @DefaultOrUnformed.WithSelf(%DefaultOrUnformed.facet.dd9) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.assoc_type: type = assoc_entity_type @DefaultOrUnformed [concrete]
@@ -227,7 +226,6 @@ fn G() {
 // CHECK:STDOUT:   %v.patt.loc8_15.2: @F.%pattern_type.loc8 (%pattern_type.fcb) = ref_binding_pattern v [template = %v.patt.loc8_15.2 (constants.%v.patt.126)]
 // CHECK:STDOUT:   %v.var_patt.loc8_3.2: @F.%pattern_type.loc8 (%pattern_type.fcb) = var_pattern %v.patt.loc8_15.2 [template = %v.var_patt.loc8_3.2 (constants.%v.var_patt.768)]
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness: <witness> = lookup_impl_witness %.loc8_24.9, @DefaultOrUnformed [template = %DefaultOrUnformed.lookup_impl_witness (constants.%DefaultOrUnformed.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %DefaultOrUnformed.lookup_impl_witness [template]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8_25.2: %DefaultOrUnformed.type = facet_value %.loc8_24.9, (%DefaultOrUnformed.lookup_impl_witness) [template = %DefaultOrUnformed.facet.loc8_25.2 (constants.%DefaultOrUnformed.facet.67e)]
 // CHECK:STDOUT:   %.loc8_25.6: <instruction> = access_member_action %.loc8_25.1, Op [template]
 // CHECK:STDOUT:   %.loc8_25.7: type = type_of_inst %.loc8_25.6 [template = %.loc8_25.7 (constants.%.77d)]
@@ -315,7 +313,6 @@ fn G() {
 // CHECK:STDOUT:   %v.patt.loc8_15.2 => constants.%v.patt.5fa
 // CHECK:STDOUT:   %v.var_patt.loc8_3.2 => constants.%v.var_patt.e69
 // CHECK:STDOUT:   %DefaultOrUnformed.lookup_impl_witness => constants.%DefaultOrUnformed.impl_witness.4c0
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.60d
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.loc8_25.2 => constants.%DefaultOrUnformed.facet.dd9
 // CHECK:STDOUT:   %.loc8_25.6 => constants.%inst.splice_block.426619.3
 // CHECK:STDOUT:   %.loc8_25.7 => constants.%.e57

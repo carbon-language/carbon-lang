@@ -496,7 +496,6 @@ impl i32 as Empty {
 // CHECK:STDOUT:   %pattern_type.0a2: type = pattern_type %impl.elem0 [symbolic]
 // CHECK:STDOUT:   %return.param_patt: %pattern_type.0a2 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt: %pattern_type.0a2 = return_slot_pattern %return.param_patt, %impl.elem0 [symbolic]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F.type: type = fn_type @I.WithSelf.F, @I.WithSelf(%Self) [symbolic]
 // CHECK:STDOUT:   %I.WithSelf.F: %I.WithSelf.F.type = struct_value () [symbolic]
 // CHECK:STDOUT:   %assoc1: %I.assoc_type = assoc_entity element1, @I.WithSelf.%I.WithSelf.F.decl [concrete]
@@ -553,7 +552,6 @@ impl i32 as Empty {
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc6_13.1: type = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc6_13.1 (constants.%impl.elem0)]
 // CHECK:STDOUT:   %.loc6_13.1: Core.Form = init_form %impl.elem0.loc6_13.1 [symbolic = %.loc6_13.1 (constants.%.157)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %impl.elem0.loc6_13.1 [symbolic = %pattern_type (constants.%pattern_type.0a2)]
@@ -568,7 +566,6 @@ impl i32 as Empty {
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
 // CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.lookup_impl_witness
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn
 // CHECK:STDOUT:   %impl.elem0.loc6_13.1 => constants.%impl.elem0
 // CHECK:STDOUT:   %.loc6_13.1 => constants.%.157
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.0a2

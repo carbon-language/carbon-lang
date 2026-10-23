@@ -372,7 +372,6 @@ interface C {
 // CHECK:STDOUT:   %DefaultFn.WithSelf.F.type: type = fn_type @DefaultFn.WithSelf.F, @DefaultFn.WithSelf(%d.loc13_20.1) [symbolic = %DefaultFn.WithSelf.F.type (constants.%DefaultFn.WithSelf.F.type.19e)]
 // CHECK:STDOUT:   %.loc14_4.2: type = fn_type_with_self_type %DefaultFn.WithSelf.F.type, %d.loc13_20.1 [symbolic = %.loc14_4.2 (constants.%.19c)]
 // CHECK:STDOUT:   %DefaultFn.lookup_impl_witness: <witness> = lookup_impl_witness %d.loc13_20.1, @DefaultFn [symbolic = %DefaultFn.lookup_impl_witness (constants.%DefaultFn.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %DefaultFn.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc14_4.2: @CallFn.%.loc14_4.2 (%.19c) = impl_witness_access %DefaultFn.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.2f3)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_4.2: <specific function> = specific_impl_function %impl.elem0.loc14_4.2, @DefaultFn.WithSelf.F(%d.loc13_20.1) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.840)]
 // CHECK:STDOUT:
@@ -402,7 +401,6 @@ interface C {
 // CHECK:STDOUT:   %DefaultMethod.WithSelf.M.type: type = fn_type @DefaultMethod.WithSelf.M, @DefaultMethod.WithSelf(%T.loc17_16.1) [symbolic = %DefaultMethod.WithSelf.M.type (constants.%DefaultMethod.WithSelf.M.type.840)]
 // CHECK:STDOUT:   %.loc18_4: type = fn_type_with_self_type %DefaultMethod.WithSelf.M.type, %T.loc17_16.1 [symbolic = %.loc18_4 (constants.%.af9)]
 // CHECK:STDOUT:   %DefaultMethod.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc17_16.1, @DefaultMethod [symbolic = %DefaultMethod.lookup_impl_witness (constants.%DefaultMethod.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %DefaultMethod.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc18_4.2: @CallMethod.%.loc18_4 (%.af9) = impl_witness_access %DefaultMethod.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0.d8d)]
 // CHECK:STDOUT:   %specific_impl_fn.loc18_4.2: <specific function> = specific_impl_function %impl.elem0.loc18_4.2, @DefaultMethod.WithSelf.M(%T.loc17_16.1) [symbolic = %specific_impl_fn.loc18_4.2 (constants.%specific_impl_fn.9ab)]
 // CHECK:STDOUT:
@@ -647,7 +645,6 @@ interface C {
 // CHECK:STDOUT:   %FinalFn.WithSelf.F.type: type = fn_type @FinalFn.WithSelf.F, @FinalFn.WithSelf(%d.loc13_20.1) [symbolic = %FinalFn.WithSelf.F.type (constants.%FinalFn.WithSelf.F.type.37e)]
 // CHECK:STDOUT:   %.loc14_4.2: type = fn_type_with_self_type %FinalFn.WithSelf.F.type, %d.loc13_20.1 [symbolic = %.loc14_4.2 (constants.%.ed7)]
 // CHECK:STDOUT:   %FinalFn.lookup_impl_witness: <witness> = lookup_impl_witness %d.loc13_20.1, @FinalFn [symbolic = %FinalFn.lookup_impl_witness (constants.%FinalFn.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %FinalFn.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc14_4.2: @CallFn.%.loc14_4.2 (%.ed7) = impl_witness_access %FinalFn.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_4.2 (constants.%impl.elem0.c34)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_4.2: <specific function> = specific_impl_function %impl.elem0.loc14_4.2, @FinalFn.WithSelf.F(%d.loc13_20.1) [symbolic = %specific_impl_fn.loc14_4.2 (constants.%specific_impl_fn.d64)]
 // CHECK:STDOUT:
@@ -677,7 +674,6 @@ interface C {
 // CHECK:STDOUT:   %FinalMethod.WithSelf.M.type: type = fn_type @FinalMethod.WithSelf.M, @FinalMethod.WithSelf(%T.loc17_16.1) [symbolic = %FinalMethod.WithSelf.M.type (constants.%FinalMethod.WithSelf.M.type.8df)]
 // CHECK:STDOUT:   %.loc18_4: type = fn_type_with_self_type %FinalMethod.WithSelf.M.type, %T.loc17_16.1 [symbolic = %.loc18_4 (constants.%.127)]
 // CHECK:STDOUT:   %FinalMethod.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc17_16.1, @FinalMethod [symbolic = %FinalMethod.lookup_impl_witness (constants.%FinalMethod.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %FinalMethod.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc18_4.2: @CallMethod.%.loc18_4 (%.127) = impl_witness_access %FinalMethod.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_4.2 (constants.%impl.elem0.259)]
 // CHECK:STDOUT:   %specific_impl_fn.loc18_4.2: <specific function> = specific_impl_function %impl.elem0.loc18_4.2, @FinalMethod.WithSelf.M(%T.loc17_16.1) [symbolic = %specific_impl_fn.loc18_4.2 (constants.%specific_impl_fn.76f)]
 // CHECK:STDOUT:

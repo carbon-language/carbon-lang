@@ -53,7 +53,6 @@ fn F(generic T: type, n: T*) -> T* {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %m.patt.loc6_8.2: @F.%pattern_type (%pattern_type.4f4) = value_binding_pattern m [symbolic = %m.patt.loc6_8.2 (constants.%m.patt)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %ptr.loc4_27.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.1da)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %Copy.facet.loc7_10.3: %Copy.type = facet_value %ptr.loc4_27.1, (%Copy.lookup_impl_witness) [symbolic = %Copy.facet.loc7_10.3 (constants.%Copy.facet)]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.loc7_10.3) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.e38)]
 // CHECK:STDOUT:   %.loc7_10.3: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %Copy.facet.loc7_10.3 [symbolic = %.loc7_10.3 (constants.%.3f816)]

@@ -287,7 +287,6 @@ fn H(generic U: Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%T.loc13_15.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.2)]
 // CHECK:STDOUT:   %.loc14_11.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %T.loc13_15.1 [symbolic = %.loc14_11.5 (constants.%.8bf935.1)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc13_15.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c332.1)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc14_11.2: @G.%.loc14_11.5 (%.8bf935.1) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_11.2 (constants.%impl.elem0.bb582d.1)]
 // CHECK:STDOUT:   %specific_impl_fn.loc14_11.2: <specific function> = specific_impl_function %impl.elem0.loc14_11.2, @Copy.WithSelf.Op(%T.loc13_15.1) [symbolic = %specific_impl_fn.loc14_11.2 (constants.%specific_impl_fn.2acc20.1)]
 // CHECK:STDOUT:
@@ -329,7 +328,6 @@ fn H(generic U: Core.Copy, c: Class(U)) -> U {
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%U.loc17_15.1) [symbolic = %Copy.WithSelf.Op.type (constants.%Copy.WithSelf.Op.type.d2f9c3.3)]
 // CHECK:STDOUT:   %.loc18_11.5: type = fn_type_with_self_type %Copy.WithSelf.Op.type, %U.loc17_15.1 [symbolic = %.loc18_11.5 (constants.%.8bf935.2)]
 // CHECK:STDOUT:   %Copy.lookup_impl_witness: <witness> = lookup_impl_witness %U.loc17_15.1, @Copy [symbolic = %Copy.lookup_impl_witness (constants.%Copy.lookup_impl_witness.d9c332.2)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %Copy.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc18_11.2: @H.%.loc18_11.5 (%.8bf935.2) = impl_witness_access %Copy.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc18_11.2 (constants.%impl.elem0.bb582d.2)]
 // CHECK:STDOUT:   %specific_impl_fn.loc18_11.2: <specific function> = specific_impl_function %impl.elem0.loc18_11.2, @Copy.WithSelf.Op(%U.loc17_15.1) [symbolic = %specific_impl_fn.loc18_11.2 (constants.%specific_impl_fn.2acc20.2)]
 // CHECK:STDOUT:

@@ -68,6 +68,92 @@ static auto AddGenericConstantInstToEvalBlock(
        .dependence = dependence});
 }
 
+// Add a dependency edge between the ImplWitness in an eval block and the
+// ImplDecl specific definition it refers to.
+static auto InstAddedToEvalBlock(Context& context, SemIR::LocId loc_id,
+                                 SemIR::ImplWitness witness) -> void {
+  auto table =
+      context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
+  if (!table.impl_id.has_value()) {
+    // This is a use of the ImplWitness from inside the impl's own declaration.
+    // There is no definition to depend on yet, any use of the definition would
+    // be invalid.
+    return;
+  }
+  const auto& impl = context.impls().Get(table.impl_id);
+  if (impl.is_being_defined()) {
+    // This is a use of the ImplWitness from inside the impl's own definition.
+    // There is no definition to depend on yet, any use of the definition would
+    // be invalid.
+    return;
+  }
+
+  // ImplWitness holds a reference to a specific of the ImplDecl, which must be
+  // used to resolve constants from the impl's witness table. Those constants
+  // may depend on the impl's declaration or definition block, so the ImplDecl's
+  // definition block must be resolved before any use of the ImplWitness in
+  // another instruction's operands.
+  //
+  // Add a RequireSpecificDefinition to the eval block to create a dependency
+  // edge from the eval block to the ImplDecl specific. As the specific in the
+  // ImplWitness is further monomorphized, the RequireSpecificDefinition will be
+  // as well. At each step, it will resolve the ImplDecl's specific definition,
+  // ensuring that the contants from the witness table remain valid for use from
+  // the ImplWitness.
+  //
+  // We add the instruction directly to the eval block without FinishInst. The
+  // RequireSpecificDefinition's constant instruction is always the same
+  // `inst_id`.
+
+#if 1
+  auto inst_id = context.sem_ir().insts().AddInNoBlock(
+      SemIR::LocIdAndInst::RuntimeVerified(
+          context.sem_ir(), loc_id,
+          SemIR::RequireSpecificDefinition{
+              .type_id = GetSingletonType(
+                  context, SemIR::RequireSpecificDefinitionType::TypeInstId),
+              .specific_id = witness.specific_id}));
+  auto const_inst_id = inst_id;
+  auto const_id = AddGenericConstantInstToEvalBlock(
+      context, const_inst_id, inst_id, 
+      // FIXME:
+      SemIR::ConstantDependence::Checked);
+  context.constant_values().Set(inst_id, const_id);
+#else
+  AddInstInNoBlock<SemIR::RequireSpecificDefinition>(
+      context, loc_id,
+      {.type_id = GetSingletonType(
+           context, SemIR::RequireSpecificDefinitionType::TypeInstId),
+       .specific_id = witness.specific_id});
+#endif
+}
+
+template <typename InstT>
+static auto CallInstAddedToEvalBlock(Context& context, SemIR::LocId loc_id,
+                                     InstT inst) -> void {
+  if constexpr (InstT::Kind.eval_block_kind() ==
+                SemIR::InstEvalBlockKind::Conditional) {
+    InstAddedToEvalBlock(context, loc_id, inst);
+  }
+}
+
+static auto TryInstAddedToEvalBlock(Context& context, SemIR::LocId loc_id,
+                                    SemIR::Inst inst) -> void {
+  auto CallInstAddedToEvalBlock = [&]<typename InstT>(InstT inst) {
+    if constexpr (InstT::Kind.eval_block_kind() ==
+                  SemIR::InstEvalBlockKind::Conditional) {
+      InstAddedToEvalBlock(context, loc_id, inst);
+    }
+  };
+  CARBON_KIND_SWITCH(inst) {
+#define CARBON_SEM_IR_INST_KIND(Name)            \
+  case CARBON_KIND(SemIR::Name typed_inst): {    \
+    return CallInstAddedToEvalBlock(typed_inst); \
+  }
+#include "toolchain/sem_ir/inst_kind.def"
+  }
+}
+
 namespace {
 // Substitution callbacks to rebuild a generic constant in the eval block for a
 // generic region.
@@ -148,19 +234,9 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
           context(), const_inst_id, inst_id, dependence);
       context().constant_values().Set(inst_id, const_id);
 
-      if (!importing_ && new_inst.kind().IsAnyOf<SemIR::LookupImplWitness>()) {
-        auto req_inst_id = context().sem_ir().insts().AddInNoBlock(
-            SemIR::LocIdAndInst::RuntimeVerified(
-                context().sem_ir(), loc_id_,
-                SemIR::RequireImplWitnessSpecificDefinition{
-                    .type_id = GetSingletonType(
-                        context(),
-                        SemIR::RequireImplWitnessSpecificDefinitionType::
-                            TypeInstId),
-                    .witness_id = inst_id}));
-        auto req_const_id = AddGenericConstantInstToEvalBlock(
-            context(), req_inst_id, req_inst_id, dependence);
-        context().constant_values().Set(req_inst_id, req_const_id);
+      if (!importing_) {
+        TryInstAddedToEvalBlock(context(), loc_id_,
+                                context().insts().Get(inst_id));
       }
 
       return inst_id;
@@ -455,9 +531,7 @@ auto RebuildGenericEvalBlock(Context& context, SemIR::GenericId generic_id,
   constants_in_generic.GrowForInsertCount(const_ids.size());
   for (auto [i, inst_id] : llvm::enumerate(const_ids)) {
     // Build a constant in the inst block.
-    // FIXME MUST NOT CREATE NEW REQUIREIMPLWITNESSSPECIFICDEFINITIONS HERE.
-    // IMPORT SHOULD ALREADY HAVE WHATEVER IS NEEDED IN THE EVAL BLOCK.
-    AddGenericConstantToEvalBlock(context, inst_id, true);
+    AddGenericConstantToEvalBlock(context, inst_id, /*importing=*/true);
     CARBON_CHECK(context.generic_region_stack().PeekEvalBlock().size() == i + 1,
                  "Produced {0} instructions when importing {1}",
                  (context.generic_region_stack().PeekEvalBlock().size() - i),
@@ -736,10 +810,8 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
   // block to form information about the specific.
   auto& specific = context.specifics().Get(specific_id);
   if (!specific.decl_block_id.has_value()) {
-    specific.definition_block_id = SemIR::InstBlockId::Empty;
     TryEvalBlockForSpecific(context, loc_id, specific_id,
                             SemIR::GenericInstIndex::Region::Declaration);
-    specific.definition_block_id = SemIR::InstBlockId::None;
   }
 }
 

@@ -637,9 +637,7 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %t.patt.614: %pattern_type.e39 = wrapper_binding_pattern t, %t.param_patt.267 [concrete]
 // CHECK:STDOUT:   %F.specific_fn.dcc: <specific function> = specific_function %F, @F(%I.facet.a68) [concrete]
 // CHECK:STDOUT:   %.856: type = fn_type_with_self_type %I.WithSelf.Doit.type.0d0, %I.facet.f31 [concrete]
-// CHECK:STDOUT:   %require_witness_defn.bb5: require_witness_defn_type = require_witness_defn %I.impl_witness.ca2 [concrete]
 // CHECK:STDOUT:   %.2bd: type = fn_type_with_self_type %I.WithSelf.Doit.type.eaa, %I.facet.a68 [concrete]
-// CHECK:STDOUT:   %require_witness_defn.a6d: require_witness_defn_type = require_witness_defn %I.impl_witness.b14 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -889,7 +887,6 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %I.WithSelf.Doit.type: type = fn_type @I.WithSelf.Doit, @I.WithSelf(%T.loc24_7.1) [symbolic = %I.WithSelf.Doit.type (constants.%I.WithSelf.Doit.type.a1c)]
 // CHECK:STDOUT:   %.loc25_11: type = fn_type_with_self_type %I.WithSelf.Doit.type, %T.loc24_7.1 [symbolic = %.loc25_11 (constants.%.7ed)]
 // CHECK:STDOUT:   %I.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc24_7.1, @I [symbolic = %I.lookup_impl_witness (constants.%I.lookup_impl_witness)]
-// CHECK:STDOUT:   %require_witness_defn: require_witness_defn_type = require_witness_defn %I.lookup_impl_witness [symbolic]
 // CHECK:STDOUT:   %impl.elem0.loc25_11.2: @F.%.loc25_11 (%.7ed) = impl_witness_access %I.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc25_11.2 (constants.%impl.elem0.fa2)]
 // CHECK:STDOUT:   %specific_impl_fn.loc25_11.2: <specific function> = specific_impl_function %impl.elem0.loc25_11.2, @I.WithSelf.Doit(%T.loc24_7.1) [symbolic = %specific_impl_fn.loc25_11.2 (constants.%specific_impl_fn.1f8)]
 // CHECK:STDOUT:
@@ -1098,7 +1095,6 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %I.WithSelf.Doit.type => constants.%I.WithSelf.Doit.type.0d0
 // CHECK:STDOUT:   %.loc25_11 => constants.%.856
 // CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness.ca2
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.bb5
 // CHECK:STDOUT:   %impl.elem0.loc25_11.2 => constants.%A.as.I.impl.Doit
 // CHECK:STDOUT:   %specific_impl_fn.loc25_11.2 => constants.%A.as.I.impl.Doit
 // CHECK:STDOUT: }
@@ -1131,7 +1127,6 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %I.WithSelf.Doit.type => constants.%I.WithSelf.Doit.type.eaa
 // CHECK:STDOUT:   %.loc25_11 => constants.%.2bd
 // CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness.b14
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.a6d
 // CHECK:STDOUT:   %impl.elem0.loc25_11.2 => constants.%B.as.I.impl.Doit
 // CHECK:STDOUT:   %specific_impl_fn.loc25_11.2 => constants.%B.as.I.impl.Doit
 // CHECK:STDOUT: }
