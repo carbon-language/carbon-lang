@@ -1183,6 +1183,28 @@ fn Call(var instance: Cpp.PublicPrivate) {
   instance.PrivateInstance();
 }
 
+// --- cpp_friend_decl_for_carbon_class.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class B;
+
+inline Cpp '''
+class A {
+  friend class Carbon::B;
+
+private:
+  int i;
+};
+''';
+
+class B {
+  fn F() {
+    var a: Cpp.A = Cpp.A.A();
+    a.i = 1;
+  }
+}
+
 // CHECK:STDOUT: --- import_non_function_member_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
