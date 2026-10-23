@@ -67,8 +67,9 @@ constraint S(N: Core.IntLiteral) {
   extend require impls CanFailToMonomorphize(N);
 }
 
-// When we identify `T as (S(N) where .Z2 impls Y)`
-// - we replace `.Self of type S(N)` with `T`
+// When we call `F` and convert `T` to `S(N) where .Z2 impls Y`:
+// - we identify `T as (S(N) where .Z2 impls Y)` for impl lookup
+// - that replaces `.Self of type S(N)` with `T`
 // - that identifies `T as S(N)`
 // If the N is invalid, the identify fails in the middle of SubstPeriodSelf
 //
@@ -80,8 +81,8 @@ fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z2 impls Y) {}
 
 fn G(generic T: Y) {
   // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE+5]]:3-10: error: constructed invalid specific for `S(N) where .(CanFailToMonomorphize(N).Z2) impls Y` from argument [SubstitutingGenericParamType]
-  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-16]]:24-47: note: `CanFailToMonomorphize(N)` evaluates to incomplete type `CanFailToMonomorphize(-1)` [IncompleteTypeInMonomorphization]
-  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-22]]:21: note: array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-17]]:24-47: note: `CanFailToMonomorphize(N)` evaluates to incomplete type `CanFailToMonomorphize(-1)` [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-23]]:21: note: array bound of -1 is negative [ArrayBoundNegative]
   // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-6]]:1-69: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   F(-1, T);
