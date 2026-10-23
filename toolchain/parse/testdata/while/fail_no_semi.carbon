@@ -12,16 +12,12 @@ fn F() {
   while (a) {
     if (b) {
       break
-    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+4]]:5: error: `break` statements must end with a `;` [ExpectedStatementSemi]
-    // CHECK:STDERR:     }
-    // CHECK:STDERR:     ^
+    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:5: error: `break` statements must end with a `;` [ExpectedStatementSemi]
     // CHECK:STDERR:
     }
     if (c) {
       continue
-    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+4]]:5: error: `continue` statements must end with a `;` [ExpectedStatementSemi]
-    // CHECK:STDERR:     }
-    // CHECK:STDERR:     ^
+    // CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:5: error: `continue` statements must end with a `;` [ExpectedStatementSemi]
     // CHECK:STDERR:
     }
   }

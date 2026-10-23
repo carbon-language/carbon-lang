@@ -18,6 +18,7 @@
 #include "toolchain/check/inst.h"
 #include "toolchain/check/merge.h"
 #include "toolchain/check/name_lookup.h"
+#include "toolchain/check/subst.h"
 #include "toolchain/check/type.h"
 #include "toolchain/sem_ir/entity_with_params_base.h"
 #include "toolchain/sem_ir/ids.h"
@@ -79,16 +80,34 @@ auto GetSelfSpecificForInterfaceMemberWithSelfType(
   // numbering at the point where the self specific is used.
   int index_delta = num_enclosing_specific_args - arg_ids.size();
 
+  // Trailing arguments may mention outer parameters of `generic` in their
+  // types (for example `U: A(T)` where `T` comes from the enclosing interface).
+  // Substitute those outer arguments before adjusting bind indices, so later
+  // thunk cloning does not evaluate a binding against the wrong generic.
+  llvm::SmallVector<Substitution, 8> substitutions;
+  substitutions.reserve(arg_ids.size());
+  auto generic_bindings = context.inst_blocks().Get(generic.bindings_id);
+  CARBON_CHECK(arg_ids.size() <= generic_bindings.size());
+  for (auto [i, outer_arg_id] : llvm::enumerate(arg_ids)) {
+    auto binding = context.insts().GetAs<SemIR::SymbolicBinding>(
+        context.constant_values().GetConstantInstId(generic_bindings[i]));
+    auto entity_name = context.entity_names().Get(binding.entity_name_id);
+    CARBON_CHECK(entity_name.bind_index().has_value());
+    substitutions.push_back(
+        {.bind_id = entity_name.bind_index(),
+         .replacement_id = context.constant_values().Get(outer_arg_id)});
+  }
+
   // Take any trailing argument values from the self specific.
-  // TODO: If these refer to outer arguments, for example in their types, we may
-  // need to perform extra substitutions here.
   for (auto arg_id : self_specific_args.drop_front(arg_ids.size())) {
-    auto new_arg_id = context.constant_values().GetConstantInstId(arg_id);
+    auto subst_const_id = SubstConstant(
+        context, loc_id, context.constant_values().Get(arg_id), substitutions);
+    auto new_arg_id = context.constant_values().GetInstId(subst_const_id);
     if (index_delta) {
       // If this parameter would have a new index in the context described by
       // `enclosing_specific_id`, form a new binding with an adjusted index.
       auto bind_name = context.insts().GetAs<SemIR::SymbolicBinding>(
-          context.constant_values().GetConstantInstId(arg_id));
+          context.constant_values().GetConstantInstId(new_arg_id));
       auto entity_name = context.entity_names().Get(bind_name.entity_name_id);
       entity_name.bind_index_value += index_delta;
       CARBON_CHECK(entity_name.bind_index_value >= 0);

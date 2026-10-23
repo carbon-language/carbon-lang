@@ -20,6 +20,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/diagnostics/renderer.h"
 #include "toolchain/lower/clang_global_decl.h"
 #include "toolchain/lower/constant.h"
 #include "toolchain/lower/function_context.h"
@@ -122,6 +123,9 @@ auto FileContext::LowerDefinitions() -> void {
       LowerGlobalVariables(inst_block_id);
     }
   }
+
+  // Lower any additional global variables defined outside of the top block.
+  LowerGlobalVariables(SemIR::InstBlockId::ExtraGlobalVariables);
 
   // Lower function definitions.
   for (auto [id, fn_info] : sem_ir_->functions().enumerate()) {
@@ -524,7 +528,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     auto converted =
         converter.Convert(SemIR::LocId(declaration_function.definition_id),
                           /*token_only=*/false);
-    converted.loc.FormatLocation(output);
+    output << Diagnostics::FormatLocation(converted.loc) << ": ";
     output << "Lowering function ";
     if (specific_id.has_value()) {
       output << SemIR::StringifySpecific(sem_ir(), specific_id);
@@ -534,7 +538,7 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     }
     output << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
-    converted.loc.FormatSnippet(output, /*indent=*/10);
+    Diagnostics::PrintSnippet(output, converted.loc, /*indent=*/10);
   });
 
   // Note that `definition_function` is potentially from a different SemIR::File
@@ -786,8 +790,19 @@ auto FileContext::BuildVtable(const SemIR::Vtable& vtable,
     -> llvm::Constant* {
   const auto& class_info = sem_ir().classes().Get(vtable.class_id);
   if (!vtable.carbon_native_vtable) {
-    const auto* clang_decl =
-        sem_ir().clang_decls().Lookup(class_info.first_decl_id());
+    // Find the clang decl corresponding to this vtable and specific. For
+    // generic classes this will be a `ClassTemplateSpecializationDecl`,
+    // otherwise it will be a regular `CXXRecordDecl`.
+    auto lookup_id = SemIR::InstId::None;
+    if (class_info.generic_id.has_value()) {
+      SemIR::ClassType class_type{SemIR::TypeType::TypeId, vtable.class_id,
+                                  specific_id};
+      auto const_id = sem_ir().constants().Get(class_type);
+      lookup_id = sem_ir().constant_values().GetInstId(const_id);
+    } else {
+      lookup_id = class_info.first_decl_id();
+    }
+    const auto* clang_decl = sem_ir().clang_decls().Lookup(lookup_id);
     CARBON_CHECK(clang_decl, "Missing Clang declaration for class {0}",
                  class_info.name_id);
     auto* cxx_record_decl = cast<clang::CXXRecordDecl>(clang_decl->key.decl);

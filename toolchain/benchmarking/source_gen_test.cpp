@@ -28,10 +28,12 @@ namespace {
 using ::testing::AllOf;
 using ::testing::ContainerEq;
 using ::testing::Contains;
+using ::testing::ContainsRegex;
 using ::testing::Each;
 using ::testing::Eq;
 using ::testing::Ge;
 using ::testing::Gt;
+using ::testing::HasSubstr;
 using ::testing::Le;
 using ::testing::MatchesRegex;
 using ::testing::SizeIs;
@@ -84,7 +86,7 @@ TEST(SourceGenTest, Identifiers) {
   // Check that repeated calls are different in interesting ways, but have the
   // exact same total bytes.
   ssize_t idents_size_sum = SumSizes(idents);
-  for ([[maybe_unused]] auto _ : llvm::seq(10)) {
+  for (auto _ : llvm::seq(10)) {
     auto idents2 = gen.GetShuffledIdentifiers(1000);
     EXPECT_THAT(idents2, SizeIs(1000));
     // Should be (at least) a different shuffle of identifiers.
@@ -449,7 +451,8 @@ TEST_P(GenApiFileDenseDeclsParamsTest, ManyFieldsAndOneMethod) {
       GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
 }
 
-// No functions or methods, so every type use is a fixed type.
+// Classes with only fields (no functions or methods). Because fields have their
+// own type pool, fields can still reference earlier classes.
 TEST_P(GenApiFileDenseDeclsParamsTest, OnlyFields) {
   SourceGen::DenseDeclParams params = {
       .class_params = {.public_function_decls = 0,
@@ -460,6 +463,208 @@ TEST_P(GenApiFileDenseDeclsParamsTest, OnlyFields) {
   EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 32));
   EXPECT_TRUE(TestCompile(
       GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Definitions read class-typed parameters through `Checksum`, and return class
+// values through `Make`.
+static auto InlineDefsParams() -> SourceGen::DenseDeclParams {
+  return {.class_params = {.inline_function_defs = 3,
+                           .inline_getters = 2,
+                           .inline_predicates = 2,
+                           .inline_forwarders = 2}};
+}
+
+TEST_P(GenApiFileDenseDeclsParamsTest, InlineDefs) {
+  SourceGen::DenseDeclParams params = InlineDefsParams();
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(2000, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(2000, params)));
+}
+
+TEST(SourceGenTest, GenApiFileDenseDeclsInlineDefs) {
+  SourceGen gen;
+  std::string source = gen.GenApiFileDenseDecls(2000, InlineDefsParams());
+  EXPECT_THAT(source, HasSubstr(".Checksum()"));
+  EXPECT_THAT(source, HasSubstr(".Make()"));
+  EXPECT_THAT(source, HasSubstr("Impl("));
+}
+
+// C++ initializes a class with a default constructor in place of `Make`, which
+// leaves the fields private.
+TEST(SourceGenTest, GenApiFileDenseDeclsInlineDefsCpp) {
+  SourceGen gen(SourceGen::Language::Cpp);
+  std::string source = gen.GenApiFileDenseDecls(2000, InlineDefsParams());
+  EXPECT_THAT(source, HasSubstr("()\n      : tag(0)"));
+  EXPECT_THAT(source, HasSubstr("\n private:\n  int tag;\n"));
+}
+
+// Many large inline definitions and few other declarations. Locals and
+// parameters draw from the same identifiers of each length, and C++ rejects a
+// local that has the same name as a parameter, so compile several seeds.
+TEST_P(GenApiFileDenseDeclsParamsTest, LargeInlineDefs) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {
+          .public_function_decls = 1,
+          .public_method_decls = 1,
+          .private_function_decls = 0,
+          .private_method_decls = 0,
+          .private_field_decls = 4,
+          .inline_function_defs = 8,
+          .inline_function_def_sizes = {{.statements = 20, .weight = 1},
+                                        {.statements = 60, .weight = 1}}}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  for (int _ : llvm::seq(4)) {
+    EXPECT_TRUE(TestCompile(
+        GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+  }
+}
+
+// Many fields, which `Make` initializes, often with an earlier class's
+// `Make`.
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyFieldsToMake) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 1,
+                       .private_function_decls = 0,
+                       .private_method_decls = 0,
+                       .private_field_decls = 24,
+                       .inline_function_defs = 2}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Many getters and predicates, and no other fields.
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyGettersAndPredicates) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.private_field_decls = 0,
+                       .inline_getters = 8,
+                       .inline_predicates = 8}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Many forwarders with many parameters, which can have class types.
+TEST_P(GenApiFileDenseDeclsParamsTest, ManyForwarders) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.inline_forwarders = 8,
+                       .inline_forwarder_params = {.max_params = 8}}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Every declared function and method has an out-of-line definition, using the
+// default size distribution (from 0-statement minimal definitions through
+// deeply nested definitions).
+TEST_P(GenApiFileDenseDeclsParamsTest, OutOfLineDefs) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.inline_function_defs = 2},
+      .define_decls_out_of_line = true};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 16));
+  EXPECT_TRUE(TestCompile(
+      GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+}
+
+// Large out-of-line definitions, which nest deeply. A definition's block
+// arrangement and which locals its statements read depend on the seed, so
+// compile several seeds.
+TEST_P(GenApiFileDenseDeclsParamsTest, LargeOutOfLineDefs) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 2,
+                       .private_function_decls = 0,
+                       .private_method_decls = 1,
+                       .private_field_decls = 2},
+      .define_decls_out_of_line = true,
+      .out_of_line_def_sizes = {{.statements = 40, .weight = 1},
+                                {.statements = 150, .weight = 1}}};
+  EXPECT_THAT(GetParam(), GeneratesSeedIndependentSize(3000, params, 24));
+  for (int _ : llvm::seq(4)) {
+    EXPECT_TRUE(TestCompile(
+        GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
+  }
+}
+
+// Plans declare class-typed locals (using both `Self` and other classes in both
+// inline and out-of-line definitions) and destructure tuples.
+TEST(SourceGenTest, GenApiFileDenseDeclsPlanDeclarations) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 2,
+                       .private_function_decls = 0,
+                       .private_method_decls = 1,
+                       .private_field_decls = 2,
+                       .inline_function_defs = 2,
+                       .inline_function_def_sizes = {{.statements = 40,
+                                                      .weight = 1}}},
+      .define_decls_out_of_line = true,
+      .out_of_line_def_sizes = {{.statements = 60, .weight = 1}}};
+
+  SourceGen carbon_gen;
+  std::string source = carbon_gen.GenApiFileDenseDecls(3000, params);
+  auto [carbon_inline, carbon_out_of_line] =
+      llvm::StringRef(source).split("\nfn ");
+  for (llvm::StringRef section : {carbon_inline, carbon_out_of_line}) {
+    EXPECT_THAT(section, HasSubstr(": Self = Make();"));
+    EXPECT_THAT(section, ContainsRegex("var [A-Za-z0-9_]+: [A-Za-z0-9_]{5,} = "
+                                       "[A-Za-z0-9_]+\\.Make\\(\\);"));
+  }
+  EXPECT_THAT(source, ContainsRegex("(let|var) \\([A-Za-z0-9_]+: "));
+
+  SourceGen cpp_gen(SourceGen::Language::Cpp);
+  source = cpp_gen.GenApiFileDenseDecls(3000, params);
+  auto [cpp_inline, cpp_out_of_line] = llvm::StringRef(source).split("\nauto ");
+  for (llvm::StringRef section : {cpp_inline, cpp_out_of_line}) {
+    EXPECT_THAT(section, HasSubstr(" = Self();"));
+    EXPECT_THAT(section, ContainsRegex("[A-Za-z0-9_]{5,} [A-Za-z0-9_]+ = "
+                                       "[A-Za-z0-9_]+\\(\\);"));
+  }
+  EXPECT_THAT(source, HasSubstr("auto ["));
+}
+
+// The line estimates have to track the emitted lines closely, or files miss
+// their target size. The target is large so that rounding to a whole number of
+// classes is small next to the tolerance. C++ gets a larger tolerance for its
+// access specifier lines, which the estimates don't count.
+TEST(SourceGenTest, GenApiFileDenseDeclsLineTargetAccuracy) {
+  llvm::SmallVector<SourceGen::DenseDeclParams, 0> param_set;
+  param_set.push_back({.class_params = {.inline_function_defs = 1,
+                                        .inline_getters = 1,
+                                        .inline_predicates = 1,
+                                        .inline_forwarders = 1}});
+  // The implementation file shape.
+  param_set.push_back(
+      {.class_params = {.public_function_decls = 2,
+                        .public_function_decl_params = {.max_params = 2},
+                        .public_method_decls = 6,
+                        .public_method_decl_params = {.max_params = 2},
+                        .private_function_decls = 2,
+                        .private_function_decl_params = {.max_params = 2},
+                        .private_method_decls = 2,
+                        .private_method_decl_params = {.max_params = 2},
+                        .private_field_decls = 4},
+       .define_decls_out_of_line = true});
+
+  constexpr int TargetLines = 20000;
+  for (const SourceGen::DenseDeclParams& params : param_set) {
+    for (SourceGen::Language language :
+         {SourceGen::Language::Carbon, SourceGen::Language::Cpp}) {
+      SourceGen gen(language);
+      std::string source = gen.GenApiFileDenseDecls(TargetLines, params);
+      ssize_t lines = CountLines(source);
+      if (language == SourceGen::Language::Carbon) {
+        // Within 2% of the requested line count.
+        EXPECT_THAT(lines, AllOf(Ge(19600), Le(20400)))
+            << "define_decls_out_of_line=" << params.define_decls_out_of_line;
+      } else {
+        // Within 10% of the requested line count.
+        EXPECT_THAT(lines, AllOf(Ge(18000), Le(22000)))
+            << "define_decls_out_of_line=" << params.define_decls_out_of_line;
+      }
+    }
+  }
 }
 
 }  // namespace

@@ -64,6 +64,11 @@ Args:
        can come with a `0x` prefix, allowing easier copy-paste from raw printed
        hex values (such as via the `p/x` lldb command).
 
+Aliases:
+  dc [<EXPR>|-- <EXPR>|<TYPE><ID>|<TYPE> <ID>]
+    - Shorthand for `dump context` which is the common case where there is a
+      `context` var or method in scope.
+
 Example usage:
   # Dumps the `inst_id` local variable, with a `context` local variable.
   dump context inst_id
@@ -92,7 +97,7 @@ Example usage:
         "function": "SemIR::MakeFunctionId",
         "generated_function": "SemIR::MakeGeneratedFunctionId",
         "generic": "SemIR::MakeGenericId",
-        "identified_facet_type": "SemIR::MakeIdentifiedFacetTypeId",
+        "identified_facet_type": "Check::MakeIdentifiedFacetTypeId",
         "impl": "SemIR::MakeImplId",
         "inst": "SemIR::MakeInstId",
         "inst_block": "SemIR::MakeInstBlockId",
@@ -204,6 +209,7 @@ def format_carbon_id(
 
 def __lldb_init_module(debugger: Any, internal_dict: Any) -> None:
     RunCommand("command script add -f lldbinit.cmd_dump dump")
+    RunCommand("command alias dc dump context")
     RunCommand(
         "type summary add --python-function lldbinit.format_carbon_id"
         + " --recognizer-function lldbinit.is_carbon_id"

@@ -91,13 +91,9 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+8]]:1: error: only imported entities are valid for `export` [ExportNotImportedEntity]
-// CHECK:STDERR: export NS;
-// CHECK:STDERR: ^~~~~~~~~~
-// CHECK:STDERR: fail_export_ns.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: base.carbon:8:1: note: name is declared here [ExportNotImportedEntitySource]
-// CHECK:STDERR: namespace NS;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_export_ns.carbon:[[@LINE+4]]:1-10: error: only imported entities are valid for `export` [ExportNotImportedEntity]
+// CHECK:STDERR: imported from: fail_export_ns.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: base.carbon:8:1-13: note: name is declared here [ExportNotImportedEntitySource]
 // CHECK:STDERR:
 export NS;
 
@@ -107,12 +103,8 @@ library "[[@TEST_NAME]]";
 
 class Local {}
 
-// CHECK:STDERR: fail_export_decl.carbon:[[@LINE+7]]:1: error: only imported entities are valid for `export` [ExportNotImportedEntity]
-// CHECK:STDERR: export Local;
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-5]]:1: note: name is declared here [ExportNotImportedEntitySource]
-// CHECK:STDERR: class Local {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_export_decl.carbon:[[@LINE+3]]:1-13: error: only imported entities are valid for `export` [ExportNotImportedEntity]
+// CHECK:STDERR: fail_export_decl.carbon:[[@LINE-3]]:1-13: note: name is declared here [ExportNotImportedEntitySource]
 // CHECK:STDERR:
 export Local;
 
@@ -122,13 +114,9 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE+8]]:8: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
-// CHECK:STDERR: export C.x;
-// CHECK:STDERR:        ^
-// CHECK:STDERR: fail_export_member.carbon:[[@LINE-5]]:1: in import [InImport]
-// CHECK:STDERR: base.carbon:4:1: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
-// CHECK:STDERR: class C {
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: fail_export_member.carbon:[[@LINE+4]]:8: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
+// CHECK:STDERR: imported from: fail_export_member.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: base.carbon:4:1-9: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR:
 export C.x;
 
@@ -158,14 +146,10 @@ library "[[@TEST_NAME]]";
 
 import library "not_reexporting";
 
-// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:15: error: name `C` not found [NameNotFound]
-// CHECK:STDERR: alias Local = C;
-// CHECK:STDERR:               ^
+// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+2]]:15: error: name `C` not found [NameNotFound]
 // CHECK:STDERR:
 alias Local = C;
-// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+4]]:17: error: name `NS` not found [NameNotFound]
-// CHECK:STDERR: alias NSLocal = NS.NSC;
-// CHECK:STDERR:                 ^~
+// CHECK:STDERR: fail_use_not_reexporting.carbon:[[@LINE+2]]:17-18: error: name `NS` not found [NameNotFound]
 // CHECK:STDERR:
 alias NSLocal = NS.NSC;
 
@@ -176,12 +160,8 @@ library "[[@TEST_NAME]]";
 import library "base";
 
 export C;
-// CHECK:STDERR: repeat_export.carbon:[[@LINE+7]]:1: warning: `export` matches previous `export` [ExportRedundant]
-// CHECK:STDERR: export C;
-// CHECK:STDERR: ^~~~~~~~~
-// CHECK:STDERR: repeat_export.carbon:[[@LINE-4]]:1: note: previous `export` here [ExportPrevious]
-// CHECK:STDERR: export C;
-// CHECK:STDERR: ^~~~~~~~~
+// CHECK:STDERR: repeat_export.carbon:[[@LINE+3]]:1-9: warning: `export` matches previous `export` [ExportRedundant]
+// CHECK:STDERR: repeat_export.carbon:[[@LINE-2]]:1-9: note: previous `export` here [ExportPrevious]
 // CHECK:STDERR:
 export C;
 
@@ -199,9 +179,7 @@ library "[[@TEST_NAME]]";
 
 import library "base";
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1: error: `private` not allowed on `export` declaration [ModifierNotAllowedOnDeclaration]
-// CHECK:STDERR: private export C;
-// CHECK:STDERR: ^~~~~~~
+// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-7: error: `private` not allowed on `export` declaration [ModifierNotAllowedOnDeclaration]
 // CHECK:STDERR:
 private export C;
 

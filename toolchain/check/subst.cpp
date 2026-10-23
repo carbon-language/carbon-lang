@@ -21,6 +21,27 @@ auto SubstInstCallbacks::RebuildType(SemIR::TypeInstId type_inst_id) const
   return context().types().GetTypeIdForTypeInstId(type_inst_id);
 }
 
+auto SubstInstCallbacks::RebuildSpecific(SemIR::SpecificId orig_specific_id,
+                                         SemIR::InstBlockId args_id)
+    -> SemIR::SpecificId {
+  // TODO: We do not resolve specifics formed from Subst, so we can't call
+  // MakeSpecific here.
+  const auto& orig_specific = context().specifics().Get(orig_specific_id);
+  if (args_id == orig_specific.args_id) {
+    // If the args didn't change, avoid constructing an `identified` specific
+    // even during identify.
+    return orig_specific_id;
+  }
+  // When modifying a non-`identified` specific during identify, mark the new
+  // specific as `identified` too. If modifying an `identified` specific outside
+  // of identify, it may contain `IdentifiedWitness` insts so the new specific
+  // must keep the `identified` marker.
+  bool identified = context().eval_impl_lookup_to_identified_witness() ||
+                    orig_specific.identified;
+  return context().specifics().GetOrAdd(orig_specific.generic_id, args_id,
+                                        identified);
+}
+
 auto SubstInstCallbacks::RebuildNewInst(SemIR::LocId loc_id,
                                         SemIR::Inst new_inst) const
     -> SemIR::InstId {
@@ -187,7 +208,8 @@ static auto ExpandOperands(Context& context, Worklist& worklist,
 
 // Pops the specified operand from the worklist and returns it.
 static auto PopOperand(Context& context, Worklist& worklist,
-                       SemIR::IdAndKind arg) -> int32_t {
+                       SemIR::IdAndKind arg, SubstInstCallbacks& callbacks)
+    -> int32_t {
   auto pop_block_id = [&](SemIR::InstBlockId old_inst_block_id) {
     auto size = context.inst_blocks().Get(old_inst_block_id).size();
     SemIR::CopyOnWriteInstBlock new_inst_block(&context.sem_ir(),
@@ -204,8 +226,7 @@ static auto PopOperand(Context& context, Worklist& worklist,
     }
     auto& specific = context.specifics().Get(specific_id);
     auto args_id = pop_block_id(specific.args_id);
-    return context.specifics().GetOrAdd(specific.generic_id, args_id,
-                                        specific.identified);
+    return callbacks.RebuildSpecific(specific_id, args_id);
   };
 
   CARBON_KIND_SWITCH(arg) {
@@ -353,8 +374,8 @@ static auto Rebuild(Context& context, Worklist& worklist, SemIR::InstId inst_id,
   auto inst = context.insts().Get(inst_id);
 
   // Note that we pop in reverse order because we pushed them in forwards order.
-  int32_t arg1 = PopOperand(context, worklist, inst.arg1_and_kind());
-  int32_t arg0 = PopOperand(context, worklist, inst.arg0_and_kind());
+  int32_t arg1 = PopOperand(context, worklist, inst.arg1_and_kind(), callbacks);
+  int32_t arg0 = PopOperand(context, worklist, inst.arg0_and_kind(), callbacks);
   auto type_id = inst.type_id().has_value()
                      ? callbacks.RebuildType(
                            context.types().GetAsTypeInstId(worklist.Pop()))

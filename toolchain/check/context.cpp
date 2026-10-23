@@ -40,7 +40,8 @@ Context::Context(DiagnosticEmitterBase* emitter,
         TODO(loc_id, label);
       }),
       core_identifiers_(&identifiers()),
-      mangle_string_fingerprint_(mangle_string_fingerprint) {
+      mangle_string_fingerprint_(mangle_string_fingerprint),
+      identified_facet_types_(sem_ir->check_ir_id()) {
   // Prepare fields which relate to the number of IRs available for import.
   import_irs().Reserve(imported_ir_count);
   import_ir_constant_values_.reserve(imported_ir_count);
@@ -80,7 +81,7 @@ auto Context::VerifyOnFinish() const -> void {
 
 #ifndef NDEBUG
   if (auto verify = sem_ir_->Verify(); !verify.ok()) {
-    CARBON_FATAL("Built invalid SemIR: {1}\n", verify.error());
+    CARBON_FATAL("Built invalid SemIR: {0}\n", verify.error());
   }
 #endif
 }

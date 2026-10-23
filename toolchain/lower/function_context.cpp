@@ -7,6 +7,7 @@
 #include "common/pretty_stack_trace_function.h"
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/diagnostics/renderer.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
@@ -69,13 +70,13 @@ auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
         &file_context_->context().tree_and_subtrees_getters(), &sem_ir());
     auto converted = converter.Convert(SemIR::LocId(inst_id_for_stack_trace),
                                        /*token_only=*/false);
-    converted.loc.FormatLocation(output);
+    output << Diagnostics::FormatLocation(converted.loc) << ": ";
     // TODO: Format SemIR for the instruction we were lowering?
     output << "Lowering "
            << sem_ir().insts().Get(inst_id_for_stack_trace).kind().ir_name()
            << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
-    converted.loc.FormatSnippet(output, /*indent=*/10);
+    Diagnostics::PrintSnippet(output, converted.loc, /*indent=*/10);
   });
 
   for (auto inst_id : sem_ir().inst_blocks().Get(block_id)) {

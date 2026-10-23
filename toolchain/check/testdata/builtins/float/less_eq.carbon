@@ -36,9 +36,7 @@ fn RuntimeCallIsValid(a: f64, b: f64) -> bool {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_literal.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.less_eq" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn LessEq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.less_eq";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_literal.carbon:[[@LINE+2]]:1-63: error: invalid signature for builtin function "float.less_eq" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn LessEq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.less_eq";
 

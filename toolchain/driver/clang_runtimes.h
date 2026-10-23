@@ -54,13 +54,7 @@ class ClangRuntimesBuilderBase {
   // Both the `clang` runner and the `threads` need to outlive this object.
   ClangRuntimesBuilderBase(ClangRunner* clang,
                            llvm::ThreadPoolInterface* threads,
-                           llvm::Triple target_triple)
-      : clang_(clang),
-        vlog_stream_(clang_->vlog_stream_),
-        tasks_(*threads),
-        target_triple_(std::move(target_triple)),
-        target_flag_(llvm::formatv("--target={0}", target_triple_.str())),
-        result_(Error("Did not finish building the runtime!")) {}
+                           const Runtimes::Cache::Features& features);
 
   auto installation() -> const InstallPaths& { return *clang_->installation_; }
 
@@ -78,6 +72,7 @@ class ClangRuntimesBuilderBase {
 
   llvm::Triple target_triple_;
   std::string target_flag_;
+  llvm::SmallVector<std::string> target_args_;
 
   ErrorOr<std::filesystem::path> result_;
 
@@ -226,7 +221,8 @@ class ClangArchiveRuntimesBuilder : public ClangRuntimesBuilderBase {
   // they were already available, the call to `Wait` will not block.
   ClangArchiveRuntimesBuilder(ClangRunner* clang,
                               llvm::ThreadPoolInterface* threads,
-                              llvm::Triple target_triple, Runtimes* runtimes);
+                              Runtimes* runtimes,
+                              const Runtimes::Cache::Features& features);
 
  private:
   // Helpers to compute the list of source files and compile flags for a
@@ -280,7 +276,8 @@ class ClangResourceDirBuilder : public ClangRuntimesBuilderBase {
   // they were already available, the call to `Wait` will not block.
   ClangResourceDirBuilder(ClangRunner* clang,
                           llvm::ThreadPoolInterface* threads,
-                          llvm::Triple target_triple, Runtimes* runtimes);
+                          Runtimes* runtimes,
+                          const Runtimes::Cache::Features& features);
 
  private:
   friend class ClangResourceDirBuilderTestPeer;

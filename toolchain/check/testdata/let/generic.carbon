@@ -16,9 +16,7 @@
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_type.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic T: type = i32;
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR: fail_todo_type.carbon:[[@LINE+2]]:15-21: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:
   let generic T: type = i32;
   var p: T*;
@@ -29,9 +27,7 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F(a: i32) -> i32 {
-  // CHECK:STDERR: fail_todo_assignment.carbon:[[@LINE+4]]:15: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
-  // CHECK:STDERR:   let generic T: type = i32;
-  // CHECK:STDERR:               ^~~~~~~
+  // CHECK:STDERR: fail_todo_assignment.carbon:[[@LINE+2]]:15-21: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
   // CHECK:STDERR:
   let generic T: type = i32;
   let x: T = 5;

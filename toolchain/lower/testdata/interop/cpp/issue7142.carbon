@@ -33,7 +33,7 @@ void f() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::A" = type { i32 }
+// CHECK:STDOUT: %"class.Carbon::Main::A" = type { i32 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: $_ZN1S4VendEv = comdat any
 // CHECK:STDOUT:
@@ -47,8 +47,8 @@ void f() {
 // CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local noundef i32 @_ZN1S4VendEv() #0 comdat align 2 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %call = call noundef ptr @_ZN6CarbonL3GetEv()
-// CHECK:STDOUT:   %price = getelementptr inbounds nuw %"class.Carbon::A", ptr %call, i32 0, i32 0
+// CHECK:STDOUT:   %call = call noundef ptr @_ZN6Carbon4MainL3GetEv()
+// CHECK:STDOUT:   %price = getelementptr inbounds nuw %"class.Carbon::Main::A", ptr %call, i32 0, i32 0
 // CHECK:STDOUT:   %0 = load i32, ptr %price, align 4, !tbaa !49
 // CHECK:STDOUT:   ret i32 %0
 // CHECK:STDOUT: }
@@ -98,7 +98,7 @@ void f() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal noundef ptr @_ZN6CarbonL3GetEv() #3 {
+// CHECK:STDOUT: define internal noundef ptr @_ZN6Carbon4MainL3GetEv() #3 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca ptr, align 8
 // CHECK:STDOUT:   call void @_CGet__carbon_thunk.Main(ptr noundef nonnull align 8 dereferenceable(8) %retval)
@@ -157,7 +157,7 @@ void f() {
 // CHECK:STDOUT: !45 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !46 = !{!"omnipotent char", !45, i64 0}
 // CHECK:STDOUT: !47 = !{!"int", !46, i64 0}
-// CHECK:STDOUT: !48 = !{!"_ZTSN6Carbon1AE", !47, i64 0}
+// CHECK:STDOUT: !48 = !{!"_ZTSN6Carbon4Main1AE", !47, i64 0}
 // CHECK:STDOUT: !49 = !{!48, !47, i64 0}
 // CHECK:STDOUT: !52 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !53 = !{i32 7, !"PIE Level", i32 2}

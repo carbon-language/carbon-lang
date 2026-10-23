@@ -10,6 +10,29 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function/export/generic.carbon
 
+// --- generic_facet.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+//@dump-sem-ir-begin
+interface Z {}
+
+class D { adapt {}; }
+impl D as Z {}
+fn MakeD() -> D { return {} as D; }
+
+class C(T: Z) { adapt {}; }
+fn MakeC[T: Z](unused t: T) -> C(T) {
+  return {} as C(T);
+}
+
+inline Cpp '''
+auto CallMake() -> Carbon::C<Carbon::D> {
+  return Carbon::MakeC(Carbon::MakeD());
+}
+''';
+//@dump-sem-ir-end
+
 // --- generic_type_impls_interface.carbon
 library "[[@TEST_NAME]]";
 import Cpp;
@@ -52,21 +75,15 @@ Carbon::B CallInterfaceF() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-// CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+4]]:1: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
-// CHECK:STDERR: fn NonTypeF[unused N: i32]() {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+2]]:1-30: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
 // CHECK:STDERR:
 fn NonTypeF[unused N: i32]() {}
 
 inline Cpp '''
 void CallNonTypeF() {
-  // CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+8]]:11: error: no member named 'NonTypeF' in namespace 'Carbon' [CppInteropParseError]
-  // CHECK:STDERR:    20 |   Carbon::NonTypeF<3>();
-  // CHECK:STDERR:       |           ^~~~~~~~
+  // CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+4]]:11-18: error: no member named 'NonTypeF' in namespace 'Carbon' [CppInteropParseError]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+4]]:23: error: expected expression [CppInteropParseError]
-  // CHECK:STDERR:    20 |   Carbon::NonTypeF<3>();
-  // CHECK:STDERR:       |                       ^
+  // CHECK:STDERR: fail_todo_non_type_generic.carbon:[[@LINE+2]]:23: error: expected expression [CppInteropParseError]
   // CHECK:STDERR:
   Carbon::NonTypeF<3>();
 }
@@ -91,9 +108,7 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class EnclosingA(T: type) {
-  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:3: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
-  // CHECK:STDERR:   fn MemberF[U: type](x: T, y: U);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+2]]:3-34: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
   // CHECK:STDERR:
   fn MemberF[U: type](x: T, y: U);
 }
@@ -105,9 +120,7 @@ void CallEnclosingF() {
   // is to test a generic function within an enclosing generic scope.
   //
   Carbon::EnclosingB b;
-  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+4]]:5: error: no member named 'MemberF' in 'Carbon::EnclosingA<int>' [CppInteropParseError]
-  // CHECK:STDERR:    23 |   b.MemberF(1, 2);
-  // CHECK:STDERR:       |   ~ ^
+  // CHECK:STDERR: fail_todo_enclosing_generic.carbon:[[@LINE+2]]:5: error: no member named 'MemberF' in 'Carbon::Main::EnclosingA<int>' [CppInteropParseError]
   // CHECK:STDERR:
   b.MemberF(1, 2);
 }
@@ -117,26 +130,344 @@ void CallEnclosingF() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-// CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE+4]]:1: error: semantics TODO: `failed to import C++ type` [SemanticsTodo]
-// CHECK:STDERR: fn UnsupportedF[T: type](unused t: T) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE+2]]:1-39: error: semantics TODO: `failed to import C++ type` [SemanticsTodo]
 // CHECK:STDERR:
 fn UnsupportedF[T: type](unused t: T) {}
 
 inline Cpp '''
 void CallUnsupportedF() {
   volatile int x;
-  // CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE+7]]:3: error: no matching function for call to 'UnsupportedF' [CppInteropParseError]
-  // CHECK:STDERR:    20 |   Carbon::UnsupportedF(x);
-  // CHECK:STDERR:       |   ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE-8]]:39: note: candidate template ignored: substitution failure [with T = volatile int] [CppInteropParseNote]
-  // CHECK:STDERR:     8 | fn UnsupportedF[T: type](unused t: T) {}
-  // CHECK:STDERR:       |                                       ^
+  // CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE+3]]:3-22: error: no matching function for call to 'UnsupportedF' [CppInteropParseError]
+  // CHECK:STDERR: fail_generic_unsupported_type.carbon:[[@LINE-6]]:39: note: candidate template ignored: substitution failure [with T = volatile int] [CppInteropParseNote]
   // CHECK:STDERR:
   Carbon::UnsupportedF(x);
 }
 ''';
 
+// CHECK:STDOUT: --- generic_facet.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Z.type: type = facet_type <@Z> [concrete]
+// CHECK:STDOUT:   %Self.cb6: %Z.type = symbolic_binding Self, 0 [symbolic]
+// CHECK:STDOUT:   %D: type = class_type @D [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %.822: <witness> = impl_self_witness %D, @Z [concrete]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness @D.as.Z.impl.%Z.impl_witness_table [concrete]
+// CHECK:STDOUT:   %Z.facet: %Z.type = facet_value %D, (%Z.impl_witness) [concrete]
+// CHECK:STDOUT:   %.592: Core.Form = init_form %D [concrete]
+// CHECK:STDOUT:   %pattern_type.d8d: type = pattern_type %D [concrete]
+// CHECK:STDOUT:   %return.param_patt.eae: %pattern_type.d8d = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.e38: %pattern_type.d8d = return_slot_pattern %return.param_patt.eae, %D [concrete]
+// CHECK:STDOUT:   %MakeD.type: type = fn_type @MakeD [concrete]
+// CHECK:STDOUT:   %MakeD: %MakeD.type = struct_value () [concrete]
+// CHECK:STDOUT:   %D.val: %D = struct_value () [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type.5d74: type = pattern_type %Z.type [concrete]
+// CHECK:STDOUT:   %T.patt.4a7: %pattern_type.5d74 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.013: %Z.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %C.type: type = parameterized_class_name_type @C [concrete]
+// CHECK:STDOUT:   %C.generic: %C.type = struct_value () [concrete]
+// CHECK:STDOUT:   %C.ccf: type = class_type @C, @C(%T.013) [symbolic]
+// CHECK:STDOUT:   %T.as_type.ff1: type = facet_access_type %T.013 [symbolic]
+// CHECK:STDOUT:   %pattern_type.cab: type = pattern_type %T.as_type.ff1 [symbolic]
+// CHECK:STDOUT:   %t.param_patt.571: %pattern_type.cab = value_param_pattern [symbolic]
+// CHECK:STDOUT:   %t.patt.a08: %pattern_type.cab = wrapper_binding_pattern t, %t.param_patt.571 [symbolic]
+// CHECK:STDOUT:   %.20e: Core.Form = init_form %C.ccf [symbolic]
+// CHECK:STDOUT:   %pattern_type.aa1: type = pattern_type %C.ccf [symbolic]
+// CHECK:STDOUT:   %return.param_patt.c22: %pattern_type.aa1 = out_param_pattern [symbolic]
+// CHECK:STDOUT:   %return.patt.a2c: %pattern_type.aa1 = return_slot_pattern %return.param_patt.c22, %C.ccf [symbolic]
+// CHECK:STDOUT:   %MakeC.type: type = fn_type @MakeC [concrete]
+// CHECK:STDOUT:   %MakeC: %MakeC.type = struct_value () [concrete]
+// CHECK:STDOUT:   %require_complete.e12: <witness> = require_complete_type %T.as_type.ff1 [symbolic]
+// CHECK:STDOUT:   %require_complete.f24: <witness> = require_complete_type %C.ccf [symbolic]
+// CHECK:STDOUT:   %C.val.d67: %C.ccf = struct_value () [symbolic]
+// CHECK:STDOUT:   %C.a55: type = class_type @C, @C(%Z.facet) [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc7_9.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.f61: %SubobjectDestroy.type = facet_value %D, (%custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.30f: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.f61) [concrete]
+// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %D, (%DestroyImpl.impl_witness.30f, %custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %t.param_patt.862: %pattern_type.d8d = value_param_pattern [concrete]
+// CHECK:STDOUT:   %t.patt.0d1: %pattern_type.d8d = wrapper_binding_pattern t, %t.param_patt.862 [concrete]
+// CHECK:STDOUT:   %.c15: Core.Form = init_form %C.a55 [concrete]
+// CHECK:STDOUT:   %pattern_type.5d77: type = pattern_type %C.a55 [concrete]
+// CHECK:STDOUT:   %return.param_patt.3b1: %pattern_type.5d77 = out_param_pattern [concrete]
+// CHECK:STDOUT:   %return.patt.060: %pattern_type.5d77 = return_slot_pattern %return.param_patt.3b1, %C.a55 [concrete]
+// CHECK:STDOUT:   %MakeC.specific_fn: <specific function> = specific_function %MakeC, @MakeC(%Z.facet) [concrete]
+// CHECK:STDOUT:   %C.val.b0d: %C.a55 = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Cpp: <namespace> = namespace file.%Cpp.import_cpp, [concrete] {
+// CHECK:STDOUT:     import Cpp//...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import_ref.74d: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/parts/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   %Z.decl: type = interface_decl @Z [concrete = constants.%Z.type] {} {}
+// CHECK:STDOUT:   %D.decl: type = class_decl @D [concrete = constants.%D] {} {}
+// CHECK:STDOUT:   impl_decl @D.as.Z.impl [concrete] {} {
+// CHECK:STDOUT:     %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8: <witness> = impl_self_witness @D.as.Z.impl.%D.ref, @Z [concrete = constants.%.822]
+// CHECK:STDOUT:   %MakeD.decl: %MakeD.type = fn_decl @MakeD [concrete = constants.%MakeD] {
+// CHECK:STDOUT:     %return.param_patt: %pattern_type.d8d = out_param_pattern [concrete = constants.%return.param_patt.eae]
+// CHECK:STDOUT:     %return.patt: %pattern_type.d8d = return_slot_pattern %return.param_patt, %D.ref.loc9_15 [concrete = constants.%return.patt.e38]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %D.ref.loc9_15: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %.loc9_15: Core.Form = init_form %D.ref.loc9_15 [concrete = constants.%.592]
+// CHECK:STDOUT:     %return.param: ref %D = out_param call_param0
+// CHECK:STDOUT:     %return: ref %D = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %C.decl: %C.type = class_decl @C [concrete = constants.%C.generic] {
+// CHECK:STDOUT:     %T.patt.loc11_10.1: %pattern_type.5d74 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_10.2 (constants.%T.patt.4a7)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc11_12: type = splice_block %Z.ref [concrete = constants.%Z.type] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc11_10.2: %Z.type = symbolic_binding T, 0 [symbolic = %T.loc11_10.1 (constants.%T.013)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %MakeC.decl: %MakeC.type = fn_decl @MakeC [concrete = constants.%MakeC] {
+// CHECK:STDOUT:     %T.patt.loc12_11.1: %pattern_type.5d74 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_11.2 (constants.%T.patt.4a7)]
+// CHECK:STDOUT:     %t.param_patt.loc12_24.1: @MakeC.%pattern_type.loc12_24 (%pattern_type.cab) = value_param_pattern [symbolic = %t.param_patt.loc12_24.2 (constants.%t.param_patt.571)]
+// CHECK:STDOUT:     %t.patt.loc12_24.1: @MakeC.%pattern_type.loc12_24 (%pattern_type.cab) = wrapper_binding_pattern t, %t.param_patt.loc12_24.1 [symbolic = %t.patt.loc12_24.2 (constants.%t.patt.a08)]
+// CHECK:STDOUT:     %return.param_patt.loc12_35.1: @MakeC.%pattern_type.loc12_35 (%pattern_type.aa1) = out_param_pattern [symbolic = %return.param_patt.loc12_35.2 (constants.%return.param_patt.c22)]
+// CHECK:STDOUT:     %return.patt.loc12_29.1: @MakeC.%pattern_type.loc12_35 (%pattern_type.aa1) = return_slot_pattern %return.param_patt.loc12_35.1, %C.loc12_35.2 [symbolic = %return.patt.loc12_29.2 (constants.%return.patt.a2c)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %C.ref.loc12: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
+// CHECK:STDOUT:     %T.ref.loc12_34: %Z.type = name_ref T, %T.loc12_11.2 [symbolic = %T.loc12_11.1 (constants.%T.013)]
+// CHECK:STDOUT:     %C.loc12_35.2: type = class_type @C, @C(constants.%T.013) [symbolic = %C.loc12_35.1 (constants.%C.ccf)]
+// CHECK:STDOUT:     %.loc12_35.2: Core.Form = init_form %C.loc12_35.2 [symbolic = %.loc12_35.1 (constants.%.20e)]
+// CHECK:STDOUT:     %.loc12_13: type = splice_block %Z.ref [concrete = constants.%Z.type] {
+// CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc12_11.2: %Z.type = symbolic_binding T, 0 [symbolic = %T.loc12_11.1 (constants.%T.013)]
+// CHECK:STDOUT:     %t.param: @MakeC.%T.as_type.loc12_26.1 (%T.as_type.ff1) = value_param call_param0
+// CHECK:STDOUT:     %.loc12_26.1: type = splice_block %.loc12_26.2 [symbolic = %T.as_type.loc12_26.1 (constants.%T.as_type.ff1)] {
+// CHECK:STDOUT:       %T.ref.loc12_26: %Z.type = name_ref T, %T.loc12_11.2 [symbolic = %T.loc12_11.1 (constants.%T.013)]
+// CHECK:STDOUT:       %T.as_type.loc12_26.2: type = facet_access_type %T.ref.loc12_26 [symbolic = %T.as_type.loc12_26.1 (constants.%T.as_type.ff1)]
+// CHECK:STDOUT:       %.loc12_26.2: type = converted %T.ref.loc12_26, %T.as_type.loc12_26.2 [symbolic = %T.as_type.loc12_26.1 (constants.%T.as_type.ff1)]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %t: @MakeC.%T.as_type.loc12_26.1 (%T.as_type.ff1) = wrapper_binding t, %t.param
+// CHECK:STDOUT:     %return.param: ref @MakeC.%C.loc12_35.1 (%C.ccf) = out_param call_param1
+// CHECK:STDOUT:     %return: ref @MakeC.%C.loc12_35.1 (%C.ccf) = return_slot %return.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %Z.facet.loc11: %Z.type = facet_value %D.decl, (constants.%Z.impl_witness) [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %.loc11: %Z.type = converted %D.decl, %Z.facet.loc11 [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %Z.facet.loc12: %Z.type = facet_value %D.decl, (constants.%Z.impl_witness) [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %.loc12: %Z.type = converted %D.decl, %Z.facet.loc12 [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   inline_cpp "auto CallMake() -> Carbon::C<Carbon::D> {\n  return Carbon::MakeC(Carbon::MakeD());\n}\n"
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: interface @Z {
+// CHECK:STDOUT:   %Self: %Z.type = symbolic_binding Self, 0 [symbolic = constants.%Self.cb6]
+// CHECK:STDOUT:   %Z.WithSelf.decl = interface_with_self_decl @Z [concrete]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = %Self
+// CHECK:STDOUT:   witness = ()
+// CHECK:STDOUT:
+// CHECK:STDOUT: !requires:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: impl @D.as.Z.impl: %D.ref as %Z.ref {
+// CHECK:STDOUT:   %Z.impl_witness_table = impl_witness_table (), @D.as.Z.impl [concrete]
+// CHECK:STDOUT:   %Z.impl_witness: <witness> = impl_witness %Z.impl_witness_table [concrete = constants.%Z.impl_witness]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   extend %Z.ref
+// CHECK:STDOUT:   witness = %Z.impl_witness
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @D {
+// CHECK:STDOUT:   %.loc7_18: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc7_19: type = converted %.loc7_18, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   adapt_decl %.loc7_19 [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%D
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @C(%T.loc11_10.2: %Z.type) {
+// CHECK:STDOUT:   %T.patt.loc11_10.2: %pattern_type.5d74 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc11_10.2 (constants.%T.patt.4a7)]
+// CHECK:STDOUT:   %T.loc11_10.1: %Z.type = symbolic_binding T, 0 [symbolic = %T.loc11_10.1 (constants.%T.013)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %.loc11_24: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc11_25: type = converted %.loc11_24, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     adapt_decl %.loc11_25 [concrete]
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%C.ccf
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MakeD() -> out %return.param: %D {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %.loc9_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %D.ref.loc9_32: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc9_29.1: %D = as_compatible %empty_struct [concrete = constants.%D.val]
+// CHECK:STDOUT:   %.loc9_29.2: %D = converted %.loc9_27, %.loc9_29.1 [concrete = constants.%D.val]
+// CHECK:STDOUT:   %.loc9_33.1: %empty_struct_type = as_compatible %.loc9_29.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc9_33.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc9_33.3: init %D = as_compatible %.loc9_33.2 [concrete = constants.%D.val]
+// CHECK:STDOUT:   %.loc9_33.4: init %D = converted %.loc9_29.2, %.loc9_33.3 [concrete = constants.%D.val]
+// CHECK:STDOUT:   return %.loc9_33.4
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @MakeC(%T.loc12_11.2: %Z.type) {
+// CHECK:STDOUT:   %T.patt.loc12_11.2: %pattern_type.5d74 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc12_11.2 (constants.%T.patt.4a7)]
+// CHECK:STDOUT:   %T.loc12_11.1: %Z.type = symbolic_binding T, 0 [symbolic = %T.loc12_11.1 (constants.%T.013)]
+// CHECK:STDOUT:   %T.as_type.loc12_26.1: type = facet_access_type %T.loc12_11.1 [symbolic = %T.as_type.loc12_26.1 (constants.%T.as_type.ff1)]
+// CHECK:STDOUT:   %pattern_type.loc12_24: type = pattern_type %T.as_type.loc12_26.1 [symbolic = %pattern_type.loc12_24 (constants.%pattern_type.cab)]
+// CHECK:STDOUT:   %t.param_patt.loc12_24.2: @MakeC.%pattern_type.loc12_24 (%pattern_type.cab) = value_param_pattern [symbolic = %t.param_patt.loc12_24.2 (constants.%t.param_patt.571)]
+// CHECK:STDOUT:   %t.patt.loc12_24.2: @MakeC.%pattern_type.loc12_24 (%pattern_type.cab) = wrapper_binding_pattern t, %t.param_patt.loc12_24.2 [symbolic = %t.patt.loc12_24.2 (constants.%t.patt.a08)]
+// CHECK:STDOUT:   %C.loc12_35.1: type = class_type @C, @C(%T.loc12_11.1) [symbolic = %C.loc12_35.1 (constants.%C.ccf)]
+// CHECK:STDOUT:   %.loc12_35.1: Core.Form = init_form %C.loc12_35.1 [symbolic = %.loc12_35.1 (constants.%.20e)]
+// CHECK:STDOUT:   %pattern_type.loc12_35: type = pattern_type %C.loc12_35.1 [symbolic = %pattern_type.loc12_35 (constants.%pattern_type.aa1)]
+// CHECK:STDOUT:   %return.param_patt.loc12_35.2: @MakeC.%pattern_type.loc12_35 (%pattern_type.aa1) = out_param_pattern [symbolic = %return.param_patt.loc12_35.2 (constants.%return.param_patt.c22)]
+// CHECK:STDOUT:   %return.patt.loc12_29.2: @MakeC.%pattern_type.loc12_35 (%pattern_type.aa1) = return_slot_pattern %return.param_patt.loc12_35.2, %C.loc12_35.1 [symbolic = %return.patt.loc12_29.2 (constants.%return.patt.a2c)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc12_24: <witness> = require_complete_type %T.as_type.loc12_26.1 [symbolic = %require_complete.loc12_24 (constants.%require_complete.e12)]
+// CHECK:STDOUT:   %require_complete.loc12_29: <witness> = require_complete_type %C.loc12_35.1 [symbolic = %require_complete.loc12_29 (constants.%require_complete.f24)]
+// CHECK:STDOUT:   %C.val: @MakeC.%C.loc12_35.1 (%C.ccf) = struct_value () [symbolic = %C.val (constants.%C.val.d67)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn(%t.param: @MakeC.%T.as_type.loc12_26.1 (%T.as_type.ff1)) -> out %return.param: @MakeC.%C.loc12_35.1 (%C.ccf) {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc13_11: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %C.ref.loc13: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
+// CHECK:STDOUT:     %T.ref.loc13: %Z.type = name_ref T, %T.loc12_11.2 [symbolic = %T.loc12_11.1 (constants.%T.013)]
+// CHECK:STDOUT:     %C.loc13: type = class_type @C, @C(constants.%T.013) [symbolic = %C.loc12_35.1 (constants.%C.ccf)]
+// CHECK:STDOUT:     %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc13_13.1: @MakeC.%C.loc12_35.1 (%C.ccf) = as_compatible %empty_struct [symbolic = %C.val (constants.%C.val.d67)]
+// CHECK:STDOUT:     %.loc13_13.2: @MakeC.%C.loc12_35.1 (%C.ccf) = converted %.loc13_11, %.loc13_13.1 [symbolic = %C.val (constants.%C.val.d67)]
+// CHECK:STDOUT:     %.loc13_20.1: %empty_struct_type = as_compatible %.loc13_13.2 [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc13_20.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc13_20.3: init @MakeC.%C.loc12_35.1 (%C.ccf) = as_compatible %.loc13_20.2 [symbolic = %C.val (constants.%C.val.d67)]
+// CHECK:STDOUT:     %.loc13_20.4: init @MakeC.%C.loc12_35.1 (%C.ccf) = converted %.loc13_13.2, %.loc13_20.3 [symbolic = %C.val (constants.%C.val.d67)]
+// CHECK:STDOUT:     return %.loc13_20.4
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MakeD__carbon_thunk(%_.param: ref %D) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %MakeD__carbon_thunk.ref: %MakeD.type = name_ref MakeD__carbon_thunk, file.%MakeD.decl [concrete = constants.%MakeD]
+// CHECK:STDOUT:   %MakeD.call: init %D = call %MakeD__carbon_thunk.ref()
+// CHECK:STDOUT:   assign %_.param, %MakeD.call
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @D.__destroy_thunk(%self.param: ref %D) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %facet_value.loc7_9.1: %facet_type = facet_value constants.%D, (constants.%DestroyImpl.impl_witness.30f, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc7_9.1: %facet_type = converted constants.%D, %facet_value.loc7_9.1 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %facet_value.loc7_9.2: %facet_type = facet_value constants.%D, (constants.%DestroyImpl.impl_witness.30f, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %.loc7_9.2: %facet_type = converted constants.%D, %facet_value.loc7_9.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%self.param)
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc7_9.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc7_9.2(%self.param: ref %D) = "no_op";
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @MakeC__carbon_thunk.33a8815d83158b21(%_.param.loc12_37.1: ref %D, %_.param.loc12_37.2: ref %C.a55) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %MakeC__carbon_thunk.33a8815d83158b21.ref: %MakeC.type = name_ref MakeC__carbon_thunk.33a8815d83158b21, file.%MakeC.decl [concrete = constants.%MakeC]
+// CHECK:STDOUT:   %Z.facet.loc12_37.1: %Z.type = facet_value constants.%D, (constants.%Z.impl_witness) [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %.loc12_37.1: %Z.type = converted constants.%D, %Z.facet.loc12_37.1 [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %Z.facet.loc12_37.2: %Z.type = facet_value constants.%D, (constants.%Z.impl_witness) [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %.loc12_37.2: %Z.type = converted constants.%D, %Z.facet.loc12_37.2 [concrete = constants.%Z.facet]
+// CHECK:STDOUT:   %MakeC.specific_fn: <specific function> = specific_function %MakeC__carbon_thunk.33a8815d83158b21.ref, @MakeC(constants.%Z.facet) [concrete = constants.%MakeC.specific_fn]
+// CHECK:STDOUT:   %.loc12_37.3: ref %empty_struct_type = as_compatible %_.param.loc12_37.1
+// CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc12_37.4: %D = as_compatible %empty_struct [concrete = constants.%D.val]
+// CHECK:STDOUT:   %.loc12_37.5: %D = converted %_.param.loc12_37.1, %.loc12_37.4 [concrete = constants.%D.val]
+// CHECK:STDOUT:   %MakeC.call: init %C.a55 = call %MakeC.specific_fn(%.loc12_37.5)
+// CHECK:STDOUT:   assign %_.param.loc12_37.2, %MakeC.call
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.cb6) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Z.facet) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%T.013) {
+// CHECK:STDOUT:   %T.patt.loc11_10.2 => constants.%T.patt.4a7
+// CHECK:STDOUT:   %T.loc11_10.1 => constants.%T.013
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @MakeC(constants.%T.013) {
+// CHECK:STDOUT:   %T.patt.loc12_11.2 => constants.%T.patt.4a7
+// CHECK:STDOUT:   %T.loc12_11.1 => constants.%T.013
+// CHECK:STDOUT:   %T.as_type.loc12_26.1 => constants.%T.as_type.ff1
+// CHECK:STDOUT:   %pattern_type.loc12_24 => constants.%pattern_type.cab
+// CHECK:STDOUT:   %t.param_patt.loc12_24.2 => constants.%t.param_patt.571
+// CHECK:STDOUT:   %t.patt.loc12_24.2 => constants.%t.patt.a08
+// CHECK:STDOUT:   %C.loc12_35.1 => constants.%C.ccf
+// CHECK:STDOUT:   %.loc12_35.1 => constants.%.20e
+// CHECK:STDOUT:   %pattern_type.loc12_35 => constants.%pattern_type.aa1
+// CHECK:STDOUT:   %return.param_patt.loc12_35.2 => constants.%return.param_patt.c22
+// CHECK:STDOUT:   %return.patt.loc12_29.2 => constants.%return.patt.a2c
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @C(constants.%Z.facet) {
+// CHECK:STDOUT:   %T.patt.loc11_10.2 => constants.%T.patt.4a7
+// CHECK:STDOUT:   %T.loc11_10.1 => constants.%Z.facet
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @MakeC(constants.%Z.facet) {
+// CHECK:STDOUT:   %T.patt.loc12_11.2 => constants.%T.patt.4a7
+// CHECK:STDOUT:   %T.loc12_11.1 => constants.%Z.facet
+// CHECK:STDOUT:   %T.as_type.loc12_26.1 => constants.%D
+// CHECK:STDOUT:   %pattern_type.loc12_24 => constants.%pattern_type.d8d
+// CHECK:STDOUT:   %t.param_patt.loc12_24.2 => constants.%t.param_patt.862
+// CHECK:STDOUT:   %t.patt.loc12_24.2 => constants.%t.patt.0d1
+// CHECK:STDOUT:   %C.loc12_35.1 => constants.%C.a55
+// CHECK:STDOUT:   %.loc12_35.1 => constants.%.c15
+// CHECK:STDOUT:   %pattern_type.loc12_35 => constants.%pattern_type.5d77
+// CHECK:STDOUT:   %return.param_patt.loc12_35.2 => constants.%return.param_patt.3b1
+// CHECK:STDOUT:   %return.patt.loc12_29.2 => constants.%return.patt.060
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %require_complete.loc12_24 => constants.%complete_type
+// CHECK:STDOUT:   %require_complete.loc12_29 => constants.%complete_type
+// CHECK:STDOUT:   %C.val => constants.%C.val.b0d
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- generic_type_impls_interface.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

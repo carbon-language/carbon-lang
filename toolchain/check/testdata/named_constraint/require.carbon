@@ -102,9 +102,7 @@ constraint Z {
 fn F(generic T: Z) {
   // This should fail name lookup since Z does not extend Y.
   //
-  // CHECK:STDERR: fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+4]]:3: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR:   T.YY();
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+2]]:3-6: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:
   T.YY();
 }
@@ -123,9 +121,7 @@ constraint Z {
 fn F(generic T: Z) {
   // This should fail name lookup since Z does not extend Y.
   //
-  // CHECK:STDERR: fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+4]]:3: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
-  // CHECK:STDERR:   T.YY();
-  // CHECK:STDERR:   ^~~~
+  // CHECK:STDERR: fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+2]]:3-6: error: member name `YY` not found in `Z` [MemberNameNotFoundInSpecificScope]
   // CHECK:STDERR:
   T.YY();
 }
@@ -161,12 +157,8 @@ constraint Y;
 
 //@dump-sem-ir-begin
 constraint Z {
-  // CHECK:STDERR: fail_require_impls_incomplete_constraint.carbon:[[@LINE+7]]:17: error: facet type `Y` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
-  // CHECK:STDERR:   require impls Y;
-  // CHECK:STDERR:                 ^
-  // CHECK:STDERR: fail_require_impls_incomplete_constraint.carbon:[[@LINE-7]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
-  // CHECK:STDERR: constraint Y;
-  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_require_impls_incomplete_constraint.carbon:[[@LINE+3]]:17: error: facet type `Y` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
+  // CHECK:STDERR: fail_require_impls_incomplete_constraint.carbon:[[@LINE-5]]:1-13: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
   // CHECK:STDERR:
   require impls Y;
 }
@@ -176,9 +168,7 @@ constraint Z {
 library "[[@TEST_NAME]]";
 
 constraint Z {
-  // CHECK:STDERR: fail_require_impls_incomplete_self.carbon:[[@LINE+4]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
-  // CHECK:STDERR:   require impls Z;
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR: fail_require_impls_incomplete_self.carbon:[[@LINE+2]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
   // CHECK:STDERR:
   require impls Z;
 }
@@ -190,9 +180,7 @@ constraint Z;
 
 alias Y = Z;
 constraint Z {
-  // CHECK:STDERR: fail_require_impls_incomplete_self_through_alias.carbon:[[@LINE+4]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
-  // CHECK:STDERR:   require impls Y;
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR: fail_require_impls_incomplete_self_through_alias.carbon:[[@LINE+2]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
   // CHECK:STDERR:
   require impls Y;
 }
@@ -203,9 +191,7 @@ library "[[@TEST_NAME]]";
 constraint Z;
 
 constraint Z {
-  // CHECK:STDERR: fail_require_impls_incomplete_self_forward_declared.carbon:[[@LINE+4]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
-  // CHECK:STDERR:   require impls Z;
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR: fail_require_impls_incomplete_self_forward_declared.carbon:[[@LINE+2]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
   // CHECK:STDERR:
   require impls Z;
 }
@@ -214,9 +200,7 @@ constraint Z {
 library "[[@TEST_NAME]]";
 
 constraint Z {
-  // CHECK:STDERR: fail_require_impls_incomplete_self_in_period_self_impls.carbon:[[@LINE+4]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
-  // CHECK:STDERR:   require impls type where .Self impls Z;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_require_impls_incomplete_self_in_period_self_impls.carbon:[[@LINE+2]]:17-40: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
   // CHECK:STDERR:
   require impls type where .Self impls Z;
 }
@@ -226,9 +210,7 @@ library "[[@TEST_NAME]]";
 
 class C(T: type);
 constraint Z {
-  // CHECK:STDERR: fail_require_impls_incomplete_self_in_class_impls.carbon:[[@LINE+4]]:17: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
-  // CHECK:STDERR:   require impls type where C(.Self) impls Z;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_require_impls_incomplete_self_in_class_impls.carbon:[[@LINE+2]]:17-43: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
   // CHECK:STDERR:
   require impls type where C(.Self) impls Z;
 }
@@ -239,12 +221,8 @@ library "[[@TEST_NAME]]";
 constraint Z;
 
 constraint Y {
-  // CHECK:STDERR: fail_require_impls_incomplete_indirect.carbon:[[@LINE+7]]:17: error: facet type `Z` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
-  // CHECK:STDERR:   require impls Z;
-  // CHECK:STDERR:                 ^
-  // CHECK:STDERR: fail_require_impls_incomplete_indirect.carbon:[[@LINE-6]]:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
-  // CHECK:STDERR: constraint Z;
-  // CHECK:STDERR: ^~~~~~~~~~~~~
+  // CHECK:STDERR: fail_require_impls_incomplete_indirect.carbon:[[@LINE+3]]:17: error: facet type `Z` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
+  // CHECK:STDERR: fail_require_impls_incomplete_indirect.carbon:[[@LINE-4]]:1-13: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
   // CHECK:STDERR:
   require impls Z;
 }
@@ -257,9 +235,7 @@ constraint Z {
 library "[[@TEST_NAME]]";
 
 constraint Z(T: type) {
-  // CHECK:STDERR: fail_require_impls_incomplete_self_specific.carbon:[[@LINE+4]]:19: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
-  // CHECK:STDERR:   require T impls Z(Self);
-  // CHECK:STDERR:                   ^~~~~~~
+  // CHECK:STDERR: fail_require_impls_incomplete_self_specific.carbon:[[@LINE+2]]:19-25: error: facet type in `require` declaration refers to the named constraint `Z` from within its definition [RequireImplsReferenceCycle]
   // CHECK:STDERR:
   require T impls Z(Self);
 }
@@ -277,9 +253,7 @@ constraint Z(T: type) {
   // it would appear in the type structure used for impl lookup (so inside a
   // `where` does not count). But they don't.
   //
-  // CHECK:STDERR: fail_require_impls_without_self.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y` without a `Self` argument [RequireImplsMissingSelf]
-  // CHECK:STDERR:   require T impls Y where .Y1 = Self;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_require_impls_without_self.carbon:[[@LINE+2]]:3-37: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y` without a `Self` argument [RequireImplsMissingSelf]
   // CHECK:STDERR:
   require T impls Y where .Y1 = Self;
 }
@@ -293,9 +267,7 @@ interface Y(T: type) {}
 constraint Z(T: type) {
   // Self is in one interface but not the other.
   //
-  // CHECK:STDERR: fail_require_impls_without_self_in_one_interface.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y({})` without a `Self` argument [RequireImplsMissingSelf]
-  // CHECK:STDERR:   require T impls Y(Self) & Y({});
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_require_impls_without_self_in_one_interface.carbon:[[@LINE+2]]:3-34: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y({})` without a `Self` argument [RequireImplsMissingSelf]
   // CHECK:STDERR:
   require T impls Y(Self) & Y({});
 }
@@ -308,13 +280,9 @@ interface Y(T: type) {}
 constraint Z(T: type) {
   // Self does not appear in either interface, we should get an error for each.
   //
-  // CHECK:STDERR: fail_require_impls_without_self_in_multiple_interfaces.carbon:[[@LINE+8]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y(())` without a `Self` argument [RequireImplsMissingSelf]
-  // CHECK:STDERR:   require T impls Y(()) & Y({});
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_require_impls_without_self_in_multiple_interfaces.carbon:[[@LINE+4]]:3-32: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y(())` without a `Self` argument [RequireImplsMissingSelf]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_require_impls_without_self_in_multiple_interfaces.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y({})` without a `Self` argument [RequireImplsMissingSelf]
-  // CHECK:STDERR:   require T impls Y(()) & Y({});
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_require_impls_without_self_in_multiple_interfaces.carbon:[[@LINE+2]]:3-32: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y({})` without a `Self` argument [RequireImplsMissingSelf]
   // CHECK:STDERR:
   require T impls Y(()) & Y({});
 }
@@ -323,9 +291,7 @@ constraint Z(T: type) {
 library "[[@TEST_NAME]]";
 
 constraint Z(T: type) {
-  // CHECK:STDERR: fail_self_impls_self.carbon:[[@LINE+4]]:17: error: `require` declaration constrained by a non-facet type; expected an `interface` or `constraint` name after `impls` [RequireImplsMissingFacetType]
-  // CHECK:STDERR:   require impls Self;
-  // CHECK:STDERR:                 ^~~~
+  // CHECK:STDERR: fail_self_impls_self.carbon:[[@LINE+2]]:17-20: error: `require` declaration constrained by a non-facet type; expected an `interface` or `constraint` name after `impls` [RequireImplsMissingFacetType]
   // CHECK:STDERR:
   require impls Self;
 }
@@ -336,9 +302,7 @@ library "[[@TEST_NAME]]";
 class C(T: type) {}
 
 constraint Z(T: type) {
-  // CHECK:STDERR: fail_impls_type.carbon:[[@LINE+4]]:19: error: `require` declaration constrained by a non-facet type; expected an `interface` or `constraint` name after `impls` [RequireImplsMissingFacetType]
-  // CHECK:STDERR:   require T impls C(Self);
-  // CHECK:STDERR:                   ^~~~~~~
+  // CHECK:STDERR: fail_impls_type.carbon:[[@LINE+2]]:19-25: error: `require` declaration constrained by a non-facet type; expected an `interface` or `constraint` name after `impls` [RequireImplsMissingFacetType]
   // CHECK:STDERR:
   require T impls C(Self);
 }
@@ -349,12 +313,8 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 constraint Z(T: type) {
-  // CHECK:STDERR: fail_non_type_impls.carbon:[[@LINE+7]]:11: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:   require 1 impls Y;
-  // CHECK:STDERR:           ^
-  // CHECK:STDERR: fail_non_type_impls.carbon:[[@LINE+4]]:11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   require 1 impls Y;
-  // CHECK:STDERR:           ^
+  // CHECK:STDERR: fail_non_type_impls.carbon:[[@LINE+3]]:11: error: cannot implicitly convert non-type value of type `Core.IntLiteral` to `type` [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR: fail_non_type_impls.carbon:[[@LINE+2]]:11: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   require 1 impls Y;
 }
@@ -365,9 +325,7 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 constraint Z(T: type) {
-  // CHECK:STDERR: fail_impls_non_type.carbon:[[@LINE+4]]:17: error: `require` declaration constrained by a non-facet type; expected an `interface` or `constraint` name after `impls` [RequireImplsMissingFacetType]
-  // CHECK:STDERR:   require impls 1;
-  // CHECK:STDERR:                 ^
+  // CHECK:STDERR: fail_impls_non_type.carbon:[[@LINE+2]]:17: error: `require` declaration constrained by a non-facet type; expected an `interface` or `constraint` name after `impls` [RequireImplsMissingFacetType]
   // CHECK:STDERR:
   require impls 1;
 }
@@ -416,9 +374,7 @@ fn F() {
   // N requires () impls Z(Self) which is Z(()) for this query, but it impls
   // Z({}).
   //
-  // CHECK:STDERR: fail_require_different_self.carbon:[[@LINE+4]]:3: error: cannot convert type `()` into type implementing `N` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   () as N;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_require_different_self.carbon:[[@LINE+2]]:3-9: error: cannot convert type `()` into type implementing `N` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:
   () as N;
 }
@@ -437,9 +393,7 @@ impl () as Z(()) {}
 fn F() {
   // N requires () impls Z({}) but it impls Z(()).
   //
-  // CHECK:STDERR: fail_require_different_parameter.carbon:[[@LINE+4]]:3: error: cannot convert type `()` into type implementing `N` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   () as N;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_require_different_parameter.carbon:[[@LINE+2]]:3-9: error: cannot convert type `()` into type implementing `N` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:
   () as N;
 }
@@ -491,9 +445,7 @@ constraint N {
   // `M(T)` does not make use of the `T`, which is assigned `Self`, so we end up
   // without any interface specific referencing the `Self` of `N`.
   //
-  // CHECK:STDERR: fail_require_different_type_impls_nested_constraint_without_reference_to_outer_self.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Z({})` without a `Self` argument [RequireImplsMissingSelf]
-  // CHECK:STDERR:   require {} impls M(Self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_require_different_type_impls_nested_constraint_without_reference_to_outer_self.carbon:[[@LINE+2]]:3-27: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Z({})` without a `Self` argument [RequireImplsMissingSelf]
   // CHECK:STDERR:
   require {} impls M(Self);
 }
@@ -507,9 +459,7 @@ constraint N {
   // `M(T)` does not make use of the `T`, which is assigned `Self`, so we end up
   // without any interface specific referencing the `Self` of `N`.
   //
-  // CHECK:STDERR: fail_require_different_type_impls_nested_constraint_empty.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but no interfaces were found [RequireImplsMissingSelfEmptyFacetType]
-  // CHECK:STDERR:   require {} impls M(Self);
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_require_different_type_impls_nested_constraint_empty.carbon:[[@LINE+2]]:3-27: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but no interfaces were found [RequireImplsMissingSelfEmptyFacetType]
   // CHECK:STDERR:
   require {} impls M(Self);
 }
@@ -529,9 +479,7 @@ fn F() {
   // N requires {} impls Z(Self) which is Z(()) for this query, but it impls
   // Z({}).
   //
-  // CHECK:STDERR: fail_require_different_type_impls_different_parameter.carbon:[[@LINE+4]]:3: error: cannot convert type `()` into type implementing `N` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   () as N;
-  // CHECK:STDERR:   ^~~~~~~
+  // CHECK:STDERR: fail_require_different_type_impls_different_parameter.carbon:[[@LINE+2]]:3-9: error: cannot convert type `()` into type implementing `N` [ConversionFailureTypeToFacet]
   // CHECK:STDERR:
   () as N;
 }
@@ -572,7 +520,7 @@ fn F() {
   () as N({});
 }
 
-// --- todo_fail_require_with_mismatching_rewrite_constraint.carbon
+// --- fail_require_with_mismatching_rewrite_constraint.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T: type) {
@@ -587,13 +535,12 @@ constraint N {
 impl {} as Z(()) where .X = {} {}
 
 fn F() {
-  // TODO: Should fail, but we're currently checking the requirements of `N`
-  // rather than of the identified facet type of `N` (which would include the
-  // require decl's requirements).
+  // CHECK:STDERR: fail_require_with_mismatching_rewrite_constraint.carbon:[[@LINE+2]]:3-9: error: cannot convert type `()` into type implementing `N` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:
   () as N;
 }
 
-// --- todo_fail_require_with_mismatching_rewrite_constraint_period_self.carbon
+// --- fail_require_with_mismatching_rewrite_constraint_period_self.carbon
 library "[[@TEST_NAME]]";
 
 interface Z(T: type) {
@@ -608,9 +555,8 @@ constraint N(T: type) {
 impl {} as Z(()) where .X = () {}
 
 fn F() {
-  // TODO: Should fail, but we're currently checking the requirements of `N`
-  // rather than of the identified facet type of `N` (which would include the
-  // require decl's requirements).
+  // CHECK:STDERR: fail_require_with_mismatching_rewrite_constraint_period_self.carbon:[[@LINE+2]]:3-13: error: cannot convert type `()` into type implementing `N({})` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:
   () as N({});
 }
 
@@ -629,9 +575,7 @@ constraint N {
 fn F(generic _: N) {}
 
 fn G(generic T: Z) {
-  // CHECK:STDERR: fail_require_with_period_self_impls_not_satisfied.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `N` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   T as N;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_require_with_period_self_impls_not_satisfied.carbon:[[@LINE+2]]:3-8: error: cannot convert type `T` that implements `Z` into type implementing `N` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:
   T as N;
 }
@@ -671,9 +615,7 @@ constraint N {
 fn F(generic _: N) {}
 
 fn G(generic T: Z) {
-  // CHECK:STDERR: fail_require_with_specific_period_self_not_satisfied.carbon:[[@LINE+4]]:3: error: cannot convert type `T` that implements `Z` into type implementing `N` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   T as N;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_require_with_specific_period_self_not_satisfied.carbon:[[@LINE+2]]:3-8: error: cannot convert type `T` that implements `Z` into type implementing `N` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:
   T as N;
 }
@@ -732,9 +674,7 @@ constraint N {
   // it is not `Self`. Since `Self` is not directly part of the type structure,
   // we don't accept this require decl.
   //
-  // CHECK:STDERR: fail_self_in_compound_member_access_is_not_in_type_structure.carbon:[[@LINE+4]]:3: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y` without a `Self` argument [RequireImplsMissingSelf]
-  // CHECK:STDERR:   require C.(Z(Self).Z1) impls Y;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_self_in_compound_member_access_is_not_in_type_structure.carbon:[[@LINE+2]]:3-33: error: no `Self` reference found in `require` declaration; `Self` must appear in the self-type or as a generic argument for each required interface, but found interface `Y` without a `Self` argument [RequireImplsMissingSelf]
   // CHECK:STDERR:
   require C.(Z(Self).Z1) impls Y;
 }
@@ -748,9 +688,7 @@ interface Z {
 }
 
 constraint N {
-  // CHECK:STDERR: fail_rewrite_cycle.carbon:[[@LINE+4]]:17: error: found cycle in facet type constraint for `.(Z.Z2)` [FacetTypeConstraintCycle]
-  // CHECK:STDERR:   require impls Z where .Z1 = .Z2 and .Z2 = .Z1;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_rewrite_cycle.carbon:[[@LINE+2]]:17-47: error: found cycle in facet type constraint for `.(Z.Z2)` [FacetTypeConstraintCycle]
   // CHECK:STDERR:
   require impls Z where .Z1 = .Z2 and .Z2 = .Z1;
 }
@@ -877,11 +815,11 @@ constraint N {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T):identified {
 // CHECK:STDOUT:   %Self => constants.%T
 // CHECK:STDOUT:   %Self.as_type.loc9_18.2 => constants.%T.as_type
 // CHECK:STDOUT: }
@@ -912,6 +850,8 @@ constraint N {
 // CHECK:STDOUT:   %require_complete.331: <witness> = require_complete_type %Y.type.a55 [symbolic]
 // CHECK:STDOUT:   %Y.assoc_type.18b: type = assoc_entity_type @Y, @Y(%T.as_type) [symbolic]
 // CHECK:STDOUT:   %assoc0.eff: %Y.assoc_type.18b = assoc_entity element0, @Y.WithSelf.%Y.WithSelf.YY.decl [symbolic]
+// CHECK:STDOUT:   %Y.type.7e4: type = facet_type <@Y, @Y(%T.as_type):identified> [symbolic]
+// CHECK:STDOUT:   %require_complete.aa7: <witness> = require_complete_type %Y.type.7e4 [symbolic]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %T.f45, @Y, @Y(%T.as_type) [symbolic]
 // CHECK:STDOUT:   %Y.facet: %Y.type.a55 = facet_value %T.as_type, (%Y.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %Y.WithSelf.YY.type.e81: type = fn_type @Y.WithSelf.YY, @Y.WithSelf(%T.as_type, %Y.facet) [symbolic]
@@ -1041,18 +981,18 @@ constraint N {
 // CHECK:STDOUT:   %require_complete => constants.%require_complete.331
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T.f45) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T.f45):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %Self => constants.%T.f45
 // CHECK:STDOUT:   %Self.as_type => constants.%T.as_type
-// CHECK:STDOUT:   %Y.type => constants.%Y.type.a55
-// CHECK:STDOUT:   %require_complete => constants.%require_complete.331
+// CHECK:STDOUT:   %Y.type => constants.%Y.type.7e4
+// CHECK:STDOUT:   %require_complete => constants.%require_complete.aa7
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T.f45) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T.f45):identified {
 // CHECK:STDOUT:   %Self => constants.%T.f45
 // CHECK:STDOUT:   %Self.as_type.loc9_18.2 => constants.%T.as_type
-// CHECK:STDOUT:   %Y.type.loc9_30.2 => constants.%Y.type.a55
+// CHECK:STDOUT:   %Y.type.loc9_30.2 => constants.%Y.type.7e4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- implicit_self_impls.carbon
@@ -1106,11 +1046,11 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T):identified {
 // CHECK:STDOUT:   %Self => constants.%T
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%T.as_type
 // CHECK:STDOUT: }
@@ -1168,11 +1108,11 @@ constraint N {
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%T):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T) [identified] {
+// CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y.type.require(constants.%T):identified {
 // CHECK:STDOUT:   %Self => constants.%T
 // CHECK:STDOUT:   %Self.as_type.loc9_11.2 => constants.%T.as_type
 // CHECK:STDOUT: }
@@ -1315,6 +1255,8 @@ constraint N {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87):identified {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y_where.type.require(constants.%Self.d87) {
 // CHECK:STDOUT:   %Self => constants.%Self.d87
@@ -1485,6 +1427,8 @@ constraint N {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87) {}
 // CHECK:STDOUT:
+// CHECK:STDOUT: specific @Z.WithSelf(constants.%Self.d87):identified {}
+// CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf.Self.as_type.impls.Y_where.type.require(constants.%Self.d87) {
 // CHECK:STDOUT:   %Self => constants.%Self.d87
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2 => constants.%Self.as_type
@@ -1516,7 +1460,7 @@ constraint N {
 // CHECK:STDOUT:   %facet_type.e5c: type = facet_type <@Z & @Y, @Y(%.Self.c86)> [symbolic_self]
 // CHECK:STDOUT:   %T.d09: %facet_type.e5c = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.d09 [symbolic]
-// CHECK:STDOUT:   %Z_where.type.bfc: type = facet_type <@Z where .Self impls @Y, @Y(%T.as_type)> [symbolic]
+// CHECK:STDOUT:   %Z_where.type.8a6: type = facet_type <@Z where .Self impls @Y, @Y(%T.as_type):identified> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1584,14 +1528,14 @@ constraint N {
 // CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.e7d
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%T.d09) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf(constants.%T.d09):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.d09) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.d09):identified {
 // CHECK:STDOUT:   %Self => constants.%T.d09
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2 => constants.%T.as_type
-// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.bfc
+// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.8a6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- require_with_specific_period_self.carbon
@@ -1616,11 +1560,11 @@ constraint N {
 // CHECK:STDOUT:   %Y.type.23e: type = facet_type <@Y, @Y(%.Self.as_type)> [symbolic_self]
 // CHECK:STDOUT:   %Z_where.type.a0f3c6.1: type = facet_type <@Z where %C.cf2 impls @Y, @Y(%.Self.as_type)> [concrete]
 // CHECK:STDOUT:   %C.f15: type = class_type @C, @C(%Self.as_type) [symbolic]
-// CHECK:STDOUT:   %Z_where.type.a0f3c6.2: type = facet_type <@Z where %C.f15 impls @Y, @Y(%Self.as_type)> [symbolic]
+// CHECK:STDOUT:   %Z_where.type.a0f3c6.3: type = facet_type <@Z where %C.f15 impls @Y, @Y(%Self.as_type)> [symbolic]
 // CHECK:STDOUT:   %T.013: %Z.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type: type = facet_access_type %T.013 [symbolic]
-// CHECK:STDOUT:   %C.7b3: type = class_type @C, @C(%T.as_type) [symbolic]
-// CHECK:STDOUT:   %Z_where.type.a0f3c6.3: type = facet_type <@Z where %C.7b3 impls @Y, @Y(%T.as_type)> [symbolic]
+// CHECK:STDOUT:   %C.f24: type = class_type @C, @C(%T.as_type):identified [symbolic]
+// CHECK:STDOUT:   %Z_where.type.a0f3c6.4: type = facet_type <@Z where %C.f24 impls @Y, @Y(%T.as_type):identified> [symbolic]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -1657,7 +1601,7 @@ constraint N {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %Z.ref [concrete]
 // CHECK:STDOUT:       %impls.loc10_34.2 = requirement_impls %C.loc10_32.2, %Y.type.loc10_47.2 [concrete]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %Z_where.type.loc10_19.1: type = facet_type <@Z where constants.%C.f15 impls @Y, @Y(constants.%Self.as_type)> [symbolic = %Z_where.type.loc10_19.2 (constants.%Z_where.type.a0f3c6.2)]
+// CHECK:STDOUT:     %Z_where.type.loc10_19.1: type = facet_type <@Z where constants.%C.f15 impls @Y, @Y(constants.%Self.as_type)> [symbolic = %Z_where.type.loc10_19.2 (constants.%Z_where.type.a0f3c6.3)]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -1679,7 +1623,7 @@ constraint N {
 // CHECK:STDOUT:   %Self: %N.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.d87)]
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc10_11.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:   %C.loc10_19: type = class_type @C, @C(%Self.as_type.loc10_11.2) [symbolic = %C.loc10_19 (constants.%C.f15)]
-// CHECK:STDOUT:   %Z_where.type.loc10_19.2: type = facet_type <@Z where %C.loc10_19 impls @Y, @Y(%Self.as_type.loc10_11.2)> [symbolic = %Z_where.type.loc10_19.2 (constants.%Z_where.type.a0f3c6.2)]
+// CHECK:STDOUT:   %Z_where.type.loc10_19.2: type = facet_type <@Z where %C.loc10_19 impls @Y, @Y(%Self.as_type.loc10_11.2)> [symbolic = %Z_where.type.loc10_19.2 (constants.%Z_where.type.a0f3c6.3)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @N.WithSelf(constants.%Self.d87) {}
@@ -1688,17 +1632,17 @@ constraint N {
 // CHECK:STDOUT:   %Self => constants.%Self.d87
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2 => constants.%Self.as_type
 // CHECK:STDOUT:   %C.loc10_19 => constants.%C.f15
-// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.a0f3c6.2
+// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.a0f3c6.3
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf(constants.%T.013) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf(constants.%T.013):identified {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.013) [identified] {
+// CHECK:STDOUT: specific @N.WithSelf.Self.as_type.impls.Z_where.type.require(constants.%T.013):identified {
 // CHECK:STDOUT:   %Self => constants.%T.013
 // CHECK:STDOUT:   %Self.as_type.loc10_11.2 => constants.%T.as_type
-// CHECK:STDOUT:   %C.loc10_19 => constants.%C.7b3
-// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.a0f3c6.3
+// CHECK:STDOUT:   %C.loc10_19 => constants.%C.f24
+// CHECK:STDOUT:   %Z_where.type.loc10_19.2 => constants.%Z_where.type.a0f3c6.4
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

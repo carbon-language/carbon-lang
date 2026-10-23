@@ -59,7 +59,6 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       associated_constants_(check_ir_id),
       // 1 reserved id for `DeclaredFacetTypeId::Empty`.
       declared_facet_types_(check_ir_id, 1),
-      identified_facet_types_(check_ir_id),
       impls_(*this),
       specific_interfaces_(check_ir_id),
       generics_(check_ir_id),
@@ -211,6 +210,8 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
 auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_source_locs_"),
+                    clang_source_locs_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
                     entity_names_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
@@ -272,7 +273,7 @@ auto File::AppendCppMangledTypeName(ClassId class_id,
 namespace Carbon {
 template class ValueStore<SemIR::ExprRegionId, SemIR::ExprRegion,
                           Tag<SemIR::CheckIRId>>;
-template class ValueStore<SemIR::ClangSourceLocId, clang::SourceLocation,
+template class ValueStore<SemIR::ClangSourceLocId, clang::SourceRange,
                           Tag<SemIR::CheckIRId>>;
 template class ValueStore<SemIR::CustomLayoutId,
                           llvm::MutableArrayRef<SemIR::ObjectSize>,

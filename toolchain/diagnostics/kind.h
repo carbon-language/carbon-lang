@@ -20,7 +20,7 @@ CARBON_DEFINE_RAW_ENUM_CLASS(Kind, uint16_t) {
 
 // An enumeration of all diagnostics provided by the toolchain. Diagnostics must
 // be added to kind.def, and defined locally to where they're used using the
-// `DIAGNOSTIC` macro in emitter.h.
+// `CARBON_DIAGNOSTIC` macro in diagnostic.h.
 //
 // Diagnostic definitions are decentralized because placing all diagnostic
 // definitions centrally is expected to create a compilation bottleneck
@@ -35,7 +35,7 @@ class Kind : public CARBON_ENUM_BASE(Kind) {
 #define CARBON_DIAGNOSTIC_KIND(Name) CARBON_ENUM_CONSTANT_DEFINITION(Kind, Name)
 #include "toolchain/diagnostics/kind.def"
 
-// We expect Kind to fit into 2 bits.
+// We expect Kind to fit into 2 bytes.
 static_assert(sizeof(Kind) == 2, "Kind includes padding!");
 
 }  // namespace Carbon::Diagnostics

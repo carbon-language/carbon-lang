@@ -85,9 +85,9 @@ var b: auto = fn (x: i32 = 0) => x;
 // CHECK:STDOUT:   │ │   │ │ ├─IntLiteral '0'
 // CHECK:STDOUT:   │ │   │ ├─DefaultValuePattern '='
 // CHECK:STDOUT:   │ │   ├─ExplicitParamList ')'
-// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '=>'
+// CHECK:STDOUT:   │ │ ╭─LambdaTerseDefinitionStart '=>'
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'x'
-// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   │ ├─LambdaTerseDefinition 'fn'
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

@@ -41,7 +41,7 @@
 // CHECK:STDOUT:       "typeDefinitionProvider": true
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 500{{\r}}
+// CHECK:STDOUT: }Content-Length: 537{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "jsonrpc": "2.0",
@@ -49,7 +49,7 @@
 // CHECK:STDOUT:   "params": {
 // CHECK:STDOUT:     "diagnostics": [
 // CHECK:STDOUT:       {
-// CHECK:STDOUT:         "message": "file extension of `.carbon` required for api",
+// CHECK:STDOUT:         "message": "file extension of `.carbon` required for api; `.impl.carbon` names an `impl` file",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
 // CHECK:STDOUT:             "character": 0,

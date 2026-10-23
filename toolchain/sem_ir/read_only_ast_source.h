@@ -35,9 +35,10 @@ class ReadOnlyASTSource : public clang::ExternalSemaSource {
   }
 
  protected:
-  // If `decl_context` was created by exporting a Carbon declaration to C++,
-  // returns its `ClangDecl`. Otherwise returns `std::nullopt`.
-  auto GetCarbonOwnedDecl(const clang::DeclContext* decl_context) const
+  // If `decl_context` was created by exporting a Carbon declaration to C++, and
+  // can have name lookups performed into it, returns its `ClangDecl`. Otherwise
+  // returns `std::nullopt`.
+  auto GetCarbonOwnedDeclAsLookupContext(clang::DeclContext* decl_context) const
       -> std::optional<ClangDecl>;
 
  private:

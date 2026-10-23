@@ -725,7 +725,7 @@ auto BuildCustomWitness(Context& context, SemIR::LocId loc_id,
     LoadImportRef(context, assoc_entity_id);
     update_interface_with_self_specific_id(assoc_entity_id);
     CARBON_CHECK(
-        !context.specifics().Get(interface_with_self_specific_id).HasError());
+        !context.specifics().HasError(interface_with_self_specific_id));
     auto decl_id =
         context.constant_values().GetInstId(SemIR::GetConstantValueInSpecific(
             context.sem_ir(), interface_with_self_specific_id,

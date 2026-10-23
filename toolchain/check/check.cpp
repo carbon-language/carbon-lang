@@ -123,9 +123,9 @@ static auto TrackImport(Map<ImportKey, UnitAndImports*>& api_map,
         !insert_result.is_inserted()) {
       CARBON_DIAGNOSTIC(RepeatedImport, Error,
                         "library imported more than once");
-      CARBON_DIAGNOSTIC(FirstImported, Note, "first import here");
+      CARBON_DIAGNOSTIC_LABEL(FirstImported, Info, "first import here");
       unit_info.emitter.Build(import.node_id, RepeatedImport)
-          .Note(insert_result.value(), FirstImported)
+          .Attach(insert_result.value(), FirstImported)
           .Emit();
       return;
     }
@@ -311,20 +311,17 @@ static auto BuildApiMapAndDiagnosePackaging(
       bool is_api_with_impl_ext = !is_impl && filename.ends_with(ImplExt);
       auto want_ext = is_impl ? ImplExt : ApiExt;
       if (is_api_with_impl_ext || !filename.ends_with(want_ext)) {
+        // The diagnostic is about the file rather than anything in it, so
+        // there is no range to mark and the hint goes in the message: a label
+        // would have no location of its own to be drawn at.
         CARBON_DIAGNOSTIC(
             IncorrectExtension, Error,
-            "file extension of `{0:.impl|}.carbon` required for {0:`impl`|api}",
-            Diagnostics::BoolAsSelect);
-        auto diag = unit_info.emitter.Build(
+            "file extension of `{0:.impl|}.carbon` required for {0:`impl`|api}"
+            "{1:; `.impl.carbon` names an `impl` file|}",
+            Diagnostics::BoolAsSelect, Diagnostics::BoolAsSelect);
+        unit_info.emitter.Emit(
             packaging ? packaging->names.node_id : Parse::NodeId::None,
-            IncorrectExtension, is_impl);
-        if (is_api_with_impl_ext) {
-          CARBON_DIAGNOSTIC(
-              IncorrectExtensionImplNote, Note,
-              "file extension of `.impl.carbon` only allowed for `impl`");
-          diag.Note(Parse::NodeId::None, IncorrectExtensionImplNote);
-        }
-        diag.Emit();
+            IncorrectExtension, is_impl, is_api_with_impl_ext);
       }
     }
   }

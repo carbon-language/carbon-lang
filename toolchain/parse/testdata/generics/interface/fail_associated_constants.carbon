@@ -13,9 +13,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_tuple_pattern.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let (T: type, U: type);
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_tuple_pattern.carbon:[[@LINE+2]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   let (T: type, U: type);
 }
@@ -25,9 +23,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_tuple_pattern_with_default.carbon:[[@LINE+4]]:15: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   default let (T: type, U: type) = ({}, {});
-  // CHECK:STDERR:               ^
+  // CHECK:STDERR: fail_tuple_pattern_with_default.carbon:[[@LINE+2]]:15: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   default let (T: type, U: type) = ({}, {});
 }
@@ -37,9 +33,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_var_pattern.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let var T: type;
-  // CHECK:STDERR:       ^~~
+  // CHECK:STDERR: fail_var_pattern.carbon:[[@LINE+2]]:7-9: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   let var T: type;
 }
@@ -49,9 +43,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_var_pattern_with_default.carbon:[[@LINE+4]]:15: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   default let var T: type = {};
-  // CHECK:STDERR:               ^~~
+  // CHECK:STDERR: fail_var_pattern_with_default.carbon:[[@LINE+2]]:15-17: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   default let var T: type = {};
 }
@@ -61,9 +53,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:7: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
-  // CHECK:STDERR:   let runtime a: {.b: ()};
-  // CHECK:STDERR:       ^~~~~~~
+  // CHECK:STDERR: fail_not_constant.carbon:[[@LINE+2]]:7-13: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
   // CHECK:STDERR:
   let runtime a: {.b: ()};
 }
@@ -73,9 +63,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_template.carbon:[[@LINE+4]]:7: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
-  // CHECK:STDERR:   let template T: type;
-  // CHECK:STDERR:       ^~~~~~~~
+  // CHECK:STDERR: fail_template.carbon:[[@LINE+2]]:7-14: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
   // CHECK:STDERR:
   let template T: type;
 }
@@ -85,9 +73,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_generic.carbon:[[@LINE+4]]:7: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
-  // CHECK:STDERR:   let generic a: type;
-  // CHECK:STDERR:       ^~~~~~~
+  // CHECK:STDERR: fail_generic.carbon:[[@LINE+2]]:7-13: error: phase keyword is not allowed on an associated constant [PhaseKeywordInAssociatedConstant]
   // CHECK:STDERR:
   let generic a: type;
 }
@@ -97,9 +83,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_underscore.carbon:[[@LINE+4]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
-  // CHECK:STDERR:   let _: {};
-  // CHECK:STDERR:       ^
+  // CHECK:STDERR: fail_underscore.carbon:[[@LINE+2]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   let _: {};
 }
@@ -109,9 +93,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_missing_colon.carbon:[[@LINE+4]]:8: error: expected `:` in associated constant declaration [ExpectedAssociatedConstantColon]
-  // CHECK:STDERR:   let a;
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR: fail_missing_colon.carbon:[[@LINE+2]]:8: error: expected `:` in associated constant declaration [ExpectedAssociatedConstantColon]
   // CHECK:STDERR:
   let a;
 }

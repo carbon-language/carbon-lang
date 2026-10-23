@@ -36,33 +36,25 @@ adapt i32;
 // --- fail_bad_syntax.carbon
 
 class A {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:11: error: `adapt` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   adapt 1 trailing_token;
-  // CHECK:STDERR:           ^~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:11-24: error: `adapt` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   adapt 1 trailing_token;
 }
 
 class B {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:8: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   adapt;
-  // CHECK:STDERR:        ^
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:8: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
   adapt;
 }
 
 class C {
   adapt
-// CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:1: error: expected expression [ExpectedExpr]
-// CHECK:STDERR: }
-// CHECK:STDERR: ^
+// CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:1: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 }
 
 class D {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+4]]:9: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   adapt class;
-  // CHECK:STDERR:         ^~~~~
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:9-13: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
   adapt class;
 }

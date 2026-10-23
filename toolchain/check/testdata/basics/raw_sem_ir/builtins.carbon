@@ -105,7 +105,8 @@
 // CHECK:STDOUT:     generated:       {}
 // CHECK:STDOUT:     imports:         {}
 // CHECK:STDOUT:     global_init:     {}
-// CHECK:STDOUT:     inst_block50000005:
+// CHECK:STDOUT:     extra_global_variables: {}
+// CHECK:STDOUT:     inst_block50000006:
 // CHECK:STDOUT:       0:               inst(Package)
 // CHECK:STDOUT:   value_stores:
 // CHECK:STDOUT:     shared_values:
