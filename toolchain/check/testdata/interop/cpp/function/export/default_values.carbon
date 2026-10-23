@@ -43,7 +43,6 @@ fn F(unused i: i32 = 0) {}
 library "[[@TEST_NAME]]";
 
 import library "other";
-
 import Cpp inline '''
 void CallF() {
   Carbon::F();

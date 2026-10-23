@@ -1994,8 +1994,8 @@ auto ExportDestructorToCpp(Context& context, const SemIR::Class& class_info,
   auto* cpp_destructor_decl = clang::CXXDestructorDecl::Create(
       context.ast_context(), record_decl,
       /*StartLoc=*/clang_loc, name_info, type, /*TInfo=*/nullptr,
-      /*UsesFPIntrin=*/false, /*isInline=*/true,
-      /*isImplicitlyDeclared=*/true, clang::ConstexprSpecKind::Unspecified);
+      /*UsesFPIntrin=*/false, /*isInline=*/true, /*isImplicitlyDeclared=*/true,
+      clang::ConstexprSpecKind::Unspecified);
   cpp_destructor_decl->setAccess(clang::AS_public);
 
   clang::Sema& sema = context.clang_sema();
