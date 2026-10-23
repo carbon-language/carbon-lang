@@ -359,8 +359,17 @@ static auto ExportClassSpecificToCpp(Context& context, SemIR::LocId loc_id,
     // TODO: also handle non-type args. Such args can't happen here yet, since
     // the `ExportGenericClassToCpp` call above already checks for them.
 
-    auto cpp_type = MapToCppType(
-        context, context.types().GetTypeIdForTypeInstId(specific_arg_inst_id));
+    // Extract the access type from constrained types.
+    SemIR::TypeId specific_arg_type_id = SemIR::TypeId::None;
+    if (context.types().IsConstrainedFacetType(
+            context.insts().GetAttachedType(specific_arg_inst_id))) {
+      specific_arg_type_id = GetFacetAccessType(context, specific_arg_inst_id);
+    } else {
+      specific_arg_type_id =
+          context.types().GetTypeIdForTypeInstId(specific_arg_inst_id);
+    }
+
+    auto cpp_type = MapToCppType(context, specific_arg_type_id);
     if (cpp_type.isNull()) {
       context.TODO(loc_id, "failed to map specific type arg to C++");
       return nullptr;
@@ -753,43 +762,6 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
 }
 
 namespace {
-
-// Given a block of parameter patterns, returns a vector of the same size,
-// where each element of that vector contains the value used as the default
-// value for that parameter, or `None` if no default value was specified.
-static auto ExtractParameterDefaults(Context& context,
-                                     SemIR::InstBlockId param_patterns_id)
-    -> llvm::SmallVector<SemIR::ConstantId> {
-  llvm::SmallVector<SemIR::ConstantId> parameter_defaults;
-  for (auto inst_id : context.inst_blocks().Get(param_patterns_id)) {
-    auto pattern_id = context.constant_values().GetConstantInstId(inst_id);
-    while (pattern_id.has_value()) {
-      CARBON_KIND_SWITCH(context.insts().Get(pattern_id)) {
-        case CARBON_KIND(SemIR::DefaultValuePattern inst): {
-          parameter_defaults.push_back(
-              context.constant_values().Get(inst.value_id));
-          pattern_id = SemIR::InstId::None;
-          break;
-        }
-        case CARBON_KIND_ANY(SemIR::AnyBindingPattern, inst): {
-          pattern_id = inst.subpattern_id;
-          break;
-        }
-        case CARBON_KIND_ANY(SemIR::AnyParamPattern, _): {
-          parameter_defaults.push_back(SemIR::ConstantId::None);
-          pattern_id = SemIR::InstId::None;
-          break;
-        }
-        default: {
-          pattern_id = SemIR::InstId::None;
-          break;
-        }
-      }
-    }
-  }
-  return parameter_defaults;
-}
-
 struct FunctionInfo {
   struct Param {
     Param(Context& context, SemIR::InstId param_inst_id,
@@ -825,11 +797,7 @@ struct FunctionInfo {
         export_as_constructor(export_as_constructor) {
     auto function_params =
         context.inst_blocks().Get(function.call_param_patterns_id);
-    auto parameter_defaults =
-        ExtractParameterDefaults(context, function.param_patterns_id);
     const auto& ranges = function.call_param_ranges;
-    CARBON_CHECK(parameter_defaults.size() ==
-                 static_cast<size_t>(ranges.explicit_size()));
     auto explicit_begin = ranges.explicit_begin().index;
     auto param_start = explicit_begin;
 
@@ -844,12 +812,15 @@ struct FunctionInfo {
       ++param_start;
     }
 
+    auto param_patterns =
+        context.inst_blocks().GetOrEmpty(function.param_patterns_id);
     // The remaining explicit parameters are the caller-provided arguments.
     for (auto i = param_start; i != ranges.explicit_end().index; ++i) {
       // We only calculated default values for the explicit parameters, so
       // we need to adjust the index within `parameter_defaults` by any elements
       // in `function_params` that may have preceded them.
-      auto default_value_const_id = parameter_defaults[i - explicit_begin];
+      auto default_value_const_id =
+          ExtractParameterDefault(context, param_patterns[i - explicit_begin]);
       explicit_params.push_back(
           Param(context, function_params[i], default_value_const_id));
     }
