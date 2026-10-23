@@ -225,7 +225,7 @@ extends
 
 ```
 interface ImplicitAs(Dest: type) {
-  extend As(Dest);
+  extend final impl as As(Dest);
   // Inherited from As(Dest):
   // fn Convert(self) -> Dest;
 }
