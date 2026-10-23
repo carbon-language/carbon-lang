@@ -14,27 +14,18 @@
 library "[[@TEST_NAME]]";
 import Cpp;
 
-class D {}
-impl D as Core.Copy {
-  fn Op(unused self: D) -> D { return {} as D; }
-}
+interface Z {};
 
+class D { adapt {}; }
+impl D as Z {}
 fn MakeD() -> D { return {} as D; }
 
-class C(T: Core.Copy & Core.Destroy) {
-  var t: T;
+class C(T: Z) {
   var d: i32;
-  impl as Core.Copy {
-    fn Op(self: Self) -> Self {
-      let c: Self = {.t = self.t, .d = self.d};
-      return c;
-    }
-  }
 }
 
-fn Make[T: Core.Copy & Core.Destroy](t: T, d: i32 = 42) -> C(T) {
-  let c: C(T) = {.t = t, .d = d};
-  return c;
+fn Make[T: Z](unused t: T, d: i32 = 42) -> C(T) {
+  return {.d = d} as C(T);
 }
 
 inline Cpp '''
@@ -42,7 +33,6 @@ void CallMake() {
   Carbon::Make(Carbon::MakeD());
 }
 ''';
-
 
 // --- other.carbon
 library "[[@TEST_NAME]]";
@@ -53,6 +43,7 @@ fn F(unused i: i32 = 0) {}
 library "[[@TEST_NAME]]";
 
 import library "other";
+
 import Cpp inline '''
 void CallF() {
   Carbon::F();
