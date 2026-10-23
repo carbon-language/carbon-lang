@@ -13,6 +13,7 @@
 #include "clang/Sema/Sema.h"
 #include "llvm/Support/Casting.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/check/class.h"
 #include "toolchain/check/cpp/access.h"
 #include "toolchain/check/cpp/context.h"
 #include "toolchain/check/cpp/import.h"
@@ -684,8 +685,8 @@ auto ExportAllFieldsToCpp(Context& context,
 
   for (const auto& struct_field : class_info.GetStructTypeFields(
            context.sem_ir(), class_type.specific_id)) {
-    auto class_field = LookupClassFieldByStructField(context.sem_ir(),
-                                                     class_scope, struct_field);
+    auto class_field =
+        LookupClassFieldByStructField(context, class_scope, struct_field);
     if (!class_field) {
       continue;
     }

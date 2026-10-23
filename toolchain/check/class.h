@@ -5,7 +5,12 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_CLASS_H_
 #define CARBON_TOOLCHAIN_CHECK_CLASS_H_
 
+#include <optional>
+
 #include "toolchain/check/context.h"
+#include "toolchain/sem_ir/name_scope.h"
+#include "toolchain/sem_ir/struct_type_field.h"
+#include "toolchain/sem_ir/typed_insts.h"
 
 namespace Carbon::Check {
 
@@ -28,6 +33,16 @@ auto InNonStaticFieldDecl(Context& context) -> bool;
 
 // Whether a static class var decl is currently being checked.
 auto InStaticClassScopeVar(Context& context) -> bool;
+
+// Returns the `FieldDecl` in the class scope corresponding to the given field
+// of the class's object representation, or `nullopt` if there is none, such as
+// for a base class. If the class was imported, this imports the field. See
+// also `SemIR::LookupClassFieldByStructField`, which can be used once checking
+// is complete.
+auto LookupClassFieldByStructField(Context& context,
+                                   const SemIR::NameScope& class_scope,
+                                   const SemIR::StructTypeField& struct_field)
+    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>>;
 
 }  // namespace Carbon::Check
 
