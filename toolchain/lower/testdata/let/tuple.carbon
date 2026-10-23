@@ -72,8 +72,8 @@ fn F() -> i32 {
 // CHECK:STDOUT:   %tuple.elem1.loc17_11.tuple.elem.load = load ptr, ptr %tuple.elem1.loc17_11.tuple.elem, align 8, !dbg !37
 // CHECK:STDOUT:   %tuple.elem1.loc17_13.tuple.elem = getelementptr inbounds nuw { i32, i32 }, ptr %tuple.elem1.loc17_11.tuple.elem.load, i32 0, i32 1, !dbg !37
 // CHECK:STDOUT:   %tuple.elem1.loc17_13.tuple.elem.load = load i32, ptr %tuple.elem1.loc17_13.tuple.elem, align 4, !dbg !37
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.eda669d623214d41(ptr %b.var), !dbg !29
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.d03c56e034d264ab(ptr %a.var), !dbg !26
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ffbc82e0019b7bf2(ptr %b.var), !dbg !29
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6e65c86a129b7677(ptr %a.var), !dbg !26
 // CHECK:STDOUT:   ret i32 %tuple.elem1.loc17_13.tuple.elem.load, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -84,12 +84,12 @@ fn F() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.eda669d623214d41(ptr %t) #0 !dbg !42 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.ffbc82e0019b7bf2(ptr %t) #0 !dbg !42 {
 // CHECK:STDOUT:   ret void, !dbg !47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.d03c56e034d264ab(ptr %t) #0 !dbg !49 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6e65c86a129b7677(ptr %t) #0 !dbg !49 {
 // CHECK:STDOUT:   ret void, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -124,12 +124,12 @@ fn F() -> i32 {
 // CHECK:STDOUT: !39 = !{null, !38}
 // CHECK:STDOUT: !40 = !DISubroutineType(types: !39)
 // CHECK:STDOUT: !41 = !DILocation(line: 17, column: 3, scope: !23)
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.eda669d623214d41", scope: null, file: !10, line: 30, type: !40, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !48)
+// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ffbc82e0019b7bf2", scope: null, file: !10, line: 32, type: !40, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !48)
 // CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !42, type: !38)
-// CHECK:STDOUT: !47 = !DILocation(line: 30, column: 1, scope: !42)
+// CHECK:STDOUT: !47 = !DILocation(line: 32, column: 1, scope: !42)
 // CHECK:STDOUT: !48 = !{!43}
-// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.d03c56e034d264ab", scope: null, file: !10, line: 30, type: !40, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !55)
+// CHECK:STDOUT: !49 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6e65c86a129b7677", scope: null, file: !10, line: 32, type: !40, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !55)
 // CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !49, type: !38)
-// CHECK:STDOUT: !54 = !DILocation(line: 30, column: 1, scope: !49)
+// CHECK:STDOUT: !54 = !DILocation(line: 32, column: 1, scope: !49)
 // CHECK:STDOUT: !55 = !{!50}
 // CHECK:STDOUT:

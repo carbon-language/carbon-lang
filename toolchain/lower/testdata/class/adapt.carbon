@@ -94,7 +94,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %pa.var), !dbg !52
 // CHECK:STDOUT:   call void @_CMake.PairAdapter.Main(ptr %pa.var), !dbg !53
 // CHECK:STDOUT:   %PairAdapter.GetB.call = call i32 @_CGetB.PairAdapter.Main(ptr %pa.var), !dbg !55
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.78c1e25b72a9b9dd(ptr %pa.var), !dbg !52
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.fb94fb1298d84111(ptr %pa.var), !dbg !52
 // CHECK:STDOUT:   ret i32 %PairAdapter.GetB.call, !dbg !58
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -105,7 +105,7 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.78c1e25b72a9b9dd(ptr %t) #0 !dbg !59 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.fb94fb1298d84111(ptr %t) #0 !dbg !59 {
 // CHECK:STDOUT:   ret void, !dbg !64
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -146,9 +146,9 @@ fn DoStuff(a: Int) -> Int {
 // CHECK:STDOUT: !56 = !{null, !21}
 // CHECK:STDOUT: !57 = !DISubroutineType(types: !56)
 // CHECK:STDOUT: !58 = !DILocation(line: 28, column: 3, scope: !49)
-// CHECK:STDOUT: !59 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.78c1e25b72a9b9dd", scope: null, file: !10, line: 30, type: !57, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !65)
+// CHECK:STDOUT: !59 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.fb94fb1298d84111", scope: null, file: !10, line: 32, type: !57, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !65)
 // CHECK:STDOUT: !60 = !DILocalVariable(arg: 1, scope: !59, type: !21)
-// CHECK:STDOUT: !64 = !DILocation(line: 30, column: 1, scope: !59)
+// CHECK:STDOUT: !64 = !DILocation(line: 32, column: 1, scope: !59)
 // CHECK:STDOUT: !65 = !{!60}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---

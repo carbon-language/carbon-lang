@@ -35,7 +35,7 @@ fn F() {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %s.var, ptr align 4 @struct.940.loc16_3.1, i64 8, i1 false), !dbg !27
 // CHECK:STDOUT:   %.loc17.b = getelementptr inbounds nuw { i32, i32 }, ptr %s.var, i32 0, i32 1, !dbg !30
 // CHECK:STDOUT:   call void @_CG.Main(ptr %.loc17.b), !dbg !32
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.c1631c5f27626f91(ptr %s.var), !dbg !27
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.ad01ed096e1f14e2(ptr %s.var), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !33
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -46,7 +46,7 @@ fn F() {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.c1631c5f27626f91(ptr %t) #0 !dbg !34 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.ad01ed096e1f14e2(ptr %t) #0 !dbg !34 {
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -72,8 +72,8 @@ fn F() {
 // CHECK:STDOUT: !30 = !DILocation(line: 17, column: 6, scope: !26)
 // CHECK:STDOUT: !32 = !DILocation(line: 17, column: 3, scope: !26)
 // CHECK:STDOUT: !33 = !DILocation(line: 15, column: 1, scope: !26)
-// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c1631c5f27626f91", scope: null, file: !10, line: 30, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !40)
+// CHECK:STDOUT: !34 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.ad01ed096e1f14e2", scope: null, file: !10, line: 32, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !40)
 // CHECK:STDOUT: !35 = !DILocalVariable(arg: 1, scope: !34, type: !21)
-// CHECK:STDOUT: !39 = !DILocation(line: 30, column: 1, scope: !34)
+// CHECK:STDOUT: !39 = !DILocation(line: 32, column: 1, scope: !34)
 // CHECK:STDOUT: !40 = !{!35}
 // CHECK:STDOUT:

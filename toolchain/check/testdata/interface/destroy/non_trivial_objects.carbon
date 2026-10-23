@@ -228,7 +228,7 @@ fn TestDestroyImplAndTrivialBase(x: DestroyImplAndTrivialBase) {
 fn TestGenericClassOfNonTrivial(x: DestroyableBox(NonTrivial)) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `DestroyableBox(NonTrivial as Core.SubobjectDestroy & Core.DestroyImpl)` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-31: error: cannot convert type `DestroyableBox(NonTrivial as Core.Destroy)` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-67]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:

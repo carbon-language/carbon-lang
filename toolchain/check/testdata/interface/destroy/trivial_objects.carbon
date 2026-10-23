@@ -410,8 +410,8 @@ fn TestTupleWithNestedTrivialTuple(x: (i32, (bool, i32))) {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.5c8: %SubobjectDestroy.type = facet_value %EmptyClass, (%custom_witness.b80ef6.2) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.ec0: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.5c8) [concrete]
 // CHECK:STDOUT:   %custom_witness.447: <witness> = custom_witness (), @TrivialDestroyImpl [concrete]
-// CHECK:STDOUT:   %TrivialDestroy.facet.d78: %TrivialDestroy.type = facet_value %EmptyClass, (%custom_witness.447, %custom_witness.b80ef6.2, %DestroyImpl.impl_witness.ec0) [concrete]
-// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn.6bc: <specific function> = specific_function %CheckHasTrivialDestruction, @CheckHasTrivialDestruction(%TrivialDestroy.facet.d78) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.facet.58f: %TrivialDestroy.type = facet_value %EmptyClass, (%custom_witness.b80ef6.2, %DestroyImpl.impl_witness.ec0, %custom_witness.447) [concrete]
+// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn.999: <specific function> = specific_function %CheckHasTrivialDestruction, @CheckHasTrivialDestruction(%TrivialDestroy.facet.58f) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -436,11 +436,11 @@ fn TestTupleWithNestedTrivialTuple(x: (i32, (bool, i32))) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.ref: %CheckHasTrivialDestruction.type = name_ref CheckHasTrivialDestruction, imports.%Main.CheckHasTrivialDestruction [concrete = constants.%CheckHasTrivialDestruction]
 // CHECK:STDOUT:   %x.ref: %EmptyClass = name_ref x, %x
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc9_31.1: %TrivialDestroy.type = facet_value constants.%EmptyClass, (constants.%custom_witness.447, constants.%custom_witness.b80ef6.2, constants.%DestroyImpl.impl_witness.ec0) [concrete = constants.%TrivialDestroy.facet.d78]
-// CHECK:STDOUT:   %.loc9_31.1: %TrivialDestroy.type = converted constants.%EmptyClass, %TrivialDestroy.facet.loc9_31.1 [concrete = constants.%TrivialDestroy.facet.d78]
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc9_31.2: %TrivialDestroy.type = facet_value constants.%EmptyClass, (constants.%custom_witness.447, constants.%custom_witness.b80ef6.2, constants.%DestroyImpl.impl_witness.ec0) [concrete = constants.%TrivialDestroy.facet.d78]
-// CHECK:STDOUT:   %.loc9_31.2: %TrivialDestroy.type = converted constants.%EmptyClass, %TrivialDestroy.facet.loc9_31.2 [concrete = constants.%TrivialDestroy.facet.d78]
-// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction.ref, @CheckHasTrivialDestruction(constants.%TrivialDestroy.facet.d78) [concrete = constants.%CheckHasTrivialDestruction.specific_fn.6bc]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc9_31.1: %TrivialDestroy.type = facet_value constants.%EmptyClass, (constants.%custom_witness.b80ef6.2, constants.%DestroyImpl.impl_witness.ec0, constants.%custom_witness.447) [concrete = constants.%TrivialDestroy.facet.58f]
+// CHECK:STDOUT:   %.loc9_31.1: %TrivialDestroy.type = converted constants.%EmptyClass, %TrivialDestroy.facet.loc9_31.1 [concrete = constants.%TrivialDestroy.facet.58f]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc9_31.2: %TrivialDestroy.type = facet_value constants.%EmptyClass, (constants.%custom_witness.b80ef6.2, constants.%DestroyImpl.impl_witness.ec0, constants.%custom_witness.447) [concrete = constants.%TrivialDestroy.facet.58f]
+// CHECK:STDOUT:   %.loc9_31.2: %TrivialDestroy.type = converted constants.%EmptyClass, %TrivialDestroy.facet.loc9_31.2 [concrete = constants.%TrivialDestroy.facet.58f]
+// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction.ref, @CheckHasTrivialDestruction(constants.%TrivialDestroy.facet.58f) [concrete = constants.%CheckHasTrivialDestruction.specific_fn.999]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.call: init %empty_tuple.type = call %CheckHasTrivialDestruction.specific_fn(%x.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -471,8 +471,8 @@ fn TestTupleWithNestedTrivialTuple(x: (i32, (bool, i32))) {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.6b7: %SubobjectDestroy.type = facet_value %empty_struct_type, (%custom_witness.b80ef6.1) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.011: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.6b7) [concrete]
 // CHECK:STDOUT:   %custom_witness.447: <witness> = custom_witness (), @TrivialDestroyImpl [concrete]
-// CHECK:STDOUT:   %TrivialDestroy.facet.609: %TrivialDestroy.type = facet_value %empty_struct_type, (%custom_witness.447, %custom_witness.b80ef6.1, %DestroyImpl.impl_witness.011) [concrete]
-// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn.30e: <specific function> = specific_function %CheckHasTrivialDestruction, @CheckHasTrivialDestruction(%TrivialDestroy.facet.609) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.facet.216: %TrivialDestroy.type = facet_value %empty_struct_type, (%custom_witness.b80ef6.1, %DestroyImpl.impl_witness.011, %custom_witness.447) [concrete]
+// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn.147: <specific function> = specific_function %CheckHasTrivialDestruction, @CheckHasTrivialDestruction(%TrivialDestroy.facet.216) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -489,11 +489,11 @@ fn TestTupleWithNestedTrivialTuple(x: (i32, (bool, i32))) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.ref: %CheckHasTrivialDestruction.type = name_ref CheckHasTrivialDestruction, imports.%Main.CheckHasTrivialDestruction [concrete = constants.%CheckHasTrivialDestruction]
 // CHECK:STDOUT:   %.loc8_31.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_32.1: %TrivialDestroy.type = facet_value constants.%empty_struct_type, (constants.%custom_witness.447, constants.%custom_witness.b80ef6.1, constants.%DestroyImpl.impl_witness.011) [concrete = constants.%TrivialDestroy.facet.609]
-// CHECK:STDOUT:   %.loc8_32.1: %TrivialDestroy.type = converted constants.%empty_struct_type, %TrivialDestroy.facet.loc8_32.1 [concrete = constants.%TrivialDestroy.facet.609]
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_32.2: %TrivialDestroy.type = facet_value constants.%empty_struct_type, (constants.%custom_witness.447, constants.%custom_witness.b80ef6.1, constants.%DestroyImpl.impl_witness.011) [concrete = constants.%TrivialDestroy.facet.609]
-// CHECK:STDOUT:   %.loc8_32.2: %TrivialDestroy.type = converted constants.%empty_struct_type, %TrivialDestroy.facet.loc8_32.2 [concrete = constants.%TrivialDestroy.facet.609]
-// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction.ref, @CheckHasTrivialDestruction(constants.%TrivialDestroy.facet.609) [concrete = constants.%CheckHasTrivialDestruction.specific_fn.30e]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_32.1: %TrivialDestroy.type = facet_value constants.%empty_struct_type, (constants.%custom_witness.b80ef6.1, constants.%DestroyImpl.impl_witness.011, constants.%custom_witness.447) [concrete = constants.%TrivialDestroy.facet.216]
+// CHECK:STDOUT:   %.loc8_32.1: %TrivialDestroy.type = converted constants.%empty_struct_type, %TrivialDestroy.facet.loc8_32.1 [concrete = constants.%TrivialDestroy.facet.216]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_32.2: %TrivialDestroy.type = facet_value constants.%empty_struct_type, (constants.%custom_witness.b80ef6.1, constants.%DestroyImpl.impl_witness.011, constants.%custom_witness.447) [concrete = constants.%TrivialDestroy.facet.216]
+// CHECK:STDOUT:   %.loc8_32.2: %TrivialDestroy.type = converted constants.%empty_struct_type, %TrivialDestroy.facet.loc8_32.2 [concrete = constants.%TrivialDestroy.facet.216]
+// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction.ref, @CheckHasTrivialDestruction(constants.%TrivialDestroy.facet.216) [concrete = constants.%CheckHasTrivialDestruction.specific_fn.147]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc8_31.2: %empty_struct_type = converted %.loc8_31.1, %empty_struct [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.call: init %empty_tuple.type = call %CheckHasTrivialDestruction.specific_fn(%.loc8_31.2)
@@ -526,8 +526,8 @@ fn TestTupleWithNestedTrivialTuple(x: (i32, (bool, i32))) {
 // CHECK:STDOUT:   %SubobjectDestroy.facet.f89: %SubobjectDestroy.type = facet_value %empty_tuple.type, (%custom_witness.b80ef6.1) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.674: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.f89) [concrete]
 // CHECK:STDOUT:   %custom_witness.447: <witness> = custom_witness (), @TrivialDestroyImpl [concrete]
-// CHECK:STDOUT:   %TrivialDestroy.facet.3bb: %TrivialDestroy.type = facet_value %empty_tuple.type, (%custom_witness.447, %custom_witness.b80ef6.1, %DestroyImpl.impl_witness.674) [concrete]
-// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn.6e1: <specific function> = specific_function %CheckHasTrivialDestruction, @CheckHasTrivialDestruction(%TrivialDestroy.facet.3bb) [concrete]
+// CHECK:STDOUT:   %TrivialDestroy.facet.a8d: %TrivialDestroy.type = facet_value %empty_tuple.type, (%custom_witness.b80ef6.1, %DestroyImpl.impl_witness.674, %custom_witness.447) [concrete]
+// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn.f2b: <specific function> = specific_function %CheckHasTrivialDestruction, @CheckHasTrivialDestruction(%TrivialDestroy.facet.a8d) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -554,11 +554,11 @@ fn TestTupleWithNestedTrivialTuple(x: (i32, (bool, i32))) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.ref: %CheckHasTrivialDestruction.type = name_ref CheckHasTrivialDestruction, imports.%Main.CheckHasTrivialDestruction [concrete = constants.%CheckHasTrivialDestruction]
 // CHECK:STDOUT:   %x.ref: %empty_tuple.type = name_ref x, %x
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_31.1: %TrivialDestroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.447, constants.%custom_witness.b80ef6.1, constants.%DestroyImpl.impl_witness.674) [concrete = constants.%TrivialDestroy.facet.3bb]
-// CHECK:STDOUT:   %.loc8_31.1: %TrivialDestroy.type = converted constants.%empty_tuple.type, %TrivialDestroy.facet.loc8_31.1 [concrete = constants.%TrivialDestroy.facet.3bb]
-// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_31.2: %TrivialDestroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.447, constants.%custom_witness.b80ef6.1, constants.%DestroyImpl.impl_witness.674) [concrete = constants.%TrivialDestroy.facet.3bb]
-// CHECK:STDOUT:   %.loc8_31.2: %TrivialDestroy.type = converted constants.%empty_tuple.type, %TrivialDestroy.facet.loc8_31.2 [concrete = constants.%TrivialDestroy.facet.3bb]
-// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction.ref, @CheckHasTrivialDestruction(constants.%TrivialDestroy.facet.3bb) [concrete = constants.%CheckHasTrivialDestruction.specific_fn.6e1]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_31.1: %TrivialDestroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.b80ef6.1, constants.%DestroyImpl.impl_witness.674, constants.%custom_witness.447) [concrete = constants.%TrivialDestroy.facet.a8d]
+// CHECK:STDOUT:   %.loc8_31.1: %TrivialDestroy.type = converted constants.%empty_tuple.type, %TrivialDestroy.facet.loc8_31.1 [concrete = constants.%TrivialDestroy.facet.a8d]
+// CHECK:STDOUT:   %TrivialDestroy.facet.loc8_31.2: %TrivialDestroy.type = facet_value constants.%empty_tuple.type, (constants.%custom_witness.b80ef6.1, constants.%DestroyImpl.impl_witness.674, constants.%custom_witness.447) [concrete = constants.%TrivialDestroy.facet.a8d]
+// CHECK:STDOUT:   %.loc8_31.2: %TrivialDestroy.type = converted constants.%empty_tuple.type, %TrivialDestroy.facet.loc8_31.2 [concrete = constants.%TrivialDestroy.facet.a8d]
+// CHECK:STDOUT:   %CheckHasTrivialDestruction.specific_fn: <specific function> = specific_function %CheckHasTrivialDestruction.ref, @CheckHasTrivialDestruction(constants.%TrivialDestroy.facet.a8d) [concrete = constants.%CheckHasTrivialDestruction.specific_fn.f2b]
 // CHECK:STDOUT:   %CheckHasTrivialDestruction.call: init %empty_tuple.type = call %CheckHasTrivialDestruction.specific_fn(%x.ref)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

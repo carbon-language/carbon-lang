@@ -67,7 +67,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 4 %w.var, ptr align 4 @IntWrapper.val.loc14_3.1, i64 4, i1 false), !dbg !42
 // CHECK:STDOUT:   %IntWrapper.as.ImplicitAs.impl.Convert.call = call i32 @"_CConvert.IntWrapper.Main:ImplicitAs.55456748a8a2eb70.Core"(ptr %w.var), !dbg !45
 // CHECK:STDOUT:   call void @_CConsume.Main(i32 %IntWrapper.as.ImplicitAs.impl.Convert.call), !dbg !46
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.bca7988aa43d3b33(ptr %w.var), !dbg !42
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b75e154fba7ce8d1(ptr %w.var), !dbg !42
 // CHECK:STDOUT:   ret void, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -78,7 +78,7 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.bca7988aa43d3b33(ptr %t) #0 !dbg !50 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b75e154fba7ce8d1(ptr %t) #0 !dbg !50 {
 // CHECK:STDOUT:   ret void, !dbg !55
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -118,9 +118,9 @@ fn F(ref d: partial D) -> ref partial B {
 // CHECK:STDOUT: !47 = !{null, !21}
 // CHECK:STDOUT: !48 = !DISubroutineType(types: !47)
 // CHECK:STDOUT: !49 = !DILocation(line: 13, column: 1, scope: !41)
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.bca7988aa43d3b33", scope: null, file: !10, line: 30, type: !48, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !56)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b75e154fba7ce8d1", scope: null, file: !10, line: 32, type: !48, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !56)
 // CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !21)
-// CHECK:STDOUT: !55 = !DILocation(line: 30, column: 1, scope: !50)
+// CHECK:STDOUT: !55 = !DILocation(line: 32, column: 1, scope: !50)
 // CHECK:STDOUT: !56 = !{!51}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---

@@ -62,8 +62,8 @@ fn G() {
 // CHECK:STDOUT:   %int_1.1fb: %.2b9 = int_value 1 [concrete]
 // CHECK:STDOUT:   %C.F.type: type = fn_type @C.F [concrete]
 // CHECK:STDOUT:   %C.F: %C.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
@@ -72,7 +72,7 @@ fn G() {
 // CHECK:STDOUT:   %custom_witness.b80: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.a24: %SubobjectDestroy.type = facet_value %C, (%custom_witness.b80) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.955: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.a24) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %C, (%DestroyImpl.impl_witness.955, %custom_witness.b80) [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %C, (%DestroyImpl.impl_witness.955, %custom_witness.b80) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -133,10 +133,10 @@ fn G() {
 // CHECK:STDOUT:   %e.ref: %.2b9 = name_ref e, imports.%int_1.1fb [concrete = constants.%int_1.1fb]
 // CHECK:STDOUT:   %.loc10_11.4: %C = acquire_value %.loc10_11.3
 // CHECK:STDOUT:   %C.F.call: init %empty_tuple.type = call imports.%C.F.decl(%.loc10_11.4, %e.ref)
-// CHECK:STDOUT:   %facet_value.loc10_11.1: %facet_type = facet_value constants.%C, (constants.%DestroyImpl.impl_witness.955, constants.%custom_witness.b80) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc10_11.5: %facet_type = converted constants.%C, %facet_value.loc10_11.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc10_11.2: %facet_type = facet_value constants.%C, (constants.%DestroyImpl.impl_witness.955, constants.%custom_witness.b80) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc10_11.6: %facet_type = converted constants.%C, %facet_value.loc10_11.2 [concrete = constants.%facet_value]
+// CHECK:STDOUT:   %Destroy.facet.loc10_11.1: %Destroy.type = facet_value constants.%C, (constants.%DestroyImpl.impl_witness.955, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc10_11.5: %Destroy.type = converted constants.%C, %Destroy.facet.loc10_11.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc10_11.2: %Destroy.type = facet_value constants.%C, (constants.%DestroyImpl.impl_witness.955, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc10_11.6: %Destroy.type = converted constants.%C, %Destroy.facet.loc10_11.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc10_11.3)
 // CHECK:STDOUT:   return

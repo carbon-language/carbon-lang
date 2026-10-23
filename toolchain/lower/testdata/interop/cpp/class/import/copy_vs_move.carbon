@@ -156,7 +156,7 @@ fn PassTemporary() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc21_39.1.temp), !dbg !26
 // CHECK:STDOUT:   call void @_Z13make_copyablev.carbon_thunk.(ptr %.loc21_39.1.temp), !dbg !26
 // CHECK:STDOUT:   call void @_Z13pass_copyable8Copyable.carbon_thunk._(ptr %.loc21_39.1.temp), !dbg !27
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.8317741dd008c11f(ptr %.loc21_39.1.temp), !dbg !26
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e025e36f919918e8(ptr %.loc21_39.1.temp), !dbg !26
 // CHECK:STDOUT:   ret void, !dbg !28
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -181,7 +181,7 @@ fn PassTemporary() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.8317741dd008c11f(ptr %t) #1 !dbg !47 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.e025e36f919918e8(ptr %t) #1 !dbg !47 {
 // CHECK:STDOUT:   call void @_ZN8CopyableD1Ev(ptr %t), !dbg !51
 // CHECK:STDOUT:   ret void, !dbg !52
 // CHECK:STDOUT: }
@@ -242,10 +242,10 @@ fn PassTemporary() {
 // CHECK:STDOUT: !43 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !14, type: !20, spFlags: DISPFlagDefinition, unit: !15)
 // CHECK:STDOUT: !44 = !DILocation(line: 14, column: 23, scope: !43)
 // CHECK:STDOUT: !46 = !DILocation(line: 0, scope: !43)
-// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.8317741dd008c11f", scope: null, file: !4, line: 30, type: !18, spFlags: DISPFlagDefinition, unit: !15, retainedNodes: !53)
+// CHECK:STDOUT: !47 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.e025e36f919918e8", scope: null, file: !4, line: 32, type: !18, spFlags: DISPFlagDefinition, unit: !15, retainedNodes: !53)
 // CHECK:STDOUT: !48 = !DILocalVariable(arg: 1, scope: !47, type: !16)
-// CHECK:STDOUT: !51 = !DILocation(line: 32, column: 5, scope: !47)
-// CHECK:STDOUT: !52 = !DILocation(line: 30, column: 1, scope: !47)
+// CHECK:STDOUT: !51 = !DILocation(line: 34, column: 5, scope: !47)
+// CHECK:STDOUT: !52 = !DILocation(line: 32, column: 1, scope: !47)
 // CHECK:STDOUT: !53 = !{!48}
 // CHECK:STDOUT: !54 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !55 = !{!"omnipotent char", !54, i64 0}
@@ -307,7 +307,7 @@ fn PassTemporary() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !73
 // CHECK:STDOUT:   call void @_Z17make_copy_or_movev.carbon_thunk.(ptr %_.var), !dbg !74
 // CHECK:STDOUT:   call void @_Z17pass_copy_or_move10CopyOrMove.carbon_thunk.v(ptr %_.var), !dbg !75
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5b53d15ddb55a6e2(ptr %_.var), !dbg !73
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.220fc4c3137ec09a(ptr %_.var), !dbg !73
 // CHECK:STDOUT:   ret void, !dbg !76
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -345,7 +345,7 @@ fn PassTemporary() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.5b53d15ddb55a6e2(ptr %t) #1 !dbg !95 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.220fc4c3137ec09a(ptr %t) #1 !dbg !95 {
 // CHECK:STDOUT:   call void @_ZN10CopyOrMoveD1Ev(ptr %t), !dbg !99
 // CHECK:STDOUT:   ret void, !dbg !100
 // CHECK:STDOUT: }
@@ -419,10 +419,10 @@ fn PassTemporary() {
 // CHECK:STDOUT: !91 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !66, type: !20, spFlags: DISPFlagDefinition, unit: !67)
 // CHECK:STDOUT: !92 = !DILocation(line: 16, column: 25, scope: !91)
 // CHECK:STDOUT: !94 = !DILocation(line: 0, scope: !91)
-// CHECK:STDOUT: !95 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5b53d15ddb55a6e2", scope: null, file: !4, line: 30, type: !18, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !101)
+// CHECK:STDOUT: !95 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.220fc4c3137ec09a", scope: null, file: !4, line: 32, type: !18, spFlags: DISPFlagDefinition, unit: !67, retainedNodes: !101)
 // CHECK:STDOUT: !96 = !DILocalVariable(arg: 1, scope: !95, type: !16)
-// CHECK:STDOUT: !99 = !DILocation(line: 32, column: 5, scope: !95)
-// CHECK:STDOUT: !100 = !DILocation(line: 30, column: 1, scope: !95)
+// CHECK:STDOUT: !99 = !DILocation(line: 34, column: 5, scope: !95)
+// CHECK:STDOUT: !100 = !DILocation(line: 32, column: 1, scope: !95)
 // CHECK:STDOUT: !101 = !{!96}
 // CHECK:STDOUT: !102 = !{!"p1 _ZTS10CopyOrMove", !56, i64 0}
 // CHECK:STDOUT: !103 = !{!102, !102, i64 0}
@@ -461,7 +461,7 @@ fn PassTemporary() {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !110
 // CHECK:STDOUT:   call void @_Z14make_move_onlyv.carbon_thunk.(ptr %_.var), !dbg !111
 // CHECK:STDOUT:   call void @_Z14pass_move_only8MoveOnly.carbon_thunk.v(ptr %_.var), !dbg !112
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5bf528c71c41a02a(ptr %_.var), !dbg !110
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.a3949840fad44321(ptr %_.var), !dbg !110
 // CHECK:STDOUT:   ret void, !dbg !113
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -485,7 +485,7 @@ fn PassTemporary() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.5bf528c71c41a02a(ptr %t) #1 !dbg !118 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.a3949840fad44321(ptr %t) #1 !dbg !118 {
 // CHECK:STDOUT:   call void @_ZN8MoveOnlyD1Ev(ptr %t), !dbg !122
 // CHECK:STDOUT:   ret void, !dbg !123
 // CHECK:STDOUT: }
@@ -545,10 +545,10 @@ fn PassTemporary() {
 // CHECK:STDOUT: !114 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !105, type: !20, spFlags: DISPFlagDefinition, unit: !106)
 // CHECK:STDOUT: !115 = !DILocation(line: 20, column: 23, scope: !114)
 // CHECK:STDOUT: !117 = !DILocation(line: 0, scope: !114)
-// CHECK:STDOUT: !118 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5bf528c71c41a02a", scope: null, file: !4, line: 30, type: !18, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !124)
+// CHECK:STDOUT: !118 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.a3949840fad44321", scope: null, file: !4, line: 32, type: !18, spFlags: DISPFlagDefinition, unit: !106, retainedNodes: !124)
 // CHECK:STDOUT: !119 = !DILocalVariable(arg: 1, scope: !118, type: !16)
-// CHECK:STDOUT: !122 = !DILocation(line: 32, column: 5, scope: !118)
-// CHECK:STDOUT: !123 = !DILocation(line: 30, column: 1, scope: !118)
+// CHECK:STDOUT: !122 = !DILocation(line: 34, column: 5, scope: !118)
+// CHECK:STDOUT: !123 = !DILocation(line: 32, column: 1, scope: !118)
 // CHECK:STDOUT: !124 = !{!119}
 // CHECK:STDOUT: !125 = !{!"p1 _ZTS8MoveOnly", !56, i64 0}
 // CHECK:STDOUT: !126 = !{!125, !125, i64 0}

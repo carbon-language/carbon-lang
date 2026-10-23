@@ -66,12 +66,12 @@ void f() {
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
 // CHECK:STDOUT: define weak_odr void @"_C__destroy_thunk:thunk.A.Main"(ptr %self) #2 !dbg !16 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.e517637b3b58cb2c(ptr %self), !dbg !18
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6b8b385dcf82cc70(ptr %self), !dbg !18
 // CHECK:STDOUT:   ret void, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.e517637b3b58cb2c(ptr %t) #1 !dbg !21 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6b8b385dcf82cc70(ptr %t) #1 !dbg !21 {
 // CHECK:STDOUT:   ret void, !dbg !26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -109,9 +109,9 @@ void f() {
 // CHECK:STDOUT: !18 = !DILocation(line: 15, column: 1, scope: !16)
 // CHECK:STDOUT: !19 = !{!17}
 // CHECK:STDOUT: !20 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.e517637b3b58cb2c", scope: null, file: !20, line: 33, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !27)
+// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6b8b385dcf82cc70", scope: null, file: !20, line: 35, type: !11, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !27)
 // CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !21, type: !7)
-// CHECK:STDOUT: !26 = !DILocation(line: 33, column: 1, scope: !21)
+// CHECK:STDOUT: !26 = !DILocation(line: 35, column: 1, scope: !21)
 // CHECK:STDOUT: !27 = !{!22}
 // CHECK:STDOUT: !28 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !29 = !{!"omnipotent char", !28, i64 0}

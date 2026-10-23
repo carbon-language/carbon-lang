@@ -115,7 +115,7 @@ import library "check_destroy_format";
 import Cpp library "types.h";
 
 fn TestCppOverloadSet() {
-  // CHECK:STDERR: fail_cpp_overload_set.carbon:[[@LINE+4]]:3-35: error: cannot convert type `<type of Cpp.Function>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_cpp_overload_set.carbon:[[@LINE+4]]:3-35: error: cannot convert type `<type of Cpp.Function>` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_cpp_overload_set.carbon:[[@LINE-5]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -136,7 +136,7 @@ import library "check_destroy_format";
 import Cpp library "types.h";
 
 fn TestCppTemplateName() {
-  // CHECK:STDERR: fail_cpp_template_name.carbon:[[@LINE+4]]:3-35: error: cannot convert type `<type of Cpp.Template>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_cpp_template_name.carbon:[[@LINE+4]]:3-35: error: cannot convert type `<type of Cpp.Template>` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_cpp_template_name.carbon:[[@LINE-5]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -163,7 +163,7 @@ fn TestArrayOfDeletedDestructor(x: array(Cpp.DeletedDestructor, 2)) {
   // CHECK:STDERR: imported from: fail_array.carbon:[[@LINE-7]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_array.carbon:[[@LINE+4]]:3-24: error: cannot convert type `array(Cpp.DeletedDestructor, 2)` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_array.carbon:[[@LINE+4]]:3-24: error: cannot convert type `array(Cpp.DeletedDestructor, 2)` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_array.carbon:[[@LINE-11]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -178,7 +178,7 @@ fn TestArrayOfDeletedDestructor(x: array(Cpp.DeletedDestructor, 2)) {
 
 fn TestArrayOfArrayOfDeletedDestructor(
     x: array(array(Cpp.DeletedDestructor, 2), 3)) {
-  // CHECK:STDERR: fail_array.carbon:[[@LINE+4]]:3-24: error: cannot convert type `array(array(Cpp.DeletedDestructor, 2), 3)` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_array.carbon:[[@LINE+4]]:3-24: error: cannot convert type `array(array(Cpp.DeletedDestructor, 2), 3)` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_array.carbon:[[@LINE-26]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -206,7 +206,7 @@ fn TestDeletedDestructor(x: Cpp.DeletedDestructor) {
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-8]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `Cpp.DeletedDestructor` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `Cpp.DeletedDestructor` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-12]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -227,7 +227,7 @@ fn TestHasDeletedMember(x: Cpp.HasDeletedMember) {
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-29]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `Cpp.HasDeletedMember` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `Cpp.HasDeletedMember` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-33]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -241,7 +241,7 @@ fn TestHasDeletedMember(x: Cpp.HasDeletedMember) {
 }
 
 fn TestDeletedDestructorField(x: DeletedDestructorField) {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `DeletedDestructorField` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `DeletedDestructorField` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-47]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -255,7 +255,7 @@ fn TestDeletedDestructorField(x: DeletedDestructorField) {
 }
 
 fn TestNestedDeletedDestructorMember(x: NestedDeletedDestructorMember) {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `NestedDeletedDestructorMember` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `NestedDeletedDestructorMember` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-61]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -270,7 +270,7 @@ fn TestNestedDeletedDestructorMember(x: NestedDeletedDestructorMember) {
 
 fn TestDeletedDestructorAndTrivialMembers(
     x: DeletedDestructorAndTrivialMembers) {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `DeletedDestructorAndTrivialMembers` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `DeletedDestructorAndTrivialMembers` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-76]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -285,7 +285,7 @@ fn TestDeletedDestructorAndTrivialMembers(
 
 fn TestTrivialAndDeletedDestructorMembers(
     x: TrivialAndDeletedDestructorMembers) {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `TrivialAndDeletedDestructorMembers` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `TrivialAndDeletedDestructorMembers` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-91]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -300,7 +300,7 @@ fn TestTrivialAndDeletedDestructorMembers(
 
 fn TestDeletedDestructorBaseAndTrivialMember(
     x: DeletedDestructorBaseAndTrivialMember) {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `DeletedDestructorBaseAndTrivialMember` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `DeletedDestructorBaseAndTrivialMember` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-106]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -315,7 +315,7 @@ fn TestDeletedDestructorBaseAndTrivialMember(
 
 fn TestTrivialBaseAndDeletedDestructorMember(
     x: TrivialBaseAndDeletedDestructorMember) {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `TrivialBaseAndDeletedDestructorMember` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:3-24: error: cannot convert type `TrivialBaseAndDeletedDestructorMember` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-121]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -376,15 +376,15 @@ fn TestAdaptDeletedDestructor(x: AdaptDeletedDestructor) {
 library "[[@TEST_NAME]]";
 
 // CHECK:STDERR: imported from: fail_todo_class_cpp_carbon_cpp.carbon:[[@LINE+5]]:1 [InImport]
-// CHECK:STDERR: types.carbon:46:1-36: error: cannot convert type `CarbonHoldsDeletedDestructor` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: {{.*}}/prelude/destroy.carbon:33:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: types.carbon:46:1-36: error: cannot convert type `CarbonHoldsDeletedDestructor` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: {{.*}}/prelude/destroy.carbon:35:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 // CHECK:STDERR: types.carbon:46:36: error: attempt to use a deleted function [CppInteropParseError]
 import library "check_destroy_format";
 import library "types";
 // CHECK:STDERR: included from: fail_todo_class_cpp_carbon_cpp.carbon:[[@LINE+4]]:10 [InCppInclude]
 // CHECK:STDERR: ./types.h:3:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
-// CHECK:STDERR: {{.*}}/prelude/destroy.carbon:33:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR: {{.*}}/prelude/destroy.carbon:35:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 import Cpp library "types.h";
 
@@ -424,7 +424,7 @@ fn TestStructWithDeletedDestructor(x: {.d: Cpp.DeletedDestructor}) {
   // CHECK:STDERR: imported from: fail_struct.carbon:[[@LINE-7]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_struct.carbon:[[@LINE+4]]:3-24: error: cannot convert type `{.d: Cpp.DeletedDestructor}` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_struct.carbon:[[@LINE+4]]:3-24: error: cannot convert type `{.d: Cpp.DeletedDestructor}` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_struct.carbon:[[@LINE-11]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -438,7 +438,7 @@ fn TestStructWithDeletedDestructor(x: {.d: Cpp.DeletedDestructor}) {
 }
 
 fn TestStructWithNestedDeletedDestructor(x: {.a: {.d: Cpp.DeletedDestructor}}) {
-  // CHECK:STDERR: fail_struct.carbon:[[@LINE+4]]:3-24: error: cannot convert type `{.a: {.d: Cpp.DeletedDestructor}}` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_struct.carbon:[[@LINE+4]]:3-24: error: cannot convert type `{.a: {.d: Cpp.DeletedDestructor}}` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_struct.carbon:[[@LINE-25]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -453,7 +453,7 @@ fn TestStructWithNestedDeletedDestructor(x: {.a: {.d: Cpp.DeletedDestructor}}) {
 
 fn TestStructWithTrivialAndDeletedDestructor(
     x: {.a: i32, .d: Cpp.DeletedDestructor}) {
-  // CHECK:STDERR: fail_struct.carbon:[[@LINE+4]]:3-24: error: cannot convert type `{.a: i32, .d: Cpp.DeletedDestructor}` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_struct.carbon:[[@LINE+4]]:3-24: error: cannot convert type `{.a: i32, .d: Cpp.DeletedDestructor}` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_struct.carbon:[[@LINE-40]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -468,7 +468,7 @@ fn TestStructWithTrivialAndDeletedDestructor(
 
 fn TestStructWithDeletedDestructorAndTrivial(
     x: {.d: Cpp.DeletedDestructor, .a: i32}) {
-  // CHECK:STDERR: fail_struct.carbon:[[@LINE+4]]:3-24: error: cannot convert type `{.d: Cpp.DeletedDestructor, .a: i32}` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_struct.carbon:[[@LINE+4]]:3-24: error: cannot convert type `{.d: Cpp.DeletedDestructor, .a: i32}` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_struct.carbon:[[@LINE-55]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -495,7 +495,7 @@ fn TestTupleWithDeletedDestructor(x: (Cpp.DeletedDestructor,)) {
   // CHECK:STDERR: imported from: fail_tuple.carbon:[[@LINE-7]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_tuple.carbon:[[@LINE+4]]:3-24: error: cannot convert type `(Cpp.DeletedDestructor,)` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_tuple.carbon:[[@LINE+4]]:3-24: error: cannot convert type `(Cpp.DeletedDestructor,)` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_tuple.carbon:[[@LINE-11]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -509,7 +509,7 @@ fn TestTupleWithDeletedDestructor(x: (Cpp.DeletedDestructor,)) {
 }
 
 fn TestTupleWithNestedDeletedDestructor(x: ((Cpp.DeletedDestructor,),)) {
-  // CHECK:STDERR: fail_tuple.carbon:[[@LINE+4]]:3-24: error: cannot convert type `((Cpp.DeletedDestructor,),)` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_tuple.carbon:[[@LINE+4]]:3-24: error: cannot convert type `((Cpp.DeletedDestructor,),)` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_tuple.carbon:[[@LINE-25]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -523,7 +523,7 @@ fn TestTupleWithNestedDeletedDestructor(x: ((Cpp.DeletedDestructor,),)) {
 }
 
 fn TestTupleWithTrivialAndDeletedDestructor(x: (i32, Cpp.DeletedDestructor)) {
-  // CHECK:STDERR: fail_tuple.carbon:[[@LINE+4]]:3-24: error: cannot convert type `(i32, Cpp.DeletedDestructor)` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_tuple.carbon:[[@LINE+4]]:3-24: error: cannot convert type `(i32, Cpp.DeletedDestructor)` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_tuple.carbon:[[@LINE-39]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -537,7 +537,7 @@ fn TestTupleWithTrivialAndDeletedDestructor(x: (i32, Cpp.DeletedDestructor)) {
 }
 
 fn TestTupleWithDeletedDestructorAndTrivial(x: (Cpp.DeletedDestructor, i32)) {
-  // CHECK:STDERR: fail_tuple.carbon:[[@LINE+4]]:3-24: error: cannot convert type `(Cpp.DeletedDestructor, i32)` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_tuple.carbon:[[@LINE+4]]:3-24: error: cannot convert type `(Cpp.DeletedDestructor, i32)` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_tuple.carbon:[[@LINE-53]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:

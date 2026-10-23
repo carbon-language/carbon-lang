@@ -110,8 +110,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc20_19.2.temp, ptr %a), !dbg !54
 // CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc20_19.1.temp, ptr %.loc20_19.2.temp), !dbg !54
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc20_19.1.temp), !dbg !54
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.loc20_19.1.temp), !dbg !54
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.loc20_19.2.temp), !dbg !54
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc20_19.1.temp), !dbg !54
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc20_19.2.temp), !dbg !54
 // CHECK:STDOUT:   ret void, !dbg !54
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -119,13 +119,13 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %t) #0 !dbg !58 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %t) #0 !dbg !58 {
 // CHECK:STDOUT:   ret void, !dbg !63
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.b963e75af1c16acd, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6579a5013ba3dcd2, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline nounwind }
@@ -166,9 +166,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !55 = !{null, !21}
 // CHECK:STDOUT: !56 = !DISubroutineType(types: !55)
 // CHECK:STDOUT: !57 = !{!52}
-// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b963e75af1c16acd", scope: null, file: !10, line: 30, type: !56, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !64)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6579a5013ba3dcd2", scope: null, file: !10, line: 32, type: !56, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !64)
 // CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !58, type: !21)
-// CHECK:STDOUT: !63 = !DILocation(line: 30, column: 1, scope: !58)
+// CHECK:STDOUT: !63 = !DILocation(line: 32, column: 1, scope: !58)
 // CHECK:STDOUT: !64 = !{!59}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -187,8 +187,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc7_19.1.temp, ptr %a), !dbg !72
 // CHECK:STDOUT:   call void @"_CF.61ea2aba74ab3bf1:I.Main"(ptr %.loc7_20.2.temp, ptr %.loc7_19.1.temp), !dbg !73
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc7_20.2.temp), !dbg !74
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.loc7_20.2.temp), !dbg !73
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.loc7_19.1.temp), !dbg !72
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc7_20.2.temp), !dbg !73
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc7_19.1.temp), !dbg !72
 // CHECK:STDOUT:   ret void, !dbg !74
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -204,13 +204,13 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %t) #0 !dbg !76 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %t) #0 !dbg !76 {
 // CHECK:STDOUT:   ret void, !dbg !81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.b963e75af1c16acd, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6579a5013ba3dcd2, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -234,9 +234,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !73 = !DILocation(line: 7, column: 10, scope: !67)
 // CHECK:STDOUT: !74 = !DILocation(line: 7, column: 3, scope: !67)
 // CHECK:STDOUT: !75 = !{!68}
-// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b963e75af1c16acd", scope: null, file: !10, line: 30, type: !56, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !82)
+// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6579a5013ba3dcd2", scope: null, file: !10, line: 32, type: !56, spFlags: DISPFlagDefinition, unit: !66, retainedNodes: !82)
 // CHECK:STDOUT: !77 = !DILocalVariable(arg: 1, scope: !76, type: !21)
-// CHECK:STDOUT: !81 = !DILocation(line: 30, column: 1, scope: !76)
+// CHECK:STDOUT: !81 = !DILocation(line: 32, column: 1, scope: !76)
 // CHECK:STDOUT: !82 = !{!77}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -263,8 +263,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc9_19.2.temp, ptr %a), !dbg !97
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc9_19.1.temp, ptr %.loc9_19.2.temp), !dbg !97
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc9_19.1.temp), !dbg !97
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.loc9_19.1.temp), !dbg !97
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.loc9_19.2.temp), !dbg !97
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc9_19.1.temp), !dbg !97
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc9_19.2.temp), !dbg !97
 // CHECK:STDOUT:   ret void, !dbg !97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -276,13 +276,13 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %t) #0 !dbg !99 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %t) #0 !dbg !99 {
 // CHECK:STDOUT:   ret void, !dbg !104
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.b963e75af1c16acd, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6579a5013ba3dcd2, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline nounwind }
@@ -311,9 +311,9 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !95 = !DILocalVariable(arg: 1, scope: !94, type: !21)
 // CHECK:STDOUT: !97 = !DILocation(line: 9, column: 3, scope: !94)
 // CHECK:STDOUT: !98 = !{!95}
-// CHECK:STDOUT: !99 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b963e75af1c16acd", scope: null, file: !10, line: 30, type: !56, spFlags: DISPFlagDefinition, unit: !84, retainedNodes: !105)
+// CHECK:STDOUT: !99 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6579a5013ba3dcd2", scope: null, file: !10, line: 32, type: !56, spFlags: DISPFlagDefinition, unit: !84, retainedNodes: !105)
 // CHECK:STDOUT: !100 = !DILocalVariable(arg: 1, scope: !99, type: !21)
-// CHECK:STDOUT: !104 = !DILocation(line: 30, column: 1, scope: !99)
+// CHECK:STDOUT: !104 = !DILocation(line: 32, column: 1, scope: !99)
 // CHECK:STDOUT: !105 = !{!100}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
@@ -332,8 +332,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT:   call void @"_CConvert.A.Main:ImplicitAs.a6a60dfee2d7d273.Core"(ptr %.loc8_18.1.temp, ptr %a), !dbg !113
 // CHECK:STDOUT:   call void @"_CF.X.Main:I.Main"(ptr %.loc8_19.2.temp, ptr %.loc8_18.1.temp), !dbg !114
 // CHECK:STDOUT:   call void @"_CConvert.B.Main:ImplicitAs.9522ff908e97e267.Core"(ptr %return, ptr %.loc8_19.2.temp), !dbg !115
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.loc8_19.2.temp), !dbg !114
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %.loc8_18.1.temp), !dbg !113
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc8_19.2.temp), !dbg !114
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %.loc8_18.1.temp), !dbg !113
 // CHECK:STDOUT:   ret void, !dbg !115
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -349,13 +349,13 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %t) #0 !dbg !117 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %t) #0 !dbg !117 {
 // CHECK:STDOUT:   ret void, !dbg !122
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.b963e75af1c16acd, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6579a5013ba3dcd2, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -379,8 +379,8 @@ fn Test(a: A) -> C {
 // CHECK:STDOUT: !114 = !DILocation(line: 8, column: 10, scope: !108)
 // CHECK:STDOUT: !115 = !DILocation(line: 8, column: 3, scope: !108)
 // CHECK:STDOUT: !116 = !{!109}
-// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b963e75af1c16acd", scope: null, file: !10, line: 30, type: !56, spFlags: DISPFlagDefinition, unit: !107, retainedNodes: !123)
+// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6579a5013ba3dcd2", scope: null, file: !10, line: 32, type: !56, spFlags: DISPFlagDefinition, unit: !107, retainedNodes: !123)
 // CHECK:STDOUT: !118 = !DILocalVariable(arg: 1, scope: !117, type: !21)
-// CHECK:STDOUT: !122 = !DILocation(line: 30, column: 1, scope: !117)
+// CHECK:STDOUT: !122 = !DILocation(line: 32, column: 1, scope: !117)
 // CHECK:STDOUT: !123 = !{!118}
 // CHECK:STDOUT:

@@ -200,13 +200,13 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT:   %.loc34_11.2.temp = alloca {}, align 1, !dbg !54
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc32_11.2.temp), !dbg !50
 // CHECK:STDOUT:   call void @_CCallBF.Main.a6a60dfee2d7d273(ptr @B.val.loc8_45), !dbg !51
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b963e75af1c16acd(ptr @B.val), !dbg !50
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr @B.val), !dbg !50
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc33_11.2.temp), !dbg !52
 // CHECK:STDOUT:   call void @_CCallBF.Main.9522ff908e97e267(ptr @C.val.loc33_13.3), !dbg !53
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.38e0a41f1f1b0274(ptr @C.val), !dbg !52
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.356af3b6aef18564(ptr @C.val), !dbg !52
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc34_11.2.temp), !dbg !54
 // CHECK:STDOUT:   call void @_CCallBF.Main.931317eeae6ffe17(ptr @D.val.loc34_13.3), !dbg !55
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4ef1144724f11c12(ptr @D.val), !dbg !54
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.0ee92c77788c7639(ptr @D.val), !dbg !54
 // CHECK:STDOUT:   ret void, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -258,7 +258,7 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b963e75af1c16acd(ptr %t) #0 !dbg !76 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6579a5013ba3dcd2(ptr %t) #0 !dbg !76 {
 // CHECK:STDOUT:   ret void, !dbg !81
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -273,7 +273,7 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.38e0a41f1f1b0274(ptr %t) #0 !dbg !89 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.356af3b6aef18564(ptr %t) #0 !dbg !89 {
 // CHECK:STDOUT:   ret void, !dbg !94
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -288,7 +288,7 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.4ef1144724f11c12(ptr %t) #0 !dbg !102 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.0ee92c77788c7639(ptr %t) #0 !dbg !102 {
 // CHECK:STDOUT:   ret void, !dbg !107
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -353,27 +353,27 @@ fn CallCallF(a: A, b: B) {
 // CHECK:STDOUT: !73 = !DILocation(line: 27, column: 1, scope: !69)
 // CHECK:STDOUT: !74 = !{!70}
 // CHECK:STDOUT: !75 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b963e75af1c16acd", scope: null, file: !75, line: 33, type: !26, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !82)
+// CHECK:STDOUT: !76 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6579a5013ba3dcd2", scope: null, file: !75, line: 35, type: !26, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !82)
 // CHECK:STDOUT: !77 = !DILocalVariable(arg: 1, scope: !76, type: !24)
-// CHECK:STDOUT: !81 = !DILocation(line: 33, column: 1, scope: !76)
+// CHECK:STDOUT: !81 = !DILocation(line: 35, column: 1, scope: !76)
 // CHECK:STDOUT: !82 = !{!77}
 // CHECK:STDOUT: !83 = distinct !DISubprogram(name: "CallBF", linkageName: "_CCallBF.Main.9522ff908e97e267", scope: null, file: !22, line: 27, type: !26, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !88)
 // CHECK:STDOUT: !84 = !DILocalVariable(arg: 1, scope: !83, type: !24)
 // CHECK:STDOUT: !86 = !DILocation(line: 28, column: 3, scope: !83)
 // CHECK:STDOUT: !87 = !DILocation(line: 27, column: 1, scope: !83)
 // CHECK:STDOUT: !88 = !{!84}
-// CHECK:STDOUT: !89 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.38e0a41f1f1b0274", scope: null, file: !75, line: 33, type: !26, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !95)
+// CHECK:STDOUT: !89 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.356af3b6aef18564", scope: null, file: !75, line: 35, type: !26, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !95)
 // CHECK:STDOUT: !90 = !DILocalVariable(arg: 1, scope: !89, type: !24)
-// CHECK:STDOUT: !94 = !DILocation(line: 33, column: 1, scope: !89)
+// CHECK:STDOUT: !94 = !DILocation(line: 35, column: 1, scope: !89)
 // CHECK:STDOUT: !95 = !{!90}
 // CHECK:STDOUT: !96 = distinct !DISubprogram(name: "CallBF", linkageName: "_CCallBF.Main.931317eeae6ffe17", scope: null, file: !22, line: 27, type: !26, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !101)
 // CHECK:STDOUT: !97 = !DILocalVariable(arg: 1, scope: !96, type: !24)
 // CHECK:STDOUT: !99 = !DILocation(line: 28, column: 3, scope: !96)
 // CHECK:STDOUT: !100 = !DILocation(line: 27, column: 1, scope: !96)
 // CHECK:STDOUT: !101 = !{!97}
-// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4ef1144724f11c12", scope: null, file: !75, line: 33, type: !26, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !108)
+// CHECK:STDOUT: !102 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.0ee92c77788c7639", scope: null, file: !75, line: 35, type: !26, spFlags: DISPFlagDefinition, unit: !23, retainedNodes: !108)
 // CHECK:STDOUT: !103 = !DILocalVariable(arg: 1, scope: !102, type: !24)
-// CHECK:STDOUT: !107 = !DILocation(line: 33, column: 1, scope: !102)
+// CHECK:STDOUT: !107 = !DILocation(line: 35, column: 1, scope: !102)
 // CHECK:STDOUT: !108 = !{!103}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---

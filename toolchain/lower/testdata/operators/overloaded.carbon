@@ -99,7 +99,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc30_10.1.temp), !dbg !46
 // CHECK:STDOUT:   call void @"_COp.Number.Main:Negate.Core"(ptr %.loc30_10.1.temp, ptr %a), !dbg !46
 // CHECK:STDOUT:   call void @"_COp.Number.Main:MulWith.124acaad20680602.Core"(ptr %return, ptr %.loc30_10.1.temp, ptr %b), !dbg !46
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.9891b8395d360038(ptr %.loc30_10.1.temp), !dbg !46
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7f8479fbb1a0ad0f(ptr %.loc30_10.1.temp), !dbg !46
 // CHECK:STDOUT:   ret void, !dbg !50
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -107,7 +107,7 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.9891b8395d360038(ptr %t) #0 !dbg !53 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7f8479fbb1a0ad0f(ptr %t) #0 !dbg !53 {
 // CHECK:STDOUT:   ret void, !dbg !58
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -155,8 +155,8 @@ fn Calculate(a: Number, b: Number) -> Number {
 // CHECK:STDOUT: !50 = !DILocation(line: 30, column: 3, scope: !38)
 // CHECK:STDOUT: !51 = !{!39, !40}
 // CHECK:STDOUT: !52 = !DIFile(filename: "{{.*}}/prelude/destroy.carbon", directory: "")
-// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9891b8395d360038", scope: null, file: !52, line: 33, type: !49, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !59)
+// CHECK:STDOUT: !53 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7f8479fbb1a0ad0f", scope: null, file: !52, line: 35, type: !49, spFlags: DISPFlagDefinition, unit: !5, retainedNodes: !59)
 // CHECK:STDOUT: !54 = !DILocalVariable(arg: 1, scope: !53, type: !6)
-// CHECK:STDOUT: !58 = !DILocation(line: 33, column: 1, scope: !53)
+// CHECK:STDOUT: !58 = !DILocation(line: 35, column: 1, scope: !53)
 // CHECK:STDOUT: !59 = !{!54}
 // CHECK:STDOUT:

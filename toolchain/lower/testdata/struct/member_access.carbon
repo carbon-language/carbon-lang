@@ -40,9 +40,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !48
 // CHECK:STDOUT:   %.loc16_16 = load i32, ptr %y.var, align 4, !dbg !49
 // CHECK:STDOUT:   store i32 %.loc16_16, ptr %_.var, align 4, !dbg !48
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %_.var), !dbg !48
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %y.var), !dbg !45
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.917afdc590dc83b9(ptr %x.var), !dbg !42
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %_.var), !dbg !48
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %y.var), !dbg !45
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.c6179d2a8b6c8a3e(ptr %x.var), !dbg !42
 // CHECK:STDOUT:   ret i32 0, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -53,18 +53,18 @@ fn Run() -> i32 {
 // CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.dc5658e0ac74b2aa(ptr %t) #0 !dbg !57 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #0 !dbg !57 {
 // CHECK:STDOUT:   ret void, !dbg !62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.917afdc590dc83b9(ptr %t) #0 !dbg !64 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.c6179d2a8b6c8a3e(ptr %t) #0 !dbg !64 {
 // CHECK:STDOUT:   ret void, !dbg !69
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 2, 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.dc5658e0ac74b2aa, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.f127f30143696d51, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
@@ -93,12 +93,12 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !54 = !{null, !53}
 // CHECK:STDOUT: !55 = !DISubroutineType(types: !54)
 // CHECK:STDOUT: !56 = !DILocation(line: 17, column: 3, scope: !39)
-// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.dc5658e0ac74b2aa", scope: null, file: !26, line: 30, type: !52, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !63)
+// CHECK:STDOUT: !57 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !26, line: 32, type: !52, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !63)
 // CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !57, type: !36)
-// CHECK:STDOUT: !62 = !DILocation(line: 30, column: 1, scope: !57)
+// CHECK:STDOUT: !62 = !DILocation(line: 32, column: 1, scope: !57)
 // CHECK:STDOUT: !63 = !{!58}
-// CHECK:STDOUT: !64 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.917afdc590dc83b9", scope: null, file: !26, line: 30, type: !55, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !70)
+// CHECK:STDOUT: !64 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.c6179d2a8b6c8a3e", scope: null, file: !26, line: 32, type: !55, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !70)
 // CHECK:STDOUT: !65 = !DILocalVariable(arg: 1, scope: !64, type: !53)
-// CHECK:STDOUT: !69 = !DILocation(line: 30, column: 1, scope: !64)
+// CHECK:STDOUT: !69 = !DILocation(line: 32, column: 1, scope: !64)
 // CHECK:STDOUT: !70 = !{!65}
 // CHECK:STDOUT:

@@ -91,7 +91,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT:   %.loc20_11.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %c.var, i32 0, i32 0, !dbg !34
 // CHECK:STDOUT:   %.loc20_11.3.field = getelementptr inbounds nuw [16 x i8], ptr %.loc20_11.1.base, i32 0, i32 8, !dbg !34
 // CHECK:STDOUT:   %.loc20_11.4 = load i32, ptr %.loc20_11.3.field, align 4, !dbg !34
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.3b9adda7aef4dfe8(ptr %c.var), !dbg !29
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.3dc4bd5f34a0e76b(ptr %c.var), !dbg !29
 // CHECK:STDOUT:   ret i32 %.loc20_11.4, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -109,7 +109,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.3b9adda7aef4dfe8(ptr %t) #1 !dbg !36 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.3dc4bd5f34a0e76b(ptr %t) #1 !dbg !36 {
 // CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -154,9 +154,9 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !33 = !DILocation(line: 19, column: 3, scope: !26)
 // CHECK:STDOUT: !34 = !DILocation(line: 20, column: 10, scope: !26)
 // CHECK:STDOUT: !35 = !DILocation(line: 20, column: 3, scope: !26)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3b9adda7aef4dfe8", scope: null, file: !10, line: 30, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !42)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3dc4bd5f34a0e76b", scope: null, file: !10, line: 32, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !42)
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !36, type: !21)
-// CHECK:STDOUT: !41 = !DILocation(line: 30, column: 1, scope: !36)
+// CHECK:STDOUT: !41 = !DILocation(line: 32, column: 1, scope: !36)
 // CHECK:STDOUT: !42 = !{!37}
 // CHECK:STDOUT: !43 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !44 = !{!"omnipotent char", !43, i64 0}

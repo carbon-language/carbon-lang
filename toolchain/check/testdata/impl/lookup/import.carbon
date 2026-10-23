@@ -1753,8 +1753,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.type.cd1: type = generic_interface_type @GenericInterface [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -1769,7 +1769,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %X: %T.67d = symbolic_binding X, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T.67d [symbolic]
 // CHECK:STDOUT:   %X.patt.9f0: %pattern_type.51d = symbolic_binding_pattern X, 1 [symbolic]
-// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.ed9: type = pattern_type %GenericInterface.type.cd1 [concrete]
 // CHECK:STDOUT:   %X.patt.ff8: %pattern_type.ed9 = symbolic_binding_pattern X, 1 [symbolic]
 // CHECK:STDOUT:   %AnyParam.c70: type = class_type @AnyParam, @AnyParam(%GenericInterface.type.cd1, %GenericInterface.generic) [concrete]
@@ -1803,9 +1803,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %.b1b: type = fn_type_with_self_type %Y.WithSelf.K.type.347, %Y.facet [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
@@ -1814,8 +1814,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.a33: %SubobjectDestroy.type = facet_value %AnyParam.c70, (%custom_witness.b80ef6.2) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.536: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.a33) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %AnyParam.c70, (%DestroyImpl.impl_witness.536, %custom_witness.b80ef6.2) [concrete]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%facet_value) [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %AnyParam.c70, (%DestroyImpl.impl_witness.536, %custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -1859,7 +1859,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %PackageHasParam.import = import PackageHasParam
 // CHECK:STDOUT:   %GenericInterface.decl: %GenericInterface.type.cd1 = interface_decl @GenericInterface [concrete = constants.%GenericInterface.generic] {
-// CHECK:STDOUT:     %U.patt.loc6_29.1: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_29.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc6_29.1: %pattern_type.9a587c.1 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_29.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_31.1: type = splice_block %.loc6_31.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -1880,7 +1880,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @GenericInterface(%U.loc6_29.2: type) {
-// CHECK:STDOUT:   %U.patt.loc6_29.2: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_29.2 (constants.%U.patt)]
+// CHECK:STDOUT:   %U.patt.loc6_29.2: %pattern_type.9a587c.1 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_29.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %U.loc6_29.1: type = symbolic_binding U, 0 [symbolic = %U.loc6_29.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -1927,7 +1927,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @AnyParam(imports.%PackageHasParam.import_ref.b3b: type, imports.%PackageHasParam.import_ref.b42: @AnyParam.%T (%T.67d)) [from "has_param.carbon"] {
-// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.3a0)]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %X.patt: @AnyParam.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern X, 1 [symbolic = %X.patt (constants.%X.patt.9f0)]
@@ -1987,11 +1987,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %obj.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc14: %AnyParam.c70 = acquire_value %obj.ref
 // CHECK:STDOUT:   %AnyParam.as.Y.impl.K.call: init %empty_tuple.type = call %bound_method(%.loc14)
-// CHECK:STDOUT:   %facet_value.loc13_3.1: %facet_type = facet_value constants.%AnyParam.c70, (constants.%DestroyImpl.impl_witness.536, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc13_3.2: %facet_type = converted constants.%AnyParam.c70, %facet_value.loc13_3.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc13_3.2: %facet_type = facet_value constants.%AnyParam.c70, (constants.%DestroyImpl.impl_witness.536, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc13_3.3: %facet_type = converted constants.%AnyParam.c70, %facet_value.loc13_3.2 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%facet_value) [concrete = constants.%SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %Destroy.facet.loc13_3.1: %Destroy.type = facet_value constants.%AnyParam.c70, (constants.%DestroyImpl.impl_witness.536, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc13_3.2: %Destroy.type = converted constants.%AnyParam.c70, %Destroy.facet.loc13_3.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc13_3.2: %Destroy.type = facet_value constants.%AnyParam.c70, (constants.%DestroyImpl.impl_witness.536, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc13_3.3: %Destroy.type = converted constants.%AnyParam.c70, %Destroy.facet.loc13_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet) [concrete = constants.%SelfDestruct.specific_fn]
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%obj.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -2008,7 +2008,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: specific @GenericInterface.WithSelf(constants.%U, constants.%Self.2d4) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%T.67d, constants.%X) {
-// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T => constants.%T.67d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:   %X.patt => constants.%X.patt.9f0
@@ -2016,7 +2016,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%GenericInterface.type.cd1, constants.%GenericInterface.generic) {
-// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T => constants.%GenericInterface.type.cd1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.ed9
 // CHECK:STDOUT:   %X.patt => constants.%X.patt.ff8
@@ -2070,13 +2070,13 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %X: %T.67d = symbolic_binding X, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T.67d [symbolic]
 // CHECK:STDOUT:   %X.patt.9f0: %pattern_type.51d = symbolic_binding_pattern X, 1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.type.cd1: type = generic_interface_type @GenericInterface [concrete]
 // CHECK:STDOUT:   %GenericInterface.generic: %GenericInterface.type.cd1 = struct_value () [concrete]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %GenericInterface.type.5f5: type = facet_type <@GenericInterface, @GenericInterface(%U)> [symbolic]
-// CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   %U.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %Self.395: %GenericInterface.type.5f5 = symbolic_binding Self, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.ed9: type = pattern_type %GenericInterface.type.cd1 [concrete]
 // CHECK:STDOUT:   %X.patt.ff8: %pattern_type.ed9 = symbolic_binding_pattern X, 1 [symbolic]
@@ -2106,9 +2106,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %AnyParam.as.Y.impl.K: %AnyParam.as.Y.impl.K.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
@@ -2117,8 +2117,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.a33: %SubobjectDestroy.type = facet_value %AnyParam.c70, (%custom_witness.b80ef6.2) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.536: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.a33) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %AnyParam.c70, (%DestroyImpl.impl_witness.536, %custom_witness.b80ef6.2) [concrete]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%facet_value) [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %AnyParam.c70, (%DestroyImpl.impl_witness.536, %custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2178,7 +2178,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic interface @GenericInterface(imports.%PackageGenericInterface.import_ref.b3bc94.2: type) [from "has_generic_interface.carbon"] {
-// CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic = %U.patt (constants.%U.patt)]
+// CHECK:STDOUT:   %U.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern U, 0 [symbolic = %U.patt (constants.%U.patt)]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -2209,7 +2209,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @AnyParam(imports.%PackageHasParam.import_ref.b3b: type, imports.%PackageHasParam.import_ref.b42: @AnyParam.%T (%T.67d)) [from "has_param.carbon"] {
-// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.3a0)]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %X.patt: @AnyParam.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern X, 1 [symbolic = %X.patt (constants.%X.patt.9f0)]
@@ -2252,11 +2252,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %obj.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc10: %AnyParam.c70 = acquire_value %obj.ref
 // CHECK:STDOUT:   %AnyParam.as.Y.impl.K.call: init %empty_tuple.type = call %bound_method(%.loc10)
-// CHECK:STDOUT:   %facet_value.loc8_3.1: %facet_type = facet_value constants.%AnyParam.c70, (constants.%DestroyImpl.impl_witness.536, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc8_3.2: %facet_type = converted constants.%AnyParam.c70, %facet_value.loc8_3.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc8_3.2: %facet_type = facet_value constants.%AnyParam.c70, (constants.%DestroyImpl.impl_witness.536, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc8_3.3: %facet_type = converted constants.%AnyParam.c70, %facet_value.loc8_3.2 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%facet_value) [concrete = constants.%SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%AnyParam.c70, (constants.%DestroyImpl.impl_witness.536, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc8_3.2: %Destroy.type = converted constants.%AnyParam.c70, %Destroy.facet.loc8_3.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc8_3.2: %Destroy.type = facet_value constants.%AnyParam.c70, (constants.%DestroyImpl.impl_witness.536, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc8_3.3: %Destroy.type = converted constants.%AnyParam.c70, %Destroy.facet.loc8_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet) [concrete = constants.%SelfDestruct.specific_fn]
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%obj.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -2281,7 +2281,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_3.2(%self.param: ref %AnyParam.c70) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%T.67d, constants.%X) {
-// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T => constants.%T.67d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:   %X.patt => constants.%X.patt.9f0
@@ -2296,7 +2296,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: specific @GenericInterface.WithSelf(constants.%U, constants.%Self.395) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%GenericInterface.type.cd1, constants.%GenericInterface.generic) {
-// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T => constants.%GenericInterface.type.cd1
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.ed9
 // CHECK:STDOUT:   %X.patt => constants.%X.patt.ff8
@@ -2332,8 +2332,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
-// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %U.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
 // CHECK:STDOUT:   %GenericClass.type: type = parameterized_class_name_type @GenericClass [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
@@ -2347,7 +2347,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %X: %T.67d = symbolic_binding X, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T.67d [symbolic]
 // CHECK:STDOUT:   %X.patt.9f0: %pattern_type.51d = symbolic_binding_pattern X, 1 [symbolic]
-// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e92: type = pattern_type %GenericClass.type [concrete]
 // CHECK:STDOUT:   %X.patt.739: %pattern_type.e92 = symbolic_binding_pattern X, 1 [symbolic]
 // CHECK:STDOUT:   %AnyParam.a54: type = class_type @AnyParam, @AnyParam(%GenericClass.type, %GenericClass.generic) [concrete]
@@ -2381,9 +2381,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %.1b2: type = fn_type_with_self_type %Y.WithSelf.K.type.54e, %Y.facet [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
@@ -2392,8 +2392,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.d65: %SubobjectDestroy.type = facet_value %AnyParam.a54, (%custom_witness.b80ef6.2) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.e65: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.d65) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %AnyParam.a54, (%DestroyImpl.impl_witness.e65, %custom_witness.b80ef6.2) [concrete]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%facet_value) [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %AnyParam.a54, (%DestroyImpl.impl_witness.e65, %custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2437,7 +2437,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %PackageHasParam.import = import PackageHasParam
 // CHECK:STDOUT:   %GenericClass.decl: %GenericClass.type = class_decl @GenericClass [concrete = constants.%GenericClass.generic] {
-// CHECK:STDOUT:     %U.patt.loc6_21.1: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_21.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %U.patt.loc6_21.1: %pattern_type.9a587c.1 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_21.2 (constants.%U.patt)]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %.loc6_23.1: type = splice_block %.loc6_23.2 [concrete = type] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
@@ -2485,7 +2485,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @GenericClass(%U.loc6_21.2: type) {
-// CHECK:STDOUT:   %U.patt.loc6_21.2: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_21.2 (constants.%U.patt)]
+// CHECK:STDOUT:   %U.patt.loc6_21.2: %pattern_type.9a587c.1 = symbolic_binding_pattern U, 0 [symbolic = %U.patt.loc6_21.2 (constants.%U.patt)]
 // CHECK:STDOUT:   %U.loc6_21.1: type = symbolic_binding U, 0 [symbolic = %U.loc6_21.1 (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -2500,7 +2500,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @AnyParam(imports.%PackageHasParam.import_ref.b3b: type, imports.%PackageHasParam.import_ref.b42: @AnyParam.%T (%T.67d)) [from "has_param.carbon"] {
-// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.3a0)]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %X.patt: @AnyParam.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern X, 1 [symbolic = %X.patt (constants.%X.patt.9f0)]
@@ -2560,11 +2560,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %obj.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc14: %AnyParam.a54 = acquire_value %obj.ref
 // CHECK:STDOUT:   %AnyParam.as.Y.impl.K.call: init %empty_tuple.type = call %bound_method(%.loc14)
-// CHECK:STDOUT:   %facet_value.loc13_3.1: %facet_type = facet_value constants.%AnyParam.a54, (constants.%DestroyImpl.impl_witness.e65, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc13_3.2: %facet_type = converted constants.%AnyParam.a54, %facet_value.loc13_3.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc13_3.2: %facet_type = facet_value constants.%AnyParam.a54, (constants.%DestroyImpl.impl_witness.e65, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc13_3.3: %facet_type = converted constants.%AnyParam.a54, %facet_value.loc13_3.2 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%facet_value) [concrete = constants.%SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %Destroy.facet.loc13_3.1: %Destroy.type = facet_value constants.%AnyParam.a54, (constants.%DestroyImpl.impl_witness.e65, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc13_3.2: %Destroy.type = converted constants.%AnyParam.a54, %Destroy.facet.loc13_3.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc13_3.2: %Destroy.type = facet_value constants.%AnyParam.a54, (constants.%DestroyImpl.impl_witness.e65, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc13_3.3: %Destroy.type = converted constants.%AnyParam.a54, %Destroy.facet.loc13_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet) [concrete = constants.%SelfDestruct.specific_fn]
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%obj.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -2579,7 +2579,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%T.67d, constants.%X) {
-// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T => constants.%T.67d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:   %X.patt => constants.%X.patt.9f0
@@ -2587,7 +2587,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%GenericClass.type, constants.%GenericClass.generic) {
-// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T => constants.%GenericClass.type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e92
 // CHECK:STDOUT:   %X.patt => constants.%X.patt.739
@@ -2641,12 +2641,12 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %X: %T.67d = symbolic_binding X, 1 [symbolic]
 // CHECK:STDOUT:   %pattern_type.51d: type = pattern_type %T.67d [symbolic]
 // CHECK:STDOUT:   %X.patt.9f0: %pattern_type.51d = symbolic_binding_pattern X, 1 [symbolic]
-// CHECK:STDOUT:   %pattern_type.9a5: type = pattern_type type [concrete]
-// CHECK:STDOUT:   %T.patt.3a0: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic]
+// CHECK:STDOUT:   %pattern_type.9a587c.1: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %GenericClass.type: type = parameterized_class_name_type @GenericClass [concrete]
 // CHECK:STDOUT:   %GenericClass.generic: %GenericClass.type = struct_value () [concrete]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic]
-// CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic]
+// CHECK:STDOUT:   %U.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern U, 0 [symbolic]
 // CHECK:STDOUT:   %pattern_type.e92: type = pattern_type %GenericClass.type [concrete]
 // CHECK:STDOUT:   %X.patt.739: %pattern_type.e92 = symbolic_binding_pattern X, 1 [symbolic]
 // CHECK:STDOUT:   %AnyParam.a54: type = class_type @AnyParam, @AnyParam(%GenericClass.type, %GenericClass.generic) [concrete]
@@ -2675,9 +2675,9 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %AnyParam.as.Y.impl.K: %AnyParam.as.Y.impl.K.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %DestroyImpl.type: type = facet_type <@DestroyImpl> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
-// CHECK:STDOUT:   %facet_type: type = facet_type <@DestroyImpl & @SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
@@ -2686,8 +2686,8 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.d65: %SubobjectDestroy.type = facet_value %AnyParam.a54, (%custom_witness.b80ef6.2) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.e65: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.d65) [concrete]
-// CHECK:STDOUT:   %facet_value: %facet_type = facet_value %AnyParam.a54, (%DestroyImpl.impl_witness.e65, %custom_witness.b80ef6.2) [concrete]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%facet_value) [concrete]
+// CHECK:STDOUT:   %Destroy.facet: %Destroy.type = facet_value %AnyParam.a54, (%DestroyImpl.impl_witness.e65, %custom_witness.b80ef6.2) [concrete]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function %SelfDestruct, @SelfDestruct(%Destroy.facet) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -2762,7 +2762,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @AnyParam(imports.%PackageHasParam.import_ref.b3b: type, imports.%PackageHasParam.import_ref.b42: @AnyParam.%T (%T.67d)) [from "has_param.carbon"] {
-// CHECK:STDOUT:   %T.patt: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.3a0)]
+// CHECK:STDOUT:   %T.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic = %T.patt (constants.%T.patt.3a0592.1)]
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T.67d)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %T [symbolic = %pattern_type (constants.%pattern_type.51d)]
 // CHECK:STDOUT:   %X.patt: @AnyParam.%pattern_type (%pattern_type.51d) = symbolic_binding_pattern X, 1 [symbolic = %X.patt (constants.%X.patt.9f0)]
@@ -2779,7 +2779,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic class @GenericClass(imports.%PackageGenericClass.import_ref.b3b: type) [from "has_generic_class.carbon"] {
-// CHECK:STDOUT:   %U.patt: %pattern_type.9a5 = symbolic_binding_pattern U, 0 [symbolic = %U.patt (constants.%U.patt)]
+// CHECK:STDOUT:   %U.patt: %pattern_type.9a587c.1 = symbolic_binding_pattern U, 0 [symbolic = %U.patt (constants.%U.patt)]
 // CHECK:STDOUT:   %U: type = symbolic_binding U, 0 [symbolic = %U (constants.%U)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -2819,11 +2819,11 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %obj.ref, %impl.elem0
 // CHECK:STDOUT:   %.loc9: %AnyParam.a54 = acquire_value %obj.ref
 // CHECK:STDOUT:   %AnyParam.as.Y.impl.K.call: init %empty_tuple.type = call %bound_method(%.loc9)
-// CHECK:STDOUT:   %facet_value.loc8_3.1: %facet_type = facet_value constants.%AnyParam.a54, (constants.%DestroyImpl.impl_witness.e65, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc8_3.2: %facet_type = converted constants.%AnyParam.a54, %facet_value.loc8_3.1 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %facet_value.loc8_3.2: %facet_type = facet_value constants.%AnyParam.a54, (constants.%DestroyImpl.impl_witness.e65, constants.%custom_witness.b80ef6.2) [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %.loc8_3.3: %facet_type = converted constants.%AnyParam.a54, %facet_value.loc8_3.2 [concrete = constants.%facet_value]
-// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%facet_value) [concrete = constants.%SelfDestruct.specific_fn]
+// CHECK:STDOUT:   %Destroy.facet.loc8_3.1: %Destroy.type = facet_value constants.%AnyParam.a54, (constants.%DestroyImpl.impl_witness.e65, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc8_3.2: %Destroy.type = converted constants.%AnyParam.a54, %Destroy.facet.loc8_3.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc8_3.2: %Destroy.type = facet_value constants.%AnyParam.a54, (constants.%DestroyImpl.impl_witness.e65, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc8_3.3: %Destroy.type = converted constants.%AnyParam.a54, %Destroy.facet.loc8_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet) [concrete = constants.%SelfDestruct.specific_fn]
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%obj.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -2848,7 +2848,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8_3.2(%self.param: ref %AnyParam.a54) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%T.67d, constants.%X) {
-// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T => constants.%T.67d
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.51d
 // CHECK:STDOUT:   %X.patt => constants.%X.patt.9f0
@@ -2861,7 +2861,7 @@ fn Test(c: HasExtraInterfaces.C(type)) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @AnyParam(constants.%GenericClass.type, constants.%GenericClass.generic) {
-// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0
+// CHECK:STDOUT:   %T.patt => constants.%T.patt.3a0592.1
 // CHECK:STDOUT:   %T => constants.%GenericClass.type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e92
 // CHECK:STDOUT:   %X.patt => constants.%X.patt.739

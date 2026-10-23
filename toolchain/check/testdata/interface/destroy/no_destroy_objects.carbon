@@ -59,7 +59,7 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestAssociatedEntity() {
-  // CHECK:STDERR: fail_associated_entity.carbon:[[@LINE+4]]:3-26: error: cannot convert type `<associated entity in I>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_associated_entity.carbon:[[@LINE+4]]:3-26: error: cannot convert type `<associated entity in I>` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_associated_entity.carbon:[[@LINE-5]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -80,7 +80,7 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestGenericInterface() {
-  // CHECK:STDERR: fail_generic_interface.carbon:[[@LINE+4]]:3-39: error: cannot convert type `<type of GenericInterface>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_generic_interface.carbon:[[@LINE+4]]:3-39: error: cannot convert type `<type of GenericInterface>` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_generic_interface.carbon:[[@LINE-5]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -101,7 +101,7 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestGenericNamedConstraint() {
-  // CHECK:STDERR: fail_generic_named_constraint.carbon:[[@LINE+4]]:3-40: error: cannot convert type `<type of GenericConstraint>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_generic_named_constraint.carbon:[[@LINE+4]]:3-40: error: cannot convert type `<type of GenericConstraint>` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_generic_named_constraint.carbon:[[@LINE-5]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -123,7 +123,7 @@ import library "check_destroy_format";
 namespace N;
 
 fn TestNamespace() {
-  // CHECK:STDERR: fail_namespace.carbon:[[@LINE+4]]:3-24: error: cannot convert type `<namespace>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_namespace.carbon:[[@LINE+4]]:3-24: error: cannot convert type `<namespace>` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_namespace.carbon:[[@LINE-6]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -144,7 +144,7 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestGenericClass() {
-  // CHECK:STDERR: fail_parameterized_class.carbon:[[@LINE+4]]:3-30: error: cannot convert type `<type of Generic>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_parameterized_class.carbon:[[@LINE+4]]:3-30: error: cannot convert type `<type of Generic>` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_parameterized_class.carbon:[[@LINE-5]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
@@ -165,7 +165,7 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestUnboundElement() {
-  // CHECK:STDERR: fail_unbound_element.carbon:[[@LINE+4]]:3-26: error: cannot convert type `<unbound element of class C>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_unbound_element.carbon:[[@LINE+4]]:3-26: error: cannot convert type `<unbound element of class C>` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_unbound_element.carbon:[[@LINE-5]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:

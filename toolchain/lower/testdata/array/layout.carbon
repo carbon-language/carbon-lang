@@ -50,7 +50,7 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT:   %.loc12_13.array.index = getelementptr inbounds [3 x <{ <{ ptr, i32 }>, [4 x i8] }>], ptr %v.var, i32 0, i32 2, !dbg !37
 // CHECK:STDOUT:   %.loc12_14.b = getelementptr inbounds nuw <{ ptr, i32 }>, ptr %.loc12_13.array.index, i32 0, i32 1, !dbg !37
 // CHECK:STDOUT:   call void @_CCheck.Main(ptr %.loc12_14.b), !dbg !39
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.d005fb008fae5f92(ptr %v.var), !dbg !29
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.bcc30dc1c10b07a0(ptr %v.var), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -58,7 +58,7 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.d005fb008fae5f92(ptr %t) #0 !dbg !41 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.bcc30dc1c10b07a0(ptr %t) #0 !dbg !41 {
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -87,9 +87,9 @@ var c: array(Core.Int(257), 5) = (1, 2, 3, 4, 5);
 // CHECK:STDOUT: !37 = !DILocation(line: 12, column: 10, scope: !28)
 // CHECK:STDOUT: !39 = !DILocation(line: 12, column: 3, scope: !28)
 // CHECK:STDOUT: !40 = !DILocation(line: 5, column: 1, scope: !28)
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.d005fb008fae5f92", scope: null, file: !14, line: 30, type: !25, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !47)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.bcc30dc1c10b07a0", scope: null, file: !14, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !21, retainedNodes: !47)
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !41, type: !23)
-// CHECK:STDOUT: !46 = !DILocation(line: 30, column: 1, scope: !41)
+// CHECK:STDOUT: !46 = !DILocation(line: 32, column: 1, scope: !41)
 // CHECK:STDOUT: !47 = !{!42}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---

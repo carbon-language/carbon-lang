@@ -66,7 +66,7 @@ import library "types";
 // `IdentityBox(T)` is used instead of `Identity(T)`, because a check that
 // uses `Identity(T)` directly waits until `T` is known.
 fn TestCall(generic T: Core.Destroy) {
-  // CHECK:STDERR: fail_call.carbon:[[@LINE+4]]:27-40: error: cannot convert type `IdentityBox(T)` into type implementing `Core.DestroyImpl & Core.SubobjectDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_call.carbon:[[@LINE+4]]:27-40: error: cannot convert type `IdentityBox(T)` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_call.carbon:[[@LINE-7]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:35-49: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
@@ -87,7 +87,7 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestAssociatedType(generic T: HasUnconstrainedAssociatedType) {
-  // CHECK:STDERR: fail_impl_witness_access.carbon:[[@LINE+4]]:27-29: error: cannot convert type `T.(HasUnconstrainedAssociatedType.U)` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_impl_witness_access.carbon:[[@LINE+4]]:27-29: error: cannot convert type `T.(HasUnconstrainedAssociatedType.U)` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_impl_witness_access.carbon:[[@LINE-5]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:35-49: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
@@ -107,7 +107,7 @@ library "[[@TEST_NAME]]";
 import library "check_destroy_format";
 
 fn TestUnconstrained(generic T: type) {
-  // CHECK:STDERR: fail_symbolic_binding.carbon:[[@LINE+4]]:27: error: cannot convert type `T` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_symbolic_binding.carbon:[[@LINE+4]]:27: error: cannot convert type `T` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_symbolic_binding.carbon:[[@LINE-4]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:35-49: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
@@ -127,13 +127,13 @@ library "[[@TEST_NAME]]";
 import library "check_destroy_format";
 
 fn TestTupleAccess(generic T: (type, type)) {
-  // CHECK:STDERR: fail_tuple_access.carbon:[[@LINE+4]]:27-29: error: cannot convert type `<cannot stringify inst69000076: {kind: TupleAccess, arg0: inst69000023, arg1: element0, type: type(TypeType)}>` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_tuple_access.carbon:[[@LINE+4]]:27-29: error: cannot convert type `<cannot stringify inst69000084: {kind: TupleAccess, arg0: inst69000023, arg1: element0, type: type(TypeType)}>` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_tuple_access.carbon:[[@LINE-4]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:35-49: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   CheckTypeHasDestruction(T.0);
 
-  // CHECK:STDERR: fail_tuple_access.carbon:[[@LINE+4]]:34-36: error: cannot convert type `<cannot stringify inst69000076: {kind: TupleAccess, arg0: inst69000023, arg1: element0, type: type(TypeType)}>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_tuple_access.carbon:[[@LINE+4]]:34-36: error: cannot convert type `<cannot stringify inst69000084: {kind: TupleAccess, arg0: inst69000023, arg1: element0, type: type(TypeType)}>` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_tuple_access.carbon:[[@LINE-10]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:19:42-63: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
@@ -148,7 +148,7 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestIncomplete() {
-  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:27-36: error: cannot convert type `Incomplete` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_incomplete.carbon:[[@LINE+4]]:27-36: error: cannot convert type `Incomplete` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_incomplete.carbon:[[@LINE-5]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:35-49: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
@@ -169,7 +169,7 @@ import library "check_destroy_format";
 import library "types";
 
 fn TestAbstract() {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:27-34: error: cannot convert type `Abstract` into type implementing `Core.SubobjectDestroy & Core.DestroyImpl` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_class.carbon:[[@LINE+4]]:27-34: error: cannot convert type `Abstract` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: imported from: fail_class.carbon:[[@LINE-5]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:35-49: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:

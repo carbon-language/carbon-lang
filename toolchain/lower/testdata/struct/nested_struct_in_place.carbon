@@ -31,7 +31,7 @@ fn G() {
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_74.1.a), !dbg !29
 // CHECK:STDOUT:   %.loc16_74.2.b = getelementptr inbounds nuw { { i32, i32, i32 }, { i32, i32, i32 } }, ptr %_.var, i32 0, i32 1, !dbg !28
 // CHECK:STDOUT:   call void @_CF.Main(ptr %.loc16_74.2.b), !dbg !30
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.7b358e8f7a856674(ptr %_.var), !dbg !27
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4cb6cde41f3c3d24(ptr %_.var), !dbg !27
 // CHECK:STDOUT:   ret void, !dbg !34
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -39,7 +39,7 @@ fn G() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.7b358e8f7a856674(ptr %t) #0 !dbg !35 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.4cb6cde41f3c3d24(ptr %t) #0 !dbg !35 {
 // CHECK:STDOUT:   ret void, !dbg !40
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -65,8 +65,8 @@ fn G() {
 // CHECK:STDOUT: !32 = !{null, !21}
 // CHECK:STDOUT: !33 = !DISubroutineType(types: !32)
 // CHECK:STDOUT: !34 = !DILocation(line: 15, column: 1, scope: !26)
-// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.7b358e8f7a856674", scope: null, file: !10, line: 30, type: !33, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !41)
+// CHECK:STDOUT: !35 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4cb6cde41f3c3d24", scope: null, file: !10, line: 32, type: !33, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !41)
 // CHECK:STDOUT: !36 = !DILocalVariable(arg: 1, scope: !35, type: !21)
-// CHECK:STDOUT: !40 = !DILocation(line: 30, column: 1, scope: !35)
+// CHECK:STDOUT: !40 = !DILocation(line: 32, column: 1, scope: !35)
 // CHECK:STDOUT: !41 = !{!36}
 // CHECK:STDOUT:
