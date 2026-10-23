@@ -184,6 +184,9 @@ class CheckUnit {
   // same witnesses.
   auto CheckPoisonedConcreteImplLookupQueries() -> void;
 
+  // Look for `impl` declarations that are invalid.
+  auto CheckImpls() -> void;
+
   // Does work after processing the parse tree, such as finishing the IR and
   // checking for missing contents.
   auto FinishRun() -> void;
