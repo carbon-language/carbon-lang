@@ -20,12 +20,14 @@ class D { adapt {}; }
 impl D as Z {}
 fn MakeD() -> D { return {} as D; }
 
+class E { adapt {}; }
+
 class C(T: Z) {
-  var d: i32;
+  var e: E;
 }
 
-fn Make[T: Z](unused t: T, d: i32 = 42) -> C(T) {
-  return {.d = d} as C(T);
+fn Make[T: Z](unused t: T, e: E = {} as E) -> C(T) {
+  return {.e = e} as C(T);
 }
 
 inline Cpp '''
