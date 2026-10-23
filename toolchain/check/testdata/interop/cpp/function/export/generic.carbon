@@ -443,14 +443,14 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @MakeC__carbon_thunk.f705bed865f18cbf(%_.param.loc12_37.1: ref %D, %_.param.loc12_37.2: ref %C.a55) {
+// CHECK:STDOUT: fn @MakeC__carbon_thunk.33a8815d83158b21(%_.param.loc12_37.1: ref %D, %_.param.loc12_37.2: ref %C.a55) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %MakeC__carbon_thunk.f705bed865f18cbf.ref: %MakeC.type = name_ref MakeC__carbon_thunk.f705bed865f18cbf, file.%MakeC.decl [concrete = constants.%MakeC]
+// CHECK:STDOUT:   %MakeC__carbon_thunk.33a8815d83158b21.ref: %MakeC.type = name_ref MakeC__carbon_thunk.33a8815d83158b21, file.%MakeC.decl [concrete = constants.%MakeC]
 // CHECK:STDOUT:   %Z.facet.loc12_37.1: %Z.type = facet_value constants.%D, (constants.%Z.impl_witness) [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   %.loc12_37.1: %Z.type = converted constants.%D, %Z.facet.loc12_37.1 [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   %Z.facet.loc12_37.2: %Z.type = facet_value constants.%D, (constants.%Z.impl_witness) [concrete = constants.%Z.facet]
 // CHECK:STDOUT:   %.loc12_37.2: %Z.type = converted constants.%D, %Z.facet.loc12_37.2 [concrete = constants.%Z.facet]
-// CHECK:STDOUT:   %MakeC.specific_fn: <specific function> = specific_function %MakeC__carbon_thunk.f705bed865f18cbf.ref, @MakeC(constants.%Z.facet) [concrete = constants.%MakeC.specific_fn]
+// CHECK:STDOUT:   %MakeC.specific_fn: <specific function> = specific_function %MakeC__carbon_thunk.33a8815d83158b21.ref, @MakeC(constants.%Z.facet) [concrete = constants.%MakeC.specific_fn]
 // CHECK:STDOUT:   %.loc12_37.3: ref %empty_struct_type = as_compatible %_.param.loc12_37.1
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc12_37.4: %D = as_compatible %empty_struct [concrete = constants.%D.val]
@@ -489,30 +489,11 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %return.patt.loc12_29.2 => constants.%return.patt.a2c
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @C(file.%.loc11) {
-// CHECK:STDOUT:   %T.patt.loc11_10.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc11_10.1 => constants.%Z.facet
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Z.facet) {
 // CHECK:STDOUT:   %T.patt.loc11_10.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc11_10.1 => constants.%Z.facet
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @MakeC(file.%.loc12) {
-// CHECK:STDOUT:   %T.patt.loc12_11.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc12_11.1 => constants.%Z.facet
-// CHECK:STDOUT:   %T.as_type.loc12_26.1 => constants.%D
-// CHECK:STDOUT:   %pattern_type.loc12_24 => constants.%pattern_type.d8d
-// CHECK:STDOUT:   %t.param_patt.loc12_24.2 => constants.%t.param_patt.862
-// CHECK:STDOUT:   %t.patt.loc12_24.2 => constants.%t.patt.0d1
-// CHECK:STDOUT:   %C.loc12_35.1 => constants.%C.a55
-// CHECK:STDOUT:   %.loc12_35.1 => constants.%.c15
-// CHECK:STDOUT:   %pattern_type.loc12_35 => constants.%pattern_type.5d77
-// CHECK:STDOUT:   %return.param_patt.loc12_35.2 => constants.%return.param_patt.3b1
-// CHECK:STDOUT:   %return.patt.loc12_29.2 => constants.%return.patt.060
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @MakeC(constants.%Z.facet) {
@@ -953,14 +934,14 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F__carbon_thunk.26f2099a79512a5d(%_.param.loc24_23.1: ref %A, %_.param.loc24_23.2: ref %A) {
+// CHECK:STDOUT: fn @F__carbon_thunk.6662a1ffb773360a(%_.param.loc24_23.1: ref %A, %_.param.loc24_23.2: ref %A) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F__carbon_thunk.26f2099a79512a5d.ref: %F.type = name_ref F__carbon_thunk.26f2099a79512a5d, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F__carbon_thunk.6662a1ffb773360a.ref: %F.type = name_ref F__carbon_thunk.6662a1ffb773360a, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %I.facet.loc24_23.1: %I.type = facet_value constants.%A, (constants.%I.impl_witness.ca2) [concrete = constants.%I.facet.f31]
 // CHECK:STDOUT:   %.loc24_23.1: %I.type = converted constants.%A, %I.facet.loc24_23.1 [concrete = constants.%I.facet.f31]
 // CHECK:STDOUT:   %I.facet.loc24_23.2: %I.type = facet_value constants.%A, (constants.%I.impl_witness.ca2) [concrete = constants.%I.facet.f31]
 // CHECK:STDOUT:   %.loc24_23.2: %I.type = converted constants.%A, %I.facet.loc24_23.2 [concrete = constants.%I.facet.f31]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunk.26f2099a79512a5d.ref, @F(constants.%I.facet.f31) [concrete = constants.%F.specific_fn.45a]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunk.6662a1ffb773360a.ref, @F(constants.%I.facet.f31) [concrete = constants.%F.specific_fn.45a]
 // CHECK:STDOUT:   %.loc24_23.3: ref %A = splice_block %_.param.loc24_23.2 {}
 // CHECK:STDOUT:   %.loc24_23.4: %A = acquire_value %_.param.loc24_23.1
 // CHECK:STDOUT:   %F.call: init %A to %.loc24_23.3 = call %F.specific_fn(%.loc24_23.4)
@@ -968,14 +949,14 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @F__carbon_thunk.7a3b9f04ddf4269e(%_.param.loc24_23.1: ref %B, %_.param.loc24_23.2: ref %B) {
+// CHECK:STDOUT: fn @F__carbon_thunk.d53b17eed3ce903c(%_.param.loc24_23.1: ref %B, %_.param.loc24_23.2: ref %B) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F__carbon_thunk.7a3b9f04ddf4269e.ref: %F.type = name_ref F__carbon_thunk.7a3b9f04ddf4269e, file.%F.decl [concrete = constants.%F]
+// CHECK:STDOUT:   %F__carbon_thunk.d53b17eed3ce903c.ref: %F.type = name_ref F__carbon_thunk.d53b17eed3ce903c, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:   %I.facet.loc24_23.1: %I.type = facet_value constants.%B, (constants.%I.impl_witness.b14) [concrete = constants.%I.facet.a68]
 // CHECK:STDOUT:   %.loc24_23.1: %I.type = converted constants.%B, %I.facet.loc24_23.1 [concrete = constants.%I.facet.a68]
 // CHECK:STDOUT:   %I.facet.loc24_23.2: %I.type = facet_value constants.%B, (constants.%I.impl_witness.b14) [concrete = constants.%I.facet.a68]
 // CHECK:STDOUT:   %.loc24_23.2: %I.type = converted constants.%B, %I.facet.loc24_23.2 [concrete = constants.%I.facet.a68]
-// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunk.7a3b9f04ddf4269e.ref, @F(constants.%I.facet.a68) [concrete = constants.%F.specific_fn.dcc]
+// CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F__carbon_thunk.d53b17eed3ce903c.ref, @F(constants.%I.facet.a68) [concrete = constants.%F.specific_fn.dcc]
 // CHECK:STDOUT:   %.loc24_23.3: ref %B = splice_block %_.param.loc24_23.2 {}
 // CHECK:STDOUT:   %.loc24_23.4: %B = acquire_value %_.param.loc24_23.1
 // CHECK:STDOUT:   %F.call: init %B to %.loc24_23.3 = call %F.specific_fn(%.loc24_23.4)
@@ -1067,18 +1048,6 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %return.patt.loc6_17.2 => constants.%return.patt.2e6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(file.%.loc24_23.1) {
-// CHECK:STDOUT:   %T.patt.loc24_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc24_7.1 => constants.%I.facet.f31
-// CHECK:STDOUT:   %T.as_type.loc24_15.1 => constants.%A
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.9ef
-// CHECK:STDOUT:   %t.param_patt.loc24_13.2 => constants.%t.param_patt.169
-// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.490
-// CHECK:STDOUT:   %.loc24_21.2 => constants.%.cbf
-// CHECK:STDOUT:   %return.param_patt.loc24_21.2 => constants.%return.param_patt.f0c
-// CHECK:STDOUT:   %return.patt.loc24_18.2 => constants.%return.patt.a6d
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%I.facet.f31) {
 // CHECK:STDOUT:   %T.patt.loc24_7.2 => constants.%T.patt
 // CHECK:STDOUT:   %T.loc24_7.1 => constants.%I.facet.f31
@@ -1097,18 +1066,6 @@ void CallUnsupportedF() {
 // CHECK:STDOUT:   %I.lookup_impl_witness => constants.%I.impl_witness.ca2
 // CHECK:STDOUT:   %impl.elem0.loc25_11.2 => constants.%A.as.I.impl.Doit
 // CHECK:STDOUT:   %specific_impl_fn.loc25_11.2 => constants.%A.as.I.impl.Doit
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @F(file.%.loc24_23.2) {
-// CHECK:STDOUT:   %T.patt.loc24_7.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc24_7.1 => constants.%I.facet.a68
-// CHECK:STDOUT:   %T.as_type.loc24_15.1 => constants.%B
-// CHECK:STDOUT:   %pattern_type => constants.%pattern_type.e39
-// CHECK:STDOUT:   %t.param_patt.loc24_13.2 => constants.%t.param_patt.267
-// CHECK:STDOUT:   %t.patt.loc24_13.2 => constants.%t.patt.614
-// CHECK:STDOUT:   %.loc24_21.2 => constants.%.d83
-// CHECK:STDOUT:   %return.param_patt.loc24_21.2 => constants.%return.param_patt.934
-// CHECK:STDOUT:   %return.patt.loc24_18.2 => constants.%return.patt.911
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%I.facet.a68) {
