@@ -28,6 +28,7 @@ namespace {
 using ::testing::AllOf;
 using ::testing::ContainerEq;
 using ::testing::Contains;
+using ::testing::ContainsRegex;
 using ::testing::Each;
 using ::testing::Eq;
 using ::testing::Ge;
@@ -584,6 +585,43 @@ TEST_P(GenApiFileDenseDeclsParamsTest, LargeOutOfLineDefs) {
     EXPECT_TRUE(TestCompile(
         GetParam(), SourceGen(GetParam()).GenApiFileDenseDecls(3000, params)));
   }
+}
+
+// Plans declare class-typed locals (using both `Self` and other classes in both
+// inline and out-of-line definitions) and destructure tuples.
+TEST(SourceGenTest, GenApiFileDenseDeclsPlanDeclarations) {
+  SourceGen::DenseDeclParams params = {
+      .class_params = {.public_function_decls = 1,
+                       .public_method_decls = 2,
+                       .private_function_decls = 0,
+                       .private_method_decls = 1,
+                       .private_field_decls = 2,
+                       .inline_function_defs = 2,
+                       .inline_function_def_sizes = {{.statements = 40,
+                                                      .weight = 1}}},
+      .define_decls_out_of_line = true,
+      .out_of_line_def_sizes = {{.statements = 60, .weight = 1}}};
+
+  SourceGen carbon_gen;
+  std::string source = carbon_gen.GenApiFileDenseDecls(3000, params);
+  auto [carbon_inline, carbon_out_of_line] =
+      llvm::StringRef(source).split("\nfn ");
+  for (llvm::StringRef section : {carbon_inline, carbon_out_of_line}) {
+    EXPECT_THAT(section, HasSubstr(": Self = Make();"));
+    EXPECT_THAT(section, ContainsRegex("var [A-Za-z0-9_]+: [A-Za-z0-9_]{5,} = "
+                                       "[A-Za-z0-9_]+\\.Make\\(\\);"));
+  }
+  EXPECT_THAT(source, ContainsRegex("(let|var) \\([A-Za-z0-9_]+: "));
+
+  SourceGen cpp_gen(SourceGen::Language::Cpp);
+  source = cpp_gen.GenApiFileDenseDecls(3000, params);
+  auto [cpp_inline, cpp_out_of_line] = llvm::StringRef(source).split("\nauto ");
+  for (llvm::StringRef section : {cpp_inline, cpp_out_of_line}) {
+    EXPECT_THAT(section, HasSubstr(" = Self();"));
+    EXPECT_THAT(section, ContainsRegex("[A-Za-z0-9_]{5,} [A-Za-z0-9_]+ = "
+                                       "[A-Za-z0-9_]+\\(\\);"));
+  }
+  EXPECT_THAT(source, HasSubstr("auto ["));
 }
 
 // The line estimates have to track the emitted lines closely, or files miss
