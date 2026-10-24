@@ -646,6 +646,18 @@ TEST(SourceGenTest, GenApiFileDenseDeclsLineTargetAccuracy) {
                         .private_method_decl_params = {.max_params = 2},
                         .private_field_decls = 4},
        .define_decls_out_of_line = true});
+  // The realistic header shape.
+  param_set.push_back(
+      {.class_params = {.public_function_decls = 0,
+                        .public_method_decls = 2,
+                        .private_function_decls = 0,
+                        .private_method_decls = 0,
+                        .private_field_decls = 3,
+                        .inline_function_defs = 2,
+                        .inline_function_decl_params = {.max_params = 2},
+                        .inline_getters = 2,
+                        .inline_predicates = 1,
+                        .inline_forwarders = 2}});
 
   constexpr int TargetLines = 20000;
   for (const SourceGen::DenseDeclParams& params : param_set) {
