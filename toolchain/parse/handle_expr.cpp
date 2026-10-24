@@ -139,6 +139,11 @@ auto HandleExprInPostfix(Context& context) -> void {
       context.PushState(state);
       break;
     }
+    case Lex::TokenKind::Slice: {
+      context.AddLeafNode(NodeKind::SliceTypeLiteral, context.Consume());
+      context.PushState(state);
+      break;
+    }
     case Lex::TokenKind::DollarIntLiteral: {
       context.AddLeafNode(NodeKind::PositionalParamExpr, context.Consume());
       context.PushState(state);
