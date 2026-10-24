@@ -315,16 +315,27 @@ static auto RealisticHeaderParams() -> SourceGen::DenseDeclParams {
 // For simplicity, we compute a number of files from the target line count as a
 // heuristic, clamped to the `[min_files, max_files]` range provided by the
 // compilation harness.
-static auto ComputeFileCount(int target_lines, int min_files,
+static auto ComputeFileCount(Lang lang, int target_lines, int min_files,
                              [[maybe_unused]] int max_files) -> int {
+  if (IsBenchmarkDryRun()) {
+    // Dry runs only smoke-test that the benchmark runs cleanly, so generate and
+    // compile just two files. We do more than one to exercise our stability
+    // checks.
+    return 2;
+  }
   int file_count = (1024 * 1024) / target_lines;
+  if (lang == Lang::Cpp) {
+    // Reduce the number of files with C++ to balance the longer compile times.
+    file_count /= 2;
+  }
 #ifndef NDEBUG
   // Use a smaller number of files in debug builds where compiles are slower,
   // capping at the release-mode minimum.
-  return std::max(1, std::min(min_files, file_count));
+  file_count = std::min(min_files, file_count);
 #else
-  return std::max(min_files, std::min(max_files, file_count));
+  file_count = std::min(max_files, file_count);
 #endif
+  return std::max(min_files, file_count);
 }
 
 template <Lang L, Phase P, Mode M = Mode::InProcess>
@@ -333,61 +344,46 @@ static auto RunApiFileBenchmark(benchmark::State& state,
     -> void {
   using Compiler = CompilerFor<L, M>;
   Compiler bench;
-  CompileHelper carbon_compile_helper;
 
   int target_lines = state.range(0);
   int num_files =
-      ComputeFileCount(target_lines, Compiler::MinFiles, Compiler::MaxFiles);
-  if constexpr (L == Lang::Cpp) {
-    // Reduce the number of files with C++ to balance the longer compile times.
-    num_files /= 2;
-  }
+      ComputeFileCount(L, target_lines, Compiler::MinFiles, Compiler::MaxFiles);
 
   llvm::SmallVector<std::string> sources;
   sources.reserve(num_files);
-
-  double total_bytes = 0.0;
-  double total_lines = 0.0;
-  double total_tokens = 0.0;
-
-  ssize_t first_bytes = 0;
-  ssize_t first_lines = 0;
-
   for (auto _ : llvm::seq(num_files)) {
     sources.push_back(bench.gen().GenApiFileDenseDecls(target_lines, params));
-    const auto& source = sources.back();
-    ssize_t bytes = source.size();
-    ssize_t lines = llvm::count(source, '\n');
-
-    total_bytes += bytes;
-    total_lines += lines;
-    if constexpr (L == Lang::Carbon) {
-      total_tokens += carbon_compile_helper.GetTokenizedBuffer(source).size();
-    }
-
-    // The generator varies each file's content but not its size, which keeps
-    // results comparable across files and runs.
-    if (sources.size() == 1) {
-      first_bytes = bytes;
-      first_lines = lines;
-      continue;
-    }
-
-    CARBON_CHECK(bytes == first_bytes,
-                 "Generated file {0} has {1} bytes but file 0 has {2}.",
-                 sources.size() - 1, bytes, first_bytes);
-    CARBON_CHECK(lines == first_lines,
-                 "Generated file {0} has {1} lines but file 0 has {2}.",
-                 sources.size() - 1, lines, first_lines);
   }
 
+  ssize_t bytes = sources[0].size();
+  ssize_t lines = llvm::count(sources[0], '\n');
+
+  for (llvm::StringRef source : llvm::ArrayRef(sources).drop_front()) {
+    // The generator varies each file's content but not its size, which keeps
+    // results comparable across files and runs.
+    ssize_t file_bytes = source.size();
+    ssize_t file_lines = llvm::count(source, '\n');
+
+    CARBON_CHECK(file_bytes == bytes,
+                 "Generated file has {0} bytes but expected {1}.", file_bytes,
+                 bytes);
+    CARBON_CHECK(file_lines == lines,
+                 "Generated file has {0} lines but expected {1}.", file_lines,
+                 lines);
+  }
   state.counters["Bytes"] =
-      benchmark::Counter(total_bytes / sources.size(),
-                         benchmark::Counter::kIsIterationInvariantRate);
+      benchmark::Counter(bytes, benchmark::Counter::kIsIterationInvariantRate);
   state.counters["Lines"] =
-      benchmark::Counter(total_lines / sources.size(),
-                         benchmark::Counter::kIsIterationInvariantRate);
+      benchmark::Counter(lines, benchmark::Counter::kIsIterationInvariantRate);
+
+  // TODO: The token count should be stable as well, so we should be able to
+  // switch it to the pattern above.
   if constexpr (L == Lang::Carbon) {
+    double total_tokens = 0.0;
+    CompileHelper carbon_compile_helper;
+    for (llvm::StringRef source : sources) {
+      total_tokens += carbon_compile_helper.GetTokenizedBuffer(source).size();
+    }
     state.counters["Tokens"] =
         benchmark::Counter(total_tokens / sources.size(),
                            benchmark::Counter::kIsIterationInvariantRate);
