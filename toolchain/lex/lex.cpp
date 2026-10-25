@@ -1389,7 +1389,9 @@ auto Lexer::CanFormRealLiteral() -> bool {
   if (has_leading_space_) {
     return true;
   }
-  auto kind = buffer_.GetKind(buffer_.tokens().end()[-1]);
+  // The flat kind array isn't built until lexing finishes, so look at the
+  // token info directly.
+  auto kind = buffer_.token_infos_.Get(buffer_.tokens().end()[-1]).kind();
   return kind != TokenKind::Period && kind != TokenKind::MinusGreater;
 }
 
@@ -1683,7 +1685,8 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
 
   if (!has_leading_space_) {
     auto prev_token = buffer_.tokens().end()[-1];
-    auto kind = buffer_.GetKind(prev_token);
+    // The flat kind array isn't built yet, so look at the token info directly.
+    auto kind = buffer_.token_infos_.Get(prev_token).kind();
     if (kind.is_word()) {
       CARBON_DIAGNOSTIC(
           CharacterOnlyAllowedAtStart, Error,
@@ -1913,6 +1916,11 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
 }
 
 auto Lexer::Finalize() -> void {
+  // The token sequence is complete, except for any bracket recovery below, so
+  // build the flat token arrays. Bracket recovery reads them, and rebuilds them
+  // if it changes the sequence.
+  buffer_.BuildTokenArrays();
+
   // If we had any mismatched brackets, issue diagnostics and fix them.
   if (has_mismatched_brackets_ || !open_groups_.empty()) {
     DiagnoseAndFixMismatchedBrackets();
@@ -1963,7 +1971,8 @@ class Lexer::ErrorRecoveryBuffer {
   }
 
   // Replace the given token with an error token. We do this immediately,
-  // because we don't benefit from buffering it.
+  // because we don't benefit from buffering it. The flat token arrays are
+  // brought up to date when `Apply` rebuilds them.
   auto ReplaceWithError(TokenIndex token) -> void {
     auto& token_info = buffer_->token_infos_.Get(token);
     int error_length = buffer_->GetTokenText(token).size();
@@ -2014,6 +2023,9 @@ class Lexer::ErrorRecoveryBuffer {
       new_token_index_[old_idx.index] = buffer_->token_infos_.Add(
           old_tokens.Get(old_idx).WithLeadingSpace(false));
     }
+
+    // The token sequence changed, so rebuild the flat token arrays from it.
+    buffer_->BuildTokenArrays();
   }
 
   // Maps a token index from before `Apply` to the same token's index after it.

@@ -52,7 +52,7 @@ struct CharLiteralValue {
 class TokenInfo {
  public:
   // The kind for this token.
-  auto kind() const -> TokenKind { return kind_; }
+  auto kind() const -> TokenKind { return TokenKind::Make(kind_); }
 
   // Whether this token is preceded by whitespace. We only store the preceding
   // state, and look at the next token to check for trailing whitespace.
@@ -191,8 +191,8 @@ class TokenInfo {
   // token index. Stores to this field may overflow, but we produce an error
   // in `Lexer::Finalize` if the file has more than `TokenIndex::Max` tokens,
   // so this value never overflows if lexing succeeds.
-  TokenKind kind_;
-  static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
+  static_assert(sizeof(TokenKind) == 1, "TokenKind must pack to 8 bits");
+  TokenKind::RawEnumType kind_ : 8;
   bool has_leading_space_ : 1;
   unsigned token_payload_ : PayloadBits;
 
