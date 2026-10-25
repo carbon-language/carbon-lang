@@ -5,33 +5,21 @@
 #include "toolchain/format/formatter.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <utility>
 
 #include "common/check.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringExtras.h"
+#include "toolchain/format/comment.h"
 #include "toolchain/format/line_wrapper.h"
 #include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Format {
-
-static auto ReindentComment(llvm::StringRef text, int indent) -> std::string {
-  llvm::SmallVector<std::string> lines;
-  std::string indentation(indent, ' ');
-  llvm::SmallVector<llvm::StringRef> raw_lines;
-  text.split(raw_lines, '\n');
-  for (llvm::StringRef raw : raw_lines) {
-    llvm::StringRef line = raw.trim();
-    if (!line.empty()) {
-      lines.push_back(indentation + line.str());
-    }
-  }
-  return llvm::join(lines, "\n");
-}
 
 Formatter::Formatter(const Parse::Tree* tree, const Style& style)
     : tree_(tree),
@@ -258,6 +246,39 @@ auto Formatter::ComputeBlankLines(int next_start_byte, bool is_block_end)
       tokens_->source().text().slice(*last_end_byte_, next_start_byte));
 }
 
+auto Formatter::ShouldFlushBeforeComments(Lex::TokenIndex token) const -> bool {
+  if (llvm::any_of(current_line_, [&](Lex::TokenIndex tok) {
+        return token_infos_.Get(tok).verbatim_region_id >= 0;
+      })) {
+    return true;
+  }
+  Lex::TokenKind kind = tokens_->GetKind(token);
+  if (kind == Lex::TokenKind::FileEnd) {
+    return true;
+  }
+  if (tokens_->IsRecoveryToken(token)) {
+    return kind == Lex::TokenKind::CloseCurlyBrace ||
+           (kind == Lex::TokenKind::OpenCurlyBrace &&
+            NextToken(token) != tokens_->GetMatchedClosingToken(token));
+  }
+  return kind == Lex::TokenKind::CloseCurlyBrace &&
+         token_infos_.Get(token).role != TokenRole::StructClose;
+}
+
+auto Formatter::PushToken(Lex::TokenIndex token) -> void {
+  if (!mid_line_comments_.empty() &&
+      mid_line_comments_.back().before_index ==
+          static_cast<int>(current_line_.size())) {
+    int token_start = tokens_->GetByteOffset(token);
+    int prev_end = mid_line_comments_.back().end_byte;
+    if (token_start > prev_end) {
+      mid_line_comments_.back().blank_lines_after = ClampBlankLines(
+          tokens_->source().text().slice(prev_end, token_start));
+    }
+  }
+  current_line_.push_back(token);
+}
+
 auto Formatter::VerbatimGapBefore(Lex::TokenIndex token) const
     -> std::optional<llvm::StringRef> {
   int32_t region_id = token_infos_.Get(token).verbatim_region_id;
@@ -298,25 +319,65 @@ auto Formatter::FlushLine() -> void {
   bool has_verbatim = llvm::any_of(current_line_, [&](Lex::TokenIndex token) {
     return token_infos_.Get(token).verbatim_region_id >= 0;
   });
-  if (has_verbatim ||
-      indent_ + RenderedWidth(*tokens_, token_infos_, current_line_) <=
-          style_.column_limit) {
+  if (has_verbatim) {
+    newline_indents.assign(current_line_.size(), -1);
+    for (const MidLineComment& c : mid_line_comments_) {
+      if (c.before_index < static_cast<int>(current_line_.size())) {
+        newline_indents[c.before_index] =
+            indent_ + style_.continuation_indent_width;
+      }
+    }
+  } else if (!mid_line_comments_.empty()) {
+    LineBreakConstraints constraints = {
+        .must_break_before = llvm::BitVector(current_line_.size()),
+        .trailing_comment_widths =
+            llvm::SmallVector<int>(current_line_.size(), 0),
+    };
+    for (const MidLineComment& c : mid_line_comments_) {
+      if (c.before_index < static_cast<int>(current_line_.size())) {
+        constraints.must_break_before.set(c.before_index);
+      }
+      if (c.is_trailing && c.before_index > 0) {
+        constraints.trailing_comment_widths[c.before_index - 1] =
+            1 + static_cast<int>(c.text.rtrim('\r').size());
+      }
+    }
+    newline_indents = SolveLineBreaks(*tokens_, token_infos_, current_line_,
+                                      indent_, style_, &constraints);
+  } else if (indent_ + RenderedWidth(*tokens_, token_infos_, current_line_) <=
+             style_.column_limit) {
     newline_indents.assign(current_line_.size(), -1);
   } else {
     newline_indents =
         SolveLineBreaks(*tokens_, token_infos_, current_line_, indent_, style_);
   }
 
+  size_t mid_it = 0;
   std::optional<Lex::TokenIndex> previous;
   for (int i = 0; i < static_cast<int>(current_line_.size()); ++i) {
     Lex::TokenIndex token = current_line_[i];
+    int blanks_after_comment = 0;
+    while (mid_it < mid_line_comments_.size() &&
+           mid_line_comments_[mid_it].before_index == i) {
+      const MidLineComment& c = mid_line_comments_[mid_it];
+      CARBON_CHECK(newline_indents[i] >= 0);
+      if (c.is_trailing) {
+        whitespace_.AddTrailingComment(c.text);
+      } else {
+        whitespace_.AddRaw(
+            1 + c.blank_lines_before,
+            CommentText(c.text, newline_indents[i], style_.column_limit));
+      }
+      blanks_after_comment = c.blank_lines_after;
+      ++mid_it;
+    }
     int newlines = 0;
     int spaces = 0;
     if (!previous) {
       newlines = leading_newlines;
       spaces = indent_;
     } else if (newline_indents[i] >= 0) {
-      newlines = 1;
+      newlines = 1 + blanks_after_comment;
       spaces = newline_indents[i];
     } else {
       spaces = SpacesBefore(*tokens_, token_infos_, *previous, token);
@@ -345,7 +406,20 @@ auto Formatter::FlushLine() -> void {
   after_open_brace_ =
       tokens_->GetKind(last) == Lex::TokenKind::OpenCurlyBrace &&
       token_infos_.Get(last).role != TokenRole::StructOpen;
+  while (mid_it < mid_line_comments_.size()) {
+    const MidLineComment& c = mid_line_comments_[mid_it];
+    if (c.is_trailing) {
+      whitespace_.AddTrailingComment(c.text);
+    } else {
+      whitespace_.AddRaw(1 + c.blank_lines_before,
+                         CommentText(c.text, indent_, style_.column_limit));
+      after_open_brace_ = false;
+    }
+    last_end_byte_ = c.end_byte;
+    ++mid_it;
+  }
   current_line_.clear();
+  mid_line_comments_.clear();
 }
 
 auto Formatter::Run() -> bool {
@@ -362,26 +436,73 @@ auto Formatter::Run() -> bool {
           ++comment_it;
         }
       } else {
-        FlushLine();
-        while (comment_it != comments.end() &&
-               tokens_->IsAfterComment(token, *comment_it)) {
-          llvm::StringRef text = tokens_->GetCommentText(*comment_it);
-          int start_byte = text.data() - source.data();
-          llvm::StringRef trimmed = text.rtrim();
-          if (last_end_byte_ &&
-              IsAttachedTrailingComment(source, *last_end_byte_, start_byte,
-                                        *comment_it)) {
-            whitespace_.AddTrailingComment(trimmed);
-          } else {
-            int leading_newlines =
-                LeadingNewlines(start_byte, /*is_block_end=*/false);
-            whitespace_.AddRaw(leading_newlines,
-                               ReindentComment(text, indent_));
-            after_open_brace_ = false;
+        if (!current_line_.empty() && ShouldFlushBeforeComments(token)) {
+          FlushLine();
+        }
+        if (current_line_.empty()) {
+          while (comment_it != comments.end() &&
+                 tokens_->IsAfterComment(token, *comment_it)) {
+            llvm::StringRef text = tokens_->GetCommentText(*comment_it);
+            int start_byte = text.data() - source.data();
+            llvm::StringRef trimmed = text.rtrim();
+            if (last_end_byte_ &&
+                IsAttachedTrailingComment(source, *last_end_byte_, start_byte,
+                                          *comment_it)) {
+              whitespace_.AddTrailingComment(trimmed);
+            } else {
+              int leading_newlines =
+                  LeadingNewlines(start_byte, /*is_block_end=*/false);
+              whitespace_.AddRaw(
+                  leading_newlines,
+                  CommentText(text, indent_, style_.column_limit));
+              after_open_brace_ = false;
+            }
+            started_ = true;
+            last_end_byte_ = start_byte + trimmed.size();
+            ++comment_it;
           }
-          started_ = true;
-          last_end_byte_ = start_byte + trimmed.size();
-          ++comment_it;
+        } else {
+          int next_index = current_line_.size();
+          bool has_comment_at_index =
+              !mid_line_comments_.empty() &&
+              mid_line_comments_.back().before_index == next_index;
+          int prev_end =
+              has_comment_at_index
+                  ? mid_line_comments_.back().end_byte
+                  : tokens_->GetByteOffset(current_line_.back()) +
+                        static_cast<int>(
+                            tokens_->GetTokenText(current_line_.back()).size());
+          while (comment_it != comments.end() &&
+                 tokens_->IsAfterComment(token, *comment_it)) {
+            Lex::CommentIndex comment = *comment_it;
+            llvm::StringRef text = tokens_->GetCommentText(comment);
+            int start_byte = text.data() - source.data();
+            llvm::StringRef trimmed = text.rtrim();
+            int end_byte = start_byte + static_cast<int>(trimmed.size());
+            if (!has_comment_at_index &&
+                IsAttachedTrailingComment(source, prev_end, start_byte,
+                                          comment)) {
+              mid_line_comments_.push_back({.before_index = next_index,
+                                            .is_trailing = true,
+                                            .end_byte = end_byte,
+                                            .comment = comment,
+                                            .text = trimmed});
+            } else {
+              int blanks =
+                  start_byte > prev_end
+                      ? ClampBlankLines(source.slice(prev_end, start_byte))
+                      : 0;
+              mid_line_comments_.push_back({.before_index = next_index,
+                                            .is_trailing = false,
+                                            .blank_lines_before = blanks,
+                                            .end_byte = end_byte,
+                                            .comment = comment,
+                                            .text = text});
+            }
+            has_comment_at_index = true;
+            prev_end = end_byte;
+            ++comment_it;
+          }
         }
       }
     }
@@ -417,10 +538,10 @@ auto Formatter::Run() -> bool {
 
       case Lex::TokenKind::OpenCurlyBrace: {
         if (token_infos_.Get(token).role == TokenRole::StructOpen) {
-          current_line_.push_back(token);
+          PushToken(token);
           break;
         }
-        current_line_.push_back(token);
+        PushToken(token);
         auto close = tokens_->GetMatchedClosingToken(token);
         bool is_unclosed = tokens_->IsRecoveryToken(close);
         bool has_inner_token = NextToken(token) != close;
@@ -438,7 +559,7 @@ auto Formatter::Run() -> bool {
 
       case Lex::TokenKind::CloseCurlyBrace: {
         if (token_infos_.Get(token).role == TokenRole::StructClose) {
-          current_line_.push_back(token);
+          PushToken(token);
           break;
         }
         auto open = tokens_->GetMatchedOpeningToken(token);
@@ -446,7 +567,7 @@ auto Formatter::Run() -> bool {
           FlushLine();
         }
         indent_ = std::max(0, indent_ - style_.indent_width);
-        current_line_.push_back(token);
+        PushToken(token);
         bool is_empty = !tokens_->IsRecoveryToken(open) &&
                         current_line_.size() >= 2 &&
                         current_line_[current_line_.size() - 2] == open;
@@ -465,19 +586,19 @@ auto Formatter::Run() -> bool {
       }
 
       case Lex::TokenKind::Comma:
-        current_line_.push_back(token);
+        PushToken(token);
         if (token_infos_.Get(token).role == TokenRole::BlockComma) {
           FlushLine();
         }
         break;
 
       case Lex::TokenKind::Semi:
-        current_line_.push_back(token);
+        PushToken(token);
         FlushLine();
         break;
 
       default:
-        current_line_.push_back(token);
+        PushToken(token);
         break;
     }
   }

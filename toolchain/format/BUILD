@@ -14,6 +14,8 @@ filegroup(
 cc_library(
     name = "format",
     srcs = [
+        "comment.cpp",
+        "comment.h",
         "format.cpp",
         "formatter.cpp",
         "formatter.h",

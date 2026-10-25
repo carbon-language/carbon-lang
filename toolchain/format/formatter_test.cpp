@@ -43,6 +43,11 @@ constexpr llvm::StringLiteral Inputs[] = {
     "beta_value, .third_field = gamma_value};\n}",
     "fn F() {\n  return aaaaaaaaaa * bbbbbbbbbb + cccccccccc * dddddddddd +"
     " eeeeeeeeee * ffffffffff;\n}",
+    "fn F() {\n        // over-indented\n  // a very long comment line that"
+    " runs well past the eighty column limit and therefore wraps around;\n"
+    "  var x: i32 = 1; // a\n  var yyyy: i32 = 22; // b\n}",
+    "fn F(a: i32, // c1\n b: i32) -> // ret\n i32 {\n  return a +\n  // add b\n"
+    "  b;\n}\n",
     "fn F() {\n  receiverrrrrrrrrrr.aaaaaaaaaaaaaaaaa().bbbbbbbbbbbbbbbbb()"
     ".cccccccccccccccc();\n}",
     "class C { private fn Configure() -> "
@@ -137,6 +142,13 @@ TEST(FormatterTest, ErrorRecoveryAndNewlineLessLiterals) {
   EXPECT_EQ(FormatText(helper, "fn F(x: i32) -> i32 { return - -x; }"),
             "fn F(x: i32) -> i32 {\n  return - -x;\n}\n");
 
+  // Mid-statement comment before an error subtree breaks onto a continuation
+  // line without corrupting the comment.
+  EXPECT_EQ(
+      FormatText(helper,
+                 "fn F() {\n  var  x : i32  = // explain\n  1  +  +  2 ;\n}\n"),
+      "fn F() {\n  var x: i32 = // explain\n      1  +  + 2;\n}\n");
+
   // Newline-sensitive `#*"""` raw strings and adjacent `""` + `"..."` tokens at
   // EOF stay lex-clean and idempotent when the trailing `\n` is appended.
   struct Case {
@@ -148,6 +160,8 @@ TEST(FormatterTest, ErrorRecoveryAndNewlineLessLiterals) {
                 "var s: auto = ##\"\"\\##\"cpp // \"##;\n"},
            Case{"var x: i32 = + #\"\"\"// \"#",
                 "var x: i32 = + #\"\"\\#\"// \"#\n"},
+           Case{"var x: i32 = + // c\n #\"\"\"// \"#",
+                "var x: i32 = + // c\n #\"\"\\#\"// \"#\n"},
            Case{"f{\"\"\"// \"}", "f{\"\" \"// \"}\n"},
        }) {
     std::string formatted = FormatText(helper, c.input);
@@ -155,6 +169,18 @@ TEST(FormatterTest, ErrorRecoveryAndNewlineLessLiterals) {
     EXPECT_FALSE(helper.GetTokenizedBuffer(formatted).has_errors());
     EXPECT_EQ(FormatText(helper, formatted), formatted);
   }
+}
+
+TEST(FormatterTest, CrlfAndNonWrappableComments) {
+  Testing::CompileHelper helper;
+  EXPECT_EQ(FormatText(helper, "// one\r\n  // two\r\nfn F() {}\r\n"),
+            "// one\n// two\nfn F() {}\n");
+
+  Style narrow;
+  narrow.column_limit = 20;
+  EXPECT_EQ(FormatText(helper, "fn F() {\n  //==========================\n}\n",
+                       narrow),
+            "fn F() {\n  //==========================\n}\n");
 }
 
 TEST(FormatterTest, StyleOptions) {
@@ -178,6 +204,11 @@ TEST(FormatterTest, StyleOptions) {
   llvm::StringRef blanks =
       "fn F() {\n  var x: i32 = 1;\n\n\n  var y: i32 = 2;\n}\n";
   EXPECT_EQ(FormatText(helper, blanks, keep_two), blanks);
+
+  Style no_align;
+  no_align.align_trailing_comments = false;
+  llvm::StringRef comments = "var x: i32 = 1; // a\nvar yyyy: i32 = 22; // b\n";
+  EXPECT_EQ(FormatText(helper, comments, no_align), comments);
 }
 
 }  // namespace

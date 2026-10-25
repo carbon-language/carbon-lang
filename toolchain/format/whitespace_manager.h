@@ -17,7 +17,8 @@
 
 namespace Carbon::Format {
 
-// Records leading whitespace decisions for tokens and comments and renders the
+// Records leading whitespace decisions for tokens and comments, aligns
+// consecutive trailing comments when enabled by `style`, and renders the
 // formatted output in a single pass.
 class WhitespaceManager {
  public:
@@ -26,8 +27,7 @@ class WhitespaceManager {
 
   // Records `token`, preceded by `newlines` line breaks and `spaces` columns
   // of indentation or inter-token spacing, at unwrapped-line indentation
-  // `indent_level`. If `rewritten` is non-empty, it is emitted in place of the
-  // token's source spelling.
+  // `indent_level` (used to group same-indent trailing-comment runs).
   auto AddToken(int newlines, int spaces, int indent_level,
                 Lex::TokenIndex token, std::string rewritten = "") -> void;
 
@@ -44,10 +44,10 @@ class WhitespaceManager {
 
   // Records a single-line trailing comment `text` (a slice of the source with
   // no trailing newline) appended to the current line after one separating
-  // space.
+  // space plus any alignment padding.
   auto AddTrailingComment(llvm::StringRef text) -> void;
 
-  // Renders and returns the formatted output.
+  // Runs trailing-comment alignment and returns the formatted output.
   auto Generate() -> std::string;
 
  private:
@@ -63,6 +63,7 @@ class WhitespaceManager {
     int newlines = 0;
     int spaces = 0;
     int indent_level = 0;
+    int start_column = 0;
     Lex::TokenIndex token = Lex::TokenIndex::None;
     llvm::StringRef gap;
     llvm::StringRef text;
@@ -70,6 +71,8 @@ class WhitespaceManager {
 
   auto OwnText(std::string text) -> llvm::StringRef;
   auto TokenText(const Change& change) const -> llvm::StringRef;
+  auto ComputeStartColumns() -> void;
+  auto AlignTrailingComments() -> void;
 
   const Lex::TokenizedBuffer* tokens_;
   Style style_;

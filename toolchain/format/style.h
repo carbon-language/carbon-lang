@@ -36,6 +36,10 @@ struct Style {
 
   // Penalty for breaking after `=` onto its right-hand side.
   int penalty_break_assignment = 2;
+
+  // Whether to align consecutive same-indent trailing `//` comments into a
+  // shared column. Standalone trailing comments keep a single leading space.
+  bool align_trailing_comments = true;
 };
 
 }  // namespace Carbon::Format
