@@ -4,6 +4,7 @@
 
 #include <gtest/gtest.h>
 
+#include <optional>
 #include <string>
 
 #include "common/raw_string_ostream.h"
@@ -66,6 +67,14 @@ auto FormatText(Testing::CompileHelper& helper, llvm::StringRef text,
   return out.TakeStr();
 }
 
+auto FormatViaReplacements(Testing::CompileHelper& helper, llvm::StringRef text,
+                           std::optional<LineRange> lines = std::nullopt,
+                           const Style& style = Style()) -> std::string {
+  llvm::SmallVector<Replacement> replacements;
+  FormatReplacements(helper.GetTree(text), replacements, lines, style);
+  return ApplyReplacements(text, replacements);
+}
+
 auto TokenKinds(Testing::CompileHelper& helper, llvm::StringRef text)
     -> std::string {
   Lex::TokenizedBuffer& tokens = helper.GetTokenizedBuffer(text);
@@ -86,6 +95,11 @@ TEST(FormatterTest, InvariantsHoldAcrossConstructs) {
     EXPECT_EQ(FormatText(helper, once), once) << input;
     EXPECT_FALSE(helper.GetTree(once).has_errors()) << once;
     EXPECT_EQ(TokenKinds(helper, input), TokenKinds(helper, once)) << input;
+    EXPECT_EQ(FormatViaReplacements(helper, input), once) << input;
+
+    llvm::SmallVector<Replacement> reformat_edits;
+    FormatReplacements(helper.GetTree(once), reformat_edits);
+    EXPECT_TRUE(reformat_edits.empty()) << once;
   }
 }
 
@@ -142,12 +156,23 @@ TEST(FormatterTest, ErrorRecoveryAndNewlineLessLiterals) {
   EXPECT_EQ(FormatText(helper, "fn F(x: i32) -> i32 { return - -x; }"),
             "fn F(x: i32) -> i32 {\n  return - -x;\n}\n");
 
+  for (llvm::StringRef recovered :
+       {"class C { fn F( }", "class C { fn F( [ }", "@ // comment\n",
+        "var a: i32 = 1;\n@ // comment\n"}) {
+    EXPECT_EQ(FormatViaReplacements(helper, recovered),
+              FormatText(helper, recovered));
+  }
+
   // Mid-statement comment before an error subtree breaks onto a continuation
   // line without corrupting the comment.
-  EXPECT_EQ(
-      FormatText(helper,
-                 "fn F() {\n  var  x : i32  = // explain\n  1  +  +  2 ;\n}\n"),
-      "fn F() {\n  var x: i32 = // explain\n      1  +  + 2;\n}\n");
+  llvm::StringRef comment_before_error =
+      "fn F() {\n  var  x : i32  = // explain\n  1  +  +  2 ;\n}\n";
+  std::string comment_error_formatted =
+      FormatText(helper, comment_before_error);
+  EXPECT_EQ(comment_error_formatted,
+            "fn F() {\n  var x: i32 = // explain\n      1  +  + 2;\n}\n");
+  EXPECT_EQ(FormatViaReplacements(helper, comment_before_error),
+            comment_error_formatted);
 
   // Newline-sensitive `#*"""` raw strings and adjacent `""` + `"..."` tokens at
   // EOF stay lex-clean and idempotent when the trailing `\n` is appended.
@@ -168,6 +193,7 @@ TEST(FormatterTest, ErrorRecoveryAndNewlineLessLiterals) {
     EXPECT_EQ(formatted, c.expected);
     EXPECT_FALSE(helper.GetTokenizedBuffer(formatted).has_errors());
     EXPECT_EQ(FormatText(helper, formatted), formatted);
+    EXPECT_EQ(FormatViaReplacements(helper, c.input), formatted);
   }
 }
 
@@ -181,6 +207,52 @@ TEST(FormatterTest, CrlfAndNonWrappableComments) {
   EXPECT_EQ(FormatText(helper, "fn F() {\n  //==========================\n}\n",
                        narrow),
             "fn F() {\n  //==========================\n}\n");
+}
+
+TEST(FormatterTest, MinimalEditsAndLineRanges) {
+  Testing::CompileHelper helper;
+  llvm::SmallVector<Replacement> replacements;
+  FormatReplacements(
+      helper.GetTree("fn F() {\n  var x: i32 = 1+2;\n  return x;\n}\n"),
+      replacements);
+  ASSERT_EQ(replacements.size(), 2);
+  EXPECT_EQ(replacements[0].text, " ");
+  EXPECT_EQ(replacements[1].text, " ");
+
+  replacements.clear();
+  FormatReplacements(helper.GetTree("fn F() {\n    var x: i32 = 1;\n}\n"),
+                     replacements);
+  ASSERT_EQ(replacements.size(), 1);
+  EXPECT_EQ(replacements[0].offset, 11);
+  EXPECT_EQ(replacements[0].length, 2);
+  EXPECT_EQ(replacements[0].text, "");
+
+  llvm::StringRef neighbors =
+      "fn F() {\n  var x: i32 = 1+1;\n      var y: i32 = 2+2;\n"
+      "var z: i32 = 3+3;\n}\n";
+  EXPECT_EQ(FormatViaReplacements(helper, neighbors,
+                                  LineRange{.first_line = 2, .last_line = 2}),
+            "fn F() {\n  var x: i32 = 1 + 1;\n      var y: i32 = 2+2;\n"
+            "var z: i32 = 3+3;\n}\n");
+  EXPECT_EQ(FormatViaReplacements(helper, neighbors,
+                                  LineRange{.first_line = 4, .last_line = 4}),
+            "fn F() {\n  var x: i32 = 1+1;\n      var y: i32 = 2+2;\n"
+            "  var z: i32 = 3 + 3;\n}\n");
+
+  // Couplings expand across matching braces, unwrapped lines, and aligned
+  // trailing comments.
+  EXPECT_EQ(
+      FormatViaReplacements(helper, "fn F() {\n  var x: i32 = 1;\n      }\n",
+                            LineRange{.first_line = 1, .last_line = 1}),
+      "fn F() {\n  var x: i32 = 1;\n}\n");
+  EXPECT_EQ(FormatViaReplacements(helper,
+                                  "fn F() {\n  Call(1+1,\n// doc\n  2+2);\n}\n",
+                                  LineRange{.first_line = 3, .last_line = 3}),
+            "fn F() {\n  Call(1 + 1,\n       // doc\n       2 + 2);\n}\n");
+  EXPECT_EQ(FormatViaReplacements(
+                helper, "var x: i32 = 1; // a\nvar yyyy:i32=22; // b\n",
+                LineRange{.first_line = 1, .last_line = 1}),
+            "var x: i32 = 1;     // a\nvar yyyy: i32 = 22; // b\n");
 }
 
 TEST(FormatterTest, StyleOptions) {

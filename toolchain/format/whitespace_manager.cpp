@@ -5,6 +5,7 @@
 #include "toolchain/format/whitespace_manager.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <utility>
 
@@ -46,6 +47,8 @@ auto WhitespaceManager::AddVerbatimGapToken(llvm::StringRef gap,
                                             int indent_level,
                                             Lex::TokenIndex token,
                                             std::string rewritten) -> void {
+  // Record `newlines` from `gap` so `AlignTrailingComments` partitions physical
+  // lines accurately while `Generate` emits `gap` verbatim.
   changes_.push_back({.kind = ChangeKind::VerbatimGapToken,
                       .newlines = static_cast<int>(gap.count('\n')),
                       .spaces = 0,
@@ -76,6 +79,8 @@ auto WhitespaceManager::ComputeStartColumns() -> void {
   for (Change& change : changes_) {
     switch (change.kind) {
       case ChangeKind::FullLineComment:
+        // Full-line comments end at a line boundary; the following item starts
+        // a new line.
         column = 0;
         break;
 
@@ -99,6 +104,8 @@ auto WhitespaceManager::ComputeStartColumns() -> void {
         }
         change.start_column = column;
         llvm::StringRef text = TokenText(change);
+        // Multi-line tokens (such as block string literals) end on their last
+        // physical line, whose width determines the column after the token.
         size_t last_line = text.rfind('\n');
         llvm::StringRef tail = last_line == llvm::StringRef::npos
                                    ? text
@@ -111,23 +118,39 @@ auto WhitespaceManager::ComputeStartColumns() -> void {
   }
 }
 
-auto WhitespaceManager::AlignTrailingComments() -> void {
+auto WhitespaceManager::AlignTrailingComments(
+    llvm::SmallVectorImpl<std::pair<int, int>>& aligned_line_extents) -> void {
   if (!style_.align_trailing_comments) {
     return;
   }
   ComputeStartColumns();
 
-  llvm::SmallVector<int> run;
+  struct RunEntry {
+    int change_index;
+    int first_line;
+    int last_line;
+  };
+  llvm::SmallVector<RunEntry> run;
   int run_indent = -1;
   auto finalize = [&] {
     if (run.size() >= 2) {
       int target = 0;
-      for (int index : run) {
-        target = std::max(target, changes_[index].start_column);
+      int first_line = 0;
+      int last_line = 0;
+      for (const RunEntry& entry : run) {
+        target = std::max(target, changes_[entry.change_index].start_column);
+        if (entry.first_line > 0) {
+          first_line = first_line > 0 ? std::min(first_line, entry.first_line)
+                                      : entry.first_line;
+          last_line = std::max(last_line, entry.last_line);
+        }
       }
-      for (int index : run) {
-        Change& comment = changes_[index];
+      for (const RunEntry& entry : run) {
+        Change& comment = changes_[entry.change_index];
         comment.spaces += target - comment.start_column;
+      }
+      if (first_line > 0) {
+        aligned_line_extents.push_back({first_line, last_line});
       }
     }
     run.clear();
@@ -137,12 +160,16 @@ auto WhitespaceManager::AlignTrailingComments() -> void {
   int n = changes_.size();
   int i = 0;
   while (i < n) {
+    // Partition `[i, j)` into one logical output line (its leading item plus
+    // same-line tokens and any trailing comment).
     int j = i + 1;
     while (j < n && changes_[j].newlines == 0) {
       ++j;
     }
 
     int indent = -1;
+    int line_first = 0;
+    int line_last = 0;
     bool has_multiline_token = false;
     int match = -1;
     for (int k = i; k < j; ++k) {
@@ -151,6 +178,9 @@ auto WhitespaceManager::AlignTrailingComments() -> void {
         if (indent < 0) {
           indent = changes_[k].indent_level;
         }
+        int tok_line = tokens_->GetLineNumber(changes_[k].token);
+        line_first = line_first > 0 ? std::min(line_first, tok_line) : tok_line;
+        line_last = std::max(line_last, tok_line);
         if (TokenText(changes_[k]).contains('\n')) {
           has_multiline_token = true;
         }
@@ -162,6 +192,8 @@ auto WhitespaceManager::AlignTrailingComments() -> void {
     if (changes_[i].newlines > 1) {
       finalize();
     }
+    // Multi-line tokens (such as block string literals) span physical lines of
+    // body text without trailing comments, so they break any surrounding run.
     if (has_multiline_token || match < 0) {
       finalize();
     } else {
@@ -171,15 +203,20 @@ auto WhitespaceManager::AlignTrailingComments() -> void {
       if (run.empty()) {
         run_indent = indent;
       }
-      run.push_back(match);
+      run.push_back({.change_index = match,
+                     .first_line = line_first,
+                     .last_line = line_last});
     }
     i = j;
   }
   finalize();
 }
 
-auto WhitespaceManager::Generate() -> std::string {
-  AlignTrailingComments();
+auto WhitespaceManager::Generate(
+    llvm::SmallVectorImpl<TokenSpan>& token_map,
+    llvm::SmallVectorImpl<std::pair<int, int>>& aligned_line_extents)
+    -> std::string {
+  AlignTrailingComments(aligned_line_extents);
 
   std::string output;
   for (const Change& change : changes_) {
@@ -200,6 +237,14 @@ auto WhitespaceManager::Generate() -> std::string {
         output.append(change.newlines, '\n');
         output.append(change.spaces, ' ');
         llvm::StringRef text = TokenText(change);
+        // Rewritten tokens (such as reformatted C++ snippets) omit their
+        // `TokenSpan` anchor so the rewrite folds into the surrounding gap.
+        if (change.text.empty()) {
+          token_map.push_back(
+              {.source_begin = tokens_->GetByteOffset(change.token),
+               .output_begin = static_cast<int32_t>(output.size()),
+               .length = static_cast<int32_t>(text.size())});
+        }
         output.append(text.data(), text.size());
         break;
       }
@@ -208,11 +253,19 @@ auto WhitespaceManager::Generate() -> std::string {
         CARBON_CHECK(!tokens_->IsRecoveryToken(change.token));
         output.append(change.gap.data(), change.gap.size());
         llvm::StringRef text = TokenText(change);
+        if (change.text.empty()) {
+          token_map.push_back(
+              {.source_begin = tokens_->GetByteOffset(change.token),
+               .output_begin = static_cast<int32_t>(output.size()),
+               .length = static_cast<int32_t>(text.size())});
+        }
         output.append(text.data(), text.size());
         break;
       }
     }
   }
+  // Line breaks are attributed to the following item, so a non-empty file ends
+  // with one final newline.
   if (!changes_.empty()) {
     output.push_back('\n');
   }

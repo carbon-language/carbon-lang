@@ -6,10 +6,7 @@
 
 #include <algorithm>
 #include <cstddef>
-#include <cstdint>
 #include <optional>
-#include <string>
-#include <utility>
 
 #include "common/check.h"
 #include "llvm/ADT/BitVector.h"
@@ -28,6 +25,12 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
       whitespace_(tokens_, style),
       token_infos_(
           TokenInfoStore::MakeWithExplicitSize(tokens_->size(), TokenInfo())) {
+  // Cache each token's first-line width, then walk `tree_` in postorder to
+  // record each owned token's syntactic role, operator break penalty,
+  // member-access chain metadata, and operand-alignment scopes.
+  // Subtree token spans are folded bottom-up on `range_stack` in the same pass,
+  // ignoring synthetic recovery and file-boundary tokens so recovery
+  // identifiers never stretch an operand span past the real tokens on the line.
   for (auto token : tokens_->tokens()) {
     llvm::StringRef text = tokens_->GetTokenText(token);
     if (tokens_->GetKind(token) == Lex::TokenKind::StringLiteral) {
@@ -40,7 +43,11 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
     token_infos_.Get(token).column_width =
         static_cast<int>(text.split('\n').first.rtrim('\r').size());
   }
-
+  // A completed subtree's root node kind, inclusive real-token range (`None`
+  // when empty), left-nested member-access chain state (`chain_last_member` is
+  // the outermost `.` or `->` link of a chain rooted at this expression,
+  // propagated across postfix `()` and `[]`), and whether the subtree's root
+  // node is erroneous (`is_error_root`).
   struct SubtreeRange {
     Parse::NodeKind kind;
     Lex::TokenIndex token = Lex::TokenIndex::None;
@@ -52,6 +59,10 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
   };
   llvm::SmallVector<SubtreeRange> range_stack;
   int32_t next_verbatim_region_id = 0;
+  // Assigns a distinct `verbatim_region_id` to every real token in an outermost
+  // error subtree so gaps inside that subtree are copied verbatim without
+  // conflating adjacent error subtrees. Outermost error subtrees are disjoint,
+  // keeping total marking linear.
   auto mark_verbatim = [&](const SubtreeRange& range) {
     if (!range.min.has_value()) {
       return;
@@ -79,6 +90,8 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
                      kind == Parse::NodeKind::StructPattern;
     llvm::SmallVector<Lex::TokenIndex, 8> field_commas;
 
+    // Fold the node's own token and its children's completed ranges into its
+    // range, popping the node's children off `range_stack`.
     SubtreeRange range = {.kind = kind, .token = token};
     if (token.has_value() && !tokens_->IsRecoveryToken(token) &&
         !tokens_->GetKind(token).IsOneOf(
@@ -105,11 +118,18 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
           (!range.max.has_value() || child.max > range.max)) {
         range.max = child.max;
       }
+      // An erroneous child folded into an erroneous parent is subsumed by the
+      // parent's wider range; an erroneous child folded into a clean parent is
+      // an outermost error subtree.
       if (child.is_error_root && !node_has_error) {
         mark_verbatim(child);
       }
       return child;
     };
+    // Children appear in postorder left-to-right, so popping from `range_stack`
+    // visits them right-to-left and the final pop yields the leftmost child
+    // (the receiver of a member access, call, or subscript, or the `*Start`
+    // bracket node of a bracketed `CallExpr`).
     std::optional<SubtreeRange> first_child;
     if (kind.has_child_count()) {
       for (int i = 0; i < kind.child_count(); ++i) {
@@ -135,6 +155,10 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
       range.chain_length = first_child->chain_length;
     }
 
+    // Group left-nested `.` and `->` links by their shared receiver-root token
+    // (`range.min`). Multi-link chains (`>= 2` links) lower the outermost
+    // link's break penalty to `MemberAccessLastLinkBreakPenalty` while keeping
+    // interior links and single-dot expressions (`Pkg.Type`) at 150.
     int member_penalty = MemberAccessBreakPenalty(kind);
     if (member_penalty >= 0 && token.has_value() &&
         !tokens_->IsRecoveryToken(token) && range.min.has_value()) {
@@ -200,6 +224,8 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
       }
     } else if (kind == Parse::NodeKind::WhereExpr && token.has_value() &&
                !tokens_->IsRecoveryToken(token) && range.max.has_value()) {
+      // Align wrapped `and`-separated requirements under the first requirement
+      // following `where`.
       Lex::TokenIndex first_req = NextRealToken(token);
       if (first_req <= range.max) {
         ++token_infos_.Get(first_req).open_scopes;
@@ -208,6 +234,7 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
     }
     range_stack.push_back(range);
   }
+  // Top-level subtrees have no parent to fold them; mark any erroneous roots.
   for (const SubtreeRange& range : range_stack) {
     if (range.is_error_root) {
       mark_verbatim(range);
@@ -224,6 +251,9 @@ auto Formatter::NextRealToken(Lex::TokenIndex token) const -> Lex::TokenIndex {
 }
 
 auto Formatter::ClampBlankLines(llvm::StringRef gap) const -> int {
+  // Keep up to `style_.max_empty_lines_to_keep` blank lines (newlines beyond
+  // the one ending the previous line), clamping to 0 when no newline separates
+  // the items.
   return std::clamp(static_cast<int>(gap.count('\n')) - 1, 0,
                     style_.max_empty_lines_to_keep);
 }
@@ -281,6 +311,11 @@ auto Formatter::PushToken(Lex::TokenIndex token) -> void {
 
 auto Formatter::VerbatimGapBefore(Lex::TokenIndex token) const
     -> std::optional<llvm::StringRef> {
+  // Copy `token`'s leading gap verbatim only when `token - 1` and `token` are
+  // both real tokens in the same outermost error subtree. Each region's first
+  // token formats at the surrounding indent, and adjacent error subtrees keep
+  // distinct `verbatim_region_id`s so comments and blank lines between them
+  // format normally.
   int32_t region_id = token_infos_.Get(token).verbatim_region_id;
   if (region_id < 0 || token.index == 0 || tokens_->IsRecoveryToken(token)) {
     return std::nullopt;
@@ -297,6 +332,9 @@ auto Formatter::VerbatimGapBefore(Lex::TokenIndex token) const
     return std::nullopt;
   }
   llvm::StringRef gap = tokens_->source().text().slice(prev_end, start);
+  // Separate adjacent `""` + `"..."` tokens when no source bytes lie between
+  // them so appending a trailing newline cannot fuse them into a `"""`
+  // multi-line string introducer on re-lexing.
   if (gap.empty() && tokens_->GetKind(prev) == Lex::TokenKind::StringLiteral &&
       tokens_->GetTokenText(prev) == "\"\"" &&
       tokens_->GetTokenText(token).starts_with('"')) {
@@ -315,6 +353,9 @@ auto Formatter::FlushLine() -> void {
       tokens_->GetByteOffset(first),
       tokens_->GetKind(first) == Lex::TokenKind::CloseCurlyBrace);
 
+  // Lines containing a verbatim error region keep single-line break decisions
+  // except at mandatory mid-statement comment breaks; other lines with embedded
+  // comments or exceeding the column limit use `SolveLineBreaks`.
   llvm::SmallVector<int> newline_indents;
   bool has_verbatim = llvm::any_of(current_line_, [&](Lex::TokenIndex token) {
     return token_infos_.Get(token).verbatim_region_id >= 0;
@@ -371,8 +412,8 @@ auto Formatter::FlushLine() -> void {
       blanks_after_comment = c.blank_lines_after;
       ++mid_it;
     }
-    int newlines = 0;
-    int spaces = 0;
+    int newlines;
+    int spaces;
     if (!previous) {
       newlines = leading_newlines;
       spaces = indent_;
@@ -380,6 +421,7 @@ auto Formatter::FlushLine() -> void {
       newlines = 1 + blanks_after_comment;
       spaces = newline_indents[i];
     } else {
+      newlines = 0;
       spaces = SpacesBefore(*tokens_, token_infos_, *previous, token);
     }
     std::string rewritten;
@@ -401,8 +443,8 @@ auto Formatter::FlushLine() -> void {
   started_ = true;
 
   Lex::TokenIndex last = current_line_.back();
-  last_end_byte_ =
-      tokens_->GetByteOffset(last) + tokens_->GetTokenText(last).size();
+  llvm::StringRef last_text = tokens_->GetTokenText(last);
+  last_end_byte_ = tokens_->GetByteOffset(last) + last_text.size();
   after_open_brace_ =
       tokens_->GetKind(last) == Lex::TokenKind::OpenCurlyBrace &&
       token_infos_.Get(last).role != TokenRole::StructOpen;
@@ -418,16 +460,34 @@ auto Formatter::FlushLine() -> void {
     last_end_byte_ = c.end_byte;
     ++mid_it;
   }
+  int first_line = tokens_->GetLineNumber(first);
+  int last_line =
+      tokens_->GetLineNumber(last) + static_cast<int>(last_text.count('\n'));
+  for (const MidLineComment& c : mid_line_comments_) {
+    int comment_start = tokens_->GetLine(c.comment).index + 1;
+    int comment_end =
+        comment_start + static_cast<int>(c.text.rtrim().count('\n'));
+    first_line = std::min(first_line, comment_start);
+    last_line = std::max(last_line, comment_end);
+  }
+  coupled_line_extents_.push_back({first_line, last_line});
   current_line_.clear();
   mid_line_comments_.clear();
 }
 
 auto Formatter::Run() -> bool {
+  // Produce best-effort formatted output even when lex or parse errors exist,
+  // keeping outermost error subtrees verbatim while reformatting surrounding
+  // code. The return value reports whether the input was error-free.
   llvm::StringRef source = tokens_->source().text();
   auto comments = tokens_->comments();
   auto comment_it = comments.begin();
 
   for (auto token : tokens_->tokens()) {
+    // Emit top-level or post-statement comments immediately, record
+    // mid-statement comments inside `current_line_` as mandatory line breaks,
+    // and skip comments inside a verbatim gap (which `AddVerbatimGapToken`
+    // copies directly from `source`).
     if (comment_it != comments.end() &&
         tokens_->IsAfterComment(token, *comment_it)) {
       if (VerbatimGapBefore(token).has_value()) {
@@ -448,6 +508,8 @@ auto Formatter::Run() -> bool {
             if (last_end_byte_ &&
                 IsAttachedTrailingComment(source, *last_end_byte_, start_byte,
                                           *comment_it)) {
+              // Keep `after_open_brace_` intact so a trailing comment on `{`
+              // still suppresses any blank line at the top of the block.
               whitespace_.AddTrailingComment(trimmed);
             } else {
               int leading_newlines =
@@ -458,6 +520,8 @@ auto Formatter::Run() -> bool {
               after_open_brace_ = false;
             }
             started_ = true;
+            // Exclude the comment's trailing newline so blank lines after
+            // comments are counted the same way as blank lines after tokens.
             last_end_byte_ = start_byte + trimmed.size();
             ++comment_it;
           }
@@ -507,6 +571,9 @@ auto Formatter::Run() -> bool {
       }
     }
 
+    // Never emit lexer-synthesized recovery brackets into user source. Still
+    // adjust block indentation and line termination on synthesized braces so
+    // code following an unclosed `{` or stray `}` stays indented reasonably.
     if (tokens_->IsRecoveryToken(token)) {
       switch (tokens_->GetKind(token)) {
         case Lex::TokenKind::OpenCurlyBrace:
@@ -533,6 +600,7 @@ auto Formatter::Run() -> bool {
         break;
 
       case Lex::TokenKind::FileEnd:
+        // Render any trailing content. An empty file stays empty.
         FlushLine();
         break;
 
@@ -542,6 +610,8 @@ auto Formatter::Run() -> bool {
           break;
         }
         PushToken(token);
+        // Expand non-empty `{...}` (or an unclosed `{` whose matching `}` is a
+        // recovery token) onto its own line; keep real empty `{}` compact.
         auto close = tokens_->GetMatchedClosingToken(token);
         bool is_unclosed = tokens_->IsRecoveryToken(close);
         bool has_inner_token = NextToken(token) != close;
@@ -603,8 +673,219 @@ auto Formatter::Run() -> bool {
     }
   }
 
-  output_ = whitespace_.Generate();
+  output_ = whitespace_.Generate(token_map_, coupled_line_extents_);
   return !tokens_->has_errors() && !tree_->has_errors();
+}
+
+auto Formatter::AffectedByteRanges(LineRange lines) const
+    -> llvm::SmallVector<std::pair<int32_t, int32_t>> {
+  llvm::StringRef source = tokens_->source().text();
+  if (source.empty()) {
+    return {};
+  }
+
+  // Expand the requested 1-based line set to a fixed point over layout
+  // couplings:
+  //
+  //   - Unwrapped lines and aligned trailing-comment groups lay out as units,
+  //     so touching any source line in an extent affects the entire extent.
+  //   - Touching either `{` or `}` of a matched brace pair affects its partner
+  //     so range formatting fixes mis-indented closing braces.
+
+  // Precompute the start byte of every 1-based line plus an end-of-source
+  // sentinel.
+  llvm::SmallVector<int32_t> line_starts;
+  line_starts.push_back(0);
+  for (size_t newline = source.find('\n'); newline != llvm::StringRef::npos;
+       newline = source.find('\n', newline + 1)) {
+    line_starts.push_back(newline + 1);
+  }
+  if (line_starts.back() != static_cast<int32_t>(source.size())) {
+    line_starts.push_back(source.size());
+  }
+  int line_count = line_starts.size() - 1;
+
+  // Collect matched brace pairs, skipping synthetic recovery braces.
+  struct BracePair {
+    int open_line;
+    int close_line;
+  };
+  llvm::SmallVector<BracePair> pairs;
+  for (auto token : tokens_->tokens()) {
+    if (tokens_->GetKind(token) == Lex::TokenKind::OpenCurlyBrace) {
+      auto close = tokens_->GetMatchedClosingToken(token);
+      if (tokens_->IsRecoveryToken(token) || tokens_->IsRecoveryToken(close)) {
+        continue;
+      }
+      pairs.push_back({.open_line = std::clamp(tokens_->GetLineNumber(token), 1,
+                                               line_count),
+                       .close_line = std::clamp(tokens_->GetLineNumber(close),
+                                                1, line_count)});
+    }
+  }
+
+  // Index couplings by 1-based line: non-negative `id` names an entry in
+  // `coupled_line_extents_`, and `~id` names a brace pair.
+  llvm::SmallVector<llvm::SmallVector<int32_t, 2>> couplings(line_count + 1);
+  for (auto [i, extent] : llvm::enumerate(coupled_line_extents_)) {
+    int first_line = std::clamp(extent.first, 1, line_count);
+    int last_line = std::clamp(extent.second, 1, line_count);
+    for (int line = first_line; line <= last_line; ++line) {
+      couplings[line].push_back(static_cast<int32_t>(i));
+    }
+  }
+  for (auto [i, pair] : llvm::enumerate(pairs)) {
+    couplings[pair.open_line].push_back(~static_cast<int32_t>(i));
+    couplings[pair.close_line].push_back(~static_cast<int32_t>(i));
+  }
+
+  llvm::BitVector affected(line_count + 1);
+  llvm::BitVector visited_extents(coupled_line_extents_.size());
+  llvm::SmallVector<int> worklist;
+  auto add_line = [&](int line) {
+    if (line >= 1 && line <= line_count && !affected[line]) {
+      affected.set(line);
+      worklist.push_back(line);
+    }
+  };
+  for (int line = std::max(1, lines.first_line);
+       line <= std::min(lines.last_line, line_count); ++line) {
+    add_line(line);
+  }
+  while (!worklist.empty()) {
+    int line = worklist.pop_back_val();
+    for (int32_t id : couplings[line]) {
+      if (id >= 0) {
+        if (!visited_extents[id]) {
+          visited_extents.set(id);
+          auto [extent_begin, extent_end] = coupled_line_extents_[id];
+          for (int l = extent_begin; l <= extent_end; ++l) {
+            add_line(l);
+          }
+        }
+      } else {
+        const BracePair& pair = pairs[~id];
+        add_line(pair.open_line);
+        add_line(pair.close_line);
+      }
+    }
+  }
+
+  // Merge contiguous affected lines into half-open byte ranges.
+  llvm::SmallVector<std::pair<int32_t, int32_t>> ranges;
+  for (int line = 1; line <= line_count; ++line) {
+    if (!affected[line]) {
+      continue;
+    }
+    int32_t begin = line_starts[line - 1];
+    int32_t end = line_starts[line];
+    if (!ranges.empty() && ranges.back().second == begin) {
+      ranges.back().second = end;
+    } else {
+      ranges.push_back({begin, end});
+    }
+  }
+  return ranges;
+}
+
+auto Formatter::ComputeReplacements(std::optional<LineRange> lines) const
+    -> llvm::SmallVector<Replacement> {
+  llvm::StringRef source = tokens_->source().text();
+  llvm::StringRef output = output_;
+
+  llvm::SmallVector<std::pair<int32_t, int32_t>> affected;
+  if (lines) {
+    affected = AffectedByteRanges(*lines);
+  }
+  int32_t source_size = source.size();
+  size_t affected_idx = 0;
+  auto in_requested_lines = [&](int32_t begin, int32_t end) -> bool {
+    if (!lines) {
+      return true;
+    }
+    // `affected` is sorted and disjoint, and trimmed gap `begin` offsets are
+    // non-decreasing across gaps, so advance `affected_idx` in a single sweep.
+    while (affected_idx < affected.size() &&
+           (affected[affected_idx].second < begin ||
+            (affected[affected_idx].second == begin && begin < source_size))) {
+      ++affected_idx;
+    }
+    if (affected_idx == affected.size()) {
+      return false;
+    }
+    auto [range_begin, range_end] = affected[affected_idx];
+    if (begin != end) {
+      return end > range_begin && begin < range_end;
+    }
+    // A zero-length insertion at `line_starts[L]` (column 0 of line `L + 1`,
+    // immediately after line `L`'s `\n`) belongs to line `L + 1`
+    // (`[range_begin, range_end)`), except at end-of-source where inserting a
+    // missing final newline belongs to the last line.
+    return begin >= range_begin &&
+           (begin < range_end ||
+            (begin == range_end && range_end == source_size));
+  };
+
+  llvm::SmallVector<Replacement> replacements;
+  auto maybe_add_gap = [&](int32_t source_begin, int32_t source_end,
+                           int32_t output_begin, int32_t output_end) {
+    llvm::StringRef source_gap =
+        source.substr(source_begin, source_end - source_begin);
+    llvm::StringRef output_gap =
+        output.substr(output_begin, output_end - output_begin);
+
+    // Trim matching leading and trailing bytes (without splitting multi-byte
+    // UTF-8 sequences) before line-range attribution so an indentation change
+    // on line `L + 1` is not attributed to line `L`'s trailing newline.
+    size_t prefix = 0;
+    size_t max_prefix = std::min(source_gap.size(), output_gap.size());
+    while (prefix < max_prefix && source_gap[prefix] == output_gap[prefix]) {
+      ++prefix;
+    }
+    while (prefix > 0 &&
+           ((prefix < source_gap.size() &&
+             (static_cast<uint8_t>(source_gap[prefix]) & 0xC0) == 0x80) ||
+            (prefix < output_gap.size() &&
+             (static_cast<uint8_t>(output_gap[prefix]) & 0xC0) == 0x80))) {
+      --prefix;
+    }
+    source_gap = source_gap.drop_front(prefix);
+    output_gap = output_gap.drop_front(prefix);
+    source_begin += static_cast<int32_t>(prefix);
+
+    size_t suffix = 0;
+    size_t max_suffix = std::min(source_gap.size(), output_gap.size());
+    while (suffix < max_suffix &&
+           source_gap[source_gap.size() - 1 - suffix] ==
+               output_gap[output_gap.size() - 1 - suffix]) {
+      ++suffix;
+    }
+    while (suffix > 0 &&
+           (static_cast<uint8_t>(source_gap[source_gap.size() - suffix]) &
+            0xC0) == 0x80) {
+      --suffix;
+    }
+    source_gap = source_gap.drop_back(suffix);
+    output_gap = output_gap.drop_back(suffix);
+    source_end -= static_cast<int32_t>(suffix);
+
+    if ((!source_gap.empty() || !output_gap.empty()) &&
+        in_requested_lines(source_begin, source_end)) {
+      replacements.push_back({.offset = source_begin,
+                              .length = source_end - source_begin,
+                              .text = output_gap.str()});
+    }
+  };
+
+  int32_t source_pos = 0;
+  int32_t output_pos = 0;
+  for (const TokenSpan& span : token_map_) {
+    maybe_add_gap(source_pos, span.source_begin, output_pos, span.output_begin);
+    source_pos = span.source_begin + span.length;
+    output_pos = span.output_begin + span.length;
+  }
+  maybe_add_gap(source_pos, source.size(), output_pos, output.size());
+  return replacements;
 }
 
 }  // namespace Carbon::Format
