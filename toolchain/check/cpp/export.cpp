@@ -986,8 +986,9 @@ static auto BuildDefaultValueExpr(Context& context, SemIR::LocId loc_id,
   // We should not be exporting the same variable twice.
   CARBON_CHECK(!context.identifiers().Lookup(var_name).has_value());
 
+  auto& ident = context.ast_context().Idents.get(var_name);
   auto name_id =
-      SemIR::NameId::ForIdentifier(context.identifiers().Add(var_name));
+      SemIR::NameId::ForIdentifier(context.identifiers().Add(ident.getName()));
 
   // First we synthesize the variable definition by creating an EntityName from
   // the generated name stored in `var_name`. We want to generate a
