@@ -44,7 +44,7 @@ auto HandleFormatting(
   }
 
   RawStringOstream out;
-  if (!Format::Format(file->tokens(), out)) {
+  if (!Format::Format(file->tree_and_subtrees().tree(), out)) {
     out.clear();
     on_done(std::vector<clang::clangd::TextEdit>());
     return;

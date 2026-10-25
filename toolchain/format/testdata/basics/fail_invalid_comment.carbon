@@ -16,6 +16,4 @@
 
 // CHECK:STDERR: fail_test.carbon:2:3: error: whitespace is required after '//' [NoWhitespaceAfterCommentIntroducer]
 // CHECK:STDERR:
-// CHECK:STDOUT:
 // CHECK:STDOUT: //f
-// CHECK:STDOUT:
