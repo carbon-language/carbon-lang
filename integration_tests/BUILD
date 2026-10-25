@@ -21,3 +21,8 @@ carbon_binary(
     name = "callback_test",
     srcs = ["callback_test.carbon"],
 )
+
+carbon_binary(
+    name = "deduced_return_test",
+    srcs = ["deduced_return_test.carbon"],
+)

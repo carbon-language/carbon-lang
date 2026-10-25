@@ -48,7 +48,8 @@ auto UndeducedReturn();
 ''';
 
 fn Call() {
-  // CHECK:STDERR: fail_return_undeduced_auto.carbon:[[@LINE+2]]:3-23: error: semantics TODO: `Unsupported: return type: auto` [SemanticsTodo]
+  // CHECK:STDERR: fail_return_undeduced_auto.carbon:[[@LINE+3]]:3: error: function 'UndeducedReturn' with deduced return type cannot be used before it is defined [CppInteropParseError]
+  // CHECK:STDERR: fail_return_undeduced_auto.carbon:[[@LINE-5]]:6: note: 'UndeducedReturn' declared here [CppInteropParseNote]
   // CHECK:STDERR:
   Cpp.UndeducedReturn();
 }

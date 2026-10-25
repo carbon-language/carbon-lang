@@ -5,6 +5,7 @@
 #include "toolchain/check/cpp/overload_resolution.h"
 
 #include "clang/AST/DeclCXX.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/DiagnosticSema.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
@@ -320,6 +321,13 @@ auto PerformCppOverloadResolution(
     case clang::OverloadingResult::OR_Success: {
       CARBON_CHECK(best_viable_fn->Function);
       CARBON_CHECK(!best_viable_fn->RewriteKind);
+
+      clang::DiagnosticErrorTrap trap(sema.getDiagnostics());
+      if (sema.DiagnoseUseOfOverloadedDecl(best_viable_fn->Function, loc) ||
+          trap.hasErrorOccurred()) {
+        return SemIR::ErrorInst::InstId;
+      }
+
       SemIR::ClangDeclSignatureId signature_id =
           ComputeClangDeclSignatureFromBestViableFunction(
               context, best_viable_fn, self_expr, arg_exprs);

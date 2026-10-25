@@ -4,6 +4,7 @@
 
 #include "toolchain/check/cpp/operators.h"
 
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Overload.h"
 #include "clang/Sema/Sema.h"
@@ -851,6 +852,11 @@ static auto FindClangOperator(Context& context, SemIR::LocId loc_id,
                           clang::getOperatorSpelling(
                               candidate_set.getRewriteInfo().OriginalOperator),
                           best_viable_fn->Function->getNameAsString()));
+        return SemIR::ErrorInst::InstId;
+      }
+      clang::DiagnosticErrorTrap trap(sema.getDiagnostics());
+      if (sema.DiagnoseUseOfOverloadedDecl(best_viable_fn->Function, loc) ||
+          trap.hasErrorOccurred()) {
         return SemIR::ErrorInst::InstId;
       }
       sema.MarkFunctionReferenced(loc, best_viable_fn->Function);
