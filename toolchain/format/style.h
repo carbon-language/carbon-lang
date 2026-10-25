@@ -40,6 +40,11 @@ struct Style {
   // Whether to align consecutive same-indent trailing `//` comments into a
   // shared column. Standalone trailing comments keep a single leading space.
   bool align_trailing_comments = true;
+
+  // Whether to reformat C++ multi-line string literals (those with a C++ file
+  // type indicator such as `'''cpp`, or the body of an `inline Cpp` or
+  // `import Cpp inline` declaration) with clang-format.
+  bool format_cpp_snippets = true;
 };
 
 }  // namespace Carbon::Format

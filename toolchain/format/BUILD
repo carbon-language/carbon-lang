@@ -16,6 +16,8 @@ cc_library(
     srcs = [
         "comment.cpp",
         "comment.h",
+        "cpp_snippet.cpp",
+        "cpp_snippet.h",
         "format.cpp",
         "formatter.cpp",
         "formatter.h",
@@ -42,6 +44,8 @@ cc_library(
         "//toolchain/parse:node_kind",
         "//toolchain/parse:precedence",
         "//toolchain/parse:tree",
+        "@llvm-project//clang:format",
+        "@llvm-project//clang:tooling_core",
         "@llvm-project//llvm:Support",
     ],
 )

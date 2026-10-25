@@ -51,6 +51,8 @@ constexpr llvm::StringLiteral Inputs[] = {
     "  b;\n}\n",
     "fn F() {\n  receiverrrrrrrrrrr.aaaaaaaaaaaaaaaaa().bbbbbbbbbbbbbbbbb()"
     ".cccccccccccccccc();\n}",
+    "import Cpp inline '''\nint *p = &x ;\n''';\n"
+    "fn F() {\n  var s: String = '''cpp\n  int  x=1+2 ;\n  ''';\n}",
     "class C { private fn Configure() -> "
     "ValidationResultStatusNameGoesHereAndOverflowsXyzzy; }",
     "fn U() {\n  var accumulated_statistics_record_value: "
@@ -199,8 +201,11 @@ TEST(FormatterTest, ErrorRecoveryAndNewlineLessLiterals) {
 
 TEST(FormatterTest, CrlfAndNonWrappableComments) {
   Testing::CompileHelper helper;
-  EXPECT_EQ(FormatText(helper, "// one\r\n  // two\r\nfn F() {}\r\n"),
-            "// one\n// two\nfn F() {}\n");
+  EXPECT_EQ(
+      FormatText(helper,
+                 "// one\r\n  // two\r\nvar s: String = '''cpp // note\r\n"
+                 "int x=1+2;\r\n''';\r\n"),
+      "// one\n// two\nvar s: String = '''cpp // note\nint x = 1 + 2;\n''';\n");
 
   Style narrow;
   narrow.column_limit = 20;
@@ -281,6 +286,70 @@ TEST(FormatterTest, StyleOptions) {
   no_align.align_trailing_comments = false;
   llvm::StringRef comments = "var x: i32 = 1; // a\nvar yyyy: i32 = 22; // b\n";
   EXPECT_EQ(FormatText(helper, comments, no_align), comments);
+
+  Style no_cpp;
+  no_cpp.format_cpp_snippets = false;
+  llvm::StringRef cpp = "var s: String = '''cpp\nint x=1+2;\n''';\n";
+  EXPECT_EQ(FormatText(helper, cpp, no_cpp), cpp);
+}
+
+TEST(FormatterTest, EmbeddedCppSnippetGuards) {
+  Testing::CompileHelper helper;
+  // Non-raw `'''cpp` leaves Carbon escapes and clang-format-inserted `\` macro
+  // splices untouched, whereas `#'''cpp` formats both while still guarding
+  // `\#` and `'''#`.
+  Style narrow_macro;
+  narrow_macro.column_limit = 35;
+  llvm::StringRef non_raw_escape =
+      "var s: String = '''cpp\nconst char* p=\"a\\nb\";\n''';\n";
+  EXPECT_EQ(FormatText(helper, non_raw_escape), non_raw_escape);
+  llvm::StringRef non_raw_macro =
+      "var s: String = '''cpp\n#define LONG_M(a, b, c) ((a) + (b) + (c))\n"
+      "''';\n";
+  EXPECT_EQ(FormatText(helper, non_raw_macro, narrow_macro), non_raw_macro);
+
+  EXPECT_TRUE(llvm::StringRef(
+                  FormatText(helper,
+                             "var s: String = #'''cpp\n#define LONG_M(a, b, c)"
+                             " ((a) + (b) + (c))\n'''#;\n",
+                             narrow_macro))
+                  .contains("\\\n"));
+  EXPECT_EQ(
+      FormatText(helper,
+                 "var s: String = #'''cpp\nconst char* p=\"'''\";\n'''#;\n"),
+      "var s: String = #'''cpp\nconst char* p = \"'''\";\n'''#;\n");
+
+  for (llvm::StringRef untouched : {
+           "var s: String = #'''cpp\nconst char* p=\"a\\#nb\";\n'''#;\n",
+           "var s: String = '''cpp //odd\nint x=1+2;\n''';\n",
+           "var s: String = '''cpp\n''';\n",
+           "var s: String = '''cpp\nint x=1;\n  ''';\n",
+           "var s: String = '''cpp\n\tint x=1;\n''';\n",
+       }) {
+    EXPECT_EQ(FormatText(helper, untouched), untouched);
+  }
+
+  // Remaining width `< 20` skips C++ snippet formatting.
+  Style narrow25;
+  narrow25.column_limit = 25;
+  llvm::StringRef indented_cpp =
+      "class A {\n  class B {\n    class C {\n      var s: String = '''cpp\n"
+      "      int x=1+2;\n      ''';\n    }\n  }\n}\n";
+  EXPECT_TRUE(llvm::StringRef(FormatText(helper, indented_cpp, narrow25))
+                  .contains("int x=1+2;"));
+
+  // Preserves `#include` order and suppresses `// namespace` end comments.
+  std::string ns =
+      "var s: String = '''cpp\n#include \"b.h\"\n#include \"a.h\"\n"
+      "namespace outer {\n";
+  for (int i = 0; i < 25; ++i) {
+    ns += "int x" + std::to_string(i) + "=1;\n";
+  }
+  ns += "}\n''';\n";
+  std::string formatted_ns = FormatText(helper, ns);
+  EXPECT_TRUE(llvm::StringRef(formatted_ns)
+                  .contains("#include \"b.h\"\n#include \"a.h\""));
+  EXPECT_FALSE(llvm::StringRef(formatted_ns).contains("// namespace outer"));
 }
 
 }  // namespace

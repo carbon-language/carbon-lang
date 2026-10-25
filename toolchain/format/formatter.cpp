@@ -13,6 +13,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/format/comment.h"
+#include "toolchain/format/cpp_snippet.h"
 #include "toolchain/format/line_wrapper.h"
 #include "toolchain/lex/token_kind.h"
 
@@ -26,8 +27,8 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
       token_infos_(
           TokenInfoStore::MakeWithExplicitSize(tokens_->size(), TokenInfo())) {
   // Cache each token's first-line width, then walk `tree_` in postorder to
-  // record each owned token's syntactic role, operator break penalty,
-  // member-access chain metadata, and operand-alignment scopes.
+  // record each owned token's syntactic role, `inline Cpp` body flag, operator
+  // break penalty, member-access chain metadata, and operand-alignment scopes.
   // Subtree token spans are folded bottom-up on `range_stack` in the same pass,
   // ignoring synthetic recovery and file-boundary tokens so recovery
   // identifiers never stretch an operand span past the real tokens on the line.
@@ -83,6 +84,10 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
     TokenRole role = RoleForNodeKind(kind);
     if (role != TokenRole::Unknown && token.has_value()) {
       token_infos_.Get(token).role = role;
+    }
+
+    if (kind == Parse::NodeKind::InlineImportBody && token.has_value()) {
+      token_infos_.Get(token).is_cpp_string = true;
     }
 
     bool is_struct = kind == Parse::NodeKind::StructLiteral ||
@@ -395,6 +400,7 @@ auto Formatter::FlushLine() -> void {
 
   size_t mid_it = 0;
   std::optional<Lex::TokenIndex> previous;
+  int line_indent = indent_;
   for (int i = 0; i < static_cast<int>(current_line_.size()); ++i) {
     Lex::TokenIndex token = current_line_[i];
     int blanks_after_comment = 0;
@@ -420,15 +426,23 @@ auto Formatter::FlushLine() -> void {
     } else if (newline_indents[i] >= 0) {
       newlines = 1 + blanks_after_comment;
       spaces = newline_indents[i];
+      line_indent = newline_indents[i];
     } else {
       newlines = 0;
       spaces = SpacesBefore(*tokens_, token_infos_, *previous, token);
     }
     std::string rewritten;
     if (tokens_->GetKind(token) == Lex::TokenKind::StringLiteral) {
-      if (auto escaped =
-              EscapeTripleQuoteString(tokens_->GetTokenText(token))) {
+      llvm::StringRef text = tokens_->GetTokenText(token);
+      if (auto escaped = EscapeTripleQuoteString(text)) {
         rewritten = std::move(*escaped);
+      } else if (style_.format_cpp_snippets &&
+                 token_infos_.Get(token).verbatim_region_id < 0) {
+        if (std::optional<std::string> cpp_snippet =
+                CppSnippet(text, line_indent, style_,
+                           token_infos_.Get(token).is_cpp_string)) {
+          rewritten = std::move(*cpp_snippet);
+        }
       }
     }
     if (std::optional<llvm::StringRef> gap = VerbatimGapBefore(token)) {

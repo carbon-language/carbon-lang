@@ -113,6 +113,10 @@ struct TokenInfo {
   // receiver-anchored indentation and all-or-nothing builder wrapping; -1
   // otherwise.
   int member_chain_id = -1;
+  // Whether the token is the string literal body of an `inline Cpp` (or
+  // `import Cpp inline`) declaration. Such a literal holds C++ and is
+  // reformatted even without a `'''cpp` file type indicator.
+  bool is_cpp_string = false;
   // Identifier of the outermost error subtree containing this token, or -1 for
   // well-formed tokens, file boundaries, and synthesized recovery tokens.
   // Adjacent tokens sharing a non-negative `verbatim_region_id` keep the raw
