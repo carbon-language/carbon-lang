@@ -121,16 +121,19 @@ template<typename T> struct Result {
   T first;
   T second;
   T third;
+  T fourth;
+  T fifth;
 };
 template<typename T> auto MakeResult(T value) {
-  return Result<T>{value, value + 1, value + 2};
+  return Result<T>{value, value + 1, value + 2, value + 3, value + 4};
 }
 ''';
 
 // Import the result's class through return deduction, not an explicit type use.
-fn Call(value: i64) -> i64 {
+// Five i32 fields keep the indirect return without platform-specific i64 mapping.
+fn Call(value: i32) -> i32 {
   //@dump-sem-ir-begin
-  return Cpp.MakeResult(value).third;
+  return Cpp.MakeResult(value).fifth;
   //@dump-sem-ir-end
 }
 
@@ -628,35 +631,35 @@ fn Call(value: i32) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
-// CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
 // CHECK:STDOUT:   %N: Core.IntLiteral = symbolic_binding N, 0 [symbolic]
-// CHECK:STDOUT:   %i64: type = class_type @Int, @Int(%int_64) [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
 // CHECK:STDOUT:   %MakeResult.cpp_overload_set.type: type = cpp_overload_set_type @MakeResult.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %MakeResult.cpp_overload_set.value: %MakeResult.cpp_overload_set.type = cpp_overload_set_value @MakeResult.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %Result: type = class_type @Result [concrete]
-// CHECK:STDOUT:   %pattern_type.25d: type = pattern_type %Result [concrete]
-// CHECK:STDOUT:   %ptr.9df: type = ptr_type %Result [concrete]
+// CHECK:STDOUT:   %pattern_type.36a: type = pattern_type %Result [concrete]
+// CHECK:STDOUT:   %ptr.bd7: type = ptr_type %Result [concrete]
 // CHECK:STDOUT:   %MakeResult__carbon_thunk.type: type = fn_type @MakeResult__carbon_thunk [concrete]
 // CHECK:STDOUT:   %MakeResult__carbon_thunk: %MakeResult__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Result.elem: type = unbound_element_type %Result, %i64 [concrete]
+// CHECK:STDOUT:   %Result.elem: type = unbound_element_type %Result, %i32 [concrete]
 // CHECK:STDOUT:   %Copy.type: type = facet_type <@Copy> [concrete]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.a1d: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%N) [symbolic]
 // CHECK:STDOUT:   %Int.as.Copy.impl.Op.3c1: %Int.as.Copy.impl.Op.type.a1d = struct_value () [symbolic]
-// CHECK:STDOUT:   %Copy.impl_witness.ecc: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_64) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.92c: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_64) [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.f9d: %Int.as.Copy.impl.Op.type.92c = struct_value () [concrete]
-// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i64, (%Copy.impl_witness.ecc) [concrete]
-// CHECK:STDOUT:   %Copy.WithSelf.Op.type.bb9: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
-// CHECK:STDOUT:   %.828: type = fn_type_with_self_type %Copy.WithSelf.Op.type.bb9, %Copy.facet [concrete]
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.f9d, @Int.as.Copy.impl.Op(%int_64) [concrete]
-// CHECK:STDOUT:   %self.param_patt.db5: %pattern_type.25d = ref_param_pattern [concrete]
-// CHECK:STDOUT:   %self.patt.624: %pattern_type.25d = wrapper_binding_pattern self, %self.param_patt.db5 [concrete]
+// CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.type.648: type = fn_type @Int.as.Copy.impl.Op, @Int.as.Copy.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.cae: %Int.as.Copy.impl.Op.type.648 = struct_value () [concrete]
+// CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
+// CHECK:STDOUT:   %Copy.WithSelf.Op.type.f76: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
+// CHECK:STDOUT:   %.2b9: type = fn_type_with_self_type %Copy.WithSelf.Op.type.f76, %Copy.facet [concrete]
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %Int.as.Copy.impl.Op.cae, @Int.as.Copy.impl.Op(%int_32) [concrete]
+// CHECK:STDOUT:   %self.param_patt.ef7: %pattern_type.36a = ref_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt.ca3: %pattern_type.36a = wrapper_binding_pattern self, %self.param_patt.ef7 [concrete]
 // CHECK:STDOUT:   %Result.cpp_destructor.type: type = fn_type @Result.cpp_destructor [concrete]
 // CHECK:STDOUT:   %Result.cpp_destructor: %Result.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc18 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef0: type = fn_type @Destroy.WithSelf.Op.loc21 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403: %Destroy.WithSelf.Op.type.ef0 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc18 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbc: type = fn_type @Destroy.WithSelf.SelfDestruct.loc21 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3: %Destroy.WithSelf.SelfDestruct.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -681,41 +684,41 @@ fn Call(value: i32) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc18 [concrete = constants.%Destroy.WithSelf.Op.403] {
-// CHECK:STDOUT:     %self.param_patt: %pattern_type.25d = ref_param_pattern [concrete = constants.%self.param_patt.db5]
-// CHECK:STDOUT:     %self.patt: %pattern_type.25d = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.624]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl: %Destroy.WithSelf.Op.type.ef0 = fn_decl @Destroy.WithSelf.Op.loc21 [concrete = constants.%Destroy.WithSelf.Op.403] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.36a = ref_param_pattern [concrete = constants.%self.param_patt.ef7]
+// CHECK:STDOUT:     %self.patt: %pattern_type.36a = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.ca3]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref %Result = ref_param call_param0
 // CHECK:STDOUT:     %self: ref %Result = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Call(%value.param: %i64) -> out %return.param: %i64 {
+// CHECK:STDOUT: fn @Call(%value.param: %i32) -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %MakeResult.ref: %MakeResult.cpp_overload_set.type = name_ref MakeResult, imports.%MakeResult.cpp_overload_set.value [concrete = constants.%MakeResult.cpp_overload_set.value]
-// CHECK:STDOUT:   %value.ref: %i64 = name_ref value, %value
-// CHECK:STDOUT:   %.loc18_30.1: ref %Result = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.9df = addr_of %.loc18_30.1
+// CHECK:STDOUT:   %value.ref: %i32 = name_ref value, %value
+// CHECK:STDOUT:   %.loc21_30.1: ref %Result = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr.bd7 = addr_of %.loc21_30.1
 // CHECK:STDOUT:   %MakeResult__carbon_thunk.call: init %empty_tuple.type = call imports.%MakeResult__carbon_thunk.decl(%value.ref, %addr)
-// CHECK:STDOUT:   %.loc18_30.2: init %Result to %.loc18_30.1 = mark_in_place_init %MakeResult__carbon_thunk.call
-// CHECK:STDOUT:   %.loc18_30.3: ref %Result = temporary %.loc18_30.1, %.loc18_30.2
-// CHECK:STDOUT:   %third.ref: %Result.elem = name_ref third, @Result.%field_decl.3 [concrete = @Result.%field_decl.3]
-// CHECK:STDOUT:   %.loc18_31.1: ref %i64 = class_element_access %.loc18_30.3, element2
-// CHECK:STDOUT:   %.loc18_31.2: %i64 = acquire_value %.loc18_31.1
-// CHECK:STDOUT:   %impl.elem0: %.828 = impl_witness_access constants.%Copy.impl_witness.ecc, element0 [concrete = constants.%Int.as.Copy.impl.Op.f9d]
-// CHECK:STDOUT:   %bound_method.loc18_31.1: <bound method> = bound_method %.loc18_31.2, %impl.elem0
-// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_64) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc18_31.2: <bound method> = bound_method %.loc18_31.2, %specific_fn
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i64 = call %bound_method.loc18_31.2(%.loc18_31.2)
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc18_30.3, constants.%Destroy.WithSelf.SelfDestruct.db3
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc18_30.3)
+// CHECK:STDOUT:   %.loc21_30.2: init %Result to %.loc21_30.1 = mark_in_place_init %MakeResult__carbon_thunk.call
+// CHECK:STDOUT:   %.loc21_30.3: ref %Result = temporary %.loc21_30.1, %.loc21_30.2
+// CHECK:STDOUT:   %fifth.ref: %Result.elem = name_ref fifth, @Result.%field_decl.5 [concrete = @Result.%field_decl.5]
+// CHECK:STDOUT:   %.loc21_31.1: ref %i32 = class_element_access %.loc21_30.3, element4
+// CHECK:STDOUT:   %.loc21_31.2: %i32 = acquire_value %.loc21_31.1
+// CHECK:STDOUT:   %impl.elem0: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
+// CHECK:STDOUT:   %bound_method.loc21_31.1: <bound method> = bound_method %.loc21_31.2, %impl.elem0
+// CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc21_31.2: <bound method> = bound_method %.loc21_31.2, %specific_fn
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc21_31.2(%.loc21_31.2)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound: <bound method> = bound_method %.loc21_30.3, constants.%Destroy.WithSelf.SelfDestruct.db3
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound(%.loc21_30.3)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc18(%self.param: ref %Result) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc21(%self.param: ref %Result) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc18(%self.param: ref %Result) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc21(%self.param: ref %Result) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl(%self.param)
 // CHECK:STDOUT:   %Result.cpp_destructor.call: init %empty_tuple.type = call imports.%Result.cpp_destructor.decl(%self.param)
