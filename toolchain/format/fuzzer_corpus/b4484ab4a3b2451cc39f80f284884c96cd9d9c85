@@ -1,0 +1,5 @@
+fn F() {
+  var s: String = '''cpp
+  int  x=1 ;
+  ''';
+}
