@@ -8,6 +8,9 @@
 #include <optional>
 #include <string>
 
+#include "common/check.h"
+#include "toolchain/parse/precedence.h"
+
 namespace Carbon::Format {
 
 // Returns true if placing `left` and `right` adjacent with no space would cause
@@ -142,6 +145,121 @@ auto RoleForNodeKind(Parse::NodeKind kind) -> TokenRole {
   }
 }
 
+// Maps an infix `PrecedenceGroup` (above `Assignment`) to its split penalty by
+// counting how many canonical comparable Carbon precedence tiers it binds
+// strictly tighter than (`4 + looser`, producing `5`..`8`). Incomparable
+// operators in Carbon require explicit parentheses, which add
+// `PenaltyPerBracketDepth` per nesting level in `SolveLineBreaks`.
+static auto InfixPrecedencePenalty(Parse::PrecedenceGroup group) -> int {
+  static constexpr Lex::TokenKind Tiers[] = {
+      Lex::TokenKind::Equal,       // Assignment
+      Lex::TokenKind::And,         // Logical
+      Lex::TokenKind::EqualEqual,  // Relational
+      Lex::TokenKind::Plus,        // Additive / Bitwise / Shift / Modulo
+  };
+  int looser = 0;
+  for (Lex::TokenKind tier_token : Tiers) {
+    auto tier = Parse::PrecedenceGroup::ForTrailing(tier_token, /*infix=*/true);
+    CARBON_CHECK(tier.has_value());
+    if (group != tier->level &&
+        Parse::PrecedenceGroup::GetPriority(group, tier->level) ==
+            Parse::OperatorPriority::LeftFirst) {
+      ++looser;
+    }
+  }
+  return 4 + looser;
+}
+
+static auto InfixTokenPrecedencePenalty(Lex::TokenKind op_token) -> int {
+  auto trailing = Parse::PrecedenceGroup::ForTrailing(op_token, /*infix=*/true);
+  CARBON_CHECK(trailing.has_value() && trailing->is_binary);
+  return InfixPrecedencePenalty(trailing->level);
+}
+
+auto OperatorInfoForNodeKind(Parse::NodeKind kind, const Style& style)
+    -> OperatorInfo {
+  // Break penalties increase with binding tightness from
+  // `Parse::PrecedenceGroup` so looser operators break first.
+  auto infix_info = [&style](Lex::TokenKind op_token) -> OperatorInfo {
+    auto trailing =
+        Parse::PrecedenceGroup::ForTrailing(op_token, /*infix=*/true);
+    CARBON_CHECK(trailing.has_value() && trailing->is_binary);
+    auto assign = Parse::PrecedenceGroup::ForTrailing(Lex::TokenKind::Equal,
+                                                      /*infix=*/true);
+    if (trailing->level == assign->level) {
+      // Assignment and compound assignment continuation-indent the right-hand
+      // side rather than aligning operands.
+      return {.break_penalty = style.penalty_break_assignment,
+              .aligns_operands = false};
+    }
+    return {.break_penalty = InfixPrecedencePenalty(trailing->level),
+            .aligns_operands = true};
+  };
+
+  switch (kind) {
+#define CARBON_PARSE_NODE_KIND(Name)
+#define CARBON_PARSE_NODE_KIND_INFIX_OPERATOR(Name) \
+  case Parse::NodeKind::InfixOperator##Name:        \
+    return infix_info(Lex::TokenKind::Name);
+#include "toolchain/parse/node_kind.def"
+
+    case Parse::NodeKind::ShortCircuitOperatorAnd:
+      return infix_info(Lex::TokenKind::And);
+    case Parse::NodeKind::ShortCircuitOperatorOr:
+      return infix_info(Lex::TokenKind::Or);
+
+    // `for (... in ...)` and `where`-requirement conjunction.
+    case Parse::NodeKind::ForIn:
+    case Parse::NodeKind::RequirementAnd:
+      return {.break_penalty = InfixTokenPrecedencePenalty(Lex::TokenKind::And),
+              .aligns_operands = false};
+
+    // Equality constraints in `where` and `observe`.
+    case Parse::NodeKind::RequirementEqualEqual:
+    case Parse::NodeKind::ObserveEqualEqual:
+      return {.break_penalty =
+                  InfixTokenPrecedencePenalty(Lex::TokenKind::EqualEqual),
+              .aligns_operands = true};
+
+    // `impls` constraints and `impl ... as` / `require ... impls` headers.
+    case Parse::NodeKind::RequirementImpls:
+    case Parse::NodeKind::ObserveImpls:
+      return {
+          .break_penalty = InfixTokenPrecedencePenalty(Lex::TokenKind::Plus),
+          .aligns_operands = true};
+    case Parse::NodeKind::ImplTypeAs:
+    case Parse::NodeKind::ImplDefaultSelfAs:
+    case Parse::NodeKind::RequireTypeImpls:
+    case Parse::NodeKind::RequireDefaultSelfImpls:
+      return {
+          .break_penalty = InfixTokenPrecedencePenalty(Lex::TokenKind::Plus),
+          .aligns_operands = false};
+
+    // Associated-entity rewrite `.Assoc = Type` inside `where`: priced above
+    // `where` and `and` so the clause wraps before splitting an individual
+    // rewrite.
+    case Parse::NodeKind::RequirementEqual:
+      return {.break_penalty =
+                  InfixTokenPrecedencePenalty(Lex::TokenKind::Star) + 1,
+              .aligns_operands = false};
+
+    default:
+      return {.break_penalty = -1, .aligns_operands = false};
+  }
+}
+
+auto MemberAccessBreakPenalty(Parse::NodeKind kind) -> int {
+  switch (kind) {
+    case Parse::NodeKind::MemberAccessExpr:
+    case Parse::NodeKind::PointerMemberAccessExpr:
+      // Interior member-access penalty; the formatter lowers the final link of
+      // a multi-link chain to `MemberAccessLastLinkBreakPenalty`.
+      return 150;
+    default:
+      return -1;
+  }
+}
+
 // Returns true when `right` is a call, parameter-list, type-constructor, or
 // subscript `(` / `[` that attaches tightly to `left` (unnamed parameter lists
 // directly after `fn` or `forall` keep a separating space).
@@ -251,4 +369,124 @@ auto EscapeTripleQuoteString(llvm::StringRef text)
   return out;
 }
 
+auto CanBreakBefore(const Lex::TokenizedBuffer& tokens,
+                    const TokenInfoStore& token_infos, Lex::TokenIndex left,
+                    Lex::TokenIndex right) -> bool {
+  Lex::TokenKind left_kind = tokens.GetKind(left);
+  Lex::TokenKind right_kind = tokens.GetKind(right);
+  TokenRole right_role = token_infos.Get(right).role;
+  // Never break before a separator, binding colon, closing bracket, or `=>`.
+  if (right_kind.IsOneOf(
+          {Lex::TokenKind::Comma, Lex::TokenKind::Semi, Lex::TokenKind::Colon,
+           Lex::TokenKind::ColonQuestion, Lex::TokenKind::CloseParen,
+           Lex::TokenKind::CloseSquareBracket, Lex::TokenKind::CloseCurlyBrace,
+           Lex::TokenKind::EqualGreater})) {
+    return false;
+  }
+  // Keep block, lambda, and multiline-struct `{` attached to their header,
+  // and keep `else` attached to a preceding `}`. Inline `StructOpen` `{` may
+  // break onto a continuation line (e.g. after `=`).
+  if (right_kind == Lex::TokenKind::OpenCurlyBrace &&
+      (right_role == TokenRole::BlockOpen ||
+       right_role == TokenRole::LambdaOpen ||
+       right_role == TokenRole::MultilineStructOpen)) {
+    return false;
+  }
+  if (left_kind == Lex::TokenKind::CloseCurlyBrace &&
+      right_kind == Lex::TokenKind::Else) {
+    return false;
+  }
+  if (IsTightPostfixBracket(tokens, token_infos, left, right)) {
+    return false;
+  }
+  // Never break immediately after `.`, `->`, or `->?`: member access,
+  // designators, and return types break before the operator rather than after.
+  if (left_kind.IsOneOf({Lex::TokenKind::Period, Lex::TokenKind::MinusGreater,
+                         Lex::TokenKind::MinusGreaterQuestion})) {
+    return false;
+  }
+  // Never separate a symbolic unary operator from its operand: Carbon's
+  // fixity rules reject whitespace on the operand side.
+  if (token_infos.Get(left).role == TokenRole::PrefixOperator &&
+      left_kind.is_symbol()) {
+    return false;
+  }
+  if (right_role == TokenRole::PostfixOperator) {
+    return false;
+  }
+  // Keep `=` and infix/constraint operators attached to the preceding line and
+  // break after them instead.
+  if (right_kind == Lex::TokenKind::Equal ||
+      token_infos.Get(right).break_penalty_after >= 0) {
+    return false;
+  }
+  return true;
+}
+
+auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
+                  const TokenInfoStore& token_infos, Lex::TokenIndex left,
+                  Lex::TokenIndex right, const Style& style) -> int {
+  Lex::TokenKind left_kind = tokens.GetKind(left);
+  Lex::TokenKind right_kind = tokens.GetKind(right);
+  if (left_kind == Lex::TokenKind::Comma) {
+    return 1;
+  }
+  int left_break_penalty_after = token_infos.Get(left).break_penalty_after;
+  if (left_break_penalty_after >= 0) {
+    return left_break_penalty_after;
+  }
+  int right_break_penalty_before = token_infos.Get(right).break_penalty_before;
+  if (right_break_penalty_before >= 0) {
+    return right_break_penalty_before;
+  }
+  if (left_kind == Lex::TokenKind::Equal) {
+    // Initializer or field `=` (not an `OperatorInfo` node).
+    return style.penalty_break_assignment;
+  }
+  if (left_kind.IsOneOf(
+          {Lex::TokenKind::OpenParen, Lex::TokenKind::OpenSquareBracket}) ||
+      (left_kind == Lex::TokenKind::OpenCurlyBrace &&
+       token_infos.Get(left).role == TokenRole::StructOpen)) {
+    return style.penalty_break_before_first_call_parameter;
+  }
+  // After a word prefix operator (`not`, `const`, `ref`) or `...` pack
+  // expansion, or before a return arrow or `unsafe` operator modifier.
+  if (token_infos.Get(left).role == TokenRole::PrefixOperator ||
+      left_kind == Lex::TokenKind::PeriodPeriodPeriod ||
+      right_kind.IsOneOf({Lex::TokenKind::MinusGreater,
+                          Lex::TokenKind::MinusGreaterQuestion,
+                          Lex::TokenKind::Unsafe})) {
+    return 60;
+  }
+  if (left_kind.IsOneOf(
+          {Lex::TokenKind::Colon, Lex::TokenKind::ColonQuestion})) {
+    return 100;
+  }
+  if (token_infos.Get(right).role == TokenRole::MemberAccess ||
+      right_kind == Lex::TokenKind::Period) {
+    return 150;
+  }
+  if (left_kind.is_keyword()) {
+    // Keep introducer and modifier keywords (`private`, `fn`, `return`,
+    // `while`) attached to the construct they introduce unless no cheaper break
+    // exists. Word operators are already handled above.
+    return 200;
+  }
+  return 3;
+}
+
+auto RenderedWidth(const Lex::TokenizedBuffer& tokens,
+                   const TokenInfoStore& token_infos,
+                   llvm::ArrayRef<Lex::TokenIndex> line) -> int {
+  int width = 0;
+  std::optional<Lex::TokenIndex> previous;
+  for (Lex::TokenIndex token : line) {
+    if (previous) {
+      width += SpacesBefore(tokens, token_infos, *previous, token);
+    }
+    width += token_infos.Get(token).column_width;
+    previous = token;
+  }
+  return width;
+}
 }  // namespace Carbon::Format

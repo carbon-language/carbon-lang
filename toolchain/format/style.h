@@ -5,11 +5,17 @@
 #ifndef CARBON_TOOLCHAIN_FORMAT_STYLE_H_
 #define CARBON_TOOLCHAIN_FORMAT_STYLE_H_
 
+#include <cstdint>
+
 namespace Carbon::Format {
 
 // Formatting parameters for `carbon format`. A default-constructed `Style`
 // represents Carbon's canonical formatting style.
 struct Style {
+  // Soft column limit for formatted output, exceeded only when no legal set of
+  // line breaks avoids overrunning it.
+  int column_limit = 80;
+
   // Columns added per block indentation level.
   int indent_width = 2;
 
@@ -19,6 +25,17 @@ struct Style {
 
   // Maximum number of consecutive blank lines preserved between items.
   int max_empty_lines_to_keep = 1;
+
+  // Penalty charged per column past `column_limit`. Exceeding every split
+  // penalty ensures any legal break is preferred over overrunning the limit.
+  int64_t penalty_excess_character = 1'000'000;
+
+  // Penalty for breaking immediately after an opening `(`, `[`, or inline `{`
+  // before its first element.
+  int penalty_break_before_first_call_parameter = 19;
+
+  // Penalty for breaking after `=` onto its right-hand side.
+  int penalty_break_assignment = 2;
 };
 
 }  // namespace Carbon::Format

@@ -11,8 +11,10 @@
 #include <utility>
 
 #include "common/check.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
+#include "toolchain/format/line_wrapper.h"
 #include "toolchain/lex/token_kind.h"
 
 namespace Carbon::Format {
@@ -38,11 +40,26 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
       whitespace_(tokens_, style),
       token_infos_(
           TokenInfoStore::MakeWithExplicitSize(tokens_->size(), TokenInfo())) {
+  for (auto token : tokens_->tokens()) {
+    llvm::StringRef text = tokens_->GetTokenText(token);
+    if (tokens_->GetKind(token) == Lex::TokenKind::StringLiteral) {
+      if (auto escaped = EscapeTripleQuoteString(text)) {
+        token_infos_.Get(token).column_width =
+            static_cast<int>(llvm::StringRef(*escaped).rtrim('\r').size());
+        continue;
+      }
+    }
+    token_infos_.Get(token).column_width =
+        static_cast<int>(text.split('\n').first.rtrim('\r').size());
+  }
+
   struct SubtreeRange {
     Parse::NodeKind kind;
     Lex::TokenIndex token = Lex::TokenIndex::None;
     Lex::TokenIndex min = Lex::TokenIndex::None;
     Lex::TokenIndex max = Lex::TokenIndex::None;
+    Lex::TokenIndex chain_last_member = Lex::TokenIndex::None;
+    int chain_length = 0;
     bool is_error_root = false;
   };
   llvm::SmallVector<SubtreeRange> range_stack;
@@ -117,6 +134,40 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
     }
     range.is_error_root = node_has_error;
 
+    if ((kind == Parse::NodeKind::CallExprStart ||
+         kind == Parse::NodeKind::IndexExprStart) &&
+        first_child && first_child->chain_last_member.has_value()) {
+      token_infos_.Get(first_child->chain_last_member).is_call_link = true;
+      range.chain_last_member = first_child->chain_last_member;
+      range.chain_length = first_child->chain_length;
+    } else if ((kind == Parse::NodeKind::CallExpr ||
+                kind == Parse::NodeKind::IndexExpr) &&
+               first_child) {
+      range.chain_last_member = first_child->chain_last_member;
+      range.chain_length = first_child->chain_length;
+    }
+
+    int member_penalty = MemberAccessBreakPenalty(kind);
+    if (member_penalty >= 0 && token.has_value() &&
+        !tokens_->IsRecoveryToken(token) && range.min.has_value()) {
+      if (first_child && first_child->chain_last_member.has_value()) {
+        if (first_child->chain_length >= 2) {
+          token_infos_.Get(first_child->chain_last_member)
+              .break_penalty_before = member_penalty;
+        }
+        range.chain_length = first_child->chain_length + 1;
+      } else {
+        range.chain_length = 1;
+      }
+      range.chain_last_member = token;
+
+      TokenInfo& info = token_infos_.Get(token);
+      info.member_chain_id = range.min.index;
+      info.break_penalty_before = range.chain_length >= 2
+                                      ? MemberAccessLastLinkBreakPenalty
+                                      : member_penalty;
+    }
+
     if (is_struct && first_child && first_child->token.has_value() &&
         !tokens_->IsRecoveryToken(first_child->token) &&
         tokens_->GetKind(first_child->token) ==
@@ -148,6 +199,23 @@ Formatter::Formatter(const Parse::Tree* tree, const Style& style)
       } else {
         token_infos_.Get(open).role = TokenRole::StructOpen;
         token_infos_.Get(close).role = TokenRole::StructClose;
+      }
+    }
+
+    auto op_info = OperatorInfoForNodeKind(kind, style_);
+    if (op_info.break_penalty >= 0 && token.has_value() &&
+        !tokens_->IsRecoveryToken(token)) {
+      token_infos_.Get(token).break_penalty_after = op_info.break_penalty;
+      if (op_info.aligns_operands && range.min.has_value()) {
+        ++token_infos_.Get(range.min).open_scopes;
+        ++token_infos_.Get(range.max).close_scopes;
+      }
+    } else if (kind == Parse::NodeKind::WhereExpr && token.has_value() &&
+               !tokens_->IsRecoveryToken(token) && range.max.has_value()) {
+      Lex::TokenIndex first_req = NextRealToken(token);
+      if (first_req <= range.max) {
+        ++token_infos_.Get(first_req).open_scopes;
+        ++token_infos_.Get(range.max).close_scopes;
       }
     }
     range_stack.push_back(range);
@@ -226,13 +294,30 @@ auto Formatter::FlushLine() -> void {
       tokens_->GetByteOffset(first),
       tokens_->GetKind(first) == Lex::TokenKind::CloseCurlyBrace);
 
+  llvm::SmallVector<int> newline_indents;
+  bool has_verbatim = llvm::any_of(current_line_, [&](Lex::TokenIndex token) {
+    return token_infos_.Get(token).verbatim_region_id >= 0;
+  });
+  if (has_verbatim ||
+      indent_ + RenderedWidth(*tokens_, token_infos_, current_line_) <=
+          style_.column_limit) {
+    newline_indents.assign(current_line_.size(), -1);
+  } else {
+    newline_indents =
+        SolveLineBreaks(*tokens_, token_infos_, current_line_, indent_, style_);
+  }
+
   std::optional<Lex::TokenIndex> previous;
-  for (Lex::TokenIndex token : current_line_) {
+  for (int i = 0; i < static_cast<int>(current_line_.size()); ++i) {
+    Lex::TokenIndex token = current_line_[i];
     int newlines = 0;
     int spaces = 0;
     if (!previous) {
       newlines = leading_newlines;
       spaces = indent_;
+    } else if (newline_indents[i] >= 0) {
+      newlines = 1;
+      spaces = newline_indents[i];
     } else {
       spaces = SpacesBefore(*tokens_, token_infos_, *previous, token);
     }

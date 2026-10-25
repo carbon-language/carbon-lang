@@ -7,6 +7,9 @@
 #include <string>
 
 #include "common/raw_string_ostream.h"
+#include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/format/format.h"
 #include "toolchain/format/style.h"
@@ -31,6 +34,24 @@ constexpr llvm::StringLiteral Inputs[] = {
     "case {.x = a: i32} => { return a; } default => { return 0; } } }",
     "choice Color { Red, // first\n Green(x: i32, y: i32), // second\n Blue }",
     "fn F() -> auto { return #\"\"\"// \"#; }",
+    "fn RegisterHandler(event_name: String, priority: i32, callback: Callback)"
+    " -> bool { return true; }",
+    "fn F() {\n  RegisterHandler(event_name, default_priority, my_callback,"
+    " extra_argument_value);\n  var is_valid: bool = has_permission and"
+    " is_authenticated and not is_token_expired;\n}",
+    "fn F() {\n  return {.first_field = alpha_value, .second_field = "
+    "beta_value, .third_field = gamma_value};\n}",
+    "fn F() {\n  return aaaaaaaaaa * bbbbbbbbbb + cccccccccc * dddddddddd +"
+    " eeeeeeeeee * ffffffffff;\n}",
+    "fn F() {\n  receiverrrrrrrrrrr.aaaaaaaaaaaaaaaaa().bbbbbbbbbbbbbbbbb()"
+    ".cccccccccccccccc();\n}",
+    "class C { private fn Configure() -> "
+    "ValidationResultStatusNameGoesHereAndOverflowsXyzzy; }",
+    "fn U() {\n  var accumulated_statistics_record_value: "
+    "ProcessingStatisticsRecordContainerXXXXX;\n  TakeTheAddress("
+    "&some_rather_long_variable_name_that_makes_this_overflow_xyzzy);\n  "
+    "TakePointerType("
+    "SomeExtremelyLongParameterTypeNameGoesHereForPointerOverflow*);\n}",
 };
 
 auto FormatText(Testing::CompileHelper& helper, llvm::StringRef text,
@@ -61,6 +82,46 @@ TEST(FormatterTest, InvariantsHoldAcrossConstructs) {
     EXPECT_FALSE(helper.GetTree(once).has_errors()) << once;
     EXPECT_EQ(TokenKinds(helper, input), TokenKinds(helper, once)) << input;
   }
+}
+
+TEST(FormatterTest, GreedyFallbackAndLongOperatorChains) {
+  Testing::CompileHelper helper;
+  // A trailing `callee()` keeps `scope_open_ahead` live across 1,500 arguments
+  // so uniform-cost search hits `MaxStatesGenerated` and exercises greedy
+  // packing.
+  std::string wide_call = "fn F() {\n  Call(";
+  for (int i = 0; i < 1500; ++i) {
+    wide_call += "elem, ";
+  }
+  wide_call += "callee());\n}\n";
+  std::string packed = FormatText(helper, wide_call);
+  EXPECT_GT(llvm::count(packed, '\n'), 100);
+  llvm::SmallVector<llvm::StringRef> lines;
+  llvm::SplitString(packed, lines, "\n");
+  for (llvm::StringRef line : lines) {
+    EXPECT_LE(static_cast<int>(line.size()), 80) << line;
+  }
+  EXPECT_EQ(FormatText(helper, packed), packed);
+
+  // Homogeneous operator chains coalesce identical alignment scopes cleanly.
+  std::string chain = "fn F() -> i32 {\n  return ";
+  for (int i = 0; i < 50; ++i) {
+    if (i > 0) {
+      chain += " + ";
+    }
+    chain += "term_" + std::to_string(i);
+  }
+  chain += ";\n}\n";
+  std::string formatted_chain = FormatText(helper, chain);
+  EXPECT_EQ(formatted_chain, FormatText(helper, formatted_chain));
+
+  // Post-lexing recovery identifiers (`x.class`) must not leak operand scopes.
+  EXPECT_EQ(
+      FormatText(helper,
+                 "fn F() {\n  CallFunction((x.class + 1), "
+                 "second_rather_long_argument_name_for_wrapping_xyz);\n}"),
+      "fn F() {\n  CallFunction((x.class + 1),\n               "
+      "second_rather_long_argument_name_for_wrapping_xyz);\n}\n");
 }
 
 TEST(FormatterTest, ErrorRecoveryAndNewlineLessLiterals) {
@@ -102,6 +163,15 @@ TEST(FormatterTest, StyleOptions) {
   indent4.indent_width = 4;
   EXPECT_EQ(FormatText(helper, "fn F() {\n  return x;\n}\n", indent4),
             "fn F() {\n    return x;\n}\n");
+
+  Style narrow;
+  narrow.column_limit = 20;
+  EXPECT_LT(
+      llvm::count(FormatText(helper, "fn F() {\n  foo(aaaa, bbbb, cccc);\n}\n"),
+                  '\n'),
+      llvm::count(
+          FormatText(helper, "fn F() {\n  foo(aaaa, bbbb, cccc);\n}\n", narrow),
+          '\n'));
 
   Style keep_two;
   keep_two.max_empty_lines_to_keep = 2;

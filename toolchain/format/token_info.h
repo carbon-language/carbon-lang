@@ -9,8 +9,10 @@
 #include <optional>
 #include <string>
 
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/base/fixed_size_value_store.h"
+#include "toolchain/format/style.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_kind.h"
@@ -60,9 +62,57 @@ enum class TokenRole : uint8_t {
 // Maps a parse node kind to the role of the token at the root of that node.
 auto RoleForNodeKind(Parse::NodeKind kind) -> TokenRole;
 
+// Wrapping behavior for an infix or constraint operator parse node.
+struct OperatorInfo {
+  // Penalty for breaking after this operator (before its right operand), or -1
+  // if the node is not such an operator. Looser-binding operators receive lower
+  // penalties so the solver breaks outer operators before tighter inner ones.
+  int break_penalty = -1;
+  // Whether wrapped operands of this node's subtree align with its first
+  // operand rather than using continuation indentation.
+  bool aligns_operands = false;
+};
+
+// Returns operator wrapping metadata for binary and constraint operator nodes,
+// or `{.break_penalty = -1}` for all other node kinds.
+auto OperatorInfoForNodeKind(Parse::NodeKind kind, const Style& style)
+    -> OperatorInfo;
+
+// Returns the break-before penalty for a member-access expression node
+// (`MemberAccessExpr` or `PointerMemberAccessExpr`), or -1 for other node
+// kinds.
+auto MemberAccessBreakPenalty(Parse::NodeKind kind) -> int;
+
+// Break-before penalty for the outermost link of a multi-link member-access
+// chain (`>= 2` links), lower than an interior link's 150 so a plain field
+// chain that must wrap prefers breaking before its final field.
+inline constexpr int MemberAccessLastLinkBreakPenalty = 35;
+
 // Per-token formatting annotations derived from the parse tree.
 struct TokenInfo {
   TokenRole role = TokenRole::Unknown;
+  // For a member-access `.` or `->` token, whether the accessed member is
+  // directly called or indexed (`obj.Method()` or `obj.items[i]`).
+  bool is_call_link = false;
+  // Width in bytes of the token on the line where it starts (its first line
+  // for multi-line tokens such as block string literals).
+  // TODO: Compute display width for multi-byte UTF-8 characters, and track the
+  // last line's width separately for multi-line tokens.
+  int column_width = 0;
+  // Number of operand-alignment scopes opening or closing at this token.
+  int open_scopes = 0;
+  int close_scopes = 0;
+  // If non-negative, this token is an operator that stays on the preceding line
+  // when wrapped, and `break_penalty_after` is the split penalty after it.
+  int break_penalty_after = -1;
+  // If non-negative, this token is a member-access `.` or `->` with this split
+  // penalty before it, or -1 otherwise.
+  int break_penalty_before = -1;
+  // For a member-access `.` or `->` token, the token index of its chain's
+  // receiver root, grouping all links of a left-nested chain for
+  // receiver-anchored indentation and all-or-nothing builder wrapping; -1
+  // otherwise.
+  int member_chain_id = -1;
   // Identifier of the outermost error subtree containing this token, or -1 for
   // well-formed tokens, file boundaries, and synthesized recovery tokens.
   // Adjacent tokens sharing a non-negative `verbatim_region_id` keep the raw
@@ -86,6 +136,24 @@ auto SpacesBefore(const Lex::TokenizedBuffer& tokens,
 auto EscapeTripleQuoteString(llvm::StringRef text)
     -> std::optional<std::string>;
 
+// Returns whether a line break is allowed before `right`, given the preceding
+// token `left`.
+auto CanBreakBefore(const Lex::TokenizedBuffer& tokens,
+                    const TokenInfoStore& token_infos, Lex::TokenIndex left,
+                    Lex::TokenIndex right) -> bool;
+
+// Returns the penalty for breaking the line before `right`, given the preceding
+// token `left` and `style`. Lower penalties are preferred by the line-wrapping
+// solver.
+auto SplitPenalty(const Lex::TokenizedBuffer& tokens,
+                  const TokenInfoStore& token_infos, Lex::TokenIndex left,
+                  Lex::TokenIndex right, const Style& style) -> int;
+
+// Returns the width, in columns, of `line` laid out on a single line: the sum
+// of the token widths and the spaces between them, excluding indentation.
+auto RenderedWidth(const Lex::TokenizedBuffer& tokens,
+                   const TokenInfoStore& token_infos,
+                   llvm::ArrayRef<Lex::TokenIndex> line) -> int;
 }  // namespace Carbon::Format
 
 #endif  // CARBON_TOOLCHAIN_FORMAT_TOKEN_INFO_H_

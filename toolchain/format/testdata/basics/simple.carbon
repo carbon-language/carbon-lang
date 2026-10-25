@@ -102,8 +102,11 @@ var single_line_text: String = "one  line, spacing kept";
 // CHECK:STDOUT:   return 0;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn FunctionWithVeryLongParameterList(first_argument_name: i32, second_argument_name: i32, third_argument_name: i32) -> i32 {
-// CHECK:STDOUT:   var very_long_variable_name_with_a_long_initialization: i32 = first_argument_name + second_argument_name + third_argument_name;
+// CHECK:STDOUT: fn FunctionWithVeryLongParameterList(first_argument_name: i32,
+// CHECK:STDOUT:                                      second_argument_name: i32,
+// CHECK:STDOUT:                                      third_argument_name: i32) -> i32 {
+// CHECK:STDOUT:   var very_long_variable_name_with_a_long_initialization: i32 =
+// CHECK:STDOUT:       first_argument_name + second_argument_name + third_argument_name;
 // CHECK:STDOUT:   return very_long_variable_name_with_a_long_initialization;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
