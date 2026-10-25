@@ -21,7 +21,7 @@
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
-// CHECK:STDOUT: Content-Length: 432{{\r}}
+// CHECK:STDOUT: Content-Length: 479{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
@@ -31,6 +31,7 @@
 // CHECK:STDOUT:       "declarationProvider": true,
 // CHECK:STDOUT:       "definitionProvider": true,
 // CHECK:STDOUT:       "documentFormattingProvider": true,
+// CHECK:STDOUT:       "documentRangeFormattingProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
 // CHECK:STDOUT:       "hoverProvider": true,
 // CHECK:STDOUT:       "implementationProvider": true,
@@ -65,12 +66,26 @@
 // CHECK:STDOUT:     ],
 // CHECK:STDOUT:     "uri": "file:///error.carbon"
 // CHECK:STDOUT:   }
-// CHECK:STDOUT: }Content-Length: 49{{\r}}
+// CHECK:STDOUT: }Content-Length: 261{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 2,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
-// CHECK:STDOUT:   "result": []
+// CHECK:STDOUT:   "result": [
+// CHECK:STDOUT:     {
+// CHECK:STDOUT:       "newText": "\n",
+// CHECK:STDOUT:       "range": {
+// CHECK:STDOUT:         "end": {
+// CHECK:STDOUT:           "character": 8,
+// CHECK:STDOUT:           "line": 0
+// CHECK:STDOUT:         },
+// CHECK:STDOUT:         "start": {
+// CHECK:STDOUT:           "character": 8,
+// CHECK:STDOUT:           "line": 0
+// CHECK:STDOUT:         }
+// CHECK:STDOUT:       }
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:   ]
 // CHECK:STDOUT: }Content-Length: 51{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {

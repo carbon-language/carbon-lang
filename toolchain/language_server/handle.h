@@ -51,7 +51,8 @@ auto HandleDocumentSymbol(
         auto(llvm::Expected<std::vector<clang::clangd::DocumentSymbol>>)->void>
         on_done) -> void;
 
-// Formats a document.
+// Formats a whole document, returning the edits that transform it into the
+// formatted result.
 auto HandleFormatting(
     Context& context, const clang::clangd::DocumentFormattingParams& params,
     llvm::function_ref<
@@ -81,6 +82,14 @@ auto HandleInitialize(
 // Acknowledges that the client finished initializing.
 auto HandleInitialized(Context& context, const clang::clangd::NoParams& params)
     -> void;
+
+// Formats a range of a document, returning the edits within it.
+auto HandleRangeFormatting(
+    Context& context,
+    const clang::clangd::DocumentRangeFormattingParams& params,
+    llvm::function_ref<
+        auto(llvm::Expected<std::vector<clang::clangd::TextEdit>>)->void>
+        on_done) -> void;
 
 // Finds references to the entity named at a position, within this file only.
 auto HandleReferences(
