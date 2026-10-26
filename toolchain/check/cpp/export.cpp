@@ -736,9 +736,12 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
       GetClassTypeInstId(context, class_type.class_id, specific_id);
   ExportAllFieldsToCpp(context, class_type_inst_id);
 
-  // Get the exported `clang::FieldDecl`.
-  if (const auto* clang_decl =
-          context.clang_decls().Lookup(field_inst_id, specific_id)) {
+  // Get the exported `clang::FieldDecl`. Exported fields are keyed by the
+  // `FieldDecl` instruction, but `field_inst_id` is an import ref if the field
+  // was imported, so look up the instruction it resolves to.
+  if (const auto* clang_decl = context.clang_decls().Lookup(
+          context.constant_values().GetConstantInstId(field_inst_id),
+          specific_id)) {
     if (!clang_decl->decl()->isInvalidDecl()) {
       return cast<clang::FieldDecl>(clang_decl->decl());
     }
