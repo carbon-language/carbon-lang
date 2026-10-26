@@ -36,7 +36,7 @@ auto InStaticClassScopeVar(Context& context) -> bool;
 
 // Returns the `FieldDecl` in the class scope corresponding to the given field
 // of the class's object representation, or `nullopt` if there is none, such as
-// for a base class. If the class was imported, this imports the field. See
+// for a base class. If the class was imported, this loads the field. See
 // also `SemIR::LookupClassFieldByStructField`, which can be used once checking
 // is complete.
 auto LookupClassFieldByStructField(Context& context,
