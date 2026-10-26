@@ -10,6 +10,32 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/function/export/default_values.carbon
 
+// --- generic_fn_concrete_default.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+interface Z {};
+
+class D { adapt {}; }
+impl D as Z {}
+fn MakeD() -> D { return {} as D; }
+
+class E { adapt {}; }
+
+class C(T: Z) {
+  var e: E;
+}
+
+fn Make[T: Z](unused t: T, e: E = {} as E) -> C(T) {
+  return {.e = e} as C(T);
+}
+
+inline Cpp '''
+void CallMake() {
+  Carbon::Make(Carbon::MakeD());
+}
+''';
+
 // --- other.carbon
 library "[[@TEST_NAME]]";
 

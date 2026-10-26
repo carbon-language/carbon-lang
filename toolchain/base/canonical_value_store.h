@@ -17,7 +17,9 @@ namespace Carbon {
 // A wrapper for accumulating immutable values with deduplication, providing IDs
 // to later retrieve the value.
 //
-// `ValueT` represents the type being stored.
+// `ValueT` represents the type being stored. Be careful storing non-owned
+// values (e.g. `llvm::StringRef`), as the store will not prevent the
+// underlying data from being freed.
 //
 // `KeyT` can optionally be different from `ValueT`, and if so is used for the
 // argument to `Lookup`. In this case, `ValueT` must provide a `GetAsKey` member
