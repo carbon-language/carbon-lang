@@ -360,14 +360,22 @@ import Cpp library "types.h";
 // TODO: Both checks should fail. Today only the C++ deleted-destructor error is
 // reported.
 fn TestAdaptDeletedDestructor(x: AdaptDeletedDestructor) {
-  // CHECK:STDERR: fail_todo_class_adapter.carbon:[[@LINE+6]]:24: error: attempt to use a deleted function [CppInteropParseError]
+  // CHECK:STDERR: fail_todo_class_adapter.carbon:[[@LINE+10]]:24: error: attempt to use a deleted function [CppInteropParseError]
   // CHECK:STDERR: included from: fail_todo_class_adapter.carbon:[[@LINE-6]]:10 [InCppInclude]
   // CHECK:STDERR: ./types.h:3:3: note: '~DeletedDestructor' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR: imported from: fail_todo_class_adapter.carbon:[[@LINE-10]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
+  // CHECK:STDERR: fail_todo_class_adapter.carbon:[[@LINE+4]]:3-24: error: cannot convert type `AdaptDeletedDestructor` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_todo_class_adapter.carbon:[[@LINE-14]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:8:1-47: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:
   CheckHasDestruction(x);
 
+  // CHECK:STDERR: fail_todo_class_adapter.carbon:[[@LINE+4]]:3-31: error: cannot convert type `AdaptDeletedDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_todo_class_adapter.carbon:[[@LINE-20]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
 

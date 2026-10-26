@@ -463,11 +463,8 @@ static auto GetClassDestroyFormat(Context& context, SemIR::LocId loc_id,
   auto object_repr_id =
       class_info.GetAdaptedType(context.sem_ir(), class_type.specific_id);
   if (object_repr_id.has_value()) {
-    if (auto array_type =
-            context.types().TryGetAs<SemIR::ArrayType>(object_repr_id)) {
-      return GetArrayDestroyFormat(context, loc_id, *array_type,
-                                   witness_context);
-    }
+    return witness_context.GetDestroyFormatForOneType(
+        context, loc_id, context.types().GetTypeInstId(object_repr_id));
   } else {
     object_repr_id =
         class_info.GetObjectRepr(context.sem_ir(), class_type.specific_id);
@@ -483,6 +480,7 @@ static auto GetClassDestroyFormat(Context& context, SemIR::LocId loc_id,
       context, loc_id,
       class_info.GetStructTypeFields(context.sem_ir(), class_type.specific_id),
       witness_context);
+
   return destroy_format;
 }
 

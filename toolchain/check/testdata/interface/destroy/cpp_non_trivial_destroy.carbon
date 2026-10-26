@@ -232,7 +232,7 @@ fn TestCppHoldsCarbonHoldsNonTrivialDestructor(
   CheckHasTrivialDestruction(x);
 }
 
-// --- todo_fail_class_adapter.carbon
+// --- fail_class_adapter.carbon
 
 library "[[@TEST_NAME]]";
 
@@ -240,26 +240,28 @@ import library "check_destroy_format";
 import library "types";
 import Cpp library "types.h";
 
-// TODO: `CheckHasTrivialDestruction` should fail.
 fn TestAdaptNonTrivialDestructor(x: AdaptNonTrivialDestructor) {
   CheckHasDestruction(x);
 
+  // CHECK:STDERR: fail_class_adapter.carbon:[[@LINE+4]]:3-31: error: cannot convert type `AdaptNonTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class_adapter.carbon:[[@LINE-8]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
 
-// --- fail_todo_class_dynamic.carbon
+// --- fail_class_dynamic.carbon
 
 library "[[@TEST_NAME]]";
 
 import library "check_destroy_format";
 import Cpp library "types.h";
 
-// TODO: implement Core.DynamicDestroy.
 fn TestVirtualDestructor(x: Cpp.VirtualDestructor) {
   CheckHasDestruction(x);
 
-  // CHECK:STDERR: fail_todo_class_dynamic.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.VirtualDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: imported from: fail_todo_class_dynamic.carbon:[[@LINE-8]]:1 [InImport]
+  // CHECK:STDERR: fail_class_dynamic.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.VirtualDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class_dynamic.carbon:[[@LINE-7]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
@@ -282,18 +284,21 @@ fn TestConstNonTrivialDestructor(x: const Cpp.NonTrivialDestructor) {
   CheckHasTrivialDestruction(x);
 }
 
-// --- todo_fail_maybe_unformed.carbon
+// --- fail_maybe_unformed.carbon
 
 library "[[@TEST_NAME]]";
 
 import library "check_destroy_format";
 import Cpp library "types.h";
 
-// TODO: `CheckHasTrivialDestruction` should fail.
 fn TestMaybeUnformedNonTrivialDestructor(
     x: Core.MaybeUnformed(Cpp.NonTrivialDestructor)) {
   CheckHasDestruction(x);
 
+  // CHECK:STDERR: fail_maybe_unformed.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Core.MaybeUnformed(Cpp.NonTrivialDestructor as Core.Destroy)` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_maybe_unformed.carbon:[[@LINE-8]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
 

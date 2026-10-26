@@ -285,36 +285,50 @@ fn TestAdaptIntWithDestroyImpl(x: AdaptIntWithDestroyImpl) {
   CheckHasTrivialDestruction(x);
 }
 
-// --- todo_fail_class_adapter.carbon
+// --- fail_class_adapter.carbon
 
 library "[[@TEST_NAME]]";
 
 import library "check_destroy_format";
 import library "types";
 
-// TODO: In each function below, `CheckHasTrivialDestruction` should fail.
-
 fn TestAdaptNonTrivial(x: AdaptNonTrivial) {
   CheckHasDestruction(x);
 
+  // CHECK:STDERR: fail_class_adapter.carbon:[[@LINE+4]]:3-31: error: cannot convert type `AdaptNonTrivial` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class_adapter.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
 
 fn TestAdaptNonTrivialStruct(x: AdaptNonTrivialStruct) {
   CheckHasDestruction(x);
 
+  // CHECK:STDERR: fail_class_adapter.carbon:[[@LINE+4]]:3-31: error: cannot convert type `AdaptNonTrivialStruct` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class_adapter.carbon:[[@LINE-17]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
 
 fn TestAdaptAdaptNonTrivial(x: AdaptAdaptNonTrivial) {
   CheckHasDestruction(x);
 
+  // CHECK:STDERR: fail_class_adapter.carbon:[[@LINE+4]]:3-31: error: cannot convert type `AdaptAdaptNonTrivial` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class_adapter.carbon:[[@LINE-27]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
 
 fn TestAdaptNonTrivialArray(x: AdaptNonTrivialArray) {
   CheckHasDestruction(x);
 
+  // CHECK:STDERR: fail_class_adapter.carbon:[[@LINE+4]]:3-31: error: cannot convert type `AdaptNonTrivialArray` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_class_adapter.carbon:[[@LINE-37]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
 
@@ -335,17 +349,20 @@ fn TestConstNonTrivial(x: const NonTrivial) {
   CheckHasTrivialDestruction(x);
 }
 
-// --- todo_fail_maybe_unformed.carbon
+// --- fail_maybe_unformed.carbon
 
 library "[[@TEST_NAME]]";
 
 import library "check_destroy_format";
 import library "types";
 
-// TODO: `CheckHasTrivialDestruction` should fail.
 fn TestMaybeUnformedNonTrivial(x: Core.MaybeUnformed(NonTrivial)) {
   CheckHasDestruction(x);
 
+  // CHECK:STDERR: fail_maybe_unformed.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Core.MaybeUnformed(NonTrivial as Core.Destroy)` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_maybe_unformed.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
 }
 

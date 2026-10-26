@@ -216,10 +216,12 @@ struct CppHoldsCarbonHoldsTrivialDestructor {
 ''';
 
 // TODO: This should have trivial destruction, because every subobject does.
+// This should be determined by reverse-interop, not Carbon-C++ interop
+// because C++ needs to be able to tell that its types are not destructible.
 fn TestCppHoldsCarbonHoldsTrivialDestructor(
     x: Cpp.CppHoldsCarbonHoldsTrivialDestructor) {
   // CHECK:STDERR: fail_todo_class_cpp_carbon_cpp.carbon:[[@LINE+4]]:3-31: error: cannot convert type `Cpp.CppHoldsCarbonHoldsTrivialDestructor` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: imported from: fail_todo_class_cpp_carbon_cpp.carbon:[[@LINE-15]]:1 [InImport]
+  // CHECK:STDERR: imported from: fail_todo_class_cpp_carbon_cpp.carbon:[[@LINE-17]]:1 [InImport]
   // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);

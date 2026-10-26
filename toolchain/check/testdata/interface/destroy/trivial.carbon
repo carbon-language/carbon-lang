@@ -277,16 +277,12 @@ fn TestAdaptTrivialArray(x: AdaptTrivialArray) {
   CheckHasTrivialDestruction(x);
 }
 
-// --- todo_class_dynamic.carbon
+// --- class_dynamic.carbon
 
 library "[[@TEST_NAME]]";
 
 import library "check_destroy_format";
 import library "types";
-
-// TODO: Decide what kind of destruction a dynamic class has. A dynamic class
-// has a virtual function, either directly or through a base class. Today these
-// have trivial destruction.
 
 fn TestVirtualFunction(x: VirtualFunction) {
   CheckHasTrivialDestruction(x);
@@ -302,8 +298,7 @@ library "[[@TEST_NAME]]";
 
 import library "check_destroy_format";
 
-// TODO: `Core.Optional` depends on `Core.MaybeUnformed` being correct, so this
-// stays a TODO until `Core.MaybeUnformed` is complete.
+// TODO: `Core.Optional` depends on `Core.MaybeUnformed`.
 fn TestOptional(x: Core.Optional(i32)) {
   CheckHasTrivialDestruction(x);
 }
