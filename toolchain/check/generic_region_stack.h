@@ -99,6 +99,15 @@ class GenericRegionStack {
     return constants_in_generic_stack_.back();
   }
 
+  // Returns the total number of instructions tracked by all pending generic
+  // regions. Pushing and then popping a region leaves this unchanged, so this
+  // can be used to check that an operation didn't add anything to any of the
+  // regions that were pending when it started.
+  auto num_tracked_insts() const -> size_t {
+    return dependent_inst_stack_.all_values_size() +
+           pending_eval_block_stack_.all_values_size();
+  }
+
   // Runs verification that the processing cleanly finished.
   auto VerifyOnFinish() const -> void {
     CARBON_CHECK(pending_generic_ids_.empty(),

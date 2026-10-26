@@ -69,18 +69,12 @@ import Cpp library "prefix_inc_and_dec.h";
 
 fn F() {
   var prefix: Cpp.Prefix = Cpp.Prefix.Prefix();
-  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+8]]:9: error: expected `;` after expression statement [ExpectedExprSemi]
-  // CHECK:STDERR:   prefix++;
-  // CHECK:STDERR:         ^~
+  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+4]]:9-10: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+4]]:3: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   prefix++;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+2]]:3-11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:
   prefix++;
-  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+4]]:9: error: expected `;` after expression statement [ExpectedExprSemi]
-  // CHECK:STDERR:   prefix--;
-  // CHECK:STDERR:         ^~
+  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+2]]:9-10: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   prefix--;
 }
@@ -99,14 +93,10 @@ import Cpp library "postfix_inc_and_dec.h";
 
 fn F() {
   var postfix: Cpp.Postfix = Cpp.Postfix.Postfix();
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Inc` in type `Cpp.Postfix` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   ++postfix;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+2]]:3-11: error: cannot access member of interface `Core.Inc` in type `Cpp.Postfix` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   ++postfix;
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+4]]:3: error: cannot access member of interface `Core.Dec` in type `Cpp.Postfix` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   --postfix;
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+2]]:3-11: error: cannot access member of interface `Core.Dec` in type `Cpp.Postfix` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   --postfix;
 }
@@ -221,12 +211,8 @@ fn F() {
   var c: Cpp.BinaryC = {};
 
   // Simple assignment.
-  // CHECK:STDERR: fail_todo_import_assignment.carbon:[[@LINE+7]]:3: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.BinaryC` [ConversionFailure]
-  // CHECK:STDERR:   c = 42;
-  // CHECK:STDERR:   ^~~~~~
-  // CHECK:STDERR: fail_todo_import_assignment.carbon:[[@LINE+4]]:3: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.BinaryC)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR:   c = 42;
-  // CHECK:STDERR:   ^~~~~~
+  // CHECK:STDERR: fail_todo_import_assignment.carbon:[[@LINE+3]]:3-8: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.BinaryC` [ConversionFailure]
+  // CHECK:STDERR: fail_todo_import_assignment.carbon:[[@LINE+2]]:3-8: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.BinaryC)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR:
   c = 42;
 }
@@ -256,14 +242,10 @@ import Cpp library "binary_operators.h";
 fn F() {
   let c1: Cpp.BinaryC = Cpp.BinaryC.BinaryC();
   // TODO: Include a list of non-viable candidate operators with this diagnostic.
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+4]]:32: error: cannot access member of interface `Core.AddWith(Core.IntLiteral)` in type `Cpp.BinaryC` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let unused c2: Cpp.BinaryC = c1 + 5;
-  // CHECK:STDERR:                                ^~~~~~
+  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+2]]:32-37: error: cannot access member of interface `Core.AddWith(Core.IntLiteral)` in type `Cpp.BinaryC` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   let unused c2: Cpp.BinaryC = c1 + 5;
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+4]]:32: error: cannot access member of interface `Core.AddWith(Cpp.BinaryC)` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let unused c3: Cpp.BinaryC = 6 + c1;
-  // CHECK:STDERR:                                ^~~~~~
+  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+2]]:32-37: error: cannot access member of interface `Core.AddWith(Cpp.BinaryC)` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   let unused c3: Cpp.BinaryC = 6 + c1;
 }
@@ -283,15 +265,9 @@ void operator+(AmbiguousC, short);
 ''';
 
 fn Test(c: Cpp.AmbiguousC) {
-  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE+10]]:5: error: use of overloaded operator '+' is ambiguous (with operand types 'const AmbiguousC' and 'int') [CppInteropParseError]
-  // CHECK:STDERR:    21 |   c + 1;
-  // CHECK:STDERR:       |     ^
-  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-8]]:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:     6 | void operator+(AmbiguousC, char);
-  // CHECK:STDERR:       |      ^
-  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-10]]:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:     7 | void operator+(AmbiguousC, short);
-  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE+4]]:5: error: use of overloaded operator '+' is ambiguous (with operand types 'const AmbiguousC' and 'int') [CppInteropParseError]
+  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-6]]:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-6]]:6: note: candidate function [CppInteropParseNote]
   // CHECK:STDERR:
   c + 1;
 }
@@ -307,15 +283,10 @@ void operator+(DeletedC, void*) = delete;
 ''';
 
 fn Test(c: Cpp.DeletedC) {
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+10]]:5: error: overload resolution selected deleted operator '+' [CppInteropParseError]
-  // CHECK:STDERR:    21 |   c + 1;
-  // CHECK:STDERR:       |     ^
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-8]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:     6 | void operator+(DeletedC, int) = delete;
-  // CHECK:STDERR:       |      ^
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-10]]:6: note: candidate function not viable: no known conversion from 'int' to 'void *' for 2nd argument [CppInteropParseNote]
-  // CHECK:STDERR:     7 | void operator+(DeletedC, void*) = delete;
-  // CHECK:STDERR:       |      ^                   ~~~~~
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+5]]:5: error: overload resolution selected deleted operator '+' [CppInteropParseError]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-6]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-6]]:6: note: candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-7]]:26-30: note: no known conversion from 'int' to 'void *' for 2nd argument [CppInteropParseNoteReason]
   // CHECK:STDERR:
   c + 1;
 }
@@ -346,16 +317,12 @@ fn F() {
   let unused greater_than: bool = c1 > c2;
 
   // Rewrite.
-  // CHECK:STDERR: fail_todo_rewrite_spaceship.carbon:[[@LINE+4]]:32: error: semantics TODO: `Rewriting operator< using operator<=> is not supported` [SemanticsTodo]
-  // CHECK:STDERR:   let unused less_than: bool = c1 < c2;
-  // CHECK:STDERR:                                ^~~~~~~
+  // CHECK:STDERR: fail_todo_rewrite_spaceship.carbon:[[@LINE+2]]:32-38: error: semantics TODO: `Rewriting operator< using operator<=> is not supported` [SemanticsTodo]
   // CHECK:STDERR:
   let unused less_than: bool = c1 < c2;
 
   // Rewrite.
-  // CHECK:STDERR: fail_todo_rewrite_spaceship.carbon:[[@LINE+4]]:44: error: semantics TODO: `Rewriting operator>= using operator<=> is not supported` [SemanticsTodo]
-  // CHECK:STDERR:   let unused greater_than_or_equal: bool = c1 >= c2;
-  // CHECK:STDERR:                                            ^~~~~~~~
+  // CHECK:STDERR: fail_todo_rewrite_spaceship.carbon:[[@LINE+2]]:44-51: error: semantics TODO: `Rewriting operator>= using operator<=> is not supported` [SemanticsTodo]
   // CHECK:STDERR:
   let unused greater_than_or_equal: bool = c1 >= c2;
 
@@ -379,15 +346,9 @@ auto operator<(CDel lhs, BaseDel rhs) -> bool;
 
 fn F(c: Cpp.CDel) -> bool {
   // Note that we mention `operator '<=>'` in the diagnostic.
-  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE+10]]:12: error: overload resolution selected deleted operator '<=>' [CppInteropParseError]
-  // CHECK:STDERR:    25 |   return c < c;
-  // CHECK:STDERR:       |            ^
-  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-9]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR:     9 | auto operator<=>(CDel lhs, CDel rhs) -> std::strong_ordering = delete;
-  // CHECK:STDERR:       |      ^
-  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-11]]:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR:    10 | auto operator<(CDel lhs, BaseDel rhs) -> bool;
-  // CHECK:STDERR:       |      ^
+  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE+4]]:12: error: overload resolution selected deleted operator '<=>' [CppInteropParseError]
+  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-7]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-7]]:6: note: candidate function [CppInteropParseNote]
   // CHECK:STDERR:
   return c < c;
 }
@@ -415,9 +376,7 @@ fn F() {
   let unused equal: bool = c1 == c2;
 
   // Rewrite.
-  // CHECK:STDERR: fail_todo_rewrite_equal.carbon:[[@LINE+4]]:32: error: semantics TODO: `Rewriting operator!= using operator== is not supported` [SemanticsTodo]
-  // CHECK:STDERR:   let unused not_equal: bool = c1 != c2;
-  // CHECK:STDERR:                                ^~~~~~~~
+  // CHECK:STDERR: fail_todo_rewrite_equal.carbon:[[@LINE+2]]:32-39: error: semantics TODO: `Rewriting operator!= using operator== is not supported` [SemanticsTodo]
   // CHECK:STDERR:
   let unused not_equal: bool = c1 != c2;
   //@dump-sem-ir-end
@@ -489,9 +448,7 @@ import Cpp library "plus_with_string_view_conversion.h";
 fn F() {
   let s1: str = "hello";
   let s2: str = "world";
-  // CHECK:STDERR: fail_todo_import_plus_with_string_view_conversion.carbon:[[@LINE+4]]:46: error: cannot access member of interface `Core.AddWith(str)` in type `str` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let unused c: Cpp.StringViewConvertibleC = s1 + s2;
-  // CHECK:STDERR:                                              ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_plus_with_string_view_conversion.carbon:[[@LINE+2]]:46-52: error: cannot access member of interface `Core.AddWith(str)` in type `str` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   let unused c: Cpp.StringViewConvertibleC = s1 + s2;
 }
@@ -536,47 +493,31 @@ fn F() {
   var c: Cpp.UnsupportedUnaryC = Cpp.UnsupportedUnaryC.UnsupportedUnaryC();
 
   // Arithmetic.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+12]]:37: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   let plus: Cpp.UnsupportedUnaryC = +c;
-  // CHECK:STDERR:                                     ^
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+6]]:37: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+8]]:37: error: whitespace missing after binary operator [BinaryOperatorRequiresWhitespace]
-  // CHECK:STDERR:   let plus: Cpp.UnsupportedUnaryC = +c;
-  // CHECK:STDERR:                                     ^
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:37: error: whitespace missing after binary operator [BinaryOperatorRequiresWhitespace]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:37: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   let plus: Cpp.UnsupportedUnaryC = +c;
-  // CHECK:STDERR:                                     ^
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:37: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:
   let plus: Cpp.UnsupportedUnaryC = +c;
 
   // Increment and Decrement.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:4: error: expected `;` after expression statement [ExpectedExprSemi]
-  // CHECK:STDERR:   c++;
-  // CHECK:STDERR:    ^~
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:4-5: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   c++;
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:4: error: expected `;` after expression statement [ExpectedExprSemi]
-  // CHECK:STDERR:   c--;
-  // CHECK:STDERR:    ^~
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:4-5: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   c--;
 
   // Bitwise.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+8]]:42: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   let not_value: Cpp.UnsupportedUnaryC = ~c;
-  // CHECK:STDERR:                                          ^
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:42: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:42: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   let not_value: Cpp.UnsupportedUnaryC = ~c;
-  // CHECK:STDERR:                                          ^
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:42: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   let not_value: Cpp.UnsupportedUnaryC = ~c;
 
   // Logical.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:51: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:   let not_result: Cpp.UnsupportedUnaryC = operator!(c1);
-  // CHECK:STDERR:                                                   ^
+  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:51: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   let not_result: Cpp.UnsupportedUnaryC = operator!(c1);
 
@@ -611,42 +552,24 @@ fn F() {
   var c1: Cpp.UnsupportedBinaryC = Cpp.UnsupportedBinaryC.UnsupportedBinaryC();
 
   // Logical.
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+16]]:44: error: name `operator` not found [NameNotFound]
-  // CHECK:STDERR:   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
-  // CHECK:STDERR:                                            ^~~~~~~~
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:44-51: error: name `operator` not found [NameNotFound]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+12]]:52: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
-  // CHECK:STDERR:   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
-  // CHECK:STDERR:                                                    ^
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+6]]:52: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:59: error: name `c2` not found [NameNotFound]
-  // CHECK:STDERR:   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
-  // CHECK:STDERR:                                                           ^~
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+4]]:59-60: error: name `c2` not found [NameNotFound]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+4]]:53: error: cannot take the address of non-reference expression [AddrOfNonRef]
-  // CHECK:STDERR:   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
-  // CHECK:STDERR:                                                     ^
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+2]]:53: error: cannot take the address of non-reference expression [AddrOfNonRef]
   // CHECK:STDERR:
   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+20]]:43: error: name `operator` not found [NameNotFound]
-  // CHECK:STDERR:   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
-  // CHECK:STDERR:                                           ^~~~~~~~
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+10]]:43-50: error: name `operator` not found [NameNotFound]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+16]]:51: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
-  // CHECK:STDERR:   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
-  // CHECK:STDERR:                                                   ^
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:51: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+12]]:52: error: expected expression [ExpectedExpr]
-  // CHECK:STDERR:   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
-  // CHECK:STDERR:                                                    ^
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+6]]:52: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:52: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
-  // CHECK:STDERR:   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
-  // CHECK:STDERR:                                                    ^
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+4]]:52: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+4]]:52: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
-  // CHECK:STDERR:   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
-  // CHECK:STDERR:                                                    ^
+  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+2]]:52: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
   // CHECK:STDERR:
   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
 }
@@ -731,9 +654,7 @@ fn F() {
   //@dump-sem-ir-begin
   let c1: Cpp.GlobalOpN.C = Cpp.GlobalOpN.C.C();
   let c2: Cpp.GlobalOpN.C = Cpp.GlobalOpN.C.C();
-  // CHECK:STDERR: fail_todo_import_operands_in_namespace_operator_in_global.carbon:[[@LINE+4]]:36: error: cannot access member of interface `Core.AddWith(Cpp.GlobalOpN.C)` in type `Cpp.GlobalOpN.C` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let unused c3: Cpp.GlobalOpN.C = c1 + c2;
-  // CHECK:STDERR:                                    ^~~~~~~
+  // CHECK:STDERR: fail_todo_import_operands_in_namespace_operator_in_global.carbon:[[@LINE+2]]:36-42: error: cannot access member of interface `Core.AddWith(Cpp.GlobalOpN.C)` in type `Cpp.GlobalOpN.C` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   let unused c3: Cpp.GlobalOpN.C = c1 + c2;
   //@dump-sem-ir-end
@@ -840,9 +761,7 @@ import Cpp library "not_found.h";
 fn F() {
   let c1: Cpp.NoOperators = Cpp.NoOperators.NoOperators();
   let c2: Cpp.NoOperators = Cpp.NoOperators.NoOperators();
-  // CHECK:STDERR: fail_import_not_found.carbon:[[@LINE+4]]:36: error: cannot access member of interface `Core.AddWith(Cpp.NoOperators)` in type `Cpp.NoOperators` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   let unused c3: Cpp.NoOperators = c1 + c2;
-  // CHECK:STDERR:                                    ^~~~~~~
+  // CHECK:STDERR: fail_import_not_found.carbon:[[@LINE+2]]:36-42: error: cannot access member of interface `Core.AddWith(Cpp.NoOperators)` in type `Cpp.NoOperators` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   let unused c3: Cpp.NoOperators = c1 + c2;
 }
@@ -865,13 +784,9 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE+8]]:34: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
-  // CHECK:STDERR:   let unused result_unary: i32 = -*Cpp.CreateIncomplete();
-  // CHECK:STDERR:                                  ^~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE-6]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE+4]]:34-57: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR: included from: fail_import_incomplete_unary.carbon:[[@LINE-4]]:10 [InCppInclude]
   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class Incomplete;
-  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let unused result_unary: i32 = -*Cpp.CreateIncomplete();
 }
@@ -884,13 +799,9 @@ import Cpp library "incomplete.h";
 
 fn F() {
   var complete: Cpp.Complete = Cpp.Complete.Complete();
-  // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE+8]]:35: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
-  // CHECK:STDERR:   let unused result_binary: i32 = complete + *Cpp.CreateIncomplete();
-  // CHECK:STDERR:                                   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE-7]]:10: in file included here [InCppInclude]
+  // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE+4]]:35-68: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR: included from: fail_import_incomplete_binary.carbon:[[@LINE-5]]:10 [InCppInclude]
   // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class Incomplete;
-  // CHECK:STDERR:       ^
   // CHECK:STDERR:
   let unused result_binary: i32 = complete + *Cpp.CreateIncomplete();
 }
@@ -914,12 +825,8 @@ fn CreateIncomplete() -> Incomplete*;
 
 fn F() {
   var complete: Cpp.CompleteCpp = Cpp.CompleteCpp.CompleteCpp();
-  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+7]]:28: error: looking up a C++ operator with incomplete operand type `Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
-  // CHECK:STDERR:   let unused result: i32 = *CreateIncomplete() + complete;
-  // CHECK:STDERR:                            ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE-8]]:1: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: class Incomplete;
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+3]]:28-57: error: looking up a C++ operator with incomplete operand type `Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE-6]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
   // CHECK:STDERR:
   let unused result: i32 = *CreateIncomplete() + complete;
 }
@@ -953,9 +860,7 @@ library "[[@TEST_NAME]]";
 import Cpp inline '''
 template<typename T> struct FailTemplateB {};
 template<typename T> struct FailTemplateA {
-  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+3]]:19: error: type 'int' cannot be used prior to '::' because it has no members [CppInteropParseError]
-  // CHECK:STDERR:    10 |   friend typename T::error operator+(FailTemplateB<FailTemplateA>, FailTemplateB<FailTemplateA>);
-  // CHECK:STDERR:       |                   ^
+  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+1]]:19: error: type 'int' cannot be used prior to '::' because it has no members [CppInteropParseError]
   friend typename T::error operator+(FailTemplateB<FailTemplateA>, FailTemplateB<FailTemplateA>);
 };
 
@@ -963,13 +868,9 @@ using FailTemplateX = FailTemplateB<FailTemplateA<int>>;
 ''';
 
 fn F(x: Cpp.FailTemplateX) -> i32 {
-  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+8]]:12: note: in instantiation of template class 'FailTemplateA<int>' requested here [CppInteropParseNote]
-  // CHECK:STDERR:    25 |   return x + x;
-  // CHECK:STDERR:       |            ^
+  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+4]]:12: note: in instantiation of template class 'FailTemplateA<int>' requested here [CppInteropParseNote]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+4]]:10: error: cannot access member of interface `Core.AddWith(Cpp.FailTemplateB)` in type `Cpp.FailTemplateB` that does not implement that interface [MissingImplInMemberAccess]
-  // CHECK:STDERR:   return x + x;
-  // CHECK:STDERR:          ^~~~~
+  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+2]]:10-14: error: cannot access member of interface `Core.AddWith(Cpp.FailTemplateB)` in type `Cpp.FailTemplateB` that does not implement that interface [MissingImplInMemberAccess]
   // CHECK:STDERR:
   return x + x;
 }
@@ -1225,30 +1126,30 @@ fn F() {
 // CHECK:STDOUT:   %int_3.1ba: Core.IntLiteral = int_value 3 [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
 // CHECK:STDOUT:   %operator_LessLess__carbon_thunk.type: type = fn_type @operator_LessLess__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_LessLess__carbon_thunk: %operator_LessLess__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.type.914: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
+// CHECK:STDOUT:   %ImplicitAs.type.6b0: type = facet_type <@ImplicitAs, @ImplicitAs(%i32)> [concrete]
 // CHECK:STDOUT:   %To: Core.IntLiteral = symbolic_binding To, 0 [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.0e9(%To) [symbolic]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.845: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74 = struct_value () [symbolic]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness.a2a: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.1aa, @Core.IntLiteral.as.ImplicitAs.impl.0e9(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.2ba: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.0e9(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.2ba = struct_value () [concrete]
-// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.914 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.a2a) [concrete]
-// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.8eb: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
-// CHECK:STDOUT:   %.b7a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.8eb, %ImplicitAs.facet [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.485: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
-// CHECK:STDOUT:   %bound_method.763: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_3.410: %i32 = int_value 3 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%To) [symbolic]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl.6b6(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
+// CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
+// CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
+// CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.b3c: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
+// CHECK:STDOUT:   %bound_method.fb0: <bound method> = bound_method %int_3.1ba, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_3.9f3: %i32 = int_value 3 [concrete]
 // CHECK:STDOUT:   %right_shift.patt: %pattern_type.b2b = value_binding_pattern right_shift [concrete]
 // CHECK:STDOUT:   %int_5.64b: Core.IntLiteral = int_value 5 [concrete]
 // CHECK:STDOUT:   %operator_GreaterGreater__carbon_thunk.type: type = fn_type @operator_GreaterGreater__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_GreaterGreater__carbon_thunk: %operator_GreaterGreater__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f6c: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
-// CHECK:STDOUT:   %bound_method.c9d: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_5.eef: %i32 = int_value 5 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f65: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
+// CHECK:STDOUT:   %bound_method.ab2: <bound method> = bound_method %int_5.64b, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_5.708: %i32 = int_value 5 [concrete]
 // CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk.type: type = fn_type @operator_PlusEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_PlusEqual__carbon_thunk: %operator_PlusEqual__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %operator_MinusEqual__carbon_thunk.type: type = fn_type @operator_MinusEqual__carbon_thunk [concrete]
@@ -1289,15 +1190,15 @@ fn F() {
 // CHECK:STDOUT:   %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete]
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.type: type = fn_type @operator_LessEqual__carbon_thunk [concrete]
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk: %operator_LessEqual__carbon_thunk.type = struct_value () [concrete]
-// CHECK:STDOUT:   %index.patt: %pattern_type.6b6 = value_binding_pattern index [concrete]
+// CHECK:STDOUT:   %index.patt: %pattern_type.d94 = value_binding_pattern index [concrete]
 // CHECK:STDOUT:   %int_42.20e: Core.IntLiteral = int_value 42 [concrete]
 // CHECK:STDOUT:   %self.param_patt.d5f: %pattern_type.b2b = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.7ef: %pattern_type.b2b = wrapper_binding_pattern self, %self.param_patt.d5f [concrete]
 // CHECK:STDOUT:   %BinaryC.cpp_operator.type: type = fn_type @BinaryC.cpp_operator [concrete]
 // CHECK:STDOUT:   %BinaryC.cpp_operator: %BinaryC.cpp_operator.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.bf3: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.e39 [concrete]
-// CHECK:STDOUT:   %bound_method.098: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
-// CHECK:STDOUT:   %int_42.ac4: %i32 = int_value 42 [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.81c: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
+// CHECK:STDOUT:   %bound_method.98e: <bound method> = bound_method %int_42.20e, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
+// CHECK:STDOUT:   %int_42.db5: %i32 = int_value 42 [concrete]
 // CHECK:STDOUT:   %self.param_patt.40d: %pattern_type.831 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.560: %pattern_type.831 = wrapper_binding_pattern self, %self.param_patt.40d [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc45 [concrete]
@@ -1371,8 +1272,8 @@ fn F() {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.import_ref.edf: @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.e74) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.0e9.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.845)]
-// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.1aa = impl_witness_table (%Core.import_ref.edf), @Core.IntLiteral.as.ImplicitAs.impl.0e9 [concrete]
+// CHECK:STDOUT:   %Core.import_ref.e47: @Core.IntLiteral.as.ImplicitAs.impl.6b6.%Core.IntLiteral.as.ImplicitAs.impl.Convert.type (%Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6) = import_ref Core//prelude/types/int, loc{{\d+_\d+}}, loaded [symbolic = @Core.IntLiteral.as.ImplicitAs.impl.6b6.%Core.IntLiteral.as.ImplicitAs.impl.Convert (constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2)]
+// CHECK:STDOUT:   %ImplicitAs.impl_witness_table.f53 = impl_witness_table (%Core.import_ref.e47), @Core.IntLiteral.as.ImplicitAs.impl.6b6 [concrete]
 // CHECK:STDOUT:   %operator_GreaterGreater__carbon_thunk.decl: %operator_GreaterGreater__carbon_thunk.type = fn_decl @operator_GreaterGreater__carbon_thunk [concrete = constants.%operator_GreaterGreater__carbon_thunk] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1712,13 +1613,13 @@ fn F() {
 // CHECK:STDOUT:   %int_3.loc22: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
 // CHECK:STDOUT:   %.loc22_43.1: ref %BinaryC = temporary_storage
 // CHECK:STDOUT:   %.loc22_40.1: %BinaryC = acquire_value %c1.ref.loc22
-// CHECK:STDOUT:   %impl.elem0.loc22: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc22_46.1: <bound method> = bound_method %int_3.loc22, %impl.elem0.loc22 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.485]
+// CHECK:STDOUT:   %impl.elem0.loc22: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc22_46.1: <bound method> = bound_method %int_3.loc22, %impl.elem0.loc22 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.b3c]
 // CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc22_46.2: <bound method> = bound_method %int_3.loc22, %specific_fn.loc22 [concrete = constants.%bound_method.763]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22: init %i32 = call %bound_method.loc22_46.2(%int_3.loc22) [concrete = constants.%int_3.410]
-// CHECK:STDOUT:   %.loc22_46.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22 [concrete = constants.%int_3.410]
-// CHECK:STDOUT:   %.loc22_46.2: %i32 = converted %int_3.loc22, %.loc22_46.1 [concrete = constants.%int_3.410]
+// CHECK:STDOUT:   %bound_method.loc22_46.2: <bound method> = bound_method %int_3.loc22, %specific_fn.loc22 [concrete = constants.%bound_method.fb0]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22: init %i32 = call %bound_method.loc22_46.2(%int_3.loc22) [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %.loc22_46.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22 [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %.loc22_46.2: %i32 = converted %int_3.loc22, %.loc22_46.1 [concrete = constants.%int_3.9f3]
 // CHECK:STDOUT:   %.loc22_40.2: ref %BinaryC = value_as_ref %.loc22_40.1
 // CHECK:STDOUT:   %addr.loc22_43.1: %ptr.6da = addr_of %.loc22_40.2
 // CHECK:STDOUT:   %addr.loc22_43.2: %ptr.6da = addr_of %.loc22_43.1
@@ -1738,13 +1639,13 @@ fn F() {
 // CHECK:STDOUT:   %int_5.loc23: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %.loc23_44.1: ref %BinaryC = temporary_storage
 // CHECK:STDOUT:   %.loc23_41.1: %BinaryC = acquire_value %c1.ref.loc23
-// CHECK:STDOUT:   %impl.elem0.loc23: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc23_47.1: <bound method> = bound_method %int_5.loc23, %impl.elem0.loc23 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f6c]
+// CHECK:STDOUT:   %impl.elem0.loc23: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc23_47.1: <bound method> = bound_method %int_5.loc23, %impl.elem0.loc23 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f65]
 // CHECK:STDOUT:   %specific_fn.loc23: <specific function> = specific_function %impl.elem0.loc23, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc23_47.2: <bound method> = bound_method %int_5.loc23, %specific_fn.loc23 [concrete = constants.%bound_method.c9d]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23: init %i32 = call %bound_method.loc23_47.2(%int_5.loc23) [concrete = constants.%int_5.eef]
-// CHECK:STDOUT:   %.loc23_47.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23 [concrete = constants.%int_5.eef]
-// CHECK:STDOUT:   %.loc23_47.2: %i32 = converted %int_5.loc23, %.loc23_47.1 [concrete = constants.%int_5.eef]
+// CHECK:STDOUT:   %bound_method.loc23_47.2: <bound method> = bound_method %int_5.loc23, %specific_fn.loc23 [concrete = constants.%bound_method.ab2]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23: init %i32 = call %bound_method.loc23_47.2(%int_5.loc23) [concrete = constants.%int_5.708]
+// CHECK:STDOUT:   %.loc23_47.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc23 [concrete = constants.%int_5.708]
+// CHECK:STDOUT:   %.loc23_47.2: %i32 = converted %int_5.loc23, %.loc23_47.1 [concrete = constants.%int_5.708]
 // CHECK:STDOUT:   %.loc23_41.2: ref %BinaryC = value_as_ref %.loc23_41.1
 // CHECK:STDOUT:   %addr.loc23_44.1: %ptr.6da = addr_of %.loc23_41.2
 // CHECK:STDOUT:   %addr.loc23_44.2: %ptr.6da = addr_of %.loc23_44.1
@@ -1810,23 +1711,23 @@ fn F() {
 // CHECK:STDOUT:   %operator_CaretEqual__carbon_thunk.call: ref %BinaryC = call imports.%operator_CaretEqual__carbon_thunk.decl(%c1.ref.loc35, %addr.loc35)
 // CHECK:STDOUT:   %c1.ref.loc36: ref %BinaryC = name_ref c1, %c1
 // CHECK:STDOUT:   %int_3.loc36: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %impl.elem0.loc36: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc36_10.1: <bound method> = bound_method %int_3.loc36, %impl.elem0.loc36 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.485]
+// CHECK:STDOUT:   %impl.elem0.loc36: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc36_10.1: <bound method> = bound_method %int_3.loc36, %impl.elem0.loc36 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.b3c]
 // CHECK:STDOUT:   %specific_fn.loc36: <specific function> = specific_function %impl.elem0.loc36, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc36_10.2: <bound method> = bound_method %int_3.loc36, %specific_fn.loc36 [concrete = constants.%bound_method.763]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36: init %i32 = call %bound_method.loc36_10.2(%int_3.loc36) [concrete = constants.%int_3.410]
-// CHECK:STDOUT:   %.loc36_10.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36 [concrete = constants.%int_3.410]
-// CHECK:STDOUT:   %.loc36_10.2: %i32 = converted %int_3.loc36, %.loc36_10.1 [concrete = constants.%int_3.410]
+// CHECK:STDOUT:   %bound_method.loc36_10.2: <bound method> = bound_method %int_3.loc36, %specific_fn.loc36 [concrete = constants.%bound_method.fb0]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36: init %i32 = call %bound_method.loc36_10.2(%int_3.loc36) [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %.loc36_10.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36 [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %.loc36_10.2: %i32 = converted %int_3.loc36, %.loc36_10.1 [concrete = constants.%int_3.9f3]
 // CHECK:STDOUT:   %cpp_operator.call.loc36: ref %BinaryC = call imports.%cpp_operator.decl.5ce91d.19(%c1.ref.loc36, %.loc36_10.2)
 // CHECK:STDOUT:   %c1.ref.loc37: ref %BinaryC = name_ref c1, %c1
 // CHECK:STDOUT:   %int_5.loc37: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
-// CHECK:STDOUT:   %impl.elem0.loc37: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc37_10.1: <bound method> = bound_method %int_5.loc37, %impl.elem0.loc37 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f6c]
+// CHECK:STDOUT:   %impl.elem0.loc37: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc37_10.1: <bound method> = bound_method %int_5.loc37, %impl.elem0.loc37 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.f65]
 // CHECK:STDOUT:   %specific_fn.loc37: <specific function> = specific_function %impl.elem0.loc37, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc37_10.2: <bound method> = bound_method %int_5.loc37, %specific_fn.loc37 [concrete = constants.%bound_method.c9d]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc37: init %i32 = call %bound_method.loc37_10.2(%int_5.loc37) [concrete = constants.%int_5.eef]
-// CHECK:STDOUT:   %.loc37_10.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc37 [concrete = constants.%int_5.eef]
-// CHECK:STDOUT:   %.loc37_10.2: %i32 = converted %int_5.loc37, %.loc37_10.1 [concrete = constants.%int_5.eef]
+// CHECK:STDOUT:   %bound_method.loc37_10.2: <bound method> = bound_method %int_5.loc37, %specific_fn.loc37 [concrete = constants.%bound_method.ab2]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc37: init %i32 = call %bound_method.loc37_10.2(%int_5.loc37) [concrete = constants.%int_5.708]
+// CHECK:STDOUT:   %.loc37_10.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc37 [concrete = constants.%int_5.708]
+// CHECK:STDOUT:   %.loc37_10.2: %i32 = converted %int_5.loc37, %.loc37_10.1 [concrete = constants.%int_5.708]
 // CHECK:STDOUT:   %cpp_operator.call.loc37: ref %BinaryC = call imports.%cpp_operator.decl.5ce91d.20(%c1.ref.loc37, %.loc37_10.2)
 // CHECK:STDOUT:   %c1.ref.loc40: ref %BinaryC = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref.loc40: ref %BinaryC = name_ref c2, %c2
@@ -1944,20 +1845,20 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref.loc48: ref %BinaryC = name_ref c1, %c1
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42.20e]
-// CHECK:STDOUT:   %impl.elem0.loc48: %.b7a = impl_witness_access constants.%ImplicitAs.impl_witness.a2a, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.e39]
-// CHECK:STDOUT:   %bound_method.loc48_30.1: <bound method> = bound_method %int_42, %impl.elem0.loc48 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.bf3]
+// CHECK:STDOUT:   %impl.elem0.loc48: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc48_30.1: <bound method> = bound_method %int_42, %impl.elem0.loc48 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound.81c]
 // CHECK:STDOUT:   %specific_fn.loc48: <specific function> = specific_function %impl.elem0.loc48, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc48_30.2: <bound method> = bound_method %int_42, %specific_fn.loc48 [concrete = constants.%bound_method.098]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc48: init %i32 = call %bound_method.loc48_30.2(%int_42) [concrete = constants.%int_42.ac4]
-// CHECK:STDOUT:   %.loc48_30.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc48 [concrete = constants.%int_42.ac4]
-// CHECK:STDOUT:   %.loc48_30.2: %i32 = converted %int_42, %.loc48_30.1 [concrete = constants.%int_42.ac4]
+// CHECK:STDOUT:   %bound_method.loc48_30.2: <bound method> = bound_method %int_42, %specific_fn.loc48 [concrete = constants.%bound_method.98e]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc48: init %i32 = call %bound_method.loc48_30.2(%int_42) [concrete = constants.%int_42.db5]
+// CHECK:STDOUT:   %.loc48_30.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc48 [concrete = constants.%int_42.db5]
+// CHECK:STDOUT:   %.loc48_30.2: %i32 = converted %int_42, %.loc48_30.1 [concrete = constants.%int_42.db5]
 // CHECK:STDOUT:   %BinaryC.cpp_operator.call: init %i32 = call imports.%BinaryC.cpp_operator.decl(%c1.ref.loc48, %.loc48_30.2)
 // CHECK:STDOUT:   %.loc48_32.1: %i32 = value_of_initializer %BinaryC.cpp_operator.call
 // CHECK:STDOUT:   %.loc48_32.2: %i32 = converted %BinaryC.cpp_operator.call, %.loc48_32.1
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %index: %i32 = wrapper_binding index, %.loc48_32.2
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %index.patt: %pattern_type.6b6 = value_binding_pattern index [concrete = constants.%index.patt]
+// CHECK:STDOUT:     %index.patt: %pattern_type.d94 = value_binding_pattern index [concrete = constants.%index.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc45: <bound method> = bound_method %.loc45_44.3, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc45: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc45(%.loc45_44.3)
@@ -2229,11 +2130,11 @@ fn F() {
 // CHECK:STDOUT:   %operator_LessEqual__carbon_thunk: %operator_LessEqual__carbon_thunk.type = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.40d: %pattern_type.831 = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.560: %pattern_type.831 = wrapper_binding_pattern self, %self.param_patt.40d [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc36 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.type.dfc: type = fn_type @Destroy.WithSelf.SubobjectDestroy.loc32 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.d01: %Destroy.WithSelf.SubobjectDestroy.type.dfc = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc36 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.type.ef016f.1: type = fn_type @Destroy.WithSelf.Op.loc32 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.403171.1: %Destroy.WithSelf.Op.type.ef016f.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.1: type = fn_type @Destroy.WithSelf.SelfDestruct.loc36 [concrete]
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.type.fbceb5.1: type = fn_type @Destroy.WithSelf.SelfDestruct.loc32 [concrete]
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.db3fdb.1: %Destroy.WithSelf.SelfDestruct.type.fbceb5.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %self.param_patt.e2f: %pattern_type.bbc = ref_param_pattern [concrete]
 // CHECK:STDOUT:   %self.patt.790: %pattern_type.bbc = wrapper_binding_pattern self, %self.param_patt.e2f [concrete]
@@ -2275,14 +2176,14 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: generated {
-// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc36 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
+// CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.decl: %Destroy.WithSelf.SubobjectDestroy.type.dfc = fn_decl @Destroy.WithSelf.SubobjectDestroy.loc32 [concrete = constants.%Destroy.WithSelf.SubobjectDestroy.d01] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = ref_param_pattern [concrete = constants.%self.param_patt.40d]
 // CHECK:STDOUT:     %self.patt: %pattern_type.831 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.560]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %self.param: ref bool = ref_param call_param0
 // CHECK:STDOUT:     %self: ref bool = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc36 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
+// CHECK:STDOUT:   %Destroy.WithSelf.Op.decl.5f94cf.1: %Destroy.WithSelf.Op.type.ef016f.1 = fn_decl @Destroy.WithSelf.Op.loc32 [concrete = constants.%Destroy.WithSelf.Op.403171.1] {
 // CHECK:STDOUT:     %self.param_patt: %pattern_type.831 = ref_param_pattern [concrete = constants.%self.param_patt.40d]
 // CHECK:STDOUT:     %self.patt: %pattern_type.831 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt.560]
 // CHECK:STDOUT:   } {
@@ -2355,41 +2256,41 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater_than.patt: %pattern_type.831 = value_binding_pattern greater_than [concrete = constants.%greater_than.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.ref.loc26: ref %C = name_ref c1, %c1
-// CHECK:STDOUT:   %c2.ref.loc26: ref %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc26: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %c1.ref.loc24: ref %C = name_ref c1, %c1
+// CHECK:STDOUT:   %c2.ref.loc24: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc24: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %less_than: bool = wrapper_binding less_than, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete = constants.%less_than.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.ref.loc33: ref %C = name_ref c1, %c1
-// CHECK:STDOUT:   %c2.ref.loc33: ref %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc33: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %c1.ref.loc29: ref %C = name_ref c1, %c1
+// CHECK:STDOUT:   %c2.ref.loc29: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc29: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %greater_than_or_equal: bool = wrapper_binding greater_than_or_equal, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete = constants.%greater_than_or_equal.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.ref.loc36: ref %C = name_ref c1, %c1
-// CHECK:STDOUT:   %c2.ref.loc36: ref %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc36_41.1: %C = acquire_value %c1.ref.loc36
-// CHECK:STDOUT:   %.loc36_47.1: %C = acquire_value %c2.ref.loc36
-// CHECK:STDOUT:   %.loc36_41.2: ref %C = value_as_ref %.loc36_41.1
-// CHECK:STDOUT:   %addr.loc36_44.1: %ptr.0a2 = addr_of %.loc36_41.2
-// CHECK:STDOUT:   %.loc36_47.2: ref %C = value_as_ref %.loc36_47.1
-// CHECK:STDOUT:   %addr.loc36_44.2: %ptr.0a2 = addr_of %.loc36_47.2
-// CHECK:STDOUT:   %.loc36_44.1: ref bool = temporary_storage
-// CHECK:STDOUT:   %addr.loc36_44.3: %ptr.bb2 = addr_of %.loc36_44.1
-// CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessEqual__carbon_thunk.decl(%addr.loc36_44.1, %addr.loc36_44.2, %addr.loc36_44.3)
-// CHECK:STDOUT:   %.loc36_44.2: init bool to %.loc36_44.1 = mark_in_place_init %operator_LessEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc36_44.3: ref bool = temporary %.loc36_44.1, %.loc36_44.2
-// CHECK:STDOUT:   %.loc36_44.4: bool = acquire_value %.loc36_44.3
-// CHECK:STDOUT:   %.loc36_34: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %less_than_or_equal: bool = wrapper_binding less_than_or_equal, %.loc36_44.4
+// CHECK:STDOUT:   %c1.ref.loc32: ref %C = name_ref c1, %c1
+// CHECK:STDOUT:   %c2.ref.loc32: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc32_41.1: %C = acquire_value %c1.ref.loc32
+// CHECK:STDOUT:   %.loc32_47.1: %C = acquire_value %c2.ref.loc32
+// CHECK:STDOUT:   %.loc32_41.2: ref %C = value_as_ref %.loc32_41.1
+// CHECK:STDOUT:   %addr.loc32_44.1: %ptr.0a2 = addr_of %.loc32_41.2
+// CHECK:STDOUT:   %.loc32_47.2: ref %C = value_as_ref %.loc32_47.1
+// CHECK:STDOUT:   %addr.loc32_44.2: %ptr.0a2 = addr_of %.loc32_47.2
+// CHECK:STDOUT:   %.loc32_44.1: ref bool = temporary_storage
+// CHECK:STDOUT:   %addr.loc32_44.3: %ptr.bb2 = addr_of %.loc32_44.1
+// CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessEqual__carbon_thunk.decl(%addr.loc32_44.1, %addr.loc32_44.2, %addr.loc32_44.3)
+// CHECK:STDOUT:   %.loc32_44.2: init bool to %.loc32_44.1 = mark_in_place_init %operator_LessEqual__carbon_thunk.call
+// CHECK:STDOUT:   %.loc32_44.3: ref bool = temporary %.loc32_44.1, %.loc32_44.2
+// CHECK:STDOUT:   %.loc32_44.4: bool = acquire_value %.loc32_44.3
+// CHECK:STDOUT:   %.loc32_34: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %less_than_or_equal: bool = wrapper_binding less_than_or_equal, %.loc32_44.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete = constants.%less_than_or_equal.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc36: <bound method> = bound_method %.loc36_44.3, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
-// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc36: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc36(%.loc36_44.3)
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc32: <bound method> = bound_method %.loc32_44.3, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
+// CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc32: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc32(%.loc32_44.3)
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.bound.loc19: <bound method> = bound_method %.loc19_38.3, constants.%Destroy.WithSelf.SelfDestruct.db3fdb.1
 // CHECK:STDOUT:   %Destroy.WithSelf.SelfDestruct.call.loc19: init %empty_tuple.type = call %Destroy.WithSelf.SelfDestruct.bound.loc19(%.loc19_38.3)
 // CHECK:STDOUT:   <elided>
@@ -2400,11 +2301,11 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc36(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.SubobjectDestroy.loc32(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc36(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: fn @Destroy.WithSelf.Op.loc32(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc36(%self.param: ref bool) {
+// CHECK:STDOUT: fn @Destroy.WithSelf.SelfDestruct.loc32(%self.param: ref bool) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Destroy.WithSelf.Op.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.Op.decl.5f94cf.1(%self.param)
 // CHECK:STDOUT:   %Destroy.WithSelf.SubobjectDestroy.call: init %empty_tuple.type = call generated.%Destroy.WithSelf.SubobjectDestroy.decl(%self.param)
@@ -2565,9 +2466,9 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %equal.patt: %pattern_type.831 = value_binding_pattern equal [concrete = constants.%equal.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.ref.loc23: ref %EqualC = name_ref c1, %c1
-// CHECK:STDOUT:   %c2.ref.loc23: ref %EqualC = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc23: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %c1.ref.loc21: ref %EqualC = name_ref c1, %c1
+// CHECK:STDOUT:   %c2.ref.loc21: ref %EqualC = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc21: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %not_equal: bool = wrapper_binding not_equal, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete = constants.%not_equal.patt]
@@ -3072,10 +2973,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref: %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc14: type = splice_block %C.ref.loc14 [concrete = constants.%C] {
-// CHECK:STDOUT:     %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %GlobalOpN.ref.loc14: <namespace> = name_ref GlobalOpN, imports.%GlobalOpN [concrete = imports.%GlobalOpN]
-// CHECK:STDOUT:     %C.ref.loc14: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc12: type = splice_block %C.ref.loc12 [concrete = constants.%C] {
+// CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %GlobalOpN.ref.loc12: <namespace> = name_ref GlobalOpN, imports.%GlobalOpN [concrete = imports.%GlobalOpN]
+// CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c3: %C = wrapper_binding c3, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

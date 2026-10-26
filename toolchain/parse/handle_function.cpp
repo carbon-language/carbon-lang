@@ -24,12 +24,24 @@ auto HandleFunctionAfterParams(Context& context) -> void {
   if (context.PositionIs(Lex::TokenKind::MinusGreater)) {
     context.PushState(StateKind::FunctionReturnTypeFinish);
     context.ConsumeAndDiscard();
-    context.PushStateForExpr(PrecedenceGroup::ForType());
+    context.PushState(StateKind::ReturnTypeOrFormExpr);
   } else if (context.PositionIs(Lex::TokenKind::MinusGreaterQuestion)) {
     context.PushState(StateKind::FunctionReturnFormFinish);
     context.ConsumeAndDiscard();
     context.PushStateForExpr(PrecedenceGroup::ForType());
   }
+}
+
+auto HandleReturnTypeOrFormExpr(Context& context) -> void {
+  context.PopAndDiscardState();
+
+  // `-> val T`, `-> ref T`, and `-> var T` specify a primitive return form.
+  if (context.PositionIs(Lex::TokenKind::Val) ||
+      context.PositionIs(Lex::TokenKind::Ref) ||
+      context.PositionIs(Lex::TokenKind::Var)) {
+    context.PushState(StateKind::PrimitiveFormFinish, context.Consume());
+  }
+  context.PushStateForExpr(PrecedenceGroup::ForType());
 }
 
 auto HandleFunctionReturnTypeFinish(Context& context) -> void {
@@ -62,8 +74,10 @@ auto HandleFunctionSignatureFinish(Context& context) -> void {
       break;
     }
     case Lex::TokenKind::EqualGreater: {
-      context.AddFunctionDefinitionStart(context.Consume(), state.has_error);
-      context.AddLeafNode(NodeKind::TerseBodyArrow, *(context.position() - 1));
+      context.AddFunctionTerseDefinitionStart(context.Consume(),
+                                              state.has_error);
+      // Any error is recorded on the FunctionTerseDefinitionStart.
+      state.has_error = false;
       context.PushState(state, StateKind::FunctionTerseBodyFinish);
       context.PushStateForExpr(PrecedenceGroup::ForTopLevelExpr());
       break;

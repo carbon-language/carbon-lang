@@ -39,13 +39,9 @@ library "[[@TEST_NAME]]";
 import library "a";
 
 class C {}
-// CHECK:STDERR: fail_import_not_identified.carbon:[[@LINE+8]]:1: error: facet type `A` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
-// CHECK:STDERR: impl C as A;
-// CHECK:STDERR: ^~~~~~~~~~~~
-// CHECK:STDERR: fail_import_not_identified.carbon:[[@LINE-6]]:1: in import [InImport]
-// CHECK:STDERR: a.carbon:3:1: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
-// CHECK:STDERR: constraint A;
-// CHECK:STDERR: ^~~~~~~~~~~~~
+// CHECK:STDERR: fail_import_not_identified.carbon:[[@LINE+4]]:1-12: error: facet type `A` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
+// CHECK:STDERR: imported from: fail_import_not_identified.carbon:[[@LINE-4]]:1 [InImport]
+// CHECK:STDERR: a.carbon:3:1-13: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
 // CHECK:STDERR:
 impl C as A;
 
@@ -96,7 +92,7 @@ impl C as B {}
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.I = import_ref Main//b, I, unloaded
 // CHECK:STDOUT:   %Main.B: type = import_ref Main//b, B, loaded [concrete = constants.%B.type]
-// CHECK:STDOUT:   %Main.import_ref.da7 = import_ref Main//b, loc5_25, unloaded
+// CHECK:STDOUT:   %Main.import_ref.ae4 = import_ref Main//b, loc5_25, unloaded
 // CHECK:STDOUT:   %Main.import_ref.223 = import_ref Main//b, loc3_13, unloaded
 // CHECK:STDOUT:   %Main.import_ref.5f6: type = import_ref Main//b, loc5_18, loaded [symbolic = @B.WithSelf.Self.as_type.impls.I.type.require.%Self.as_type (constants.%Self.as_type)]
 // CHECK:STDOUT:   %Main.import_ref.c3f: type = import_ref Main//b, loc5_24, loaded [concrete = constants.%I.type]
@@ -134,7 +130,7 @@ impl C as B {}
 // CHECK:STDOUT: constraint @B [from "b.carbon"] {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.364
-// CHECK:STDOUT:   extend imports.%Main.import_ref.da7
+// CHECK:STDOUT:   extend imports.%Main.import_ref.ae4
 // CHECK:STDOUT:
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT:   @B.WithSelf.Self.as_type.impls.I.type.require {

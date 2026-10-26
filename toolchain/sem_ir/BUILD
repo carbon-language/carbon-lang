@@ -106,7 +106,6 @@ cc_library(
         "file.cpp",
         "function.cpp",
         "generic.cpp",
-        "identified_facet_type.cpp",
         "impl.cpp",
         "import_ir.cpp",
         "inst.cpp",
@@ -143,7 +142,6 @@ cc_library(
         "file.h",
         "function.h",
         "generic.h",
-        "identified_facet_type.h",
         "impl.h",
         "import_cpp.h",
         "import_ir.h",
@@ -336,6 +334,7 @@ cc_library(
         ":absolute_node_ref",
         ":file",
         ":typed_insts",
+        "//common:check",
         "//toolchain/diagnostics:emitter",
         "//toolchain/parse:tree",
         "@llvm-project//clang:basic",
@@ -354,6 +353,7 @@ cc_library(
         ":typed_insts",
         "//common:ostream",
         "//common:raw_string_ostream",
+        "@llvm-project//clang:ast",
     ],
     # Always link dump methods so they are callable from a debugger
     # even though they are never called.
@@ -469,6 +469,7 @@ cc_library(
     hdrs = ["read_only_ast_source.h"],
     deps = [
         "//toolchain/sem_ir:file",
+        "@llvm-project//clang:ast",
         "@llvm-project//clang:sema",
     ],
 )

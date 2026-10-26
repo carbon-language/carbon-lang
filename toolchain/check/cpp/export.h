@@ -17,6 +17,33 @@ class CXXRecordDecl;
 
 namespace Carbon::Check {
 
+// Creates a namespace to use as a semantic parent for exported C++ entities.
+// This is used for the root `Carbon` namespace, the package namespaces within
+// it, and any nested namespaces within those packages. Does not register the
+// namespace as corresponding to any particular Carbon entity.
+auto CreateSemanticNamespace(Context& context,
+                             clang::DeclContext* parent_context,
+                             clang::IdentifierInfo* identifier)
+    -> clang::NamespaceDecl*;
+
+// Exports a Carbon namespace into C++ as a semantic sub-namespace of
+// `parent_context` (used as the parent `DeclContext` of exported Carbon
+// entities), or returns the existing namespace if already exported in this C++
+// domain.
+auto ExportNamespaceToCpp(Context& context, clang::DeclContext* parent_context,
+                          clang::IdentifierInfo* identifier)
+    -> clang::NamespaceDecl*;
+
+// Exports a Carbon namespace into C++ as a per-file lookup-only
+// `NamespaceDecl`, or returns the C++ declaration context if it was imported
+// from C++. Lookup-only namespaces are only used for C++ name lookup in the
+// current Carbon file, and are never the parent `DeclContext` of anything
+// other than child lookup-only namespaces, so that references to Carbon
+// entities are mangled consistently.
+auto ExportLookupNamespaceToCpp(Context& context, SemIR::LocId loc_id,
+                                SemIR::NameScopeId name_scope_id)
+    -> clang::DeclContext*;
+
 // Exports a Carbon name scope into C++ as a namespace or class, or returns the
 // C++ namespace or class declaration that it was imported from.
 //
@@ -41,14 +68,14 @@ auto ExportClassToCpp(Context& context, SemIR::ClassType class_type)
 auto ExportAndCompleteClassToCpp(Context& context, SemIR::ClassType class_type)
     -> clang::TagDecl*;
 
-// Exports a generic Carbon class into C++ as a templated class.
+// Exports a parameterized Carbon class into C++ as a templated class.
 //
-// If the generic class has already been exported, returns the existing
+// If the parameterized class has already been exported, returns the existing
 // C++ class template.  Otherwise, creates a new C++ class template and
 // returns it. Returns nullptr if the class could not be exported and an
 // error was diagnosed.
-auto ExportGenericClassToCpp(Context& context,
-                             SemIR::GenericClassType generic_class_type)
+auto ExportParameterizedClassToCpp(
+    Context& context, SemIR::ParameterizedClassType param_class_type)
     -> clang::ClassTemplateDecl*;
 
 // Creates a C++ class template specialization for a generic Carbon
@@ -77,11 +104,21 @@ auto ExportFieldToCpp(Context& context, SemIR::InstId field_inst_id,
                       SemIR::FieldDecl field_decl,
                       SemIR::SpecificId specific_id) -> clang::FieldDecl*;
 
-// Get a `clang::FunctionDecl` that can be used to call a Carbon function.
-// If the function is generic, a `clang::FunctionTemplateDecl` will be
-// created instead.
-auto ExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                         SemIR::FunctionId function_id) -> clang::NamedDecl*;
+// Returns the `ClangDeclId` of a `clang::FunctionDecl` or
+// `clang::FunctionTemplateDecl` that can be used to call the given function.
+// Returns null if an error was diagnosed.
+auto GetOrExportFunctionToCpp(Context& context, SemIR::LocId loc_id,
+                              SemIR::FunctionId function_id)
+    -> clang::NamedDecl*;
+
+// Exports the necessary declarations to permit conversion from the given
+// Carbon function type to the given C++ function pointer type. If the
+// conversion would be invalid, this will return false, and if `diagnose` is
+// true it will also emit one or more diagnostics explaining the reason it would
+// be invalid. In those diagnostics, `src_id` is the source of the conversion.
+auto ExportFunctionToCppPointerConversion(
+    Context& context, SemIR::InstId src_id, SemIR::FunctionType src_type,
+    SemIR::CppFunctionPointerType dest_type, bool diagnose) -> bool;
 
 // Exports a Carbon virtual function as a C++ `clang::FunctionDecl` declaration.
 // Does not emit a definition.

@@ -5,6 +5,7 @@
 #include "toolchain/sem_ir/expr_info.h"
 
 #include <concepts>
+#include <utility>
 
 #include "common/check.h"
 #include "toolchain/base/kind_switch.h"
@@ -44,12 +45,36 @@ static auto GetExprCategoryImpl(const File* ir, InstId inst_id,
         [&](SemIR::FunctionId function_id,
             SemIR::SpecificId resolved_specific_id) -> ExprCategory {
       const auto& function = ir->functions().Get(function_id);
+      if (function.return_form_inst_id == ErrorInst::InstId) {
+        return ExprCategory::Error;
+      }
+
+      // For a deduced return type, we know the form independent of the
+      // specific. Don't query the return form in the specific: in a generic,
+      // it's computed by the definition's eval block, which might not have been
+      // evaluated for this specific.
+      // TODO: Once we support `->? auto`, we'll need the specific function
+      // definition to be resolved here.
+      CARBON_CHECK(!function.has_pending_deduced_return_type(),
+                   "Call to function before its return type is deduced");
+      switch (function.deduced_return_kind) {
+        case Function::DeducedReturnKind::None:
+          break;
+        case Function::DeducedReturnKind::Init:
+          return ExprCategory::ReprInitializing;
+        case Function::DeducedReturnKind::Ref:
+          return ExprCategory::DurableRef;
+        case Function::DeducedReturnKind::Value:
+          return ExprCategory::Value;
+      }
+
       auto return_form_id =
           function.GetDeclaredReturnForm(*ir, resolved_specific_id);
       if (!return_form_id.has_value()) {
         // Treat as equivalent to `-> ()`.
         return ExprCategory::ReprInitializing;
       }
+
       auto return_form = ir->insts().Get(return_form_id);
       CARBON_KIND_SWITCH(return_form) {
         case CARBON_KIND(InitForm _):
@@ -228,8 +253,18 @@ auto GetExprCategory(const File& file, InstId inst_id,
 
 auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
                                   bool allow_transitive) -> InstId {
+  auto [storage_sem_ir, storage_id] = FindStorageArgForInitializerInSpecific(
+      sem_ir, init_id, sem_ir, SpecificId::None, allow_transitive);
+  CARBON_CHECK(!storage_id.has_value() || storage_sem_ir == &sem_ir);
+  return storage_id;
+}
+
+auto FindStorageArgForInitializerInSpecific(const File& sem_ir, InstId init_id,
+                                            const File& specific_sem_ir,
+                                            SpecificId specific_id,
+                                            bool allow_transitive)
+    -> std::pair<const File*, InstId> {
   const File* ir = &sem_ir;
-  auto specific_id = SemIR::SpecificId::None;
   while (true) {
     Inst init_untyped = ir->insts().Get(init_id);
     CARBON_KIND_SWITCH(init_untyped) {
@@ -247,68 +282,89 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
       }
       case CARBON_KIND(AsCompatible init): {
         if (!allow_transitive) {
-          return InstId::None;
+          return {ir, InstId::None};
         }
         init_id = init.source_id;
         continue;
       }
       case CARBON_KIND(Converted init): {
         if (!allow_transitive) {
-          return InstId::None;
+          return {ir, InstId::None};
         }
         init_id = init.result_id;
         continue;
       }
       case CARBON_KIND(UpdateInit init): {
         if (!allow_transitive) {
-          return InstId::None;
+          return {ir, InstId::None};
         }
         init_id = init.base_init_id;
         continue;
       }
       case CARBON_KIND(SpliceBlock splice): {
         if (!allow_transitive) {
-          return InstId::None;
+          return {ir, InstId::None};
         }
         init_id = splice.result_id;
         continue;
       }
       case CARBON_KIND(SpecificInst inst): {
         if (!allow_transitive) {
-          return InstId::None;
+          return {ir, InstId::None};
+        }
+        init_id = inst.inst_id;
+        specific_id = inst.specific_id;
+        continue;
+      }
+      case CARBON_KIND(SpecificConstant inst): {
+        if (!allow_transitive) {
+          return {ir, InstId::None};
         }
         init_id = inst.inst_id;
         specific_id = inst.specific_id;
         continue;
       }
       case CARBON_KIND(ArrayInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
       }
       case CARBON_KIND(ClassInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
       }
       case CARBON_KIND(StructInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
       }
       case CARBON_KIND(TupleInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
       }
       case CARBON_KIND(InPlaceInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
       }
       case CARBON_KIND(MarkInPlaceInit init): {
-        return init.dest_id;
+        return {ir, init.dest_id};
+      }
+      case CARBON_KIND(SpliceInst inst): {
+        if (!allow_transitive) {
+          return {ir, InstId::None};
+        }
+        auto [const_sem_ir, const_id] = GetConstantValueInSpecific(
+            specific_sem_ir, specific_id, *ir, inst.inst_id);
+        ir = const_sem_ir;
+        init_id =
+            ir->constant_values().GetInstAs<SemIR::InstValue>(const_id).inst_id;
+        continue;
       }
       case CARBON_KIND(Call call): {
         auto callee_function =
             GetCalleeAsFunction(*ir, call.callee_id, specific_id);
         const auto& function = ir->functions().Get(callee_function.function_id);
         if (!function.return_form_inst_id.has_value()) {
-          return InstId::None;
+          return {ir, InstId::None};
         }
-        auto return_form_constant_id = GetConstantValueInSpecific(
-            *ir, callee_function.resolved_specific_id,
-            function.return_form_inst_id);
+        auto [return_form_sem_ir, return_form_constant_id] =
+            GetConstantValueInSpecific(specific_sem_ir,
+                                       callee_function.resolved_specific_id,
+                                       *ir, function.return_form_inst_id);
+        ir = return_form_sem_ir;
         auto return_form = ir->insts().Get(
             ir->constant_values().GetInstId(return_form_constant_id));
         CARBON_KIND_SWITCH(return_form) {
@@ -316,28 +372,33 @@ auto FindStorageArgForInitializer(const File& sem_ir, InstId init_id,
             auto type_id = ir->types().GetTypeIdForTypeInstId(
                 init_form.type_component_inst_id);
             if (!InitRepr::ForType(*ir, type_id).MightBeInPlace()) {
-              return InstId::None;
+              return {ir, InstId::None};
             }
 
             if (!call.args_id.has_value()) {
               // Argument initialization failed, so we have no return slot.
-              return InstId::None;
+              return {ir, InstId::None};
             }
 
             CARBON_CHECK(function.call_param_ranges.return_size() == 1,
                          "Unexpected number of output parameters on function");
-            return ir->inst_blocks().Get(
-                call.args_id)[function.call_param_ranges.return_begin().index];
+            return {ir,
+                    ir->inst_blocks().Get(
+                        call.args_id)[function.call_param_ranges.return_begin()
+                                          .index]};
           }
           case CARBON_KIND(RefForm _): {
-            return InstId::None;
+            return {ir, InstId::None};
+          }
+          case CARBON_KIND(ValueForm _): {
+            return {ir, InstId::None};
           }
           default:
             CARBON_FATAL("Unexpected inst kind: {0}", return_form);
         }
       }
       case CARBON_KIND(ErrorInst _): {
-        return InstId::None;
+        return {ir, InstId::None};
       }
       default:
         CARBON_FATAL("Initialization from unexpected inst {0}", init_untyped);

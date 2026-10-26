@@ -14,7 +14,6 @@
 #include "clang/Lex/HeaderSearch.h"
 #include "common/check.h"
 #include "common/command_line.h"
-#include "common/filesystem.h"
 #include "common/version.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/STLExtras.h"
@@ -76,14 +75,22 @@ struct ConfigDataEntry {
 // If there are any errors setting up Clang, this will diagnose them using
 // `driver_env.consumer` and return `false`. If successful, returns `true`.
 static auto ComputeClangConfig(DriverEnv& driver_env,
-                               llvm::StringRef target_str,
+                               const CodegenOptions& codegen_options,
                                llvm::SmallVectorImpl<ConfigDataEntry>& data)
     -> bool {
+  llvm::SmallVector<std::string> codegen_clang_args =
+      codegen_options.GetClangArgs();
+  llvm::SmallVector<llvm::StringRef> extra_args(codegen_clang_args.begin(),
+                                                codegen_clang_args.end());
+
   // Build a library invocation of Clang in order to query its header search
   // paths.
-  std::shared_ptr clang_invocation =
-      BuildClangInvocation(*driver_env.consumer, driver_env.fs,
-                           *driver_env.installation, target_str, {});
+  std::shared_ptr clang_invocation = BuildClangInvocation(
+      *driver_env.consumer, driver_env.fs, *driver_env.installation,
+      codegen_options.target, extra_args);
+  if (!clang_invocation) {
+    return false;
+  }
   clang_invocation->getFrontendOpts().DisableFree = false;
 
   // Setup up a driver-style diagnostic engine for the compiler invocation and
@@ -107,7 +114,8 @@ static auto ComputeClangConfig(DriverEnv& driver_env,
     CARBON_DIAGNOSTIC(ConfigFailedToSetupTarget, Error,
                       "unable to setup the requested target `{0}`",
                       std::string);
-    driver_env.emitter.Emit(ConfigFailedToSetupTarget, target_str.str());
+    driver_env.emitter.Emit(ConfigFailedToSetupTarget,
+                            codegen_options.target.str());
     return false;
   }
 
@@ -193,28 +201,30 @@ auto ConfigSubcommand::Run(DriverEnv& driver_env) -> DriverResult {
       {.key = "VERSION", .value = Version::String.str()},
   };
 
-  // Try to read the installation digest and include that.
-  auto read_result = Filesystem::Cwd().ReadFileToString(
-      driver_env.installation->digest_path());
-  if (!read_result.ok()) {
+  // Try to read the installation digest and include that. This goes through the
+  // driver's filesystem so that tests get consistent results regardless of
+  // whether the digest happens to exist on the real filesystem.
+  auto read_result = driver_env.fs->getBufferForFile(
+      driver_env.installation->digest_path().native());
+  if (!read_result) {
     CARBON_DIAGNOSTIC(ConfigFailedToReadDigest, Error,
-                      "unable to read the installation's digest file: {0}",
-                      std::string);
+                      "unable to read the installation's digest file: {0}: {1}",
+                      std::string, std::string);
     driver_env.emitter.Emit(ConfigFailedToReadDigest,
-                            read_result.error().ToString());
+                            driver_env.installation->digest_path().native(),
+                            read_result.getError().message());
 
     // Remember that we encountered an error but continue to give a minimally
     // useful `config` output.
     result = false;
   } else {
     data.push_back({.key = "INSTALL_DIGEST",
-                    .value = llvm::StringRef(*read_result).rtrim().str()});
+                    .value = (*read_result)->getBuffer().rtrim().str()});
   }
 
   // Compute and print Clang's config entries if we can. This will have been
   // diagnosed while computing, so just track if we hit errors.
-  result &=
-      ComputeClangConfig(driver_env, options_.codegen_options.target, data);
+  result &= ComputeClangConfig(driver_env, options_.codegen_options, data);
 
   llvm::sort(data, [](const ConfigDataEntry& lhs, const ConfigDataEntry& rhs) {
     return lhs.key < rhs.key;

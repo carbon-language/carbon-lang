@@ -10,6 +10,7 @@
 
 #include "absl/random/random.h"
 #include "common/raw_hashtable_metadata_group.h"
+#include "testing/base/benchmark_helpers.h"
 
 namespace Carbon::RawHashtable {
 
@@ -215,7 +216,7 @@ static void BM_LoadMatch(benchmark::State& s) {
   // We don't want the optimizer to peel iterations off of this loop, so hide
   // the starting index.
   ssize_t i = 0;
-  benchmark::DoNotOptimize(i);
+  Testing::DoNotOptimize(i);
 
   // This loop looks *really* attractive to unroll to the compiler. However,
   // that can easily overlap some of the memory operations and generally makes
@@ -288,7 +289,7 @@ static void BM_LoadMatchMissSteps(benchmark::State& s) {
   // We don't want the optimizer to peel iterations off of this loop, so hide
   // the starting index.
   ssize_t i = 0;
-  benchmark::DoNotOptimize(i);
+  Testing::DoNotOptimize(i);
 
   // This loop looks *really* attractive to unroll to the compiler. However,
   // that can easily overlap some of the memory operations and generally makes

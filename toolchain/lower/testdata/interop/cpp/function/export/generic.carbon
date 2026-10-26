@@ -52,37 +52,37 @@ fn Run() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::A" = type {}
-// CHECK:STDOUT: %"class.Carbon::B" = type {}
+// CHECK:STDOUT: %"class.Carbon::Main::A" = type {}
+// CHECK:STDOUT: %"class.Carbon::Main::B" = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon1AD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main1AD2Ev = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon1BD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main1BD2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z1Gv() #0 personality ptr @__gxx_personality_v0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a = alloca %"class.Carbon::A", align 1
-// CHECK:STDOUT:   %b = alloca %"class.Carbon::B", align 1
-// CHECK:STDOUT:   %agg.tmp = alloca %"class.Carbon::A", align 1
+// CHECK:STDOUT:   %a = alloca %"class.Carbon::Main::A", align 1
+// CHECK:STDOUT:   %b = alloca %"class.Carbon::Main::B", align 1
+// CHECK:STDOUT:   %agg.tmp = alloca %"class.Carbon::Main::A", align 1
 // CHECK:STDOUT:   %exn.slot = alloca ptr, align 8
 // CHECK:STDOUT:   %ehselector.slot = alloca i32, align 4
-// CHECK:STDOUT:   %agg.tmp1 = alloca %"class.Carbon::B", align 1
+// CHECK:STDOUT:   %agg.tmp1 = alloca %"class.Carbon::Main::B", align 1
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #4
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %b) #4
-// CHECK:STDOUT:   invoke void @_ZN6CarbonL1FENS_1AE()
+// CHECK:STDOUT:   invoke void @_ZN6Carbon4MainL1FENS0_1AE()
 // CHECK:STDOUT:           to label %invoke.cont unwind label %lpad
 // CHECK:STDOUT:
 // CHECK:STDOUT: invoke.cont:                                      ; preds = %entry
-// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 1 %agg.tmp) #4
-// CHECK:STDOUT:   invoke void @_ZN6CarbonL1FENS_1BE()
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %agg.tmp) #4
+// CHECK:STDOUT:   invoke void @_ZN6Carbon4MainL1FENS0_1BE()
 // CHECK:STDOUT:           to label %invoke.cont3 unwind label %lpad2
 // CHECK:STDOUT:
 // CHECK:STDOUT: invoke.cont3:                                     ; preds = %invoke.cont
-// CHECK:STDOUT:   call void @_ZN6Carbon1BD2Ev(ptr noundef nonnull align 1 %agg.tmp1) #4
-// CHECK:STDOUT:   call void @_ZN6Carbon1BD2Ev(ptr noundef nonnull align 1 %b) #4
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main1BD2Ev(ptr noundef nonnull align 1 %agg.tmp1) #4
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main1BD2Ev(ptr noundef nonnull align 1 %b) #4
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #4
-// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 1 %a) #4
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %a) #4
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #4
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT:
@@ -93,7 +93,7 @@ fn Run() {
 // CHECK:STDOUT:   store ptr %1, ptr %exn.slot, align 8
 // CHECK:STDOUT:   %2 = extractvalue { ptr, i32 } %0, 1
 // CHECK:STDOUT:   store i32 %2, ptr %ehselector.slot, align 4
-// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 1 %agg.tmp) #4
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %agg.tmp) #4
 // CHECK:STDOUT:   br label %ehcleanup
 // CHECK:STDOUT:
 // CHECK:STDOUT: lpad2:                                            ; preds = %invoke.cont
@@ -103,13 +103,13 @@ fn Run() {
 // CHECK:STDOUT:   store ptr %4, ptr %exn.slot, align 8
 // CHECK:STDOUT:   %5 = extractvalue { ptr, i32 } %3, 1
 // CHECK:STDOUT:   store i32 %5, ptr %ehselector.slot, align 4
-// CHECK:STDOUT:   call void @_ZN6Carbon1BD2Ev(ptr noundef nonnull align 1 %agg.tmp1) #4
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main1BD2Ev(ptr noundef nonnull align 1 %agg.tmp1) #4
 // CHECK:STDOUT:   br label %ehcleanup
 // CHECK:STDOUT:
 // CHECK:STDOUT: ehcleanup:                                        ; preds = %lpad2, %lpad
-// CHECK:STDOUT:   call void @_ZN6Carbon1BD2Ev(ptr noundef nonnull align 1 %b) #4
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main1BD2Ev(ptr noundef nonnull align 1 %b) #4
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %b) #4
-// CHECK:STDOUT:   call void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 1 %a) #4
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %a) #4
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #4
 // CHECK:STDOUT:   br label %eh.resume
 // CHECK:STDOUT:
@@ -129,9 +129,9 @@ fn Run() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6CarbonL1FENS_1AE() #2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon4MainL1FENS0_1AE() #2 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %0 = alloca %"class.Carbon::A", align 1
+// CHECK:STDOUT:   %0 = alloca %"class.Carbon::Main::A", align 1
 // CHECK:STDOUT:   call void @_CF__carbon_thunk.26f2099a79512a5d.Main(ptr noundef nonnull align 1 %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -139,7 +139,7 @@ fn Run() {
 // CHECK:STDOUT: declare i32 @__gxx_personality_v0(...)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon1AD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main1AD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !75
@@ -149,15 +149,15 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6CarbonL1FENS_1BE() #2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon4MainL1FENS0_1BE() #2 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %0 = alloca %"class.Carbon::B", align 1
+// CHECK:STDOUT:   %0 = alloca %"class.Carbon::Main::B", align 1
 // CHECK:STDOUT:   call void @_CF__carbon_thunk.7a3b9f04ddf4269e.Main(ptr noundef nonnull align 1 %0)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon1BD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main1BD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !77
@@ -250,8 +250,8 @@ fn Run() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_ZN6Carbon1AD2Ev, { 0, 2, 1, 3 }
-// CHECK:STDOUT: uselistorder ptr @_ZN6Carbon1BD2Ev, { 0, 2, 1, 3 }
+// CHECK:STDOUT: uselistorder ptr @_ZN6Carbon4Main1AD2Ev, { 0, 2, 1, 3 }
+// CHECK:STDOUT: uselistorder ptr @_ZN6Carbon4Main1BD2Ev, { 0, 2, 1, 3 }
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.end.p0, { 3, 1, 2, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -327,9 +327,9 @@ fn Run() {
 // CHECK:STDOUT: !71 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !72 = !{!"omnipotent char", !71, i64 0}
 // CHECK:STDOUT: !73 = !{!"any pointer", !72, i64 0}
-// CHECK:STDOUT: !74 = !{!"p1 _ZTSN6Carbon1AE", !73, i64 0}
+// CHECK:STDOUT: !74 = !{!"p1 _ZTSN6Carbon4Main1AE", !73, i64 0}
 // CHECK:STDOUT: !75 = !{!74, !74, i64 0}
-// CHECK:STDOUT: !76 = !{!"p1 _ZTSN6Carbon1BE", !73, i64 0}
+// CHECK:STDOUT: !76 = !{!"p1 _ZTSN6Carbon4Main1BE", !73, i64 0}
 // CHECK:STDOUT: !77 = !{!76, !76, i64 0}
 // CHECK:STDOUT: !78 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !79 = !{i32 7, !"PIE Level", i32 2}

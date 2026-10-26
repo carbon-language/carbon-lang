@@ -2,6 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+// When adding a new ID type, consider adding utilities to aid debugging. See
+// the comment in `toolchain/sem_ir/dump.h` for details.
+
 #ifndef CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 #define CARBON_TOOLCHAIN_SEM_IR_IDS_H_
 
@@ -375,13 +378,6 @@ struct DeclaredFacetTypeId : public IdBase<DeclaredFacetTypeId> {
 inline constexpr DeclaredFacetTypeId DeclaredFacetTypeId::Empty =
     DeclaredFacetTypeId(0);
 
-// The ID of an resolved facet type value.
-struct IdentifiedFacetTypeId : public IdBase<IdentifiedFacetTypeId> {
-  static constexpr llvm::StringLiteral Label = "identified_facet_type";
-
-  using IdBase::IdBase;
-};
-
 // The ID of an `Impl`.
 struct ImplId : public IdBase<ImplId> {
   using DiagnosticType = Diagnostics::TypeInfo<std::string>;
@@ -497,14 +493,14 @@ inline constexpr ImportIRId ImportIRId::Cpp = ImportIRId(ApiForImpl.index + 1);
 // embedding pointers directly into the storage of SemIR as part of an
 // instruction.
 struct ClangDeclId : public IdBase<ClangDeclId> {
-  static constexpr llvm::StringLiteral Label = "clang_decl_id";
+  static constexpr llvm::StringLiteral Label = "clang_decl";
 
   using IdBase::IdBase;
 };
 
 // The ID of a `ClangDeclSignature`.
 struct ClangDeclSignatureId : public IdBase<ClangDeclSignatureId> {
-  static constexpr llvm::StringLiteral Label = "clang_decl_signature_id";
+  static constexpr llvm::StringLiteral Label = "clang_decl_signature";
 
   using IdBase::IdBase;
 };
@@ -723,6 +719,16 @@ inline constexpr int NameId::NonIndexValueCount =
     1 CARBON_SPECIAL_NAME_ID(CARBON_SPECIAL_NAME_ID_FOR_COUNT);
 #undef CARBON_SPECIAL_NAME_ID_FOR_COUNT
 
+// An X-macro for special name scopes. Uses should look like:
+//
+//   #define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ(Name) ...
+//   CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ)
+//   #undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_XYZ
+#define CARBON_SPECIAL_NAME_SCOPE_ID(X)                                \
+  /* A scope used by the toolchain to indicate it has access to all */ \
+  /* of a class' members. */                                           \
+  X(AllowHighestAccessLevel)
+
 // The ID of a `NameScope`.
 struct NameScopeId : public IdBase<NameScopeId> {
   static constexpr llvm::StringLiteral Label = "name_scope";
@@ -730,10 +736,34 @@ struct NameScopeId : public IdBase<NameScopeId> {
   // The package (or file) name scope, guaranteed to be the first added.
   static const NameScopeId Package;
 
+  // An enum of special name scopes.
+  enum class SpecialNameScopeId : uint8_t {
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM(Name) Name,
+    CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_ENUM
+  };
+
+  // For each SpecialNameScopeId, provide a matching `NameScopeId` instance for
+  // convenience.
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL(Name) \
+  static const NameScopeId Name;
+  CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DECL
+
   using IdBase::IdBase;
 };
 
 inline constexpr NameScopeId NameScopeId::Package = NameScopeId(0);
+
+// Define the special `static const NameScopeId` values.
+#define CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF(Name) \
+  inline constexpr NameScopeId NameScopeId::Name = \
+      NameScopeId(NoneIndex - 1 -                  \
+                  static_cast<int>(NameScopeId::SpecialNameScopeId::Name));
+CARBON_SPECIAL_NAME_SCOPE_ID(CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF)
+#undef CARBON_SPECIAL_NAME_SCOPE_ID_FOR_DEF
+
+#undef CARBON_SPECIAL_NAME_SCOPE_ID
 
 // The ID of an `InstId` block.
 struct InstBlockId : public IdBase<InstBlockId> {
@@ -766,8 +796,14 @@ struct InstBlockId : public IdBase<InstBlockId> {
   // be inserted into it.
   static const InstBlockId GlobalInit;
 
+  // Stores instructions defining global variables that might otherwise be
+  // defined in contexts where they won't be exported during lowering. This is
+  // useful, for example, when synthesizing function argument default values for
+  // export to C++.
+  static const InstBlockId ExtraGlobalVariables;
+
   // A convenience list of reserved IDs.
-  static const std::array<InstBlockId, 5> ReservedIds;
+  static const std::array<InstBlockId, 6> ReservedIds;
 
   // An ID for unreachable code.
   static const InstBlockId Unreachable;
@@ -786,10 +822,11 @@ inline constexpr InstBlockId InstBlockId::Exports = InstBlockId(1);
 inline constexpr InstBlockId InstBlockId::Generated = InstBlockId(2);
 inline constexpr InstBlockId InstBlockId::Imports = InstBlockId(3);
 inline constexpr InstBlockId InstBlockId::GlobalInit = InstBlockId(4);
+inline constexpr InstBlockId InstBlockId::ExtraGlobalVariables = InstBlockId(5);
 inline constexpr InstBlockId InstBlockId::Unreachable =
     InstBlockId(NoneIndex - 1);
-inline constexpr std::array<InstBlockId, 5> InstBlockId::ReservedIds = {
-    Empty, Exports, Generated, Imports, GlobalInit};
+inline constexpr std::array<InstBlockId, 6> InstBlockId::ReservedIds = {
+    Empty, Exports, Generated, Imports, GlobalInit, ExtraGlobalVariables};
 
 // Contains either an `InstBlockId` value, an error value, or
 // `InstBlockId::None`.
@@ -970,7 +1007,7 @@ struct TypeId : public IdBase<TypeId> {
   auto Print(llvm::raw_ostream& out) const -> void;
 };
 
-// The ID of a `clang::SourceLocation`.
+// The ID of a range of C++ source, held as a `clang::SourceRange`.
 struct ClangSourceLocId : public IdBase<ClangSourceLocId> {
   static constexpr llvm::StringLiteral Label = "clang_source_loc";
 

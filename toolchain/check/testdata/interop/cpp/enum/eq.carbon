@@ -76,12 +76,8 @@ fn CompareGeneric[U: type, T: Core.EqWith(U)](x: T, y: U) -> bool {
 }
 
 fn CompareHeterogeneousFail(x: Cpp.Scoped, y: Cpp.Unscoped) -> bool {
-  // CHECK:STDERR: fail_heterogeneous.carbon:[[@LINE+7]]:10: error: cannot convert type `Cpp.Scoped` into type implementing `Core.EqWith(Cpp.Unscoped)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   return CompareGeneric(x, y);
-  // CHECK:STDERR:          ^~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_heterogeneous.carbon:[[@LINE-8]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn CompareGeneric[U: type, T: Core.EqWith(U)](x: T, y: U) -> bool {
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_heterogeneous.carbon:[[@LINE+3]]:10-29: error: cannot convert type `Cpp.Scoped` into type implementing `Core.EqWith(Cpp.Unscoped)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: fail_heterogeneous.carbon:[[@LINE-6]]:1-67: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   return CompareGeneric(x, y);
 }

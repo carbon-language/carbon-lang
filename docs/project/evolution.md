@@ -72,8 +72,6 @@ language are well explained, justified, and reviewed by the community.
 
     -   Send the proposal as a broad RFC to the community.
 
-    -   Add the "proposal rfc" label for tracking.
-
 -   Contributors are encouraged to react with a _thumbs-up_ to proposal PRs if
     they are generally interested and supportive of the high-level direction
     based on title and summary. Similarly, other reactions are encouraged to
@@ -143,8 +141,6 @@ issues for longer discussion:
 
     -   Send the proposal as a broad RFC to the community.
 
-    -   Add the "proposal rfc" label for tracking.
-
 -   Address comments where you can and they make sense.
 
 -   If you don't see an obvious way to address comments, that's OK.
@@ -172,7 +168,7 @@ issues for longer discussion:
 #### Community
 
 -   We use the
-    ["proposal rfc" label](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+is%3Aopen+label%3A%22proposal+rfc%22)
+    ["proposal" label on non-draft PRs](https://github.com/carbon-language/carbon-lang/pulls?q=is%3Apr+is%3Aopen+draft%3Afalse+label%3Aproposal)
     to track proposals that are in RFC.
 
     -   Anyone that is interested can participate once a proposal is ready for

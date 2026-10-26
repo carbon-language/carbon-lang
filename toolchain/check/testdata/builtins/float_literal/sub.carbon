@@ -44,9 +44,7 @@ library "[[@TEST_NAME]]";
 
 fn Sub(a: Core.FloatLiteral, b: Core.FloatLiteral) -> Core.FloatLiteral = "float.sub";
 
-// CHECK:STDERR: fail_too_large.carbon:[[@LINE+4]]:29: error: binary calculation `16*2^1023999999996 - 1*10^-19` would exceed the maximum supported integer width of 8388608 [CompileTimeFloatLiteralBinaryOperationOutOfRange]
-// CHECK:STDERR: let v1: Core.FloatLiteral = Sub(0x1.0p1024000000000, 0.0000000000000000001);
-// CHECK:STDERR:                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_large.carbon:[[@LINE+2]]:29-75: error: binary calculation `16*2^1023999999996 - 1*10^-19` would exceed the maximum supported integer width of 8388608 [CompileTimeFloatLiteralBinaryOperationOutOfRange]
 // CHECK:STDERR:
 let v1: Core.FloatLiteral = Sub(0x1.0p1024000000000, 0.0000000000000000001);
 
@@ -57,7 +55,7 @@ let v1: Core.FloatLiteral = Sub(0x1.0p1024000000000, 0.0000000000000000001);
 // CHECK:STDOUT:   %pattern_type.dab: type = pattern_type Core.FloatLiteral [concrete]
 // CHECK:STDOUT:   %Sub.type: type = fn_type @Sub [concrete]
 // CHECK:STDOUT:   %Sub: %Sub.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Float.type: type = generic_class_type @Float [concrete]
+// CHECK:STDOUT:   %Float.type: type = parameterized_class_name_type @Float [concrete]
 // CHECK:STDOUT:   %Float.generic: %Float.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]

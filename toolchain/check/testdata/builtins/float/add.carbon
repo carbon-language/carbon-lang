@@ -28,19 +28,13 @@ var x: f64 = Add(2.2, 2.3);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooFew(a: f64) -> f64 = "float.add";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-26: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooFew(a: f64) -> f64 = "float.add";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.add";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-43: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.add";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn BadReturnType(a: f64, b: f64) -> bool = "float.add";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-42: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn BadReturnType(a: f64, b: f64) -> bool = "float.add";
 fn JustRight(a: f64, b: f64) -> f64 = "float.add";
@@ -62,17 +56,17 @@ fn RuntimeCallIsValidBadReturnType(a: f64, b: f64) -> bool {
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_64: Core.IntLiteral = int_value 64 [concrete]
-// CHECK:STDOUT:   %f64.dc1: type = class_type @Float, @Float(%int_64) [concrete]
+// CHECK:STDOUT:   %f64.761: type = class_type @Float, @Float(%int_64) [concrete]
 // CHECK:STDOUT:   %Add.type: type = fn_type @Add [concrete]
 // CHECK:STDOUT:   %Add: %Add.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.dc1, %b.param: %f64.dc1) -> out %return.param: %f64.dc1 {
+// CHECK:STDOUT: fn @RuntimeCallIsValid(%a.param: %f64.761, %b.param: %f64.761) -> out %return.param: %f64.761 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Add.ref: %Add.type = name_ref Add, file.%Add.decl [concrete = constants.%Add]
-// CHECK:STDOUT:   %a.ref: %f64.dc1 = name_ref a, %a
-// CHECK:STDOUT:   %b.ref: %f64.dc1 = name_ref b, %b
-// CHECK:STDOUT:   %Add.call: init %f64.dc1 = call %Add.ref(%a.ref, %b.ref)
+// CHECK:STDOUT:   %a.ref: %f64.761 = name_ref a, %a
+// CHECK:STDOUT:   %b.ref: %f64.761 = name_ref b, %b
+// CHECK:STDOUT:   %Add.call: init %f64.761 = call %Add.ref(%a.ref, %b.ref)
 // CHECK:STDOUT:   return %Add.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

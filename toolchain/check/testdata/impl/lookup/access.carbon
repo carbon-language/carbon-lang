@@ -53,9 +53,32 @@ fn H(generic U: type, generic V: Z where .Z1 = C(U)) {
   // query's.
   //
   // TODO: This should pass.
-  // CHECK:STDERR: fail_todo_impl_witness_access_in_impl_type_structure.carbon:[[@LINE+4]]:3: error: cannot convert type `V` that implements `Z where .(Z.Z1) = C(U)` into type implementing `X(U)` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR:   V as X(U);
-  // CHECK:STDERR:   ^~~~~~~~~
+  // CHECK:STDERR: fail_todo_impl_witness_access_in_impl_type_structure.carbon:[[@LINE+2]]:3-11: error: cannot convert type `V` that implements `Z where .(Z.Z1) = C(U)` into type implementing `X(U)` [ConversionFailureFacetToFacet]
   // CHECK:STDERR:
   V as X(U);
+}
+
+// --- lookup_query_self_is_access_with_witness_from_nested_facet.carbon
+library "[[@TEST_NAME]]";
+
+interface HasNested {
+  let Nested: type;
+}
+
+interface Z {}
+
+constraint ProvideZ {
+  require impls Z;
+}
+
+constraint NeedZ(T: Z) {}
+
+constraint N {
+  extend require impls HasNested;
+  require Self.(Nested) impls ProvideZ;
+
+  // This performs an impl lookup `Self.(Nested) as Z`. When we identify
+  // the facet type of `Self` to find witnesses, we find a witness that
+  // `Self.(Nested)` impls `Z`.
+  require impls NeedZ(Self.(Nested));
 }

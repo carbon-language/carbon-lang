@@ -8,7 +8,7 @@
 // invoked. The debugger should do namespace resolution automatically. For
 // example:
 //
-// - lldb: `expr Dump(context, id)`
+// - lldb: `dump context id`
 // - gdb: `call Dump(context, id)`
 
 #ifndef NDEBUG
@@ -55,6 +55,18 @@ LLVM_DUMP_METHOD static auto Dump(
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context,
+                                  SemIR::ClangDeclId clang_decl_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), clang_decl_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(
+    const Context& context, SemIR::ClangDeclSignatureId clang_decl_signature_id)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), clang_decl_signature_id);
+}
+
+LLVM_DUMP_METHOD static auto Dump(const Context& context,
                                   SemIR::ClassId class_id) -> std::string {
   return SemIR::Dump(context.sem_ir(), class_id);
 }
@@ -88,9 +100,30 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 }
 
 LLVM_DUMP_METHOD static auto Dump(
-    const Context& context,
-    SemIR::IdentifiedFacetTypeId identified_facet_type_id) -> std::string {
-  return SemIR::Dump(context.sem_ir(), identified_facet_type_id);
+    const Context& context, IdentifiedFacetTypeId identified_facet_type_id)
+    -> std::string {
+  RawStringOstream out;
+  out << identified_facet_type_id;
+  if (!identified_facet_type_id.has_value()) {
+    return out.TakeStr();
+  }
+
+  const auto& identified_facet_type =
+      context.identified_facet_types().Get(identified_facet_type_id);
+  for (auto req_impl : identified_facet_type.required_impls()) {
+    auto [self, req_interface] = req_impl;
+    out << "\n  - self: "
+        << DumpConstantSummary(context.sem_ir(), self.RawValue());
+    out << "\n    impls: "
+        << DumpInterfaceSummary(context.sem_ir(),
+                                req_interface.RawValue().interface_id);
+    if (req_interface.RawValue().specific_id.has_value()) {
+      out << "; "
+          << DumpSpecificSummary(context.sem_ir(),
+                                 req_interface.RawValue().specific_id);
+    }
+  }
+  return out.TakeStr();
 }
 
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::ImplId impl_id)
@@ -173,6 +206,12 @@ LLVM_DUMP_METHOD static auto Dump(const Context& context,
 }
 
 LLVM_DUMP_METHOD static auto Dump(
+    const Context& context, const SemIR::SpecificInterface& specific_interface)
+    -> std::string {
+  return SemIR::Dump(context.sem_ir(), specific_interface);
+}
+
+LLVM_DUMP_METHOD static auto Dump(
     const Context& context, SemIR::SpecificInterfaceId specific_interface_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), specific_interface_id);
@@ -187,6 +226,11 @@ LLVM_DUMP_METHOD static auto Dump(
 LLVM_DUMP_METHOD static auto Dump(const Context& context, SemIR::TypeId type_id)
     -> std::string {
   return SemIR::Dump(context.sem_ir(), type_id);
+}
+
+LLVM_DUMP_METHOD static auto MakeIdentifiedFacetTypeId(int id)
+    -> IdentifiedFacetTypeId {
+  return IdentifiedFacetTypeId(id);
 }
 
 }  // namespace Carbon::Check

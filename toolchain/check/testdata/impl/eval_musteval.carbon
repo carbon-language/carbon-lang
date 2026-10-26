@@ -77,19 +77,13 @@ impl A as MustEval {
 }
 
 fn Call() {
-  // CHECK:STDERR: fail_impl_runtime_eval.carbon:[[@LINE+4]]:17: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   let unused t: ({} as A).(Runtime.F)() = {} as A;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_runtime_eval.carbon:[[@LINE+2]]:17-39: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:
   let unused t: ({} as A).(Runtime.F)() = {} as A;
-  // CHECK:STDERR: fail_impl_runtime_eval.carbon:[[@LINE+4]]:17: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   let unused u: ({} as A).(Eval.F)() = {} as A;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_runtime_eval.carbon:[[@LINE+2]]:17-36: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:
   let unused u: ({} as A).(Eval.F)() = {} as A;
-  // CHECK:STDERR: fail_impl_runtime_eval.carbon:[[@LINE+4]]:17: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   let unused v: ({} as A).(MustEval.F)() = {} as A;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_runtime_eval.carbon:[[@LINE+2]]:17-40: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:
   let unused v: ({} as A).(MustEval.F)() = {} as A;
 }
@@ -142,9 +136,7 @@ impl B as Runtime {
 fn Call() {
   // TODO: Should we allow calling this at compile time? This is allowed if we
   // don't generate a thunk.
-  // CHECK:STDERR: fail_todo_impl_eval_from_runtime_thunk.carbon:[[@LINE+4]]:17: error: cannot evaluate type expression [TypeExprEvaluationFailure]
-  // CHECK:STDERR:   let unused t: ({} as B).(Runtime.F)() = {} as B;
-  // CHECK:STDERR:                 ^~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_impl_eval_from_runtime_thunk.carbon:[[@LINE+2]]:17-39: error: cannot evaluate type expression [TypeExprEvaluationFailure]
   // CHECK:STDERR:
   let unused t: ({} as B).(Runtime.F)() = {} as B;
 }
@@ -158,31 +150,19 @@ import library "interface";
 class B { adapt {}; }
 
 impl B as Runtime {
-  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+11]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR:   musteval fn F(unused self) -> type { return B; }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+8]]:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR:   musteval fn F(unused self) -> type { return B; }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE-11]]:1: in import [InImport]
-  // CHECK:STDERR: interface.carbon:5:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   fn F(self) -> type;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+5]]:3-38: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+4]]:3-38: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: imported from: fail_impl_musteval.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: interface.carbon:5:3-21: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
   musteval fn F(unused self) -> type { return B; }
 }
 
 impl B as Eval {
-  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+11]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR:   musteval fn F(unused self) -> type { return B; }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+8]]:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR:   musteval fn F(unused self) -> type { return B; }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE-26]]:1: in import [InImport]
-  // CHECK:STDERR: interface.carbon:9:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   eval fn F(self) -> type;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+5]]:3-38: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_impl_musteval.carbon:[[@LINE+4]]:3-38: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: imported from: fail_impl_musteval.carbon:[[@LINE-16]]:1 [InImport]
+  // CHECK:STDERR: interface.carbon:9:3-26: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
   musteval fn F(unused self) -> type { return B; }
 }
@@ -217,16 +197,10 @@ impl B as Core.ImplicitAs(BView) {
 }
 
 impl B as MustEval {
-  // CHECK:STDERR: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE+11]]:3: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR:   musteval fn F(unused self: BView) -> type { return B; }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE+8]]:3: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
-  // CHECK:STDERR:   musteval fn F(unused self: BView) -> type { return B; }
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE-16]]:1: in import [InImport]
-  // CHECK:STDERR: interface.carbon:13:3: note: while building thunk to match the signature of this function [ThunkSignature]
-  // CHECK:STDERR:   musteval fn F(self) -> type;
-  // CHECK:STDERR:   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  // CHECK:STDERR: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE+5]]:3-45: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE+4]]:3-45: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR: imported from: fail_todo_impl_musteval_from_musteval_thunk.carbon:[[@LINE-12]]:1 [InImport]
+  // CHECK:STDERR: interface.carbon:13:3-30: note: while building thunk to match the signature of this function [ThunkSignature]
   // CHECK:STDERR:
   musteval fn F(unused self: BView) -> type { return B; }
 }

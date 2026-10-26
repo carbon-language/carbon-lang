@@ -33,24 +33,24 @@ fn Run() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::C" = type {}
+// CHECK:STDOUT: %"class.Carbon::Main::C" = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_Z11make_uniqueIN6Carbon1CEEvv = comdat any
+// CHECK:STDOUT: $_Z11make_uniqueIN6Carbon4Main1CEEvv = comdat any
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon1CD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main1CD2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @main() #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_Z11make_uniqueIN6Carbon1CEEvv(), !dbg !15
+// CHECK:STDOUT:   call void @_Z11make_uniqueIN6Carbon4Main1CEEvv(), !dbg !15
 // CHECK:STDOUT:   ret i32 0, !dbg !16
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_Z11make_uniqueIN6Carbon1CEEvv() #1 comdat {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_Z11make_uniqueIN6Carbon4Main1CEEvv() #1 comdat {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %agg.tmp.ensured = alloca %"class.Carbon::C", align 1
-// CHECK:STDOUT:   call void @_ZN6Carbon1CD2Ev(ptr noundef nonnull align 1 %agg.tmp.ensured) #0
+// CHECK:STDOUT:   %agg.tmp.ensured = alloca %"class.Carbon::Main::C", align 1
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main1CD2Ev(ptr noundef nonnull align 1 %agg.tmp.ensured) #0
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -74,7 +74,7 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon1CD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main1CD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !33
@@ -120,7 +120,7 @@ fn Run() {
 // CHECK:STDOUT: !29 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !30 = !{!"omnipotent char", !29, i64 0}
 // CHECK:STDOUT: !31 = !{!"any pointer", !30, i64 0}
-// CHECK:STDOUT: !32 = !{!"p1 _ZTSN6Carbon1CE", !31, i64 0}
+// CHECK:STDOUT: !32 = !{!"p1 _ZTSN6Carbon4Main1CE", !31, i64 0}
 // CHECK:STDOUT: !33 = !{!32, !32, i64 0}
 // CHECK:STDOUT: !35 = !{i32 8, !"PIC Level", i32 2}
 // CHECK:STDOUT: !36 = !{i32 7, !"PIE Level", i32 2}

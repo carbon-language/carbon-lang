@@ -1502,21 +1502,21 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
   auto diagnose_invalid_char = [&]() {
     CARBON_DIAGNOSTIC(
         InvalidCharacterInDollarIntLiteral, Error,
-        "Positional parameters can only contain digits after `$`");
+        "positional parameters can only contain digits after `$`");
     emitter_.Emit(word.begin() + 1, InvalidCharacterInDollarIntLiteral);
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   };
 
   if (word.size() < 2) {
     CARBON_DIAGNOSTIC(DollarIntLiteralMissingNumber, Error,
-                      "Expected digits after `$`");
+                      "expected digits after `$`");
     emitter_.Emit(word.begin() + 1, DollarIntLiteralMissingNumber);
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
   if (word[1] == '0' && word.size() > 2) {
     CARBON_DIAGNOSTIC(
         DollarIntLiteralLeadingZero, Error,
-        "Leading zeroes are not allowed in positional parameters");
+        "leading zeroes are not allowed in positional parameters");
     emitter_.Emit(word.begin() + 1, DollarIntLiteralLeadingZero);
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
@@ -2247,10 +2247,10 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
                       "opening symbol without a corresponding closing symbol");
     CARBON_DIAGNOSTIC(UnmatchedClosing, Error,
                       "closing symbol without a corresponding opening symbol");
-    CARBON_DIAGNOSTIC(PossiblyMissingBracketHere, Note,
-                      "possibly missing `{0}` here", Lex::TokenKind);
+    CARBON_DIAGNOSTIC_LABEL(PossiblyMissingBracketHere, Info,
+                            "possibly missing `{0}` here", Lex::TokenKind);
 
-    // The note names a position between two tokens, which only the source
+    // The label names a position between two tokens, which only the source
     // pointer emitter can express.
     auto builder = emitter_.Build(
         TokenStartPosition(buffer_, correction.diagnostic_token_index),
@@ -2265,8 +2265,8 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
       // on the bracket rather than suggest one of them.
       fixes.ReplaceWithError(correction.diagnostic_token_index);
     } else {
-      builder.Note(BracketInsertionPosition(buffer_, correction),
-                   PossiblyMissingBracketHere, correction.fix_token_kind);
+      builder.Attach(BracketInsertionPosition(buffer_, correction),
+                     PossiblyMissingBracketHere, correction.fix_token_kind);
       insertion_ids[correction_index] =
           correction.fix_action == BracketFixAction::InsertBefore
               ? fixes.InsertBefore(correction.fix_token_index,

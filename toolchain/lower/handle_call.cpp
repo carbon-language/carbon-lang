@@ -411,6 +411,7 @@ static auto HandleBuiltinCall(FunctionContext& context, SemIR::InstId inst_id,
       return;
     }
 
+    case SemIR::BuiltinFunctionKind::ArrayMakeType:
     case SemIR::BuiltinFunctionKind::BoolMakeType:
     case SemIR::BuiltinFunctionKind::CharLiteralMakeType:
     case SemIR::BuiltinFunctionKind::FloatLiteralMakeType:

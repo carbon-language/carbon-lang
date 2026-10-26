@@ -8,7 +8,7 @@
 #include <variant>
 
 #include "toolchain/check/context.h"
-#include "toolchain/sem_ir/identified_facet_type.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
@@ -35,6 +35,8 @@ namespace Carbon::Check {
 //
 // - An error value, indicating the program is invalid and a diagonstic has been
 //   produced, either in this function or before.
+//
+// TODO: The query facet type could be a TypeId since it's always a FacetType.
 auto LookupImplWitness(Context& context, SemIR::LocId loc_id,
                        SemIR::ConstantId query_self_const_id,
                        SemIR::ConstantId query_facet_type_const_id,

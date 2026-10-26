@@ -5,6 +5,7 @@
 #ifndef CARBON_COMMON_HASHING_H_
 #define CARBON_COMMON_HASHING_H_
 
+#include <bit>
 #include <concepts>
 #include <string>
 #include <tuple>
@@ -75,21 +76,16 @@ class HashCode : public Printable<HashCode> {
   uint64_t value_ = 0;
 };
 
-// Computes a hash code for the provided value, incorporating the provided seed.
-//
-// The seed doesn't need to be of any particular high quality, but a zero seed
-// has bad effects in several places. Prefer the unseeded routine rather than
-// providing a zero here.
+// Computes a hash code for the provided value.
 //
 // This **not** a cryptographically secure or stable hash -- it is only designed
 // for use with in-memory hash table style data structures. Being fast and
 // effective for that use case is the guiding principle of its design.
 //
-// There is no guarantee that the values produced are stable from execution to
-// execution. For speed and quality reasons, the implementation does not
-// introduce any variance to defend against accidental dependencies. As a
-// consequence, it is strongly encouraged to use a seed that varies from
-// execution to execution to avoid depending on specific values produced.
+// There is no guarantee that the values produced are stable between versions
+// of this code. Within one build, the hash of a value is the same in every
+// execution: the function is unseeded, so hashtable layouts and collisions are
+// reproducible between runs. Code must not depend on the specific values.
 //
 // The algorithm used is most heavily based on [Abseil's hashing algorithm][1],
 // with some additional ideas and inspiration from the fallback hashing
@@ -100,13 +96,13 @@ class HashCode : public Printable<HashCode> {
 // [2]: https://github.com/tkaitchuck/aHash/wiki/AHash-fallback-algorithm
 // [3]: https://docs.rs/fxhash/latest/fxhash/
 //
-// This hash algorithm does *not* defend against hash flooding. While it can be
-// viewed as "keyed" on the seed, it is expected to be possible to craft inputs
-// for some data types that cancel out the seed used and manufacture endlessly
-// colliding sets of keys. In general, this function works to be *fast* for hash
-// tables. If you need to defend against hash flooding, either directly use a
-// data structure with strong worst-case guarantees, or a hash table which
-// detects catastrophic collisions and falls back to such a data structure.
+// This hash algorithm does *not* defend against hash flooding. It is unkeyed,
+// and it is expected to be possible to craft inputs for some data types that
+// manufacture endlessly colliding sets of keys. In general, this function works
+// to be *fast* for hash tables. If you need to defend against hash flooding,
+// either directly use a data structure with strong worst-case guarantees, or a
+// hash table which detects catastrophic collisions and falls back to such a
+// data structure.
 //
 // This hash function is heavily optimized for *latency* over *quality*. Modern
 // hash tables designs can efficiently handle reasonable collision rates,
@@ -147,7 +143,7 @@ class HashCode : public Printable<HashCode> {
 // `CarbonHashValue` with the following signature:
 //
 // ```cpp
-// auto CarbonHashValue(const YourType& value, uint64_t seed) -> HashCode;
+// auto CarbonHashValue(const YourType& value) -> HashCode;
 // ```
 //
 // The extension point needs to ensure that values that compare equal (including
@@ -173,16 +169,6 @@ class HashCode : public Printable<HashCode> {
 //
 // [4]: https://en.wikipedia.org/wiki/Avalanche_effect
 template <typename T>
-inline auto HashValue(const T& value, uint64_t seed) -> HashCode;
-
-// The same as the seeded version of `HashValue` but without callers needing to
-// provide a seed.
-//
-// Generally prefer the seeded version, but this is available if there is no
-// reasonable seed. In particular, this will behave better than using a seed of
-// `0`. One important use case is for recursive hashing of sub-objects where
-// appropriate or needed.
-template <typename T>
 inline auto HashValue(const T& value) -> HashCode;
 
 // Object and APIs that eventually produce a hash code.
@@ -199,8 +185,8 @@ inline auto HashValue(const T& value) -> HashCode;
 //
 // Example usage:
 // ```cpp
-// auto CarbonHashValue(const MyType& value, uint64_t seed) -> HashCode {
-//   Hasher hasher(seed);
+// auto CarbonHashValue(const MyType& value) -> HashCode {
+//   Hasher hasher;
 //   hasher.HashTwo(value.x, value.y);
 //   return static_cast<HashCode>(hasher);
 // }
@@ -221,7 +207,6 @@ inline auto HashValue(const T& value) -> HashCode;
 class Hasher {
  public:
   Hasher() = default;
-  explicit Hasher(uint64_t seed) : buffer(seed) {}
 
   Hasher(Hasher&& arg) = default;
   Hasher(const Hasher& arg) = delete;
@@ -311,6 +296,13 @@ class Hasher {
   static auto Read4(const std::byte* data) -> uint64_t;
   static auto Read8(const std::byte* data) -> uint64_t;
 
+  // Returns `value` XOR-ed with `imm` sign-extended to 64 bits, keeping `imm`
+  // an immediate operand of the XOR on x86-64. When `value` comes directly from
+  // a read, instruction selection otherwise folds the read into the XOR and
+  // materializes `imm` in a register, which a loop then hoists and keeps live.
+  // Hiding `value` from the optimizer prevents that.
+  static auto XorImmediate(uint64_t value, int32_t imm) -> uint64_t;
+
   // Similar to the `ReadN` functions, but supports reading a range of different
   // bytes provided by the size *without branching on the size*. The lack of
   // branches is often key, and the code in these routines works to be efficient
@@ -355,7 +347,9 @@ class Hasher {
   // multiplication. However, it is not *necessary* as we do capture the
   // complete 128-bit result. Where reasonable, the caller should XOR random
   // data into operands before calling `Mix` to try and increase the
-  // distribution of bits feeding the multiply.
+  // distribution of bits feeding the multiply. The operands of each `Mix` use
+  // `ImmediateRandomData` for this, and use `StaticRandomData` only to encode
+  // a size.
   static auto Mix(uint64_t lhs, uint64_t rhs) -> uint64_t;
 
   // An alternative to `Mix` that is significantly weaker but also lower
@@ -392,10 +386,10 @@ class Hasher {
 
   // Random data taken from the hexadecimal digits of Pi's fractional component,
   // written in lexical order for convenience of reading. The resulting
-  // byte-stream will be different due to little-endian integers. These can be
-  // used directly for convenience rather than calling `SampleRandomData`, but
-  // be aware that this is the underlying pool. The goal is to reuse the same
-  // single cache-line of constant data.
+  // byte-stream will be different due to little-endian integers. This pool is
+  // sampled with `SampleRandomData` to encode sizes into the hash, and is used
+  // directly by the large-input routine. The goal is to reuse the same single
+  // cache-line of constant data.
   //
   // The initializers here can be generated with the following shell script,
   // which will generate 8 64-bit values and one more digit. The `bc` command's
@@ -416,6 +410,33 @@ class Hasher {
       0x082e'fa98'ec4e'6c89, 0x4528'21e6'38d0'1377, 0xbe54'66cf'34e9'0c6c,
       0xc0ac'29b7'c97c'50dd, 0x3f84'd5b5'b547'0917,
   };
+
+  // Random data XOR-ed into the operands of `Mix` so that common inputs, such
+  // as all-zero bytes, don't zero an operand, and to spread bits across the
+  // multiply. These are 32-bit values, sign-extended on use: 32 bits of
+  // random data is enough for this, and x86-64 can XOR a sign-extended 32-bit
+  // value in as an immediate operand, where a full 64-bit constant costs an
+  // extra instruction to materialize. They are also independent of
+  // `StaticRandomData`, so they can't correlate with a sample of that pool on
+  // the other operand of the same `Mix`.
+  //
+  // The values are successive 32-bit chunks of the hexadecimal digits of e's
+  // fractional component. The initializers can be generated with the
+  // following shell script:
+  //
+  // ```sh
+  // echo 'obase=16; scale=40; e(1)' | bc -l \
+  //  | cut -c 3-34 | tr '[:upper:]' '[:lower:]' \
+  //  | sed -e "s/.\{4\}/&'/g" \
+  //  | sed -e "s/\(.\{4\}'.\{4\}\)'/0x\1,\n/g"
+  // ```
+  static constexpr std::array<int32_t, 4> ImmediateRandomData =
+      std::bit_cast<std::array<int32_t, 4>>(std::array<uint32_t, 4>{
+          0xb7e1'5162,
+          0x8aed'2a6a,
+          0xbf71'5880,
+          0x9cf4'f3c7,
+      });
 
   // We need a multiplicative hashing constant for both 64-bit multiplicative
   // hashing fast paths and some other 128-bit folded multiplies. We use an
@@ -448,7 +469,7 @@ class Hasher {
   static constexpr uint64_t MulConstant = 0x79d5'f9e0'de1e'8cf5U;
 
  private:
-  uint64_t buffer;
+  uint64_t buffer = 0;
 };
 
 // A dedicated namespace for `CarbonHashValue` overloads that are not found by
@@ -460,42 +481,37 @@ class Hasher {
 namespace InternalHashDispatch {
 
 template <typename T>
-inline auto CarbonHashValue(llvm::ArrayRef<T> values, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
+inline auto CarbonHashValue(llvm::ArrayRef<T> values) -> HashCode {
+  Hasher hasher;
   hasher.HashArray(values);
   return static_cast<HashCode>(hasher);
 }
 
-inline auto CarbonHashValue(llvm::ArrayRef<std::byte> bytes, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
+inline auto CarbonHashValue(llvm::ArrayRef<std::byte> bytes) -> HashCode {
+  Hasher hasher;
   hasher.HashSizedBytes(bytes);
   return static_cast<HashCode>(hasher);
 }
 
 // Hashing implementation for `llvm::StringRef`. We forward all the other
 // string-like types that support heterogeneous lookup to this one.
-inline auto CarbonHashValue(llvm::StringRef value, uint64_t seed) -> HashCode {
-  return CarbonHashValue(
-      llvm::ArrayRef(reinterpret_cast<const std::byte*>(value.data()),
-                     value.size()),
-      seed);
+inline auto CarbonHashValue(llvm::StringRef value) -> HashCode {
+  return CarbonHashValue(llvm::ArrayRef(
+      reinterpret_cast<const std::byte*>(value.data()), value.size()));
 }
 
-inline auto CarbonHashValue(std::string_view value, uint64_t seed) -> HashCode {
-  return CarbonHashValue(llvm::StringRef(value.data(), value.size()), seed);
+inline auto CarbonHashValue(std::string_view value) -> HashCode {
+  return CarbonHashValue(llvm::StringRef(value.data(), value.size()));
 }
 
-inline auto CarbonHashValue(const std::string& value, uint64_t seed)
-    -> HashCode {
-  return CarbonHashValue(llvm::StringRef(value.data(), value.size()), seed);
+inline auto CarbonHashValue(const std::string& value) -> HashCode {
+  return CarbonHashValue(llvm::StringRef(value.data(), value.size()));
 }
 
 template <unsigned Length>
-inline auto CarbonHashValue(const llvm::SmallString<Length>& value,
-                            uint64_t seed) -> HashCode {
-  return CarbonHashValue(llvm::StringRef(value.data(), value.size()), seed);
+inline auto CarbonHashValue(const llvm::SmallString<Length>& value)
+    -> HashCode {
+  return CarbonHashValue(llvm::StringRef(value.data(), value.size()));
 }
 
 // Support types that are array-like by building an `llvm::ArrayRef` out of
@@ -503,37 +519,32 @@ inline auto CarbonHashValue(const llvm::SmallString<Length>& value,
 // because that type supports building a synthetic array out of any single
 // element.
 template <typename T>
-inline auto CarbonHashValue(const std::vector<T>& arg, uint64_t seed)
-    -> HashCode {
-  return CarbonHashValue(llvm::ArrayRef(arg), seed);
+inline auto CarbonHashValue(const std::vector<T>& arg) -> HashCode {
+  return CarbonHashValue(llvm::ArrayRef(arg));
 }
 template <typename T>
-inline auto CarbonHashValue(const llvm::SmallVectorImpl<T>& arg, uint64_t seed)
-    -> HashCode {
-  return CarbonHashValue(llvm::ArrayRef(arg), seed);
+inline auto CarbonHashValue(const llvm::SmallVectorImpl<T>& arg) -> HashCode {
+  return CarbonHashValue(llvm::ArrayRef(arg));
 }
 template <typename T, size_t N>
-inline auto CarbonHashValue(const std::array<T, N>& arg, uint64_t seed)
-    -> HashCode {
-  return CarbonHashValue(llvm::ArrayRef(arg), seed);
+inline auto CarbonHashValue(const std::array<T, N>& arg) -> HashCode {
+  return CarbonHashValue(llvm::ArrayRef(arg));
 }
 template <typename T, size_t N>
-inline auto CarbonHashValue(const T (&arg)[N], uint64_t seed) -> HashCode {
-  return CarbonHashValue(llvm::ArrayRef(arg), seed);
+inline auto CarbonHashValue(const T (&arg)[N]) -> HashCode {
+  return CarbonHashValue(llvm::ArrayRef(arg));
 }
 
 template <typename... Ts>
-inline auto CarbonHashValue(const std::tuple<Ts...>& value, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
+inline auto CarbonHashValue(const std::tuple<Ts...>& value) -> HashCode {
+  Hasher hasher;
   std::apply([&](const auto&... args) { hasher.Hash(args...); }, value);
   return static_cast<HashCode>(hasher);
 }
 
 template <typename T, typename U>
-inline auto CarbonHashValue(const std::pair<T, U>& value, uint64_t seed)
-    -> HashCode {
-  Hasher hasher(seed);
+inline auto CarbonHashValue(const std::pair<T, U>& value) -> HashCode {
+  Hasher hasher;
   hasher.Hash(value.first, value.second);
   return static_cast<HashCode>(hasher);
 }
@@ -550,8 +561,8 @@ concept HasCustomHashValue = requires { CustomHashValue<T>::Hash; };
 // overload available for a particular type, either in this namespace or found
 // via ADL. Note that this should not be moved above any overloads.
 template <typename T>
-concept HasCarbonHashValue = requires(const T& value, uint64_t seed) {
-  { CarbonHashValue(value, seed) } -> std::same_as<HashCode>;
+concept HasCarbonHashValue = requires(const T& value) {
+  { CarbonHashValue(value) } -> std::same_as<HashCode>;
 };
 
 // C++ guarantees this is true for the unsigned variants, but we require it for
@@ -596,21 +607,21 @@ concept CanHashAsRawDataType = std::same_as<T, std::nullptr_t> ||
 // overloads, either here, or via ADL. Note that similar to
 // `HasCarbonHashValue`, this must not be moved above any of those overloads.
 template <typename T>
-inline auto DispatchImpl(const T& value, uint64_t seed) -> HashCode {
+inline auto DispatchImpl(const T& value) -> HashCode {
   if constexpr (HasCarbonHashValue<T>) {
     // If we have an explicit overload for `CarbonHashValue`, call it. This may
     // be provided above or via ADL, and is preferred as it represents an
     // explicit request for how the type is hashed.
-    return CarbonHashValue(value, seed);
+    return CarbonHashValue(value);
   } else if constexpr (HasCustomHashValue<T>) {
     // If we have an explicit specialization for `CustomHashValue`, call it.
     // This is a fallback explicit hashing path that doesn't require ADL or
     // being in this header.
-    return CustomHashValue<T>::Hash(value, seed);
+    return CustomHashValue<T>::Hash(value);
   } else if constexpr (CanHashAsRawDataType<T>) {
     // There was no explicit overload or specialization to call, but the type
     // allows us to hash it as raw data, do so.
-    Hasher hasher(seed);
+    Hasher hasher;
     hasher.HashRaw(MapToRawDataType(value));
     return static_cast<HashCode>(hasher);
   } else {
@@ -627,17 +638,8 @@ inline auto DispatchImpl(const T& value, uint64_t seed) -> HashCode {
 }  // namespace InternalHashDispatch
 
 template <typename T>
-inline auto HashValue(const T& value, uint64_t seed) -> HashCode {
-  return InternalHashDispatch::DispatchImpl(value, seed);
-}
-
-template <typename T>
 inline auto HashValue(const T& value) -> HashCode {
-  // When a seed isn't provided, use the last 64-bit chunk of random data. Other
-  // chunks (especially the first) are more often XOR-ed with the seed and risk
-  // cancelling each other out and feeding a zero to a `Mix` call in a way that
-  // sharply increasing collisions.
-  return HashValue(value, Hasher::StaticRandomData[7]);
+  return InternalHashDispatch::DispatchImpl(value);
 }
 
 constexpr auto HashCode::ExtractIndex() -> ssize_t { return value_; }
@@ -687,6 +689,13 @@ inline auto Hasher::Read8(const std::byte* data) -> uint64_t {
   uint64_t result;
   std::memcpy(&result, data, sizeof(result));
   return result;
+}
+
+inline auto Hasher::XorImmediate(uint64_t value, int32_t imm) -> uint64_t {
+#if defined(__x86_64__)
+  __asm__("" : "+r"(value));
+#endif
+  return value ^ static_cast<uint64_t>(static_cast<int64_t>(imm));
 }
 
 inline auto Hasher::Read1To3(const std::byte* data, ssize_t size) -> uint64_t {
@@ -745,23 +754,16 @@ inline auto Hasher::HashDense(uint64_t data) -> void {
 inline auto Hasher::HashDense(uint64_t data0, uint64_t data1) -> void {
   // When hashing two chunks of data at the same time, we XOR it with random
   // data to avoid common inputs from having especially bad multiplicative
-  // effects. We also XOR in the starting buffer as seed or to chain. Note that
-  // we don't use *consecutive* random data 64-bit values to avoid a common
-  // compiler "optimization" of loading both 64-bit chunks into a 128-bit vector
-  // and doing the XOR in the vector unit. The latency of extracting the data
-  // afterward eclipses any benefit. Callers will routinely have two consecutive
-  // data values here, but using non-consecutive keys avoids any vectorization
-  // being tempting.
+  // effects. We also XOR in the starting buffer to chain.
   //
-  // XOR-ing both the incoming state and a random word over the second data is
-  // done to pipeline with materializing the constants and is observed to have
-  // better performance than XOR-ing after the mix.
+  // XOR-ing both the incoming state and random data over the second data is
+  // observed to have better performance than XOR-ing after the mix.
   //
   // This roughly matches the mix pattern used in the larger mixing routines
   // from Abseil, which is a more minimal form than used in other algorithms
   // such as AHash and seems adequate for latency-optimized use cases.
-  buffer =
-      Mix(data0 ^ StaticRandomData[1], data1 ^ StaticRandomData[3] ^ buffer);
+  buffer = Mix(XorImmediate(data0, ImmediateRandomData[3]),
+               XorImmediate(data1, ImmediateRandomData[2]) ^ buffer);
 }
 
 template <typename T>
@@ -818,7 +820,7 @@ inline auto Hasher::Hash(const Ts&... values) -> void {
   auto map_value = []<typename T>(const T& value) -> uint64_t {
     if constexpr (HasCarbonHashValue<T> || HasCustomHashValue<T>) {
       // Use the top-level `HashValue` to re-dispatch to the custom
-      // implementation with a fixed seed.
+      // implementation.
       return static_cast<uint64_t>(HashValue(value));
     } else if constexpr (CanHashAsRawDataType<T>) {
       auto raw_value = MapToRawDataType(value);
@@ -828,8 +830,7 @@ inline auto Hasher::Hash(const Ts&... values) -> void {
       if constexpr (sizeof(raw_value) <= 8) {
         return ReadSmall(raw_value);
       } else {
-        // Use the top-level `HashValue` to pick up a good fixed seed and hash
-        // this large object as raw data.
+        // Use the top-level `HashValue` to hash this large object as raw data.
         return static_cast<uint64_t>(HashValue(raw_value));
       }
     } else {
@@ -912,13 +913,14 @@ inline auto Hasher::HashRaw(const T& value) -> void {
   if constexpr (16 < sizeof(T) && sizeof(T) <= 32) {
     CARBON_MCA_BEGIN("fixed-32b");
     // Essentially the same technique used for dynamically sized byte sequences
-    // of this size, but we start with a fixed XOR of random data.
-    buffer ^= StaticRandomData[0];
-    uint64_t m0 = Mix(Read8(data_ptr) ^ StaticRandomData[1],
-                      Read8(data_ptr + 8) ^ buffer);
+    // of this size, but with a fixed XOR of random data in place of the size.
+    uint64_t m0 =
+        Mix(XorImmediate(Read8(data_ptr), ImmediateRandomData[3]),
+            XorImmediate(Read8(data_ptr + 8), ImmediateRandomData[1]) ^ buffer);
     const std::byte* tail_16b_ptr = data_ptr + (sizeof(T) - 16);
-    uint64_t m1 = Mix(Read8(tail_16b_ptr) ^ StaticRandomData[3],
-                      Read8(tail_16b_ptr + 8) ^ buffer);
+    uint64_t m1 = Mix(
+        XorImmediate(Read8(tail_16b_ptr), ImmediateRandomData[2]),
+        XorImmediate(Read8(tail_16b_ptr + 8), ImmediateRandomData[1]) ^ buffer);
     buffer = m0 ^ m1;
     CARBON_MCA_END("fixed-32b");
     return;
@@ -948,7 +950,11 @@ inline auto Hasher::HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void {
       // Note that we don't drop to the `WeakMix` routine here because we want
       // to use sampled random data to encode the size, which may not be as
       // effective without the full 128-bit folded result.
-      buffer = Mix(data ^ buffer, SampleAlignedRandomData(size - 1));
+      //
+      // The data is XOR-ed with random data so that all-zero data doesn't zero
+      // the multiply and lose the size.
+      buffer = Mix(XorImmediate(data, ImmediateRandomData[0]) ^ buffer,
+                   SampleAlignedRandomData(size - 1));
       CARBON_MCA_END("dynamic-8b");
       return;
     }
@@ -972,12 +978,13 @@ inline auto Hasher::HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void {
   if (size <= 16) {
     CARBON_MCA_BEGIN("dynamic-16b");
     // Similar to the above, we optimize primarily for latency here and spread
-    // the incoming data across both ends of the multiply. Note that this does
-    // have a drawback -- any time one half of the mix function becomes zero it
-    // will fail to incorporate any bits from the other half. However, there is
-    // exactly 1 in 2^64 values for each side that achieve this, and only when
-    // the size is exactly 16 -- for smaller sizes there is an overlapping byte
-    // that makes this impossible unless the seed is *also* incredibly unlucky.
+    // the incoming data across both ends of the multiply. Any time one half of
+    // the mix function becomes zero it fails to incorporate any bits from the
+    // other half, so both halves are XOR-ed with random data: a sample of the
+    // pool encoding the size, and a 32-bit constant. Otherwise the common case
+    // of trailing zero bytes, such as `{x, 0, 0}` as an array of `int32_t`,
+    // would zero the second half and hash every `x` the same. With the random
+    // data, exactly 1 in 2^64 values for each half is a problem.
     //
     // Because this hash function makes no attempt to defend against hash
     // flooding, we accept this risk in order to keep the latency low. If this
@@ -985,7 +992,8 @@ inline auto Hasher::HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void {
     // the 16-byte case down the next tier of cost.
     uint64_t size_hash = SampleRandomData(size);
     auto data = Read8To16(data_ptr, size);
-    buffer = Mix(data.first ^ size_hash, data.second ^ buffer);
+    buffer = Mix(data.first ^ size_hash,
+                 XorImmediate(data.second, ImmediateRandomData[1]) ^ buffer);
     CARBON_MCA_END("dynamic-16b");
     return;
   }
@@ -994,13 +1002,23 @@ inline auto Hasher::HashSizedBytes(llvm::ArrayRef<std::byte> bytes) -> void {
     CARBON_MCA_BEGIN("dynamic-32b");
     // Do two mixes of overlapping 16-byte ranges in parallel to minimize
     // latency. We also incorporate the size by sampling random data into the
-    // seed before both.
+    // buffer before both.
+    //
+    // The first operands use 32-bit constants rather than chunks of the pool.
+    // The sample reads bytes 17 through 39 of the pool, and a chunk that
+    // overlaps it is the same random data shifted by some bytes. Multiplying
+    // one by the other produces structured collisions.
+    //
+    // Both also go through `XorImmediate`, which keeps the two products at the
+    // same depth. Otherwise reassociation XORs the halves of `m0` together
+    // first, and on x86-64 the high half of a multiply arrives a cycle after
+    // the low half, lengthening the critical path by a cycle.
     buffer ^= SampleRandomData(size);
-    uint64_t m0 = Mix(Read8(data_ptr) ^ StaticRandomData[1],
+    uint64_t m0 = Mix(XorImmediate(Read8(data_ptr), ImmediateRandomData[3]),
                       Read8(data_ptr + 8) ^ buffer);
 
     const std::byte* tail_16b_ptr = data_ptr + (size - 16);
-    uint64_t m1 = Mix(Read8(tail_16b_ptr) ^ StaticRandomData[3],
+    uint64_t m1 = Mix(XorImmediate(Read8(tail_16b_ptr), ImmediateRandomData[2]),
                       Read8(tail_16b_ptr + 8) ^ buffer);
     // Just an XOR mix at the end is quite weak here, but we prefer that for
     // latency over a more robust approach. Doing another mix with the size (the

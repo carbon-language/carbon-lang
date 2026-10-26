@@ -45,21 +45,15 @@ library "[[@TEST_NAME]]";
 
 fn MakeUnformed(t: type) -> type = "maybe_unformed.make_type";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "pointer.make_null" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NoRetType() = "pointer.make_null";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-16: error: invalid signature for builtin function "pointer.make_null" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn NoRetType() = "pointer.make_null";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "pointer.make_null" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NoUnformed() -> {}* = "pointer.make_null";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-24: error: invalid signature for builtin function "pointer.make_null" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn NoUnformed() -> {}* = "pointer.make_null";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+4]]:1: error: invalid signature for builtin function "pointer.make_null" [InvalidBuiltinSignature]
-// CHECK:STDERR: fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-37: error: invalid signature for builtin function "pointer.make_null" [InvalidBuiltinSignature]
 // CHECK:STDERR:
 fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 
@@ -142,12 +136,12 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   %.b2d: type = maybe_unformed_type %ptr.c28 [concrete]
 // CHECK:STDOUT:   %pattern_type.b42: type = pattern_type %.b2d [concrete]
 // CHECK:STDOUT:   %s.patt: %pattern_type.b42 = value_binding_pattern s [concrete]
-// CHECK:STDOUT:   %MakeNull.specific_fn.391: <specific function> = specific_function %MakeNull, @MakeNull(%empty_struct_type) [concrete]
+// CHECK:STDOUT:   %MakeNull.specific_fn.3e4: <specific function> = specific_function %MakeNull, @MakeNull(%empty_struct_type) [concrete]
 // CHECK:STDOUT:   %ptr.6b6: type = ptr_type %C [concrete]
 // CHECK:STDOUT:   %.9e8: type = maybe_unformed_type %ptr.6b6 [concrete]
 // CHECK:STDOUT:   %pattern_type.e22: type = pattern_type %.9e8 [concrete]
 // CHECK:STDOUT:   %c.patt: %pattern_type.e22 = value_binding_pattern c [concrete]
-// CHECK:STDOUT:   %MakeNull.specific_fn.75f: <specific function> = specific_function %MakeNull, @MakeNull(%C) [concrete]
+// CHECK:STDOUT:   %MakeNull.specific_fn.e96: <specific function> = specific_function %MakeNull, @MakeNull(%C) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -187,11 +181,11 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT:   %MakeNull.ref.loc10: %MakeNull.type = name_ref MakeNull, file.%MakeNull.decl [concrete = constants.%MakeNull]
 // CHECK:STDOUT:   %.loc10_38: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_39: type = converted %.loc10_38, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   %MakeNull.specific_fn.loc10: <specific function> = specific_function %MakeNull.ref.loc10, @MakeNull(constants.%empty_struct_type) [concrete = constants.%MakeNull.specific_fn.391]
+// CHECK:STDOUT:   %MakeNull.specific_fn.loc10: <specific function> = specific_function %MakeNull.ref.loc10, @MakeNull(constants.%empty_struct_type) [concrete = constants.%MakeNull.specific_fn.3e4]
 // CHECK:STDOUT:   %MakeNull.call.loc10: init %.b2d = call %MakeNull.specific_fn.loc10()
 // CHECK:STDOUT:   %MakeNull.ref.loc11: %MakeNull.type = name_ref MakeNull, file.%MakeNull.decl [concrete = constants.%MakeNull]
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %MakeNull.specific_fn.loc11: <specific function> = specific_function %MakeNull.ref.loc11, @MakeNull(constants.%C) [concrete = constants.%MakeNull.specific_fn.75f]
+// CHECK:STDOUT:   %MakeNull.specific_fn.loc11: <specific function> = specific_function %MakeNull.ref.loc11, @MakeNull(constants.%C) [concrete = constants.%MakeNull.specific_fn.e96]
 // CHECK:STDOUT:   %MakeNull.call.loc11: init %.9e8 = call %MakeNull.specific_fn.loc11()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

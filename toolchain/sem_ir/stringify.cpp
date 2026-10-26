@@ -158,6 +158,10 @@ class StepStack {
 
   // Pushes all components of a qualified name (`A.B.C`) onto the stack.
   auto PushQualifiedName(NameScopeId name_scope_id, NameId name_id) -> void {
+    if (!name_id.has_value()) {
+      PushString("<unnamed>");
+      return;
+    }
     PushNameId(name_id);
     if (!qualified_names_) {
       return;
@@ -375,8 +379,8 @@ class Stringifier {
   }
 
   auto StringifyInst(InstId /*inst_id*/, ArrayType inst) -> void {
-    *out_ << "array(";
-    step_stack_->Push(inst.element_type_inst_id, ", ", inst.bound_id, ")");
+    *out_ << "<builtin array(";
+    step_stack_->Push(inst.element_type_inst_id, ", ", inst.bound_id, ")>");
   }
 
   auto StringifyInst(InstId /*inst_id*/, AssociatedConstantDecl inst) -> void {
@@ -579,6 +583,14 @@ class Stringifier {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
     if (auto type_info = RecognizedTypeInfo::ForType(*sem_ir_, inst);
         type_info.is_valid()) {
+      if (type_info.kind == RecognizedTypeInfo::Array) {
+        auto args = sem_ir_->inst_blocks().Get(type_info.args_id);
+        if (args.size() == 2) {
+          *out_ << "array(";
+          step_stack_->Push(args[0], ", ", args[1], ")");
+          return;
+        }
+      }
       if (type_info.PrintLiteral(*sem_ir_, *out_)) {
         return;
       }
@@ -663,8 +675,17 @@ class Stringifier {
     *out_ << "<C++ type " << clang_type.getAsString() << ">";
   }
 
+  auto StringifyInst(InstId /*inst_id*/, FunctionDecl inst) -> void {
+    const auto& fn = sem_ir_->functions().Get(inst.function_id);
+    step_stack_->PushQualifiedName(fn.parent_scope_id, fn.name_id);
+  }
+
   auto StringifyInst(InstId /*inst_id*/, FunctionType inst) -> void {
     const auto& fn = sem_ir_->functions().Get(inst.function_id);
+    if (!fn.name_id.has_value()) {
+      *out_ << "<type of function expression>";
+      return;
+    }
     *out_ << "<type of ";
     step_stack_->Push(
         StepStack::QualifiedNameItem{fn.parent_scope_id, fn.name_id}, ">");
@@ -685,7 +706,7 @@ class Stringifier {
     step_stack_->Push(fn_name, " in ", inst.self_id, ">");
   }
 
-  auto StringifyInst(InstId /*inst_id*/, GenericClassType inst) -> void {
+  auto StringifyInst(InstId /*inst_id*/, ParameterizedClassType inst) -> void {
     const auto& class_info = sem_ir_->classes().Get(inst.class_id);
     *out_ << "<type of ";
     step_stack_->Push(StepStack::QualifiedNameItem{class_info.parent_scope_id,
@@ -740,6 +761,10 @@ class Stringifier {
             sem_ir_->insts().TryGetAs<ImplSelfWitness>(witness_inst_id)) {
       specific_interface = sem_ir_->specific_interfaces().Get(
           self_witness->specific_interface_id);
+    } else if (auto id_witness = sem_ir_->insts().TryGetAs<IdentifiedWitness>(
+                   witness_inst_id)) {
+      specific_interface = sem_ir_->specific_interfaces().Get(
+          id_witness->query_specific_interface_id);
     } else {
       auto lookup = sem_ir_->insts().GetAs<LookupImplWitness>(witness_inst_id);
       specific_interface = sem_ir_->specific_interfaces().Get(
@@ -797,6 +822,18 @@ class Stringifier {
       if (!is_period_self) {
         step_stack_->PushInstId(self_witness->period_self);
       }
+    } else if (auto lookup = sem_ir_->insts().TryGetAs<IdentifiedWitness>(
+                   witness_inst_id)) {
+      bool is_period_self = false;
+      if (auto sym_name = sem_ir_->insts().TryGetAs<SymbolicBinding>(
+              lookup->query_self_inst_id)) {
+        auto name_id =
+            sem_ir_->entity_names().Get(sym_name->entity_name_id).name_id;
+        is_period_self = (name_id == NameId::PeriodSelf);
+      }
+      if (!is_period_self) {
+        step_stack_->PushInstId(lookup->query_self_inst_id);
+      }
     } else if (auto lookup = sem_ir_->insts().TryGetAs<LookupImplWitness>(
                    witness_inst_id)) {
       bool is_period_self = false;
@@ -838,6 +875,12 @@ class Stringifier {
 
   auto StringifyInst(InstId /*inst_id*/, IntValue inst) -> void {
     sem_ir_->ints().Get(inst.int_id).print(*out_, /*isSigned=*/true);
+  }
+
+  auto StringifyInst(InstId /*inst_id*/, IdentifiedWitness inst) -> void {
+    step_stack_->Push(
+        inst.query_self_inst_id, " as ",
+        sem_ir_->specific_interfaces().Get(inst.query_specific_interface_id));
   }
 
   auto StringifyInst(InstId /*inst_id*/, LookupImplWitness inst) -> void {
@@ -1150,7 +1193,7 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
   auto decl = sem_ir.insts().Get(generic.decl_id);
   CARBON_KIND_SWITCH(decl) {
     case CARBON_KIND(ClassDecl class_decl): {
-      // Print `Core.Int(N)` as `iN`.
+      // Print `Core.Int(N)` as `iN` and `Core.Array(T, N)` as `array(T, N)`.
       // TODO: This duplicates work done in StringifyInst for ClassType.
       const auto& class_info = sem_ir.classes().Get(class_decl.class_id);
       if (auto type_info = RecognizedTypeInfo::ForType(
@@ -1158,6 +1201,13 @@ auto StringifySpecific(const File& sem_ir, SpecificId specific_id)
                                 .class_id = class_decl.class_id,
                                 .specific_id = specific_id});
           type_info.is_valid()) {
+        if (type_info.kind == RecognizedTypeInfo::Array) {
+          auto args = sem_ir.inst_blocks().Get(type_info.args_id);
+          if (args.size() == 2) {
+            step_stack.Push("array(", args[0], ", ", args[1], ")");
+            break;
+          }
+        }
         RawStringOstream out;
         if (type_info.PrintLiteral(sem_ir, out)) {
           return out.TakeStr();

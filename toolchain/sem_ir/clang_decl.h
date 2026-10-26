@@ -93,16 +93,12 @@ struct ClangDeclSignature : public Printable<ClangDeclSignature> {
   auto operator==(const ClangDeclSignature& rhs) const -> bool = default;
 
   // Hashing for ClangDeclSignature.
-  friend auto CarbonHashValue(const ClangDeclSignature& value, uint64_t seed)
-      -> HashCode {
-    HashCode code =
-        HashValue(std::tuple{value.kind, value.num_params,
-                             static_cast<int8_t>(value.self_passing_mode)},
-                  seed);
-    for (auto mode : value.passing_modes) {
-      code = HashValue(static_cast<int8_t>(mode), static_cast<uint64_t>(code));
-    }
-    return code;
+  friend auto CarbonHashValue(const ClangDeclSignature& value) -> HashCode {
+    Hasher hasher;
+    hasher.Hash(value.kind, value.num_params,
+                static_cast<int8_t>(value.self_passing_mode),
+                llvm::ArrayRef(value.passing_modes));
+    return static_cast<HashCode>(hasher);
   }
 };
 
@@ -139,9 +135,8 @@ struct ClangDeclKey : public Printable<ClangDeclKey> {
   auto operator==(const ClangDeclKey& rhs) const -> bool = default;
 
   // Hashing for ClangDecl. See common/hashing.h.
-  friend auto CarbonHashValue(const ClangDeclKey& value, uint64_t seed)
-      -> HashCode {
-    return HashValue(std::tuple{value.decl, value.signature_id}, seed);
+  friend auto CarbonHashValue(const ClangDeclKey& value) -> HashCode {
+    return HashValue(std::tuple{value.decl, value.signature_id});
   }
 
   // The Clang declaration pointing to the Clang AST.
@@ -214,10 +209,20 @@ class ClangDeclStore {
   // Looks up a `ClangDeclId` by `ClangDeclKey`.
   auto LookupId(ClangDeclKey key) const -> ClangDeclId;
 
+  // Looks up a `ClangDeclId` by `InstId` and optional `SpecificId`.
+  auto LookupId(InstId inst_id, SpecificId specific_id = SpecificId::None) const
+      -> ClangDeclId;
+
   // Looks up a `ClangDecl` by `InstId` and optional `SpecificId`. Returns
   // nullptr if not found.
   auto Lookup(InstId inst_id, SpecificId specific_id = SpecificId::None) const
-      -> const ClangDecl*;
+      -> const ClangDecl* {
+    if (auto clang_decl_id = LookupId(inst_id, specific_id);
+        clang_decl_id.has_value()) {
+      return &Get(clang_decl_id);
+    }
+    return nullptr;
+  }
 
   auto OutputYaml() const -> Yaml::OutputMapping;
 

@@ -173,10 +173,10 @@ auto MakeStringLiteral(Context& context, Parse::StringLiteralId node_id,
   auto str_type = MakeStringType(context, SemIR::LocId(node_id).AsDesugared());
   if (!RequireCompleteType(
           context, str_type.type_id, node_id, [&](auto& builder) {
-            CARBON_DIAGNOSTIC(StringLiteralTypeIncomplete, Context,
-                              "type {0} is incomplete", InstIdAsType);
-            builder.Context(node_id, StringLiteralTypeIncomplete,
-                            str_type.inst_id);
+            CARBON_DIAGNOSTIC_CONTEXT(StringLiteralTypeIncomplete,
+                                      "type {0} is incomplete", InstIdAsType);
+            builder.Attach(node_id, StringLiteralTypeIncomplete,
+                           str_type.inst_id);
           })) {
     return SemIR::ErrorInst::InstId;
   }
@@ -241,6 +241,17 @@ auto MakeStringTypeLiteral(Context& context, Parse::StringTypeLiteralId node_id)
 auto MakeStringType(Context& context, SemIR::LocId loc_id) -> TypeExpr {
   auto type_inst_id = GetOrAddStringTypeInst(context, loc_id);
   return ExprAsType(context, loc_id, type_inst_id);
+}
+
+auto MakeArrayType(Context& context, SemIR::LocId loc_id,
+                   SemIR::InstId element_type_inst_id, SemIR::InstId bound_id)
+    -> TypeExpr {
+  auto desugared_loc_id = context.insts().GetLocIdForDesugaring(loc_id);
+  auto fn_inst_id =
+      LookupNameInCore(context, desugared_loc_id, CoreIdentifier::Array);
+  auto call_id = PerformCall(context, loc_id, fn_inst_id,
+                             {element_type_inst_id, bound_id});
+  return ExprAsType(context, loc_id, call_id);
 }
 
 }  // namespace Carbon::Check

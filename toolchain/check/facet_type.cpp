@@ -4,7 +4,6 @@
 
 #include "toolchain/check/facet_type.h"
 
-#include "toolchain/base/kind_switch.h"
 #include "toolchain/check/context.h"
 #include "toolchain/check/import_ref.h"
 #include "toolchain/check/inst.h"

@@ -15,9 +15,7 @@ library "[[@TEST_NAME]]";
 
 constraint A {}
 
-// CHECK:STDERR: fail_empty_constraint.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as A {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_empty_constraint.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as A {}
 
@@ -31,9 +29,7 @@ constraint B {
   extend require impls A2;
 }
 
-// CHECK:STDERR: fail_too_many_interfaces_in_constraint.carbon:[[@LINE+4]]:1: error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as B {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_too_many_interfaces_in_constraint.carbon:[[@LINE+2]]:1-14: error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as B {}
 
@@ -55,9 +51,7 @@ constraint B {
   require impls A;
 }
 
-// CHECK:STDERR: fail_one_impls_interface_in_constraint.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as B {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_one_impls_interface_in_constraint.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as B {}
 
@@ -86,9 +80,7 @@ constraint C {
   require impls B;
 }
 
-// CHECK:STDERR: fail_nested_constraints_not_extend_outer.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as C {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_constraints_not_extend_outer.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as C {}
 
@@ -104,9 +96,7 @@ constraint C {
   extend require impls B;
 }
 
-// CHECK:STDERR: fail_nested_constraints_not_extend_inner.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as C {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_constraints_not_extend_inner.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as C {}
 
@@ -122,9 +112,7 @@ constraint C {
   require impls B;
 }
 
-// CHECK:STDERR: fail_nested_constraints_not_extend_both.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as C {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_nested_constraints_not_extend_both.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as C {}
 
@@ -140,12 +128,8 @@ constraint B(X: type, Y: type) {
 // This should impl () as A({}).
 impl () as B((), {}) {}
 
-// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE+7]]:1: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-// CHECK:STDERR: impl () as A({}) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~
-// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE-5]]:1: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
-// CHECK:STDERR: impl () as B((), {}) {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~
+// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE+3]]:1-18: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE-3]]:1-22: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
 // CHECK:STDERR:
 impl () as A({}) {}
 
@@ -158,9 +142,7 @@ interface A(T: type) {}
 // the constraint.
 //@dump-sem-ir-begin
 //
-// CHECK:STDERR: fail_error_self_in_require.carbon:[[@LINE+4]]:17: error: name `Undefined` not found [NameNotFound]
-// CHECK:STDERR: constraint B(X: Undefined) {
-// CHECK:STDERR:                 ^~~~~~~~~
+// CHECK:STDERR: fail_error_self_in_require.carbon:[[@LINE+2]]:17-25: error: name `Undefined` not found [NameNotFound]
 // CHECK:STDERR:
 constraint B(X: Undefined) {
   extend require impls A(X);
@@ -168,6 +150,18 @@ constraint B(X: Undefined) {
 //@dump-sem-ir-end
 
 impl () as B(1) {}
+
+// --- impl_as_constraint_duplicates_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T: type) {}
+constraint J {
+  extend require impls I(Self);
+}
+
+// This impls `I(())` twice, which should be deduplicated to a single specific
+// interface.
+impl () as I(()) & J {}
 
 // --- impl_as_constraint_where_rewrite.carbon
 library "[[@TEST_NAME]]";
@@ -227,7 +221,7 @@ fn G() {
   F(C);
 }
 
-// --- fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon
+// --- impl_as_constraint_containing_rewrite_for_concrete_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface I {
@@ -239,28 +233,14 @@ constraint N {
 }
 
 class C;
-// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE+7]]:1: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: impl C as N {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let I1: type;
-// CHECK:STDERR:       ^~~~~~~~
-// CHECK:STDERR:
 impl C as N {}
 
 fn F(generic _: I where .I1 = .Self) {}
 fn G() {
-  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `I where .(I.I1) = .Self` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   F(C);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_concrete_interface.carbon:[[@LINE-5]]:14: note: initializing generic parameter `_` declared here [InitializingGenericParam]
-  // CHECK:STDERR: fn F(generic _: I where .I1 = .Self) {}
-  // CHECK:STDERR:              ^~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   F(C);
 }
 
-// --- fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon
+// --- impl_as_constraint_containing_rewrite_for_generic_interface.carbon
 library "[[@TEST_NAME]]";
 
 interface I(T: type) {
@@ -272,26 +252,36 @@ constraint N {
 }
 
 class C;
-// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE+7]]:1: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: impl C as N {}
-// CHECK:STDERR: ^~~~~~~~~~~~~
-// CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE-11]]:7: note: associated constant declared here [AssociatedConstantHere]
-// CHECK:STDERR:   let I1: type;
-// CHECK:STDERR:       ^~~~~~~~
-// CHECK:STDERR:
 impl C as N {}
 
 fn F(generic _: I(.Self) where .I1 = .Self) {}
 fn G() {
-  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE+7]]:3: error: cannot convert type `C` into type implementing `I(.Self) where .(I(.Self).I1) = .Self` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR:   F(C);
-  // CHECK:STDERR:   ^~~~
-  // CHECK:STDERR: fail_todo_impl_as_constraint_containing_rewrite_for_generic_interface.carbon:[[@LINE-5]]:1: note: while deducing parameters of generic declared here [DeductionGenericHere]
-  // CHECK:STDERR: fn F(generic _: I(.Self) where .I1 = .Self) {}
-  // CHECK:STDERR: ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // CHECK:STDERR:
   F(C);
 }
+
+// --- fail_impl_as_constraint_missing_rewrite.carbon
+library "[[@TEST_NAME]]";
+
+interface I {
+  let I1: type;
+  let I2: type;
+}
+
+constraint N {
+  extend require impls I where .I2 = .I1;
+}
+
+class C;
+// TODO: Since these errors have the same location, it would be nice to omit
+// the first one. Once rewrites can be done in the impl defn body, these errors
+// won't always have the same location (with the location being the decl)
+// though.
+// CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE+5]]:1-13: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE+3]]:1-13: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE-16]]:7-14: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:
+impl C as N {}
 
 // --- fail_no_require_self.carbon
 library "[[@TEST_NAME]]";
@@ -307,9 +297,7 @@ constraint Y {
 }
 
 // Y does not have any extend require on `Self`.
-// CHECK:STDERR: fail_no_require_self.carbon:[[@LINE+4]]:1: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
-// CHECK:STDERR: impl () as Y {}
-// CHECK:STDERR: ^~~~~~~~~~~~~~
+// CHECK:STDERR: fail_no_require_self.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
 // CHECK:STDERR:
 impl () as Y {}
 
@@ -325,14 +313,147 @@ constraint GivesI {
   extend require impls I where .X impls J;
 }
 
-// When we check this we check that GivesI is complete, which:
-// - Forms the self-specific for GivesI's extend require
-// - Creates Self.(I.X) which has a LookupImplWitness for `Self as I`
-// - Evaluates the witness which finds this impl
-// - Deduces for Self which tries to convert Self to type
-// - Requires the type of Self to be complete, and its type is GivesI
-// - Forms the self-specfic for GivesI's extend require....we have a loop.
+// The access of `.X` in the named constraint contains a witness of
+// `Self as GivesI` which becomes `T as GivesI` in the context of this
+// impl. This tests that the access `.X` is replaced by `()` from the
+// impl, and doesnt form any cycles in checking.
 impl forall [T: type] T as GivesI where .X = () {}
+
+// --- require_specific_used_in_impl_as_then_outside.carbon
+library "[[@TEST_NAME]]";
+
+interface I { let X: type; }
+interface J {}
+interface K {}
+
+class C {}
+impl C as J {}
+impl C as K {}
+
+class D {}
+impl D as J {}
+
+constraint GivesI {
+  extend require impls I where .X impls J;
+}
+
+match_first {
+  impl () as I where .X = C {}
+  // Never selected for `() as I`. Declaring this impl forms the specific of
+  // the require in `GivesI` with `Self = ()`, where `.X` refers to this
+  // impl. The require's specific must not permanently encode that decision
+  // into future uses though.
+  impl () as GivesI where .X = D {}
+}
+
+fn F(generic _: GivesI where .X impls K) {}
+
+fn G() {
+  // Reuses the specific of the require in `GivesI` with `Self = ()`. The
+  // `.X` should perform a fresh impl lookup here and should resolve to `C`. If
+  // the specific encoded the attachment to the second impl instead, it may
+  // resolve to `D` (which doesn't impl `K`) or it may not resolve beyond the
+  // symbolic `.X` at all.
+  F(());
+}
+
+// --- access_through_nested_specific_in_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+impl forall [T: type] T as Z where .Z1 = {} {}
+
+class C(T: type) {
+    alias U = T.(Z.Z1);
+}
+
+interface K {}
+
+constraint J {
+    extend require impls Z;
+    // When identifying `() as J` for the impl below, this forms a specific `C(())`
+    // which contains an access of `().(Z.Z1)`. The `() as Z` lookup _should_ find
+    // the impl below, not the blanket impl above. If we find the above impl, then
+    // the access of `U` here resolves to `{}` incorrectly.
+    require C(Self).U impls K;
+}
+
+impl () as K {}
+
+impl () as J where .Z1 = () {}
+
+// --- witness_access_in_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+class C {}
+class G(T: type) {}
+
+interface Z(R: type) {
+  let Result: type;
+}
+interface Y(S: type) {}
+
+impl forall [T: type] () as Y(G(T)) {}
+
+// This is a blanket impl that overlaps with (but is less specific than)
+// `G(C) as Z(G(C))`, which is the next impl below.
+impl forall [T: type, U: type] G(T) as Z(U) where .Result = {} {}
+
+constraint N {
+  // Forming the specific with `Self=G(C)` must not choose a concrete value
+  // `.Result = {}` from the impl above, even though the query is concrete.
+  // The `impl G(C) as N` sets the `.Result = ()`.
+  //
+  // This specific is formed while checking the `impl G(C) as N` decl, and the
+  // `.Result` must remain a reference to that impl's witness table not some
+  // other impl.
+  //
+  // We have `.Result impls...` to ensure that we substitute `G(C)` into the
+  // `.Result` access while checking the impl decl, as rewrite constraints
+  // may be ignored until later.
+  extend require impls Z(G(C)) where .Result impls Y(G(C)) and .Result = ();
+}
+
+impl G(C) as N {}
+
+fn F() -> G(C).(Z(G(C)).Result) {
+  return ();
+}
+
+// --- rewrite_twice_same.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+constraint J {
+    extend require impls Z where .Z1 = ();
+}
+impl () as J where .Z1 = () {}
+
+// --- fail_rewrite_twice_different.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+constraint J {
+    extend require impls Z where .Z1 = {};
+}
+// CHECK:STDERR: fail_rewrite_twice_different.carbon:[[@LINE+2]]:12-27: error: associated constant Z1 given value `()` that is different from previously given value `{}` [AssociatedConstantGivenDifferentValues]
+// CHECK:STDERR:
+impl () as J where .Z1 = () {}
+
+// --- fail_rewrite_twice_different_named_constraints.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+constraint K {
+    extend require impls Z where .Z1 = ();
+}
+constraint J {
+    extend require impls Z where .Z1 = {};
+    extend require impls K;
+}
+// CHECK:STDERR: fail_rewrite_twice_different_named_constraints.carbon:[[@LINE+2]]:12: error: associated constant Z1 given value `{}` that is different from previously given value `()` [AssociatedConstantGivenDifferentValues]
+// CHECK:STDERR:
+impl () as J {}
 
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:

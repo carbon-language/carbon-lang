@@ -21,23 +21,59 @@ fn G() {
   let unused ref x: i32 = F();
 }
 
+// --- ref_return_parenthesized_type.carbon
+
+library "[[@TEST_NAME]]";
+
+fn F() -> ref (i32);
+
+// --- fail_todo_ref_return_parenthesized.carbon
+
+library "[[@TEST_NAME]]";
+
+// TODO: Per p5434, a return form starting with `(` is a compound form, which
+// isn't supported yet.
+// CHECK:STDERR: fail_todo_ref_return_parenthesized.carbon:[[@LINE+2]]:12-18: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+// CHECK:STDERR:
+fn F() -> (ref i32);
+
+// --- ref_return_lib.carbon
+
+library "[[@TEST_NAME]]";
+
+var g: i32 = 0;
+
+fn F() -> ref i32 { return g; }
+
+// --- import_ref_return.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "ref_return_lib";
+
+//@include-in-dumps
+
+fn G() {
+  let unused ref x: i32 = F();
+}
+
 // CHECK:STDOUT: --- ref_return.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
-// CHECK:STDOUT:   %Int.type: type = generic_class_type @Int [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
 // CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
 // CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
-// CHECK:STDOUT:   %.512: Core.Form = ref_form %i32 [concrete]
-// CHECK:STDOUT:   %pattern_type.6b6: type = pattern_type %i32 [concrete]
-// CHECK:STDOUT:   %.ae0: %pattern_type.6b6 = ref_return_pattern [concrete]
-// CHECK:STDOUT:   %return.patt: %pattern_type.6b6 = return_slot_pattern %.ae0, %i32 [concrete]
+// CHECK:STDOUT:   %.30e: Core.Form = ref_form %i32 [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %.b71: %pattern_type.d94 = ref_return_pattern [concrete]
+// CHECK:STDOUT:   %return.patt: %pattern_type.d94 = return_slot_pattern %.b71, %i32 [concrete]
 // CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
 // CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
 // CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
 // CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
-// CHECK:STDOUT:   %x.patt: %pattern_type.6b6 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.d94 = ref_binding_pattern x [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -57,12 +93,12 @@ fn G() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {
-// CHECK:STDOUT:     %.loc4_11.1: %pattern_type.6b6 = ref_return_pattern [concrete = constants.%.ae0]
-// CHECK:STDOUT:     %return.patt: %pattern_type.6b6 = return_slot_pattern %.loc4_11.1, %i32 [concrete = constants.%return.patt]
+// CHECK:STDOUT:     %.loc4_11.1: %pattern_type.d94 = ref_return_pattern [concrete = constants.%.b71]
+// CHECK:STDOUT:     %return.patt: %pattern_type.d94 = return_slot_pattern %.loc4_11.1, %.loc4_11.3 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc4_11.2: type = ref_tag %i32
-// CHECK:STDOUT:     %.loc4_11.3: Core.Form = ref_form %i32 [concrete = constants.%.512]
+// CHECK:STDOUT:     %.loc4_11.2: Core.Form = ref_form %i32 [concrete = constants.%.30e]
+// CHECK:STDOUT:     %.loc4_11.3: type = type_component_of %.loc4_11.2 [concrete = constants.%i32]
 // CHECK:STDOUT:     %.loc4_11.4: ref %i32 = ref_return
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %.loc4_11.4
 // CHECK:STDOUT:   }
@@ -78,8 +114,61 @@ fn G() {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %x: ref %i32 = wrapper_binding x, %F.call
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %x.patt: %pattern_type.6b6 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:     %x.patt: %pattern_type.d94 = ref_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- import_ref_return.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %G.type: type = fn_type @G [concrete]
+// CHECK:STDOUT:   %G: %G.type = struct_value () [concrete]
+// CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
+// CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
+// CHECK:STDOUT:   %Int.generic: %Int.type = struct_value () [concrete]
+// CHECK:STDOUT:   %i32: type = class_type @Int, @Int(%int_32) [concrete]
+// CHECK:STDOUT:   %pattern_type.d94: type = pattern_type %i32 [concrete]
+// CHECK:STDOUT:   %x.patt: %pattern_type.d94 = ref_binding_pattern x [concrete]
+// CHECK:STDOUT:   %F.type: type = fn_type @F [concrete]
+// CHECK:STDOUT:   %F: %F.type = struct_value () [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Main.g = import_ref Main//ref_return_lib, g, unloaded
+// CHECK:STDOUT:   %Main.F: %F.type = import_ref Main//ref_return_lib, F, loaded [concrete = constants.%F]
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     .Int = %Core.Int
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.Int: %Int.type = import_ref Core//prelude/parts/int, Int, loaded [concrete = constants.%Int.generic]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .g = imports.%Main.g
+// CHECK:STDOUT:     .F = imports.%Main.F
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .G = %G.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %default.import = import <none>
+// CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @G() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %F.ref: %F.type = name_ref F, imports.%Main.F [concrete = constants.%F]
+// CHECK:STDOUT:   %F.call: ref %i32 = call %F.ref()
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %x: ref %i32 = wrapper_binding x, %F.call
+// CHECK:STDOUT:   name_binding_decl {
+// CHECK:STDOUT:     %x.patt: %pattern_type.d94 = ref_binding_pattern x [concrete = constants.%x.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @F [from "ref_return_lib.carbon"];
 // CHECK:STDOUT:

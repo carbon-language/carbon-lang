@@ -8,8 +8,16 @@
 // invoked. The debugger should do namespace resolution automatically. For
 // example:
 //
-// - lldb: `expr Dump(tokens, id)`
-// - gdb: `call Dump(tokens, id)`
+// - lldb: `dump file id`
+// - gdb: `call Dump(file, id)`
+//
+// When adding a new ID type, if it corresponds to a collection in `File`, also
+// update the following places:
+// - Add a `Dump` function in this header and `toolchain/sem_ir/dump.cpp`.
+// - Add a forwarding `Dump` function in `toolchain/check/dump.cpp`.
+// - Add a `Make<NewIdType>` function in `toolchain/sem_ir/dump.cpp`.
+// - Add the `Make<NewIdType>` function to the `id_types` map in
+//   `scripts/lldbinit.py`.
 
 #ifndef CARBON_TOOLCHAIN_SEM_IR_DUMP_H_
 #define CARBON_TOOLCHAIN_SEM_IR_DUMP_H_
@@ -21,9 +29,30 @@
 
 namespace Carbon::SemIR {
 
+auto DumpNameIfValid(const File& file, NameId name_id) -> std::string;
+auto DumpNameOfEntityName(const File& file, const EntityName& entity_name)
+    -> std::string;
+auto DumpLocSummary(const File& file, LocId loc_id) -> std::string;
+auto DumpConstantSummary(const File& file, ConstantId const_id) -> std::string;
+auto DumpTypeSummary(const File& file, TypeId type_id) -> std::string;
+auto DumpInstSummary(const File& file, InstId inst_id) -> std::string;
+auto DumpGenericSummary(const File& file, GenericId generic_id) -> std::string;
+auto DumpInterfaceSummary(const File& file, InterfaceId interface_id)
+    -> std::string;
+auto DumpNamedConstraintSummary(const File& file,
+                                NamedConstraintId named_constraint_id)
+    -> std::string;
+auto DumpSpecificSummary(const File& file, SpecificId specific_id)
+    -> std::string;
+auto DumpRequireImplsSummary(const File& file, RequireImplsId require_impls_id)
+    -> std::string;
+
 auto Dump(const File& file) -> std::string;
 auto Dump(const File& file, RawBundleId bundle_id) -> std::string;
 auto Dump(const File& file, GeneratedFunctionId generated_function_id)
+    -> std::string;
+auto Dump(const File& file, ClangDeclId clang_decl_id) -> std::string;
+auto Dump(const File& file, ClangDeclSignatureId clang_decl_signature_id)
     -> std::string;
 auto Dump(const File& file, ClassId class_id) -> std::string;
 auto Dump(const File& file, ConstantId const_id) -> std::string;
@@ -34,8 +63,6 @@ auto Dump(const File& file, EntityNameId entity_name_id) -> std::string;
 auto Dump(const File& file, FieldId field_id) -> std::string;
 auto Dump(const File& file, FunctionId function_id) -> std::string;
 auto Dump(const File& file, GenericId generic_id) -> std::string;
-auto Dump(const File& file, IdentifiedFacetTypeId identified_facet_type_id)
-    -> std::string;
 auto Dump(const File& file, ImplId impl_id) -> std::string;
 auto Dump(const File& file, ImportIRInstId import_inst_id) -> std::string;
 auto Dump(const File& file, const Inst& inst) -> std::string;
@@ -52,6 +79,8 @@ auto Dump(const File& file, RequireImplsBlockId require_impls_block_id)
     -> std::string;
 auto Dump(const File& file, RequireImplsId require_impls_id) -> std::string;
 auto Dump(const File& file, SpecificId specific_id) -> std::string;
+auto Dump(const File& file, const SpecificInterface& specific_interface_id)
+    -> std::string;
 auto Dump(const File& file, SpecificInterfaceId specific_interface_id)
     -> std::string;
 auto Dump(const File& file, StructTypeFieldsId struct_type_fields_id)

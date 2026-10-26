@@ -116,7 +116,13 @@ class FunctionContext {
   auto IsConstant(SemIR::InstId) -> bool;
 
   // Returns a value for the given instruction.
-  auto GetValue(SemIR::InstId inst_id) -> llvm::Value*;
+  //
+  // If `require_value` is true, the instruction is required to have emitted a
+  // value or have a concrete constant in the current specific, and will CHECK
+  // if these conditions are not met. If `require_value` is false, `nullptr`
+  // will be returned instead if there is no value for the instruction.
+  auto GetValue(SemIR::InstId inst_id, bool require_value = true)
+      -> llvm::Value*;
 
   // Sets the value for the given instruction.
   auto SetLocal(SemIR::InstId inst_id, llvm::Value* value) -> void {
@@ -298,11 +304,10 @@ class FunctionContext {
     // Sets the instruction we are currently emitting.
     auto SetCurrentInstId(SemIR::InstId inst_id) -> void { inst_id_ = inst_id; }
 
-   private:
     auto InsertHelper(llvm::Instruction* inst, const llvm::Twine& name,
-                      llvm::BasicBlock::iterator insert_pt) const
-        -> void override;
+                      llvm::BasicBlock::iterator insert_pt) const -> void;
 
+   private:
     // The instruction namer.
     const SemIR::InstNamer* inst_namer_;
 

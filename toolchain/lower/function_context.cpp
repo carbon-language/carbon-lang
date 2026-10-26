@@ -7,6 +7,7 @@
 #include "common/pretty_stack_trace_function.h"
 #include "common/vlog.h"
 #include "toolchain/base/kind_switch.h"
+#include "toolchain/diagnostics/renderer.h"
 #include "toolchain/sem_ir/diagnostic_loc_converter.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/file.h"
@@ -69,13 +70,13 @@ auto FunctionContext::LowerBlockContents(SemIR::InstBlockId block_id) -> void {
         &file_context_->context().tree_and_subtrees_getters(), &sem_ir());
     auto converted = converter.Convert(SemIR::LocId(inst_id_for_stack_trace),
                                        /*token_only=*/false);
-    converted.loc.FormatLocation(output);
+    output << Diagnostics::FormatLocation(converted.loc) << ": ";
     // TODO: Format SemIR for the instruction we were lowering?
     output << "Lowering "
            << sem_ir().insts().Get(inst_id_for_stack_trace).kind().ir_name()
            << "\n";
     // Crash output has a tab indent; try to indent slightly past that.
-    converted.loc.FormatSnippet(output, /*indent=*/10);
+    Diagnostics::PrintSnippet(output, converted.loc, /*indent=*/10);
   });
 
   for (auto inst_id : sem_ir().inst_blocks().Get(block_id)) {
@@ -174,7 +175,8 @@ auto FunctionContext::IsConstant(SemIR::InstId inst_id) -> bool {
       .second.is_constant();
 }
 
-auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
+auto FunctionContext::GetValue(SemIR::InstId inst_id, bool require_value)
+    -> llvm::Value* {
   // Singletons are types, as is the builtin TypeType, with the same empty
   // lowered value.
   if (SemIR::IsSingletonInstId(inst_id) ||
@@ -193,9 +195,17 @@ auto FunctionContext::GetValue(SemIR::InstId inst_id) -> llvm::Value* {
   auto [const_ir, const_id] = GetConstantValueInSpecific(
       specific_sem_ir(), specific_id_, sem_ir(), inst_id);
   CARBON_CHECK(const_ir == &sem_ir() || const_ir == &specific_sem_ir());
-  CARBON_CHECK(const_id.is_concrete(),
-               "Missing value: {0} {1} in {2} has non-concrete value {3}",
-               inst_id, sem_ir().insts().Get(inst_id), specific_id_, const_id);
+  if (require_value) {
+    CARBON_CHECK(const_id.is_concrete(),
+                 "Missing value: {0} {1} in {2} has non-concrete value {3}",
+                 inst_id, sem_ir().insts().Get(inst_id), specific_id_,
+                 const_id);
+  }
+
+  if (!const_id.is_concrete()) {
+    return nullptr;
+  }
+
   // We can only pass on the InstId if it refers to the file in which the
   // constant value was provided.
   auto* global = GetFileContext(const_ir).GetConstant(

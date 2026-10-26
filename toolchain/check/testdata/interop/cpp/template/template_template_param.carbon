@@ -36,20 +36,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "templates.h";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE+15]]:35: error: too few template arguments for class template 'C' [CppInteropParseError]
-// CHECK:STDERR:    22 | var x: Cpp.TwoTemplates(Cpp.A, Cpp.C);
-// CHECK:STDERR:       |                                   ^
-// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE+12]]:35: note: template template argument has different template parameters than its corresponding template template parameter [CppInteropParseNote]
-// CHECK:STDERR:    22 | var x: Cpp.TwoTemplates(Cpp.A, Cpp.C);
-// CHECK:STDERR:       |                                   ^
-// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE-9]]:10: in file included here [InCppInclude]
+// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE+6]]:35: error: too few template arguments for class template 'C' [CppInteropParseError]
+// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE+5]]:35: note: template template argument has different template parameters than its corresponding template template parameter [CppInteropParseNote]
+// CHECK:STDERR: included from: fail_template_mismatch.carbon:[[@LINE-5]]:10 [InCppInclude]
 // CHECK:STDERR: ./templates.h:6:66: note: previous template template parameter is here [CppInteropParseNote]
-// CHECK:STDERR:     6 | template<template<typename> typename, template<typename> typename>
-// CHECK:STDERR:       |                                       ~~~~~~~~~~~~~~~~~~         ^
-// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE-13]]:10: in file included here [InCppInclude]
 // CHECK:STDERR: ./templates.h:4:37: note: template is declared here [CppInteropParseNote]
-// CHECK:STDERR:     4 | template<typename, typename> struct C {};
-// CHECK:STDERR:       | ~~~~~~~~~~~~~~~~~~~~~~~~~~~~        ^
 // CHECK:STDERR:
 var x: Cpp.TwoTemplates(Cpp.A, Cpp.C);
 //@dump-sem-ir-end
@@ -62,9 +53,7 @@ import Cpp library "templates.h";
 
 class X {}
 
-// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+4]]:32: error: template argument for template template parameter must be a class template or type alias template [CppInteropParseError]
-// CHECK:STDERR:    12 | var x: Cpp.TwoTemplates(Cpp.A, X);
-// CHECK:STDERR:       |                                ^
+// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+2]]:32: error: template argument for template template parameter must be a class template or type alias template [CppInteropParseError]
 // CHECK:STDERR:
 var x: Cpp.TwoTemplates(Cpp.A, X);
 
@@ -74,9 +63,7 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+4]]:32: error: template argument for template template parameter must be a class template or type alias template [CppInteropParseError]
-// CHECK:STDERR:    10 | var x: Cpp.TwoTemplates(Cpp.A, true);
-// CHECK:STDERR:       |                                ^
+// CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+2]]:32: error: template argument for template template parameter must be a class template or type alias template [CppInteropParseError]
 // CHECK:STDERR:
 var x: Cpp.TwoTemplates(Cpp.A, true);
 
@@ -91,19 +78,19 @@ var x: Cpp.TwoTemplates(Cpp.A, true);
 // CHECK:STDOUT:   %DefaultOrUnformed.type: type = facet_type <@DefaultOrUnformed> [concrete]
 // CHECK:STDOUT:   %Default.type: type = facet_type <@Default> [concrete]
 // CHECK:STDOUT:   %T.b09: %Default.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.b09) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.cfe: %T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9 = struct_value () [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.4da: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%T.b09) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.79f: %T.as_type.as.DefaultOrUnformed.impl.Op.type.4da = struct_value () [symbolic]
 // CHECK:STDOUT:   %TwoTemplates.Op.type: type = fn_type @TwoTemplates.Op [concrete]
 // CHECK:STDOUT:   %TwoTemplates.Op: %TwoTemplates.Op.type = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.9b4: <witness> = custom_witness (%TwoTemplates.Op), @Default [concrete]
 // CHECK:STDOUT:   %Default.facet.e75: %Default.type = facet_value %TwoTemplates, (%custom_witness.9b4) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.5af: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.e75) [concrete]
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %TwoTemplates, (%DefaultOrUnformed.impl_witness.5af) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.436: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.e75) [concrete]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value %TwoTemplates, (%DefaultOrUnformed.impl_witness.436) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
-// CHECK:STDOUT:   %Core.import_ref.c2f: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.0c9) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.cfe)]
-// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.c2f), @T.as_type.as.DefaultOrUnformed.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.288: @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op.type (%T.as_type.as.DefaultOrUnformed.impl.Op.type.4da) = import_ref Core//prelude/parts/default, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DefaultOrUnformed.impl.%T.as_type.as.DefaultOrUnformed.impl.Op (constants.%T.as_type.as.DefaultOrUnformed.impl.Op.79f)]
+// CHECK:STDOUT:   %DefaultOrUnformed.impl_witness_table.162 = impl_witness_table (%Core.import_ref.288), @T.as_type.as.DefaultOrUnformed.impl [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -117,7 +104,7 @@ var x: Cpp.TwoTemplates(Cpp.A, true);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%TwoTemplates, (constants.%DefaultOrUnformed.impl_witness.5af) [concrete = constants.%DefaultOrUnformed.facet]
+// CHECK:STDOUT:   %DefaultOrUnformed.facet: %DefaultOrUnformed.type = facet_value constants.%TwoTemplates, (constants.%DefaultOrUnformed.impl_witness.436) [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %.loc7_38.1: %DefaultOrUnformed.type = converted constants.%TwoTemplates, %DefaultOrUnformed.facet [concrete = constants.%DefaultOrUnformed.facet]
 // CHECK:STDOUT:   %as_type: type = facet_access_type %.loc7_38.1 [concrete = constants.%TwoTemplates]
 // CHECK:STDOUT:   %.loc7_38.2: type = converted %.loc7_38.1, %as_type [concrete = constants.%TwoTemplates]

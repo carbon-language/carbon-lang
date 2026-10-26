@@ -6,11 +6,28 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdlib>
 #include <forward_list>
 #include <utility>
 #include <vector>
 
 namespace Carbon::RawHashtable {
+
+auto GetBenchLayout() -> int {
+  static const int layout = [] {
+    if (const char* env = std::getenv("CARBON_BENCH_LAYOUT")) {
+      int env_layout;
+      CARBON_CHECK(!llvm::StringRef(env).getAsInteger(10, env_layout) &&
+                       0 <= env_layout && env_layout < NumBenchLayouts,
+                   "`CARBON_BENCH_LAYOUT` must be an integer in [0, {0}).",
+                   NumBenchLayouts);
+      return env_layout;
+    }
+    absl::BitGen gen;
+    return absl::Uniform<int>(gen, 0, NumBenchLayouts);
+  }();
+  return layout;
+}
 
 // A local shuffle implementation built on Abseil to improve performance in
 // debug builds.
@@ -355,9 +372,8 @@ auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void {
   constexpr int GroupShift = llvm::ConstantLog2<GroupSize>();
 
   size_t mask = ComputeProbeMaskFromSize(expected_size);
-  uint64_t salt = ComputeSeed();
-  auto get_hash_index = [mask, salt](auto x) -> ssize_t {
-    auto [hash_index, _] = HashValue(x, salt).template ExtractIndexAndTag<7>();
+  auto get_hash_index = [mask](auto x) -> ssize_t {
+    auto [hash_index, _] = HashValue(x).template ExtractIndexAndTag<7>();
     return (hash_index & mask) >> GroupShift;
   };
 
@@ -391,9 +407,8 @@ auto DumpHashStatistics(llvm::ArrayRef<T> keys) -> void {
   for (auto i : llvm::ArrayRef(grouped_key_indices[max_group_index])
                     .take_front(2 * GroupSize)) {
     auto k = keys[i];
-    auto hash = static_cast<uint64_t>(HashValue(k, salt));
+    auto hash = static_cast<uint64_t>(HashValue(k));
     llvm::errs() << "  key: " << k
-                 << "  salt: " << llvm::formatv("{0:x16}", salt)
                  << "  hash: " << llvm::formatv("{0:x16}", hash) << "\n";
   }
 }

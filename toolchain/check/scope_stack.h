@@ -56,6 +56,7 @@ class ScopeStack {
     CleanupScopeDepth break_depth;
     SemIR::InstBlockId continue_target;
     CleanupScopeDepth continue_depth;
+    SemIR::InstId return_scope_decl_id;
   };
 
   // A non-lexical scope in which unqualified lookup may be required.
@@ -188,6 +189,44 @@ class ScopeStack {
   auto GetReturnScopeDeclId() -> SemIR::InstId {
     CARBON_CHECK(IsInFunctionScope(), "Handling return but not in a function");
     return return_scope_stack_.back().decl_id;
+  }
+
+  // A `return` statement in a function whose return type is being deduced.
+  // Initialization of the return value is deferred until the return type is
+  // known.
+  struct PendingReturn {
+    // The returned expression, before conversion to the return type.
+    SemIR::InstId expr_id;
+    // A placeholder `SpliceBlock` producing `expr_id`, to be replaced by the
+    // conversion of `expr_id` to the return type.
+    SemIR::InstId splice_id;
+    // The `ReturnExpr` instruction. Its destination is set once the return
+    // type is known.
+    SemIR::InstId return_inst_id;
+  };
+
+  // Adds a `return` statement in the current function whose initialization is
+  // waiting for the return type to be deduced.
+  auto AddPendingReturn(PendingReturn pending_return) -> void {
+    CARBON_CHECK(IsInFunctionScope(), "Handling return but not in a function");
+    pending_return_stack_.AppendToTop(pending_return);
+  }
+
+  // Returns the `return` statements in the current function whose
+  // initialization is waiting for the return type to be deduced.
+  auto PeekPendingReturns() const -> llvm::ArrayRef<PendingReturn> {
+    CARBON_CHECK(IsInFunctionScope(), "Handling return but not in a function");
+    return pending_return_stack_.PeekArray();
+  }
+
+  // Removes and returns the `return` statements in the current function whose
+  // initialization is waiting for the return type to be deduced.
+  auto TakePendingReturns() -> llvm::SmallVector<PendingReturn> {
+    auto pending_returns = llvm::to_vector(PeekPendingReturns());
+    // Leave an empty array for the current function.
+    pending_return_stack_.PopArray();
+    pending_return_stack_.PushArray();
+    return pending_returns;
   }
 
   // Looks up the name `name_id` in the current scope and enclosing scopes, but
@@ -430,6 +469,10 @@ class ScopeStack {
 
   // A stack of scopes from which we can `return`.
   llvm::SmallVector<ReturnScope> return_scope_stack_;
+
+  // For each entry in `return_scope_stack_`, the `return` statements whose
+  // initialization is waiting for the function's return type to be deduced.
+  ArrayStack<PendingReturn> pending_return_stack_;
 
   // A stack of `break` and `continue` targets.
   llvm::SmallVector<BreakContinueScope> break_continue_stack_;

@@ -19,6 +19,8 @@
 #include "llvm/Support/VirtualFileSystem.h"
 #include "llvm/TargetParser/Triple.h"
 #include "toolchain/base/install_paths.h"
+#include "toolchain/diagnostics/emitter.h"
+#include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/runtimes_cache.h"
 #include "toolchain/driver/tool_runner_base.h"
 
@@ -83,7 +85,8 @@ class ClangRunner : ToolRunnerBase {
   auto Run(llvm::ArrayRef<llvm::StringRef> args,
            Runtimes::Cache& runtimes_cache,
            llvm::ThreadPoolInterface& runtimes_build_thread_pool,
-           bool enable_leaking = false) -> ErrorOr<bool>;
+           bool enable_leaking = false, Runtimes::Cache::Features features = {})
+      -> ErrorOr<bool>;
 
   // Run Clang with the provided arguments and prebuilt runtimes.
   //
@@ -103,6 +106,13 @@ class ClangRunner : ToolRunnerBase {
   // not.
   auto RunWithNoRuntimes(llvm::ArrayRef<llvm::StringRef> args,
                          bool enable_leaking = false) -> ErrorOr<bool>;
+
+  // Computes the canonicalized `Runtimes::Cache::Features` for
+  // `codegen_options`, emitting any diagnostics for invalid target flags to
+  // `consumer`.
+  auto ComputeRuntimesFeatures(const CodegenOptions& codegen_options,
+                               Diagnostics::Consumer& consumer)
+      -> ErrorOr<Runtimes::Cache::Features>;
 
  private:
   friend class ClangRuntimesBuilderBase;

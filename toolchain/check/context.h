@@ -21,6 +21,7 @@
 #include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/generic_region_stack.h"
 #include "toolchain/check/global_init.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/inst_block_stack.h"
 #include "toolchain/check/node_stack.h"
 #include "toolchain/check/param_and_arg_refs_stack.h"
@@ -33,7 +34,6 @@
 #include "toolchain/parse/tree_and_subtrees.h"
 #include "toolchain/sem_ir/declared_facet_type.h"
 #include "toolchain/sem_ir/file.h"
-#include "toolchain/sem_ir/identified_facet_type.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
@@ -129,6 +129,10 @@ class Context {
     return field_decls_stack_;
   }
 
+  auto friend_scopes_stack() -> ArrayStack<SemIR::ConstantId>& {
+    return friend_scopes_stack_;
+  }
+
   auto require_impls_stack() -> RequireImplsStack& {
     return require_impls_stack_;
   }
@@ -165,6 +169,10 @@ class Context {
   auto vtable_stack() -> InstBlockStack& { return vtable_stack_; }
 
   auto exports() -> llvm::SmallVector<SemIR::InstId>& { return exports_; }
+
+  auto extra_global_variables() -> llvm::SmallVector<SemIR::InstId>& {
+    return extra_global_variables_;
+  }
 
   using CheckIRToImportIRStore =
       FixedSizeValueStore<SemIR::CheckIRId, SemIR::ImportIRId>;
@@ -310,9 +318,14 @@ class Context {
   struct DeclaringImplDecl {
     SemIR::ConstantId self_id;
     SemIR::SpecificInterface specific_interface;
+    auto operator==(const DeclaringImplDecl& rhs) const -> bool = default;
   };
   auto declaring_impl_decls() -> llvm::SmallVector<DeclaringImplDecl>& {
     return declaring_impl_decls_;
+  }
+
+  auto eval_impl_lookup_to_identified_witness() -> int32_t& {
+    return eval_impl_lookup_to_identified_witness_;
   }
 
   // Data about a form expression.
@@ -353,6 +366,13 @@ class Context {
   auto core_identifiers() -> CoreIdentifierCache& { return core_identifiers_; }
 
   auto access_context() -> SemIR::NameScopeId& { return access_context_; }
+
+  auto identified_facet_types() -> IdentifiedFacetTypeStore& {
+    return identified_facet_types_;
+  }
+  auto identified_facet_types() const -> const IdentifiedFacetTypeStore& {
+    return identified_facet_types_;
+  }
 
   // --------------------------------------------------------------------------
   // Directly expose SemIR::File data accessors for brevity in calls.
@@ -400,9 +420,6 @@ class Context {
   }
   auto declared_facet_types() -> SemIR::DeclaredFacetTypeStore& {
     return sem_ir().declared_facet_types();
-  }
-  auto identified_facet_types() -> SemIR::IdentifiedFacetTypeStore& {
-    return sem_ir().identified_facet_types();
   }
   auto impls() -> SemIR::ImplStore& { return sem_ir().impls(); }
   auto specific_interfaces() -> SemIR::SpecificInterfaceStore& {
@@ -508,6 +525,10 @@ class Context {
   // The stack of FieldDecls for in-progress Class definitions.
   ArrayStack<SemIR::InstId> field_decls_stack_;
 
+  // The stack of `friend` decls for in-progress Class definitions, identified
+  // by the constant value of an expression that names them.
+  ArrayStack<SemIR::ConstantId> friend_scopes_stack_;
+
   // The stack of RequireImpls for in-progress Interface and Constraint
   // definitions.
   RequireImplsStack require_impls_stack_;
@@ -539,6 +560,10 @@ class Context {
   // Instructions which are operands to an `export` directive. This becomes
   // `InstBlockId::Exports`.
   llvm::SmallVector<SemIR::InstId> exports_;
+
+  // Instructions that will be scanned for export as global variables. This
+  // becomes `InstBlockId::ExtraGlobalVariables`.
+  llvm::SmallVector<SemIR::InstId> extra_global_variables_;
 
   // Maps CheckIRId to ImportIRId.
   CheckIRToImportIRStore check_ir_map_;
@@ -630,6 +655,13 @@ class Context {
   // that impl being declared (even though it does not yet exist).
   llvm::SmallVector<DeclaringImplDecl> declaring_impl_decls_;
 
+  // Tracks if we are currently identifying a facet type, which causes
+  // LookupImplWitness instructions to not resolve to final witnesses by
+  // redirecting them to form IdentifiedWitness instructions. The caller to
+  // identify must replace any IdentifiedWitness instructions in the
+  // IdentifiedFacetType before using the values there.
+  int32_t eval_impl_lookup_to_identified_witness_ = 0;
+
   // Declared return form for the in-progress function declaration, if any.
   std::optional<FormExpr> return_form_expr_;
 
@@ -644,6 +676,9 @@ class Context {
   // This is updated by `DeclNameStack`. During monomorphization, it is updated
   // by `TryEvalBlockForSpecific`.
   SemIR::NameScopeId access_context_ = SemIR::NameScopeId::None;
+
+  // Storage for identified facet types.
+  IdentifiedFacetTypeStore identified_facet_types_;
 };
 
 inline constexpr Context::FormExpr Context::FormExpr::Error = {

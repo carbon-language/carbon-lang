@@ -30,9 +30,7 @@ let {var y: ()} = {.y = ()};
 
 // --- fail_nested.carbon
 
-// CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:25: error: `var` nested within another `var` [NestedVar]
-// CHECK:STDERR: let (x: (), var (y: (), var z: ())) = ((), ((), ()));
-// CHECK:STDERR:                         ^~~
+// CHECK:STDERR: fail_nested.carbon:[[@LINE+2]]:25-27: error: `var` nested within another `var` [NestedVar]
 // CHECK:STDERR:
 let (x: (), var (y: (), var z: ())) = ((), ((), ()));
 

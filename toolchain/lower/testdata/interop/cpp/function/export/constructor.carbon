@@ -31,17 +31,17 @@ void f() {
 // CHECK:STDOUT: target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
-// CHECK:STDOUT: %"class.Carbon::OneArg" = type {}
+// CHECK:STDOUT: %"class.Carbon::Main::OneArg" = type {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: $_ZN6Carbon6OneArgD2Ev = comdat any
+// CHECK:STDOUT: $_ZN6Carbon4Main6OneArgD2Ev = comdat any
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: mustprogress uwtable
 // CHECK:STDOUT: define dso_local void @_Z1fv() #0 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %a = alloca %"class.Carbon::OneArg", align 1
+// CHECK:STDOUT:   %a = alloca %"class.Carbon::Main::OneArg", align 1
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #5
-// CHECK:STDOUT:   call void @_ZN6Carbon6OneArgC2Ei(ptr noundef nonnull align 1 %a, i32 noundef 42)
-// CHECK:STDOUT:   call void @_ZN6Carbon6OneArgD2Ev(ptr noundef nonnull align 1 %a) #5
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main6OneArgC2Ei(ptr noundef nonnull align 1 %a, i32 noundef 42)
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main6OneArgD2Ev(ptr noundef nonnull align 1 %a) #5
 // CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #5
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -50,7 +50,7 @@ void f() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal void @_ZN6Carbon6OneArgC2Ei(ptr noundef nonnull align 1 %this, i32 noundef %0) unnamed_addr #2 align 2 {
+// CHECK:STDOUT: define internal void @_ZN6Carbon4Main6OneArgC2Ei(ptr noundef nonnull align 1 %this, i32 noundef %0) unnamed_addr #2 align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %.addr = alloca i32, align 4
@@ -62,7 +62,7 @@ void f() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
-// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon6OneArgD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
+// CHECK:STDOUT: define linkonce_odr dso_local void @_ZN6Carbon4Main6OneArgD2Ev(ptr noundef nonnull align 1 %this) unnamed_addr #3 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
 // CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !36
@@ -144,7 +144,7 @@ void f() {
 // CHECK:STDOUT: !32 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !33 = !{!"omnipotent char", !32, i64 0}
 // CHECK:STDOUT: !34 = !{!"any pointer", !33, i64 0}
-// CHECK:STDOUT: !35 = !{!"p1 _ZTSN6Carbon6OneArgE", !34, i64 0}
+// CHECK:STDOUT: !35 = !{!"p1 _ZTSN6Carbon4Main6OneArgE", !34, i64 0}
 // CHECK:STDOUT: !36 = !{!35, !35, i64 0}
 // CHECK:STDOUT: !37 = !{!"int", !33, i64 0}
 // CHECK:STDOUT: !38 = !{!37, !37, i64 0}
