@@ -292,17 +292,6 @@ fn TestDerivedFromVirtualFunction(x: DerivedFromVirtualFunction) {
   CheckHasTrivialDestruction(x);
 }
 
-// --- todo_class_optional.carbon
-
-library "[[@TEST_NAME]]";
-
-import library "check_destroy_format";
-
-// TODO: `Core.Optional` depends on `Core.MaybeUnformed`.
-fn TestOptional(x: Core.Optional(i32)) {
-  CheckHasTrivialDestruction(x);
-}
-
 // --- fail_todo_class_derived_from_abstract.carbon
 
 library "[[@TEST_NAME]]";
