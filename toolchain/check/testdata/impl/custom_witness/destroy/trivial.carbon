@@ -31,6 +31,23 @@ fn CheckHasDestruction[T: Core.Destroy](_: T) {}
 // redundant.
 fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
 
+// Identifies whether a type can be destroyed.
+//
+// Use this function to confirm non-trivial destruction (pass) and types that
+// can't be destroyed (fail).
+fn CheckTypeHasDestruction(unused T: Core.Destroy) {}
+
+// Identifies whether a type has trivial destruction.
+//
+// Use this function to confirm trivial destruction (pass), non-trivial
+// destruction (fail), and types that can't be destroyed (fail).
+//
+// `CheckTypeHasTrivialDestruction` should only be combined with
+// `CheckTypeHasDestruction` for types that are expected to not have trivial
+// destruction. Using both on a trivially destroyable type (e.g. `i32`) is
+// redundant.
+fn CheckTypeHasTrivialDestruction(unused T: Core.TrivialDestroy) {}
+
 // --- types.carbon
 
 library "[[@TEST_NAME]]";
@@ -367,6 +384,51 @@ fn TestTuple(x: (i32, bool)) {
 
 fn TestTupleWithNestedTrivialTuple(x: (i32, (bool, i32))) {
   CheckHasTrivialDestruction(x);
+}
+
+// --- constrained_facet.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+fn TestDestroyAndTrivialDestroy(generic T: Core.Destroy & Core.TrivialDestroy) {
+  CheckTypeHasDestruction(T);
+
+  CheckTypeHasTrivialDestruction(T);
+}
+
+fn TestTrivialDestroy(generic T: Core.TrivialDestroy) {
+  CheckTypeHasDestruction(T);
+}
+
+// --- facet_type.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+fn TestType() {
+  CheckTypeHasTrivialDestruction(type);
+}
+
+fn TestFacetType() {
+  CheckTypeHasTrivialDestruction(Core.Destroy);
+}
+
+// --- partial.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+import library "types";
+
+fn TestPartialTrivialBase() {
+  CheckTypeHasTrivialDestruction(partial TrivialBase);
+}
+
+fn TestPartialAbstract() {
+  CheckTypeHasTrivialDestruction(partial Abstract);
 }
 
 // CHECK:STDOUT: --- class.carbon

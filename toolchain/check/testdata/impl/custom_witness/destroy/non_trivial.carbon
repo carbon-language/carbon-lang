@@ -31,6 +31,23 @@ fn CheckHasDestruction[T: Core.Destroy](_: T) {}
 // redundant.
 fn CheckHasTrivialDestruction[T: Core.TrivialDestroy](_: T) {}
 
+// Identifies whether a type can be destroyed.
+//
+// Use this function to confirm non-trivial destruction (pass) and types that
+// can't be destroyed (fail).
+fn CheckTypeHasDestruction(unused T: Core.Destroy) {}
+
+// Identifies whether a type has trivial destruction.
+//
+// Use this function to confirm trivial destruction (pass), non-trivial
+// destruction (fail), and types that can't be destroyed (fail).
+//
+// `CheckTypeHasTrivialDestruction` should only be combined with
+// `CheckTypeHasDestruction` for types that are expected to not have trivial
+// destruction. Using both on a trivially destroyable type (e.g. `i32`) is
+// redundant.
+fn CheckTypeHasTrivialDestruction(unused T: Core.TrivialDestroy) {}
+
 // --- types.carbon
 
 library "[[@TEST_NAME]]";
@@ -129,6 +146,11 @@ class AdaptAdaptNonTrivial {
 // adapter.
 class AdaptNonTrivialArray {
   adapt array(NonTrivial, 2);
+}
+
+// Has non-trivial destruction because of a member.
+base class NonTrivialMemberBase {
+  var n: NonTrivial;
 }
 
 // --- fail_array.carbon
@@ -438,4 +460,74 @@ fn TestTupleWithNestedNonTrivial(x: ((NonTrivial,),)) {
   // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
+}
+
+// --- constrained_facet.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+import library "types";
+
+fn TestDestroy(generic T: Core.Destroy) {
+  CheckTypeHasDestruction(T);
+}
+
+fn TestStructOfDestroy(generic T: Core.Destroy) {
+  CheckTypeHasDestruction({.a: T});
+}
+
+fn TestTupleOfDestroy(generic T: Core.Destroy) {
+  CheckTypeHasDestruction((T, i32));
+}
+
+fn TestArrayOfDestroy(generic T: Core.Destroy) {
+  CheckTypeHasDestruction(array(T, 2));
+}
+
+fn TestGenericClassOfDestroy(generic T: Core.Destroy) {
+  CheckTypeHasDestruction(DestroyableBox(T));
+}
+
+// --- todo_fail_constrained_facet_trivial.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+
+// TODO: This should fail, because `T` might not have trivial destruction.
+fn TestDestroy(generic T: Core.Destroy) {
+  CheckTypeHasTrivialDestruction(T);
+}
+
+// --- fail_partial.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+import library "types";
+
+fn TestPartialNonTrivialMemberBase() {
+  CheckTypeHasDestruction(partial NonTrivialMemberBase);
+
+  // CHECK:STDERR: fail_partial.carbon:[[@LINE+4]]:34-61: error: cannot convert type `partial NonTrivialMemberBase` into type implementing `Core.TrivialDestroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: imported from: fail_partial.carbon:[[@LINE-7]]:1 [InImport]
+  // CHECK:STDERR: check_destroy_format.carbon:36:42-63: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:
+  CheckTypeHasTrivialDestruction(partial NonTrivialMemberBase);
+}
+
+// --- todo_fail_partial_destroy_impl.carbon
+
+library "[[@TEST_NAME]]";
+
+import library "check_destroy_format";
+import library "types";
+
+// TODO: `CheckTypeHasTrivialDestruction` should fail once `DestroyImpl.Op`
+// takes `partial Self` instead of `Self`.
+fn TestPartialNonTrivialBase() {
+  CheckTypeHasDestruction(partial NonTrivialBase);
+
+  CheckTypeHasTrivialDestruction(partial NonTrivialBase);
 }
