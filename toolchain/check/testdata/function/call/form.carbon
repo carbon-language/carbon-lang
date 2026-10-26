@@ -67,11 +67,11 @@ fn F(x:? form(ref ()));
 // --- fail_param_form_not_constant.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_param_form_not_constant.carbon:[[@LINE+2]]:1-27: error: imported API 'Core//form' not found [ImportNotFound]
-// CHECK:STDERR:
-import Core library "form";
+import Core library "core";
 
 fn F() -> Core.Form;
+// CHECK:STDERR: fail_param_form_not_constant.carbon:[[@LINE+2]]:10-12: error: cannot evaluate form expression [FormExprEvaluationFailure]
+// CHECK:STDERR:
 fn G(x:? F());
 
 // --- fail_form_param_not_form.carbon
