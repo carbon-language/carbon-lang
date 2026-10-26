@@ -254,6 +254,12 @@ static auto BuildDefaultWitness(
                             query_specific_interface, {fn_id});
 }
 
+static auto IsCppTypeTriviallyDestructible(
+    const clang::CXXRecordDecl* class_decl) -> bool {
+  return !class_decl || (class_decl->hasTrivialDestructor() &&
+                         !class_decl->hasDeletedDestructor());
+}
+
 static auto BuildCppSubobjectDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -265,8 +271,7 @@ static auto BuildCppSubobjectDestroyWitness(
     return SemIR::InstId::None;
   }
   auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
-  if (!class_decl || (class_decl->hasTrivialDestructor() &&
-                      !class_decl->hasDeletedDestructor())) {
+  if (IsCppTypeTriviallyDestructible(class_decl)) {
     return BuildTrivialSubobjectDestroyWitness(
         context, loc_id, query_self_const_id, query_specific_interface);
   }
@@ -280,6 +285,21 @@ static auto BuildCppSubobjectDestroyWitness(
   }
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface, {fn_id});
+}
+
+static auto BuildTrivialDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
+  auto* tag_decl = TypeAsTagDecl(context, query_self_const_id);
+  if (!tag_decl) {
+    return SemIR::InstId::None;
+  }
+  auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
+  return IsCppTypeTriviallyDestructible(class_decl)
+             ? BuildCustomWitness(context, loc_id, query_self_const_id,
+                                  query_specific_interface, {})
+             : SemIR::InstId::None;
 }
 
 // Attempts to build a witness table entry for a C++ unary operator.
@@ -627,6 +647,10 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
       return BuildCppSubobjectDestroyWitness(
           context, loc_id, query_self_const_id, query_specific_interface);
 
+    case SemIR::CoreInterface::TrivialDestroyImpl:
+      return BuildTrivialDestroyWitness(context, loc_id, query_self_const_id,
+                                        query_specific_interface);
+
     case SemIR::CoreInterface::CppRangeForIterate:
       return BuildCppRangeForIterateWitness(
           context, loc_id, query_self_const_id, query_specific_interface);
@@ -634,7 +658,6 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     // *FitsIn are implemented only by Carbon primitive types.
     case SemIR::CoreInterface::IntFitsIn:
     case SemIR::CoreInterface::FloatFitsIn:
-    case SemIR::CoreInterface::TrivialDestroyImpl:
       return SemIR::InstId::None;
 
     case SemIR::CoreInterface::Unknown:

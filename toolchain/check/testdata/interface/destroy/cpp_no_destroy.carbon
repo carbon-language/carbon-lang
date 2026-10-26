@@ -6,9 +6,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/destroy/cpp_no_destroy_objects.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/destroy/cpp_no_destroy.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/destroy/cpp_no_destroy_objects.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/destroy/cpp_no_destroy.carbon
 
 // --- types.h
 
@@ -396,9 +396,9 @@ struct CppHoldsCarbonHoldsDeletedDestructor {
 ''';
 
 // TODO: `CheckHasDestruction` should fail too, because
-// `CarbonHoldsDeletedDestructor` can't be destroyed. Today it passes; the only
-// errors are at the definition of `CarbonHoldsDeletedDestructor` and from
-// `CheckHasTrivialDestruction`.
+// `CarbonHoldsDeletedDestructor` can't be destroyed. This should be
+// determined by reverse-interop, not Carbon-C++ interop because C++
+// needs to be able to tell that its types are not destructible.
 fn TestCppHoldsCarbonHoldsDeletedDestructor(
     x: Cpp.CppHoldsCarbonHoldsDeletedDestructor) {
   CheckHasDestruction(x);

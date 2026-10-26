@@ -6,9 +6,9 @@
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
-// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/destroy/cpp_objects_with_trivial_destroy.carbon
+// TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/check/testdata/interface/destroy/cpp_trivial_destroy.carbon
 // TIP: To dump output, run:
-// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/destroy/cpp_objects_with_trivial_destroy.carbon
+// TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/destroy/cpp_trivial_destroy.carbon
 
 // --- types.h
 
@@ -178,28 +178,24 @@ fn TestAdaptTrivialDestructor(x: AdaptTrivialDestructor) {
   CheckHasTrivialDestruction(x);
 }
 
-// --- todo_class_dynamic.carbon
+// --- virtual_function.carbon
 
 library "[[@TEST_NAME]]";
 
 import library "check_destroy_format";
 import Cpp library "types.h";
 
-// TODO: Decide what kind of destruction a dynamic class has. Today this has
-// trivial destruction.
 fn TestVirtualFunction(x: Cpp.VirtualFunction) {
   CheckHasTrivialDestruction(x);
 }
 
-// --- todo_class_nullptr.carbon
+// --- nullptr_t.carbon
 
 library "[[@TEST_NAME]]";
 
 import library "check_destroy_format";
 import Cpp library "types.h";
 
-// TODO: `Cpp.NullptrT` depends on `Core.MaybeUnformed` being correct, so this
-// stays a TODO until `Core.MaybeUnformed` is complete.
 fn TestNullptr(x: Cpp.NullptrT) {
   CheckHasTrivialDestruction(x);
 }
@@ -227,6 +223,7 @@ fn TestCppHoldsCarbonHoldsTrivialDestructor(
   // CHECK:STDERR: check_destroy_format.carbon:19:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   CheckHasTrivialDestruction(x);
+  CheckHasDestruction(x);
 }
 
 // --- const.carbon
