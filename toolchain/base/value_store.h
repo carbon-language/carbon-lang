@@ -263,8 +263,10 @@ class ValueStore
 
     CARBON_DCHECK(static_cast<size_t>(chunk_index) <= chunks_.size(),
                   "{0} <= {1}", chunk_index, chunks_.size());
-    if (static_cast<size_t>(chunk_index) == chunks_.size()) {
-      chunks_.emplace_back();
+    if (LLVM_UNLIKELY(static_cast<size_t>(chunk_index) == chunks_.size())) {
+      // Sink all the growth and allocation logic into an out-of-line helper as
+      // this is inherently a cold-path.
+      AllocateNextChunk();
     }
 
     CARBON_DCHECK(pos == chunks_[chunk_index].size());
@@ -518,6 +520,10 @@ class ValueStore
   // that specific chunk.
   auto IdToChunkIndices(IdType id) const -> std::pair<int32_t, int32_t> {
     return RawIndexToChunkIndices(GetRawIndex(id));
+  }
+
+  [[clang::noinline, clang::preserve_most]] auto AllocateNextChunk() -> void {
+    chunks_.emplace_back();
   }
 
   // Number of elements added to the store. The number should never exceed what
