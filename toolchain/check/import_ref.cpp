@@ -4361,12 +4361,14 @@ static auto TryResolveTypedInst(ImportRefResolver& resolver,
                SemIR::RequireSpecificDefinitionType::TypeInstId);
 
   auto specific_data = GetLocalSpecificData(resolver, inst.specific_id);
+
   if (resolver.HasNewWork()) {
     return ResolveResult::Retry();
   }
 
   auto specific_id =
       GetOrAddLocalSpecific(resolver, inst.specific_id, specific_data);
+
   return ResolveResult::Deduplicated<SemIR::RequireSpecificDefinition>(
       resolver, {.type_id = GetSingletonType(
                      resolver.local_context(),

@@ -283,13 +283,6 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
   return ConstantEvalResult::NewSamePhase(inst);
 }
 
-auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
-                      SemIR::RequireSpecificDefinition inst)
-    -> ConstantEvalResult {
-  ResolveSpecificDefinition(context, SemIR::LocId(inst_id), inst.specific_id);
-  return ConstantEvalResult::NewSamePhase(inst);
-}
-
 // Given a SpecificInterface and an index of an associated constant in that
 // interface, try find a value for that constant in the rewrite constraints of
 // the type of `search_facet`.
@@ -628,6 +621,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
   // If it's not a concrete constant, require it to be complete once it
   // becomes one.
+  return ConstantEvalResult::NewSamePhase(inst);
+}
+
+auto EvalConstantInst(Context& context, SemIR::RequireSpecificDefinition inst)
+    -> ConstantEvalResult {
+  // This can return false, we just need to try it.
+  ResolveSpecificDefinition(context, SemIR::LocId::None, inst.specific_id);
   return ConstantEvalResult::NewSamePhase(inst);
 }
 

@@ -1369,7 +1369,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
       return;
     }
     case RequireSpecificDefinition::Kind: {
-      AddInstName("require_witness_defn");
+      AddInstName("require_specific_def");
       return;
     }
     case CARBON_KIND(RequireImplsDecl inst): {

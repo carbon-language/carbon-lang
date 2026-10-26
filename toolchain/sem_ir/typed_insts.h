@@ -1801,14 +1801,14 @@ struct RequireImplsDecl {
   DeclInstBlockId decl_block_id;
 };
 
-// Record a dependency on the definition of a specific.
+// Record a dependency on the definition of a specific. Can be put into the eval
+// block for a symbolic specific, such that the dependency applies to future
+// monomorphized specifics, not just to a single specific ID.
 struct RequireSpecificDefinition {
   static constexpr auto Kind =
       InstKind::RequireSpecificDefinition.Define<Parse::NodeId>(
-          {.ir_name = "require_specific_defn",
+          {.ir_name = "require_specific_def",
            .constant_kind = InstConstantKind::Conditional,
-           .constant_needs_inst_id =
-               InstConstantNeedsInstIdKind::DuringEvaluation,
            .is_lowered = false});
   // Always the builtin `RequireSpecificDefinitionType` type.
   TypeId type_id;
@@ -1818,7 +1818,7 @@ struct RequireSpecificDefinition {
 // A dedicated type for `RequireSpecificDefinition`.
 using RequireSpecificDefinitionType =
     SingletonTypeInst<InstKind::RequireSpecificDefinitionType,
-                      "require_specific_defn_type">;
+                      "require_specific_def_type">;
 
 // A requirement that `.Self` implements a facet type, specified as the first
 // operand of a `where` expression. This is always the first requirement in a

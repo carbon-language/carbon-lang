@@ -102,7 +102,7 @@ fn F(generic T: Y where .Y1 impls M) {
   // Forms a specific of C whose definition must be resolved in order to
   // perform member access to C1. The resolved specific evaluates a modified
   // LookupImplWitness (`U` substed with `T`) and finds a `final impl` for L.
-  // 
+  //
   // A dependency on a specific impl is a dependency on the specific impl's
   // definition. We used to create a new instruction at the time we found the
   // `final impl` to encode that dependency. But that instruction would end up
@@ -152,7 +152,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0, @I.WithSelf.F(%T.dda) [symbolic]
 // CHECK:STDOUT:   %UseJ.type: type = fn_type @UseJ [concrete]
 // CHECK:STDOUT:   %UseJ: %UseJ.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_witness_defn.9db: require_specific_defn_type = require_specific_defn @T.as_type.as.I.impl(%T.e40) [symbolic]
+// CHECK:STDOUT:   %require_specific_def.6cc: require_specific_def_type = require_specific_def @T.as_type.as.I.impl(%T.e40) [symbolic]
 // CHECK:STDOUT:   %UseI.specific_fn.95d: <specific function> = specific_function %UseI, @UseI(%I.facet.297) [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
@@ -169,7 +169,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT:   %I.impl_witness.2ce: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.type.ad4: type = fn_type @T.as_type.as.I.impl.F, @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.9a9: %T.as_type.as.I.impl.F.type.ad4 = struct_value () [concrete]
-// CHECK:STDOUT:   %require_witness_defn.4b2: require_specific_defn_type = require_specific_defn @T.as_type.as.I.impl(%J.facet) [concrete]
+// CHECK:STDOUT:   %require_specific_def.109: require_specific_def_type = require_specific_def @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %I.facet.c8e: %I.type = facet_value %C, (%I.impl_witness.2ce) [concrete]
 // CHECK:STDOUT:   %UseI.specific_fn.0ef: <specific function> = specific_function %UseI, @UseI(%I.facet.c8e) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.151: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.c8e) [concrete]
@@ -350,7 +350,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc12_31.2: type = facet_access_type %T.loc12_18.1 [symbolic = %T.as_type.loc12_31.2 (constants.%T.as_type.d90)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%T.loc12_18.1) [symbolic = %I.impl_witness (constants.%I.impl_witness.e22)]
-// CHECK:STDOUT:   %require_witness_defn: require_specific_defn_type = require_specific_defn @T.as_type.as.I.impl(%T.loc12_18.1) [symbolic = %require_witness_defn (constants.%require_witness_defn.9db)]
+// CHECK:STDOUT:   %require_specific_def: require_specific_def_type = require_specific_def @T.as_type.as.I.impl(%T.loc12_18.1) [symbolic = %require_specific_def (constants.%require_specific_def.6cc)]
 // CHECK:STDOUT:   %I.facet.loc12_31.2: %I.type = facet_value %T.as_type.loc12_31.2, (%I.impl_witness) [symbolic = %I.facet.loc12_31.2 (constants.%I.facet.297)]
 // CHECK:STDOUT:   %UseI.specific_fn.loc12_25.2: <specific function> = specific_function constants.%UseI, @UseI(%I.facet.loc12_31.2) [symbolic = %UseI.specific_fn.loc12_25.2 (constants.%UseI.specific_fn.95d)]
 // CHECK:STDOUT:
@@ -459,7 +459,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc12_31.2 => constants.%C
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.2ce
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.4b2
+// CHECK:STDOUT:   %require_specific_def => constants.%require_specific_def.109
 // CHECK:STDOUT:   %I.facet.loc12_31.2 => constants.%I.facet.c8e
 // CHECK:STDOUT:   %UseI.specific_fn.loc12_25.2 => constants.%UseI.specific_fn.0ef
 // CHECK:STDOUT: }
@@ -541,7 +541,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.type.8985dc.2: type = fn_type @T.as_type.as.I.impl.F, @T.as_type.as.I.impl(%V) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.fedb3f.2: %T.as_type.as.I.impl.F.type.8985dc.2 = struct_value () [symbolic]
 // CHECK:STDOUT:   %I.facet.297833.2: %I.type = facet_value %V.as_type, (%I.impl_witness.e22ed8.2) [symbolic]
-// CHECK:STDOUT:   %require_witness_defn.9db: require_specific_defn_type = require_specific_defn @T.as_type.as.I.impl(%V) [symbolic]
+// CHECK:STDOUT:   %require_specific_def.6cc: require_specific_def_type = require_specific_def @T.as_type.as.I.impl(%V) [symbolic]
 // CHECK:STDOUT:   %B.14e: type = class_type @B, @B(%I.facet.297833.2) [symbolic]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %.b77: <witness> = impl_self_witness %D, @J [concrete]
@@ -554,7 +554,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT:   %I.impl_witness.6a0: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.type.1de: type = fn_type @T.as_type.as.I.impl.F, @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.ec8: %T.as_type.as.I.impl.F.type.1de = struct_value () [concrete]
-// CHECK:STDOUT:   %require_witness_defn.e6d: require_specific_defn_type = require_specific_defn @T.as_type.as.I.impl(%J.facet) [concrete]
+// CHECK:STDOUT:   %require_specific_def.0ce: require_specific_def_type = require_specific_def @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %I.facet.a62: %I.type = facet_value %D, (%I.impl_witness.6a0) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.type.1b8: type = fn_type @I.WithSelf.F, @I.WithSelf(%I.facet.a62) [concrete]
 // CHECK:STDOUT:   %I.WithSelf.F.183: %I.WithSelf.F.type.1b8 = struct_value () [concrete]
@@ -709,7 +709,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %V.as_type.loc16_9: type = facet_access_type %V.loc13_10.1 [symbolic = %V.as_type.loc16_9 (constants.%V.as_type)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%V.loc13_10.1) [symbolic = %I.impl_witness (constants.%I.impl_witness.e22ed8.2)]
-// CHECK:STDOUT:   %require_witness_defn: require_specific_defn_type = require_specific_defn @T.as_type.as.I.impl(%V.loc13_10.1) [symbolic = %require_witness_defn (constants.%require_witness_defn.9db)]
+// CHECK:STDOUT:   %require_specific_def: require_specific_def_type = require_specific_def @T.as_type.as.I.impl(%V.loc13_10.1) [symbolic = %require_specific_def (constants.%require_specific_def.6cc)]
 // CHECK:STDOUT:   %I.facet.loc16_9: %I.type = facet_value %V.as_type.loc16_9, (%I.impl_witness) [symbolic = %I.facet.loc16_9 (constants.%I.facet.297833.2)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   class {
@@ -850,7 +850,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %V.as_type.loc16_9 => constants.%D
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.6a0
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.e6d
+// CHECK:STDOUT:   %require_specific_def => constants.%require_specific_def.0ce
 // CHECK:STDOUT:   %I.facet.loc16_9 => constants.%I.facet.a62
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -929,7 +929,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT:   %specific_impl_fn: <specific function> = specific_impl_function %impl.elem0.136579.2, @I.WithSelf.F(%T.dda) [symbolic]
 // CHECK:STDOUT:   %UseJ.type: type = fn_type @UseJ [concrete]
 // CHECK:STDOUT:   %UseJ: %UseJ.type = struct_value () [concrete]
-// CHECK:STDOUT:   %require_witness_defn.9db: require_specific_defn_type = require_specific_defn @T.as_type.as.I.impl(%T.e40) [symbolic]
+// CHECK:STDOUT:   %require_specific_def.6cc: require_specific_def_type = require_specific_def @T.as_type.as.I.impl(%T.e40) [symbolic]
 // CHECK:STDOUT:   %UseI.specific_fn.95d: <specific function> = specific_function %UseI, @UseI(%I.facet.297) [symbolic]
 // CHECK:STDOUT:   %D: type = class_type @D [concrete]
 // CHECK:STDOUT:   %.b77: <witness> = impl_self_witness %D, @J [concrete]
@@ -946,7 +946,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT:   %I.impl_witness.6a0: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.type.1de: type = fn_type @T.as_type.as.I.impl.F, @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %T.as_type.as.I.impl.F.ec8: %T.as_type.as.I.impl.F.type.1de = struct_value () [concrete]
-// CHECK:STDOUT:   %require_witness_defn.e6d: require_specific_defn_type = require_specific_defn @T.as_type.as.I.impl(%J.facet) [concrete]
+// CHECK:STDOUT:   %require_specific_def.0ce: require_specific_def_type = require_specific_def @T.as_type.as.I.impl(%J.facet) [concrete]
 // CHECK:STDOUT:   %I.facet.a62: %I.type = facet_value %D, (%I.impl_witness.6a0) [concrete]
 // CHECK:STDOUT:   %UseI.specific_fn.033: <specific function> = specific_function %UseI, @UseI(%I.facet.a62) [concrete]
 // CHECK:STDOUT:   %C.c11: type = class_type @C, @C(%I.facet.a62) [concrete]
@@ -1167,7 +1167,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc15_31.2: type = facet_access_type %T.loc15_18.1 [symbolic = %T.as_type.loc15_31.2 (constants.%T.as_type.d90)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @T.as_type.as.I.impl.%I.impl_witness_table, @T.as_type.as.I.impl(%T.loc15_18.1) [symbolic = %I.impl_witness (constants.%I.impl_witness.e22)]
-// CHECK:STDOUT:   %require_witness_defn: require_specific_defn_type = require_specific_defn @T.as_type.as.I.impl(%T.loc15_18.1) [symbolic = %require_witness_defn (constants.%require_witness_defn.9db)]
+// CHECK:STDOUT:   %require_specific_def: require_specific_def_type = require_specific_def @T.as_type.as.I.impl(%T.loc15_18.1) [symbolic = %require_specific_def (constants.%require_specific_def.6cc)]
 // CHECK:STDOUT:   %I.facet.loc15_31.2: %I.type = facet_value %T.as_type.loc15_31.2, (%I.impl_witness) [symbolic = %I.facet.loc15_31.2 (constants.%I.facet.297)]
 // CHECK:STDOUT:   %UseI.specific_fn.loc15_25.2: <specific function> = specific_function constants.%UseI, @UseI(%I.facet.loc15_31.2) [symbolic = %UseI.specific_fn.loc15_25.2 (constants.%UseI.specific_fn.95d)]
 // CHECK:STDOUT:
@@ -1295,7 +1295,7 @@ fn F(generic T: Y where .Y1 impls M) {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T.as_type.loc15_31.2 => constants.%D
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness.6a0
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn.e6d
+// CHECK:STDOUT:   %require_specific_def => constants.%require_specific_def.0ce
 // CHECK:STDOUT:   %I.facet.loc15_31.2 => constants.%I.facet.a62
 // CHECK:STDOUT:   %UseI.specific_fn.loc15_25.2 => constants.%UseI.specific_fn.033
 // CHECK:STDOUT: }

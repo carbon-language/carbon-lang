@@ -1007,7 +1007,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %.f8fe26.2: <witness> = impl_self_witness %T.67d, @Ptr [symbolic]
 // CHECK:STDOUT:   %Ptr.impl_witness.5a17a2.2: <witness> = impl_witness @U.as.Ptr.impl.%Ptr.impl_witness_table, @U.as.Ptr.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %Ptr.facet.7955f3.2: %Ptr.type = facet_value %T.67d, (%Ptr.impl_witness.5a17a2.2) [symbolic]
-// CHECK:STDOUT:   %require_witness_defn: require_specific_defn_type = require_specific_defn @U.as.Ptr.impl(%T.67d) [symbolic]
+// CHECK:STDOUT:   %require_specific_def: require_specific_def_type = require_specific_def @U.as.Ptr.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %.cb6: Core.Form = init_form %ptr.e8f8f9.2 [symbolic]
 // CHECK:STDOUT:   %pattern_type.4f4: type = pattern_type %ptr.e8f8f9.2 [symbolic]
 // CHECK:STDOUT:   %return.param_patt.27f: %pattern_type.4f4 = out_param_pattern [symbolic]
@@ -1142,7 +1142,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %t.patt.loc9_20.2: @F.%pattern_type.loc9_20 (%pattern_type.51d) = ref_binding_pattern t [symbolic = %t.patt.loc9_20.2 (constants.%t.patt)]
 // CHECK:STDOUT:   %t.param_patt.loc9_15.2: @F.%pattern_type.loc9_20 (%pattern_type.51d) = var_param_pattern %t.patt.loc9_20.2 [symbolic = %t.param_patt.loc9_15.2 (constants.%t.param_patt)]
 // CHECK:STDOUT:   %Ptr.impl_witness: <witness> = impl_witness @U.as.Ptr.impl.%Ptr.impl_witness_table, @U.as.Ptr.impl(%T.loc9_7.1) [symbolic = %Ptr.impl_witness (constants.%Ptr.impl_witness.5a17a2.2)]
-// CHECK:STDOUT:   %require_witness_defn: require_specific_defn_type = require_specific_defn @U.as.Ptr.impl(%T.loc9_7.1) [symbolic = %require_witness_defn (constants.%require_witness_defn)]
+// CHECK:STDOUT:   %require_specific_def: require_specific_def_type = require_specific_def @U.as.Ptr.impl(%T.loc9_7.1) [symbolic = %require_specific_def (constants.%require_specific_def)]
 // CHECK:STDOUT:   %Ptr.facet.loc9_29.1: %Ptr.type = facet_value %T.loc9_7.1, (%Ptr.impl_witness) [symbolic = %Ptr.facet.loc9_29.1 (constants.%Ptr.facet.7955f3.2)]
 // CHECK:STDOUT:   %ptr: type = ptr_type %T.loc9_7.1 [symbolic = %ptr (constants.%ptr.e8f8f9.2)]
 // CHECK:STDOUT:   %.loc9_29.1: Core.Form = init_form %ptr [symbolic = %.loc9_29.1 (constants.%.cb6)]
@@ -1220,7 +1220,7 @@ fn F[T: Ptr](var t: T) -> T.(Ptr.Type) {
 // CHECK:STDOUT:   %t.patt.loc9_20.2 => constants.%t.patt
 // CHECK:STDOUT:   %t.param_patt.loc9_15.2 => constants.%t.param_patt
 // CHECK:STDOUT:   %Ptr.impl_witness => constants.%Ptr.impl_witness.5a17a2.2
-// CHECK:STDOUT:   %require_witness_defn => constants.%require_witness_defn
+// CHECK:STDOUT:   %require_specific_def => constants.%require_specific_def
 // CHECK:STDOUT:   %Ptr.facet.loc9_29.1 => constants.%Ptr.facet.7955f3.2
 // CHECK:STDOUT:   %ptr => constants.%ptr.e8f8f9.2
 // CHECK:STDOUT:   %.loc9_29.1 => constants.%.cb6

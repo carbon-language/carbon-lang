@@ -98,34 +98,16 @@ static auto InstAddedToEvalBlock(Context& context, SemIR::LocId loc_id,
   // edge from the eval block to the ImplDecl specific. As the specific in the
   // ImplWitness is further monomorphized, the RequireSpecificDefinition will be
   // as well. At each step, it will resolve the ImplDecl's specific definition,
-  // ensuring that the contants from the witness table remain valid for use from
-  // the ImplWitness.
+  // ensuring that the constants from the witness table remain valid for use
+  // from the ImplWitness.
   //
-  // We add the instruction directly to the eval block without FinishInst. The
-  // RequireSpecificDefinition's constant instruction is always the same
-  // `inst_id`.
-
-#if 1
-  auto inst_id = context.sem_ir().insts().AddInNoBlock(
-      SemIR::LocIdAndInst::RuntimeVerified(
-          context.sem_ir(), loc_id,
-          SemIR::RequireSpecificDefinition{
-              .type_id = GetSingletonType(
-                  context, SemIR::RequireSpecificDefinitionType::TypeInstId),
-              .specific_id = witness.specific_id}));
-  auto const_inst_id = inst_id;
-  auto const_id = AddGenericConstantInstToEvalBlock(
-      context, const_inst_id, inst_id, 
-      // FIXME:
-      SemIR::ConstantDependence::Checked);
-  context.constant_values().Set(inst_id, const_id);
-#else
+  // The eval block being inserted into is always the top of the generic stack,
+  // so we can go through the standard AddInst flow.
   AddInstInNoBlock<SemIR::RequireSpecificDefinition>(
       context, loc_id,
       {.type_id = GetSingletonType(
            context, SemIR::RequireSpecificDefinitionType::TypeInstId),
        .specific_id = witness.specific_id});
-#endif
 }
 
 template <typename InstT>
@@ -849,8 +831,7 @@ static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
   auto args_id = context.inst_blocks().AddCanonical(arg_ids);
   // Self specifics are not created as part of identifying a facet type.
   CARBON_CHECK(!context.eval_impl_lookup_to_identified_witness());
-  return context.specifics().GetOrAdd(generic_id, args_id,
-                                      /*identified=*/false);
+  return context.specifics().GetOrAdd(generic_id, args_id, false);
 }
 
 auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,

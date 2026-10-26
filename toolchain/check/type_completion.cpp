@@ -247,14 +247,13 @@ class TypeCompleter {
       -> SemIR::CompleteTypeInfo;
 
   template <typename InstT>
-    requires(
-        InstT::Kind.template IsAnyOf<
-            SemIR::AutoType, SemIR::BoundMethodType, SemIR::CharLiteralType,
-            SemIR::ErrorInst, SemIR::FacetType, SemIR::FloatLiteralType,
-            SemIR::FormType, SemIR::IntLiteralType, SemIR::NamespaceType,
-            SemIR::PatternType, SemIR::RequireSpecificDefinitionType,
-            SemIR::SpecificFunctionType, SemIR::VtableType,
-            SemIR::WitnessType>())
+    requires(InstT::Kind.template IsAnyOf<
+             SemIR::AutoType, SemIR::BoundMethodType, SemIR::CharLiteralType,
+             SemIR::ErrorInst, SemIR::FacetType, SemIR::FloatLiteralType,
+             SemIR::FormType, SemIR::IntLiteralType, SemIR::NamespaceType,
+             SemIR::PatternType, SemIR::RequireSpecificDefinitionType,
+             SemIR::SpecificFunctionType, SemIR::VtableType,
+             SemIR::WitnessType>())
   auto BuildInfoForInst(SemIR::TypeId type_id, InstT /*inst*/) const
       -> SemIR::CompleteTypeInfo {
     // These types are empty at runtime but have values to copy at compile time.
