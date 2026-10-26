@@ -5,8 +5,6 @@
 #ifndef CARBON_TOOLCHAIN_CHECK_IMPORT_REF_H_
 #define CARBON_TOOLCHAIN_CHECK_IMPORT_REF_H_
 
-#include <cstdint>
-
 #include "toolchain/check/context.h"
 #include "toolchain/sem_ir/file.h"
 #include "toolchain/sem_ir/ids.h"
