@@ -1010,16 +1010,62 @@ auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
   line_index_ = LineIndex(0);
 }
 
-auto Lexer::SkipHorizontalWhitespace(llvm::StringRef source_text,
-                                     ssize_t& position) -> void {
-  // Handle adjacent whitespace quickly. This comes up frequently for example
-  // due to indentation. We don't expect *huge* runs, so just use a scalar
-  // loop. While still scalar, this avoids repeated table dispatch and marking
-  // whitespace.
-  while (position < static_cast<ssize_t>(source_text.size()) &&
+static auto SkipHorizontalWhitespaceScalar(llvm::StringRef source_text,
+                                           ssize_t& position) -> void {
+  const ssize_t size = source_text.size();
+  while (position < size &&
          (source_text[position] == ' ' || source_text[position] == '\t')) {
     ++position;
   }
+}
+
+#if CARBON_USE_SIMD && __x86_64__
+// Advances `position` past contiguous `' '` and `'\t'` bytes in `source_text`
+// using 16-byte SSE2 scans, falling back to `SkipHorizontalWhitespaceScalar`
+// for any `< 16`-byte tail near EOF.
+static auto SkipHorizontalWhitespaceX86(llvm::StringRef source_text,
+                                        ssize_t& position) -> void {
+  const ssize_t size = source_text.size();
+  const char* const data = source_text.data();
+  // Broadcast `' '` and `'\t'` across all 16 byte lanes of 128-bit registers.
+  const __m128i spaces = _mm_set1_epi8(' ');
+  const __m128i tabs = _mm_set1_epi8('\t');
+  while (LLVM_LIKELY(position + 16 <= size)) {
+    // Unaligned 16-byte load; the loop guard guarantees `[position, position +
+    // 16)` lies within `source_text` without requiring trailing buffer padding.
+    __m128i chunk =
+        _mm_loadu_si128(reinterpret_cast<const __m128i*>(data + position));
+    // `_mm_cmpeq_epi8` sets matching byte lanes to `0xFF` and others to `0x00`;
+    // OR-ing the two comparisons marks every `' '` or `'\t'` byte with `0xFF`.
+    __m128i is_ws = _mm_or_si128(_mm_cmpeq_epi8(chunk, spaces),
+                                 _mm_cmpeq_epi8(chunk, tabs));
+    // `_mm_movemask_epi8` packs bit 7 of each byte into the low 16 bits of an
+    // `int`. Invert and mask to 16 bits so set bits mark non-whitespace bytes.
+    // Most indentation runs are shorter than 16 characters, so predict a hit
+    // here and advance directly to the first non-whitespace byte with
+    // `tzcnt`/`bsf`
+    // (`std::countr_zero`) instead of looping per byte.
+    uint32_t non_ws_mask =
+        ~static_cast<uint32_t>(_mm_movemask_epi8(is_ws)) & 0xFFFFu;
+    if (LLVM_LIKELY(non_ws_mask != 0)) {
+      position += std::countr_zero(non_ws_mask);
+      return;
+    }
+    position += 16;
+  }
+  SkipHorizontalWhitespaceScalar(source_text, position);
+}
+#endif
+
+auto Lexer::SkipHorizontalWhitespace(llvm::StringRef source_text,
+                                     ssize_t& position) -> void {
+  // Handle adjacent whitespace quickly. This comes up frequently for example
+  // due to indentation.
+#if CARBON_USE_SIMD && __x86_64__
+  SkipHorizontalWhitespaceX86(source_text, position);
+#else
+  SkipHorizontalWhitespaceScalar(source_text, position);
+#endif
 }
 
 auto Lexer::AdvanceToLine(llvm::StringRef source_text, ssize_t& position,
@@ -1037,6 +1083,13 @@ auto Lexer::LexHorizontalWhitespace(llvm::StringRef source_text,
                                     ssize_t& position) -> void {
   CARBON_DCHECK(source_text[position] == ' ' || source_text[position] == '\t');
   NoteWhitespace();
+  ++position;
+  // Check if we're already done before an optimized skip routine.
+  if (LLVM_LIKELY(position < static_cast<ssize_t>(source_text.size()) &&
+                  source_text[position] != ' ' &&
+                  source_text[position] != '\t')) {
+    return;
+  }
   // Skip runs using an optimized code path.
   SkipHorizontalWhitespace(source_text, position);
 }
