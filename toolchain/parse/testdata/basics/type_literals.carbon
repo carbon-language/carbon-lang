@@ -12,6 +12,7 @@ var test_i32: i32 = 0;
 var test_f64: f64 = 0.1;
 var test_char: char = 'c';
 var test_str: str = "Test";
+var test_slice: slice(i32);
 
 // CHECK:STDOUT: - filename: type_literals.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
@@ -50,6 +51,16 @@ var test_str: str = "Test";
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='
 // CHECK:STDOUT:   │ ├─StringLiteral '"Test"'
+// CHECK:STDOUT:   ├─VariableDecl ';'
+// CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
+// CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'test_slice'
+// CHECK:STDOUT:   │ │   ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │   │   ╭─SliceTypeLiteral 'slice'
+// CHECK:STDOUT:   │ │   │ ╭─CallExprStart '('
+// CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │   ├─CallExpr ')'
+// CHECK:STDOUT:   │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

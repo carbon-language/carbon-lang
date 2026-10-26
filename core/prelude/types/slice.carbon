@@ -1,0 +1,59 @@
+// Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+// Exceptions. See /LICENSE for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+package Core library "prelude/types/slice";
+
+import library "prelude/copy";
+import library "prelude/default";
+import library "prelude/destroy";
+import library "prelude/operators/as";
+import library "prelude/operators/index";
+import library "prelude/types/array";
+import library "prelude/types/int";
+import library "prelude/types/int_literal";
+import library "prelude/types/uint";
+
+private fn PointerOffset[T: type](p: T*, offset: u64) -> T* = "pointer.offset";
+
+class Slice(T: type) {
+  // TODO: Make this unsafe.
+  fn Make(ptr: T*, size: u64) -> Self {
+    return {.ptr = ptr, .size = size};
+  }
+
+  fn Size(self) -> u64 { return self.size; }
+  fn Ptr(self) -> T* { return self.ptr; }
+
+  fn Range(self, start: u64, count: u64) -> Self {
+    return Make(PointerOffset(self.ptr, start), count);
+  }
+
+  impl as Copy {
+    fn Op(self) -> Self { return {.ptr = self.ptr, .size = self.size}; }
+  }
+
+  // TODO: This should be an array iterator.
+  private var ptr: T*;
+  // TODO: This should be a word-sized integer.
+  private var size: u64;
+}
+
+impl forall [T: type, Subscript: ImplicitAs(u64)]
+    Slice(T) as IndirectIndexWith(Subscript)
+    where .ElementType = T {
+  fn Ref(self, subscript: Subscript) -> ref T {
+    return *PointerOffset(self.Ptr(), subscript);
+  }
+}
+
+impl forall [T: type] Slice(T) as UnformedInit {}
+
+// TODO: Convert from `ref array(T, N)` (per the design) rather than a pointer,
+// once conversions can take `self` by reference (probably via the form-generic
+// conversions in #5389).
+impl forall [T: type, N: IntLiteral] array(T, N)* as ImplicitAs(Slice(T)) {
+  fn Convert(self: array(T, N)*) -> Slice(T) {
+    return Slice(T).Make(&(*self)[0], N);
+  }
+}
