@@ -883,8 +883,9 @@ static auto SkipHorizontalWhitespaceX86(llvm::StringRef source_text,
                                  _mm_cmpeq_epi8(chunk, tabs));
     // `_mm_movemask_epi8` packs bit 7 of each byte into the low 16 bits of an
     // `int`. Invert and mask to 16 bits so set bits mark non-whitespace bytes.
-    // Most indentation runs are shorter than 16 characters, so predict a hit here
-    // and advance directly to the first non-whitespace byte with `tzcnt`/`bsf`
+    // Most indentation runs are shorter than 16 characters, so predict a hit
+    // here and advance directly to the first non-whitespace byte with
+    // `tzcnt`/`bsf`
     // (`std::countr_zero`) instead of looping per byte.
     uint32_t non_ws_mask =
         ~static_cast<uint32_t>(_mm_movemask_epi8(is_ws)) & 0xFFFFu;
