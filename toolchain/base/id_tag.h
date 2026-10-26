@@ -69,9 +69,7 @@ struct IdTag {
   auto Apply(int32_t index) const -> IdT {
     CARBON_DCHECK(index >= 0, "{0}", index);
     if constexpr (IdTagIsUntagged<IdTag>) {
-      // Untagged ids are the index itself. Returning directly, rather than
-      // relying on the members below always producing the identity, keeps
-      // every lookup in an untagged `ValueStore` free of tag arithmetic.
+      // Untagged ids are the index itself, so return directly with no tag computation.
       return IdT(index);
     } else {
       if (index < initial_reserved_ids_) {
@@ -87,6 +85,7 @@ struct IdTag {
   auto Remove(IdT id) const -> int32_t {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
     if constexpr (IdTagIsUntagged<IdTag>) {
+      // Untagged ids are the index itself, so return directly with no tag computation.
       return id.index;
     } else {
       if (!HasTag(id.index)) {
