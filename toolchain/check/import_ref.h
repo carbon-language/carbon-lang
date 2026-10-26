@@ -50,19 +50,9 @@ auto LoadImportRef(Context& context, SemIR::InstId inst_id) -> void;
 // Load all impls declared in the api file corresponding to this impl file.
 auto ImportImplsFromApiFile(Context& context) -> void;
 
-// The result of `ImportImpl`.
-enum class ImportImplResult : std::uint8_t {
-  // The impl was imported by this call.
-  NewlyImported,
-
-  // The impl was imported by an earlier call, possibly through a different
-  // IR.
-  PreviouslyImported,
-};
-
 // Load an impl that is declared in an imported IR.
 auto ImportImpl(Context& context, SemIR::ImportIRId import_ir_id,
-                SemIR::ImplId impl_id) -> ImportImplResult;
+                SemIR::ImplId impl_id) -> void;
 
 // Load an interface that is declared in an imported IR.
 auto ImportInterface(Context& context, SemIR::ImportIRId import_ir_id,

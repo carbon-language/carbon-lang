@@ -513,16 +513,9 @@ static auto MakeSpecificForTemplateArgs(
     auto binding_const_inst_id =
         context.constant_values().GetConstantInstId(binding_inst_id);
 
-    auto arg_id = ConvertToValueOfType(
+    specific_arg_ids.push_back(ConvertToValueOfType(
         context, loc_id, type_expr.inst_id,
-        context.insts().Get(binding_const_inst_id).type_id());
-
-    // Use the canonical constant instruction, so that this forms the same
-    // specific as a Carbon use with the same arguments. Otherwise, a
-    // non-canonical instruction such as a `ClassDecl` would form a second,
-    // distinct specific.
-    specific_arg_ids.push_back(
-        context.constant_values().GetConstantInstId(arg_id));
+        context.insts().Get(binding_const_inst_id).type_id()));
   }
 
   return MakeSpecific(context, loc_id, generic_id, specific_arg_ids);
