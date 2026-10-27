@@ -12,7 +12,7 @@
 #include <string>
 #include <utility>
 
-#include "absl/random/seed_sequences.h"
+#include "common/check.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -387,19 +387,67 @@ static constexpr int NestedLocalPercent = 25;
 static constexpr int DestructurePercent = 2;
 static constexpr int ClassTypeLocalPercent = 50;
 
-// Scales `count` by `percent`%, rounding up with probability equal to the
-// remainder (`(count * percent % 100) / 100.0`).
-using ScaleByPercentFn = llvm::function_ref<auto(int count, int percent)->int>;
+// Returns the `index`th value in `[0, 100)` from a golden-ratio sequence.
+// Multiples of `std::numbers::phi` mod 1.0 in `double` spread evenly across
+// `[0, 100)` without needing a fixed-point rational approximation.
+static auto GoldenRatioPercent(int index) -> int {
+  CARBON_CHECK(index >= 0);
+  return static_cast<int>(std::fmod((index + 0.5) * std::numbers::phi, 1.0) *
+                          100);
+}
+
+// Scales a count by a percentage, carrying the remainder across calls.
+//
+// Each call adds `count * percent` percentage points and returns `1` per full
+// `100` points, keeping the `< 100` leftover points in `remainder_`. Across any
+// sequence of calls, the total returned is
+// `(initial_remainder + sum(count * percent)) / 100`, which is always either
+// the floor or the ceiling of the exact unrounded total regardless of where
+// `remainder_` starts in `[0, 100)`. Spreading starting offsets evenly across
+// `[0, 100)` keeps rounding unbiased and varies which call gets an extra step.
+class PercentScaler {
+ public:
+  explicit PercentScaler(int& next_index)
+      : remainder_(GoldenRatioPercent(next_index++)) {}
+
+  auto operator()(int count, int percent) -> int {
+    remainder_ += count * percent;
+    int scaled = remainder_ / 100;
+    remainder_ %= 100;
+    return scaled;
+  }
+
+ private:
+  int remainder_;
+};
+
+// Deterministic `PercentScaler`s for `ComposeDefPlan`, shared across a sequence
+// of plans so remainders carry from one definition to the next. Initialized
+// from plan parameters rather than `SourceGen` so generated file sizes are
+// identical across `SourceGen` seeds and processes.
+struct PlanScalers {
+  explicit PlanScalers(int seed_index) : next_index(seed_index) {}
+
+  int next_index;
+  PercentScaler exits{next_index};
+  PercentScaler guards{next_index};
+  PercentScaler next_blocks{next_index};
+  PercentScaler loops{next_index};
+  PercentScaler pairs{next_index};
+  PercentScaler locals{next_index};
+  PercentScaler else_ifs{next_index};
+  PercentScaler destructures{next_index};
+  PercentScaler class_type_locals{next_index};
+  PercentScaler destructure_calls{next_index};
+  PercentScaler calls{next_index};
+};
 
 // Returns the maximum depth of the `variant`th plan with `statements`
-// statements. The variants of a size follow the distribution in its row of
-// `PlanShapeTable`: multiples of the golden ratio (`std::numbers::phi`) mod 1.0
-// in `double` spread their choices evenly across `[0, 100)` without needing a
-// fixed-point rational approximation.
+// statements. Variants of a size follow the distribution in its row of
+// `PlanShapeTable` using `GoldenRatioPercent(variant)`.
 static auto ChoosePlanMaxDepth(const PlanShapeRow& shape, int statements,
                                int variant) -> int {
-  int choice = static_cast<int>(
-      std::fmod((variant + 0.5) * std::numbers::phi, 1.0) * 100);
+  int choice = GoldenRatioPercent(variant);
   int max_depth = 0;
   for (int percent : shape.max_depth_percents) {
     choice -= percent;
@@ -412,21 +460,17 @@ static auto ChoosePlanMaxDepth(const PlanShapeRow& shape, int statements,
 }
 
 // Splits `statements` statements between depths 0 through `max_depth`,
-// following `PlanDepthPercents` and giving each depth at least one.
-static auto SplitPlanDepths(int statements, int max_depth,
-                            ScaleByPercentFn scale_by_percent)
+// following `PlanDepthPercents` and giving each depth at least one. Uses a
+// fresh `PercentScaler` per plan because each row sums to `100` (so a shared
+// scaler's remainder would return to its initial value after every plan).
+static auto SplitPlanDepths(int statements, int max_depth, int& next_index)
     -> llvm::SmallVector<int> {
+  PercentScaler scale_by_percent(next_index);
   llvm::SmallVector<int> depth_counts;
-  int cumulative_percent = 0;
-  int assigned = 0;
   for (int percent :
-       llvm::ArrayRef(PlanDepthPercents[max_depth]).take_front(max_depth)) {
-    cumulative_percent += percent;
-    int upto = scale_by_percent(statements, cumulative_percent);
-    depth_counts.push_back(upto - assigned);
-    assigned = upto;
+       llvm::ArrayRef(PlanDepthPercents[max_depth]).take_front(max_depth + 1)) {
+    depth_counts.push_back(scale_by_percent(statements, percent));
   }
-  depth_counts.push_back(statements - assigned);
   for (int& count : depth_counts) {
     if (count == 0) {
       ++count;
@@ -438,20 +482,15 @@ static auto SplitPlanDepths(int statements, int max_depth,
 
 // Composes the plan of a definition with `statements` statements, for the
 // `variant`th definition of that size. With `calls`, some of the updates and
-// destructurings call free functions. Percentage-scaled counts round with a
-// generator seeded with the size and variant, so that definitions of one size
-// vary while their average follows the calibration, and nothing depends on the
-// `SourceGen` seed.
-static auto ComposeDefPlan(int statements, int variant, bool calls) -> DefPlan {
+// destructurings call free functions. Percentage-scaled counts round with
+// `scalers` so definitions of one size vary while tracking the calibrated
+// rates.
+static auto ComposeDefPlan(int statements, int variant, bool calls,
+                           PlanScalers& scalers) -> DefPlan {
   DefPlan plan;
   if (statements == 0) {
     return plan;
   }
-  absl::SeedSeq seed_seq = {statements, variant};
-  absl::BitGen rng(seed_seq);
-  auto scale_by_percent = [&](int count, int percent) {
-    return (count * percent + absl::Uniform<int>(rng, 0, 100)) / 100;
-  };
 
   // Find the last row satisfying `statements >= row.min_statements`. This
   // invariant is satisfied for `*shape` throughout the loop because the first
@@ -468,7 +507,7 @@ static auto ComposeDefPlan(int statements, int variant, bool calls) -> DefPlan {
   }
   llvm::SmallVector<int> depth_counts = SplitPlanDepths(
       statements, ChoosePlanMaxDepth(*shape, statements, variant),
-      scale_by_percent);
+      scalers.next_index);
 
   plan.levels.resize(depth_counts.size());
   // Select each step's spelling starting from `variant` and advancing with
@@ -508,9 +547,9 @@ static auto ComposeDefPlan(int statements, int variant, bool calls) -> DefPlan {
       // Guards' statements can't hold deeper ones, so leave a free statement at
       // the next depth when there are any.
       int min_free = depth + 2 < num_depths ? 1 : 0;
-      exits = std::min({scale_by_percent(loop_blocks, LoopExitPercent), heads,
+      exits = std::min({scalers.exits(loop_blocks, LoopExitPercent), heads,
                         next - min_free});
-      guards = std::min({scale_by_percent(next, shape->guard_return_percent),
+      guards = std::min({scalers.guards(next, shape->guard_return_percent),
                          heads - exits, next - exits - min_free});
       // The number of statements at the next depth that aren't the body of a
       // guard at this depth, and so must be placed in blocks opened by
@@ -528,9 +567,9 @@ static auto ComposeDefPlan(int statements, int variant, bool calls) -> DefPlan {
         ++free;
       }
       if (free > 0) {
-        next_blocks = std::max(1, scale_by_percent(free, NewBlockPercent));
-        loops = scale_by_percent(next_blocks, LoopBlockPercent);
-        pairs = std::min(scale_by_percent(next_blocks, ElseBlockPercent / 2),
+        next_blocks = std::max(1, scalers.next_blocks(free, NewBlockPercent));
+        loops = scalers.loops(next_blocks, LoopBlockPercent);
+        pairs = std::min(scalers.pairs(next_blocks, ElseBlockPercent / 2),
                          (next_blocks - loops) / 2);
         ifs = next_blocks - loops - 2 * pairs;
         // Fit the statements that open blocks into this depth, merging blocks
@@ -558,15 +597,16 @@ static auto ComposeDefPlan(int statements, int variant, bool calls) -> DefPlan {
     // Each block at this depth ends with a step that isn't a local declaration.
     int max_locals = heads - fixed - std::max(0, blocks - fixed);
     int local_percent = depth == 0 ? TopLocalPercent : NestedLocalPercent;
-    int locals = std::min(scale_by_percent(heads, local_percent), max_locals);
-    int else_ifs = scale_by_percent(pairs, ElseIfPercent);
+    int locals = std::min(scalers.locals(heads, local_percent), max_locals);
+    int else_ifs = scalers.else_ifs(pairs, ElseIfPercent);
     int updates = heads - fixed - locals;
-    int destructures = scale_by_percent(locals, DestructurePercent);
+    int destructures = scalers.destructures(locals, DestructurePercent);
     int class_type_locals =
-        scale_by_percent(locals - destructures, ClassTypeLocalPercent);
+        scalers.class_type_locals(locals - destructures, ClassTypeLocalPercent);
     int destructure_calls =
-        calls ? scale_by_percent(destructures, CallDestructurePercent) : 0;
-    int num_calls = calls ? scale_by_percent(updates, CallPercent) : 0;
+        calls ? scalers.destructure_calls(destructures, CallDestructurePercent)
+              : 0;
+    int num_calls = calls ? scalers.calls(updates, CallPercent) : 0;
     add(depth, PlanStepKind::ScalarLocal,
         locals - destructures - class_type_locals);
     add(depth, PlanStepKind::ClassTypeLocal, class_type_locals);
@@ -663,9 +703,11 @@ static auto BuildDefPlans(int num_defs,
   llvm::stable_sort(entries, [](const Entry& lhs, const Entry& rhs) {
     return lhs.position < rhs.position;
   });
+  PlanScalers scalers(num_defs * 2 + static_cast<int>(calls));
   plans.reserve(plans.size() + num_defs);
   for (const Entry& entry : entries) {
-    plans.push_back(ComposeDefPlan(entry.statements, entry.variant, calls));
+    plans.push_back(
+        ComposeDefPlan(entry.statements, entry.variant, calls, scalers));
   }
 }
 
@@ -681,9 +723,11 @@ static auto EstimateAvgDefPlanLines(
   double lines = 0.0;
   int64_t total_weight = 0;
   for (const SourceGen::DefSizeWeight& size : sizes) {
+    PlanScalers scalers(size.statements * 2 + static_cast<int>(calls));
     int size_lines = 0;
     for (int variant : llvm::seq(NumVariants)) {
-      size_lines += ComposeDefPlan(size.statements, variant, calls).lines;
+      size_lines +=
+          ComposeDefPlan(size.statements, variant, calls, scalers).lines;
     }
     lines += static_cast<double>(size_lines) / NumVariants * size.weight;
     total_weight += size.weight;
