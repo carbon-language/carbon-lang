@@ -127,7 +127,7 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT:   %_.var = alloca [40 x i8], align 8, !dbg !29
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !29
 // CHECK:STDOUT:   call void @_ZN1DC1Ev.carbon_thunk.(ptr %_.var), !dbg !30
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.b0bd72ff7739b134(ptr %_.var), !dbg !29
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5657a11f920a808e(ptr %_.var), !dbg !29
 // CHECK:STDOUT:   ret void, !dbg !32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -153,7 +153,7 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b0bd72ff7739b134(ptr %t) #0 !dbg !41 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.5657a11f920a808e(ptr %t) #0 !dbg !41 {
 // CHECK:STDOUT:   ret void, !dbg !46
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -219,7 +219,7 @@ fn AccessD(d: Cpp.D) -> i32 {
 // CHECK:STDOUT: !38 = !DILocation(line: 16, column: 10, scope: !33)
 // CHECK:STDOUT: !39 = !DILocation(line: 16, column: 3, scope: !33)
 // CHECK:STDOUT: !40 = !{!34}
-// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b0bd72ff7739b134", scope: null, file: !10, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !47)
+// CHECK:STDOUT: !41 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5657a11f920a808e", scope: null, file: !10, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !47)
 // CHECK:STDOUT: !42 = !DILocalVariable(arg: 1, scope: !41, type: !23)
 // CHECK:STDOUT: !46 = !DILocation(line: 32, column: 1, scope: !41)
 // CHECK:STDOUT: !47 = !{!42}

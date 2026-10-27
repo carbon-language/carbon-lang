@@ -378,7 +378,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %x.var, i32 0, i32 8, !dbg !146
 // CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !146
 // CHECK:STDOUT:   call void @_Z11pass_struct1X.carbon_thunk._(ptr %x.var), !dbg !148
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %x.var), !dbg !142
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4e766327b9d07a26(ptr %x.var), !dbg !142
 // CHECK:STDOUT:   ret void, !dbg !149
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -426,7 +426,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %t) #0 !dbg !158 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.4e766327b9d07a26(ptr %t) #0 !dbg !158 {
 // CHECK:STDOUT:   ret void, !dbg !163
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -485,7 +485,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !153 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.102476b7ae87d0a1", scope: null, file: !22, line: 9, type: !140, spFlags: DISPFlagDefinition, unit: !138)
 // CHECK:STDOUT: !156 = !DILocation(line: 9, column: 28, scope: !153)
 // CHECK:STDOUT: !157 = !DILocation(line: 9, column: 21, scope: !153)
-// CHECK:STDOUT: !158 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2d682b12c0c20e08", scope: null, file: !26, line: 32, type: !54, spFlags: DISPFlagDefinition, unit: !138, retainedNodes: !164)
+// CHECK:STDOUT: !158 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4e766327b9d07a26", scope: null, file: !26, line: 32, type: !54, spFlags: DISPFlagDefinition, unit: !138, retainedNodes: !164)
 // CHECK:STDOUT: !159 = !DILocalVariable(arg: 1, scope: !158, type: !44)
 // CHECK:STDOUT: !163 = !DILocation(line: 32, column: 1, scope: !158)
 // CHECK:STDOUT: !164 = !{!159}
@@ -513,7 +513,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   %.loc10_4.c = getelementptr inbounds nuw [12 x i8], ptr %y.var, i32 0, i32 8, !dbg !176
 // CHECK:STDOUT:   store i32 3, ptr %.loc10_4.c, align 4, !dbg !176
 // CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %y.var), !dbg !178
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5d1f4d5634dc3faa(ptr %y.var), !dbg !172
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6b885745e47b1554(ptr %y.var), !dbg !172
 // CHECK:STDOUT:   ret void, !dbg !179
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -538,7 +538,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc17_24.1.temp), !dbg !181
 // CHECK:STDOUT:   call void @_CMake.Main(ptr %.loc17_24.1.temp), !dbg !181
 // CHECK:STDOUT:   call void @_Z11pass_struct1Y.carbon_thunk._(ptr %.loc17_24.1.temp), !dbg !182
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5d1f4d5634dc3faa(ptr %.loc17_24.1.temp), !dbg !181
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.6b885745e47b1554(ptr %.loc17_24.1.temp), !dbg !181
 // CHECK:STDOUT:   ret void, !dbg !183
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -553,7 +553,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #2
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.5d1f4d5634dc3faa(ptr %t) #0 !dbg !191 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6b885745e47b1554(ptr %t) #0 !dbg !191 {
 // CHECK:STDOUT:   ret void, !dbg !196
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -563,7 +563,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @llvm.lifetime.start.p0, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.5d1f4d5634dc3faa, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.6b885745e47b1554, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -609,7 +609,7 @@ fn PassValueExpr(y: Cpp.Y) {
 // CHECK:STDOUT: !188 = !DILocation(line: 21, column: 3, scope: !184)
 // CHECK:STDOUT: !189 = !DILocation(line: 20, column: 1, scope: !184)
 // CHECK:STDOUT: !190 = !{!185}
-// CHECK:STDOUT: !191 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5d1f4d5634dc3faa", scope: null, file: !26, line: 32, type: !54, spFlags: DISPFlagDefinition, unit: !170, retainedNodes: !197)
+// CHECK:STDOUT: !191 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.6b885745e47b1554", scope: null, file: !26, line: 32, type: !54, spFlags: DISPFlagDefinition, unit: !170, retainedNodes: !197)
 // CHECK:STDOUT: !192 = !DILocalVariable(arg: 1, scope: !191, type: !44)
 // CHECK:STDOUT: !196 = !DILocation(line: 32, column: 1, scope: !191)
 // CHECK:STDOUT: !197 = !{!192}

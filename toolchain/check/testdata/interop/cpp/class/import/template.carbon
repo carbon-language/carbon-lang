@@ -765,21 +765,21 @@ fn G() {
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %E.cpp_destructor.type: type = fn_type @E.cpp_destructor [concrete]
-// CHECK:STDOUT:   %E.cpp_destructor: %E.cpp_destructor.type = struct_value () [concrete]
-// CHECK:STDOUT:   %custom_witness.fe1: <witness> = custom_witness (%E.cpp_destructor), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.facet.09b: %SubobjectDestroy.type = facet_value %E, (%custom_witness.fe1) [concrete]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness.6e5: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.09b) [concrete]
-// CHECK:STDOUT:   %Destroy.facet.ac4b54.1: %Destroy.type = facet_value %E, (%DestroyImpl.impl_witness.6e5, %custom_witness.fe1) [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.687: type = fn_type @SubobjectDestroy.WithSelf.Op.loc10 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f: %SubobjectDestroy.WithSelf.Op.type.687 = struct_value () [concrete]
+// CHECK:STDOUT:   %custom_witness.b80: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f), @SubobjectDestroy [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.facet.cc5: %SubobjectDestroy.type = facet_value %E, (%custom_witness.b80) [concrete]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness.d63: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.cc5) [concrete]
+// CHECK:STDOUT:   %Destroy.facet.1cb72a.1: %Destroy.type = facet_value %E, (%DestroyImpl.impl_witness.d63, %custom_witness.b80) [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.6: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %.79f: init %empty_tuple.type = splice_block %SelfDestruct.call {
+// CHECK:STDOUT:     %.7b4: init %empty_tuple.type = splice_block %SelfDestruct.call {
 // CHECK:STDOUT:       %.efc445.1: ref %E = specific_inst @F.%a.var, @F(%i32)
-// CHECK:STDOUT:       %Destroy.facet.ac4b54.2: %Destroy.type = facet_value %E, (%DestroyImpl.impl_witness.6e5, %custom_witness.fe1) [concrete = %Destroy.facet.ac4b54.1]
-// CHECK:STDOUT:       %.8fdcd6.1: %Destroy.type = converted %E, %Destroy.facet.ac4b54.2 [concrete = %Destroy.facet.ac4b54.1]
-// CHECK:STDOUT:       %Destroy.facet.ac4b54.3: %Destroy.type = facet_value %E, (%DestroyImpl.impl_witness.6e5, %custom_witness.fe1) [concrete = %Destroy.facet.ac4b54.1]
-// CHECK:STDOUT:       %.8fdcd6.2: %Destroy.type = converted %E, %Destroy.facet.ac4b54.3 [concrete = %Destroy.facet.ac4b54.1]
+// CHECK:STDOUT:       %Destroy.facet.1cb72a.2: %Destroy.type = facet_value %E, (%DestroyImpl.impl_witness.d63, %custom_witness.b80) [concrete = %Destroy.facet.1cb72a.1]
+// CHECK:STDOUT:       %.9a9d8c.1: %Destroy.type = converted %E, %Destroy.facet.1cb72a.2 [concrete = %Destroy.facet.1cb72a.1]
+// CHECK:STDOUT:       %Destroy.facet.1cb72a.3: %Destroy.type = facet_value %E, (%DestroyImpl.impl_witness.d63, %custom_witness.b80) [concrete = %Destroy.facet.1cb72a.1]
+// CHECK:STDOUT:       %.9a9d8c.2: %Destroy.type = converted %E, %Destroy.facet.1cb72a.3 [concrete = %Destroy.facet.1cb72a.1]
 // CHECK:STDOUT:       <elided>
-// CHECK:STDOUT:       %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn.1f11d4.2(%.efc445.1)
+// CHECK:STDOUT:       %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn.02d4dd.2(%.efc445.1)
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -878,6 +878,8 @@ fn G() {
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc10(%self.param: ref %E) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(constants.%T.67d) {
 // CHECK:STDOUT:   %T.patt.loc9_15.2 => constants.%T.patt.3a0592.1
