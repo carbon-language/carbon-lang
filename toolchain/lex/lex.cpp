@@ -536,11 +536,6 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
   return ScanForIdentifierPrefixScalar(text, 0);
 }
 
-using DispatchFunctionT = auto(Lexer& lexer, llvm::StringRef source_text,
-                               ssize_t position) [[clang::preserve_none]]
--> void;
-using DispatchTableT = std::array<DispatchFunctionT*, 256>;
-
 static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
   std::array<TokenKind, 256> table = {};
 #define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
@@ -553,6 +548,19 @@ static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
   return table;
 }();
 
+// Disable `[[clang::preserve_none]]` when building with AddressSanitizer on
+// AArch64 to work around an LLVM backend bug: when sanitizer stack
+// instrumentation combines dynamic stack allocation with stack realignment,
+// AArch64 reserves `x19` as the stack base pointer (`hasBasePointer`) and
+// fails to save and restore `x19` across calls to `[[clang::preserve_none]]`
+// callees that clobber `x19`.
+#if (defined(__aarch64__) || defined(_M_ARM64)) && \
+    (LLVM_ADDRESS_SANITIZER_BUILD || LLVM_HWADDRESS_SANITIZER_BUILD)
+#define CARBON_LEX_PRESERVE_NONE
+#else
+#define CARBON_LEX_PRESERVE_NONE [[clang::preserve_none]]
+#endif
+
 // We use a collection of static member functions for table-based dispatch to
 // lexer methods. These are named static member functions so that they show up
 // helpfully in profiles and backtraces, but they tend to not contain the
@@ -561,11 +569,14 @@ static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
 // build efficient dispatch tables out of them. All of them end by doing a
 // must-tail return call to this routine. It handles continuing the dispatch
 // chain.
-[[clang::preserve_none]] static auto DispatchNext(Lexer& lexer,
+CARBON_LEX_PRESERVE_NONE static auto DispatchNext(Lexer& lexer,
                                                   llvm::StringRef source_text,
                                                   ssize_t position) -> void;
 
-[[clang::preserve_none]] static auto DispatchLexError(
+using DispatchFunctionT = decltype(DispatchNext);
+using DispatchTableT = std::array<DispatchFunctionT*, 256>;
+
+CARBON_LEX_PRESERVE_NONE static auto DispatchLexError(
     Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
   Lexer::LexResult result = lexer.LexError(source_text, position);
   CARBON_CHECK(result, "Failed to form a token!");
@@ -577,7 +588,7 @@ static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
 // lexes a token. If no token is matched, they tail-dispatch to the error token
 // handler; otherwise they continue dispatching the next token.
 #define CARBON_DISPATCH_LEX_TOKEN(LexMethod)                                   \
-  [[clang::preserve_none]] static auto Dispatch##LexMethod(                    \
+  CARBON_LEX_PRESERVE_NONE static auto Dispatch##LexMethod(                    \
       Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {   \
     if (LLVM_LIKELY(lexer.LexMethod(source_text, position))) {                 \
       /* NOLINTNEXTLINE(readability-avoid-return-with-void-value) */           \
@@ -591,7 +602,7 @@ CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifier)
 CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
-[[clang::preserve_none]] static auto DispatchLexHash(
+CARBON_LEX_PRESERVE_NONE static auto DispatchLexHash(
     Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
   if (lexer.LexHash(source_text, position)) {
     // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
@@ -604,7 +615,7 @@ CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
 // A set of custom dispatch functions that preselect the symbol token to lex.
 #define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
-  [[clang::preserve_none]] static auto Dispatch##LexMethod##SymbolToken(     \
+  CARBON_LEX_PRESERVE_NONE static auto Dispatch##LexMethod##SymbolToken(     \
       Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
     Lexer::LexResult result = lexer.LexMethod##SymbolToken(                  \
         source_text,                                                         \
@@ -621,7 +632,7 @@ CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexClosing)
 // Define a set of non-token dispatch functions that handle things like
 // whitespace and comments.
 #define CARBON_DISPATCH_LEX_NON_TOKEN(LexMethod)                             \
-  [[clang::preserve_none]] static auto Dispatch##LexMethod(                  \
+  CARBON_LEX_PRESERVE_NONE static auto Dispatch##LexMethod(                  \
       Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
     lexer.LexMethod(source_text, position);                                  \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
@@ -630,7 +641,7 @@ CARBON_DISPATCH_LEX_NON_TOKEN(LexHorizontalWhitespace)
 CARBON_DISPATCH_LEX_NON_TOKEN(LexVerticalWhitespace)
 CARBON_DISPATCH_LEX_NON_TOKEN(LexCR)
 
-[[clang::preserve_none]] static auto DispatchLexCommentOrSlash(
+CARBON_LEX_PRESERVE_NONE static auto DispatchLexCommentOrSlash(
     Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
   CARBON_DCHECK(source_text[position] == '/');
 
@@ -753,7 +764,7 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
 
 static constexpr DispatchTableT DispatchTable = MakeDispatchTable();
 
-[[clang::preserve_none]] static auto DispatchFileEnd(
+CARBON_LEX_PRESERVE_NONE static auto DispatchFileEnd(
     Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
   if (lexer.has_dump_sem_ir_ranges()) {
     // Incomplete ranges will use the next token for their end; we want that to
@@ -770,7 +781,7 @@ static constexpr DispatchTableT DispatchTable = MakeDispatchTable();
   lexer.LexFileEnd(source_text, position);
 }
 
-[[clang::preserve_none]] static auto DispatchNext(Lexer& lexer,
+CARBON_LEX_PRESERVE_NONE static auto DispatchNext(Lexer& lexer,
                                                   llvm::StringRef source_text,
                                                   ssize_t position) -> void {
   if (LLVM_LIKELY(position < static_cast<ssize_t>(source_text.size()))) {
@@ -786,6 +797,8 @@ static constexpr DispatchTableT DispatchTable = MakeDispatchTable();
   // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
   [[clang::musttail]] return DispatchFileEnd(lexer, source_text, position);
 }
+
+#undef CARBON_LEX_PRESERVE_NONE
 
 // Estimate an upper bound on the number of identifiers we will need to lex.
 //
@@ -1046,7 +1059,7 @@ static auto SkipHorizontalWhitespaceX86(llvm::StringRef source_text,
     // `tzcnt`/`bsf`
     // (`std::countr_zero`) instead of looping per byte.
     uint32_t non_ws_mask =
-        ~static_cast<uint32_t>(_mm_movemask_epi8(is_ws)) & 0xFFFFu;
+        ~static_cast<uint32_t>(_mm_movemask_epi8(is_ws)) & 0xFFFFU;
     if (LLVM_LIKELY(non_ws_mask != 0)) {
       position += std::countr_zero(non_ws_mask);
       return;

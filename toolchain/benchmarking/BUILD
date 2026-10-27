@@ -34,6 +34,7 @@ cc_test(
     size = "small",
     srcs = ["source_gen_test.cpp"],
     data = ["//toolchain/install:install_data"],
+    shard_count = 8,
     deps = [
         ":source_gen_lib",
         "//common:all_llvm_targets",
