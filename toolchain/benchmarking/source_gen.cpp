@@ -303,7 +303,7 @@ struct DefPlan {
 //
 // All rates and bucket distributions below are integer percentages (with
 // multi-bucket rows summing to 100).
-//
+
 // A row of `PlanShapeTable` giving the shape parameters for plans with at
 // least `min_statements` statements: the percentage of plans with each maximum
 // depth, and the number of guard returns at a depth as a percentage of the
@@ -372,8 +372,8 @@ static constexpr int LoopBlockWeight = 3;
 // The percentage of updates that are calls, when definitions can make calls.
 static constexpr int CallPercent = 50;
 // The percentage of destructurings that destructure a call, when definitions
-// can make calls. In the sample, 89% of structured bindings bind a call's
-// result.
+// can make calls. In the sampled Carbon, LLVM, and Clang implementation files,
+// 89% of structured bindings bind a call's result.
 static constexpr int CallDestructurePercent = 89;
 // The percentages of the statements at depth 0, and deeper, that declare a new
 // local variable.
@@ -381,8 +381,9 @@ static constexpr int TopLocalPercent = 35;
 static constexpr int NestedLocalPercent = 25;
 // The percentages of declarations that destructure a tuple, and of the rest
 // that declare a local of a class type. Structured bindings are 0.2-1.9% of the
-// declarations in the sample, and Carbon's tuples suggest the high end. Class
-// types are 29-78% of the types of local variables, 49% on average.
+// declarations in the sampled Carbon, LLVM, and Clang implementation files, and
+// Carbon's tuples suggest the high end. Class types are 29-78% of the types of
+// local variables, 49% on average.
 static constexpr int DestructurePercent = 2;
 static constexpr int ClassTypeLocalPercent = 50;
 
@@ -592,6 +593,8 @@ static auto ComposeDefPlan(int statements, int variant, bool calls) -> DefPlan {
     blocks = next_blocks;
     loop_blocks = loops;
   }
+  // Definitions with calls or destructured calls declare `acc64` on an extra
+  // line before `acc`; see `GenerateFunctionDef`.
   if (plan.calls + plan.destructure_calls > 0) {
     ++plan.lines;
   }
@@ -1373,8 +1376,8 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   llvm::SmallVector<llvm::StringRef> file_scope_names =
       gen.GetUniqueIdentifiers(num_classes + num_free_functions,
                                /*min_length=*/MinClassNameLength);
-  class_names_.assign(file_scope_names.begin(),
-                      file_scope_names.begin() + num_classes);
+  class_names_ =
+      llvm::to_vector(llvm::ArrayRef(file_scope_names).take_front(num_classes));
   llvm::ArrayRef<llvm::StringRef> free_function_names =
       llvm::ArrayRef(file_scope_names).slice(num_classes);
   for (llvm::StringRef name : class_names_) {
@@ -1542,8 +1545,7 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   }
   call_refs_ = BuildCallRefs(gen, num_calls);
   destructure_call_refs_ = BuildDestructureCallRefs(gen, num_destructure_calls);
-  free_emission_order_.resize(num_free_functions);
-  std::iota(free_emission_order_.begin(), free_emission_order_.end(), 0);
+  free_emission_order_ = llvm::to_vector(llvm::seq(num_free_functions));
   std::shuffle(free_emission_order_.begin(), free_emission_order_.end(),
                gen.rng_);
   // Classes are defined from the back, so the first unshuffled name is always
@@ -2586,27 +2588,24 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
   return def;
 }
 
-// Emits the steps of `def` after the accumulator declarations that every
-// function begins with, indented beyond `indent`. Locals take their names from
-// `locals` in turn, class-typed locals take their classes from
-// `class_type_local_types` (with `""` for `Self`), the `ReadParams` step adds
-// `reads`, `Call` steps add what `emit_call` emits, `DestructureCall` steps
-// destructure what `next_destructure_call` provides, and guards return
-// `return_value`.
+// Arranges and emits the steps of `state.def_plans()[def_plan]` after the
+// accumulator declarations that every function begins with, indented beyond
+// `indent`. Locals take their names from `locals` in turn, the `ReadParams`
+// step adds `reads`, `Call` and `DestructureCall` steps draw calls from
+// `state`, and guards return `return_value`.
 //
 // The first operand of each step after a local declaration reads the locals
 // that it declares, so that every local is read. Every other operand is a
 // random `i32` local in scope, and the target of each update a random `var`
 // one.
-static auto EmitArrangedDef(
-    const ArrangedDef& def, llvm::ArrayRef<llvm::StringRef> locals,
-    llvm::ArrayRef<llvm::StringRef> class_type_local_types,
-    llvm::StringRef reads,
-    llvm::function_ref<auto(llvm::raw_ostream& os)->void> emit_call,
-    llvm::function_ref<auto(std::string& call)->const CallDestructureForm*>
-        next_destructure_call,
-    llvm::StringRef return_value, bool is_cpp, llvm::StringRef indent,
-    absl::BitGen& rng, llvm::raw_ostream& os) -> void {
+auto SourceGen::EmitArrangedDef(ClassGenState& state, int def_plan,
+                                llvm::ArrayRef<llvm::StringRef> locals,
+                                llvm::StringRef reads,
+                                llvm::StringRef return_value,
+                                llvm::StringRef indent, llvm::raw_ostream& os)
+    -> void {
+  const DefPlan& plan = state.def_plans()[def_plan];
+  ArrangedDef def = ArrangeDef(plan, rng_);
   // The `i32` locals in scope that later steps can update, and the ones that
   // they can only read.
   llvm::SmallVector<llvm::StringRef> var_scope = {"acc"};
@@ -2616,13 +2615,14 @@ static auto EmitArrangedDef(
   int next_local = 0;
   int next_class_type_local = 0;
   auto pick_local = [&]() {
-    int index = absl::Uniform<int>(rng, 0, var_scope.size() + let_scope.size());
+    int index =
+        absl::Uniform<int>(rng_, 0, var_scope.size() + let_scope.size());
     return index < static_cast<int>(var_scope.size())
                ? var_scope[index]
                : let_scope[index - var_scope.size()];
   };
   auto pick_var = [&]() {
-    return var_scope[absl::Uniform<int>(rng, 0, var_scope.size())];
+    return var_scope[absl::Uniform<int>(rng_, 0, var_scope.size())];
   };
   auto emit_expr_to = [&](llvm::StringRef format, llvm::raw_ostream& out) {
     while (!format.empty()) {
@@ -2648,7 +2648,7 @@ static auto EmitArrangedDef(
   auto emit_destructure = [&](const DestructureForm& form) {
     llvm::StringRef a = locals[next_local++];
     llvm::StringRef b = locals[next_local++];
-    emit_expr(substitute(is_cpp ? form.cpp_decl : form.carbon_decl, a, b));
+    emit_expr(substitute(IsCpp() ? form.cpp_decl : form.carbon_decl, a, b));
     os << "\n";
     auto& scope = form.is_var ? var_scope : let_scope;
     if (form.a_is_i32) {
@@ -2657,7 +2657,7 @@ static auto EmitArrangedDef(
     if (form.b_is_i32) {
       scope.push_back(b);
     }
-    pending = substitute(is_cpp ? form.cpp_read : form.carbon_read, a, b);
+    pending = substitute(IsCpp() ? form.cpp_read : form.carbon_read, a, b);
   };
   auto emit_cond = [&](int spelling_index) {
     emit_expr(PlanConds[spelling_index % std::size(PlanConds)]);
@@ -2722,8 +2722,8 @@ static auto EmitArrangedDef(
     switch (planned.kind) {
       case PlanStepKind::ScalarLocal: {
         llvm::StringRef name = locals[next_local++];
-        os << (is_cpp ? "int " : "var ") << name
-           << (is_cpp ? " = " : ": i32 = ");
+        os << (IsCpp() ? "int " : "var ") << name
+           << (IsCpp() ? " = " : ": i32 = ");
         emit_expr(PlanExprs[planned.spelling_index]);
         os << ";\n";
         var_scope.push_back(name);
@@ -2732,11 +2732,12 @@ static auto EmitArrangedDef(
       }
       case PlanStepKind::ClassTypeLocal: {
         llvm::StringRef name = locals[next_local++];
-        llvm::StringRef type = class_type_local_types[next_class_type_local++];
+        llvm::StringRef type =
+            plan.class_type_local_types[next_class_type_local++];
         if (type.empty()) {
-          os << (is_cpp ? "Self " : "var ") << name
-             << (is_cpp ? " = Self();\n" : ": Self = Make();\n");
-        } else if (is_cpp) {
+          os << (IsCpp() ? "Self " : "var ") << name
+             << (IsCpp() ? " = Self();\n" : ": Self = Make();\n");
+        } else if (IsCpp()) {
           os << type << " " << name << " = " << type << "();\n";
         } else {
           os << "var " << name << ": " << type << " = " << type << ".Make();\n";
@@ -2751,14 +2752,14 @@ static auto EmitArrangedDef(
         break;
       case PlanStepKind::DestructureCall: {
         std::string call;
-        const CallDestructureForm* form = next_destructure_call(call);
+        const CallDestructureForm* form = state.NextDestructureCall(call);
         if (!form) {
           emit_destructure(DestructureForms[planned.spelling_index]);
           break;
         }
         llvm::StringRef a = locals[next_local++];
         llvm::StringRef b = locals[next_local++];
-        if (is_cpp) {
+        if (IsCpp()) {
           os << "const auto [" << a << ", " << b << "]";
         } else {
           os << substitute(form->carbon_pattern, a, b);
@@ -2766,7 +2767,7 @@ static auto EmitArrangedDef(
         os << " = " << call << ";\n";
         RawStringOstream read;
         emit_expr_to(
-            substitute(is_cpp ? form->cpp_read : form->carbon_read, a, b),
+            substitute(IsCpp() ? form->cpp_read : form->carbon_read, a, b),
             read);
         if (form->a_is_i32) {
           let_scope.push_back(a);
@@ -2791,7 +2792,7 @@ static auto EmitArrangedDef(
         os << pick_var() << " = ";
         emit_expr("{0}");
         os << " + ";
-        emit_call(os);
+        state.EmitCall(os);
         os << ";\n";
         break;
       case PlanStepKind::If:
@@ -2887,12 +2888,8 @@ auto SourceGen::GenerateFunctionDef(ClassGenState& state,
   RawStringOstream return_value;
   state.ProduceValue(sig.return_type, return_value);
   std::string return_value_str = return_value.TakeStr();
-  EmitArrangedDef(
-      ArrangeDef(plan, rng_), locals, plan.class_type_local_types,
-      reads.TakeStr(),
-      [&](llvm::raw_ostream& call_os) { state.EmitCall(call_os); },
-      [&](std::string& call) { return state.NextDestructureCall(call); },
-      return_value_str, IsCpp(), indent, rng_, os);
+  EmitArrangedDef(state, sig.def_plan, locals, reads.TakeStr(),
+                  return_value_str, indent, os);
   os << indent << "  return " << return_value_str << ";\n";
 }
 

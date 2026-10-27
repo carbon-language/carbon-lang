@@ -36,6 +36,7 @@ using ::testing::Gt;
 using ::testing::HasSubstr;
 using ::testing::Le;
 using ::testing::MatchesRegex;
+using ::testing::Not;
 using ::testing::SizeIs;
 using ::testing::StrEq;
 using ::testing::TestParamInfo;
@@ -661,6 +662,16 @@ TEST_P(GenApiFileDenseDeclsParamsTest, FreeFunctionCallsWithoutTupleReturns) {
   std::string source = SourceGen(GetParam()).GenApiFileDenseDecls(3000, params);
   EXPECT_TRUE(TestCompile(GetParam(), source));
   EXPECT_THAT(source, HasSubstr("&acc64"));
+  if (GetParam() == SourceGen::Language::Carbon) {
+    EXPECT_THAT(source,
+                ContainsRegex("(let|var) \\([A-Za-z0-9_]+: [^)]+\\) = \\("));
+    EXPECT_THAT(source, Not(ContainsRegex("let \\([^)]+\\) = [A-Za-z]")));
+  } else {
+    EXPECT_THAT(source, HasSubstr("] = std::pair{"));
+    EXPECT_THAT(
+        source,
+        Not(ContainsRegex("auto \\[[A-Za-z0-9_, ]+\\] = [A-Za-z0-9_]+\\(")));
+  }
 }
 
 TEST(SourceGenTest, GenApiFileDenseDeclsFreeFunctionCalls) {
@@ -674,18 +685,24 @@ TEST(SourceGenTest, GenApiFileDenseDeclsFreeFunctionCalls) {
       .out_of_line_def_sizes = {{.statements = 60, .weight = 1}},
       .free_function_decls_per_class = 4};
 
+  auto carbon_destructure_call_regex = [](llvm::StringRef first_type,
+                                          llvm::StringRef second_type) {
+    return llvm::formatv(
+               "let \\([A-Za-z0-9_]+: {0}, [A-Za-z0-9_]+: {1}\\) = "
+               "[A-Za-z0-9_]{{5,}\\(",
+               first_type, second_type)
+        .str();
+  };
+
   SourceGen carbon_gen;
   std::string source = carbon_gen.GenApiFileDenseDecls(3000, params);
   auto [carbon_free_decls, carbon_classes_and_defs] =
       llvm::StringRef(source).split("\nclass ");
   EXPECT_THAT(carbon_free_decls, ContainsRegex("\nfn [A-Za-z0-9_]{5,}\\("));
   EXPECT_THAT(carbon_classes_and_defs,
-              ContainsRegex("let \\([A-Za-z0-9_]+: bool, [A-Za-z0-9_]+: i64\\) "
-                            "= [A-Za-z0-9_]{5,}\\("));
-  EXPECT_THAT(
-      carbon_classes_and_defs,
-      ContainsRegex("let \\([A-Za-z0-9_]+: i32, [A-Za-z0-9_]+: i64\\*\\)"
-                    " = [A-Za-z0-9_]{5,}\\("));
+              ContainsRegex(carbon_destructure_call_regex("bool", "i64")));
+  EXPECT_THAT(carbon_classes_and_defs,
+              ContainsRegex(carbon_destructure_call_regex("i32", "i64\\*")));
 
   SourceGen cpp_gen(SourceGen::Language::Cpp);
   source = cpp_gen.GenApiFileDenseDecls(3000, params);

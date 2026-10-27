@@ -201,6 +201,8 @@ class SourceGen {
       llvm::StringRef cpp_arg;
     };
 
+    // `FixedTypeWeight` exceeds `SmallVector`'s 256-byte limit for default
+    // inline storage.
     llvm::SmallVector<FixedTypeWeight, 0> fixed_type_weights = {
         // Combined weight of 65 for a core set of builtin types.
         {.carbon_spelling = "bool",
@@ -465,6 +467,10 @@ class SourceGen {
                             FunctionSig* captured = nullptr) -> void;
   auto GenerateFreeFunctionDecls(ClassGenState& state, llvm::raw_ostream& os)
       -> void;
+  auto EmitArrangedDef(ClassGenState& state, int def_plan,
+                       llvm::ArrayRef<llvm::StringRef> locals,
+                       llvm::StringRef reads, llvm::StringRef return_value,
+                       llvm::StringRef indent, llvm::raw_ostream& os) -> void;
   auto GenerateFunctionDef(ClassGenState& state, const FunctionSig& sig,
                            llvm::StringRef indent, llvm::raw_ostream& os)
       -> void;
