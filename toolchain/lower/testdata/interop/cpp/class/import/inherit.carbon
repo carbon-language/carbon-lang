@@ -68,7 +68,7 @@ fn Run() -> i32 {
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN4Base1fEv(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #0 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !62
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !47
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -99,55 +99,32 @@ fn Run() -> i32 {
 // CHECK:STDOUT: define internal void @_ZN4BaseC1Ev.carbon_thunk.(ptr noundef %return) #2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %return.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !62
-// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !62
+// CHECK:STDOUT:   store ptr %return, ptr %return.addr, align 8, !tbaa !47
+// CHECK:STDOUT:   %0 = load ptr, ptr %return.addr, align 8, !tbaa !47
 // CHECK:STDOUT:   call void @_ZN4BaseC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %0) #1
 // CHECK:STDOUT:   ret void
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.0a0b9df20a60c6f6:core.SubobjectDestroy.Core"(ptr %self) #1 !dbg !36 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_3.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %self, i32 0, i32 0, !dbg !38
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5984d7e4773d5a3e(ptr %.loc16_3.1.base), !dbg !38
-// CHECK:STDOUT:   ret void, !dbg !38
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.4daed2797ffd86fa:core.SubobjectDestroy.Core"(ptr %self) #1 !dbg !40 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc16_3.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %self, i32 0, i32 0, !dbg !42
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5984d7e4773d5a3e(ptr %.loc16_3.1.base), !dbg !42
-// CHECK:STDOUT:   ret void, !dbg !42
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #3
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.3dc4bd5f34a0e76b(ptr %t) #1 !dbg !44 {
-// CHECK:STDOUT:   call void @"_COp.4daed2797ffd86fa:core.SubobjectDestroy.Core"(ptr %t), !dbg !48
-// CHECK:STDOUT:   ret void, !dbg !49
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.5984d7e4773d5a3e(ptr %t) #1 !dbg !51 {
-// CHECK:STDOUT:   ret void, !dbg !56
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.3dc4bd5f34a0e76b(ptr %t) #1 !dbg !36 {
+// CHECK:STDOUT:   ret void, !dbg !41
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: inlinehint mustprogress nounwind uwtable
 // CHECK:STDOUT: define linkonce_odr dso_local void @_ZN4BaseC2Ev(ptr noundef nonnull align 8 dereferenceable(12) %this) unnamed_addr #4 comdat align 2 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %this.addr = alloca ptr, align 8
-// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !62
+// CHECK:STDOUT:   store ptr %this, ptr %this.addr, align 8, !tbaa !47
 // CHECK:STDOUT:   %this1 = load ptr, ptr %this.addr, align 8
-// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTV4Base, i64 16), ptr %this1, align 8, !tbaa !64
+// CHECK:STDOUT:   store ptr getelementptr inbounds inrange(-16, 8) (i8, ptr @_ZTV4Base, i64 16), ptr %this1, align 8, !tbaa !49
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN4Base1fEv, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.5984d7e4773d5a3e, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nounwind }
@@ -156,8 +133,8 @@ fn Run() -> i32 {
 // CHECK:STDOUT: attributes #4 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!19}
-// CHECK:STDOUT: !llvm.module.flags = !{!65, !66, !67, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!70}
+// CHECK:STDOUT: !llvm.module.flags = !{!50, !51, !52, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!55}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -177,34 +154,21 @@ fn Run() -> i32 {
 // CHECK:STDOUT: !33 = !DILocation(line: 19, column: 3, scope: !26)
 // CHECK:STDOUT: !34 = !DILocation(line: 20, column: 10, scope: !26)
 // CHECK:STDOUT: !35 = !DILocation(line: 20, column: 3, scope: !26)
-// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "Op", linkageName: "_COp.0a0b9df20a60c6f6:core.SubobjectDestroy.Core", scope: null, file: !18, line: 16, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !39)
+// CHECK:STDOUT: !36 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3dc4bd5f34a0e76b", scope: null, file: !10, line: 32, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !42)
 // CHECK:STDOUT: !37 = !DILocalVariable(arg: 1, scope: !36, type: !21)
-// CHECK:STDOUT: !38 = !DILocation(line: 16, column: 3, scope: !36)
-// CHECK:STDOUT: !39 = !{!37}
-// CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Op", linkageName: "_COp.4daed2797ffd86fa:core.SubobjectDestroy.Core", scope: null, file: !18, line: 16, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !43)
-// CHECK:STDOUT: !41 = !DILocalVariable(arg: 1, scope: !40, type: !21)
-// CHECK:STDOUT: !42 = !DILocation(line: 16, column: 3, scope: !40)
-// CHECK:STDOUT: !43 = !{!41}
-// CHECK:STDOUT: !44 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.3dc4bd5f34a0e76b", scope: null, file: !10, line: 32, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !50)
-// CHECK:STDOUT: !45 = !DILocalVariable(arg: 1, scope: !44, type: !21)
-// CHECK:STDOUT: !48 = !DILocation(line: 34, column: 5, scope: !44)
-// CHECK:STDOUT: !49 = !DILocation(line: 32, column: 1, scope: !44)
-// CHECK:STDOUT: !50 = !{!45}
-// CHECK:STDOUT: !51 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5984d7e4773d5a3e", scope: null, file: !10, line: 32, type: !23, spFlags: DISPFlagDefinition, unit: !19, retainedNodes: !57)
-// CHECK:STDOUT: !52 = !DILocalVariable(arg: 1, scope: !51, type: !21)
-// CHECK:STDOUT: !56 = !DILocation(line: 32, column: 1, scope: !51)
-// CHECK:STDOUT: !57 = !{!52}
-// CHECK:STDOUT: !58 = !{!"Simple C++ TBAA"}
-// CHECK:STDOUT: !59 = !{!"omnipotent char", !58, i64 0}
-// CHECK:STDOUT: !60 = !{!"any pointer", !59, i64 0}
-// CHECK:STDOUT: !61 = !{!"p1 _ZTS4Base", !60, i64 0}
-// CHECK:STDOUT: !62 = !{!61, !61, i64 0}
-// CHECK:STDOUT: !63 = !{!"vtable pointer", !58, i64 0}
-// CHECK:STDOUT: !64 = !{!63, !63, i64 0}
-// CHECK:STDOUT: !65 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !66 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !67 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !68 = !{!"int", !59, i64 0}
-// CHECK:STDOUT: !69 = !{!"__libc_errno", !68, i64 0}
-// CHECK:STDOUT: !70 = !{!69, !68, i64 0}
+// CHECK:STDOUT: !41 = !DILocation(line: 32, column: 1, scope: !36)
+// CHECK:STDOUT: !42 = !{!37}
+// CHECK:STDOUT: !43 = !{!"Simple C++ TBAA"}
+// CHECK:STDOUT: !44 = !{!"omnipotent char", !43, i64 0}
+// CHECK:STDOUT: !45 = !{!"any pointer", !44, i64 0}
+// CHECK:STDOUT: !46 = !{!"p1 _ZTS4Base", !45, i64 0}
+// CHECK:STDOUT: !47 = !{!46, !46, i64 0}
+// CHECK:STDOUT: !48 = !{!"vtable pointer", !43, i64 0}
+// CHECK:STDOUT: !49 = !{!48, !48, i64 0}
+// CHECK:STDOUT: !50 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !51 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !52 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !53 = !{!"int", !44, i64 0}
+// CHECK:STDOUT: !54 = !{!"__libc_errno", !53, i64 0}
+// CHECK:STDOUT: !55 = !{!54, !53, i64 0}
 // CHECK:STDOUT:
