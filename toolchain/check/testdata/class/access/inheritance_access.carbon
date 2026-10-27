@@ -296,9 +296,6 @@ class Derived {
   extend base: Base;
 
   fn F(self) {
-    // CHECK:STDERR: access_private_member_of_parent_friend.carbon:[[@LINE+3]]:5-10: error: cannot access private member `x` of type `Base` [ClassInvalidMemberAccess]
-    // CHECK:STDERR: access_private_member_of_parent_friend.carbon:[[@LINE-8]]:15-19: note: declared here [ClassMemberDeclaration]
-    // CHECK:STDERR:
     self.x;
   }
 }
@@ -325,10 +322,6 @@ class Derived {
 }
 
 fn H() {
-  // CHECK:STDERR: access_private_member_of_parent_in_unrelated_friend_scope.carbon:[[@LINE+4]]:3-14: error: unable to monomorphize specific `G()` [ResolvingSpecificHere]
-  // CHECK:STDERR: access_private_member_of_parent_in_unrelated_friend_scope.carbon:[[@LINE-10]]:5-7: note: cannot access private member `F` of type `Base` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: access_private_member_of_parent_in_unrelated_friend_scope.carbon:[[@LINE-16]]:3-18: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:
   A(Derived).G();
 }
 
@@ -2052,7 +2045,10 @@ fn H() {
 // CHECK:STDOUT: fn @Derived.F(%self.param: %Derived) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %self.ref: %Derived = name_ref self, %self
-// CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
+// CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, @Base.%field_decl [concrete = @Base.%field_decl]
+// CHECK:STDOUT:   %.loc14_9.1: ref %Base = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc14_9.2: ref %Base = converted %self.ref, %.loc14_9.1
+// CHECK:STDOUT:   %.loc14_9.3: ref %empty_tuple.type = class_element_access %.loc14_9.2, element0
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2092,7 +2088,14 @@ fn H() {
 // CHECK:STDOUT:   %A.G.4bd: %A.G.type.e86 = struct_value () [concrete]
 // CHECK:STDOUT:   %A.G.specific_fn: <specific function> = specific_function %A.G.4bd, @A.G(%Derived) [concrete]
 // CHECK:STDOUT:   %inst.name_ref: <instruction> = inst_value [concrete] {
-// CHECK:STDOUT:     %F.ref: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:     %F.ref: %Base.F.type = name_ref F, @Base.%Base.F.decl [concrete = %Base.F]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %inst.call: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %Base.F.call: init %empty_tuple.type = call %Base.F()
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type.782: <witness> = complete_type_witness %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %inst.splice_block: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.017: init %empty_tuple.type = splice_block %Base.F.call {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -2217,8 +2220,8 @@ fn H() {
 // CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl.loc3 [concrete = constants.%A.generic]
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
 // CHECK:STDOUT:   %A: type = class_type @A, @A(constants.%Derived) [concrete = constants.%A.c3e]
-// CHECK:STDOUT:   %.loc26: %A.G.type.e86 = specific_constant @A.%A.G.decl, @A(constants.%Derived) [concrete = constants.%A.G.4bd]
-// CHECK:STDOUT:   %G.ref: %A.G.type.e86 = name_ref G, %.loc26 [concrete = constants.%A.G.4bd]
+// CHECK:STDOUT:   %.loc22: %A.G.type.e86 = specific_constant @A.%A.G.decl, @A(constants.%Derived) [concrete = constants.%A.G.4bd]
+// CHECK:STDOUT:   %G.ref: %A.G.type.e86 = name_ref G, %.loc22 [concrete = constants.%A.G.4bd]
 // CHECK:STDOUT:   %A.G.specific_fn: <specific function> = specific_function %G.ref, @A.G(constants.%Derived) [concrete = constants.%A.G.specific_fn]
 // CHECK:STDOUT:   %A.G.call: init %empty_tuple.type = call %A.G.specific_fn()
 // CHECK:STDOUT:   return
@@ -2248,13 +2251,13 @@ fn H() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %T => constants.%Derived
 // CHECK:STDOUT:   %.loc13_6.3 => constants.%inst.name_ref
-// CHECK:STDOUT:   %.loc13_6.4 => <error>
-// CHECK:STDOUT:   %.loc13_6.5 => <error>
-// CHECK:STDOUT:   %.loc13_9.4 => <error>
-// CHECK:STDOUT:   %.loc13_9.5 => <error>
-// CHECK:STDOUT:   %.loc13_9.6 => <error>
-// CHECK:STDOUT:   %require_complete => <error>
-// CHECK:STDOUT:   %.loc13_9.7 => <error>
-// CHECK:STDOUT:   %.loc13_9.8 => <error>
+// CHECK:STDOUT:   %.loc13_6.4 => constants.%Base.F.type
+// CHECK:STDOUT:   %.loc13_6.5 => constants.%Base.F
+// CHECK:STDOUT:   %.loc13_9.4 => constants.%inst.call
+// CHECK:STDOUT:   %.loc13_9.5 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %.loc13_9.6 => <not constant>
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.782
+// CHECK:STDOUT:   %.loc13_9.7 => constants.%inst.splice_block
+// CHECK:STDOUT:   %.loc13_9.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -508,6 +508,33 @@ static auto DiagnoseMemberNameNotFound(
   context.emitter().Emit(loc_id, MemberNameNotFound, name_id);
 }
 
+// Returns whether the current access context is friended by `target_scope`.
+static auto IsFriend(Context& context, const SemIR::NameScope& target_scope)
+    -> bool {
+  // Get the constant ID for the current access context.
+  auto access_context_scope_id = context.access_context();
+  if (!access_context_scope_id.has_value() ||
+      access_context_scope_id == SemIR::NameScopeId::AllowHighestAccessLevel) {
+    return false;
+  }
+  const auto& access_context =
+      context.name_scopes().Get(access_context_scope_id);
+  auto access_context_const_id =
+      context.constant_values().Get(access_context.inst_id());
+
+  // Get the `SemIR::Class` for the target scope. Return early if it's not a
+  // class.
+  auto target_inst_id =
+      context.constant_values().GetConstantInstId(target_scope.inst_id());
+  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(target_inst_id);
+  if (!class_type) {
+    return false;
+  }
+  const auto& class_info = context.classes().Get(class_type->class_id);
+
+  return (bool)class_info.friend_scopes.Lookup(access_context_const_id);
+}
+
 auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
                          SemIR::NameId name_id,
                          llvm::ArrayRef<LookupScope> lookup_scopes,
@@ -547,6 +574,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
     }
 
     auto is_access_prohibited =
+        !IsFriend(context, name_scope) &&
         IsAccessProhibited(context, access_info, access_kind, is_parent_access);
 
     // Keep track of prohibited accesses, this will be useful for reporting
