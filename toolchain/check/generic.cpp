@@ -110,15 +110,6 @@ static auto InstAddedToEvalBlock(Context& context, SemIR::LocId loc_id,
        .specific_id = witness.specific_id});
 }
 
-template <typename InstT>
-static auto CallInstAddedToEvalBlock(Context& context, SemIR::LocId loc_id,
-                                     InstT inst) -> void {
-  if constexpr (InstT::Kind.eval_block_kind() ==
-                SemIR::InstEvalBlockKind::Conditional) {
-    InstAddedToEvalBlock(context, loc_id, inst);
-  }
-}
-
 static auto TryInstAddedToEvalBlock(Context& context, SemIR::LocId loc_id,
                                     SemIR::Inst inst) -> void {
   auto CallInstAddedToEvalBlock = [&]<typename InstT>(InstT inst) {
@@ -215,14 +206,17 @@ class RebuildGenericConstantInEvalBlockCallbacks : public SubstInstCallbacks {
       auto const_id = AddGenericConstantInstToEvalBlock(
           context(), const_inst_id, inst_id, dependence);
       context().constant_values().Set(inst_id, const_id);
-
-      if (!importing_) {
-        TryInstAddedToEvalBlock(context(), loc_id_,
-                                context().insts().Get(inst_id));
-      }
-
       return inst_id;
     });
+
+    if (result.is_inserted() && !importing_) {
+      // Avoid doing this inside the Insert() callback above, as mutating the
+      // `constants_in_generic_` structure inside its callback can break the
+      // data structure.
+      TryInstAddedToEvalBlock(context(), loc_id_,
+                              context().insts().Get(result.value()));
+    }
+
     return result.value();
   }
 

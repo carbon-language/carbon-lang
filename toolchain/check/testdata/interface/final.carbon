@@ -94,7 +94,7 @@ final impl forall [T: M] T as L where .L1 = () {}
 
 interface Y { let Y1: L; }
 class C(U: Y) {
-  // This puts a LookupImplWitness for `U as L` in the eval block of C.
+  // This puts a LookupImplWitness for `U.Y1 as L` in the eval block of C.
   alias C1 = U.Y1.L1;
 }
 

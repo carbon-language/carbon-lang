@@ -3508,7 +3508,6 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
       context.generic_region_stack().num_tracked_insts() == num_tracked_insts,
       "Evaluating {0} added instructions to an enclosing generic region",
       specific_id);
-  static_cast<void>(num_tracked_insts);
 }
 
 // Information about the function call we are currently executing. Unlike
