@@ -262,6 +262,7 @@ static auto DenseDeclParams() -> SourceGen::DenseDeclParams {
   params.class_params.inline_function_defs = 1;
   params.class_params.inline_getters = 1;
   params.class_params.inline_forwarders = 1;
+  params.free_function_decls_per_class = 2;
   return params;
 }
 
@@ -283,6 +284,7 @@ static auto ImplFileParams() -> SourceGen::DenseDeclParams {
                          .private_method_decl_params = {.max_params = 2},
                          .private_field_decls = 4};
   params.define_decls_out_of_line = true;
+  params.free_function_decls_per_class = 2;
   return params;
 }
 
@@ -302,6 +304,7 @@ static auto RealisticHeaderParams() -> SourceGen::DenseDeclParams {
                          .inline_getters = 2,
                          .inline_predicates = 1,
                          .inline_forwarders = 2};
+  params.free_function_decls_per_class = 1;
   return params;
 }
 
