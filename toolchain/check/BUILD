@@ -308,6 +308,7 @@ cc_library(
         "//common:map",
         "//common:ostream",
         "//common:vlog",
+        "//toolchain/base:stable_stack",
         "//toolchain/sem_ir:file",
         "//toolchain/sem_ir:typed_insts",
         "@llvm-project//llvm:Support",

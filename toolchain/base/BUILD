@@ -240,6 +240,30 @@ cc_library(
 )
 
 cc_library(
+    name = "stable_stack",
+    hdrs = [
+        "stable_stack.h",
+    ],
+    deps = [
+        ":mem_usage",
+        ":yaml",
+        "//common:check",
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "stable_stack_test",
+    size = "small",
+    srcs = ["stable_stack_test.cpp"],
+    deps = [
+        ":stable_stack",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "timings",
     hdrs = ["timings.h"],
     deps = [

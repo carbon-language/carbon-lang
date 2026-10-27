@@ -7,6 +7,7 @@
 
 #include "common/array_stack.h"
 #include "common/map.h"
+#include "toolchain/base/stable_stack.h"
 #include "toolchain/sem_ir/ids.h"
 
 namespace Carbon::Check {
@@ -31,10 +32,11 @@ using ConstantsInGenericMap = Map<SemIR::InstId, SemIR::InstId, 256>;
 // `var x: C(i32, 0) = {.x = 0};` also substitutes into the definition.
 class GenericRegionStack {
  public:
-  explicit GenericRegionStack(llvm::raw_ostream* vlog_stream)
-      : vlog_stream_(vlog_stream) {
+  explicit GenericRegionStack(llvm::raw_ostream* vlog_stream,
+                              llvm::BumpPtrAllocator& allocator)
+      : vlog_stream_(vlog_stream), constants_in_generic_stack_(allocator) {
     // Reserve a large enough stack that we typically won't need to reallocate.
-    constants_in_generic_stack_.reserve(4);
+    constants_in_generic_stack_.Reserve(4);
   }
 
   struct PendingGeneric {
@@ -96,7 +98,7 @@ class GenericRegionStack {
   // instructions for the current generic.
   auto PeekConstantsInGenericMap() -> ConstantsInGenericMap& {
     CARBON_CHECK(!Empty());
-    return constants_in_generic_stack_.back();
+    return constants_in_generic_stack_.PeekMutable();
   }
 
   // Returns the total number of instructions tracked by all pending generic
@@ -131,7 +133,7 @@ class GenericRegionStack {
   // Mapping from constant InstIds to the corresponding InstIds in the eval
   // blocks for each enclosing generic. We reserve this to a suitable size in
   // the constructor.
-  llvm::SmallVector<ConstantsInGenericMap, 0> constants_in_generic_stack_;
+  StableStack<ConstantsInGenericMap> constants_in_generic_stack_;
 };
 
 }  // namespace Carbon::Check
