@@ -72,19 +72,12 @@ static auto AddGenericConstantInstToEvalBlock(
 // ImplDecl specific definition it refers to.
 static auto InstAddedToEvalBlock(Context& context, SemIR::LocId loc_id,
                                  SemIR::ImplWitness witness) -> void {
-  auto table =
-      context.insts().GetAs<SemIR::ImplWitnessTable>(witness.witness_table_id);
-  if (!table.impl_id.has_value()) {
-    // This is a use of the ImplWitness from inside the impl's own declaration.
-    // There is no definition to depend on yet, any use of the definition would
-    // be invalid.
-    return;
-  }
-  const auto& impl = context.impls().Get(table.impl_id);
-  if (impl.is_being_defined()) {
-    // This is a use of the ImplWitness from inside the impl's own definition.
-    // There is no definition to depend on yet, any use of the definition would
-    // be invalid.
+  const auto& specific = context.specifics().Get(witness.specific_id);
+  const auto& generic = context.generics().Get(specific.generic_id);
+  if (!generic.decl_block_id.has_value()) {
+    // Can't attempt to resolve a specific definition before the declaration is
+    // complete. Any use of the definition at this point would be invalid since
+    // it hasn't even started.
     return;
   }
 
