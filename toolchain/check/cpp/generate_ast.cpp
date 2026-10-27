@@ -1098,6 +1098,12 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
 }
 
 auto FinalizeCppAstFragment(Context& context) -> void {
+  // `FinalizeCppAst` operates very close to where AST fragment is
+  // nullified. Builds may call this function with a null AST fragment,
+  // so we exit early in the case where it's null.
+  //
+  // TODO: investigate if we can avoid AST fragment resolution when the
+  // fragment is null.
   if (!context.cpp_context()) {
     return;
   }
@@ -1113,6 +1119,12 @@ auto FinalizeCppAstFragment(Context& context) -> void {
 }
 
 auto DisconnectCppAst(Context& context) -> void {
+  // `DisconnectCppAst` operates very close to where AST fragment is
+  // nullified. Builds may call this function with a null AST fragment,
+  // so we exit early in the case where it's null.
+  //
+  // TODO: investigate if we can avoid AST fragment disconnection when
+  // the fragment is null.
   if (!context.cpp_context()) {
     return;
   }
@@ -1131,9 +1143,6 @@ auto DisconnectCppAst(Context& context) -> void {
   // location adjustment is safe.
   LeaveModule(*context.cpp_context(),
               GetCppLocation(context, end_loc_id).getLocWithOffset(-1));
-  FlushDiagnosticConsumer(
-      *context.cpp_context()->sema().getDiagnostics().getClient());
-  context.emitter().Flush();
 
   // Hide the per-file lookup-only `::Carbon` namespace from the further lookup
   // results and remove it from the translation unit's name lookup table if it's

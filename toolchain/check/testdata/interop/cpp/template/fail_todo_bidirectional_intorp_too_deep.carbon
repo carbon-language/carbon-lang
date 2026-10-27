@@ -2,7 +2,9 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
-// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/full.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/convert.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/int.carbon
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/optional.carbon
 //
 // AUTOUPDATE
 // TIP: To test this file alone, run:
@@ -10,6 +12,8 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interop/cpp/template/fail_todo_bidirectional_intorp_too_deep.carbon
 
+import Core library "prelude/parts/optional";
+import Core library "prelude/parts/int";
 import Cpp;
 
 fn ManualMultiply[template T: type](p: T*) -> T*;

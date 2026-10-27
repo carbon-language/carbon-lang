@@ -14,7 +14,7 @@
 
 library "[[@TEST_NAME]]";
 
-// Resolving `Make(C)` at the end of the file uses the constructor of
+// Resolving `Make({} as C)` at the end of the file uses the constructor of
 // `Wrapper(C)`, whose definition is only instantiated after that. The
 // constructor calls back into Carbon, so `C` must still be usable from C++.
 import Cpp inline '''

@@ -655,8 +655,7 @@ auto CheckUnit::FinishRun() -> void {
     // Point at the code that queued the next C++ instantiation, because that
     // is what needed another pass. If nothing is queued, point at the top of
     // the file.
-    auto loc_id =
-        SemIR::LocId(*(context_.sem_ir().parse_tree().postorder().begin()));
+    auto loc_id = SemIR::LocId::None;
     auto* cpp_context = context_.cpp_context();
     if (cpp_context && !cpp_context->sema().PendingInstantiations.empty()) {
       loc_id = AddImportIRInst(
