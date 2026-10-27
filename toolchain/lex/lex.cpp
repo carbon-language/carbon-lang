@@ -1046,7 +1046,7 @@ static auto SkipHorizontalWhitespaceX86(llvm::StringRef source_text,
     // `tzcnt`/`bsf`
     // (`std::countr_zero`) instead of looping per byte.
     uint32_t non_ws_mask =
-        ~static_cast<uint32_t>(_mm_movemask_epi8(is_ws)) & 0xFFFFu;
+        ~static_cast<uint32_t>(_mm_movemask_epi8(is_ws)) & 0xFFFFU;
     if (LLVM_LIKELY(non_ws_mask != 0)) {
       position += std::countr_zero(non_ws_mask);
       return;
