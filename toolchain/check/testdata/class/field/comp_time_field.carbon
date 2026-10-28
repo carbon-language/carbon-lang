@@ -65,21 +65,9 @@ var x: Class = {};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Class {
-// CHECK:STDOUT:   %Class.ref.loc7: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc7_18.1: type = splice_block %.loc7_18.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc7: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc7_18.2: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %A: type = wrapper_binding A, %Class.ref.loc7
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %A.patt: %pattern_type = value_binding_pattern A [concrete = constants.%A.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Class.ref.loc11: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
-// CHECK:STDOUT:   %.loc11_19.1: type = splice_block %.loc11_19.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc11: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc11_19.2: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %B: type = wrapper_binding B, %Class.ref.loc11
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %B.patt: %pattern_type = value_binding_pattern B [concrete = constants.%B.patt]
 // CHECK:STDOUT:   }
@@ -88,9 +76,26 @@ var x: Class = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Class
-// CHECK:STDOUT:   .A = %A
+// CHECK:STDOUT:   .A = @__global_init.%A
 // CHECK:STDOUT:   .Class = <poisoned>
-// CHECK:STDOUT:   .B = %B
+// CHECK:STDOUT:   .B = @__global_init.%B
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %Class.ref.loc7: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %.loc7_18.1: type = splice_block %.loc7_18.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self.frozen.loc7: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc7_18.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %A: type = wrapper_binding A, %Class.ref.loc7
+// CHECK:STDOUT:   %Class.ref.loc11: type = name_ref Class, file.%Class.decl [concrete = constants.%Class]
+// CHECK:STDOUT:   %.loc11_19.1: type = splice_block %.loc11_19.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self.frozen.loc11: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc11_19.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %B: type = wrapper_binding B, %Class.ref.loc11
+// CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_var.carbon

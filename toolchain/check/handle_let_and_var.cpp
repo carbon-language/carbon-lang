@@ -316,7 +316,6 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   auto decl_info =
       HandleDecl<Lex::TokenKind::Let, Parse::NodeKind::LetIntroducer,
                  Parse::NodeKind::LetInitializer>(context, node_id);
-  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
 
   LimitModifiersOnDecl(
       context, decl_info.introducer,
@@ -351,6 +350,7 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   }
 
   context.full_pattern_stack().PopFullPattern();
+  context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
   return true;
 }
 

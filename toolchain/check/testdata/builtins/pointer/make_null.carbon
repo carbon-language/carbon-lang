@@ -81,32 +81,9 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc11_48.1: %.b2d = value_of_initializer @__global_init.%MakeNullEmptyStruct.call
-// CHECK:STDOUT:   %.loc11_48.2: %.b2d = converted @__global_init.%MakeNullEmptyStruct.call, %.loc11_48.1
-// CHECK:STDOUT:   %.loc11_24.1: type = splice_block %.loc11_24.3 [concrete = constants.%.b2d] {
-// CHECK:STDOUT:     %MakeUnformed.ref.loc11: %MakeUnformed.type = name_ref MakeUnformed, %MakeUnformed.decl [concrete = constants.%MakeUnformed]
-// CHECK:STDOUT:     %.loc11_22: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc11_23: type = converted %.loc11_22, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %ptr.loc11: type = ptr_type %.loc11_23 [concrete = constants.%ptr.c28]
-// CHECK:STDOUT:     %MakeUnformed.call.loc11: init type = call %MakeUnformed.ref.loc11(%ptr.loc11) [concrete = constants.%.b2d]
-// CHECK:STDOUT:     %.loc11_24.2: type = value_of_initializer %MakeUnformed.call.loc11 [concrete = constants.%.b2d]
-// CHECK:STDOUT:     %.loc11_24.3: type = converted %MakeUnformed.call.loc11, %.loc11_24.2 [concrete = constants.%.b2d]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: %.b2d = wrapper_binding s, %.loc11_48.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.b42 = value_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12_37.1: %.9e8 = value_of_initializer @__global_init.%MakeNullC.call
-// CHECK:STDOUT:   %.loc12_37.2: %.9e8 = converted @__global_init.%MakeNullC.call, %.loc12_37.1
-// CHECK:STDOUT:   %.loc12_23.1: type = splice_block %.loc12_23.3 [concrete = constants.%.9e8] {
-// CHECK:STDOUT:     %MakeUnformed.ref.loc12: %MakeUnformed.type = name_ref MakeUnformed, %MakeUnformed.decl [concrete = constants.%MakeUnformed]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc12: type = ptr_type %C.ref [concrete = constants.%ptr.6b6]
-// CHECK:STDOUT:     %MakeUnformed.call.loc12: init type = call %MakeUnformed.ref.loc12(%ptr.loc12) [concrete = constants.%.9e8]
-// CHECK:STDOUT:     %.loc12_23.2: type = value_of_initializer %MakeUnformed.call.loc12 [concrete = constants.%.9e8]
-// CHECK:STDOUT:     %.loc12_23.3: type = converted %MakeUnformed.call.loc12, %.loc12_23.2 [concrete = constants.%.9e8]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %.9e8 = wrapper_binding c, %.loc12_37.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.e22 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
@@ -116,8 +93,31 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeNullEmptyStruct.ref: %MakeNullEmptyStruct.type = name_ref MakeNullEmptyStruct, file.%MakeNullEmptyStruct.decl [concrete = constants.%MakeNullEmptyStruct]
 // CHECK:STDOUT:   %MakeNullEmptyStruct.call: init %.b2d = call %MakeNullEmptyStruct.ref()
+// CHECK:STDOUT:   %.loc11_48.1: %.b2d = value_of_initializer %MakeNullEmptyStruct.call
+// CHECK:STDOUT:   %.loc11_48.2: %.b2d = converted %MakeNullEmptyStruct.call, %.loc11_48.1
+// CHECK:STDOUT:   %.loc11_24.1: type = splice_block %.loc11_24.3 [concrete = constants.%.b2d] {
+// CHECK:STDOUT:     %MakeUnformed.ref.loc11: %MakeUnformed.type = name_ref MakeUnformed, file.%MakeUnformed.decl [concrete = constants.%MakeUnformed]
+// CHECK:STDOUT:     %.loc11_22: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc11_23: type = converted %.loc11_22, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %ptr.loc11: type = ptr_type %.loc11_23 [concrete = constants.%ptr.c28]
+// CHECK:STDOUT:     %MakeUnformed.call.loc11: init type = call %MakeUnformed.ref.loc11(%ptr.loc11) [concrete = constants.%.b2d]
+// CHECK:STDOUT:     %.loc11_24.2: type = value_of_initializer %MakeUnformed.call.loc11 [concrete = constants.%.b2d]
+// CHECK:STDOUT:     %.loc11_24.3: type = converted %MakeUnformed.call.loc11, %.loc11_24.2 [concrete = constants.%.b2d]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %s: %.b2d = wrapper_binding s, %.loc11_48.2
 // CHECK:STDOUT:   %MakeNullC.ref: %MakeNullC.type = name_ref MakeNullC, file.%MakeNullC.decl [concrete = constants.%MakeNullC]
 // CHECK:STDOUT:   %MakeNullC.call: init %.9e8 = call %MakeNullC.ref()
+// CHECK:STDOUT:   %.loc12_37.1: %.9e8 = value_of_initializer %MakeNullC.call
+// CHECK:STDOUT:   %.loc12_37.2: %.9e8 = converted %MakeNullC.call, %.loc12_37.1
+// CHECK:STDOUT:   %.loc12_23.1: type = splice_block %.loc12_23.3 [concrete = constants.%.9e8] {
+// CHECK:STDOUT:     %MakeUnformed.ref.loc12: %MakeUnformed.type = name_ref MakeUnformed, file.%MakeUnformed.decl [concrete = constants.%MakeUnformed]
+// CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr.loc12: type = ptr_type %C.ref [concrete = constants.%ptr.6b6]
+// CHECK:STDOUT:     %MakeUnformed.call.loc12: init type = call %MakeUnformed.ref.loc12(%ptr.loc12) [concrete = constants.%.9e8]
+// CHECK:STDOUT:     %.loc12_23.2: type = value_of_initializer %MakeUnformed.call.loc12 [concrete = constants.%.9e8]
+// CHECK:STDOUT:     %.loc12_23.3: type = converted %MakeUnformed.call.loc12, %.loc12_23.2 [concrete = constants.%.9e8]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c: %.9e8 = wrapper_binding c, %.loc12_37.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -145,32 +145,9 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc10_39.1: %.b2d = value_of_initializer @__global_init.%MakeNull.call.loc10
-// CHECK:STDOUT:   %.loc10_39.2: %.b2d = converted @__global_init.%MakeNull.call.loc10, %.loc10_39.1
-// CHECK:STDOUT:   %.loc10_24.1: type = splice_block %.loc10_24.3 [concrete = constants.%.b2d] {
-// CHECK:STDOUT:     %MakeUnformed.ref.loc10: %MakeUnformed.type = name_ref MakeUnformed, %MakeUnformed.decl [concrete = constants.%MakeUnformed]
-// CHECK:STDOUT:     %.loc10_22: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc10_23: type = converted %.loc10_22, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:     %ptr.loc10: type = ptr_type %.loc10_23 [concrete = constants.%ptr.c28]
-// CHECK:STDOUT:     %MakeUnformed.call.loc10: init type = call %MakeUnformed.ref.loc10(%ptr.loc10) [concrete = constants.%.b2d]
-// CHECK:STDOUT:     %.loc10_24.2: type = value_of_initializer %MakeUnformed.call.loc10 [concrete = constants.%.b2d]
-// CHECK:STDOUT:     %.loc10_24.3: type = converted %MakeUnformed.call.loc10, %.loc10_24.2 [concrete = constants.%.b2d]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %s: %.b2d = wrapper_binding s, %.loc10_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %s.patt: %pattern_type.b42 = value_binding_pattern s [concrete = constants.%s.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc11_37.1: %.9e8 = value_of_initializer @__global_init.%MakeNull.call.loc11
-// CHECK:STDOUT:   %.loc11_37.2: %.9e8 = converted @__global_init.%MakeNull.call.loc11, %.loc11_37.1
-// CHECK:STDOUT:   %.loc11_23.1: type = splice_block %.loc11_23.3 [concrete = constants.%.9e8] {
-// CHECK:STDOUT:     %MakeUnformed.ref.loc11: %MakeUnformed.type = name_ref MakeUnformed, %MakeUnformed.decl [concrete = constants.%MakeUnformed]
-// CHECK:STDOUT:     %C.ref: type = name_ref C, %C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc11: type = ptr_type %C.ref [concrete = constants.%ptr.6b6]
-// CHECK:STDOUT:     %MakeUnformed.call.loc11: init type = call %MakeUnformed.ref.loc11(%ptr.loc11) [concrete = constants.%.9e8]
-// CHECK:STDOUT:     %.loc11_23.2: type = value_of_initializer %MakeUnformed.call.loc11 [concrete = constants.%.9e8]
-// CHECK:STDOUT:     %.loc11_23.3: type = converted %MakeUnformed.call.loc11, %.loc11_23.2 [concrete = constants.%.9e8]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %.9e8 = wrapper_binding c, %.loc11_37.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.e22 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
@@ -180,13 +157,36 @@ fn NotPointer() -> MakeUnformed({}) = "pointer.make_null";
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %MakeNull.ref.loc10: %MakeNull.type = name_ref MakeNull, file.%MakeNull.decl [concrete = constants.%MakeNull]
 // CHECK:STDOUT:   %.loc10_38: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_39: type = converted %.loc10_38, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc10_39.1: type = converted %.loc10_38, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %MakeNull.specific_fn.loc10: <specific function> = specific_function %MakeNull.ref.loc10, @MakeNull(constants.%empty_struct_type) [concrete = constants.%MakeNull.specific_fn.3e4]
 // CHECK:STDOUT:   %MakeNull.call.loc10: init %.b2d = call %MakeNull.specific_fn.loc10()
+// CHECK:STDOUT:   %.loc10_39.2: %.b2d = value_of_initializer %MakeNull.call.loc10
+// CHECK:STDOUT:   %.loc10_39.3: %.b2d = converted %MakeNull.call.loc10, %.loc10_39.2
+// CHECK:STDOUT:   %.loc10_24.1: type = splice_block %.loc10_24.3 [concrete = constants.%.b2d] {
+// CHECK:STDOUT:     %MakeUnformed.ref.loc10: %MakeUnformed.type = name_ref MakeUnformed, file.%MakeUnformed.decl [concrete = constants.%MakeUnformed]
+// CHECK:STDOUT:     %.loc10_22: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc10_23: type = converted %.loc10_22, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %ptr.loc10: type = ptr_type %.loc10_23 [concrete = constants.%ptr.c28]
+// CHECK:STDOUT:     %MakeUnformed.call.loc10: init type = call %MakeUnformed.ref.loc10(%ptr.loc10) [concrete = constants.%.b2d]
+// CHECK:STDOUT:     %.loc10_24.2: type = value_of_initializer %MakeUnformed.call.loc10 [concrete = constants.%.b2d]
+// CHECK:STDOUT:     %.loc10_24.3: type = converted %MakeUnformed.call.loc10, %.loc10_24.2 [concrete = constants.%.b2d]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %s: %.b2d = wrapper_binding s, %.loc10_39.3
 // CHECK:STDOUT:   %MakeNull.ref.loc11: %MakeNull.type = name_ref MakeNull, file.%MakeNull.decl [concrete = constants.%MakeNull]
-// CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %C.ref.loc11_36: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %MakeNull.specific_fn.loc11: <specific function> = specific_function %MakeNull.ref.loc11, @MakeNull(constants.%C) [concrete = constants.%MakeNull.specific_fn.e96]
 // CHECK:STDOUT:   %MakeNull.call.loc11: init %.9e8 = call %MakeNull.specific_fn.loc11()
+// CHECK:STDOUT:   %.loc11_37.1: %.9e8 = value_of_initializer %MakeNull.call.loc11
+// CHECK:STDOUT:   %.loc11_37.2: %.9e8 = converted %MakeNull.call.loc11, %.loc11_37.1
+// CHECK:STDOUT:   %.loc11_23.1: type = splice_block %.loc11_23.3 [concrete = constants.%.9e8] {
+// CHECK:STDOUT:     %MakeUnformed.ref.loc11: %MakeUnformed.type = name_ref MakeUnformed, file.%MakeUnformed.decl [concrete = constants.%MakeUnformed]
+// CHECK:STDOUT:     %C.ref.loc11_21: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr.loc11: type = ptr_type %C.ref.loc11_21 [concrete = constants.%ptr.6b6]
+// CHECK:STDOUT:     %MakeUnformed.call.loc11: init type = call %MakeUnformed.ref.loc11(%ptr.loc11) [concrete = constants.%.9e8]
+// CHECK:STDOUT:     %.loc11_23.2: type = value_of_initializer %MakeUnformed.call.loc11 [concrete = constants.%.9e8]
+// CHECK:STDOUT:     %.loc11_23.3: type = converted %MakeUnformed.call.loc11, %.loc11_23.2 [concrete = constants.%.9e8]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c: %.9e8 = wrapper_binding c, %.loc11_37.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

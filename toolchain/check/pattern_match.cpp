@@ -672,18 +672,19 @@ auto MatchContext::DoVarPreWorkImpl(State state,
       return scrutinee_id;
     }
     case CARBON_KIND(LocalState* _): {
-      // TODO: Find a more efficient way to put these insts in the global_init
-      // block (or drop the distinction between the global_init block and the
-      // file scope?)
-      if (UseGlobalInit(context_)) {
-        context_.global_init().Resume();
-      }
-
       // In a `var`/`let` declaration, the `VarStorage` inst is created before
       // we start pattern matching.
       auto storage_id =
           context_.full_pattern_stack().GetLocalVarStorage(entry.pattern_id);
       if (scrutinee_id.has_value()) {
+        bool use_global_init =
+            UseGlobalInit(context_) &&
+            (context_.decl_introducer_state_stack().empty() ||
+             context_.decl_introducer_state_stack().innermost().kind !=
+                 Lex::TokenKind::Let);
+        if (use_global_init) {
+          context_.global_init().Resume();
+        }
         auto init_id =
             InitializeExisting(context_, SemIR::LocId(entry.pattern_id),
                                storage_id, scrutinee_id, /*for_return=*/false);
@@ -692,10 +693,9 @@ auto MatchContext::DoVarPreWorkImpl(State state,
         // purpose.
         AddInst<SemIR::Assign>(context_, SemIR::LocId(entry.pattern_id),
                                {.lhs_id = storage_id, .rhs_id = init_id});
-      }
-
-      if (UseGlobalInit(context_)) {
-        context_.global_init().Suspend();
+        if (use_global_init) {
+          context_.global_init().Suspend();
+        }
       }
       return storage_id;
     }
@@ -1283,11 +1283,22 @@ auto CallerPatternMatch(
 auto LocalPatternMatch(Context& context, SemIR::LocId loc_id,
                        SemIR::InstId pattern_id, SemIR::InstId scrutinee_id)
     -> void {
+  bool use_global_init =
+      UseGlobalInit(context) &&
+      !context.decl_introducer_state_stack().empty() &&
+      context.decl_introducer_state_stack().innermost().kind ==
+          Lex::TokenKind::Let;
+  if (use_global_init) {
+    context.global_init().Resume();
+  }
   LocalState state;
   MatchContext match(context, loc_id);
   match.Match(&state,
               {.pattern_id = pattern_id,
                .work = MatchContext::PreWork{.scrutinee_id = scrutinee_id}});
+  if (use_global_init) {
+    context.global_init().Suspend();
+  }
 }
 
 }  // namespace Carbon::Check

@@ -59,10 +59,6 @@ let lossy: f32 = ConvertIntLiteralToF32(123456789);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7_50.1: %f32.3bc = value_of_initializer @__global_init.%ConvertIntLiteralToF32.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc7_50.2: %f32.3bc = converted @__global_init.%ConvertIntLiteralToF32.call, %.loc7_50.1 [concrete = <error>]
-// CHECK:STDOUT:   %f32: type = type_literal constants.%f32.3bc [concrete = constants.%f32.3bc]
-// CHECK:STDOUT:   %lossy: %f32.3bc = wrapper_binding lossy, %.loc7_50.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %lossy.patt: %pattern_type.239 = value_binding_pattern lossy [concrete = constants.%lossy.patt]
 // CHECK:STDOUT:   }
@@ -73,6 +69,10 @@ let lossy: f32 = ConvertIntLiteralToF32(123456789);
 // CHECK:STDOUT:   %ConvertIntLiteralToF32.ref: %ConvertIntLiteralToF32.type = name_ref ConvertIntLiteralToF32, imports.%Main.ConvertIntLiteralToF32 [concrete = constants.%ConvertIntLiteralToF32]
 // CHECK:STDOUT:   %int_123456789: Core.IntLiteral = int_value 123456789 [concrete = constants.%int_123456789]
 // CHECK:STDOUT:   %ConvertIntLiteralToF32.call: init %f32.3bc = call %ConvertIntLiteralToF32.ref(%int_123456789) [concrete = <error>]
+// CHECK:STDOUT:   %.loc7_50.1: %f32.3bc = value_of_initializer %ConvertIntLiteralToF32.call [concrete = <error>]
+// CHECK:STDOUT:   %.loc7_50.2: %f32.3bc = converted %ConvertIntLiteralToF32.call, %.loc7_50.1 [concrete = <error>]
+// CHECK:STDOUT:   %f32: type = type_literal constants.%f32.3bc [concrete = constants.%f32.3bc]
+// CHECK:STDOUT:   %lossy: %f32.3bc = wrapper_binding lossy, %.loc7_50.2 [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

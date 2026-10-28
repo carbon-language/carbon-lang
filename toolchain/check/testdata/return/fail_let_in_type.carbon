@@ -67,51 +67,42 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .x = %x
+// CHECK:STDOUT:     .x = @__global_init.%x
 // CHECK:STDOUT:     .Six = %Six.decl
-// CHECK:STDOUT:     .y = %y
+// CHECK:STDOUT:     .y = @__global_init.%y
 // CHECK:STDOUT:     .HalfDozen = %HalfDozen.decl
-// CHECK:STDOUT:     .z = %z
+// CHECK:STDOUT:     .z = @__global_init.%z
 // CHECK:STDOUT:     .FirstPerfectNumber = %FirstPerfectNumber.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc15: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %x: type = wrapper_binding x, @__global_init.%i32.loc15
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.9a5 = value_binding_pattern x [concrete = constants.%x.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.ref: type = name_ref x, file.%x
+// CHECK:STDOUT:     %x.global_ref: type = global_ref @__global_init.%x
+// CHECK:STDOUT:     %x.ref: type = name_ref x, %x.global_ref
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc23_16.1: type = splice_block %.loc23_16.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc23: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc23_16.2: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: type = wrapper_binding y, @__global_init.%i32.loc23
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.9a5 = value_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %HalfDozen.decl: %HalfDozen.type = fn_decl @HalfDozen [concrete = constants.%HalfDozen] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %y.ref: type = name_ref y, file.%y
+// CHECK:STDOUT:     %y.global_ref: type = global_ref @__global_init.%y
+// CHECK:STDOUT:     %y.ref: type = name_ref y, %y.global_ref
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc31_17.1: type = splice_block %.loc31_17.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc31: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc31_17.2: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %z: type = wrapper_binding z, @__global_init.%i32.loc31
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %z.patt: %pattern_type.9a5 = value_binding_pattern z [concrete = constants.%z.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %FirstPerfectNumber.decl: %FirstPerfectNumber.type = fn_decl @FirstPerfectNumber [concrete = constants.%FirstPerfectNumber] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %z.ref: type = name_ref z, file.%z
+// CHECK:STDOUT:     %z.global_ref: type = global_ref @__global_init.%z
+// CHECK:STDOUT:     %z.ref: type = name_ref z, %z.global_ref
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -137,8 +128,20 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc15: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %x: type = wrapper_binding x, %i32.loc15
 // CHECK:STDOUT:   %i32.loc23: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc23_16.1: type = splice_block %.loc23_16.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self.frozen.loc23: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc23_16.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %y: type = wrapper_binding y, %i32.loc23
 // CHECK:STDOUT:   %i32.loc31: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %.loc31_17.1: type = splice_block %.loc31_17.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self.frozen.loc31: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc31_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %z: type = wrapper_binding z, %i32.loc31
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

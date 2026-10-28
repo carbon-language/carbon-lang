@@ -66,6 +66,8 @@ class DeclIntroducerStateStack {
     stack_.push_back({.kind = Lex::TokenKind::Make(Kind)});
   }
 
+  auto empty() const -> bool { return stack_.empty(); }
+
   // Gets the state of declaration at the top of the stack -- the innermost
   // declaration currently being processed.
   auto innermost() -> DeclIntroducerState& { return stack_.back(); }

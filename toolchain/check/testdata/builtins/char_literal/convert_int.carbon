@@ -100,45 +100,21 @@ let g: u8 = ConvertToU8('\u{100}');
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc14_30.1: %i32 = value_of_initializer @__global_init.%ConvertToI32.call [concrete = constants.%int_97]
-// CHECK:STDOUT:   %.loc14_30.2: %i32 = converted @__global_init.%ConvertToI32.call, %.loc14_30.1 [concrete = constants.%int_97]
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc14_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d94 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc15_30.1: %u32 = value_of_initializer @__global_init.%ConvertToU32.call [concrete = constants.%int_98]
-// CHECK:STDOUT:   %.loc15_30.2: %u32 = converted @__global_init.%ConvertToU32.call, %.loc15_30.1 [concrete = constants.%int_98]
-// CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %b: %u32 = wrapper_binding b, %.loc15_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.129 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc16_39.1: %i64 = value_of_initializer @__global_init.%ConvertToI64.call [concrete = constants.%int_1114111]
-// CHECK:STDOUT:   %.loc16_39.2: %i64 = converted @__global_init.%ConvertToI64.call, %.loc16_39.1 [concrete = constants.%int_1114111]
-// CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
-// CHECK:STDOUT:   %c: %i64 = wrapper_binding c, %.loc16_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.c0e = value_binding_pattern c [concrete = constants.%c.patt.e2c]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc17_31.1: %u64 = value_of_initializer @__global_init.%ConvertToU64.call [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc17_31.2: %u64 = converted @__global_init.%ConvertToU64.call, %.loc17_31.1 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %u64: type = type_literal constants.%u64 [concrete = constants.%u64]
-// CHECK:STDOUT:   %d: %u64 = wrapper_binding d, %.loc17_31.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.dd7 = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc19_33.1: %u8 = value_of_initializer @__global_init.%ConvertToU8.call.loc19 [concrete = constants.%int_128]
-// CHECK:STDOUT:   %.loc19_33.2: %u8 = converted @__global_init.%ConvertToU8.call.loc19, %.loc19_33.1 [concrete = constants.%int_128]
-// CHECK:STDOUT:   %u8.loc19: type = type_literal constants.%u8 [concrete = constants.%u8]
-// CHECK:STDOUT:   %e: %u8 = wrapper_binding e, %.loc19_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.e53 = value_binding_pattern e [concrete = constants.%e.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc20_33.1: %u8 = value_of_initializer @__global_init.%ConvertToU8.call.loc20 [concrete = constants.%int_255]
-// CHECK:STDOUT:   %.loc20_33.2: %u8 = converted @__global_init.%ConvertToU8.call.loc20, %.loc20_33.1 [concrete = constants.%int_255]
-// CHECK:STDOUT:   %u8.loc20: type = type_literal constants.%u8 [concrete = constants.%u8]
-// CHECK:STDOUT:   %f: %u8 = wrapper_binding f, %.loc20_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.e53 = value_binding_pattern f [concrete = constants.%f.patt]
 // CHECK:STDOUT:   }
@@ -147,23 +123,47 @@ let g: u8 = ConvertToU8('\u{100}');
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %ConvertToI32.ref: %ConvertToI32.type = name_ref ConvertToI32, file.%ConvertToI32.decl [concrete = constants.%ConvertToI32]
-// CHECK:STDOUT:   %.loc14: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
-// CHECK:STDOUT:   %ConvertToI32.call: init %i32 = call %ConvertToI32.ref(%.loc14) [concrete = constants.%int_97]
+// CHECK:STDOUT:   %.loc14_27: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
+// CHECK:STDOUT:   %ConvertToI32.call: init %i32 = call %ConvertToI32.ref(%.loc14_27) [concrete = constants.%int_97]
+// CHECK:STDOUT:   %.loc14_30.1: %i32 = value_of_initializer %ConvertToI32.call [concrete = constants.%int_97]
+// CHECK:STDOUT:   %.loc14_30.2: %i32 = converted %ConvertToI32.call, %.loc14_30.1 [concrete = constants.%int_97]
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %a: %i32 = wrapper_binding a, %.loc14_30.2
 // CHECK:STDOUT:   %ConvertToU32.ref: %ConvertToU32.type = name_ref ConvertToU32, file.%ConvertToU32.decl [concrete = constants.%ConvertToU32]
-// CHECK:STDOUT:   %.loc15: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
-// CHECK:STDOUT:   %ConvertToU32.call: init %u32 = call %ConvertToU32.ref(%.loc15) [concrete = constants.%int_98]
+// CHECK:STDOUT:   %.loc15_27: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
+// CHECK:STDOUT:   %ConvertToU32.call: init %u32 = call %ConvertToU32.ref(%.loc15_27) [concrete = constants.%int_98]
+// CHECK:STDOUT:   %.loc15_30.1: %u32 = value_of_initializer %ConvertToU32.call [concrete = constants.%int_98]
+// CHECK:STDOUT:   %.loc15_30.2: %u32 = converted %ConvertToU32.call, %.loc15_30.1 [concrete = constants.%int_98]
+// CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
+// CHECK:STDOUT:   %b: %u32 = wrapper_binding b, %.loc15_30.2
 // CHECK:STDOUT:   %ConvertToI64.ref: %ConvertToI64.type = name_ref ConvertToI64, file.%ConvertToI64.decl [concrete = constants.%ConvertToI64]
-// CHECK:STDOUT:   %.loc16: Core.CharLiteral = char_value U+10FFFF [concrete = constants.%.914]
-// CHECK:STDOUT:   %ConvertToI64.call: init %i64 = call %ConvertToI64.ref(%.loc16) [concrete = constants.%int_1114111]
+// CHECK:STDOUT:   %.loc16_27: Core.CharLiteral = char_value U+10FFFF [concrete = constants.%.914]
+// CHECK:STDOUT:   %ConvertToI64.call: init %i64 = call %ConvertToI64.ref(%.loc16_27) [concrete = constants.%int_1114111]
+// CHECK:STDOUT:   %.loc16_39.1: %i64 = value_of_initializer %ConvertToI64.call [concrete = constants.%int_1114111]
+// CHECK:STDOUT:   %.loc16_39.2: %i64 = converted %ConvertToI64.call, %.loc16_39.1 [concrete = constants.%int_1114111]
+// CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
+// CHECK:STDOUT:   %c: %i64 = wrapper_binding c, %.loc16_39.2
 // CHECK:STDOUT:   %ConvertToU64.ref: %ConvertToU64.type = name_ref ConvertToU64, file.%ConvertToU64.decl [concrete = constants.%ConvertToU64]
-// CHECK:STDOUT:   %.loc17: Core.CharLiteral = char_value U+0000 [concrete = constants.%.dc9]
-// CHECK:STDOUT:   %ConvertToU64.call: init %u64 = call %ConvertToU64.ref(%.loc17) [concrete = constants.%int_0]
+// CHECK:STDOUT:   %.loc17_27: Core.CharLiteral = char_value U+0000 [concrete = constants.%.dc9]
+// CHECK:STDOUT:   %ConvertToU64.call: init %u64 = call %ConvertToU64.ref(%.loc17_27) [concrete = constants.%int_0]
+// CHECK:STDOUT:   %.loc17_31.1: %u64 = value_of_initializer %ConvertToU64.call [concrete = constants.%int_0]
+// CHECK:STDOUT:   %.loc17_31.2: %u64 = converted %ConvertToU64.call, %.loc17_31.1 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %u64: type = type_literal constants.%u64 [concrete = constants.%u64]
+// CHECK:STDOUT:   %d: %u64 = wrapper_binding d, %.loc17_31.2
 // CHECK:STDOUT:   %ConvertToU8.ref.loc19: %ConvertToU8.type = name_ref ConvertToU8, file.%ConvertToU8.decl [concrete = constants.%ConvertToU8]
-// CHECK:STDOUT:   %.loc19: Core.CharLiteral = char_value U+0080 [concrete = constants.%.ae7]
-// CHECK:STDOUT:   %ConvertToU8.call.loc19: init %u8 = call %ConvertToU8.ref.loc19(%.loc19) [concrete = constants.%int_128]
+// CHECK:STDOUT:   %.loc19_25: Core.CharLiteral = char_value U+0080 [concrete = constants.%.ae7]
+// CHECK:STDOUT:   %ConvertToU8.call.loc19: init %u8 = call %ConvertToU8.ref.loc19(%.loc19_25) [concrete = constants.%int_128]
+// CHECK:STDOUT:   %.loc19_33.1: %u8 = value_of_initializer %ConvertToU8.call.loc19 [concrete = constants.%int_128]
+// CHECK:STDOUT:   %.loc19_33.2: %u8 = converted %ConvertToU8.call.loc19, %.loc19_33.1 [concrete = constants.%int_128]
+// CHECK:STDOUT:   %u8.loc19: type = type_literal constants.%u8 [concrete = constants.%u8]
+// CHECK:STDOUT:   %e: %u8 = wrapper_binding e, %.loc19_33.2
 // CHECK:STDOUT:   %ConvertToU8.ref.loc20: %ConvertToU8.type = name_ref ConvertToU8, file.%ConvertToU8.decl [concrete = constants.%ConvertToU8]
-// CHECK:STDOUT:   %.loc20: Core.CharLiteral = char_value U+00FF [concrete = constants.%.ad8]
-// CHECK:STDOUT:   %ConvertToU8.call.loc20: init %u8 = call %ConvertToU8.ref.loc20(%.loc20) [concrete = constants.%int_255]
+// CHECK:STDOUT:   %.loc20_25: Core.CharLiteral = char_value U+00FF [concrete = constants.%.ad8]
+// CHECK:STDOUT:   %ConvertToU8.call.loc20: init %u8 = call %ConvertToU8.ref.loc20(%.loc20_25) [concrete = constants.%int_255]
+// CHECK:STDOUT:   %.loc20_33.1: %u8 = value_of_initializer %ConvertToU8.call.loc20 [concrete = constants.%int_255]
+// CHECK:STDOUT:   %.loc20_33.2: %u8 = converted %ConvertToU8.call.loc20, %.loc20_33.1 [concrete = constants.%int_255]
+// CHECK:STDOUT:   %u8.loc20: type = type_literal constants.%u8 [concrete = constants.%u8]
+// CHECK:STDOUT:   %f: %u8 = wrapper_binding f, %.loc20_33.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -43,8 +43,6 @@ let f: Form = form(var ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %Form.ref: type = name_ref Form, imports.%Main.Form [concrete = Core.Form]
-// CHECK:STDOUT:   %f: Core.Form = wrapper_binding f, @__global_init.%.loc7_20
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type = value_binding_pattern f [concrete = constants.%f.patt]
 // CHECK:STDOUT:   }
@@ -55,6 +53,8 @@ let f: Form = form(var ());
 // CHECK:STDOUT:   %.loc7_25.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc7_25.2: type = converted %.loc7_25.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   %.loc7_20: Core.Form = init_form %.loc7_25.2 [concrete = constants.%.262]
+// CHECK:STDOUT:   %Form.ref: type = name_ref Form, imports.%Main.Form [concrete = Core.Form]
+// CHECK:STDOUT:   %f: Core.Form = wrapper_binding f, %.loc7_20
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

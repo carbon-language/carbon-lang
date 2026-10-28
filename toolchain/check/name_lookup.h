@@ -33,6 +33,11 @@ struct LookupResult {
 
   // The result from the lookup in the scope.
   SemIR::ScopeLookupResult scope_result;
+
+  // If the result was found in a lexical scope, the index of that scope.
+  // `None` if the result was found in a non-lexical scope, such as a namespace
+  // or class, or wasn't found.
+  ScopeIndex lexical_scope_index = ScopeIndex::None;
 };
 
 // Information about an access.
@@ -63,6 +68,18 @@ auto LookupNameInDecl(Context& context, SemIR::LocId loc_id,
 auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                            SemIR::NameId name_id, bool required = true)
     -> LookupResult;
+
+// Prepares the result of a name lookup to be used as an expression. Name lookup
+// doesn't check or build access to non-constant entities; callers that use the
+// result as a value should call this first.
+//
+// If the result names a non-constant entity, checks that it can be referenced
+// from the current position and, if needed, replaces the target with an
+// instruction that accesses it, such as a `GlobalRef` for a global binding. On
+// error, `result` is replaced by an error result.
+auto PrepareLookupResultForUse(Context& context, SemIR::LocId loc_id,
+                               SemIR::NameId name_id, LookupResult& result)
+    -> void;
 
 // Performs a name lookup in a specified scope, returning the referenced
 // `InstId`. Does not look into extended scopes. Returns `InstId::None` if the

@@ -71,12 +71,30 @@ class ScopeStack {
     SemIR::SpecificId specific_id;
   };
 
+  // How a scope affects access to non-constant values from enclosing lexical
+  // scopes.
+  enum class NonConstantAccess : uint8_t {
+    // Non-constant locals from enclosing scopes can be used if permitted by the
+    // parent scope (e.g. `if`, `for`, block scopes, and function body scopes
+    // accessing their own parameter scope).
+    Permitted,
+    // Non-constant locals from enclosing scopes cannot be used (e.g. `class` or
+    // nested `fn` scopes).
+    Disallowed,
+    // Non-constant locals from enclosing scopes can be used if captured.
+    Captured,
+    // Non-constant locals from enclosing scopes can be used unconditionally
+    // because the scope is unevaluated (e.g. `typeof(...)`).
+    Unevaluated,
+  };
+
   // Information about a scope that has been temporarily removed from the stack.
   // This type is large, so moves of this type should be avoided.
   struct SuspendedScope;
 
   // Pushes a scope for a declaration name's parameters.
-  auto PushForDeclName() -> void;
+  auto PushForDeclName(NonConstantAccess non_constant_access =
+                           NonConstantAccess::Disallowed) -> void;
 
   // Pushes a non-function entity scope. Functions must use
   // `PushForFunctionBody` instead.
@@ -87,8 +105,10 @@ class ScopeStack {
   // Pushes a scope which should be in the same region as the current scope.
   // These can be in a function without breaking `return` scoping. For example,
   // this is used by struct literals and code blocks.
-  auto PushForSameRegion(CleanupScopeKind cleanup_scope_kind =
-                             CleanupScopeKind::Inherited) -> void;
+  auto PushForSameRegion(
+      CleanupScopeKind cleanup_scope_kind = CleanupScopeKind::Inherited,
+      NonConstantAccess non_constant_access = NonConstantAccess::Permitted)
+      -> void;
 
   // Pushes a function scope.
   auto PushForFunctionBody(SemIR::InstId scope_inst_id) -> void;
@@ -237,6 +257,11 @@ class ScopeStack {
                                    SemIR::LocId use_loc_id, bool is_reachable)
       -> SemIR::InstId;
 
+  struct LexicalResult {
+    SemIR::InstId inst_id;
+    ScopeIndex scope_index;
+  };
+
   // Looks up the name `name_id` in the current scope and related lexical
   // scopes. Returns the innermost lexical lookup result, if any, along with a
   // list of non-lexical scopes in which lookup should also be performed,
@@ -244,7 +269,14 @@ class ScopeStack {
   // name is marked as used at that location.
   auto LookupInLexicalScopes(SemIR::NameId name_id, SemIR::LocId use_loc_id,
                              bool is_reachable)
-      -> std::pair<SemIR::InstId, llvm::ArrayRef<NonLexicalScope>>;
+      -> std::pair<LexicalResult, llvm::ArrayRef<NonLexicalScope>>;
+
+  // Classifies how a non-constant local declared in `target_scope_index` can be
+  // referenced from the current scope. Returns the access kind of the innermost
+  // intervening scope that doesn't permit direct access, or `Permitted` if
+  // there is no such scope.
+  auto GetNonConstantAccess(ScopeIndex target_scope_index) const
+      -> NonConstantAccess;
 
   // Looks up the name `name_id` in the current scope, or in `scope_index` if
   // specified. Returns the existing instruction if the name is already declared
@@ -389,6 +421,9 @@ class ScopeStack {
     // The kind of cleanup scope that is associated with this scope.
     CleanupScopeKind cleanup_scope_kind = CleanupScopeKind::None;
 
+    // How this scope affects access to non-constant locals in outer scopes.
+    NonConstantAccess non_constant_access = NonConstantAccess::Disallowed;
+
     // The ambient cleanup scope depth in this scope. This is the depth that we
     // will return to at the end of a statement in this scope.
     CleanupScopeDepth cleanup_scope_depth;
@@ -431,6 +466,7 @@ class ScopeStack {
   // namespace may contain a mix of both successful and failed name imports.
   auto Push(SemIR::InstId scope_inst_id, SemIR::NameScopeId scope_id,
             SemIR::SpecificId specific_id, CleanupScopeKind cleanup_scope_kind,
+            NonConstantAccess non_constant_access,
             bool lexical_lookup_has_load_error) -> void;
 
   auto Peek(int drop = 0) const -> const ScopeStackEntry& {

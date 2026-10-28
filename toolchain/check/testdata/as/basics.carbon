@@ -176,8 +176,6 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc5: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %t: type = wrapper_binding t, @__global_init.%.loc5_24.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %t.patt: %pattern_type = value_binding_pattern t [concrete = constants.%t.patt]
 // CHECK:STDOUT:   }
@@ -192,6 +190,8 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc5_24.1: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %.loc5_24.2: type = converted constants.%empty_struct, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %.loc5_24.3: type = converted %.loc5_22, constants.%tuple.type.b6b [concrete = constants.%tuple.type.b6b]
+// CHECK:STDOUT:   %.loc5_8: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %t: type = wrapper_binding t, %.loc5_24.3
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -458,10 +458,6 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary @__global_init.%.loc19_29.1, @__global_init.%.loc19_29.2
-// CHECK:STDOUT:   %.loc19_29.2: %Y = acquire_value %.loc19_29.1
-// CHECK:STDOUT:   %Y.ref: type = name_ref Y, %Y.decl [concrete = constants.%Y]
-// CHECK:STDOUT:   %n: %Y = wrapper_binding n, %.loc19_29.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ab = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
@@ -479,7 +475,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc19_21.5: init %empty_tuple.type to %.loc19_21.3 = in_place_init %.loc19_21.4 [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %.loc19_21.6: init %X to %.loc19_21.2 = class_init (%.loc19_21.5) [concrete = constants.%X.val]
 // CHECK:STDOUT:   %.loc19_23.1: init %X = converted %.loc19_21.1, %.loc19_21.6 [concrete = constants.%X.val]
-// CHECK:STDOUT:   %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
+// CHECK:STDOUT:   %Y.ref.loc19_32: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
 // CHECK:STDOUT:   %impl.elem0: %.09f = impl_witness_access constants.%As.impl_witness.71c, element0 [concrete = constants.%X.as.As.impl.Convert]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc19_23.1, %impl.elem0 [concrete = constants.%X.as.As.impl.Convert.bound]
 // CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary_storage
@@ -487,6 +483,10 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc19_23.3: %X = acquire_value %.loc19_23.2 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %X.as.As.impl.Convert.call: init %Y to %.loc19_29.1 = call %bound_method(%.loc19_23.3)
 // CHECK:STDOUT:   %.loc19_29.2: init %Y = converted %.loc19_23.1, %X.as.As.impl.Convert.call
+// CHECK:STDOUT:   %.loc19_29.3: ref %Y = temporary %.loc19_29.1, %.loc19_29.2
+// CHECK:STDOUT:   %.loc19_29.4: %Y = acquire_value %.loc19_29.3
+// CHECK:STDOUT:   %Y.ref.loc19_8: type = name_ref Y, file.%Y.decl [concrete = constants.%Y]
+// CHECK:STDOUT:   %n: %Y = wrapper_binding n, %.loc19_29.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

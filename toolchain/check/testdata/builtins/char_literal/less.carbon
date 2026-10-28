@@ -38,17 +38,9 @@ let b: bool = Less('b', 'a');
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc21_28.1: bool = value_of_initializer @__global_init.%Less.call.loc21 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc21_28.2: bool = converted @__global_init.%Less.call.loc21, %.loc21_28.1 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc21_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %a: bool = wrapper_binding a, %.loc21_28.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete = constants.%a.patt.567]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc22_28.1: bool = value_of_initializer @__global_init.%Less.call.loc22 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc22_28.2: bool = converted @__global_init.%Less.call.loc22, %.loc22_28.1 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc22_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc22_28.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt.438]
 // CHECK:STDOUT:   }
@@ -60,10 +52,18 @@ let b: bool = Less('b', 'a');
 // CHECK:STDOUT:   %.loc21_20: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc21_25: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %Less.call.loc21: init bool = call %Less.ref.loc21(%.loc21_20, %.loc21_25) [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc21_28.1: bool = value_of_initializer %Less.call.loc21 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc21_28.2: bool = converted %Less.call.loc21, %.loc21_28.1 [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc21_8: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %a: bool = wrapper_binding a, %.loc21_28.2
 // CHECK:STDOUT:   %Less.ref.loc22: %Less.type = name_ref Less, file.%Less.decl [concrete = constants.%Less]
 // CHECK:STDOUT:   %.loc22_20: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %.loc22_25: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %Less.call.loc22: init bool = call %Less.ref.loc22(%.loc22_20, %.loc22_25) [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc22_28.1: bool = value_of_initializer %Less.call.loc22 [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc22_28.2: bool = converted %Less.call.loc22, %.loc22_28.1 [concrete = constants.%false]
+// CHECK:STDOUT:   %.loc22_8: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc22_28.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

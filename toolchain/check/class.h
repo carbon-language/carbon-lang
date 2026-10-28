@@ -29,6 +29,9 @@ auto InNonStaticFieldDecl(Context& context) -> bool;
 // Whether a static class var decl is currently being checked.
 auto InStaticClassScopeVar(Context& context) -> bool;
 
+// Whether a class scope `let` is currently being checked.
+auto InClassScopeLet(Context& context) -> bool;
+
 }  // namespace Carbon::Check
 
 #endif  // CARBON_TOOLCHAIN_CHECK_CLASS_H_

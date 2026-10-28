@@ -1945,12 +1945,6 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc10: type = splice_block %ptr [concrete = constants.%ptr] {
-// CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %const: type = const_type %i32 [concrete = constants.%const]
-// CHECK:STDOUT:     %ptr: type = ptr_type %const [concrete = constants.%ptr]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %p: %ptr = wrapper_binding p, @__global_init.%addr
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %p.patt: %pattern_type.6f6 = value_binding_pattern p [concrete = constants.%p.patt]
 // CHECK:STDOUT:   }
@@ -1962,6 +1956,12 @@ let _: C(1) = {} as C(Cpp.COUNT);
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %N.ref: ref %const = name_ref N, imports.%n.var [concrete = imports.%n.var]
 // CHECK:STDOUT:   %addr: %ptr = addr_of %N.ref [concrete = constants.%addr]
+// CHECK:STDOUT:   %.loc10: type = splice_block %ptr [concrete = constants.%ptr] {
+// CHECK:STDOUT:     %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %const: type = const_type %i32.loc10 [concrete = constants.%const]
+// CHECK:STDOUT:     %ptr: type = ptr_type %const [concrete = constants.%ptr]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %p: %ptr = wrapper_binding p, %addr
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

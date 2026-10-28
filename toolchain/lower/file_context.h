@@ -194,6 +194,11 @@ class FileContext {
   auto BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
       -> llvm::GlobalVariable*;
 
+  // Returns or creates the global storage for a non-constant global or static
+  // `let` `WrapperBinding`, or `nullptr` if its value representation is empty.
+  auto GetOrCreateGlobalBinding(SemIR::InstId binding_inst_id)
+      -> llvm::GlobalVariable*;
+
   // Builds the definition for the given function. If the function is only a
   // declaration with no definition, does nothing. If this is a generic it'll
   // only be lowered if the specific_id is specified. During this lowering of
@@ -302,6 +307,10 @@ class FileContext {
 
   // Maps global variables to their lowered variant.
   Map<SemIR::InstId, llvm::GlobalVariable*> global_variables_;
+
+  // Maps non-constant global/static `let` bindings (`WrapperBinding`) to their
+  // lowered global storage.
+  Map<SemIR::InstId, llvm::GlobalVariable*> global_bindings_;
 
   // For a generic function, keep track of the specifics for which LLVM
   // function declarations were created. Those can be retrieved then from

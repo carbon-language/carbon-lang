@@ -68,9 +68,9 @@ class FullPatternStack {
   // The kind of the current full-pattern.
   auto CurrentKind() const -> Kind { return kind_stack_.back(); }
 
-  // Whether the kind of the current full-pattern is a class `var` decl.
-  auto IsCurrentKindClassScopeVarDecl() -> bool {
-    return !empty() && CurrentKind() == Kind::ClassScopeVarDecl;
+  // Returns whether the kind of the current full-pattern is `kind`.
+  auto CurrentKindIs(Kind kind) -> bool {
+    return !empty() && CurrentKind() == kind;
   }
 
   // Marks the start of a new full-pattern for a parameterized entity

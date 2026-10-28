@@ -8,6 +8,7 @@
 #include "toolchain/check/convert.h"
 #include "toolchain/check/cpp/export.h"
 #include "toolchain/check/eval.h"
+#include "toolchain/check/full_pattern_stack.h"
 #include "toolchain/check/function.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/impl.h"
@@ -457,17 +458,28 @@ auto ComputeClassObjectRepr(Context& context, Parse::ClassDefinitionId node_id,
 }
 
 auto InNonStaticFieldDecl(Context& context) -> bool {
-  return context.full_pattern_stack().IsCurrentKindClassScopeVarDecl() &&
+  return context.full_pattern_stack().CurrentKindIs(
+             FullPatternStack::Kind::ClassScopeVarDecl) &&
          !context.decl_introducer_state_stack()
               .innermost()
               .modifier_set.HasAnyOf(KeywordModifierSet::Static);
 }
 
 auto InStaticClassScopeVar(Context& context) -> bool {
-  return context.full_pattern_stack().IsCurrentKindClassScopeVarDecl() &&
+  return context.full_pattern_stack().CurrentKindIs(
+             FullPatternStack::Kind::ClassScopeVarDecl) &&
          context.decl_introducer_state_stack()
              .innermost()
              .modifier_set.HasAnyOf(KeywordModifierSet::Static);
+}
+
+auto InClassScopeLet(Context& context) -> bool {
+  return context.full_pattern_stack().CurrentKindIs(
+             FullPatternStack::Kind::NameBindingDecl) &&
+         !context.decl_introducer_state_stack().empty() &&
+         context.decl_introducer_state_stack().innermost().kind ==
+             Lex::TokenKind::Let &&
+         context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>();
 }
 
 }  // namespace Carbon::Check
