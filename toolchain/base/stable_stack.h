@@ -16,9 +16,8 @@
 
 namespace Carbon {
 
-template <class T>
-class StableStack;
-
+// A stack that never reallocates when growing so as to not invalidate pointers
+// to objects that remain in the stack.
 template <class T>
 class StableStack {
  public:
@@ -145,6 +144,43 @@ class StableStack {
     return capacity;
   }
 
+  friend auto operator==(const StableStack& lhs, const StableStack& rhs) -> bool
+    requires requires(const T& l, const T& r) {
+      { l == r } -> std::convertible_to<bool>;
+    }
+  {
+    if (lhs.size() != rhs.size()) {
+      return false;
+    }
+    if (lhs.empty()) {
+      return true;
+    }
+    CARBON_CHECK(lhs.used_chunks_ == rhs.used_chunks_);
+    for (auto chunk = 0; chunk < lhs.used_chunks_ - 1; ++chunk) {
+      auto& l = lhs.chunks_[chunk];
+      auto& r = rhs.chunks_[chunk];
+      CARBON_CHECK(l.capacity == r.capacity);
+      for (auto index = 0; index < l.capacity; ++index) {
+        if (!(lhs.Get(chunk, index) == rhs.Get(chunk, index))) {
+          return false;
+        }
+      }
+    }
+    CARBON_CHECK(lhs.size_in_last_chunk_ == rhs.size_in_last_chunk_);
+    {
+      auto chunk = lhs.used_chunks_ - 1;
+      auto& l = lhs.chunks_[chunk];
+      auto& r = rhs.chunks_[chunk];
+      CARBON_CHECK(l.capacity == r.capacity);
+      for (auto index = 0; index < lhs.size_in_last_chunk_; ++index) {
+        if (!(lhs.Get(chunk, index) == rhs.Get(chunk, index))) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
     mem_usage.Add(label.str(), size(), capacity());
@@ -158,6 +194,10 @@ class StableStack {
 
   template <class Getter>
   auto ConstructFrom(const StableStack& rhs, Getter getter) {
+    if (rhs.empty()) {
+      return;
+    }
+
     chunks_.reserve(used_chunks_);
     for (int chunk = 0; chunk < used_chunks_ - 1; ++chunk) {
       auto capacity = rhs.chunks_[chunk].capacity;
@@ -274,7 +314,7 @@ class StableStack {
   }
 
   auto NextChunkCapacity() {
-    if (empty()) {
+    if (chunks_.empty()) {
       return 16;
     }
     return chunks_.back().capacity * 3;

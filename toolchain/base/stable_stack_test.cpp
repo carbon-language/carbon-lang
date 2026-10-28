@@ -252,10 +252,17 @@ TEST(StableStack, CopyStack) {
     EXPECT_EQ(constructed, size);
     EXPECT_EQ(destroyed, size);
     constructed = destroyed = 0;
+
+    // Copy assignment from empty.
+    StableStack<Counter> stack4;
+    stack3 = stack4;
+    EXPECT_EQ(constructed, 0);
+    EXPECT_EQ(destroyed, size);
+    constructed = destroyed = 0;
   }
   EXPECT_EQ(constructed, 0);
   // Each Counter held in each stack was destroyed.
-  EXPECT_EQ(destroyed, size * 3);
+  EXPECT_EQ(destroyed, size * 2);
 }
 
 TEST(StableStack, MoveStack) {
@@ -329,10 +336,17 @@ TEST(StableStack, MoveStack) {
     EXPECT_EQ(constructed, size);
     EXPECT_EQ(destroyed, size);
     constructed = destroyed = 0;
+
+    // Move assignment from empty.
+    StableStack<Counter> stack4;
+    stack3 = std::move(stack4);
+    EXPECT_EQ(constructed, 0);
+    EXPECT_EQ(destroyed, size);
+    constructed = destroyed = 0;
   }
   EXPECT_EQ(constructed, 0);
   // Each Counter held in each stack was destroyed.
-  EXPECT_EQ(destroyed, size * 3);
+  EXPECT_EQ(destroyed, size * 2);
 }
 
 TEST(StableStack, Peek) {
@@ -389,6 +403,40 @@ TEST(StableStack, Reserve) {
   }
   EXPECT_EQ(stack.capacity(), capacity);
   EXPECT_EQ(stack.size(), capacity);
+}
+
+TEST(StableStack, Equal) {
+  StableStack<int> stack;
+  StableStack<int> stack2;
+
+  EXPECT_EQ(stack, stack2);
+  stack.Reserve(1);
+  EXPECT_EQ(stack, stack2);
+  stack2.Reserve(1000);
+  EXPECT_EQ(stack, stack2);
+
+  int i = 0;
+  GrowCapacityTimes(stack, 3, [&i]() { return i++; });
+  EXPECT_NE(stack, stack2);
+
+  for (auto j = 0; j < stack.size(); ++j) {
+    stack2.Push(j);
+  }
+  EXPECT_EQ(stack, stack2);
+
+  auto start_size = stack.size();
+  while (stack.size() > start_size / 2) {
+    stack.Pop();
+    EXPECT_NE(stack, stack2);
+    stack2.Pop();
+    EXPECT_EQ(stack, stack2);
+  }
+  while (!stack.empty()) {
+    stack2.Pop();
+    EXPECT_NE(stack, stack2);
+    stack.Pop();
+    EXPECT_EQ(stack, stack2);
+  }
 }
 
 }  // namespace
