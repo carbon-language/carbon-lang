@@ -15,6 +15,7 @@ library "[[@TEST_NAME]]";
 
 alias Imported = fn (x: i32) -> i32 { return x; };
 alias ImportedTerse = fn (x: i32) => x;
+alias ImportedGenericTerse = fn [T: Core.Copy](x: T) => x;
 
 // --- main.carbon
 library "[[@TEST_NAME]]";
@@ -25,8 +26,9 @@ fn Test() -> i32 {
   alias f = fn (x: i32) -> i32 {
     return x;
   };
-  alias g = fn (x: i32) => x;
-  return (fn (y: i32) => y)(g(f(ImportedTerse(Imported(1)))));
+  alias g = fn [T: Core.Copy](x: T) => x;
+  return (fn [T: Core.Copy](y: T) => y)(
+      g(f(ImportedGenericTerse(ImportedTerse(Imported(1))))));
 }
 
 // CHECK:STDOUT: ; ---
@@ -73,35 +75,41 @@ fn Test() -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CTest.Main() #0 !dbg !40 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %fn.call.loc10_57 = call i32 @"_Cfn:enclosed.3c14c8ca6559e7d0"(i32 1), !dbg !43
-// CHECK:STDOUT:   %fn.call.loc10_58 = call i32 @"_Cfn:enclosed.c7952b8f54fe2475"(i32 %fn.call.loc10_57), !dbg !44
-// CHECK:STDOUT:   %fn.call.loc10_59 = call i32 @"_Cfn:enclosed.78e97d08196088b9"(i32 %fn.call.loc10_58), !dbg !45
-// CHECK:STDOUT:   %fn.call.loc10_60 = call i32 @"_Cfn:enclosed.0e7270695e932392"(i32 %fn.call.loc10_59), !dbg !46
-// CHECK:STDOUT:   %fn.call.loc10_61 = call i32 @"_Cfn:enclosed.1fd415d9d5ad7882"(i32 %fn.call.loc10_60), !dbg !47
-// CHECK:STDOUT:   ret i32 %fn.call.loc10_61, !dbg !48
+// CHECK:STDOUT:   %fn.call.loc11_56 = call i32 @"_Cfn:enclosed.3c14c8ca6559e7d0"(i32 1), !dbg !43
+// CHECK:STDOUT:   %fn.call.loc11_57 = call i32 @"_Cfn:enclosed.c7952b8f54fe2475"(i32 %fn.call.loc11_56), !dbg !44
+// CHECK:STDOUT:   %fn.call.loc11_58 = call i32 @"_Cfn:enclosed.8a40e95b23d3f272.2fad9574e050607e"(i32 %fn.call.loc11_57), !dbg !45
+// CHECK:STDOUT:   %fn.call.loc11_59 = call i32 @"_Cfn:enclosed.1a725d33c50a7457"(i32 %fn.call.loc11_58), !dbg !46
+// CHECK:STDOUT:   %fn.call.loc11_60 = call i32 @"_Cfn:enclosed.e581b0d03d82ce06.2fad9574e050607e"(i32 %fn.call.loc11_59), !dbg !47
+// CHECK:STDOUT:   %fn.call.loc11_61 = call i32 @"_Cfn:enclosed.c27343342d9f58cb.2fad9574e050607e"(i32 %fn.call.loc11_60), !dbg !48
+// CHECK:STDOUT:   ret i32 %fn.call.loc11_61, !dbg !49
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_Cfn:enclosed.78e97d08196088b9"(i32 %x) #0 !dbg !49 {
+// CHECK:STDOUT: define i32 @"_Cfn:enclosed.1a725d33c50a7457"(i32 %x) #0 !dbg !50 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !55
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_Cfn:enclosed.0e7270695e932392"(i32 %x) #0 !dbg !57 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %x, !dbg !60
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_Cfn:enclosed.1fd415d9d5ad7882"(i32 %y) #0 !dbg !62 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret i32 %y, !dbg !65
+// CHECK:STDOUT:   ret i32 %x, !dbg !56
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @"_Cfn:enclosed.c7952b8f54fe2475"(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare i32 @"_Cfn:enclosed.3c14c8ca6559e7d0"(i32)
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @"_Cfn:enclosed.8a40e95b23d3f272.2fad9574e050607e"(i32 %x) #0 !dbg !58 {
+// CHECK:STDOUT:   ret i32 %x, !dbg !61
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @"_Cfn:enclosed.e581b0d03d82ce06.2fad9574e050607e"(i32 %x) #0 !dbg !63 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret i32 %x, !dbg !66
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define linkonce_odr i32 @"_Cfn:enclosed.c27343342d9f58cb.2fad9574e050607e"(i32 %y) #0 !dbg !68 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   ret i32 %y, !dbg !71
+// CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT:
@@ -110,6 +118,7 @@ fn Test() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !18 = !DIFile(filename: "lib.carbon", directory: "")
 // CHECK:STDOUT: !20 = !DIBasicType(name: "int", size: 32, encoding: DW_ATE_signed)
 // CHECK:STDOUT: !21 = !{!20, !20}
 // CHECK:STDOUT: !22 = !DISubroutineType(types: !21)
@@ -118,22 +127,27 @@ fn Test() -> i32 {
 // CHECK:STDOUT: !38 = !{!20}
 // CHECK:STDOUT: !39 = !DISubroutineType(types: !38)
 // CHECK:STDOUT: !40 = distinct !DISubprogram(name: "Test", linkageName: "_CTest.Main", scope: null, file: !36, line: 5, type: !39, spFlags: DISPFlagDefinition, unit: !37)
-// CHECK:STDOUT: !43 = !DILocation(line: 10, column: 47, scope: !40)
-// CHECK:STDOUT: !44 = !DILocation(line: 10, column: 33, scope: !40)
-// CHECK:STDOUT: !45 = !DILocation(line: 10, column: 31, scope: !40)
-// CHECK:STDOUT: !46 = !DILocation(line: 10, column: 29, scope: !40)
-// CHECK:STDOUT: !47 = !DILocation(line: 10, column: 10, scope: !40)
-// CHECK:STDOUT: !48 = !DILocation(line: 10, column: 3, scope: !40)
-// CHECK:STDOUT: !49 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.78e97d08196088b9", scope: null, file: !36, line: 6, type: !22, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !56)
-// CHECK:STDOUT: !50 = !DILocalVariable(arg: 1, scope: !49, type: !20)
-// CHECK:STDOUT: !55 = !DILocation(line: 7, column: 5, scope: !49)
-// CHECK:STDOUT: !56 = !{!50}
-// CHECK:STDOUT: !57 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.0e7270695e932392", scope: null, file: !36, line: 9, type: !22, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !61)
-// CHECK:STDOUT: !58 = !DILocalVariable(arg: 1, scope: !57, type: !20)
-// CHECK:STDOUT: !60 = !DILocation(line: 9, column: 28, scope: !57)
-// CHECK:STDOUT: !61 = !{!58}
-// CHECK:STDOUT: !62 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.1fd415d9d5ad7882", scope: null, file: !36, line: 10, type: !22, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !66)
-// CHECK:STDOUT: !63 = !DILocalVariable(arg: 1, scope: !62, type: !20)
-// CHECK:STDOUT: !65 = !DILocation(line: 10, column: 26, scope: !62)
-// CHECK:STDOUT: !66 = !{!63}
+// CHECK:STDOUT: !43 = !DILocation(line: 11, column: 46, scope: !40)
+// CHECK:STDOUT: !44 = !DILocation(line: 11, column: 32, scope: !40)
+// CHECK:STDOUT: !45 = !DILocation(line: 11, column: 11, scope: !40)
+// CHECK:STDOUT: !46 = !DILocation(line: 11, column: 9, scope: !40)
+// CHECK:STDOUT: !47 = !DILocation(line: 11, column: 7, scope: !40)
+// CHECK:STDOUT: !48 = !DILocation(line: 10, column: 10, scope: !40)
+// CHECK:STDOUT: !49 = !DILocation(line: 10, column: 3, scope: !40)
+// CHECK:STDOUT: !50 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.1a725d33c50a7457", scope: null, file: !36, line: 6, type: !22, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !57)
+// CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !20)
+// CHECK:STDOUT: !56 = !DILocation(line: 7, column: 5, scope: !50)
+// CHECK:STDOUT: !57 = !{!51}
+// CHECK:STDOUT: !58 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.8a40e95b23d3f272.2fad9574e050607e", scope: null, file: !18, line: 5, type: !22, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !62)
+// CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !58, type: !20)
+// CHECK:STDOUT: !61 = !DILocation(line: 5, column: 57, scope: !58)
+// CHECK:STDOUT: !62 = !{!59}
+// CHECK:STDOUT: !63 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.e581b0d03d82ce06.2fad9574e050607e", scope: null, file: !36, line: 9, type: !22, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !67)
+// CHECK:STDOUT: !64 = !DILocalVariable(arg: 1, scope: !63, type: !20)
+// CHECK:STDOUT: !66 = !DILocation(line: 9, column: 40, scope: !63)
+// CHECK:STDOUT: !67 = !{!64}
+// CHECK:STDOUT: !68 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.c27343342d9f58cb.2fad9574e050607e", scope: null, file: !36, line: 10, type: !22, spFlags: DISPFlagDefinition, unit: !37, retainedNodes: !72)
+// CHECK:STDOUT: !69 = !DILocalVariable(arg: 1, scope: !68, type: !20)
+// CHECK:STDOUT: !71 = !DILocation(line: 10, column: 38, scope: !68)
+// CHECK:STDOUT: !72 = !{!69}
 // CHECK:STDOUT:
