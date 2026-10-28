@@ -123,11 +123,23 @@ auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
 auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
                          SemIR::SpecificId specific_id) -> void;
 
+enum class DefinitionResolution : std::uint8_t {
+  // The definition is not available.
+  NotDefinedYet,
+
+  // The definition was resolved by this operation.
+  NewlyResolved,
+
+  // The definition was resolved by a previous operation.
+  PreviouslyResolved,
+};
+
 // Attempts to resolve the definition of the given specific, by evaluating the
 // eval block of the corresponding generic and storing a corresponding value
-// block in the specific. Returns false if a definition is not available.
+// block in the specific.
 auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
-                               SemIR::SpecificId specific_id) -> bool;
+                               SemIR::SpecificId specific_id)
+    -> DefinitionResolution;
 
 // Diagnoses if an entity has implicit parameters, indicating it's generic, but
 // is missing explicit parameters.

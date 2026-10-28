@@ -41,6 +41,7 @@ impl forall [T: type] T as I where .U = C {
 // CHECK:STDOUT:   %.917: <witness> = impl_self_witness %T, @I [symbolic]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @T.as.I.impl.%I.impl_witness_table, @T.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %I.facet.510: %I.type = facet_value %T, (%I.impl_witness) [symbolic]
+// CHECK:STDOUT:   %require_specific_def: require_specific_def_type = require_specific_def @T.as.I.impl(%T) [symbolic]
 // CHECK:STDOUT:   %.a44: Core.Form = init_form %C [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %return.param_patt.89a: %pattern_type.98b = out_param_pattern [concrete]
@@ -84,6 +85,7 @@ impl forall [T: type] T as I where .U = C {
 // CHECK:STDOUT: generic fn @T.as.I.impl.F(@T.as.I.impl.%T.loc10_15.2: type) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
 // CHECK:STDOUT:   %I.impl_witness: <witness> = impl_witness @T.as.I.impl.%I.impl_witness_table, @T.as.I.impl(%T) [symbolic = %I.impl_witness (constants.%I.impl_witness)]
+// CHECK:STDOUT:   %require_specific_def: require_specific_def_type = require_specific_def @T.as.I.impl(%T) [symbolic = %require_specific_def (constants.%require_specific_def)]
 // CHECK:STDOUT:   %I.facet.loc13_13.1: %I.type = facet_value %T, (%I.impl_witness) [symbolic = %I.facet.loc13_13.1 (constants.%I.facet.510)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
@@ -117,6 +119,7 @@ impl forall [T: type] T as I where .U = C {
 // CHECK:STDOUT: specific @T.as.I.impl.F(constants.%T) {
 // CHECK:STDOUT:   %T => constants.%T
 // CHECK:STDOUT:   %I.impl_witness => constants.%I.impl_witness
+// CHECK:STDOUT:   %require_specific_def => constants.%require_specific_def
 // CHECK:STDOUT:   %I.facet.loc13_13.1 => constants.%I.facet.510
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
