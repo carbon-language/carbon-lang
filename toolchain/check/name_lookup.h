@@ -108,12 +108,15 @@ auto AppendLookupScopesForConstant(Context& context, SemIR::LocId loc_id,
 
 // Performs a qualified name lookup in a specified scopes and in scopes that
 // they extend, returning the referenced `InstId`.
+//
+// If `check_access` is true, the lookup will fail if access is prohibited
+// (e.g. accessing a private member of a parent class).
 auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
                          SemIR::NameId name_id,
                          llvm::ArrayRef<LookupScope> lookup_scopes,
                          bool required = true,
-                         std::optional<AccessInfo> access_info = std::nullopt)
-    -> LookupResult;
+                         std::optional<AccessInfo> access_info = std::nullopt,
+                         bool check_access = true) -> LookupResult;
 
 // Returns the `InstId` corresponding to a qualified name in the `Core` package,
 // or BuiltinErrorInst if not found.

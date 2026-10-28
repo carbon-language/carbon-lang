@@ -1223,18 +1223,15 @@ private:
 template <class T>
 struct A {
   static void G() {
+    // CHECK:STDERR: fail_access_private_parent_member_in_unrelated_class.carbon:[[@LINE+1]]:8: error: 'F' is a private member of 'Base' [CppInteropParseError]
     T::F();
   }
 };
 
 void H() {
   A<Carbon::Derived> a;
-  // CHECK:STDERR: fail_access_private_parent_member_in_unrelated_class.carbon:[[@LINE+7]]:5: error: cannot access private member `F` of type `Cpp.Base` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: fail_access_private_parent_member_in_unrelated_class.carbon:[[@LINE+6]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_access_private_parent_member_in_unrelated_class.carbon:[[@LINE-9]]:8: error: 'F' is a private member of 'Base' [CppInteropParseError]
   // CHECK:STDERR: fail_access_private_parent_member_in_unrelated_class.carbon:[[@LINE+3]]:5: note: in instantiation of member function 'A<Carbon::Main::Derived>::G' requested here [CppInteropParseNote]
-  // CHECK:STDERR: fail_access_private_parent_member_in_unrelated_class.carbon:[[@LINE-17]]:15: note: declared private here [CppInteropParseNote]
+  // CHECK:STDERR: fail_access_private_parent_member_in_unrelated_class.carbon:[[@LINE-14]]:15: note: declared private here [CppInteropParseNote]
   // CHECK:STDERR:
   a.G();
 }
@@ -1270,9 +1267,6 @@ struct A {
 
 void H() {
   A<Carbon::Derived> a;
-  // CHECK:STDERR: access_private_parent_member_in_unrelated_class_with_friend.carbon:[[@LINE+3]]:5: error: cannot access private member `F` of type `Cpp.Base` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: access_private_parent_member_in_unrelated_class_with_friend.carbon:[[@LINE+2]]:5: note: declared here [ClassMemberDeclaration]
-  // CHECK:STDERR:
   a.G();
 }
 ''';

@@ -371,9 +371,14 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
 
   // `required=false` so Carbon doesn't diagnose a failure, let Clang diagnose
   // it or even SFINAE.
+  //
+  // `check_access=false` so that lookup only filters names by visibility, not
+  // access. Access will be checked later.
   LookupResult result = LookupQualifiedName(*context_, GetCurrentCppLocId(),
                                             name_id, lookup_scopes,
-                                            /*required=*/false);
+                                            /*required=*/false,
+                                            /*access_info=*/std::nullopt,
+                                            /*check_access=*/false);
   if (!result.scope_result.is_found()) {
     // Avoid caching a negative lookup, as a declaration with this name may be
     // added in Carbon later.

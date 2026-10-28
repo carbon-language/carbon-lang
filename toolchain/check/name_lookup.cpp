@@ -511,8 +511,8 @@ static auto DiagnoseMemberNameNotFound(
 auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
                          SemIR::NameId name_id,
                          llvm::ArrayRef<LookupScope> lookup_scopes,
-                         bool required, std::optional<AccessInfo> access_info)
-    -> LookupResult {
+                         bool required, std::optional<AccessInfo> access_info,
+                         bool check_access) -> LookupResult {
   llvm::SmallVector<LookupScope> scopes(lookup_scopes);
 
   // TODO: Support reporting of multiple prohibited access.
@@ -547,6 +547,7 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
     }
 
     auto is_access_prohibited =
+        check_access &&
         IsAccessProhibited(context, access_info, access_kind, is_parent_access);
 
     // Keep track of prohibited accesses, this will be useful for reporting
