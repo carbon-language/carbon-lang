@@ -10,6 +10,7 @@
 #include <cstring>
 #include <limits>
 #include <optional>
+#include <string_view>
 #include <utility>
 
 #include "common/check.h"
@@ -225,10 +226,13 @@ class [[clang::internal_linkage]] Lexer {
   auto LexWordAsDollarIntLiteralToken(llvm::StringRef word, int32_t byte_offset)
       -> LexResult;
 
-  auto LexKeywordOrIdentifier(llvm::StringRef source_text, ssize_t& position)
-      -> LexResult;
+  auto LexIdentifierToken(llvm::StringRef text, int32_t byte_offset) -> void;
 
-  auto LexHash(llvm::StringRef source_text, ssize_t& position) -> LexResult;
+  auto LexKeywordOrIdentifierToken(llvm::StringRef text, int32_t byte_offset)
+      -> void;
+
+  auto LexRawIdentifierToken(llvm::StringRef source_text, ssize_t& position)
+      -> void;
 
   auto LexError(llvm::StringRef source_text, ssize_t& position) -> LexResult;
 
@@ -808,20 +812,126 @@ CARBON_PRESERVE_NONE static auto DispatchLexError(Lexer& lexer,
     /* NOLINTNEXTLINE(readability-avoid-return-with-void-value) */             \
     [[clang::musttail]] return DispatchLexError(lexer, source_text, position); \
   }
-CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifier)
 CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
-CARBON_PRESERVE_NONE static auto DispatchLexHash(Lexer& lexer,
-                                                 llvm::StringRef source_text,
-                                                 ssize_t position) -> void {
-  if (lexer.LexHash(source_text, position)) {
+// Verify the keyword invariant relied upon by the type literal dispatchers
+// below: no keyword starts with a sized type literal prefix (`[iuf][1-9]`).
+static_assert([] {
+#define CARBON_KEYWORD_TOKEN(Name, Spelling)                            \
+  if (((Spelling)[0] == 'i' || (Spelling)[0] == 'u' ||                  \
+       (Spelling)[0] == 'f') &&                                         \
+      std::string_view(Spelling).size() >= 2 && (Spelling)[1] >= '1' && \
+      (Spelling)[1] <= '9') {                                           \
+    return false;                                                       \
+  }
+#include "toolchain/lex/token_kind.def"
+  return true;
+}());
+
+// Lexes a keyword or identifier starting with an identifier start byte that
+// doesn't have a more specific dispatch function below. The dispatch functions
+// for `r`, `i`, `u`, and `f` also fall back to this one when their special
+// case doesn't apply.
+CARBON_PRESERVE_NONE static auto DispatchLexKeywordOrIdentifier(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  CARBON_DCHECK(
+      IsIdStartByteTable[static_cast<unsigned char>(source_text[position])]);
+  int32_t byte_offset = position;
+  llvm::StringRef identifier_text = lexer.ScanIdentifier(source_text, position);
+  CARBON_DCHECK(!identifier_text.empty(), "Must have at least one character!");
+  position += identifier_text.size();
+  lexer.LexKeywordOrIdentifierToken(identifier_text, byte_offset);
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchNext(lexer, source_text, position);
+}
+
+// Lexes a word starting with `r`. When `r#` is followed by an identifier start
+// byte, this is a raw identifier like `r#for`. Otherwise, it's a keyword or
+// identifier like `return` or `r`.
+CARBON_PRESERVE_NONE static auto DispatchLexRawIdentifierOrKeywordOrIdentifier(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  CARBON_DCHECK(source_text[position] == 'r');
+  if (LLVM_UNLIKELY(position + 2 < static_cast<ssize_t>(source_text.size()) &&
+                    source_text[position + 1] == '#' &&
+                    IsIdStartByteTable[static_cast<unsigned char>(
+                        source_text[position + 2])])) {
+    lexer.LexRawIdentifierToken(source_text, position);
     // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);
   }
   // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
-  [[clang::musttail]] return DispatchLexStringLiteral(lexer, source_text,
-                                                      position);
+  [[clang::musttail]] return DispatchLexKeywordOrIdentifier(lexer, source_text,
+                                                            position);
+}
+
+// The out-of-line fallback for a word starting with `[iuf][1-9]` that
+// `DispatchLexTypeLiteralOrKeywordOrIdentifier` doesn't lex inline: a word near
+// the end of the source, a type literal with a width of more than three digits,
+// or an identifier like `i32x`. None of these can be a keyword.
+//
+// This is a separate function because its calls keep more values live, and so
+// need a prologue that saves registers to the stack. When merged into the
+// dispatcher, the compiler emits that prologue on entry, adding it to the
+// dispatcher's common path of keywords and identifiers like `if` and `fn`.
+CARBON_PRESERVE_NONE static auto DispatchLexFallbackTypeLiteralOrIdentifier(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  llvm::StringRef word = lexer.ScanIdentifier(source_text, position);
+  if (!lexer.LexWordAsTypeLiteralToken(word, position)) {
+    lexer.LexIdentifierToken(word, position);
+  }
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchNext(lexer, source_text,
+                                          position + word.size());
+}
+
+// Lexes a word starting with `i`, `u`, or `f`, where `Kind` is the kind of
+// sized type literal for that letter. When a digit `[1-9]` follows, this is a
+// type literal like `i32`, `u8`, or `f64`, lexed inline for widths of up to
+// three digits, or an identifier like `i32x`. Otherwise, it's a keyword or
+// identifier like `if` or `fn`.
+template <TokenKind::RawEnumType Kind>
+CARBON_PRESERVE_NONE static auto DispatchLexTypeLiteralOrKeywordOrIdentifier(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  const ssize_t size = source_text.size();
+  const char* ptr = source_text.data() + position;
+  if (LLVM_LIKELY(position + 1 >= size || ptr[1] < '1' || ptr[1] > '9')) {
+    // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+    [[clang::musttail]] return DispatchLexKeywordOrIdentifier(
+        lexer, source_text, position);
+  }
+
+  // Lex a width of up to three digits inline when the bytes it could span,
+  // through the byte after it at `ptr[4]`, are in bounds.
+  if (LLVM_LIKELY(position + 4 < size)) {
+    int32_t width = ptr[1] - '0';
+    ssize_t end = 2;
+    for (; end < 4 && IsDecimalDigit(ptr[end]); ++end) {
+      width = width * 10 + (ptr[end] - '0');
+    }
+    if (!IsIdByteTable[static_cast<unsigned char>(ptr[end])]) {
+      lexer.LexTokenWithPayload(TokenKind::Make(Kind),
+                                IntId::MakeRaw(width).AsTokenPayload(),
+                                position);
+      // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+      [[clang::musttail]] return DispatchNext(lexer, source_text,
+                                              position + end);
+    }
+  }
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchLexFallbackTypeLiteralOrIdentifier(
+      lexer, source_text, position);
+}
+
+// Lexes a word starting with `$` as a positional parameter like `$0`, or as an
+// error token if it isn't a valid one.
+CARBON_PRESERVE_NONE static auto DispatchLexDollarIntLiteral(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  llvm::StringRef word = lexer.ScanIdentifier(source_text, position);
+  lexer.LexWordAsDollarIntLiteralToken(word, position);
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchNext(lexer, source_text,
+                                          position + word.size());
 }
 
 // A set of custom dispatch functions that preselect the symbol token to lex.
@@ -958,23 +1068,24 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   // symbol.
   table['/'] = &DispatchLexCommentOrSlash;
 
-  table['_'] = &DispatchLexKeywordOrIdentifier;
-  table['$'] = &DispatchLexKeywordOrIdentifier;
-  // Note that we don't use `llvm::seq` because this needs to be `constexpr`
-  // evaluated.
-  for (unsigned char c = 'a'; c <= 'z'; ++c) {
-    table[c] = &DispatchLexKeywordOrIdentifier;
+  // We dispatch all non-ASCII UTF-8 characters to the error handler, as
+  // whitespace characters are handled below and the only remaining valid
+  // Unicode characters would be part of an identifier.
+  //
+  // TODO: Need to add support for Unicode lexing.
+  for (int i = 0; i < 256; ++i) {
+    if (IsIdStartByteTable[i]) {
+      table[i] = &DispatchLexKeywordOrIdentifier;
+    }
   }
-  for (unsigned char c = 'A'; c <= 'Z'; ++c) {
-    table[c] = &DispatchLexKeywordOrIdentifier;
-  }
-  // We dispatch all non-ASCII UTF-8 characters to the identifier lexing
-  // as whitespace characters should already have been skipped and the
-  // only remaining valid Unicode characters would be part of an
-  // identifier. That code can either accept or reject.
-  for (int i = 0x80; i < 0x100; ++i) {
-    table[i] = &DispatchLexKeywordOrIdentifier;
-  }
+  table['r'] = &DispatchLexRawIdentifierOrKeywordOrIdentifier;
+  table['i'] =
+      &DispatchLexTypeLiteralOrKeywordOrIdentifier<TokenKind::IntTypeLiteral>;
+  table['u'] = &DispatchLexTypeLiteralOrKeywordOrIdentifier<
+      TokenKind::UnsignedIntTypeLiteral>;
+  table['f'] =
+      &DispatchLexTypeLiteralOrKeywordOrIdentifier<TokenKind::FloatTypeLiteral>;
+  table['$'] = &DispatchLexDollarIntLiteral;
 
   for (unsigned char c = '0'; c <= '9'; ++c) {
     table[c] = &DispatchLexNumericLiteral;
@@ -982,7 +1093,7 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
 
   table['\''] = &DispatchLexStringLiteral;
   table['"'] = &DispatchLexStringLiteral;
-  table['#'] = &DispatchLexHash;
+  table['#'] = &DispatchLexStringLiteral;
 
   table[' '] = &DispatchLexHorizontalWhitespace;
   table['\t'] = &DispatchLexHorizontalWhitespace;
@@ -1994,84 +2105,43 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
       byte_offset);
 }
 
-auto Lexer::LexKeywordOrIdentifier(llvm::StringRef source_text,
-                                   ssize_t& position) -> LexResult {
-  if (static_cast<unsigned char>(source_text[position]) > 0x7F) {
-    // TODO: Need to add support for Unicode lexing.
-    return LexResult::NoMatch();
-  }
-  CARBON_CHECK(
-      IsIdStartByteTable[static_cast<unsigned char>(source_text[position])]);
+auto Lexer::LexIdentifierToken(llvm::StringRef text, int32_t byte_offset)
+    -> void {
+  LexTokenWithPayload(TokenKind::Identifier,
+                      buffer_.value_stores_->identifiers().Add(text).index,
+                      byte_offset);
+}
 
-  // Capture the position before we step past the token.
-  int32_t byte_offset = position;
-
-  // Take the valid characters off the front of the source buffer.
-  llvm::StringRef identifier_text = ScanIdentifier(source_text, position);
-  CARBON_DCHECK(!identifier_text.empty(), "Must have at least one character!");
-  position += identifier_text.size();
-
-  // Check if the text is a type literal, and if so form such a literal.
-  if (LexResult result =
-          LexWordAsTypeLiteralToken(identifier_text, byte_offset)) {
-    return result;
-  }
-  if (LexResult result =
-          LexWordAsDollarIntLiteralToken(identifier_text, byte_offset)) {
-    return result;
-  }
-
+auto Lexer::LexKeywordOrIdentifierToken(llvm::StringRef text,
+                                        int32_t byte_offset) -> void {
   // Check if the text matches a keyword token, and if so use that.
-  TokenKind kind = llvm::StringSwitch<TokenKind>(identifier_text)
+  TokenKind kind = llvm::StringSwitch<TokenKind>(text)
 #define CARBON_KEYWORD_TOKEN(Name, Spelling) .Case(Spelling, TokenKind::Name)
 #include "toolchain/lex/token_kind.def"
                        .Default(TokenKind::Error);
   if (kind != TokenKind::Error) {
-    return LexToken(kind, byte_offset);
+    LexToken(kind, byte_offset);
+    return;
   }
 
-  // Otherwise we have a generic identifier.
-  return LexTokenWithPayload(
-      TokenKind::Identifier,
-      buffer_.value_stores_->identifiers().Add(identifier_text).index,
-      byte_offset);
+  LexIdentifierToken(text, byte_offset);
 }
 
-auto Lexer::LexHash(llvm::StringRef source_text, ssize_t& position)
-    -> LexResult {
-  // For `r#`, we already lexed an `r` identifier token. Detect that case and
-  // replace that token with a raw identifier. We do this to keep identifier
-  // lexing as fast as possible.
-
-  // Look for the `r` token. Note that this is always in bounds because we
-  // create a start of file token.
-  auto& prev_token_info =
-      buffer_.token_infos_.Get(TokenIndex(buffer_.token_infos_.size() - 1));
-
-  // If the previous token isn't the identifier `r`, or the character after `#`
-  // isn't the start of an identifier, this is not a raw identifier.
-  if (prev_token_info.kind() != TokenKind::Identifier ||
-      source_text[position - 1] != 'r' ||
-      position + 1 == static_cast<ssize_t>(source_text.size()) ||
-      !IsIdStartByteTable[static_cast<unsigned char>(
-          source_text[position + 1])] ||
-      prev_token_info.byte_offset() != static_cast<int32_t>(position) - 1) {
-    return LexResult::NoMatch();
-  }
-  CARBON_DCHECK(buffer_.value_stores_->identifiers().Get(
-                    prev_token_info.ident_id()) == "r");
+auto Lexer::LexRawIdentifierToken(llvm::StringRef source_text,
+                                  ssize_t& position) -> void {
+  CARBON_DCHECK(source_text.substr(position).starts_with("r#"));
+  int32_t byte_offset = position;
 
   // Take the valid characters off the front of the source buffer.
-  llvm::StringRef identifier_text = ScanIdentifier(source_text, position + 1);
+  llvm::StringRef identifier_text = ScanIdentifier(source_text, position + 2);
   CARBON_DCHECK(!identifier_text.empty(), "Must have at least one character!");
-  position += 1 + identifier_text.size();
+  position += 2 + identifier_text.size();
 
-  // Replace the `r` identifier's value with the raw identifier.
+  // The raw identifier token covers the `r#` prefix, but its identifier is
+  // only the name following it.
   // TODO: This token doesn't carry any indicator that it's raw, so
   // diagnostics are unclear.
-  prev_token_info.set_ident_id(
-      buffer_.value_stores_->identifiers().Add(identifier_text));
-  return LexResult(TokenIndex(buffer_.token_infos_.size() - 1));
+  LexIdentifierToken(identifier_text, byte_offset);
 }
 
 auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
