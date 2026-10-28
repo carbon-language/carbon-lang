@@ -1182,7 +1182,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
   // If the lookup comes from inside an impl decl and is for that impl, get a
   // witness for that impl even though it does not yet exist.
   if (!context.declaring_impl_decls().empty()) {
-    const auto& declaring = context.declaring_impl_decls().back();
+    const auto& declaring = context.declaring_impl_decls().Peek();
     if (query_self_const_id == declaring.self_id ||
         IsPeriodSelf(context, eval_query.query_self_inst_id)) {
       if (query_specific_interface == declaring.specific_interface) {

@@ -319,7 +319,7 @@ class Context {
     SemIR::SpecificInterface specific_interface;
     auto operator==(const DeclaringImplDecl& rhs) const -> bool = default;
   };
-  auto declaring_impl_decls() -> llvm::SmallVector<DeclaringImplDecl>& {
+  auto declaring_impl_decls() -> StableStack<DeclaringImplDecl>& {
     return declaring_impl_decls_;
   }
 
@@ -651,7 +651,7 @@ class Context {
   // Track impl declarations that are underway. If we're declaring an impl for
   // `C as I`, an impl lookup query for `C as I` or `.Self as I` should find
   // that impl being declared (even though it does not yet exist).
-  llvm::SmallVector<DeclaringImplDecl> declaring_impl_decls_;
+  StableStack<DeclaringImplDecl> declaring_impl_decls_;
 
   // Tracks if we are currently identifying a facet type, which causes
   // LookupImplWitness instructions to not resolve to final witnesses by
