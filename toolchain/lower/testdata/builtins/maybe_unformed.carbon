@@ -123,46 +123,40 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.b3126fe3b97d1b85:core.SubobjectDestroy.Core"(ptr %self) #0 !dbg !83 {
+// CHECK:STDOUT: define void @_CTakeAdapterBool.Main(ptr %_) #0 !dbg !83 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !85
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CTakeAdapterBool.Main(ptr %_) #0 !dbg !87 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !90
+// CHECK:STDOUT:   ret void, !dbg !86
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CMakeAdapterBool.Main(ptr sret(i1))
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassAdapterBool.Main() #0 !dbg !92 {
+// CHECK:STDOUT: define void @_CPassAdapterBool.Main() #0 !dbg !88 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc55_35.1.temp = alloca i1, align 1, !dbg !93
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc55_35.1.temp), !dbg !93
-// CHECK:STDOUT:   call void @_CMakeAdapterBool.Main(ptr %.loc55_35.1.temp), !dbg !93
-// CHECK:STDOUT:   call void @_CTakeAdapterBool.Main(ptr %.loc55_35.1.temp), !dbg !94
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.fd9d713231488556(ptr %.loc55_35.1.temp), !dbg !93
-// CHECK:STDOUT:   ret void, !dbg !95
+// CHECK:STDOUT:   %.loc55_35.1.temp = alloca i1, align 1, !dbg !89
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc55_35.1.temp), !dbg !89
+// CHECK:STDOUT:   call void @_CMakeAdapterBool.Main(ptr %.loc55_35.1.temp), !dbg !89
+// CHECK:STDOUT:   call void @_CTakeAdapterBool.Main(ptr %.loc55_35.1.temp), !dbg !90
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.fd9d713231488556(ptr %.loc55_35.1.temp), !dbg !89
+// CHECK:STDOUT:   ret void, !dbg !91
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #1
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.9d6c9c9ca086f431(ptr %t) #0 !dbg !96 {
-// CHECK:STDOUT:   ret void, !dbg !101
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.9d6c9c9ca086f431(ptr %t) #0 !dbg !92 {
+// CHECK:STDOUT:   ret void, !dbg !97
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b0cad517913c41b8(ptr %t) #0 !dbg !103 {
-// CHECK:STDOUT:   ret void, !dbg !108
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.b0cad517913c41b8(ptr %t) #0 !dbg !99 {
+// CHECK:STDOUT:   ret void, !dbg !104
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.fd9d713231488556(ptr %t) #0 !dbg !110 {
-// CHECK:STDOUT:   ret void, !dbg !115
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.fd9d713231488556(ptr %t) #0 !dbg !106 {
+// CHECK:STDOUT:   ret void, !dbg !111
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -216,28 +210,24 @@ fn PassAdapterBool() {
 // CHECK:STDOUT: !80 = !DILocation(line: 48, column: 18, scope: !79)
 // CHECK:STDOUT: !81 = !DILocation(line: 48, column: 3, scope: !79)
 // CHECK:STDOUT: !82 = !DILocation(line: 45, column: 1, scope: !79)
-// CHECK:STDOUT: !83 = distinct !DISubprogram(name: "Op", linkageName: "_COp.b3126fe3b97d1b85:core.SubobjectDestroy.Core", scope: null, file: !34, line: 48, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !86)
+// CHECK:STDOUT: !83 = distinct !DISubprogram(name: "TakeAdapterBool", linkageName: "_CTakeAdapterBool.Main", scope: null, file: !34, line: 51, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !87)
 // CHECK:STDOUT: !84 = !DILocalVariable(arg: 1, scope: !83, type: !39)
-// CHECK:STDOUT: !85 = !DILocation(line: 48, column: 18, scope: !83)
-// CHECK:STDOUT: !86 = !{!84}
-// CHECK:STDOUT: !87 = distinct !DISubprogram(name: "TakeAdapterBool", linkageName: "_CTakeAdapterBool.Main", scope: null, file: !34, line: 51, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !91)
-// CHECK:STDOUT: !88 = !DILocalVariable(arg: 1, scope: !87, type: !39)
-// CHECK:STDOUT: !90 = !DILocation(line: 51, column: 1, scope: !87)
-// CHECK:STDOUT: !91 = !{!88}
-// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "PassAdapterBool", linkageName: "_CPassAdapterBool.Main", scope: null, file: !34, line: 54, type: !45, spFlags: DISPFlagDefinition, unit: !35)
-// CHECK:STDOUT: !93 = !DILocation(line: 55, column: 19, scope: !92)
-// CHECK:STDOUT: !94 = !DILocation(line: 55, column: 3, scope: !92)
-// CHECK:STDOUT: !95 = !DILocation(line: 54, column: 1, scope: !92)
-// CHECK:STDOUT: !96 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9d6c9c9ca086f431", scope: null, file: !26, line: 32, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !102)
-// CHECK:STDOUT: !97 = !DILocalVariable(arg: 1, scope: !96, type: !39)
-// CHECK:STDOUT: !101 = !DILocation(line: 32, column: 1, scope: !96)
-// CHECK:STDOUT: !102 = !{!97}
-// CHECK:STDOUT: !103 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b0cad517913c41b8", scope: null, file: !26, line: 32, type: !38, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !109)
-// CHECK:STDOUT: !104 = !DILocalVariable(arg: 1, scope: !103, type: !36)
-// CHECK:STDOUT: !108 = !DILocation(line: 32, column: 1, scope: !103)
-// CHECK:STDOUT: !109 = !{!104}
-// CHECK:STDOUT: !110 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.fd9d713231488556", scope: null, file: !26, line: 32, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !116)
-// CHECK:STDOUT: !111 = !DILocalVariable(arg: 1, scope: !110, type: !39)
-// CHECK:STDOUT: !115 = !DILocation(line: 32, column: 1, scope: !110)
-// CHECK:STDOUT: !116 = !{!111}
+// CHECK:STDOUT: !86 = !DILocation(line: 51, column: 1, scope: !83)
+// CHECK:STDOUT: !87 = !{!84}
+// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "PassAdapterBool", linkageName: "_CPassAdapterBool.Main", scope: null, file: !34, line: 54, type: !45, spFlags: DISPFlagDefinition, unit: !35)
+// CHECK:STDOUT: !89 = !DILocation(line: 55, column: 19, scope: !88)
+// CHECK:STDOUT: !90 = !DILocation(line: 55, column: 3, scope: !88)
+// CHECK:STDOUT: !91 = !DILocation(line: 54, column: 1, scope: !88)
+// CHECK:STDOUT: !92 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.9d6c9c9ca086f431", scope: null, file: !26, line: 32, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !98)
+// CHECK:STDOUT: !93 = !DILocalVariable(arg: 1, scope: !92, type: !39)
+// CHECK:STDOUT: !97 = !DILocation(line: 32, column: 1, scope: !92)
+// CHECK:STDOUT: !98 = !{!93}
+// CHECK:STDOUT: !99 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.b0cad517913c41b8", scope: null, file: !26, line: 32, type: !38, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !105)
+// CHECK:STDOUT: !100 = !DILocalVariable(arg: 1, scope: !99, type: !36)
+// CHECK:STDOUT: !104 = !DILocation(line: 32, column: 1, scope: !99)
+// CHECK:STDOUT: !105 = !{!100}
+// CHECK:STDOUT: !106 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.fd9d713231488556", scope: null, file: !26, line: 32, type: !43, spFlags: DISPFlagDefinition, unit: !35, retainedNodes: !112)
+// CHECK:STDOUT: !107 = !DILocalVariable(arg: 1, scope: !106, type: !39)
+// CHECK:STDOUT: !111 = !DILocation(line: 32, column: 1, scope: !106)
+// CHECK:STDOUT: !112 = !{!107}
 // CHECK:STDOUT:
