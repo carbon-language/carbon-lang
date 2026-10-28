@@ -12,7 +12,6 @@
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/iterator.h"
-#include "llvm/Support/Allocator.h"
 #include "toolchain/base/mem_usage.h"
 
 namespace Carbon {
@@ -23,14 +22,12 @@ class StableStack;
 template <class T>
 class StableStack {
  public:
-  explicit StableStack(llvm::BumpPtrAllocator& allocator)
-      : allocator_(&allocator) {}
+  StableStack() = default;
   ~StableStack() { DestroyAll(); }
 
   StableStack(const StableStack& rhs)
     requires(std::is_copy_constructible_v<T>)
-      : allocator_(rhs.allocator_),
-        size_(rhs.size_),
+      : size_(rhs.size_),
         used_chunks_(rhs.used_chunks_),
         size_in_last_chunk_(rhs.size_in_last_chunk_) {
     ConstructFrom(rhs, [&rhs](int32_t chunk, int32_t index) -> const T& {
@@ -46,7 +43,6 @@ class StableStack {
 
     DestroyAll();
     chunks_.truncate(0);
-    allocator_ = rhs.allocator_;
     size_ = rhs.size_;
     used_chunks_ = rhs.used_chunks_;
     size_in_last_chunk_ = rhs.size_in_last_chunk_;
@@ -58,8 +54,7 @@ class StableStack {
 
   StableStack(StableStack&& rhs) noexcept
     requires(std::is_move_constructible_v<T>)
-      : allocator_(rhs.allocator_),
-        size_(rhs.size_),
+      : size_(rhs.size_),
         used_chunks_(rhs.used_chunks_),
         size_in_last_chunk_(rhs.size_in_last_chunk_) {
     ConstructFrom(rhs, [&rhs](int32_t chunk, int32_t index) -> T&& {
@@ -75,7 +70,6 @@ class StableStack {
 
     DestroyAll();
     chunks_.truncate(0);
-    allocator_ = rhs.allocator_;
     size_ = rhs.size_;
     used_chunks_ = rhs.used_chunks_;
     size_in_last_chunk_ = rhs.size_in_last_chunk_;
@@ -133,7 +127,8 @@ class StableStack {
     auto current = capacity();
     while (current < reserve) {
       auto capacity = NextChunkCapacity();
-      void* array = allocator_->Allocate(capacity * sizeof(T), alignof(T));
+      void* array =
+          ::operator new[](capacity * sizeof(T), std::align_val_t(alignof(T)));
       __asan_poison_memory_region(array, capacity * sizeof(T));
       chunks_.push_back({.array = array, .capacity = capacity});
       current += capacity;
@@ -166,7 +161,8 @@ class StableStack {
     chunks_.reserve(used_chunks_);
     for (int chunk = 0; chunk < used_chunks_ - 1; ++chunk) {
       auto capacity = rhs.chunks_[chunk].capacity;
-      void* array = allocator_->Allocate(capacity * sizeof(T), alignof(T));
+      void* array =
+          ::operator new[](capacity * sizeof(T), std::align_val_t(alignof(T)));
       for (auto index = 0; index < capacity; ++index) {
         T* slot = reinterpret_cast<T*>(array) + index;
         std::construct_at(slot, getter(chunk, index));
@@ -176,7 +172,8 @@ class StableStack {
     {
       auto chunk = used_chunks_ - 1;
       auto capacity = rhs.chunks_[chunk].capacity;
-      void* array = allocator_->Allocate(capacity * sizeof(T), alignof(T));
+      void* array =
+          ::operator new[](capacity * sizeof(T), std::align_val_t(alignof(T)));
       __asan_poison_memory_region(
           reinterpret_cast<T*>(array) + size_in_last_chunk_,
           (capacity - size_in_last_chunk_) * sizeof(T));
@@ -196,16 +193,16 @@ class StableStack {
     for (auto i = 0; i < used_chunks_ - 1; ++i) {
       std::destroy_n(reinterpret_cast<T*>(chunks_[i].array),
                      chunks_[i].capacity);
-      allocator_->Deallocate(chunks_[i].array, chunks_[i].capacity, alignof(T));
+      ::operator delete[](chunks_[i].array, std::align_val_t(alignof(T)));
     }
     {
       auto i = used_chunks_ - 1;
       std::destroy_n(reinterpret_cast<T*>(chunks_[i].array),
                      size_in_last_chunk_);
-      allocator_->Deallocate(chunks_[i].array, chunks_[i].capacity, alignof(T));
+      ::operator delete[](chunks_[i].array, std::align_val_t(alignof(T)));
     }
     for (auto i = used_chunks_; i < static_cast<int32_t>(chunks_.size()); ++i) {
-      allocator_->Deallocate(chunks_[i].array, chunks_[i].capacity, alignof(T));
+      ::operator delete[](chunks_[i].array, std::align_val_t(alignof(T)));
     }
   }
 
@@ -268,7 +265,8 @@ class StableStack {
     ++used_chunks_;
     if (used_chunks_ > static_cast<int32_t>(chunks_.size())) {
       auto capacity = NextChunkCapacity();
-      void* array = allocator_->Allocate(capacity * sizeof(T), alignof(T));
+      void* array =
+          ::operator new[](capacity * sizeof(T), std::align_val_t(alignof(T)));
       __asan_poison_memory_region(array, capacity * sizeof(T));
       chunks_.push_back({.array = array, .capacity = capacity});
     }
@@ -282,7 +280,6 @@ class StableStack {
     return chunks_.back().capacity * 3;
   }
 
-  llvm::BumpPtrAllocator* allocator_;
   llvm::SmallVector<Chunk, 1> chunks_;
   // The total number of values in the stack.
   int32_t size_ = 0;

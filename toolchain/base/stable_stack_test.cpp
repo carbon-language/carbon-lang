@@ -10,14 +10,12 @@ namespace Carbon {
 namespace {
 
 TEST(StableStack, DestroyEmpty) {
-  llvm::BumpPtrAllocator alloc;
-  StableStack<int> stack(alloc);
+  StableStack<int> stack;
   EXPECT_EQ(stack.empty(), true);
 }
 
 TEST(StableStack, Growth) {
-  llvm::BumpPtrAllocator alloc;
-  StableStack<int> stack(alloc);
+  StableStack<int> stack;
   EXPECT_EQ(stack.empty(), true);
   EXPECT_EQ(stack.size(), 0);
   EXPECT_EQ(stack.capacity(), 0);
@@ -55,8 +53,7 @@ static auto GrowCapacityTimes(StableStack<T>& stack, int n, F factory) {
 }
 
 TEST(StableStack, PushPop) {
-  llvm::BumpPtrAllocator alloc;
-  StableStack<int> stack(alloc);
+  StableStack<int> stack;
   int i = 0;
   GrowCapacityTimes(stack, 3, [&i]() { return i++; });
   EXPECT_EQ(stack.size(), i);
@@ -82,8 +79,7 @@ TEST(StableStack, PushPop) {
 }
 
 TEST(StableStack, EmptyPushPop) {
-  llvm::BumpPtrAllocator alloc;
-  StableStack<int> stack(alloc);
+  StableStack<int> stack;
 
   stack.Push(1);
   EXPECT_EQ(stack.size(), 1);
@@ -122,8 +118,7 @@ TEST(StableStack, CopyConstructDestroy) {
 
   int size;
   {
-    llvm::BumpPtrAllocator alloc;
-    StableStack<Counter> stack(alloc);
+    StableStack<Counter> stack;
     GrowCapacityTimes(stack, 3,
                       [&]() { return Counter(&constructed, &destroyed); });
     EXPECT_EQ(constructed, stack.size());
@@ -164,8 +159,7 @@ TEST(StableStack, MoveConstructDestroy) {
 
   int size;
   {
-    llvm::BumpPtrAllocator alloc;
-    StableStack<Counter> stack(alloc);
+    StableStack<Counter> stack;
     GrowCapacityTimes(stack, 3,
                       [&]() { return Counter(&constructed, &destroyed); });
     EXPECT_EQ(constructed, stack.size());
@@ -213,8 +207,7 @@ TEST(StableStack, CopyStack) {
 
   int size;
   {
-    llvm::BumpPtrAllocator alloc;
-    StableStack<Counter> stack(alloc);
+    StableStack<Counter> stack;
     GrowCapacityTimes(stack, 3, [&, i = 0]() mutable {
       return Counter(i++, &constructed, &destroyed);
     });
@@ -242,7 +235,7 @@ TEST(StableStack, CopyStack) {
     EXPECT_EQ(destroyed, 0);
     constructed = destroyed = 0;
 
-    StableStack<Counter> stack3(alloc);
+    StableStack<Counter> stack3;
     EXPECT_EQ(constructed, 0);
     EXPECT_EQ(destroyed, 0);
     constructed = destroyed = 0;
@@ -292,8 +285,7 @@ TEST(StableStack, MoveStack) {
 
   int size;
   {
-    llvm::BumpPtrAllocator alloc;
-    StableStack<Counter> stack(alloc);
+    StableStack<Counter> stack;
     GrowCapacityTimes(stack, 3, [&, i = 0]() mutable {
       return Counter(i++, &constructed, &destroyed);
     });
@@ -320,7 +312,7 @@ TEST(StableStack, MoveStack) {
     EXPECT_EQ(destroyed, 0);
     constructed = destroyed = 0;
 
-    StableStack<Counter> stack3(alloc);
+    StableStack<Counter> stack3;
     EXPECT_EQ(constructed, 0);
     EXPECT_EQ(destroyed, 0);
     constructed = destroyed = 0;
@@ -344,8 +336,7 @@ TEST(StableStack, MoveStack) {
 }
 
 TEST(StableStack, Peek) {
-  llvm::BumpPtrAllocator alloc;
-  StableStack<int> stack(alloc);
+  StableStack<int> stack;
   stack.Push(1);
 
   decltype(auto) r = stack.Peek();
@@ -371,8 +362,7 @@ TEST(StableStack, Peek) {
 }
 
 TEST(StableStack, Reserve) {
-  llvm::BumpPtrAllocator alloc;
-  StableStack<int> stack(alloc);
+  StableStack<int> stack;
   EXPECT_EQ(stack.capacity(), 0);
 
   stack.Reserve(2);

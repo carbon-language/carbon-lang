@@ -32,9 +32,8 @@ using ConstantsInGenericMap = Map<SemIR::InstId, SemIR::InstId, 256>;
 // `var x: C(i32, 0) = {.x = 0};` also substitutes into the definition.
 class GenericRegionStack {
  public:
-  explicit GenericRegionStack(llvm::raw_ostream* vlog_stream,
-                              llvm::BumpPtrAllocator& allocator)
-      : vlog_stream_(vlog_stream), constants_in_generic_stack_(allocator) {
+  explicit GenericRegionStack(llvm::raw_ostream* vlog_stream)
+      : vlog_stream_(vlog_stream) {
     // Reserve a large enough stack that we typically won't need to reallocate.
     constants_in_generic_stack_.Reserve(4);
   }

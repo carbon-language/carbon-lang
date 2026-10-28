@@ -132,8 +132,6 @@ class File : public Printable<File> {
     return import_irs().Get(ImportIRId::ApiForImpl).sem_ir != nullptr;
   }
 
-  auto allocator() -> llvm::BumpPtrAllocator& { return allocator_; }
-
   auto check_ir_id() const -> CheckIRId { return check_ir_id_; }
   auto package_id() const -> PackageNameId { return package_id_; }
   auto library_id() const -> LibraryNameId { return library_id_; }
