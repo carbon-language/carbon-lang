@@ -15,6 +15,7 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
@@ -351,6 +352,13 @@ class ValueStore
     return EnumerateRange(*this);
   }
 
+  // Returns the chunks of values in order. Each chunk is a contiguous range of
+  // values, so bulk operations over all values can iterate over contiguous
+  // memory rather than looking up each value by its ID.
+  auto chunks() const [[clang::lifetimebound]] -> auto {
+    return llvm::ArrayRef<Chunk>(chunks_);
+  }
+
   auto GetIdTag() const -> IdTagType { return tag_; }
   auto GetRawIndex(IdT id) const -> int32_t {
     CARBON_DCHECK(id.index >= 0, "{0}", id.index);
@@ -483,7 +491,10 @@ class ValueStore
         -> void
       requires(std::is_copy_constructible_v<ValueT>);
 
+    auto data() const -> const ValueType* { return buf_; }
     auto size() const -> int32_t { return num_; }
+    auto begin() const -> const ValueType* { return buf_; }
+    auto end() const -> const ValueType* { return buf_ + num_; }
 
    private:
     // Verify using an `int32_t` for `num_` is sound.
