@@ -390,6 +390,10 @@ static constexpr int ClassTypeLocalPercent = 50;
 // Returns the `index`th value in `[0, 100)` from a golden-ratio sequence.
 // Multiples of `std::numbers::phi` mod 1.0 in `double` spread evenly across
 // `[0, 100)` without needing a fixed-point rational approximation.
+//
+// We use this PRNG technique rather than Abseil random because we want a fixed
+// and consistent random sequence rather than one that varies from run-to-run.
+// And it seems simpler than Merseene Twister from the STL.
 static auto GoldenRatioPercent(int index) -> int {
   CARBON_CHECK(index >= 0);
   return static_cast<int>(std::fmod((index + 0.5) * std::numbers::phi, 1.0) *
