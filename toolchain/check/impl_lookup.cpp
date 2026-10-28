@@ -472,7 +472,7 @@ static auto CollectFacetWitnessSources(
     // inner `where` expression is checked before the outer, so it needs to be
     // self-consistent and provide any `impls` constraints required by other
     // constraints.
-    const auto& impls = context.where_stack().back().impls;
+    const auto& impls = context.where_stack().Peek().impls;
     for (auto [self_const_id, facet_type_const_id] : impls) {
       self_const_id = GetCanonicalFacet(context, self_const_id);
       // TypeType (and ErrorInst) is never stored in the impls stack, so we

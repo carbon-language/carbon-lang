@@ -126,7 +126,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
 
   // Add a context stack for tracking constraints, that will be used to allow
   // later constraints to read from them eagerly.
-  context.where_stack().push_back({.loc_id = node_id});
+  context.where_stack().Push({.loc_id = node_id});
   // Track the occurrence of `where` inside a binding's type.
   ++context.binding_type_where_count();
 
@@ -145,8 +145,8 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
         auto const_id = context.constant_values().Get(
             GetImplWitnessAccessWithoutSubstitution(context, rewrite.lhs_id));
         auto frozen_const_id = FreezePeriodSelf(context, const_id);
-        context.where_stack().back().rewrites.Insert(frozen_const_id,
-                                                     rewrite.rhs_id);
+        context.where_stack().PeekMutable().rewrites.Insert(frozen_const_id,
+                                                            rewrite.rhs_id);
       }
     }
 
@@ -164,7 +164,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
           GetInterfaceType(context, impls.interface_id, impls.specific_id)
               .AsConstantId();
       auto type_frozen_const_id = FreezePeriodSelf(context, type_const_id);
-      context.where_stack().back().impls.push_back(
+      context.where_stack().PeekMutable().impls.push_back(
           {.self_const_id = self_frozen_const_id,
            .facet_type_const_id = type_frozen_const_id});
     }
@@ -176,7 +176,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
                                  impls.specific_id)
               .AsConstantId();
       auto type_frozen_const_id = FreezePeriodSelf(context, type_const_id);
-      context.where_stack().back().impls.push_back(
+      context.where_stack().PeekMutable().impls.push_back(
           {.self_const_id = self_frozen_const_id,
            .facet_type_const_id = type_frozen_const_id});
     }
@@ -189,7 +189,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
                            type_impls.specific_interface.specific_id)
               .AsConstantId();
       auto type_frozen_const_id = FreezePeriodSelf(context, type_const_id);
-      context.where_stack().back().impls.push_back(
+      context.where_stack().PeekMutable().impls.push_back(
           {.self_const_id = self_frozen_const_id,
            .facet_type_const_id = type_frozen_const_id});
     }
@@ -203,7 +203,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
               type_impls.specific_named_constraint.specific_id)
               .AsConstantId();
       auto type_frozen_const_id = FreezePeriodSelf(context, type_const_id);
-      context.where_stack().back().impls.push_back(
+      context.where_stack().PeekMutable().impls.push_back(
           {.self_const_id = self_frozen_const_id,
            .facet_type_const_id = type_frozen_const_id});
     }
@@ -317,7 +317,7 @@ auto HandleParseNode(Context& context, Parse::RequirementEqualId node_id)
     // Note that the where_stack rewrites need to be frozen. Since this
     // expression is inside of facet type construction, it will already be
     // frozen.
-    context.where_stack().back().rewrites.Insert(
+    context.where_stack().PeekMutable().rewrites.Insert(
         context.constant_values().Get(
             GetImplWitnessAccessWithoutSubstitution(context, lhs_id)),
         rhs_id);
@@ -449,7 +449,7 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
     // Track the impls relationship so further constraints can use it
     // immediately, before they are evaluated. Impl lookup will search the top
     // of the stack.
-    context.where_stack().back().impls.push_back({
+    context.where_stack().PeekMutable().impls.push_back({
         context.constant_values().Get(lhs_as_type.inst_id),
         context.constant_values().Get(rhs_as_type.inst_id),
     });
@@ -473,7 +473,8 @@ auto HandleParseNode(Context& context, Parse::RequirementImplsId node_id)
         auto lhs_id = SubstPeriodSelf(
             context, rhs_node, context.constant_values().Get(rewrite.lhs_id),
             context.constant_values().Get(lhs_as_type.inst_id));
-        context.where_stack().back().rewrites.Insert(lhs_id, rewrite.rhs_id);
+        context.where_stack().PeekMutable().rewrites.Insert(lhs_id,
+                                                            rewrite.rhs_id);
       }
     }
   }
@@ -590,8 +591,7 @@ static auto ThawPeriodSelfInRequirements(Context& context,
 }
 
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
-  auto where_loc = context.where_stack().back().loc_id;
-  context.where_stack().pop_back();
+  auto where_loc = context.where_stack().Pop().loc_id;
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop(/*check_unused=*/true);
@@ -601,7 +601,7 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   if (!context.where_stack().empty()) {
     // This `where` expression is nested on the RHS of another `where`, which is
     // an error.
-    DiagnoseNestedWhere(context, node_id, context.where_stack().back().loc_id);
+    DiagnoseNestedWhere(context, node_id, context.where_stack().Peek().loc_id);
     type_id = SemIR::ErrorInst::TypeId;
   }
   requirements_id = CheckForNestedWhereInRequirementsAfterEval(

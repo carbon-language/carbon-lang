@@ -31,7 +31,7 @@ Context::Context(DiagnosticEmitterBase* emitter,
       decl_name_stack_(this),
       scope_stack_(*this),
       deferred_definition_worklist_(vlog_stream),
-      generic_region_stack_(vlog_stream),
+      generic_region_stack_(vlog_stream, sem_ir_->allocator()),
       vtable_stack_("vtable_stack_", *sem_ir, vlog_stream),
       check_ir_map_(CheckIRToImportIRStore::MakeWithExplicitSize(
           total_ir_count_, SemIR::ImportIRId::None)),
@@ -39,6 +39,7 @@ Context::Context(DiagnosticEmitterBase* emitter,
       region_stack_([this](SemIR::LocId loc_id, std::string label) {
         TODO(loc_id, label);
       }),
+      where_stack_(sem_ir_->allocator()),
       core_identifiers_(&identifiers()),
       mangle_string_fingerprint_(mangle_string_fingerprint),
       identified_facet_types_(sem_ir->check_ir_id()) {

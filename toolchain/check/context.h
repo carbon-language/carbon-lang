@@ -11,6 +11,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/canonical_value_store.h"
+#include "toolchain/base/stable_stack.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/context.h"
@@ -307,9 +308,7 @@ class Context {
     SemIR::LocId loc_id;
   };
 
-  auto where_stack() -> llvm::SmallVector<WhereStackEntry>& {
-    return where_stack_;
-  }
+  auto where_stack() -> StableStack<WhereStackEntry>& { return where_stack_; }
 
   auto binding_type_where_count() -> int32_t& {
     return binding_type_where_count_;
@@ -643,7 +642,7 @@ class Context {
 
   // Tracks information about constraints in the current `where` expression
   // being checked so that they can be used by later constraints.
-  llvm::SmallVector<WhereStackEntry> where_stack_;
+  StableStack<WhereStackEntry> where_stack_;
 
   // Counts the number of `where` expressions in the type of the binding
   // currently being checked.
