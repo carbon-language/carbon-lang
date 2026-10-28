@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <array>
 #include <bit>
+#include <cstring>
 #include <limits>
 #include <optional>
 #include <utility>
@@ -38,6 +39,13 @@
 #define CARBON_USE_SIMD 1
 #else
 #define CARBON_USE_SIMD 0
+#endif
+
+#if CARBON_USE_SIMD && \
+    (__AVX2__ || (__ARM_NEON && (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)))
+#define CARBON_USE_BLOCK_SIMD 1
+#else
+#define CARBON_USE_BLOCK_SIMD 0
 #endif
 
 namespace Carbon::Lex {
@@ -100,12 +108,12 @@ class [[clang::internal_linkage]] Lexer {
   // useful to have in the profile and it doesn't simplify by inlining at all.
   // But because it can, the compiler will flatten this otherwise.
   [[gnu::noinline]] auto MakeLines(llvm::StringRef source_text) -> void;
-#if CARBON_USE_SIMD && __AVX2__
-  // Scans 64-byte blocks of `source_text` for `'\n'` with AVX2, appends the
+#if CARBON_USE_BLOCK_SIMD
+  // Scans 64-byte blocks of `source_text` for `'\n'` with SIMD, appends the
   // completed `LineInfo`s to `buffer_.line_infos_`, and advances `start` and
   // `search_start` to the start of the in-progress line and the start of the
   // remaining `< 64`-byte tail respectively.
-  auto MakeLinesAVX2(llvm::StringRef source_text, ssize_t& start,
+  auto MakeLinesSimd(llvm::StringRef source_text, ssize_t& start,
                      ssize_t& search_start) -> void;
 #endif
 
@@ -890,12 +898,143 @@ auto Lexer::Lex() && -> TokenizedBuffer {
   return std::move(buffer_);
 }
 
-#if CARBON_USE_SIMD && __AVX2__
-auto Lexer::MakeLinesAVX2(llvm::StringRef source_text, ssize_t& start,
+#if CARBON_USE_BLOCK_SIMD
+namespace {
+
+// A 64-byte source text block classified in parallel into 64-bit 1-bit-per-byte
+// masks, structured like `RawHashtable::MetadataGroup`: portable reference
+// methods pair with platform-specific `Simd*` leaf methods and are
+// cross-checked in debug builds.
+class SourceBlock {
+ public:
+  static constexpr ssize_t Size = 64;
+
+  [[clang::always_inline]] static auto Load(const char* text) -> SourceBlock {
+    SourceBlock b = SimdLoad(text);
+    if constexpr (DebugSimd) {
+      SourceBlock portable_b = PortableLoad(text);
+      CARBON_DCHECK(std::memcmp(b.bytes, portable_b.bytes, Size) == 0);
+    }
+    return b;
+  }
+
+  // Returns `{mask, count}` of `'\n'` bytes across the 64-byte block.
+  [[clang::always_inline]] auto MatchNewlines() const
+      -> std::pair<uint64_t, int> {
+    std::pair<uint64_t, int> simd_result = SimdMatchNewlines();
+    if constexpr (DebugSimd) {
+      CARBON_DCHECK(simd_result == PortableMatchNewlines());
+    }
+    return simd_result;
+  }
+
+ private:
+  static constexpr bool DebugSimd =
+#if !defined(NDEBUG)
+      true;
+#else
+      false;
+#endif
+
+  union {
+    uint8_t bytes[Size] = {};
+#if __AVX2__
+    __m256i vec[2];
+#elif __ARM_NEON
+    uint8x16_t vec[4];
+#endif
+    static_assert(sizeof(vec) == Size);
+  };
+
+  static auto PortableLoad(const char* text) -> SourceBlock {
+    SourceBlock b;
+    std::memcpy(b.bytes, text, Size);
+    return b;
+  }
+
+  auto PortableMatchNewlines() const -> std::pair<uint64_t, int> {
+    uint64_t mask = 0;
+    for (ssize_t i = 0; i < Size; ++i) {
+      if (bytes[i] == '\n') {
+        mask |= uint64_t{1} << i;
+      }
+    }
+    return {mask, std::popcount(mask)};
+  }
+
+  [[clang::always_inline]] static auto SimdLoad(const char* text)
+      -> SourceBlock {
+    SourceBlock b;
+#if __AVX2__
+    b.vec[0] = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(text));
+    b.vec[1] = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(text + 32));
+#elif __ARM_NEON
+    const auto* p = reinterpret_cast<const uint8_t*>(text);
+    b.vec[0] = vld1q_u8(p);
+    b.vec[1] = vld1q_u8(p + 16);
+    b.vec[2] = vld1q_u8(p + 32);
+    b.vec[3] = vld1q_u8(p + 48);
+#endif
+    return b;
+  }
+
+#if __ARM_NEON
+  [[clang::always_inline]] static auto NeonBitWeights() -> uint8x16_t {
+    return vreinterpretq_u8_u64(vdupq_n_u64(0x8040201008040201ULL));
+  }
+
+  [[clang::always_inline]] static auto NeonReduceQuarter(uint8x16_t v0,
+                                                         uint8x16_t v1,
+                                                         uint8x16_t v2,
+                                                         uint8x16_t v3)
+      -> uint8x16_t {
+    const uint8x16_t weights = NeonBitWeights();
+    return vpaddq_u8(vpaddq_u8(vandq_u8(v0, weights), vandq_u8(v1, weights)),
+                     vpaddq_u8(vandq_u8(v2, weights), vandq_u8(v3, weights)));
+  }
+
+  [[clang::always_inline]] static auto NeonMovemask64(
+      uint8x16_t v0, uint8x16_t v1, uint8x16_t v2, uint8x16_t v3) -> uint64_t {
+    uint8x16_t q = NeonReduceQuarter(v0, v1, v2, v3);
+    return vgetq_lane_u64(vreinterpretq_u64_u8(vpaddq_u8(q, q)), 0);
+  }
+#endif
+
+  [[clang::always_inline]] auto SimdMatchNewlines() const
+      -> std::pair<uint64_t, int> {
+#if __AVX2__
+    const __m256i newline = _mm256_set1_epi8('\n');
+    uint64_t mask =
+        static_cast<uint32_t>(
+            _mm256_movemask_epi8(_mm256_cmpeq_epi8(vec[0], newline))) |
+        (static_cast<uint64_t>(static_cast<uint32_t>(
+             _mm256_movemask_epi8(_mm256_cmpeq_epi8(vec[1], newline))))
+         << 32);
+    return {mask, std::popcount(mask)};
+#elif __ARM_NEON
+    const uint8x16_t newline = vdupq_n_u8('\n');
+    uint8x16_t eq0 = vceqq_u8(vec[0], newline);
+    uint8x16_t eq1 = vceqq_u8(vec[1], newline);
+    uint8x16_t eq2 = vceqq_u8(vec[2], newline);
+    uint8x16_t eq3 = vceqq_u8(vec[3], newline);
+    // Each matching byte is `0xFF` (`-1` as `int8_t`), so summing all four
+    // vectors yields `[-4, 0]` per lane (`[-64, 0]` across 16 lanes) and
+    // reduces in NEON in parallel with `NeonMovemask64` without round-tripping
+    // `mask` from GPR back to NEON for `cnt`.
+    uint8x16_t neg_sum = vaddq_u8(vaddq_u8(eq0, eq1), vaddq_u8(eq2, eq3));
+    int count = -vaddvq_s8(vreinterpretq_s8_u8(neg_sum));
+    return {NeonMovemask64(eq0, eq1, eq2, eq3), count};
+#endif
+  }
+};
+
+}  // namespace
+
+auto Lexer::MakeLinesSimd(llvm::StringRef source_text, ssize_t& start,
                           ssize_t& search_start) -> void {
   const char* const text = source_text.data();
   const ssize_t size = source_text.size();
-  constexpr int BlockSize = 64;
+  constexpr int BlockSize = SourceBlock::Size;
   constexpr int DecodedPerStep = 4;
 
   // Buffer the 32-bit byte offset following each `'\n'` (`int32_t` matches
@@ -918,8 +1057,6 @@ auto Lexer::MakeLinesAVX2(llvm::StringRef source_text, ssize_t& start,
   line_starts.resize_for_overwrite(size / 16 + 2 * BlockSize);
   int32_t* line_starts_end = line_starts.data();
 
-  // Broadcast `'\n'` to all 32 byte lanes of a 256-bit register.
-  const __m256i newline = _mm256_set1_epi8('\n');
   for (; search_start + BlockSize <= size; search_start += BlockSize) {
     if (LLVM_UNLIKELY(line_starts_end + BlockSize >
                       line_starts.data() + line_starts.size())) {
@@ -928,36 +1065,23 @@ auto Lexer::MakeLinesAVX2(llvm::StringRef source_text, ssize_t& start,
       line_starts_end = line_starts.data() + count;
     }
 
-    // Load two unaligned 32-byte halves of the 64-byte block.
-    // `_mm256_cmpeq_epi8` compares 32 bytes in parallel (`0xFF` if equal,
-    // `0x00` otherwise), and `_mm256_movemask_epi8` packs bit 7 of each byte
-    // into a 32-bit `int` mask. Cast to `uint32_t` before widening to
-    // `uint64_t` so bit 31 is zero-extended rather than sign-extended.
-    __m256i low_block = _mm256_loadu_si256(
-        reinterpret_cast<const __m256i*>(text + search_start));
-    __m256i high_block = _mm256_loadu_si256(
-        reinterpret_cast<const __m256i*>(text + search_start + 32));
-    uint64_t mask =
-        static_cast<uint32_t>(
-            _mm256_movemask_epi8(_mm256_cmpeq_epi8(low_block, newline))) |
-        (static_cast<uint64_t>(static_cast<uint32_t>(
-             _mm256_movemask_epi8(_mm256_cmpeq_epi8(high_block, newline))))
-         << 32);
+    auto [mask, nl_count] =
+        SourceBlock::Load(text + search_start).MatchNewlines();
 
     // Most 64-byte blocks contain 0 to 4 newlines. Unrolling a `while (mask)`
     // loop with `#pragma clang loop unroll_count(4)` would emit a
     // data-dependent exit branch on every bit, suffering branch mispredictions
     // as newline counts vary from block to block. Instead, advance
-    // `line_starts_end` by `std::popcount(mask)` up front and use
+    // `line_starts_end` by `nl_count` up front and use
     // `#pragma clang loop unroll(full)` to unroll 4 unconditional steps of
-    // `std::countr_zero` (`tzcnt`, byte index of lowest set bit) +
-    // `mask &= mask - 1` (`blsr`, clear lowest set bit). Any extra writes when
-    // fewer than 4 bits are set land harmlessly in the `BlockSize` slack past
-    // `line_starts_end` and are overwritten by the next block; blocks with > 4
-    // newlines repeat the 4-wide body (at most `64 / 4 = 16` iterations).
+    // `std::countr_zero` (byte index of lowest set bit) + `mask &= mask - 1`
+    // (clear lowest set bit). Any extra writes when fewer than 4 bits are set
+    // land harmlessly in the `BlockSize` slack past `line_starts_end` and are
+    // overwritten by the next block; blocks with > 4 newlines repeat the 4-wide
+    // body (at most `64 / 4 = 16` iterations).
     int32_t base = search_start + 1;
     int32_t* out = line_starts_end;
-    line_starts_end += std::popcount(mask);
+    line_starts_end += nl_count;
     do {
 #pragma clang loop unroll(full)
       for (int i = 0; i < DecodedPerStep; ++i) {
@@ -968,7 +1092,7 @@ auto Lexer::MakeLinesAVX2(llvm::StringRef source_text, ssize_t& start,
     } while (LLVM_UNLIKELY(mask != 0));
   }
 
-  // Reserve room for all lines ended in the AVX2 scan plus the final line and
+  // Reserve room for all lines ended in the SIMD scan plus the final line and
   // potential trailing blank line added in `MakeLines`.
   buffer_.line_infos_.Reserve((line_starts_end - line_starts.data()) + 2);
   for (const int32_t* next_start = line_starts.data();
@@ -1009,13 +1133,13 @@ auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
   const ssize_t size = source_text.size();
   // `start` is the byte offset of the line currently being scanned, while
   // `search_start` is where newline scanning resumes. Separating them lets
-  // `MakeLinesAVX2` advance `search_start` to the end of the last 64-byte block
+  // `MakeLinesSimd` advance `search_start` to the end of the last 64-byte block
   // so the scalar `memchr` tail only scans the `< 64` remaining bytes even when
   // a line straddles the boundary.
   ssize_t start = 0;
   ssize_t search_start = 0;
-#if CARBON_USE_SIMD && __AVX2__
-  MakeLinesAVX2(source_text, start, search_start);
+#if CARBON_USE_BLOCK_SIMD
+  MakeLinesSimd(source_text, start, search_start);
 #endif
   while (const char* nl = reinterpret_cast<const char*>(
              memchr(&text[search_start], '\n', size - search_start))) {
