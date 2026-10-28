@@ -2087,6 +2087,101 @@ class B {
   }
 }
 
+// --- fail_access_private_parent_member_in_unrelated_class.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class Derived;
+
+inline Cpp '''
+class Base {
+private:
+  static void F() {}
+};
+
+template <class T>
+struct A {
+  static void G() {
+    T::F();
+  }
+};
+
+void H() {
+  A<Carbon::Derived> a;
+  // CHECK:STDERR:        ╭─┤ fail_access_private_parent_member_in_unrelated_class.carbon:[[@LINE+24]]:5
+  // CHECK:STDERR: ->     │   a.G();
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: cannot access private member `F` of type `Cpp.Base`
+  // CHECK:STDERR:        ·     │  ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ·     ╰────┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_access_private_parent_member_in_unrelated_class.carbon:[[@LINE-14]]:8
+  // CHECK:STDERR:        │   static void F() {}
+  // CHECK:STDERR:        ·               ┬
+  // CHECK:STDERR:        ·               ╰──┤ declared private here [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │     T::F();
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: 'F' is a private member of 'Base' [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   a.G();
+  // CHECK:STDERR:        ·     ┬
+  // CHECK:STDERR:        ·     ╰──┤ in instantiation of member function 'A<Carbon::Main::Derived>::G'
+  // CHECK:STDERR:        ·        │ requested here
+  // CHECK:STDERR:        ·        │ [CppInteropParseNote]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  a.G();
+}
+''';
+
+class Derived {
+  extend base: Cpp.Base;
+};
+
+// --- access_private_parent_member_in_unrelated_class_with_friend.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+class Derived;
+
+inline Cpp '''
+class Base {
+private:
+  // This test is identical to
+  // fail_access_private_parent_member_in_unrelated_class except for this
+  // friend decl:
+  template <typename> friend class A;
+
+  static void F() {}
+};
+
+template <class T>
+struct A {
+  static void G() {
+    T::F();
+  }
+};
+
+void H() {
+  A<Carbon::Derived> a;
+  // CHECK:STDERR:        ╭─┤ access_private_parent_member_in_unrelated_class_with_friend.carbon:[[@LINE+8]]:5
+  // CHECK:STDERR: ->     │   a.G();
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: cannot access private member `F` of type `Cpp.Base`
+  // CHECK:STDERR:        ·     │  ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ·     ╰────┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  a.G();
+}
+''';
+
+class Derived {
+  extend base: Cpp.Base;
+};
+
 // CHECK:STDOUT: --- import_non_function_member_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
