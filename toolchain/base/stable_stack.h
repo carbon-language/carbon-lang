@@ -135,7 +135,7 @@ class StableStack {
     auto ret = std::move(ref);
     std::destroy_at(&ref);
     __asan_poison_memory_region(&ref, sizeof(T));
-    return std::move(ret);
+    return ret;
   }
 
   // Ensure there is memory allocated to hold at least `reserve` elements.
