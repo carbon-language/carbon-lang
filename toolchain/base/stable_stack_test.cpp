@@ -280,9 +280,7 @@ TEST(StableStack, MoveStack) {
     }
     ~Counter() { (*destroyed_)++; }
 
-    auto operator==(const Counter& rhs) const -> bool {
-      return value_ == rhs.value_;
-    }
+    auto value() const -> int { return value_; }
 
    private:
     int value_;
@@ -300,14 +298,15 @@ TEST(StableStack, MoveStack) {
     size = stack.size();
 
     StableStack<Counter> stack2 = std::move(stack);
-    EXPECT_EQ(constructed, size);
+    EXPECT_EQ(constructed, 0);
     EXPECT_EQ(destroyed, 0);
     constructed = destroyed = 0;
 
-    EXPECT_EQ(stack.size(), stack2.size());
-    EXPECT_LE(stack.capacity(), stack2.capacity());
+    // Moving leaves the source empty.
+    EXPECT_EQ(stack.empty(), true);
+    EXPECT_EQ(stack.capacity(), 0);
     for (auto i = 0; i < size; ++i) {
-      EXPECT_EQ(stack.Peek(i), stack2.Peek(i));
+      EXPECT_EQ(stack2.Peek(i).value(), size - 1 - i);
     }
     EXPECT_EQ(constructed, 0);
     EXPECT_EQ(destroyed, 0);
@@ -326,27 +325,28 @@ TEST(StableStack, MoveStack) {
 
     // Move assignment to empty.
     stack3 = std::move(stack2);
-    EXPECT_EQ(constructed, size);
+    EXPECT_EQ(constructed, 0);
     EXPECT_EQ(destroyed, 0);
     constructed = destroyed = 0;
 
-    // Move assignment to non-empty. We destroy the LHS and reconstruct from the
-    // RHS.
-    stack3 = std::move(stack2);
-    EXPECT_EQ(constructed, size);
-    EXPECT_EQ(destroyed, size);
+    stack.Push(Counter(0, &constructed, &destroyed));
+    constructed = destroyed = 0;
+
+    // Move assignment to non-empty. We destroy the LHS.
+    stack = std::move(stack3);
+    EXPECT_EQ(constructed, 0);
+    EXPECT_EQ(destroyed, 1);
     constructed = destroyed = 0;
 
     // Move assignment from empty.
-    StableStack<Counter> stack4;
-    stack3 = std::move(stack4);
+    stack = std::move(stack3);
     EXPECT_EQ(constructed, 0);
     EXPECT_EQ(destroyed, size);
     constructed = destroyed = 0;
   }
   EXPECT_EQ(constructed, 0);
-  // Each Counter held in each stack was destroyed.
-  EXPECT_EQ(destroyed, size * 2);
+  // All the stacks were empty by the end.
+  EXPECT_EQ(destroyed, 0);
 }
 
 TEST(StableStack, Peek) {
