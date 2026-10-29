@@ -348,7 +348,9 @@ class StableStack {
 
   auto NextChunkCapacity() {
     if (chunks_.empty()) {
-      // The size of the first chunk.
+      // The size of the first chunk. We use a fairly small number since
+      // StableStack is intended for holding larger classes, since those are
+      // cases we need to hold references into the stack.
       return 2;
     }
     // The growth factor from each chunk to the next. 2 matches the growth
