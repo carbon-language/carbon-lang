@@ -251,16 +251,12 @@ class StableStack {
 
   // Destroy all the elements in the stack and free the arrays in the chunks.
   auto DestroyAll() {
-    if (empty()) {
-      return;
-    }
-
     for (auto i = 0; i < used_chunks_ - 1; ++i) {
       std::destroy_n(reinterpret_cast<T*>(chunks_[i].array),
                      chunks_[i].capacity);
       ::operator delete[](chunks_[i].array, std::align_val_t(alignof(T)));
     }
-    {
+    if (used_chunks_) {
       auto i = used_chunks_ - 1;
       std::destroy_n(reinterpret_cast<T*>(chunks_[i].array),
                      size_in_last_chunk_);
