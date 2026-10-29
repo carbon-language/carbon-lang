@@ -5,12 +5,17 @@
 #ifndef CARBON_TOOLCHAIN_BASE_STABLE_STACK_H_
 #define CARBON_TOOLCHAIN_BASE_STABLE_STACK_H_
 
+#include <algorithm>
+#include <concepts>
 #include <cstdint>
+#include <memory>
 #include <new>
 #include <type_traits>
+#include <utility>
 
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/Compiler.h"
 #include "toolchain/base/mem_usage.h"
 
 namespace Carbon {
@@ -21,7 +26,7 @@ namespace Carbon {
 // As a stack, all insertions must be pushed onto the back of the stack, and
 // doing so is an O(1) operation. Peeking or popping the back of the stack is
 // also an O(1) operation. It is also possible to peek further into the stack,
-// but at a cost proportional to the distance from the back.
+// but at a cost proportional to `log(distance from the back)`.
 //
 // The stack is implemented as an array of pointers to arrays. Each successive
 // array gains a larger capacity than the last by multiplicative factor, to
@@ -32,7 +37,7 @@ namespace Carbon {
 // Like a std::vector, the stack does not free memory after Pop(). This means
 // the stack retains capacity for holding the maximum number of values it ever
 // held.
-template <class T>
+template <typename T>
 class StableStack {
  public:
   StableStack() = default;
@@ -140,7 +145,7 @@ class StableStack {
   }
 
   // Ensure there is memory allocated to hold at least `reserve` elements.
-  auto Reserve(int32_t reserve) {
+  auto Reserve(int32_t reserve) -> void {
     auto current = capacity();
     while (current < reserve) {
       auto capacity = NextChunkCapacity();
@@ -158,7 +163,7 @@ class StableStack {
   auto size() const -> int32_t { return size_; }
   // Compute the capacity of the stack. The total capacity is not cached, so
   // this takes work proportional to `log(capacity of the stack)`.
-  auto capacity() const {
+  auto capacity() const -> int32_t {
     int32_t capacity = 0;
     for (const auto& chunk : chunks_) {
       capacity += chunk.capacity;
@@ -218,7 +223,7 @@ class StableStack {
   // Constructs elements into this stack from `rhs`. Uses `getter` to get a
   // reference to each element in `rhs`.
   template <typename Getter>
-  auto ConstructFrom(const StableStack& rhs, Getter getter) {
+  auto ConstructFrom(const StableStack& rhs, Getter getter) -> void {
     if (rhs.empty()) {
       return;
     }
@@ -251,7 +256,7 @@ class StableStack {
   }
 
   // Destroy all the elements in the stack and free the arrays in the chunks.
-  auto DestroyAll() {
+  auto DestroyAll() -> void {
     for (auto i = 0; i < used_chunks_ - 1; ++i) {
       std::destroy_n(reinterpret_cast<T*>(chunks_[i].array),
                      chunks_[i].capacity);
@@ -346,11 +351,12 @@ class StableStack {
     return chunks_[used_chunks_ - 1];
   }
 
-  auto NextChunkCapacity() {
+  auto NextChunkCapacity() -> int32_t {
     if (chunks_.empty()) {
       // The size of the first chunk. We use a fairly small number since
       // StableStack is intended for holding larger classes, since those are
       // cases we need to hold references into the stack.
+      // TODO: Maybe choose something inversely proportional to sizeof(T)?
       return 2;
     }
     // The growth factor from each chunk to the next. 2 matches the growth
