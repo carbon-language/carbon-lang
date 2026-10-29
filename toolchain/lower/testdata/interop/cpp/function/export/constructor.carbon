@@ -39,10 +39,10 @@ void f() {
 // CHECK:STDOUT: define dso_local void @_Z1fv() #0 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a = alloca %"class.Carbon::Main::OneArg", align 1
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #5
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %a) #6
 // CHECK:STDOUT:   call void @_ZN6Carbon4Main6OneArgC2Ei(ptr noundef nonnull align 1 %a, i32 noundef 42)
-// CHECK:STDOUT:   call void @_ZN6Carbon4Main6OneArgD2Ev(ptr noundef nonnull align 1 %a) #5
-// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #5
+// CHECK:STDOUT:   call void @_ZN6Carbon4Main6OneArgD2Ev(ptr noundef nonnull align 1 %a) #6
+// CHECK:STDOUT:   call void @llvm.lifetime.end.p0(ptr %a) #6
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -84,7 +84,7 @@ void f() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_COneArg__carbon_thunk.OneArg.Main(ptr %_, ptr %_1) #5 !dbg !19 {
+// CHECK:STDOUT: define void @_COneArg__carbon_thunk.OneArg.Main(ptr noundef nonnull align 1 %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) unnamed_addr #5 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_28.2 = load i32, ptr %_1, align 4, !dbg !22
 // CHECK:STDOUT:   call void @_COneArg.OneArg.Main(ptr %_, i32 %.loc6_28.2), !dbg !22
@@ -92,7 +92,7 @@ void f() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f5db22251d2a7ef4(ptr %t) #5 !dbg !25 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f5db22251d2a7ef4(ptr %t) #6 !dbg !25 {
 // CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -101,7 +101,8 @@ void f() {
 // CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #4 = { alwaysinline nounwind }
-// CHECK:STDOUT: attributes #5 = { nounwind }
+// CHECK:STDOUT: attributes #5 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #6 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!6}
 // CHECK:STDOUT: !llvm.module.flags = !{!39, !40, !41, !3, !4}
