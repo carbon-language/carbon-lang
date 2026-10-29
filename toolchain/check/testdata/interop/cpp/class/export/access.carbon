@@ -129,9 +129,6 @@ inline Cpp '''
 class C {
   void G() {
     auto b = Carbon::B::Make();
-    // CHECK:STDERR: access_exported_private_member_of_friend.carbon:[[@LINE+3]]:7: error: 'F' is a private member of 'Carbon::Main::B' [CppInteropParseError]
-    // CHECK:STDERR: access_exported_private_member_of_friend.carbon:[[@LINE-8]]:18: note: implicitly declared private here [CppInteropParseNote]
-    // CHECK:STDERR:
     b.F();
   }
 };
