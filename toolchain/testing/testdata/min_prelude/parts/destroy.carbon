@@ -40,3 +40,10 @@ fn SelfDestruct[T: Destroy](ref t: T) {
     t.(DestroyImpl.Op)();
     t.(SubobjectDestroy.Op)();
 }
+
+// TODO: rename to `TrivialDestroy` when `require impls` adds a witness table entry.
+interface TrivialDestroyImpl {}
+
+constraint TrivialDestroy {
+  extend require impls Destroy & TrivialDestroyImpl;
+}

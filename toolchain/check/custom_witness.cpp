@@ -275,19 +275,25 @@ enum class DestroyFormat {
 namespace {
 // Cleans up state `PrepareForHasWitness`.
 class DestroyFormatWitnessContext {
-  Context& context_;
+  Context* context_;
   SemIR::ConstantId subobject_destroy_facet_id_;
   SemIR::ConstantId destroy_facet_id_;
 
   DestroyFormatWitnessContext(Context& context,
                               SemIR::ConstantId subobject_destroy_facet_id,
                               SemIR::ConstantId destroy_facet_id)
-      : context_(context),
+      : context_(&context),
         subobject_destroy_facet_id_(subobject_destroy_facet_id),
         destroy_facet_id_(destroy_facet_id) {}
 
  public:
-  DestroyFormatWitnessContext(DestroyFormatWitnessContext&&) = delete;
+  DestroyFormatWitnessContext(DestroyFormatWitnessContext&& other)
+      : context_(std::exchange(other.context_, nullptr)),
+        subobject_destroy_facet_id_(std::exchange(
+            other.subobject_destroy_facet_id_, SemIR::ConstantId::None)),
+        destroy_facet_id_(
+            std::exchange(other.destroy_facet_id_, SemIR::ConstantId::None)) {}
+
   DestroyFormatWitnessContext(const DestroyFormatWitnessContext&) = delete;
   auto operator=(DestroyFormatWitnessContext&&) -> void = delete;
   auto operator=(const DestroyFormatWitnessContext&) -> void = delete;
@@ -295,29 +301,39 @@ class DestroyFormatWitnessContext {
   // Starts a block for lookup-related instructions, and returns a `FacetType`
   // for lookups.
   static auto PrepareForLookup(Context& context, SemIR::LocId loc_id)
-      -> DestroyFormatWitnessContext {
+      -> std::optional<DestroyFormatWitnessContext> {
     context.inst_block_stack().Push();
     StartGenericDecl(context);
 
     auto subobject_destroy_interface_id =
         GetCoreInterfaceId(context, loc_id, CoreIdentifier::SubobjectDestroy);
+    if (subobject_destroy_interface_id == SemIR::InterfaceId::None) {
+      return std::nullopt;
+    }
+
+    auto destroy_interface_id =
+        GetCoreInterfaceId(context, loc_id, CoreIdentifier::DestroyImpl);
+    if (destroy_interface_id == SemIR::InterfaceId::None) {
+      return std::nullopt;
+    }
+
     auto subobject_destroy_facet_id = GetFacetTypeForQuerySpecificInterface(
         context, loc_id,
         {.interface_id = subobject_destroy_interface_id,
          .specific_id = SemIR::SpecificId::None});
-
-    auto destroy_interface_id =
-        GetCoreInterfaceId(context, loc_id, CoreIdentifier::DestroyImpl);
     auto destroy_facet_id = GetFacetTypeForQuerySpecificInterface(
         context, loc_id,
         {.interface_id = destroy_interface_id,
          .specific_id = SemIR::SpecificId::None});
-    return {context, subobject_destroy_facet_id, destroy_facet_id};
+    return DestroyFormatWitnessContext(context, subobject_destroy_facet_id,
+                                       destroy_facet_id);
   }
 
   ~DestroyFormatWitnessContext() {
-    DiscardGenericDecl(context_);
-    context_.inst_block_stack().PopAndDiscard();
+    if (context_) {
+      DiscardGenericDecl(*context_);
+      context_->inst_block_stack().PopAndDiscard();
+    }
   }
 
   auto GetDestroyFormatForOneType(Context& context, SemIR::LocId loc_id,
@@ -571,22 +587,26 @@ static auto GetDestroyFormat(Context& context, SemIR::LocId loc_id,
 
   auto witness_prep =
       DestroyFormatWitnessContext::PrepareForLookup(context, loc_id);
+  if (witness_prep == std::nullopt) {
+    return std::nullopt;
+  }
+
   CARBON_KIND_SWITCH(inst) {
     case CARBON_KIND(SemIR::ArrayType array_type): {
-      return GetArrayDestroyFormat(context, loc_id, array_type, witness_prep);
+      return GetArrayDestroyFormat(context, loc_id, array_type, *witness_prep);
     }
     case CARBON_KIND(SemIR::ClassType class_type): {
       return GetClassDestroyFormat(context, loc_id, class_type,
                                    context.types().GetCompleteTypeInfo(type_id),
-                                   witness_prep,
+                                   *witness_prep,
                                    /*is_partial=*/false);
     }
     case CARBON_KIND(SemIR::ConstType const_type): {
-      return witness_prep.GetDestroyFormatForOneType(context, loc_id,
-                                                     const_type.inner_id);
+      return witness_prep->GetDestroyFormatForOneType(context, loc_id,
+                                                      const_type.inner_id);
     }
     case CARBON_KIND(SemIR::MaybeUnformedType maybe_unformed_type): {
-      return witness_prep.GetDestroyFormatForOneType(
+      return witness_prep->GetDestroyFormatForOneType(
           context, loc_id, maybe_unformed_type.inner_id);
     }
     case CARBON_KIND(SemIR::PartialType partial_type): {
@@ -596,19 +616,19 @@ static auto GetDestroyFormat(Context& context, SemIR::LocId loc_id,
           context.insts().GetAs<SemIR::ClassType>(partial_type.inner_id);
       return GetClassDestroyFormat(context, loc_id, class_type,
                                    context.types().GetCompleteTypeInfo(type_id),
-                                   witness_prep,
+                                   *witness_prep,
                                    /*is_partial=*/true);
     }
     case CARBON_KIND(SemIR::StructType struct_type): {
       return GetStructDestroyFormat(
           context, loc_id,
           context.struct_type_fields().Get(struct_type.fields_id),
-          witness_prep);
+          *witness_prep);
     }
     case SemIR::TupleType::Kind: {
       return GetTupleDestroyFormat(context, loc_id,
                                    context.types().GetAsTypeInstId(inst_id),
-                                   witness_prep);
+                                   *witness_prep);
     }
     default: {
       CARBON_FATAL("Unexpected type for `GetDestroyFormat`: {}", inst.kind());
@@ -1083,6 +1103,33 @@ static auto LookupSubobjectDestroyWitness(
                                       query_specific_interface, *format);
 }
 
+static auto MakeTrivialDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface, bool build_witness)
+    -> std::optional<SemIR::InstId> {
+  if (!build_witness || query_self_const_id.is_symbolic()) {
+    return SemIR::InstId::None;
+  }
+
+  auto witness_prep =
+      DestroyFormatWitnessContext::PrepareForLookup(context, loc_id);
+  if (witness_prep == std::nullopt) {
+    return std::nullopt;
+  }
+
+  auto destroy_format = witness_prep->GetDestroyFormatForOneType(
+      context, loc_id,
+      context.types().GetTypeInstIdForTypeConstantId(query_self_const_id));
+  if (destroy_format == std::nullopt ||
+      destroy_format != DestroyFormat::Trivial) {
+    return std::nullopt;
+  }
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface, {});
+}
+
 static auto MakeIntFitsInWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -1268,6 +1315,9 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
       return LookupSubobjectDestroyWitness(context, loc_id, query_self_const_id,
                                            query_specific_interface,
                                            build_witness);
+    case SemIR::CoreInterface::TrivialDestroyImpl:
+      return MakeTrivialDestroyWitness(context, loc_id, query_self_const_id,
+                                       query_specific_interface, build_witness);
     case SemIR::CoreInterface::AddAssignWith:
     case SemIR::CoreInterface::AddWith:
     case SemIR::CoreInterface::Copy:
