@@ -11,7 +11,6 @@
 
 #include "common/check.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/iterator.h"
 #include "toolchain/base/mem_usage.h"
 
 namespace Carbon {
@@ -88,11 +87,11 @@ class StableStack {
   }
 
   // Returns a reference to an element in the stack. By default it returns the
-  // most recently pushed element element at the back of the stack. But `n` may
-  // be used to specify a distance from that element into the stack.
+  // most recently pushed element at the back of the stack. But `n` may be used
+  // to specify a distance from that element into the stack.
   //
   // This operation is O(1) when `n = 0` but otherwise has a cost proportional
-  // to the size of `n`.
+  // to `log(n)`.
   auto Peek(int32_t n = 0) const -> const T& {
     CARBON_CHECK(!empty(), "Peek on an empty stack");
     CARBON_CHECK(n >= 0, "Peek index invalid");
@@ -107,12 +106,12 @@ class StableStack {
   }
 
   // Pushes a new element onto the back of the stack.
-  auto Push(const T& t) {
+  auto Push(const T& t) -> void {
     void* slot = PushSlot();
     __asan_unpoison_memory_region(slot, sizeof(T));
     std::construct_at<T>(reinterpret_cast<T*>(slot), t);
   }
-  auto Push(T&& t) {
+  auto Push(T&& t) -> void {
     void* slot = PushSlot();
     __asan_unpoison_memory_region(slot, sizeof(T));
     std::construct_at<T>(reinterpret_cast<T*>(slot), std::move(t));
@@ -158,7 +157,7 @@ class StableStack {
   // The number of elements pushed onto the stack.
   auto size() const -> int32_t { return size_; }
   // Compute the capacity of the stack. The total capacity is not cached, so
-  // this takes work proportional to the capacity of the stack.
+  // this takes work proportional to `log(capacity of the stack)`.
   auto capacity() const {
     int32_t capacity = 0;
     for (const auto& chunk : chunks_) {
@@ -218,7 +217,7 @@ class StableStack {
 
   // Constructs elements into this stack from `rhs`. Uses `getter` to get a
   // reference to each element in `rhs`.
-  template <class Getter>
+  template <typename Getter>
   auto ConstructFrom(const StableStack& rhs, Getter getter) {
     if (rhs.empty()) {
       return;
@@ -350,7 +349,7 @@ class StableStack {
   auto NextChunkCapacity() {
     if (chunks_.empty()) {
       // The size of the first chunk.
-      return 16;
+      return 2;
     }
     // The growth factor from each chunk to the next. 2 matches the growth
     // factor of llvm::SmallVector.

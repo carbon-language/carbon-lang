@@ -42,7 +42,7 @@ TEST(StableStack, Growth) {
 }
 
 template <typename T, typename F>
-static auto GrowCapacityTimes(StableStack<T>& stack, int n, F factory) {
+static auto GrowCapacityTimes(StableStack<T>& stack, int n, F factory) -> void {
   while (n) {
     auto capacity = stack.capacity();
     while (stack.capacity() == capacity) {
@@ -146,7 +146,7 @@ TEST(StableStack, MoveConstructDestroy) {
    public:
     Counter(int* constructed, int* destroyed)
         : constructed_(constructed), destroyed_(destroyed) {}
-    Counter(Counter&& rhs)
+    Counter(Counter&& rhs) noexcept
         : constructed_(rhs.constructed_), destroyed_(rhs.destroyed_) {
       (*constructed_)++;
     }
@@ -272,7 +272,7 @@ TEST(StableStack, MoveStack) {
    public:
     Counter(int value, int* constructed, int* destroyed)
         : value_(value), constructed_(constructed), destroyed_(destroyed) {}
-    Counter(Counter&& rhs)
+    Counter(Counter&& rhs) noexcept
         : value_(rhs.value_),
           constructed_(rhs.constructed_),
           destroyed_(rhs.destroyed_) {
@@ -389,8 +389,8 @@ TEST(StableStack, Reserve) {
 
   stack.Reserve(1000);
   EXPECT_GE(stack.capacity(), 1000);
-  EXPECT_GE(stack.size(), 0);
-  EXPECT_GE(stack.empty(), true);
+  EXPECT_EQ(stack.size(), 0);
+  EXPECT_EQ(stack.empty(), true);
 
   capacity = stack.capacity();
   stack.Reserve(1);

@@ -8,7 +8,6 @@
 #include <bit>
 #include <compare>
 #include <cstddef>
-#include <iterator>
 #include <limits>
 #include <memory>
 #include <type_traits>
@@ -55,7 +54,7 @@ class ValueStoreIterator
   // ValueStore*).
   template <typename OtherValueStoreT, typename OtherElementT,
             typename OtherPointerT, typename OtherReferenceT>
-    requires(std::convertible_to<OtherValueStoreT*, ValueStoreT*>)
+    requires(std::is_convertible_v<OtherValueStoreT*, ValueStoreT*>)
   // NOLINTNEXTLINE(google-explicit-constructor)
   ValueStoreIterator(
       const ValueStoreIterator<OtherValueStoreT, OtherElementT, OtherPointerT,

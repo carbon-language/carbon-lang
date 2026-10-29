@@ -34,7 +34,8 @@ class GenericRegionStack {
  public:
   explicit GenericRegionStack(llvm::raw_ostream* vlog_stream)
       : vlog_stream_(vlog_stream) {
-    // Reserve a large enough stack that we typically won't need to reallocate.
+    // Reserve a large enough stack that we typically won't need to allocate
+    // again.
     constants_in_generic_stack_.Reserve(4);
   }
 

@@ -246,7 +246,6 @@ cc_library(
     ],
     deps = [
         ":mem_usage",
-        ":yaml",
         "//common:check",
         "@llvm-project//llvm:Support",
     ],
