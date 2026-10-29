@@ -258,6 +258,8 @@ static auto BuildCppSubobjectDestroyWitness(
   if (!tag_decl) {
     return SemIR::InstId::None;
   }
+
+  // TODO: handle class types that are trivially destructible.
   auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
   if (!class_decl) {
     return BuildTrivialSubobjectDestroyWitness(
@@ -273,6 +275,22 @@ static auto BuildCppSubobjectDestroyWitness(
   }
   return BuildCustomWitness(context, loc_id, query_self_const_id,
                             query_specific_interface, {fn_id});
+}
+
+static auto BuildCppTrivialDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
+  auto* tag_decl = TypeAsTagDecl(context, query_self_const_id);
+  if (!tag_decl) {
+    return SemIR::InstId::None;
+  }
+
+  // TODO: handle class types that are trivially destructible.
+  const auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
+  return class_decl ? BuildCustomWitness(context, loc_id, query_self_const_id,
+                                         query_specific_interface, {})
+                    : SemIR::InstId::None;
 }
 
 // Attempts to build a witness table entry for a C++ unary operator.
@@ -619,6 +637,10 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::SubobjectDestroy:
       return BuildCppSubobjectDestroyWitness(
           context, loc_id, query_self_const_id, query_specific_interface);
+
+    case SemIR::CoreInterface::TrivialDestroyImpl:
+      return BuildCppTrivialDestroyWitness(context, loc_id, query_self_const_id,
+                                           query_specific_interface);
 
     case SemIR::CoreInterface::CppRangeForIterate:
       return BuildCppRangeForIterateWitness(

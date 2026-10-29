@@ -1042,6 +1042,32 @@ static auto LookupSubobjectDestroyWitness(
                                       query_specific_interface, *format);
 }
 
+static auto MakeTrivialDestroyWitness(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::ConstantId query_self_const_id,
+    SemIR::SpecificInterface query_specific_interface, bool build_witness)
+    -> std::optional<SemIR::InstId> {
+  if (!build_witness || query_self_const_id.is_symbolic()) {
+    return SemIR::InstId::None;
+  }
+
+  auto witness_prep =
+      DestroyFormatWitnessContext::PrepareForLookup(context, loc_id);
+  if (!witness_prep) {
+    return std::nullopt;
+  }
+
+  auto destroy_format = witness_prep->GetDestroyFormatForOneType(
+      context, loc_id,
+      context.types().GetTypeInstIdForTypeConstantId(query_self_const_id));
+  if (!destroy_format || *destroy_format != DestroyFormat::Trivial) {
+    return std::nullopt;
+  }
+
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface, {});
+}
+
 static auto MakeIntFitsInWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -1227,6 +1253,9 @@ auto LookupCustomWitness(Context& context, SemIR::LocId loc_id,
       return LookupSubobjectDestroyWitness(context, loc_id, query_self_const_id,
                                            query_specific_interface,
                                            build_witness);
+    case SemIR::CoreInterface::TrivialDestroyImpl:
+      return MakeTrivialDestroyWitness(context, loc_id, query_self_const_id,
+                                       query_specific_interface, build_witness);
     case SemIR::CoreInterface::AddAssignWith:
     case SemIR::CoreInterface::AddWith:
     case SemIR::CoreInterface::Copy:
