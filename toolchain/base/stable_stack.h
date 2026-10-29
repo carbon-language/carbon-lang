@@ -205,7 +205,7 @@ class StableStack {
 
   auto CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
       -> void {
-    mem_usage.Add(label.str(), size(), capacity());
+    mem_usage.Add(label.str(), size() * sizeof(T), capacity() * sizeof(T));
   }
 
  private:
