@@ -209,6 +209,7 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     }
   }
 
+  StartGenericDecl(context);
   return true;
 }
 
@@ -607,6 +608,16 @@ auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
   requirements_id = CheckForNestedWhereInRequirementsAfterEval(
       context, where_loc, requirements_id);
   requirements_id = ThawPeriodSelfInRequirements(context, requirements_id);
+
+  // We make and discard a generic because we may have instructions inside which
+  // are only PeriodSelfDependent. These should not be part of any enclosing
+  // generic. A facet type is only symbolic if it depends on symbolic values
+  // from outside the facet type (which are Symbolic rather than
+  // PeriodSelfSymbolic). If the resulting facet type is Symbolic, the Symbolic
+  // instructions that it depends on (which are being discarded in the eval
+  // block here) will be added as dependent instructions of the facet type in
+  // the enclosing generic.
+  DiscardGenericDecl(context);
 
   AddInstAndPush<SemIR::WhereExpr>(
       context, node_id,
