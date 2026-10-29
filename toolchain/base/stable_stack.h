@@ -98,7 +98,7 @@ class StableStack {
     auto [chunk, index] = GetIndexFromBack(n);
     return Get(chunk, index);
   }
-  auto PeekMutable(int32_t n = 0) const -> T& {
+  auto PeekMutable(int32_t n = 0) -> T& {
     CARBON_CHECK(!empty(), "Peek on an empty stack");
     auto [chunk, index] = GetIndexFromBack(n);
     return Get(chunk, index);
