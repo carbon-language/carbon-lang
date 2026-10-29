@@ -95,11 +95,13 @@ class StableStack {
   // to the size of `n`.
   auto Peek(int32_t n = 0) const -> const T& {
     CARBON_CHECK(!empty(), "Peek on an empty stack");
+    CARBON_CHECK(n >= 0, "Peek index invalid");
     auto [chunk, index] = GetIndexFromBack(n);
     return Get(chunk, index);
   }
   auto PeekMutable(int32_t n = 0) -> T& {
     CARBON_CHECK(!empty(), "Peek on an empty stack");
+    CARBON_CHECK(n >= 0, "Peek index invalid");
     auto [chunk, index] = GetIndexFromBack(n);
     return Get(chunk, index);
   }
