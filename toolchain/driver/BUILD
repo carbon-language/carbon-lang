@@ -250,6 +250,7 @@ cc_library(
         "//toolchain/diagnostics:emitter",
         "//toolchain/format",
         "//toolchain/lex",
+        "//toolchain/parse",
         "//toolchain/source:source_buffer",
         "@llvm-project//llvm:Support",
     ],

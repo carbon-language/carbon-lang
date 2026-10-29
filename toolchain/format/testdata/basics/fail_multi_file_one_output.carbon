@@ -8,5 +8,5 @@
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/format/testdata/basics/fail_multi_file_one_output.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/format/testdata/basics/fail_multi_file_one_output.carbon
-// CHECK:STDERR: error: multiple input files are being provided; --output only works with one input [FormatMultipleFilesToOneOutput]
+// CHECK:STDERR: error: multiple input files provided; `--output` only works with one input file [FormatMultipleFilesToOneOutput]
 // CHECK:STDERR:

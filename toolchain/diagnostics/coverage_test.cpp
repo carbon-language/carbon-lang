@@ -38,10 +38,11 @@ constexpr Kind UntestedKinds[] = {
     // These diagnose filesystem issues that are hard to unit test.
     Kind::ErrorReadingFile,
     Kind::ErrorStattingFile,
-    Kind::FileTooLarge,
     Kind::FailureBuildingRuntimes,
     Kind::FailureRunningClang,
     Kind::FailureRunningClangToLink,
+    Kind::FileTooLarge,
+    Kind::FormatOutputFileWriteError,
 
     // These aren't feasible to test with a normal testcase, but are tested in
     // lex/tokenized_buffer_test.cpp.
