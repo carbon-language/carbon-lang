@@ -196,14 +196,14 @@ fn Run() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.26f2099a79512a5d.Main(ptr %_) #4 !dbg !42 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.26f2099a79512a5d.Main(ptr noundef nonnull align 1 %_) #6 !dbg !42 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main.6662a1ffb773360a(ptr %_), !dbg !44
 // CHECK:STDOUT:   ret void, !dbg !44
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.7a3b9f04ddf4269e.Main(ptr %_) #4 !dbg !46 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.7a3b9f04ddf4269e.Main(ptr noundef nonnull align 1 %_) #6 !dbg !46 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Main.d53b17eed3ce903c(ptr %_), !dbg !48
 // CHECK:STDOUT:   ret void, !dbg !48
@@ -252,6 +252,7 @@ fn Run() {
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #4 = { nounwind }
 // CHECK:STDOUT: attributes #5 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #6 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!15}
 // CHECK:STDOUT: !llvm.module.flags = !{!86, !87, !88, !4, !5}
