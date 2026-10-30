@@ -15,6 +15,7 @@
 
 #include "common/check.h"
 #include "common/ostream.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallVector.h"
@@ -263,8 +264,10 @@ class ValueStore
 
     CARBON_DCHECK(static_cast<size_t>(chunk_index) <= chunks_.size(),
                   "{0} <= {1}", chunk_index, chunks_.size());
-    if (static_cast<size_t>(chunk_index) == chunks_.size()) {
-      chunks_.emplace_back();
+    if (LLVM_UNLIKELY(static_cast<size_t>(chunk_index) == chunks_.size())) {
+      // Sink all the growth and allocation logic into an out-of-line helper as
+      // this is inherently a cold-path.
+      AllocateNextChunk();
     }
 
     CARBON_DCHECK(pos == chunks_[chunk_index].size());
@@ -347,6 +350,13 @@ class ValueStore
   // ```
   auto enumerate() const [[clang::lifetimebound]] -> EnumerateRange {
     return EnumerateRange(*this);
+  }
+
+  // Returns the chunks of values in order. Each chunk is a contiguous range of
+  // values, so bulk operations over all values can iterate over contiguous
+  // memory rather than looking up each value by its ID.
+  auto chunks() const [[clang::lifetimebound]] -> auto {
+    return llvm::ArrayRef<Chunk>(chunks_);
   }
 
   auto GetIdTag() const -> IdTagType { return tag_; }
@@ -481,7 +491,10 @@ class ValueStore
         -> void
       requires(std::is_copy_constructible_v<ValueT>);
 
+    auto data() const -> const ValueType* { return buf_; }
     auto size() const -> int32_t { return num_; }
+    auto begin() const -> const ValueType* { return buf_; }
+    auto end() const -> const ValueType* { return buf_ + num_; }
 
    private:
     // Verify using an `int32_t` for `num_` is sound.
@@ -518,6 +531,10 @@ class ValueStore
   // that specific chunk.
   auto IdToChunkIndices(IdType id) const -> std::pair<int32_t, int32_t> {
     return RawIndexToChunkIndices(GetRawIndex(id));
+  }
+
+  [[clang::noinline, clang::preserve_most]] auto AllocateNextChunk() -> void {
+    chunks_.emplace_back();
   }
 
   // Number of elements added to the store. The number should never exceed what

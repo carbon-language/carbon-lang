@@ -229,9 +229,54 @@ auto TokenizedBuffer::AddPostLexingRecoveryToken(TokenInfo info) -> TokenIndex {
   }
 
   auto token = token_infos_.Add(info);
+  // Overwrite the first `FileEnd` padding entry and append a new one at the end
+  // to keep `KindDataPadding` trailing entries intact.
+  token_kinds_[token.index] = info.kind();
+  token_kinds_.push_back(TokenKind::FileEnd);
+  token_has_leading_space_.push_back(info.has_leading_space());
   recovery_tokens_.push_back(true);
   ++post_lexing_recovery_tokens_;
   return token;
+}
+
+auto TokenizedBuffer::BuildTokenArrays() -> void {
+  int32_t num_tokens = token_infos_.size();
+  token_kinds_.resize_for_overwrite(num_tokens + KindDataPadding);
+  token_has_leading_space_.resize_for_overwrite(num_tokens);
+
+  TokenKind* kinds = token_kinds_.data();
+  bool* has_leading_space = token_has_leading_space_.data();
+  for (const auto& chunk : token_infos_.chunks()) {
+    // Building these flat arrays is only a performance benefit when we can do
+    // so using especially efficient vectorized processing of the underlying
+    // `TokenInfo` structs that are created during lexing. We rely on Clang to
+    // autovectorize the inner loop below, but have to take some care to ensure
+    // that works.
+    //
+    // Because `TokenInfo`'s bitfield loads as 32-bit words, LLVM's default x86
+    // cost model caps the vector width at `256 / 32 = 8` lanes and emits
+    // narrower shuffles; requesting a width of 16 packs each iteration's
+    // extracted bytes into full 128-bit stores via `vpackusdw`/`vpackuswb`.
+    //
+    // We guard the pragma on `NDEBUG` (rather than `__OPTIMIZE__`, which is
+    // also set under `fastbuild`'s `-Og` where the loop vectorizer is disabled)
+    // and skip it under UBSan (whose per-iteration checks block vectorization),
+    // as Clang otherwise diagnoses `-Wpass-failed` under `-Werror`.
+    //
+    // Last but not least, it is important to iterate over `TokenInfo` by value
+    // (8 bytes) so `kind()` and `has_leading_space()` extract from a single SSA
+    // value. When using a reference, Clang lowers them as two narrower memory
+    // loads that AArch64 vectorizes as duplicate strided `ld2` passes over the
+    // chunk instead of single-pass `ldp` loads.
+#if defined(NDEBUG) && !__has_feature(undefined_behavior_sanitizer)
+#pragma clang loop vectorize_width(16)
+#endif
+    for (TokenInfo info : chunk) {
+      *kinds++ = info.kind();
+      *has_leading_space++ = info.has_leading_space();
+    }
+  }
+  std::fill_n(kinds, KindDataPadding, TokenKind::FileEnd);
 }
 
 auto TokenizedBuffer::GetIndentColumnNumber(LineIndex line) const -> int {
@@ -482,6 +527,9 @@ auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
                                       llvm::StringRef label) const -> void {
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "token_infos_"), token_infos_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "token_kinds_"), token_kinds_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "token_has_leading_space_"),
+                    token_has_leading_space_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "line_infos_"), line_infos_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "comments_"), comments_);
 }

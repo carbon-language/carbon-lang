@@ -65,6 +65,20 @@ template <typename T>
   DoNotOptimize(container.data());
 }
 
+// Returns true if the benchmark binary was invoked in dry-run mode
+// (`--benchmark_dry_run` or `BENCHMARK_DRY_RUN`).
+//
+// Google Benchmark's `--benchmark_dry_run` caps `state.max_iterations` to `1`,
+// so benchmarks that use `state.KeepRunningBatch(n)` or multi-input setup still
+// execute a full batch of `n` unless they also clamp `n` on dry runs.
+auto IsBenchmarkDryRun() -> bool;
+
+// Sets whether the benchmark binary is running in dry-run mode.
+//
+// This function must only be called once for an execution, and before any
+// callers to `IsBenchmarkDryRun`. Typically, it is called from within `main`.
+auto SetBenchmarkDryRun(bool is_dry_run) -> void;
+
 }  // namespace Carbon::Testing
 
 #endif  // CARBON_TESTING_BASE_BENCHMARK_HELPERS_H_

@@ -155,6 +155,13 @@ alias terse_id_fn = fn (x: i32) => x;
 fn TestAsGenericArgument() {
   PassToGeneric(id_fn);
   PassToGeneric(terse_id_fn);
+
+  alias generic_terse_id = fn [T: Core.Copy](x: T) => x;
+  let g1: i32 = generic_terse_id(42 as i32);
+  let g2: bool = generic_terse_id(true);
+  alias generic_terse_pair = fn [T: Core.Copy, U: Core.Copy](x: T, y: U) => (x, y);
+  let unused gp: (i32, bool) = generic_terse_pair(g1, g2);
+  let unused g3: i32 = (fn [T: Core.Copy](x: T) => x)(10 as i32);
 }
 
 // --- as_template_argument.carbon
@@ -336,13 +343,6 @@ fn F() {
   // CHECK:STDERR: fail_todo_positional_params.carbon:[[@LINE+2]]:4-8: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
   // CHECK:STDERR:
   (fn => 0);
-}
-
-// --- dependent_terse_return.carbon
-library "[[@TEST_NAME]]";
-
-fn F() {
-  (fn [T: Core.Copy](x: T) => x);
 }
 
 // CHECK:STDOUT: --- empty.carbon

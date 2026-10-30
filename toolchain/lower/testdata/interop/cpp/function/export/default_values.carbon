@@ -125,7 +125,7 @@ void CallF() {
 // CHECK:STDOUT: declare void @_CF.OtherFunction(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.OtherFunction(ptr %_) #2 !dbg !41 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.OtherFunction(ptr noundef nonnull align 4 dereferenceable(4) %_) #2 !dbg !41 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !43
 // CHECK:STDOUT:   call void @_CF.OtherFunction(i32 %.1), !dbg !43
@@ -135,7 +135,7 @@ void CallF() {
 // CHECK:STDOUT: declare void @_CF.FirstFunction(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.FirstFunction(ptr %_) #2 !dbg !45 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.FirstFunction(ptr noundef nonnull align 4 dereferenceable(4) %_) #2 !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !47
 // CHECK:STDOUT:   call void @_CF.FirstFunction(i32 %.1), !dbg !47
@@ -143,7 +143,7 @@ void CallF() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define internal void @_C__global_init.Main() #2 !dbg !51 {
+// CHECK:STDOUT: define internal void @_C__global_init.Main() #3 !dbg !51 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   store i32 23, ptr @_C__carbon_default_value__CF.OtherFunction_0.Main, align 4
 // CHECK:STDOUT:   store i32 0, ptr @_C__carbon_default_value__CF.FirstFunction_0.Main, align 4
@@ -152,7 +152,8 @@ void CallF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { nounwind }
+// CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #3 = { nounwind }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!40}
 // CHECK:STDOUT: !llvm.module.flags = !{!53, !54, !55, !6, !7}

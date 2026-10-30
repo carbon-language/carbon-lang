@@ -25,6 +25,9 @@ class SharedValueStores : public Yaml::Printable<SharedValueStores> {
   using IntStore = IntStore;
   using RealStore = ValueStore<RealId, Real>;
   using FloatStore = CanonicalValueStore<FloatId, llvm::APFloat>;
+  // Note that this stores string references. The underlying string data must
+  // be stored somewhere more durable (e.g. a string literal or
+  // `clang::ASTContext::Idents`).
   using IdentifierStore = CanonicalValueStore<IdentifierId, llvm::StringRef>;
   using StringLiteralStore =
       CanonicalValueStore<StringLiteralValueId, llvm::StringRef>;

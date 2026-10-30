@@ -15,9 +15,9 @@
 //
 // SET-CHECK-SUBSET
 // CHECK:STDOUT: --- interfaces.carbon
-// CHECK:STDOUT:   %facet_type: type = facet_type <@SimpleOp & @Empty> [concrete]
+// CHECK:STDOUT:   %facet_type{{.*}}: type = facet_type <@SimpleOp & @Empty> [concrete]
 // CHECK:STDOUT: --- use.carbon
-// CHECK:STDOUT:   %facet_type: type = facet_type <@Empty & @SimpleOp> [concrete]
+// CHECK:STDOUT:   %facet_type{{.*}}: type = facet_type <@Empty & @SimpleOp> [concrete]
 //
 // This check does not strictly exclude extra facet types, although that should
 // create different instruction names. We also anticipate diagnostics should be

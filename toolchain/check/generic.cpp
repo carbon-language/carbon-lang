@@ -764,24 +764,27 @@ auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
 }
 
 auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
-                               SemIR::SpecificId specific_id) -> bool {
+                               SemIR::SpecificId specific_id)
+    -> DefinitionResolution {
   // TODO: Handle recursive resolution of the same generic definition.
   auto& specific = context.specifics().Get(specific_id);
   auto generic_id = specific.generic_id;
   CARBON_CHECK(generic_id.has_value(), "Specific with no generic ID");
 
-  if (!specific.definition_block_id.has_value()) {
-    // Evaluate the eval block for the definition of the generic.
-    auto& generic = context.generics().Get(generic_id);
-    CARBON_CHECK(generic.decl_block_id.has_value(), "missing declaration");
-    if (!generic.definition_block_id.has_value()) {
-      // The generic is not defined yet.
-      return false;
-    }
-    TryEvalBlockForSpecific(context, loc_id, specific_id,
-                            SemIR::GenericInstIndex::Definition);
+  if (specific.definition_block_id.has_value()) {
+    return DefinitionResolution::PreviouslyResolved;
   }
-  return true;
+
+  // Evaluate the eval block for the definition of the generic.
+  auto& generic = context.generics().Get(generic_id);
+  CARBON_CHECK(generic.decl_block_id.has_value(), "missing declaration");
+  if (!generic.definition_block_id.has_value()) {
+    return DefinitionResolution::NotDefinedYet;
+  }
+
+  TryEvalBlockForSpecific(context, loc_id, specific_id,
+                          SemIR::GenericInstIndex::Definition);
+  return DefinitionResolution::NewlyResolved;
 }
 
 auto DiagnoseIfGenericMissingExplicitParameters(

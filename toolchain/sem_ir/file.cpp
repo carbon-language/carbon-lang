@@ -210,15 +210,32 @@ auto File::OutputYaml(bool include_singletons) const -> Yaml::OutputMapping {
 auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
     -> void {
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_source_locs_"),
-                    clang_source_locs_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "filename_"), filename_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "entity_names_"),
                     entity_names_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "functions_"), functions_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "generated_functions_"),
+                    generated_functions_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "cpp_overload_sets_"),
+                    cpp_overload_sets_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "thunks_"), thunks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "classes_"), classes_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "fields_"), fields_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "interfaces_"), interfaces_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "named_constraints_"),
+                    named_constraints_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "require_impls_"),
+                    require_impls_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "observes_"), observes_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "observe_blocks_"),
+                    observe_blocks_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "associated_constants_"),
+                    associated_constants_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "declared_facet_types_"),
+                    declared_facet_types_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "impls_"), impls_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "specific_interfaces_"),
+                    specific_interfaces_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "generics_"), generics_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "specifics_"), specifics_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "import_irs_"), import_irs_);
@@ -227,15 +244,26 @@ auto File::CollectMemUsage(MemUsage& mem_usage, llvm::StringRef label) const
   mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_decls_"), clang_decls_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_decl_signatures_"),
                     clang_decl_signatures_);
-  mem_usage.Collect(MemUsage::ConcatLabel(label, "struct_type_fields_"),
-                    struct_type_fields_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "insts_"), insts_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "vtables_"), vtables_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "name_scopes_"), name_scopes_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "constant_values_"),
                     constant_values_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "inst_blocks_"), inst_blocks_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "constants_"), constants_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "struct_type_fields_"),
+                    struct_type_fields_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "custom_layouts_"),
+                    custom_layouts_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "types_"), types_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "expr_regions_"),
+                    expr_regions_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "clang_source_locs_"),
+                    clang_source_locs_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "bundles_"), bundles_);
+  mem_usage.Collect(
+      MemUsage::ConcatLabel(label, "clang_function_pointer_types_"),
+      clang_function_pointer_types_);
 }
 
 auto File::set_cpp_file(std::unique_ptr<SemIR::CppFile> cpp_file) -> void {

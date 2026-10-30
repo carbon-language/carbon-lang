@@ -39,38 +39,38 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: declare i32 @_CRand.Main() local_unnamed_addr
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CNoInlineWithOz.Main() local_unnamed_addr #0 !dbg !10 {
+// CHECK:STDOUT: define i32 @_CNoInlineWithOz.Main() local_unnamed_addr #0 !dbg !8 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc4_15 = tail call i32 @_CRand.Main() #0, !dbg !13
-// CHECK:STDOUT:   %Rand.call.loc4_24 = tail call i32 @_CRand.Main() #0, !dbg !14
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %Rand.call.loc4_24, %Rand.call.loc4_15, !dbg !13
-// CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call, !dbg !15
+// CHECK:STDOUT:   %Rand.call.loc4_15 = tail call i32 @_CRand.Main() #0, !dbg !11
+// CHECK:STDOUT:   %Rand.call.loc4_24 = tail call i32 @_CRand.Main() #0, !dbg !12
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call = add i32 %Rand.call.loc4_24, %Rand.call.loc4_15, !dbg !11
+// CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call, !dbg !13
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CCallNoInlineWithOptSize.Main() local_unnamed_addr #0 !dbg !16 {
+// CHECK:STDOUT: define i32 @_CCallNoInlineWithOptSize.Main() local_unnamed_addr #0 !dbg !14 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %Rand.call.loc4_15.i = tail call i32 @_CRand.Main() #0, !dbg !80
-// CHECK:STDOUT:   %Rand.call.loc4_24.i = tail call i32 @_CRand.Main() #0, !dbg !81
-// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc4_24.i, %Rand.call.loc4_15.i, !dbg !80
-// CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.i, !dbg !20
+// CHECK:STDOUT:   %Rand.call.loc4_15.i = tail call i32 @_CRand.Main() #0, !dbg !84
+// CHECK:STDOUT:   %Rand.call.loc4_24.i = tail call i32 @_CRand.Main() #0, !dbg !85
+// CHECK:STDOUT:   %Int.as.AddWith.impl.Op.call.i = add i32 %Rand.call.loc4_24.i, %Rand.call.loc4_15.i, !dbg !84
+// CHECK:STDOUT:   ret i32 %Int.as.AddWith.impl.Op.call.i, !dbg !18
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nofree norecurse nosync nounwind memory(argmem: readwrite)
-// CHECK:STDOUT: define void @_CVectorizedWithOptSpeed.Main(ptr nofree captures(none) %a) local_unnamed_addr #1 !dbg !21 {
+// CHECK:STDOUT: define void @_CVectorizedWithOptSpeed.Main(ptr nofree captures(none) %a) local_unnamed_addr #1 !dbg !19 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   br label %while.body, !dbg !26
+// CHECK:STDOUT:   br label %while.body, !dbg !24
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.body:                                       ; preds = %entry, %while.body
 // CHECK:STDOUT:   %n.var.03 = phi i32 [ 0, %entry ], [ %1, %while.body ]
-// CHECK:STDOUT:   %0 = zext nneg i32 %n.var.03 to i64, !dbg !31
-// CHECK:STDOUT:   %.loc16_11.array.index = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %0, !dbg !31
-// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc16_11.array.index, align 4, !dbg !31
-// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = shl i32 %Int.as.MulAssignWith.impl.Op.call, 1, !dbg !31
-// CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc16_11.array.index, align 4, !dbg !31
-// CHECK:STDOUT:   %1 = add nuw nsw i32 %n.var.03, 1, !dbg !89
-// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp samesign ult i32 %n.var.03, 65535, !dbg !27
-// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !26
+// CHECK:STDOUT:   %0 = zext nneg i32 %n.var.03 to i64, !dbg !29
+// CHECK:STDOUT:   %.loc16_11.array.index = getelementptr inbounds nuw [4 x i8], ptr %a, i64 %0, !dbg !29
+// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call = load i32, ptr %.loc16_11.array.index, align 4, !dbg !29
+// CHECK:STDOUT:   %Int.as.MulAssignWith.impl.Op.call1 = shl i32 %Int.as.MulAssignWith.impl.Op.call, 1, !dbg !29
+// CHECK:STDOUT:   store i32 %Int.as.MulAssignWith.impl.Op.call1, ptr %.loc16_11.array.index, align 4, !dbg !29
+// CHECK:STDOUT:   %1 = add nuw nsw i32 %n.var.03, 1, !dbg !93
+// CHECK:STDOUT:   %Int.as.OrderedWith.impl.Less.call = icmp samesign ult i32 %n.var.03, 65535, !dbg !25
+// CHECK:STDOUT:   br i1 %Int.as.OrderedWith.impl.Less.call, label %while.body, label %while.done, !dbg !24
 // CHECK:STDOUT:
 // CHECK:STDOUT: while.done:                                       ; preds = %while.body
 // CHECK:STDOUT:   ret void, !dbg !35
@@ -81,17 +81,11 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT:   uselistorder ptr %.loc16_11.array.index, { 1, 0 }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_CSelfDestruct.72395be3dbbe8946:core.Destroy.Core"(ptr %self) local_unnamed_addr #0 !dbg !37 {
-// CHECK:STDOUT: entry:
-// CHECK:STDOUT:   ret void, !dbg !39
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { nofree norecurse nosync nounwind memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!1}
-// CHECK:STDOUT: !llvm.module.flags = !{!75, !76}
+// CHECK:STDOUT: !llvm.module.flags = !{!79, !80}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !DIFile(filename: "foo.carbon", directory: "")
 // CHECK:STDOUT: !1 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !0, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
@@ -101,41 +95,37 @@ fn VectorizedWithOptSpeed(a: array(i32, 65536)*) {
 // CHECK:STDOUT: !5 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: null, size: 64)
 // CHECK:STDOUT: !6 = !{null, !5}
 // CHECK:STDOUT: !7 = !DISubroutineType(types: !6)
-// CHECK:STDOUT: !8 = !{null, !2}
-// CHECK:STDOUT: !9 = !DISubroutineType(types: !8)
-// CHECK:STDOUT: !10 = distinct !DISubprogram(name: "NoInlineWithOz", linkageName: "_CNoInlineWithOz.Main", scope: null, file: !0, line: 3, type: !4, spFlags: DISPFlagDefinition, unit: !1)
-// CHECK:STDOUT: !13 = !DILocation(line: 4, column: 10, scope: !10)
-// CHECK:STDOUT: !14 = !DILocation(line: 4, column: 19, scope: !10)
-// CHECK:STDOUT: !15 = !DILocation(line: 4, column: 3, scope: !10)
-// CHECK:STDOUT: !16 = distinct !DISubprogram(name: "CallNoInlineWithOptSize", linkageName: "_CCallNoInlineWithOptSize.Main", scope: null, file: !0, line: 7, type: !4, spFlags: DISPFlagDefinition, unit: !1)
-// CHECK:STDOUT: !20 = !DILocation(line: 9, column: 3, scope: !16)
-// CHECK:STDOUT: !21 = distinct !DISubprogram(name: "VectorizedWithOptSpeed", linkageName: "_CVectorizedWithOptSpeed.Main", scope: null, file: !0, line: 12, type: !7, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !36)
-// CHECK:STDOUT: !22 = !DILocalVariable(arg: 1, scope: !21, type: !5)
-// CHECK:STDOUT: !26 = !DILocation(line: 15, column: 9, scope: !21)
-// CHECK:STDOUT: !27 = !DILocation(line: 15, column: 10, scope: !21)
-// CHECK:STDOUT: !31 = !DILocation(line: 16, column: 5, scope: !21)
-// CHECK:STDOUT: !35 = !DILocation(line: 12, column: 1, scope: !21)
-// CHECK:STDOUT: !36 = !{!22}
-// CHECK:STDOUT: !37 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.72395be3dbbe8946:core.Destroy.Core", scope: null, file: !0, line: 14, type: !9, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !40)
-// CHECK:STDOUT: !38 = !DILocalVariable(arg: 1, scope: !37, type: !2)
-// CHECK:STDOUT: !39 = !DILocation(line: 14, column: 3, scope: !37)
-// CHECK:STDOUT: !40 = !{!38}
-// CHECK:STDOUT: !41 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
-// CHECK:STDOUT: !42 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !41, line: 396, type: !9, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !49)
-// CHECK:STDOUT: !43 = !DILocalVariable(arg: 1, scope: !42, type: !2)
-// CHECK:STDOUT: !46 = !{null, !2, !2}
-// CHECK:STDOUT: !47 = !DISubroutineType(types: !46)
-// CHECK:STDOUT: !49 = !{!43}
-// CHECK:STDOUT: !50 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !41, line: 331, type: !47, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !57)
-// CHECK:STDOUT: !51 = !DILocalVariable(arg: 1, scope: !50, type: !2)
-// CHECK:STDOUT: !52 = !DILocalVariable(arg: 2, scope: !50, type: !2)
-// CHECK:STDOUT: !57 = !{!51, !52}
-// CHECK:STDOUT: !75 = !{i32 7, !"Dwarf Version", i32 5}
-// CHECK:STDOUT: !76 = !{i32 2, !"Debug Info Version", i32 3}
-// CHECK:STDOUT: !79 = distinct !DILocation(line: 9, column: 10, scope: !16)
-// CHECK:STDOUT: !80 = distinct !DILocation(line: 4, column: 10, scope: !10, inlinedAt: !79)
-// CHECK:STDOUT: !81 = distinct !DILocation(line: 4, column: 19, scope: !10, inlinedAt: !79)
-// CHECK:STDOUT: !87 = distinct !DILocation(line: 17, column: 5, scope: !21)
-// CHECK:STDOUT: !88 = distinct !DILocation(line: 398, column: 5, scope: !42, inlinedAt: !87)
-// CHECK:STDOUT: !89 = distinct !DILocation(line: 331, column: 3, scope: !50, inlinedAt: !88)
+// CHECK:STDOUT: !8 = distinct !DISubprogram(name: "NoInlineWithOz", linkageName: "_CNoInlineWithOz.Main", scope: null, file: !0, line: 3, type: !4, spFlags: DISPFlagDefinition, unit: !1)
+// CHECK:STDOUT: !11 = !DILocation(line: 4, column: 10, scope: !8)
+// CHECK:STDOUT: !12 = !DILocation(line: 4, column: 19, scope: !8)
+// CHECK:STDOUT: !13 = !DILocation(line: 4, column: 3, scope: !8)
+// CHECK:STDOUT: !14 = distinct !DISubprogram(name: "CallNoInlineWithOptSize", linkageName: "_CCallNoInlineWithOptSize.Main", scope: null, file: !0, line: 7, type: !4, spFlags: DISPFlagDefinition, unit: !1)
+// CHECK:STDOUT: !18 = !DILocation(line: 9, column: 3, scope: !14)
+// CHECK:STDOUT: !19 = distinct !DISubprogram(name: "VectorizedWithOptSpeed", linkageName: "_CVectorizedWithOptSpeed.Main", scope: null, file: !0, line: 12, type: !7, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !36)
+// CHECK:STDOUT: !20 = !DILocalVariable(arg: 1, scope: !19, type: !5)
+// CHECK:STDOUT: !24 = !DILocation(line: 15, column: 9, scope: !19)
+// CHECK:STDOUT: !25 = !DILocation(line: 15, column: 10, scope: !19)
+// CHECK:STDOUT: !29 = !DILocation(line: 16, column: 5, scope: !19)
+// CHECK:STDOUT: !32 = !{null, !2}
+// CHECK:STDOUT: !33 = !DISubroutineType(types: !32)
+// CHECK:STDOUT: !35 = !DILocation(line: 12, column: 1, scope: !19)
+// CHECK:STDOUT: !36 = !{!20}
+// CHECK:STDOUT: !37 = !DIFile(filename: "{{.*}}/prelude/types/int.carbon", directory: "")
+// CHECK:STDOUT: !38 = distinct !DISubprogram(name: "Op", linkageName: "_COp.Int.9452f4c51951679b.Core:Inc.Core.be1e879c1ad406d8", scope: null, file: !37, line: 396, type: !33, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !45)
+// CHECK:STDOUT: !39 = !DILocalVariable(arg: 1, scope: !38, type: !2)
+// CHECK:STDOUT: !42 = !{null, !2, !2}
+// CHECK:STDOUT: !43 = !DISubroutineType(types: !42)
+// CHECK:STDOUT: !45 = !{!39}
+// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:AddAssignWith.b59e374b0649c9ad.Core:Int.9452f4c51951679b.Core:AddAssignWith.ab03190a9e911cb4.Core.306167be98c24f26", scope: null, file: !37, line: 331, type: !43, spFlags: DISPFlagDefinition, unit: !1, retainedNodes: !61)
+// CHECK:STDOUT: !55 = !DILocalVariable(arg: 1, scope: !54, type: !2)
+// CHECK:STDOUT: !56 = !DILocalVariable(arg: 2, scope: !54, type: !2)
+// CHECK:STDOUT: !61 = !{!55, !56}
+// CHECK:STDOUT: !79 = !{i32 7, !"Dwarf Version", i32 5}
+// CHECK:STDOUT: !80 = !{i32 2, !"Debug Info Version", i32 3}
+// CHECK:STDOUT: !83 = distinct !DILocation(line: 9, column: 10, scope: !14)
+// CHECK:STDOUT: !84 = distinct !DILocation(line: 4, column: 10, scope: !8, inlinedAt: !83)
+// CHECK:STDOUT: !85 = distinct !DILocation(line: 4, column: 19, scope: !8, inlinedAt: !83)
+// CHECK:STDOUT: !91 = distinct !DILocation(line: 17, column: 5, scope: !19)
+// CHECK:STDOUT: !92 = distinct !DILocation(line: 398, column: 5, scope: !38, inlinedAt: !91)
+// CHECK:STDOUT: !93 = distinct !DILocation(line: 331, column: 3, scope: !54, inlinedAt: !92)
 // CHECK:STDOUT:
