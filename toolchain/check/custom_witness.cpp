@@ -330,6 +330,8 @@ static auto CanDestroyType(Context& context, SemIR::LocId loc_id,
     }
 
     case SemIR::Call::Kind:
+    case SemIR::CppOverloadSetType::Kind:
+    case SemIR::CppTemplateNameType::Kind:
       // Dependent type constructor calls that cannot be resolved under the
       // generic context.
       return DestroyFormat::NoDestroy;

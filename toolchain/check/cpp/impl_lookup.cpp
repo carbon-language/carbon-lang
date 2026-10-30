@@ -259,7 +259,8 @@ static auto BuildCppSubobjectDestroyWitness(
     return SemIR::InstId::None;
   }
   auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
-  if (!class_decl) {
+  if (!class_decl || (class_decl->hasTrivialDestructor() &&
+                      !class_decl->hasDeletedDestructor())) {
     return BuildTrivialSubobjectDestroyWitness(
         context, loc_id, query_self_const_id, query_specific_interface);
   }

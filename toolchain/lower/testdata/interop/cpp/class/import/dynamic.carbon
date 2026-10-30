@@ -112,7 +112,7 @@ fn DoThing() {
 // CHECK:STDOUT: define weak_odr void @"_COp.0a0b9df20a60c6f6:core.SubobjectDestroy.Core"(ptr %self) #2 !dbg !66 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_20.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %self, i32 0, i32 0, !dbg !68
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5984d7e4773d5a3e(ptr %.loc22_20.1.base), !dbg !68
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.1bbfefd3ad2afc44(ptr %.loc22_20.1.base), !dbg !68
 // CHECK:STDOUT:   ret void, !dbg !68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -120,7 +120,7 @@ fn DoThing() {
 // CHECK:STDOUT: define weak_odr void @"_COp.b25525d21a9bd472:core.SubobjectDestroy.Core"(ptr %self) #2 !dbg !70 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22_20.1.base = getelementptr inbounds nuw { [16 x i8] }, ptr %self, i32 0, i32 0, !dbg !72
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.5984d7e4773d5a3e(ptr %.loc22_20.1.base), !dbg !72
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.1bbfefd3ad2afc44(ptr %.loc22_20.1.base), !dbg !72
 // CHECK:STDOUT:   ret void, !dbg !72
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -174,7 +174,7 @@ fn DoThing() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.5984d7e4773d5a3e(ptr %t) #2 !dbg !98 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.1bbfefd3ad2afc44(ptr %t) #2 !dbg !98 {
 // CHECK:STDOUT:   ret void, !dbg !103
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -228,7 +228,7 @@ fn DoThing() {
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_ZN11FurtherBase17further_base_funcEv, { 2, 1, 0 }
 // CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.9ede905be876779b, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.5984d7e4773d5a3e, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.1bbfefd3ad2afc44, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress noinline nounwind optnone uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
@@ -303,7 +303,7 @@ fn DoThing() {
 // CHECK:STDOUT: !95 = !DILocation(line: 34, column: 5, scope: !91)
 // CHECK:STDOUT: !96 = !DILocation(line: 32, column: 1, scope: !91)
 // CHECK:STDOUT: !97 = !{!92}
-// CHECK:STDOUT: !98 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.5984d7e4773d5a3e", scope: null, file: !31, line: 32, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !104)
+// CHECK:STDOUT: !98 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.1bbfefd3ad2afc44", scope: null, file: !31, line: 32, type: !44, spFlags: DISPFlagDefinition, unit: !40, retainedNodes: !104)
 // CHECK:STDOUT: !99 = !DILocalVariable(arg: 1, scope: !98, type: !42)
 // CHECK:STDOUT: !103 = !DILocation(line: 32, column: 1, scope: !98)
 // CHECK:STDOUT: !104 = !{!99}

@@ -88,7 +88,7 @@ fn F() {
 // CHECK:STDOUT: define weak_odr void @"_COp.de73a19002e400c9:core.SubobjectDestroy.Core"(ptr %self) #1 !dbg !33 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_9.1.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !35
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %.loc18_9.1.base), !dbg !35
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4e766327b9d07a26(ptr %.loc18_9.1.base), !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !35
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -96,7 +96,7 @@ fn F() {
 // CHECK:STDOUT: define weak_odr void @"_COp.680f7fa3ef86df7a:core.SubobjectDestroy.Core"(ptr %self) #1 !dbg !37 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc18_9.1.base = getelementptr inbounds nuw { [8 x i8] }, ptr %self, i32 0, i32 0, !dbg !39
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %.loc18_9.1.base), !dbg !39
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4e766327b9d07a26(ptr %.loc18_9.1.base), !dbg !39
 // CHECK:STDOUT:   ret void, !dbg !39
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -138,7 +138,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.2d682b12c0c20e08(ptr %t) #1 !dbg !58 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.4e766327b9d07a26(ptr %t) #1 !dbg !58 {
 // CHECK:STDOUT:   ret void, !dbg !63
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -167,7 +167,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
 // CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.ff24853a526ad6af, { 1, 0 }
-// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.2d682b12c0c20e08, { 1, 0 }
+// CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.4e766327b9d07a26, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { nounwind }
@@ -225,7 +225,7 @@ fn F() {
 // CHECK:STDOUT: !55 = !DILocation(line: 34, column: 5, scope: !51)
 // CHECK:STDOUT: !56 = !DILocation(line: 32, column: 1, scope: !51)
 // CHECK:STDOUT: !57 = !{!52}
-// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.2d682b12c0c20e08", scope: null, file: !4, line: 32, type: !16, spFlags: DISPFlagDefinition, unit: !13, retainedNodes: !64)
+// CHECK:STDOUT: !58 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4e766327b9d07a26", scope: null, file: !4, line: 32, type: !16, spFlags: DISPFlagDefinition, unit: !13, retainedNodes: !64)
 // CHECK:STDOUT: !59 = !DILocalVariable(arg: 1, scope: !58, type: !14)
 // CHECK:STDOUT: !63 = !DILocation(line: 32, column: 1, scope: !58)
 // CHECK:STDOUT: !64 = !{!59}
