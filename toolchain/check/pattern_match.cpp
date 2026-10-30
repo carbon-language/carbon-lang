@@ -587,7 +587,8 @@ auto MatchContext::DoPostWork(State /*state*/,
 auto MatchContext::DoPreWork(State /*state*/, SemIR::FieldDecl field_decl,
                              SemIR::InstId scrutinee_id, WorkItem /*entry*/)
     -> void {
-  if (!scrutinee_id.has_value()) {
+  if (!scrutinee_id.has_value() ||
+      field_decl.type_id == SemIR::ErrorInst::TypeId) {
     return;
   }
 
