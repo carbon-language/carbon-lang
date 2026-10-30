@@ -106,3 +106,33 @@ void F() {
   b.F();
 }
 ''';
+
+// --- access_exported_private_member_of_friend.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+inline Cpp '''
+class C;
+''';
+
+alias C = Cpp.C;
+
+class A {}
+
+class B {
+  friend C;
+  fn Make() -> Self { return {}; }
+  private fn F() {}
+}
+
+inline Cpp '''
+class C {
+  void G() {
+    auto b = Carbon::B::Make();
+    // CHECK:STDERR: access_exported_private_member_of_friend.carbon:[[@LINE+3]]:7: error: 'F' is a private member of 'Carbon::Main::B' [CppInteropParseError]
+    // CHECK:STDERR: access_exported_private_member_of_friend.carbon:[[@LINE-8]]:18: note: implicitly declared private here [CppInteropParseNote]
+    // CHECK:STDERR:
+    b.F();
+  }
+};
+''';
