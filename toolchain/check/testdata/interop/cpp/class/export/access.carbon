@@ -47,6 +47,9 @@ class B {
 inline Cpp '''
 void G() {
   auto b = Carbon::B::Make();
+  // CHECK:STDERR: fail_access_exported_private_method.carbon:[[@LINE+3]]:5: error: 'F' is a private member of 'Carbon::Main::B' [CppInteropParseError]
+  // CHECK:STDERR: fail_access_exported_private_method.carbon:[[@LINE-7]]:18: note: implicitly declared private here [CppInteropParseNote]
+  // CHECK:STDERR:
   b.F();
 }
 ''';

@@ -1385,8 +1385,17 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
           tinfo, target.GetStorageClass(), uses_fp_intrin, inline_specified,
           constexpr_kind, clang_loc, trailing_requires_clause);
     }
-    // TODO: Map Carbon access to C++ access.
-    thunk_function_decl->setAccess(clang::AS_public);
+
+    // Map Carbon access to C++ access.
+    auto clang_decl_id = context.clang_decls().LookupId(
+        SemIR::ClangDeclKey::ForNonFunctionDecl(parent_class));
+    auto class_decl = context.insts().GetAs<SemIR::ClassDecl>(
+        context.clang_decls().Get(clang_decl_id).inst_id);
+    const auto& class_info = context.classes().Get(class_decl.class_id);
+    const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
+    SetCppClassMemberAccess(class_scope, target.function.name_id,
+                            thunk_function_decl);
+
     // Carbon overriders are non-virtual in C++; only the corresponding thunk is
     // virtual.
     thunk_function_decl->setVirtualAsWritten(
