@@ -106,10 +106,9 @@ fn F(generic T: Y where .Y1 impls M) {
   // A dependency on a specific impl is a dependency on the specific impl's
   // definition. We used to create a new instruction at the time we found the
   // `final impl` to encode that dependency. But that instruction would end up
-  // in the eval block of `F` which is incorrect. The instruction should be
-  // part of the eval block of `C`, so that it can be part of the specific
-  // definition block of `C(T)`, where the relationship is actually
-  // established.
+  // in the eval block of `F` which is incorrect. The dependency needs to resolve
+  // the impl's specific definition again when a specific is applied to `C` and
+  // `U` is replaced.
   C(T).C1;
 }
 
@@ -135,8 +134,8 @@ interface I {
 final impl forall [T: J] T as I {
   fn F() {}
   // The return type `B(V)` forms an ImplWitness of `V as I` which refers to
-  // the impl currently being defined. This requires a dependency edge from
-  // the declaration of G to the specific `T as I` ImplDecl definition with a
+  // the impl currently being defined. This introduces a dependency from the
+  // declaration of G to the specific `T as I` ImplDecl definition with a
   // symbolic argument of `V`.
   fn G(generic V: J) -> B(V) {
     return {};
@@ -156,8 +155,8 @@ fn Use() {
   // referring to the specific `T as I` ImplDecl with argument `D`. The alias
   // is the FacetValue holding that ImplWitness.
   //
-  // The decl of G should have declared a dependency edge on the specific
-  // ImplDecl such that forming this ImplWitness resolves the `T as I`
+  // The decl of G should has dependency on the specific ImplDecl such that
+  // forming accessing the table of ImplWitness can use a resolved `T as I`
   // specific definition with its argument `D`.
   alias D_As_I = C.(I.G)(D).B1;
   // This accesses `F` from the witness table using the `ImplWitness` from
@@ -1652,22 +1651,22 @@ fn Use() {
 // CHECK:STDOUT:   %T.loc14_15.1: %Y_where.type.bd02cd.1 = symbolic_binding T, 0 [symbolic = %T.loc14_15.1 (constants.%T.95b)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc26_6.2: type = facet_access_type %T.loc14_15.1 [symbolic = %T.as_type.loc26_6.2 (constants.%T.as_type.917)]
+// CHECK:STDOUT:   %T.as_type.loc25_6.2: type = facet_access_type %T.loc14_15.1 [symbolic = %T.as_type.loc25_6.2 (constants.%T.as_type.917)]
 // CHECK:STDOUT:   %Y.lookup_impl_witness: <witness> = lookup_impl_witness %T.loc14_15.1, @Y [symbolic = %Y.lookup_impl_witness (constants.%Y.lookup_impl_witness.6a9071.2)]
-// CHECK:STDOUT:   %Y.facet.loc26_6.2: %Y.type = facet_value %T.as_type.loc26_6.2, (%Y.lookup_impl_witness) [symbolic = %Y.facet.loc26_6.2 (constants.%Y.facet.c69)]
-// CHECK:STDOUT:   %C.loc26_6.2: type = class_type @C, @C(%Y.facet.loc26_6.2) [symbolic = %C.loc26_6.2 (constants.%C.cbf)]
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.loc26_6.2 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %Y.facet.loc25_6.2: %Y.type = facet_value %T.as_type.loc25_6.2, (%Y.lookup_impl_witness) [symbolic = %Y.facet.loc25_6.2 (constants.%Y.facet.c69)]
+// CHECK:STDOUT:   %C.loc25_6.2: type = class_type @C, @C(%Y.facet.loc25_6.2) [symbolic = %C.loc25_6.2 (constants.%C.cbf)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %C.loc25_6.2 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %C.ref: %C.type = name_ref C, file.%C.decl [concrete = constants.%C.generic]
 // CHECK:STDOUT:     %T.ref: %Y_where.type.bd02cd.1 = name_ref T, %T.loc14_15.2 [symbolic = %T.loc14_15.1 (constants.%T.95b)]
-// CHECK:STDOUT:     %T.as_type.loc26_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc26_6.2 (constants.%T.as_type.917)]
-// CHECK:STDOUT:     %Y.facet.loc26_6.1: %Y.type = facet_value %T.as_type.loc26_6.1, (constants.%Y.lookup_impl_witness.6a9071.2) [symbolic = %Y.facet.loc26_6.2 (constants.%Y.facet.c69)]
-// CHECK:STDOUT:     %.loc26_6: %Y.type = converted %T.ref, %Y.facet.loc26_6.1 [symbolic = %Y.facet.loc26_6.2 (constants.%Y.facet.c69)]
-// CHECK:STDOUT:     %C.loc26_6.1: type = class_type @C, @C(constants.%Y.facet.c69) [symbolic = %C.loc26_6.2 (constants.%C.cbf)]
-// CHECK:STDOUT:     %.loc26_7: type = specific_constant @C.%C1, @C(constants.%Y.facet.c69) [concrete = constants.%empty_tuple.type]
-// CHECK:STDOUT:     %C1.ref: type = name_ref C1, %.loc26_7 [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %T.as_type.loc25_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc25_6.2 (constants.%T.as_type.917)]
+// CHECK:STDOUT:     %Y.facet.loc25_6.1: %Y.type = facet_value %T.as_type.loc25_6.1, (constants.%Y.lookup_impl_witness.6a9071.2) [symbolic = %Y.facet.loc25_6.2 (constants.%Y.facet.c69)]
+// CHECK:STDOUT:     %.loc25_6: %Y.type = converted %T.ref, %Y.facet.loc25_6.1 [symbolic = %Y.facet.loc25_6.2 (constants.%Y.facet.c69)]
+// CHECK:STDOUT:     %C.loc25_6.1: type = class_type @C, @C(constants.%Y.facet.c69) [symbolic = %C.loc25_6.2 (constants.%C.cbf)]
+// CHECK:STDOUT:     %.loc25_7: type = specific_constant @C.%C1, @C(constants.%Y.facet.c69) [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:     %C1.ref: type = name_ref C1, %.loc25_7 [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
