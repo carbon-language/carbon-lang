@@ -44,14 +44,18 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .n = @__global_init.%n
+// CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:     .undeclared = <poisoned>
-// CHECK:STDOUT:     .n2 = @__global_init.%n2
+// CHECK:STDOUT:     .n2 = %n2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %n: %i32 = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.d94 = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %n2: %i32 = wrapper_binding n2, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n2.patt: %pattern_type.d94 = value_binding_pattern n2 [concrete = constants.%n2.patt]
 // CHECK:STDOUT:   }
@@ -61,13 +65,9 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %undeclared.ref.loc17: <error> = name_ref undeclared, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc17: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %n: %i32 = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   %undeclared.ref.loc20: <error> = name_ref undeclared, <error> [concrete = <error>]
 // CHECK:STDOUT:   %.loc20: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
-// CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %n2: %i32 = wrapper_binding n2, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

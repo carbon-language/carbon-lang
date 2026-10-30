@@ -108,37 +108,53 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .b [protected] = @__global_init.%b
-// CHECK:STDOUT:     .c = @__global_init.%c
-// CHECK:STDOUT:     .d = @__global_init.%d
-// CHECK:STDOUT:     .e = @__global_init.%e
-// CHECK:STDOUT:     .f = @__global_init.%f
-// CHECK:STDOUT:     .g = @__global_init.%g
-// CHECK:STDOUT:     .h [protected] = @__global_init.%h
-// CHECK:STDOUT:     .i [protected] = @__global_init.%i
+// CHECK:STDOUT:     .b [protected] = %b
+// CHECK:STDOUT:     .c = %c
+// CHECK:STDOUT:     .d = %d
+// CHECK:STDOUT:     .e = %e
+// CHECK:STDOUT:     .f = %f
+// CHECK:STDOUT:     .g = %g
+// CHECK:STDOUT:     .h [protected] = %h
+// CHECK:STDOUT:     .i [protected] = %i
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %b: %i32 = wrapper_binding b, @__global_init.%.loc17_24.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.d94 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %c: %i32 = wrapper_binding c, @__global_init.%.loc21_22.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.d94 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc25: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %d: %i32 = wrapper_binding d, @__global_init.%.loc25_20.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.d94 = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc29: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %e: %i32 = wrapper_binding e, @__global_init.%.loc29_22.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.d94 = value_binding_pattern e [concrete = constants.%e.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc36: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %f: %i32 = wrapper_binding f, @__global_init.%.loc36_28.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.d94 = value_binding_pattern f [concrete = constants.%f.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc43: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %g: %i32 = wrapper_binding g, @__global_init.%.loc43_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %g.patt: %pattern_type.d94 = value_binding_pattern g [concrete = constants.%g.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc50: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %h: %i32 = wrapper_binding h, @__global_init.%.loc50_32.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %h.patt: %pattern_type.d94 = value_binding_pattern h [concrete = constants.%h.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc57: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i: %i32 = wrapper_binding i, @__global_init.%.loc57_34.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %i.patt: %pattern_type.d94 = value_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:   }
@@ -154,8 +170,6 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17: init %i32 = call %bound_method.loc17_24.2(%int_1.loc17) [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc17_24.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17 [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc17_24.2: %i32 = converted %int_1.loc17, %.loc17_24.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %b: %i32 = wrapper_binding b, %.loc17_24.2
 // CHECK:STDOUT:   %int_1.loc21: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc21: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
 // CHECK:STDOUT:   %bound_method.loc21_22.1: <bound method> = bound_method %int_1.loc21, %impl.elem0.loc21 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -164,8 +178,6 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21: init %i32 = call %bound_method.loc21_22.2(%int_1.loc21) [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc21_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21 [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc21_22.2: %i32 = converted %int_1.loc21, %.loc21_22.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %c: %i32 = wrapper_binding c, %.loc21_22.2
 // CHECK:STDOUT:   %int_1.loc25: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc25: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
 // CHECK:STDOUT:   %bound_method.loc25_20.1: <bound method> = bound_method %int_1.loc25, %impl.elem0.loc25 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -174,8 +186,6 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25: init %i32 = call %bound_method.loc25_20.2(%int_1.loc25) [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc25_20.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25 [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc25_20.2: %i32 = converted %int_1.loc25, %.loc25_20.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc25: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %d: %i32 = wrapper_binding d, %.loc25_20.2
 // CHECK:STDOUT:   %int_1.loc29: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc29: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
 // CHECK:STDOUT:   %bound_method.loc29_22.1: <bound method> = bound_method %int_1.loc29, %impl.elem0.loc29 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -184,8 +194,6 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29: init %i32 = call %bound_method.loc29_22.2(%int_1.loc29) [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc29_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29 [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc29_22.2: %i32 = converted %int_1.loc29, %.loc29_22.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc29: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %e: %i32 = wrapper_binding e, %.loc29_22.2
 // CHECK:STDOUT:   %int_1.loc36: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc36: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
 // CHECK:STDOUT:   %bound_method.loc36_28.1: <bound method> = bound_method %int_1.loc36, %impl.elem0.loc36 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -194,8 +202,6 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36: init %i32 = call %bound_method.loc36_28.2(%int_1.loc36) [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc36_28.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36 [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc36_28.2: %i32 = converted %int_1.loc36, %.loc36_28.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc36: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %f: %i32 = wrapper_binding f, %.loc36_28.2
 // CHECK:STDOUT:   %int_1.loc43: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc43: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
 // CHECK:STDOUT:   %bound_method.loc43_30.1: <bound method> = bound_method %int_1.loc43, %impl.elem0.loc43 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -204,8 +210,6 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc43: init %i32 = call %bound_method.loc43_30.2(%int_1.loc43) [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc43_30.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc43 [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc43_30.2: %i32 = converted %int_1.loc43, %.loc43_30.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc43: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %g: %i32 = wrapper_binding g, %.loc43_30.2
 // CHECK:STDOUT:   %int_1.loc50: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc50: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
 // CHECK:STDOUT:   %bound_method.loc50_32.1: <bound method> = bound_method %int_1.loc50, %impl.elem0.loc50 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -214,8 +218,6 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc50: init %i32 = call %bound_method.loc50_32.2(%int_1.loc50) [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc50_32.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc50 [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc50_32.2: %i32 = converted %int_1.loc50, %.loc50_32.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc50: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %h: %i32 = wrapper_binding h, %.loc50_32.2
 // CHECK:STDOUT:   %int_1.loc57: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc57: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
 // CHECK:STDOUT:   %bound_method.loc57_34.1: <bound method> = bound_method %int_1.loc57, %impl.elem0.loc57 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -224,8 +226,6 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc57: init %i32 = call %bound_method.loc57_34.2(%int_1.loc57) [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc57_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc57 [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc57_34.2: %i32 = converted %int_1.loc57, %.loc57_34.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc57: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %i: %i32 = wrapper_binding i, %.loc57_34.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

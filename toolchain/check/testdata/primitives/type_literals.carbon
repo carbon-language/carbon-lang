@@ -545,6 +545,8 @@ var test_str: str = ();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %char: type = type_literal constants.%char [concrete = constants.%char]
+// CHECK:STDOUT:   %test_char: %char = wrapper_binding test_char, @__global_init.%.loc5_23.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_char.patt: %pattern_type.2ff = value_binding_pattern test_char [concrete = constants.%test_char.patt]
 // CHECK:STDOUT:   }
@@ -558,8 +560,6 @@ var test_str: str = ();
 // CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %char = call %bound_method(%.loc5_23.1) [concrete = constants.%int_99]
 // CHECK:STDOUT:   %.loc5_23.2: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_99]
 // CHECK:STDOUT:   %.loc5_23.3: %char = converted %.loc5_23.1, %.loc5_23.2 [concrete = constants.%int_99]
-// CHECK:STDOUT:   %char: type = type_literal constants.%char [concrete = constants.%char]
-// CHECK:STDOUT:   %test_char: %char = wrapper_binding test_char, %.loc5_23.3
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -581,6 +581,8 @@ var test_str: str = ();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %str: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
+// CHECK:STDOUT:   %test_str: %str.3d4 = wrapper_binding test_str, @__global_init.%String.val
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_str.patt: %pattern_type.adf = value_binding_pattern test_str [concrete = constants.%test_str.patt]
 // CHECK:STDOUT:   }
@@ -588,11 +590,9 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %str.loc5_21: %ptr.22f = string_literal "Test" [concrete = constants.%str.47b]
+// CHECK:STDOUT:   %str: %ptr.22f = string_literal "Test" [concrete = constants.%str.47b]
 // CHECK:STDOUT:   %int_4: %u64 = int_value 4 [concrete = constants.%int_4]
-// CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str.loc5_21, %int_4) [concrete = constants.%String.val]
-// CHECK:STDOUT:   %str.loc5_15: type = type_literal constants.%str.3d4 [concrete = constants.%str.3d4]
-// CHECK:STDOUT:   %test_str: %str.3d4 = wrapper_binding test_str, %String.val
+// CHECK:STDOUT:   %String.val: %str.3d4 = struct_value (%str, %int_4) [concrete = constants.%String.val]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

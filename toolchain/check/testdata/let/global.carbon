@@ -81,10 +81,12 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .n = @__global_init.%n
+// CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %n: %i32 = wrapper_binding n, @__global_init.%.loc15_14.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.d94 = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
@@ -101,7 +103,7 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %n.global_ref: %i32 = global_ref @__global_init.%n
+// CHECK:STDOUT:   %n.global_ref: %i32 = global_ref file.%n
 // CHECK:STDOUT:   %n.ref: %i32 = name_ref n, %n.global_ref
 // CHECK:STDOUT:   %impl.elem0: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
 // CHECK:STDOUT:   %bound_method.loc17_24.1: <bound method> = bound_method %n.ref, %impl.elem0
@@ -121,8 +123,6 @@ fn F() -> i32 { return n; }
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc15_14.2(%int_1) [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc15_14.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc15_14.2: %i32 = converted %int_1, %.loc15_14.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %n: %i32 = wrapper_binding n, %.loc15_14.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

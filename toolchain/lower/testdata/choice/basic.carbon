@@ -30,8 +30,6 @@ fn F() {
 // CHECK:STDOUT: @VehicleType.val.df0 = internal constant { i2 } { i2 1 }
 // CHECK:STDOUT: @VehicleType.val.8cc = internal constant { i2 } { i2 -2 }
 // CHECK:STDOUT: @VehicleType.val.df0.Car.ref = internal constant { i2 } { i2 1 }
-// CHECK:STDOUT: @VehicleType.val.c4d.Bike.ref = internal constant { i2 } zeroinitializer
-// CHECK:STDOUT: @_Cglobal_vehicle.Main = global { i2 } zeroinitializer
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
@@ -43,15 +41,10 @@ fn F() {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !29 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @llvm.memcpy.p0.p0.i64(ptr align 1 @_Cglobal_vehicle.Main, ptr align 1 @VehicleType.val.c4d.Bike.ref, i64 1, i1 false), !dbg !30
-// CHECK:STDOUT:   ret void, !dbg !31
+// CHECK:STDOUT:   ret void, !dbg !30
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: ; Function Attrs: nocallback nofree nosync nounwind willreturn memory(argmem: readwrite)
-// CHECK:STDOUT: declare void @llvm.memcpy.p0.p0.i64(ptr noalias writeonly captures(none), ptr noalias readonly captures(none), i64, i1 immarg) #1
-// CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { nounwind }
-// CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!21}
 // CHECK:STDOUT: !llvm.module.flags = !{!2, !3}
@@ -65,6 +58,5 @@ fn F() {
 // CHECK:STDOUT: !25 = distinct !DISubprogram(name: "F", linkageName: "_CF.Main", scope: null, file: !20, line: 21, type: !24, spFlags: DISPFlagDefinition, unit: !21)
 // CHECK:STDOUT: !28 = !DILocation(line: 21, column: 1, scope: !25)
 // CHECK:STDOUT: !29 = distinct !DISubprogram(name: "__global_init", linkageName: "_C__global_init.Main", scope: null, file: !20, type: !24, spFlags: DISPFlagDefinition, unit: !21)
-// CHECK:STDOUT: !30 = !DILocation(line: 19, column: 5, scope: !29)
-// CHECK:STDOUT: !31 = !DILocation(line: 0, scope: !29)
+// CHECK:STDOUT: !30 = !DILocation(line: 0, scope: !29)
 // CHECK:STDOUT:

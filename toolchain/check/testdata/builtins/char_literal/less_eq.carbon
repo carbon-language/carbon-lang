@@ -40,12 +40,18 @@ let c: bool = LessEq('b', 'a');
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %.loc21: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %a: bool = wrapper_binding a, @__global_init.%.loc21_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete = constants.%a.patt.567]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc22: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, @__global_init.%.loc22_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt.438]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc23: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %c: bool = wrapper_binding c, @__global_init.%.loc23_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.831 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
@@ -59,24 +65,18 @@ let c: bool = LessEq('b', 'a');
 // CHECK:STDOUT:   %LessEq.call.loc21: init bool = call %LessEq.ref.loc21(%.loc21_22, %.loc21_27) [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc21_30.1: bool = value_of_initializer %LessEq.call.loc21 [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc21_30.2: bool = converted %LessEq.call.loc21, %.loc21_30.1 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc21_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %a: bool = wrapper_binding a, %.loc21_30.2
 // CHECK:STDOUT:   %LessEq.ref.loc22: %LessEq.type = name_ref LessEq, file.%LessEq.decl [concrete = constants.%LessEq]
 // CHECK:STDOUT:   %.loc22_22: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc22_27: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %LessEq.call.loc22: init bool = call %LessEq.ref.loc22(%.loc22_22, %.loc22_27) [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc22_30.1: bool = value_of_initializer %LessEq.call.loc22 [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc22_30.2: bool = converted %LessEq.call.loc22, %.loc22_30.1 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc22_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc22_30.2
 // CHECK:STDOUT:   %LessEq.ref.loc23: %LessEq.type = name_ref LessEq, file.%LessEq.decl [concrete = constants.%LessEq]
 // CHECK:STDOUT:   %.loc23_22: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %.loc23_27: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %LessEq.call.loc23: init bool = call %LessEq.ref.loc23(%.loc23_22, %.loc23_27) [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc23_30.1: bool = value_of_initializer %LessEq.call.loc23 [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc23_30.2: bool = converted %LessEq.call.loc23, %.loc23_30.1 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc23_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %c: bool = wrapper_binding c, %.loc23_30.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

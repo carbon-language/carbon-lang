@@ -285,12 +285,18 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
+// CHECK:STDOUT:   %SizePreserving: %u32 = wrapper_binding SizePreserving, @__global_init.%.loc6_42.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %SizePreserving.patt: %pattern_type.129 = value_binding_pattern SizePreserving [concrete = constants.%SizePreserving.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i16: type = type_literal constants.%i16 [concrete = constants.%i16]
+// CHECK:STDOUT:   %Narrowing: %i16 = wrapper_binding Narrowing, @__global_init.%.loc7_36.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Narrowing.patt: %pattern_type.9bc = value_binding_pattern Narrowing [concrete = constants.%Narrowing.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
+// CHECK:STDOUT:   %Widening: %i64 = wrapper_binding Widening, @__global_init.%.loc8_35.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %Widening.patt: %pattern_type.c0e = value_binding_pattern Widening [concrete = constants.%Widening.patt]
 // CHECK:STDOUT:   }
@@ -310,8 +316,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %Int32ToUint32.call: init %u32 = call %Int32ToUint32.ref(%.loc6_41.2) [concrete = constants.%int_1.b0b]
 // CHECK:STDOUT:   %.loc6_42.1: %u32 = value_of_initializer %Int32ToUint32.call [concrete = constants.%int_1.b0b]
 // CHECK:STDOUT:   %.loc6_42.2: %u32 = converted %Int32ToUint32.call, %.loc6_42.1 [concrete = constants.%int_1.b0b]
-// CHECK:STDOUT:   %u32: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:   %SizePreserving: %u32 = wrapper_binding SizePreserving, %.loc6_42.2
 // CHECK:STDOUT:   %Int32ToInt16.ref: %Int32ToInt16.type = name_ref Int32ToInt16, imports.%Main.Int32ToInt16 [concrete = constants.%Int32ToInt16]
 // CHECK:STDOUT:   %int_1.loc7: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc7: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
@@ -324,8 +328,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %Int32ToInt16.call: init %i16 = call %Int32ToInt16.ref(%.loc7_35.2) [concrete = constants.%int_1.6e1]
 // CHECK:STDOUT:   %.loc7_36.1: %i16 = value_of_initializer %Int32ToInt16.call [concrete = constants.%int_1.6e1]
 // CHECK:STDOUT:   %.loc7_36.2: %i16 = converted %Int32ToInt16.call, %.loc7_36.1 [concrete = constants.%int_1.6e1]
-// CHECK:STDOUT:   %i16: type = type_literal constants.%i16 [concrete = constants.%i16]
-// CHECK:STDOUT:   %Narrowing: %i16 = wrapper_binding Narrowing, %.loc7_36.2
 // CHECK:STDOUT:   %Int32ToInt64.ref: %Int32ToInt64.type = name_ref Int32ToInt64, imports.%Main.Int32ToInt64 [concrete = constants.%Int32ToInt64]
 // CHECK:STDOUT:   %int_1.loc8: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0.loc8: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
@@ -338,8 +340,6 @@ let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);
 // CHECK:STDOUT:   %Int32ToInt64.call: init %i64 = call %Int32ToInt64.ref(%.loc8_34.2) [concrete = constants.%int_1.836]
 // CHECK:STDOUT:   %.loc8_35.1: %i64 = value_of_initializer %Int32ToInt64.call [concrete = constants.%int_1.836]
 // CHECK:STDOUT:   %.loc8_35.2: %i64 = converted %Int32ToInt64.call, %.loc8_35.1 [concrete = constants.%int_1.836]
-// CHECK:STDOUT:   %i64: type = type_literal constants.%i64 [concrete = constants.%i64]
-// CHECK:STDOUT:   %Widening: %i64 = wrapper_binding Widening, %.loc8_35.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

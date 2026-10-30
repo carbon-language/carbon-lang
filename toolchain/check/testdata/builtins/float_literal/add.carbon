@@ -86,9 +86,19 @@ fn F(){
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %.loc11: type = splice_block %FloatLiteral.ref.loc11 [concrete = Core.FloatLiteral] {
+// CHECK:STDOUT:     %Core.ref.loc11: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %FloatLiteral.ref.loc11: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v1: Core.FloatLiteral = wrapper_binding v1, @__global_init.%.loc11_54.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v1.patt: %pattern_type.dab = value_binding_pattern v1 [concrete = constants.%v1.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc12: type = splice_block %FloatLiteral.ref.loc12 [concrete = Core.FloatLiteral] {
+// CHECK:STDOUT:     %Core.ref.loc12: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %FloatLiteral.ref.loc12: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v2: Core.FloatLiteral = wrapper_binding v2, @__global_init.%.loc12_54.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v2.patt: %pattern_type.dab = value_binding_pattern v2 [concrete = constants.%v2.patt]
 // CHECK:STDOUT:   }
@@ -102,22 +112,12 @@ fn F(){
 // CHECK:STDOUT:   %Add.call.loc11: init Core.FloatLiteral = call %Add.ref.loc11(%float.loc11_33, %float.loc11_49) [concrete = constants.%float.9f6]
 // CHECK:STDOUT:   %.loc11_54.1: Core.FloatLiteral = value_of_initializer %Add.call.loc11 [concrete = constants.%float.9f6]
 // CHECK:STDOUT:   %.loc11_54.2: Core.FloatLiteral = converted %Add.call.loc11, %.loc11_54.1 [concrete = constants.%float.9f6]
-// CHECK:STDOUT:   %.loc11_13: type = splice_block %FloatLiteral.ref.loc11 [concrete = Core.FloatLiteral] {
-// CHECK:STDOUT:     %Core.ref.loc11: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %FloatLiteral.ref.loc11: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v1: Core.FloatLiteral = wrapper_binding v1, %.loc11_54.2
 // CHECK:STDOUT:   %Add.ref.loc12: %Add.type = name_ref Add, file.%Add.decl [concrete = constants.%Add]
 // CHECK:STDOUT:   %float.loc12_33: Core.FloatLiteral = float_literal_value 65536p6 [concrete = constants.%float.846]
 // CHECK:STDOUT:   %float.loc12_46: Core.FloatLiteral = float_literal_value 16p6 [concrete = constants.%float.333]
 // CHECK:STDOUT:   %Add.call.loc12: init Core.FloatLiteral = call %Add.ref.loc12(%float.loc12_33, %float.loc12_46) [concrete = constants.%float.283]
 // CHECK:STDOUT:   %.loc12_54.1: Core.FloatLiteral = value_of_initializer %Add.call.loc12 [concrete = constants.%float.283]
 // CHECK:STDOUT:   %.loc12_54.2: Core.FloatLiteral = converted %Add.call.loc12, %.loc12_54.1 [concrete = constants.%float.283]
-// CHECK:STDOUT:   %.loc12_13: type = splice_block %FloatLiteral.ref.loc12 [concrete = Core.FloatLiteral] {
-// CHECK:STDOUT:     %Core.ref.loc12: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %FloatLiteral.ref.loc12: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: Core.FloatLiteral = wrapper_binding v2, %.loc12_54.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

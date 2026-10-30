@@ -80,7 +80,9 @@ struct CalleeState {
 };
 
 // State for local pattern matching.
-struct LocalState {};
+struct LocalState {
+  bool in_global_init;
+};
 
 // State for thunk pattern matching.
 struct ThunkState {
@@ -427,6 +429,8 @@ auto MatchContext::DoPostWork(State state,
   }
 
   if (specific_id_stack_.size() > 1) {
+    // TODO: Is this dead code? It's not reached in any of our tests.
+
     // If anything has been pushed onto the specific stack, that means
     // that `binding_pattern` is a constant inst. The bindings for constant
     // insts are not precomputed (see the documentation for bind_name_map), so
@@ -437,6 +441,9 @@ auto MatchContext::DoPostWork(State state,
     return;
   }
 
+  auto* local_state = std::get_if<LocalState*>(&state);
+  bool in_global_init = local_state && (*local_state)->in_global_init;
+
   // We're logically consuming this map entry, so we invalidate it in order
   // to avoid accidentally consuming it twice.
   auto [bind_name_id, type_expr_region_id] =
@@ -444,15 +451,38 @@ auto MatchContext::DoPostWork(State state,
                     {.bind_name_id = SemIR::InstId::None,
                      .type_expr_region_id = SemIR::ExprRegionId::None});
   if (type_expr_region_id.has_value()) {
+    // For a global binding, put the type expression in the file block, not in
+    // the global_init function.
+    if (in_global_init) {
+      context_.global_init().Suspend();
+    }
+
     InsertHere(context_, type_expr_region_id);
+
+    if (in_global_init) {
+      context_.global_init().Resume();
+    }
   }
   CARBON_CHECK(bind_name_id.has_value(), "bind_name_map entry used twice");
+
+  // For a global binding, put the binding in the file block if it's constant.
+  // Otherwise it needs to go in the global_init block so that it can see the
+  // non-constant value.
+  bool suspend_global_init =
+      in_global_init && context_.constant_values().Get(value_id).is_constant();
+  if (suspend_global_init) {
+    context_.global_init().Suspend();
+  }
 
   auto bind_name = context_.insts().GetAs<SemIR::AnyBinding>(bind_name_id);
   CARBON_CHECK(!bind_name.value_id.has_value());
   bind_name.value_id = value_id;
   ReplaceInstBeforeConstantUse(context_, bind_name_id, bind_name);
   context_.inst_block_stack().AddInstId(bind_name_id);
+
+  if (suspend_global_init) {
+    context_.global_init().Resume();
+  }
 }
 
 // Returns the inst kind to use for the parameter corresponding to the given
@@ -677,13 +707,6 @@ auto MatchContext::DoVarPreWorkImpl(State state,
       auto storage_id =
           context_.full_pattern_stack().GetLocalVarStorage(entry.pattern_id);
       if (scrutinee_id.has_value()) {
-        bool use_global_init =
-            UseGlobalInit(context_) &&
-            !context_.decl_introducer_state_stack().InnermostKindIs(
-                Lex::TokenKind::Let);
-        if (use_global_init) {
-          context_.global_init().Resume();
-        }
         auto init_id =
             InitializeExisting(context_, SemIR::LocId(entry.pattern_id),
                                storage_id, scrutinee_id, /*for_return=*/false);
@@ -692,9 +715,6 @@ auto MatchContext::DoVarPreWorkImpl(State state,
         // purpose.
         AddInst<SemIR::Assign>(context_, SemIR::LocId(entry.pattern_id),
                                {.lhs_id = storage_id, .rhs_id = init_id});
-        if (use_global_init) {
-          context_.global_init().Suspend();
-        }
       }
       return storage_id;
     }
@@ -1282,13 +1302,11 @@ auto CallerPatternMatch(
 auto LocalPatternMatch(Context& context, SemIR::LocId loc_id,
                        SemIR::InstId pattern_id, SemIR::InstId scrutinee_id)
     -> void {
-  bool use_global_init = UseGlobalInit(context) &&
-                         context.decl_introducer_state_stack().InnermostKindIs(
-                             Lex::TokenKind::Let);
+  bool use_global_init = UseGlobalInit(context);
   if (use_global_init) {
     context.global_init().Resume();
   }
-  LocalState state;
+  LocalState state = {.in_global_init = use_global_init};
   MatchContext match(context, loc_id);
   match.Match(&state,
               {.pattern_id = pattern_id,

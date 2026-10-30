@@ -226,7 +226,7 @@ class A {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Circle
 // CHECK:STDOUT:   .radius [private] = %field_decl
-// CHECK:STDOUT:   .SOME_INTERNAL_CONSTANT [private] = @__global_init.%SOME_INTERNAL_CONSTANT
+// CHECK:STDOUT:   .SOME_INTERNAL_CONSTANT [private] = %SOME_INTERNAL_CONSTANT
 // CHECK:STDOUT:   .SomeInternalFunction [private] = %Circle.SomeInternalFunction.decl
 // CHECK:STDOUT:   .Make = %Circle.Make.decl
 // CHECK:STDOUT: }
@@ -464,6 +464,7 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt.ea2]
 // CHECK:STDOUT:   }
@@ -473,10 +474,9 @@ class A {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %x.global_ref: %i32 = global_ref %x.loc4
+// CHECK:STDOUT:   %x.global_ref: %i32 = global_ref @A.%x
 // CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x.global_ref
-// CHECK:STDOUT:   %i32.loc8: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x.loc8: %i32 = wrapper_binding x, %x.ref
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %x.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -493,9 +493,13 @@ class A {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt.ea2]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %y: %i32 = wrapper_binding y, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.d94 = value_binding_pattern y [concrete = constants.%y.patt.cd5]
 // CHECK:STDOUT:   }
@@ -506,12 +510,8 @@ class A {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %A.ref.loc12: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
-// CHECK:STDOUT:   %i32.loc12: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x.loc12: %i32 = wrapper_binding x, <error> [concrete = <error>]
 // CHECK:STDOUT:   %A.ref.loc16: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %y.ref: <error> = name_ref y, <error> [concrete = <error>]
-// CHECK:STDOUT:   %i32.loc16: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %y.loc16: %i32 = wrapper_binding y, <error> [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -180,14 +180,20 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_val.patt: %pattern_type.e39 = value_binding_pattern b_val [concrete = constants.%b_val.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc23: type = splice_block %ptr [concrete = constants.%ptr.432] {
+// CHECK:STDOUT:     %B.ref.loc23: type = name_ref B, %B.decl [concrete = constants.%B]
+// CHECK:STDOUT:     %ptr: type = ptr_type %B.ref.loc23 [concrete = constants.%ptr.432]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b_ptr: %ptr.432 = wrapper_binding b_ptr, @__global_init.%addr
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_ptr.patt: %pattern_type.3c8 = value_binding_pattern b_ptr [concrete = constants.%b_ptr.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b_factory.var: ref %B = var_storage %b_factory.var_patt [concrete]
-// CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc25: type = name_ref B, %B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b_factory: ref %B = wrapper_binding b_factory, %b_factory.var [concrete = %b_factory.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_factory.patt: %pattern_type.e39 = ref_binding_pattern b_factory [concrete = constants.%b_factory.patt]
@@ -200,22 +206,16 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %a_val.global_ref: %A = global_ref %a_val
 // CHECK:STDOUT:   %a_val.ref: %A = name_ref a_val, %a_val.global_ref
-// CHECK:STDOUT:   %B.ref.loc22_25: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc22: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc22_22.1: %B = as_compatible %a_val.ref
 // CHECK:STDOUT:   %.loc22_22.2: %B = converted %a_val.ref, %.loc22_22.1
-// CHECK:STDOUT:   %B.ref.loc22_12: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %b_val: %B = wrapper_binding b_val, %.loc22_22.2
 // CHECK:STDOUT:   %a_ref.ref.loc23: ref %A = name_ref a_ref, file.%a_ref [concrete = file.%a_ref.var]
-// CHECK:STDOUT:   %B.ref.loc23_28: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref.loc23: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc23_25.1: ref %B = as_compatible %a_ref.ref.loc23 [concrete = constants.%a_ref.var]
 // CHECK:STDOUT:   %.loc23_25.2: ref %B = converted %a_ref.ref.loc23, %.loc23_25.1 [concrete = constants.%a_ref.var]
 // CHECK:STDOUT:   %addr: %ptr.432 = addr_of %.loc23_25.2 [concrete = constants.%addr]
-// CHECK:STDOUT:   %.loc23_13: type = splice_block %ptr [concrete = constants.%ptr.432] {
-// CHECK:STDOUT:     %B.ref.loc23_12: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %ptr: type = ptr_type %B.ref.loc23_12 [concrete = constants.%ptr.432]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b_ptr: %ptr.432 = wrapper_binding b_ptr, %addr
-// CHECK:STDOUT:   %A.ref.loc25: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %Make.ref: %A.Make.type = name_ref Make, @A.%A.Make.decl [concrete = constants.%A.Make]
 // CHECK:STDOUT:   %.loc25_1: ref %B = splice_block file.%b_factory.var [concrete = file.%b_factory.var] {}
 // CHECK:STDOUT:   %A.Make.call: init %A to %.loc25_1 = call %Make.ref()
@@ -261,9 +261,12 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %A.ref: type = name_ref A, %A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %a: %A = wrapper_binding a, @__global_init.%.loc9_23.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.9ef = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.d94 = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
@@ -280,17 +283,14 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %Core.IntLiteral.as.As.impl.Convert.call: init %i32 = call %bound_method.loc9_15.2(%int_1) [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc9_15.1: %i32 = value_of_initializer %Core.IntLiteral.as.As.impl.Convert.call [concrete = constants.%int_1.68a]
 // CHECK:STDOUT:   %.loc9_15.2: %i32 = converted %int_1, %.loc9_15.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %A.ref.loc9_26: type = name_ref A, file.%A.decl [concrete = constants.%A]
+// CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %.loc9_23.1: %A = as_compatible %.loc9_15.2 [concrete = constants.%int_1.403]
 // CHECK:STDOUT:   %.loc9_23.2: %A = converted %.loc9_15.2, %.loc9_23.1 [concrete = constants.%int_1.403]
-// CHECK:STDOUT:   %A.ref.loc9_8: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %a: %A = wrapper_binding a, %.loc9_23.2
-// CHECK:STDOUT:   %a.global_ref: %A = global_ref %a
+// CHECK:STDOUT:   %a.global_ref: %A = global_ref file.%a
 // CHECK:STDOUT:   %a.ref: %A = name_ref a, %a.global_ref
-// CHECK:STDOUT:   %i32.loc10_19: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %.loc10_16.1: %i32 = as_compatible %a.ref
 // CHECK:STDOUT:   %.loc10_16.2: %i32 = converted %a.ref, %.loc10_16.1
-// CHECK:STDOUT:   %i32.loc10_8: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %n: %i32 = wrapper_binding n, %.loc10_16.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
@@ -308,6 +308,8 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %D.ref: type = name_ref D, %D.decl [concrete = constants.%D]
+// CHECK:STDOUT:   %d: %D = wrapper_binding d, @__global_init.%.loc10_15.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
@@ -316,12 +318,10 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %.loc10_13: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %D.ref.loc10_18: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:   %D.ref: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc10_15.1: %D = as_compatible %empty_struct [concrete = constants.%D.val]
 // CHECK:STDOUT:   %.loc10_15.2: %D = converted %.loc10_13, %.loc10_15.1 [concrete = constants.%D.val]
-// CHECK:STDOUT:   %D.ref.loc10_8: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %d: %D = wrapper_binding d, %.loc10_15.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -367,6 +367,8 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %B.ref: type = name_ref B, %B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %b_value: %B = wrapper_binding b_value, @__global_init.%.loc14_42.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b_value.patt: %pattern_type.e39 = value_binding_pattern b_value [concrete = constants.%b_value.patt]
 // CHECK:STDOUT:   }
@@ -397,13 +399,11 @@ var b: B = {.x = ()} as B;
 // CHECK:STDOUT:   %.loc14_34.8: init %i32 to %.loc14_34.7 = in_place_init %.loc14_34.6 [concrete = constants.%int_2.2e0]
 // CHECK:STDOUT:   %.loc14_34.9: init %A to %.loc14_34.3 = class_init (%.loc14_34.5, %.loc14_34.8) [concrete = constants.%A.val]
 // CHECK:STDOUT:   %.loc14_36: init %A = converted %.loc14_34.1, %.loc14_34.9 [concrete = constants.%A.val]
-// CHECK:STDOUT:   %B.ref.loc14_45: type = name_ref B, file.%B.decl [concrete = constants.%B]
+// CHECK:STDOUT:   %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
 // CHECK:STDOUT:   %.loc14_42.1: init %B = as_compatible %.loc14_36 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc14_42.2: init %B = converted %.loc14_36, %.loc14_42.1 [concrete = constants.%B.val]
 // CHECK:STDOUT:   %.loc14_42.3: ref %B = temporary %.loc14_34.3, %.loc14_42.2 [concrete = constants.%.a63]
 // CHECK:STDOUT:   %.loc14_42.4: %B = acquire_value %.loc14_42.3 [concrete = constants.%B.val]
-// CHECK:STDOUT:   %B.ref.loc14_14: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:   %b_value: %B = wrapper_binding b_value, %.loc14_42.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -95,14 +95,25 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .v = @__global_init.%v
+// CHECK:STDOUT:     .v = %v
 // CHECK:STDOUT:     .w = @__global_init.%w
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %.loc15: type = splice_block %struct_type.a.b.loc15 [concrete = constants.%struct_type.a.b.250] {
+// CHECK:STDOUT:     %i32.loc15_13: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc15_22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a.b.loc15: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.250]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: %struct_type.a.b.250 = wrapper_binding v, @__global_init.%.loc15_44.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.290 = value_binding_pattern v [concrete = constants.%v.patt]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc16: type = splice_block %struct_type.a.b.loc16 [concrete = constants.%struct_type.a.b.250] {
+// CHECK:STDOUT:     %i32.loc16_13: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc16_22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %struct_type.a.b.loc16: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.250]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.290 = value_binding_pattern w [concrete = constants.%w.patt]
@@ -152,19 +163,8 @@ var y: {.a: i32, .b: i32} = x;
 // CHECK:STDOUT:   %.loc15_44.5: %i32 = converted %int_2.loc15, %.loc15_44.4 [concrete = constants.%int_2.2e0]
 // CHECK:STDOUT:   %struct: %struct_type.a.b.250 = struct_value (%.loc15_44.3, %.loc15_44.5) [concrete = constants.%struct.940]
 // CHECK:STDOUT:   %.loc15_44.6: %struct_type.a.b.250 = converted %.loc15_44.1, %struct [concrete = constants.%struct.940]
-// CHECK:STDOUT:   %.loc15_25: type = splice_block %struct_type.a.b.loc15 [concrete = constants.%struct_type.a.b.250] {
-// CHECK:STDOUT:     %i32.loc15_13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc15_22: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %struct_type.a.b.loc15: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.250]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: %struct_type.a.b.250 = wrapper_binding v, %.loc15_44.6
-// CHECK:STDOUT:   %v.global_ref: %struct_type.a.b.250 = global_ref %v
+// CHECK:STDOUT:   %v.global_ref: %struct_type.a.b.250 = global_ref file.%v
 // CHECK:STDOUT:   %v.ref: %struct_type.a.b.250 = name_ref v, %v.global_ref
-// CHECK:STDOUT:   %.loc16: type = splice_block %struct_type.a.b.loc16 [concrete = constants.%struct_type.a.b.250] {
-// CHECK:STDOUT:     %i32.loc16_13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc16_22: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %struct_type.a.b.loc16: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.250]
-// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %w: %struct_type.a.b.250 = wrapper_binding w, %v.ref
 // CHECK:STDOUT:   %int_1.loc18: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %int_2.loc18: Core.IntLiteral = int_value 2 [concrete = constants.%int_2.ecc]

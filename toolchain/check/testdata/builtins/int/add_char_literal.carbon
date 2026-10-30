@@ -78,6 +78,8 @@ let c: CharLiteral = AddIntChar(Negate(98), 'a');
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %CharLiteral.ref: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
+// CHECK:STDOUT:   %a: Core.CharLiteral = wrapper_binding a, @__global_init.%.loc12_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.8c6 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
@@ -91,8 +93,6 @@ let c: CharLiteral = AddIntChar(Negate(98), 'a');
 // CHECK:STDOUT:   %AddIntChar.call: init Core.CharLiteral = call %AddIntChar.ref(%int_1, %.loc12_36) [concrete = constants.%.711]
 // CHECK:STDOUT:   %.loc12_39.1: Core.CharLiteral = value_of_initializer %AddIntChar.call [concrete = constants.%.711]
 // CHECK:STDOUT:   %.loc12_39.2: Core.CharLiteral = converted %AddIntChar.call, %.loc12_39.1 [concrete = constants.%.711]
-// CHECK:STDOUT:   %CharLiteral.ref: type = name_ref CharLiteral, file.%CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %a: Core.CharLiteral = wrapper_binding a, %.loc12_39.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

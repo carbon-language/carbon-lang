@@ -101,8 +101,8 @@ fn Constant() {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .Not = %Not.decl
-// CHECK:STDOUT:     .not_true = @__global_init.%not_true
-// CHECK:STDOUT:     .not_false = @__global_init.%not_false
+// CHECK:STDOUT:     .not_true = %not_true
+// CHECK:STDOUT:     .not_false = %not_false
 // CHECK:STDOUT:     .Constant = %Constant.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
@@ -120,9 +120,13 @@ fn Constant() {
 // CHECK:STDOUT:     %return.param: ref bool = out_param call_param1
 // CHECK:STDOUT:     %return: ref bool = return_slot %return.param
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc19: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %not_true: bool = wrapper_binding not_true, @__global_init.%.loc19
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_true.patt: %pattern_type.831 = value_binding_pattern not_true [concrete = constants.%not_true.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc20: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %not_false: bool = wrapper_binding not_false, @__global_init.%.loc20
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_false.patt: %pattern_type.831 = value_binding_pattern not_false [concrete = constants.%not_false.patt]
 // CHECK:STDOUT:   }
@@ -226,13 +230,9 @@ fn Constant() {
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc19_22: bool = not %true [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc19_15: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %not_true: bool = wrapper_binding not_true, %.loc19_22
+// CHECK:STDOUT:   %.loc19: bool = not %true [concrete = constants.%false]
 // CHECK:STDOUT:   %false: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc20_23: bool = not %false [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc20_16: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %not_false: bool = wrapper_binding not_false, %.loc20_23
+// CHECK:STDOUT:   %.loc20: bool = not %false [concrete = constants.%true]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

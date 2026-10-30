@@ -652,6 +652,8 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %SOME_CONSTANT: %i32 = wrapper_binding SOME_CONSTANT, @__global_init.%.loc5_38.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %SOME_CONSTANT.patt: %pattern_type.d94 = value_binding_pattern SOME_CONSTANT [concrete = constants.%SOME_CONSTANT.patt]
 // CHECK:STDOUT:   }
@@ -669,7 +671,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .SOME_CONSTANT [protected] = @__global_init.%SOME_CONSTANT
+// CHECK:STDOUT:   .SOME_CONSTANT [protected] = %SOME_CONSTANT
 // CHECK:STDOUT:   .SomeProtectedFunction [protected] = %A.SomeProtectedFunction.decl
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT: }
@@ -722,7 +724,7 @@ fn G() {
 // CHECK:STDOUT: fn @B.G() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %SOME_CONSTANT.global_ref: %i32 = global_ref @__global_init.%SOME_CONSTANT
+// CHECK:STDOUT:   %SOME_CONSTANT.global_ref: %i32 = global_ref @A.%SOME_CONSTANT
 // CHECK:STDOUT:   %SOME_CONSTANT.ref: %i32 = name_ref SOME_CONSTANT, %SOME_CONSTANT.global_ref
 // CHECK:STDOUT:   %impl.elem0: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
 // CHECK:STDOUT:   %bound_method.loc15_13.1: <bound method> = bound_method %SOME_CONSTANT.ref, %impl.elem0
@@ -750,8 +752,6 @@ fn G() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc5_38.2(%int_5) [concrete = constants.%int_5.708]
 // CHECK:STDOUT:   %.loc5_38.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_5.708]
 // CHECK:STDOUT:   %.loc5_38.2: %i32 = converted %int_5, %.loc5_38.1 [concrete = constants.%int_5.708]
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %SOME_CONSTANT: %i32 = wrapper_binding SOME_CONSTANT, %.loc5_38.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1131,6 +1131,8 @@ fn G() {
 // CHECK:STDOUT: class @B {
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %.loc9: %B.elem = base_decl %A.ref, element0 [concrete]
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT: %i32 = wrapper_binding SOME_PRIVATE_CONSTANT, @__global_init.%.loc11_44.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %SOME_PRIVATE_CONSTANT.patt: %pattern_type.d94 = value_binding_pattern SOME_PRIVATE_CONSTANT [concrete = constants.%SOME_PRIVATE_CONSTANT.patt]
 // CHECK:STDOUT:   }
@@ -1142,7 +1144,7 @@ fn G() {
 // CHECK:STDOUT:   .Self = constants.%B
 // CHECK:STDOUT:   .A = <poisoned>
 // CHECK:STDOUT:   .base = %.loc9
-// CHECK:STDOUT:   .SOME_PRIVATE_CONSTANT [private] = @__global_init.%SOME_PRIVATE_CONSTANT
+// CHECK:STDOUT:   .SOME_PRIVATE_CONSTANT [private] = %SOME_PRIVATE_CONSTANT
 // CHECK:STDOUT:   .Fb [private] = %B.Fb.decl
 // CHECK:STDOUT:   .Fa = <poisoned>
 // CHECK:STDOUT:   extend %A.ref
@@ -1216,8 +1218,6 @@ fn G() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc11_44.2(%int_86) [concrete = constants.%int_86.f9f]
 // CHECK:STDOUT:   %.loc11_44.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_86.f9f]
 // CHECK:STDOUT:   %.loc11_44.2: %i32 = converted %int_86, %.loc11_44.1 [concrete = constants.%int_86.f9f]
-// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT: %i32 = wrapper_binding SOME_PRIVATE_CONSTANT, %.loc11_44.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1372,9 +1372,13 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @A {
+// CHECK:STDOUT:   %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %SOME_PROTECTED_CONSTANT: %i32 = wrapper_binding SOME_PROTECTED_CONSTANT, @__global_init.%.loc5_48.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %SOME_PROTECTED_CONSTANT.patt: %pattern_type.d94 = value_binding_pattern SOME_PROTECTED_CONSTANT [concrete = constants.%SOME_PROTECTED_CONSTANT.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT: %i32 = wrapper_binding SOME_PRIVATE_CONSTANT, @__global_init.%.loc6_44.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %SOME_PRIVATE_CONSTANT.patt: %pattern_type.d94 = value_binding_pattern SOME_PRIVATE_CONSTANT [concrete = constants.%SOME_PRIVATE_CONSTANT.patt]
 // CHECK:STDOUT:   }
@@ -1383,11 +1387,13 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%A
-// CHECK:STDOUT:   .SOME_PROTECTED_CONSTANT [protected] = @__global_init.%SOME_PROTECTED_CONSTANT
-// CHECK:STDOUT:   .SOME_PRIVATE_CONSTANT [private] = @__global_init.%SOME_PRIVATE_CONSTANT
+// CHECK:STDOUT:   .SOME_PROTECTED_CONSTANT [protected] = %SOME_PROTECTED_CONSTANT
+// CHECK:STDOUT:   .SOME_PRIVATE_CONSTANT [private] = %SOME_PRIVATE_CONSTANT
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @Internal {
+// CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %INTERNAL_CONSTANT: %i32 = wrapper_binding INTERNAL_CONSTANT, @__global_init.%.loc10_42.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %INTERNAL_CONSTANT.patt: %pattern_type.d94 = value_binding_pattern INTERNAL_CONSTANT [concrete = constants.%INTERNAL_CONSTANT.patt]
 // CHECK:STDOUT:   }
@@ -1396,7 +1402,7 @@ fn G() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .Self = constants.%Internal
-// CHECK:STDOUT:   .INTERNAL_CONSTANT [protected] = @__global_init.%INTERNAL_CONSTANT
+// CHECK:STDOUT:   .INTERNAL_CONSTANT [protected] = %INTERNAL_CONSTANT
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @B {
@@ -1467,8 +1473,6 @@ fn G() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5: init %i32 = call %bound_method.loc5_48.2(%int_5.loc5) [concrete = constants.%int_5.708]
 // CHECK:STDOUT:   %.loc5_48.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc5 [concrete = constants.%int_5.708]
 // CHECK:STDOUT:   %.loc5_48.2: %i32 = converted %int_5.loc5, %.loc5_48.1 [concrete = constants.%int_5.708]
-// CHECK:STDOUT:   %i32.loc5: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %SOME_PROTECTED_CONSTANT: %i32 = wrapper_binding SOME_PROTECTED_CONSTANT, %.loc5_48.2
 // CHECK:STDOUT:   %int_5.loc6: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %impl.elem0.loc6: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
 // CHECK:STDOUT:   %bound_method.loc6_44.1: <bound method> = bound_method %int_5.loc6, %impl.elem0.loc6 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -1477,8 +1481,6 @@ fn G() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6: init %i32 = call %bound_method.loc6_44.2(%int_5.loc6) [concrete = constants.%int_5.708]
 // CHECK:STDOUT:   %.loc6_44.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc6 [concrete = constants.%int_5.708]
 // CHECK:STDOUT:   %.loc6_44.2: %i32 = converted %int_5.loc6, %.loc6_44.1 [concrete = constants.%int_5.708]
-// CHECK:STDOUT:   %i32.loc6: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %SOME_PRIVATE_CONSTANT: %i32 = wrapper_binding SOME_PRIVATE_CONSTANT, %.loc6_44.2
 // CHECK:STDOUT:   %int_5.loc10: Core.IntLiteral = int_value 5 [concrete = constants.%int_5.64b]
 // CHECK:STDOUT:   %impl.elem0.loc10: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
 // CHECK:STDOUT:   %bound_method.loc10_42.1: <bound method> = bound_method %int_5.loc10, %impl.elem0.loc10 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
@@ -1487,8 +1489,6 @@ fn G() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10: init %i32 = call %bound_method.loc10_42.2(%int_5.loc10) [concrete = constants.%int_5.708]
 // CHECK:STDOUT:   %.loc10_42.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc10 [concrete = constants.%int_5.708]
 // CHECK:STDOUT:   %.loc10_42.2: %i32 = converted %int_5.loc10, %.loc10_42.1 [concrete = constants.%int_5.708]
-// CHECK:STDOUT:   %i32.loc10: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %INTERNAL_CONSTANT: %i32 = wrapper_binding INTERNAL_CONSTANT, %.loc10_42.2
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -71,6 +71,8 @@ let overflow: f64 = ConvertIntLiteralToF64(1000000000000000000000000000000000000
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %f64: type = type_literal constants.%f64.761 [concrete = constants.%f64.761]
+// CHECK:STDOUT:   %overflow: %f64.761 = wrapper_binding overflow, @__global_init.%.loc7_354.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %overflow.patt: %pattern_type.667 = value_binding_pattern overflow [concrete = constants.%overflow.patt]
 // CHECK:STDOUT:   }
@@ -83,8 +85,6 @@ let overflow: f64 = ConvertIntLiteralToF64(1000000000000000000000000000000000000
 // CHECK:STDOUT:   %ConvertIntLiteralToF64.call: init %f64.761 = call %ConvertIntLiteralToF64.ref(%int_1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000) [concrete = <error>]
 // CHECK:STDOUT:   %.loc7_354.1: %f64.761 = value_of_initializer %ConvertIntLiteralToF64.call [concrete = <error>]
 // CHECK:STDOUT:   %.loc7_354.2: %f64.761 = converted %ConvertIntLiteralToF64.call, %.loc7_354.1 [concrete = <error>]
-// CHECK:STDOUT:   %f64: type = type_literal constants.%f64.761 [concrete = constants.%f64.761]
-// CHECK:STDOUT:   %overflow: %f64.761 = wrapper_binding overflow, %.loc7_354.2 [concrete = <error>]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

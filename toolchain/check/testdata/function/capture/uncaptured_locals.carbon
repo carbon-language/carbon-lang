@@ -375,7 +375,7 @@ fn Outer(generic T: type, p: i32) -> i32 {
 // CHECK:STDOUT:     name_binding_decl {
 // CHECK:STDOUT:       %a.patt: %pattern_type.d94 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %global_let.global_ref: %i32 = global_ref @__global_init.%global_let
+// CHECK:STDOUT:     %global_let.global_ref: %i32 = global_ref file.%global_let
 // CHECK:STDOUT:     %global_let.ref: %i32 = name_ref global_let, %global_let.global_ref
 // CHECK:STDOUT:     %.loc34: type = type_of %p.ref in [concrete = constants.%i32] {
 // CHECK:STDOUT:       %p.ref: %i32 = name_ref p, @Outer.%p

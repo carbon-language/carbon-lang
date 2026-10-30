@@ -142,6 +142,11 @@ fn F() -> {} {
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [concrete = constants.%empty_struct_type] {
+// CHECK:STDOUT:     %.loc4_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %_: %empty_struct_type = wrapper_binding _, @__global_init.%.loc4_14.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc4: %pattern_type.a96 = value_binding_pattern _ [concrete = constants.%_.patt.bc3]
 // CHECK:STDOUT:   }
@@ -150,7 +155,6 @@ fn F() -> {} {
 // CHECK:STDOUT:     %.loc5_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %.loc5_9.3: type = converted %.loc5_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: ref %empty_struct_type = wrapper_binding _, %_.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt.loc5: %pattern_type.a96 = ref_binding_pattern _ [concrete = constants.%_.patt.7e8]
 // CHECK:STDOUT:     %_.var_patt: %pattern_type.a96 = var_pattern %_.patt.loc5 [concrete = constants.%_.var_patt.d5b]
@@ -201,15 +205,11 @@ fn F() -> {} {
 // CHECK:STDOUT:   %.loc4_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc4_14.2: %empty_struct_type = converted %.loc4_14.1, %empty_struct [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc4_9.1: type = splice_block %.loc4_9.3 [concrete = constants.%empty_struct_type] {
-// CHECK:STDOUT:     %.loc4_9.2: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc4_9.3: type = converted %.loc4_9.2, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %empty_struct_type = wrapper_binding _, %.loc4_14.2
 // CHECK:STDOUT:   %.loc5_14.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_14.2: init %empty_struct_type = struct_init () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %.loc5_1: init %empty_struct_type = converted %.loc5_14.1, %.loc5_14.2 [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%_.var, %.loc5_1
+// CHECK:STDOUT:   %_: ref %empty_struct_type = wrapper_binding _, file.%_.var
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

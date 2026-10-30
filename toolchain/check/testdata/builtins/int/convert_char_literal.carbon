@@ -112,12 +112,18 @@ let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %CharLiteral.ref.loc14: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
+// CHECK:STDOUT:   %a: Core.CharLiteral = wrapper_binding a, @__global_init.%.loc14_46.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.8c6 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %CharLiteral.ref.loc15: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
+// CHECK:STDOUT:   %b: Core.CharLiteral = wrapper_binding b, @__global_init.%.loc15_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.8c6 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %CharLiteral.ref.loc16: type = name_ref CharLiteral, %CharLiteral [concrete = Core.CharLiteral]
+// CHECK:STDOUT:   %c: Core.CharLiteral = wrapper_binding c, @__global_init.%.loc16_39.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.8c6 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
@@ -130,8 +136,6 @@ let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 // CHECK:STDOUT:   %ConvertFromIntLiteral.call: init Core.CharLiteral = call %ConvertFromIntLiteral.ref(%int_97) [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc14_46.1: Core.CharLiteral = value_of_initializer %ConvertFromIntLiteral.call [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc14_46.2: Core.CharLiteral = converted %ConvertFromIntLiteral.call, %.loc14_46.1 [concrete = constants.%.54f]
-// CHECK:STDOUT:   %CharLiteral.ref.loc14: type = name_ref CharLiteral, file.%CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %a: Core.CharLiteral = wrapper_binding a, %.loc14_46.2
 // CHECK:STDOUT:   %ConvertFromI32.ref: %ConvertFromI32.type = name_ref ConvertFromI32, file.%ConvertFromI32.decl [concrete = constants.%ConvertFromI32]
 // CHECK:STDOUT:   %int_98: Core.IntLiteral = int_value 98 [concrete = constants.%int_98.fb6]
 // CHECK:STDOUT:   %impl.elem0.loc15: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
@@ -144,8 +148,6 @@ let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 // CHECK:STDOUT:   %ConvertFromI32.call: init Core.CharLiteral = call %ConvertFromI32.ref(%.loc15_37.2) [concrete = constants.%.711]
 // CHECK:STDOUT:   %.loc15_39.1: Core.CharLiteral = value_of_initializer %ConvertFromI32.call [concrete = constants.%.711]
 // CHECK:STDOUT:   %.loc15_39.2: Core.CharLiteral = converted %ConvertFromI32.call, %.loc15_39.1 [concrete = constants.%.711]
-// CHECK:STDOUT:   %CharLiteral.ref.loc15: type = name_ref CharLiteral, file.%CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %b: Core.CharLiteral = wrapper_binding b, %.loc15_39.2
 // CHECK:STDOUT:   %ConvertFromU32.ref: %ConvertFromU32.type = name_ref ConvertFromU32, file.%ConvertFromU32.decl [concrete = constants.%ConvertFromU32]
 // CHECK:STDOUT:   %int_99: Core.IntLiteral = int_value 99 [concrete = constants.%int_99.6d1]
 // CHECK:STDOUT:   %impl.elem0.loc16: %.8ad = impl_witness_access constants.%ImplicitAs.impl_witness.88f, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.14a]
@@ -158,8 +160,6 @@ let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 // CHECK:STDOUT:   %ConvertFromU32.call: init Core.CharLiteral = call %ConvertFromU32.ref(%.loc16_37.2) [concrete = constants.%.b9b]
 // CHECK:STDOUT:   %.loc16_39.1: Core.CharLiteral = value_of_initializer %ConvertFromU32.call [concrete = constants.%.b9b]
 // CHECK:STDOUT:   %.loc16_39.2: Core.CharLiteral = converted %ConvertFromU32.call, %.loc16_39.1 [concrete = constants.%.b9b]
-// CHECK:STDOUT:   %CharLiteral.ref.loc16: type = name_ref CharLiteral, file.%CharLiteral [concrete = Core.CharLiteral]
-// CHECK:STDOUT:   %c: Core.CharLiteral = wrapper_binding c, %.loc16_39.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -78,8 +78,8 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:     .F = %F.decl
-// CHECK:STDOUT:     .v = @__global_init.%v
-// CHECK:STDOUT:     .w = @__global_init.%w
+// CHECK:STDOUT:     .v = %v
+// CHECK:STDOUT:     .w = %w
 // CHECK:STDOUT:     .x = %x
 // CHECK:STDOUT:     .y = %y
 // CHECK:STDOUT:   }
@@ -94,9 +94,16 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT:     %i32.loc18_56: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
+// CHECK:STDOUT:     %i32.loc23_13: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc23_22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: <error> = value_binding_pattern v [concrete = <error>]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %i32.loc28: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %w: %i32 = wrapper_binding w, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %w.patt: %pattern_type.d94 = value_binding_pattern w [concrete = constants.%w.patt]
 // CHECK:STDOUT:   }
@@ -129,16 +136,9 @@ var y: {.b: i32, .c: i32} = {.b = 3, .b = 4};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1.loc23: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %.loc23: %struct_type.a.a6c = struct_literal (%int_1.loc23) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %i32.loc23_13: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %i32.loc23_22: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v: <error> = wrapper_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc28: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2.loc28: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   %def.ref: <error> = name_ref def, <error> [concrete = <error>]
-// CHECK:STDOUT:   %i32.loc28: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %w: %i32 = wrapper_binding w, <error> [concrete = <error>]
 // CHECK:STDOUT:   %int_1.loc33: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2.loc33: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
 // CHECK:STDOUT:   assign file.%x.var, <error>

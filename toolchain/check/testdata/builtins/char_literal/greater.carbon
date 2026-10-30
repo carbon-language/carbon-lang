@@ -38,9 +38,13 @@ let b: bool = Greater('a', 'b');
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %.loc21: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %a: bool = wrapper_binding a, @__global_init.%.loc21_31.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.831 = value_binding_pattern a [concrete = constants.%a.patt.567]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc22: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %b: bool = wrapper_binding b, @__global_init.%.loc22_31.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.831 = value_binding_pattern b [concrete = constants.%b.patt.438]
 // CHECK:STDOUT:   }
@@ -54,16 +58,12 @@ let b: bool = Greater('a', 'b');
 // CHECK:STDOUT:   %Greater.call.loc21: init bool = call %Greater.ref.loc21(%.loc21_23, %.loc21_28) [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc21_31.1: bool = value_of_initializer %Greater.call.loc21 [concrete = constants.%true]
 // CHECK:STDOUT:   %.loc21_31.2: bool = converted %Greater.call.loc21, %.loc21_31.1 [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc21_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %a: bool = wrapper_binding a, %.loc21_31.2
 // CHECK:STDOUT:   %Greater.ref.loc22: %Greater.type = name_ref Greater, file.%Greater.decl [concrete = constants.%Greater]
 // CHECK:STDOUT:   %.loc22_23: Core.CharLiteral = char_value U+0061 [concrete = constants.%.54f]
 // CHECK:STDOUT:   %.loc22_28: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %Greater.call.loc22: init bool = call %Greater.ref.loc22(%.loc22_23, %.loc22_28) [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc22_31.1: bool = value_of_initializer %Greater.call.loc22 [concrete = constants.%false]
 // CHECK:STDOUT:   %.loc22_31.2: bool = converted %Greater.call.loc22, %.loc22_31.1 [concrete = constants.%false]
-// CHECK:STDOUT:   %.loc22_8: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %b: bool = wrapper_binding b, %.loc22_31.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

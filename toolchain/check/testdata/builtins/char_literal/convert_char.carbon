@@ -107,12 +107,36 @@ let c: UInt(8) = ToChar('\u{1E15}');
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %.loc6_14.1: type = splice_block %.loc6_14.3 [concrete = constants.%u8.builtin] {
+// CHECK:STDOUT:     %UInt.ref.loc6: %UInt.type = name_ref UInt, imports.%Main.UInt [concrete = constants.%UInt]
+// CHECK:STDOUT:     %int_8.loc6: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
+// CHECK:STDOUT:     %UInt.call.loc6: init type = call %UInt.ref.loc6(%int_8.loc6) [concrete = constants.%u8.builtin]
+// CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %UInt.call.loc6 [concrete = constants.%u8.builtin]
+// CHECK:STDOUT:     %.loc6_14.3: type = converted %UInt.call.loc6, %.loc6_14.2 [concrete = constants.%u8.builtin]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %a: %u8.builtin = wrapper_binding a, @__global_init.%.loc6_29.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.456 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc7_14.1: type = splice_block %.loc7_14.3 [concrete = constants.%u8.builtin] {
+// CHECK:STDOUT:     %UInt.ref.loc7: %UInt.type = name_ref UInt, imports.%Main.UInt [concrete = constants.%UInt]
+// CHECK:STDOUT:     %int_8.loc7: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
+// CHECK:STDOUT:     %UInt.call.loc7: init type = call %UInt.ref.loc7(%int_8.loc7) [concrete = constants.%u8.builtin]
+// CHECK:STDOUT:     %.loc7_14.2: type = value_of_initializer %UInt.call.loc7 [concrete = constants.%u8.builtin]
+// CHECK:STDOUT:     %.loc7_14.3: type = converted %UInt.call.loc7, %.loc7_14.2 [concrete = constants.%u8.builtin]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %b: %u8.builtin = wrapper_binding b, @__global_init.%.loc7_28.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.456 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc8_14.1: type = splice_block %.loc8_14.3 [concrete = constants.%u8.builtin] {
+// CHECK:STDOUT:     %UInt.ref.loc8: %UInt.type = name_ref UInt, imports.%Main.UInt [concrete = constants.%UInt]
+// CHECK:STDOUT:     %int_8.loc8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
+// CHECK:STDOUT:     %UInt.call.loc8: init type = call %UInt.ref.loc8(%int_8.loc8) [concrete = constants.%u8.builtin]
+// CHECK:STDOUT:     %.loc8_14.2: type = value_of_initializer %UInt.call.loc8 [concrete = constants.%u8.builtin]
+// CHECK:STDOUT:     %.loc8_14.3: type = converted %UInt.call.loc8, %.loc8_14.2 [concrete = constants.%u8.builtin]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %c: %u8.builtin = wrapper_binding c, @__global_init.%.loc8_33.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.456 = value_binding_pattern c [concrete = constants.%c.patt.7eb]
 // CHECK:STDOUT:   }
@@ -125,40 +149,16 @@ let c: UInt(8) = ToChar('\u{1E15}');
 // CHECK:STDOUT:   %ToChar.call.loc6: init %u8.builtin = call %ToChar.ref.loc6(%.loc6_25) [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc6_29.1: %u8.builtin = value_of_initializer %ToChar.call.loc6 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %.loc6_29.2: %u8.builtin = converted %ToChar.call.loc6, %.loc6_29.1 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %.loc6_14.1: type = splice_block %.loc6_14.3 [concrete = constants.%u8.builtin] {
-// CHECK:STDOUT:     %UInt.ref.loc6: %UInt.type = name_ref UInt, imports.%Main.UInt [concrete = constants.%UInt]
-// CHECK:STDOUT:     %int_8.loc6: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
-// CHECK:STDOUT:     %UInt.call.loc6: init type = call %UInt.ref.loc6(%int_8.loc6) [concrete = constants.%u8.builtin]
-// CHECK:STDOUT:     %.loc6_14.2: type = value_of_initializer %UInt.call.loc6 [concrete = constants.%u8.builtin]
-// CHECK:STDOUT:     %.loc6_14.3: type = converted %UInt.call.loc6, %.loc6_14.2 [concrete = constants.%u8.builtin]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a: %u8.builtin = wrapper_binding a, %.loc6_29.2
 // CHECK:STDOUT:   %ToChar.ref.loc7: %ToChar.type = name_ref ToChar, imports.%Main.ToChar [concrete = constants.%ToChar]
 // CHECK:STDOUT:   %.loc7_25: Core.CharLiteral = char_value U+0062 [concrete = constants.%.711]
 // CHECK:STDOUT:   %ToChar.call.loc7: init %u8.builtin = call %ToChar.ref.loc7(%.loc7_25) [concrete = constants.%int_98]
 // CHECK:STDOUT:   %.loc7_28.1: %u8.builtin = value_of_initializer %ToChar.call.loc7 [concrete = constants.%int_98]
 // CHECK:STDOUT:   %.loc7_28.2: %u8.builtin = converted %ToChar.call.loc7, %.loc7_28.1 [concrete = constants.%int_98]
-// CHECK:STDOUT:   %.loc7_14.1: type = splice_block %.loc7_14.3 [concrete = constants.%u8.builtin] {
-// CHECK:STDOUT:     %UInt.ref.loc7: %UInt.type = name_ref UInt, imports.%Main.UInt [concrete = constants.%UInt]
-// CHECK:STDOUT:     %int_8.loc7: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
-// CHECK:STDOUT:     %UInt.call.loc7: init type = call %UInt.ref.loc7(%int_8.loc7) [concrete = constants.%u8.builtin]
-// CHECK:STDOUT:     %.loc7_14.2: type = value_of_initializer %UInt.call.loc7 [concrete = constants.%u8.builtin]
-// CHECK:STDOUT:     %.loc7_14.3: type = converted %UInt.call.loc7, %.loc7_14.2 [concrete = constants.%u8.builtin]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %b: %u8.builtin = wrapper_binding b, %.loc7_28.2
 // CHECK:STDOUT:   %ToChar.ref.loc8: %ToChar.type = name_ref ToChar, imports.%Main.ToChar [concrete = constants.%ToChar]
 // CHECK:STDOUT:   %.loc8_25: Core.CharLiteral = char_value U+007F [concrete = constants.%.e28]
 // CHECK:STDOUT:   %ToChar.call.loc8: init %u8.builtin = call %ToChar.ref.loc8(%.loc8_25) [concrete = constants.%int_127]
 // CHECK:STDOUT:   %.loc8_33.1: %u8.builtin = value_of_initializer %ToChar.call.loc8 [concrete = constants.%int_127]
 // CHECK:STDOUT:   %.loc8_33.2: %u8.builtin = converted %ToChar.call.loc8, %.loc8_33.1 [concrete = constants.%int_127]
-// CHECK:STDOUT:   %.loc8_14.1: type = splice_block %.loc8_14.3 [concrete = constants.%u8.builtin] {
-// CHECK:STDOUT:     %UInt.ref.loc8: %UInt.type = name_ref UInt, imports.%Main.UInt [concrete = constants.%UInt]
-// CHECK:STDOUT:     %int_8.loc8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
-// CHECK:STDOUT:     %UInt.call.loc8: init type = call %UInt.ref.loc8(%int_8.loc8) [concrete = constants.%u8.builtin]
-// CHECK:STDOUT:     %.loc8_14.2: type = value_of_initializer %UInt.call.loc8 [concrete = constants.%u8.builtin]
-// CHECK:STDOUT:     %.loc8_14.3: type = converted %UInt.call.loc8, %.loc8_14.2 [concrete = constants.%u8.builtin]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %u8.builtin = wrapper_binding c, %.loc8_33.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

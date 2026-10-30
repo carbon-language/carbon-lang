@@ -158,6 +158,8 @@ extern alias C = Class;
 // CHECK:STDOUT:   %b: type = alias_binding b, %a.ref [concrete = constants.%C]
 // CHECK:STDOUT:   %b.ref: type = name_ref b, %b [concrete = constants.%C]
 // CHECK:STDOUT:   %c: type = alias_binding c, %b.ref [concrete = constants.%C]
+// CHECK:STDOUT:   %c.ref: type = name_ref c, %c [concrete = constants.%C]
+// CHECK:STDOUT:   %d: %C = wrapper_binding d, @__global_init.%.loc10_13.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
@@ -171,8 +173,6 @@ extern alias C = Class;
 // CHECK:STDOUT:   %.loc10_13.4: init %C = converted %.loc10_13.1, %.loc10_13.3 [concrete = constants.%C.val]
 // CHECK:STDOUT:   %.loc10_13.5: ref %C = temporary %.loc10_13.2, %.loc10_13.4 [concrete = constants.%.115]
 // CHECK:STDOUT:   %.loc10_13.6: %C = acquire_value %.loc10_13.5 [concrete = constants.%C.val]
-// CHECK:STDOUT:   %c.ref: type = name_ref c, file.%c [concrete = constants.%C]
-// CHECK:STDOUT:   %d: %C = wrapper_binding d, %.loc10_13.6
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

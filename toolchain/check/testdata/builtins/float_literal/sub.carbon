@@ -87,9 +87,19 @@ let v1: Core.FloatLiteral = Sub(0x1.0p1024000000000, 0.0000000000000000001);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %.loc12: type = splice_block %FloatLiteral.ref.loc12 [concrete = Core.FloatLiteral] {
+// CHECK:STDOUT:     %Core.ref.loc12: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %FloatLiteral.ref.loc12: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v1: Core.FloatLiteral = wrapper_binding v1, @__global_init.%.loc12_41.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v1.patt: %pattern_type.dab = value_binding_pattern v1 [concrete = constants.%v1.patt]
 // CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc13: type = splice_block %FloatLiteral.ref.loc13 [concrete = Core.FloatLiteral] {
+// CHECK:STDOUT:     %Core.ref.loc13: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %FloatLiteral.ref.loc13: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %v2: Core.FloatLiteral = wrapper_binding v2, @__global_init.%.loc13_54.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v2.patt: %pattern_type.dab = value_binding_pattern v2 [concrete = constants.%v2.patt]
 // CHECK:STDOUT:   }
@@ -103,22 +113,12 @@ let v1: Core.FloatLiteral = Sub(0x1.0p1024000000000, 0.0000000000000000001);
 // CHECK:STDOUT:   %Sub.call.loc12: init Core.FloatLiteral = call %Sub.ref.loc12(%float.loc12_33, %float.loc12_38) [concrete = constants.%float.e85]
 // CHECK:STDOUT:   %.loc12_41.1: Core.FloatLiteral = value_of_initializer %Sub.call.loc12 [concrete = constants.%float.e85]
 // CHECK:STDOUT:   %.loc12_41.2: Core.FloatLiteral = converted %Sub.call.loc12, %.loc12_41.1 [concrete = constants.%float.e85]
-// CHECK:STDOUT:   %.loc12_13: type = splice_block %FloatLiteral.ref.loc12 [concrete = Core.FloatLiteral] {
-// CHECK:STDOUT:     %Core.ref.loc12: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %FloatLiteral.ref.loc12: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v1: Core.FloatLiteral = wrapper_binding v1, %.loc12_41.2
 // CHECK:STDOUT:   %Sub.ref.loc13: %Sub.type = name_ref Sub, file.%Sub.decl [concrete = constants.%Sub]
 // CHECK:STDOUT:   %float.loc13_33: Core.FloatLiteral = float_literal_value 65536p6 [concrete = constants.%float.8466d5.1]
 // CHECK:STDOUT:   %float.loc13_46: Core.FloatLiteral = float_literal_value 16p6 [concrete = constants.%float.333a1f.1]
 // CHECK:STDOUT:   %Sub.call.loc13: init Core.FloatLiteral = call %Sub.ref.loc13(%float.loc13_33, %float.loc13_46) [concrete = constants.%float.bec4a4.1]
 // CHECK:STDOUT:   %.loc13_54.1: Core.FloatLiteral = value_of_initializer %Sub.call.loc13 [concrete = constants.%float.bec4a4.1]
 // CHECK:STDOUT:   %.loc13_54.2: Core.FloatLiteral = converted %Sub.call.loc13, %.loc13_54.1 [concrete = constants.%float.bec4a4.1]
-// CHECK:STDOUT:   %.loc13_13: type = splice_block %FloatLiteral.ref.loc13 [concrete = Core.FloatLiteral] {
-// CHECK:STDOUT:     %Core.ref.loc13: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %FloatLiteral.ref.loc13: type = name_ref FloatLiteral, imports.%Core.FloatLiteral [concrete = Core.FloatLiteral]
-// CHECK:STDOUT:   }
-// CHECK:STDOUT:   %v2: Core.FloatLiteral = wrapper_binding v2, %.loc13_54.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

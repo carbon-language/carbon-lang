@@ -159,6 +159,8 @@ var x: typeof(undeclared);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
+// CHECK:STDOUT:   %.loc7: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %T: type = wrapper_binding T, @__global_init.%.loc7
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %T.patt: %pattern_type = value_binding_pattern T [concrete = constants.%T.patt]
 // CHECK:STDOUT:   }
@@ -166,11 +168,9 @@ var x: typeof(undeclared);
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc7_23: type = type_of %C.ref in [concrete = type] {
+// CHECK:STDOUT:   %.loc7: type = type_of %C.ref in [concrete = type] {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc7_8: type = type_literal type [concrete = type]
-// CHECK:STDOUT:   %T: type = wrapper_binding T, %.loc7_23
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
