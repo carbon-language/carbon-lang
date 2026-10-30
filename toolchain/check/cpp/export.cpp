@@ -1327,6 +1327,30 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
       ->getAs<clang::FunctionProtoType>();
 }
 
+// Look up the `SemIR::Class` associated with a `clang::Decl`. The mapping is
+// required to exist.
+static auto GetClassInfoForClangDecl(Context& context, clang::Decl* decl)
+    -> const SemIR::Class& {
+  auto clang_decl_id = context.clang_decls().LookupId(
+      SemIR::ClangDeclKey::ForNonFunctionDecl(decl));
+  const auto& clang_decl = context.clang_decls().Get(clang_decl_id);
+  auto class_id = SemIR::ClassId::None;
+  // Regular classes are mapped in `clang_decls` to a `ClassDecl`
+  // inst. Specific classes are mapped to a `ClassType` plus a specific.
+  if (auto class_decl =
+          context.insts().TryGetAs<SemIR::ClassDecl>(clang_decl.inst_id)) {
+    class_id = class_decl->class_id;
+
+  } else if (auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
+                 clang_decl.inst_id)) {
+    class_id = class_type->class_id;
+
+  } else {
+    CARBON_FATAL("failed to map clang decl to a Carbon class");
+  }
+  return context.classes().Get(class_id);
+}
+
 // Create the declaration of the C++ thunk.
 static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
                                       const FunctionInfo& target,
@@ -1385,8 +1409,13 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
           tinfo, target.GetStorageClass(), uses_fp_intrin, inline_specified,
           constexpr_kind, clang_loc, trailing_requires_clause);
     }
-    // TODO: Map Carbon access to C++ access.
-    thunk_function_decl->setAccess(clang::AS_public);
+
+    // Map Carbon access to C++ access.
+    const auto& class_info = GetClassInfoForClangDecl(context, parent_class);
+    const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
+    SetCppClassMemberAccess(class_scope, target.function.name_id,
+                            thunk_function_decl);
+
     // Carbon overriders are non-virtual in C++; only the corresponding thunk is
     // virtual.
     thunk_function_decl->setVirtualAsWritten(
@@ -1725,9 +1754,9 @@ auto DefineExportedVirtualFunction(Context& context, SemIR::LocId loc_id,
 // name.
 //
 // Returns nullptr if an error occurs.
-auto ExportNonGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                                   const FunctionInfo& target,
-                                   std::string_view extra_name = "")
+static auto ExportNonGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
+                                          const FunctionInfo& target,
+                                          std::string_view extra_name = "")
     -> clang::FunctionDecl* {
   auto* thunk_function_decl =
       ExportNonGenericFunctionDeclToCpp(context, loc_id, target);
