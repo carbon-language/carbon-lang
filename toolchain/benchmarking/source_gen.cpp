@@ -387,15 +387,14 @@ static constexpr int NestedLocalPercent = 25;
 static constexpr int DestructurePercent = 2;
 static constexpr int ClassTypeLocalPercent = 50;
 
-// Returns the `index`th value in `[0, 100)` from a golden-ratio sequence.
-// Multiples of `std::numbers::phi` mod 1.0 in `double` spread evenly across
-// `[0, 100)` without needing a fixed-point rational approximation.
-//
-// We use this PRNG technique rather than Abseil random because we want a fixed
-// and consistent random sequence rather than one that varies from run-to-run.
-// And it seems simpler than Merseene Twister from the STL.
-static auto GoldenRatioPercent(int index) -> int {
+// Returns a percentage value from a sequence that is spread evenly in [0, 100).
+// The sequence is chosen so that consecutive subsequences are spaced out as
+// evenly as possible, with percentages well-separated from each other and
+// averaging to ~50% even in short subsequences.
+static auto EvenlySpreadPercent(int index) -> int {
   CARBON_CHECK(index >= 0);
+  // Multiples of `std::numbers::phi` mod 1.0 in `double` spread evenly across
+  // `[0, 100)` without needing a fixed-point rational approximation.
   return static_cast<int>(std::fmod((index + 0.5) * std::numbers::phi, 1.0) *
                           100);
 }
