@@ -411,7 +411,7 @@ static auto EvenlySpreadPercent(int index) -> int {
 class PercentScaler {
  public:
   explicit PercentScaler(int& next_index)
-      : remainder_(GoldenRatioPercent(next_index++)) {}
+      : remainder_(EvenlySpreadPercent(next_index++)) {}
 
   auto operator()(int count, int percent) -> int {
     remainder_ += count * percent;
@@ -447,10 +447,10 @@ struct PlanScalers {
 
 // Returns the maximum depth of the `variant`th plan with `statements`
 // statements. Variants of a size follow the distribution in its row of
-// `PlanShapeTable` using `GoldenRatioPercent(variant)`.
+// `PlanShapeTable` using `EvenlySpreadPercent(variant)`.
 static auto ChoosePlanMaxDepth(const PlanShapeRow& shape, int statements,
                                int variant) -> int {
-  int choice = GoldenRatioPercent(variant);
+  int choice = EvenlySpreadPercent(variant);
   int max_depth = 0;
   for (int percent : shape.max_depth_percents) {
     choice -= percent;
