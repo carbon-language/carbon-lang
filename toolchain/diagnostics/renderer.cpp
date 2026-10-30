@@ -1967,10 +1967,10 @@ auto Renderer::Render(Terminal::OutputBufferRef out,
 namespace {
 
 // Draws the rows `RowLayout` lays out, with the frame beside them.
-class FrameDrawer {
+class FrameRenderer {
  public:
-  FrameDrawer(Buffer& buffer, Charset charset, int frame_x, int content_x,
-              int columns, Style dotted_frame_style)
+  FrameRenderer(Buffer& buffer, Charset charset, int frame_x, int content_x,
+                int columns, Style dotted_frame_style)
       : buffer_(&buffer),
         glyphs_(Glyphs::For(charset)),
         charset_(charset),
@@ -2056,7 +2056,7 @@ class FrameDrawer {
 
 }  // namespace
 
-auto FrameDrawer::Draw(llvm::ArrayRef<Row> rows) -> void {
+auto FrameRenderer::Draw(llvm::ArrayRef<Row> rows) -> void {
   // A row that wraps pushes the ones below it down, so `y` follows what was
   // drawn instead of counting rows.
   int y = 0;
@@ -2100,7 +2100,7 @@ auto FrameDrawer::Draw(llvm::ArrayRef<Row> rows) -> void {
 
 // Draws `╭─┤ location`. The bracket is drawn as lines so that the character set
 // decides how it looks, and so that a path row above can connect down into it.
-auto FrameDrawer::DrawLocationRow(const PreparedPart& part, int y) -> int {
+auto FrameRenderer::DrawLocationRow(const PreparedPart& part, int y) -> int {
   buffer_->DrawHorizontalLine(frame_x_, y, 3, FrameStyle());
   buffer_->DrawVerticalLine(frame_x_ + 2, y, 1, FrameStyle(), LineEnd::Edge,
                             LineEnd::Edge);
@@ -2119,7 +2119,7 @@ auto FrameDrawer::DrawLocationRow(const PreparedPart& part, int y) -> int {
 // Draws a step of a path. Its line descends into the bracket before the file
 // name in the location row below, so the row shows that it leads there. It is
 // drawn downwards so that several steps stack into one line.
-auto FrameDrawer::DrawPath(const PreparedPart& part, int y) -> int {
+auto FrameRenderer::DrawPath(const PreparedPart& part, int y) -> int {
   int bracket_x = frame_x_ + 2;
   buffer_->DrawVerticalLine(bracket_x, y, 2, FrameStyle());
   buffer_->DrawHorizontalLine(bracket_x, y, LineToTextWidth - 1, FrameStyle(),
@@ -2131,13 +2131,13 @@ auto FrameDrawer::DrawPath(const PreparedPart& part, int y) -> int {
   return y + 1;
 }
 
-auto FrameDrawer::DrawSource(const Row& row, int y) -> int {
+auto FrameRenderer::DrawSource(const Row& row, int y) -> int {
   DrawLineNumber(*buffer_, frame_x_, y, row.line_number, row.points_here);
   buffer_->DrawText(content_x_, y, row.text, Style());
   return y + 1;
 }
 
-auto FrameDrawer::DrawUnderlineRow(const Row& row, int y) -> int {
+auto FrameRenderer::DrawUnderlineRow(const Row& row, int y) -> int {
   underline_y_ = y;
   outdented_rows_.clear();
   for (const PreparedPart* span : row.spans) {
@@ -2150,7 +2150,7 @@ auto FrameDrawer::DrawUnderlineRow(const Row& row, int y) -> int {
 // on its first row, where the text and any level word begin, so that following
 // the line from the underline arrives at the start of the sentence. The bar
 // continues down every row the text wraps onto.
-auto FrameDrawer::DrawLabel(const Row& row, int y) -> int {
+auto FrameRenderer::DrawLabel(const Row& row, int y) -> int {
   const PreparedPart& part = *row.part;
   int line_x = content_x_ + part.source.line_column;
   int text_x = content_x_ + part.source.label_x;
@@ -2170,7 +2170,7 @@ auto FrameDrawer::DrawLabel(const Row& row, int y) -> int {
 // along the row under the underline row and runs to the label line. Meeting the
 // label at its top lets the bar be directly against the text, which is the
 // width out-denting is for.
-auto FrameDrawer::DrawRoutedLabel(const Row& row, int y) -> int {
+auto FrameRenderer::DrawRoutedLabel(const Row& row, int y) -> int {
   const PreparedPart& part = *row.part;
   int line_x = content_x_ + part.source.line_column;
   int bar_x = content_x_;
@@ -2195,7 +2195,7 @@ auto FrameDrawer::DrawRoutedLabel(const Row& row, int y) -> int {
 // label is placed under its underline, with the label line's corner in the
 // source's first column. There is no underline above it, so the line starts at
 // the corner.
-auto FrameDrawer::DrawLocationLabel(const Row& row, int y) -> int {
+auto FrameRenderer::DrawLocationLabel(const Row& row, int y) -> int {
   const PreparedPart& part = *row.part;
   int line_x = content_x_;
   int text_x = content_x_ + LabelIndentWidth;
@@ -2211,7 +2211,7 @@ auto FrameDrawer::DrawLocationLabel(const Row& row, int y) -> int {
   return next_y;
 }
 
-auto FrameDrawer::DrawFrame(Row::Kind kind, int y, int next_y) -> void {
+auto FrameRenderer::DrawFrame(Row::Kind kind, int y, int next_y) -> void {
   // The frame's line runs the whole height of the row, edge to edge, so that
   // consecutive rows' lines join without either reaching into the other's
   // cells. Only the first row's line starts at a center, which leaves that
@@ -2244,15 +2244,16 @@ auto FrameDrawer::DrawFrame(Row::Kind kind, int y, int next_y) -> void {
   }
 }
 
-auto FrameDrawer::LabelWeight(const PreparedPart& part) const
+auto FrameRenderer::LabelWeight(const PreparedPart& part) const
     -> Terminal::LineWeight {
   return part.is_leading && charset_ == Charset::Utf8
              ? Terminal::LineWeight::Heavy
              : Terminal::LineWeight::Light;
 }
 
-auto FrameDrawer::DrawLabelText(const PreparedPart& part, llvm::StringRef text,
-                                int x, int y, bool is_label_row) -> int {
+auto FrameRenderer::DrawLabelText(const PreparedPart& part,
+                                  llvm::StringRef text, int x, int y,
+                                  bool is_label_row) -> int {
   Style style;
   if (part.is_leading) {
     x = buffer_->DrawText(x, y, part.level_text, part.style).x;
@@ -2262,17 +2263,17 @@ auto FrameDrawer::DrawLabelText(const PreparedPart& part, llvm::StringRef text,
                      part.KindSuffixOn(is_label_row), style);
 }
 
-auto FrameDrawer::DrawBar(int x, int y, int next_y, const Style& style,
-                          Terminal::LineWeight weight) -> void {
+auto FrameRenderer::DrawBar(int x, int y, int next_y, const Style& style,
+                            Terminal::LineWeight weight) -> void {
   for (int bar_y : llvm::seq(y, next_y)) {
     buffer_->DrawVerticalLine(x, bar_y, 1, style, LineEnd::Edge, LineEnd::Edge,
                               weight);
   }
 }
 
-auto FrameDrawer::DrawLabelLine(const PreparedPart& part, int x, int y,
-                                const Style& style, Terminal::LineWeight weight)
-    -> void {
+auto FrameRenderer::DrawLabelLine(const PreparedPart& part, int x, int y,
+                                  const Style& style,
+                                  Terminal::LineWeight weight) -> void {
   CARBON_CHECK(underline_y_ >= 0,
                "A label row follows the underline row it is placed under.");
   if (part.is_leading) {
@@ -2283,7 +2284,7 @@ auto FrameDrawer::DrawLabelLine(const PreparedPart& part, int x, int y,
   }
 }
 
-auto FrameDrawer::DrawCrossing(int x, int to_y, const Style& style) -> void {
+auto FrameRenderer::DrawCrossing(int x, int to_y, const Style& style) -> void {
   int from_y = underline_y_;
   LineEnd start = LineEnd::Center;
   for (auto [top, bottom] : outdented_rows_) {
@@ -2325,8 +2326,8 @@ auto Renderer::RenderFramed(Terminal::OutputBufferRef out,
                 source_columns, content_x, columns)
           .LayOut();
 
-  FrameDrawer(buffer, capabilities_.charset, frame_x, content_x, columns,
-              UnderlineStyle(parts[leading].style))
+  FrameRenderer(buffer, capabilities_.charset, frame_x, content_x, columns,
+                UnderlineStyle(parts[leading].style))
       .Draw(rows);
   buffer.Render(out, capabilities_.color_mode);
 }
