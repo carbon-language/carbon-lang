@@ -44,6 +44,13 @@ class Mangler {
   // given internal linkage.
   auto MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string;
 
+  // Produce a deterministically unique mangled name for the given global or
+  // static binding, or an empty string if the binding doesn't have an
+  // externally referenceable name, in which case it should be given internal
+  // linkage.
+  auto MangleGlobalBinding(SemIR::EntityNameId entity_name_id,
+                           SemIR::InstId fingerprint_inst_id) -> std::string;
+
   // Produce a deterministically unique mangled name for the specified class's
   // vtable.
   auto MangleVTable(const SemIR::Class& class_info,

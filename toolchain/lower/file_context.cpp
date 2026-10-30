@@ -853,6 +853,58 @@ auto FileContext::BuildNonCppGlobalVariableDecl(SemIR::VarStorage var_storage)
                                   /*Initializer=*/nullptr, mangled_name);
 }
 
+auto FileContext::GetOrCreateGlobalBinding(SemIR::InstId binding_inst_id)
+    -> llvm::GlobalVariable* {
+  if (auto result = global_bindings_.Lookup(binding_inst_id)) {
+    return result.value();
+  }
+
+  auto binding = sem_ir().insts().GetAs<SemIR::WrapperBinding>(binding_inst_id);
+  llvm::Type* type = nullptr;
+  if (SemIR::IsRefCategory(SemIR::GetExprCategory(sem_ir(), binding_inst_id))) {
+    type = llvm::PointerType::get(llvm_context(), /*AddressSpace=*/0);
+  } else {
+    auto value_rep = SemIR::ValueRepr::ForType(sem_ir(), binding.type_id);
+    switch (value_rep.kind) {
+      case SemIR::ValueRepr::Unknown:
+      case SemIR::ValueRepr::Dependent:
+        CARBON_FATAL("Unexpected incomplete or dependent global binding: {0}",
+                     binding);
+      case SemIR::ValueRepr::None:
+        global_bindings_.Insert(binding_inst_id, nullptr);
+        return nullptr;
+      case SemIR::ValueRepr::Copy:
+        type = GetType(value_rep.type_id);
+        break;
+      case SemIR::ValueRepr::Pointer:
+        type = GetType(sem_ir().GetPointeeType(value_rep.type_id));
+        break;
+      case SemIR::ValueRepr::Custom:
+        CARBON_FATAL("TODO: Support global binding with custom value repr");
+    }
+  }
+
+  auto mangled_name =
+      mangler_.MangleGlobalBinding(binding.entity_name_id, binding_inst_id);
+  auto linkage = llvm::GlobalVariable::ExternalLinkage;
+  if (mangled_name.empty()) {
+    // If the variable doesn't have an externally-visible name, demote it to
+    // internal linkage and invent a plausible name that shouldn't collide with
+    // any of our real manglings.
+    linkage = llvm::GlobalVariable::InternalLinkage;
+    if (inst_namer_) {
+      mangled_name =
+          ("let.anon" + inst_namer_->GetUnscopedNameFor(binding_inst_id)).str();
+    }
+  }
+
+  auto* global_var = new llvm::GlobalVariable(
+      llvm_module(), type, /*isConstant=*/false, linkage,
+      /*Initializer=*/nullptr, mangled_name);
+  global_bindings_.Insert(binding_inst_id, global_var);
+  return global_var;
+}
+
 auto FileContext::GetLocForDI(SemIR::InstId inst_id) -> Context::LocForDI {
   auto abs_node_ref = GetAbsoluteNodeRef(sem_ir_, SemIR::LocId(inst_id)).back();
   return context().GetLocForDI(abs_node_ref);

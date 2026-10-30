@@ -458,10 +458,7 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc19_29.1: ref %Y = temporary @__global_init.%.loc19_29.1, @__global_init.%.loc19_29.2
-// CHECK:STDOUT:   %.loc19_29.2: %Y = acquire_value %.loc19_29.1
 // CHECK:STDOUT:   %Y.ref: type = name_ref Y, %Y.decl [concrete = constants.%Y]
-// CHECK:STDOUT:   %n: %Y = wrapper_binding n, %.loc19_29.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.7ab = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
@@ -487,6 +484,9 @@ let n: {.x: ()} = {.x = ()} as {.x = ()};
 // CHECK:STDOUT:   %.loc19_23.3: %X = acquire_value %.loc19_23.2 [concrete = constants.%X.val]
 // CHECK:STDOUT:   %X.as.As.impl.Convert.call: init %Y to %.loc19_29.1 = call %bound_method(%.loc19_23.3)
 // CHECK:STDOUT:   %.loc19_29.2: init %Y = converted %.loc19_23.1, %X.as.As.impl.Convert.call
+// CHECK:STDOUT:   %.loc19_29.3: ref %Y = temporary %.loc19_29.1, %.loc19_29.2
+// CHECK:STDOUT:   %.loc19_29.4: %Y = acquire_value %.loc19_29.3
+// CHECK:STDOUT:   %n: %Y = wrapper_binding n, %.loc19_29.4
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

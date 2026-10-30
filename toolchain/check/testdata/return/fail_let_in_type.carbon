@@ -83,7 +83,8 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %Six.decl: %Six.type = fn_decl @Six [concrete = constants.%Six] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %x.ref: type = name_ref x, file.%x
+// CHECK:STDOUT:     %x.global_ref: type = global_ref file.%x
+// CHECK:STDOUT:     %x.ref: type = name_ref x, %x.global_ref
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc23_16.1: type = splice_block %.loc23_16.2 [concrete = type] {
@@ -97,7 +98,8 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %HalfDozen.decl: %HalfDozen.type = fn_decl @HalfDozen [concrete = constants.%HalfDozen] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %y.ref: type = name_ref y, file.%y
+// CHECK:STDOUT:     %y.global_ref: type = global_ref file.%y
+// CHECK:STDOUT:     %y.ref: type = name_ref y, %y.global_ref
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %.loc31_17.1: type = splice_block %.loc31_17.2 [concrete = type] {
@@ -111,7 +113,8 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:   %FirstPerfectNumber.decl: %FirstPerfectNumber.type = fn_decl @FirstPerfectNumber [concrete = constants.%FirstPerfectNumber] {
 // CHECK:STDOUT:     %return.patt: <error> = return_slot_pattern <error>, <error> [concrete = <error>]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %z.ref: type = name_ref z, file.%z
+// CHECK:STDOUT:     %z.global_ref: type = global_ref file.%z
+// CHECK:STDOUT:     %z.ref: type = name_ref z, %z.global_ref
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

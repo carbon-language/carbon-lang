@@ -15,6 +15,7 @@
 #include "toolchain/sem_ir/builtin_function_kind.h"
 #include "toolchain/sem_ir/expr_info.h"
 #include "toolchain/sem_ir/function.h"
+#include "toolchain/sem_ir/import_ir.h"
 #include "toolchain/sem_ir/inst.h"
 #include "toolchain/sem_ir/typed_insts.h"
 
@@ -117,7 +118,98 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
                 SemIR::WrapperBinding inst) -> void {
-  context.SetLocal(inst_id, context.GetValue(inst.value_id));
+  auto* value = context.GetValue(inst.value_id);
+  context.SetLocal(inst_id, value);
+
+  const auto& entity_name =
+      context.sem_ir().entity_names().Get(inst.entity_name_id);
+  if (!entity_name.parent_scope_id.has_value() ||
+      entity_name.name_id == SemIR::NameId::Underscore ||
+      context.sem_ir().constant_values().Get(inst_id).is_constant()) {
+    return;
+  }
+
+  auto& file_context = context.GetFileContext(&context.sem_ir());
+  auto* global_var = file_context.GetOrCreateGlobalBinding(inst_id);
+  if (!global_var) {
+    return;
+  }
+  global_var->setInitializer(
+      llvm::Constant::getNullValue(global_var->getValueType()));
+
+  if (SemIR::IsRefCategory(SemIR::GetExprCategory(context.sem_ir(), inst_id))) {
+    auto* store = context.builder().CreateStore(value, global_var);
+    store->setAlignment(
+        context.llvm_module().getDataLayout().getPointerABIAlignment(0));
+    return;
+  }
+
+  auto value_rep = SemIR::ValueRepr::ForType(context.sem_ir(), inst.type_id);
+  switch (value_rep.kind) {
+    case SemIR::ValueRepr::Copy:
+      context.StoreObject(
+          {.file = &context.sem_ir(), .type_id = value_rep.type_id}, value,
+          global_var);
+      break;
+    case SemIR::ValueRepr::Pointer: {
+      auto pointee_type_id = context.sem_ir().GetPointeeType(value_rep.type_id);
+      context.CopyObject(
+          {.file = &context.sem_ir(), .type_id = pointee_type_id}, value,
+          global_var);
+      break;
+    }
+    default:
+      CARBON_FATAL("Unexpected value repr for global binding: {0}", inst);
+  }
+}
+
+auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
+                SemIR::GlobalRef inst) -> void {
+  auto [canonical_ir, canonical_inst_id] =
+      SemIR::GetCanonicalFileAndInstId(&context.sem_ir(), inst.inst_id);
+  auto& target_file_context = context.GetFileContext(canonical_ir);
+  auto* global_var =
+      target_file_context.GetOrCreateGlobalBinding(canonical_inst_id);
+  context.AddGlobalToCurrentFingerprint(global_var);
+
+  if (SemIR::IsRefCategory(
+          SemIR::GetExprCategory(*canonical_ir, canonical_inst_id))) {
+    auto* ptr_type = llvm::PointerType::get(context.llvm_context(),
+                                            /*AddressSpace=*/0);
+    auto* load = context.builder().CreateLoad(ptr_type, global_var);
+    load->setAlignment(
+        context.llvm_module().getDataLayout().getPointerABIAlignment(0));
+    context.SetLocal(inst_id, load);
+    return;
+  }
+
+  auto canonical_binding =
+      canonical_ir->insts().GetAs<SemIR::WrapperBinding>(canonical_inst_id);
+  auto value_rep =
+      SemIR::ValueRepr::ForType(*canonical_ir, canonical_binding.type_id);
+  switch (value_rep.kind) {
+    case SemIR::ValueRepr::Unknown:
+    case SemIR::ValueRepr::Dependent:
+      CARBON_FATAL("Unexpected incomplete or dependent global binding: {0}",
+                   canonical_binding);
+    case SemIR::ValueRepr::None:
+      context.SetLocal(
+          inst_id,
+          llvm::PoisonValue::get(context.GetType(
+              {.file = canonical_ir, .type_id = canonical_binding.type_id})));
+      break;
+    case SemIR::ValueRepr::Copy:
+      context.SetLocal(inst_id,
+                       context.LoadObject(
+                           {.file = canonical_ir, .type_id = value_rep.type_id},
+                           global_var));
+      break;
+    case SemIR::ValueRepr::Pointer:
+      context.SetLocal(inst_id, global_var);
+      break;
+    case SemIR::ValueRepr::Custom:
+      CARBON_FATAL("TODO: Support global binding with custom value repr");
+  }
 }
 
 auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
@@ -215,19 +307,7 @@ auto HandleInst(FunctionContext& context, SemIR::InstId inst_id,
     return;
   }
 
-  auto inner_inst_id = inst.value_id;
-
-  // `GetValue` will fail on package-scope value bindings because they aren't
-  // constants, and they aren't global variables, so as a workaround we
-  // peek through bindings here to directly access the bound value.
-  // TODO: Find a way of dealing with this that still works if the bound
-  // value isn't a global variable or constant either.
-  if (auto bind_name =
-          context.sem_ir().insts().TryGetAs<SemIR::AnyBinding>(inner_inst_id)) {
-    inner_inst_id = bind_name->value_id;
-  }
-
-  context.SetLocal(inst_id, context.GetValue(inner_inst_id));
+  context.SetLocal(inst_id, context.GetValue(inst.value_id));
 }
 
 auto HandleInst(FunctionContext& /*context*/, SemIR::InstId /*inst_id*/,

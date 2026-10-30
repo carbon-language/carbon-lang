@@ -44,7 +44,7 @@ import library "tuple_pattern";
 
 fn V() -> i32 { return v; }
 fn W() -> i32 { return w; }
-// TODO: Also test `x`. Right now, lowering a reference to an imported `let` asserts.
+fn X() -> i32 { return x; }
 fn Y() -> i32 { return y; }
 fn Z() -> i32 { return z; }
 
@@ -157,6 +157,10 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: @_Cv.Main = external global { i32, i32 }
 // CHECK:STDOUT: @_Cy.Main = external global i32
 // CHECK:STDOUT: @_Cz.Main = external global { i32, i32 }
+// CHECK:STDOUT: @_Cv.Main.1 = external global { i32, i32 }
+// CHECK:STDOUT: @_Cy.Main.2 = external global i32
+// CHECK:STDOUT: @_Cz.Main.3 = external global { i32, i32 }
+// CHECK:STDOUT: @_Cx.Main = external global i32
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define i32 @_CV.Main() #0 !dbg !44 {
@@ -173,17 +177,24 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CY.Main() #0 !dbg !54 {
+// CHECK:STDOUT: define i32 @_CX.Main() #0 !dbg !54 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc9_24 = load i32, ptr @_Cy.Main, align 4, !dbg !57
-// CHECK:STDOUT:   ret i32 %.loc9_24, !dbg !58
+// CHECK:STDOUT:   %x.global_ref = load i32, ptr @_Cx.Main, align 4, !dbg !57
+// CHECK:STDOUT:   ret i32 %x.global_ref, !dbg !58
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @_CZ.Main() #0 !dbg !59 {
+// CHECK:STDOUT: define i32 @_CY.Main() #0 !dbg !59 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %.loc10_24 = load i32, ptr getelementptr inbounds nuw (i8, ptr @_Cz.Main, i64 4), align 4, !dbg !62
-// CHECK:STDOUT:   ret i32 %.loc10_24, !dbg !63
+// CHECK:STDOUT:   %.loc9_24 = load i32, ptr @_Cy.Main, align 4, !dbg !62
+// CHECK:STDOUT:   ret i32 %.loc9_24, !dbg !63
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: ; Function Attrs: nounwind
+// CHECK:STDOUT: define i32 @_CZ.Main() #0 !dbg !64 {
+// CHECK:STDOUT: entry:
+// CHECK:STDOUT:   %.loc10_24 = load i32, ptr getelementptr inbounds nuw (i8, ptr @_Cz.Main, i64 4), align 4, !dbg !67
+// CHECK:STDOUT:   ret i32 %.loc10_24, !dbg !68
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; uselistorder directives
@@ -207,10 +218,13 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: !49 = distinct !DISubprogram(name: "W", linkageName: "_CW.Main", scope: null, file: !42, line: 7, type: !29, spFlags: DISPFlagDefinition, unit: !43)
 // CHECK:STDOUT: !52 = !DILocation(line: 7, column: 24, scope: !49)
 // CHECK:STDOUT: !53 = !DILocation(line: 7, column: 17, scope: !49)
-// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "Y", linkageName: "_CY.Main", scope: null, file: !42, line: 9, type: !29, spFlags: DISPFlagDefinition, unit: !43)
-// CHECK:STDOUT: !57 = !DILocation(line: 9, column: 24, scope: !54)
-// CHECK:STDOUT: !58 = !DILocation(line: 9, column: 17, scope: !54)
-// CHECK:STDOUT: !59 = distinct !DISubprogram(name: "Z", linkageName: "_CZ.Main", scope: null, file: !42, line: 10, type: !29, spFlags: DISPFlagDefinition, unit: !43)
-// CHECK:STDOUT: !62 = !DILocation(line: 10, column: 24, scope: !59)
-// CHECK:STDOUT: !63 = !DILocation(line: 10, column: 17, scope: !59)
+// CHECK:STDOUT: !54 = distinct !DISubprogram(name: "X", linkageName: "_CX.Main", scope: null, file: !42, line: 8, type: !29, spFlags: DISPFlagDefinition, unit: !43)
+// CHECK:STDOUT: !57 = !DILocation(line: 8, column: 24, scope: !54)
+// CHECK:STDOUT: !58 = !DILocation(line: 8, column: 17, scope: !54)
+// CHECK:STDOUT: !59 = distinct !DISubprogram(name: "Y", linkageName: "_CY.Main", scope: null, file: !42, line: 9, type: !29, spFlags: DISPFlagDefinition, unit: !43)
+// CHECK:STDOUT: !62 = !DILocation(line: 9, column: 24, scope: !59)
+// CHECK:STDOUT: !63 = !DILocation(line: 9, column: 17, scope: !59)
+// CHECK:STDOUT: !64 = distinct !DISubprogram(name: "Z", linkageName: "_CZ.Main", scope: null, file: !42, line: 10, type: !29, spFlags: DISPFlagDefinition, unit: !43)
+// CHECK:STDOUT: !67 = !DILocation(line: 10, column: 24, scope: !64)
+// CHECK:STDOUT: !68 = !DILocation(line: 10, column: 17, scope: !64)
 // CHECK:STDOUT:

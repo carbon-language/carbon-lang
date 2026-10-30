@@ -329,28 +329,40 @@ auto Mangler::MangleSpecificId(llvm::raw_ostream& os,
 }
 
 auto Mangler::MangleGlobalVariable(SemIR::InstId pattern_id) -> std::string {
+  if (const auto* clang_decl = sem_ir().clang_decls().Lookup(pattern_id)) {
+    CARBON_CHECK(!clang_decl->is_imported, "Mangling a C++ variable");
+  }
+
   // Use the name of the first binding in the variable as its mangled name.
   auto var_name_id =
       SemIR::GetFirstBindingNameFromPatternId(sem_ir(), pattern_id);
-  if (!var_name_id.has_value()) {
+  return MangleGlobalBinding(var_name_id, pattern_id);
+}
+
+auto Mangler::MangleGlobalBinding(SemIR::EntityNameId entity_name_id,
+                                  SemIR::InstId fingerprint_inst_id)
+    -> std::string {
+  if (!entity_name_id.has_value()) {
     return std::string();
   }
 
-  if (const auto* clang_decl = sem_ir().clang_decls().Lookup(pattern_id)) {
-    CARBON_CHECK(!clang_decl->is_imported, "Mangling a C++ variable");
+  const auto& entity_name = sem_ir().entity_names().Get(entity_name_id);
+  if (!entity_name.name_id.has_value() ||
+      entity_name.name_id == SemIR::NameId::Underscore ||
+      !entity_name.parent_scope_id.has_value()) {
+    return std::string();
   }
 
   RawStringOstream os;
   os << "_C";
 
-  auto var_name = sem_ir().entity_names().Get(var_name_id);
-  MangleNameId(os, var_name.name_id);
-  MangleInverseQualifiedNameScope(os, var_name.parent_scope_id);
+  MangleNameId(os, entity_name.name_id);
+  MangleInverseQualifiedNameScope(os, entity_name.parent_scope_id);
 
-  if (sem_ir().name_scopes().IsPrivateToLibrary(var_name.name_id,
-                                                var_name.parent_scope_id)) {
+  if (sem_ir().name_scopes().IsPrivateToLibrary(entity_name.name_id,
+                                                entity_name.parent_scope_id)) {
     os << ".";
-    MangleFingerprint(os, &sem_ir(), pattern_id);
+    MangleFingerprint(os, &sem_ir(), fingerprint_inst_id);
   }
   return os.TakeStr();
 }

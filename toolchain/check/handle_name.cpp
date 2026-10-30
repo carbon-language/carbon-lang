@@ -110,6 +110,9 @@ static auto GetIdentifierAsNameId(
 static auto HandleNameAsExpr(Context& context, Parse::NodeId node_id,
                              SemIR::NameId name_id) -> SemIR::InstId {
   auto result = LookupUnqualifiedName(context, node_id, name_id);
+  if (!TryGetLookupResultInCurrentScope(context, node_id, name_id, result)) {
+    return SemIR::ErrorInst::InstId;
+  }
   return BuildNameRef(context, node_id, name_id,
                       result.scope_result.target_inst_id(), result.specific_id);
 }

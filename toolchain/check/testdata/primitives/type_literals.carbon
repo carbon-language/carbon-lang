@@ -545,13 +545,8 @@ var test_str: str = ();
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %impl.elem0: %.929 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
-// CHECK:STDOUT:   %bound_method: <bound method> = bound_method @__global_init.%.loc5, %impl.elem0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %char = call %bound_method(@__global_init.%.loc5) [concrete = constants.%int_99]
-// CHECK:STDOUT:   %.loc5_23.1: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_99]
-// CHECK:STDOUT:   %.loc5_23.2: %char = converted @__global_init.%.loc5, %.loc5_23.1 [concrete = constants.%int_99]
 // CHECK:STDOUT:   %char: type = type_literal constants.%char [concrete = constants.%char]
-// CHECK:STDOUT:   %test_char: %char = wrapper_binding test_char, %.loc5_23.2
+// CHECK:STDOUT:   %test_char: %char = wrapper_binding test_char, @__global_init.%.loc5_23.3
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %test_char.patt: %pattern_type.2ff = value_binding_pattern test_char [concrete = constants.%test_char.patt]
 // CHECK:STDOUT:   }
@@ -559,7 +554,12 @@ var test_str: str = ();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc5: Core.CharLiteral = char_value U+0063 [concrete = constants.%.b9b]
+// CHECK:STDOUT:   %.loc5_23.1: Core.CharLiteral = char_value U+0063 [concrete = constants.%.b9b]
+// CHECK:STDOUT:   %impl.elem0: %.929 = impl_witness_access constants.%ImplicitAs.impl_witness, element0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert]
+// CHECK:STDOUT:   %bound_method: <bound method> = bound_method %.loc5_23.1, %impl.elem0 [concrete = constants.%Core.CharLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %Core.CharLiteral.as.ImplicitAs.impl.Convert.call: init %char = call %bound_method(%.loc5_23.1) [concrete = constants.%int_99]
+// CHECK:STDOUT:   %.loc5_23.2: %char = value_of_initializer %Core.CharLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_99]
+// CHECK:STDOUT:   %.loc5_23.3: %char = converted %.loc5_23.1, %.loc5_23.2 [concrete = constants.%int_99]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

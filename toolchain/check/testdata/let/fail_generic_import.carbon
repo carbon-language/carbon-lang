@@ -97,7 +97,10 @@ let a: T = 0;
 // CHECK:STDOUT:   %Implicit.import = import Implicit
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %T.ref: type = name_ref T, imports.%Implicit.T
+// CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
+// CHECK:STDOUT:     %T.global_ref: type = global_ref imports.%Implicit.T
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.global_ref
+// CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a: <error> = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: <error> = value_binding_pattern a [concrete = <error>]

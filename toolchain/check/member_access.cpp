@@ -327,6 +327,10 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
+  if (!TryGetLookupResultInCurrentScope(context, loc_id, name_id, result)) {
+    return SemIR::ErrorInst::InstId;
+  }
+
   // TODO: Find a way to use `WrapInstForSpecific` here.
   auto type_id =
       SemIR::GetTypeOfInstInSpecific(context.sem_ir(), result.specific_id,

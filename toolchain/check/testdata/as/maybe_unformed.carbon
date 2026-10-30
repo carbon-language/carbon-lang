@@ -155,7 +155,8 @@ fn Use() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.d77 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.db8 = name_ref ptr, file.%ptr.loc7_8
+// CHECK:STDOUT:   %ptr.global_ref: %ptr.db8 = global_ref file.%ptr.loc7_8
+// CHECK:STDOUT:   %ptr.ref: %ptr.db8 = name_ref ptr, %ptr.global_ref
 // CHECK:STDOUT:   %Core.ref.loc13_49: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %MaybeUnformed.ref.loc13_53: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
 // CHECK:STDOUT:   %X.ref.loc13_68: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -254,7 +255,8 @@ fn Use() {
 // CHECK:STDOUT:     %i.patt: %pattern_type.55d = ref_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.55d = var_pattern %i.patt [concrete = constants.%i.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %value.ref: %X = name_ref value, file.%value
+// CHECK:STDOUT:   %value.global_ref: %X = global_ref @__global_init.%value
+// CHECK:STDOUT:   %value.ref: %X = name_ref value, %value.global_ref
 // CHECK:STDOUT:   %Core.ref.loc19_50: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:   %MaybeUnformed.ref.loc19_54: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
 // CHECK:STDOUT:   %X.ref.loc19_69: type = name_ref X, file.%X.decl [concrete = constants.%X]
@@ -314,7 +316,8 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Use() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %value.ref: %MaybeUnformed.67f = name_ref value, file.%value
+// CHECK:STDOUT:   %value.global_ref: %MaybeUnformed.67f = global_ref @__global_init.%value
+// CHECK:STDOUT:   %value.ref: %MaybeUnformed.67f = name_ref value, %value.global_ref
 // CHECK:STDOUT:   %X.ref.loc13_37: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %.loc13_34.1: %X = as_compatible %value.ref
 // CHECK:STDOUT:   %.loc13_34.2: %X = converted %value.ref, %.loc13_34.1
@@ -336,7 +339,8 @@ fn Use() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.990 = value_binding_pattern a [concrete = constants.%a.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %ptr.ref: %ptr.6d8 = name_ref ptr, file.%ptr.loc9_8
+// CHECK:STDOUT:   %ptr.global_ref: %ptr.6d8 = global_ref file.%ptr.loc9_8
+// CHECK:STDOUT:   %ptr.ref: %ptr.6d8 = name_ref ptr, %ptr.global_ref
 // CHECK:STDOUT:   %X.ref.loc15_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %ptr.loc15_37: type = ptr_type %X.ref.loc15_36 [concrete = constants.%ptr.db8]
 // CHECK:STDOUT:   %.loc15_33.1: %ptr.db8 = as_compatible %ptr.ref

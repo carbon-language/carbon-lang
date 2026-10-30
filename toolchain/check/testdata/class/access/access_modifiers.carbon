@@ -312,6 +312,11 @@ class A {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
+// CHECK:STDOUT: fn @__global_init() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_protected_field_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -460,7 +465,6 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, @__global_init.%x.ref
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.d94 = value_binding_pattern x [concrete = constants.%x.patt.ea2]
 // CHECK:STDOUT:   }
@@ -468,8 +472,11 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A]
-// CHECK:STDOUT:   %x.ref: %i32 = name_ref x, @A.%x
+// CHECK:STDOUT:   %x.global_ref: %i32 = global_ref @A.%x
+// CHECK:STDOUT:   %x.ref: %i32 = name_ref x, %x.global_ref
+// CHECK:STDOUT:   %x: %i32 = wrapper_binding x, %x.ref
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -500,6 +507,7 @@ class A {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %A.ref.loc12: type = name_ref A, file.%A.decl [concrete = constants.%A]
 // CHECK:STDOUT:   %x.ref: <error> = name_ref x, <error> [concrete = <error>]
 // CHECK:STDOUT:   %A.ref.loc16: type = name_ref A, file.%A.decl [concrete = constants.%A]

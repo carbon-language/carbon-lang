@@ -1186,6 +1186,28 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddEntityNameAndMaybePush(inst.named_constraint_id, ".type");
       return;
     }
+    case CARBON_KIND(GlobalRef inst): {
+      EntityNameId entity_name_id = EntityNameId::None;
+      CARBON_KIND_SWITCH(sem_ir().insts().Get(inst.inst_id)) {
+        case CARBON_KIND_ANY(AnyBinding, binding):
+          entity_name_id = binding.entity_name_id;
+          break;
+        case CARBON_KIND_ANY(AnyImportRef, import_ref):
+          entity_name_id = import_ref.entity_name_id;
+          break;
+        case CARBON_KIND(ExportDecl export_decl):
+          entity_name_id = export_decl.entity_name_id;
+          break;
+        default:
+          break;
+      }
+      if (entity_name_id.has_value()) {
+        AddInstEntityNameId(entity_name_id, ".global_ref");
+      } else {
+        AddInstName("global_ref");
+      }
+      return;
+    }
     case CARBON_KIND(ImplDecl inst): {
       // `impl` declarations aren't named because they aren't added to any
       // namespace, and so aren't referenced directly.
