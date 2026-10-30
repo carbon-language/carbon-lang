@@ -21,11 +21,24 @@ class N.C {
   class D {}
 }
 
-// CHECK:STDERR: fail_todo_reenter_class_scope.carbon:[[@LINE+6]]:11-12: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_class_scope.carbon:[[@LINE+19]]:11
+// CHECK:STDERR: ->     │ impl N.C.(as Z) {
+// CHECK:STDERR:        ·           ━┳
+// CHECK:STDERR:        ·            ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_class_scope.carbon:[[@LINE+4]]:11-12: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_class_scope.carbon:[[@LINE+13]]:11
+// CHECK:STDERR: ->     │ impl N.C.(as Z) {
+// CHECK:STDERR:        ·           ━┳
+// CHECK:STDERR:        ·            ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·               ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_class_scope.carbon:[[@LINE+2]]:17: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_class_scope.carbon:[[@LINE+6]]:17
+// CHECK:STDERR: ->     │ impl N.C.(as Z) {
+// CHECK:STDERR:        ·                 ┳
+// CHECK:STDERR:        ·                 ┗━━┫ error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl N.C.(as Z) {
   fn ZF() {
@@ -45,13 +58,31 @@ class N.C {
   class D {}
 }
 
-// CHECK:STDERR: fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+8]]:11-14: error: name `Self` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+26]]:11
+// CHECK:STDERR: ->     │ impl N.C.(Self as Z) {
+// CHECK:STDERR:        ·           ━━┳━
+// CHECK:STDERR:        ·             ┗━━┫ error: name `Self` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+6]]:19: error: name `Z` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+20]]:19
+// CHECK:STDERR: ->     │ impl N.C.(Self as Z) {
+// CHECK:STDERR:        ·                   ┳
+// CHECK:STDERR:        ·                   ┗━━┫ error: name `Z` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+4]]:22: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+14]]:22
+// CHECK:STDERR: ->     │ impl N.C.(Self as Z) {
+// CHECK:STDERR:        ·                      ┳
+// CHECK:STDERR:        ·                      ┗━━┫ error: expected `as` in `impl` declaration
+// CHECK:STDERR:        ·                         ┃        [ImplExpectedAs]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+2]]:1-22: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_class_scope_explicit_self.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl N.C.(Self as Z) {
+// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·               ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl N.C.(Self as Z) {
   fn ZF() {
@@ -71,13 +102,31 @@ class N.C {
   class D {}
 }
 
-// CHECK:STDERR: fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+8]]:11: error: name `D` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+26]]:11
+// CHECK:STDERR: ->     │ impl N.C.(D as Z) {
+// CHECK:STDERR:        ·           ┳
+// CHECK:STDERR:        ·           ┗━━┫ error: name `D` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+6]]:16: error: name `Z` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+20]]:16
+// CHECK:STDERR: ->     │ impl N.C.(D as Z) {
+// CHECK:STDERR:        ·                ┳
+// CHECK:STDERR:        ·                ┗━━┫ error: name `Z` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+4]]:19: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+14]]:19
+// CHECK:STDERR: ->     │ impl N.C.(D as Z) {
+// CHECK:STDERR:        ·                   ┳
+// CHECK:STDERR:        ·                   ┗━━┫ error: expected `as` in `impl` declaration
+// CHECK:STDERR:        ·                      ┃        [ImplExpectedAs]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+2]]:1-19: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_class_scope_unrelated_self.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl N.C.(D as Z) {
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·             ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl N.C.(D as Z) {
   fn ZF() {
@@ -95,13 +144,30 @@ class N.C {}
 class N.D {}
 
 // The path outside the parens must point to a class.
-// CHECK:STDERR: fail_todo_reenter_namespace_scope.carbon:[[@LINE+8]]:9: error: name `C` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_namespace_scope.carbon:[[@LINE+25]]:9
+// CHECK:STDERR: ->     │ impl N.(C as Z) {
+// CHECK:STDERR:        ·         ┳
+// CHECK:STDERR:        ·         ┗━━┫ error: name `C` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_namespace_scope.carbon:[[@LINE+6]]:14: error: name `Z` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_namespace_scope.carbon:[[@LINE+19]]:14
+// CHECK:STDERR: ->     │ impl N.(C as Z) {
+// CHECK:STDERR:        ·              ┳
+// CHECK:STDERR:        ·              ┗━━┫ error: name `Z` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_namespace_scope.carbon:[[@LINE+4]]:17: error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_namespace_scope.carbon:[[@LINE+13]]:17
+// CHECK:STDERR: ->     │ impl N.(C as Z) {
+// CHECK:STDERR:        ·                 ┳
+// CHECK:STDERR:        ·                 ┗━━┫ error: expected `as` in `impl` declaration [ImplExpectedAs]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_reenter_namespace_scope.carbon:[[@LINE+2]]:1-17: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_reenter_namespace_scope.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl N.(C as Z) {
+// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·            ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl N.(C as Z) {
   fn ZF() {

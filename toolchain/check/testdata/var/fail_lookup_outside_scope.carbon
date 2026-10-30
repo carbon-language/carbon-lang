@@ -16,6 +16,10 @@ fn Main() {
   var unused x: ();
 }
 
-// CHECK:STDERR: fail_basic.carbon:[[@LINE+2]]:13: error: name `x` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_basic.carbon:[[@LINE+6]]:13
+// CHECK:STDERR: ->     │ var y: () = x;
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ error: name `x` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var y: () = x;

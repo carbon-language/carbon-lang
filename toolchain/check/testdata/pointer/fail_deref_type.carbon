@@ -12,11 +12,22 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_type.carbon
 
-// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+3]]:8: error: cannot dereference operand of non-pointer type `type` [DerefOfNonPointer]
-// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+2]]:8: note: to form a pointer type, write the `*` after the pointee type [DerefOfType]
+// CHECK:STDERR:        ╭─┤ fail_deref_type.carbon:[[@LINE+9]]:8
+// CHECK:STDERR: ->     │ var p: *i32;
+// CHECK:STDERR:        ·        ┳
+// CHECK:STDERR:        ·        ┗━━┫ error: cannot dereference operand of non-pointer type `type`
+// CHECK:STDERR:        ·        │  ┃        [DerefOfNonPointer]
+// CHECK:STDERR:        ·        ╰────┤ to form a pointer type, write the `*` after the pointee type
+// CHECK:STDERR:        ·             │ [DerefOfType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var p: *i32;
-// CHECK:STDERR: fail_deref_type.carbon:[[@LINE+2]]:12-13: error: cannot apply `->` operator to non-pointer type `type` [ArrowOperatorOfNonPointer]
+// CHECK:STDERR:        ╭─┤ fail_deref_type.carbon:[[@LINE+7]]:12
+// CHECK:STDERR: ->     │ var p2: i32->foo;
+// CHECK:STDERR:        ·            ━┳
+// CHECK:STDERR:        ·             ┗━━┫ error: cannot apply `->` operator to non-pointer type `type`
+// CHECK:STDERR:        ·                ┃        [ArrowOperatorOfNonPointer]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var p2: i32->foo;
 
@@ -48,8 +59,8 @@ var p2: i32->foo;
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %p.var: ref <error> = var_storage %p.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %i32.loc18: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc18: ref <error> = deref %i32.loc18 [concrete = <error>]
+// CHECK:STDOUT:     %i32.loc24: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc24: ref <error> = deref %i32.loc24 [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: <error> = wrapper_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -58,8 +69,8 @@ var p2: i32->foo;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p2.var: ref <error> = var_storage %p2.var_patt [concrete = <error>]
 // CHECK:STDOUT:   %.2: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:     %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc21: ref <error> = deref %i32.loc21 [concrete = <error>]
+// CHECK:STDOUT:     %i32.loc32: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc32: ref <error> = deref %i32.loc32 [concrete = <error>]
 // CHECK:STDOUT:     %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p2: <error> = wrapper_binding p2, <error> [concrete = <error>]

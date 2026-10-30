@@ -56,8 +56,17 @@ library "[[@TEST_NAME]]";
 fn F(generic _: type);
 
 fn G() {
-  // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE+3]]:3: error: use of undefined generic function [MissingGenericFunctionDefinition]
-  // CHECK:STDERR: fail_function_generic_undefined.carbon:[[@LINE-4]]:1-22: note: generic function declared here [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:        ╭─┤ fail_function_generic_undefined.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn F(generic _: type);
+  // CHECK:STDERR:        · ───────────┬──────────
+  // CHECK:STDERR:        ·            ╰──┤ generic function declared here
+  // CHECK:STDERR:        ·               │ [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F({});
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: use of undefined generic function
+  // CHECK:STDERR:        ·      ┃        [MissingGenericFunctionDefinition]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F({});
 }
@@ -75,7 +84,12 @@ fn G[_: type]() {}
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+2]]:7-11: error: expected identifier in field declaration [FieldNamedUnderscore]
+  // CHECK:STDERR:        ╭─┤ fail_class.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   var _: ();
+  // CHECK:STDERR:        ·       ━━┳━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected identifier in field declaration
+  // CHECK:STDERR:        ·            ┃        [FieldNamedUnderscore]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var _: ();
 }
@@ -84,11 +98,25 @@ class C {
 
 fn F() -> {} {
   let _: {} = {};
-  // CHECK:STDERR: fail_use.carbon:[[@LINE+6]]:10: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_use.carbon:[[@LINE+20]]:10
+  // CHECK:STDERR: ->     │   return _;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_use.carbon:[[@LINE+4]]:10: error: `return` statements must end with a `;` [ExpectedStatementSemi]
+  // CHECK:STDERR:        ╭─┤ fail_use.carbon:[[@LINE+14]]:10
+  // CHECK:STDERR: ->     │   return _;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: `return` statements must end with a `;`
+  // CHECK:STDERR:        ·             ┃        [ExpectedStatementSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_use.carbon:[[@LINE+2]]:10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_use.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   return _;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+  // CHECK:STDERR:        ·             ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return _;
 }
@@ -420,8 +448,8 @@ fn F() -> {} {
 // CHECK:STDOUT: fn @G() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %.loc10_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc10_7: type = converted %.loc10_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:   %.loc19_6: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc19_7: type = converted %.loc19_6, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:   %F.specific_fn: <specific function> = specific_function %F.ref, @F(constants.%empty_struct_type) [concrete = constants.%F.specific_fn]
 // CHECK:STDOUT:   %F.call: init %empty_tuple.type = call %F.specific_fn()
 // CHECK:STDOUT:   return
@@ -543,9 +571,9 @@ fn F() -> {} {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %field_decl: %C.elem = field_decl _, element0, %.loc7_11.2 in [concrete] {
-// CHECK:STDOUT:     %.loc7_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc7_11.2: type = converted %.loc7_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %field_decl: %C.elem = field_decl _, element0, %.loc12_11.2 in [concrete] {
+// CHECK:STDOUT:     %.loc12_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc12_11.2: type = converted %.loc12_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type._ [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type

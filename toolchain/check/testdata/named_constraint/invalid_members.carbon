@@ -36,9 +36,18 @@ constraint E {
 // --- fail_todo_invalid_var_template.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_invalid_var_template.carbon:[[@LINE+4]]:1-8: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╭─┤ fail_todo_invalid_var_template.carbon:[[@LINE+13]]:1
+// CHECK:STDERR: ->     │ template constraint E {
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_invalid_var_template.carbon:[[@LINE+2]]:1-8: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_invalid_var_template.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ template constraint E {
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·        ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 template constraint E {
   // TODO: Any var in a constraint is an error.
@@ -56,9 +65,18 @@ constraint E {
 // --- fail_todo_invalid_let_template.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_invalid_let_template.carbon:[[@LINE+4]]:1-8: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╭─┤ fail_todo_invalid_let_template.carbon:[[@LINE+13]]:1
+// CHECK:STDERR: ->     │ template constraint E {
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_invalid_let_template.carbon:[[@LINE+2]]:1-8: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_invalid_let_template.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ template constraint E {
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·        ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 template constraint E {
   // TODO: Any let in a constraint is an error.

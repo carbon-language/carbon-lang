@@ -10,7 +10,13 @@
 
 namespace Foo;
 
-// CHECK:STDERR: fail_arrow.carbon:[[@LINE+2]]:10-11: error: `class` declarations must either end with a `;` or have a `{ ... }` block for a definition [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR:        ╭─┤ fail_arrow.carbon:[[@LINE+8]]:10
+// CHECK:STDERR: ->     │ class Foo->Bar {}
+// CHECK:STDERR:        ·          ┳━
+// CHECK:STDERR:        ·          ┗━━┫ error: `class` declarations must either end with a `;` or have a
+// CHECK:STDERR:        ·             ┃        `{ ... }` block for a definition
+// CHECK:STDERR:        ·             ┃        [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class Foo->Bar {}
 

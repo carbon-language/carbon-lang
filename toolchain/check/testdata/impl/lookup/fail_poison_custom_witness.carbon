@@ -56,8 +56,20 @@ struct A {
 };
 ''';
 
-// CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE+3]]:1-9: error: found `impl` for Cpp.A as SubobjectDestroy, which has a custom witness [PoisonedImplLookupCustomResult]
-// CHECK:STDERR: destroy.carbon:8:1-45: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
+// CHECK:STDERR:        ╭─┤ fail_poison_custom_witness.carbon:[[@LINE+15]]:1
+// CHECK:STDERR: ->     │ class B {
+// CHECK:STDERR:        · ┳━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: found `impl` for Cpp.A as SubobjectDestroy, which has a custom
+// CHECK:STDERR:        ·    ┃        witness
+// CHECK:STDERR:        ·    ┃        [PoisonedImplLookupCustomResult]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ destroy.carbon
+// CHECK:STDERR:        │ impl forall [T: type] T as SubobjectDestroy {
+// CHECK:STDERR:        · ┬────────────────────────────────────────────
+// CHECK:STDERR:        · ╰──┤ the use tried to select the `impl` here, but a custom witness was already
+// CHECK:STDERR:        ·    │ chosen
+// CHECK:STDERR:        ·    │ [PoisonedImplLookupCustomResultNoteBadImpl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class B {
   extend base: Cpp.A;

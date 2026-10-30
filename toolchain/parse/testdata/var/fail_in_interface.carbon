@@ -9,19 +9,37 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/fail_in_interface.carbon
 
 interface I {
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:7-9: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR:        ╭─┤ fail_in_interface.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   let var a: ();
+  // CHECK:STDERR:        ·       ━┳━
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected identifier in associated constant declaration
+  // CHECK:STDERR:        ·           ┃        [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let var a: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:3-5: error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR:        ╭─┤ fail_in_interface.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   var b: ();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var b: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:7-9: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR:        ╭─┤ fail_in_interface.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   let var c: ();
+  // CHECK:STDERR:        ·       ━┳━
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected identifier in associated constant declaration
+  // CHECK:STDERR:        ·           ┃        [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let var c: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:3-5: error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR:        ╭─┤ fail_in_interface.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   var d: ();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: unrecognized declaration introducer [UnrecognizedDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var d: ();
 }

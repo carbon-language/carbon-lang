@@ -10,7 +10,12 @@
 
 fn f() -> i32 {
   match (3) {
-    // CHECK:STDERR: fail_missing_default_arrow.carbon:[[@LINE+2]]:13: error: expected `=>` introducing statement block [ExpectedMatchCaseArrow]
+    // CHECK:STDERR:        ╭─┤ fail_missing_default_arrow.carbon:[[@LINE+7]]:13
+    // CHECK:STDERR: ->     │     default { return 1; }
+    // CHECK:STDERR:        ·             ┳
+    // CHECK:STDERR:        ·             ┗━━┫ error: expected `=>` introducing statement block
+    // CHECK:STDERR:        ·                ┃        [ExpectedMatchCaseArrow]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     default { return 1; }
   }

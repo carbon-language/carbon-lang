@@ -54,8 +54,17 @@ library "[[@TEST_NAME]]";
 import Cpp library "int_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_int_param_overflow_max.carbon:[[@LINE+3]]:11-21: error: integer value 2147483648 too large for type `i32` [IntTooLargeForType]
-  // CHECK:STDERR: ./int_param.h:2:14: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_import_int_param_overflow_max.carbon:[[@LINE+12]]:11
+  // CHECK:STDERR: ->     │   Cpp.foo(0x8000_0000);
+  // CHECK:STDERR:        ·           ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: integer value 2147483648 too large for type `i32`
+  // CHECK:STDERR:        ·                   ┃        [IntTooLargeForType]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./int_param.h
+  // CHECK:STDERR:        │ auto foo(int a) -> void;
+  // CHECK:STDERR:        ·              ┬
+  // CHECK:STDERR:        ·              ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(0x8000_0000);
 }
@@ -79,8 +88,17 @@ library "[[@TEST_NAME]]";
 import Cpp library "int_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_int_param_overflow_min.carbon:[[@LINE+3]]:11-22: error: integer value -2147483649 too large for type `i32` [IntTooLargeForType]
-  // CHECK:STDERR: ./int_param.h:2:14: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_import_int_param_overflow_min.carbon:[[@LINE+12]]:11
+  // CHECK:STDERR: ->     │   Cpp.foo(-0x8000_0001);
+  // CHECK:STDERR:        ·           ━━━━━━┳━━━━━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: integer value -2147483649 too large for type `i32`
+  // CHECK:STDERR:        ·                    ┃        [IntTooLargeForType]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./int_param.h
+  // CHECK:STDERR:        │ auto foo(int a) -> void;
+  // CHECK:STDERR:        ·              ┬
+  // CHECK:STDERR:        ·              ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(-0x8000_0001);
 }
@@ -154,15 +172,35 @@ import Cpp library "unsigned_int_param.h";
 fn F() {
   Cpp.foo(0);
 
-  // CHECK:STDERR: fail_import_unsigned_int_param_overflow.carbon:[[@LINE+3]]:11-12: error: negative integer value -1 converted to unsigned type `u32` [NegativeIntInUnsignedType]
-  // CHECK:STDERR: ./unsigned_int_param.h:2:23: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_import_unsigned_int_param_overflow.carbon:[[@LINE+13]]:11
+  // CHECK:STDERR: ->     │   Cpp.foo(-1);
+  // CHECK:STDERR:        ·           ┳━
+  // CHECK:STDERR:        ·           ┗━━┫ error: negative integer value -1 converted to unsigned type `u32`
+  // CHECK:STDERR:        ·              ┃        [NegativeIntInUnsignedType]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./unsigned_int_param.h
+  // CHECK:STDERR:        │ auto foo(unsigned int a) -> void;
+  // CHECK:STDERR:        ·                       ┬
+  // CHECK:STDERR:        ·                       ╰──┤ initializing function parameter
+  // CHECK:STDERR:        ·                          │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(-1);
 
   Cpp.foo(0x0_FFFF_FFFF);
 
-  // CHECK:STDERR: fail_import_unsigned_int_param_overflow.carbon:[[@LINE+3]]:11-23: error: integer value 4294967296 too large for type `u32` [IntTooLargeForType]
-  // CHECK:STDERR: ./unsigned_int_param.h:2:23: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_import_unsigned_int_param_overflow.carbon:[[@LINE+13]]:11
+  // CHECK:STDERR: ->     │   Cpp.foo(0x1_0000_0000);
+  // CHECK:STDERR:        ·           ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: integer value 4294967296 too large for type `u32`
+  // CHECK:STDERR:        ·                    ┃        [IntTooLargeForType]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./unsigned_int_param.h
+  // CHECK:STDERR:        │ auto foo(unsigned int a) -> void;
+  // CHECK:STDERR:        ·                       ┬
+  // CHECK:STDERR:        ·                       ╰──┤ initializing function parameter
+  // CHECK:STDERR:        ·                          │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(0x1_0000_0000);
 }

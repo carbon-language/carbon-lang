@@ -19,7 +19,13 @@ interface Z {}
 // not able to provide any witness for an impl lookup on that facet.
 constraint N;
 fn F(generic T: N) {
-  // CHECK:STDERR: fail_incomplete_constraint_in_impl_lookup.carbon:[[@LINE+2]]:3-8: error: cannot convert type `T` that implements `N` into type implementing `Z` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_constraint_in_impl_lookup.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   T as Z;
+  // CHECK:STDERR:        ·   ┳━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `T` that implements `N` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Z`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   T as Z;
 }
@@ -38,7 +44,12 @@ impl forall [T: N] T as Z {}
 class C;
 
 fn F() {
-  // CHECK:STDERR: fail_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE+2]]:3-8: error: cannot convert type `C` into type implementing `Z` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_does_not_diagnose_identify_failure_in_deduce.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   C as Z;
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: cannot convert type `C` into type implementing `Z`
+  // CHECK:STDERR:        ·         ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C as Z;
 }
@@ -72,9 +83,22 @@ fn AsZ(unused generic T: Z) {}
 
 fn F() {
   // Converting to facet type `Z` requires `Z` to be identified.
-  // CHECK:STDERR: fail_impl_lookup_target_not_identified.carbon:[[@LINE+4]]:3-9: error: facet type `Z` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR: fail_impl_lookup_target_not_identified.carbon:[[@LINE-7]]:1-13: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
-  // CHECK:STDERR: fail_impl_lookup_target_not_identified.carbon:[[@LINE-6]]:23-26: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_impl_lookup_target_not_identified.carbon:[[@LINE+17]]:3
+  // CHECK:STDERR:        │ constraint Z;
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ constraint was forward declared here
+  // CHECK:STDERR:        ·          │ [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR:        │
+  // CHECK:STDERR:        │ fn AsZ(unused generic T: Z) {}
+  // CHECK:STDERR:        ·                       ──┬─
+  // CHECK:STDERR:        ·                         ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                            │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   AsZ(());
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: facet type `Z` can not be identified
+  // CHECK:STDERR:        ·         ┃        [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AsZ(());
 }
@@ -97,12 +121,34 @@ interface Z {}
 interface X { let XZ: Z; }
 constraint W {
   require impls Z;
-  // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE+7]]:31-47: error: function returns incomplete type `W` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE-3]]:1-14: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
-  // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE-11]]:44-47: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_self.carbon:[[@LINE+29]]:31
+  // CHECK:STDERR:        │ eval fn ReturnFacet[T: type](generic U: T) -> T;
+  // CHECK:STDERR:        ·                                            ──┬─
+  // CHECK:STDERR:        ·                                              ╰──┤ return type declared here
+  // CHECK:STDERR:        ·                                                 │ [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ constraint W {
+  // CHECK:STDERR:        · ───────┬──────
+  // CHECK:STDERR:        ·        ╰──┤ constraint is currently being defined
+  // CHECK:STDERR:        ·           │ [NamedConstraintIncompleteWithinDefinition]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   require impls X where .XZ = ReturnFacet(Self);
+  // CHECK:STDERR:        ·                               ━━┳━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                                 ┗━━┫ error: function returns incomplete type `W`
+  // CHECK:STDERR:        ·                                    ┃        [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE+3]]:31-41: error: use of undefined generic function [MissingGenericFunctionDefinition]
-  // CHECK:STDERR: fail_incomplete_self.carbon:[[@LINE-14]]:1-48: note: generic function declared here [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_self.carbon:[[@LINE+12]]:31
+  // CHECK:STDERR:        │ eval fn ReturnFacet[T: type](generic U: T) -> T;
+  // CHECK:STDERR:        · ────────────────────────┬───────────────────────
+  // CHECK:STDERR:        ·                         ╰──┤ generic function declared here
+  // CHECK:STDERR:        ·                            │ [MissingGenericFunctionDefinitionHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   require impls X where .XZ = ReturnFacet(Self);
+  // CHECK:STDERR:        ·                               ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·                                    ┗━━┫ error: use of undefined generic function
+  // CHECK:STDERR:        ·                                       ┃        [MissingGenericFunctionDefinition]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   require impls X where .XZ = ReturnFacet(Self);
 }

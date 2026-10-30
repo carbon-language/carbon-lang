@@ -12,12 +12,23 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_missing_value.carbon
 
-// CHECK:STDERR: fail_missing_value.carbon:[[@LINE+2]]:11: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
+// CHECK:STDERR:        ╭─┤ fail_missing_value.carbon:[[@LINE+7]]:11
+// CHECK:STDERR: ->     │ let n: i32;
+// CHECK:STDERR:        ·           ┳
+// CHECK:STDERR:        ·           ┗━━┫ error: expected `=`; `let` declaration must have an initializer
+// CHECK:STDERR:        ·              ┃        [ExpectedInitializerAfterLet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let n: i32;
 
 fn F() {
-  // CHECK:STDERR: fail_missing_value.carbon:[[@LINE+2]]:20: error: expected `=`; `let` declaration must have an initializer [ExpectedInitializerAfterLet]
+  // CHECK:STDERR:        ╭─┤ fail_missing_value.carbon:[[@LINE+8]]:20
+  // CHECK:STDERR: ->     │   let unused n: i32;
+  // CHECK:STDERR:        ·                    ┳
+  // CHECK:STDERR:        ·                    ┗━━┫ error: expected `=`; `let` declaration must have an
+  // CHECK:STDERR:        ·                       ┃        initializer
+  // CHECK:STDERR:        ·                       ┃        [ExpectedInitializerAfterLet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused n: i32;
 }
@@ -49,7 +60,7 @@ fn F() {
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Core = imports.%Core
-// CHECK:STDOUT:     .n = <unexpected>.inst{{[0-9A-F]+}}.loc17_6
+// CHECK:STDOUT:     .n = <unexpected>.inst{{[0-9A-F]+}}.loc22_6
 // CHECK:STDOUT:     .F = %F.decl
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core

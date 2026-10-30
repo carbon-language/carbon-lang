@@ -41,7 +41,12 @@ fn G(generic _: I(.Self) where .I1 = ()) {}
 // --- fail_period_self_as_type.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_period_self_as_type.carbon:[[@LINE+2]]:16-20: error: `.Self` used in a type that is not a facet type [PeriodSelfInNonFacetType]
+// CHECK:STDERR:        ╭─┤ fail_period_self_as_type.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ interface I(T: .Self) {
+// CHECK:STDERR:        ·                ━━┳━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: `.Self` used in a type that is not a facet type
+// CHECK:STDERR:        ·                     ┃        [PeriodSelfInNonFacetType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 interface I(T: .Self) {
   fn G() -> T;
@@ -84,17 +89,32 @@ fn F2[U: I(.Self)](unused T: U*) {}
 
 fn F(generic U: I(.Self)) {
   // Caller sees the returned `.Self` type from `F()` as the full `U`.
-  // CHECK:STDERR: fail_todo_return_of_type_period_self.carbon:[[@LINE+2]]:3-10: error: type `.Self` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_type_period_self.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   U.G()->G()->G();
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: type `.Self` does not support qualified expressions
+  // CHECK:STDERR:        ·          ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   U.G()->G()->G();
   // Conversion to `type` retains access to all of `U`.
-  // CHECK:STDERR: fail_todo_return_of_type_period_self.carbon:[[@LINE+2]]:3-20: error: type `.Self` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_type_period_self.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   (U as type).G()->G()->G();
+  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: type `.Self` does not support qualified expressions
+  // CHECK:STDERR:        ·               ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (U as type).G()->G()->G();
 
   // Using the returned `.Self` as a facet value works, not just member lookup
   // on its facet type.
-  // CHECK:STDERR: fail_todo_return_of_type_period_self.carbon:[[@LINE+2]]:6-13: error: type `.Self` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_type_period_self.carbon:[[@LINE+7]]:6
+  // CHECK:STDERR: ->     │   F2(U.G()->G()->G());
+  // CHECK:STDERR:        ·      ━━━━┳━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: type `.Self` does not support qualified expressions
+  // CHECK:STDERR:        ·             ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F2(U.G()->G()->G());
 }
@@ -115,15 +135,30 @@ fn F2[U: I(.Self) & J(.Self)](unused T: U*) {}
 fn F(generic U: I(.Self) & J(.Self)) {
   // TODO: The returned value of `I1` and `J1` has type `U` which has access to
   // the methods of `I` and `J`.
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_extends_interface.carbon:[[@LINE+2]]:3-12: error: type `.Self` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_type_period_self_extends_interface.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   U.I1()->J1()->I1()->J1()->I1()->J1();
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: type `.Self` does not support qualified expressions
+  // CHECK:STDERR:        ·           ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   U.I1()->J1()->I1()->J1()->I1()->J1();
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_extends_interface.carbon:[[@LINE+2]]:3-22: error: type `.Self` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_type_period_self_extends_interface.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   (U as type).I1()->J1()->I1()->J1()->I1()->J1();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: type `.Self` does not support qualified expressions
+  // CHECK:STDERR:        ·                ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (U as type).I1()->J1()->I1()->J1()->I1()->J1();
 
   // TODO: Using the returned value of type `U` as a facet value works.
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_extends_interface.carbon:[[@LINE+2]]:6-15: error: type `.Self` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_type_period_self_extends_interface.carbon:[[@LINE+7]]:6
+  // CHECK:STDERR: ->     │   F2(U.I1()->J1()->I1()->J1()->I1()->J1());
+  // CHECK:STDERR:        ·      ━━━━━┳━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: type `.Self` does not support qualified expressions
+  // CHECK:STDERR:        ·              ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F2(U.I1()->J1()->I1()->J1()->I1()->J1());
 }
@@ -147,22 +182,40 @@ fn G(generic U: I(.Self) where .Self impls J(.Self)) {
 
   // TODO: This step should work.
   //
-  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+3]]:14-19: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+2]]:14-19: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+11]]:14
+  // CHECK:STDERR: ->     │   let u: U = U.I1();
+  // CHECK:STDERR:        ·              ┳━━━━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert expression of type `.Self` to
+  // CHECK:STDERR:        ·              │  ┃        `U`
+  // CHECK:STDERR:        ·              │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·              ╰────┤ type `.Self` does not implement interface
+  // CHECK:STDERR:        ·                   │ `Core.ImplicitAs(U)`
+  // CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let u: U = U.I1();
   // `u` is a non-type value. Can call methods with `self` through compound
   // member lookup, but can't call methods without `self`. See the
   // `compound_access_through_call_with_self_param.carbon` test for the former.
   //
-  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+2]]:6-9: error: type `<type of J>` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+7]]:6
+  // CHECK:STDERR: ->     │   u.(J.J1)();
+  // CHECK:STDERR:        ·      ━━┳━
+  // CHECK:STDERR:        ·        ┗━━┫ error: type `<type of J>` does not support qualified expressions
+  // CHECK:STDERR:        ·           ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   u.(J.J1)();
 
   // This is the same as the above, since U.I1() returns a non-type value of
   // type `U`.
   //
-  // CHECK:STDERR: fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+2]]:11-14: error: type `<type of J>` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_period_self_impls_interface.carbon:[[@LINE+7]]:11
+  // CHECK:STDERR: ->     │   U.I1().(J.J1)();
+  // CHECK:STDERR:        ·           ━┳━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: type `<type of J>` does not support qualified expressions
+  // CHECK:STDERR:        ·               ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   U.I1().(J.J1)();
 }
@@ -175,8 +228,16 @@ interface I(T: type) {
 }
 
 fn F(generic U: I(.Self)) {
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+3]]:21-25: error: cannot implicitly convert expression of type `.Self` to `U` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+2]]:21-25: note: type `.Self` does not implement interface `Core.ImplicitAs(U)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_todo_return_of_type_period_self_has_type_u.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR: ->     │   let unused a: U = U.G();
+  // CHECK:STDERR:        ·                     ┳━━━━
+  // CHECK:STDERR:        ·                     ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·                     │  ┃        `.Self` to `U`
+  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                     ╰────┤ type `.Self` does not implement interface
+  // CHECK:STDERR:        ·                          │ `Core.ImplicitAs(U)`
+  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: U = U.G();
 }
@@ -209,8 +270,19 @@ interface I(T: Core.Destroy) {}
 // TODO: Implied constraints that `.Self` impls `Core.Destroy` are satisfied by
 // the `&` expression.
 //
-// CHECK:STDERR: fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE+3]]:39-46: error: cannot convert type `.Self` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE-6]]:13-27: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_todo_period_self_parameter_constraint_satisfied_with_type_and.carbon:[[@LINE+14]]:39
+// CHECK:STDERR:        │ interface I(T: Core.Destroy) {}
+// CHECK:STDERR:        ·             ───────┬───────
+// CHECK:STDERR:        ·                    ╰──┤ initializing generic parameter `T` declared here
+// CHECK:STDERR:        ·                       │ [InitializingGenericParam]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F(unused generic U: Core.Destroy & I(.Self)) {}
+// CHECK:STDERR:        ·                                       ┳━━━━━━━
+// CHECK:STDERR:        ·                                       ┗━━┫ error: cannot convert type `.Self`
+// CHECK:STDERR:        ·                                          ┃        into type implementing
+// CHECK:STDERR:        ·                                          ┃        `Core.Destroy`
+// CHECK:STDERR:        ·                                          ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic U: Core.Destroy & I(.Self)) {}
 
@@ -271,8 +343,22 @@ interface Z {}
 // This is missing `.Self impls M` so the `final impl` is not used, through
 // deduction is attempted.
 //
-// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon:[[@LINE+3]]:53-61: error: cannot implicitly convert expression of type `T.(L.W)` to `{}` [ConversionFailure]
-// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon:[[@LINE+2]]:53-61: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs({})` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_associated_constant_as_impls_type_missing_impls_m.carbon:[[@LINE+17]]:53
+// CHECK:STDERR: ->     │ fn F(generic T: L where .W impls Z, a: T.W) -> {} { return a; }
+// CHECK:STDERR:        ·                                                     ┳━━━━━━━━
+// CHECK:STDERR:        ·                                                     ┗━━┫ error: cannot
+// CHECK:STDERR:        ·                                                     │  ┃        implicitly
+// CHECK:STDERR:        ·                                                     │  ┃        convert
+// CHECK:STDERR:        ·                                                     │  ┃        expression of
+// CHECK:STDERR:        ·                                                     │  ┃        type `T.(L.W)`
+// CHECK:STDERR:        ·                                                     │  ┃        to `{}`
+// CHECK:STDERR:        ·                                                     │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·                                                     ╰────┤ type `T.(L.W)` does
+// CHECK:STDERR:        ·                                                          │ not implement
+// CHECK:STDERR:        ·                                                          │ interface
+// CHECK:STDERR:        ·                                                          │ `Core.ImplicitAs({})`
+// CHECK:STDERR:        ·                                                          │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: L where .W impls Z, a: T.W) -> {} { return a; }
 
@@ -311,8 +397,16 @@ interface Z(T: type) {}
 // This is missing `.Self impls M` so the `final impl` is not used, through
 // deduction is attempted.
 //
-// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon:[[@LINE+3]]:60-68: error: cannot implicitly convert expression of type `T.(L.W)` to `()` [ConversionFailure]
-// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon:[[@LINE+2]]:60-68: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_type_missing_m.carbon:[[@LINE+11]]:60
+// CHECK:STDERR: ->     │ fn F(generic T: L where .Self impls Z(.W), a: T.W) -> () { return a; }
+// CHECK:STDERR:        ·                                                            ━━━━┳━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type `T.(L.W)` to `()`
+// CHECK:STDERR:        · ┃        [ConversionFailure]
+// CHECK:STDERR:        · ╭──────────────────────────────────────────────────────────────╯
+// CHECK:STDERR:        · │ type `T.(L.W)` does not implement interface `Core.ImplicitAs(())`
+// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: L where .Self impls Z(.W), a: T.W) -> () { return a; }
 
@@ -329,8 +423,16 @@ interface Z(T: L) {}
 // This is missing `.Self impls M` so the `final impl` is not used, through
 // deduction is attempted.
 //
-// CHECK:STDERR: fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon:[[@LINE+3]]:63-71: error: cannot implicitly convert expression of type `T.(L.W)` to `()` [ConversionFailure]
-// CHECK:STDERR: fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon:[[@LINE+2]]:63-71: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_period_self_in_impls_interface_as_type_missing_m.carbon:[[@LINE+11]]:63
+// CHECK:STDERR: ->     │ fn F(generic T: L where .Self impls Z(.Self), a: T.W) -> () { return a; }
+// CHECK:STDERR:        ·                                                               ━━━━┳━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type `T.(L.W)` to `()`
+// CHECK:STDERR:        · ┃        [ConversionFailure]
+// CHECK:STDERR:        · ╭─────────────────────────────────────────────────────────────────╯
+// CHECK:STDERR:        · │ type `T.(L.W)` does not implement interface `Core.ImplicitAs(())`
+// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: L where .Self impls Z(.Self), a: T.W) -> () { return a; }
 
@@ -370,8 +472,16 @@ interface Z(T: Y) {}
 // This is missing `.Self impls M` so the `final impl` is not used, through
 // deduction is attempted.
 //
-// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon:[[@LINE+3]]:75-83: error: cannot implicitly convert expression of type `T.(L.W)` to `()` [ConversionFailure]
-// CHECK:STDERR: fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon:[[@LINE+2]]:75-83: note: type `T.(L.W)` does not implement interface `Core.ImplicitAs(())` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_infinite_cycle_identifying_associated_constant_in_impls_interface_as_facet_type_missing_m.carbon:[[@LINE+11]]:75
+// CHECK:STDERR: ->     │ ...c T: L where .W impls Y and .Self impls Z(.W), a: T.W) -> () { return a; }
+// CHECK:STDERR:        ·                                                                   ━━━━┳━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type `T.(L.W)` to `()`
+// CHECK:STDERR:        · ┃        [ConversionFailure]
+// CHECK:STDERR:        · ╭─────────────────────────────────────────────────────────────────────╯
+// CHECK:STDERR:        · │ type `T.(L.W)` does not implement interface `Core.ImplicitAs(())`
+// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: L where .W impls Y and .Self impls Z(.W), a: T.W) -> () { return a; }
 
@@ -432,8 +542,16 @@ class C(U: Y, v: U.Y1.L1) {
 // This creates a bug in the toolchain since the specific is now wrong and we're
 // unable to get the concrete value of `C(T, ()).C1`.
 fn F(generic T: Y where .Y1 impls M and C(.Self, ()) impls M) -> C(T, ()).C1 {
-  // CHECK:STDERR: fail_todo_specific_resolves_final_impl_while_collecting_witnesses.carbon:[[@LINE+3]]:3-12: error: cannot implicitly convert expression of type `()` to `T.(Y.Y1).(L.L1)` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_specific_resolves_final_impl_while_collecting_witnesses.carbon:[[@LINE+2]]:3-12: note: type `()` does not implement interface `Core.ImplicitAs(T.(Y.Y1).(L.L1))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_todo_specific_resolves_final_impl_while_collecting_witnesses.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   return ();
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `()` to
+  // CHECK:STDERR:        ·   │  ┃        `T.(Y.Y1).(L.L1)`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·   ╰────┤ type `()` does not implement interface
+  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(T.(Y.Y1).(L.L1))`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return ();
 }
@@ -612,7 +730,15 @@ class C(C1: type);
 //
 // TODO: We have a witness for `L(.Self: type)` but we need a witness for
 // `L(.Self: (L(.Self: type) & M(.Self: type)))`, so this fails to convert.
-// CHECK:STDERR: fail_todo_concrete_access_witness_generic_m_in_extend_constraint_compound_access.carbon:[[@LINE+2]]:47-64: error: cannot convert type `.Self` that implements `L(.Self) & M(.Self)` into type implementing `L(.Self)` [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╭─┤ fail_todo_concrete_access_witness_generic_m_in_extend_constraint_compound_access.carbon:[[@LINE+10]]:47
+// CHECK:STDERR: ->     │ ...ric T: (L(.Self) & M(.Self)) where C(.Self.(L(.Self).W)) impls Z(.Self)) {
+// CHECK:STDERR:        ·                                         ┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                                         ┗━━┫ error: cannot convert type `.Self`
+// CHECK:STDERR:        ·                                            ┃        that implements
+// CHECK:STDERR:        ·                                            ┃        `L(.Self) & M(.Self)` into
+// CHECK:STDERR:        ·                                            ┃        type implementing `L(.Self)`
+// CHECK:STDERR:        ·                                            ┃        [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn H(generic T: (L(.Self) & M(.Self)) where C(.Self.(L(.Self).W)) impls Z(.Self)) {
   C(()) as Z(T);
@@ -640,7 +766,12 @@ class C(C1: type);
 // witness for `M(.Self: L(.Self: type))` instead, so we don't use the impl.
 // The test passes if we write `.W` as `.Self.(L(.Self).W)` instead.
 fn H(generic T: (L(.Self) where .Self impls M(.Self)) where C(.W) impls Z(.Self)) {
-  // CHECK:STDERR: fail_todo_concrete_access_witness_generic_m_in_impls_interface.carbon:[[@LINE+2]]:3-15: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_todo_concrete_access_witness_generic_m_in_impls_interface.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   C(()) as Z(T);
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: cannot convert type `C(())` into type implementing `Z(T)`
+  // CHECK:STDERR:        ·            ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C(()) as Z(T);
 }
@@ -668,7 +799,12 @@ class C(C1: type);
 // witness for `M(.Self: L(.Self: type))` instead, so we don't use the impl.
 // The test passes if we write `.W` as `.Self.(L(.Self).W)` instead.
 fn H(generic T: (L(.Self) where .Self impls GivesM(.Self)) where C(.W) impls Z(.Self)) {
-  // CHECK:STDERR: fail_todo_concrete_access_witness_generic_m_in_impls_constraint.carbon:[[@LINE+2]]:3-15: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_todo_concrete_access_witness_generic_m_in_impls_constraint.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   C(()) as Z(T);
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: cannot convert type `C(())` into type implementing `Z(T)`
+  // CHECK:STDERR:        ·            ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C(()) as Z(T);
 }
@@ -736,7 +872,12 @@ class C(C1: type);
 // witness for `M(.Self: L(.Self: type))` instead, so we don't use the impl.
 // The test passes if we write `.W` as `.Self.(L(.Self).W)` instead.
 fn H(generic T: L(.Self) where .Self impls M(.Self) and C(.W) impls Z(.Self)) {
-  // CHECK:STDERR: fail_todo_concrete_access_witness_generic_m_in_earlier_requirement.carbon:[[@LINE+2]]:3-15: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_todo_concrete_access_witness_generic_m_in_earlier_requirement.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   C(()) as Z(T);
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: cannot convert type `C(())` into type implementing `Z(T)`
+  // CHECK:STDERR:        ·            ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C(()) as Z(T);
 }
@@ -762,7 +903,12 @@ class C(C1: type);
 // cycle that identifies `T`, which deduces `T: M` for the `impl`, which
 // identifies `T`. See TODO in CollectFacetWitnessSources for ideas.
 fn F(generic T: L where C(.W) impls Z(.Self) and .Self impls M) {
-  // CHECK:STDERR: fail_todo_concrete_access_witness.carbon:[[@LINE+2]]:3-15: error: cannot convert type `C(())` into type implementing `Z(T)` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_todo_concrete_access_witness.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   C(()) as Z(T);
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: cannot convert type `C(())` into type implementing `Z(T)`
+  // CHECK:STDERR:        ·            ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C(()) as Z(T);
 }
@@ -772,7 +918,12 @@ library "[[@TEST_NAME]]";
 
 class C(T: type);
 
-// CHECK:STDERR: fail_period_self_in_class_argument.carbon:[[@LINE+2]]:17-24: error: `.Self` used in a type that is not a facet type [PeriodSelfInNonFacetType]
+// CHECK:STDERR:        ╭─┤ fail_period_self_in_class_argument.carbon:[[@LINE+7]]:17
+// CHECK:STDERR: ->     │ fn F(generic _: C(.Self)) {}
+// CHECK:STDERR:        ·                 ━━━━┳━━━
+// CHECK:STDERR:        ·                     ┗━━┫ error: `.Self` used in a type that is not a facet type
+// CHECK:STDERR:        ·                        ┃        [PeriodSelfInNonFacetType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic _: C(.Self)) {}
 
@@ -781,9 +932,22 @@ library "[[@TEST_NAME]]";
 
 class C(T: type);
 
-// CHECK:STDERR: fail_period_self_in_class_argument_in_where.carbon:[[@LINE+4]]:17-24: error: left argument of `where` operator must be a facet type [WhereOnNonFacetType]
+// CHECK:STDERR:        ╭─┤ fail_period_self_in_class_argument_in_where.carbon:[[@LINE+17]]:17
+// CHECK:STDERR: ->     │ fn F(generic _: C(.Self) where type == type) {}
+// CHECK:STDERR:        ·                 ┳━━━━━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: left argument of `where` operator must be a facet
+// CHECK:STDERR:        ·                    ┃        type
+// CHECK:STDERR:        ·                    ┃        [WhereOnNonFacetType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_period_self_in_class_argument_in_where.carbon:[[@LINE+2]]:32-43: error: constraint in `where` clause without a designator; expected `.Self` or a member access like `.M` [WhereWithoutDesignator]
+// CHECK:STDERR:        ╭─┤ fail_period_self_in_class_argument_in_where.carbon:[[@LINE+9]]:32
+// CHECK:STDERR: ->     │ fn F(generic _: C(.Self) where type == type) {}
+// CHECK:STDERR:        ·                                ┳━━━━━━━━━━━
+// CHECK:STDERR:        ·                                ┗━━┫ error: constraint in `where` clause without
+// CHECK:STDERR:        ·                                   ┃        a designator; expected `.Self` or a
+// CHECK:STDERR:        ·                                   ┃        member access like `.M`
+// CHECK:STDERR:        ·                                   ┃        [WhereWithoutDesignator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic _: C(.Self) where type == type) {}
 
@@ -793,7 +957,12 @@ library "[[@TEST_NAME]]";
 class C(T: type);
 interface Z(T: type);
 
-// CHECK:STDERR: fail_period_self_in_interface_argument_in_class_argument.carbon:[[@LINE+2]]:17-27: error: `.Self` used in a type that is not a facet type [PeriodSelfInNonFacetType]
+// CHECK:STDERR:        ╭─┤ fail_period_self_in_interface_argument_in_class_argument.carbon:[[@LINE+7]]:17
+// CHECK:STDERR: ->     │ fn F(generic _: C(Z(.Self))) {}
+// CHECK:STDERR:        ·                 ━━━━━┳━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: `.Self` used in a type that is not a facet type
+// CHECK:STDERR:        ·                         ┃        [PeriodSelfInNonFacetType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic _: C(Z(.Self))) {}
 
@@ -813,7 +982,14 @@ interface Y(T: type) {
 
 // TODO: We crash if this impl is not generic, as the call to `.YF()` produces a
 // symbolic-dependent instruction, but there's no generic eval block for it.
-// CHECK:STDERR: fail_todo_period_self_in_generic_argument.carbon:[[@LINE+2]]:60-64: error: cannot convert type `.(Y(Z where .(Z.Z1) = ()).YF)()` that implements `Z where .(Z.Z1) = ()` into type implementing `Z where .(Z.Z1) = ()` [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╭─┤ fail_todo_period_self_in_generic_argument.carbon:[[@LINE+9]]:60
+// CHECK:STDERR: ->     │ impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
+// CHECK:STDERR:        ·                                                            ━━┳━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: cannot convert type `.(Y(Z where .(Z.Z1) = ()).YF)()` that implements
+// CHECK:STDERR:        · ┃        `Z where .(Z.Z1) = ()` into type implementing `Z where .(Z.Z1) = ()`
+// CHECK:STDERR:        · ┃        [ConversionFailureFacetToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall [T: type] T as Y(Z where .Z1 = ()) where .Y1 = .YF() {}
 

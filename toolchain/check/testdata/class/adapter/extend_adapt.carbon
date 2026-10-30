@@ -52,9 +52,20 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) {
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+4]]:3: error: cannot implicitly convert expression of type `SomeClassAdapter` to `SomeClass` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE+3]]:3: note: type `SomeClassAdapter` does not implement interface `Core.ImplicitAs(SomeClass)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_todo_method_access.carbon:[[@LINE-10]]:8-11: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_todo_method_access.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        │   fn F(self);
+  // CHECK:STDERR:        ·        ──┬─
+  // CHECK:STDERR:        ·          ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   a.F();
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `SomeClassAdapter` to
+  // CHECK:STDERR:        ·   │  ┃        `SomeClass`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·   ╰────┤ type `SomeClassAdapter` does not implement interface
+  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(SomeClass)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.F();
 }
@@ -73,8 +84,16 @@ class SomeClassAdapter {
 }
 
 fn F(a: SomeClassAdapter) -> i32 {
-  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+3]]:10-12: error: cannot implicitly convert expression of type `SomeClassAdapter` to `SomeClass` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_field_access.carbon:[[@LINE+2]]:10-12: note: type `SomeClassAdapter` does not implement interface `Core.ImplicitAs(SomeClass)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_todo_field_access.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR: ->     │   return a.b;
+  // CHECK:STDERR:        ·          ┳━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·          │  ┃        `SomeClassAdapter` to `SomeClass`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `SomeClassAdapter` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(SomeClass)`
+  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a.b;
 }
@@ -89,7 +108,12 @@ class StructAdapter {
 
 fn F(a: StructAdapter) -> i32 {
   // TODO: This should be allowed.
-  // CHECK:STDERR: fail_todo_adapt_struct.carbon:[[@LINE+2]]:10-12: error: member name `b` not found in `StructAdapter` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╭─┤ fail_todo_adapt_struct.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   return a.b;
+  // CHECK:STDERR:        ·          ━┳━
+  // CHECK:STDERR:        ·           ┗━━┫ error: member name `b` not found in `StructAdapter`
+  // CHECK:STDERR:        ·              ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a.b;
 }
@@ -104,7 +128,13 @@ class TupleAdapter {
 
 fn F(a: TupleAdapter) -> i32 {
   // TODO: This should be allowed.
-  // CHECK:STDERR: fail_todo_adapt_tuple.carbon:[[@LINE+2]]:10-12: error: type `TupleAdapter` does not support tuple indexing; only tuples can be indexed that way [TupleIndexOnANonTupleType]
+  // CHECK:STDERR:        ╭─┤ fail_todo_adapt_tuple.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   return a.1;
+  // CHECK:STDERR:        ·          ┳━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: type `TupleAdapter` does not support tuple indexing; only
+  // CHECK:STDERR:        ·             ┃        tuples can be indexed that way
+  // CHECK:STDERR:        ·             ┃        [TupleIndexOnANonTupleType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a.1;
 }
@@ -121,7 +151,12 @@ class IntAdapter {
 
 fn F(a: IntAdapter) -> i32 {
   // Builtin types have no member names.
-  // CHECK:STDERR: fail_adapt_builtin.carbon:[[@LINE+2]]:10-14: error: member name `foo` not found in `IntAdapter` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╭─┤ fail_adapt_builtin.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   return a.foo;
+  // CHECK:STDERR:        ·          ━━┳━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: member name `foo` not found in `IntAdapter`
+  // CHECK:STDERR:        ·               ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a.foo;
 }
@@ -346,7 +381,7 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %F.ref: %SomeClass.F.type = name_ref F, @SomeClass.%SomeClass.F.decl [concrete = constants.%SomeClass.F]
 // CHECK:STDOUT:   %SomeClass.F.bound: <bound method> = bound_method %a.ref, %F.ref
-// CHECK:STDOUT:   %.loc17: %SomeClass = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc28: %SomeClass = converted %a.ref, <error> [concrete = <error>]
 // CHECK:STDOUT:   %SomeClass.F.call: init %empty_tuple.type = call %SomeClass.F.bound(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -447,8 +482,8 @@ fn F(a: IntAdapter) -> i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.ref: %SomeClassAdapter = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %SomeClass.elem = name_ref b, @SomeClass.%field_decl.loc6 [concrete = @SomeClass.%field_decl.loc6]
-// CHECK:STDOUT:   %.loc17_11.1: %SomeClass = converted %a.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc17_11.2: %i32 = class_element_access <error>, element1 [concrete = <error>]
+// CHECK:STDOUT:   %.loc25_11.1: %SomeClass = converted %a.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc25_11.2: %i32 = class_element_access <error>, element1 [concrete = <error>]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

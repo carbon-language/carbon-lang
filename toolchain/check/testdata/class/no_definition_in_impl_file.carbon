@@ -52,10 +52,23 @@ class C;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+5]]:1-8: error: redeclaration of `class C` is redundant [RedeclRedundant]
-// CHECK:STDERR: decl_in_api_decl_in_impl.carbon:4:1-8: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+18]]:1
+// CHECK:STDERR: ->     │ class C;
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclaration of `class C` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ decl_in_api_decl_in_impl.carbon
+// CHECK:STDERR:        │ class C;
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+2]]:1-8: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR:        ╭─┤ fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ class C;
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: no definition found for declaration in impl file
+// CHECK:STDERR:        ·        ┃        [MissingDefinitionInImpl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class C;
 
@@ -69,8 +82,16 @@ class D;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE+3]]:1-8: error: redeclaration of `class D` is redundant [RedeclRedundant]
-// CHECK:STDERR: decl_in_api_decl_and_definition_in_impl.carbon:4:1-8: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ class D;
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclaration of `class D` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ decl_in_api_decl_and_definition_in_impl.carbon
+// CHECK:STDERR:        │ class D;
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class D;
 
@@ -84,6 +105,11 @@ library "[[@TEST_NAME]]";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_only_in_impl.impl.carbon:[[@LINE+2]]:1-8: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR:        ╭─┤ fail_decl_only_in_impl.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ class E;
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: no definition found for declaration in impl file
+// CHECK:STDERR:        ·        ┃        [MissingDefinitionInImpl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class E;

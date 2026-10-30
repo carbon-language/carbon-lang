@@ -13,7 +13,12 @@
 // available because it has already accepted that first part of the expression,
 // so it is recovering by using the second option, but the diagnostic should
 // ideally offer (or consider) both fixes as alternatives.
-// CHECK:STDERR: fail_star_minus.carbon:[[@LINE+2]]:16: error: whitespace missing after binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR:        ╭─┤ fail_star_minus.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ var n: i8 = n* -n;
+// CHECK:STDERR:        ·                ┳
+// CHECK:STDERR:        ·                ┗━━┫ error: whitespace missing after binary operator
+// CHECK:STDERR:        ·                   ┃        [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var n: i8 = n* -n;
 

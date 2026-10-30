@@ -89,16 +89,21 @@ void CallUsingF() { UsingF(); }
 // --- other_generic.carbon
 
 package OtherGeneric;
+// CHECK:STDERR:        ╷ ╭── imported from: fail_todo_generic.carbon [InImport]
+// CHECK:STDERR:        ├─┤ other_generic.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ fn HasGenericArg(generic T: type, a: T) { a; }
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: 1 argument passed to function expecting 2 arguments
+// CHECK:STDERR:        ·                  │  ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ·                  ╰────┤ calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn HasGenericArg(generic T: type, a: T) { a; }
 
 // --- fail_todo_generic.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_todo_generic.carbon:[[@LINE+4]]:1 [InImport]
-// CHECK:STDERR: other_generic.carbon:3:1-41: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
-// CHECK:STDERR: other_generic.carbon:3:1-41: note: calling function declared here [InCallToEntity]
-// CHECK:STDERR:
 import OtherGeneric;
 import Cpp inline '''
 void CallHasGenericArg() {

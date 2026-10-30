@@ -29,8 +29,15 @@ var x: () = F();
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE+3]]:1-14: error: redeclaration of `fn F` is redundant [RedeclRedundant]
-// CHECK:STDERR: fail_redecl.carbon:[[@LINE-2]]:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_redecl.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ extern fn F();
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ extern fn F();
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclaration of `fn F` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F();
 
@@ -39,8 +46,15 @@ extern fn F();
 library "[[@TEST_NAME]]";
 
 extern fn F();
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE+3]]:1-7: error: redeclaration of `fn F` is redundant [RedeclRedundant]
-// CHECK:STDERR: fail_redecl_extern.carbon:[[@LINE-2]]:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_redecl_extern.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ extern fn F();
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F();
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: redeclaration of `fn F` is redundant [RedeclRedundant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F();
 
@@ -49,10 +63,20 @@ fn F();
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+2]]:3-8: error: `extern` not allowed; requires file or namespace scope [ModifierExternNotAllowed]
+  // CHECK:STDERR:        ╭─┤ fail_member_extern.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   extern fn F();
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: `extern` not allowed; requires file or namespace scope
+  // CHECK:STDERR:        ·         ┃        [ModifierExternNotAllowed]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extern fn F();
-  // CHECK:STDERR: fail_member_extern.carbon:[[@LINE+2]]:3-8: error: `extern` not allowed; requires file or namespace scope [ModifierExternNotAllowed]
+  // CHECK:STDERR:        ╭─┤ fail_member_extern.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   extern fn G(self);
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: `extern` not allowed; requires file or namespace scope
+  // CHECK:STDERR:        ·         ┃        [ModifierExternNotAllowed]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extern fn G(self);
 }
@@ -63,8 +87,17 @@ library "[[@TEST_NAME]]";
 
 import library "basic";
 
-// CHECK:STDERR: fail_extern_library_in_importer.carbon:[[@LINE+3]]:1-30: error: cannot declare imported `fn F` as `extern library` [ExternLibraryInImporter]
-// CHECK:STDERR: basic.carbon:4:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_extern_library_in_importer.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ extern library "basic" fn F();
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                ┗━━┫ error: cannot declare imported `fn F` as `extern library`
+// CHECK:STDERR:        ·                   ┃        [ExternLibraryInImporter]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ basic.carbon
+// CHECK:STDERR:        │ extern fn F();
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library "basic" fn F();
 
@@ -143,7 +176,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc8: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc15: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();
@@ -161,7 +194,7 @@ extern library "basic" fn F();
 // CHECK:STDOUT:     .F = %F.decl.loc4
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl.loc4: %F.type = fn_decl @F [concrete = constants.%F] {} {}
-// CHECK:STDOUT:   %F.decl.loc8: %F.type = fn_decl @F [concrete = constants.%F] {} {}
+// CHECK:STDOUT:   %F.decl.loc15: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @F();

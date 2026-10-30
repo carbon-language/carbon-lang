@@ -72,7 +72,12 @@ let (x: {}, y: {}) = ({}, {});
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+2]]:20: error: found tuple pattern in class `var` decl [FieldWithTuplePattern]
+  // CHECK:STDERR:        ╭─┤ fail_in_class.carbon:[[@LINE+7]]:20
+  // CHECK:STDERR: ->     │   var (x: {}, y: {});
+  // CHECK:STDERR:        ·                    ┳
+  // CHECK:STDERR:        ·                    ┗━━┫ error: found tuple pattern in class `var` decl
+  // CHECK:STDERR:        ·                       ┃        [FieldWithTuplePattern]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var (x: {}, y: {});
 }
@@ -81,11 +86,21 @@ class C {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_initializer_mismatch.carbon:[[@LINE+2]]:5-18: error: tuple pattern expects 2 elements, but tuple literal has 1 [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ╭─┤ fail_initializer_mismatch.carbon:[[@LINE+7]]:5
+// CHECK:STDERR: ->     │ let (x: {}, y: {}) = ({},);
+// CHECK:STDERR:        ·     ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: tuple pattern expects 2 elements, but tuple literal has 1
+// CHECK:STDERR:        ·               ┃        [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let (x: {}, y: {}) = ({},);
 
-// CHECK:STDERR: fail_initializer_mismatch.carbon:[[@LINE+2]]:5-18: error: tuple pattern expects 2 elements, but tuple literal has 3 [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ╭─┤ fail_initializer_mismatch.carbon:[[@LINE+7]]:5
+// CHECK:STDERR: ->     │ let (a: {}, b: {}) = ({}, {}, {});
+// CHECK:STDERR:        ·     ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: tuple pattern expects 2 elements, but tuple literal has 3
+// CHECK:STDERR:        ·               ┃        [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let (a: {}, b: {}) = ({}, {}, {});
 

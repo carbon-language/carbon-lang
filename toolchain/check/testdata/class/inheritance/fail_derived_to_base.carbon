@@ -23,14 +23,34 @@ class B2 {
   var b: i32;
 }
 
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:38-46: error: cannot implicitly convert expression of type `B2*` to `A1*` [ConversionFailure]
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+2]]:38-46: note: type `B2*` does not implement interface `Core.ImplicitAs(A1*)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_derived_to_base.carbon:[[@LINE+12]]:38
+// CHECK:STDERR: ->     │ fn ConvertUnrelated(p: B2*) -> A1* { return p; }
+// CHECK:STDERR:        ·                                      ┳━━━━━━━━
+// CHECK:STDERR:        ·                                      ┗━━┫ error: cannot implicitly convert
+// CHECK:STDERR:        ·                                      │  ┃        expression of type `B2*` to
+// CHECK:STDERR:        ·                                      │  ┃        `A1*`
+// CHECK:STDERR:        ·                                      │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·                                      ╰────┤ type `B2*` does not implement
+// CHECK:STDERR:        ·                                           │ interface `Core.ImplicitAs(A1*)`
+// CHECK:STDERR:        ·                                           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ConvertUnrelated(p: B2*) -> A1* { return p; }
 
 class Incomplete;
 
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+3]]:47-55: error: cannot implicitly convert expression of type `Incomplete*` to `A2*` [ConversionFailure]
-// CHECK:STDERR: fail_derived_to_base.carbon:[[@LINE+2]]:47-55: note: type `Incomplete*` does not implement interface `Core.ImplicitAs(A2*)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_derived_to_base.carbon:[[@LINE+14]]:47
+// CHECK:STDERR: ->     │ fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }
+// CHECK:STDERR:        ·                                               ┳━━━━━━━━
+// CHECK:STDERR:        ·                                               ┗━━┫ error: cannot implicitly
+// CHECK:STDERR:        ·                                               │  ┃        convert expression of
+// CHECK:STDERR:        ·                                               │  ┃        type `Incomplete*` to
+// CHECK:STDERR:        ·                                               │  ┃        `A2*`
+// CHECK:STDERR:        ·                                               │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·                                               ╰────┤ type `Incomplete*` does not
+// CHECK:STDERR:        ·                                                    │ implement interface
+// CHECK:STDERR:        ·                                                    │ `Core.ImplicitAs(A2*)`
+// CHECK:STDERR:        ·                                                    │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ConvertIncomplete(p: Incomplete*) -> A2* { return p; }

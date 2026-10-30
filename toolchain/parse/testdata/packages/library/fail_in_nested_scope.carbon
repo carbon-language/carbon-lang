@@ -11,15 +11,31 @@
 // api.carbon
 
 class C {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+3]]:3-9: error: the `library` declaration must be the first non-comment line [PackageTooLate]
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-2]]:1-5: note: first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ╭─┤ fail_in_nested_scope.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ class C {
+  // CHECK:STDERR:        · ──┬──
+  // CHECK:STDERR:        ·   ╰──┤ first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   library "foo";
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: the `library` declaration must be the first non-comment line
+  // CHECK:STDERR:        ·         ┃        [PackageTooLate]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   library "foo";
 }
 
 fn F() {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+3]]:3-9: error: the `library` declaration must be the first non-comment line [PackageTooLate]
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-9]]:1-5: note: first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ╭─┤ fail_in_nested_scope.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ class C {
+  // CHECK:STDERR:        · ──┬──
+  // CHECK:STDERR:        ·   ╰──┤ first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   library "foo";
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: the `library` declaration must be the first non-comment line
+  // CHECK:STDERR:        ·         ┃        [PackageTooLate]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   library "foo";
 }
@@ -27,15 +43,31 @@ fn F() {
 // impl.carbon
 
 class C {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+3]]:3-6: error: the `library` declaration must be the first non-comment line [PackageTooLate]
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-18]]:1-5: note: first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ╭─┤ fail_in_nested_scope.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ class C {
+  // CHECK:STDERR:        · ──┬──
+  // CHECK:STDERR:        ·   ╰──┤ first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl library "foo";
+  // CHECK:STDERR:        ·   ━━┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: the `library` declaration must be the first non-comment line
+  // CHECK:STDERR:        ·        ┃        [PackageTooLate]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl library "foo";
 }
 
 fn F() {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+3]]:3-6: error: the `library` declaration must be the first non-comment line [PackageTooLate]
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-25]]:1-5: note: first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ╭─┤ fail_in_nested_scope.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ class C {
+  // CHECK:STDERR:        · ──┬──
+  // CHECK:STDERR:        ·   ╰──┤ first non-comment line is here [FirstNonCommentLine]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   impl library "foo";
+  // CHECK:STDERR:        ·   ━━┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: the `library` declaration must be the first non-comment line
+  // CHECK:STDERR:        ·        ┃        [PackageTooLate]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl library "foo";
 }

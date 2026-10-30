@@ -10,8 +10,16 @@
 
 ;
 
-// CHECK:STDERR: fail_semi_before.carbon:[[@LINE+3]]:1-7: error: the `package` declaration must be the first non-comment line [PackageTooLate]
-// CHECK:STDERR: fail_semi_before.carbon:[[@LINE-3]]:1: note: first non-comment line is here [FirstNonCommentLine]
+// CHECK:STDERR:        ╭─┤ fail_semi_before.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ ;
+// CHECK:STDERR:        · ┬
+// CHECK:STDERR:        · ╰──┤ first non-comment line is here [FirstNonCommentLine]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ package Geometry;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: the `package` declaration must be the first non-comment line
+// CHECK:STDERR:        ·       ┃        [PackageTooLate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 package Geometry;
 

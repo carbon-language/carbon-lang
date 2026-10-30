@@ -21,10 +21,22 @@ class C {
 }
 
 fn F(c: C) {
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+2]]:3-5: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_alias_impl_not_found.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   C.F();
+  // CHECK:STDERR:        ·   ┳━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `I` in type `C` that does not
+  // CHECK:STDERR:        ·      ┃        implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C.F();
-  // CHECK:STDERR: fail_alias_impl_not_found.carbon:[[@LINE+2]]:3-5: error: cannot access member of interface `I` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_alias_impl_not_found.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   c.F();
+  // CHECK:STDERR:        ·   ┳━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `I` in type `C` that does not
+  // CHECK:STDERR:        ·      ┃        implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c.F();
 }
@@ -102,10 +114,10 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc26: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc26: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %F.ref.loc32: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc29: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
+// CHECK:STDOUT:   %F.ref.loc41: %I.assoc_type = name_ref F, @C.%F [concrete = constants.%assoc0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

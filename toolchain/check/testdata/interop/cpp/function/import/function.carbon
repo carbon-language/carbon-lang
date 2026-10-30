@@ -37,7 +37,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "global.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_global_use_different_name.carbon:[[@LINE+2]]:3-9: error: member name `bar` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╭─┤ fail_import_global_use_different_name.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.bar();
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: member name `bar` not found in `Cpp`
+  // CHECK:STDERR:        ·         ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.bar();
 }
@@ -57,7 +62,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_special_name_call_unescaped.carbon:[[@LINE+2]]:3-10: error: member name `base` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╭─┤ fail_import_special_name_call_unescaped.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.base();
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: member name `base` not found in `Cpp`
+  // CHECK:STDERR:        ·          ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.base();
 }
@@ -81,9 +91,19 @@ library "[[@TEST_NAME]]";
 import Cpp library "special_name.h";
 
 fn MyF() {
-  // CHECK:STDERR: fail_import_special_name_call_escaped_no_match.carbon:[[@LINE+4]]:3-12: error: no matching function for call to 'base' [CppInteropParseError]
-  // CHECK:STDERR: ./special_name.h:2:6: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./special_name.h:2:10-11: note: requires 0 arguments, but 1 was provided [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_import_special_name_call_escaped_no_match.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   Cpp.r#base(1);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: no matching function for call to 'base'
+  // CHECK:STDERR:        ·           ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./special_name.h
+  // CHECK:STDERR:        │ auto base() -> void;
+  // CHECK:STDERR:        ·      ┬   ─┬
+  // CHECK:STDERR:        ·      ╰───────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·           ╰────┤ requires 0 arguments, but 1 was provided
+  // CHECK:STDERR:        ·                │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.r#base(1);
 }
@@ -125,7 +145,12 @@ import Cpp library "variadic.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_variadic.carbon:[[@LINE+2]]:3-21: error: semantics TODO: `Unsupported: Variadic function` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_variadic.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.variadic_foo(8);
+  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: semantics TODO: `Unsupported: Variadic function`
+  // CHECK:STDERR:        ·               ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.variadic_foo(8);
   //@dump-sem-ir-end
@@ -138,7 +163,19 @@ fn F() {
 // --- static.h
 
 // TODO: Promote this warning to an error by default.
-// CHECK:STDERR: ./static.h:[[@LINE+1]]:13: warning: function 'static_foo' has internal linkage but is not defined [CppInteropParseWarning]
+// CHECK:STDERR:        ╭─┤ ./static.h:[[@LINE+13]]:13
+// CHECK:STDERR: ->     │ static auto static_foo() -> void;
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ warning: function 'static_foo' has internal linkage but is not
+// CHECK:STDERR:        ·                ┃          defined
+// CHECK:STDERR:        ·                ┃          [CppInteropParseWarning]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ todo_fail_import_static.carbon
+// CHECK:STDERR:        │   Cpp.static_foo();
+// CHECK:STDERR:        ·                  ┬
+// CHECK:STDERR:        ·                  ╰──┤ used here [CppInteropParseNote]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 static auto static_foo() -> void;
 
 // --- todo_fail_import_static.carbon
@@ -149,8 +186,6 @@ import Cpp library "static.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: todo_fail_import_static.carbon:[[@LINE+2]]:18: note: used here [CppInteropParseNote]
-  // CHECK:STDERR:
   Cpp.static_foo();
   //@dump-sem-ir-end
 }

@@ -25,9 +25,22 @@ fn ErrorIfNIsZero(generic N: Core.IntLiteral) {
 }
 
 fn CallNegative() {
-  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE+4]]:3-16: error: unable to monomorphize specific `ErrorIfNIsZero(0)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_todo_call_monomorphization_error.carbon:[[@LINE-5]]:17-27: note: `Core.Int(N)` evaluates to incomplete type `i0` [IncompleteTypeInMonomorphization]
-  // CHECK:STDERR: min_prelude/parts/int.carbon:11:9-18: note: integer type width of 0 is not positive [IntWidthNotPositive]
+  // CHECK:STDERR:        ╭─┤ fail_todo_call_monomorphization_error.carbon:[[@LINE+17]]:3
+  // CHECK:STDERR:        │   var unused v: Core.Int(N);
+  // CHECK:STDERR:        ·                 ─────┬─────
+  // CHECK:STDERR:        ·                      ╰──┤ `Core.Int(N)` evaluates to incomplete type `i0`
+  // CHECK:STDERR:        ·                         │ [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   ErrorIfNIsZero(0);
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: unable to monomorphize specific `ErrorIfNIsZero(0)`
+  // CHECK:STDERR:        ·             ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ min_prelude/parts/int.carbon
+  // CHECK:STDERR:        │   adapt MakeInt(N);
+  // CHECK:STDERR:        ·         ─────┬────
+  // CHECK:STDERR:        ·              ╰──┤ integer type width of 0 is not positive [IntWidthNotPositive]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ErrorIfNIsZero(0);
 }

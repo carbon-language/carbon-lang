@@ -51,9 +51,23 @@ let v: a = {} as A({});
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_control_flow.carbon:[[@LINE+4]]:11-17: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_control_flow.carbon:[[@LINE+18]]:11
+// CHECK:STDERR: ->     │ alias a = true or false;
+// CHECK:STDERR:        ·           ━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_control_flow.carbon:[[@LINE+2]]:11-23: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_control_flow.carbon:[[@LINE+9]]:11
+// CHECK:STDERR: ->     │ alias a = true or false;
+// CHECK:STDERR:        ·           ━━━━━━┳━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias a = true or false;
 
@@ -64,14 +78,30 @@ library "[[@TEST_NAME]]";
 class C {}
 
 alias a = C;
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+3]]:5: error: duplicate name `a` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-2]]:7: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╭─┤ fail_name_conflict.carbon:[[@LINE+11]]:5
+// CHECK:STDERR:        │ alias a = C;
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var a: C = {};
+// CHECK:STDERR:        ·     ┳
+// CHECK:STDERR:        ·     ┗━━┫ error: duplicate name `a` being declared in the same scope
+// CHECK:STDERR:        ·        ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: C = {};
 
 var b: C = {};
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE+3]]:7: error: duplicate name `b` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fail_name_conflict.carbon:[[@LINE-2]]:5-8: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╭─┤ fail_name_conflict.carbon:[[@LINE+11]]:7
+// CHECK:STDERR:        │ var b: C = {};
+// CHECK:STDERR:        ·     ──┬─
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ alias b = C;
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: duplicate name `b` being declared in the same scope
+// CHECK:STDERR:        ·          ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias b = C;
 
@@ -82,7 +112,12 @@ library "[[@TEST_NAME]]";
 var a: () = ();
 var b: ()* = &a;
 
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+2]]:11-12: error: alias refers to a runtime value [AliasRequiresConstantValue]
+// CHECK:STDERR:        ╭─┤ fail_not_constant.carbon:[[@LINE+7]]:11
+// CHECK:STDERR: ->     │ alias c = *b;
+// CHECK:STDERR:        ·           ━┳
+// CHECK:STDERR:        ·            ┗━━┫ error: alias refers to a runtime value
+// CHECK:STDERR:        ·               ┃        [AliasRequiresConstantValue]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias c = *b;
 
@@ -90,7 +125,12 @@ alias c = *b;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_params.carbon:[[@LINE+2]]:8-16: error: `alias` declaration cannot have parameters [UnexpectedDeclNameParams]
+// CHECK:STDERR:        ╭─┤ fail_params.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ alias A(T: type) = T*;
+// CHECK:STDERR:        ·        ━━━━┳━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: `alias` declaration cannot have parameters
+// CHECK:STDERR:        ·               ┃        [UnexpectedDeclNameParams]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias A(T: type) = T*;
 
@@ -100,24 +140,56 @@ library "[[@TEST_NAME]]";
 
 class Class {}
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+11]]:10-13: error: `base` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+10]]:1-8: note: `abstract` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+33]]:10
+// CHECK:STDERR: ->     │ abstract base default final alias A = Class;
+// CHECK:STDERR:        · ────┬─── ━━┳━
+// CHECK:STDERR:        ·     │      ┗━━┫ error: `base` not allowed on declaration with `abstract`
+// CHECK:STDERR:        ·     │         ┃        [ModifierNotAllowedWith]
+// CHECK:STDERR:        ·     ╰───────────┤ `abstract` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+8]]:15-21: error: `default` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+7]]:1-8: note: `abstract` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+25]]:15
+// CHECK:STDERR: ->     │ abstract base default final alias A = Class;
+// CHECK:STDERR:        · ────┬───      ━━┳━━━━
+// CHECK:STDERR:        ·     │           ┗━━┫ error: `default` not allowed on declaration with `abstract`
+// CHECK:STDERR:        ·     │              ┃        [ModifierNotAllowedWith]
+// CHECK:STDERR:        ·     ╰────────────────┤ `abstract` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+5]]:23-27: error: `final` not allowed on declaration with `abstract` [ModifierNotAllowedWith]
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1-8: note: `abstract` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+17]]:23
+// CHECK:STDERR: ->     │ abstract base default final alias A = Class;
+// CHECK:STDERR:        · ────┬───              ┳━━━━
+// CHECK:STDERR:        ·     │                 ┗━━┫ error: `final` not allowed on declaration with
+// CHECK:STDERR:        ·     │                    ┃        `abstract`
+// CHECK:STDERR:        ·     │                    ┃        [ModifierNotAllowedWith]
+// CHECK:STDERR:        ·     ╰──────────────────────┤ `abstract` previously appeared here
+// CHECK:STDERR:        ·                            │ [ModifierPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-8: error: `abstract` not allowed on `alias` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ abstract base default final alias A = Class;
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: `abstract` not allowed on `alias` declaration
+// CHECK:STDERR:        ·        ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract base default final alias A = Class;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-4: error: `impl` not allowed on `alias` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ impl alias B = Class;
+// CHECK:STDERR:        · ━━┳━
+// CHECK:STDERR:        ·   ┗━━┫ error: `impl` not allowed on `alias` declaration
+// CHECK:STDERR:        ·      ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl alias B = Class;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-6: error: `extern` not allowed on `alias` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern alias C = Class;
+// CHECK:STDERR:        · ━━━┳━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `extern` not allowed on `alias` declaration
+// CHECK:STDERR:        ·       ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern alias C = Class;
 

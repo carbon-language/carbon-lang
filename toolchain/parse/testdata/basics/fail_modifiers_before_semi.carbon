@@ -8,7 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/basics/fail_modifiers_before_semi.carbon
 
-// CHECK:STDERR: fail_modifiers_before_semi.carbon:[[@LINE+2]]:18: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╭─┤ fail_modifiers_before_semi.carbon:[[@LINE+7]]:18
+// CHECK:STDERR: ->     │ protected virtual;
+// CHECK:STDERR:        ·                  ┳
+// CHECK:STDERR:        ·                  ┗━━┫ error: unrecognized declaration introducer
+// CHECK:STDERR:        ·                     ┃        [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 protected virtual;
 

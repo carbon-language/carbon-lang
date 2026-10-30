@@ -48,15 +48,35 @@ fn F() {
 // --- fail_int_literal_to_float_lossy.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_int_literal_to_float_lossy.carbon:[[@LINE+2]]:14-22: error: integer value 123456789 cannot be represented exactly in floating-point type `f32` [IntLossyConversionToFloat]
+// CHECK:STDERR:        ╭─┤ fail_int_literal_to_float_lossy.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ let a: f32 = 123456789;
+// CHECK:STDERR:        ·              ┳━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: integer value 123456789 cannot be represented exactly
+// CHECK:STDERR:        ·                 ┃        in floating-point type `f32`
+// CHECK:STDERR:        ·                 ┃        [IntLossyConversionToFloat]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: f32 = 123456789;
 
-// CHECK:STDERR: fail_int_literal_to_float_lossy.carbon:[[@LINE+2]]:14-22: error: integer value 100000001 cannot be represented exactly in floating-point type `f32` [IntLossyConversionToFloat]
+// CHECK:STDERR:        ╭─┤ fail_int_literal_to_float_lossy.carbon:[[@LINE+8]]:14
+// CHECK:STDERR: ->     │ let b: f32 = 100000001;
+// CHECK:STDERR:        ·              ┳━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: integer value 100000001 cannot be represented exactly
+// CHECK:STDERR:        ·                 ┃        in floating-point type `f32`
+// CHECK:STDERR:        ·                 ┃        [IntLossyConversionToFloat]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: f32 = 100000001;
 
-// CHECK:STDERR: fail_int_literal_to_float_lossy.carbon:[[@LINE+2]]:14-114: error: integer value 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000 too large for floating-point type `f32` [IntTooLargeForFloatType]
+// CHECK:STDERR:        ╭─┤ fail_int_literal_to_float_lossy.carbon:[[@LINE+10]]:14
+// CHECK:STDERR: ->     │ let c: f32 = 1000000000000000000000000000000000000000000000000000000000000...
+// CHECK:STDERR:        ·              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: integer value
+// CHECK:STDERR:        · ┃        10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+// CHECK:STDERR:        · ┃        too large for floating-point type `f32`
+// CHECK:STDERR:        · ┃        [IntTooLargeForFloatType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let c: f32 = 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000;
 
@@ -87,13 +107,28 @@ import library "test_helpers";
 
 fn F(f: f32) {
   // Lossy explicit conversion using `as` not permitted.
-  // CHECK:STDERR: fail_float_as_int.carbon:[[@LINE+3]]:16-27: error: cannot convert expression of type `Core.FloatLiteral` to `i32` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_float_as_int.carbon:[[@LINE+2]]:16-27: note: type `Core.FloatLiteral` does not implement interface `Core.As(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_float_as_int.carbon:[[@LINE+11]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = 12.34 as i32;
+  // CHECK:STDERR:        ·                ┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot convert expression of type `Core.FloatLiteral`
+  // CHECK:STDERR:        ·                │  ┃        to `i32` with `as`
+  // CHECK:STDERR:        ·                │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                ╰────┤ type `Core.FloatLiteral` does not implement interface
+  // CHECK:STDERR:        ·                     │ `Core.As(i32)`
+  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = 12.34 as i32;
 
-  // CHECK:STDERR: fail_float_as_int.carbon:[[@LINE+3]]:16-23: error: cannot convert expression of type `f32` to `i32` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_float_as_int.carbon:[[@LINE+2]]:16-23: note: type `f32` does not implement interface `Core.As(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_float_as_int.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = f as i32;
+  // CHECK:STDERR:        ·                ┳━━━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot convert expression of type `f32` to `i32` with
+  // CHECK:STDERR:        ·                │  ┃        `as`
+  // CHECK:STDERR:        ·                │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                ╰────┤ type `f32` does not implement interface `Core.As(i32)`
+  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = f as i32;
 }
@@ -119,8 +154,16 @@ library "[[@TEST_NAME]]";
 
 fn F(x: f64) {
   // Implicit narrowing conversion (f64 -> f32) is not permitted.
-  // CHECK:STDERR: fail_float_to_float_narrowing.carbon:[[@LINE+3]]:16: error: cannot implicitly convert expression of type `f64` to `f32` [ConversionFailure]
-  // CHECK:STDERR: fail_float_to_float_narrowing.carbon:[[@LINE+2]]:16: note: type `f64` does not implement interface `Core.ImplicitAs(f32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_float_to_float_narrowing.carbon:[[@LINE+11]]:16
+  // CHECK:STDERR: ->     │   let _: f32 = x;
+  // CHECK:STDERR:        ·                ┳
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot implicitly convert expression of type `f64` to
+  // CHECK:STDERR:        ·                │  ┃        `f32`
+  // CHECK:STDERR:        ·                │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                ╰────┤ type `f64` does not implement interface
+  // CHECK:STDERR:        ·                     │ `Core.ImplicitAs(f32)`
+  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = x;
 }

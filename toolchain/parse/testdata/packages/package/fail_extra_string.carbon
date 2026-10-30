@@ -8,7 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/package/fail_extra_string.carbon
 
-// CHECK:STDERR: fail_extra_string.carbon:[[@LINE+2]]:27-31: error: `package` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_extra_string.carbon:[[@LINE+7]]:27
+// CHECK:STDERR: ->     │ package Foo library "bar" "baz";
+// CHECK:STDERR:        ·                           ┳━━━━
+// CHECK:STDERR:        ·                           ┗━━┫ error: `package` declarations must end with a `;`
+// CHECK:STDERR:        ·                              ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 package Foo library "bar" "baz";
 

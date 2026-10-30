@@ -9,19 +9,39 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if/fail_errors.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:6: error: expected `(` after `if` [ExpectedParenAfter]
+  // CHECK:STDERR:        ╭─┤ fail_errors.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   if a {}
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected `(` after `if` [ExpectedParenAfter]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   if a {}
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:7: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_errors.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   if () {}
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   if () {}
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:9: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+  // CHECK:STDERR:        ╭─┤ fail_errors.carbon:[[@LINE+6]]:9
+  // CHECK:STDERR: ->     │   if (b c) {}
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: unexpected tokens before `)` [ExpectedCloseSymbol]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   if (b c) {}
   if (d)
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+4]]:1: error: expected braced code block [ExpectedCodeBlock]
+// CHECK:STDERR:        ╭─┤ fail_errors.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ }
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: expected braced code block [ExpectedCodeBlock]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:1: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╭─┤ fail_errors.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ }
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 }
 

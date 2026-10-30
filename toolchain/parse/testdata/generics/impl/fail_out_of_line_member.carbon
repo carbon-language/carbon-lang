@@ -18,7 +18,11 @@ impl bool as Interface {
   fn F();
 }
 
-// CHECK:STDERR: fail_out_of_line_member.carbon:[[@LINE+2]]:4: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╭─┤ fail_out_of_line_member.carbon:[[@LINE+6]]:4
+// CHECK:STDERR: ->     │ fn (bool as Interface).F() {}
+// CHECK:STDERR:        ·    ┳
+// CHECK:STDERR:        ·    ┗━━┫ error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn (bool as Interface).F() {}
 
@@ -28,7 +32,11 @@ class C {
   }
 }
 
-// CHECK:STDERR: fail_out_of_line_member.carbon:[[@LINE+2]]:6: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR:        ╭─┤ fail_out_of_line_member.carbon:[[@LINE+6]]:6
+// CHECK:STDERR: ->     │ fn C.(Self as Interface).F() {}
+// CHECK:STDERR:        ·      ┳
+// CHECK:STDERR:        ·      ┗━━┫ error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn C.(Self as Interface).F() {}
 

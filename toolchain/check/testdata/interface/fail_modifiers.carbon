@@ -16,7 +16,12 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE+2]]:1-8: error: `abstract` not allowed on `interface` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╭─┤ fail_abstract.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ abstract interface Abstract {
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: `abstract` not allowed on `interface` declaration
+// CHECK:STDERR:        ·        ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract interface Abstract {
 }
@@ -25,7 +30,12 @@ abstract interface Abstract {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_default.carbon:[[@LINE+2]]:1-7: error: `default` not allowed on `interface` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╭─┤ fail_default.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ default interface Default;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `default` not allowed on `interface` declaration
+// CHECK:STDERR:        ·       ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 default interface Default;
 
@@ -33,7 +43,12 @@ default interface Default;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_virtual.carbon:[[@LINE+2]]:1-7: error: `virtual` not allowed on `interface` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╭─┤ fail_virtual.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ virtual interface Virtual {
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `virtual` not allowed on `interface` declaration
+// CHECK:STDERR:        ·       ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 virtual interface Virtual {
 }
@@ -42,7 +57,12 @@ virtual interface Virtual {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_protected.carbon:[[@LINE+2]]:1-9: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+// CHECK:STDERR:        ╭─┤ fail_protected.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ protected interface Protected;
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: `protected` not allowed; requires class scope
+// CHECK:STDERR:        ·        ┃        [ModifierProtectedNotAllowed]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 protected interface Protected;
 
@@ -51,7 +71,12 @@ protected interface Protected;
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_private_member.carbon:[[@LINE+2]]:3-9: error: `private` not allowed; requires class or file scope [ModifierPrivateNotAllowed]
+  // CHECK:STDERR:        ╭─┤ fail_private_member.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   private fn F(self);
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: `private` not allowed; requires class or file scope
+  // CHECK:STDERR:        ·         ┃        [ModifierPrivateNotAllowed]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   private fn F(self);
 }
@@ -61,7 +86,12 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_protected_member.carbon:[[@LINE+2]]:3-11: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+  // CHECK:STDERR:        ╭─┤ fail_protected_member.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   protected fn F(self);
+  // CHECK:STDERR:        ·   ━━━━┳━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: `protected` not allowed; requires class scope
+  // CHECK:STDERR:        ·          ┃        [ModifierProtectedNotAllowed]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   protected fn F(self);
 }
@@ -183,16 +213,16 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F)] {
-// CHECK:STDOUT:     %self.param_patt.loc7_16.1: @I.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern [symbolic = %self.param_patt.loc7_16.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:     %self.patt.loc7_16.1: @I.WithSelf.F.%pattern_type (%pattern_type) = wrapper_binding_pattern self, %self.param_patt.loc7_16.1 [symbolic = %self.patt.loc7_16.2 (constants.%self.patt)]
+// CHECK:STDOUT:     %self.param_patt.loc12_16.1: @I.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern [symbolic = %self.param_patt.loc12_16.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:     %self.patt.loc12_16.1: @I.WithSelf.F.%pattern_type (%pattern_type) = wrapper_binding_pattern self, %self.param_patt.loc12_16.1 [symbolic = %self.patt.loc12_16.2 (constants.%self.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.as_type.loc7_16.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc7_16.1: type = splice_block %.loc7_16.2 [symbolic = %Self.as_type.loc7_16.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.as_type.loc12_16.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc12_16.1: type = splice_block %.loc12_16.2 [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc7_16.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc7_16.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc7_16.2: type = converted %Self.ref, %Self.as_type.loc7_16.2 [symbolic = %Self.as_type.loc7_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc12_16.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc12_16.2: type = converted %Self.ref, %Self.as_type.loc12_16.2 [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc7_16.1 (%Self.as_type) = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc12_16.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -206,22 +236,22 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc7_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc7_16.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc7_16.1 [symbolic = %pattern_type (constants.%pattern_type)]
-// CHECK:STDOUT:   %self.param_patt.loc7_16.2: @I.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern [symbolic = %self.param_patt.loc7_16.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt.loc7_16.2: @I.WithSelf.F.%pattern_type (%pattern_type) = wrapper_binding_pattern self, %self.param_patt.loc7_16.2 [symbolic = %self.patt.loc7_16.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %Self.as_type.loc12_16.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_16.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc12_16.1 [symbolic = %pattern_type (constants.%pattern_type)]
+// CHECK:STDOUT:   %self.param_patt.loc12_16.2: @I.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern [symbolic = %self.param_patt.loc12_16.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc12_16.2: @I.WithSelf.F.%pattern_type (%pattern_type) = wrapper_binding_pattern self, %self.param_patt.loc12_16.2 [symbolic = %self.patt.loc12_16.2 (constants.%self.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc7_16.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc12_16.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc7_16.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc12_16.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
-// CHECK:STDOUT:   %self.param_patt.loc7_16.2 => constants.%self.param_patt
-// CHECK:STDOUT:   %self.patt.loc7_16.2 => constants.%self.patt
+// CHECK:STDOUT:   %self.param_patt.loc12_16.2 => constants.%self.param_patt
+// CHECK:STDOUT:   %self.patt.loc12_16.2 => constants.%self.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_protected_member.carbon
@@ -253,16 +283,16 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %I.WithSelf.F.decl: @I.WithSelf.%I.WithSelf.F.type (%I.WithSelf.F.type) = fn_decl @I.WithSelf.F [symbolic = @I.WithSelf.%I.WithSelf.F (constants.%I.WithSelf.F)] {
-// CHECK:STDOUT:     %self.param_patt.loc7_18.1: @I.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern [symbolic = %self.param_patt.loc7_18.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:     %self.patt.loc7_18.1: @I.WithSelf.F.%pattern_type (%pattern_type) = wrapper_binding_pattern self, %self.param_patt.loc7_18.1 [symbolic = %self.patt.loc7_18.2 (constants.%self.patt)]
+// CHECK:STDOUT:     %self.param_patt.loc12_18.1: @I.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern [symbolic = %self.param_patt.loc12_18.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:     %self.patt.loc12_18.1: @I.WithSelf.F.%pattern_type (%pattern_type) = wrapper_binding_pattern self, %self.param_patt.loc12_18.1 [symbolic = %self.patt.loc12_18.2 (constants.%self.patt)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.as_type.loc7_18.1 (%Self.as_type) = value_param call_param0
-// CHECK:STDOUT:     %.loc7_18.1: type = splice_block %.loc7_18.2 [symbolic = %Self.as_type.loc7_18.1 (constants.%Self.as_type)] {
+// CHECK:STDOUT:     %self.param: @I.WithSelf.F.%Self.as_type.loc12_18.1 (%Self.as_type) = value_param call_param0
+// CHECK:STDOUT:     %.loc12_18.1: type = splice_block %.loc12_18.2 [symbolic = %Self.as_type.loc12_18.1 (constants.%Self.as_type)] {
 // CHECK:STDOUT:       %Self.ref: %I.type = name_ref Self, @I.%Self [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:       %Self.as_type.loc7_18.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc7_18.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:       %.loc7_18.2: type = converted %Self.ref, %Self.as_type.loc7_18.2 [symbolic = %Self.as_type.loc7_18.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc12_18.2: type = facet_access_type %Self.ref [symbolic = %Self.as_type.loc12_18.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %.loc12_18.2: type = converted %Self.ref, %Self.as_type.loc12_18.2 [symbolic = %Self.as_type.loc12_18.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc7_18.1 (%Self.as_type) = wrapper_binding self, %self.param
+// CHECK:STDOUT:     %self: @I.WithSelf.F.%Self.as_type.loc12_18.1 (%Self.as_type) = wrapper_binding self, %self.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %assoc0: %I.assoc_type = assoc_entity element0, %I.WithSelf.F.decl [concrete = constants.%assoc0]
 // CHECK:STDOUT:
@@ -276,21 +306,21 @@ interface I {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic fn @I.WithSelf.F(@I.%Self: %I.type) {
 // CHECK:STDOUT:   %Self: %I.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc7_18.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc7_18.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc7_18.1 [symbolic = %pattern_type (constants.%pattern_type)]
-// CHECK:STDOUT:   %self.param_patt.loc7_18.2: @I.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern [symbolic = %self.param_patt.loc7_18.2 (constants.%self.param_patt)]
-// CHECK:STDOUT:   %self.patt.loc7_18.2: @I.WithSelf.F.%pattern_type (%pattern_type) = wrapper_binding_pattern self, %self.param_patt.loc7_18.2 [symbolic = %self.patt.loc7_18.2 (constants.%self.patt)]
+// CHECK:STDOUT:   %Self.as_type.loc12_18.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc12_18.1 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %Self.as_type.loc12_18.1 [symbolic = %pattern_type (constants.%pattern_type)]
+// CHECK:STDOUT:   %self.param_patt.loc12_18.2: @I.WithSelf.F.%pattern_type (%pattern_type) = value_param_pattern [symbolic = %self.param_patt.loc12_18.2 (constants.%self.param_patt)]
+// CHECK:STDOUT:   %self.patt.loc12_18.2: @I.WithSelf.F.%pattern_type (%pattern_type) = wrapper_binding_pattern self, %self.param_patt.loc12_18.2 [symbolic = %self.patt.loc12_18.2 (constants.%self.patt)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc7_18.1 (%Self.as_type));
+// CHECK:STDOUT:   fn(%self.param: @I.WithSelf.F.%Self.as_type.loc12_18.1 (%Self.as_type));
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @I.WithSelf.F(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc7_18.1 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc12_18.1 => constants.%Self.as_type
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type
-// CHECK:STDOUT:   %self.param_patt.loc7_18.2 => constants.%self.param_patt
-// CHECK:STDOUT:   %self.patt.loc7_18.2 => constants.%self.patt
+// CHECK:STDOUT:   %self.param_patt.loc12_18.2 => constants.%self.param_patt
+// CHECK:STDOUT:   %self.patt.loc12_18.2 => constants.%self.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

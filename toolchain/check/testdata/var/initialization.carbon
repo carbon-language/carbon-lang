@@ -55,7 +55,13 @@ import Core;
 class A {}
 
 fn Main() {
-  // CHECK:STDERR: fail_uninitialized_no_impl.carbon:[[@LINE+2]]:3-18: error: cannot convert type `A` into type implementing `Core.DefaultOrUnformed` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_uninitialized_no_impl.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   var unused x: A;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `A` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.DefaultOrUnformed`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused x: A;
 }

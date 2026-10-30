@@ -10,18 +10,34 @@
 
 fn F() {
   if (a)
-    // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+2]]:5-6: error: expected braced code block [ExpectedCodeBlock]
+    // CHECK:STDERR:        ╭─┤ fail_else_unbraced.carbon:[[@LINE+6]]:5
+    // CHECK:STDERR: ->     │     if (b)
+    // CHECK:STDERR:        ·     ━┳
+    // CHECK:STDERR:        ·      ┗━━┫ error: expected braced code block [ExpectedCodeBlock]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     if (b)
-      // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+2]]:7: error: expected braced code block [ExpectedCodeBlock]
+      // CHECK:STDERR:        ╭─┤ fail_else_unbraced.carbon:[[@LINE+6]]:7
+      // CHECK:STDERR: ->     │       c;
+      // CHECK:STDERR:        ·       ┳
+      // CHECK:STDERR:        ·       ┗━━┫ error: expected braced code block [ExpectedCodeBlock]
+      // CHECK:STDERR:        ╰────
       // CHECK:STDERR:
       c;
     else
-      // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+2]]:7: error: expected braced code block [ExpectedCodeBlock]
+      // CHECK:STDERR:        ╭─┤ fail_else_unbraced.carbon:[[@LINE+6]]:7
+      // CHECK:STDERR: ->     │       d;
+      // CHECK:STDERR:        ·       ┳
+      // CHECK:STDERR:        ·       ┗━━┫ error: expected braced code block [ExpectedCodeBlock]
+      // CHECK:STDERR:        ╰────
       // CHECK:STDERR:
       d;
   else
-    // CHECK:STDERR: fail_else_unbraced.carbon:[[@LINE+2]]:5: error: expected braced code block [ExpectedCodeBlock]
+    // CHECK:STDERR:        ╭─┤ fail_else_unbraced.carbon:[[@LINE+6]]:5
+    // CHECK:STDERR: ->     │     e;
+    // CHECK:STDERR:        ·     ┳
+    // CHECK:STDERR:        ·     ┗━━┫ error: expected braced code block [ExpectedCodeBlock]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     e;
   if (x) { f; }

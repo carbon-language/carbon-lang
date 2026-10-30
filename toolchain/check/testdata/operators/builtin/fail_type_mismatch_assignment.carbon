@@ -14,8 +14,16 @@
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+3]]:3-9: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_type_mismatch_assignment.carbon:[[@LINE+2]]:3-9: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_type_mismatch_assignment.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   a = 5.6;
+  // CHECK:STDERR:        ·   ┳━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Core.FloatLiteral`
+  // CHECK:STDERR:        ·   │  ┃        to `i32`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·   ╰────┤ type `Core.FloatLiteral` does not implement interface
+  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(i32)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a = 5.6;
 }
@@ -113,7 +121,7 @@ fn Main() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %a.ref: ref %i32 = name_ref a, %a
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 56e-1 [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc20: %i32 = converted %float, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc28: %i32 = converted %float, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %a.ref, <error>
 // CHECK:STDOUT:   %Destroy.facet.loc16_3.1: %Destroy.type = facet_value constants.%i32, (constants.%DestroyImpl.impl_witness.077, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   %.loc16_3.2: %Destroy.type = converted constants.%i32, %Destroy.facet.loc16_3.1 [concrete = constants.%Destroy.facet]
