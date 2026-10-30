@@ -24,7 +24,6 @@ cc_library(
         "//common:set",
         "//toolchain/lex:token_kind",
         "@abseil-cpp//absl/random",
-        "@abseil-cpp//absl/random:seed_sequences",
         "@llvm-project//llvm:Support",
     ],
 )
@@ -34,6 +33,7 @@ cc_test(
     size = "small",
     srcs = ["source_gen_test.cpp"],
     data = ["//toolchain/install:install_data"],
+    shard_count = 8,
     deps = [
         ":source_gen_lib",
         "//common:all_llvm_targets",
