@@ -346,7 +346,7 @@ auto Mangler::MangleGlobalBinding(SemIR::EntityNameId entity_name_id,
     return std::string();
   }
 
-  auto entity_name = sem_ir().entity_names().Get(entity_name_id);
+  const auto& entity_name = sem_ir().entity_names().Get(entity_name_id);
   if (!entity_name.name_id.has_value() ||
       entity_name.name_id == SemIR::NameId::Underscore ||
       !entity_name.parent_scope_id.has_value()) {

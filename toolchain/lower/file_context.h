@@ -195,7 +195,8 @@ class FileContext {
       -> llvm::GlobalVariable*;
 
   // Returns or creates the global storage for a non-constant global or static
-  // `let` `WrapperBinding`, or `nullptr` if its value representation is empty.
+  // `let` binding (`WrapperBinding`), or `nullptr` if its value representation
+  // is empty.
   auto GetOrCreateGlobalBinding(SemIR::InstId binding_inst_id)
       -> llvm::GlobalVariable*;
 

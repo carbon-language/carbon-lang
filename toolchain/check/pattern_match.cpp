@@ -679,9 +679,8 @@ auto MatchContext::DoVarPreWorkImpl(State state,
       if (scrutinee_id.has_value()) {
         bool use_global_init =
             UseGlobalInit(context_) &&
-            (context_.decl_introducer_state_stack().empty() ||
-             context_.decl_introducer_state_stack().innermost().kind !=
-                 Lex::TokenKind::Let);
+            !context_.decl_introducer_state_stack().InnermostKindIs(
+                Lex::TokenKind::Let);
         if (use_global_init) {
           context_.global_init().Resume();
         }
@@ -1283,11 +1282,9 @@ auto CallerPatternMatch(
 auto LocalPatternMatch(Context& context, SemIR::LocId loc_id,
                        SemIR::InstId pattern_id, SemIR::InstId scrutinee_id)
     -> void {
-  bool use_global_init =
-      UseGlobalInit(context) &&
-      !context.decl_introducer_state_stack().empty() &&
-      context.decl_introducer_state_stack().innermost().kind ==
-          Lex::TokenKind::Let;
+  bool use_global_init = UseGlobalInit(context) &&
+                         context.decl_introducer_state_stack().InnermostKindIs(
+                             Lex::TokenKind::Let);
   if (use_global_init) {
     context.global_init().Resume();
   }

@@ -1058,6 +1058,9 @@ struct GlobalRef {
        .constant_kind = InstConstantKind::Never});
 
   TypeId type_id;
+  // This is an indirect reference to this global instruction -- we use its
+  // identity rather than its value as an operand -- so is represented as an
+  // AbsoluteInstId.
   AbsoluteInstId inst_id;
 };
 

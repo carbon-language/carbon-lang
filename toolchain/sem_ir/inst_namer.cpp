@@ -1202,8 +1202,7 @@ auto InstNamer::NamingContext::NameInst() -> void {
           break;
       }
       if (entity_name_id.has_value()) {
-        AddInstNameId(sem_ir().entity_names().Get(entity_name_id).name_id,
-                      ".global_ref");
+        AddInstEntityNameId(entity_name_id, ".global_ref");
       } else {
         AddInstName("global_ref");
       }

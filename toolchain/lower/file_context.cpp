@@ -815,6 +815,9 @@ auto FileContext::GetOrCreateGlobalBinding(SemIR::InstId binding_inst_id)
       mangler_.MangleGlobalBinding(binding.entity_name_id, binding_inst_id);
   auto linkage = llvm::GlobalVariable::ExternalLinkage;
   if (mangled_name.empty()) {
+    // If the variable doesn't have an externally-visible name, demote it to
+    // internal linkage and invent a plausible name that shouldn't collide with
+    // any of our real manglings.
     linkage = llvm::GlobalVariable::InternalLinkage;
     if (inst_namer_) {
       mangled_name =

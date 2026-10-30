@@ -71,19 +71,21 @@ class ScopeStack {
     SemIR::SpecificId specific_id;
   };
 
-  // How a scope affects access to non-constant values from enclosing lexical
+  // How a scope affects access to non-constant values in enclosing lexical
   // scopes.
   enum class NonConstantAccess : uint8_t {
-    // Non-constant locals from enclosing scopes can be used if permitted by the
+    // Non-constant locals in enclosing scopes can be used if permitted by the
     // parent scope (e.g. `if`, `for`, block scopes, and function body scopes
     // accessing their own parameter scope).
     Permitted,
-    // Non-constant locals from enclosing scopes cannot be used (e.g. `class` or
-    // nested `fn` scopes).
+    // Non-constant locals in enclosing scopes cannot be used (e.g. `class` or,
+    // for now, nested `fn` scopes).
     Disallowed,
-    // Non-constant locals from enclosing scopes can be used if captured.
+    // Non-constant locals in enclosing scopes can be used if captured.
+    // TODO: This will eventually be used for `fn` scopes that have captures,
+    // but is unused for now.
     Captured,
-    // Non-constant locals from enclosing scopes can be used unconditionally
+    // Non-constant locals in enclosing scopes can be used unconditionally
     // because the scope is unevaluated (e.g. `typeof(...)`).
     Unevaluated,
   };
@@ -93,6 +95,10 @@ class ScopeStack {
   struct SuspendedScope;
 
   // Pushes a scope for a declaration name's parameters.
+  //
+  // `non_constant_access` specifies whether lookups in this scope are allowed
+  // to find and use non-constant locals in the enclosing scope. For most kinds
+  // of nested declaration, this is not allowed.
   auto PushForDeclName(NonConstantAccess non_constant_access =
                            NonConstantAccess::Disallowed) -> void;
 
@@ -105,6 +111,11 @@ class ScopeStack {
   // Pushes a scope which should be in the same region as the current scope.
   // These can be in a function without breaking `return` scoping. For example,
   // this is used by struct literals and code blocks.
+  //
+  // `non_constant_access` specifies whether lookups in this scope are allowed
+  // to find and use non-constant locals in the enclosing scope. This is
+  // typically allowed since the nested scope is in the same region as the
+  // enclosing scope.
   auto PushForSameRegion(
       CleanupScopeKind cleanup_scope_kind = CleanupScopeKind::Inherited,
       NonConstantAccess non_constant_access = NonConstantAccess::Permitted)
