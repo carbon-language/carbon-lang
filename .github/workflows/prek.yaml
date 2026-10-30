@@ -60,7 +60,7 @@ jobs:
           matrix_runner: ubuntu-22.04
           remote_cache_upload: '--remote_upload_local_results=false'
 
-      - uses: j178/prek-action@01345c78b7de7d79edf368729212760396ba9345 # v2
+      - uses: j178/prek-action@44924fe9ef4a6f88253c4b6b1bf11c689d3ce53d # v3.1.0
 
       # We want to automatically create github suggestions for prek file
       # changes for a pull request. But `pull_request` actions never have write
