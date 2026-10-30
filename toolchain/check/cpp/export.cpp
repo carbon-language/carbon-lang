@@ -1335,6 +1335,8 @@ static auto GetClassInfoForClangDecl(Context& context, clang::Decl* decl)
       SemIR::ClangDeclKey::ForNonFunctionDecl(decl));
   const auto& clang_decl = context.clang_decls().Get(clang_decl_id);
   auto class_id = SemIR::ClassId::None;
+  // Regular classes are mapped in `clang_decls` to a `ClassDecl`
+  // inst. Specific classes are mapped to a `ClassType` plus a specific.
   if (auto class_decl =
           context.insts().TryGetAs<SemIR::ClassDecl>(clang_decl.inst_id)) {
     class_id = class_decl->class_id;
