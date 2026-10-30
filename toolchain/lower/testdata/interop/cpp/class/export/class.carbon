@@ -301,7 +301,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallLayoutA__carbon_thunk.Main(ptr %_) #5 !dbg !67 {
+// CHECK:STDOUT: define void @_CCallLayoutA__carbon_thunk.Main(ptr noundef nonnull align 8 dereferenceable(8) %_) #6 !dbg !67 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc21 = load ptr, ptr %_, align 8, !dbg !69
 // CHECK:STDOUT:   call void @_CCallLayoutA.Main(ptr %.loc21), !dbg !69
@@ -336,7 +336,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallLayoutB__carbon_thunk.Main(ptr %_) #5 !dbg !83 {
+// CHECK:STDOUT: define void @_CCallLayoutB__carbon_thunk.Main(ptr noundef nonnull align 8 dereferenceable(8) %_) #6 !dbg !83 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc22 = load ptr, ptr %_, align 8, !dbg !85
 // CHECK:STDOUT:   call void @_CCallLayoutB.Main(ptr %.loc22), !dbg !85
@@ -371,7 +371,7 @@ fn G() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CCallLayoutC__carbon_thunk.Main(ptr %_) #5 !dbg !99 {
+// CHECK:STDOUT: define void @_CCallLayoutC__carbon_thunk.Main(ptr noundef nonnull align 8 dereferenceable(8) %_) #6 !dbg !99 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc23 = load ptr, ptr %_, align 8, !dbg !101
 // CHECK:STDOUT:   call void @_CCallLayoutC.Main(ptr %.loc23), !dbg !101
@@ -418,6 +418,7 @@ fn G() {
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #4 = { alwaysinline nounwind }
 // CHECK:STDOUT: attributes #5 = { nounwind }
+// CHECK:STDOUT: attributes #6 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!49}
 // CHECK:STDOUT: !llvm.module.flags = !{!43, !44, !45, !19, !20}

@@ -1607,8 +1607,10 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
   // If this thunk will be exposed as a C++ constructor, we put the output
   // parameter first to match the Itanium constructor ABI.
   //
-  // TODO: use `clang::CodeGen::CGCXXABI::HasThisReturn` to determine if the
-  // constructor's `this` should be a return value instead of an output param.
+  // Some C++ ABIs also return `this` from constructors. We don't model that
+  // here; instead, lowering defines the thunk in the LLVM function Clang
+  // creates for its C++ declaration, and returns `this` if Clang's signature
+  // does. See `FileContext::GetCppThunkLLVMFunction`.
   if (target.export_as_constructor) {
     CARBON_CHECK(target.return_type_id != SemIR::TypeId::None);
     std::rotate(thunk_param_type_ids.begin(), thunk_param_type_ids.end() - 1,
@@ -1626,6 +1628,9 @@ static auto BuildCarbonToCarbonThunk(Context& context, SemIR::LocId loc_id,
            .param_type_ids = thunk_param_type_ids,
            .param_kinds = thunk_param_kinds})
           .second;
+  context.functions()
+      .Get(carbon_thunk_function_id)
+      .SetCppThunk(target.function.first_decl_id());
 
   BuildThunkDefinitionForExport(
       context, carbon_thunk_function_id, target.function_id,
@@ -1672,6 +1677,20 @@ static auto BuildCppToCarbonThunk(Context& context, SemIR::LocId loc_id,
   if (!carbon_function_decl) {
     return;
   }
+
+  // Map the Carbon thunk to its C++ declaration, so that lowering can define
+  // the thunk in the same LLVM function that Clang uses to call it.
+  SemIR::ClangDeclSignature carbon_function_signature{
+      .kind = SemIR::ClangDeclSignature::Normal,
+      .num_params = static_cast<int32_t>(carbon_function_decl->getNumParams())};
+  carbon_function_signature.passing_modes.assign(
+      carbon_function_signature.num_params,
+      SemIR::ClangDeclSignature::PassingMode::ByValue);
+  context.clang_decls().Add(
+      {.key = SemIR::ClangDeclKey::ForFunctionDecl(
+           carbon_function_decl, context.clang_decl_signatures().Add(
+                                     std::move(carbon_function_signature))),
+       .inst_id = carbon_thunk_target.function.first_decl_id()});
 
   // Build the thunk function body.
   clang::Sema& sema = context.clang_sema();

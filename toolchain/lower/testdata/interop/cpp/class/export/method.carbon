@@ -124,7 +124,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.A.Main(ptr %self) #4 !dbg !35 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.A.Main(ptr noundef nonnull align 1 %self) #6 !dbg !35 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.A.Main(ptr %self), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !37
@@ -141,6 +141,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #4 = { nounwind }
 // CHECK:STDOUT: attributes #5 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #6 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!21}
 // CHECK:STDOUT: !llvm.module.flags = !{!51, !52, !53, !4, !5}
@@ -247,7 +248,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.ArgsA.Main(ptr %self, ptr %_, ptr %_1) #4 !dbg !81 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.ArgsA.Main(ptr noundef nonnull align 1 %self, ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #6 !dbg !81 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_29.2 = load i32, ptr %_, align 4, !dbg !85
 // CHECK:STDOUT:   %ArgsA.F.call = call i32 @_CF.ArgsA.Main(ptr %self, i32 %.loc6_29.2), !dbg !85
@@ -273,6 +274,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: attributes #3 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #4 = { nounwind }
 // CHECK:STDOUT: attributes #5 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #6 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!58}
 // CHECK:STDOUT: !llvm.module.flags = !{!51, !52, !53, !4, !5}
@@ -362,7 +364,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.StaticA.Main() #2 !dbg !112 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.StaticA.Main() #4 !dbg !112 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.StaticA.Main(), !dbg !113
 // CHECK:STDOUT:   ret void, !dbg !113
@@ -384,6 +386,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { nounwind }
 // CHECK:STDOUT: attributes #3 = { alwaysinline nounwind }
+// CHECK:STDOUT: attributes #4 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!103}
 // CHECK:STDOUT: !llvm.module.flags = !{!51, !52, !53, !4, !5}
