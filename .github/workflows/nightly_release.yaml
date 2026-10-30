@@ -52,6 +52,7 @@ jobs:
             download.gnome.org:443
             downloads.sourceforge.net:443
             files.pythonhosted.org:443
+            formulae.brew.sh:443
             github.com:443
             go.dev:443
             mirror.bazel.build:443
