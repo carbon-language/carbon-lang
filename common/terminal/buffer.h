@@ -262,17 +262,16 @@ class Buffer {
   // answers only for arguments drawing would accept.
   auto MeasureWrappedText(int x, int y, int margin, int max_width,
                           llvm::StringRef text,
-                          bool keep_backtick_quotes_whole = false) const
-      -> DrawEnd;
+                          bool backticks_are_quotes = false) const -> DrawEnd;
 
   // Returns the fewest columns `text` wraps into without overhanging them,
   // which is the width of its widest word since wrapping never breaks one.
-  // `keep_backtick_quotes_whole` is as for `DrawWrappedText`.
+  // `backticks_are_quotes` is as for `DrawWrappedText`.
   //
   // Wrapping into fewer columns still draws everything; the excess overhangs.
   // So this is a layout preference rather than a minimum.
   auto MeasureWrapWidth(llvm::StringRef text,
-                        bool keep_backtick_quotes_whole = false) const -> int;
+                        bool backticks_are_quotes = false) const -> int;
 
   // Draws `code_point` at (x, y), which must be a non-negative column and a row
   // inside `MaxRows`, widening the buffer and adding rows as needed to reach
@@ -403,8 +402,8 @@ class Buffer {
   // word, and one too long for a row of its own is moved down to one and then
   // overhangs it rather than being broken.
   //
-  // With `keep_backtick_quotes_whole`, backticks pair up from the left on each
-  // line and no break falls between a pair, so a quoted type with spaces in it
+  // With `backticks_are_quotes`, backticks pair up from the left on each line
+  // and no break falls between a pair, so a quoted type with spaces in it
   // wraps whole or overhangs, as a URL does. A backtick with no partner later
   // on its line, or with a tab or carriage return before its partner, is an
   // ordinary character.
@@ -443,7 +442,7 @@ class Buffer {
   // that text came from.
   auto DrawWrappedText(int x, int y, int margin, int max_width,
                        llvm::StringRef text, const Style& style,
-                       bool keep_backtick_quotes_whole = false) -> DrawEnd;
+                       bool backticks_are_quotes = false) -> DrawEnd;
 
   // Renders the grid, appending the bytes that draw it to `out`.
   //
@@ -556,7 +555,7 @@ class Buffer {
                 PlaceFn place) const -> DrawEnd;
   template <typename PlaceFn>
   auto WalkWrappedText(int x, int y, int margin, int max_width,
-                       llvm::StringRef text, bool keep_backtick_quotes_whole,
+                       llvm::StringRef text, bool backticks_are_quotes,
                        PlaceFn place) const -> DrawEnd;
 
   // Adds rows until row `y` exists.
