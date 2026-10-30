@@ -1725,9 +1725,9 @@ auto DefineExportedVirtualFunction(Context& context, SemIR::LocId loc_id,
 // name.
 //
 // Returns nullptr if an error occurs.
-auto ExportNonGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
-                                   const FunctionInfo& target,
-                                   std::string_view extra_name = "")
+static auto ExportNonGenericFunctionToCpp(Context& context, SemIR::LocId loc_id,
+                                          const FunctionInfo& target,
+                                          std::string_view extra_name = "")
     -> clang::FunctionDecl* {
   auto* thunk_function_decl =
       ExportNonGenericFunctionDeclToCpp(context, loc_id, target);
