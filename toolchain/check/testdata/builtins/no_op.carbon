@@ -60,7 +60,12 @@ var x: () = NoOp();
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_signature.carbon:[[@LINE+2]]:1-17: error: invalid signature for builtin function "no_op" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_signature.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn NoOp() -> {} = "no_op";
+// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: invalid signature for builtin function "no_op"
+// CHECK:STDERR:        ·            ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NoOp() -> {} = "no_op";
 

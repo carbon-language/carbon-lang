@@ -62,10 +62,20 @@ class D {
 }
 
 fn B(d: D) {
-  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE+2]]:3-5: error: ambiguous use of name `A` found in multiple extended scopes [NameAmbiguousDueToExtend]
+  // CHECK:STDERR:        ╭─┤ fail_ambiguous_impls.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   D.A();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: ambiguous use of name `A` found in multiple extended scopes
+  // CHECK:STDERR:        ·       ┃        [NameAmbiguousDueToExtend]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   D.A();
-  // CHECK:STDERR: fail_ambiguous_impls.carbon:[[@LINE+2]]:3-5: error: ambiguous use of name `A` found in multiple extended scopes [NameAmbiguousDueToExtend]
+  // CHECK:STDERR:        ╭─┤ fail_ambiguous_impls.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   d.A();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: ambiguous use of name `A` found in multiple extended scopes
+  // CHECK:STDERR:        ·       ┃        [NameAmbiguousDueToExtend]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   d.A();
 }
@@ -116,10 +126,20 @@ class L {
 }
 
 fn M(l: L) {
-   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+2]]:4-6: error: ambiguous use of name `K` found in multiple extended scopes [NameAmbiguousDueToExtend]
+   // CHECK:STDERR:        ╭─┤ fail_ambiguous_impl_and_base.carbon:[[@LINE+7]]:4
+   // CHECK:STDERR: ->     │    L.K();
+   // CHECK:STDERR:        ·    ━┳━
+   // CHECK:STDERR:        ·     ┗━━┫ error: ambiguous use of name `K` found in multiple extended scopes
+   // CHECK:STDERR:        ·        ┃        [NameAmbiguousDueToExtend]
+   // CHECK:STDERR:        ╰────
    // CHECK:STDERR:
    L.K();
-   // CHECK:STDERR: fail_ambiguous_impl_and_base.carbon:[[@LINE+2]]:4-6: error: ambiguous use of name `K` found in multiple extended scopes [NameAmbiguousDueToExtend]
+   // CHECK:STDERR:        ╭─┤ fail_ambiguous_impl_and_base.carbon:[[@LINE+7]]:4
+   // CHECK:STDERR: ->     │    l.K();
+   // CHECK:STDERR:        ·    ━┳━
+   // CHECK:STDERR:        ·     ┗━━┫ error: ambiguous use of name `K` found in multiple extended scopes
+   // CHECK:STDERR:        ·        ┃        [NameAmbiguousDueToExtend]
+   // CHECK:STDERR:        ╰────
    // CHECK:STDERR:
    l.K();
 }
@@ -555,10 +575,10 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%d.param: %D) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %D.ref.loc24: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %A.ref.loc24: <error> = name_ref A, <error> [concrete = <error>]
+// CHECK:STDOUT:   %D.ref.loc29: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:   %A.ref.loc29: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
-// CHECK:STDOUT:   %A.ref.loc27: <error> = name_ref A, <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc37: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -919,10 +939,10 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @M(%l.param: %L) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %L.ref.loc22: type = name_ref L, file.%L.decl [concrete = constants.%L]
-// CHECK:STDOUT:   %K.ref.loc22: <error> = name_ref K, <error> [concrete = <error>]
+// CHECK:STDOUT:   %L.ref.loc27: type = name_ref L, file.%L.decl [concrete = constants.%L]
+// CHECK:STDOUT:   %K.ref.loc27: <error> = name_ref K, <error> [concrete = <error>]
 // CHECK:STDOUT:   %l.ref: %L = name_ref l, %l
-// CHECK:STDOUT:   %K.ref.loc25: <error> = name_ref K, <error> [concrete = <error>]
+// CHECK:STDOUT:   %K.ref.loc35: <error> = name_ref K, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

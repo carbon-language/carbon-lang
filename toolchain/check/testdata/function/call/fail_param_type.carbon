@@ -15,9 +15,20 @@
 fn G(unused a: i32) {}
 
 fn F() {
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+4]]:5-7: error: cannot implicitly convert expression of type `Core.FloatLiteral` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE+3]]:5-7: note: type `Core.FloatLiteral` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_param_type.carbon:[[@LINE-5]]:13-18: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_param_type.carbon:[[@LINE+15]]:5
+  // CHECK:STDERR:        │ fn G(unused a: i32) {}
+  // CHECK:STDERR:        ·             ───┬──
+  // CHECK:STDERR:        ·                ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   G(1.0);
+  // CHECK:STDERR:        ·     ┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: cannot implicitly convert expression of type `Core.FloatLiteral`
+  // CHECK:STDERR:        ·     │  ┃        to `i32`
+  // CHECK:STDERR:        ·     │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·     ╰────┤ type `Core.FloatLiteral` does not implement interface
+  // CHECK:STDERR:        ·          │ `Core.ImplicitAs(i32)`
+  // CHECK:STDERR:        ·          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   G(1.0);
 }
@@ -81,7 +92,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %G.ref: %G.type = name_ref G, file.%G.decl [concrete = constants.%G]
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc22: %i32 = converted %float, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc33: %i32 = converted %float, <error> [concrete = <error>]
 // CHECK:STDOUT:   %G.call: init %empty_tuple.type = call %G.ref(<error>)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

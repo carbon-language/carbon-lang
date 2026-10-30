@@ -76,8 +76,16 @@ struct S {};
 
 fn F(input: Cpp.void*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon:[[@LINE+3]]:26-40: error: cannot convert expression of type `void*` to `Cpp.S*` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon:[[@LINE+2]]:26-40: note: type `Cpp.void*` does not implement interface `Core.As(Cpp.S*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_explicit_as_from_void_pointer_to_cpp_class_pointer.carbon:[[@LINE+11]]:26
+  // CHECK:STDERR: ->     │   let unused p: Cpp.S* = input as Cpp.S*;
+  // CHECK:STDERR:        ·                          ┳━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                          ┗━━┫ error: cannot convert expression of type `void*`
+  // CHECK:STDERR:        ·                          │  ┃        to `Cpp.S*` with `as`
+  // CHECK:STDERR:        ·                          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                          ╰────┤ type `Cpp.void*` does not implement interface
+  // CHECK:STDERR:        ·                               │ `Core.As(Cpp.S*)`
+  // CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused p: Cpp.S* = input as Cpp.S*;
   //@dump-sem-ir-end
@@ -93,8 +101,16 @@ class C {}
 
 fn F(input: Cpp.void*) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon:[[@LINE+3]]:22-32: error: cannot convert expression of type `void*` to `C*` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon:[[@LINE+2]]:22-32: note: type `Cpp.void*` does not implement interface `Core.As(C*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_explicit_as_from_void_pointer_to_carbon_class_pointer.carbon:[[@LINE+11]]:22
+  // CHECK:STDERR: ->     │   let unused p: C* = input as C*;
+  // CHECK:STDERR:        ·                      ┳━━━━━━━━━━
+  // CHECK:STDERR:        ·                      ┗━━┫ error: cannot convert expression of type `void*` to
+  // CHECK:STDERR:        ·                      │  ┃        `C*` with `as`
+  // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                      ╰────┤ type `Cpp.void*` does not implement interface
+  // CHECK:STDERR:        ·                           │ `Core.As(C*)`
+  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused p: C* = input as C*;
   //@dump-sem-ir-end
@@ -398,14 +414,14 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT: fn @F(%input.param: %ptr.00a) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %input.ref: %ptr.00a = name_ref input, %input
-// CHECK:STDOUT:   %Cpp.ref.loc13_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %S.ref.loc13_38: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:   %ptr.loc13_40: type = ptr_type %S.ref.loc13_38 [concrete = constants.%ptr.037]
-// CHECK:STDOUT:   %.loc13_32: %ptr.037 = converted %input.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc13_22: type = splice_block %ptr.loc13_22 [concrete = constants.%ptr.037] {
-// CHECK:STDOUT:     %Cpp.ref.loc13_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %S.ref.loc13_20: type = name_ref S, imports.%S.decl [concrete = constants.%S]
-// CHECK:STDOUT:     %ptr.loc13_22: type = ptr_type %S.ref.loc13_20 [concrete = constants.%ptr.037]
+// CHECK:STDOUT:   %Cpp.ref.loc21_35: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %S.ref.loc21_38: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:   %ptr.loc21_40: type = ptr_type %S.ref.loc21_38 [concrete = constants.%ptr.037]
+// CHECK:STDOUT:   %.loc21_32: %ptr.037 = converted %input.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21_22: type = splice_block %ptr.loc21_22 [concrete = constants.%ptr.037] {
+// CHECK:STDOUT:     %Cpp.ref.loc21_17: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %S.ref.loc21_20: type = name_ref S, imports.%S.decl [concrete = constants.%S]
+// CHECK:STDOUT:     %ptr.loc21_22: type = ptr_type %S.ref.loc21_20 [concrete = constants.%ptr.037]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.037 = wrapper_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
@@ -429,12 +445,12 @@ fn F(input: Cpp.void*) {
 // CHECK:STDOUT: fn @F(%input.param: %ptr.00a) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %input.ref: %ptr.00a = name_ref input, %input
-// CHECK:STDOUT:   %C.ref.loc13_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %ptr.loc13_32: type = ptr_type %C.ref.loc13_31 [concrete = constants.%ptr.6b6]
-// CHECK:STDOUT:   %.loc13_28: %ptr.6b6 = converted %input.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc13_18: type = splice_block %ptr.loc13_18 [concrete = constants.%ptr.6b6] {
-// CHECK:STDOUT:     %C.ref.loc13_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %ptr.loc13_18: type = ptr_type %C.ref.loc13_17 [concrete = constants.%ptr.6b6]
+// CHECK:STDOUT:   %C.ref.loc21_31: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %ptr.loc21_32: type = ptr_type %C.ref.loc21_31 [concrete = constants.%ptr.6b6]
+// CHECK:STDOUT:   %.loc21_28: %ptr.6b6 = converted %input.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21_18: type = splice_block %ptr.loc21_18 [concrete = constants.%ptr.6b6] {
+// CHECK:STDOUT:     %C.ref.loc21_17: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %ptr.loc21_18: type = ptr_type %C.ref.loc21_17 [concrete = constants.%ptr.6b6]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %p: %ptr.6b6 = wrapper_binding p, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

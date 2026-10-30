@@ -40,8 +40,18 @@ class Goat {}
 impl Goat as Animal {}
 
 fn F() {
-  // CHECK:STDERR: fail_facet_value_to_facet_type.carbon:[[@LINE+3]]:3-22: error: cannot convert type `Goat as Animal` that implements `Animal` into type implementing `Eats` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: fail_facet_value_to_facet_type.carbon:[[@LINE-6]]:24-30: note: initializing generic parameter `e` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_facet_value_to_facet_type.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn Feed(unused generic e: Eats) {}
+  // CHECK:STDERR:        ·                        ───┬───
+  // CHECK:STDERR:        ·                           ╰──┤ initializing generic parameter `e` declared here
+  // CHECK:STDERR:        ·                              │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Feed(Goat as Animal);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Goat as Animal` that implements `Animal` into
+  // CHECK:STDERR:        ·      ┃        type implementing `Eats`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Feed(Goat as Animal);
 }
@@ -65,13 +75,33 @@ impl Goat as Climbs {}
 // These are expected to fail:
 // https://github.com/carbon-language/carbon-lang/issues/4853#issuecomment-2707673344
 fn F() {
-  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+3]]:3-33: error: cannot convert type `Goat as Animal & Climbs` that implements `Animal & Climbs` into type implementing `Eats` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE-9]]:24-30: note: initializing generic parameter `e` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn Feed(unused generic e: Eats) {}
+  // CHECK:STDERR:        ·                        ───┬───
+  // CHECK:STDERR:        ·                           ╰──┤ initializing generic parameter `e` declared here
+  // CHECK:STDERR:        ·                              │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Feed(Goat as (Animal & Climbs));
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Goat as Animal & Climbs` that implements
+  // CHECK:STDERR:        ·      ┃        `Animal & Climbs` into type implementing `Eats`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Feed(Goat as (Animal & Climbs));
 
-  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+3]]:3-23: error: cannot convert type `Animal & Climbs` into type implementing `Eats` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE-14]]:24-30: note: initializing generic parameter `e` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_convert_multi_interface_facet_value_to_facet_value.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn Feed(unused generic e: Eats) {}
+  // CHECK:STDERR:        ·                        ───┬───
+  // CHECK:STDERR:        ·                           ╰──┤ initializing generic parameter `e` declared here
+  // CHECK:STDERR:        ·                              │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Feed(Animal & Climbs);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Animal & Climbs` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Eats`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Feed(Animal & Climbs);
 }

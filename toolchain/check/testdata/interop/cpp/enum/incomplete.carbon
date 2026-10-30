@@ -15,15 +15,28 @@
 
 // This is not valid in standard C++, but MSVC allows it as an extension, and so
 // Clang allows it in MSVC compatibility mode.
+// CHECK:STDERR:        ╷ ╭── included from: import_declaration.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./declaration.h:[[@LINE+15]]:6
+// CHECK:STDERR: ->     │ enum UnsizedEnum;
+// CHECK:STDERR:        ·      ┳
+// CHECK:STDERR:        ·      ┗━━┫ warning: forward references to 'enum' types are a Microsoft extension
+// CHECK:STDERR:        ·         ┃          [CppInteropParseWarning]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╷ ╭── included from: fail_use_declaration_as_definition.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./declaration.h:[[@LINE+7]]:6
+// CHECK:STDERR: ->     │ enum UnsizedEnum;
+// CHECK:STDERR:        ·      ┳
+// CHECK:STDERR:        ·      ┗━━┫ warning: forward references to 'enum' types are a Microsoft extension
+// CHECK:STDERR:        ·         ┃          [CppInteropParseWarning]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 enum UnsizedEnum;
 
 // --- import_declaration.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: included from: import_declaration.carbon:[[@LINE+3]]:10 [InCppInclude]
-// CHECK:STDERR: ./declaration.h:4:6: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
-// CHECK:STDERR:
 import Cpp library "declaration.h";
 
 //@dump-sem-ir-begin
@@ -34,17 +47,24 @@ fn F(e: Cpp.UnsizedEnum);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: included from: fail_use_declaration_as_definition.carbon:[[@LINE+3]]:10 [InCppInclude]
-// CHECK:STDERR: ./declaration.h:4:6: warning: forward references to 'enum' types are a Microsoft extension [CppInteropParseWarning]
-// CHECK:STDERR:
 import Cpp library "declaration.h";
 
 fn MyF() {
   // TODO: It's a bit surprising to refer to this type as a class, even though
   // we model it as a class in Carbon. Consider customizing the diagnostic.
-  // CHECK:STDERR: fail_use_declaration_as_definition.carbon:[[@LINE+4]]:17-31: error: binding pattern has incomplete type `UnsizedEnum` in name binding declaration [IncompleteTypeInBindingDecl]
-  // CHECK:STDERR: included from: fail_use_declaration_as_definition.carbon:[[@LINE-6]]:10 [InCppInclude]
-  // CHECK:STDERR: ./declaration.h:4:6: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_use_declaration_as_definition.carbon:[[@LINE+14]]:17
+  // CHECK:STDERR: ->     │   var unused e: Cpp.UnsizedEnum;
+  // CHECK:STDERR:        ·                 ┳━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: binding pattern has incomplete type `UnsizedEnum` in
+  // CHECK:STDERR:        ·                    ┃        name binding declaration
+  // CHECK:STDERR:        ·                    ┃        [IncompleteTypeInBindingDecl]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_use_declaration_as_definition.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./declaration.h
+  // CHECK:STDERR:        │ enum UnsizedEnum;
+  // CHECK:STDERR:        ·      ┬
+  // CHECK:STDERR:        ·      ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused e: Cpp.UnsizedEnum;
 }
@@ -75,7 +95,7 @@ fn MyF() {
 // CHECK:STDOUT:     %e.patt: %pattern_type = wrapper_binding_pattern e, %e.param_patt [concrete = constants.%e.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %e.param: %UnsizedEnum = value_param call_param0
-// CHECK:STDOUT:     %.loc10: type = splice_block %UnsizedEnum.ref [concrete = constants.%UnsizedEnum] {
+// CHECK:STDOUT:     %.loc7: type = splice_block %UnsizedEnum.ref [concrete = constants.%UnsizedEnum] {
 // CHECK:STDOUT:       %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:       %UnsizedEnum.ref: type = name_ref UnsizedEnum, imports.%UnsizedEnum.decl [concrete = constants.%UnsizedEnum]
 // CHECK:STDOUT:     }

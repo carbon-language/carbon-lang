@@ -8,15 +8,35 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_mix_with_unknown.carbon
 
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+4]]:25: error: expected `.field = value` [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╭─┤ fail_mix_with_unknown.carbon:[[@LINE+14]]:25
+// CHECK:STDERR: ->     │ var x: i32 = {.a = 1, .b, .c: i32};
+// CHECK:STDERR:        ·                         ┳
+// CHECK:STDERR:        ·                         ┗━━┫ error: expected `.field = value`
+// CHECK:STDERR:        ·                            ┃        [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+2]]:29: error: expected `.field = value` [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╭─┤ fail_mix_with_unknown.carbon:[[@LINE+7]]:29
+// CHECK:STDERR: ->     │ var x: i32 = {.a = 1, .b, .c: i32};
+// CHECK:STDERR:        ·                             ┳
+// CHECK:STDERR:        ·                             ┗━━┫ error: expected `.field = value`
+// CHECK:STDERR:        ·                                ┃        [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: i32 = {.a = 1, .b, .c: i32};
 
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+4]]:26: error: expected `.field: field_type` [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╭─┤ fail_mix_with_unknown.carbon:[[@LINE+14]]:26
+// CHECK:STDERR: ->     │ var x: i32 = {.a: i32, .b, .c = 1};
+// CHECK:STDERR:        ·                          ┳
+// CHECK:STDERR:        ·                          ┗━━┫ error: expected `.field: field_type`
+// CHECK:STDERR:        ·                             ┃        [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_mix_with_unknown.carbon:[[@LINE+2]]:31: error: expected `.field: field_type` [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╭─┤ fail_mix_with_unknown.carbon:[[@LINE+7]]:31
+// CHECK:STDERR: ->     │ var x: i32 = {.a: i32, .b, .c = 1};
+// CHECK:STDERR:        ·                               ┳
+// CHECK:STDERR:        ·                               ┗━━┫ error: expected `.field: field_type`
+// CHECK:STDERR:        ·                                  ┃        [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: i32 = {.a: i32, .b, .c = 1};
 

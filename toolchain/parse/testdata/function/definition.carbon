@@ -35,7 +35,11 @@ fn foo() -> f64 {
 fn F() {
   // Note: this might become valid depending on the expression syntax. This test
   // shouldn't be taken as a sign it should remain invalid.
-  // CHECK:STDERR: fail_identifier_in_statements.carbon:[[@LINE+2]]:6: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╭─┤ fail_identifier_in_statements.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   bar
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   bar
 }
@@ -59,19 +63,34 @@ impl T as I {
 
 // --- fail_builtin_identifier.carbon
 
-// CHECK:STDERR: fail_builtin_identifier.carbon:[[@LINE+2]]:17: error: expected builtin function name after `=` [ExpectedBuiltinName]
+// CHECK:STDERR:        ╭─┤ fail_builtin_identifier.carbon:[[@LINE+7]]:17
+// CHECK:STDERR: ->     │ fn NotString() = banana;
+// CHECK:STDERR:        ·                 ┳
+// CHECK:STDERR:        ·                 ┗━━┫ error: expected builtin function name after `=`
+// CHECK:STDERR:        ·                    ┃        [ExpectedBuiltinName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NotString() = banana;
 
 // --- fail_builtin_two_strings.carbon
 
-// CHECK:STDERR: fail_builtin_two_strings.carbon:[[@LINE+2]]:31: error: `fn` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_builtin_two_strings.carbon:[[@LINE+7]]:31
+// CHECK:STDERR: ->     │ fn JunkAfterString() = "hello" "world";
+// CHECK:STDERR:        ·                               ┳
+// CHECK:STDERR:        ·                               ┗━━┫ error: `fn` declarations must end with a `;`
+// CHECK:STDERR:        ·                                  ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn JunkAfterString() = "hello" "world";
 
 // --- fail_builtin_spurious_equals.carbon
 
-// CHECK:STDERR: fail_builtin_spurious_equals.carbon:[[@LINE+2]]:22: error: expected builtin function name after `=` [ExpectedBuiltinName]
+// CHECK:STDERR:        ╭─┤ fail_builtin_spurious_equals.carbon:[[@LINE+7]]:22
+// CHECK:STDERR: ->     │ fn SpuriousEquals() = { }
+// CHECK:STDERR:        ·                      ┳
+// CHECK:STDERR:        ·                      ┗━━┫ error: expected builtin function name after `=`
+// CHECK:STDERR:        ·                         ┃        [ExpectedBuiltinName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn SpuriousEquals() = { }
 fn TestRecoveryFromSpuriousEquals();

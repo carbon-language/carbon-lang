@@ -31,7 +31,11 @@ interface Y {}
 
 // The self type `T` is an `ErrorInst`, and when identifying the facet type
 // would get substituted into the `.Self`.
-// CHECK:STDERR: fail_self_error.carbon:[[@LINE+2]]:17-23: error: name `Invalid` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_self_error.carbon:[[@LINE+6]]:17
+// CHECK:STDERR: ->     │ impl forall [T: Invalid] T as Z where .Z1 impls Y {}
+// CHECK:STDERR:        ·                 ━━━┳━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: name `Invalid` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall [T: Invalid] T as Z where .Z1 impls Y {}
 
@@ -193,23 +197,23 @@ impl forall [T: Invalid] T as Z where .Z1 impls Y {}
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %T.ref: <error> = name_ref T, %T [concrete = <error>]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
-// CHECK:STDOUT:     %.Self.frozen.loc10_33: %Z.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.7b7]
+// CHECK:STDOUT:     %.Self.frozen.loc14_33: %Z.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.7b7]
 // CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %Z.ref [concrete]
-// CHECK:STDOUT:     %.Self.ref: %Z.type = name_ref .Self, %.Self.frozen.loc10_33 [symbolic_self = constants.%.Self.frozen.7b7]
+// CHECK:STDOUT:     %.Self.ref: %Z.type = name_ref .Self, %.Self.frozen.loc14_33 [symbolic_self = constants.%.Self.frozen.7b7]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %.loc10_39: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:     %.loc14_39: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:     %Z1.ref: %Z.assoc_type = name_ref Z1, @Z1.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc10_39.1: type = impl_witness_access constants.%.db1, element0 [symbolic_self = constants.%impl.elem0.e1c]
+// CHECK:STDOUT:     %impl.elem0.loc14_39.1: type = impl_witness_access constants.%.db1, element0 [symbolic_self = constants.%impl.elem0.e1c]
 // CHECK:STDOUT:     %Y.ref: type = name_ref Y, file.%Y.decl [concrete = constants.%Y.type]
-// CHECK:STDOUT:     %impls.loc10_43.1 = requirement_impls %impl.elem0.loc10_39.1, %Y.ref [concrete]
-// CHECK:STDOUT:     %impl.elem0.loc10_39.2: type = impl_witness_access constants.%.513, element0 [symbolic_self = constants.%impl.elem0.ff0]
-// CHECK:STDOUT:     %impls.loc10_43.2 = requirement_impls %impl.elem0.loc10_39.2, %Y.ref [concrete]
-// CHECK:STDOUT:     %.loc10_33: type = where_expr [concrete = constants.%Z_where.type] {
+// CHECK:STDOUT:     %impls.loc14_43.1 = requirement_impls %impl.elem0.loc14_39.1, %Y.ref [concrete]
+// CHECK:STDOUT:     %impl.elem0.loc14_39.2: type = impl_witness_access constants.%.513, element0 [symbolic_self = constants.%impl.elem0.ff0]
+// CHECK:STDOUT:     %impls.loc14_43.2 = requirement_impls %impl.elem0.loc14_39.2, %Y.ref [concrete]
+// CHECK:STDOUT:     %.loc14_33: type = where_expr [concrete = constants.%Z_where.type] {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %Z.ref [concrete]
-// CHECK:STDOUT:       %impls.loc10_43.2 = requirement_impls %impl.elem0.loc10_39.2, %Y.ref [concrete]
+// CHECK:STDOUT:       %impls.loc14_43.2 = requirement_impls %impl.elem0.loc14_39.2, %Y.ref [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
-// CHECK:STDOUT:       %.Self.frozen.loc10_15: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
+// CHECK:STDOUT:       %.Self.frozen.loc14_15: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen.e58]
 // CHECK:STDOUT:       %Invalid.ref: <error> = name_ref Invalid, <error> [concrete = <error>]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T: <error> = symbolic_binding T, 0 [concrete = <error>]

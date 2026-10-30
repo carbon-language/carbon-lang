@@ -44,7 +44,15 @@ library "[[@TEST_NAME]]";
 
 fn Sub(a: Core.FloatLiteral, b: Core.FloatLiteral) -> Core.FloatLiteral = "float.sub";
 
-// CHECK:STDERR: fail_too_large.carbon:[[@LINE+2]]:29-75: error: binary calculation `16*2^1023999999996 - 1*10^-19` would exceed the maximum supported integer width of 8388608 [CompileTimeFloatLiteralBinaryOperationOutOfRange]
+// CHECK:STDERR:        ╭─┤ fail_too_large.carbon:[[@LINE+10]]:29
+// CHECK:STDERR: ->     │ let v1: Core.FloatLiteral = Sub(0x1.0p1024000000000, 0.0000000000000000001);
+// CHECK:STDERR:        ·                             ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                             ┗━━┫ error: binary calculation
+// CHECK:STDERR:        ·                                ┃        `16*2^1023999999996 - 1*10^-19` would
+// CHECK:STDERR:        ·                                ┃        exceed the maximum supported integer
+// CHECK:STDERR:        ·                                ┃        width of 8388608
+// CHECK:STDERR:        ·                                ┃        [CompileTimeFloatLiteralBinaryOperationOutOfRange]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let v1: Core.FloatLiteral = Sub(0x1.0p1024000000000, 0.0000000000000000001);
 

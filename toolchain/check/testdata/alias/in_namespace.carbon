@@ -34,10 +34,19 @@ library "[[@TEST_NAME]]";
 namespace NS;
 
 fn F() -> {} {
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+2]]:9-10: error: name `NS` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_local_in_namespace.carbon:[[@LINE+6]]:9
+  // CHECK:STDERR: ->     │   alias NS.a = {};
+  // CHECK:STDERR:        ·         ━┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: name `NS` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   alias NS.a = {};
-  // CHECK:STDERR: fail_local_in_namespace.carbon:[[@LINE+2]]:10-13: error: member name `a` not found in `NS` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╭─┤ fail_local_in_namespace.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   return NS.a;
+  // CHECK:STDERR:        ·          ━━┳━
+  // CHECK:STDERR:        ·            ┗━━┫ error: member name `a` not found in `NS`
+  // CHECK:STDERR:        ·               ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return NS.a;
 }

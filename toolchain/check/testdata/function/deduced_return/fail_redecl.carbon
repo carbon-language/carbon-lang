@@ -13,18 +13,36 @@
 // --- fail_forward_decl.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_forward_decl.carbon:[[@LINE+2]]:8-14: error: forward declaration of function with deduced return type [DeducedReturnTypeNotDefinition]
+// CHECK:STDERR:        ╭─┤ fail_forward_decl.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ fn F() -> auto;
+// CHECK:STDERR:        ·        ━━━┳━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: forward declaration of function with deduced return type
+// CHECK:STDERR:        ·              ┃        [DeducedReturnTypeNotDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> auto;
 
 // --- fail_forward_decl_then_def.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_forward_decl_then_def.carbon:[[@LINE+2]]:8-14: error: forward declaration of function with deduced return type [DeducedReturnTypeNotDefinition]
+// CHECK:STDERR:        ╭─┤ fail_forward_decl_then_def.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ fn F() -> auto;
+// CHECK:STDERR:        ·        ━━━┳━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: forward declaration of function with deduced return type
+// CHECK:STDERR:        ·              ┃        [DeducedReturnTypeNotDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> auto;
-// CHECK:STDERR: fail_forward_decl_then_def.carbon:[[@LINE+3]]:1-16: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: fail_forward_decl_then_def.carbon:[[@LINE-2]]:1-15: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_forward_decl_then_def.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn F() -> auto;
+// CHECK:STDERR:        · ───────┬───────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F() -> auto { return 0 as i32; }
+// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: redeclaration of function with deduced return type
+// CHECK:STDERR:        ·            ┃        [DeducedReturnTypeRedecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> auto { return 0 as i32; }
 
@@ -32,8 +50,16 @@ fn F() -> auto { return 0 as i32; }
 library "[[@TEST_NAME]]";
 
 fn F() -> i32;
-// CHECK:STDERR: fail_decl_then_auto_def.carbon:[[@LINE+3]]:1-16: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: fail_decl_then_auto_def.carbon:[[@LINE-2]]:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_decl_then_auto_def.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn F() -> i32;
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F() -> auto { return 0 as i32; }
+// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: redeclaration of function with deduced return type
+// CHECK:STDERR:        ·            ┃        [DeducedReturnTypeRedecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> auto { return 0 as i32; }
 
@@ -41,8 +67,16 @@ fn F() -> auto { return 0 as i32; }
 library "[[@TEST_NAME]]";
 
 fn F() -> auto { return 0 as i32; }
-// CHECK:STDERR: fail_auto_def_then_decl.carbon:[[@LINE+3]]:1-14: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: fail_auto_def_then_decl.carbon:[[@LINE-2]]:1-16: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_auto_def_then_decl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn F() -> auto { return 0 as i32; }
+// CHECK:STDERR:        · ────────┬───────
+// CHECK:STDERR:        ·         ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F() -> i32;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclaration of function with deduced return type
+// CHECK:STDERR:        ·           ┃        [DeducedReturnTypeRedecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> i32;
 
@@ -50,8 +84,16 @@ fn F() -> i32;
 library "[[@TEST_NAME]]";
 
 fn F() -> auto { return 0 as i32; }
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE+3]]:1-16: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: fail_redefinition.carbon:[[@LINE-2]]:1-16: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_redefinition.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn F() -> auto { return 0 as i32; }
+// CHECK:STDERR:        · ────────┬───────
+// CHECK:STDERR:        ·         ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F() -> auto { return 0 as i32; }
+// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: redeclaration of function with deduced return type
+// CHECK:STDERR:        ·            ┃        [DeducedReturnTypeRedecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> auto { return 0 as i32; }
 
@@ -59,29 +101,57 @@ fn F() -> auto { return 0 as i32; }
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_member_out_of_line.carbon:[[@LINE+2]]:10-16: error: forward declaration of function with deduced return type [DeducedReturnTypeNotDefinition]
+  // CHECK:STDERR:        ╭─┤ fail_member_out_of_line.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   fn F() -> auto;
+  // CHECK:STDERR:        ·          ━━━┳━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: forward declaration of function with deduced return type
+  // CHECK:STDERR:        ·                ┃        [DeducedReturnTypeNotDefinition]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F() -> auto;
 }
 
-// CHECK:STDERR: fail_member_out_of_line.carbon:[[@LINE+3]]:1-18: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: fail_member_out_of_line.carbon:[[@LINE-4]]:3-17: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_member_out_of_line.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │   fn F() -> auto;
+// CHECK:STDERR:        ·   ───────┬───────
+// CHECK:STDERR:        ·          ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn C.F() -> auto { return 0 as i32; }
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: redeclaration of function with deduced return type
+// CHECK:STDERR:        ·             ┃        [DeducedReturnTypeRedecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn C.F() -> auto { return 0 as i32; }
 
 // --- fail_builtin.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_builtin.carbon:[[@LINE+4]]:26-32: error: builtin function with deduced return type [DeducedReturnTypeNotAllowed]
+// CHECK:STDERR:        ╭─┤ fail_builtin.carbon:[[@LINE+14]]:26
+// CHECK:STDERR: ->     │ fn F(n: Core.IntLiteral) -> auto = "int.make_type_signed";
+// CHECK:STDERR:        ·                          ━━┳━━━━
+// CHECK:STDERR:        ·                            ┗━━┫ error: builtin function with deduced return type
+// CHECK:STDERR:        ·                               ┃        [DeducedReturnTypeNotAllowed]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_builtin.carbon:[[@LINE+2]]:1-34: error: invalid signature for builtin function "int.make_type_signed" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_builtin.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn F(n: Core.IntLiteral) -> auto = "int.make_type_signed";
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: invalid signature for builtin function "int.make_type_signed"
+// CHECK:STDERR:        ·           ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(n: Core.IntLiteral) -> auto = "int.make_type_signed";
 
 // --- fail_extern.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern.carbon:[[@LINE+2]]:15-21: error: `extern` function with deduced return type [DeducedReturnTypeNotAllowed]
+// CHECK:STDERR:        ╭─┤ fail_extern.carbon:[[@LINE+7]]:15
+// CHECK:STDERR: ->     │ extern fn F() -> auto { return 0 as i32; }
+// CHECK:STDERR:        ·               ━━━┳━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: `extern` function with deduced return type
+// CHECK:STDERR:        ·                     ┃        [DeducedReturnTypeNotAllowed]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F() -> auto { return 0 as i32; }
 
@@ -93,10 +163,24 @@ fn F() -> auto { return 0 as i32; }
 // --- fail_api_def.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_api_def.impl.carbon:[[@LINE+5]]:1-14: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: api_def.carbon:3:1-16: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_api_def.impl.carbon:[[@LINE+19]]:1
+// CHECK:STDERR: ->     │ fn F() -> i32;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redeclaration of function with deduced return type
+// CHECK:STDERR:        ·           ┃        [DeducedReturnTypeRedecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ api_def.carbon
+// CHECK:STDERR:        │ fn F() -> auto { return 0 as i32; }
+// CHECK:STDERR:        · ────────┬───────
+// CHECK:STDERR:        ·         ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_api_def.impl.carbon:[[@LINE+2]]:1-14: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
+// CHECK:STDERR:        ╭─┤ fail_api_def.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn F() -> i32;
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: no definition found for declaration in impl file
+// CHECK:STDERR:        ·           ┃        [MissingDefinitionInImpl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> i32;
 
@@ -108,7 +192,16 @@ fn F() -> i32;
 // --- fail_api_decl.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_api_decl.impl.carbon:[[@LINE+3]]:1-16: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: api_decl.carbon:3:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_api_decl.impl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ fn F() -> auto { return 0 as i32; }
+// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: redeclaration of function with deduced return type
+// CHECK:STDERR:        ·            ┃        [DeducedReturnTypeRedecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ api_decl.carbon
+// CHECK:STDERR:        │ fn F() -> i32;
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> auto { return 0 as i32; }

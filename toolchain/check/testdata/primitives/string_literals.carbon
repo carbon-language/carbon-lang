@@ -15,7 +15,12 @@
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_no_string.carbon:[[@LINE+2]]:3-9: error: name `Core.String` implicitly referenced here, but not found [CoreNameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_no_string.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   "hello";
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: name `Core.String` implicitly referenced here, but not found
+  // CHECK:STDERR:        ·         ┃        [CoreNameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   "hello";
 }
@@ -35,7 +40,12 @@ class String {
 
 import Core library "unusual_string";
 
-// CHECK:STDERR: fail_use_unusual_string.carbon:[[@LINE+2]]:14-20: error: unexpected representation for type `str` [StringLiteralTypeUnexpected]
+// CHECK:STDERR:        ╭─┤ fail_use_unusual_string.carbon:[[@LINE+7]]:14
+// CHECK:STDERR: ->     │ let x: str = "hello";
+// CHECK:STDERR:        ·              ━━━┳━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: unexpected representation for type `str`
+// CHECK:STDERR:        ·                    ┃        [StringLiteralTypeUnexpected]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let x: str = "hello";
 
@@ -52,8 +62,16 @@ library "[[@TEST_NAME]]";
 import Core library "incomplete_string";
 
 fn F() {
-  // CHECK:STDERR: fail_use_incomplete_string.carbon:[[@LINE+3]]:3-9: error: type `Core.String` is incomplete [StringLiteralTypeIncomplete]
-  // CHECK:STDERR: incomplete_string.carbon:4:1-13: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_use_incomplete_string.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   "hello";
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: type `Core.String` is incomplete [StringLiteralTypeIncomplete]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ incomplete_string.carbon
+  // CHECK:STDERR:        │ class String;
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   "hello";
 }
@@ -88,7 +106,11 @@ library "[[@TEST_NAME]]";
 import Core library "small_string";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_overfill_small_string.carbon:[[@LINE+2]]:14-276: error: string literal is too long [StringLiteralTooLong]
+// CHECK:STDERR:        ╭─┤ fail_overfill_small_string.carbon:[[@LINE+6]]:14
+// CHECK:STDERR: ->     │ let x: str = '''
+// CHECK:STDERR:        ·              ━┳━
+// CHECK:STDERR:        ·               ┗━━┫ error: string literal is too long [StringLiteralTooLong]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let x: str = '''
 A string so long its size does not fit in `u8`. This results in an error,

@@ -9,15 +9,33 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/import/fail_in_nested_scope.carbon
 
 class A {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+3]]:3-8: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-2]]:1-5: note: first declaration is here [FirstDecl]
+  // CHECK:STDERR:        ╭─┤ fail_in_nested_scope.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ class A {
+  // CHECK:STDERR:        · ──┬──
+  // CHECK:STDERR:        ·   ╰──┤ first declaration is here [FirstDecl]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   import B;
+  // CHECK:STDERR:        ·   ┳━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `import` declarations must come after the `package` declaration
+  // CHECK:STDERR:        ·      ┃        (if present) and before any other entities in the file
+  // CHECK:STDERR:        ·      ┃        [ImportTooLate]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   import B;
 }
 
 fn F() {
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE+3]]:3-8: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
-  // CHECK:STDERR: fail_in_nested_scope.carbon:[[@LINE-9]]:1-5: note: first declaration is here [FirstDecl]
+  // CHECK:STDERR:        ╭─┤ fail_in_nested_scope.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ class A {
+  // CHECK:STDERR:        · ──┬──
+  // CHECK:STDERR:        ·   ╰──┤ first declaration is here [FirstDecl]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   import C;
+  // CHECK:STDERR:        ·   ┳━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `import` declarations must come after the `package` declaration
+  // CHECK:STDERR:        ·      ┃        (if present) and before any other entities in the file
+  // CHECK:STDERR:        ·      ┃        [ImportTooLate]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   import C;
 }

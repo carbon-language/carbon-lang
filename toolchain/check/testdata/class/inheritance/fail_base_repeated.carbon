@@ -15,8 +15,17 @@ base class B2 {}
 
 class C {
   extend base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+3]]:3-18: error: multiple `base` declarations in class; multiple inheritance is not permitted [BaseDeclRepeated]
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-2]]:3-18: note: previous `base` declaration is here [ClassSpecificDeclPrevious]
+  // CHECK:STDERR:        ╭─┤ fail_base_repeated.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │   extend base: B1;
+  // CHECK:STDERR:        ·   ────────┬───────
+  // CHECK:STDERR:        ·           ╰──┤ previous `base` declaration is here [ClassSpecificDeclPrevious]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   extend base: B2;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: multiple `base` declarations in class; multiple inheritance is not
+  // CHECK:STDERR:        ·      ┃        permitted
+  // CHECK:STDERR:        ·      ┃        [BaseDeclRepeated]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend base: B2;
 }
@@ -24,8 +33,17 @@ class C {
 class D {
   // TODO: Consider adding a custom diagnostic for this case.
   extend base: B1;
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE+3]]:3-18: error: multiple `base` declarations in class; multiple inheritance is not permitted [BaseDeclRepeated]
-  // CHECK:STDERR: fail_base_repeated.carbon:[[@LINE-2]]:3-18: note: previous `base` declaration is here [ClassSpecificDeclPrevious]
+  // CHECK:STDERR:        ╭─┤ fail_base_repeated.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │   extend base: B1;
+  // CHECK:STDERR:        ·   ────────┬───────
+  // CHECK:STDERR:        ·           ╰──┤ previous `base` declaration is here [ClassSpecificDeclPrevious]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   extend base: B1;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: multiple `base` declarations in class; multiple inheritance is not
+  // CHECK:STDERR:        ·      ┃        permitted
+  // CHECK:STDERR:        ·      ┃        [BaseDeclRepeated]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend base: B1;
 }

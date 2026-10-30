@@ -9,7 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/choice/fail_keyword_alternative_name.carbon
 
 choice C {
-  // CHECK:STDERR: fail_keyword_alternative_name.carbon:[[@LINE+2]]:3-7: error: expected choice alternative name; prefix reserved word with `r#` to form a valid identifier [ExpectedChoiceAlternativeName]
+  // CHECK:STDERR:        ╭─┤ fail_keyword_alternative_name.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   class,
+  // CHECK:STDERR:        ·   ┳━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: expected choice alternative name; prefix reserved word with `r#`
+  // CHECK:STDERR:        ·      ┃        to form a valid identifier
+  // CHECK:STDERR:        ·      ┃        [ExpectedChoiceAlternativeName]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   class,
   Other

@@ -10,6 +10,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/packages/fail_import_inline_not_cpp.carbon
 
-// CHECK:STDERR: fail_import_inline_not_cpp.carbon:[[@LINE+2]]:1-36: error: `inline` import not in package `Cpp` [InlineImportNotCpp]
+// CHECK:STDERR:        ╭─┤ fail_import_inline_not_cpp.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ import NotCpp inline "not C++ code";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: `inline` import not in package `Cpp`
+// CHECK:STDERR:        ·                      ┃        [InlineImportNotCpp]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import NotCpp inline "not C++ code";

@@ -17,30 +17,78 @@ fn Run1(unused a: i32) {}
 fn Run2(unused a: i32, unused b: i32) {}
 
 fn Main() {
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+3]]:3-9: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-6]]:1-11: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ fn Run0() {}
+  // CHECK:STDERR:        · ─────┬─────
+  // CHECK:STDERR:        ·      ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Run0(1);
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: 1 argument passed to function expecting 0 arguments
+  // CHECK:STDERR:        ·         ┃        [CallArgCountMismatch]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Run0(1);
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+3]]:3-12: error: 2 arguments passed to function expecting 0 arguments [CallArgCountMismatch]
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-10]]:1-11: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ fn Run0() {}
+  // CHECK:STDERR:        · ─────┬─────
+  // CHECK:STDERR:        ·      ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Run0(0, 1);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: 2 arguments passed to function expecting 0 arguments
+  // CHECK:STDERR:        ·           ┃        [CallArgCountMismatch]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Run0(0, 1);
 
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+3]]:3-8: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-14]]:1-24: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ fn Run1(unused a: i32) {}
+  // CHECK:STDERR:        · ────────────┬───────────
+  // CHECK:STDERR:        ·             ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Run1();
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: 0 arguments passed to function expecting 1 argument
+  // CHECK:STDERR:        ·         ┃        [CallArgCountMismatch]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Run1();
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+3]]:3-12: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-18]]:1-24: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ fn Run1(unused a: i32) {}
+  // CHECK:STDERR:        · ────────────┬───────────
+  // CHECK:STDERR:        ·             ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Run1(0, 1);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: 2 arguments passed to function expecting 1 argument
+  // CHECK:STDERR:        ·           ┃        [CallArgCountMismatch]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Run1(0, 1);
 
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+3]]:3-8: error: 0 arguments passed to function expecting 2 arguments [CallArgCountMismatch]
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-22]]:1-39: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ fn Run2(unused a: i32, unused b: i32) {}
+  // CHECK:STDERR:        · ───────────────────┬───────────────────
+  // CHECK:STDERR:        ·                    ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Run2();
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: 0 arguments passed to function expecting 2 arguments
+  // CHECK:STDERR:        ·         ┃        [CallArgCountMismatch]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Run2();
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE+3]]:3-9: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
-  // CHECK:STDERR: fail_param_count.carbon:[[@LINE-26]]:1-39: note: calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ╭─┤ fail_param_count.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ fn Run2(unused a: i32, unused b: i32) {}
+  // CHECK:STDERR:        · ───────────────────┬───────────────────
+  // CHECK:STDERR:        ·                    ╰──┤ calling function declared here [InCallToEntity]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Run2(0);
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: 1 argument passed to function expecting 2 arguments
+  // CHECK:STDERR:        ·         ┃        [CallArgCountMismatch]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Run2(0);
 }
@@ -131,18 +179,18 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Run0.ref.loc23: %Run0.type = name_ref Run0, file.%Run0.decl [concrete = constants.%Run0]
-// CHECK:STDOUT:   %int_1.loc23: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %Run0.ref.loc27: %Run0.type = name_ref Run0, file.%Run0.decl [concrete = constants.%Run0]
-// CHECK:STDOUT:   %int_0.loc27: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %int_1.loc27: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %Run1.ref.loc32: %Run1.type = name_ref Run1, file.%Run1.decl [concrete = constants.%Run1]
-// CHECK:STDOUT:   %Run1.ref.loc36: %Run1.type = name_ref Run1, file.%Run1.decl [concrete = constants.%Run1]
-// CHECK:STDOUT:   %int_0.loc36: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %int_1.loc36: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %Run2.ref.loc41: %Run2.type = name_ref Run2, file.%Run2.decl [concrete = constants.%Run2]
-// CHECK:STDOUT:   %Run2.ref.loc45: %Run2.type = name_ref Run2, file.%Run2.decl [concrete = constants.%Run2]
-// CHECK:STDOUT:   %int_0.loc45: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %Run0.ref.loc31: %Run0.type = name_ref Run0, file.%Run0.decl [concrete = constants.%Run0]
+// CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %Run0.ref.loc43: %Run0.type = name_ref Run0, file.%Run0.decl [concrete = constants.%Run0]
+// CHECK:STDOUT:   %int_0.loc43: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %int_1.loc43: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %Run1.ref.loc56: %Run1.type = name_ref Run1, file.%Run1.decl [concrete = constants.%Run1]
+// CHECK:STDOUT:   %Run1.ref.loc68: %Run1.type = name_ref Run1, file.%Run1.decl [concrete = constants.%Run1]
+// CHECK:STDOUT:   %int_0.loc68: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %int_1.loc68: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %Run2.ref.loc81: %Run2.type = name_ref Run2, file.%Run2.decl [concrete = constants.%Run2]
+// CHECK:STDOUT:   %Run2.ref.loc93: %Run2.type = name_ref Run2, file.%Run2.decl [concrete = constants.%Run2]
+// CHECK:STDOUT:   %int_0.loc93: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

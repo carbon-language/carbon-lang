@@ -38,7 +38,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+2]]:11: error: name `A` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_local_def.carbon:[[@LINE+6]]:11
+// CHECK:STDERR: ->     │ var inst: A = {};
+// CHECK:STDERR:        ·           ┳
+// CHECK:STDERR:        ·           ┗━━┫ error: name `A` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var inst: A = {};
 
@@ -48,7 +52,12 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+2]]:11-16: error: member name `A` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_other_def.carbon:[[@LINE+7]]:11
+// CHECK:STDERR: ->     │ var inst: Test.A = {};
+// CHECK:STDERR:        ·           ━━━┳━━
+// CHECK:STDERR:        ·              ┗━━┫ error: member name `A` not found in `Test`
+// CHECK:STDERR:        ·                 ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var inst: Test.A = {};
 
@@ -163,7 +172,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc12: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -203,7 +212,7 @@ var inst: Test.A = {};
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc8: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc13: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   assign file.%inst.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

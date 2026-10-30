@@ -26,7 +26,12 @@ import Cpp library "unsupported_primitive_type.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+2]]:3-13: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_primitive_type.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.foo(11);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: semantics TODO: `Unsupported: parameter type: _BitInt(23)`
+  // CHECK:STDERR:        ·           ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(11);
   //@dump-sem-ir-end
@@ -48,7 +53,12 @@ import Cpp library "unsupported_primitive_type_among_params.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+2]]:3-16: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_primitive_type_among_params.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.foo(1, 20);
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: semantics TODO: `Unsupported: parameter type: _BitInt(23)`
+  // CHECK:STDERR:        ·             ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(1, 20);
   //@dump-sem-ir-end
@@ -70,9 +80,19 @@ import Cpp library "int_param.h";
 
 // This doesn't have a direct type mapping in `getIntTypeForBitwidth`.
 fn F(x: i512) {
-  // CHECK:STDERR: fail_large_int.carbon:[[@LINE+4]]:11: error: call argument of type `i512` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:        ╭─┤ fail_large_int.carbon:[[@LINE+14]]:11
+  // CHECK:STDERR: ->     │   Cpp.foo(x);
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: call argument of type `i512` is not supported
+  // CHECK:STDERR:        ·              ┃        [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: min_prelude/parts/int.carbon:10:1-26: error: semantics TODO: `interop with non-identifier package name` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ min_prelude/parts/int.carbon:10:1
+  // CHECK:STDERR: ->     │ class Int(N: IntLiteral) {
+  // CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: semantics TODO: `interop with non-identifier package name`
+  // CHECK:STDERR:        ·              ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(x);
 }
@@ -85,7 +105,12 @@ import Cpp library "int_param.h";
 
 // This doesn't fit as an embedded `IntId` value.
 fn F(x: i8388608) {
-  // CHECK:STDERR: fail_very_large_int.carbon:[[@LINE+2]]:11: error: call argument of type `i8388608` is not supported [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:        ╭─┤ fail_very_large_int.carbon:[[@LINE+7]]:11
+  // CHECK:STDERR: ->     │   Cpp.foo(x);
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: call argument of type `i8388608` is not supported
+  // CHECK:STDERR:        ·              ┃        [CppCallArgTypeNotSupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(x);
 }

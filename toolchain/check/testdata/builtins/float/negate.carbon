@@ -28,7 +28,12 @@ let a: f64 = Negate(1.5);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:1-20: error: invalid signature for builtin function "float.negate" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooFew() -> f64 = "float.negate";
+// CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: invalid signature for builtin function "float.negate"
+// CHECK:STDERR:        ·              ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooFew() -> f64 = "float.negate";
 
@@ -40,7 +45,12 @@ fn RuntimeCallIsValidTooFew() -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:1-35: error: invalid signature for builtin function "float.negate" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooMany(a: f64, b: f64) -> f64 = "float.negate";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                ┗━━┫ error: invalid signature for builtin function "float.negate"
+// CHECK:STDERR:        ·                   ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64) -> f64 = "float.negate";
 
@@ -52,7 +62,12 @@ fn RuntimeCallIsValidTooMany(a: f64, b: f64) -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:1-34: error: invalid signature for builtin function "float.negate" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_return_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn BadReturnType(a: f64) -> bool = "float.negate";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                ┗━━┫ error: invalid signature for builtin function "float.negate"
+// CHECK:STDERR:        ·                   ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn BadReturnType(a: f64) -> bool = "float.negate";
 

@@ -184,8 +184,20 @@ fn PassToTemplate[template F: type](f: F) { f(42); }
 alias id_fn = fn (x: i32) -> i32 { return x; };
 
 fn TestAsTemplateArgument() {
-  // CHECK:STDERR: fail_todo_as_non_constant_template_argument.carbon:[[@LINE+3]]:3-16: error: unable to monomorphize specific `PassToTemplate(<type of function expression>)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_todo_as_non_constant_template_argument.carbon:[[@LINE-6]]:45-49: note: value of type `<type of function expression>` is not callable [CallToNonCallable]
+  // CHECK:STDERR:        ╭─┤ fail_todo_as_non_constant_template_argument.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        │ fn PassToTemplate[template F: type](f: F) { f(42); }
+  // CHECK:STDERR:        ·                                             ┬────
+  // CHECK:STDERR:        ·                                             ╰──┤ value of type
+  // CHECK:STDERR:        ·                                                │ `<type of function expression>`
+  // CHECK:STDERR:        ·                                                │ is not callable
+  // CHECK:STDERR:        ·                                                │ [CallToNonCallable]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   PassToTemplate(id_fn);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: unable to monomorphize specific
+  // CHECK:STDERR:        ·      ┃        `PassToTemplate(<type of function expression>)`
+  // CHECK:STDERR:        ·      ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   PassToTemplate(id_fn);
 }
@@ -203,20 +215,41 @@ library "[[@TEST_NAME]]";
 
 class C {
   fn M() {
-    // CHECK:STDERR: fail_self.carbon:[[@LINE+2]]:17-26: error: `self` parameter in function expression [SelfParameterInLambda]
+    // CHECK:STDERR:        ╭─┤ fail_self.carbon:[[@LINE+7]]:17
+    // CHECK:STDERR: ->     │     (fn (unused self: Self) {});
+    // CHECK:STDERR:        ·                 ━━━━━┳━━━━
+    // CHECK:STDERR:        ·                      ┗━━┫ error: `self` parameter in function expression
+    // CHECK:STDERR:        ·                         ┃        [SelfParameterInLambda]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     (fn (unused self: Self) {});
-    // CHECK:STDERR: fail_self.carbon:[[@LINE+2]]:17-26: error: `self` must be declared in the explicit parameter list [SelfInImplicitParamList]
+    // CHECK:STDERR:        ╭─┤ fail_self.carbon:[[@LINE+8]]:17
+    // CHECK:STDERR: ->     │     (fn [unused self: Self]() {});
+    // CHECK:STDERR:        ·                 ┳━━━━━━━━━
+    // CHECK:STDERR:        ·                 ┗━━┫ error: `self` must be declared in the explicit parameter
+    // CHECK:STDERR:        ·                    ┃        list
+    // CHECK:STDERR:        ·                    ┃        [SelfInImplicitParamList]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     (fn [unused self: Self]() {});
   }
 }
 
 fn F() {
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+2]]:15-23: error: `self` parameter in function expression [SelfParameterInLambda]
+  // CHECK:STDERR:        ╭─┤ fail_self.carbon:[[@LINE+7]]:15
+  // CHECK:STDERR: ->     │   (fn (unused self: i32) {});
+  // CHECK:STDERR:        ·               ━━━━┳━━━━
+  // CHECK:STDERR:        ·                   ┗━━┫ error: `self` parameter in function expression
+  // CHECK:STDERR:        ·                      ┃        [SelfParameterInLambda]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn (unused self: i32) {});
-  // CHECK:STDERR: fail_self.carbon:[[@LINE+2]]:30-38: error: `self` parameter in function expression [SelfParameterInLambda]
+  // CHECK:STDERR:        ╭─┤ fail_self.carbon:[[@LINE+7]]:30
+  // CHECK:STDERR: ->     │   (fn (unused x: i32, unused self: i32) {});
+  // CHECK:STDERR:        ·                              ┳━━━━━━━━
+  // CHECK:STDERR:        ·                              ┗━━┫ error: `self` parameter in function expression
+  // CHECK:STDERR:        ·                                 ┃        [SelfParameterInLambda]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn (unused x: i32, unused self: i32) {});
 }
@@ -225,21 +258,50 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn Outer() -> i32 {
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+2]]:18: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+8]]:18
+  // CHECK:STDERR: ->     │   (fn () -> i32 {});
+  // CHECK:STDERR:        ·                  ┳
+  // CHECK:STDERR:        ·                  ┗━━┫ error: missing `return` at end of function with declared
+  // CHECK:STDERR:        ·                     ┃        return type
+  // CHECK:STDERR:        ·                     ┃        [MissingReturnStatement]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn () -> i32 {});
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+3]]:20-28: error: cannot implicitly convert expression of type `Core.IntLiteral` to `bool` [ConversionFailure]
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+2]]:20-28: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+11]]:20
+  // CHECK:STDERR: ->     │   (fn () -> bool { return 1; });
+  // CHECK:STDERR:        ·                    ┳━━━━━━━━
+  // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·                    │  ┃        `Core.IntLiteral` to `bool`
+  // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                    ╰────┤ type `Core.IntLiteral` does not implement interface
+  // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn () -> bool { return 1; });
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+3]]:12-20: error: no return expression should be provided in this context [ReturnStatementDisallowExpr]
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+2]]:4-10: note: there was no return type provided [ReturnTypeOmittedNote]
+  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+8]]:12
+  // CHECK:STDERR: ->     │   (fn () { return 1; });
+  // CHECK:STDERR:        ·    ───┬─── ━━┳━━━━━━
+  // CHECK:STDERR:        ·       │      ┗━━┫ error: no return expression should be provided in this context
+  // CHECK:STDERR:        ·       │         ┃        [ReturnStatementDisallowExpr]
+  // CHECK:STDERR:        ·       ╰───────────┤ there was no return type provided [ReturnTypeOmittedNote]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn () { return 1; });
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+2]]:10-15: error: cannot specify a return type with `=>` [ReturnTypeInTerseFunction]
+  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR: ->     │   (fn () -> i32 => 0);
+  // CHECK:STDERR:        ·          ━━━┳━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: cannot specify a return type with `=>`
+  // CHECK:STDERR:        ·                ┃        [ReturnTypeInTerseFunction]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn () -> i32 => 0);
-  // CHECK:STDERR: fail_return.carbon:[[@LINE+2]]:20-36: error: cannot specify a return form with `=>` [ReturnTypeInTerseFunction]
+  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+7]]:20
+  // CHECK:STDERR: ->     │   (fn (ref x: i32) ->? form(ref i32) => x);
+  // CHECK:STDERR:        ·                    ━━━━━━━━┳━━━━━━━━
+  // CHECK:STDERR:        ·                            ┗━━┫ error: cannot specify a return form with `=>`
+  // CHECK:STDERR:        ·                               ┃        [ReturnTypeInTerseFunction]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn (ref x: i32) ->? form(ref i32) => x);
 
@@ -250,21 +312,47 @@ fn Outer() -> i32 {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_unused.carbon:[[@LINE+3]]:8-13: warning: binding `x` unused [UnusedBinding]
+  // CHECK:STDERR:        ╭─┤ fail_unused.carbon:[[@LINE+17]]:8
+  // CHECK:STDERR: ->     │   (fn (x: i32, unused y: i32) -> i32 {
+  // CHECK:STDERR:        ·        ━━━┳━━
+  // CHECK:STDERR:        ·           ┗━━┫ warning: binding `x` unused [UnusedBinding]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_unused.carbon:[[@LINE+1]]:23-28: error: variable `y` marked `unused` but used [UnusedButUsed]
+  // CHECK:STDERR:        ╭─┤ fail_unused.carbon:[[@LINE+11]]:23
+  // CHECK:STDERR: ->     │   (fn (x: i32, unused y: i32) -> i32 {
+  // CHECK:STDERR:        ·                       ━━━┳━━
+  // CHECK:STDERR:        ·                          ┗━━┫ error: variable `y` marked `unused` but used
+  // CHECK:STDERR:        ·                             ┃        [UnusedButUsed]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │     return y;
+  // CHECK:STDERR:        ·            ┬
+  // CHECK:STDERR:        ·            ╰──┤ usage here [UnusedButUsedHere]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   (fn (x: i32, unused y: i32) -> i32 {
+    // CHECK:STDERR:        ╭─┤ fail_unused.carbon:[[@LINE+6]]:9
+    // CHECK:STDERR: ->     │     let z: i32 = 1;
+    // CHECK:STDERR:        ·         ━━━┳━━
+    // CHECK:STDERR:        ·            ┗━━┫ warning: binding `z` unused [UnusedBinding]
+    // CHECK:STDERR:        ╰────
+    // CHECK:STDERR:
     let z: i32 = 1;
-    // CHECK:STDERR: fail_unused.carbon:[[@LINE+4]]:12: note: usage here [UnusedButUsedHere]
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_unused.carbon:[[@LINE-3]]:9-14: warning: binding `z` unused [UnusedBinding]
-    // CHECK:STDERR:
     return y;
   });
-  // CHECK:STDERR: fail_unused.carbon:[[@LINE+5]]:8-13: warning: binding `x` unused [UnusedBinding]
+  // CHECK:STDERR:        ╭─┤ fail_unused.carbon:[[@LINE+15]]:8
+  // CHECK:STDERR: ->     │   (fn (x: i32, unused y: i32) => y);
+  // CHECK:STDERR:        ·        ━━━┳━━
+  // CHECK:STDERR:        ·           ┗━━┫ warning: binding `x` unused [UnusedBinding]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_unused.carbon:[[@LINE+3]]:23-28: error: variable `y` marked `unused` but used [UnusedButUsed]
-  // CHECK:STDERR: fail_unused.carbon:[[@LINE+2]]:34: note: usage here [UnusedButUsedHere]
+  // CHECK:STDERR:        ╭─┤ fail_unused.carbon:[[@LINE+9]]:23
+  // CHECK:STDERR: ->     │   (fn (x: i32, unused y: i32) => y);
+  // CHECK:STDERR:        ·                       ━━━┳━━     ┬
+  // CHECK:STDERR:        ·                          ┗━━━━━━━━━━┫ error: variable `y` marked `unused` but
+  // CHECK:STDERR:        ·                                  │  ┃        used
+  // CHECK:STDERR:        ·                                  │  ┃        [UnusedButUsed]
+  // CHECK:STDERR:        ·                                  ╰────┤ usage here [UnusedButUsedHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn (x: i32, unused y: i32) => y);
 }
@@ -275,12 +363,21 @@ library "[[@TEST_NAME]]";
 fn F() {
   while (true) {
     (fn () {
-      // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+2]]:7-11: error: `break` can only be used in a loop [BreakOutsideLoop]
+      // CHECK:STDERR:        ╭─┤ fail_break_continue.carbon:[[@LINE+6]]:7
+      // CHECK:STDERR: ->     │       break;
+      // CHECK:STDERR:        ·       ━━┳━━
+      // CHECK:STDERR:        ·         ┗━━┫ error: `break` can only be used in a loop [BreakOutsideLoop]
+      // CHECK:STDERR:        ╰────
       // CHECK:STDERR:
       break;
     });
     (fn () {
-      // CHECK:STDERR: fail_break_continue.carbon:[[@LINE+2]]:7-14: error: `continue` can only be used in a loop [ContinueOutsideLoop]
+      // CHECK:STDERR:        ╭─┤ fail_break_continue.carbon:[[@LINE+7]]:7
+      // CHECK:STDERR: ->     │       continue;
+      // CHECK:STDERR:        ·       ━━━━┳━━━
+      // CHECK:STDERR:        ·           ┗━━┫ error: `continue` can only be used in a loop
+      // CHECK:STDERR:        ·              ┃        [ContinueOutsideLoop]
+      // CHECK:STDERR:        ╰────
       // CHECK:STDERR:
       continue;
     });
@@ -292,8 +389,17 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_default_values.carbon:[[@LINE+3]]:34-39: error: this pattern is missing a required default value [RequiredPatternDefaultValueMissing]
-  // CHECK:STDERR: fail_default_values.carbon:[[@LINE+2]]:15-20: note: all patterns to the right of this first pattern with a default value must also specify a default value [RequiredPatternDefaultValueFirstDefault]
+  // CHECK:STDERR:        ╭─┤ fail_default_values.carbon:[[@LINE+12]]:34
+  // CHECK:STDERR: ->     │   (fn (unused x: i32 = 1, unused y: i32) {});
+  // CHECK:STDERR:        ·               ───┬──             ┳━━━━━
+  // CHECK:STDERR:        ·                  │               ┗━━┫ error: this pattern is missing a required
+  // CHECK:STDERR:        ·                  │                  ┃        default value
+  // CHECK:STDERR:        ·                  │                  ┃        [RequiredPatternDefaultValueMissing]
+  // CHECK:STDERR:        ·                  ╰────────────────────┤ all patterns to the right of this first
+  // CHECK:STDERR:        ·                                       │ pattern with a default value must also
+  // CHECK:STDERR:        ·                                       │ specify a default value
+  // CHECK:STDERR:        ·                                       │ [RequiredPatternDefaultValueFirstDefault]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn (unused x: i32 = 1, unused y: i32) {});
 }
@@ -304,18 +410,50 @@ library "[[@TEST_NAME]]";
 class Incomplete;
 
 fn F() {
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+3]]:15-27: error: parameter has incomplete type `Incomplete` in function definition [IncompleteTypeInFunctionParam]
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-4]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+12]]:15
+  // CHECK:STDERR:        │ class Incomplete;
+  // CHECK:STDERR:        · ────────┬────────
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   (fn (unused x: Incomplete) {});
+  // CHECK:STDERR:        ·               ┳━━━━━━━━━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: parameter has incomplete type `Incomplete` in function
+  // CHECK:STDERR:        ·                  ┃        definition
+  // CHECK:STDERR:        ·                  ┃        [IncompleteTypeInFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn (unused x: Incomplete) {});
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+5]]:10-22: error: function returns incomplete type `Incomplete` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-8]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+19]]:10
+  // CHECK:STDERR:        │ class Incomplete;
+  // CHECK:STDERR:        · ────────┬────────
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   (fn () -> Incomplete {});
+  // CHECK:STDERR:        ·          ━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: function returns incomplete type `Incomplete`
+  // CHECK:STDERR:        ·                   ┃        [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+2]]:25: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+8]]:25
+  // CHECK:STDERR: ->     │   (fn () -> Incomplete {});
+  // CHECK:STDERR:        ·                         ┳
+  // CHECK:STDERR:        ·                         ┗━━┫ error: missing `return` at end of function with
+  // CHECK:STDERR:        ·                            ┃        declared return type
+  // CHECK:STDERR:        ·                            ┃        [MissingReturnStatement]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn () -> Incomplete {});
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE+3]]:27-28: error: function returns incomplete type `Incomplete` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR: fail_incomplete_type.carbon:[[@LINE-14]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+12]]:27
+  // CHECK:STDERR:        │ class Incomplete;
+  // CHECK:STDERR:        · ────────┬────────
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   (fn (p: Incomplete*) => *p);
+  // CHECK:STDERR:        ·                           ┳━
+  // CHECK:STDERR:        ·                           ┗━━┫ error: function returns incomplete type
+  // CHECK:STDERR:        ·                              ┃        `Incomplete`
+  // CHECK:STDERR:        ·                              ┃        [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn (p: Incomplete*) => *p);
 }
@@ -324,8 +462,16 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_conversion.carbon:[[@LINE+3]]:16-22: error: cannot implicitly convert expression of type `<type of function expression>` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_conversion.carbon:[[@LINE+2]]:16-22: note: type `<type of function expression>` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_conversion.carbon:[[@LINE+11]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = fn () {};
+  // CHECK:STDERR:        ·                ┳━━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·                │  ┃        `<type of function expression>` to `i32`
+  // CHECK:STDERR:        ·                │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                ╰────┤ type `<type of function expression>` does not implement
+  // CHECK:STDERR:        ·                     │ interface `Core.ImplicitAs(i32)`
+  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = fn () {};
 }
@@ -334,13 +480,28 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_positional_params.carbon:[[@LINE+2]]:4-7: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_positional_params.carbon:[[@LINE+7]]:4
+  // CHECK:STDERR: ->     │   (fn {});
+  // CHECK:STDERR:        ·    ━━┳━
+  // CHECK:STDERR:        ·      ┗━━┫ error: semantics TODO: `function with positional parameters`
+  // CHECK:STDERR:        ·         ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn {});
-  // CHECK:STDERR: fail_todo_positional_params.carbon:[[@LINE+2]]:4-14: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_positional_params.carbon:[[@LINE+7]]:4
+  // CHECK:STDERR: ->     │   (fn -> i32 { return 0; });
+  // CHECK:STDERR:        ·    ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: semantics TODO: `function with positional parameters`
+  // CHECK:STDERR:        ·            ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn -> i32 { return 0; });
-  // CHECK:STDERR: fail_todo_positional_params.carbon:[[@LINE+2]]:4-8: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_positional_params.carbon:[[@LINE+7]]:4
+  // CHECK:STDERR: ->     │   (fn => 0);
+  // CHECK:STDERR:        ·    ━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: semantics TODO: `function with positional parameters`
+  // CHECK:STDERR:        ·         ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn => 0);
 }

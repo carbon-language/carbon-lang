@@ -25,9 +25,17 @@ library "[[@TEST_NAME]]";
 import Core library "core_wrong_index_with";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_wrong_index_with.carbon:[[@LINE+4]]:10-13: error: value of type `type` is not callable [CallToNonCallable]
+// CHECK:STDERR:        ╭─┤ fail_wrong_index_with.carbon:[[@LINE+12]]:10
+// CHECK:STDERR: ->     │ fn F() { 0[1]; }
+// CHECK:STDERR:        ·          ━━┳━
+// CHECK:STDERR:        ·            ┗━━┫ error: value of type `type` is not callable [CallToNonCallable]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_wrong_index_with.carbon:[[@LINE+2]]:10-13: error: value of type `type` is not callable [CallToNonCallable]
+// CHECK:STDERR:        ╭─┤ fail_wrong_index_with.carbon:[[@LINE+6]]:10
+// CHECK:STDERR: ->     │ fn F() { 0[1]; }
+// CHECK:STDERR:        ·          ━━┳━
+// CHECK:STDERR:        ·            ┗━━┫ error: value of type `type` is not callable [CallToNonCallable]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() { 0[1]; }
 //@dump-sem-ir-end
@@ -37,9 +45,21 @@ fn F() { 0[1]; }
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+4]]:10-13: error: name `Core.IndirectIndexWith` implicitly referenced here, but not found [CoreNameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_missing_index_with.carbon:[[@LINE+16]]:10
+// CHECK:STDERR: ->     │ fn F() { 0[1]; }
+// CHECK:STDERR:        ·          ┳━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: name `Core.IndirectIndexWith` implicitly referenced here,
+// CHECK:STDERR:        ·             ┃        but not found
+// CHECK:STDERR:        ·             ┃        [CoreNameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_missing_index_with.carbon:[[@LINE+2]]:10-13: error: name `Core.IndexWith` implicitly referenced here, but not found [CoreNameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_missing_index_with.carbon:[[@LINE+8]]:10
+// CHECK:STDERR: ->     │ fn F() { 0[1]; }
+// CHECK:STDERR:        ·          ┳━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: name `Core.IndexWith` implicitly referenced here, but not
+// CHECK:STDERR:        ·             ┃        found
+// CHECK:STDERR:        ·             ┃        [CoreNameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() { 0[1]; }
 //@dump-sem-ir-end
@@ -74,11 +94,26 @@ impl C as Core.IndexWith((), ()) {
 
 fn F() {
   let c: C = {};
-  // CHECK:STDERR: fail_wrong_arg_count.carbon:[[@LINE+3]]:3-7: error: 1 argument passed to generic interface expecting 2 arguments [CallArgCountMismatch]
-  // CHECK:STDERR: core_wrong_arg_count.carbon:4:1-61: note: calling generic interface declared here [InCallToEntity]
+  // CHECK:STDERR:        ╭─┤ fail_wrong_arg_count.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR: ->     │   c[()];
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: 1 argument passed to generic interface expecting 2 arguments
+  // CHECK:STDERR:        ·        ┃        [CallArgCountMismatch]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ core_wrong_arg_count.carbon
+  // CHECK:STDERR:        │ interface IndexWith(SubscriptType: type, ElementType: type) {
+  // CHECK:STDERR:        · ──────────────────────────────┬──────────────────────────────
+  // CHECK:STDERR:        ·                               ╰──┤ calling generic interface declared here
+  // CHECK:STDERR:        ·                                  │ [InCallToEntity]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c[()];
-  // CHECK:STDERR: fail_wrong_arg_count.carbon:[[@LINE+2]]:3: error: missing `//@dump-sem-ir-begin` to match `//@dump-sem-ir-end` [DumpSemIRRangeMissingBegin]
+  // CHECK:STDERR:        ╭─┤ fail_wrong_arg_count.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   //@dump-sem-ir-end
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: missing `//@dump-sem-ir-begin` to match `//@dump-sem-ir-end`
+  // CHECK:STDERR:        ·      ┃        [DumpSemIRRangeMissingBegin]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   //@dump-sem-ir-end
 }

@@ -9,7 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/match/fail_missing_cases_block.carbon
 
 fn f() -> i32 {
-  // CHECK:STDERR: fail_missing_cases_block.carbon:[[@LINE+2]]:12: error: expected `{` starting block with cases [ExpectedMatchCasesBlock]
+  // CHECK:STDERR:        ╭─┤ fail_missing_cases_block.carbon:[[@LINE+7]]:12
+  // CHECK:STDERR: ->     │   match (1)
+  // CHECK:STDERR:        ·            ┳
+  // CHECK:STDERR:        ·            ┗━━┫ error: expected `{` starting block with cases
+  // CHECK:STDERR:        ·               ┃        [ExpectedMatchCasesBlock]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   match (1)
   return 0;

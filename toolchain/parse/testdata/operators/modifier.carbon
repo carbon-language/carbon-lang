@@ -17,26 +17,55 @@ fn F() {
 // --- fail_invalid.carbon
 
 fn G() {
-  // CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:5-10: error: `unsafe` not allowed on operator `or` [ModifierNotAllowedOnOperator]
+  // CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+7]]:5
+  // CHECK:STDERR: ->     │   a unsafe or b;
+  // CHECK:STDERR:        ·     ━━━┳━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: `unsafe` not allowed on operator `or`
+  // CHECK:STDERR:        ·           ┃        [ModifierNotAllowedOnOperator]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a unsafe or b;
 
-  // CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:5-10: error: `unsafe` not allowed on operator `*` [ModifierNotAllowedOnOperator]
+  // CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+7]]:5
+  // CHECK:STDERR: ->     │   a unsafe * b;
+  // CHECK:STDERR:        ·     ━━━┳━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: `unsafe` not allowed on operator `*`
+  // CHECK:STDERR:        ·           ┃        [ModifierNotAllowedOnOperator]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a unsafe * b;
 
-  // CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:4: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+6]]:4
+  // CHECK:STDERR: ->     │   a unsafe;
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a unsafe;
 
-  // CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:3-8: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   unsafe;
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   unsafe;
 
   // TODO: It'd be nice to underline both tokens in `unsafe as` here.
-  // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:9-14: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+15]]:9
+  // CHECK:STDERR: ->     │   a + b unsafe as c * d;
+  // CHECK:STDERR:        ·         ┳━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: parentheses are required to disambiguate operator precedence
+  // CHECK:STDERR:        ·            ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:21: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+8]]:21
+  // CHECK:STDERR: ->     │   a + b unsafe as c * d;
+  // CHECK:STDERR:        ·                     ┳
+  // CHECK:STDERR:        ·                     ┗━━┫ error: parentheses are required to disambiguate
+  // CHECK:STDERR:        ·                        ┃        operator precedence
+  // CHECK:STDERR:        ·                        ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a + b unsafe as c * d;
 }

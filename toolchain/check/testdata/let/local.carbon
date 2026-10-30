@@ -29,7 +29,14 @@ fn F(_: C) {}
 
 fn CallF() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_symbolic.carbon:[[@LINE+2]]:15-18: error: semantics TODO: `local generic `let` bindings are currently unsupported` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_symbolic.carbon:[[@LINE+9]]:15
+  // CHECK:STDERR: ->     │   let generic c: C = {};
+  // CHECK:STDERR:        ·               ━━┳━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `local generic `let` bindings are currently unsupported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let generic c: C = {};
   F(c);

@@ -15,7 +15,11 @@ int n;
 // TIP:   bazel test //toolchain/testing:file_test --test_arg=--file_tests=toolchain/parse/testdata/packages/import/fail_inline_cpp_no_semi.carbon
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/import/fail_inline_cpp_no_semi.carbon
-// CHECK:STDERR: fail_inline_cpp_no_semi.carbon:[[@LINE-10]]:4: error: `inline` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_inline_cpp_no_semi.carbon:[[@LINE-10]]:4
+// CHECK:STDERR: ->     │ '''
+// CHECK:STDERR:        ·    ┳
+// CHECK:STDERR:        ·    ┗━━┫ error: `inline` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 
 // CHECK:STDOUT: - filename: fail_inline_cpp_no_semi.carbon

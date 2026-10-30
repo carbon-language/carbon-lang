@@ -37,7 +37,18 @@ fn MyF() {
 // --- without_definition.h
 
 // TODO: Promote this warning to an error by default.
-// CHECK:STDERR: ./without_definition.h:[[@LINE+1]]:13: warning: inline function 'inline_without_def' is not defined [CppInteropParseWarning]
+// CHECK:STDERR:        ╭─┤ ./without_definition.h:[[@LINE+12]]:13
+// CHECK:STDERR: ->     │ inline void inline_without_def();
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ warning: inline function 'inline_without_def' is not defined
+// CHECK:STDERR:        ·                ┃          [CppInteropParseWarning]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ todo_fail_import_without_definition.carbon
+// CHECK:STDERR:        │   Cpp.inline_without_def();
+// CHECK:STDERR:        ·                          ┬
+// CHECK:STDERR:        ·                          ╰──┤ used here [CppInteropParseNote]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 inline void inline_without_def();
 
 // --- todo_fail_import_without_definition.carbon
@@ -48,8 +59,6 @@ import Cpp library "without_definition.h";
 
 fn MyF() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: todo_fail_import_without_definition.carbon:[[@LINE+2]]:26: note: used here [CppInteropParseNote]
-  // CHECK:STDERR:
   Cpp.inline_without_def();
 
   // Don't error on repeated calls.
@@ -131,12 +140,12 @@ fn MyF() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @MyF() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc10: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %inline_without_def.ref.loc10: %inline_without_def.cpp_overload_set.type = name_ref inline_without_def, imports.%inline_without_def.cpp_overload_set.value [concrete = constants.%inline_without_def.cpp_overload_set.value]
-// CHECK:STDOUT:   %inline_without_def.call.loc10: init %empty_tuple.type = call imports.%inline_without_def.decl()
-// CHECK:STDOUT:   %Cpp.ref.loc13: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %inline_without_def.ref.loc13: %inline_without_def.cpp_overload_set.type = name_ref inline_without_def, imports.%inline_without_def.cpp_overload_set.value [concrete = constants.%inline_without_def.cpp_overload_set.value]
-// CHECK:STDOUT:   %inline_without_def.call.loc13: init %empty_tuple.type = call imports.%inline_without_def.decl()
+// CHECK:STDOUT:   %Cpp.ref.loc8: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %inline_without_def.ref.loc8: %inline_without_def.cpp_overload_set.type = name_ref inline_without_def, imports.%inline_without_def.cpp_overload_set.value [concrete = constants.%inline_without_def.cpp_overload_set.value]
+// CHECK:STDOUT:   %inline_without_def.call.loc8: init %empty_tuple.type = call imports.%inline_without_def.decl()
+// CHECK:STDOUT:   %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %inline_without_def.ref.loc11: %inline_without_def.cpp_overload_set.type = name_ref inline_without_def, imports.%inline_without_def.cpp_overload_set.value [concrete = constants.%inline_without_def.cpp_overload_set.value]
+// CHECK:STDOUT:   %inline_without_def.call.loc11: init %empty_tuple.type = call imports.%inline_without_def.decl()
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

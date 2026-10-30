@@ -12,7 +12,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_error_in_type.carbon
 
-// CHECK:STDERR: fail_error_in_type.carbon:[[@LINE+2]]:13: error: name `x` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_error_in_type.carbon:[[@LINE+6]]:13
+// CHECK:STDERR: ->     │ fn Six() -> x;
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ error: name `x` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Six() -> x;
 

@@ -10,19 +10,32 @@
 
 // --- fail_missing_expr_after_observe.carbon
 
-// CHECK:STDERR: fail_missing_expr_after_observe.carbon:[[@LINE+2]]:8: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╭─┤ fail_missing_expr_after_observe.carbon:[[@LINE+6]]:8
+// CHECK:STDERR: ->     │ observe impls I;
+// CHECK:STDERR:        ·        ┳
+// CHECK:STDERR:        ·        ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 observe impls I;
 
 // --- fail_missing_expr_after_impls.carbon
 
-// CHECK:STDERR: fail_missing_expr_after_impls.carbon:[[@LINE+2]]:16: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╭─┤ fail_missing_expr_after_impls.carbon:[[@LINE+6]]:16
+// CHECK:STDERR: ->     │ observe T impls ;
+// CHECK:STDERR:        ·                ┳
+// CHECK:STDERR:        ·                ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 observe T impls ;
 
 // --- fail_missing_impls.carbon
 
-// CHECK:STDERR: fail_missing_impls.carbon:[[@LINE+2]]:10: error: observe should use `==` or `impls` operator [ExpectedObserveOperator]
+// CHECK:STDERR:        ╭─┤ fail_missing_impls.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ observe T ;
+// CHECK:STDERR:        ·          ┳
+// CHECK:STDERR:        ·          ┗━━┫ error: observe should use `==` or `impls` operator
+// CHECK:STDERR:        ·             ┃        [ExpectedObserveOperator]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 observe T ;
 

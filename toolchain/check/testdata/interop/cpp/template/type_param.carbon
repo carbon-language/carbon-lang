@@ -43,8 +43,16 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+3]]:28-31: error: cannot implicitly convert non-type value of type `bool` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+2]]:28-31: note: type `bool` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_non_type_argument.carbon:[[@LINE+11]]:28
+// CHECK:STDERR: ->     │ var x: Cpp.TwoTypes(Cpp.A, true);
+// CHECK:STDERR:        ·                            ┳━━━
+// CHECK:STDERR:        ·                            ┗━━┫ error: cannot implicitly convert non-type value
+// CHECK:STDERR:        ·                            │  ┃        of type `bool` to `type`
+// CHECK:STDERR:        ·                            │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·                            ╰────┤ type `bool` does not implement interface
+// CHECK:STDERR:        ·                                 │ `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·                                 │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoTypes(Cpp.A, true);
 
@@ -54,7 +62,13 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_unsupported_type.carbon:[[@LINE+2]]:28-29: error: semantics TODO: `unsupported type used as template argument` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_unsupported_type.carbon:[[@LINE+8]]:28
+// CHECK:STDERR: ->     │ var x: Cpp.TwoTypes(Cpp.A, {});
+// CHECK:STDERR:        ·                            ━┳
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO: `unsupported type used as template argument`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoTypes(Cpp.A, {});
 

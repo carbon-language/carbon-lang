@@ -36,7 +36,13 @@ alias IntLiteral = MakeIntLiteral();
 
 fn AddIntChar(n: IntLiteral, c: CharLiteral) -> CharLiteral = "int.add_char_literal";
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:22-54: error: character arithmetic result 4503599627370593 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let a: CharLiteral = AddIntChar(0x10000000000000, 'a');
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 4503599627370593 is
+// CHECK:STDERR:        ·                         ┃        not a valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: CharLiteral = AddIntChar(0x10000000000000, 'a');
 
@@ -52,15 +58,33 @@ alias IntLiteral = MakeIntLiteral();
 fn AddIntChar(n: IntLiteral, c: CharLiteral) -> CharLiteral = "int.add_char_literal";
 fn Negate(n: IntLiteral) -> IntLiteral = "int.snegate";
 
-// CHECK:STDERR: fail_invalid_result.carbon:[[@LINE+2]]:22-48: error: character arithmetic result 1114112 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_invalid_result.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let a: CharLiteral = AddIntChar(1, '\u{10FFFF}');
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 1114112 is not a
+// CHECK:STDERR:        ·                         ┃        valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: CharLiteral = AddIntChar(1, '\u{10FFFF}');
 
-// CHECK:STDERR: fail_invalid_result.carbon:[[@LINE+2]]:22-46: error: character arithmetic result 55296 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_invalid_result.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let b: CharLiteral = AddIntChar(1, '\u{D7FF}');
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 55296 is not a
+// CHECK:STDERR:        ·                         ┃        valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: CharLiteral = AddIntChar(1, '\u{D7FF}');
 
-// CHECK:STDERR: fail_invalid_result.carbon:[[@LINE+2]]:22-48: error: character arithmetic result -1 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_invalid_result.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let c: CharLiteral = AddIntChar(Negate(98), 'a');
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result -1 is not a valid
+// CHECK:STDERR:        ·                         ┃        Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let c: CharLiteral = AddIntChar(Negate(98), 'a');
 

@@ -12,47 +12,105 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_modifiers.carbon
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-9: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ protected let b: i32 = 1;
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: `protected` not allowed; requires class scope
+// CHECK:STDERR:        ·        ┃        [ModifierProtectedNotAllowed]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 protected let b: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-7: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ default let c: i32 = 1;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `default` not allowed; requires interface scope
+// CHECK:STDERR:        ·       ┃        [ModifierRequiresInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 default let c: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-5: error: `final` not allowed; requires interface scope [ModifierRequiresInterface]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ final let d: i32 = 1;
+// CHECK:STDERR:        · ━━┳━━
+// CHECK:STDERR:        ·   ┗━━┫ error: `final` not allowed; requires interface scope
+// CHECK:STDERR:        ·      ┃        [ModifierRequiresInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final let d: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-7: error: `virtual` not allowed on `let` declaration [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ virtual let e: i32 = 1;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `virtual` not allowed on `let` declaration
+// CHECK:STDERR:        ·       ┃        [ModifierNotAllowedOnDeclaration]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 virtual let e: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+5]]:9-13: error: `final` not allowed on declaration with `default` [ModifierNotAllowedWith]
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1-7: note: `default` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+15]]:9
+// CHECK:STDERR: ->     │ default final let f: i32 = 1;
+// CHECK:STDERR:        · ───┬─── ━━┳━━
+// CHECK:STDERR:        ·    │      ┗━━┫ error: `final` not allowed on declaration with `default`
+// CHECK:STDERR:        ·    │         ┃        [ModifierNotAllowedWith]
+// CHECK:STDERR:        ·    ╰───────────┤ `default` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-7: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ default final let f: i32 = 1;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `default` not allowed; requires interface scope
+// CHECK:STDERR:        ·       ┃        [ModifierRequiresInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 default final let f: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+5]]:9-15: error: `default` repeated on declaration [ModifierRepeated]
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1-7: note: `default` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+14]]:9
+// CHECK:STDERR: ->     │ default default let g: i32 = 1;
+// CHECK:STDERR:        · ───┬─── ━━━┳━━━
+// CHECK:STDERR:        ·    │       ┗━━┫ error: `default` repeated on declaration [ModifierRepeated]
+// CHECK:STDERR:        ·    ╰────────────┤ `default` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-7: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ default default let g: i32 = 1;
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `default` not allowed; requires interface scope
+// CHECK:STDERR:        ·       ┃        [ModifierRequiresInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 default default let g: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+5]]:11-17: error: `private` not allowed on declaration with `protected` [ModifierNotAllowedWith]
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1-9: note: `protected` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+15]]:11
+// CHECK:STDERR: ->     │ protected private let h: i32 = 1;
+// CHECK:STDERR:        · ────┬──── ━━━┳━━━
+// CHECK:STDERR:        ·     │        ┗━━┫ error: `private` not allowed on declaration with `protected`
+// CHECK:STDERR:        ·     │           ┃        [ModifierNotAllowedWith]
+// CHECK:STDERR:        ·     ╰─────────────┤ `protected` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-9: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ protected private let h: i32 = 1;
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: `protected` not allowed; requires class scope
+// CHECK:STDERR:        ·        ┃        [ModifierProtectedNotAllowed]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 protected private let h: i32 = 1;
 
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+5]]:11-19: error: `protected` repeated on declaration [ModifierRepeated]
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+4]]:1-9: note: `protected` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+14]]:11
+// CHECK:STDERR: ->     │ protected protected let i: i32 = 1;
+// CHECK:STDERR:        · ────┬──── ━━━━┳━━━━
+// CHECK:STDERR:        ·     │         ┗━━┫ error: `protected` repeated on declaration [ModifierRepeated]
+// CHECK:STDERR:        ·     ╰──────────────┤ `protected` previously appeared here [ModifierPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:1-9: error: `protected` not allowed; requires class scope [ModifierProtectedNotAllowed]
+// CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ protected protected let i: i32 = 1;
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: `protected` not allowed; requires class scope
+// CHECK:STDERR:        ·        ┃        [ModifierProtectedNotAllowed]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 protected protected let i: i32 = 1;
 
@@ -118,99 +176,99 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:     .i [protected] = %i
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %impl.elem0.loc17: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc17_24.1: <bound method> = bound_method @__global_init.%int_1.loc17, %impl.elem0.loc17 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc17_24.2: <bound method> = bound_method @__global_init.%int_1.loc17, %specific_fn.loc17 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17: init %i32 = call %bound_method.loc17_24.2(@__global_init.%int_1.loc17) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc17_24.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc17 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc17_24.2: %i32 = converted @__global_init.%int_1.loc17, %.loc17_24.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %b: %i32 = wrapper_binding b, %.loc17_24.2
+// CHECK:STDOUT:   %impl.elem0.loc22: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc22_24.1: <bound method> = bound_method @__global_init.%int_1.loc22, %impl.elem0.loc22 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc22: <specific function> = specific_function %impl.elem0.loc22, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc22_24.2: <bound method> = bound_method @__global_init.%int_1.loc22, %specific_fn.loc22 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22: init %i32 = call %bound_method.loc22_24.2(@__global_init.%int_1.loc22) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc22_24.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc22 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc22_24.2: %i32 = converted @__global_init.%int_1.loc22, %.loc22_24.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %i32.loc22: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %b: %i32 = wrapper_binding b, %.loc22_24.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.d94 = value_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc21: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc21_22.1: <bound method> = bound_method @__global_init.%int_1.loc21, %impl.elem0.loc21 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc21: <specific function> = specific_function %impl.elem0.loc21, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc21_22.2: <bound method> = bound_method @__global_init.%int_1.loc21, %specific_fn.loc21 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21: init %i32 = call %bound_method.loc21_22.2(@__global_init.%int_1.loc21) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc21_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc21 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc21_22.2: %i32 = converted @__global_init.%int_1.loc21, %.loc21_22.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %c: %i32 = wrapper_binding c, %.loc21_22.2
+// CHECK:STDOUT:   %impl.elem0.loc31: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc31_22.1: <bound method> = bound_method @__global_init.%int_1.loc31, %impl.elem0.loc31 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc31: <specific function> = specific_function %impl.elem0.loc31, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc31_22.2: <bound method> = bound_method @__global_init.%int_1.loc31, %specific_fn.loc31 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc31: init %i32 = call %bound_method.loc31_22.2(@__global_init.%int_1.loc31) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc31_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc31 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc31_22.2: %i32 = converted @__global_init.%int_1.loc31, %.loc31_22.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %i32.loc31: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %c: %i32 = wrapper_binding c, %.loc31_22.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.d94 = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc25: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc25_20.1: <bound method> = bound_method @__global_init.%int_1.loc25, %impl.elem0.loc25 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc25: <specific function> = specific_function %impl.elem0.loc25, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc25_20.2: <bound method> = bound_method @__global_init.%int_1.loc25, %specific_fn.loc25 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25: init %i32 = call %bound_method.loc25_20.2(@__global_init.%int_1.loc25) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc25_20.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc25 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc25_20.2: %i32 = converted @__global_init.%int_1.loc25, %.loc25_20.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc25: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %d: %i32 = wrapper_binding d, %.loc25_20.2
+// CHECK:STDOUT:   %impl.elem0.loc40: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc40_20.1: <bound method> = bound_method @__global_init.%int_1.loc40, %impl.elem0.loc40 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc40: <specific function> = specific_function %impl.elem0.loc40, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc40_20.2: <bound method> = bound_method @__global_init.%int_1.loc40, %specific_fn.loc40 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc40: init %i32 = call %bound_method.loc40_20.2(@__global_init.%int_1.loc40) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc40_20.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc40 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc40_20.2: %i32 = converted @__global_init.%int_1.loc40, %.loc40_20.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %i32.loc40: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %d: %i32 = wrapper_binding d, %.loc40_20.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.d94 = value_binding_pattern d [concrete = constants.%d.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc29: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc29_22.1: <bound method> = bound_method @__global_init.%int_1.loc29, %impl.elem0.loc29 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc29: <specific function> = specific_function %impl.elem0.loc29, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc29_22.2: <bound method> = bound_method @__global_init.%int_1.loc29, %specific_fn.loc29 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29: init %i32 = call %bound_method.loc29_22.2(@__global_init.%int_1.loc29) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc29_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc29_22.2: %i32 = converted @__global_init.%int_1.loc29, %.loc29_22.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc29: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %e: %i32 = wrapper_binding e, %.loc29_22.2
+// CHECK:STDOUT:   %impl.elem0.loc49: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc49_22.1: <bound method> = bound_method @__global_init.%int_1.loc49, %impl.elem0.loc49 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc49: <specific function> = specific_function %impl.elem0.loc49, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc49_22.2: <bound method> = bound_method @__global_init.%int_1.loc49, %specific_fn.loc49 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc49: init %i32 = call %bound_method.loc49_22.2(@__global_init.%int_1.loc49) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc49_22.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc49 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc49_22.2: %i32 = converted @__global_init.%int_1.loc49, %.loc49_22.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %i32.loc49: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %e: %i32 = wrapper_binding e, %.loc49_22.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %e.patt: %pattern_type.d94 = value_binding_pattern e [concrete = constants.%e.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc36: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc36_28.1: <bound method> = bound_method @__global_init.%int_1.loc36, %impl.elem0.loc36 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc36: <specific function> = specific_function %impl.elem0.loc36, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc36_28.2: <bound method> = bound_method @__global_init.%int_1.loc36, %specific_fn.loc36 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36: init %i32 = call %bound_method.loc36_28.2(@__global_init.%int_1.loc36) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc36_28.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc36 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc36_28.2: %i32 = converted @__global_init.%int_1.loc36, %.loc36_28.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc36: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %f: %i32 = wrapper_binding f, %.loc36_28.2
+// CHECK:STDOUT:   %impl.elem0.loc66: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc66_28.1: <bound method> = bound_method @__global_init.%int_1.loc66, %impl.elem0.loc66 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc66: <specific function> = specific_function %impl.elem0.loc66, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc66_28.2: <bound method> = bound_method @__global_init.%int_1.loc66, %specific_fn.loc66 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc66: init %i32 = call %bound_method.loc66_28.2(@__global_init.%int_1.loc66) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc66_28.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc66 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc66_28.2: %i32 = converted @__global_init.%int_1.loc66, %.loc66_28.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %i32.loc66: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %f: %i32 = wrapper_binding f, %.loc66_28.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %f.patt: %pattern_type.d94 = value_binding_pattern f [concrete = constants.%f.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc43: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc43_30.1: <bound method> = bound_method @__global_init.%int_1.loc43, %impl.elem0.loc43 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc43: <specific function> = specific_function %impl.elem0.loc43, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc43_30.2: <bound method> = bound_method @__global_init.%int_1.loc43, %specific_fn.loc43 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc43: init %i32 = call %bound_method.loc43_30.2(@__global_init.%int_1.loc43) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc43_30.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc43 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc43_30.2: %i32 = converted @__global_init.%int_1.loc43, %.loc43_30.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc43: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %g: %i32 = wrapper_binding g, %.loc43_30.2
+// CHECK:STDOUT:   %impl.elem0.loc82: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc82_30.1: <bound method> = bound_method @__global_init.%int_1.loc82, %impl.elem0.loc82 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc82: <specific function> = specific_function %impl.elem0.loc82, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc82_30.2: <bound method> = bound_method @__global_init.%int_1.loc82, %specific_fn.loc82 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc82: init %i32 = call %bound_method.loc82_30.2(@__global_init.%int_1.loc82) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc82_30.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc82 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc82_30.2: %i32 = converted @__global_init.%int_1.loc82, %.loc82_30.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %i32.loc82: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %g: %i32 = wrapper_binding g, %.loc82_30.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %g.patt: %pattern_type.d94 = value_binding_pattern g [concrete = constants.%g.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc50: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc50_32.1: <bound method> = bound_method @__global_init.%int_1.loc50, %impl.elem0.loc50 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc50: <specific function> = specific_function %impl.elem0.loc50, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc50_32.2: <bound method> = bound_method @__global_init.%int_1.loc50, %specific_fn.loc50 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc50: init %i32 = call %bound_method.loc50_32.2(@__global_init.%int_1.loc50) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc50_32.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc50 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc50_32.2: %i32 = converted @__global_init.%int_1.loc50, %.loc50_32.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc50: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %h: %i32 = wrapper_binding h, %.loc50_32.2
+// CHECK:STDOUT:   %impl.elem0.loc99: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc99_32.1: <bound method> = bound_method @__global_init.%int_1.loc99, %impl.elem0.loc99 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc99: <specific function> = specific_function %impl.elem0.loc99, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc99_32.2: <bound method> = bound_method @__global_init.%int_1.loc99, %specific_fn.loc99 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc99: init %i32 = call %bound_method.loc99_32.2(@__global_init.%int_1.loc99) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc99_32.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc99 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc99_32.2: %i32 = converted @__global_init.%int_1.loc99, %.loc99_32.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %i32.loc99: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %h: %i32 = wrapper_binding h, %.loc99_32.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %h.patt: %pattern_type.d94 = value_binding_pattern h [concrete = constants.%h.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %impl.elem0.loc57: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc57_34.1: <bound method> = bound_method @__global_init.%int_1.loc57, %impl.elem0.loc57 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc57: <specific function> = specific_function %impl.elem0.loc57, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc57_34.2: <bound method> = bound_method @__global_init.%int_1.loc57, %specific_fn.loc57 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc57: init %i32 = call %bound_method.loc57_34.2(@__global_init.%int_1.loc57) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc57_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc57 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc57_34.2: %i32 = converted @__global_init.%int_1.loc57, %.loc57_34.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %i32.loc57: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %i: %i32 = wrapper_binding i, %.loc57_34.2
+// CHECK:STDOUT:   %impl.elem0.loc115: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc115_34.1: <bound method> = bound_method @__global_init.%int_1.loc115, %impl.elem0.loc115 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc115: <specific function> = specific_function %impl.elem0.loc115, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc115_34.2: <bound method> = bound_method @__global_init.%int_1.loc115, %specific_fn.loc115 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc115: init %i32 = call %bound_method.loc115_34.2(@__global_init.%int_1.loc115) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc115_34.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc115 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc115_34.2: %i32 = converted @__global_init.%int_1.loc115, %.loc115_34.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %i32.loc115: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i: %i32 = wrapper_binding i, %.loc115_34.2
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %i.patt: %pattern_type.d94 = value_binding_pattern i [concrete = constants.%i.patt]
 // CHECK:STDOUT:   }
@@ -218,14 +276,14 @@ protected protected let i: i32 = 1;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %int_1.loc17: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int_1.loc21: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int_1.loc25: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int_1.loc29: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int_1.loc36: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int_1.loc43: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int_1.loc50: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
-// CHECK:STDOUT:   %int_1.loc57: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_1.loc22: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_1.loc31: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_1.loc40: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_1.loc49: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_1.loc66: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_1.loc82: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_1.loc99: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
+// CHECK:STDOUT:   %int_1.loc115: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

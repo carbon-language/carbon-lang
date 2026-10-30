@@ -36,10 +36,33 @@ library "[[@TEST_NAME]]";
 import Cpp library "templates.h";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE+5]]:35: error: too few template arguments for class template 'C' [CppInteropParseError]
-// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE+4]]:35: note: template template argument has different template parameters than its corresponding template template parameter [CppInteropParseNote]
-// CHECK:STDERR: ./templates.h:6:66: note: previous template template parameter is here [CppInteropParseNote]
-// CHECK:STDERR: ./templates.h:4:37: note: template is declared here [CppInteropParseNote]
+// CHECK:STDERR:        ╭─┤ fail_template_mismatch.carbon:[[@LINE+28]]:35
+// CHECK:STDERR: ->     │ var x: Cpp.TwoTemplates(Cpp.A, Cpp.C);
+// CHECK:STDERR:        ·                                   ┳
+// CHECK:STDERR:        ·                                   ┗━━┫ error: too few template arguments for
+// CHECK:STDERR:        ·                                   │  ┃        class template 'C'
+// CHECK:STDERR:        ·                                   │  ┃        [CppInteropParseError]
+// CHECK:STDERR:        ·                                   ╰────┤ template template argument has
+// CHECK:STDERR:        ·                                        │ different template parameters than its
+// CHECK:STDERR:        ·                                        │ corresponding template template
+// CHECK:STDERR:        ·                                        │ parameter
+// CHECK:STDERR:        ·                                        │ [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ ./templates.h
+// CHECK:STDERR:        │ template<typename, typename> struct C {};
+// CHECK:STDERR:        · ────────────────────────────        ┬
+// CHECK:STDERR:        ·                                     ╰──┤ template is declared here
+// CHECK:STDERR:        ·                                        │ [CppInteropParseNote]
+// CHECK:STDERR:        │
+// CHECK:STDERR:        │ template<template<typename> typename, template<typename> typename>
+// CHECK:STDERR:        ·                                       ──────────────────         ┬
+// CHECK:STDERR:        ·                                                                  ╰──┤ previous
+// CHECK:STDERR:        ·                                                                     │ template
+// CHECK:STDERR:        ·                                                                     │ template
+// CHECK:STDERR:        ·                                                                     │ parameter
+// CHECK:STDERR:        ·                                                                     │ is here
+// CHECK:STDERR:        ·                                                                     │ [CppInteropParseNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoTemplates(Cpp.A, Cpp.C);
 //@dump-sem-ir-end
@@ -52,7 +75,14 @@ import Cpp library "templates.h";
 
 class X {}
 
-// CHECK:STDERR: fail_type_argument.carbon:[[@LINE+2]]:32: error: template argument for template template parameter must be a class template or type alias template [CppInteropParseError]
+// CHECK:STDERR:        ╭─┤ fail_type_argument.carbon:[[@LINE+9]]:32
+// CHECK:STDERR: ->     │ var x: Cpp.TwoTemplates(Cpp.A, X);
+// CHECK:STDERR:        ·                                ┳
+// CHECK:STDERR:        ·                                ┗━━┫ error: template argument for template
+// CHECK:STDERR:        ·                                   ┃        template parameter must be a class
+// CHECK:STDERR:        ·                                   ┃        template or type alias template
+// CHECK:STDERR:        ·                                   ┃        [CppInteropParseError]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoTemplates(Cpp.A, X);
 
@@ -62,7 +92,14 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR: fail_non_type_argument.carbon:[[@LINE+2]]:32: error: template argument for template template parameter must be a class template or type alias template [CppInteropParseError]
+// CHECK:STDERR:        ╭─┤ fail_non_type_argument.carbon:[[@LINE+9]]:32
+// CHECK:STDERR: ->     │ var x: Cpp.TwoTemplates(Cpp.A, true);
+// CHECK:STDERR:        ·                                ┳
+// CHECK:STDERR:        ·                                ┗━━┫ error: template argument for template
+// CHECK:STDERR:        ·                                   ┃        template parameter must be a class
+// CHECK:STDERR:        ·                                   ┃        template or type alias template
+// CHECK:STDERR:        ·                                   ┃        [CppInteropParseError]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoTemplates(Cpp.A, true);
 

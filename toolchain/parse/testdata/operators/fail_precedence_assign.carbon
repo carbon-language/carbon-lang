@@ -12,18 +12,42 @@ fn F() {
   var a: i32;
   // Assignment can only appear as an expression statement, not as a subexpression.
   // TODO: Produce the "can only be used as a complete statement" diagnostic in each of these cases.
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+2]]:9: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_assign.carbon:[[@LINE+6]]:9
+  // CHECK:STDERR: ->     │   1 + (a = 1);
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected `,` or `)` [UnexpectedTokenAfterListElement]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   1 + (a = 1);
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+4]]:18: error: expected `else` after `if ... then ...` [ExpectedElseAfterIf]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_assign.carbon:[[@LINE+14]]:18
+  // CHECK:STDERR: ->     │   (if true then a += 1 else a /= 2);
+  // CHECK:STDERR:        ·                  ┳
+  // CHECK:STDERR:        ·                  ┗━━┫ error: expected `else` after `if ... then ...`
+  // CHECK:STDERR:        ·                     ┃        [ExpectedElseAfterIf]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+2]]:18: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_assign.carbon:[[@LINE+7]]:18
+  // CHECK:STDERR: ->     │   (if true then a += 1 else a /= 2);
+  // CHECK:STDERR:        ·                  ┳
+  // CHECK:STDERR:        ·                  ┗━━┫ error: expected `,` or `)`
+  // CHECK:STDERR:        ·                     ┃        [UnexpectedTokenAfterListElement]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (if true then a += 1 else a /= 2);
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+2]]:7-8: error: operator `++` can only be used as a complete statement [StatementOperatorAsSubExpr]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_assign.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   a + ++a;
+  // CHECK:STDERR:        ·       ━┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: operator `++` can only be used as a complete statement
+  // CHECK:STDERR:        ·           ┃        [StatementOperatorAsSubExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a + ++a;
-  // CHECK:STDERR: fail_precedence_assign.carbon:[[@LINE+2]]:5-6: error: parentheses are required around this unary `if` operator [UnaryOperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_assign.carbon:[[@LINE+7]]:5
+  // CHECK:STDERR: ->     │   ++if c then a else b;
+  // CHECK:STDERR:        ·     ━┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: parentheses are required around this unary `if` operator
+  // CHECK:STDERR:        ·         ┃        [UnaryOperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ++if c then a else b;
 }

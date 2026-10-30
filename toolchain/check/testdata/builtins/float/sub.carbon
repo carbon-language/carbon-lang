@@ -28,7 +28,12 @@ var x: f64 = Sub(2.0, 0.5);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:1-26: error: invalid signature for builtin function "float.sub" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooFew(a: f64) -> f64 = "float.sub";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: invalid signature for builtin function "float.sub"
+// CHECK:STDERR:        ·                 ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooFew(a: f64) -> f64 = "float.sub";
 
@@ -40,7 +45,12 @@ fn RuntimeCallIsValidTooFew(a: f64) -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:1-43: error: invalid signature for builtin function "float.sub" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.sub";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: invalid signature for builtin function "float.sub"
+// CHECK:STDERR:        ·                      ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.sub";
 
@@ -52,7 +62,12 @@ fn RuntimeCallIsValidTooMany(a: f64, b: f64, c: f64) -> f64 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:1-42: error: invalid signature for builtin function "float.sub" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_return_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn BadReturnType(a: f64, b: f64) -> bool = "float.sub";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: invalid signature for builtin function "float.sub"
+// CHECK:STDERR:        ·                      ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn BadReturnType(a: f64, b: f64) -> bool = "float.sub";
 

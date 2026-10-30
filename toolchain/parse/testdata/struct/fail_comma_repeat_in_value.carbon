@@ -8,7 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_comma_repeat_in_value.carbon
 
-// CHECK:STDERR: fail_comma_repeat_in_value.carbon:[[@LINE+2]]:16: error: expected `.field = value` [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╭─┤ fail_comma_repeat_in_value.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ var x: {.a = 0,,} = {};
+// CHECK:STDERR:        ·                ┳
+// CHECK:STDERR:        ·                ┗━━┫ error: expected `.field = value`
+// CHECK:STDERR:        ·                   ┃        [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: {.a = 0,,} = {};
 
