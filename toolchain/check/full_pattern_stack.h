@@ -43,8 +43,11 @@ class FullPatternStack {
     // A name-binding declaration, such as a `let` or `var` statement.
     NameBindingDecl,
 
-    // A `var` field declaration inside a class.
+    // A `var` declaration of a field or static var inside a class.
     ClassScopeVarDecl,
+
+    // A `let` declaration inside a class.
+    ClassScopeLetDecl,
 
     // The implicit parameter list of a function or impl declaration.
     ImplicitParamList,
@@ -62,6 +65,13 @@ class FullPatternStack {
     // there is no explicit parameter list.
     NotInEitherParamList
   };
+
+  // Returns whether `kind` is the kind of a name binding declaration.
+  static auto IsAnyNameBindingDeclKind(Kind kind) -> bool {
+    return kind == Kind::NameBindingDecl ||
+           kind == Kind::ClassScopeVarDecl ||
+           kind == Kind::ClassScopeLetDecl;
+  }
 
   auto empty() const -> bool { return kind_stack_.empty(); }
 
@@ -84,8 +94,8 @@ class FullPatternStack {
   }
 
   // Marks the start of a new full-pattern for a name binding declaration.
-  auto PushNameBindingDecl() -> void {
-    kind_stack_.push_back(Kind::NameBindingDecl);
+  auto PushNameBindingDecl(Kind kind = Kind::NameBindingDecl) -> void {
+    kind_stack_.push_back(kind);
     bind_name_stack_.PushArray();
     var_pattern_stack_.PushArray();
     next_var_index_stack_.push_back(-1);
@@ -93,10 +103,12 @@ class FullPatternStack {
 
   // Marks the start of a new full-pattern for a class `var` declaration.
   auto PushClassScopeVarDecl() -> void {
-    kind_stack_.push_back(Kind::ClassScopeVarDecl);
-    bind_name_stack_.PushArray();
-    var_pattern_stack_.PushArray();
-    next_var_index_stack_.push_back(-1);
+    PushNameBindingDecl(Kind::ClassScopeVarDecl);
+  }
+
+  // Marks the start of a new full-pattern for a class `let` declaration.
+  auto PushClassScopeLetDecl() -> void {
+    PushNameBindingDecl(Kind::ClassScopeLetDecl);
   }
 
   // Marks the start of the current parameterized entity's implicit parameter
@@ -170,8 +182,7 @@ class FullPatternStack {
   // needs to be emitted early; otherwise the `VarStorage` should be emitted on
   // demand during pattern matching.
   auto AddLocalVarPattern(VarInfo var_info) -> void {
-    CARBON_CHECK(kind_stack_.back() == Kind::ClassScopeVarDecl ||
-                 kind_stack_.back() == Kind::NameBindingDecl);
+    CARBON_CHECK(IsAnyNameBindingDeclKind(kind_stack_.back()));
     CARBON_CHECK(next_var_index_stack_.back() < 0);
     var_pattern_stack_.AppendToTop(var_info);
   }
@@ -183,8 +194,7 @@ class FullPatternStack {
   // exactly once for each inst pair passed to `AddLocalVarPattern`, and in the
   // same order.
   auto GetLocalVarStorage(SemIR::InstId var_pattern_id) -> SemIR::InstId {
-    CARBON_CHECK(kind_stack_.back() == Kind::ClassScopeVarDecl ||
-                 kind_stack_.back() == Kind::NameBindingDecl);
+    CARBON_CHECK(IsAnyNameBindingDeclKind(kind_stack_.back()));
     auto& index = next_var_index_stack_.back();
     CARBON_CHECK(index >= 0);
     auto var_info = var_pattern_stack_.PeekArray()[index];

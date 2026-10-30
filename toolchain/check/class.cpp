@@ -475,10 +475,7 @@ auto InStaticClassScopeVar(Context& context) -> bool {
 
 auto InClassScopeLet(Context& context) -> bool {
   return context.full_pattern_stack().CurrentKindIs(
-             FullPatternStack::Kind::NameBindingDecl) &&
-         context.decl_introducer_state_stack().InnermostKindIs(
-             Lex::TokenKind::Let) &&
-         context.scope_stack().TryGetCurrentScopeAs<SemIR::ClassDecl>();
+      FullPatternStack::Kind::ClassScopeLetDecl);
 }
 
 }  // namespace Carbon::Check

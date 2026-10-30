@@ -188,11 +188,12 @@ static auto MakeBinding(Context& context, const ChoiceInfo& choice_info,
                         const Context::ChoiceDeferredBinding& binding) -> void {
   SemIR::InstId discriminant_value_id = [&] {
     if (choice_info.num_alternative_bits == 0) {
-      return AddInst(context, binding.node_id,
-                     SemIR::TupleLiteral{
-                         .type_id = GetTupleType(context, {}),
-                         .elements_id = SemIR::InstBlockId::Empty,
-                     });
+      return AddInst<SemIR::TupleLiteral>(
+          context, binding.node_id,
+          {
+              .type_id = GetTupleType(context, {}),
+              .elements_id = SemIR::InstBlockId::Empty,
+          });
     } else {
       return MakeIntLiteral(context, binding.node_id,
                             context.ints().Add(alternative_index));
@@ -204,28 +205,29 @@ static auto MakeBinding(Context& context, const ChoiceInfo& choice_info,
 
   auto self_value_id = ConvertToValueOfType(
       context, binding.node_id,
-      AddInst(context, binding.node_id,
-              SemIR::StructLiteral{
-                  .type_id = choice_info.self_struct_type_id,
-                  .elements_id =
-                      [&] {
-                        context.inst_block_stack().Push();
-                        context.inst_block_stack().AddInstId(
-                            discriminant_value_id);
-                        return context.inst_block_stack().Pop();
-                      }(),
-              }),
+      AddInst<SemIR::StructLiteral>(
+          context, binding.node_id,
+          {
+              .type_id = choice_info.self_struct_type_id,
+              .elements_id =
+                  [&] {
+                    context.inst_block_stack().Push();
+                    context.inst_block_stack().AddInstId(discriminant_value_id);
+                    return context.inst_block_stack().Pop();
+                  }(),
+          }),
       choice_info.self_type_id);
 
   auto entity_name_id = context.entity_names().Add(
       {.name_id = binding.name_component.name_id,
        .parent_scope_id = choice_info.name_scope_id});
-  auto bind_name_id = AddInst(context, binding.node_id,
-                              SemIR::AliasBinding{
-                                  .type_id = choice_info.self_type_id,
-                                  .entity_name_id = entity_name_id,
-                                  .value_id = self_value_id,
-                              });
+  auto bind_name_id =
+      AddInst<SemIR::AliasBinding>(context, binding.node_id,
+                                   {
+                                       .type_id = choice_info.self_type_id,
+                                       .entity_name_id = entity_name_id,
+                                       .value_id = self_value_id,
+                                   });
   context.name_scopes()
       .Get(choice_info.name_scope_id)
       .AddRequired({.name_id = binding.name_component.name_id,
@@ -277,12 +279,11 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
   });
   auto fields_id =
       context.struct_type_fields().AddCanonical(struct_type_fields);
-  auto choice_witness_id = AddInst(
+  auto choice_witness_id = AddInst<SemIR::CompleteTypeWitness>(
       context, node_id,
-      SemIR::CompleteTypeWitness{
-          .type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
-          .object_repr_type_inst_id = context.types().GetTypeInstId(
-              GetStructType(context, fields_id))});
+      {.type_id = GetSingletonType(context, SemIR::WitnessType::TypeInstId),
+       .object_repr_type_inst_id =
+           context.types().GetTypeInstId(GetStructType(context, fields_id))});
   auto& class_info = context.classes().Get(class_id);
   class_info.complete_type_witness_id = choice_witness_id;
 
