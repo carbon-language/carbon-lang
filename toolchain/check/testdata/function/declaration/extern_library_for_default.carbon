@@ -32,8 +32,7 @@ package Foo library "[[@TEST_NAME]]";
 
 import library default;
 
-// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE+4]]:1-14: error: declaration in library "wrong_library" doesn't match `extern library` declaration [ExternLibraryIncorrect]
-// CHECK:STDERR: imported from: fail_wrong_library.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_wrong_library.carbon:[[@LINE+3]]:1-14: error: declaration in library "wrong_library" doesn't match `extern library` declaration [ExternLibraryIncorrect]
 // CHECK:STDERR: default.carbon:4:1-33: note: previously declared with `extern library` here [ExternLibraryExpected]
 // CHECK:STDERR:
 extern fn F();

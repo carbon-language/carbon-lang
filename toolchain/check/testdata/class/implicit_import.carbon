@@ -34,8 +34,7 @@ class C {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+4]]:1-8: error: redeclaration of `class C` is redundant [RedeclRedundant]
-// CHECK:STDERR: imported from: fail_redecl_after_def.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_redecl_after_def.impl.carbon:[[@LINE+3]]:1-8: error: redeclaration of `class C` is redundant [RedeclRedundant]
 // CHECK:STDERR: redecl_after_def.carbon:4:1-9: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 class C;
@@ -50,8 +49,7 @@ class C {}
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+4]]:1-9: error: redefinition of `class C` [RedeclRedef]
-// CHECK:STDERR: imported from: fail_redef_after_def.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_redef_after_def.impl.carbon:[[@LINE+3]]:1-9: error: redefinition of `class C` [RedeclRedef]
 // CHECK:STDERR: redef_after_def.carbon:4:1-9: note: previously defined here [RedeclPrevDef]
 // CHECK:STDERR:
 class C {}
@@ -67,8 +65,7 @@ alias B = C;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+4]]:7: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: imported from: fail_def_alias.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_def_alias.impl.carbon:[[@LINE+3]]:7: error: duplicate name `B` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: def_alias.carbon:5:7: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 class B {}
@@ -200,7 +197,7 @@ class B {}
 // CHECK:STDOUT:   %C.08d9e3.1: type = class_type @C.1 [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
-// CHECK:STDOUT:   %C.08d9e3.2: type = class_type @C.loc8 [concrete]
+// CHECK:STDOUT:   %C.08d9e3.2: type = class_type @C.loc7 [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
@@ -215,7 +212,7 @@ class B {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %default.import.loc2_31.1 = import <none>
 // CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
-// CHECK:STDOUT:   %C.decl: type = class_decl @C.loc8 [concrete = constants.%C.08d9e3.2] {} {}
+// CHECK:STDOUT:   %C.decl: type = class_decl @C.loc7 [concrete = constants.%C.08d9e3.2] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C.1 [from "redef_after_def.carbon"] {
@@ -225,7 +222,7 @@ class B {}
 // CHECK:STDOUT:   .Self = imports.%Main.import_ref.e47
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: class @C.loc8 {
+// CHECK:STDOUT: class @C.loc7 {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:

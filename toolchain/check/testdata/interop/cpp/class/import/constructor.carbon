@@ -208,13 +208,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "deleted.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+4]]:32-52: error: call to deleted function 'DeletedC' [CppInteropParseError]
-  // CHECK:STDERR: included from: fail_import_deleted.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+3]]:32-52: error: call to deleted function 'DeletedC' [CppInteropParseError]
   // CHECK:STDERR: ./deleted.h:4:3: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR:
   let unused c: Cpp.DeletedC = Cpp.DeletedC.DeletedC();
-  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+5]]:32-52: error: call to deleted function 'DeletedD' [CppInteropParseError]
-  // CHECK:STDERR: included from: fail_import_deleted.carbon:[[@LINE-9]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_deleted.carbon:[[@LINE+4]]:32-52: error: call to deleted function 'DeletedD' [CppInteropParseError]
   // CHECK:STDERR: ./deleted.h:9:3: note: candidate constructor has been explicitly deleted [CppInteropParseNote]
   // CHECK:STDERR: ./deleted.h:10:3: note: candidate constructor [CppInteropParseNote]
   // CHECK:STDERR:

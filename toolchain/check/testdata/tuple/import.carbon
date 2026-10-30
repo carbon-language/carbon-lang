@@ -35,8 +35,7 @@ var c: C((1, 2)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+4]]:14-22: error: cannot initialize tuple of 2 elements from tuple with 3 elements [TupleInitElementCountMismatch]
-// CHECK:STDERR: imported from: fail_bad_type.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+3]]:14-22: error: cannot initialize tuple of 2 elements from tuple with 3 elements [TupleInitElementCountMismatch]
 // CHECK:STDERR: implicit.carbon:7:9-21: note: initializing generic parameter `X` declared here [InitializingGenericParam]
 // CHECK:STDERR:
 var c_bad: C((1, 2, 3)) = F();

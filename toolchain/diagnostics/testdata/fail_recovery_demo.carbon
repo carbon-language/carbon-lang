@@ -40,48 +40,44 @@
 
 library "recovery_demo";
 
-// CHECK:STDERR: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
-// CHECK:STDERR:        ╭─┤ fail_recovery_demo.carbon:[[@LINE+7]]:13
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->  52 │ fn Paint(a: i32 b: i32);
-// CHECK:STDERR:        ·             ─┬─
-// CHECK:STDERR:        ·              ╰──┤ expected `,` or `)` after this token [ListSeparatorGoesAfter]
-// CHECK:STDERR:        ╰────────────
+// CHECK:STDERR:        ╭─┤ fail_recovery_demo.carbon:[[@LINE+7]]:17
+// CHECK:STDERR: ->  50 │ fn Paint(a: i32 b: i32);
+// CHECK:STDERR:        ·                 ┳
+// CHECK:STDERR:        ·                 ┗━━┫ error: expected `,` or `)`
+// CHECK:STDERR:        ·                    ┃        [UnexpectedTokenAfterListElement]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Paint(a: i32 b: i32);
 
 fn Blend() {
-  // CHECK:STDERR: error: expected `(` after `if` [ExpectedParenAfter]
-  // CHECK:STDERR:        ╭─┤ fail_recovery_demo.carbon:[[@LINE+7]]:3
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->  63 │   if true { }
-  // CHECK:STDERR:        ·   ─┬
-  // CHECK:STDERR:        ·    ╰──┤ expected `(` after this token [ParenGoesAfter]
-  // CHECK:STDERR:        ╰────────────
+  // CHECK:STDERR:        ╭─┤ fail_recovery_demo.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->  59 │   if true { }
+  // CHECK:STDERR:        ·      ━━┳━
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected `(` after `if` [ExpectedParenAfter]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   if true { }
 }
 
 fn Tint() {
-  // CHECK:STDERR: error: opening symbol without a corresponding closing symbol [UnmatchedOpening]
-  // CHECK:STDERR:        ╭─┤ fail_recovery_demo.carbon:[[@LINE+7]]:16
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->  75 │   var n: i32 = (1;
-  // CHECK:STDERR:        ·                ─ ┬
-  // CHECK:STDERR:        ·                  ╰──┤ possibly missing `)` here [PossiblyMissingBracketHere]
-  // CHECK:STDERR:        ╰────────────
+  // CHECK:STDERR:        ╭─┤ fail_recovery_demo.carbon:[[@LINE+9]]:16
+  // CHECK:STDERR: ->  72 │   var n: i32 = (1;
+  // CHECK:STDERR:        ·                ┳ ┬
+  // CHECK:STDERR:        ·                ┗━━━━┫ error: opening symbol without a corresponding closing
+  // CHECK:STDERR:        ·                  │  ┃        symbol
+  // CHECK:STDERR:        ·                  │  ┃        [UnmatchedOpening]
+  // CHECK:STDERR:        ·                  ╰────┤ possibly missing `)` here [PossiblyMissingBracketHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var n: i32 = (1;
 }
 
-// CHECK:STDERR: error: `class` declarations must either end with a `;` or have a `{ ... }` block for a
-// CHECK:STDERR:        definition
-// CHECK:STDERR:        [ExpectedDeclSemiOrDefinition]
-// CHECK:STDERR:        ╭─┤ fail_recovery_demo.carbon:[[@LINE+7]]:7
-// CHECK:STDERR:        ┆
-// CHECK:STDERR: ->  88 │ class Widget
-// CHECK:STDERR:        ·       ───┬──
-// CHECK:STDERR:        ·          ╰──┤ expected `;` or `{` after this token [DeclSemiOrBlockGoesAfter]
-// CHECK:STDERR:        ╰────────────
+// CHECK:STDERR:        ╭─┤ fail_recovery_demo.carbon:[[@LINE+8]]:13
+// CHECK:STDERR: ->  83 │ class Widget
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ error: `class` declarations must either end with a `;` or have
+// CHECK:STDERR:        ·                ┃        a `{ ... }` block for a definition
+// CHECK:STDERR:        ·                ┃        [ExpectedDeclSemiOrDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class Widget

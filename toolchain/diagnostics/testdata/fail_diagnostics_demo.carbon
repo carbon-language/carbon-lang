@@ -64,100 +64,88 @@ import Cpp inline '''
 fn Blend(first_operand: i32, second_operand: Core.Optional(i32));
 
 fn Tour(count: i32, flag: bool, cell: {.a: i32}, n: i32) -> i32 {
-  // CHECK:STDERR: error: 1 argument passed to function expecting 2 arguments [CallArgCountMismatch]
   // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:     64 │ fn Blend(first_operand: i32, second_operand: Core.Optional(i32));
+  // CHECK:STDERR:        · ────────────────────────────────┬────────────────────────────────
+  // CHECK:STDERR:        ·                                 ╰──┤ calling function declared here
+  // CHECK:STDERR:        ·                                    │ [InCallToEntity]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:     65 │ fn Blend(first_operand: i32, second_operand: Core.Optional(i32));
-  // CHECK:STDERR:        · ──────────────────────┬──────────────────────────────────────────
-  // CHECK:STDERR:        ·                       ╰──┤ calling function declared here, expecting 2 arguments
-  // CHECK:STDERR:        ·                          │ [InCallToEntity]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->  81 │   Blend(1);
-  // CHECK:STDERR:        ·   ────┬───
-  // CHECK:STDERR:        ·       ╰──┤ 1 argument passed here [ArgsPassedHere]
-  // CHECK:STDERR:        ╰────────────
+  // CHECK:STDERR: ->  79 │   Blend(1);
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: 1 argument passed to function expecting 2 arguments
+  // CHECK:STDERR:        ·          ┃        [CallArgCountMismatch]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Blend(1);
-  // CHECK:STDERR: error: cannot implicitly convert expression of type `str` to `Core.Optional(i32 as
-  // CHECK:STDERR:        Core.OptionalStorage)`
-  // CHECK:STDERR:        [ConversionFailure]
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+14]]:12
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR:     65 │ fn Blend(first_operand: i32, second_operand: Core.Optional(i32));
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+16]]:12
+  // CHECK:STDERR:     64 │ fn Blend(first_operand: i32, second_operand: Core.Optional(i32));
   // CHECK:STDERR:        ·                              ───────────────┬──────────────────
   // CHECK:STDERR:        ·                                             ╰──┤ initializing function parameter
   // CHECK:STDERR:        ·                                                │ [InCallToFunctionParam]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR: ->  99 │   Blend(0, "全角文字の幅も列で数えるので、下線はずれず、長すぎる行は両端を...
-  // CHECK:STDERR:        ·            ┬────────────────────────────────────────────────────────────────────
-  // CHECK:STDERR:        ·            │  │ type `str` does not implement interface
-  // CHECK:STDERR:        ·            ╰──┤ `Core.ImplicitAs(Core.Optional(i32 as Core.OptionalStorage))`
-  // CHECK:STDERR:        ·               │ [MissingImplForType]
-  // CHECK:STDERR:        ╰────────────
+  // CHECK:STDERR: ->  96 │   Blend(0, "全角文字の幅も列で数えるので、下線はずれず、長すぎる行は両端を...
+  // CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: cannot implicitly convert expression of type `str` to
+  // CHECK:STDERR:        ·            │  ┃        `Core.Optional(i32 as Core.OptionalStorage)`
+  // CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·            ╰────┤ type `str` does not implement interface
+  // CHECK:STDERR:        ·                 │ `Core.ImplicitAs(Core.Optional(i32 as Core.OptionalStorage))`
+  // CHECK:STDERR:        ·                 │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Blend(0, "全角文字の幅も列で数えるので、下線はずれず、長すぎる行は両端を切り詰めて窓のように表示されます");
-  // CHECK:STDERR: error: no matching function for call to 'Paint' [CppInteropParseError]
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:     61 │   void Paint(int layer, int depth);
+  // CHECK:STDERR:        ·        ┬     ──────────┬─────────
+  // CHECK:STDERR:        ·        ╰──────────────────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·                        ╰────┤ requires 2 arguments, but 1 was provided
+  // CHECK:STDERR:        ·                             │ [CppInteropParseNoteReason]
   // CHECK:STDERR:        ┆
-  // CHECK:STDERR:     62 │   void Paint(int layer, int depth);
-  // CHECK:STDERR:        ·        ──┬── ──────────┬─────────
-  // CHECK:STDERR:        ·          │             ╰──┤ requires 2 arguments, but 1 was provided
-  // CHECK:STDERR:        ·          │                │ [CppInteropParseNoteReason]
-  // CHECK:STDERR:        ·          ╰──┤ candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: -> 113 │   Cpp.Paint(0);
-  // CHECK:STDERR:        ·   ─────────
-  // CHECK:STDERR:        ╰────────────
+  // CHECK:STDERR: -> 110 │   Cpp.Paint(0);
+  // CHECK:STDERR:        ·   ━━━━┳━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: no matching function for call to 'Paint'
+  // CHECK:STDERR:        ·          ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.Paint(0);
-  // CHECK:STDERR: error: name `missing` not found [NameNotFound]
   // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+6]]:19
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: -> 121 │   var tint: i32 = missing;
-  // CHECK:STDERR:        ·                   ───────
-  // CHECK:STDERR:        ╰────────────
+  // CHECK:STDERR: -> 117 │   var tint: i32 = missing;
+  // CHECK:STDERR:        ·                   ━━━┳━━━
+  // CHECK:STDERR:        ·                      ┗━━┫ error: name `missing` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var tint: i32 = missing;
-  // CHECK:STDERR: error: type `i32` does not implement interface `Core.MulWith(bool)` [MissingImplForType]
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+40]]:16
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: -> 163 │   return count * flag + cell[n] + -flag;
-  // CHECK:STDERR:        ·          ──┬── ┬ ──┬─
-  // CHECK:STDERR:        ·            │   │   ╰──┤ right operand has type `bool` [BinaryOperatorRhsType]
-  // CHECK:STDERR:        ·            │   ╰──┤ `*` requires an impl of `Core.MulWith` [OperatorInterface]
-  // CHECK:STDERR:        ·            ╰──┤ left operand has type `i32` [BinaryOperatorLhsType]
-  // CHECK:STDERR:        ╰────────────
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+32]]:10
+  // CHECK:STDERR: -> 150 │   return count * flag + cell[n] + -flag;
+  // CHECK:STDERR:        ·          ┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.MulWith(bool)` in
+  // CHECK:STDERR:        ·             ┃        type `i32` that does not implement that interface
+  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: error: type `{.a: i32}` does not implement interface `Core.IndexWith(i32)`
-  // CHECK:STDERR:        [MissingImplForType]
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+29]]:30
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: -> 163 │   return count * flag + cell[n] + -flag;
-  // CHECK:STDERR:        ·                         ──┬─ ╷╷
-  // CHECK:STDERR:        ·                           │  │╰──┤ `[]` requires an impl of `Core.IndexWith`
-  // CHECK:STDERR:        ·                           │  │   │ [OperatorInterface]
-  // CHECK:STDERR:        ·                           │  ╰──┤ indexing with type `i32` [IndexWithType]
-  // CHECK:STDERR:        ·                           ╰──┤ indexing an object with type `{.a: i32}`
-  // CHECK:STDERR:        ·                              │ [IndexedObjectType]
-  // CHECK:STDERR:        ╰────────────
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+24]]:25
+  // CHECK:STDERR: -> 150 │   return count * flag + cell[n] + -flag;
+  // CHECK:STDERR:        ·                         ┳━━━━━━
+  // CHECK:STDERR:        ·                         ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                            ┃        `Core.IndexWith(i32)` in type `{.a: i32}`
+  // CHECK:STDERR:        ·                            ┃        that does not implement that interface
+  // CHECK:STDERR:        ·                            ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: error: type `bool` does not implement interface `Core.Negate` [MissingImplForType]
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+17]]:35
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: -> 163 │   return count * flag + cell[n] + -flag;
-  // CHECK:STDERR:        ·                                   ╷╶─┬─
-  // CHECK:STDERR:        ·                                   │  ╰──┤ operand has type `bool`
-  // CHECK:STDERR:        ·                                   │     │ [UnaryOperatorOperandType]
-  // CHECK:STDERR:        ·                                   ╰──┤ `-` requires an impl of `Core.Negate`
-  // CHECK:STDERR:        ·                                      │ [OperatorInterface]
-  // CHECK:STDERR:        ╰────────────
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+15]]:35
+  // CHECK:STDERR: -> 150 │   return count * flag + cell[n] + -flag;
+  // CHECK:STDERR:        ·                                   ┳━━━━
+  // CHECK:STDERR:        ·                                   ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                                      ┃        `Core.Negate` in type `bool` that
+  // CHECK:STDERR:        ·                                      ┃        does not implement that interface
+  // CHECK:STDERR:        ·                                      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: warning: binding `tint` unused [UnusedBinding]
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE-36]]:7
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR: -> 121 │   var tint: i32 = missing;
-  // CHECK:STDERR:        ·       ─────────
-  // CHECK:STDERR:        ╰────────────
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE-27]]:7
+  // CHECK:STDERR: -> 117 │   var tint: i32 = missing;
+  // CHECK:STDERR:        ·       ━━━━┳━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ warning: binding `tint` unused [UnusedBinding]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return count * flag + cell[n] + -flag;
 }

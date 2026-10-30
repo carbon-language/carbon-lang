@@ -38,8 +38,7 @@ import library "transitive";
 fn F[T: Transitive](t: T) {
   var a: T.A = t.GetA();
 
-  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+4]]:3-13: error: cannot convert type `T.(Transitive.A)` that implements `P & Core.Destroy` into type implementing `R & Core.Destroy where...` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: imported from: fail_todo_equivalent.carbon:[[@LINE-6]]:1 [InImport]
+  // CHECK:STDERR: fail_todo_equivalent.carbon:[[@LINE+3]]:3-13: error: cannot convert type `T.(Transitive.A)` that implements `P & Core.Destroy` into type implementing `R & Core.Destroy where...` [ConversionFailureFacetToFacet]
   // CHECK:STDERR: transitive.carbon:14:3-24: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   t.TakesC(a);
@@ -146,8 +145,7 @@ fn F[U: Z](t: U.Z1) {
   var a: U.Z1.A = t.GetA();
 
   // Depends on the observe statement in Transitive, which is the type of `Z1`.
-  // CHECK:STDERR: fail_todo_observe_from_type_of_assoc_constant.carbon:[[@LINE+4]]:3-13: error: cannot convert type `U.(Z.Z1).(Transitive.A)` that implements `P & Core.Destroy` into type implementing `R & Core.Destroy where...` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: imported from: fail_todo_observe_from_type_of_assoc_constant.carbon:[[@LINE-12]]:1 [InImport]
+  // CHECK:STDERR: fail_todo_observe_from_type_of_assoc_constant.carbon:[[@LINE+3]]:3-13: error: cannot convert type `U.(Z.Z1).(Transitive.A)` that implements `P & Core.Destroy` into type implementing `R & Core.Destroy where...` [ConversionFailureFacetToFacet]
   // CHECK:STDERR: transitive.carbon:14:3-24: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   t.TakesC(a);
@@ -419,8 +417,7 @@ import library "generic_observe";
 fn F[W: A, X: I(W)](x: X) {
   var v: X.V = x.GetV();
 
-  // CHECK:STDERR: fail_todo_generic_import.carbon:[[@LINE+4]]:3-13: error: cannot convert type `X.(I(W).V)` that implements `C & Core.Destroy where...` into type implementing `A` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: imported from: fail_todo_generic_import.carbon:[[@LINE-6]]:1 [InImport]
+  // CHECK:STDERR: fail_todo_generic_import.carbon:[[@LINE+3]]:3-13: error: cannot convert type `X.(I(W).V)` that implements `C & Core.Destroy where...` into type implementing `A` [ConversionFailureFacetToFacet]
   // CHECK:STDERR: generic_observe.carbon:12:3-24: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   x.TakesT(v);

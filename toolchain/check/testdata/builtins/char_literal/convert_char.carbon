@@ -44,8 +44,7 @@ library "[[@TEST_NAME]]";
 import library "builtin";
 
 let c: CharLiteral = 'a';
-// CHECK:STDERR: fail_runtime_call.carbon:[[@LINE+4]]:18-26: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: imported from: fail_runtime_call.carbon:[[@LINE-4]]:1 [InImport]
+// CHECK:STDERR: fail_runtime_call.carbon:[[@LINE+3]]:18-26: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: builtin.carbon:10:1-38: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let d: UInt(8) = ToChar(c);
