@@ -94,7 +94,7 @@ int UseB() { return Carbon::Other::Identity(4); }
 // CHECK:STDOUT: declare i32 @_CIdentity.Other(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CIdentity__carbon_thunk.Other(ptr %_, ptr %_1) #2 !dbg !35 {
+// CHECK:STDOUT: define linkonce_odr void @_CIdentity__carbon_thunk.Other(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #2 !dbg !35 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !38
 // CHECK:STDOUT:   %Identity.call = call i32 @_CIdentity.Other(i32 %.1), !dbg !38
@@ -104,7 +104,7 @@ int UseB() { return Carbon::Other::Identity(4); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { nounwind }
+// CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!32}
 // CHECK:STDOUT: !llvm.module.flags = !{!44, !45, !46, !2, !3}
@@ -160,7 +160,7 @@ int UseB() { return Carbon::Other::Identity(4); }
 // CHECK:STDOUT: declare i32 @_CIdentity.Other(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CIdentity__carbon_thunk.Other(ptr %_, ptr %_1) #2 !dbg !51 {
+// CHECK:STDOUT: define linkonce_odr void @_CIdentity__carbon_thunk.Other(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #2 !dbg !51 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !54
 // CHECK:STDOUT:   %Identity.call = call i32 @_CIdentity.Other(i32 %.1), !dbg !54
@@ -170,7 +170,7 @@ int UseB() { return Carbon::Other::Identity(4); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #2 = { nounwind }
+// CHECK:STDOUT: attributes #2 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!50}
 // CHECK:STDOUT: !llvm.module.flags = !{!44, !45, !46, !2, !3}

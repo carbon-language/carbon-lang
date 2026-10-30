@@ -16,6 +16,7 @@
 #include "common/vlog.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Linker/Linker.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
@@ -335,6 +336,45 @@ auto FileContext::HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
   return function_address;
 }
 
+auto FileContext::GetCppThunkLLVMFunction(
+    const FunctionTypeInfo& function_type_info, clang::FunctionDecl* cpp_decl)
+    -> llvm::Function* {
+  // Ask Clang for its function for the thunk, creating its declaration if it
+  // doesn't exist yet. Clang names it based on the thunk's asm label, which
+  // may differ from Carbon's name for it in the IR (for example, `\01`-prefixed
+  // on targets with a global symbol prefix). Using Clang's function means that
+  // C++ calls to the thunk refer to its definition in the IR.
+  // TODO: This code generator can be for the wrong AST if we're not using
+  // --share-cpp-ast.
+  auto* llvm_function =
+      dyn_cast<llvm::Function>(context().cpp_code_generator()->GetAddrOfGlobal(
+          CreateGlobalDecl(cpp_decl), /*isForDefinition=*/false));
+  CARBON_CHECK(llvm_function);
+
+  // The thunk takes all of its parameters by reference, so Clang should lower
+  // them the same way we do. However, some C++ ABIs return `this` from
+  // constructors; `BuildFunctionBody` handles that.
+  auto* cpp_type = llvm_function->getFunctionType();
+  auto* carbon_type = function_type_info.type;
+  CARBON_CHECK(llvm::equal(cpp_type->params(), carbon_type->params()),
+               "C++ thunk parameter types don't match: {0} vs {1}", *cpp_type,
+               *carbon_type);
+  CARBON_CHECK(
+      cpp_type->getReturnType() == carbon_type->getReturnType() ||
+          (carbon_type->getReturnType()->isVoidTy() &&
+           llvm_function->hasParamAttribute(0, llvm::Attribute::Returned)),
+      "C++ thunk return types don't match: {0} vs {1}", *cpp_type,
+      *carbon_type);
+  CARBON_CHECK(function_type_info.sret_type == nullptr,
+               "C++ thunks return through an explicit output parameter");
+
+  for (auto [name_id, arg] : llvm::zip_equal(function_type_info.param_name_ids,
+                                             llvm_function->args())) {
+    arg.setName(sem_ir().names().GetIRBaseName(name_id));
+  }
+  return llvm_function;
+}
+
 auto FileContext::HandleReferencedSpecificFunction(
     SemIR::FunctionId function_id, SemIR::SpecificId specific_id,
     llvm::Type* llvm_type) -> void {
@@ -370,6 +410,13 @@ auto FileContext::GetOrCreateLLVMFunction(
         CARBON_CHECK(!specific_id.has_value(),
                      "Specific functions cannot have C++ definitions");
         return HandleReferencedCppFunction(clang_decl->decl()->getAsFunction());
+      }
+      if (function.special_function_kind ==
+          SemIR::Function::SpecialFunctionKind::CppThunk) {
+        CARBON_CHECK(!specific_id.has_value(),
+                     "Specific functions cannot be C++ thunks");
+        return GetCppThunkLLVMFunction(function_type_info,
+                                       clang_decl->decl()->getAsFunction());
       }
     }
   }
@@ -691,6 +738,23 @@ auto FileContext::BuildFunctionBody(SemIR::FunctionId function_id,
     lower_block(block_id);
   }
 
+  // Some C++ ABIs return `this` from constructors. If Clang's declaration of a
+  // C++ thunk does that, return the parameter it marks as `returned` instead
+  // of returning nothing.
+  if (declaration_function.special_function_kind ==
+          SemIR::Function::SpecialFunctionKind::CppThunk &&
+      !function_info->llvm_function->getReturnType()->isVoidTy() &&
+      function_info->type->getReturnType()->isVoidTy()) {
+    auto* this_arg = function_info->llvm_function->getArg(0);
+    for (auto& llvm_block : *function_info->llvm_function) {
+      auto* ret = dyn_cast<llvm::ReturnInst>(llvm_block.getTerminator());
+      if (ret && !ret->getReturnValue()) {
+        llvm::ReturnInst::Create(llvm_context(), this_arg, ret->getIterator());
+        ret->eraseFromParent();
+      }
+    }
+  }
+
   // LLVM requires that the entry block has no predecessors.
   auto* entry_block = &function_info->llvm_function->getEntryBlock();
   if (entry_block->hasNPredecessorsOrMore(1)) {
@@ -720,8 +784,17 @@ auto FileContext::BuildDISubprogram(const SemIR::Function& function,
   }
   auto loc = GetLocForDI(function.definition_id);
   llvm::DISubroutineType* subroutine_type = function_info.di_type;
+  // A function named by Clang from an asm label has a `\01` marker followed
+  // by the target's global prefix, if any. Use the unprefixed name, matching
+  // other functions.
+  llvm::StringRef linkage_name = function_info.llvm_function->getName();
+  if (linkage_name.consume_front("\1")) {
+    if (char global_prefix = llvm_module().getDataLayout().getGlobalPrefix()) {
+      linkage_name.consume_front(llvm::StringRef(&global_prefix, 1));
+    }
+  }
   auto* subprogram = context().di_builder().createFunction(
-      context().di_compile_unit(), name, function_info.llvm_function->getName(),
+      context().di_compile_unit(), name, linkage_name,
       /*File=*/context().di_builder().createFile(loc.filename, ""),
       /*LineNo=*/loc.line_number, subroutine_type,
       /*ScopeLine=*/0, llvm::DINode::FlagZero,

@@ -68,28 +68,40 @@ struct IdTag {
 
   auto Apply(int32_t index) const -> IdT {
     CARBON_DCHECK(index >= 0, "{0}", index);
-    if (index < initial_reserved_ids_) {
+    if constexpr (IdTagIsUntagged<IdTag>) {
+      // Untagged ids are the index itself, so return directly with no tag
+      // computation.
       return IdT(index);
+    } else {
+      if (index < initial_reserved_ids_) {
+        return IdT(index);
+      }
+      // TODO: Assert that tag_ doesn't have the second highest bit set.
+      auto tagged_index = index ^ tag_;
+      CARBON_DCHECK(tagged_index >= 0, "{0}", tagged_index);
+      return IdT(tagged_index);
     }
-    // TODO: Assert that tag_ doesn't have the second highest bit set.
-    auto tagged_index = index ^ tag_;
-    CARBON_DCHECK(tagged_index >= 0, "{0}", tagged_index);
-    return IdT(tagged_index);
   }
 
   auto Remove(IdT id) const -> int32_t {
     CARBON_DCHECK(id.index >= 0, "{0}", id);
-    if (!HasTag(id.index)) {
-      CARBON_DCHECK(id.index < initial_reserved_ids_,
-                    "This untagged index is outside the initial reserved ids "
-                    "and should have been tagged.");
+    if constexpr (IdTagIsUntagged<IdTag>) {
+      // Untagged ids are the index itself, so return directly with no tag
+      // computation.
       return id.index;
+    } else {
+      if (!HasTag(id.index)) {
+        CARBON_DCHECK(id.index < initial_reserved_ids_,
+                      "This untagged index is outside the initial reserved ids "
+                      "and should have been tagged.");
+        return id.index;
+      }
+      auto untagged_index = id.index ^ tag_;
+      CARBON_DCHECK(untagged_index >= initial_reserved_ids_,
+                    "When removing tagging bits, found an index that "
+                    "shouldn't've been tagged in the first place.");
+      return untagged_index;
     }
-    auto untagged_index = id.index ^ tag_;
-    CARBON_DCHECK(untagged_index >= initial_reserved_ids_,
-                  "When removing tagging bits, found an index that "
-                  "shouldn't've been tagged in the first place.");
-    return untagged_index;
   }
 
   // Gets the value unique to this IdTag instance that is added to indices in

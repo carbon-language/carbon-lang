@@ -366,7 +366,9 @@ auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
   return Insert(
       lookup_key,
       [&key_cb](LookupKeyT /*lookup_key*/, void* key_storage) {
-        new (key_storage) KeyT(key_cb());
+        // Despite being on the cold path, inlining is essential to keep
+        // fast-path register allocation efficient.
+        [[clang::always_inline]] new (key_storage) KeyT(key_cb());
       },
       key_context);
 }
@@ -386,7 +388,10 @@ auto SetBase<InputKeyT, InputKeyContextT>::Insert(LookupKeyT lookup_key,
     return InsertResult(false, entry->key());
   }
 
-  insert_cb(lookup_key, static_cast<void*>(&entry->key_storage));
+  // Despite being on the cold path, inlining is essential to keep fast-path
+  // register allocation efficient.
+  [[clang::always_inline]] insert_cb(lookup_key,
+                                     static_cast<void*>(&entry->key_storage));
   return InsertResult(true, entry->key());
 }
 

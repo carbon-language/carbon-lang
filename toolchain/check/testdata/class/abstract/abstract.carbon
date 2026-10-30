@@ -149,9 +149,10 @@ abstract class Abstract {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+4]]:28-29: error: initialization of abstract class `Abstract` [AbstractTypeInInit]
+  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+5]]:28-29: error: initialization of abstract class `Abstract` [AbstractTypeInInit]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+2]]:28-29: error: cannot access member of interface `Core.Destroy` in type `Abstract` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+3]]:28-29: error: cannot convert type `Abstract` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: {{.*}}/prelude/destroy.carbon:36:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   let unused l: Abstract = {};
 }
@@ -169,7 +170,8 @@ class Derived {
 fn F() {
   // TODO: support destroying classes that derive from abstract types.
   //
-  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+2]]:28-50: error: cannot access member of interface `Core.Destroy` in type `Derived` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR: fail_todo_abstract_let_temporary.carbon:[[@LINE+3]]:28-50: error: cannot convert type `Derived` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR: {{.*}}/prelude/destroy.carbon:36:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
   // CHECK:STDERR:
   let unused l: Abstract = {.base = {}} as Derived;
 }
@@ -261,16 +263,17 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %Var.type: type = fn_type @Var [concrete]
 // CHECK:STDOUT:   %Var: %Var.type = struct_value () [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -869,16 +872,17 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %empty_struct: %empty_struct_type = struct_value () [concrete]
 // CHECK:STDOUT:   %Abstract.val: %Abstract = struct_value () [concrete]
 // CHECK:STDOUT:   %.69a: ref %Abstract = temporary invalid, %Abstract.val [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -902,14 +906,14 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc11_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc11_29.2: ref %Abstract = temporary_storage
-// CHECK:STDOUT:   %.loc11_29.3: init %Abstract to %.loc11_29.2 = class_init () [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc11_29.4: init %Abstract = converted %.loc11_29.1, %.loc11_29.3 [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc11_29.5: ref %Abstract = temporary %.loc11_29.2, %.loc11_29.4 [concrete = constants.%.69a]
-// CHECK:STDOUT:   %.loc11_29.6: %Abstract = acquire_value %.loc11_29.5 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc12_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc12_29.2: ref %Abstract = temporary_storage
+// CHECK:STDOUT:   %.loc12_29.3: init %Abstract to %.loc12_29.2 = class_init () [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc12_29.4: init %Abstract = converted %.loc12_29.1, %.loc12_29.3 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc12_29.5: ref %Abstract = temporary %.loc12_29.2, %.loc12_29.4 [concrete = constants.%.69a]
+// CHECK:STDOUT:   %.loc12_29.6: %Abstract = acquire_value %.loc12_29.5 [concrete = constants.%Abstract.val]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc11_29.6
+// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc12_29.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type.169 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }
@@ -940,16 +944,17 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:   %Derived.val: %Derived = struct_value (%Abstract.val) [concrete]
 // CHECK:STDOUT:   %.521: ref %Derived = temporary invalid, %Derived.val [concrete]
 // CHECK:STDOUT:   %.5d3: ref %Abstract = class_element_access %.521, element0 [concrete]
-// CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
-// CHECK:STDOUT:     .Destroy = %Core.Destroy
+// CHECK:STDOUT:     .SelfDestruct = %Core.SelfDestruct
 // CHECK:STDOUT:     import Core//prelude
 // CHECK:STDOUT:     import Core//prelude/...
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Core.Destroy: type = import_ref Core//prelude/destroy, Destroy, loaded [concrete = constants.%Destroy.type]
+// CHECK:STDOUT:   %Core.SelfDestruct: %SelfDestruct.type = import_ref Core//prelude/destroy, SelfDestruct, loaded [concrete = constants.%SelfDestruct]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -988,22 +993,22 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_38.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
-// CHECK:STDOUT:   %.loc15_39.1: %struct_type.base.f5e = struct_literal (%.loc15_38.1) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc16_38.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct.a40]
+// CHECK:STDOUT:   %.loc16_39.1: %struct_type.base.f5e = struct_literal (%.loc16_38.1) [concrete = constants.%struct]
 // CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
-// CHECK:STDOUT:   %.loc15_39.2: ref %Derived = temporary_storage
-// CHECK:STDOUT:   %.loc15_39.3: ref %.79f = class_element_access %.loc15_39.2, element0
-// CHECK:STDOUT:   %.loc15_38.2: init %.79f to %.loc15_39.3 = class_init () [concrete = constants.%empty_struct.5e0]
-// CHECK:STDOUT:   %.loc15_39.4: init %.79f = converted %.loc15_38.1, %.loc15_38.2 [concrete = constants.%empty_struct.5e0]
-// CHECK:STDOUT:   %.loc15_39.5: init %Abstract = as_compatible %.loc15_39.4 [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc15_39.6: init %Derived to %.loc15_39.2 = class_init (%.loc15_39.5) [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc15_41.1: init %Derived = converted %.loc15_39.1, %.loc15_39.6 [concrete = constants.%Derived.val]
-// CHECK:STDOUT:   %.loc15_41.2: ref %Derived = temporary %.loc15_39.2, %.loc15_41.1 [concrete = constants.%.521]
-// CHECK:STDOUT:   %.loc15_41.3: ref %Abstract = class_element_access %.loc15_41.2, element0 [concrete = constants.%.5d3]
-// CHECK:STDOUT:   %.loc15_41.4: ref %Abstract = converted %.loc15_41.1, %.loc15_41.3 [concrete = constants.%.5d3]
-// CHECK:STDOUT:   %.loc15_41.5: %Abstract = acquire_value %.loc15_41.4
+// CHECK:STDOUT:   %.loc16_39.2: ref %Derived = temporary_storage
+// CHECK:STDOUT:   %.loc16_39.3: ref %.79f = class_element_access %.loc16_39.2, element0
+// CHECK:STDOUT:   %.loc16_38.2: init %.79f to %.loc16_39.3 = class_init () [concrete = constants.%empty_struct.5e0]
+// CHECK:STDOUT:   %.loc16_39.4: init %.79f = converted %.loc16_38.1, %.loc16_38.2 [concrete = constants.%empty_struct.5e0]
+// CHECK:STDOUT:   %.loc16_39.5: init %Abstract = as_compatible %.loc16_39.4 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc16_39.6: init %Derived to %.loc16_39.2 = class_init (%.loc16_39.5) [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc16_41.1: init %Derived = converted %.loc16_39.1, %.loc16_39.6 [concrete = constants.%Derived.val]
+// CHECK:STDOUT:   %.loc16_41.2: ref %Derived = temporary %.loc16_39.2, %.loc16_41.1 [concrete = constants.%.521]
+// CHECK:STDOUT:   %.loc16_41.3: ref %Abstract = class_element_access %.loc16_41.2, element0 [concrete = constants.%.5d3]
+// CHECK:STDOUT:   %.loc16_41.4: ref %Abstract = converted %.loc16_41.1, %.loc16_41.3 [concrete = constants.%.5d3]
+// CHECK:STDOUT:   %.loc16_41.5: %Abstract = acquire_value %.loc16_41.4
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc15_41.5
+// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc16_41.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type.169 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }

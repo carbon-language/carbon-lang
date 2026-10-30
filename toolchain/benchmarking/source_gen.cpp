@@ -12,7 +12,7 @@
 #include <string>
 #include <utility>
 
-#include "absl/random/seed_sequences.h"
+#include "common/check.h"
 #include "common/raw_string_ostream.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"
@@ -38,11 +38,11 @@ static constexpr int MinMemberNameLength = 4;
 // The length of every local variable name. How many times a definition spells
 // each local depends on the local's position, so a single length keeps the byte
 // count from depending on which name lands where. Locals are shorter than class
-// names, so they can't shadow a class that the definition names. This is
-// hard-coded rather than in `ClassParams` because seed-independent output sizes
-// require a single length `< MinClassNameLength`; it would only need to be
-// parameterized to benchmark identifier-length sensitivity specifically for
-// local variables.
+// and free function names, so they can't shadow a class or free function that
+// the definition names. This is hard-coded rather than in `ClassParams` because
+// seed-independent output sizes require a single length `< MinClassNameLength`;
+// it would only need to be parameterized to benchmark identifier-length
+// sensitivity specifically for local variables.
 static constexpr int LocalNameLength = 3;
 
 // The number of function and method declarations in each class.
@@ -85,11 +85,11 @@ static auto WeightedFixedTypes(
 // the arrangement doesn't change the definition's size.
 //
 // TODO: Plans read each parameter once, read class-typed locals only with
-// `Checksum`, and make no calls. Real definitions read parameters and fields
-// throughout, and make calls in most statements, many of them to methods of
-// their locals. Add those statements and expressions, fixing each one's
-// spelling before the shuffle as the type use pools do, so that sizes stay the
-// same for every seed.
+// `Checksum`, and only call free functions, with fixed arguments. Real
+// definitions read parameters and fields throughout, and call methods of their
+// locals with arguments computed from other locals. Add those statements and
+// expressions, fixing each one's spelling before the shuffle as the type use
+// pools do, so that sizes stay the same for every seed.
 enum class PlanStepKind : uint8_t {
   // `var <local>: i32 = <expr>;`, whose local is available to be read and
   // updated by subsequent steps.
@@ -104,8 +104,19 @@ enum class PlanStepKind : uint8_t {
   // (and updated, when `var`) by subsequent steps. `spelling_index` selects
   // among `DestructureForms`.
   Destructure,
+  // A declaration that destructures the tuple returned by a call to a free
+  // function into two locals, such as
+  // `let (<local>: bool, <local>: i64) = <call>;`, whose locals are read by the
+  // next step and whose `i32` locals are available to be read (but not updated)
+  // by subsequent steps. When no free function returns a tuple in
+  // `CallDestructureForms`, this falls back to `Destructure` using
+  // `spelling_index`.
+  DestructureCall,
   // `<local> = <expr>;`
   Update,
+  // `<local> = <local> + <call>;`, where a consumer template reads the result
+  // of a call to a free function.
+  Call,
   // `if (<cond>) {`, a block, and `}`.
   If,
   // `if (<cond>) {`, a block, `} else {`, a block, and `}`.
@@ -145,7 +156,8 @@ static auto NumPlanBlocks(PlanStepKind kind) -> int {
 static auto IsLocalDeclaration(PlanStepKind kind) -> bool {
   return kind == PlanStepKind::ScalarLocal ||
          kind == PlanStepKind::ClassTypeLocal ||
-         kind == PlanStepKind::Destructure;
+         kind == PlanStepKind::Destructure ||
+         kind == PlanStepKind::DestructureCall;
 }
 
 // A step in a definition plan. `spelling_index` selects among the available
@@ -201,6 +213,36 @@ static constexpr DestructureForm DestructureForms[] = {
      .b_is_i32 = true},
 };
 
+// A form of `DestructureCall` step, for the tuple type that its callee returns.
+// `{a}` and `{b}` are the two locals, and `read` reads them along with an
+// operand, `{0}`, since the call has none. Later steps can also read the locals
+// that are `i32`s. C++ destructures every call with `const auto [{a}, {b}]`.
+struct CallDestructureForm {
+  llvm::StringLiteral carbon_type;
+  llvm::StringLiteral cpp_type;
+  llvm::StringLiteral carbon_pattern;
+  llvm::StringLiteral carbon_read;
+  llvm::StringLiteral cpp_read;
+  bool a_is_i32;
+  bool b_is_i32;
+};
+static constexpr CallDestructureForm CallDestructureForms[] = {
+    {.carbon_type = "(bool, i64)",
+     .cpp_type = "std::pair<bool, std::int64_t>",
+     .carbon_pattern = "let ({a}: bool, {b}: i64)",
+     .carbon_read = "({0} + (if {a} then 1 else 0) + ({b} as i32))",
+     .cpp_read = "({0} + ({a} ? 1 : 0) + static_cast<int>({b}))",
+     .a_is_i32 = false,
+     .b_is_i32 = false},
+    {.carbon_type = "(i32, i64*)",
+     .cpp_type = "std::pair<int, std::int64_t*>",
+     .carbon_pattern = "let ({a}: i32, {b}: i64*)",
+     .carbon_read = "({0} + {a} + (*{b} as i32))",
+     .cpp_read = "({0} + {a} + static_cast<int>(*{b}))",
+     .a_is_i32 = true,
+     .b_is_i32 = false},
+};
+
 // The number of distinct spellings for a step of `kind`.
 static auto NumPlanSpellings(PlanStepKind kind) -> int {
   switch (kind) {
@@ -208,8 +250,12 @@ static auto NumPlanSpellings(PlanStepKind kind) -> int {
     case PlanStepKind::Update:
       return std::size(PlanExprs);
     case PlanStepKind::ClassTypeLocal:
+    case PlanStepKind::Call:
       return 1;
     case PlanStepKind::Destructure:
+    case PlanStepKind::DestructureCall:
+      // `DestructureCall` uses `DestructureForms` when no free function returns
+      // a destructurable tuple.
       return std::size(DestructureForms);
     case PlanStepKind::If:
     case PlanStepKind::IfElse:
@@ -229,7 +275,9 @@ static auto NumPlanSpellings(PlanStepKind kind) -> int {
 // returns or exits with is one depth below the guard, and isn't listed.
 struct DefPlan {
   llvm::SmallVector<llvm::SmallVector<PlanStep>> levels;
-  // The number of lines in the plan's steps.
+  // The number of lines in the plan's steps. A definition whose plan has calls
+  // or destructured calls also has a line declaring `acc64`, which `lines`
+  // counts.
   int lines = 0;
   // The number of local variables that the plan's steps declare.
   int locals = 0;
@@ -237,6 +285,10 @@ struct DefPlan {
   int class_type_locals = 0;
   // The class names of the plan's class-typed locals, with `""` for `Self`.
   llvm::SmallVector<llvm::StringRef> class_type_local_types;
+  // The number of `Call` steps in the plan.
+  int calls = 0;
+  // The number of `DestructureCall` steps in the plan.
+  int destructure_calls = 0;
 };
 
 // The internal shape calibration of definition plans, which approximates the
@@ -251,7 +303,7 @@ struct DefPlan {
 //
 // All rates and bucket distributions below are integer percentages (with
 // multi-bucket rows summing to 100).
-//
+
 // A row of `PlanShapeTable` giving the shape parameters for plans with at
 // least `min_statements` statements: the percentage of plans with each maximum
 // depth, and the number of guard returns at a depth as a percentage of the
@@ -317,30 +369,88 @@ static constexpr int ElseIfPercent = 42;
 // How many times more likely a loop block is than another block of the same
 // size to get each further statement when arranging a definition.
 static constexpr int LoopBlockWeight = 3;
+// The percentage of updates that are calls, when definitions can make calls.
+static constexpr int CallPercent = 50;
+// The percentage of destructurings that destructure a call, when definitions
+// can make calls. In the sampled Carbon, LLVM, and Clang implementation files,
+// 89% of structured bindings bind a call's result.
+static constexpr int CallDestructurePercent = 89;
 // The percentages of the statements at depth 0, and deeper, that declare a new
 // local variable.
 static constexpr int TopLocalPercent = 35;
 static constexpr int NestedLocalPercent = 25;
 // The percentages of declarations that destructure a tuple, and of the rest
 // that declare a local of a class type. Structured bindings are 0.2-1.9% of the
-// declarations in the sample, and Carbon's tuples suggest the high end. Class
-// types are 29-78% of the types of local variables, 49% on average.
+// declarations in the sampled Carbon, LLVM, and Clang implementation files, and
+// Carbon's tuples suggest the high end. Class types are 29-78% of the types of
+// local variables, 49% on average.
 static constexpr int DestructurePercent = 2;
 static constexpr int ClassTypeLocalPercent = 50;
 
-// Scales `count` by `percent`%, rounding up with probability equal to the
-// remainder (`(count * percent % 100) / 100.0`).
-using ScaleByPercentFn = llvm::function_ref<auto(int count, int percent)->int>;
+// Returns a percentage value from a sequence that is spread evenly in [0, 100).
+// The sequence is chosen so that consecutive subsequences are spaced out as
+// evenly as possible, with percentages well-separated from each other and
+// averaging to ~50% even in short subsequences.
+static auto EvenlySpreadPercent(int index) -> int {
+  CARBON_CHECK(index >= 0);
+  // Multiples of `std::numbers::phi` mod 1.0 in `double` spread evenly across
+  // `[0, 100)` without needing a fixed-point rational approximation.
+  return static_cast<int>(std::fmod((index + 0.5) * std::numbers::phi, 1.0) *
+                          100);
+}
+
+// Scales a count by a percentage, carrying the remainder across calls.
+//
+// Each call adds `count * percent` percentage points and returns `1` per full
+// `100` points, keeping the `< 100` leftover points in `remainder_`. Across any
+// sequence of calls, the total returned is
+// `(initial_remainder + sum(count * percent)) / 100`, which is always either
+// the floor or the ceiling of the exact unrounded total regardless of where
+// `remainder_` starts in `[0, 100)`. Spreading starting offsets evenly across
+// `[0, 100)` keeps rounding unbiased and varies which call gets an extra step.
+class PercentScaler {
+ public:
+  explicit PercentScaler(int& next_index)
+      : remainder_(EvenlySpreadPercent(next_index++)) {}
+
+  auto operator()(int count, int percent) -> int {
+    remainder_ += count * percent;
+    int scaled = remainder_ / 100;
+    remainder_ %= 100;
+    return scaled;
+  }
+
+ private:
+  int remainder_;
+};
+
+// Deterministic `PercentScaler`s for `ComposeDefPlan`, shared across a sequence
+// of plans so remainders carry from one definition to the next. Initialized
+// from plan parameters rather than `SourceGen` so generated file sizes are
+// identical across `SourceGen` seeds and processes.
+struct PlanScalers {
+  explicit PlanScalers(int seed_index) : next_index(seed_index) {}
+
+  int next_index;
+  PercentScaler exits{next_index};
+  PercentScaler guards{next_index};
+  PercentScaler next_blocks{next_index};
+  PercentScaler loops{next_index};
+  PercentScaler pairs{next_index};
+  PercentScaler locals{next_index};
+  PercentScaler else_ifs{next_index};
+  PercentScaler destructures{next_index};
+  PercentScaler class_type_locals{next_index};
+  PercentScaler destructure_calls{next_index};
+  PercentScaler calls{next_index};
+};
 
 // Returns the maximum depth of the `variant`th plan with `statements`
-// statements. The variants of a size follow the distribution in its row of
-// `PlanShapeTable`: multiples of the golden ratio (`std::numbers::phi`) mod 1.0
-// in `double` spread their choices evenly across `[0, 100)` without needing a
-// fixed-point rational approximation.
+// statements. Variants of a size follow the distribution in its row of
+// `PlanShapeTable` using `EvenlySpreadPercent(variant)`.
 static auto ChoosePlanMaxDepth(const PlanShapeRow& shape, int statements,
                                int variant) -> int {
-  int choice = static_cast<int>(
-      std::fmod((variant + 0.5) * std::numbers::phi, 1.0) * 100);
+  int choice = EvenlySpreadPercent(variant);
   int max_depth = 0;
   for (int percent : shape.max_depth_percents) {
     choice -= percent;
@@ -353,21 +463,17 @@ static auto ChoosePlanMaxDepth(const PlanShapeRow& shape, int statements,
 }
 
 // Splits `statements` statements between depths 0 through `max_depth`,
-// following `PlanDepthPercents` and giving each depth at least one.
-static auto SplitPlanDepths(int statements, int max_depth,
-                            ScaleByPercentFn scale_by_percent)
+// following `PlanDepthPercents` and giving each depth at least one. Uses a
+// fresh `PercentScaler` per plan because each row sums to `100` (so a shared
+// scaler's remainder would return to its initial value after every plan).
+static auto SplitPlanDepths(int statements, int max_depth, int& next_index)
     -> llvm::SmallVector<int> {
+  PercentScaler scale_by_percent(next_index);
   llvm::SmallVector<int> depth_counts;
-  int cumulative_percent = 0;
-  int assigned = 0;
   for (int percent :
-       llvm::ArrayRef(PlanDepthPercents[max_depth]).take_front(max_depth)) {
-    cumulative_percent += percent;
-    int upto = scale_by_percent(statements, cumulative_percent);
-    depth_counts.push_back(upto - assigned);
-    assigned = upto;
+       llvm::ArrayRef(PlanDepthPercents[max_depth]).take_front(max_depth + 1)) {
+    depth_counts.push_back(scale_by_percent(statements, percent));
   }
-  depth_counts.push_back(statements - assigned);
   for (int& count : depth_counts) {
     if (count == 0) {
       ++count;
@@ -378,20 +484,16 @@ static auto SplitPlanDepths(int statements, int max_depth,
 }
 
 // Composes the plan of a definition with `statements` statements, for the
-// `variant`th definition of that size. Percentage-scaled counts round with a
-// generator seeded with the size and variant, so that definitions of one size
-// vary while their average follows the calibration, and nothing depends on the
-// `SourceGen` seed.
-static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
+// `variant`th definition of that size. With `calls`, some of the updates and
+// destructurings call free functions. Percentage-scaled counts round with
+// `scalers` so definitions of one size vary while tracking the calibrated
+// rates.
+static auto ComposeDefPlan(int statements, int variant, bool calls,
+                           PlanScalers& scalers) -> DefPlan {
   DefPlan plan;
   if (statements == 0) {
     return plan;
   }
-  absl::SeedSeq seed_seq = {statements, variant};
-  absl::BitGen rng(seed_seq);
-  auto scale_by_percent = [&](int count, int percent) {
-    return (count * percent + absl::Uniform<int>(rng, 0, 100)) / 100;
-  };
 
   // Find the last row satisfying `statements >= row.min_statements`. This
   // invariant is satisfied for `*shape` throughout the loop because the first
@@ -408,7 +510,7 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
   }
   llvm::SmallVector<int> depth_counts = SplitPlanDepths(
       statements, ChoosePlanMaxDepth(*shape, statements, variant),
-      scale_by_percent);
+      scalers.next_index);
 
   plan.levels.resize(depth_counts.size());
   // Select each step's spelling starting from `variant` and advancing with
@@ -448,9 +550,9 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
       // Guards' statements can't hold deeper ones, so leave a free statement at
       // the next depth when there are any.
       int min_free = depth + 2 < num_depths ? 1 : 0;
-      exits = std::min({scale_by_percent(loop_blocks, LoopExitPercent), heads,
+      exits = std::min({scalers.exits(loop_blocks, LoopExitPercent), heads,
                         next - min_free});
-      guards = std::min({scale_by_percent(next, shape->guard_return_percent),
+      guards = std::min({scalers.guards(next, shape->guard_return_percent),
                          heads - exits, next - exits - min_free});
       // The number of statements at the next depth that aren't the body of a
       // guard at this depth, and so must be placed in blocks opened by
@@ -468,9 +570,9 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
         ++free;
       }
       if (free > 0) {
-        next_blocks = std::max(1, scale_by_percent(free, NewBlockPercent));
-        loops = scale_by_percent(next_blocks, LoopBlockPercent);
-        pairs = std::min(scale_by_percent(next_blocks, ElseBlockPercent / 2),
+        next_blocks = std::max(1, scalers.next_blocks(free, NewBlockPercent));
+        loops = scalers.loops(next_blocks, LoopBlockPercent);
+        pairs = std::min(scalers.pairs(next_blocks, ElseBlockPercent / 2),
                          (next_blocks - loops) / 2);
         ifs = next_blocks - loops - 2 * pairs;
         // Fit the statements that open blocks into this depth, merging blocks
@@ -498,17 +600,23 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
     // Each block at this depth ends with a step that isn't a local declaration.
     int max_locals = heads - fixed - std::max(0, blocks - fixed);
     int local_percent = depth == 0 ? TopLocalPercent : NestedLocalPercent;
-    int locals = std::min(scale_by_percent(heads, local_percent), max_locals);
-    int else_ifs = scale_by_percent(pairs, ElseIfPercent);
+    int locals = std::min(scalers.locals(heads, local_percent), max_locals);
+    int else_ifs = scalers.else_ifs(pairs, ElseIfPercent);
     int updates = heads - fixed - locals;
-    int destructures = scale_by_percent(locals, DestructurePercent);
+    int destructures = scalers.destructures(locals, DestructurePercent);
     int class_type_locals =
-        scale_by_percent(locals - destructures, ClassTypeLocalPercent);
+        scalers.class_type_locals(locals - destructures, ClassTypeLocalPercent);
+    int destructure_calls =
+        calls ? scalers.destructure_calls(destructures, CallDestructurePercent)
+              : 0;
+    int num_calls = calls ? scalers.calls(updates, CallPercent) : 0;
     add(depth, PlanStepKind::ScalarLocal,
         locals - destructures - class_type_locals);
     add(depth, PlanStepKind::ClassTypeLocal, class_type_locals);
-    add(depth, PlanStepKind::Destructure, destructures);
-    add(depth, PlanStepKind::Update, updates);
+    add(depth, PlanStepKind::Destructure, destructures - destructure_calls);
+    add(depth, PlanStepKind::DestructureCall, destructure_calls);
+    add(depth, PlanStepKind::Update, updates - num_calls);
+    add(depth, PlanStepKind::Call, num_calls);
     add(depth, PlanStepKind::If, ifs);
     add(depth, PlanStepKind::IfElse, pairs - else_ifs);
     add(depth, PlanStepKind::ElseIf, else_ifs);
@@ -522,9 +630,16 @@ static auto ComposeDefPlan(int statements, int variant) -> DefPlan {
     // Each destructuring declares two locals.
     plan.locals += locals + destructures;
     plan.class_type_locals += class_type_locals;
+    plan.calls += num_calls;
+    plan.destructure_calls += destructure_calls;
     guard_children = guards + exits;
     blocks = next_blocks;
     loop_blocks = loops;
+  }
+  // Definitions with calls or destructured calls declare `acc64` on an extra
+  // line before `acc`; see `GenerateFunctionDef`.
+  if (plan.calls + plan.destructure_calls > 0) {
+    ++plan.lines;
   }
   return plan;
 }
@@ -563,12 +678,14 @@ static auto ApportionDefSizes(int num_defs,
   return counts;
 }
 
-// Builds the plans for `num_defs` definitions, with sizes following `sizes`,
-// and appends them to `plans`. Each size's plans spread evenly through the
-// order, so that any stretch of the order has a mix of sizes.
+// Builds the plans for `num_defs` definitions, with sizes following `sizes` and
+// with calls when `calls`, and appends them to `plans`. Each size's plans
+// spread evenly through the order, so that any stretch of the order has a mix
+// of sizes.
 static auto BuildDefPlans(int num_defs,
                           llvm::ArrayRef<SourceGen::DefSizeWeight> sizes,
-                          llvm::SmallVectorImpl<DefPlan>& plans) -> void {
+                          bool calls, llvm::SmallVectorImpl<DefPlan>& plans)
+    -> void {
   // Entries are sorted by `position`, which is `(variant + 0.5) / count`, to
   // interleave buckets with different counts.
   struct Entry {
@@ -589,26 +706,31 @@ static auto BuildDefPlans(int num_defs,
   llvm::stable_sort(entries, [](const Entry& lhs, const Entry& rhs) {
     return lhs.position < rhs.position;
   });
+  PlanScalers scalers(num_defs * 2 + static_cast<int>(calls));
   plans.reserve(plans.size() + num_defs);
   for (const Entry& entry : entries) {
-    plans.push_back(ComposeDefPlan(entry.statements, entry.variant));
+    plans.push_back(
+        ComposeDefPlan(entry.statements, entry.variant, calls, scalers));
   }
 }
 
 // Estimates the average number of lines in the plans of definitions with sizes
-// following `sizes`. Uses `double` (like the other `EstimateAvg*Lines` helpers
-// below) to accumulate fractional average line counts across variants and
-// constructs before a single final rounding to a whole number of classes.
+// following `sizes`, and with calls when `calls`. Uses `double` (like the
+// other `EstimateAvg*Lines` helpers below) to accumulate fractional average
+// line counts across variants and constructs before a single final rounding to
+// a whole number of classes.
 static auto EstimateAvgDefPlanLines(
-    llvm::ArrayRef<SourceGen::DefSizeWeight> sizes) -> double {
+    llvm::ArrayRef<SourceGen::DefSizeWeight> sizes, bool calls) -> double {
   // Average over enough variants that their rounding evens out.
   constexpr int NumVariants = 16;
   double lines = 0.0;
   int64_t total_weight = 0;
   for (const SourceGen::DefSizeWeight& size : sizes) {
+    PlanScalers scalers(size.statements * 2 + static_cast<int>(calls));
     int size_lines = 0;
     for (int variant : llvm::seq(NumVariants)) {
-      size_lines += ComposeDefPlan(size.statements, variant).lines;
+      size_lines +=
+          ComposeDefPlan(size.statements, variant, calls, scalers).lines;
     }
     lines += static_cast<double>(size_lines) / NumVariants * size.weight;
     total_weight += size.weight;
@@ -626,6 +748,29 @@ static auto EstimateAvgDefPlanLines(
 // Detailed comments for out-of-line methods are on their definitions.
 class SourceGen::ClassGenState {
  public:
+  // A free function declaration, which definitions call. `args` is the argument
+  // list of every call to it.
+  struct FreeFunction {
+    llvm::StringRef name;
+    llvm::SmallVector<llvm::StringRef> param_types;
+    std::string args;
+    llvm::StringRef return_type;
+  };
+
+  // A call in a definition: the index of the callee in `free_functions()`, and
+  // the consumer template that reads its result.
+  struct CallRef {
+    int callee_index;
+    llvm::StringRef consumer;
+  };
+
+  // A destructured call in a definition: the index of the callee in
+  // `free_functions()`, and the index of its form in `CallDestructureForms`.
+  struct DestructureCallRef {
+    int callee_index;
+    int form_index;
+  };
+
   ClassGenState(SourceGen& gen, int num_classes, const DenseDeclParams& params);
 
   auto public_function_param_counts() -> llvm::SmallVectorImpl<int>& {
@@ -653,6 +798,45 @@ class SourceGen::ClassGenState {
   // kind; see `BuildTypePool`.
   auto def_plans() -> llvm::ArrayRef<DefPlan> { return def_plans_; }
   auto inline_def_plans_start() -> int { return inline_def_plans_start_; }
+
+  auto free_functions() -> llvm::ArrayRef<FreeFunction> {
+    return free_functions_;
+  }
+  // The shuffled order to declare the free functions in.
+  auto free_emission_order() -> llvm::ArrayRef<int> {
+    return free_emission_order_;
+  }
+  auto free_param_names() -> llvm::SmallVectorImpl<llvm::StringRef>& {
+    return free_param_names_;
+  }
+
+  // The calls that definition plans make, shuffled.
+  auto call_refs() -> llvm::SmallVectorImpl<CallRef>& { return call_refs_; }
+  // The destructured calls that definition plans make, shuffled.
+  auto destructure_call_refs() -> llvm::SmallVectorImpl<DestructureCallRef>& {
+    return destructure_call_refs_;
+  }
+
+  // Emits the next call in `call_refs()`, read with its consumer template.
+  auto EmitCall(llvm::raw_ostream& os) -> void {
+    CallRef ref = call_refs_.pop_back_val();
+    const FreeFunction& callee = free_functions_[ref.callee_index];
+    auto [prefix, suffix] = ref.consumer.split("{0}");
+    os << prefix << callee.name << "(" << callee.args << ")" << suffix;
+  }
+
+  // Takes the next destructured call, spells it in `call`, and returns the form
+  // that destructures it. Returns null when no free function returns a tuple
+  // with a form.
+  auto NextDestructureCall(std::string& call) -> const CallDestructureForm* {
+    if (destructure_call_refs_.empty()) {
+      return nullptr;
+    }
+    DestructureCallRef ref = destructure_call_refs_.pop_back_val();
+    const FreeFunction& callee = free_functions_[ref.callee_index];
+    call = (callee.name + "(" + callee.args + ")").str();
+    return &CallDestructureForms[ref.form_index];
+  }
 
   auto getter_field_types() -> llvm::SmallVectorImpl<llvm::StringRef>& {
     return getter_field_types_;
@@ -704,10 +888,11 @@ class SourceGen::ClassGenState {
     valid_type_names_.Insert(type_name);
   }
 
-  // The names of all classes in the file. Parameter, member, and field names
-  // exclude these so that they can't shadow a class that a definition names.
-  auto class_name_set() -> const Set<llvm::StringRef>& {
-    return class_name_set_;
+  // The names of all classes and free functions in the file. Parameter,
+  // member, and field names exclude these so that they can't shadow a name that
+  // a definition uses.
+  auto file_scope_name_set() -> const Set<llvm::StringRef>& {
+    return file_scope_name_set_;
   }
 
   // Emits an expression producing a value of `type`: a call to the class's
@@ -793,8 +978,15 @@ class SourceGen::ClassGenState {
   auto GetValidReturnType(TypePool& pool, bool is_inline) -> TypeUse;
 
   auto BuildClassAndTypeNames(SourceGen& gen, int num_classes,
-                              const ClassParams& class_params,
-                              const TypeUseParams& type_use_params) -> void;
+                              const DenseDeclParams& params) -> void;
+  auto BuildFreeFunction(
+      SourceGen& gen, int i, llvm::StringRef name,
+      llvm::ArrayRef<const TypeUseParams::FixedTypeWeight*> weighted_types,
+      int max_params) -> FreeFunction;
+  auto BuildCallRefs(SourceGen& gen, int num_calls)
+      -> llvm::SmallVector<CallRef>;
+  auto BuildDestructureCallRefs(SourceGen& gen, int num_calls)
+      -> llvm::SmallVector<DestructureCallRef>;
   auto BuildTypePool(SourceGen& gen, int num_types, int max_refs_per_class,
                      bool needs_value_expr, bool consumed,
                      bool exclude_last_class,
@@ -811,6 +1003,11 @@ class SourceGen::ClassGenState {
   llvm::SmallVector<int> forwarder_param_counts_;
   llvm::SmallVector<DefPlan> def_plans_;
   int inline_def_plans_start_;
+  llvm::SmallVector<FreeFunction> free_functions_;
+  llvm::SmallVector<int> free_emission_order_;
+  llvm::SmallVector<llvm::StringRef> free_param_names_;
+  llvm::SmallVector<CallRef> call_refs_;
+  llvm::SmallVector<DestructureCallRef> destructure_call_refs_;
 
   // Getters return a copy of their field, and `Make` initializes it, so getter
   // and predicate fields have fixed types with a value expression. These types
@@ -856,6 +1053,7 @@ class SourceGen::ClassGenState {
   Set<llvm::StringRef> valid_type_names_;
 
   Set<llvm::StringRef> class_name_set_;
+  Set<llvm::StringRef> file_scope_name_set_;
   // The value expression and consumer templates of each fixed type, keyed by
   // its spelling. These refer into the `TypeUseParams`, which outlives
   // generation.
@@ -921,10 +1119,13 @@ SourceGen::ClassGenState::ClassGenState(SourceGen& gen, int num_classes,
   // `BuildClassAndTypeNames`.
   int num_inline_params =
       Sum(inline_function_param_counts_) + num_inline_functions;
-  BuildDefPlans(num_out_of_line_defs, params.out_of_line_def_sizes, def_plans_);
+  // Definitions only make calls when the file has free functions to call.
+  bool calls = params.free_function_decls_per_class > 0;
+  BuildDefPlans(num_out_of_line_defs, params.out_of_line_def_sizes, calls,
+                def_plans_);
   inline_def_plans_start_ = def_plans_.size();
   BuildDefPlans(num_inline_functions, class_params.inline_function_def_sizes,
-                def_plans_);
+                calls, def_plans_);
   int num_locals = 0;
   for (const DefPlan& plan : def_plans_) {
     num_locals += plan.locals;
@@ -950,8 +1151,7 @@ SourceGen::ClassGenState::ClassGenState(SourceGen& gen, int num_classes,
   forwarder_param_names_ =
       gen.GetShuffledIdentifiers(Sum(forwarder_param_counts_));
 
-  BuildClassAndTypeNames(gen, num_classes, class_params,
-                         params.type_use_params);
+  BuildClassAndTypeNames(gen, num_classes, params);
 }
 
 auto SourceGen::ClassGenState::GetValidTypeUse(
@@ -1211,14 +1411,27 @@ auto SourceGen::ClassGenState::AssignClassTypeLocalTypes(
 // to each class at the number of uses each class draws from it after its
 // fields; see `BuildTypePool`.
 auto SourceGen::ClassGenState::BuildClassAndTypeNames(
-    SourceGen& gen, int num_classes, const ClassParams& class_params,
-    const TypeUseParams& type_use_params) -> void {
-  // Initially get the sequence of class names without shuffling so we can
-  // compute our type pools from them prior to any shuffling.
+    SourceGen& gen, int num_classes, const DenseDeclParams& params) -> void {
+  const ClassParams& class_params = params.class_params;
+  const TypeUseParams& type_use_params = params.type_use_params;
+  // Initially get the sequence of class and free function names without
+  // shuffling so we can compute our type pools from them prior to any
+  // shuffling. Drawing both from one set of unique names keeps them distinct,
+  // and `MinClassNameLength` keeps them longer than local and inline function
+  // names so those can't shadow them.
+  int num_free_functions = num_classes * params.free_function_decls_per_class;
+  llvm::SmallVector<llvm::StringRef> file_scope_names =
+      gen.GetUniqueIdentifiers(num_classes + num_free_functions,
+                               /*min_length=*/MinClassNameLength);
   class_names_ =
-      gen.GetUniqueIdentifiers(num_classes, /*min_length=*/MinClassNameLength);
+      llvm::to_vector(llvm::ArrayRef(file_scope_names).take_front(num_classes));
+  llvm::ArrayRef<llvm::StringRef> free_function_names =
+      llvm::ArrayRef(file_scope_names).slice(num_classes);
   for (llvm::StringRef name : class_names_) {
     class_name_set_.Insert(name);
+  }
+  for (llvm::StringRef name : file_scope_names) {
+    file_scope_name_set_.Insert(name);
   }
 
   // Every fixed type needs a consumer template, since any of them can be the
@@ -1358,10 +1571,141 @@ auto SourceGen::ClassGenState::BuildClassAndTypeNames(
   }
   std::shuffle(predicate_fields_.begin(), predicate_fields_.end(), gen.rng_);
 
+  free_functions_.reserve(num_free_functions);
+  auto free_function_types = WeightedFixedTypes(
+      type_use_params, [](const auto& /*fw*/) { return true; });
+  CARBON_CHECK(num_free_functions == 0 || !free_function_types.empty(),
+               "Free functions need a fixed type.");
+  int num_free_params = 0;
+  for (auto [i, name] : llvm::enumerate(free_function_names)) {
+    free_functions_.push_back(
+        BuildFreeFunction(gen, static_cast<int>(i), name, free_function_types,
+                          params.free_function_decl_params.max_params));
+    num_free_params += free_functions_.back().param_types.size();
+  }
+  free_param_names_ = gen.GetShuffledIdentifiers(num_free_params);
+  int num_calls = 0;
+  int num_destructure_calls = 0;
+  for (const DefPlan& plan : def_plans_) {
+    num_calls += plan.calls;
+    num_destructure_calls += plan.destructure_calls;
+  }
+  call_refs_ = BuildCallRefs(gen, num_calls);
+  destructure_call_refs_ = BuildDestructureCallRefs(gen, num_destructure_calls);
+  free_emission_order_ = llvm::to_vector(llvm::seq(num_free_functions));
+  std::shuffle(free_emission_order_.begin(), free_emission_order_.end(),
+               gen.rng_);
   // Classes are defined from the back, so the first unshuffled name is always
   // the class defined last, which field and return pools leave out; see
   // `BuildTypePool`.
   std::shuffle(class_names_.begin() + 1, class_names_.end(), gen.rng_);
+}
+
+// Builds the `i`th free function declaration. Its signature depends only on
+// `i`, not on the seed, so that the bytes of its calls don't either: its
+// parameter count cycles through [0, max_params], its parameter types cycle
+// through `weighted_types`, and its return type is the `i`th of
+// `weighted_types`, so that return types follow the weights.
+auto SourceGen::ClassGenState::BuildFreeFunction(
+    SourceGen& gen, int i, llvm::StringRef name,
+    llvm::ArrayRef<const TypeUseParams::FixedTypeWeight*> weighted_types,
+    int max_params) -> FreeFunction {
+  FreeFunction fn;
+  fn.name = name;
+
+  // Start each function's parameter types at a different point in the cycle.
+  int offset = i * (max_params + 2);
+  auto next_type = [&]() -> const TypeUseParams::FixedTypeWeight* {
+    return weighted_types[offset++ % weighted_types.size()];
+  };
+
+  int param_count = i % (max_params + 1);
+  RawStringOstream args;
+  llvm::ListSeparator sep;
+  for (auto _ : llvm::seq(param_count)) {
+    const auto& fw = *next_type();
+    fn.param_types.push_back(gen.IsCpp() ? fw.cpp_spelling
+                                         : fw.carbon_spelling);
+    llvm::StringRef arg = gen.IsCpp() ? fw.cpp_arg : fw.carbon_arg;
+    if (arg.empty()) {
+      arg = gen.IsCpp() ? fw.cpp_value : fw.carbon_value;
+    }
+    CARBON_CHECK(!arg.empty(),
+                 "Fixed type `{0}` needs an argument or value expression.",
+                 fn.param_types.back());
+    args << sep << arg;
+  }
+  fn.args = args.TakeStr();
+  const auto& return_type = *weighted_types[i % weighted_types.size()];
+  fn.return_type =
+      gen.IsCpp() ? return_type.cpp_spelling : return_type.carbon_spelling;
+  return fn;
+}
+
+// Builds a shuffled pool of `num_calls` calls, distributed evenly over the free
+// functions. Each call gets one of its result type's consumer templates,
+// round-robin per type before the shuffle.
+auto SourceGen::ClassGenState::BuildCallRefs(SourceGen& gen, int num_calls)
+    -> llvm::SmallVector<CallRef> {
+  llvm::SmallVector<CallRef> refs;
+  if (num_calls == 0) {
+    return refs;
+  }
+  int num_free = free_functions_.size();
+  CARBON_CHECK(num_free > 0);
+  refs.reserve(num_calls);
+  Map<llvm::StringRef, int> consumer_counters;
+  auto append_ref = [&](int callee_index) {
+    llvm::StringRef ret = free_functions_[callee_index].return_type;
+    llvm::ArrayRef<llvm::StringRef> consumers =
+        fixed_consumers_.Lookup(ret).value();
+    int& counter = consumer_counters.Insert(ret, 0).value();
+    refs.push_back({.callee_index = callee_index,
+                    .consumer = consumers[counter++ % consumers.size()]});
+  };
+  int full_copies = num_calls / num_free;
+  int remainder = num_calls % num_free;
+  for (auto _ : llvm::seq(full_copies)) {
+    for (int callee_index : llvm::seq(num_free)) {
+      append_ref(callee_index);
+    }
+  }
+  // Give the remaining calls to a prefix of the unshuffled free functions, so
+  // that which functions get an extra call doesn't depend on the seed.
+  for (int callee_index : llvm::seq(remainder)) {
+    append_ref(callee_index);
+  }
+  std::shuffle(refs.begin(), refs.end(), gen.rng_);
+  return refs;
+}
+
+// Builds a shuffled pool of `num_calls` destructured calls, distributed evenly
+// over the free functions that return a tuple with a `CallDestructureForms`
+// entry, with any remainder going to a fixed prefix of them. Returns an empty
+// pool when there are none.
+auto SourceGen::ClassGenState::BuildDestructureCallRefs(SourceGen& gen,
+                                                        int num_calls)
+    -> llvm::SmallVector<DestructureCallRef> {
+  llvm::SmallVector<DestructureCallRef> eligible;
+  for (auto [callee_index, fn] : llvm::enumerate(free_functions_)) {
+    for (auto [form_index, call_form] : llvm::enumerate(CallDestructureForms)) {
+      if (fn.return_type ==
+          (gen.IsCpp() ? call_form.cpp_type : call_form.carbon_type)) {
+        eligible.push_back({.callee_index = static_cast<int>(callee_index),
+                            .form_index = static_cast<int>(form_index)});
+      }
+    }
+  }
+  llvm::SmallVector<DestructureCallRef> refs;
+  if (eligible.empty()) {
+    return refs;
+  }
+  refs.reserve(num_calls);
+  for (int i : llvm::seq(num_calls)) {
+    refs.push_back(eligible[i % eligible.size()]);
+  }
+  std::shuffle(refs.begin(), refs.end(), gen.rng_);
+  return refs;
 }
 
 // Some heuristic numbers used when formatting generated code. These heuristics
@@ -1410,21 +1754,34 @@ static auto EstimateAvgMethodDeclLines(SourceGen::MethodDeclParams params,
 // excluding its comment. The definition has an accumulator line, a line reading
 // the parameters, its plan's lines, a return line, and a closing brace line.
 static auto EstimateAvgInlineFunctionDefLines(
-    const SourceGen::ClassParams& params) -> double {
+    const SourceGen::DenseDeclParams& dense_params) -> double {
+  const SourceGen::ClassParams& params = dense_params.class_params;
   constexpr int ExtraParams = 1;
   return EstimateAvgFunctionDeclLines(params.inline_function_decl_params,
                                       ExtraParams) +
-         4.0 + EstimateAvgDefPlanLines(params.inline_function_def_sizes);
+         4.0 +
+         EstimateAvgDefPlanLines(
+             params.inline_function_def_sizes,
+             /*calls=*/dense_params.free_function_decls_per_class > 0);
 }
 
 // Note that this should match the heuristics used when formatting.
 // TODO: See top-level TODO about line estimates and formatting.
+//
+// This includes each class's share of the free function declarations, whose
+// number is proportional to the number of classes.
 static auto EstimateAvgClassDefLines(
     const SourceGen::DenseDeclParams& dense_params) -> double {
   const SourceGen::ClassParams& params = dense_params.class_params;
   bool define_decls_out_of_line = dense_params.define_decls_out_of_line;
   // Comment line, and class open line.
   double avg = 2.0;
+
+  // Each class's share of the free function declarations, which each have a
+  // blank line and a comment line.
+  avg += dense_params.free_function_decls_per_class *
+         (2.0 +
+          EstimateAvgFunctionDeclLines(dense_params.free_function_decl_params));
 
   // Declarations with out-of-line definitions have an extra parameter.
   int decl_extra_params = define_decls_out_of_line ? 1 : 0;
@@ -1442,7 +1799,7 @@ static auto EstimateAvgClassDefLines(
   avg += (2.0 + EstimateAvgMethodDeclLines(params.private_method_decl_params,
                                            decl_extra_params)) *
          params.private_method_decls;
-  avg += (2.0 + EstimateAvgInlineFunctionDefLines(params)) *
+  avg += (2.0 + EstimateAvgInlineFunctionDefLines(dense_params)) *
          params.inline_function_defs;
   // Getters and predicates are on one line.
   avg += 3.0 * (params.inline_getters + params.inline_predicates);
@@ -1476,8 +1833,11 @@ static auto EstimateAvgClassDefLines(
   // line, an accumulator line, a line reading the parameters, its plan's lines,
   // a return line, and a closing brace line.
   if (define_decls_out_of_line) {
-    avg += (7.0 + EstimateAvgDefPlanLines(dense_params.out_of_line_def_sizes)) *
-           NumDeclsPerClass(params);
+    avg +=
+        (7.0 + EstimateAvgDefPlanLines(
+                   dense_params.out_of_line_def_sizes,
+                   /*calls=*/dense_params.free_function_decls_per_class > 0)) *
+        NumDeclsPerClass(params);
   }
 
   // No need to account for the class close line, we have an extra blank line
@@ -1529,6 +1889,7 @@ auto SourceGen::GenApiFileDenseDecls(int target_lines,
   }
 
   auto class_gen_state = ClassGenState(*this, num_classes, params);
+  GenerateFreeFunctionDecls(class_gen_state, source);
   llvm::SmallVector<OutOfLineDef, 0> out_of_line_defs;
   for (auto _ : llvm::seq(num_classes)) {
     source << "\n";
@@ -1548,6 +1909,8 @@ auto SourceGen::GenApiFileDenseDecls(int target_lines,
   CARBON_CHECK(class_gen_state.private_function_param_counts().empty());
   CARBON_CHECK(class_gen_state.private_method_param_counts().empty());
   CARBON_CHECK(class_gen_state.inline_function_param_counts().empty());
+  CARBON_CHECK(class_gen_state.call_refs().empty());
+  CARBON_CHECK(class_gen_state.destructure_call_refs().empty());
   CARBON_CHECK(class_gen_state.forwarder_param_counts().empty());
   CARBON_CHECK(class_gen_state.getter_field_types().empty());
   CARBON_CHECK(class_gen_state.predicate_fields().empty());
@@ -1558,6 +1921,7 @@ auto SourceGen::GenApiFileDenseDecls(int target_lines,
   CARBON_CHECK(class_gen_state.decl_names().empty());
   CARBON_CHECK(class_gen_state.field_names().empty());
   CARBON_CHECK(class_gen_state.param_names().empty());
+  CARBON_CHECK(class_gen_state.free_param_names().empty());
   CARBON_CHECK(class_gen_state.inline_function_names().empty());
   CARBON_CHECK(class_gen_state.inline_param_names().empty());
   CARBON_CHECK(class_gen_state.local_names().empty());
@@ -1677,8 +2041,8 @@ static constexpr llvm::StringRef NonCarbonCppKeywords[] = {
 // Names that generated code declares itself, which random identifiers must
 // avoid. For example, an inline function named `Make` would collide with its
 // class's `Make` function.
-static constexpr llvm::StringRef ReservedGeneratedNames[] = {"Make", "Checksum",
-                                                             "acc", "tag"};
+static constexpr llvm::StringRef ReservedGeneratedNames[] = {
+    "Make", "Checksum", "acc", "acc64", "tag"};
 
 // Returns a random identifier string of the specified length.
 //
@@ -2068,6 +2432,25 @@ auto SourceGen::EmitFunctionDecl(llvm::StringRef name, bool is_private,
   os << ") -> " << return_type << ";\n";
 }
 
+// Generates the file's free function declarations.
+auto SourceGen::GenerateFreeFunctionDecls(ClassGenState& state,
+                                          llvm::raw_ostream& os) -> void {
+  for (int i : state.free_emission_order()) {
+    const ClassGenState::FreeFunction& fn = state.free_functions()[i];
+    UniqueIdentifierPopper unique_param_names(*this, state.free_param_names(),
+                                              &state.file_scope_name_set());
+    llvm::SmallVector<TypedName> params;
+    params.reserve(fn.param_types.size());
+    for (llvm::StringRef type : fn.param_types) {
+      params.push_back({.name = unique_param_names.Pop(), .type = type});
+    }
+    os << "\n// TODO: make better comment text\n";
+    os << (IsCpp() ? "auto " : "fn ") << fn.name << "(";
+    EmitParams(/*is_method=*/false, params, /*indent=*/"", os);
+    os << ") -> " << fn.return_type << ";\n";
+  }
+}
+
 // Generates a function declaration and writes it to the provided stream.
 //
 // The declaration can be configured with a function name, private modifier,
@@ -2085,10 +2468,10 @@ auto SourceGen::GenerateFunctionDecl(ClassGenState& state, llvm::StringRef name,
   if (out_of_line) {
     param_count += 1;
   }
-  // Exclude class names so that a parameter can't shadow a class that an
-  // out-of-line definition names.
+  // Exclude class and free function names so that a parameter can't shadow one
+  // that an out-of-line definition names.
   UniqueIdentifierPopper unique_param_names(*this, state.param_names(),
-                                            &state.class_name_set());
+                                            &state.file_scope_name_set());
   FunctionSig sig = {.name = name, .is_method = is_method};
   sig.params.reserve(param_count);
   sig.param_consumers.reserve(param_count);
@@ -2252,21 +2635,24 @@ static auto ArrangeDef(const DefPlan& plan, absl::BitGen& rng) -> ArrangedDef {
   return def;
 }
 
-// Emits the steps of `def` after the accumulator declaration that every
-// function begins with, indented beyond `indent`. Locals take their names from
-// `locals` in turn, class-typed locals take their classes from
-// `class_type_local_types` (with `""` for `Self`), the `ReadParams` step adds
-// `reads`, and guards return `return_value`.
+// Arranges and emits the steps of `state.def_plans()[def_plan]` after the
+// accumulator declarations that every function begins with, indented beyond
+// `indent`. Locals take their names from `locals` in turn, the `ReadParams`
+// step adds `reads`, `Call` and `DestructureCall` steps draw calls from
+// `state`, and guards return `return_value`.
 //
 // The first operand of each step after a local declaration reads the locals
 // that it declares, so that every local is read. Every other operand is a
 // random `i32` local in scope, and the target of each update a random `var`
 // one.
-static auto EmitArrangedDef(
-    const ArrangedDef& def, llvm::ArrayRef<llvm::StringRef> locals,
-    llvm::ArrayRef<llvm::StringRef> class_type_local_types,
-    llvm::StringRef reads, llvm::StringRef return_value, bool is_cpp,
-    llvm::StringRef indent, absl::BitGen& rng, llvm::raw_ostream& os) -> void {
+auto SourceGen::EmitArrangedDef(ClassGenState& state, int def_plan,
+                                llvm::ArrayRef<llvm::StringRef> locals,
+                                llvm::StringRef reads,
+                                llvm::StringRef return_value,
+                                llvm::StringRef indent, llvm::raw_ostream& os)
+    -> void {
+  const DefPlan& plan = state.def_plans()[def_plan];
+  ArrangedDef def = ArrangeDef(plan, rng_);
   // The `i32` locals in scope that later steps can update, and the ones that
   // they can only read.
   llvm::SmallVector<llvm::StringRef> var_scope = {"acc"};
@@ -2276,13 +2662,14 @@ static auto EmitArrangedDef(
   int next_local = 0;
   int next_class_type_local = 0;
   auto pick_local = [&]() {
-    int index = absl::Uniform<int>(rng, 0, var_scope.size() + let_scope.size());
+    int index =
+        absl::Uniform<int>(rng_, 0, var_scope.size() + let_scope.size());
     return index < static_cast<int>(var_scope.size())
                ? var_scope[index]
                : let_scope[index - var_scope.size()];
   };
   auto pick_var = [&]() {
-    return var_scope[absl::Uniform<int>(rng, 0, var_scope.size())];
+    return var_scope[absl::Uniform<int>(rng_, 0, var_scope.size())];
   };
   auto emit_expr_to = [&](llvm::StringRef format, llvm::raw_ostream& out) {
     while (!format.empty()) {
@@ -2296,6 +2683,29 @@ static auto EmitArrangedDef(
     }
   };
   auto emit_expr = [&](llvm::StringRef format) { emit_expr_to(format, os); };
+  // Substitutes the locals `a` and `b` into `format`.
+  auto substitute = [](llvm::StringRef format, llvm::StringRef a,
+                       llvm::StringRef b) {
+    std::string text = format.str();
+    for (auto [placeholder, name] : {std::pair{"{a}", a}, {"{b}", b}}) {
+      text.replace(text.find(placeholder), 3, name);
+    }
+    return text;
+  };
+  auto emit_destructure = [&](const DestructureForm& form) {
+    llvm::StringRef a = locals[next_local++];
+    llvm::StringRef b = locals[next_local++];
+    emit_expr(substitute(IsCpp() ? form.cpp_decl : form.carbon_decl, a, b));
+    os << "\n";
+    auto& scope = form.is_var ? var_scope : let_scope;
+    if (form.a_is_i32) {
+      scope.push_back(a);
+    }
+    if (form.b_is_i32) {
+      scope.push_back(b);
+    }
+    pending = substitute(IsCpp() ? form.cpp_read : form.carbon_read, a, b);
+  };
   auto emit_cond = [&](int spelling_index) {
     emit_expr(PlanConds[spelling_index % std::size(PlanConds)]);
   };
@@ -2359,8 +2769,8 @@ static auto EmitArrangedDef(
     switch (planned.kind) {
       case PlanStepKind::ScalarLocal: {
         llvm::StringRef name = locals[next_local++];
-        os << (is_cpp ? "int " : "var ") << name
-           << (is_cpp ? " = " : ": i32 = ");
+        os << (IsCpp() ? "int " : "var ") << name
+           << (IsCpp() ? " = " : ": i32 = ");
         emit_expr(PlanExprs[planned.spelling_index]);
         os << ";\n";
         var_scope.push_back(name);
@@ -2369,11 +2779,12 @@ static auto EmitArrangedDef(
       }
       case PlanStepKind::ClassTypeLocal: {
         llvm::StringRef name = locals[next_local++];
-        llvm::StringRef type = class_type_local_types[next_class_type_local++];
+        llvm::StringRef type =
+            plan.class_type_local_types[next_class_type_local++];
         if (type.empty()) {
-          os << (is_cpp ? "Self " : "var ") << name
-             << (is_cpp ? " = Self();\n" : ": Self = Make();\n");
-        } else if (is_cpp) {
+          os << (IsCpp() ? "Self " : "var ") << name
+             << (IsCpp() ? " = Self();\n" : ": Self = Make();\n");
+        } else if (IsCpp()) {
           os << type << " " << name << " = " << type << "();\n";
         } else {
           os << "var " << name << ": " << type << " = " << type << ".Make();\n";
@@ -2383,27 +2794,35 @@ static auto EmitArrangedDef(
         pending = read.TakeStr();
         break;
       }
-      case PlanStepKind::Destructure: {
-        const DestructureForm& form = DestructureForms[planned.spelling_index];
+      case PlanStepKind::Destructure:
+        emit_destructure(DestructureForms[planned.spelling_index]);
+        break;
+      case PlanStepKind::DestructureCall: {
+        std::string call;
+        const CallDestructureForm* form = state.NextDestructureCall(call);
+        if (!form) {
+          emit_destructure(DestructureForms[planned.spelling_index]);
+          break;
+        }
         llvm::StringRef a = locals[next_local++];
         llvm::StringRef b = locals[next_local++];
-        auto substitute = [&](llvm::StringRef format) {
-          std::string text = format.str();
-          for (auto [placeholder, name] : {std::pair{"{a}", a}, {"{b}", b}}) {
-            text.replace(text.find(placeholder), 3, name);
-          }
-          return text;
-        };
-        emit_expr(substitute(is_cpp ? form.cpp_decl : form.carbon_decl));
-        os << "\n";
-        auto& scope = form.is_var ? var_scope : let_scope;
-        if (form.a_is_i32) {
-          scope.push_back(a);
+        if (IsCpp()) {
+          os << "const auto [" << a << ", " << b << "]";
+        } else {
+          os << substitute(form->carbon_pattern, a, b);
         }
-        if (form.b_is_i32) {
-          scope.push_back(b);
+        os << " = " << call << ";\n";
+        RawStringOstream read;
+        emit_expr_to(
+            substitute(IsCpp() ? form->cpp_read : form->carbon_read, a, b),
+            read);
+        if (form->a_is_i32) {
+          let_scope.push_back(a);
         }
-        pending = substitute(is_cpp ? form.cpp_read : form.carbon_read);
+        if (form->b_is_i32) {
+          let_scope.push_back(b);
+        }
+        pending = read.TakeStr();
         break;
       }
       case PlanStepKind::Update:
@@ -2415,6 +2834,13 @@ static auto EmitArrangedDef(
         os << pick_var() << " = ";
         emit_expr("{0}");
         os << " + " << reads << ";\n";
+        break;
+      case PlanStepKind::Call:
+        os << pick_var() << " = ";
+        emit_expr("{0}");
+        os << " + ";
+        state.EmitCall(os);
+        os << ";\n";
         break;
       case PlanStepKind::If:
       case PlanStepKind::IfElse:
@@ -2462,11 +2888,24 @@ static auto EmitArrangedDef(
 // types, inline definitions only use classes defined prior to the enclosing
 // class, whereas out-of-line definitions follow every class and can use any
 // other class; see `GetValidReturnType`.
+//
+// A definition with calls or destructured calls first declares `acc64`, which
+// pointer arguments can point at along with `acc`, and initializes `acc` from
+// it so that it is read.
 auto SourceGen::GenerateFunctionDef(ClassGenState& state,
                                     const FunctionSig& sig,
                                     llvm::StringRef indent,
                                     llvm::raw_ostream& os) -> void {
-  os << indent << (IsCpp() ? "  int acc = 0;\n" : "  var acc: i32 = 0;\n");
+  const DefPlan& plan = state.def_plans()[sig.def_plan];
+  if (plan.calls + plan.destructure_calls == 0) {
+    os << indent << (IsCpp() ? "  int acc = 0;\n" : "  var acc: i32 = 0;\n");
+  } else if (!IsCpp()) {
+    os << indent << "  var acc64: i64 = 0;\n";
+    os << indent << "  var acc: i32 = acc64 as i32;\n";
+  } else {
+    os << indent << "  std::int64_t acc64 = 0;\n";
+    os << indent << "  int acc = static_cast<int>(acc64);\n";
+  }
 
   RawStringOstream reads;
   llvm::ListSeparator read_sep(" + ");
@@ -2481,7 +2920,6 @@ auto SourceGen::GenerateFunctionDef(ClassGenState& state,
   // Locals and parameters draw from the same identifiers of each length, so
   // exclude this function's parameter names: C++ rejects a local that
   // has the same name as a parameter.
-  const DefPlan& plan = state.def_plans()[sig.def_plan];
   Set<llvm::StringRef> param_names;
   for (const TypedName& param : sig.params) {
     param_names.Insert(param.name);
@@ -2497,8 +2935,8 @@ auto SourceGen::GenerateFunctionDef(ClassGenState& state,
   RawStringOstream return_value;
   state.ProduceValue(sig.return_type, return_value);
   std::string return_value_str = return_value.TakeStr();
-  EmitArrangedDef(ArrangeDef(plan, rng_), locals, plan.class_type_local_types,
-                  reads.TakeStr(), return_value_str, IsCpp(), indent, rng_, os);
+  EmitArrangedDef(state, sig.def_plan, locals, reads.TakeStr(),
+                  return_value_str, indent, os);
   os << indent << "  return " << return_value_str << ";\n";
 }
 
@@ -2549,10 +2987,10 @@ auto SourceGen::GenerateInlineFunctionDef(ClassGenState& state,
   // Add the extra parameter; see `BuildClassAndTypeNames`.
   param_count += 1;
 
-  // Exclude class names so that a parameter can't shadow a class that the
-  // definition names.
+  // Exclude class and free function names so that a parameter can't shadow one
+  // that the definition names.
   UniqueIdentifierPopper unique_param_names(*this, state.inline_param_names(),
-                                            &state.class_name_set());
+                                            &state.file_scope_name_set());
   FunctionSig sig = {.name = name, .is_method = false};
   sig.params.reserve(param_count);
   sig.param_consumers.reserve(param_count);
@@ -2701,7 +3139,7 @@ auto SourceGen::GenerateClassDef(
   // Name the getter and predicate fields first, so that member names can avoid
   // them.
   UniqueIdentifierPopper unique_accessed_names(
-      *this, state.accessed_field_names(), &state.class_name_set());
+      *this, state.accessed_field_names(), &state.file_scope_name_set());
   llvm::SmallVector<TypedName> getter_fields;
   getter_fields.reserve(params.inline_getters);
   for (auto _ : llvm::seq(params.inline_getters)) {
@@ -2719,10 +3157,11 @@ auto SourceGen::GenerateClassDef(
          field.predicate});
   }
 
-  // Definitions in this class can name any class, so exclude class names from
-  // member names. Inline function names are too short to be class names.
+  // Definitions in this class can name any class or free function, so exclude
+  // their names from member names. Inline function names are too short to be
+  // one.
   UniqueIdentifierPopper unique_member_names(*this, state.decl_names(),
-                                             &state.class_name_set());
+                                             &state.file_scope_name_set());
   unique_member_names.Reserve(unique_accessed_names.used());
   UniqueIdentifierPopper unique_inline_names(*this,
                                              state.inline_function_names());
@@ -2781,10 +3220,10 @@ auto SourceGen::GenerateClassDef(
   for (auto _ : llvm::seq(params.inline_forwarders)) {
     Forwarder& forwarder = forwarders.emplace_back();
     forwarder.name = unique_forwarder_names.Pop();
-    // Exclude class names so that a parameter can't shadow a class in the
-    // signature.
+    // Exclude class and free function names so that a parameter can't shadow a
+    // class in the signature.
     UniqueIdentifierPopper unique_param_names(
-        *this, state.forwarder_param_names(), &state.class_name_set());
+        *this, state.forwarder_param_names(), &state.file_scope_name_set());
     for (auto _ : llvm::seq(state.forwarder_param_counts().pop_back_val())) {
       forwarder.params.push_back({.name = unique_param_names.Pop(),
                                   .type = state.GetForwardType().name});
@@ -2823,9 +3262,9 @@ auto SourceGen::GenerateClassDef(
   }
 
   // Field names can't repeat this class's function, method, or field names, or
-  // be a class name.
+  // be a class or free function name.
   UniqueIdentifierPopper unique_field_names(*this, state.field_names(),
-                                            &state.class_name_set());
+                                            &state.file_scope_name_set());
   unique_field_names.Reserve(unique_member_names.used());
   llvm::SmallVector<TypedName> fields;
   fields.reserve(field_type_names.size() + getter_fields.size() +

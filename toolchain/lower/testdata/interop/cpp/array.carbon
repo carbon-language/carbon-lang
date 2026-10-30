@@ -87,7 +87,7 @@ int H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Main(ptr %_, ptr %_1) #3 !dbg !40 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(20) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #4 !dbg !40 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %_), !dbg !43
 // CHECK:STDOUT:   store i32 %F.call, ptr %_1, align 4, !dbg !43
@@ -98,6 +98,7 @@ int H() {
 // CHECK:STDOUT: attributes #1 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #2 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #3 = { nounwind }
+// CHECK:STDOUT: attributes #4 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!25}
 // CHECK:STDOUT: !llvm.module.flags = !{!51, !52, !53, !6, !7}
