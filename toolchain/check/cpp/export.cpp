@@ -1327,6 +1327,28 @@ static auto BuildCppToCarbonThunkFunctionType(Context& context,
       ->getAs<clang::FunctionProtoType>();
 }
 
+// Look up the `SemIR::Class` associated with a `clang::Decl`. The mapping is
+// required to exist.
+static auto GetClassInfoForClangDecl(Context& context, clang::Decl* decl)
+    -> const SemIR::Class& {
+  auto clang_decl_id = context.clang_decls().LookupId(
+      SemIR::ClangDeclKey::ForNonFunctionDecl(decl));
+  const auto& clang_decl = context.clang_decls().Get(clang_decl_id);
+  auto class_id = SemIR::ClassId::None;
+  if (auto class_decl =
+          context.insts().TryGetAs<SemIR::ClassDecl>(clang_decl.inst_id)) {
+    class_id = class_decl->class_id;
+
+  } else if (auto class_type = context.insts().TryGetAs<SemIR::ClassType>(
+                 clang_decl.inst_id)) {
+    class_id = class_type->class_id;
+
+  } else {
+    CARBON_FATAL("failed to map clang decl to a Carbon class");
+  }
+  return context.classes().Get(class_id);
+}
+
 // Create the declaration of the C++ thunk.
 static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
                                       const FunctionInfo& target,
@@ -1387,11 +1409,7 @@ static auto BuildCppToCarbonThunkDecl(Context& context, SemIR::LocId loc_id,
     }
 
     // Map Carbon access to C++ access.
-    auto clang_decl_id = context.clang_decls().LookupId(
-        SemIR::ClangDeclKey::ForNonFunctionDecl(parent_class));
-    auto class_decl = context.insts().GetAs<SemIR::ClassDecl>(
-        context.clang_decls().Get(clang_decl_id).inst_id);
-    const auto& class_info = context.classes().Get(class_decl.class_id);
+    const auto& class_info = GetClassInfoForClangDecl(context, parent_class);
     const auto& class_scope = context.name_scopes().Get(class_info.scope_id);
     SetCppClassMemberAccess(class_scope, target.function.name_id,
                             thunk_function_decl);
