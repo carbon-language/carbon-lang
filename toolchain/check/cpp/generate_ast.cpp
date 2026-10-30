@@ -585,7 +585,7 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
               friend_class_info.first_decl_id())) {
         auto* friend_tag_decl =
             llvm::cast<clang::TagDecl>(friend_clang_decl->decl());
-        auto friend_tsi = context_->ast_context().getTrivialTypeSourceInfo(
+        auto* friend_tsi = context_->ast_context().getTrivialTypeSourceInfo(
             context_->ast_context().getCanonicalTagType(friend_tag_decl));
         clang::FriendDecl::Create(context_->ast_context(), class_decl,
                                   /*L=*/clang::SourceLocation(), friend_tsi,
