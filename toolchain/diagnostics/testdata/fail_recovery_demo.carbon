@@ -14,29 +14,29 @@
 // A tour of how a missing token is drawn, which is the case where nothing in
 // the source is wrong: what the reader needs is not a range to look at but a
 // place to put something. See /toolchain/docs/diagnostics_rendering.md for
-// the rendering and /toolchain/docs/diagnostics.md for the convention.
+// the rendering.
 //
-// The rule is that the message is located at the token the missing one goes
-// after, which is the last token the developer wrote. The token after it can be
-// the end of the file, which has no source to locate the message at. For an
-// opening delimiter, the message is located at the introducer that requires it,
-// which the message already names.
+// The rule is that the message is located at the token the parser found where
+// the missing one should be, which is the first token after the gap. That token
+// is underlined like any other range, so the place to put the missing token is
+// its left edge. When it is the end of the file, the message is located just
+// past the last token, which covers no text and is drawn as a lone `┳`.
 //
 // This is a parse-phase tour, so nothing here reaches checking. What each line
 // is for:
 //
 // - `fn Paint`: a separator missing between two elements of a list, located at
-//   the element it goes after.
+//   the first token of the element after the gap.
 // - `if true`: an opening delimiter missing after its introducer, located at
-//   the introducer the message names.
+//   the token after the introducer.
 // - `var n`: the lexer inserting a `)` to recover, which the label reports,
 //   because everything reported after that point is about that reading of the
 //   file rather than about what was written.
-// - `class Widget`: a `;` missing at the end of a declaration, located at the
-//   last token of the declaration. This is last in the file because recovery
+// - `class Widget`: a `;` missing at the end of a declaration, which is the
+//   case where the next token is the end of the file, so the message is drawn
+//   as a point just past `Widget`. This is last in the file because recovery
 //   skips to what looks like the end of the declaration, which consumes
-//   everything after it. It is also the case where the next token is the end
-//   of the file.
+//   everything after it.
 
 library "recovery_demo";
 

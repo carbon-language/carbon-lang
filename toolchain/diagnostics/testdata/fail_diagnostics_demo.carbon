@@ -46,14 +46,14 @@
 // - `missing`: the message placed under its own range with nothing else on
 //   the line, which is the common case. The warning below it has the same
 //   shape on the binding it initializes.
-// - `count * flag`: the message placed under the operator, which connects the
-//   syntax to the interface the message reports missing, and a label on each
-//   operand with its type. The labels follow the message in source order, so
-//   their label lines cross the rows above them.
-// - `cell[n]`: the same shape for a different syntax, with the message placed
-//   under the index and a label only on the object.
-// - `-flag`: the message alone under a prefix operator, a single column
-//   directly against its operand.
+// - `count * flag`: the message placed under the whole expression it reports,
+//   which is a binary operator and both its operands. The other two errors on
+//   this line are separate diagnostics, so each is drawn in its own frame,
+//   which shows the line again.
+// - `cell[n]`: the same shape for an index, with the message under the object
+//   and the index together.
+// - `-flag`: the same shape for a prefix operator, with the message under the
+//   operator and its operand.
 
 library "demo";
 
