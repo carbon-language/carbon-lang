@@ -284,23 +284,6 @@ static auto TryGetSpecificWitnessIdForImpl(
     return SemIR::ConstantId::None;
   }
 
-  if (specific_id.has_value()) {
-    // Evaluating a LookupImplWitness to an ImplWitness comes with a promise
-    // that the ImplDecl specific that the ImplWitness refers to will be
-    // resolved: both its decl and its definition blocks. This allows the
-    // evaluation of other instructions that use the witness as an operand to
-    // access values from the ImplWitness witness table, since it contains
-    // constant values that must be viewed through the specific referred to by
-    // the ImplWitness.
-    //
-    // If the ImplWitness returned here is symbolic (the specific it refers to
-    // has symbolic arguments), this promise must be maintained not just for
-    // this specific but for future specifics formed that make use of the
-    // returned ImplWitness. This is done through the RequireSpecificDefinition
-    // instruction in InstAddedToEvalBlock().
-    ResolveSpecificDefinition(context, loc_id, specific_id);
-  }
-
   LoadImportRef(context, impl.witness_id);
   return SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
                                            impl.witness_id);

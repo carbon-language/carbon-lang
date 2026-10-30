@@ -440,6 +440,13 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
         if (element.has_value() &&
             element != SemIR::InstId::ImplWitnessTablePlaceholder) {
           LoadImportRef(context, element);
+          // The constant values in the witness table may depend on the ImplDecl
+          // specific definition, which we must ensure is resolved before
+          // accessing them.
+          if (witness.specific_id.has_value()) {
+            ResolveSpecificDefinition(context, SemIR::LocId(inst_id),
+                                      witness.specific_id);
+          }
           return ConstantEvalResult::Existing(GetConstantValueInSpecific(
               context.sem_ir(), witness.specific_id, element));
         }
@@ -621,13 +628,6 @@ auto EvalConstantInst(Context& context, SemIR::InstId inst_id,
 
   // If it's not a concrete constant, require it to be complete once it
   // becomes one.
-  return ConstantEvalResult::NewSamePhase(inst);
-}
-
-auto EvalConstantInst(Context& context, SemIR::RequireSpecificDefinition inst)
-    -> ConstantEvalResult {
-  // This can return false, we just need to try it.
-  ResolveSpecificDefinition(context, SemIR::LocId::None, inst.specific_id);
   return ConstantEvalResult::NewSamePhase(inst);
 }
 

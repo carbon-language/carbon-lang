@@ -332,7 +332,5 @@ fn F() {
 // CHECK:STDOUT:   %CC.loc19_28.2 => constants.%CC.2bf
 // CHECK:STDOUT:   %.loc19_35 => constants.%.b08
 // CHECK:STDOUT:   %Z.impl_witness.loc19_35.2 => constants.%Z.impl_witness.f9a
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -50,11 +50,11 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 // CHECK:STDOUT:   %Copy.impl_witness.8af: <witness> = impl_witness imports.%Copy.impl_witness_table.f44, @Int.as.Copy.impl(%int_32) [concrete]
 // CHECK:STDOUT:   %Copy.facet.95d: %Copy.type = facet_value %i32, (%Copy.impl_witness.8af) [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.526: <witness> = impl_witness imports.%Copy.impl_witness_table.aca, @const.as.Copy.impl(%Copy.facet.95d) [concrete]
-// CHECK:STDOUT:   %const.as.Copy.impl.Op.type.0da: type = fn_type @const.as.Copy.impl.Op, @const.as.Copy.impl(%Copy.facet.95d) [concrete]
-// CHECK:STDOUT:   %const.as.Copy.impl.Op.594: %const.as.Copy.impl.Op.type.0da = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.f50: %Copy.type = facet_value %const.003, (%Copy.impl_witness.526) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.e9c: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.f50) [concrete]
 // CHECK:STDOUT:   %.7ba: type = fn_type_with_self_type %Copy.WithSelf.Op.type.e9c, %Copy.facet.f50 [concrete]
+// CHECK:STDOUT:   %const.as.Copy.impl.Op.type.0da: type = fn_type @const.as.Copy.impl.Op, @const.as.Copy.impl(%Copy.facet.95d) [concrete]
+// CHECK:STDOUT:   %const.as.Copy.impl.Op.594: %const.as.Copy.impl.Op.type.0da = struct_value () [concrete]
 // CHECK:STDOUT:   %const.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %const.as.Copy.impl.Op.594, @const.as.Copy.impl.Op(%Copy.facet.95d) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -848,8 +848,6 @@ fn CallsWithTypeExplicit(generic U: type) {
 // CHECK:STDOUT:   %A.as_type.loc7_25.2 => constants.%W.as_type
 // CHECK:STDOUT:   %.loc7_35 => constants.%.c97
 // CHECK:STDOUT:   %Eats.impl_witness.loc7_35.2 => constants.%Eats.impl_witness.31e
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @FeedTame2(constants.%facet_value) {

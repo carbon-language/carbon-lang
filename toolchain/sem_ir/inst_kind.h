@@ -241,18 +241,6 @@ enum class InstConstantNeedsInstIdKind : int8_t {
   Permanent,
 };
 
-// Indicates behaviour to be expected when inserting an instruction of this kind
-// into an eval block.
-enum class InstEvalBlockKind : int8_t {
-  // The instruction, and only the one instruction, is inserted into the eval
-  // block without modification.
-  AlwaysSingle,
-
-  // The instruction is inserted into the eval block, but additional
-  // instructions may be inserted with it.
-  Conditional,
-};
-
 // Whether an instruction is a terminator or part of the terminator sequence.
 // The instructions in a block appear in the order NotTerminator, then
 // TerminatorSequence, then Terminator, which is also the numerical order of
@@ -295,7 +283,6 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
         constant_kind == InstConstantKind::AlwaysUnique
             ? InstConstantNeedsInstIdKind::Permanent
             : InstConstantNeedsInstIdKind::No;
-    InstEvalBlockKind eval_block_kind = InstEvalBlockKind::AlwaysSingle;
     bool action_needs_specific_id = false;
     TerminatorKind terminator_kind = TerminatorKind::NotTerminator;
     bool is_lowered = true;
@@ -344,10 +331,6 @@ class InstKind : public CARBON_ENUM_BASE(InstKind) {
   // Returns this instruction kind's category of allowed constants.
   auto constant_kind() const -> InstConstantKind {
     return definition_info(*this).constant_kind;
-  }
-
-  auto eval_block_kind() const -> InstEvalBlockKind {
-    return definition_info(*this).eval_block_kind;
   }
 
   // Returns whether this instruction kind is an action instruction.
@@ -470,11 +453,6 @@ class InstKind::Definition : public InstKind {
   // Returns this instruction kind's category of allowed constants.
   constexpr auto constant_kind() const -> InstConstantKind {
     return info_.constant_kind;
-  }
-
-  // Returns this instruction kind's behaviour when added to an eval block.
-  constexpr auto eval_block_kind() const -> InstEvalBlockKind {
-    return info_.eval_block_kind;
   }
 
   // Returns whether this instruction kind is an action instruction.

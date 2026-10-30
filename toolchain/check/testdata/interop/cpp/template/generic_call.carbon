@@ -104,13 +104,13 @@ fn G() {
 // CHECK:STDOUT:   %custom_witness.9b4: <witness> = custom_witness (%S.Op.4dca31.1), @Default [concrete]
 // CHECK:STDOUT:   %Default.facet.602: %Default.type = facet_value %S, (%custom_witness.9b4) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.impl_witness.4c0: <witness> = impl_witness imports.%DefaultOrUnformed.impl_witness_table.162, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.602) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.46a: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.602) [concrete]
-// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.89b: %T.as_type.as.DefaultOrUnformed.impl.Op.type.46a = struct_value () [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.facet.dd9: %DefaultOrUnformed.type = facet_value %S, (%DefaultOrUnformed.impl_witness.4c0) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.WithSelf.Op.type.2e6: type = fn_type @DefaultOrUnformed.WithSelf.Op, @DefaultOrUnformed.WithSelf(%DefaultOrUnformed.facet.dd9) [concrete]
 // CHECK:STDOUT:   %DefaultOrUnformed.assoc_type: type = assoc_entity_type @DefaultOrUnformed [concrete]
 // CHECK:STDOUT:   %assoc0: %DefaultOrUnformed.assoc_type = assoc_entity element0, imports.%Core.import_ref.c82 [concrete]
 // CHECK:STDOUT:   %.e57: type = fn_type_with_self_type %DefaultOrUnformed.WithSelf.Op.type.2e6, %DefaultOrUnformed.facet.dd9 [concrete]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.type.46a: type = fn_type @T.as_type.as.DefaultOrUnformed.impl.Op, @T.as_type.as.DefaultOrUnformed.impl(%Default.facet.602) [concrete]
+// CHECK:STDOUT:   %T.as_type.as.DefaultOrUnformed.impl.Op.89b: %T.as_type.as.DefaultOrUnformed.impl.Op.type.46a = struct_value () [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.3: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.9dd: %.e57 = splice_block %impl.elem0.ef9 [concrete = %T.as_type.as.DefaultOrUnformed.impl.Op.89b] {
 // CHECK:STDOUT:       %as_type: type = facet_access_type %DefaultOrUnformed.facet.dd9 [concrete = %S]

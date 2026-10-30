@@ -351,7 +351,7 @@ fn H(generic T: type) {
 // CHECK:STDOUT:   %B.type.904f2f.1: type = facet_type <@B, @B(%ptr.e8f8f9.1)> [symbolic]
 // CHECK:STDOUT:   %.61f: <witness> = impl_self_witness %BB.a11, @B, @B(%ptr.e8f8f9.1) [symbolic]
 // CHECK:STDOUT:   %B.impl_witness.089: <witness> = impl_witness @BB.as_type.as.B.impl.%B.impl_witness_table, @BB.as_type.as.B.impl(%AA, %BB.a11) [symbolic]
-// CHECK:STDOUT:   %require_complete.58dcfe.1: <witness> = require_complete_type %B.type.904f2f.1 [symbolic]
+// CHECK:STDOUT:   %require_complete.58d: <witness> = require_complete_type %B.type.904f2f.1 [symbolic]
 // CHECK:STDOUT:   %DD.patt: %pattern_type.9a5 = symbolic_binding_pattern DD, 0 [symbolic]
 // CHECK:STDOUT:   %DD: type = symbolic_binding DD, 0 [symbolic]
 // CHECK:STDOUT:   %D.1a8: type = class_type @D, @D(%DD) [symbolic]
@@ -443,7 +443,7 @@ fn H(generic T: type) {
 // CHECK:STDOUT:   %B.impl_witness.loc9_62.2: <witness> = impl_witness %B.impl_witness_table, @BB.as_type.as.B.impl(%AA.loc9_16.2, %BB.loc9_26.2) [symbolic = %B.impl_witness.loc9_62.2 (constants.%B.impl_witness.089)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete.loc9_60: <witness> = require_complete_type %B.type.loc9_60.2 [symbolic = %require_complete.loc9_60 (constants.%require_complete.58dcfe.1)]
+// CHECK:STDOUT:   %require_complete.loc9_60: <witness> = require_complete_type %B.type.loc9_60.2 [symbolic = %require_complete.loc9_60 (constants.%require_complete.58d)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   impl: %.loc9_49 as %B.type.loc9_60.1 {
 // CHECK:STDOUT:     %B.impl_witness_table = impl_witness_table (), @BB.as_type.as.B.impl [concrete]

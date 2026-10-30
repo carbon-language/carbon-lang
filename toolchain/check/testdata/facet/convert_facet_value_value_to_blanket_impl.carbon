@@ -264,8 +264,6 @@ fn HandleAnimal[T: Animal](a: T) { Feed(a); }
 // CHECK:STDOUT:   %A.as_type.loc18_25.2 => constants.%T.as_type.01d
 // CHECK:STDOUT:   %.loc18_35 => constants.%.45f396.2
 // CHECK:STDOUT:   %Eats.impl_witness.loc18_35.2 => constants.%Eats.impl_witness.861e2e.2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Feed(constants.%Eats.facet.934) {

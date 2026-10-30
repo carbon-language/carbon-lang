@@ -87,11 +87,11 @@ fn F(template T: type, generic U: type) -> (T, U) {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.20f: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67db0b.2) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f12: %ptr.as.Copy.impl.Op.type.20f = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.e1a: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.56e: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%empty_tuple.type) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.284: %ptr.as.Copy.impl.Op.type.56e = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.843, (%Copy.impl_witness.e1a) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.5ad: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.f8c: type = fn_type_with_self_type %Copy.WithSelf.Op.type.5ad, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.56e: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%empty_tuple.type) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.284: %ptr.as.Copy.impl.Op.type.56e = struct_value () [concrete]
 // CHECK:STDOUT:   %inst.splice_block.426619.1: <instruction> = inst_value [concrete] {
 // CHECK:STDOUT:     %.334: <bound method> = splice_block %bound_method.7f0 {
 // CHECK:STDOUT:       %.422: %ptr.843 = specific_inst @F.%.loc6_10.2, @F(%empty_tuple.type)

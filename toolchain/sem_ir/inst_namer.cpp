@@ -1368,10 +1368,6 @@ auto InstNamer::NamingContext::NameInst() -> void {
       AddInstName("require_complete");
       return;
     }
-    case RequireSpecificDefinition::Kind: {
-      AddInstName("require_specific_def");
-      return;
-    }
     case CARBON_KIND(RequireImplsDecl inst): {
       AddEntityNameAndMaybePush(inst.require_impls_id, ".decl");
       auto require_scope_id = inst_namer_->GetScopeFor(inst.require_impls_id);

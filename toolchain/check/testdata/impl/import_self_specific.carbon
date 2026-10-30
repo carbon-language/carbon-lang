@@ -328,8 +328,6 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %U.loc9_15.2 => constants.%as_type
 // CHECK:STDOUT:   %.loc9_30 => constants.%.85e
 // CHECK:STDOUT:   %Z.impl_witness.loc9_30.2 => constants.%Z.impl_witness.19e
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Z.facet.4d3) {
@@ -728,8 +726,6 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %T => constants.%empty_tuple.type
 // CHECK:STDOUT:   %.1 => constants.%.fa3
 // CHECK:STDOUT:   %Y.impl_witness => constants.%Y.impl_witness.ef1
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @D.as.I.impl(constants.%N) {
@@ -756,8 +752,6 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %U => constants.%empty_tuple.type
 // CHECK:STDOUT:   %.1 => constants.%.78e
 // CHECK:STDOUT:   %Z.impl_witness => constants.%Z.impl_witness.3e9
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C(constants.%Z.facet.f3d) {
