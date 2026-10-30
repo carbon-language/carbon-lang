@@ -2922,11 +2922,14 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   // Handle calls to `eval` and `musteval` functions.
   if (evaluation_mode != SemIR::Function::EvaluationMode::None) {
     // A non-concrete call to `eval` or `musteval` is a template symbolic
-    // constant, regardless of the phase of the arguments.
+    // constant, unless it is only dependent on `.Self`. Then preserve that so
+    // a Call on the RHS of a `where` does not change the phase of the whole
+    // facet type.
     if (phase != Phase::Concrete) {
       CARBON_CHECK(phase <= Phase::TemplateSymbolic);
-      return MakeConstantResult(eval_context.context(), call,
-                                Phase::TemplateSymbolic);
+      phase = phase == Phase::PeriodSelfSymbolic ? Phase::PeriodSelfSymbolic
+                                                 : Phase::TemplateSymbolic;
+      return MakeConstantResult(eval_context.context(), call, phase);
     }
 
     // TODO: Instead of performing the call immediately, add it to a work queue
