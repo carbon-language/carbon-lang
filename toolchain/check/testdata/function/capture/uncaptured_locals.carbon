@@ -18,7 +18,7 @@ class X {}
 fn Test() {
   let x: X = {};
   fn Inner() {
-    // CHECK:STDERR: fail_reference_uncaptured.carbon:[[@LINE+3]]:23: error: cannot reference local `x` from enclosing scope [UncapturedLocal]
+    // CHECK:STDERR: fail_reference_uncaptured.carbon:[[@LINE+3]]:23: error: cannot reference local `x` declared in enclosing scope [UncapturedLocal]
     // CHECK:STDERR: fail_reference_uncaptured.carbon:[[@LINE-3]]:7-10: note: declared here [UncapturedLocalDecl]
     // CHECK:STDERR:
     let unused y: X = x;
@@ -31,13 +31,13 @@ library "[[@TEST_NAME]]";
 fn F(p: i32) {
   var n: i32;
   fn G() -> i32 {
-    // CHECK:STDERR: fail_reference_uncaptured_var_and_param.carbon:[[@LINE+3]]:12: error: cannot reference local `n` from enclosing scope [UncapturedLocal]
+    // CHECK:STDERR: fail_reference_uncaptured_var_and_param.carbon:[[@LINE+3]]:12: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
     // CHECK:STDERR: fail_reference_uncaptured_var_and_param.carbon:[[@LINE-3]]:7-12: note: declared here [UncapturedLocalDecl]
     // CHECK:STDERR:
     return n;
   }
   fn H() -> i32 {
-    // CHECK:STDERR: fail_reference_uncaptured_var_and_param.carbon:[[@LINE+3]]:12: error: cannot reference local `p` from enclosing scope [UncapturedLocal]
+    // CHECK:STDERR: fail_reference_uncaptured_var_and_param.carbon:[[@LINE+3]]:12: error: cannot reference local `p` declared in enclosing scope [UncapturedLocal]
     // CHECK:STDERR: fail_reference_uncaptured_var_and_param.carbon:[[@LINE-10]]:6-11: note: declared here [UncapturedLocalDecl]
     // CHECK:STDERR:
     return p;
@@ -52,7 +52,7 @@ class X {}
 fn Test() {
   let x: X = {};
   (fn() {
-    // CHECK:STDERR: fail_reference_uncaptured_lambda.carbon:[[@LINE+3]]:23: error: cannot reference local `x` from enclosing scope [UncapturedLocal]
+    // CHECK:STDERR: fail_reference_uncaptured_lambda.carbon:[[@LINE+3]]:23: error: cannot reference local `x` declared in enclosing scope [UncapturedLocal]
     // CHECK:STDERR: fail_reference_uncaptured_lambda.carbon:[[@LINE-3]]:7-10: note: declared here [UncapturedLocalDecl]
     // CHECK:STDERR:
     let unused y: X = x;
@@ -66,16 +66,16 @@ fn F() {
   var n: i32 = 0;
   let m: i32 = 1;
   class Local {
-    // CHECK:STDERR: fail_reference_uncaptured_local_class.carbon:[[@LINE+3]]:22: error: cannot reference local `n` from enclosing scope [UncapturedLocal]
+    // CHECK:STDERR: fail_reference_uncaptured_local_class.carbon:[[@LINE+3]]:22: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
     // CHECK:STDERR: fail_reference_uncaptured_local_class.carbon:[[@LINE-4]]:7-12: note: declared here [UncapturedLocalDecl]
     // CHECK:STDERR:
     var field: i32 = n;
-    // CHECK:STDERR: fail_reference_uncaptured_local_class.carbon:[[@LINE+3]]:27: error: cannot reference local `m` from enclosing scope [UncapturedLocal]
+    // CHECK:STDERR: fail_reference_uncaptured_local_class.carbon:[[@LINE+3]]:27: error: cannot reference local `m` declared in enclosing scope [UncapturedLocal]
     // CHECK:STDERR: fail_reference_uncaptured_local_class.carbon:[[@LINE-7]]:7-12: note: declared here [UncapturedLocalDecl]
     // CHECK:STDERR:
     let member_let: i32 = m;
     fn Method() -> i32 {
-      // CHECK:STDERR: fail_reference_uncaptured_local_class.carbon:[[@LINE+3]]:14: error: cannot reference local `n` from enclosing scope [UncapturedLocal]
+      // CHECK:STDERR: fail_reference_uncaptured_local_class.carbon:[[@LINE+3]]:14: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
       // CHECK:STDERR: fail_reference_uncaptured_local_class.carbon:[[@LINE-13]]:7-12: note: declared here [UncapturedLocalDecl]
       // CHECK:STDERR:
       return n;
@@ -91,7 +91,7 @@ class C {}
 fn F() {
   var n: i32 = 0;
   interface LocalIface {
-    // CHECK:STDERR: fail_reference_uncaptured_local_interface_and_impl.carbon:[[@LINE+3]]:18: error: cannot reference local `n` from enclosing scope [UncapturedLocal]
+    // CHECK:STDERR: fail_reference_uncaptured_local_interface_and_impl.carbon:[[@LINE+3]]:18: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
     // CHECK:STDERR: fail_reference_uncaptured_local_interface_and_impl.carbon:[[@LINE-3]]:7-12: note: declared here [UncapturedLocalDecl]
     // CHECK:STDERR:
     let X: i32 = n;
@@ -104,12 +104,12 @@ fn F() {
   // CHECK:STDERR: fail_reference_uncaptured_local_interface_and_impl.carbon:[[@LINE-4]]:9-14: note: associated constant declared here [AssociatedConstantHere]
   // CHECK:STDERR:
   impl C as OtherIface {
-    // CHECK:STDERR: fail_reference_uncaptured_local_interface_and_impl.carbon:[[@LINE+3]]:18: error: cannot reference local `n` from enclosing scope [UncapturedLocal]
+    // CHECK:STDERR: fail_reference_uncaptured_local_interface_and_impl.carbon:[[@LINE+3]]:18: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
     // CHECK:STDERR: fail_reference_uncaptured_local_interface_and_impl.carbon:[[@LINE-16]]:7-12: note: declared here [UncapturedLocalDecl]
     // CHECK:STDERR:
     let Y: i32 = n;
     fn Get(unused self) -> i32 {
-      // CHECK:STDERR: fail_reference_uncaptured_local_interface_and_impl.carbon:[[@LINE+3]]:14: error: cannot reference local `n` from enclosing scope [UncapturedLocal]
+      // CHECK:STDERR: fail_reference_uncaptured_local_interface_and_impl.carbon:[[@LINE+3]]:14: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
       // CHECK:STDERR: fail_reference_uncaptured_local_interface_and_impl.carbon:[[@LINE-21]]:7-12: note: declared here [UncapturedLocalDecl]
       // CHECK:STDERR:
       return n;
@@ -125,7 +125,7 @@ fn F() {
   // CHECK:STDERR: fail_reference_uncaptured_qualified_alias.carbon:[[@LINE+2]]:3-14: error: `namespace` declaration not at top level [NamespaceDeclNotAtTopLevel]
   // CHECK:STDERR:
   namespace N;
-  // CHECK:STDERR: fail_reference_uncaptured_qualified_alias.carbon:[[@LINE+3]]:15: error: cannot reference local `x` from enclosing scope [UncapturedLocal]
+  // CHECK:STDERR: fail_reference_uncaptured_qualified_alias.carbon:[[@LINE+3]]:15: error: cannot reference local `x` declared in enclosing scope [UncapturedLocal]
   // CHECK:STDERR: fail_reference_uncaptured_qualified_alias.carbon:[[@LINE-5]]:7-12: note: declared here [UncapturedLocalDecl]
   // CHECK:STDERR:
   alias N.a = x;
@@ -147,7 +147,7 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   var n: i32 = 0;
-  // CHECK:STDERR: fail_typeof_nested_lambda.carbon:[[@LINE+3]]:46: error: cannot reference local `n` from enclosing scope [UncapturedLocal]
+  // CHECK:STDERR: fail_typeof_nested_lambda.carbon:[[@LINE+3]]:46: error: cannot reference local `n` declared in enclosing scope [UncapturedLocal]
   // CHECK:STDERR: fail_typeof_nested_lambda.carbon:[[@LINE-2]]:7-12: note: declared here [UncapturedLocalDecl]
   // CHECK:STDERR:
   let unused x: typeof((fn() -> i32 { return n; })()) = 0;

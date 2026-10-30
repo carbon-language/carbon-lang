@@ -177,16 +177,15 @@ struct ChoiceInfo {
   int num_alternative_bits;
 };
 
-// Builds a `let` binding for an alternative without parameters as a member of
-// the resulting class for the Choice definition. If the alternative was `Alt`
-// then the binding will be like:
+// Builds a binding for an alternative without parameters as a member of the
+// resulting class for the Choice definition. If the alternative was `Alt` then
+// the binding will be like:
 // ```
-//   let Alt: ChoiceType = <ChoiceType with Alt selected>;
+//   alias Alt = <ChoiceType with Alt selected>;
 // ```
-static auto MakeLetBinding(Context& context, const ChoiceInfo& choice_info,
-                           int alternative_index,
-                           const Context::ChoiceDeferredBinding& binding)
-    -> void {
+static auto MakeBinding(Context& context, const ChoiceInfo& choice_info,
+                        int alternative_index,
+                        const Context::ChoiceDeferredBinding& binding) -> void {
   SemIR::InstId discriminant_value_id = [&] {
     if (choice_info.num_alternative_bits == 0) {
       return AddInst(context, binding.node_id,
@@ -296,13 +295,13 @@ auto HandleParseNode(Context& context, Parse::ChoiceDefinitionId node_id)
     // `FinishGenericDefinition`, so we can't use it as a complete type yet. But
     // this also potentially adds things to the generic definition, so we can't
     // call `FinsihGenericDefinition` before this call, either.
-    MakeLetBinding(context,
-                   ChoiceInfo{.self_type_id = class_info.self_type_id,
-                              .name_scope_id = class_info.scope_id,
-                              .self_struct_type_id = self_struct_type_id,
-                              .discriminant_type_id = discriminant_type_id,
-                              .num_alternative_bits = num_alternative_bits},
-                   i, deferred_binding);
+    MakeBinding(context,
+                ChoiceInfo{.self_type_id = class_info.self_type_id,
+                           .name_scope_id = class_info.scope_id,
+                           .self_struct_type_id = self_struct_type_id,
+                           .discriminant_type_id = discriminant_type_id,
+                           .num_alternative_bits = num_alternative_bits},
+                i, deferred_binding);
   }
 
   // The scopes and blocks for the choice itself.

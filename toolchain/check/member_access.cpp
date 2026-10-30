@@ -327,8 +327,7 @@ static auto LookupMemberNameInScope(Context& context, SemIR::LocId loc_id,
     return SemIR::ErrorInst::InstId;
   }
 
-  PrepareLookupResultForUse(context, loc_id, name_id, result);
-  if (!result.scope_result.is_found()) {
+  if (!TryGetLookupResultInCurrentScope(context, loc_id, name_id, result)) {
     return SemIR::ErrorInst::InstId;
   }
 

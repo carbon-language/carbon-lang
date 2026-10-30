@@ -350,6 +350,10 @@ auto HandleParseNode(Context& context, Parse::LetDeclId node_id) -> bool {
   }
 
   context.full_pattern_stack().PopFullPattern();
+
+  // Keep the introducer on the stack until we've finished processing the
+  // declaration so we can detect when we're processing an initializer for a
+  // global let or var.
   context.decl_introducer_state_stack().Pop<Lex::TokenKind::Let>();
   return true;
 }

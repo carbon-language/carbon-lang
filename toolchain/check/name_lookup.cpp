@@ -124,11 +124,11 @@ static auto IsWrapperBinding(Context& context, SemIR::InstId inst_id) -> bool {
   return canonical_ir->insts().Is<SemIR::WrapperBinding>(canonical_inst_id);
 }
 
-auto PrepareLookupResultForUse(Context& context, SemIR::LocId loc_id,
+auto TryGetLookupResultInCurrentScope(Context& context, SemIR::LocId loc_id,
                                SemIR::NameId name_id, LookupResult& result)
-    -> void {
+    -> bool {
   if (!result.scope_result.is_found()) {
-    return;
+    return false;
   }
 
   auto target_inst_id = result.scope_result.target_inst_id();
@@ -136,18 +136,12 @@ auto PrepareLookupResultForUse(Context& context, SemIR::LocId loc_id,
                                         target_inst_id)
           .is_constant()) {
     // Constants don't need any special logic to access them.
-    return;
+    return true;
   }
-
-  auto set_error = [&] {
-    result = {.specific_id = SemIR::SpecificId::None,
-              .scope_result = SemIR::ScopeLookupResult::MakeError()};
-  };
 
   auto type_id = context.insts().Get(target_inst_id).type_id();
   if (type_id == SemIR::ErrorInst::TypeId) {
-    set_error();
-    return;
+    return false;
   }
 
   if (result.lexical_scope_index.has_value()) {
@@ -156,26 +150,25 @@ auto PrepareLookupResultForUse(Context& context, SemIR::LocId loc_id,
         result.lexical_scope_index)) {
       case ScopeStack::NonConstantAccess::Permitted:
       case ScopeStack::NonConstantAccess::Unevaluated:
-        return;
+        return true;
 
       case ScopeStack::NonConstantAccess::Disallowed: {
-        CARBON_DIAGNOSTIC(UncapturedLocal, Error,
-                          "cannot reference local `{0}` from enclosing scope",
-                          SemIR::NameId);
+        CARBON_DIAGNOSTIC(
+            UncapturedLocal, Error,
+            "cannot reference local `{0}` declared in enclosing scope",
+            SemIR::NameId);
         CARBON_DIAGNOSTIC_LABEL(UncapturedLocalDecl, Info, "declared here");
         context.emitter()
             .Build(loc_id, UncapturedLocal, name_id)
             .Attach(target_inst_id, UncapturedLocalDecl)
             .Emit();
-        set_error();
-        return;
+        return false;
       }
 
       case ScopeStack::NonConstantAccess::Captured:
         // TODO: Record the capture and build an instruction to access it.
         context.TODO(loc_id, "capture of enclosing local");
-        set_error();
-        return;
+        return false;
     }
   }
 
@@ -187,14 +180,14 @@ auto PrepareLookupResultForUse(Context& context, SemIR::LocId loc_id,
 
   if (result.specific_id.has_value()) {
     context.TODO(loc_id, "non-constant `let` binding in generic");
-    set_error();
-    return;
+    return false;
   }
 
   auto global_ref_id = AddInst<SemIR::GlobalRef>(
       context, loc_id, {.type_id = type_id, .inst_id = target_inst_id});
   result.scope_result = SemIR::ScopeLookupResult::MakeFound(
       global_ref_id, result.scope_result.access_kind());
+  return true;
 }
 
 auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
