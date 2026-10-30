@@ -68,8 +68,7 @@ class FullPatternStack {
 
   // Returns whether `kind` is the kind of a name binding declaration.
   static auto IsAnyNameBindingDeclKind(Kind kind) -> bool {
-    return kind == Kind::NameBindingDecl ||
-           kind == Kind::ClassScopeVarDecl ||
+    return kind == Kind::NameBindingDecl || kind == Kind::ClassScopeVarDecl ||
            kind == Kind::ClassScopeLetDecl;
   }
 

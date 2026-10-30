@@ -125,8 +125,8 @@ static auto IsWrapperBinding(Context& context, SemIR::InstId inst_id) -> bool {
 }
 
 auto TryGetLookupResultInCurrentScope(Context& context, SemIR::LocId loc_id,
-                               SemIR::NameId name_id, LookupResult& result)
-    -> bool {
+                                      SemIR::NameId name_id,
+                                      LookupResult& result) -> bool {
   if (!result.scope_result.is_found()) {
     return false;
   }
