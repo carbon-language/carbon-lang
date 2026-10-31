@@ -186,7 +186,7 @@ static auto PerformImplWitnessAccessAndSubstitute(
       GetOrAddInst<SemIR::ImplWitnessAccess>(context, loc_id, access);
 
   if (!context.where_stack().empty()) {
-    if (auto result = context.where_stack().back().rewrites.Lookup(
+    if (auto result = context.where_stack().Peek().rewrites.Lookup(
             context.constant_values().Get(access_id))) {
       return GetOrAddInst<SemIR::ImplWitnessAccessSubstituted>(
           context, loc_id,

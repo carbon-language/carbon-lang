@@ -472,7 +472,7 @@ static auto CollectFacetWitnessSources(
     // inner `where` expression is checked before the outer, so it needs to be
     // self-consistent and provide any `impls` constraints required by other
     // constraints.
-    const auto& impls = context.where_stack().back().impls;
+    const auto& impls = context.where_stack().Peek().impls;
     for (auto [self_const_id, facet_type_const_id] : impls) {
       self_const_id = GetCanonicalFacet(context, self_const_id);
       // TypeType (and ErrorInst) is never stored in the impls stack, so we
@@ -1182,7 +1182,7 @@ auto EvalLookupSingleFinalWitness(Context& context, SemIR::LocId loc_id,
   // If the lookup comes from inside an impl decl and is for that impl, get a
   // witness for that impl even though it does not yet exist.
   if (!context.declaring_impl_decls().empty()) {
-    const auto& declaring = context.declaring_impl_decls().back();
+    const auto& declaring = context.declaring_impl_decls().Peek();
     if (query_self_const_id == declaring.self_id ||
         IsPeriodSelf(context, eval_query.query_self_inst_id)) {
       if (query_specific_interface == declaring.specific_interface) {
