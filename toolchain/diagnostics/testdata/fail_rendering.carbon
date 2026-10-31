@@ -48,7 +48,7 @@ fn H() {
   // CHECK:STDERR:        .-| fail_note_in_same_file.carbon:[[@LINE+10]]:3
   // CHECK:STDERR:        :
   // CHECK:STDERR:      4 | fn G() {}
-  // CHECK:STDERR:        : --------
+  // CHECK:STDERR:        : ----.---
   // CHECK:STDERR:        :     '--| calling function declared here [InCallToEntity]
   // CHECK:STDERR:        :
   // CHECK:STDERR: ->  18 |   G(1);
@@ -108,7 +108,7 @@ fn Use() {
   // CHECK:STDERR:        |-| declared.carbon:4:1
   // CHECK:STDERR:        :
   // CHECK:STDERR:      4 | fn Declared();
-  // CHECK:STDERR:        : --------------
+  // CHECK:STDERR:        : -------.------
   // CHECK:STDERR:        :        '--| calling function declared here [InCallToEntity]
   // CHECK:STDERR:        '------------
   // CHECK:STDERR:
@@ -123,7 +123,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        .-| fail_two_spans_on_one_line.carbon:[[@LINE+7]]:27
 // CHECK:STDERR:        :
 // CHECK:STDERR: ->  12 | fn Same() {} fn Twice() { Same(1); }
-// CHECK:STDERR:        : -----------               -------
+// CHECK:STDERR:        : -----.-----               -------
 // CHECK:STDERR:        :      '--| calling function declared here [InCallToEntity]
 // CHECK:STDERR:        '------------
 // CHECK:STDERR:
@@ -195,7 +195,7 @@ fn CallIt() {
   // CHECK:STDERR:        |-| ./cpp_decl.h:3:6
   // CHECK:STDERR:        :
   // CHECK:STDERR:      3 | void Use(Widget w, int extra);
-  // CHECK:STDERR:        :      -   -------------------
+  // CHECK:STDERR:        :      .   ---------.---------
   // CHECK:STDERR:        :      |            '--| requires 2 arguments, but 1 was provided
   // CHECK:STDERR:        :      |               | [CppInteropParseNoteReason]
   // CHECK:STDERR:        :      '--| candidate function not viable [CppInteropParseNote]

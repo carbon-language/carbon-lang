@@ -211,6 +211,13 @@ class FileContext {
   auto HandleReferencedCppFunction(clang::FunctionDecl* cpp_decl)
       -> llvm::Function*;
 
+  // Gets the LLVM function that Clang uses for a Carbon thunk exported to C++,
+  // given the thunk's C++ declaration. The thunk's definition is lowered into
+  // this function.
+  auto GetCppThunkLLVMFunction(const FunctionTypeInfo& function_type_info,
+                               clang::FunctionDecl* cpp_decl)
+      -> llvm::Function*;
+
   // Notes that a specific function has been referenced for the first time.
   // Updates the fingerprint to include the function's type, and adds the
   // function to the list of specific functions whose definitions should be

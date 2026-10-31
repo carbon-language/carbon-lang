@@ -231,7 +231,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.Final.Main(ptr %self) #8 !dbg !49 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.Final.Main(ptr noundef nonnull align 8 dereferenceable(8) %self) #7 !dbg !49 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Final.Main(ptr %self), !dbg !51
 // CHECK:STDOUT:   ret void, !dbg !51
@@ -262,7 +262,7 @@ void delete_new_Base() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.Base.Main(ptr %self) #8 !dbg !66 {
+// CHECK:STDOUT: define void @_CF__carbon_thunk.Base.Main(ptr noundef nonnull align 8 dereferenceable(8) %self) #7 !dbg !66 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.Base.Main(ptr %self), !dbg !68
 // CHECK:STDOUT:   ret void, !dbg !68
