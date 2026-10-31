@@ -21,14 +21,14 @@ class Class(template T: type) {
   var n: T;
 }
 
-// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+3]]:30-35: error: type `<pattern for <splice of <cannot stringify inst7800007F: {kind: ConvertToValueAction, arg0: inst7800007C, arg1: inst(TypeType), type: type(inst(InstType))}>>>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T>` [RedeclParamDiffersType]
+// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+3]]:30-35: error: type `<pattern for <splice of <cannot stringify inst7800007E: {kind: ConvertToValueAction, arg0: inst7800007B, arg1: inst(TypeType), type: type(inst(InstType))}>>>` of parameter 1 in redeclaration differs from previous parameter type `<pattern for T>` [RedeclParamDiffersType]
 // CHECK:STDERR: fail_todo_basic.carbon:[[@LINE-6]]:8-11: note: previous declaration's corresponding parameter here [RedeclParamPrevious]
 // CHECK:STDERR:
 fn Class(template T: type).F(n: T.U) -> T.U {
   return n;
 }
 
-// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+3]]:1-43: error: function redeclaration differs because return type is `<splice of <cannot stringify inst780000DF: {kind: ConvertToValueAction, arg0: inst780000DC, arg1: inst(TypeType), type: type(inst(InstType))}>>` [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR: fail_todo_basic.carbon:[[@LINE+3]]:1-43: error: function redeclaration differs because return type is `<splice of <cannot stringify inst780000DE: {kind: ConvertToValueAction, arg0: inst780000DB, arg1: inst(TypeType), type: type(inst(InstType))}>>` [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR: fail_todo_basic.carbon:[[@LINE-12]]:3-18: note: previously declared with return type `T` [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:
 fn Class(template T: type).G(self) -> T.U {
