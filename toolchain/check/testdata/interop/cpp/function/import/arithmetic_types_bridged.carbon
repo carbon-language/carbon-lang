@@ -234,8 +234,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_overflow_max.carbon:[[@LINE+4]]:11-16: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
-  // CHECK:STDERR: included from: fail_import_short_param_overflow_max.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_short_param_overflow_max.carbon:[[@LINE+3]]:11-16: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
   // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo(0x8000);
@@ -260,8 +259,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_overflow_min.carbon:[[@LINE+4]]:11-17: error: integer value -32769 too large for type `i16` [IntTooLargeForType]
-  // CHECK:STDERR: included from: fail_import_short_param_overflow_min.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_short_param_overflow_min.carbon:[[@LINE+3]]:11-17: error: integer value -32769 too large for type `i16` [IntTooLargeForType]
   // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo(-0x8001);
@@ -274,9 +272,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+5]]:11-18: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
-  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+4]]:11-18: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: included from: fail_import_short_param_int32_arg.carbon:[[@LINE-5]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+4]]:11-18: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
+  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+3]]:11-18: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   Cpp.foo(1 as i32);

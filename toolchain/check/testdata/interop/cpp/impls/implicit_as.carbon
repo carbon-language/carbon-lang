@@ -107,8 +107,7 @@ import Cpp library "implicit_conversions.h";
 
 fn InaccessibleConstructorTest(s: Cpp.Source) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_access.carbon:[[@LINE+4]]:40: error: cannot access private member `InaccessibleConstructor` of type `Cpp.InaccessibleConstructor` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_access.carbon:[[@LINE-5]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_access.carbon:[[@LINE+3]]:40: error: cannot access private member `InaccessibleConstructor` of type `Cpp.InaccessibleConstructor` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./implicit_conversions.h:21:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let _: Cpp.InaccessibleConstructor = s;
@@ -117,8 +116,7 @@ fn InaccessibleConstructorTest(s: Cpp.Source) {
 
 fn InaccessibleConversionTest(s: Cpp.InaccessibleConversion) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_access.carbon:[[@LINE+4]]:21: error: cannot access private member `<C++ operator>` of type `Cpp.InaccessibleConversion` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_access.carbon:[[@LINE-15]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_access.carbon:[[@LINE+3]]:21: error: cannot access private member `<C++ operator>` of type `Cpp.InaccessibleConversion` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./implicit_conversions.h:26:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let _: Cpp.Dest = s;
@@ -193,9 +191,8 @@ import Cpp library "implicit_conversions.h";
 
 fn IntConstructorTest(u: u32) {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE+5]]:31: error: cannot implicitly convert expression of type `u32` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE+4]]:31: note: type `u32` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: included from: fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE-6]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE+4]]:31: error: cannot implicitly convert expression of type `u32` to `i32` [ConversionFailure]
+  // CHECK:STDERR: fail_no_u32_to_int_conversion_in_carbon.carbon:[[@LINE+3]]:31: note: type `u32` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
   // CHECK:STDERR: ./implicit_conversions.h:38:21: note: initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:
   let _: Cpp.IntConstructor = u;
@@ -602,56 +599,56 @@ fn InitFromStruct() {
 // CHECK:STDOUT: fn @InaccessibleConstructorTest(%s.param: %Source) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %Source = name_ref s, %s
-// CHECK:STDOUT:   %.loc12_40.1: ref %InaccessibleConstructor = temporary_storage
-// CHECK:STDOUT:   %.loc12_40.2: ref %Source = value_as_ref %s.ref
-// CHECK:STDOUT:   %addr.loc12_40.1: %ptr.5f6 = addr_of %.loc12_40.2
-// CHECK:STDOUT:   %addr.loc12_40.2: %ptr.859 = addr_of %.loc12_40.1
-// CHECK:STDOUT:   %InaccessibleConstructor__carbon_thunk.call: init %empty_tuple.type = call imports.%InaccessibleConstructor__carbon_thunk.decl(%addr.loc12_40.1, %addr.loc12_40.2)
-// CHECK:STDOUT:   %.loc12_40.3: init %InaccessibleConstructor to %.loc12_40.1 = mark_in_place_init %InaccessibleConstructor__carbon_thunk.call
-// CHECK:STDOUT:   %.loc12_40.4: init %InaccessibleConstructor = converted %s.ref, %.loc12_40.3
-// CHECK:STDOUT:   %.loc12_40.5: ref %InaccessibleConstructor = temporary %.loc12_40.1, %.loc12_40.4
-// CHECK:STDOUT:   %.loc12_40.6: %InaccessibleConstructor = acquire_value %.loc12_40.5
-// CHECK:STDOUT:   %.loc12_13: type = splice_block %InaccessibleConstructor.ref [concrete = constants.%InaccessibleConstructor] {
-// CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc11_40.1: ref %InaccessibleConstructor = temporary_storage
+// CHECK:STDOUT:   %.loc11_40.2: ref %Source = value_as_ref %s.ref
+// CHECK:STDOUT:   %addr.loc11_40.1: %ptr.5f6 = addr_of %.loc11_40.2
+// CHECK:STDOUT:   %addr.loc11_40.2: %ptr.859 = addr_of %.loc11_40.1
+// CHECK:STDOUT:   %InaccessibleConstructor__carbon_thunk.call: init %empty_tuple.type = call imports.%InaccessibleConstructor__carbon_thunk.decl(%addr.loc11_40.1, %addr.loc11_40.2)
+// CHECK:STDOUT:   %.loc11_40.3: init %InaccessibleConstructor to %.loc11_40.1 = mark_in_place_init %InaccessibleConstructor__carbon_thunk.call
+// CHECK:STDOUT:   %.loc11_40.4: init %InaccessibleConstructor = converted %s.ref, %.loc11_40.3
+// CHECK:STDOUT:   %.loc11_40.5: ref %InaccessibleConstructor = temporary %.loc11_40.1, %.loc11_40.4
+// CHECK:STDOUT:   %.loc11_40.6: %InaccessibleConstructor = acquire_value %.loc11_40.5
+// CHECK:STDOUT:   %.loc11_13: type = splice_block %InaccessibleConstructor.ref [concrete = constants.%InaccessibleConstructor] {
+// CHECK:STDOUT:     %Cpp.ref.loc11: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %InaccessibleConstructor.ref: type = name_ref InaccessibleConstructor, imports.%InaccessibleConstructor.decl [concrete = constants.%InaccessibleConstructor]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %InaccessibleConstructor = wrapper_binding _, %.loc12_40.6
+// CHECK:STDOUT:   %_: %InaccessibleConstructor = wrapper_binding _, %.loc11_40.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.824 = value_binding_pattern _ [concrete = constants.%_.patt.f1f]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc12_40.1: %Destroy.type = facet_value constants.%InaccessibleConstructor, (constants.%DestroyImpl.impl_witness.8e4, constants.%custom_witness.5760f4.1) [concrete = constants.%Destroy.facet.8e3]
-// CHECK:STDOUT:   %.loc12_40.7: %Destroy.type = converted constants.%InaccessibleConstructor, %Destroy.facet.loc12_40.1 [concrete = constants.%Destroy.facet.8e3]
-// CHECK:STDOUT:   %Destroy.facet.loc12_40.2: %Destroy.type = facet_value constants.%InaccessibleConstructor, (constants.%DestroyImpl.impl_witness.8e4, constants.%custom_witness.5760f4.1) [concrete = constants.%Destroy.facet.8e3]
-// CHECK:STDOUT:   %.loc12_40.8: %Destroy.type = converted constants.%InaccessibleConstructor, %Destroy.facet.loc12_40.2 [concrete = constants.%Destroy.facet.8e3]
+// CHECK:STDOUT:   %Destroy.facet.loc11_40.1: %Destroy.type = facet_value constants.%InaccessibleConstructor, (constants.%DestroyImpl.impl_witness.8e4, constants.%custom_witness.5760f4.1) [concrete = constants.%Destroy.facet.8e3]
+// CHECK:STDOUT:   %.loc11_40.7: %Destroy.type = converted constants.%InaccessibleConstructor, %Destroy.facet.loc11_40.1 [concrete = constants.%Destroy.facet.8e3]
+// CHECK:STDOUT:   %Destroy.facet.loc11_40.2: %Destroy.type = facet_value constants.%InaccessibleConstructor, (constants.%DestroyImpl.impl_witness.8e4, constants.%custom_witness.5760f4.1) [concrete = constants.%Destroy.facet.8e3]
+// CHECK:STDOUT:   %.loc11_40.8: %Destroy.type = converted constants.%InaccessibleConstructor, %Destroy.facet.loc11_40.2 [concrete = constants.%Destroy.facet.8e3]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc12_40.5)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc11_40.5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InaccessibleConversionTest(%s.param: %InaccessibleConversion) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %s.ref: %InaccessibleConversion = name_ref s, %s
-// CHECK:STDOUT:   %.loc22_21.1: ref %Dest = temporary_storage
-// CHECK:STDOUT:   %addr: %ptr.ca8 = addr_of %.loc22_21.1
+// CHECK:STDOUT:   %.loc20_21.1: ref %Dest = temporary_storage
+// CHECK:STDOUT:   %addr: %ptr.ca8 = addr_of %.loc20_21.1
 // CHECK:STDOUT:   %Dest__carbon_thunk.call: init %empty_tuple.type = call imports.%Dest__carbon_thunk.decl(%s.ref, %addr)
-// CHECK:STDOUT:   %.loc22_21.2: init %Dest to %.loc22_21.1 = mark_in_place_init %Dest__carbon_thunk.call
-// CHECK:STDOUT:   %.loc22_21.3: init %Dest = converted %s.ref, %.loc22_21.2
-// CHECK:STDOUT:   %.loc22_21.4: ref %Dest = temporary %.loc22_21.1, %.loc22_21.3
-// CHECK:STDOUT:   %.loc22_21.5: %Dest = acquire_value %.loc22_21.4
-// CHECK:STDOUT:   %.loc22_13: type = splice_block %Dest.ref [concrete = constants.%Dest] {
-// CHECK:STDOUT:     %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc20_21.2: init %Dest to %.loc20_21.1 = mark_in_place_init %Dest__carbon_thunk.call
+// CHECK:STDOUT:   %.loc20_21.3: init %Dest = converted %s.ref, %.loc20_21.2
+// CHECK:STDOUT:   %.loc20_21.4: ref %Dest = temporary %.loc20_21.1, %.loc20_21.3
+// CHECK:STDOUT:   %.loc20_21.5: %Dest = acquire_value %.loc20_21.4
+// CHECK:STDOUT:   %.loc20_13: type = splice_block %Dest.ref [concrete = constants.%Dest] {
+// CHECK:STDOUT:     %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Dest.ref: type = name_ref Dest, imports.%Dest.decl [concrete = constants.%Dest]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %Dest = wrapper_binding _, %.loc22_21.5
+// CHECK:STDOUT:   %_: %Dest = wrapper_binding _, %.loc20_21.5
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.b72 = value_binding_pattern _ [concrete = constants.%_.patt.664]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc22_21.1: %Destroy.type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.2) [concrete = constants.%Destroy.facet.bbf]
-// CHECK:STDOUT:   %.loc22_21.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc22_21.1 [concrete = constants.%Destroy.facet.bbf]
-// CHECK:STDOUT:   %Destroy.facet.loc22_21.2: %Destroy.type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.2) [concrete = constants.%Destroy.facet.bbf]
-// CHECK:STDOUT:   %.loc22_21.7: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc22_21.2 [concrete = constants.%Destroy.facet.bbf]
+// CHECK:STDOUT:   %Destroy.facet.loc20_21.1: %Destroy.type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.2) [concrete = constants.%Destroy.facet.bbf]
+// CHECK:STDOUT:   %.loc20_21.6: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc20_21.1 [concrete = constants.%Destroy.facet.bbf]
+// CHECK:STDOUT:   %Destroy.facet.loc20_21.2: %Destroy.type = facet_value constants.%Dest, (constants.%DestroyImpl.impl_witness.771, constants.%custom_witness.5760f4.2) [concrete = constants.%Destroy.facet.bbf]
+// CHECK:STDOUT:   %.loc20_21.7: %Destroy.type = converted constants.%Dest, %Destroy.facet.loc20_21.2 [concrete = constants.%Destroy.facet.bbf]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc22_21.4)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc20_21.4)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -884,28 +881,28 @@ fn InitFromStruct() {
 // CHECK:STDOUT: fn @IntConstructorTest(%u.param: %u32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %u.ref: %u32 = name_ref u, %u
-// CHECK:STDOUT:   %.loc13_31.1: ref %IntConstructor = temporary_storage
-// CHECK:STDOUT:   %.loc13_31.2: %i32 = converted %u.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr: %ptr.100 = addr_of %.loc13_31.1
+// CHECK:STDOUT:   %.loc12_31.1: ref %IntConstructor = temporary_storage
+// CHECK:STDOUT:   %.loc12_31.2: %i32 = converted %u.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr: %ptr.100 = addr_of %.loc12_31.1
 // CHECK:STDOUT:   %IntConstructor__carbon_thunk.call: init %empty_tuple.type = call imports.%IntConstructor__carbon_thunk.decl(<error>, %addr)
-// CHECK:STDOUT:   %.loc13_31.3: init %IntConstructor to %.loc13_31.1 = mark_in_place_init %IntConstructor__carbon_thunk.call
-// CHECK:STDOUT:   %.loc13_31.4: init %IntConstructor = converted %u.ref, %.loc13_31.3
-// CHECK:STDOUT:   %.loc13_31.5: ref %IntConstructor = temporary %.loc13_31.1, %.loc13_31.4
-// CHECK:STDOUT:   %.loc13_31.6: %IntConstructor = acquire_value %.loc13_31.5
-// CHECK:STDOUT:   %.loc13_13: type = splice_block %IntConstructor.ref [concrete = constants.%IntConstructor] {
+// CHECK:STDOUT:   %.loc12_31.3: init %IntConstructor to %.loc12_31.1 = mark_in_place_init %IntConstructor__carbon_thunk.call
+// CHECK:STDOUT:   %.loc12_31.4: init %IntConstructor = converted %u.ref, %.loc12_31.3
+// CHECK:STDOUT:   %.loc12_31.5: ref %IntConstructor = temporary %.loc12_31.1, %.loc12_31.4
+// CHECK:STDOUT:   %.loc12_31.6: %IntConstructor = acquire_value %.loc12_31.5
+// CHECK:STDOUT:   %.loc12_13: type = splice_block %IntConstructor.ref [concrete = constants.%IntConstructor] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %IntConstructor.ref: type = name_ref IntConstructor, imports.%IntConstructor.decl [concrete = constants.%IntConstructor]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %_: %IntConstructor = wrapper_binding _, %.loc13_31.6
+// CHECK:STDOUT:   %_: %IntConstructor = wrapper_binding _, %.loc12_31.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %_.patt: %pattern_type.c4e = value_binding_pattern _ [concrete = constants.%_.patt.151]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc13_31.1: %Destroy.type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc13_31.7: %Destroy.type = converted constants.%IntConstructor, %Destroy.facet.loc13_31.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc13_31.2: %Destroy.type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc13_31.8: %Destroy.type = converted constants.%IntConstructor, %Destroy.facet.loc13_31.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc12_31.1: %Destroy.type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc12_31.7: %Destroy.type = converted constants.%IntConstructor, %Destroy.facet.loc12_31.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc12_31.2: %Destroy.type = facet_value constants.%IntConstructor, (constants.%DestroyImpl.impl_witness.1d9, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc12_31.8: %Destroy.type = converted constants.%IntConstructor, %Destroy.facet.loc12_31.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc13_31.5)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc12_31.5)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

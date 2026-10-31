@@ -215,20 +215,17 @@ import library "int_ops";
 
 let not_constant: i32 = 0;
 
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:40-65: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: imported from: fail_not_constant.carbon:[[@LINE-5]]:1 [InImport]
+// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+3]]:40-65: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: int_ops.carbon:19:1-32: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let convert_not_constant_narrow: i16 = Int32ToInt16(not_constant);
 
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:38-63: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: imported from: fail_not_constant.carbon:[[@LINE-11]]:1 [InImport]
+// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+3]]:38-63: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: int_ops.carbon:11:1-32: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let convert_not_constant_same: i32 = Int32ToInt32(not_constant);
 
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:39-64: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: imported from: fail_not_constant.carbon:[[@LINE-17]]:1 [InImport]
+// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+3]]:39-64: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: int_ops.carbon:27:1-32: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let convert_not_constant_widen: i64 = Int32ToInt64(not_constant);

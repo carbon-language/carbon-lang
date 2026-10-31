@@ -70,8 +70,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_function_member_protected.h";
 
 fn F(c: Cpp.NonFunctionMemberProtected) {
-  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+4]]:35-49: error: cannot access protected member `instance_data` of type `Cpp.NonFunctionMemberProtected` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_import_non_function_member_protected.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_non_function_member_protected.carbon:[[@LINE+3]]:35-49: error: cannot access protected member `instance_data` of type `Cpp.NonFunctionMemberProtected` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let unused instance_data: i32 = c.instance_data;
@@ -92,8 +91,7 @@ class Derived {
 }
 
 fn F(d: Derived) {
-  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+4]]:35-49: error: cannot access protected member `instance_data` of type `Derived` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_import_non_function_member_protected_extend.carbon:[[@LINE-8]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_non_function_member_protected_extend.carbon:[[@LINE+3]]:35-49: error: cannot access protected member `instance_data` of type `Derived` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./non_function_member_protected.h:2:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let unused instance_data: i32 = d.instance_data;
@@ -139,8 +137,7 @@ library "[[@TEST_NAME]]";
 import Cpp library "non_function_member_private.h";
 
 fn F(c: Cpp.NonFunctionMemberPrivate) {
-  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+4]]:35-49: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_import_non_function_member_private.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_non_function_member_private.carbon:[[@LINE+3]]:35-49: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let unused instance_data: i32 = c.instance_data;
@@ -159,8 +156,7 @@ import Cpp library "non_function_member_private.h";
 class Derived {
   extend base: Cpp.NonFunctionMemberPrivate;
   fn F(self) {
-    // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+4]]:37-54: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
-    // CHECK:STDERR: included from: fail_import_non_function_member_private_extend.carbon:[[@LINE-6]]:10 [InCppInclude]
+    // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+3]]:37-54: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
     // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     let unused instance_data: i32 = self.instance_data;
@@ -168,8 +164,7 @@ class Derived {
 }
 
 fn F(d: Derived) {
-  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+4]]:35-49: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_import_non_function_member_private_extend.carbon:[[@LINE-15]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_non_function_member_private_extend.carbon:[[@LINE+3]]:35-49: error: cannot access private member `instance_data` of type `Cpp.NonFunctionMemberPrivate` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./non_function_member_private.h:2:7: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   let unused instance_data: i32 = d.instance_data;
@@ -265,8 +260,7 @@ class Derived {
   fn F(self) {
     //@dump-sem-ir-begin
     // TODO: It should be possible to call protected methods in the base class.
-    // CHECK:STDERR: fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon:[[@LINE+5]]:5-20: error: no matching function for call to 'instance_fn' [CppInteropParseError]
-    // CHECK:STDERR: included from: fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon:[[@LINE-8]]:10 [InCppInclude]
+    // CHECK:STDERR: fail_todo_import_function_member_protected_extend_call_instance_in_member.carbon:[[@LINE+4]]:5-20: error: no matching function for call to 'instance_fn' [CppInteropParseError]
     // CHECK:STDERR: ./function_member_protected.h:4:8: note: candidate function not viable [CppInteropParseNote]
     // CHECK:STDERR: ./function_member_protected.h:4:19-20: note: cannot convert argument of incomplete type 'const Carbon::Main::Derived' to 'FunctionMemberProtected' for object argument [CppInteropParseNoteReason]
     // CHECK:STDERR:
@@ -389,13 +383,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+4]]:3-64: error: cannot access protected member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_import_overload_set_protected.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+3]]:3-64: error: cannot access protected member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./overload_set.h:11:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadSet.OverloadSet(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+4]]:3-61: error: cannot access protected member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_import_overload_set_protected.carbon:[[@LINE-9]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_protected.carbon:[[@LINE+3]]:3-61: error: cannot access protected member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./overload_set.h:12:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadSet.Overload(Cpp.ProtectedCall.ProtectedCall());
@@ -442,13 +434,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+4]]:3-60: error: cannot access private member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_import_overload_set_private.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+3]]:3-60: error: cannot access private member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./overload_set.h:14:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadSet.OverloadSet(Cpp.PrivateCall.PrivateCall());
-  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+4]]:3-57: error: cannot access private member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_import_overload_set_private.carbon:[[@LINE-9]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_private.carbon:[[@LINE+3]]:3-57: error: cannot access private member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadSet.Overload(Cpp.PrivateCall.PrivateCall());
@@ -464,16 +454,14 @@ class D {
   extend base: Cpp.OverloadSet;
 
   fn MakePrivate() -> D {
-    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+4]]:21-62: error: cannot access private member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-    // CHECK:STDERR: included from: fail_import_overload_set_private_base.carbon:[[@LINE-7]]:10 [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+3]]:21-62: error: cannot access private member `OverloadSet` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
     // CHECK:STDERR: ./overload_set.h:14:3: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     return {.base = OverloadSet(Cpp.PrivateCall.PrivateCall())};
   }
 
   fn CallPrivate() {
-    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+4]]:5-43: error: cannot access private member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
-    // CHECK:STDERR: included from: fail_import_overload_set_private_base.carbon:[[@LINE-15]]:10 [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_private_base.carbon:[[@LINE+3]]:5-43: error: cannot access private member `Overload` of type `Cpp.OverloadSet` [ClassInvalidMemberAccess]
     // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Overload(Cpp.PrivateCall.PrivateCall());
@@ -507,15 +495,11 @@ library "[[@TEST_NAME]]";
 import Cpp library "overload_set_base_class.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3-64: error: cannot access protected member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-4]]:10 [InCppInclude]
-  // CHECK:STDERR: included from: ./overload_set_base_class.h:2:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+3]]:3-64: error: cannot access protected member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./overload_set.h:12:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadPublic.Overload(Cpp.ProtectedCall.ProtectedCall());
-  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+5]]:3-60: error: cannot access private member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE-10]]:10 [InCppInclude]
-  // CHECK:STDERR: included from: ./overload_set_base_class.h:2:10 [InCppInclude]
+  // CHECK:STDERR: fail_import_overload_set_public_base_class_call_non_public.carbon:[[@LINE+3]]:3-60: error: cannot access private member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   Cpp.OverloadPublic.Overload(Cpp.PrivateCall.PrivateCall());
@@ -548,9 +532,7 @@ class Derived {
   extend base: Cpp.OverloadPublic;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE+5]]:5-43: error: cannot access private member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
-    // CHECK:STDERR: included from: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE-7]]:10 [InCppInclude]
-    // CHECK:STDERR: included from: ./overload_set_base_class.h:2:10 [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_public_base_class_derived_call_private.carbon:[[@LINE+3]]:5-43: error: cannot access private member `Overload` of type `Cpp.OverloadPublic` [ClassInvalidMemberAccess]
     // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Overload(Cpp.PrivateCall.PrivateCall());
@@ -605,9 +587,7 @@ class Derived {
   extend base: Cpp.OverloadProtected;
 
   fn F() {
-    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE+5]]:5-43: error: cannot access private member `Overload` of type `Cpp.OverloadProtected` [ClassInvalidMemberAccess]
-    // CHECK:STDERR: included from: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE-7]]:10 [InCppInclude]
-    // CHECK:STDERR: included from: ./overload_set_base_class.h:2:10 [InCppInclude]
+    // CHECK:STDERR: fail_import_overload_set_protected_base_class_derived_call_private.carbon:[[@LINE+3]]:5-43: error: cannot access private member `Overload` of type `Cpp.OverloadProtected` [ClassInvalidMemberAccess]
     // CHECK:STDERR: ./overload_set.h:15:15: note: declared here [ClassMemberDeclaration]
     // CHECK:STDERR:
     Overload(Cpp.PrivateCall.PrivateCall());

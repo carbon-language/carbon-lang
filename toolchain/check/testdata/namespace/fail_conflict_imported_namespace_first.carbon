@@ -24,8 +24,7 @@ package Example;
 
 import library "namespace";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:4-5: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:4-5: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: namespace.carbon:4:1-13: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 fn NS();

@@ -20,19 +20,17 @@
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: error: name `missing` not found [NameNotFound]
-  // CHECK:STDERR:        .-| fail_one_message.carbon:[[@LINE+13]]:23
-  // CHECK:STDERR:        :
-  // CHECK:STDERR: ->  19 |   var unused_x: i32 = missing;
-  // CHECK:STDERR:        :                       -------
-  // CHECK:STDERR:        '------------
+  // CHECK:STDERR:        .-| fail_one_message.carbon:[[@LINE+12]]:23
+  // CHECK:STDERR: ->  17 |   var unused_x: i32 = missing;
+  // CHECK:STDERR:        :                       ^^^^^^^
+  // CHECK:STDERR:        :                          '--| error: name `missing` not found [NameNotFound]
+  // CHECK:STDERR:        '----
   // CHECK:STDERR:
-  // CHECK:STDERR: warning: binding `unused_x` unused [UnusedBinding]
   // CHECK:STDERR:        .-| fail_one_message.carbon:[[@LINE+6]]:7
-  // CHECK:STDERR:        :
-  // CHECK:STDERR: ->  19 |   var unused_x: i32 = missing;
-  // CHECK:STDERR:        :       -------------
-  // CHECK:STDERR:        '------------
+  // CHECK:STDERR: ->  17 |   var unused_x: i32 = missing;
+  // CHECK:STDERR:        :       ^^^^^^^^^^^^^
+  // CHECK:STDERR:        :             '--| warning: binding `unused_x` unused [UnusedBinding]
+  // CHECK:STDERR:        '----
   // CHECK:STDERR:
   var unused_x: i32 = missing;
 }
@@ -44,16 +42,16 @@ library "[[@TEST_NAME]]";
 fn G() {}
 
 fn H() {
-  // CHECK:STDERR: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
-  // CHECK:STDERR:        .-| fail_note_in_same_file.carbon:[[@LINE+10]]:3
-  // CHECK:STDERR:        :
+  // CHECK:STDERR:        .-| fail_note_in_same_file.carbon:[[@LINE+11]]:3
   // CHECK:STDERR:      4 | fn G() {}
   // CHECK:STDERR:        : ----.---
   // CHECK:STDERR:        :     '--| calling function declared here [InCallToEntity]
   // CHECK:STDERR:        :
   // CHECK:STDERR: ->  18 |   G(1);
-  // CHECK:STDERR:        :   ----
-  // CHECK:STDERR:        '------------
+  // CHECK:STDERR:        :   ^^^^
+  // CHECK:STDERR:        :     '--| error: 1 argument passed to function expecting 0 arguments
+  // CHECK:STDERR:        :        |        [CallArgCountMismatch]
+  // CHECK:STDERR:        '----
   // CHECK:STDERR:
   G(1);
 }
@@ -68,19 +66,18 @@ fn Wide() {
   //
   //
   //
-  // CHECK:STDERR: error: name `also_missing` not found [NameNotFound]
   // CHECK:STDERR:        .-| fail_wide_line_numbers.carbon:[[@LINE+13]]:23
-  // CHECK:STDERR:        :
-  // CHECK:STDERR: ->  24 |   var unused_y: i32 = also_missing;
-  // CHECK:STDERR:        :                       ------------
-  // CHECK:STDERR:        '------------
+  // CHECK:STDERR: ->  23 |   var unused_y: i32 = also_missing;
+  // CHECK:STDERR:        :                       ^^^^^^^^^^^^
+  // CHECK:STDERR:        :                             '--| error: name `also_missing` not found
+  // CHECK:STDERR:        :                                |        [NameNotFound]
+  // CHECK:STDERR:        '----
   // CHECK:STDERR:
-  // CHECK:STDERR: warning: binding `unused_y` unused [UnusedBinding]
   // CHECK:STDERR:        .-| fail_wide_line_numbers.carbon:[[@LINE+6]]:7
-  // CHECK:STDERR:        :
-  // CHECK:STDERR: ->  24 |   var unused_y: i32 = also_missing;
-  // CHECK:STDERR:        :       -------------
-  // CHECK:STDERR:        '------------
+  // CHECK:STDERR: ->  23 |   var unused_y: i32 = also_missing;
+  // CHECK:STDERR:        :       ^^^^^^^^^^^^^
+  // CHECK:STDERR:        :             '--| warning: binding `unused_y` unused [UnusedBinding]
+  // CHECK:STDERR:        '----
   // CHECK:STDERR:
   var unused_y: i32 = also_missing;
 }
@@ -98,19 +95,17 @@ library "[[@TEST_NAME]]";
 import library "declared";
 
 fn Use() {
-  // CHECK:STDERR: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
-  // CHECK:STDERR:        .-| fail_across_files.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        .-| fail_across_files.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR: ->  19 |   Declared(1);
+  // CHECK:STDERR:        :   ^^^^^^^^^^^
+  // CHECK:STDERR:        :        '--| error: 1 argument passed to function expecting 0 arguments
+  // CHECK:STDERR:        :           |        [CallArgCountMismatch]
   // CHECK:STDERR:        :
-  // CHECK:STDERR: ->  21 |   Declared(1);
-  // CHECK:STDERR:        :   -----------
-  // CHECK:STDERR:        |------------
-  // CHECK:STDERR:        | .-- imported from: fail_across_files.carbon:[[@LINE-9]]:1 [InImport]
   // CHECK:STDERR:        |-| declared.carbon:4:1
-  // CHECK:STDERR:        :
   // CHECK:STDERR:      4 | fn Declared();
   // CHECK:STDERR:        : -------.------
   // CHECK:STDERR:        :        '--| calling function declared here [InCallToEntity]
-  // CHECK:STDERR:        '------------
+  // CHECK:STDERR:        '----
   // CHECK:STDERR:
   Declared(1);
 }
@@ -119,13 +114,14 @@ fn Use() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: error: 1 argument passed to function expecting 0 arguments [CallArgCountMismatch]
-// CHECK:STDERR:        .-| fail_two_spans_on_one_line.carbon:[[@LINE+7]]:27
-// CHECK:STDERR:        :
-// CHECK:STDERR: ->  12 | fn Same() {} fn Twice() { Same(1); }
-// CHECK:STDERR:        : -----.-----               -------
-// CHECK:STDERR:        :      '--| calling function declared here [InCallToEntity]
-// CHECK:STDERR:        '------------
+// CHECK:STDERR:        .-| fail_two_spans_on_one_line.carbon:[[@LINE+9]]:27
+// CHECK:STDERR: ->  13 | fn Same() {} fn Twice() { Same(1); }
+// CHECK:STDERR:        : -----.-----               ^^^^^^^
+// CHECK:STDERR:        :      |                    '--| error: 1 argument passed to function expecting 0
+// CHECK:STDERR:        :      |                       |        arguments
+// CHECK:STDERR:        :      |                       |        [CallArgCountMismatch]
+// CHECK:STDERR:        :      '-------------------------| calling function declared here [InCallToEntity]
+// CHECK:STDERR:        '----
 // CHECK:STDERR:
 fn Same() {} fn Twice() { Same(1); }
 
@@ -134,19 +130,19 @@ fn Same() {} fn Twice() { Same(1); }
 library "[[@TEST_NAME]]";
 
 fn Wide() {
-  // CHECK:STDERR: error: name `Core.String` implicitly referenced here, but not found [CoreNameNotFound]
-  // CHECK:STDERR:        .-| fail_non_ascii_source.carbon:[[@LINE+13]]:19
-  // CHECK:STDERR:        :
+  // CHECK:STDERR:        .-| fail_non_ascii_source.carbon:[[@LINE+14]]:19
   // CHECK:STDERR: ->  19 |   var text: i32 = "<E4><B8><96><E7><95><8C>";
-  // CHECK:STDERR:        :                   --------------------------
-  // CHECK:STDERR:        '------------
+  // CHECK:STDERR:        :                   ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  // CHECK:STDERR:        :                   '--| error: name `Core.String` implicitly referenced here, but
+  // CHECK:STDERR:        :                      |        not found
+  // CHECK:STDERR:        :                      |        [CoreNameNotFound]
+  // CHECK:STDERR:        '----
   // CHECK:STDERR:
-  // CHECK:STDERR: warning: binding `text` unused [UnusedBinding]
   // CHECK:STDERR:        .-| fail_non_ascii_source.carbon:[[@LINE+6]]:7
-  // CHECK:STDERR:        :
   // CHECK:STDERR: ->  19 |   var text: i32 = "<E4><B8><96><E7><95><8C>";
-  // CHECK:STDERR:        :       ---------
-  // CHECK:STDERR:        '------------
+  // CHECK:STDERR:        :       ^^^^^^^^^
+  // CHECK:STDERR:        :           '--| warning: binding `text` unused [UnusedBinding]
+  // CHECK:STDERR:        '----
   // CHECK:STDERR:
   var text: i32 = "世界";
 }
@@ -156,19 +152,18 @@ fn Wide() {
 library "[[@TEST_NAME]]";
 
 fn Tabbed() {
-// CHECK:STDERR: error: name `nowhere` not found [NameNotFound]
 // CHECK:STDERR:        .-| fail_tab_indented.carbon:[[@LINE+13]]:26
-// CHECK:STDERR:        :
-// CHECK:STDERR: ->  19 |         var also_missing: i32 = nowhere;
-// CHECK:STDERR:        :                                 -------
-// CHECK:STDERR:        '------------
+// CHECK:STDERR: ->  18 |         var also_missing: i32 = nowhere;
+// CHECK:STDERR:        :                                 ^^^^^^^
+// CHECK:STDERR:        :                                    '--| error: name `nowhere` not found
+// CHECK:STDERR:        :                                       |        [NameNotFound]
+// CHECK:STDERR:        '----
 // CHECK:STDERR:
-// CHECK:STDERR: warning: binding `also_missing` unused [UnusedBinding]
 // CHECK:STDERR:        .-| fail_tab_indented.carbon:[[@LINE+6]]:6
-// CHECK:STDERR:        :
-// CHECK:STDERR: ->  19 |         var also_missing: i32 = nowhere;
-// CHECK:STDERR:        :             -----------------
-// CHECK:STDERR:        '------------
+// CHECK:STDERR: ->  18 |         var also_missing: i32 = nowhere;
+// CHECK:STDERR:        :             ^^^^^^^^^^^^^^^^^
+// CHECK:STDERR:        :                     '--| warning: binding `also_missing` unused [UnusedBinding]
+// CHECK:STDERR:        '----
 // CHECK:STDERR:
 	var also_missing: i32 = nowhere;
 }
@@ -185,21 +180,18 @@ library "[[@TEST_NAME]]";
 import Cpp library "cpp_decl.h";
 
 fn CallIt() {
-  // CHECK:STDERR: error: no matching function for call to 'Use' [CppInteropParseError]
-  // CHECK:STDERR:        .-| fail_cpp_interop.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        .-| fail_cpp_interop.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR: ->  20 |   Cpp.Use(1);
+  // CHECK:STDERR:        :   ^^^^^^^
+  // CHECK:STDERR:        :      '--| error: no matching function for call to 'Use' [CppInteropParseError]
   // CHECK:STDERR:        :
-  // CHECK:STDERR: ->  23 |   Cpp.Use(1);
-  // CHECK:STDERR:        :   -------
-  // CHECK:STDERR:        |------------
-  // CHECK:STDERR:        | .-- included from: fail_cpp_interop.carbon:[[@LINE-9]]:10 [InCppInclude]
   // CHECK:STDERR:        |-| ./cpp_decl.h:3:6
-  // CHECK:STDERR:        :
   // CHECK:STDERR:      3 | void Use(Widget w, int extra);
   // CHECK:STDERR:        :      .   ---------.---------
-  // CHECK:STDERR:        :      |            '--| requires 2 arguments, but 1 was provided
-  // CHECK:STDERR:        :      |               | [CppInteropParseNoteReason]
-  // CHECK:STDERR:        :      '--| candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR:        '------------
+  // CHECK:STDERR:        :      '---------------| candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        :                   '----| requires 2 arguments, but 1 was provided
+  // CHECK:STDERR:        :                        | [CppInteropParseNoteReason]
+  // CHECK:STDERR:        '----
   // CHECK:STDERR:
   Cpp.Use(1);
 }
