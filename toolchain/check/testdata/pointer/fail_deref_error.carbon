@@ -12,10 +12,18 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_deref_error.carbon
 
-// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+2]]:15-24: error: name `undeclared` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_deref_error.carbon:[[@LINE+6]]:15
+// CHECK:STDERR: ->     │ let n: i32 = *undeclared;
+// CHECK:STDERR:        ·               ━━━━━┳━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: name `undeclared` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let n: i32 = *undeclared;
-// CHECK:STDERR: fail_deref_error.carbon:[[@LINE+2]]:15-24: error: name `undeclared` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_deref_error.carbon:[[@LINE+6]]:15
+// CHECK:STDERR: ->     │ let n2: i32 = undeclared->foo;
+// CHECK:STDERR:        ·               ━━━━━┳━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: name `undeclared` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let n2: i32 = undeclared->foo;
 
@@ -49,12 +57,12 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT:     .n2 = %n2
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %i32.loc17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc21: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %n: %i32 = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: %pattern_type.d94 = value_binding_pattern n [concrete = constants.%n.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %i32.loc20: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc28: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %n2: %i32 = wrapper_binding n2, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n2.patt: %pattern_type.d94 = value_binding_pattern n2 [concrete = constants.%n2.patt]
@@ -63,10 +71,10 @@ let n2: i32 = undeclared->foo;
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %undeclared.ref.loc17: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc17: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc20: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc20: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc21: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc21: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc28: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc28: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

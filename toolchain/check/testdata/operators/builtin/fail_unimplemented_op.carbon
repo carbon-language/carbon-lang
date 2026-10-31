@@ -13,7 +13,14 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_unimplemented_op.carbon
 
 fn Main() -> i32 {
-  // CHECK:STDERR: fail_unimplemented_op.carbon:[[@LINE+2]]:10-16: error: cannot access member of interface `Core.AddWith(Core.IntLiteral)` in type `{}` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_unimplemented_op.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR: ->     │   return {} + 34;
+  // CHECK:STDERR:        ·          ┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·             ┃        `Core.AddWith(Core.IntLiteral)` in type `{}` that does not
+  // CHECK:STDERR:        ·             ┃        implement that interface
+  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return {} + 34;
 }
@@ -69,7 +76,7 @@ fn Main() -> i32 {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc18: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc25: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:   %int_34: Core.IntLiteral = int_value 34 [concrete = constants.%int_34]
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }

@@ -16,8 +16,18 @@ library "[[@TEST_NAME]]";
 interface Y {}
 interface NeedsY(T: Y) {}
 constraint W {
-  // CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE+3]]:24-35: error: cannot convert type `Self` that implements `W` into type implementing `Y` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: fail_self_doesnt_meet_constraint.carbon:[[@LINE-3]]:18-21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_self_doesnt_meet_constraint.carbon:[[@LINE+13]]:24
+  // CHECK:STDERR:        │ interface NeedsY(T: Y) {}
+  // CHECK:STDERR:        ·                  ──┬─
+  // CHECK:STDERR:        ·                    ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                       │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   extend require impls NeedsY(Self);
+  // CHECK:STDERR:        ·                        ┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·                        ┗━━┫ error: cannot convert type `Self` that implements
+  // CHECK:STDERR:        ·                           ┃        `W` into type implementing `Y`
+  // CHECK:STDERR:        ·                           ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend require impls NeedsY(Self);
 }
@@ -168,8 +178,18 @@ interface X { let XZ: Z; }
 constraint W {
   require impls Z;
   // Target of impl lookup can not be partially identified.
-  // CHECK:STDERR: fail_impl_lookup_target_partially_identified.carbon:[[@LINE+3]]:32-46: error: facet type `Z & W` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR: fail_impl_lookup_target_partially_identified.carbon:[[@LINE-4]]:1-14: note: constraint is currently being defined [NamedConstraintIncompleteWithinDefinition]
+  // CHECK:STDERR:        ╭─┤ fail_impl_lookup_target_partially_identified.carbon:[[@LINE+13]]:32
+  // CHECK:STDERR:        │ constraint W {
+  // CHECK:STDERR:        · ───────┬──────
+  // CHECK:STDERR:        ·        ╰──┤ constraint is currently being defined
+  // CHECK:STDERR:        ·           │ [NamedConstraintIncompleteWithinDefinition]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   require impls X where .XZ = (Self as (W & Z));
+  // CHECK:STDERR:        ·                                ┳━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                                ┗━━┫ error: facet type `Z & W` can not be
+  // CHECK:STDERR:        ·                                   ┃        identified
+  // CHECK:STDERR:        ·                                   ┃        [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   require impls X where .XZ = (Self as (W & Z));
 }

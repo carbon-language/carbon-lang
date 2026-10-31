@@ -93,13 +93,52 @@ library "[[@TEST_NAME]]";
 import Cpp inline '''c++
 struct NeqBoolish {
   auto operator==(NeqBoolish) const -> bool;
-  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+3]]:8: error: cannot implicitly convert expression of type `i32` to `bool` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+2]]:8: note: type `i32` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:14:3-51: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR: ->     │   auto operator!=(NeqBoolish) const -> int;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `i32` to `bool`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `i32` does not implement interface `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
+  // CHECK:STDERR:        │   default fn NotEqual(self, other: Other) -> bool {
+  // CHECK:STDERR:        ·   ─────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   auto operator!=(NeqBoolish) const -> int;
 };
 
 struct EqBoolish {
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR: ->     │   auto operator==(EqBoolish) const -> int*;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·        │  ┃        `Core.Optional(i32* as Core.OptionalStorage)` to `bool`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `Core.Optional(i32* as Core.OptionalStorage)` does not
+  // CHECK:STDERR:        ·             │ implement interface `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
+  // CHECK:STDERR:        │   fn Equal(self, other: Other) -> bool;
+  // CHECK:STDERR:        ·   ─────────────┬───────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   auto operator==(EqBoolish) const -> int*;
   auto operator!=(EqBoolish) const -> bool;
 };
@@ -109,28 +148,55 @@ struct BothBoolish {
     False,
     True,
   };
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR: ->     │   auto operator==(BothBoolish) const -> Result;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `Cpp.Result` to
+  // CHECK:STDERR:        ·        │  ┃        `bool`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `Cpp.Result` does not implement interface
+  // CHECK:STDERR:        ·             │ `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
+  // CHECK:STDERR:        │   fn Equal(self, other: Other) -> bool;
+  // CHECK:STDERR:        ·   ─────────────┬───────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   auto operator==(BothBoolish) const -> Result;
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR: ->     │   auto operator!=(BothBoolish) const -> Result;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `Cpp.Result` to
+  // CHECK:STDERR:        ·        │  ┃        `bool`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `Cpp.Result` does not implement interface
+  // CHECK:STDERR:        ·             │ `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
+  // CHECK:STDERR:        │   default fn NotEqual(self, other: Other) -> bool {
+  // CHECK:STDERR:        ·   ─────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   auto operator!=(BothBoolish) const -> Result;
 };
 ''';
 
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+17]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-16]]:8: error: cannot implicitly convert expression of type `Core.Optional(i32* as Core.OptionalStorage)` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-17]]:8: note: type `Core.Optional(i32* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:13:3-39: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+12]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-12]]:8: error: cannot implicitly convert expression of type `Cpp.Result` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-13]]:8: note: type `Cpp.Result` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:13:3-39: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+7]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-16]]:8: error: cannot implicitly convert expression of type `Cpp.Result` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-17]]:8: note: type `Cpp.Result` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:14:3-51: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+2]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
 fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   x == y;
   x != y;
@@ -168,19 +234,45 @@ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
 }
 
 fn Test(default_eq_only: Cpp.DefaultEqOnly,
-        // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE+2]]:33-56: error: member name `DefaultSpaceshipOnly` not found in `Cpp` [MemberNameNotFoundInInstScope]
+        // CHECK:STDERR:        ╭─┤ fail_todo_comparison_rewrites.carbon:[[@LINE+8]]:33
+        // CHECK:STDERR: ->     │         default_spaceship_only: Cpp.DefaultSpaceshipOnly,
+        // CHECK:STDERR:        ·                                 ┳━━━━━━━━━━━━━━━━━━━━━━━
+        // CHECK:STDERR:        ·                                 ┗━━┫ error: member name `DefaultSpaceshipOnly`
+        // CHECK:STDERR:        ·                                    ┃        not found in `Cpp`
+        // CHECK:STDERR:        ·                                    ┃        [MemberNameNotFoundInInstScope]
+        // CHECK:STDERR:        ╰────
         // CHECK:STDERR:
         default_spaceship_only: Cpp.DefaultSpaceshipOnly,
         only_eq_declared: Cpp.OnlyEqDeclared) {
-  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE+3]]:3-42: error: semantics TODO: `Rewriting operator!= using operator== is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-11]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_todo_comparison_rewrites.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   EqWith(default_eq_only, default_eq_only);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `Rewriting operator!= using operator== is not supported`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(default_eq_only, default_eq_only);
 
   EqWith(default_spaceship_only, default_spaceship_only);
 
-  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE+3]]:3-44: error: semantics TODO: `Rewriting operator!= using operator== is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_todo_comparison_rewrites.carbon:[[@LINE-18]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_todo_comparison_rewrites.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   EqWith(only_eq_declared, only_eq_declared);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `Rewriting operator!= using operator== is not supported`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(only_eq_declared, only_eq_declared);
 }
@@ -235,46 +327,133 @@ fn Test(only_neq: Cpp.OnlyNeq,
         deleted_neq: Cpp.DeletedNeq,
         non_const_eq: Cpp.NonConstEq,
         a2: Cpp.A2, b2: Cpp.B2) {
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-28: error: cannot convert type `Cpp.OnlyNeq` into type implementing `Core.EqWith(Cpp.OnlyNeq)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-13]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   EqWith(only_neq, only_neq);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.OnlyNeq` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.EqWith(Cpp.OnlyNeq)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(only_neq, only_neq);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+4]]:10-35: error: name `only_non_default_spaceship` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR: ->     │   EqWith(only_non_default_spaceship, only_non_default_spaceship);
+  // CHECK:STDERR:        ·          ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                       ┗━━┫ error: name `only_non_default_spaceship` not found
+  // CHECK:STDERR:        ·                          ┃        [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+2]]:38-63: error: name `only_non_default_spaceship` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+9]]:38
+  // CHECK:STDERR: ->     │   EqWith(only_non_default_spaceship, only_non_default_spaceship);
+  // CHECK:STDERR:        ·                                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                                      ┗━━┫ error: name
+  // CHECK:STDERR:        ·                                         ┃        `only_non_default_spaceship`
+  // CHECK:STDERR:        ·                                         ┃        not found
+  // CHECK:STDERR:        ·                                         ┃        [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(only_non_default_spaceship, only_non_default_spaceship);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-50: error: cannot convert type `Cpp.NoRelevantMembers` into type implementing `Core.EqWith(Cpp.NoRelevantMembers)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-24]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   EqWith(no_relevant_members, no_relevant_members);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.NoRelevantMembers` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.EqWith(Cpp.NoRelevantMembers)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(no_relevant_members, no_relevant_members);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-42: error: cannot convert type `Cpp.EqReturnsVoid` into type implementing `Core.EqWith(Cpp.EqReturnsVoid)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-29]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   EqWith(eq_returns_void, eq_returns_void);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.EqReturnsVoid` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.EqWith(Cpp.EqReturnsVoid)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(eq_returns_void, eq_returns_void);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-44: error: cannot convert type `Cpp.NeqReturnsVoid` into type implementing `Core.EqWith(Cpp.NeqReturnsVoid)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-34]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   EqWith(neq_returns_void, neq_returns_void);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.NeqReturnsVoid` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.EqWith(Cpp.NeqReturnsVoid)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(neq_returns_void, neq_returns_void);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+5]]:34: error: overload resolution selected deleted operator '!=' [CppInteropParseError]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-55]]:8: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-55]]:8: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-41]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+20]]:34
+  // CHECK:STDERR:        │   auto operator==(DeletedNeq) const -> bool;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ candidate function [CppInteropParseNote]
+  // CHECK:STDERR:        │   auto operator!=(DeletedNeq) const -> bool = delete;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   EqWith(deleted_neq, deleted_neq);
+  // CHECK:STDERR:        ·                                  ┳
+  // CHECK:STDERR:        ·                                  ┗━━┫ error: overload resolution selected
+  // CHECK:STDERR:        ·                                     ┃        deleted operator '!='
+  // CHECK:STDERR:        ·                                     ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(deleted_neq, deleted_neq);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-36: error: semantics TODO: `Rewriting operator!= using operator== is not supported` [SemanticsTodo]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-46]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   EqWith(non_const_eq, non_const_eq);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `Rewriting operator!= using operator== is not supported`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(non_const_eq, non_const_eq);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-16: error: cannot convert type `Cpp.A2` into type implementing `Core.EqWith(Cpp.B2)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-51]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   EqWith(a2, b2);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.A2` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.EqWith(Cpp.B2)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   EqWith(a2, b2);
 }

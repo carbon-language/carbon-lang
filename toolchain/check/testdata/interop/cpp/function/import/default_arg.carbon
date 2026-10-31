@@ -63,45 +63,114 @@ import Cpp library "functions.h";
 
 fn Call() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+4]]:3-20: error: no matching function for call to 'GlobalNoReturn' [CppInteropParseError]
-  // CHECK:STDERR: ./functions.h:2:6: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./functions.h:2:21-54: note: requires at least 2 arguments, but 1 was provided [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_call_too_few_args.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   Cpp.GlobalNoReturn(1);
+  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: no matching function for call to 'GlobalNoReturn'
+  // CHECK:STDERR:        ·               ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./functions.h
+  // CHECK:STDERR:        │ auto GlobalNoReturn(int a, int b, int c = 1, int d = 2) -> void;
+  // CHECK:STDERR:        ·      ┬              ────┬─────────────────────────────
+  // CHECK:STDERR:        ·      ╰─────────────────────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·                         ╰────┤ requires at least 2 arguments, but 1 was provided
+  // CHECK:STDERR:        ·                              │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.GlobalNoReturn(1);
 
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+4]]:3-20: error: no matching function for call to 'GlobalNoReturn' [CppInteropParseError]
-  // CHECK:STDERR: ./functions.h:2:6: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./functions.h:2:21-54: note: requires at least 2 arguments, but 0 were provided [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_call_too_few_args.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   Cpp.GlobalNoReturn();
+  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: no matching function for call to 'GlobalNoReturn'
+  // CHECK:STDERR:        ·               ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./functions.h
+  // CHECK:STDERR:        │ auto GlobalNoReturn(int a, int b, int c = 1, int d = 2) -> void;
+  // CHECK:STDERR:        ·      ┬              ───┬──────────────────────────────
+  // CHECK:STDERR:        ·      ╰────────────────────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·                        ╰────┤ requires at least 2 arguments, but 0 were provided
+  // CHECK:STDERR:        ·                             │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.GlobalNoReturn();
 
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+4]]:3-21: error: no matching function for call to 'GlobalReturnInt' [CppInteropParseError]
-  // CHECK:STDERR: ./functions.h:3:6: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./functions.h:3:22-55: note: requires at least 2 arguments, but 1 was provided [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_call_too_few_args.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   Cpp.GlobalReturnInt(1);
+  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: no matching function for call to 'GlobalReturnInt'
+  // CHECK:STDERR:        ·               ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./functions.h
+  // CHECK:STDERR:        │ auto GlobalReturnInt(int a, int b, int c = 1, int d = 2) -> int;
+  // CHECK:STDERR:        ·      ┬               ───┬──────────────────────────────
+  // CHECK:STDERR:        ·      ╰─────────────────────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·                         ╰────┤ requires at least 2 arguments, but 1 was provided
+  // CHECK:STDERR:        ·                              │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.GlobalReturnInt(1);
 
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+4]]:3-21: error: no matching function for call to 'GlobalReturnInt' [CppInteropParseError]
-  // CHECK:STDERR: ./functions.h:3:6: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./functions.h:3:22-55: note: requires at least 2 arguments, but 0 were provided [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_call_too_few_args.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   Cpp.GlobalReturnInt();
+  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: no matching function for call to 'GlobalReturnInt'
+  // CHECK:STDERR:        ·               ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./functions.h
+  // CHECK:STDERR:        │ auto GlobalReturnInt(int a, int b, int c = 1, int d = 2) -> int;
+  // CHECK:STDERR:        ·      ┬               ──┬───────────────────────────────
+  // CHECK:STDERR:        ·      ╰────────────────────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·                        ╰────┤ requires at least 2 arguments, but 0 were provided
+  // CHECK:STDERR:        ·                             │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.GlobalReturnInt();
 
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+4]]:3-17: error: no matching function for call to 'B' [CppInteropParseError]
-  // CHECK:STDERR: ./functions.h:6:8: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./functions.h:6:10-25: note: requires at least argument 'a', but no arguments were provided [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_call_too_few_args.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR: ->     │   ({} as Cpp.X).B();
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: no matching function for call to 'B' [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./functions.h
+  // CHECK:STDERR:        │   void B(int a, int b = 1);
+  // CHECK:STDERR:        ·        ┬ ──┬─────────────
+  // CHECK:STDERR:        ·        ╰──────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·            ╰────┤ requires at least argument 'a', but no arguments were provided
+  // CHECK:STDERR:        ·                 │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ({} as Cpp.X).B();
 
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+4]]:3-9: error: no matching function for call to 'C' [CppInteropParseError]
-  // CHECK:STDERR: ./functions.h:7:15: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./functions.h:7:17-32: note: requires at least argument 'a', but no arguments were provided [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_call_too_few_args.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   Cpp.X.C();
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: no matching function for call to 'C' [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./functions.h
+  // CHECK:STDERR:        │   static void C(int a, int b = 1);
+  // CHECK:STDERR:        ·               ┬ ┬───────────────
+  // CHECK:STDERR:        ·               ╰────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·                 ╰────┤ requires at least argument 'a', but no arguments were
+  // CHECK:STDERR:        ·                      │ provided
+  // CHECK:STDERR:        ·                      │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.X.C();
 
-  // CHECK:STDERR: fail_call_too_few_args.carbon:[[@LINE+4]]:3-17: error: no matching function for call to 'D' [CppInteropParseError]
-  // CHECK:STDERR: ./functions.h:8:8: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./functions.h:8:10-33: note: requires at least non-object argument 'a', but no arguments were provided [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_call_too_few_args.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   ({} as Cpp.X).D();
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: no matching function for call to 'D' [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./functions.h
+  // CHECK:STDERR:        │   void D(this X, int a, int b = 1);
+  // CHECK:STDERR:        ·        ┬ ┬───────────────────────
+  // CHECK:STDERR:        ·        ╰────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·          ╰────┤ requires at least non-object argument 'a', but no arguments were
+  // CHECK:STDERR:        ·               │ provided
+  // CHECK:STDERR:        ·               │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ({} as Cpp.X).D();
   //@dump-sem-ir-end
@@ -921,49 +990,49 @@ fn Call() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Call() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %GlobalNoReturn.ref.loc12: %GlobalNoReturn.cpp_overload_set.type = name_ref GlobalNoReturn, imports.%GlobalNoReturn.cpp_overload_set.value [concrete = constants.%GlobalNoReturn.cpp_overload_set.value]
-// CHECK:STDOUT:   %int_1.loc12: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %Cpp.ref.loc18: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %GlobalNoReturn.ref.loc18: %GlobalNoReturn.cpp_overload_set.type = name_ref GlobalNoReturn, imports.%GlobalNoReturn.cpp_overload_set.value [concrete = constants.%GlobalNoReturn.cpp_overload_set.value]
-// CHECK:STDOUT:   %Cpp.ref.loc24: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %GlobalReturnInt.ref.loc24: %GlobalReturnInt.cpp_overload_set.type = name_ref GlobalReturnInt, imports.%GlobalReturnInt.cpp_overload_set.value [concrete = constants.%GlobalReturnInt.cpp_overload_set.value]
-// CHECK:STDOUT:   %int_1.loc24: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
-// CHECK:STDOUT:   %Cpp.ref.loc30: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %GlobalReturnInt.ref.loc30: %GlobalReturnInt.cpp_overload_set.type = name_ref GlobalReturnInt, imports.%GlobalReturnInt.cpp_overload_set.value [concrete = constants.%GlobalReturnInt.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc36_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc36: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %X.ref.loc36: type = name_ref X, imports.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %.loc36_5.2: ref %X = temporary_storage
-// CHECK:STDOUT:   %.loc36_5.3: init %X to %.loc36_5.2 = class_init () [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc36_7.1: init %X = converted %.loc36_5.1, %.loc36_5.3 [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc36_7.2: ref %X = temporary %.loc36_5.2, %.loc36_7.1 [concrete = constants.%.414]
+// CHECK:STDOUT:   %Cpp.ref.loc22: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %GlobalNoReturn.ref.loc22: %GlobalNoReturn.cpp_overload_set.type = name_ref GlobalNoReturn, imports.%GlobalNoReturn.cpp_overload_set.value [concrete = constants.%GlobalNoReturn.cpp_overload_set.value]
+// CHECK:STDOUT:   %int_1.loc22: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %Cpp.ref.loc38: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %GlobalNoReturn.ref.loc38: %GlobalNoReturn.cpp_overload_set.type = name_ref GlobalNoReturn, imports.%GlobalNoReturn.cpp_overload_set.value [concrete = constants.%GlobalNoReturn.cpp_overload_set.value]
+// CHECK:STDOUT:   %Cpp.ref.loc54: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %GlobalReturnInt.ref.loc54: %GlobalReturnInt.cpp_overload_set.type = name_ref GlobalReturnInt, imports.%GlobalReturnInt.cpp_overload_set.value [concrete = constants.%GlobalReturnInt.cpp_overload_set.value]
+// CHECK:STDOUT:   %int_1.loc54: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %Cpp.ref.loc70: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %GlobalReturnInt.ref.loc70: %GlobalReturnInt.cpp_overload_set.type = name_ref GlobalReturnInt, imports.%GlobalReturnInt.cpp_overload_set.value [concrete = constants.%GlobalReturnInt.cpp_overload_set.value]
+// CHECK:STDOUT:   %.loc85_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Cpp.ref.loc85: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %X.ref.loc85: type = name_ref X, imports.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %.loc85_5.2: ref %X = temporary_storage
+// CHECK:STDOUT:   %.loc85_5.3: init %X to %.loc85_5.2 = class_init () [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc85_7.1: init %X = converted %.loc85_5.1, %.loc85_5.3 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc85_7.2: ref %X = temporary %.loc85_5.2, %.loc85_7.1 [concrete = constants.%.414]
 // CHECK:STDOUT:   %B.ref: %X.B.cpp_overload_set.type = name_ref B, imports.%X.B.cpp_overload_set.value [concrete = constants.%X.B.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc36: <bound method> = bound_method %.loc36_7.2, %B.ref [concrete = constants.%bound_method.f8c]
-// CHECK:STDOUT:   %Destroy.facet.loc36_7.1: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.a05, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc36_7.3: %Destroy.type = converted constants.%X, %Destroy.facet.loc36_7.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc36_7.2: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.a05, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc36_7.4: %Destroy.type = converted constants.%X, %Destroy.facet.loc36_7.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %bound_method.loc85: <bound method> = bound_method %.loc85_7.2, %B.ref [concrete = constants.%bound_method.f8c]
+// CHECK:STDOUT:   %Destroy.facet.loc85_7.1: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.a05, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc85_7.3: %Destroy.type = converted constants.%X, %Destroy.facet.loc85_7.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc85_7.2: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.a05, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc85_7.4: %Destroy.type = converted constants.%X, %Destroy.facet.loc85_7.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc36: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%.loc36_7.2)
-// CHECK:STDOUT:   %Cpp.ref.loc42: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %X.ref.loc42: type = name_ref X, imports.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %SelfDestruct.call.loc85: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%.loc85_7.2)
+// CHECK:STDOUT:   %Cpp.ref.loc101: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %X.ref.loc101: type = name_ref X, imports.%X.decl [concrete = constants.%X]
 // CHECK:STDOUT:   %C.ref: %X.C.cpp_overload_set.type = name_ref C, imports.%X.C.cpp_overload_set.value [concrete = constants.%X.C.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc48_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %Cpp.ref.loc48: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:   %X.ref.loc48: type = name_ref X, imports.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %.loc48_5.2: ref %X = temporary_storage
-// CHECK:STDOUT:   %.loc48_5.3: init %X to %.loc48_5.2 = class_init () [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc48_7.1: init %X = converted %.loc48_5.1, %.loc48_5.3 [concrete = constants.%X.val]
-// CHECK:STDOUT:   %.loc48_7.2: ref %X = temporary %.loc48_5.2, %.loc48_7.1 [concrete = constants.%.414]
+// CHECK:STDOUT:   %.loc117_5.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %Cpp.ref.loc117: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %X.ref.loc117: type = name_ref X, imports.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %.loc117_5.2: ref %X = temporary_storage
+// CHECK:STDOUT:   %.loc117_5.3: init %X to %.loc117_5.2 = class_init () [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc117_7.1: init %X = converted %.loc117_5.1, %.loc117_5.3 [concrete = constants.%X.val]
+// CHECK:STDOUT:   %.loc117_7.2: ref %X = temporary %.loc117_5.2, %.loc117_7.1 [concrete = constants.%.414]
 // CHECK:STDOUT:   %D.ref: %X.D.cpp_overload_set.type = name_ref D, imports.%X.D.cpp_overload_set.value [concrete = constants.%X.D.cpp_overload_set.value]
-// CHECK:STDOUT:   %bound_method.loc48: <bound method> = bound_method %.loc48_7.2, %D.ref [concrete = constants.%bound_method.9a8]
-// CHECK:STDOUT:   %Destroy.facet.loc48_7.1: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.a05, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc48_7.3: %Destroy.type = converted constants.%X, %Destroy.facet.loc48_7.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc48_7.2: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.a05, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc48_7.4: %Destroy.type = converted constants.%X, %Destroy.facet.loc48_7.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %bound_method.loc117: <bound method> = bound_method %.loc117_7.2, %D.ref [concrete = constants.%bound_method.9a8]
+// CHECK:STDOUT:   %Destroy.facet.loc117_7.1: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.a05, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc117_7.3: %Destroy.type = converted constants.%X, %Destroy.facet.loc117_7.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc117_7.2: %Destroy.type = facet_value constants.%X, (constants.%DestroyImpl.impl_witness.a05, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc117_7.4: %Destroy.type = converted constants.%X, %Destroy.facet.loc117_7.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc48: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%.loc48_7.2)
+// CHECK:STDOUT:   %SelfDestruct.call.loc117: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%.loc117_7.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

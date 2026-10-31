@@ -24,13 +24,32 @@ package Example;
 
 import library "fn";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:11-12: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn.carbon:4:1-8: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╭─┤ fail_conflict.carbon:[[@LINE+12]]:11
+// CHECK:STDERR: ->     │ namespace NS;
+// CHECK:STDERR:        ·           ━┳
+// CHECK:STDERR:        ·            ┗━━┫ error: duplicate name `NS` being declared in the same scope
+// CHECK:STDERR:        ·               ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fn.carbon
+// CHECK:STDERR:        │ fn NS();
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:4-5: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
-// CHECK:STDERR: fn.carbon:4:1-8: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
+// CHECK:STDERR:        ╭─┤ fail_conflict.carbon:[[@LINE+13]]:4
+// CHECK:STDERR: ->     │ fn NS.Foo();
+// CHECK:STDERR:        ·    ┳━
+// CHECK:STDERR:        ·    ┗━━┫ error: name qualifiers are only allowed for entities that provide a
+// CHECK:STDERR:        ·       ┃        scope
+// CHECK:STDERR:        ·       ┃        [QualifiedNameInNonScope]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fn.carbon
+// CHECK:STDERR:        │ fn NS();
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NS.Foo();
 
@@ -85,7 +104,7 @@ fn NS.Foo();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %.loc9: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %.loc18: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

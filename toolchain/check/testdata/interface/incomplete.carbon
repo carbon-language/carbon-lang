@@ -30,8 +30,16 @@ interface I {
   let T: C;
 }
 
-// CHECK:STDERR: fail_incomplete_type_impl.carbon:[[@LINE+3]]:26-32: error: invalid use of incomplete type `C` [IncompleteTypeInConversion]
-// CHECK:STDERR: fail_incomplete_type_impl.carbon:[[@LINE-7]]:1-8: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ╭─┤ fail_incomplete_type_impl.carbon:[[@LINE+11]]:26
+// CHECK:STDERR:        │ class C;
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl {} as I where .T = ({} as C) {}
+// CHECK:STDERR:        ·                          ━━━┳━━━
+// CHECK:STDERR:        ·                             ┗━━┫ error: invalid use of incomplete type `C`
+// CHECK:STDERR:        ·                                ┃        [IncompleteTypeInConversion]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl {} as I where .T = ({} as C) {}
 
@@ -55,8 +63,18 @@ library "[[@TEST_NAME]]";
 constraint A;
 
 interface B {
-  // CHECK:STDERR: fail_incomplete_extend_constraint.carbon:[[@LINE+3]]:24: error: facet type `A` cannot be identified in `require` declaration [RequireImplsUnidentifiedFacetType]
-  // CHECK:STDERR: fail_incomplete_extend_constraint.carbon:[[@LINE-4]]:1-13: note: constraint was forward declared here [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_extend_constraint.carbon:[[@LINE+13]]:24
+  // CHECK:STDERR:        │ constraint A;
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ constraint was forward declared here
+  // CHECK:STDERR:        ·          │ [NamedConstraintForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   extend require impls A;
+  // CHECK:STDERR:        ·                        ┳
+  // CHECK:STDERR:        ·                        ┗━━┫ error: facet type `A` cannot be identified in
+  // CHECK:STDERR:        ·                           ┃        `require` declaration
+  // CHECK:STDERR:        ·                           ┃        [RequireImplsUnidentifiedFacetType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend require impls A;
 }
@@ -65,8 +83,17 @@ interface B {
 library "[[@TEST_NAME]]";
 
 interface A {
-  // CHECK:STDERR: fail_extend_require_enclosing.carbon:[[@LINE+3]]:24: error: `extend require` of incomplete facet type `A` [RequireImplsIncompleteFacetType]
-  // CHECK:STDERR: fail_extend_require_enclosing.carbon:[[@LINE-2]]:1-13: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR:        ╭─┤ fail_extend_require_enclosing.carbon:[[@LINE+12]]:24
+  // CHECK:STDERR:        │ interface A {
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ interface is currently being defined
+  // CHECK:STDERR:        ·          │ [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   extend require impls A;
+  // CHECK:STDERR:        ·                        ┳
+  // CHECK:STDERR:        ·                        ┗━━┫ error: `extend require` of incomplete facet type `A`
+  // CHECK:STDERR:        ·                           ┃        [RequireImplsIncompleteFacetType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend require impls A;
 }
@@ -75,8 +102,18 @@ interface A {
 library "[[@TEST_NAME]]";
 
 interface A(T: type) {
-  // CHECK:STDERR: fail_extend_require_enclosing_generic.carbon:[[@LINE+3]]:24-28: error: `extend require` of incomplete facet type `A({})` [RequireImplsIncompleteFacetType]
-  // CHECK:STDERR: fail_extend_require_enclosing_generic.carbon:[[@LINE-2]]:1-22: note: interface is currently being defined [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR:        ╭─┤ fail_extend_require_enclosing_generic.carbon:[[@LINE+13]]:24
+  // CHECK:STDERR:        │ interface A(T: type) {
+  // CHECK:STDERR:        · ───────────┬──────────
+  // CHECK:STDERR:        ·            ╰──┤ interface is currently being defined
+  // CHECK:STDERR:        ·               │ [InterfaceIncompleteWithinDefinition]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   extend require impls A({});
+  // CHECK:STDERR:        ·                        ┳━━━━
+  // CHECK:STDERR:        ·                        ┗━━┫ error: `extend require` of incomplete facet type
+  // CHECK:STDERR:        ·                           ┃        `A({})`
+  // CHECK:STDERR:        ·                           ┃        [RequireImplsIncompleteFacetType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend require impls A({});
 }
@@ -152,24 +189,24 @@ interface A(T: type) {
 // CHECK:STDOUT:   %C.decl: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   %I.decl: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   impl_decl @empty_struct_type.as.<error>.impl [concrete] {} {
-// CHECK:STDOUT:     %.loc12_7.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:     %.loc12_7.2: type = converted %.loc12_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:     %.loc20_7.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %.loc20_7.2: type = converted %.loc20_7.1, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:     %.Self.frozen: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %base_facet_type = requirement_base_facet_type %I.ref [concrete]
 // CHECK:STDOUT:     %.Self.ref: %I.type = name_ref .Self, %.Self.frozen [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:     %.Self.as_type: type = facet_access_type %.Self.ref [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %.loc12_20: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:     %.loc20_20: type = converted %.Self.ref, %.Self.as_type [symbolic_self = constants.%.Self.frozen.as_type]
 // CHECK:STDOUT:     %T.ref: %I.assoc_type = name_ref T, @T.%assoc0 [concrete = constants.%assoc0]
-// CHECK:STDOUT:     %impl.elem0.loc12_20.1: %C = impl_witness_access constants.%.f01, element0 [symbolic_self = constants.%impl.elem0.419]
-// CHECK:STDOUT:     %.loc12_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:     %impl.elem0.loc20_20.1: %C = impl_witness_access constants.%.f01, element0 [symbolic_self = constants.%impl.elem0.419]
+// CHECK:STDOUT:     %.loc20_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %rewrite.loc12_23.1 = requirement_rewrite %impl.elem0.loc12_20.1, <error> [concrete]
-// CHECK:STDOUT:     %impl.elem0.loc12_20.2: %C = impl_witness_access constants.%.00f, element0 [symbolic_self = constants.%impl.elem0.adf]
-// CHECK:STDOUT:     %rewrite.loc12_23.2 = requirement_rewrite %impl.elem0.loc12_20.2, <error> [concrete]
-// CHECK:STDOUT:     %.loc12_14: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:     %rewrite.loc20_23.1 = requirement_rewrite %impl.elem0.loc20_20.1, <error> [concrete]
+// CHECK:STDOUT:     %impl.elem0.loc20_20.2: %C = impl_witness_access constants.%.00f, element0 [symbolic_self = constants.%impl.elem0.adf]
+// CHECK:STDOUT:     %rewrite.loc20_23.2 = requirement_rewrite %impl.elem0.loc20_20.2, <error> [concrete]
+// CHECK:STDOUT:     %.loc20_14: type = where_expr [concrete = <error>] {
 // CHECK:STDOUT:       %base_facet_type = requirement_base_facet_type %I.ref [concrete]
-// CHECK:STDOUT:       %rewrite.loc12_23.2 = requirement_rewrite %impl.elem0.loc12_20.2, <error> [concrete]
+// CHECK:STDOUT:       %rewrite.loc20_23.2 = requirement_rewrite %impl.elem0.loc20_20.2, <error> [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -193,7 +230,7 @@ interface A(T: type) {
 // CHECK:STDOUT: !requires:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: impl @empty_struct_type.as.<error>.impl: %.loc12_7.2 as <error> {
+// CHECK:STDOUT: impl @empty_struct_type.as.<error>.impl: %.loc20_7.2 as <error> {
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   extend <error>
 // CHECK:STDOUT:   witness = <error>
@@ -379,9 +416,9 @@ interface A(T: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !with Self:
 // CHECK:STDOUT:   %A.WithSelf.Self.as_type.impls.A.type.require.decl = require_decl @A.WithSelf.Self.as_type.impls.A.type.require [concrete] {
-// CHECK:STDOUT:     require %Self.as_type.loc7_18.1 impls %A.ref
+// CHECK:STDOUT:     require %Self.as_type.loc16_18.1 impls %A.ref
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %Self.as_type.loc7_18.1: type = facet_access_type @A.%Self [symbolic = %Self.as_type.loc7_18.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:     %Self.as_type.loc16_18.1: type = facet_access_type @A.%Self [symbolic = %Self.as_type.loc16_18.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %A.ref: type = name_ref A, file.%A.decl [concrete = constants.%A.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:
@@ -396,14 +433,14 @@ interface A(T: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @A.WithSelf.Self.as_type.impls.A.type.require(@A.%Self: %A.type) {
 // CHECK:STDOUT:   %Self: %A.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc7_18.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc7_18.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %Self.as_type.loc16_18.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc16_18.2 (constants.%Self.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.Self.as_type.impls.A.type.require(constants.%Self) {
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc7_18.2 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc16_18.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_extend_require_enclosing_generic.carbon
@@ -453,13 +490,13 @@ interface A(T: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !with Self:
 // CHECK:STDOUT:     %A.WithSelf.Self.as_type.impls.A.type.require.decl = require_decl @A.WithSelf.Self.as_type.impls.A.type.require [concrete] {
-// CHECK:STDOUT:       require %Self.as_type.loc7_18.1 impls %A.type.loc7_28
+// CHECK:STDOUT:       require %Self.as_type.loc17_18.1 impls %A.type.loc17_28
 // CHECK:STDOUT:     } {
-// CHECK:STDOUT:       %Self.as_type.loc7_18.1: type = facet_access_type @A.%Self.loc3_22.1 [symbolic = %Self.as_type.loc7_18.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:       %Self.as_type.loc17_18.1: type = facet_access_type @A.%Self.loc3_22.1 [symbolic = %Self.as_type.loc17_18.2 (constants.%Self.as_type)]
 // CHECK:STDOUT:       %A.ref: %A.type.55a = name_ref A, file.%A.decl [concrete = constants.%A.generic]
-// CHECK:STDOUT:       %.loc7_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:       %.loc7_28: type = converted %.loc7_27, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
-// CHECK:STDOUT:       %A.type.loc7_28: type = facet_type <@A, @A(constants.%empty_struct_type)> [concrete = constants.%A.type.ae6]
+// CHECK:STDOUT:       %.loc17_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:       %.loc17_28: type = converted %.loc17_27, constants.%empty_struct_type [concrete = constants.%empty_struct_type]
+// CHECK:STDOUT:       %A.type.loc17_28: type = facet_type <@A, @A(constants.%empty_struct_type)> [concrete = constants.%A.type.ae6]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:
 // CHECK:STDOUT:   !members:
@@ -474,9 +511,9 @@ interface A(T: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: generic require @A.WithSelf.Self.as_type.impls.A.type.require(@A.%T.loc3_14.2: type, @A.%Self.loc3_22.1: @A.%A.type (%A.type.fa0)) {
 // CHECK:STDOUT:   %T: type = symbolic_binding T, 0 [symbolic = %T (constants.%T)]
-// CHECK:STDOUT:   %A.type.loc7_18: type = facet_type <@A, @A(%T)> [symbolic = %A.type.loc7_18 (constants.%A.type.fa0)]
-// CHECK:STDOUT:   %Self: @A.WithSelf.Self.as_type.impls.A.type.require.%A.type.loc7_18 (%A.type.fa0) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
-// CHECK:STDOUT:   %Self.as_type.loc7_18.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc7_18.2 (constants.%Self.as_type)]
+// CHECK:STDOUT:   %A.type.loc17_18: type = facet_type <@A, @A(%T)> [symbolic = %A.type.loc17_18 (constants.%A.type.fa0)]
+// CHECK:STDOUT:   %Self: @A.WithSelf.Self.as_type.impls.A.type.require.%A.type.loc17_18 (%A.type.fa0) = symbolic_binding Self, 1 [symbolic = %Self (constants.%Self)]
+// CHECK:STDOUT:   %Self.as_type.loc17_18.2: type = facet_access_type %Self [symbolic = %Self.as_type.loc17_18.2 (constants.%Self.as_type)]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T) {
@@ -493,8 +530,8 @@ interface A(T: type) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf.Self.as_type.impls.A.type.require(constants.%T, constants.%Self) {
 // CHECK:STDOUT:   %T => constants.%T
-// CHECK:STDOUT:   %A.type.loc7_18 => constants.%A.type.fa0
+// CHECK:STDOUT:   %A.type.loc17_18 => constants.%A.type.fa0
 // CHECK:STDOUT:   %Self => constants.%Self
-// CHECK:STDOUT:   %Self.as_type.loc7_18.2 => constants.%Self.as_type
+// CHECK:STDOUT:   %Self.as_type.loc17_18.2 => constants.%Self.as_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -12,7 +12,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/namespace/fail_unresolved_scope.carbon
 
-// CHECK:STDERR: fail_unresolved_scope.carbon:[[@LINE+2]]:4-6: error: name `Foo` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_unresolved_scope.carbon:[[@LINE+6]]:4
+// CHECK:STDERR: ->     │ fn Foo.Baz() {
+// CHECK:STDERR:        ·    ━┳━
+// CHECK:STDERR:        ·     ┗━━┫ error: name `Foo` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Foo.Baz() {
 }

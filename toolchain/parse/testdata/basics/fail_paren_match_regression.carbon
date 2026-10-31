@@ -8,13 +8,26 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/basics/fail_paren_match_regression.carbon
 
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+4]]:5: error: expected pattern [ExpectedPattern]
+// CHECK:STDERR:        ╭─┤ fail_paren_match_regression.carbon:[[@LINE+12]]:5
+// CHECK:STDERR: ->     │ var = (foo {})
+// CHECK:STDERR:        ·     ┳
+// CHECK:STDERR:        ·     ┗━━┫ error: expected pattern [ExpectedPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+2]]:12: error: expected `,` or `)` [UnexpectedTokenAfterListElement]
+// CHECK:STDERR:        ╭─┤ fail_paren_match_regression.carbon:[[@LINE+6]]:12
+// CHECK:STDERR: ->     │ var = (foo {})
+// CHECK:STDERR:        ·            ┳
+// CHECK:STDERR:        ·            ┗━━┫ error: expected `,` or `)` [UnexpectedTokenAfterListElement]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var = (foo {})
 
-// CHECK:STDERR: fail_paren_match_regression.carbon:[[@LINE+13]]:26: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_paren_match_regression.carbon:[[@LINE+18]]:26
+// CHECK:STDERR: ->     │ // CHECK:STDOUT:   (root)
+// CHECK:STDERR:        ·                          ┳
+// CHECK:STDERR:        ·                          ┗━━┫ error: `var` declarations must end with a `;`
+// CHECK:STDERR:        ·                             ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_paren_match_regression.carbon
 // CHECK:STDOUT:   ╭─FileStart ''

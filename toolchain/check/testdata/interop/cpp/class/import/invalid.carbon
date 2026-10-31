@@ -16,7 +16,11 @@ library "[[@TEST_NAME]]";
 
 import Cpp inline '''
 struct Base {
-  // CHECK:STDERR: fail_invalid_base.carbon:[[@LINE+2]]:3: error: unknown type name 'no_such_type' [CppInteropParseError]
+  // CHECK:STDERR:        ╭─┤ fail_invalid_base.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   no_such_type invalid;
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: unknown type name 'no_such_type' [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   no_such_type invalid;
 };

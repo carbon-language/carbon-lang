@@ -52,8 +52,18 @@ class B {}
 
 fn F(generic T: Generic(A));
 fn G(generic T: Generic(B)) {
-  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE+3]]:3-6: error: cannot convert type `T` that implements `Generic(B)` into type implementing `Generic(A)` [ConversionFailureFacetToFacet]
-  // CHECK:STDERR: fail_mismatched_args.carbon:[[@LINE-3]]:14-26: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_mismatched_args.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn F(generic T: Generic(A));
+  // CHECK:STDERR:        ·              ──────┬──────
+  // CHECK:STDERR:        ·                    ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                       │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(T);
+  // CHECK:STDERR:        ·   ┳━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `T` that implements `Generic(B)` into type
+  // CHECK:STDERR:        ·      ┃        implementing `Generic(A)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(T);
 }
@@ -63,8 +73,17 @@ library "[[@TEST_NAME]]";
 
 interface Generic(T: type) {}
 
-// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE+3]]:24-38: error: 2 arguments passed to generic interface expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fail_args_count_mismatch.carbon:[[@LINE-3]]:1-28: note: calling generic interface declared here [InCallToEntity]
+// CHECK:STDERR:        ╭─┤ fail_args_count_mismatch.carbon:[[@LINE+12]]:24
+// CHECK:STDERR:        │ interface Generic(T: type) {}
+// CHECK:STDERR:        · ──────────────┬─────────────
+// CHECK:STDERR:        ·               ╰──┤ calling generic interface declared here [InCallToEntity]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F(unused generic T: Generic((), ())) {}
+// CHECK:STDERR:        ·                        ┳━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                        ┗━━┫ error: 2 arguments passed to generic interface
+// CHECK:STDERR:        ·                           ┃        expecting 1 argument
+// CHECK:STDERR:        ·                           ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: Generic((), ())) {}
 
@@ -587,13 +606,13 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc10_15.1: %Generic.type.a24 = symbolic_binding T, 0 [symbolic = %T.loc10_15.1 (constants.%T.ec1)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %T.as_type.loc14_6.2: type = facet_access_type %T.loc10_15.1 [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
+// CHECK:STDOUT:   %T.as_type.loc24_6.2: type = facet_access_type %T.loc10_15.1 [symbolic = %T.as_type.loc24_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:
 // CHECK:STDOUT:   fn() {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
 // CHECK:STDOUT:     %T.ref: %Generic.type.a24 = name_ref T, %T.loc10_15.2 [symbolic = %T.loc10_15.1 (constants.%T.ec1)]
-// CHECK:STDOUT:     %T.as_type.loc14_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc14_6.2 (constants.%T.as_type)]
+// CHECK:STDOUT:     %T.as_type.loc24_6.1: type = facet_access_type %T.ref [symbolic = %T.as_type.loc24_6.2 (constants.%T.as_type)]
 // CHECK:STDOUT:     return
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -663,8 +682,8 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:     %.1: <error> = splice_block <error> [concrete = <error>] {
 // CHECK:STDOUT:       %.Self.frozen: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
 // CHECK:STDOUT:       %Generic.ref: %Generic.type.30d = name_ref Generic, file.%Generic.decl [concrete = constants.%Generic.generic]
-// CHECK:STDOUT:       %.loc8_33: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:       %.loc8_37: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc17_33: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:       %.loc17_37: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %T: <error> = symbolic_binding T, 0 [concrete = <error>]
 // CHECK:STDOUT:   }

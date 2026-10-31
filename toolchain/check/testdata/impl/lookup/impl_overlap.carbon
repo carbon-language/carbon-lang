@@ -98,8 +98,17 @@ final impl forall [T: type] T as Z(T) {}
 // The final impl here overlaps with the final impl above, but is not in a
 // match_first.
 //
-// CHECK:STDERR: fail_multiple_finals_overlap_with_interface.carbon:[[@LINE+3]]:1-40: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
-// CHECK:STDERR: fail_multiple_finals_overlap_with_interface.carbon:[[@LINE-6]]:1-39: note: other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ╭─┤ fail_multiple_finals_overlap_with_interface.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ final impl forall [T: type] T as Z(T) {}
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ final impl forall [T: type] T as Z(()) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `final impl` overlaps with `final impl` from same file outside a
+// CHECK:STDERR:        ·    ┃        `match_first` block
+// CHECK:STDERR:        ·    ┃        [FinalImplOverlapsSameFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl forall [T: type] T as Z(()) {}
 
@@ -108,8 +117,17 @@ class C {}
 // The final impl here overlaps with the first final impl above, but is not in
 // a match_first.
 //
-// CHECK:STDERR: fail_multiple_finals_overlap_with_interface.carbon:[[@LINE+3]]:1-23: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
-// CHECK:STDERR: fail_multiple_finals_overlap_with_interface.carbon:[[@LINE-16]]:1-39: note: other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ╭─┤ fail_multiple_finals_overlap_with_interface.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ final impl forall [T: type] T as Z(T) {}
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ final impl C as Z({}) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `final impl` overlaps with `final impl` from same file outside a
+// CHECK:STDERR:        ·    ┃        `match_first` block
+// CHECK:STDERR:        ·    ┃        [FinalImplOverlapsSameFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl C as Z({}) {}
 
@@ -125,8 +143,17 @@ final impl C as Z(()) {}
 // The final impl here overlaps with the first final impl above, but is not in
 // a match_first.
 //
-// CHECK:STDERR: fail_multiple_finals_overlap_with_self_type.carbon:[[@LINE+3]]:1-39: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
-// CHECK:STDERR: fail_multiple_finals_overlap_with_self_type.carbon:[[@LINE-6]]:1-23: note: other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ╭─┤ fail_multiple_finals_overlap_with_self_type.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ final impl C as Z(()) {}
+// CHECK:STDERR:        · ───────────┬───────────
+// CHECK:STDERR:        ·            ╰──┤ other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ final impl forall [T: type] C as Z(T) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `final impl` overlaps with `final impl` from same file outside a
+// CHECK:STDERR:        ·    ┃        `match_first` block
+// CHECK:STDERR:        ·    ┃        [FinalImplOverlapsSameFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl forall [T: type] C as Z(T) {}
 
@@ -175,8 +202,18 @@ class C {}
 // Can't write a final impl in both the interface's file and the root self
 // type's file (when they are different files).
 //
-// CHECK:STDERR: fail_final_impl_with_both_interface_and_self_but_different_files.carbon:[[@LINE+3]]:1-23: error: `final impl` overlaps with `final impl` from another file [FinalImplOverlapsDifferentFile]
-// CHECK:STDERR: interface_z_with_impl.carbon:9:1-39: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
+// CHECK:STDERR:        ╭─┤ fail_final_impl_with_both_interface_and_self_but_different_files.carbon:[[@LINE+13]]:1
+// CHECK:STDERR: ->     │ final impl C as Z(()) {}
+// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: `final impl` overlaps with `final impl` from another file
+// CHECK:STDERR:        ·               ┃        [FinalImplOverlapsDifferentFile]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ interface_z_with_impl.carbon
+// CHECK:STDERR:        │ final impl forall [T: type] T as Z(T) {}
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ imported `final impl` here
+// CHECK:STDERR:        ·                       │ [FinalImplOverlapsDifferentFileNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl C as Z(()) {}
 
@@ -190,8 +227,18 @@ class C {}
 // This final impl is overlapped by a final impl in the interface file, and you
 // can't write a final impl in two different files.
 //
-// CHECK:STDERR: fail_final_overlaps_final_from_other_file.carbon:[[@LINE+3]]:1-22: error: `final impl` overlaps with `final impl` from another file [FinalImplOverlapsDifferentFile]
-// CHECK:STDERR: interface_z_with_impl.carbon:9:1-39: note: imported `final impl` here [FinalImplOverlapsDifferentFileNote]
+// CHECK:STDERR:        ╭─┤ fail_final_overlaps_final_from_other_file.carbon:[[@LINE+13]]:1
+// CHECK:STDERR: ->     │ final impl C as Z(C) {}
+// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: `final impl` overlaps with `final impl` from another file
+// CHECK:STDERR:        ·               ┃        [FinalImplOverlapsDifferentFile]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ interface_z_with_impl.carbon
+// CHECK:STDERR:        │ final impl forall [T: type] T as Z(T) {}
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ imported `final impl` here
+// CHECK:STDERR:        ·                       │ [FinalImplOverlapsDifferentFileNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl C as Z(C) {}
 
@@ -204,8 +251,17 @@ class C {}
 
 // This non-final impl is subsumed by a final impl in the interface file.
 //
-// CHECK:STDERR: fail_final_overlaps_non_final_from_other_file.carbon:[[@LINE+3]]:1-16: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
-// CHECK:STDERR: interface_z_with_impl.carbon:9:1-39: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR:        ╭─┤ fail_final_overlaps_non_final_from_other_file.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ impl C as Z(C) {}
+// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ error: `impl` will never be used [ImplFinalOverlapsNonFinal]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ interface_z_with_impl.carbon
+// CHECK:STDERR:        │ final impl forall [T: type] T as Z(T) {}
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ `final impl` declared here would always be used instead
+// CHECK:STDERR:        ·                       │ [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl C as Z(C) {}
 
@@ -219,7 +275,13 @@ class C;
 
 // The root type must be defined in the same library, not just declared.
 //
-// CHECK:STDERR: fail_final_root_self_type_not_defined.carbon:[[@LINE+2]]:1-23: error: `final impl` found in file that does not contain the root self type nor the interface definition [FinalImplInvalidFile]
+// CHECK:STDERR:        ╭─┤ fail_final_root_self_type_not_defined.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ final impl C as Z(()) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `final impl` found in file that does not contain the root self type
+// CHECK:STDERR:        ·    ┃        nor the interface definition
+// CHECK:STDERR:        ·    ┃        [FinalImplInvalidFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl C as Z(()) {}
 
@@ -234,7 +296,13 @@ class C {}
 // Can't make a final impl that is not in the same file as the self type nor
 // the interface.
 //
-// CHECK:STDERR: fail_final_different_file_from_self_and_interface.carbon:[[@LINE+2]]:1-26: error: `final impl` found in file that does not contain the root self type nor the interface definition [FinalImplInvalidFile]
+// CHECK:STDERR:        ╭─┤ fail_final_different_file_from_self_and_interface.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ final impl D(C) as Z(()) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `final impl` found in file that does not contain the root self type
+// CHECK:STDERR:        ·    ┃        nor the interface definition
+// CHECK:STDERR:        ·    ┃        [FinalImplInvalidFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl D(C) as Z(()) {}
 
@@ -248,7 +316,13 @@ class C {}
 // Can't make a final impl that is not in the same file as the self type nor
 // the interface.
 //
-// CHECK:STDERR: fail_final_different_file_from_self_and_interface_with_generic_self.carbon:[[@LINE+2]]:1-39: error: `final impl` found in file that does not contain the root self type nor the interface definition [FinalImplInvalidFile]
+// CHECK:STDERR:        ╭─┤ fail_final_different_file_from_self_and_interface_with_generic_self.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ final impl forall [T: type] T as Z(C) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `final impl` found in file that does not contain the root self type
+// CHECK:STDERR:        ·    ┃        nor the interface definition
+// CHECK:STDERR:        ·    ┃        [FinalImplInvalidFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl forall [T: type] T as Z(C) {}
 
@@ -257,11 +331,19 @@ library "[[@TEST_NAME]]";
 
 interface Z(T: type) {}
 
-// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+1]]:1-18: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
+// CHECK:STDERR:        ╭─┤ fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ impl () as Z(()) {}
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: `impl` will never be used [ImplFinalOverlapsNonFinal]
+// CHECK:STDERR:        │
+// CHECK:STDERR:        │ final impl forall [T: type] T as Z(T) {}
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ `final impl` declared here would always be used instead
+// CHECK:STDERR:        ·                       │ [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 impl () as Z(()) {}
 
-// CHECK:STDERR: fail_final_overlaps_earlier_non_final_impl.carbon:[[@LINE+2]]:1-39: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
-// CHECK:STDERR:
 final impl forall [T: type] T as Z(T) {}
 
 // --- fail_final_overlaps_later_non_final_impl.carbon
@@ -271,8 +353,16 @@ interface Z(T: type) {}
 
 final impl forall [T: type] T as Z(T) {}
 
-// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE+3]]:1-18: error: `impl` will never be used [ImplFinalOverlapsNonFinal]
-// CHECK:STDERR: fail_final_overlaps_later_non_final_impl.carbon:[[@LINE-3]]:1-39: note: `final impl` declared here would always be used instead [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR:        ╭─┤ fail_final_overlaps_later_non_final_impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ final impl forall [T: type] T as Z(T) {}
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ `final impl` declared here would always be used instead
+// CHECK:STDERR:        ·                       │ [ImplFinalOverlapsNonFinalNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl () as Z(()) {}
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: `impl` will never be used [ImplFinalOverlapsNonFinal]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as Z(()) {}
 
@@ -285,8 +375,17 @@ class C {}
 
 final impl C as Z(C) {}
 
-// CHECK:STDERR: fail_final_overlaps_earlier_final_impl.carbon:[[@LINE+3]]:1-39: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
-// CHECK:STDERR: fail_final_overlaps_earlier_final_impl.carbon:[[@LINE-3]]:1-22: note: other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ╭─┤ fail_final_overlaps_earlier_final_impl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ final impl C as Z(C) {}
+// CHECK:STDERR:        · ───────────┬──────────
+// CHECK:STDERR:        ·            ╰──┤ other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ final impl forall [T: type] T as Z(T) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `final impl` overlaps with `final impl` from same file outside a
+// CHECK:STDERR:        ·    ┃        `match_first` block
+// CHECK:STDERR:        ·    ┃        [FinalImplOverlapsSameFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl forall [T: type] T as Z(T) {}
 
@@ -299,8 +398,17 @@ class C {}
 
 final impl forall [T: type] T as Z(T) {}
 
-// CHECK:STDERR: fail_final_overlaps_later_final_impl.carbon:[[@LINE+3]]:1-22: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
-// CHECK:STDERR: fail_final_overlaps_later_final_impl.carbon:[[@LINE-3]]:1-39: note: other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ╭─┤ fail_final_overlaps_later_final_impl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ final impl forall [T: type] T as Z(T) {}
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ final impl C as Z(C) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `final impl` overlaps with `final impl` from same file outside a
+// CHECK:STDERR:        ·    ┃        `match_first` block
+// CHECK:STDERR:        ·    ┃        [FinalImplOverlapsSameFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl C as Z(C) {}
 
@@ -317,8 +425,17 @@ class C(T: type);
 // No diagnosis here as the type structure is unique.
 impl forall [T: type] T as Z(C(T)) {}
 
-// CHECK:STDERR: fail_non_final_type_structure_matches_non_final_impl.carbon:[[@LINE+3]]:1-33: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-// CHECK:STDERR: fail_non_final_type_structure_matches_non_final_impl.carbon:[[@LINE-8]]:1-30: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
+// CHECK:STDERR:        ╭─┤ fail_non_final_type_structure_matches_non_final_impl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ impl forall [T: Y] T as Z(T) {}
+// CHECK:STDERR:        · ───────────────┬──────────────
+// CHECK:STDERR:        ·                ╰──┤ other `impl` here [ImplNonFinalSameTypeStructureNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl forall [T: type] T as Z(T) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: found non-final `impl` with the same type structure as another
+// CHECK:STDERR:        ·    ┃        non-final `impl`
+// CHECK:STDERR:        ·    ┃        [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall [T: type] T as Z(T) {}
 
@@ -359,7 +476,17 @@ class C(T: type) {}
 // more specific in the self type. They overlap for the query `C(()) as Z(())`
 // but neither impl is completely more specific than the other.
 final impl forall [T: type] C(T) as Z(()) {}
-// CHECK:STDERR: fail_final_overlap_where_each_is_more_specific_than_the_other.carbon:[[@LINE+3]]:1-43: error: `final impl` overlaps with `final impl` from same file outside a `match_first` block [FinalImplOverlapsSameFile]
-// CHECK:STDERR: fail_final_overlap_where_each_is_more_specific_than_the_other.carbon:[[@LINE-2]]:1-43: note: other `final impl` here [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ╭─┤ fail_final_overlap_where_each_is_more_specific_than_the_other.carbon:[[@LINE+13]]:1
+// CHECK:STDERR:        │ final impl forall [T: type] C(T) as Z(()) {}
+// CHECK:STDERR:        · ─────────────────────┬─────────────────────
+// CHECK:STDERR:        ·                      ╰──┤ other `final impl` here
+// CHECK:STDERR:        ·                         │ [FinalImplOverlapsSameFileNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ final impl forall [T: type] C(()) as Z(T) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `final impl` overlaps with `final impl` from same file outside a
+// CHECK:STDERR:        ·    ┃        `match_first` block
+// CHECK:STDERR:        ·    ┃        [FinalImplOverlapsSameFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl forall [T: type] C(()) as Z(T) {}

@@ -28,13 +28,24 @@ var i: auto = -expand x;
 // --- fail_under_not.carbon
 
 // Like prefix `*`, `expand` requires parentheses under `not`.
-// CHECK:STDERR: fail_under_not.carbon:[[@LINE+2]]:19-24: error: parentheses are required around this unary `expand` operator [UnaryOperatorRequiresParentheses]
+// CHECK:STDERR:        ╭─┤ fail_under_not.carbon:[[@LINE+8]]:19
+// CHECK:STDERR: ->     │ var a: auto = not expand x;
+// CHECK:STDERR:        ·                   ┳━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: parentheses are required around this unary
+// CHECK:STDERR:        ·                      ┃        `expand` operator
+// CHECK:STDERR:        ·                      ┃        [UnaryOperatorRequiresParentheses]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: auto = not expand x;
 
 // --- fail_as_postfix.carbon
 
-// CHECK:STDERR: fail_as_postfix.carbon:[[@LINE+2]]:17-22: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_as_postfix.carbon:[[@LINE+7]]:17
+// CHECK:STDERR: ->     │ var a: auto = x expand;
+// CHECK:STDERR:        ·                 ━━━┳━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: `var` declarations must end with a `;`
+// CHECK:STDERR:        ·                       ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: auto = x expand;
 

@@ -18,7 +18,12 @@ fn Success() {
 // --- fail_numeric_designator.carbon
 
 fn FailNumeric() {
-  // CHECK:STDERR: fail_numeric_designator.carbon:[[@LINE+2]]:4: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╭─┤ fail_numeric_designator.carbon:[[@LINE+7]]:4
+  // CHECK:STDERR: ->     │   .1;
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expected identifier or `Self` after `.`
+  // CHECK:STDERR:        ·       ┃        [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   .1;
 }
@@ -26,7 +31,12 @@ fn FailNumeric() {
 // --- fail_keyword_designator.carbon
 
 fn FailKeyword() {
-  // CHECK:STDERR: fail_keyword_designator.carbon:[[@LINE+2]]:4-7: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╭─┤ fail_keyword_designator.carbon:[[@LINE+7]]:4
+  // CHECK:STDERR: ->     │   .base;
+  // CHECK:STDERR:        ·    ━━┳━
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected identifier or `Self` after `.`
+  // CHECK:STDERR:        ·         ┃        [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   .base;
 }
@@ -34,7 +44,12 @@ fn FailKeyword() {
 // --- fail_empty_designator.carbon
 
 fn FailEmpty() {
-  // CHECK:STDERR: fail_empty_designator.carbon:[[@LINE+2]]:4: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╭─┤ fail_empty_designator.carbon:[[@LINE+7]]:4
+  // CHECK:STDERR: ->     │   .;
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expected identifier or `Self` after `.`
+  // CHECK:STDERR:        ·       ┃        [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   .;
 }
@@ -42,7 +57,12 @@ fn FailEmpty() {
 // --- fail_star_designator.carbon
 
 fn FailStar() {
-  // CHECK:STDERR: fail_star_designator.carbon:[[@LINE+2]]:4: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╭─┤ fail_star_designator.carbon:[[@LINE+7]]:4
+  // CHECK:STDERR: ->     │   .*;
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expected identifier or `Self` after `.`
+  // CHECK:STDERR:        ·       ┃        [ExpectedIdentifierOrSelfAfterPeriod]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   .*;
 }
@@ -51,9 +71,19 @@ fn FailStar() {
 
 var x: i32 = .
 
-// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+86]]:26: error: expected identifier or `Self` after `.` [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR:        ╭─┤ fail_designator_eof.carbon:[[@LINE+96]]:26
+// CHECK:STDERR: ->     │ // CHECK:STDOUT:   (root)
+// CHECK:STDERR:        ·                          ┳
+// CHECK:STDERR:        ·                          ┗━━┫ error: expected identifier or `Self` after `.`
+// CHECK:STDERR:        ·                             ┃        [ExpectedIdentifierOrSelfAfterPeriod]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_designator_eof.carbon:[[@LINE+84]]:26: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_designator_eof.carbon:[[@LINE+89]]:26
+// CHECK:STDERR: ->     │ // CHECK:STDOUT:   (root)
+// CHECK:STDERR:        ·                          ┳
+// CHECK:STDERR:        ·                          ┗━━┫ error: `var` declarations must end with a `;`
+// CHECK:STDERR:        ·                             ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: designator.carbon
 // CHECK:STDOUT:   ╭─FileStart ''

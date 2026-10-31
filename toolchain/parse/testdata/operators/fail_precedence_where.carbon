@@ -11,7 +11,13 @@
 // --- fail_and_where.carbon
 
 fn AndWhere() {
-  // CHECK:STDERR: fail_and_where.carbon:[[@LINE+2]]:14-18: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_and_where.carbon:[[@LINE+8]]:14
+  // CHECK:STDERR: ->     │   true and T where .A = B;
+  // CHECK:STDERR:        ·              ┳━━━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: parentheses are required to disambiguate operator
+  // CHECK:STDERR:        ·                 ┃        precedence
+  // CHECK:STDERR:        ·                 ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   true and T where .A = B;
 }
@@ -19,7 +25,12 @@ fn AndWhere() {
 // --- fail_where_or.carbon
 
 fn WhereOr() {
-  // CHECK:STDERR: fail_where_or.carbon:[[@LINE+2]]:22-23: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╭─┤ fail_where_or.carbon:[[@LINE+7]]:22
+  // CHECK:STDERR: ->     │   U where .C impls D or false;
+  // CHECK:STDERR:        ·                      ━┳
+  // CHECK:STDERR:        ·                       ┗━━┫ error: expected `;` after expression statement
+  // CHECK:STDERR:        ·                          ┃        [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   U where .C impls D or false;
 }
@@ -27,7 +38,13 @@ fn WhereOr() {
 // --- fail_equals_where.carbon
 
 fn EqualsWhere() {
-  // CHECK:STDERR: fail_equals_where.carbon:[[@LINE+2]]:10-14: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_equals_where.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   e == V where .G == f32;
+  // CHECK:STDERR:        ·          ┳━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: parentheses are required to disambiguate operator
+  // CHECK:STDERR:        ·             ┃        precedence
+  // CHECK:STDERR:        ·             ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   e == V where .G == f32;
 }
@@ -35,7 +52,12 @@ fn EqualsWhere() {
 // --- fail_where_neq.carbon
 
 fn WhereNEq() {
-  // CHECK:STDERR: fail_where_neq.carbon:[[@LINE+2]]:21-22: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╭─┤ fail_where_neq.carbon:[[@LINE+7]]:21
+  // CHECK:STDERR: ->     │   W where .H = bool != i;
+  // CHECK:STDERR:        ·                     ━┳
+  // CHECK:STDERR:        ·                      ┗━━┫ error: expected `;` after expression statement
+  // CHECK:STDERR:        ·                         ┃        [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   W where .H = bool != i;
 }
@@ -43,7 +65,12 @@ fn WhereNEq() {
 // --- fail_less_requirement.carbon
 
 fn LessRequirement() {
-  // CHECK:STDERR: fail_less_requirement.carbon:[[@LINE+2]]:14: error: requirement should use `impls`, `=`, or `==` operator [ExpectedRequirementOperator]
+  // CHECK:STDERR:        ╭─┤ fail_less_requirement.carbon:[[@LINE+7]]:14
+  // CHECK:STDERR: ->     │   X where .J < .K;
+  // CHECK:STDERR:        ·              ┳
+  // CHECK:STDERR:        ·              ┗━━┫ error: requirement should use `impls`, `=`, or `==` operator
+  // CHECK:STDERR:        ·                 ┃        [ExpectedRequirementOperator]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   X where .J < .K;
 }
@@ -51,7 +78,13 @@ fn LessRequirement() {
 // --- fail_as_where.carbon
 
 fn AsWhere() {
-  // CHECK:STDERR: fail_as_where.carbon:[[@LINE+2]]:10-14: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_as_where.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   Y as Z where .L impls M;
+  // CHECK:STDERR:        ·          ┳━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: parentheses are required to disambiguate operator
+  // CHECK:STDERR:        ·             ┃        precedence
+  // CHECK:STDERR:        ·             ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Y as Z where .L impls M;
 }
@@ -59,7 +92,12 @@ fn AsWhere() {
 // --- fail_where_as.carbon
 
 fn WhereAs() {
-  // CHECK:STDERR: fail_where_as.carbon:[[@LINE+2]]:21-22: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╭─┤ fail_where_as.carbon:[[@LINE+7]]:21
+  // CHECK:STDERR: ->     │   S where .N == i32 as type;
+  // CHECK:STDERR:        ·                     ━┳
+  // CHECK:STDERR:        ·                      ┗━━┫ error: expected `;` after expression statement
+  // CHECK:STDERR:        ·                         ┃        [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   S where .N == i32 as type;
 }
@@ -67,7 +105,12 @@ fn WhereAs() {
 // --- fail_as_in_argument.carbon
 
 fn AsInArgument() {
-  // CHECK:STDERR: fail_as_in_argument.carbon:[[@LINE+2]]:14-15: error: requirement should use `impls`, `=`, or `==` operator [ExpectedRequirementOperator]
+  // CHECK:STDERR:        ╭─┤ fail_as_in_argument.carbon:[[@LINE+7]]:14
+  // CHECK:STDERR: ->     │   R where .O as type impls P;
+  // CHECK:STDERR:        ·              ━┳
+  // CHECK:STDERR:        ·               ┗━━┫ error: requirement should use `impls`, `=`, or `==` operator
+  // CHECK:STDERR:        ·                  ┃        [ExpectedRequirementOperator]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   R where .O as type impls P;
 }
@@ -75,7 +118,12 @@ fn AsInArgument() {
 // --- fail_greater_in_argument.carbon
 
 fn GreaterInArgument() {
-  // CHECK:STDERR: fail_greater_in_argument.carbon:[[@LINE+2]]:15: error: requirement should use `impls`, `=`, or `==` operator [ExpectedRequirementOperator]
+  // CHECK:STDERR:        ╭─┤ fail_greater_in_argument.carbon:[[@LINE+7]]:15
+  // CHECK:STDERR: ->     │   Q where .AA > .BB impls CC;
+  // CHECK:STDERR:        ·               ┳
+  // CHECK:STDERR:        ·               ┗━━┫ error: requirement should use `impls`, `=`, or `==` operator
+  // CHECK:STDERR:        ·                  ┃        [ExpectedRequirementOperator]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Q where .AA > .BB impls CC;
 }

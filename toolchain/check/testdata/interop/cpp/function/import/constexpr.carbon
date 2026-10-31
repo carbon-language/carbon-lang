@@ -72,7 +72,12 @@ constexpr int invalid_const_fn(int a) {
 }
 ''';
 
-// CHECK:STDERR: fail_invalid_constant_eval.carbon:[[@LINE+2]]:19-41: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR:        ╭─┤ fail_invalid_constant_eval.carbon:[[@LINE+7]]:19
+// CHECK:STDERR: ->     │ let a: array(i32, Cpp.invalid_const_fn(5)) = (1, 2, 3);
+// CHECK:STDERR:        ·                   ━━━━━━━━━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        ·                              ┗━━┫ error: array bound is not a constant
+// CHECK:STDERR:        ·                                 ┃        [InvalidArrayExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: array(i32, Cpp.invalid_const_fn(5)) = (1, 2, 3);
 
@@ -101,16 +106,36 @@ var a: i32 = 0;
 
 // TODO: This is failing when building the thunk, not when calling it.
 inline Cpp '''
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+3]]:15: error: call to consteval function 'nonconst_consteval_fn' is not a constant expression [CppInteropParseError]
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+2]]:15: note: function parameter 'r' with unknown value cannot be used in a constant expression [CppInteropParseNote]
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+1]]:15: note: declared here [CppInteropParseNote]
+// CHECK:STDERR:        ╭─┤ fail_nonconstant_consteval_call.carbon:[[@LINE+16]]:15
+// CHECK:STDERR: ->     │ consteval int nonconst_consteval_fn(const int &r) { return r; }
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: call to consteval function 'nonconst_consteval_fn' is
+// CHECK:STDERR:        ·               │  ┃        not a constant expression
+// CHECK:STDERR:        ·               │  ┃        [CppInteropParseError]
+// CHECK:STDERR:        ·               ╰────┤ function parameter 'r' with unknown value cannot be used in
+// CHECK:STDERR:        ·               │    │ a constant expression
+// CHECK:STDERR:        ·               │    │ [CppInteropParseNote]
+// CHECK:STDERR:        ·               ╰──────┤ declared here [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │ var b: i32 = Cpp.nonconst_consteval_fn(a);
+// CHECK:STDERR:        ·              ──────────────┬─────────────
+// CHECK:STDERR:        ·                            ╰──┤ in thunk for C++ function used here [InCppThunk]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 consteval int nonconst_consteval_fn(const int &r) { return r; }
 ''';
 
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+5]]:14-41: note: in thunk for C++ function used here [InCppThunk]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE+3]]:14-41: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: fail_nonconstant_consteval_call.carbon:[[@LINE-6]]:15: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ╭─┤ fail_nonconstant_consteval_call.carbon:[[@LINE+12]]:14
+// CHECK:STDERR:        │ consteval int nonconst_consteval_fn(const int &r) { return r; }
+// CHECK:STDERR:        ·               ┬
+// CHECK:STDERR:        ·               ╰──┤ compile-time-only function declared here
+// CHECK:STDERR:        ·                  │ [CompTimeOnlyFunctionHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var b: i32 = Cpp.nonconst_consteval_fn(a);
+// CHECK:STDERR:        ·              ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: non-constant call to compile-time-only function
+// CHECK:STDERR:        ·                         ┃        [NonConstantCallToCompTimeOnlyFunction]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: i32 = Cpp.nonconst_consteval_fn(a);
 
@@ -130,14 +155,22 @@ struct ConstexprC {
 // TODO: This should probably be allowed.
 eval fn F() -> i32 {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_constructor.carbon:[[@LINE+1]]:27: error: expression is runtime; expected constant [EvalRequiresConstantValue]
+  // CHECK:STDERR:        ╭─┤ fail_todo_constructor.carbon:[[@LINE+11]]:27
+  // CHECK:STDERR: ->     │   let c: Cpp.ConstexprC = 3;
+  // CHECK:STDERR:        ·                           ┳
+  // CHECK:STDERR:        ·                           ┗━━┫ error: expression is runtime; expected constant
+  // CHECK:STDERR:        ·                              ┃        [EvalRequiresConstantValue]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ let a: array(i32, F()) = (1, 2, 3);
+  // CHECK:STDERR:        ·                   ─┬─
+  // CHECK:STDERR:        ·                    ╰──┤ in call to F here [InCallToEvalFn]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   let c: Cpp.ConstexprC = 3;
   return c.a;
   //@dump-sem-ir-end
 }
 
-// CHECK:STDERR: fail_todo_constructor.carbon:[[@LINE+2]]:19-21: note: in call to F here [InCallToEvalFn]
-// CHECK:STDERR:
 let a: array(i32, F()) = (1, 2, 3);
 
 // CHECK:STDOUT: --- fail_todo_constructor.carbon
@@ -215,43 +248,43 @@ let a: array(i32, F()) = (1, 2, 3);
 // CHECK:STDOUT: fn @F() -> out %return.param: %i32 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3.1ba]
-// CHECK:STDOUT:   %.loc17_27.1: ref %ConstexprC = temporary_storage
-// CHECK:STDOUT:   %impl.elem0.loc17: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc17_27.1: <bound method> = bound_method %int_3, %impl.elem0.loc17 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc17: <specific function> = specific_function %impl.elem0.loc17, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc17_27.2: <bound method> = bound_method %int_3, %specific_fn.loc17 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc17_27.2(%int_3) [concrete = constants.%int_3.9f3]
-// CHECK:STDOUT:   %.loc17_27.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_3.9f3]
-// CHECK:STDOUT:   %.loc17_27.3: %i32 = converted %int_3, %.loc17_27.2 [concrete = constants.%int_3.9f3]
-// CHECK:STDOUT:   %addr: %ptr.0b8 = addr_of %.loc17_27.1
-// CHECK:STDOUT:   %ConstexprC__carbon_thunk.call: init %empty_tuple.type = call imports.%ConstexprC__carbon_thunk.decl(%.loc17_27.3, %addr)
-// CHECK:STDOUT:   %.loc17_27.4: init %ConstexprC to %.loc17_27.1 = mark_in_place_init %ConstexprC__carbon_thunk.call
-// CHECK:STDOUT:   %.loc17_27.5: init %ConstexprC = converted %int_3, %.loc17_27.4
-// CHECK:STDOUT:   %.loc17_27.6: ref %ConstexprC = temporary %.loc17_27.1, %.loc17_27.5
-// CHECK:STDOUT:   %.loc17_27.7: %ConstexprC = acquire_value %.loc17_27.6
-// CHECK:STDOUT:   %.loc17_13: type = splice_block %ConstexprC.ref [concrete = constants.%ConstexprC] {
+// CHECK:STDOUT:   %.loc27_27.1: ref %ConstexprC = temporary_storage
+// CHECK:STDOUT:   %impl.elem0.loc27: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc27_27.1: <bound method> = bound_method %int_3, %impl.elem0.loc27 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc27: <specific function> = specific_function %impl.elem0.loc27, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc27_27.2: <bound method> = bound_method %int_3, %specific_fn.loc27 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc27_27.2(%int_3) [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %.loc27_27.2: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %.loc27_27.3: %i32 = converted %int_3, %.loc27_27.2 [concrete = constants.%int_3.9f3]
+// CHECK:STDOUT:   %addr: %ptr.0b8 = addr_of %.loc27_27.1
+// CHECK:STDOUT:   %ConstexprC__carbon_thunk.call: init %empty_tuple.type = call imports.%ConstexprC__carbon_thunk.decl(%.loc27_27.3, %addr)
+// CHECK:STDOUT:   %.loc27_27.4: init %ConstexprC to %.loc27_27.1 = mark_in_place_init %ConstexprC__carbon_thunk.call
+// CHECK:STDOUT:   %.loc27_27.5: init %ConstexprC = converted %int_3, %.loc27_27.4
+// CHECK:STDOUT:   %.loc27_27.6: ref %ConstexprC = temporary %.loc27_27.1, %.loc27_27.5
+// CHECK:STDOUT:   %.loc27_27.7: %ConstexprC = acquire_value %.loc27_27.6
+// CHECK:STDOUT:   %.loc27_13: type = splice_block %ConstexprC.ref [concrete = constants.%ConstexprC] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %ConstexprC.ref: type = name_ref ConstexprC, imports.%ConstexprC.decl [concrete = constants.%ConstexprC]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c: %ConstexprC = wrapper_binding c, %.loc17_27.7
+// CHECK:STDOUT:   %c: %ConstexprC = wrapper_binding c, %.loc27_27.7
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.3cc = value_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.ref: %ConstexprC = name_ref c, %c
 // CHECK:STDOUT:   %a.ref: %ConstexprC.elem = name_ref a, @ConstexprC.%field_decl [concrete = @ConstexprC.%field_decl]
-// CHECK:STDOUT:   %.loc18_11.1: ref %i32 = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc18_11.2: %i32 = acquire_value %.loc18_11.1
-// CHECK:STDOUT:   %impl.elem0.loc18: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
-// CHECK:STDOUT:   %bound_method.loc18_11.1: <bound method> = bound_method %.loc18_11.2, %impl.elem0.loc18
-// CHECK:STDOUT:   %specific_fn.loc18: <specific function> = specific_function %impl.elem0.loc18, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc18_11.2: <bound method> = bound_method %.loc18_11.2, %specific_fn.loc18
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc18_11.2(%.loc18_11.2)
-// CHECK:STDOUT:   %Destroy.facet.loc17_27.1: %Destroy.type = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.a0d, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc17_27.8: %Destroy.type = converted constants.%ConstexprC, %Destroy.facet.loc17_27.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc17_27.2: %Destroy.type = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.a0d, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc17_27.9: %Destroy.type = converted constants.%ConstexprC, %Destroy.facet.loc17_27.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc28_11.1: ref %i32 = class_element_access %c.ref, element0
+// CHECK:STDOUT:   %.loc28_11.2: %i32 = acquire_value %.loc28_11.1
+// CHECK:STDOUT:   %impl.elem0.loc28: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
+// CHECK:STDOUT:   %bound_method.loc28_11.1: <bound method> = bound_method %.loc28_11.2, %impl.elem0.loc28
+// CHECK:STDOUT:   %specific_fn.loc28: <specific function> = specific_function %impl.elem0.loc28, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc28_11.2: <bound method> = bound_method %.loc28_11.2, %specific_fn.loc28
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call: init %i32 = call %bound_method.loc28_11.2(%.loc28_11.2)
+// CHECK:STDOUT:   %Destroy.facet.loc27_27.1: %Destroy.type = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.a0d, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc27_27.8: %Destroy.type = converted constants.%ConstexprC, %Destroy.facet.loc27_27.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc27_27.2: %Destroy.type = facet_value constants.%ConstexprC, (constants.%DestroyImpl.impl_witness.a0d, constants.%custom_witness.576) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc27_27.9: %Destroy.type = converted constants.%ConstexprC, %Destroy.facet.loc27_27.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc17_27.6)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc27_27.6)
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -61,7 +61,12 @@ interface Z {
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_missing_impls.carbon:[[@LINE+2]]:12: error: expected `impls` in `require` declaration [RequireExpectedImpls]
+  // CHECK:STDERR:        ╭─┤ fail_missing_impls.carbon:[[@LINE+7]]:12
+  // CHECK:STDERR: ->     │   require Y;
+  // CHECK:STDERR:        ·            ┳
+  // CHECK:STDERR:        ·            ┗━━┫ error: expected `impls` in `require` declaration
+  // CHECK:STDERR:        ·               ┃        [RequireExpectedImpls]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   require Y;
 }
@@ -71,7 +76,11 @@ interface Z {
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_wrong_keyword.carbon:[[@LINE+2]]:11-12: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_wrong_keyword.carbon:[[@LINE+6]]:11
+  // CHECK:STDERR: ->     │   require as Y;
+  // CHECK:STDERR:        ·           ━┳
+  // CHECK:STDERR:        ·            ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   require as Y;
 }
@@ -81,7 +90,12 @@ interface Z {
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR: fail_as_in_self.carbon:[[@LINE+2]]:16-17: error: expected `impls` in `require` declaration [RequireExpectedImpls]
+  // CHECK:STDERR:        ╭─┤ fail_as_in_self.carbon:[[@LINE+7]]:16
+  // CHECK:STDERR: ->     │   require Self as Y impls Y;
+  // CHECK:STDERR:        ·                ━┳
+  // CHECK:STDERR:        ·                 ┗━━┫ error: expected `impls` in `require` declaration
+  // CHECK:STDERR:        ·                    ┃        [RequireExpectedImpls]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   require Self as Y impls Y;
 }

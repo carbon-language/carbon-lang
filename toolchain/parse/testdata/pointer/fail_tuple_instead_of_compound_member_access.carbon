@@ -9,35 +9,67 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/pointer/fail_tuple_instead_of_compound_member_access.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:6: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+6]]:6
+  // CHECK:STDERR: ->     │   x.();
+  // CHECK:STDERR:        ·      ┳
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   x.();
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:7: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   y.(1,);
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   y.(1,);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:7: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   z.(a, b);
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   z.(a, b);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:8: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+6]]:8
+  // CHECK:STDERR: ->     │   w.(c d e ());
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   w.(c d e ());
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:7: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   v->();
+  // CHECK:STDERR:        ·       ┳
+  // CHECK:STDERR:        ·       ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   v->();
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:8: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+6]]:8
+  // CHECK:STDERR: ->     │   u->(f,);
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   u->(f,);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:8: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+6]]:8
+  // CHECK:STDERR: ->     │   t->(2, 3);
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   t->(2, 3);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:9: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+6]]:9
+  // CHECK:STDERR: ->     │   s->(g h i ());
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   s->(g h i ());
 }

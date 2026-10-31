@@ -32,7 +32,14 @@ fn H() {
 library "[[@TEST_NAME]]";
 
 fn F(generic N: i32) {
-  // CHECK:STDERR: fail_init_dependent_bound.carbon:[[@LINE+2]]:35-43: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
+  // CHECK:STDERR:        ╭─┤ fail_init_dependent_bound.carbon:[[@LINE+9]]:35
+  // CHECK:STDERR: ->     │   var unused arr: array(i32, N) = (1, 2, 3);
+  // CHECK:STDERR:        ·                                   ┳━━━━━━━━
+  // CHECK:STDERR:        ·                                   ┗━━┫ error: cannot initialize array with
+  // CHECK:STDERR:        ·                                      ┃        dependent bound from a list of
+  // CHECK:STDERR:        ·                                      ┃        initializers
+  // CHECK:STDERR:        ·                                      ┃        [ArrayInitDependentBound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused arr: array(i32, N) = (1, 2, 3);
 }
@@ -45,8 +52,18 @@ interface Y(T: type, U: T) {}
 constraint Z(N: i32) {
   // Forming the specific of `Y` uses constant values which are canonical and
   // have no location. The error should still point somewhere reasonable.
-  // CHECK:STDERR: fail_init_dependent_bound_in_constant.carbon:[[@LINE+3]]:24-42: error: cannot initialize array with dependent bound from a list of initializers [ArrayInitDependentBound]
-  // CHECK:STDERR: fail_init_dependent_bound_in_constant.carbon:[[@LINE-6]]:1-28: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_init_dependent_bound_in_constant.carbon:[[@LINE+13]]:24
+  // CHECK:STDERR:        │ interface Y(T: type, U: T) {}
+  // CHECK:STDERR:        · ──────────────┬─────────────
+  // CHECK:STDERR:        ·               ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                  │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   extend require impls Y(array((), N), ());
+  // CHECK:STDERR:        ·                        ┳━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                        ┗━━┫ error: cannot initialize array with dependent bound
+  // CHECK:STDERR:        ·                           ┃        from a list of initializers
+  // CHECK:STDERR:        ·                           ┃        [ArrayInitDependentBound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend require impls Y(array((), N), ());
 }

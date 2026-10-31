@@ -14,14 +14,23 @@ match_first {}
 
 // --- fail_missing_braces.carbon
 
-// CHECK:STDERR: fail_missing_braces.carbon:[[@LINE+2]]:12: error: expected `{` after `match_first` [ExpectedCurlyBraceAfter]
+// CHECK:STDERR:        ╭─┤ fail_missing_braces.carbon:[[@LINE+7]]:12
+// CHECK:STDERR: ->     │ match_first;
+// CHECK:STDERR:        ·            ┳
+// CHECK:STDERR:        ·            ┗━━┫ error: expected `{` after `match_first`
+// CHECK:STDERR:        ·               ┃        [ExpectedCurlyBraceAfter]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 match_first;
 
 // --- fail_eof.carbon
 
 match_first
-// CHECK:STDERR: fail_eof.carbon:[[@LINE+2]]:1: error: expected `{` after `match_first` [ExpectedCurlyBraceAfter]
+// CHECK:STDERR:        ╭─┤ fail_eof.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: expected `{` after `match_first` [ExpectedCurlyBraceAfter]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 
 // --- with_impls.carbon

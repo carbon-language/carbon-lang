@@ -34,8 +34,18 @@ class PrivateClass {
 
 inline Cpp '''
 int PrivateStatic() {
-  // CHECK:STDERR: fail_static_private.carbon:[[@LINE+3]]:32: error: 'x' is a private member of 'Carbon::Main::PrivateClass' [CppInteropParseError]
-  // CHECK:STDERR: fail_static_private.carbon:[[@LINE-6]]:23: note: implicitly declared private here [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_static_private.carbon:[[@LINE+13]]:32
+  // CHECK:STDERR:        │   private static var x: i32 = 123;
+  // CHECK:STDERR:        ·                       ┬
+  // CHECK:STDERR:        ·                       ╰──┤ implicitly declared private here
+  // CHECK:STDERR:        ·                          │ [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   return Carbon::PrivateClass::x;
+  // CHECK:STDERR:        ·                                ┳
+  // CHECK:STDERR:        ·                                ┗━━┫ error: 'x' is a private member of
+  // CHECK:STDERR:        ·                                   ┃        'Carbon::Main::PrivateClass'
+  // CHECK:STDERR:        ·                                   ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return Carbon::PrivateClass::x;
 }

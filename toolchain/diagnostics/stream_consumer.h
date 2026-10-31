@@ -38,6 +38,9 @@ class StreamConsumer : public Consumer {
   auto set_diagnostic_snippets(bool value) -> void {
     renderer_.set_snippets(value);
   }
+  auto set_diagnostic_line_numbers(bool value) -> void {
+    renderer_.set_line_numbers(value);
+  }
 
  private:
   llvm::raw_ostream* stream_;

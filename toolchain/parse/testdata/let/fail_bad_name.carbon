@@ -8,7 +8,11 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/let/fail_bad_name.carbon
 
-// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+2]]:5: error: expected pattern [ExpectedPattern]
+// CHECK:STDERR:        ╭─┤ fail_bad_name.carbon:[[@LINE+6]]:5
+// CHECK:STDERR: ->     │ let ? = 4;
+// CHECK:STDERR:        ·     ┳
+// CHECK:STDERR:        ·     ┗━━┫ error: expected pattern [ExpectedPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let ? = 4;
 

@@ -16,13 +16,21 @@
 // `<error>` doesn't implement an operator.
 
 fn F() {
-  // CHECK:STDERR: fail_error_recovery.carbon:[[@LINE+2]]:3-12: error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_error_recovery.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   undeclared + 1;
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   undeclared + 1;
 }
 
 fn G(n: i32) {
-  // CHECK:STDERR: fail_error_recovery.carbon:[[@LINE+2]]:7-16: error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_error_recovery.carbon:[[@LINE+6]]:7
+  // CHECK:STDERR: ->     │   n + undeclared;
+  // CHECK:STDERR:        ·       ━━━━━┳━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   n + undeclared;
 }

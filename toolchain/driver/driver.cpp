@@ -36,6 +36,7 @@ struct Options {
   bool fuzzing = false;
   bool include_diagnostic_kind = false;
   bool diagnostic_snippets = true;
+  bool diagnostic_line_numbers = true;
   bool threads = true;
   bool build_runtimes_on_demand = false;
 
@@ -148,12 +149,30 @@ By default a diagnostic shows one view of each file it points into, with the
 lines between its ranges elided, so a message and a label near it read as one
 piece of code. `--no-diagnostic-snippets` drops that: each part of a diagnostic
 is one line, led by its location and the extent of its range, positioned
-against nothing, which is what a build log and a golden file want.
+against nothing, which suits a build log.
 )""",
       },
       [&](auto& arg_b) {
         arg_b.Default(true);
         arg_b.Set(&diagnostic_snippets);
+      });
+
+  b.AddFlag(
+      {
+          .name = "diagnostic-line-numbers",
+          .help = R"""(
+Whether diagnostics show line numbers.
+
+By default every line of source shown is numbered and every location is
+complete. `--no-diagnostic-line-numbers` leaves the lines unnumbered and keeps
+one location per diagnostic in full, normally the one it is reported at; every
+other location is reduced to its file name. Golden test files capture
+diagnostics this way so that they don't change when the lines of a test move.
+)""",
+      },
+      [&](auto& arg_b) {
+        arg_b.Default(true);
+        arg_b.Set(&diagnostic_line_numbers);
       });
 
   b.AddOneOfOption(
@@ -358,6 +377,7 @@ auto Driver::RunCommand(llvm::ArrayRef<llvm::StringRef> args) -> DriverResult {
   // flag and render for whatever is behind the error stream.
   consumer.set_include_diagnostic_kind(options.include_diagnostic_kind);
   consumer.set_diagnostic_snippets(options.diagnostic_snippets);
+  consumer.set_diagnostic_line_numbers(options.diagnostic_line_numbers);
   consumer.set_capabilities(ErrorCapabilities(options.terminal));
 
   if (env.installation->error()) {

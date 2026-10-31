@@ -58,8 +58,17 @@ extern fn F();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE+3]]:1-8: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: two_file_impl_mismatch.carbon:4:1-14: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_two_file_impl_mismatch.impl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ fn F() {}
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: redeclarations of `fn F` must match use of `extern`
+// CHECK:STDERR:        ·        ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ two_file_impl_mismatch.carbon
+// CHECK:STDERR:        │ extern fn F();
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() {}
 
@@ -67,6 +76,14 @@ fn F() {}
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_no_decl.carbon [InImport]
+// CHECK:STDERR:        ├─┤ no_decl_extern.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern library "no_decl" fn F();
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: owning declaration required for non-owning declaration
+// CHECK:STDERR:        ·                  ┃        [MissingOwningDeclarationInApi]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 extern library "no_decl" fn F();
 
 // --- no_decl_extern.impl.carbon
@@ -77,31 +94,38 @@ impl library "no_decl_extern";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_no_decl.carbon:[[@LINE+3]]:1 [InImport]
-// CHECK:STDERR: no_decl_extern.carbon:4:1-32: error: owning declaration required for non-owning declaration [MissingOwningDeclarationInApi]
-// CHECK:STDERR:
 import library "no_decl_extern";
 
 // --- indirect_two_file_extern.carbon
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_indirect_two_file.carbon [InImport]
+// CHECK:STDERR:        ├─┤ indirect_two_file_extern.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern library "indirect_two_file" fn F();
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: owning declaration required for non-owning declaration
+// CHECK:STDERR:        ·                  ┃        [MissingOwningDeclarationInApi]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 extern library "indirect_two_file" fn F();
 
 // --- fail_indirect_two_file.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_indirect_two_file.carbon:[[@LINE+3]]:1 [InImport]
-// CHECK:STDERR: indirect_two_file_extern.carbon:4:1-42: error: owning declaration required for non-owning declaration [MissingOwningDeclarationInApi]
-// CHECK:STDERR:
 import library "indirect_two_file_extern";
 
 // --- fail_indirect_two_file.impl.carbon
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_indirect_two_file.impl.carbon:[[@LINE+2]]:1-15: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
+// CHECK:STDERR:        ╭─┤ fail_indirect_two_file.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern fn F() {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: `extern` entities must have a declaration in the API file
+// CHECK:STDERR:        ·           ┃        [ExternRequiresDeclInApiFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F() {}
 
@@ -121,7 +145,12 @@ impl library "[[@TEST_NAME]]";
 
 import library "in_impl_extern";
 
-// CHECK:STDERR: fail_in_impl.impl.carbon:[[@LINE+2]]:1-15: error: `extern` entities must have a declaration in the API file [ExternRequiresDeclInApiFile]
+// CHECK:STDERR:        ╭─┤ fail_in_impl.impl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern fn F() {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: `extern` entities must have a declaration in the API file
+// CHECK:STDERR:        ·           ┃        [ExternRequiresDeclInApiFile]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F() {}
 

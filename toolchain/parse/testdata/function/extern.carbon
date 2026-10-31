@@ -22,15 +22,32 @@ extern library default fn G();
 
 // --- fail_name_missing.carbon
 
-// CHECK:STDERR: fail_name_missing.carbon:[[@LINE+2]]:16-17: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
+// CHECK:STDERR:        ╭─┤ fail_name_missing.carbon:[[@LINE+8]]:16
+// CHECK:STDERR: ->     │ extern library fn G();
+// CHECK:STDERR:        ·                ┳━
+// CHECK:STDERR:        ·                ┗━━┫ error: expected `default` or a string literal to specify the
+// CHECK:STDERR:        ·                   ┃        library name
+// CHECK:STDERR:        ·                   ┃        [ExpectedLibraryNameOrDefault]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library fn G();
 
 // --- fail_identifier.carbon
 
-// CHECK:STDERR: fail_identifier.carbon:[[@LINE+4]]:16-18: error: expected `default` or a string literal to specify the library name [ExpectedLibraryNameOrDefault]
+// CHECK:STDERR:        ╭─┤ fail_identifier.carbon:[[@LINE+15]]:16
+// CHECK:STDERR: ->     │ extern library foo fn G();
+// CHECK:STDERR:        ·                ┳━━
+// CHECK:STDERR:        ·                ┗━━┫ error: expected `default` or a string literal to specify the
+// CHECK:STDERR:        ·                   ┃        library name
+// CHECK:STDERR:        ·                   ┃        [ExpectedLibraryNameOrDefault]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_identifier.carbon:[[@LINE+2]]:16-18: error: unrecognized declaration introducer [UnrecognizedDecl]
+// CHECK:STDERR:        ╭─┤ fail_identifier.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ extern library foo fn G();
+// CHECK:STDERR:        ·                ━┳━
+// CHECK:STDERR:        ·                 ┗━━┫ error: unrecognized declaration introducer
+// CHECK:STDERR:        ·                    ┃        [UnrecognizedDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library foo fn G();
 

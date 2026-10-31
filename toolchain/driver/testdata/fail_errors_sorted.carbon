@@ -24,8 +24,20 @@ var x = 3a;
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDERR: fail_errors_sorted.carbon:2:24: error: opening symbol without a corresponding closing symbol
-// CHECK:STDERR: fail_errors_sorted.carbon:4:1: note: possibly missing `}` here
+// CHECK:STDERR:        ╭─┤ fail_errors_sorted.carbon:2:24
+// CHECK:STDERR: ->     │ fn run(String program) {
+// CHECK:STDERR:        ·                        ┳
+// CHECK:STDERR:        ·                        ┗━━┫ error: opening symbol without a corresponding
+// CHECK:STDERR:        ·                           ┃        closing symbol
+// CHECK:STDERR:        │   return True;
+// CHECK:STDERR:        │
+// CHECK:STDERR:        · ┬
+// CHECK:STDERR:        · ╰──┤ possibly missing `}` here
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_errors_sorted.carbon:5:10: error: invalid digit 'a' in decimal numeric literal
+// CHECK:STDERR:        ╭─┤ fail_errors_sorted.carbon:5:10
+// CHECK:STDERR: ->     │ var x = 3a;
+// CHECK:STDERR:        ·          ┳
+// CHECK:STDERR:        ·          ┗━━┫ error: invalid digit 'a' in decimal numeric literal
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:

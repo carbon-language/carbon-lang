@@ -41,8 +41,15 @@ impl Core.MaybeUnformed(C) as I {}
 impl partial C as I {}
 impl C* as I {}
 
-// CHECK:STDERR: fail_const_overlap.carbon:[[@LINE+3]]:1-19: error: redefinition of `impl const C as I` [ImplRedefinition]
-// CHECK:STDERR: fail_const_overlap.carbon:[[@LINE-6]]:1-19: note: previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR:        ╭─┤ fail_const_overlap.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ impl const C as I {}
+// CHECK:STDERR:        · ─────────┬─────────
+// CHECK:STDERR:        ·          ╰──┤ previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl const C as I {}
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: redefinition of `impl const C as I` [ImplRedefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl const C as I {}
 
@@ -58,8 +65,16 @@ impl Core.MaybeUnformed(C) as I {}
 impl partial C as I {}
 impl C* as I {}
 
-// CHECK:STDERR: fail_maybe_unformed_overlap.carbon:[[@LINE+3]]:1-33: error: redefinition of `impl Core.MaybeUnformed(C as Core.Destroy) as I` [ImplRedefinition]
-// CHECK:STDERR: fail_maybe_unformed_overlap.carbon:[[@LINE-5]]:1-33: note: previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR:        ╭─┤ fail_maybe_unformed_overlap.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ impl Core.MaybeUnformed(C) as I {}
+// CHECK:STDERR:        · ────────────────┬────────────────
+// CHECK:STDERR:        ·                 ╰──┤ previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl Core.MaybeUnformed(C) as I {}
+// CHECK:STDERR:        · ━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: redefinition of `impl Core.MaybeUnformed(C as Core.Destroy) as I`
+// CHECK:STDERR:        ·       ┃        [ImplRedefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl Core.MaybeUnformed(C) as I {}
 
@@ -75,8 +90,15 @@ impl Core.MaybeUnformed(C) as I {}
 impl partial C as I {}
 impl C* as I {}
 
-// CHECK:STDERR: fail_partial_overlap.carbon:[[@LINE+3]]:1-21: error: redefinition of `impl partial C as I` [ImplRedefinition]
-// CHECK:STDERR: fail_partial_overlap.carbon:[[@LINE-4]]:1-21: note: previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR:        ╭─┤ fail_partial_overlap.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ impl partial C as I {}
+// CHECK:STDERR:        · ──────────┬──────────
+// CHECK:STDERR:        ·           ╰──┤ previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl partial C as I {}
+// CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: redefinition of `impl partial C as I` [ImplRedefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl partial C as I {}
 
@@ -92,7 +114,14 @@ impl Core.MaybeUnformed(C) as I {}
 impl partial C as I {}
 impl C* as I {}
 
-// CHECK:STDERR: fail_pointer_overlap.carbon:[[@LINE+3]]:1-14: error: redefinition of `impl C* as I` [ImplRedefinition]
-// CHECK:STDERR: fail_pointer_overlap.carbon:[[@LINE-3]]:1-14: note: previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR:        ╭─┤ fail_pointer_overlap.carbon:[[@LINE+10]]:1
+// CHECK:STDERR:        │ impl C* as I {}
+// CHECK:STDERR:        · ───────┬──────
+// CHECK:STDERR:        ·        ╰──┤ previous definition was here [ImplPreviousDefinition]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl C* as I {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: redefinition of `impl C* as I` [ImplRedefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl C* as I {}

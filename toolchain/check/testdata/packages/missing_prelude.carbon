@@ -16,7 +16,13 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_missing_prelude.carbon:[[@LINE+2]]:8-10: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]
+// CHECK:STDERR:        ╭─┤ fail_missing_prelude.carbon:[[@LINE+8]]:8
+// CHECK:STDERR: ->     │ var n: i32;
+// CHECK:STDERR:        ·        ┳━━
+// CHECK:STDERR:        ·        ┗━━┫ error: `Core.Int` implicitly referenced here, but package `Core` not
+// CHECK:STDERR:        ·           ┃        found
+// CHECK:STDERR:        ·           ┃        [CoreNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var n: i32;
 
@@ -30,7 +36,12 @@ library "[[@TEST_NAME]]";
 
 import Core library "prelude_empty";
 
-// CHECK:STDERR: fail_missing_prelude_member.carbon:[[@LINE+2]]:8-10: error: name `Core.Int` implicitly referenced here, but not found [CoreNameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_missing_prelude_member.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ var n: i32;
+// CHECK:STDERR:        ·        ━┳━
+// CHECK:STDERR:        ·         ┗━━┫ error: name `Core.Int` implicitly referenced here, but not found
+// CHECK:STDERR:        ·            ┃        [CoreNameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var n: i32;
 
@@ -53,11 +64,27 @@ library "[[@TEST_NAME]]";
 import Core library "prelude_fake_int";
 
 // We don't really care whether this works, but it shouldn't crash or otherwise misbehave.
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+6]]:17-19: error: cannot implicitly convert non-type value of type `Core.X` to `type` [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+5]]:17-19: note: type `Core.X` does not implement interface `Core.ImplicitAs(type)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+22]]:17
+// CHECK:STDERR: ->     │ let n: Core.X = i32;
+// CHECK:STDERR:        ·                 ┳━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert non-type value of type
+// CHECK:STDERR:        ·                 │  ┃        `Core.X` to `type`
+// CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·                 ╰────┤ type `Core.X` does not implement interface
+// CHECK:STDERR:        ·                      │ `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+3]]:17-19: error: cannot implicitly convert expression of type `type` to `Core.X` [ConversionFailure]
-// CHECK:STDERR: fail_use_fake_int.carbon:[[@LINE+2]]:17-19: note: type `type` does not implement interface `Core.ImplicitAs(Core.X)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+11]]:17
+// CHECK:STDERR: ->     │ let n: Core.X = i32;
+// CHECK:STDERR:        ·                 ┳━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert expression of type `type`
+// CHECK:STDERR:        ·                 │  ┃        to `Core.X`
+// CHECK:STDERR:        ·                 │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·                 ╰────┤ type `type` does not implement interface
+// CHECK:STDERR:        ·                      │ `Core.ImplicitAs(Core.X)`
+// CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let n: Core.X = i32;
 
@@ -75,13 +102,27 @@ let n: i32 = {};
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+4]]:11-14: error: `namespace` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╭─┤ fail_prelude_as_namespace.carbon:[[@LINE+14]]:11
+// CHECK:STDERR: ->     │ namespace Core;
+// CHECK:STDERR:        ·           ━━┳━
+// CHECK:STDERR:        ·             ┗━━┫ error: `namespace` introducer should be followed by a name
+// CHECK:STDERR:        ·                ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+2]]:11-14: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_prelude_as_namespace.carbon:[[@LINE+7]]:11
+// CHECK:STDERR: ->     │ namespace Core;
+// CHECK:STDERR:        ·           ━━┳━
+// CHECK:STDERR:        ·             ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·                ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 namespace Core;
 
-// CHECK:STDERR: fail_prelude_as_namespace.carbon:[[@LINE+2]]:4-7: error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╭─┤ fail_prelude_as_namespace.carbon:[[@LINE+6]]:4
+// CHECK:STDERR: ->     │ fn Core.Int[T: type](generic N: T) -> {} { return {}; }
+// CHECK:STDERR:        ·    ━━┳━
+// CHECK:STDERR:        ·      ┗━━┫ error: `fn` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Core.Int[T: type](generic N: T) -> {} { return {}; }
 
@@ -92,9 +133,19 @@ let n: type = i32;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+4]]:7-10: error: `class` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╭─┤ fail_prelude_as_class.carbon:[[@LINE+14]]:7
+// CHECK:STDERR: ->     │ class Core {
+// CHECK:STDERR:        ·       ━━┳━
+// CHECK:STDERR:        ·         ┗━━┫ error: `class` introducer should be followed by a name
+// CHECK:STDERR:        ·            ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+2]]:7-10: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_prelude_as_class.carbon:[[@LINE+7]]:7
+// CHECK:STDERR: ->     │ class Core {
+// CHECK:STDERR:        ·       ━━┳━
+// CHECK:STDERR:        ·         ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·            ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class Core {
   fn Int[T: type](generic N: T) -> {} { return {}; }
@@ -114,7 +165,7 @@ let n: type = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %n.var: ref <error> = var_storage %n.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc6: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc12: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: <error> = ref_binding_pattern n [concrete = <error>]
@@ -154,7 +205,7 @@ let n: type = i32;
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %n.var: ref <error> = var_storage %n.var_patt [concrete = <error>]
-// CHECK:STDOUT:   %.loc8: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc13: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   %n: <error> = wrapper_binding n, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %n.patt: <error> = ref_binding_pattern n [concrete = <error>]
@@ -443,8 +494,8 @@ let n: type = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc13_17: %X = converted @__global_init.%.loc13_17.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc13_12: type = splice_block %X.ref [concrete = constants.%X] {
+// CHECK:STDOUT:   %.loc29_17: %X = converted @__global_init.%.loc29_17.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc29_12: type = splice_block %X.ref [concrete = constants.%X] {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Core.X [concrete = constants.%X]
 // CHECK:STDOUT:   }
@@ -510,10 +561,10 @@ let n: type = i32;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int_32) [concrete = constants.%Int.specific_fn]
-// CHECK:STDOUT:   %.loc13_17.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Int.call: init %X to %.loc13_17.1 = call %Int.specific_fn()
-// CHECK:STDOUT:   %.loc13_17.2: type = converted %Int.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc13_17.3: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc29_17.1: ref %X = temporary_storage
+// CHECK:STDOUT:   %Int.call: init %X to %.loc29_17.1 = call %Int.specific_fn()
+// CHECK:STDOUT:   %.loc29_17.2: type = converted %Int.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc29_17.3: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

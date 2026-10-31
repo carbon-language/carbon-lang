@@ -65,10 +65,25 @@ import Cpp library "instantiation_error.h";
 //@dump-sem-ir-begin
 var x: Cpp.XY.r#type = 0;
 
-// CHECK:STDERR: fail_use_instantiation_error.carbon:[[@LINE+5]]:8-22: error: member access into incomplete class `Cpp.X` [QualifiedExprInIncompleteClassScope]
-// CHECK:STDERR: included from: fail_use_instantiation_error.carbon:[[@LINE-6]]:10 [InCppInclude]
-// CHECK:STDERR: ./instantiation_error.h:3:25: note: type 'int' cannot be used prior to '::' because it has no members [CppInteropParseError]
-// CHECK:STDERR: ./instantiation_error.h:2:29: note: in instantiation of template class 'X<int>' requested here [CppInteropParseNote]
+// CHECK:STDERR:        ╭─┤ fail_use_instantiation_error.carbon:[[@LINE+20]]:8
+// CHECK:STDERR: ->     │ var y: Cpp.Xint.r#type = 0;
+// CHECK:STDERR:        ·        ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: member access into incomplete class `Cpp.X`
+// CHECK:STDERR:        ·                  ┃        [QualifiedExprInIncompleteClassScope]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │ ╭── included from: fail_use_instantiation_error.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./instantiation_error.h
+// CHECK:STDERR:        │ template<typename T> struct X {
+// CHECK:STDERR:        ·                             ┬
+// CHECK:STDERR:        ·                             ╰──┤ in instantiation of template class 'X<int>'
+// CHECK:STDERR:        ·                                │ requested here
+// CHECK:STDERR:        ·                                │ [CppInteropParseNote]
+// CHECK:STDERR:        │   using type = typename T::member;
+// CHECK:STDERR:        ·                         ┬
+// CHECK:STDERR:        ·                         ╰──┤ type 'int' cannot be used prior to '::' because it
+// CHECK:STDERR:        ·                            │ has no members
+// CHECK:STDERR:        ·                            │ [CppInteropParseError]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var y: Cpp.Xint.r#type = 0;
 //@dump-sem-ir-end
@@ -289,11 +304,11 @@ fn G() {
 // CHECK:STDOUT:     %x.var_patt: %pattern_type.d94 = var_pattern %x.patt [concrete = constants.%x.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y.var: ref %i32 = var_storage %y.var_patt [concrete]
-// CHECK:STDOUT:   %.loc14: type = splice_block %type.ref.loc14 [concrete = constants.%i32] {
-// CHECK:STDOUT:     %Cpp.ref.loc14: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:   %.loc29: type = splice_block %type.ref.loc29 [concrete = constants.%i32] {
+// CHECK:STDOUT:     %Cpp.ref.loc29: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %Xint.ref: type = name_ref Xint, imports.%X.decl.b67 [concrete = constants.%X.c92]
 // CHECK:STDOUT:     <elided>
-// CHECK:STDOUT:     %type.ref.loc14: type = name_ref r#type, %i32.2 [concrete = constants.%i32]
+// CHECK:STDOUT:     %type.ref.loc29: type = name_ref r#type, %i32.2 [concrete = constants.%i32]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %y: ref %i32 = wrapper_binding y, %y.var [concrete = %y.var]
 // CHECK:STDOUT:   name_binding_decl {
@@ -312,14 +327,14 @@ fn G() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7: init %i32 = call %bound_method.loc7_1.2(%int_0.loc7) [concrete = constants.%int_0.753]
 // CHECK:STDOUT:   %.loc7: init %i32 = converted %int_0.loc7, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc7 [concrete = constants.%int_0.753]
 // CHECK:STDOUT:   assign file.%x.var, %.loc7
-// CHECK:STDOUT:   %int_0.loc14: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
-// CHECK:STDOUT:   %impl.elem0.loc14: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc14_1.1: <bound method> = bound_method %int_0.loc14, %impl.elem0.loc14 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
-// CHECK:STDOUT:   %specific_fn.loc14: <specific function> = specific_function %impl.elem0.loc14, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc14_1.2: <bound method> = bound_method %int_0.loc14, %specific_fn.loc14 [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14: init %i32 = call %bound_method.loc14_1.2(%int_0.loc14) [concrete = constants.%int_0.753]
-// CHECK:STDOUT:   %.loc14: init %i32 = converted %int_0.loc14, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc14 [concrete = constants.%int_0.753]
-// CHECK:STDOUT:   assign file.%y.var, %.loc14
+// CHECK:STDOUT:   %int_0.loc29: Core.IntLiteral = int_value 0 [concrete = constants.%int_0.5c6]
+// CHECK:STDOUT:   %impl.elem0.loc29: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
+// CHECK:STDOUT:   %bound_method.loc29_1.1: <bound method> = bound_method %int_0.loc29, %impl.elem0.loc29 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %specific_fn.loc29: <specific function> = specific_function %impl.elem0.loc29, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc29_1.2: <bound method> = bound_method %int_0.loc29, %specific_fn.loc29 [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29: init %i32 = call %bound_method.loc29_1.2(%int_0.loc29) [concrete = constants.%int_0.753]
+// CHECK:STDOUT:   %.loc29: init %i32 = converted %int_0.loc29, %Core.IntLiteral.as.ImplicitAs.impl.Convert.call.loc29 [concrete = constants.%int_0.753]
+// CHECK:STDOUT:   assign file.%y.var, %.loc29
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -110,7 +110,11 @@ fn Use() {
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_modifiers.carbon:[[@LINE+2]]:3-22: error: override without base class [OverrideWithoutBase]
+  // CHECK:STDERR:        ╭─┤ fail_modifiers.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   override fn F(self);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: override without base class [OverrideWithoutBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn F(self);
 }
@@ -145,7 +149,12 @@ base class Base {
 
 class Derived {
   extend base: Base;
-  // CHECK:STDERR: fail_impl_without_base_declaration.carbon:[[@LINE+2]]:3-22: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
+  // CHECK:STDERR:        ╭─┤ fail_impl_without_base_declaration.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   override fn F(self);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: override without compatible virtual in base class
+  // CHECK:STDERR:        ·                ┃        [OverrideWithoutVirtualInBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn F(self);
 }
@@ -198,8 +207,17 @@ base class Base {
 
 class Derived {
   extend base: Base;
-  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE+3]]:3-30: error: override without compatible virtual in base class [OverrideWithoutVirtualInBase]
-  // CHECK:STDERR: fail_impl_mismatch.carbon:[[@LINE-6]]:3-21: note: base class function has fewer parameters (0 vs 1 excluding `self`) [OverrideCandidateArityMismatch]
+  // CHECK:STDERR:        ╭─┤ fail_impl_mismatch.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │   virtual fn F(self);
+  // CHECK:STDERR:        ·   ───────┬───────────
+  // CHECK:STDERR:        ·          ╰──┤ base class function has fewer parameters (0 vs 1 excluding `self`)
+  // CHECK:STDERR:        ·             │ [OverrideCandidateArityMismatch]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   override fn F(self, v: i32);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: override without compatible virtual in base class
+  // CHECK:STDERR:        ·                    ┃        [OverrideWithoutVirtualInBase]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn F(self, v: i32);
 }
@@ -239,10 +257,18 @@ fn Derived.F(unused self) -> T2 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+1]]:1-26: error: use of undefined generic function [MissingGenericFunctionDefinition]
+// CHECK:STDERR:        ╭─┤ fail_generic_virtual_decl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ base class Base(T: type) {
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: use of undefined generic function
+// CHECK:STDERR:        ·                 ┃        [MissingGenericFunctionDefinition]
+// CHECK:STDERR:        │   virtual fn F(self);
+// CHECK:STDERR:        ·   ─────────┬─────────
+// CHECK:STDERR:        ·            ╰──┤ generic function declared here
+// CHECK:STDERR:        ·               │ [MissingGenericFunctionDefinitionHere]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 base class Base(T: type) {
-  // CHECK:STDERR: fail_generic_virtual_decl.carbon:[[@LINE+2]]:3-21: note: generic function declared here [MissingGenericFunctionDefinitionHere]
-  // CHECK:STDERR:
   virtual fn F(self);
 }
 
@@ -268,17 +294,29 @@ class Derived {
 library "[[@TEST_NAME]]";
 
 abstract class T1 {
-  // CHECK:STDERR: fail_virtual_without_self.carbon:[[@LINE+2]]:3-17: error: virtual class function [VirtualWithoutSelf]
+  // CHECK:STDERR:        ╭─┤ fail_virtual_without_self.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   virtual fn F();
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: virtual class function [VirtualWithoutSelf]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   virtual fn F();
-  // CHECK:STDERR: fail_virtual_without_self.carbon:[[@LINE+2]]:3-18: error: virtual class function [VirtualWithoutSelf]
+  // CHECK:STDERR:        ╭─┤ fail_virtual_without_self.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   abstract fn G();
+  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: virtual class function [VirtualWithoutSelf]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   abstract fn G();
 }
 
 class T2 {
   extend base: T1;
-  // CHECK:STDERR: fail_virtual_without_self.carbon:[[@LINE+2]]:3-18: error: virtual class function [VirtualWithoutSelf]
+  // CHECK:STDERR:        ╭─┤ fail_virtual_without_self.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   override fn F();
+  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: virtual class function [VirtualWithoutSelf]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn F();
 }
@@ -293,9 +331,19 @@ base class T1 {
 
 class T2 {
   extend base: T1;
-  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+4]]:3-27: error: value expression passed to reference parameter [ValueForRefParam]
-  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE+3]]:18-25: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fail_ref_self_mismatch.carbon:[[@LINE-7]]:3-22: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:        ╭─┤ fail_ref_self_mismatch.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        │   virtual fn F1(self);
+  // CHECK:STDERR:        ·   ──────────┬─────────
+  // CHECK:STDERR:        ·             ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   override fn F1(ref self);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━┳━━━━━━┯━━━━━
+  // CHECK:STDERR:        ·               ┗━━━━━━━━━┫ error: value expression passed to reference parameter
+  // CHECK:STDERR:        ·                      │  ┃        [ValueForRefParam]
+  // CHECK:STDERR:        ·                      ╰────┤ initializing function parameter
+  // CHECK:STDERR:        ·                           │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn F1(ref self);
 }
@@ -305,7 +353,11 @@ class T2 {
 library "[[@TEST_NAME]]";
 
 base class T1 {
-  // CHECK:STDERR: fail_generic_virtual.carbon:[[@LINE+2]]:3-30: error: generic virtual function [GenericVirtual]
+  // CHECK:STDERR:        ╭─┤ fail_generic_virtual.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   virtual fn F[T: type](self);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: generic virtual function [GenericVirtual]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   virtual fn F[T: type](self);
 }
@@ -315,7 +367,11 @@ base class T1 {
 library "[[@TEST_NAME]]";
 
 base class T1(T: type) {
-  // CHECK:STDERR: fail_generic_virtual_in_generic_class.carbon:[[@LINE+2]]:3-30: error: generic virtual function [GenericVirtual]
+  // CHECK:STDERR:        ╭─┤ fail_generic_virtual_in_generic_class.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   virtual fn F[T: type](self);
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: generic virtual function [GenericVirtual]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   virtual fn F[T: type](self);
 }
@@ -408,10 +464,24 @@ base class Base(T: type) {
 
 class D1 {
   extend base: Base(T1);
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+5]]:3-45: error: cannot implicitly convert expression of type `T1*` to `T2*` [ConversionFailure]
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+4]]:3-45: note: type `T1*` does not implement interface `Core.ImplicitAs(T2*)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE+3]]:37-42: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fail_impl_generic_specifically_mismatch.carbon:[[@LINE-8]]:3-44: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:        ╭─┤ fail_impl_generic_specifically_mismatch.carbon:[[@LINE+19]]:3
+  // CHECK:STDERR:        │   virtual fn F(unused self, unused t: T1*) { }
+  // CHECK:STDERR:        ·   ─────────────┬────────────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   override fn F(unused self, unused t: T2*) { }
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┯━━━━━━━━
+  // CHECK:STDERR:        ·                        ┗━━━━━━━━━━━━━━━┫ error: cannot implicitly convert
+  // CHECK:STDERR:        ·                        │            │  ┃        expression of type `T1*` to
+  // CHECK:STDERR:        ·                        │            │  ┃        `T2*`
+  // CHECK:STDERR:        ·                        │            │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                        ╰─────────────────┤ type `T1*` does not implement
+  // CHECK:STDERR:        ·                                     │    │ interface `Core.ImplicitAs(T2*)`
+  // CHECK:STDERR:        ·                                     │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                     ╰──────┤ initializing function parameter
+  // CHECK:STDERR:        ·                                            │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn F(unused self, unused t: T2*) { }
 }
@@ -425,10 +495,23 @@ abstract class Base(T: type) {
 }
 class Derived(T: type) {
   extend base: Base(T);
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+5]]:3-43: error: cannot implicitly convert expression of type `T*` to `T` [ConversionFailure]
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+4]]:3-43: note: type `T*` does not implement interface `Core.ImplicitAs(T)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE+3]]:37-40: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fail_impl_generic_generic_mismatch.carbon:[[@LINE-7]]:3-43: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:        ╭─┤ fail_impl_generic_generic_mismatch.carbon:[[@LINE+18]]:3
+  // CHECK:STDERR:        │   virtual fn F(unused self, unused t: T*) { }
+  // CHECK:STDERR:        ·   ─────────────┬───────────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   override fn F(unused self, unused t: T) { }
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┯━━━━━━
+  // CHECK:STDERR:        ·                       ┗━━━━━━━━━━━━━━━━┫ error: cannot implicitly convert
+  // CHECK:STDERR:        ·                       │             │  ┃        expression of type `T*` to `T`
+  // CHECK:STDERR:        ·                       │             │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                       ╰──────────────────┤ type `T*` does not implement
+  // CHECK:STDERR:        ·                                     │    │ interface `Core.ImplicitAs(T)`
+  // CHECK:STDERR:        ·                                     │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                     ╰──────┤ initializing function parameter
+  // CHECK:STDERR:        ·                                            │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   override fn F(unused self, unused t: T) { }
 }

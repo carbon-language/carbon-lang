@@ -14,15 +14,30 @@ fn foo(template a: i32);
 
 // --- fail_template_ref.carbon
 
-// CHECK:STDERR: fail_template_ref.carbon:[[@LINE+2]]:17-19: error: `ref` is only allowed on a runtime binding [ExpectedRuntimeBindingPatternAfterRef]
+// CHECK:STDERR:        ╭─┤ fail_template_ref.carbon:[[@LINE+7]]:17
+// CHECK:STDERR: ->     │ fn foo(template ref a: i32);
+// CHECK:STDERR:        ·                 ━┳━
+// CHECK:STDERR:        ·                  ┗━━┫ error: `ref` is only allowed on a runtime binding
+// CHECK:STDERR:        ·                     ┃        [ExpectedRuntimeBindingPatternAfterRef]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn foo(template ref a: i32);
 
-// CHECK:STDERR: fail_template_ref.carbon:[[@LINE+2]]:17-19: error: `ref` is only allowed on a runtime binding [ExpectedRuntimeBindingPatternAfterRef]
+// CHECK:STDERR:        ╭─┤ fail_template_ref.carbon:[[@LINE+7]]:17
+// CHECK:STDERR: ->     │ fn foo(template ref a: i32);
+// CHECK:STDERR:        ·                 ━┳━
+// CHECK:STDERR:        ·                  ┗━━┫ error: `ref` is only allowed on a runtime binding
+// CHECK:STDERR:        ·                     ┃        [ExpectedRuntimeBindingPatternAfterRef]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn foo(template ref a: i32);
 
-// CHECK:STDERR: fail_template_ref.carbon:[[@LINE+2]]:12-19: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR:        ╭─┤ fail_template_ref.carbon:[[@LINE+7]]:12
+// CHECK:STDERR: ->     │ fn foo(ref template a: i32);
+// CHECK:STDERR:        ·            ━━━━┳━━━
+// CHECK:STDERR:        ·                ┗━━┫ error: expected name in binding pattern
+// CHECK:STDERR:        ·                   ┃        [ExpectedBindingPattern]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn foo(ref template a: i32);
 

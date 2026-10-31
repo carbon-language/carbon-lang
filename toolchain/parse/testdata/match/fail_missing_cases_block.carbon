@@ -10,7 +10,12 @@
 
 fn f() -> i32 {
   match (1)
-  // CHECK:STDERR: fail_missing_cases_block.carbon:[[@LINE+2]]:3-8: error: expected `{` starting block with cases [ExpectedMatchCasesBlock]
+  // CHECK:STDERR:        ╭─┤ fail_missing_cases_block.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   return 0;
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: expected `{` starting block with cases
+  // CHECK:STDERR:        ·         ┃        [ExpectedMatchCasesBlock]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return 0;
 }

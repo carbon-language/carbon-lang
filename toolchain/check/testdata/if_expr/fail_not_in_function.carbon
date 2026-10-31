@@ -16,11 +16,32 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_basic.carbon:[[@LINE+6]]:14-20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_basic.carbon:[[@LINE+27]]:14
+// CHECK:STDERR: ->     │ let x: i32 = if true then 1 else 0;
+// CHECK:STDERR:        ·              ━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_basic.carbon:[[@LINE+4]]:22-27: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_basic.carbon:[[@LINE+18]]:22
+// CHECK:STDERR: ->     │ let x: i32 = if true then 1 else 0;
+// CHECK:STDERR:        ·                      ━━━┳━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_basic.carbon:[[@LINE+2]]:14-34: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_basic.carbon:[[@LINE+9]]:14
+// CHECK:STDERR: ->     │ let x: i32 = if true then 1 else 0;
+// CHECK:STDERR:        ·              ━━━━━━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let x: i32 = if true then 1 else 0;
 
@@ -28,7 +49,14 @@ let x: i32 = if true then 1 else 0;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_types.carbon:[[@LINE+2]]:8-32: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_types.carbon:[[@LINE+9]]:8
+// CHECK:STDERR: ->     │ var y: if true then i32 else f64;
+// CHECK:STDERR:        ·        ━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var y: if true then i32 else f64;
 
@@ -36,7 +64,14 @@ var y: if true then i32 else f64;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_in_param.carbon:[[@LINE+2]]:9-33: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_in_param.carbon:[[@LINE+9]]:9
+// CHECK:STDERR: ->     │ fn F(a: if true then i32 else f64);
+// CHECK:STDERR:        ·         ━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(a: if true then i32 else f64);
 
@@ -45,7 +80,14 @@ fn F(a: if true then i32 else f64);
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_class.carbon:[[@LINE+2]]:10-34: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_class.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR: ->     │   var n: if true then i32 else f64;
+  // CHECK:STDERR:        ·          ━━━━━━━━━━━━┳━━━━━━━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var n: if true then i32 else f64;
 }
@@ -58,7 +100,14 @@ base class C(T: type) {}
 
 fn F() {
   class B {
-    // CHECK:STDERR: fail_nested_class.carbon:[[@LINE+2]]:20-44: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+    // CHECK:STDERR:        ╭─┤ fail_nested_class.carbon:[[@LINE+9]]:20
+    // CHECK:STDERR: ->     │     extend base: C(if true then i32 else i32);
+    // CHECK:STDERR:        ·                    ━━━━━━━━━━━━┳━━━━━━━━━━━━
+    // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+    // CHECK:STDERR:        · ┃ error: semantics TODO:
+    // CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+    // CHECK:STDERR:        · ┃        [SemanticsTodo]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     extend base: C(if true then i32 else i32);
   }

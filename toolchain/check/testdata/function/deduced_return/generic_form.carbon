@@ -148,8 +148,14 @@ fn H(ref n: i32) -> i32* { return G(ref n); }
 library "[[@TEST_NAME]]";
 
 fn F[T: type](x: T) -> ref auto {
-  // CHECK:STDERR: fail_ref_auto_non_ref.carbon:[[@LINE+3]]:3-11: error: cannot bind durable reference to non-reference value of type `T` [ConversionFailureNonRefToRef]
-  // CHECK:STDERR: fail_ref_auto_non_ref.carbon:[[@LINE+2]]:10: note: return type deduced as `T` [ReturnTypeDeducedAs]
+  // CHECK:STDERR:        ╭─┤ fail_ref_auto_non_ref.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   return x;
+  // CHECK:STDERR:        ·   ━━━━┳━━┯━
+  // CHECK:STDERR:        ·       ┗━━━━━┫ error: cannot bind durable reference to non-reference value of
+  // CHECK:STDERR:        ·          │  ┃        type `T`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailureNonRefToRef]
+  // CHECK:STDERR:        ·          ╰────┤ return type deduced as `T` [ReturnTypeDeducedAs]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return x;
 }
@@ -164,8 +170,18 @@ class C {
 }
 
 fn G(c: C) {
-  // CHECK:STDERR: fail_template_ref_auto_non_ref.carbon:[[@LINE+3]]:3-6: error: unable to monomorphize specific `F(C)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_template_ref_auto_non_ref.carbon:[[@LINE-8]]:44-54: note: cannot bind durable reference to non-reference value of type `i32` [ConversionFailureNonRefToRef]
+  // CHECK:STDERR:        ╭─┤ fail_template_ref_auto_non_ref.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn F[template T: type](x: T) -> ref auto { return x.n; }
+  // CHECK:STDERR:        ·                                            ┬──────────
+  // CHECK:STDERR:        ·                                            ╰──┤ cannot bind durable reference to
+  // CHECK:STDERR:        ·                                               │ non-reference value of type
+  // CHECK:STDERR:        ·                                               │ `i32`
+  // CHECK:STDERR:        ·                                               │ [ConversionFailureNonRefToRef]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(c);
+  // CHECK:STDERR:        ·   ━━┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: unable to monomorphize specific `F(C)` [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(c);
 }
@@ -178,9 +194,21 @@ fn F[template T: type](ref x: T) -> ref auto {
 }
 
 fn G(ref n: i32) {
-  // CHECK:STDERR: fail_template_ref_auto_recursion_before_deduced.carbon:[[@LINE+4]]:3-10: error: unable to monomorphize specific `F(i32)` [ResolvingSpecificHere]
-  // CHECK:STDERR: fail_template_ref_auto_recursion_before_deduced.carbon:[[@LINE-5]]:10-17: note: call to `F` before its return type is known [CallBeforeReturnTypeDeduced]
-  // CHECK:STDERR: fail_template_ref_auto_recursion_before_deduced.carbon:[[@LINE-7]]:1-46: note: return type of `F` is deduced from its definition [ReturnTypeDeducedFromDefinition]
+  // CHECK:STDERR:        ╭─┤ fail_template_ref_auto_recursion_before_deduced.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR:        │ fn F[template T: type](ref x: T) -> ref auto {
+  // CHECK:STDERR:        · ───────────────────────┬──────────────────────
+  // CHECK:STDERR:        ·                        ╰──┤ return type of `F` is deduced from its definition
+  // CHECK:STDERR:        ·                           │ [ReturnTypeDeducedFromDefinition]
+  // CHECK:STDERR:        │   return F(ref x);
+  // CHECK:STDERR:        ·          ────┬───
+  // CHECK:STDERR:        ·              ╰──┤ call to `F` before its return type is known
+  // CHECK:STDERR:        ·                 │ [CallBeforeReturnTypeDeduced]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(ref n);
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: unable to monomorphize specific `F(i32)`
+  // CHECK:STDERR:        ·          ┃        [ResolvingSpecificHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(ref n);
 }

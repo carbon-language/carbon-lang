@@ -29,8 +29,17 @@ library "[[@TEST_NAME]]";
 musteval fn MustEval(unused n: i32) {}
 
 fn RuntimeArg(n: i32) {
-  // CHECK:STDERR: fail_no_eval_musteval.carbon:[[@LINE+3]]:3-13: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR: fail_no_eval_musteval.carbon:[[@LINE-4]]:1-37: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ╭─┤ fail_no_eval_musteval.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ musteval fn MustEval(unused n: i32) {}
+  // CHECK:STDERR:        · ──────────────────┬──────────────────
+  // CHECK:STDERR:        ·                   ╰──┤ compile-time-only function declared here
+  // CHECK:STDERR:        ·                      │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   MustEval(n);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: non-constant call to compile-time-only function
+  // CHECK:STDERR:        ·           ┃        [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   MustEval(n);
 }
@@ -57,8 +66,17 @@ musteval fn MustEval(unused n: i32) {}
 
 // TODO: This should be accepted.
 musteval fn CallMustEval(n: i32) {
-  // CHECK:STDERR: fail_todo_musteval_calls_musteval.carbon:[[@LINE+3]]:3-13: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-  // CHECK:STDERR: fail_todo_musteval_calls_musteval.carbon:[[@LINE-5]]:1-37: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ╭─┤ fail_todo_musteval_calls_musteval.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ musteval fn MustEval(unused n: i32) {}
+  // CHECK:STDERR:        · ──────────────────┬──────────────────
+  // CHECK:STDERR:        ·                   ╰──┤ compile-time-only function declared here
+  // CHECK:STDERR:        ·                      │ [CompTimeOnlyFunctionHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   MustEval(n);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: non-constant call to compile-time-only function
+  // CHECK:STDERR:        ·           ┃        [NonConstantCallToCompTimeOnlyFunction]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   MustEval(n);
 }

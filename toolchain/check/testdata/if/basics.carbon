@@ -65,7 +65,12 @@ fn If1(b: bool) -> bool {
     return false;
   } else {
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+2]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR:        ╭─┤ fail_reachable_fallthrough.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ }
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: missing `return` at end of function with declared return type
+// CHECK:STDERR:        ·    ┃        [MissingReturnStatement]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 }
 
@@ -74,7 +79,12 @@ fn If2(b: bool) -> bool {
   } else {
     return true;
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+2]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR:        ╭─┤ fail_reachable_fallthrough.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ }
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: missing `return` at end of function with declared return type
+// CHECK:STDERR:        ·    ┃        [MissingReturnStatement]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 }
 
@@ -82,7 +92,12 @@ fn If3(b: bool) -> bool {
   if (b) {
     return false;
   }
-// CHECK:STDERR: fail_reachable_fallthrough.carbon:[[@LINE+2]]:1: error: missing `return` at end of function with declared return type [MissingReturnStatement]
+// CHECK:STDERR:        ╭─┤ fail_reachable_fallthrough.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ }
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: missing `return` at end of function with declared return type
+// CHECK:STDERR:        ·    ┃        [MissingReturnStatement]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 }
 
@@ -94,7 +109,11 @@ fn VarScope(b: bool) -> bool {
     var n: bool = true;
     return n;
   }
-  // CHECK:STDERR: fail_scope.carbon:[[@LINE+2]]:10: error: name `n` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_scope.carbon:[[@LINE+6]]:10
+  // CHECK:STDERR: ->     │   return n;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: name `n` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return n;
 }
