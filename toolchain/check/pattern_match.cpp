@@ -422,11 +422,10 @@ auto MatchContext::DoPostWork(State state,
   if (value_id.has_value()) {
     if (scrutinee_type_id == SemIR::AutoType::TypeId) {
       scrutinee_type_id = context_.insts().Get(value_id).type_id();
-    } else {
-      value_id = Convert(context_, SemIR::LocId(value_id), value_id,
-                         {.kind = ConversionKindFor(binding_pattern, entry),
-                          .type_id = scrutinee_type_id});
     }
+    value_id = Convert(context_, SemIR::LocId(value_id), value_id,
+                       {.kind = ConversionKindFor(binding_pattern, entry),
+                        .type_id = scrutinee_type_id});
   } else {
     CARBON_CHECK(binding_pattern.kind == SemIR::SymbolicBindingPattern::Kind);
   }
