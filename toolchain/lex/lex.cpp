@@ -12,6 +12,7 @@
 #include <utility>
 
 #include "common/check.h"
+#include "common/preserve_none.h"
 #include "common/vlog.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -194,9 +195,6 @@ class [[clang::internal_linkage]] Lexer {
   auto LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
                              ssize_t& position) -> LexResult;
 
-  auto LexSymbolToken(llvm::StringRef source_text, ssize_t& position)
-      -> LexResult;
-
   // Given a word that has already been lexed, determine whether it is a type
   // literal and if so form the corresponding token.
   auto LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
@@ -316,6 +314,31 @@ static constexpr std::array<bool, 256> IsIdByteTable = [] {
   }
   // Identifiers can only have `$` in start.
   table['$'] = false;
+  return table;
+}();
+
+// A table of booleans classifying the bytes that end a run of unrecognized
+// characters forming an error token: alphanumeric characters, `_`, tabs and
+// newlines, and any character that is by itself a symbol.
+static constexpr std::array<bool, 256> IsErrorEndByteTable = [] {
+  std::array<bool, 256> table = {};
+  for (char c = '0'; c <= '9'; ++c) {
+    table[c] = true;
+  }
+  for (char c = 'A'; c <= 'Z'; ++c) {
+    table[c] = true;
+  }
+  for (char c = 'a'; c <= 'z'; ++c) {
+    table[c] = true;
+  }
+  table['_'] = true;
+  table['\t'] = true;
+  table['\n'] = true;
+#define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
+  if (sizeof(Spelling) == 2) {                   \
+    table[(Spelling)[0]] = true;                 \
+  }
+#include "toolchain/lex/token_kind.def"
   return table;
 }();
 
@@ -536,23 +559,6 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
   return ScanForIdentifierPrefixScalar(text, 0);
 }
 
-using DispatchFunctionT = auto(Lexer& lexer, llvm::StringRef source_text,
-                               ssize_t position) [[clang::preserve_none]]
--> void;
-using DispatchTableT = std::array<DispatchFunctionT*, 256>;
-
-static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
-  std::array<TokenKind, 256> table = {};
-#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = TokenKind::TokenName;
-#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
-  table[(Spelling)[0]] = TokenKind::TokenName;
-#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
-  table[(Spelling)[0]] = TokenKind::TokenName;
-#include "toolchain/lex/token_kind.def"
-  return table;
-}();
-
 // We use a collection of static member functions for table-based dispatch to
 // lexer methods. These are named static member functions so that they show up
 // helpfully in profiles and backtraces, but they tend to not contain the
@@ -561,12 +567,16 @@ static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
 // build efficient dispatch tables out of them. All of them end by doing a
 // must-tail return call to this routine. It handles continuing the dispatch
 // chain.
-[[clang::preserve_none]] static auto DispatchNext(Lexer& lexer,
-                                                  llvm::StringRef source_text,
-                                                  ssize_t position) -> void;
+CARBON_PRESERVE_NONE static auto DispatchNext(Lexer& lexer,
+                                              llvm::StringRef source_text,
+                                              ssize_t position) -> void;
 
-[[clang::preserve_none]] static auto DispatchLexError(
-    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+using DispatchFunctionT = decltype(DispatchNext);
+using DispatchTableT = std::array<DispatchFunctionT*, 256>;
+
+CARBON_PRESERVE_NONE static auto DispatchLexError(Lexer& lexer,
+                                                  llvm::StringRef source_text,
+                                                  ssize_t position) -> void {
   Lexer::LexResult result = lexer.LexError(source_text, position);
   CARBON_CHECK(result, "Failed to form a token!");
   // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
@@ -577,7 +587,7 @@ static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
 // lexes a token. If no token is matched, they tail-dispatch to the error token
 // handler; otherwise they continue dispatching the next token.
 #define CARBON_DISPATCH_LEX_TOKEN(LexMethod)                                   \
-  [[clang::preserve_none]] static auto Dispatch##LexMethod(                    \
+  CARBON_PRESERVE_NONE static auto Dispatch##LexMethod(                        \
       Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {   \
     if (LLVM_LIKELY(lexer.LexMethod(source_text, position))) {                 \
       /* NOLINTNEXTLINE(readability-avoid-return-with-void-value) */           \
@@ -586,13 +596,13 @@ static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
     /* NOLINTNEXTLINE(readability-avoid-return-with-void-value) */             \
     [[clang::musttail]] return DispatchLexError(lexer, source_text, position); \
   }
-CARBON_DISPATCH_LEX_TOKEN(LexSymbolToken)
 CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifier)
 CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
-[[clang::preserve_none]] static auto DispatchLexHash(
-    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+CARBON_PRESERVE_NONE static auto DispatchLexHash(Lexer& lexer,
+                                                 llvm::StringRef source_text,
+                                                 ssize_t position) -> void {
   if (lexer.LexHash(source_text, position)) {
     // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);
@@ -603,25 +613,46 @@ CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 }
 
 // A set of custom dispatch functions that preselect the symbol token to lex.
-#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
-  [[clang::preserve_none]] static auto Dispatch##LexMethod##SymbolToken(     \
-      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
-    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                  \
-        source_text,                                                         \
-        OneCharTokenKindTable[static_cast<unsigned char>(                    \
-            source_text[position])],                                         \
-        position);                                                           \
-    CARBON_CHECK(result, "Failed to form a token!");                         \
-    [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
+#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                           \
+  template <TokenKind::RawEnumType Kind>                                      \
+  CARBON_PRESERVE_NONE static auto Dispatch##LexMethod##SymbolToken(          \
+      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {  \
+    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                   \
+        source_text, TokenKind::Make(Kind), position);                        \
+    CARBON_CHECK(result, "Failed to form a token!");                          \
+    /* NOLINTNEXTLINE(readability-avoid-return-with-void-value): musttail. */ \
+    [[clang::musttail]] return DispatchNext(lexer, source_text, position);    \
   }
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOneChar)
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOpening)
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexClosing)
 
+template <char FirstChar>
+CARBON_PRESERVE_NONE static auto DispatchLexSymbolToken(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  CARBON_DCHECK(source_text[position] == FirstChar);
+  llvm::StringRef tail = source_text.substr(position + 1);
+#define CARBON_SYMBOL_TOKEN(Name, Spelling)                                    \
+  if constexpr ((Spelling)[0] == FirstChar) {                                  \
+    if (tail.starts_with(llvm::StringLiteral(Spelling).substr(1))) {           \
+      lexer.LexToken(TokenKind::Name, position);                               \
+      /* NOLINTNEXTLINE(readability-avoid-return-with-void-value): musttail */ \
+      [[clang::musttail]] return DispatchNext(                                 \
+          lexer, source_text, position + (sizeof(Spelling) - 1));              \
+    }                                                                          \
+  }
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName)
+#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName)
+#include "toolchain/lex/token_kind.def"
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchLexError(lexer, source_text, position);
+}
+
 // Define a set of non-token dispatch functions that handle things like
 // whitespace and comments.
 #define CARBON_DISPATCH_LEX_NON_TOKEN(LexMethod)                             \
-  [[clang::preserve_none]] static auto Dispatch##LexMethod(                  \
+  CARBON_PRESERVE_NONE static auto Dispatch##LexMethod(                      \
       Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
     lexer.LexMethod(source_text, position);                                  \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
@@ -630,7 +661,7 @@ CARBON_DISPATCH_LEX_NON_TOKEN(LexHorizontalWhitespace)
 CARBON_DISPATCH_LEX_NON_TOKEN(LexVerticalWhitespace)
 CARBON_DISPATCH_LEX_NON_TOKEN(LexCR)
 
-[[clang::preserve_none]] static auto DispatchLexCommentOrSlash(
+CARBON_PRESERVE_NONE static auto DispatchLexCommentOrSlash(
     Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
   CARBON_DCHECK(source_text[position] == '/');
 
@@ -647,8 +678,8 @@ CARBON_DISPATCH_LEX_NON_TOKEN(LexCR)
   }
 
   // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
-  [[clang::musttail]] return DispatchLexSymbolToken(lexer, source_text,
-                                                    position);
+  [[clang::musttail]] return DispatchLexSymbolToken<'/'>(lexer, source_text,
+                                                         position);
 }
 
 // Build a table of function pointers that we can use to dispatch to the
@@ -691,12 +722,10 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   }
 
   // Symbols have some special dispatching. First, set the first character of
-  // each symbol token spelling to dispatch to the symbol lexer. We don't
-  // provide a pre-computed token here, so the symbol lexer will compute the
-  // exact symbol token kind. We'll override this with more specific dispatch
-  // below.
+  // each symbol token spelling to dispatch to the symbol lexer for that
+  // starting character. We'll override this with more specific dispatch below.
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = &DispatchLexSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexSymbolToken<(Spelling)[0]>;
 #include "toolchain/lex/token_kind.def"
 
   // Now special cased single-character symbols that are guaranteed to not
@@ -706,11 +735,11 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   // needs to override some of the generic handling above, and provide a
   // custom token.
 #define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = &DispatchLexOneCharSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexOneCharSymbolToken<TokenKind::TokenName>;
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
-  table[(Spelling)[0]] = &DispatchLexOpeningSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexOpeningSymbolToken<TokenKind::TokenName>;
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
-  table[(Spelling)[0]] = &DispatchLexClosingSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexClosingSymbolToken<TokenKind::TokenName>;
 #include "toolchain/lex/token_kind.def"
 
   // Override the handling for `/` to consider comments as well as a `/`
@@ -753,8 +782,9 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
 
 static constexpr DispatchTableT DispatchTable = MakeDispatchTable();
 
-[[clang::preserve_none]] static auto DispatchFileEnd(
-    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+CARBON_PRESERVE_NONE static auto DispatchFileEnd(Lexer& lexer,
+                                                 llvm::StringRef source_text,
+                                                 ssize_t position) -> void {
   if (lexer.has_dump_sem_ir_ranges()) {
     // Incomplete ranges will use the next token for their end; we want that to
     // be `FileEnd` in this case, so check before adding `FileEnd`. The argument
@@ -770,9 +800,9 @@ static constexpr DispatchTableT DispatchTable = MakeDispatchTable();
   lexer.LexFileEnd(source_text, position);
 }
 
-[[clang::preserve_none]] static auto DispatchNext(Lexer& lexer,
-                                                  llvm::StringRef source_text,
-                                                  ssize_t position) -> void {
+CARBON_PRESERVE_NONE static auto DispatchNext(Lexer& lexer,
+                                              llvm::StringRef source_text,
+                                              ssize_t position) -> void {
   if (LLVM_LIKELY(position < static_cast<ssize_t>(source_text.size()))) {
     // The common case is to tail recurse based on the next character. Note
     // that because this is a must-tail return, this cannot fail to tail-call
@@ -1046,7 +1076,7 @@ static auto SkipHorizontalWhitespaceX86(llvm::StringRef source_text,
     // `tzcnt`/`bsf`
     // (`std::countr_zero`) instead of looping per byte.
     uint32_t non_ws_mask =
-        ~static_cast<uint32_t>(_mm_movemask_epi8(is_ws)) & 0xFFFFu;
+        ~static_cast<uint32_t>(_mm_movemask_epi8(is_ws)) & 0xFFFFU;
     if (LLVM_LIKELY(non_ws_mask != 0)) {
       position += std::countr_zero(non_ws_mask);
       return;
@@ -1387,7 +1417,9 @@ auto Lexer::CanFormRealLiteral() -> bool {
   if (has_leading_space_) {
     return true;
   }
-  auto kind = buffer_.GetKind(buffer_.tokens().end()[-1]);
+  // The flat kind array isn't built until lexing finishes, so look at the
+  // token info directly.
+  auto kind = buffer_.token_infos_.Get(buffer_.tokens().end()[-1]).kind();
   return kind != TokenKind::Period && kind != TokenKind::MinusGreater;
 }
 
@@ -1581,27 +1613,6 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
   return token;
 }
 
-auto Lexer::LexSymbolToken(llvm::StringRef source_text, ssize_t& position)
-    -> LexResult {
-  // One character symbols and grouping symbols are handled with dedicated
-  // dispatch. We only lex the multi-character tokens here.
-  TokenKind kind = llvm::StringSwitch<TokenKind>(source_text.substr(position))
-#define CARBON_SYMBOL_TOKEN(Name, Spelling) \
-  .StartsWith(Spelling, TokenKind::Name)
-#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)
-#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName)
-#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName)
-#include "toolchain/lex/token_kind.def"
-                       .Default(TokenKind::Error);
-  if (kind == TokenKind::Error) {
-    return LexResult::NoMatch();
-  }
-
-  TokenIndex token = LexToken(kind, position);
-  position += kind.fixed_spelling().size();
-  return token;
-}
-
 auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
     -> LexResult {
   if (word.size() < 2) {
@@ -1681,7 +1692,8 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
 
   if (!has_leading_space_) {
     auto prev_token = buffer_.tokens().end()[-1];
-    auto kind = buffer_.GetKind(prev_token);
+    // The flat kind array isn't built yet, so look at the token info directly.
+    auto kind = buffer_.token_infos_.Get(prev_token).kind();
     if (kind.is_word()) {
       CARBON_DIAGNOSTIC(
           CharacterOnlyAllowedAtStart, Error,
@@ -1842,21 +1854,7 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
     -> LexResult {
   llvm::StringRef error_text =
       source_text.substr(position).take_while([](char c) {
-        if (IsAlnum(c)) {
-          return false;
-        }
-        switch (c) {
-          case '_':
-          case '\t':
-          case '\n':
-            return false;
-          default:
-            break;
-        }
-        return llvm::StringSwitch<bool>(llvm::StringRef(&c, 1))
-#define CARBON_SYMBOL_TOKEN(Name, Spelling) .StartsWith(Spelling, false)
-#include "toolchain/lex/token_kind.def"
-            .Default(true);
+        return !IsErrorEndByteTable[static_cast<unsigned char>(c)];
       });
   if (error_text.empty()) {
     // TODO: Reimplement this to use the lexer properly. In the meantime,
@@ -1911,6 +1909,11 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
 }
 
 auto Lexer::Finalize() -> void {
+  // The token sequence is complete, except for any bracket recovery below, so
+  // build the flat token arrays. Bracket recovery reads them, and rebuilds them
+  // if it changes the sequence.
+  buffer_.BuildTokenArrays();
+
   // If we had any mismatched brackets, issue diagnostics and fix them.
   if (has_mismatched_brackets_ || !open_groups_.empty()) {
     DiagnoseAndFixMismatchedBrackets();
@@ -1961,7 +1964,8 @@ class Lexer::ErrorRecoveryBuffer {
   }
 
   // Replace the given token with an error token. We do this immediately,
-  // because we don't benefit from buffering it.
+  // because we don't benefit from buffering it. The flat token arrays are
+  // brought up to date when `Apply` rebuilds them.
   auto ReplaceWithError(TokenIndex token) -> void {
     auto& token_info = buffer_->token_infos_.Get(token);
     int error_length = buffer_->GetTokenText(token).size();
@@ -2012,6 +2016,9 @@ class Lexer::ErrorRecoveryBuffer {
       new_token_index_[old_idx.index] = buffer_->token_infos_.Add(
           old_tokens.Get(old_idx).WithLeadingSpace(false));
     }
+
+    // The token sequence changed, so rebuild the flat token arrays from it.
+    buffer_->BuildTokenArrays();
   }
 
   // Maps a token index from before `Apply` to the same token's index after it.

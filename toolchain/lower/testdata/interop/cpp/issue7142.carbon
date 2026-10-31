@@ -56,7 +56,7 @@ void f() {
 // CHECK:STDOUT: declare ptr @_CGet.Main()
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CGet__carbon_thunk.Main(ptr %_) #1 !dbg !12 {
+// CHECK:STDOUT: define void @_CGet__carbon_thunk.Main(ptr noundef nonnull align 8 dereferenceable(8) %_) #1 !dbg !12 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %Get.call = call ptr @_CGet.Main(), !dbg !14
 // CHECK:STDOUT:   store ptr %Get.call, ptr %_, align 8, !dbg !14
@@ -71,7 +71,7 @@ void f() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.daf9f875be2f7080:core.SubobjectDestroy.Core"(ptr %self) #1 !dbg !20 {
+// CHECK:STDOUT: define weak_odr void @"_COp.daf9f875be2f7080:core.SubobjectDestroy.Core"(ptr %self) #3 !dbg !20 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc15_9.1.price = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !22
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc15_9.1.price), !dbg !22
@@ -79,7 +79,7 @@ void f() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp.5a23cc09585c55d2:core.SubobjectDestroy.Core"(ptr %self) #1 !dbg !26 {
+// CHECK:STDOUT: define weak_odr void @"_COp.5a23cc09585c55d2:core.SubobjectDestroy.Core"(ptr %self) #3 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc15_9.1.price = getelementptr inbounds nuw { i32 }, ptr %self, i32 0, i32 0, !dbg !28
 // CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc15_9.1.price), !dbg !28
@@ -87,18 +87,18 @@ void f() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6b8b385dcf82cc70(ptr %t) #1 !dbg !31 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.6b8b385dcf82cc70(ptr %t) #3 !dbg !31 {
 // CHECK:STDOUT:   call void @"_COp.5a23cc09585c55d2:core.SubobjectDestroy.Core"(ptr %t), !dbg !35
 // CHECK:STDOUT:   ret void, !dbg !36
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #1 !dbg !38 {
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #3 !dbg !38 {
 // CHECK:STDOUT:   ret void, !dbg !43
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
-// CHECK:STDOUT: define internal noundef ptr @_ZN6Carbon4MainL3GetEv() #3 {
+// CHECK:STDOUT: define internal noundef ptr @_ZN6Carbon4MainL3GetEv() #4 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %retval = alloca ptr, align 8
 // CHECK:STDOUT:   call void @_CGet__carbon_thunk.Main(ptr noundef nonnull align 8 dereferenceable(8) %retval)
@@ -110,9 +110,10 @@ void f() {
 // CHECK:STDOUT: uselistorder ptr @_CSelfDestruct.Core.f127f30143696d51, { 1, 0 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: attributes #0 = { mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
-// CHECK:STDOUT: attributes #1 = { nounwind }
+// CHECK:STDOUT: attributes #1 = { nounwind "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { alwaysinline nounwind }
-// CHECK:STDOUT: attributes #3 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+// CHECK:STDOUT: attributes #3 = { nounwind }
+// CHECK:STDOUT: attributes #4 = { alwaysinline mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!5}
 // CHECK:STDOUT: !llvm.module.flags = !{!52, !53, !54, !2, !3}

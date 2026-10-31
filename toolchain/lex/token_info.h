@@ -52,7 +52,7 @@ struct CharLiteralValue {
 class TokenInfo {
  public:
   // The kind for this token.
-  auto kind() const -> TokenKind { return kind_; }
+  auto kind() const -> TokenKind { return TokenKind::Make(kind_); }
 
   // Whether this token is preceded by whitespace. We only store the preceding
   // state, and look at the next token to check for trailing whitespace.
@@ -162,14 +162,19 @@ class TokenInfo {
   //
   // Only used by the lexer which enforces only the correct kinds are used.
   //
-  // When the payload is not being set, we leave it uninitialized. At least in
-  // some cases, this will allow MSan to correctly detect erroneous attempts
-  // to access the payload, as it works to track uninitialized memory
-  // bit-for-bit specifically to handle complex cases like bitfields.
+  // Under MSan, leave `token_payload_` uninitialized so bit-level tracking can
+  // detect erroneous attempts to access a missing payload. In non-MSan builds,
+  // zero-initialize it so constructing a payloadless `TokenInfo` compiles to a
+  // plain 32-bit store rather than a read-modify-write preserving uninitialized
+  // upper bits (which SROA otherwise promotes to loop-carried registers).
   TokenInfo(TokenKind kind, bool has_leading_space, int32_t byte_offset)
       : kind_(kind),
         has_leading_space_(has_leading_space),
-        byte_offset_(byte_offset) {}
+#if !__has_feature(memory_sanitizer)
+        token_payload_(0),
+#endif
+        byte_offset_(byte_offset) {
+  }
 
   // Constructor for a TokenKind that carries a payload.
   //
@@ -191,8 +196,8 @@ class TokenInfo {
   // token index. Stores to this field may overflow, but we produce an error
   // in `Lexer::Finalize` if the file has more than `TokenIndex::Max` tokens,
   // so this value never overflows if lexing succeeds.
-  TokenKind kind_;
-  static_assert(sizeof(kind_) == 1, "TokenKind must pack to 8 bits");
+  static_assert(sizeof(TokenKind) == 1, "TokenKind must pack to 8 bits");
+  TokenKind::RawEnumType kind_ : 8;
   bool has_leading_space_ : 1;
   unsigned token_payload_ : PayloadBits;
 

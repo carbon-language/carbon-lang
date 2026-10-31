@@ -29,7 +29,7 @@ jobs:
       matrix:
         # Test a recent version of each supported OS, covering both x86-64 and
         # AArch64: Linux on x86-64 and AArch64, and macOS on AArch64.
-        runner: ['ubuntu-22.04', 'ubuntu-22.04-arm', 'macos-14']
+        runner: ['ubuntu-22.04', 'ubuntu-22.04-arm', 'macos-26']
         # Create a synthetic matrix dimension with the event name for filtering.
         event: ['${{ github.event_name }}']
         config:
@@ -40,7 +40,7 @@ jobs:
           - name: 'ASan'
             flags: '--config=asan'
         exclude:
-          - runner: 'macos-14'
+          - runner: 'macos-26'
             config: { name: 'ASan', flags: '--config=asan' }
           - event: 'pull_request'
             config: { name: 'ASan', flags: '--config=asan' }
@@ -64,6 +64,7 @@ jobs:
             download.gnome.org:443
             downloads.sourceforge.net:443
             files.pythonhosted.org:443
+            formulae.brew.sh:443
             github.com:443
             go.dev:443
             mirror.bazel.build:443
@@ -71,6 +72,7 @@ jobs:
             nodejs.org:443
             oauth2.googleapis.com:443
             objects.githubusercontent.com:443
+            pkg-containers.githubusercontent.com:443
             pypi.org:443
             raw.githubusercontent.com:443
             registry.npmjs.org:443

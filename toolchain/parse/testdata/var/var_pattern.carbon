@@ -131,7 +131,7 @@ let (x: (), var (y: (), var z: ())) = ((), ((), ()));
 // CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │   │ ╭─TupleLiteralStart '('
 // CHECK:STDOUT:   │ │ │   ├─TupleLiteral ')'
-// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ ╭─StructPatternFieldVarBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─StructPattern '}'
 // CHECK:STDOUT:   │ ├─LetInitializer '='

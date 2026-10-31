@@ -42,31 +42,37 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
   // inside of other tokens, outside of the contents of other tokens they
   // don't require any specific characters before or after to distinguish them
   // in the source. Returns false otherwise.
-  auto is_symbol() const -> bool { return IsSymbol[AsInt()]; }
+  constexpr auto is_symbol() const -> bool { return IsSymbol[AsInt()]; }
 
   // Test whether this kind of token is a grouping symbol (part of an opening
   // and closing pair that must always be matched in the token stream).
-  auto is_grouping_symbol() const -> bool { return IsGroupingSymbol[AsInt()]; }
+  constexpr auto is_grouping_symbol() const -> bool {
+    return IsGroupingSymbol[AsInt()];
+  }
 
   // Test whether this kind of token is an opening symbol for a group.
-  auto is_opening_symbol() const -> bool { return IsOpeningSymbol[AsInt()]; }
+  constexpr auto is_opening_symbol() const -> bool {
+    return IsOpeningSymbol[AsInt()];
+  }
 
   // Returns the associated closing symbol for an opening symbol.
   //
   // The token kind must be an opening symbol.
-  auto closing_symbol() const -> TokenKind {
+  constexpr auto closing_symbol() const -> TokenKind {
     auto result = ClosingSymbol[AsInt()];
     CARBON_DCHECK(result != Error, "Only opening symbols are valid!");
     return result;
   }
 
   // Test whether this kind of token is a closing symbol for a group.
-  auto is_closing_symbol() const -> bool { return IsClosingSymbol[AsInt()]; }
+  constexpr auto is_closing_symbol() const -> bool {
+    return IsClosingSymbol[AsInt()];
+  }
 
   // Returns the associated opening symbol for a closing symbol.
   //
   // The token kind must be a closing symbol.
-  auto opening_symbol() const -> TokenKind {
+  constexpr auto opening_symbol() const -> TokenKind {
     auto result = OpeningSymbol[AsInt()];
     CARBON_DCHECK(result != Error, "Only closing symbols are valid!");
     return result;
@@ -74,48 +80,50 @@ class TokenKind : public CARBON_ENUM_BASE(TokenKind) {
 
   // Test whether this kind of token is a one-character symbol whose character
   // is not part of any other symbol.
-  auto is_one_char_symbol() const -> bool { return IsOneCharSymbol[AsInt()]; }
+  constexpr auto is_one_char_symbol() const -> bool {
+    return IsOneCharSymbol[AsInt()];
+  }
 
   // Test whether this kind of token is a keyword.
-  auto is_keyword() const -> bool { return IsKeyword[AsInt()]; }
+  constexpr auto is_keyword() const -> bool { return IsKeyword[AsInt()]; }
 
   // Test whether this kind of token is a sized type literal.
-  auto is_sized_type_literal() const -> bool {
+  constexpr auto is_sized_type_literal() const -> bool {
     return *this == TokenKind::IntTypeLiteral ||
            *this == TokenKind::UnsignedIntTypeLiteral ||
            *this == TokenKind::FloatTypeLiteral;
   }
 
   // Test whether this kind of token is a dollar int literal.
-  auto is_dollar_int_literal() const -> bool {
+  constexpr auto is_dollar_int_literal() const -> bool {
     return *this == TokenKind::DollarIntLiteral;
   }
 
   // Test whether this kind of token is a word.
-  auto is_word() const -> bool {
+  constexpr auto is_word() const -> bool {
     return *this == TokenKind::Identifier || *this == TokenKind::Underscore ||
            is_keyword() || is_sized_type_literal();
   }
 
   // Test whether this kind of token is a binding pattern operator.
-  auto is_binding_pattern_operator() const -> bool {
+  constexpr auto is_binding_pattern_operator() const -> bool {
     return *this == TokenKind::Colon || *this == TokenKind::ColonQuestion;
   }
 
   // If this token kind has a fixed spelling when in source code, returns it.
   // Otherwise returns an empty string.
-  auto fixed_spelling() const -> llvm::StringLiteral {
+  constexpr auto fixed_spelling() const -> llvm::StringLiteral {
     return FixedSpelling[AsInt()];
   }
 
   // Get the expected number of parse tree nodes that will be created for this
   // token.
-  auto expected_max_parse_tree_size() const -> int {
+  constexpr auto expected_max_parse_tree_size() const -> int {
     return ExpectedParseTreeSize[AsInt()];
   }
 
   // Test whether this token kind is in the provided list.
-  auto IsOneOf(std::initializer_list<TokenKind> kinds) const -> bool {
+  constexpr auto IsOneOf(std::initializer_list<TokenKind> kinds) const -> bool {
     for (TokenKind kind : kinds) {
       if (*this == kind) {
         return true;
@@ -152,6 +160,74 @@ inline constexpr TokenKind TokenKind::KeywordTokensStorage[] = {
 };
 inline constexpr llvm::ArrayRef<TokenKind> TokenKind::KeywordTokens =
     KeywordTokensStorage;
+
+inline constexpr bool TokenKind::IsSymbol[] = {
+#define CARBON_TOKEN(TokenName) false,
+#define CARBON_SYMBOL_TOKEN(TokenName, Spelling) true,
+#include "toolchain/lex/token_kind.def"
+};
+
+inline constexpr bool TokenKind::IsGroupingSymbol[] = {
+#define CARBON_TOKEN(TokenName) false,
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
+  true,
+#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
+  true,
+#include "toolchain/lex/token_kind.def"
+};
+
+inline constexpr bool TokenKind::IsOpeningSymbol[] = {
+#define CARBON_TOKEN(TokenName) false,
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
+  true,
+#include "toolchain/lex/token_kind.def"
+};
+
+inline constexpr TokenKind TokenKind::ClosingSymbol[] = {
+#define CARBON_TOKEN(TokenName) Error,
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
+  ClosingName,
+#include "toolchain/lex/token_kind.def"
+};
+
+inline constexpr bool TokenKind::IsClosingSymbol[] = {
+#define CARBON_TOKEN(TokenName) false,
+#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
+  true,
+#include "toolchain/lex/token_kind.def"
+};
+
+inline constexpr TokenKind TokenKind::OpeningSymbol[] = {
+#define CARBON_TOKEN(TokenName) Error,
+#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
+  OpeningName,
+#include "toolchain/lex/token_kind.def"
+};
+
+inline constexpr bool TokenKind::IsOneCharSymbol[] = {
+#define CARBON_TOKEN(TokenName) false,
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) true,
+#include "toolchain/lex/token_kind.def"
+};
+
+inline constexpr bool TokenKind::IsKeyword[] = {
+#define CARBON_TOKEN(TokenName) false,
+#define CARBON_KEYWORD_TOKEN(TokenName, Spelling) true,
+#include "toolchain/lex/token_kind.def"
+};
+
+inline constexpr llvm::StringLiteral TokenKind::FixedSpelling[] = {
+#define CARBON_TOKEN(TokenName) "",
+#define CARBON_SYMBOL_TOKEN(TokenName, Spelling) Spelling,
+#define CARBON_KEYWORD_TOKEN(TokenName, Spelling) Spelling,
+#include "toolchain/lex/token_kind.def"
+};
+
+inline constexpr int8_t TokenKind::ExpectedParseTreeSize[] = {
+#define CARBON_TOKEN(Name) 1,
+#define CARBON_TOKEN_WITH_VIRTUAL_NODE(size) 2,
+#include "toolchain/lex/token_kind.def"
+};
 
 }  // namespace Carbon::Lex
 

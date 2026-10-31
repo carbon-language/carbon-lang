@@ -714,6 +714,99 @@ TEST_F(LexerTest, Whitespace) {
   ASSERT_EQ(pos + 1, std::size(space));
 }
 
+TEST_F(LexerTest, KindDataAndWhitespaceForLongInput) {
+  // The token kinds and whitespace flags are built in bulk once lexing
+  // finishes, so check them on an input long enough to exercise the bulk path
+  // as well as its tail, with a mix of kinds and whitespace.
+  constexpr llvm::StringLiteral Line =
+      "fn x(a: i32) -> bool { return a+1 == 2; }\n";
+  constexpr int Repeats = 37;
+  std::string source;
+  for (int i = 0; i < Repeats; ++i) {
+    source += Line;
+  }
+  auto& buffer = compile_helper_.GetTokenizedBuffer(source);
+  EXPECT_FALSE(buffer.has_errors());
+
+  struct ExpectedLineToken {
+    TokenKind kind;
+    bool has_leading_space;
+  };
+  const ExpectedLineToken expected_line[] = {
+      {TokenKind::Fn, true},              //
+      {TokenKind::Identifier, true},      //
+      {TokenKind::OpenParen, false},      //
+      {TokenKind::Identifier, false},     //
+      {TokenKind::Colon, false},          //
+      {TokenKind::IntTypeLiteral, true},  //
+      {TokenKind::CloseParen, false},     //
+      {TokenKind::MinusGreater, true},    //
+      {TokenKind::Bool, true},            //
+      {TokenKind::OpenCurlyBrace, true},  //
+      {TokenKind::Return, true},          //
+      {TokenKind::Identifier, true},      //
+      {TokenKind::Plus, false},           //
+      {TokenKind::IntLiteral, false},     //
+      {TokenKind::EqualEqual, true},      //
+      {TokenKind::IntLiteral, true},      //
+      {TokenKind::Semi, false},           //
+      {TokenKind::CloseCurlyBrace, true},
+  };
+  constexpr int TokensPerLine = std::size(expected_line);
+  ASSERT_EQ(buffer.size(), 2 + Repeats * TokensPerLine);
+
+  const TokenKind* kind_data = buffer.kind_data();
+  for (TokenIndex token : buffer.tokens()) {
+    SCOPED_TRACE(
+        llvm::formatv("Token #{0}: '{1}'", token, buffer.GetTokenText(token)));
+    ExpectedLineToken expected;
+    if (token.index == 0) {
+      expected = {TokenKind::FileStart, false};
+    } else if (token.index == buffer.size() - 1) {
+      expected = {TokenKind::FileEnd, true};
+    } else {
+      // The start of the file counts as whitespace, so the first `fn` matches
+      // the pattern too.
+      expected = expected_line[(token.index - 1) % TokensPerLine];
+    }
+    EXPECT_EQ(buffer.GetKind(token), expected.kind);
+    EXPECT_EQ(kind_data[token.index], expected.kind);
+    EXPECT_EQ(buffer.HasLeadingWhitespace(token), expected.has_leading_space);
+    if (token.index + 1 < buffer.size()) {
+      EXPECT_EQ(buffer.HasTrailingWhitespace(token),
+                buffer.HasLeadingWhitespace(TokenIndex(token.index + 1)));
+    } else {
+      EXPECT_FALSE(buffer.HasTrailingWhitespace(token));
+    }
+  }
+  for (int i = 0; i < TokenizedBuffer::KindDataPadding; ++i) {
+    EXPECT_EQ(kind_data[buffer.size() + i], TokenKind::FileEnd) << i;
+  }
+
+  // Adding recovery tokens after lexing extends the arrays and keeps the
+  // padding intact.
+  int lexed_size = buffer.size();
+  for (int i = 0; i < 3; ++i) {
+    TokenIndex fn_token(1 + i * TokensPerLine);
+    TokenIndex recovered =
+        buffer.AddPostLexingRecoveryTokenAsIdentifier(fn_token);
+    EXPECT_EQ(recovered.index, lexed_size + i);
+    EXPECT_EQ(buffer.GetKind(recovered), TokenKind::Identifier);
+    EXPECT_EQ(buffer.GetTokenText(recovered), "fn");
+    EXPECT_EQ(buffer.HasLeadingWhitespace(recovered),
+              buffer.HasLeadingWhitespace(fn_token));
+  }
+  EXPECT_EQ(buffer.size(), lexed_size + 3);
+  EXPECT_EQ(buffer.tokens().end() - buffer.tokens().begin(), lexed_size);
+  kind_data = buffer.kind_data();
+  for (TokenIndex token : buffer.tokens()) {
+    EXPECT_EQ(kind_data[token.index], buffer.GetKind(token));
+  }
+  for (int i = 0; i < TokenizedBuffer::KindDataPadding; ++i) {
+    EXPECT_EQ(kind_data[buffer.size() + i], TokenKind::FileEnd) << i;
+  }
+}
+
 TEST_F(LexerTest, Keywords) {
   TokenKind keywords[] = {
 #define CARBON_TOKEN(TokenName)
