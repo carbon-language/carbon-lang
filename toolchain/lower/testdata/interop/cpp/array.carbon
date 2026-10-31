@@ -87,7 +87,7 @@ int H() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(20) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #4 !dbg !40 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(20) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #4 !dbg !40 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %F.call = call i32 @_CF.Main(ptr %_), !dbg !43
 // CHECK:STDOUT:   store i32 %F.call, ptr %_1, align 4, !dbg !43

@@ -84,7 +84,7 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @"\01__CF__carbon_thunk.Main"(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #3 !dbg !26 {
+// CHECK:STDOUT: define linkonce_odr void @"\01__CF__carbon_thunk.Main"(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #3 !dbg !26 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6 = load i32, ptr %_, align 4, !dbg !29
 // CHECK:STDOUT:   %F.call = call i32 @_CF.Main(i32 %.loc6), !dbg !29
@@ -222,7 +222,7 @@ fn H() -> i32 { return Cpp.G(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define noundef ptr @"\01__CC__carbon_thunk.C.Main"(ptr noundef nonnull returned align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) unnamed_addr #6 !dbg !74 {
+// CHECK:STDOUT: define linkonce_odr noundef ptr @"\01__CC__carbon_thunk.C.Main"(ptr noundef nonnull returned align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) unnamed_addr #6 !dbg !74 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc7_24.2 = load i32, ptr %_1, align 4, !dbg !77
 // CHECK:STDOUT:   call void @_CC.C.Main(ptr %_, i32 %.loc7_24.2), !dbg !77
