@@ -260,9 +260,51 @@ using CompilerFor =
 static auto DenseDeclParams() -> SourceGen::DenseDeclParams {
   SourceGen::DenseDeclParams params;
   params.class_params.inline_function_defs = 1;
-  params.class_params.max_body_locals = 3;
   params.class_params.inline_getters = 1;
   params.class_params.inline_forwarders = 1;
+  params.free_function_decls_per_class = 2;
+  return params;
+}
+
+// Parameters for the implementation file pattern: classes whose functions and
+// methods are all defined out-of-line, with the default definition sizes. Two
+// thirds of the functions are methods, and they average two parameters (`0..2`
+// from `max_params = 2`, plus the extra parameter added to out-of-line
+// definitions), as in the Carbon toolchain's, LLVM's, and Clang's
+// implementation files.
+static auto ImplFileParams() -> SourceGen::DenseDeclParams {
+  SourceGen::DenseDeclParams params;
+  params.class_params = {.public_function_decls = 2,
+                         .public_function_decl_params = {.max_params = 2},
+                         .public_method_decls = 6,
+                         .public_method_decl_params = {.max_params = 2},
+                         .private_function_decls = 2,
+                         .private_function_decl_params = {.max_params = 2},
+                         .private_method_decls = 2,
+                         .private_method_decl_params = {.max_params = 2},
+                         .private_field_decls = 4};
+  params.define_decls_out_of_line = true;
+  params.free_function_decls_per_class = 2;
+  return params;
+}
+
+// Parameters for the realistic header pattern, which models a typical API file.
+// Its classes define about two thirds of their member functions inline, and
+// the mix of inline definitions approximates the inline definitions in the
+// Carbon toolchain's, LLVM's, and Clang's headers.
+static auto RealisticHeaderParams() -> SourceGen::DenseDeclParams {
+  SourceGen::DenseDeclParams params;
+  params.class_params = {.public_function_decls = 0,
+                         .public_method_decls = 2,
+                         .private_function_decls = 0,
+                         .private_method_decls = 0,
+                         .private_field_decls = 3,
+                         .inline_function_defs = 2,
+                         .inline_function_decl_params = {.max_params = 2},
+                         .inline_getters = 2,
+                         .inline_predicates = 1,
+                         .inline_forwarders = 2};
+  params.free_function_decls_per_class = 1;
   return params;
 }
 
@@ -276,16 +318,27 @@ static auto DenseDeclParams() -> SourceGen::DenseDeclParams {
 // For simplicity, we compute a number of files from the target line count as a
 // heuristic, clamped to the `[min_files, max_files]` range provided by the
 // compilation harness.
-static auto ComputeFileCount(int target_lines, int min_files,
+static auto ComputeFileCount(Lang lang, int target_lines, int min_files,
                              [[maybe_unused]] int max_files) -> int {
+  if (IsBenchmarkDryRun()) {
+    // Dry runs only smoke-test that the benchmark runs cleanly, so generate and
+    // compile just two files. We do more than one to exercise our stability
+    // checks.
+    return 2;
+  }
   int file_count = (1024 * 1024) / target_lines;
+  if (lang == Lang::Cpp) {
+    // Reduce the number of files with C++ to balance the longer compile times.
+    file_count /= 2;
+  }
 #ifndef NDEBUG
   // Use a smaller number of files in debug builds where compiles are slower,
   // capping at the release-mode minimum.
-  return std::max(1, std::min(min_files, file_count));
+  file_count = std::min(min_files, file_count);
 #else
-  return std::max(min_files, std::min(max_files, file_count));
+  file_count = std::min(max_files, file_count);
 #endif
+  return std::max(min_files, file_count);
 }
 
 template <Lang L, Phase P, Mode M = Mode::InProcess>
@@ -294,61 +347,46 @@ static auto RunApiFileBenchmark(benchmark::State& state,
     -> void {
   using Compiler = CompilerFor<L, M>;
   Compiler bench;
-  CompileHelper carbon_compile_helper;
 
   int target_lines = state.range(0);
   int num_files =
-      ComputeFileCount(target_lines, Compiler::MinFiles, Compiler::MaxFiles);
-  if constexpr (L == Lang::Cpp) {
-    // Reduce the number of files with C++ to balance the longer compile times.
-    num_files /= 2;
-  }
+      ComputeFileCount(L, target_lines, Compiler::MinFiles, Compiler::MaxFiles);
 
   llvm::SmallVector<std::string> sources;
   sources.reserve(num_files);
-
-  double total_bytes = 0.0;
-  double total_lines = 0.0;
-  double total_tokens = 0.0;
-
-  ssize_t first_bytes = 0;
-  ssize_t first_lines = 0;
-
   for (auto _ : llvm::seq(num_files)) {
     sources.push_back(bench.gen().GenApiFileDenseDecls(target_lines, params));
-    const auto& source = sources.back();
-    ssize_t bytes = source.size();
-    ssize_t lines = llvm::count(source, '\n');
-
-    total_bytes += bytes;
-    total_lines += lines;
-    if constexpr (L == Lang::Carbon) {
-      total_tokens += carbon_compile_helper.GetTokenizedBuffer(source).size();
-    }
-
-    // The generator varies each file's content but not its size, which keeps
-    // results comparable across files and runs.
-    if (sources.size() == 1) {
-      first_bytes = bytes;
-      first_lines = lines;
-      continue;
-    }
-
-    CARBON_CHECK(bytes == first_bytes,
-                 "Generated file {0} has {1} bytes but file 0 has {2}.",
-                 sources.size() - 1, bytes, first_bytes);
-    CARBON_CHECK(lines == first_lines,
-                 "Generated file {0} has {1} lines but file 0 has {2}.",
-                 sources.size() - 1, lines, first_lines);
   }
 
+  ssize_t bytes = sources[0].size();
+  ssize_t lines = llvm::count(sources[0], '\n');
+
+  for (llvm::StringRef source : llvm::ArrayRef(sources).drop_front()) {
+    // The generator varies each file's content but not its size, which keeps
+    // results comparable across files and runs.
+    ssize_t file_bytes = source.size();
+    ssize_t file_lines = llvm::count(source, '\n');
+
+    CARBON_CHECK(file_bytes == bytes,
+                 "Generated file has {0} bytes but expected {1}.", file_bytes,
+                 bytes);
+    CARBON_CHECK(file_lines == lines,
+                 "Generated file has {0} lines but expected {1}.", file_lines,
+                 lines);
+  }
   state.counters["Bytes"] =
-      benchmark::Counter(total_bytes / sources.size(),
-                         benchmark::Counter::kIsIterationInvariantRate);
+      benchmark::Counter(bytes, benchmark::Counter::kIsIterationInvariantRate);
   state.counters["Lines"] =
-      benchmark::Counter(total_lines / sources.size(),
-                         benchmark::Counter::kIsIterationInvariantRate);
+      benchmark::Counter(lines, benchmark::Counter::kIsIterationInvariantRate);
+
+  // TODO: The token count should be stable as well, so we should be able to
+  // switch it to the pattern above.
   if constexpr (L == Lang::Carbon) {
+    double total_tokens = 0.0;
+    CompileHelper carbon_compile_helper;
+    for (llvm::StringRef source : sources) {
+      total_tokens += carbon_compile_helper.GetTokenizedBuffer(source).size();
+    }
     state.counters["Tokens"] =
         benchmark::Counter(total_tokens / sources.size(),
                            benchmark::Counter::kIsIterationInvariantRate);
@@ -384,6 +422,16 @@ static auto BM_CompileApiFileDenseDecls(benchmark::State& state) -> void {
   RunApiFileBenchmark<L, P, M>(state, DenseDeclParams());
 }
 
+template <Lang L, Phase P, Mode M = Mode::InProcess>
+static auto BM_CompileImplFile(benchmark::State& state) -> void {
+  RunApiFileBenchmark<L, P, M>(state, ImplFileParams());
+}
+
+template <Lang L, Phase P, Mode M = Mode::InProcess>
+static auto BM_CompileApiFileRealisticHeader(benchmark::State& state) -> void {
+  RunApiFileBenchmark<L, P, M>(state, RealisticHeaderParams());
+}
+
 // A thin wrapper for the subprocess benchmarks: they reuse the shared
 // implementation above, but register under their own (terser) name rather than
 // spelling out `Mode::Subprocess` at each registration.
@@ -392,44 +440,77 @@ static auto BM_CompileExecApiFileDenseDecls(benchmark::State& state) -> void {
   BM_CompileApiFileDenseDecls<L, P, Mode::Subprocess>(state);
 }
 
-// Applies the shared range configuration used by every compile benchmark:
-// 256-line test cases through 256k-line test cases.
-static auto ConfigureCompileBenchmark(benchmark::Benchmark* b) -> void {
+// Applies the range configuration of the API file benchmarks (dense
+// declarations and realistic header): 256-line test cases through 256k-line
+// test cases.
+static auto ConfigureApiFileBenchmark(benchmark::Benchmark* b) -> void {
   b->RangeMultiplier(4)->Range(256, static_cast<int64_t>(256 * 1024));
+}
+
+// The implementation file benchmarks start at 1024 lines instead, because a
+// class with all of its functions defined doesn't fit in 256 lines.
+static auto ConfigureImplFileBenchmark(benchmark::Benchmark* b) -> void {
+  b->RangeMultiplier(4)->Range(1024, static_cast<int64_t>(256 * 1024));
 }
 
 // In-process benchmarks measure the compiler as a library across each phase of
 // compilation. The mode defaults to `Mode::InProcess`.
 BENCHMARK(BM_CompileApiFileDenseDecls<Lang::Carbon, Phase::Lex>)
-    ->Apply(ConfigureCompileBenchmark);
+    ->Apply(ConfigureApiFileBenchmark);
 BENCHMARK(BM_CompileApiFileDenseDecls<Lang::Carbon, Phase::Parse>)
-    ->Apply(ConfigureCompileBenchmark);
+    ->Apply(ConfigureApiFileBenchmark);
 BENCHMARK(BM_CompileApiFileDenseDecls<Lang::Carbon, Phase::Check>)
-    ->Apply(ConfigureCompileBenchmark);
+    ->Apply(ConfigureApiFileBenchmark);
 BENCHMARK(BM_CompileApiFileDenseDecls<Lang::Cpp, Phase::Lex>)
-    ->Apply(ConfigureCompileBenchmark);
+    ->Apply(ConfigureApiFileBenchmark);
 BENCHMARK(BM_CompileApiFileDenseDecls<Lang::Cpp, Phase::Check>)
-    ->Apply(ConfigureCompileBenchmark);
+    ->Apply(ConfigureApiFileBenchmark);
 
 // Subprocess benchmarks measure the same work end-to-end by executing the
 // installed compiler binary, including process startup cost. They use real
 // (wall-clock) time because the compilation happens in a child process whose
 // CPU time isn't attributed to the benchmark process.
 BENCHMARK(BM_CompileExecApiFileDenseDecls<Lang::Carbon, Phase::Lex>)
-    ->Apply(ConfigureCompileBenchmark)
+    ->Apply(ConfigureApiFileBenchmark)
     ->UseRealTime();
 BENCHMARK(BM_CompileExecApiFileDenseDecls<Lang::Carbon, Phase::Parse>)
-    ->Apply(ConfigureCompileBenchmark)
+    ->Apply(ConfigureApiFileBenchmark)
     ->UseRealTime();
 BENCHMARK(BM_CompileExecApiFileDenseDecls<Lang::Carbon, Phase::Check>)
-    ->Apply(ConfigureCompileBenchmark)
+    ->Apply(ConfigureApiFileBenchmark)
     ->UseRealTime();
 BENCHMARK(BM_CompileExecApiFileDenseDecls<Lang::Cpp, Phase::Lex>)
-    ->Apply(ConfigureCompileBenchmark)
+    ->Apply(ConfigureApiFileBenchmark)
     ->UseRealTime();
 BENCHMARK(BM_CompileExecApiFileDenseDecls<Lang::Cpp, Phase::Check>)
-    ->Apply(ConfigureCompileBenchmark)
+    ->Apply(ConfigureApiFileBenchmark)
     ->UseRealTime();
+
+// In-process benchmarks of the implementation file pattern.
+BENCHMARK(BM_CompileImplFile<Lang::Carbon, Phase::Lex>)
+    ->Apply(ConfigureImplFileBenchmark);
+BENCHMARK(BM_CompileImplFile<Lang::Carbon, Phase::Parse>)
+    ->Apply(ConfigureImplFileBenchmark);
+BENCHMARK(BM_CompileImplFile<Lang::Carbon, Phase::Check>)
+    ->Apply(ConfigureImplFileBenchmark);
+
+BENCHMARK(BM_CompileImplFile<Lang::Cpp, Phase::Lex>)
+    ->Apply(ConfigureImplFileBenchmark);
+BENCHMARK(BM_CompileImplFile<Lang::Cpp, Phase::Check>)
+    ->Apply(ConfigureImplFileBenchmark);
+
+// In-process benchmarks of the realistic header pattern.
+BENCHMARK(BM_CompileApiFileRealisticHeader<Lang::Carbon, Phase::Lex>)
+    ->Apply(ConfigureApiFileBenchmark);
+BENCHMARK(BM_CompileApiFileRealisticHeader<Lang::Carbon, Phase::Parse>)
+    ->Apply(ConfigureApiFileBenchmark);
+BENCHMARK(BM_CompileApiFileRealisticHeader<Lang::Carbon, Phase::Check>)
+    ->Apply(ConfigureApiFileBenchmark);
+
+BENCHMARK(BM_CompileApiFileRealisticHeader<Lang::Cpp, Phase::Lex>)
+    ->Apply(ConfigureApiFileBenchmark);
+BENCHMARK(BM_CompileApiFileRealisticHeader<Lang::Cpp, Phase::Check>)
+    ->Apply(ConfigureApiFileBenchmark);
 
 }  // namespace
 }  // namespace Carbon::Testing

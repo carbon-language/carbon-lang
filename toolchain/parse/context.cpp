@@ -39,17 +39,20 @@ Context::Context(Tree* tree, Lex::TokenizedBuffer* tokens,
                tokens_->GetKind(*end_));
 }
 
-auto Context::ReplacePlaceholderNode(int32_t position, NodeKind kind,
-                                     Lex::TokenIndex token, bool has_error)
-    -> void {
-  CARBON_CHECK(
-      kind != NodeKind::InvalidParse && kind != NodeKind::InvalidParseSubtree,
-      "{0} shouldn't occur in Placeholder use-cases", kind);
-  CARBON_CHECK(position >= 0 && position < tree_->size(),
-               "position: {0} size: {1}", position, tree_->size());
-  auto* node_impl = &tree_->node_impls_[position];
-  CARBON_CHECK(node_impl->kind() == NodeKind::Placeholder);
-  *node_impl = Tree::NodeImpl(kind, has_error, token);
+auto Context::VlogAddNode() const -> void {
+  CARBON_VLOG("Add #node{0}: {1}",
+              llvm::format_hex_no_prefix(tree_->node_impls_.size() - 1, 0,
+                                         /*Upper=*/true),
+              tree_->node_impls_.back());
+}
+
+auto Context::VlogPushState() const -> void {
+  CARBON_VLOG("Push {0}: {1}\n", state_stack_.size() - 1, state_stack_.back());
+}
+
+auto Context::VlogPopState(llvm::StringLiteral label) const -> void {
+  CARBON_VLOG("{0} {1}: {2}\n", label, state_stack_.size() - 1,
+              state_stack_.back());
 }
 
 auto Context::OpeningBracketInsertionPoint() const -> DiagnosticLoc {
@@ -61,80 +64,47 @@ auto Context::OpeningBracketInsertionPoint() const -> DiagnosticLoc {
   return DiagnosticLoc::After(previous_token);
 }
 
-auto Context::ConsumeAndAddOpenCurlyBrace(Lex::TokenIndex default_token,
-                                          NodeKind start_kind)
-    -> std::optional<Lex::TokenIndex> {
-  if (auto open_curly = ConsumeIf(Lex::TokenKind::OpenCurlyBrace)) {
-    AddLeafNode(start_kind, *open_curly, /*has_error=*/false);
-    return open_curly;
-  } else {
-    CARBON_DIAGNOSTIC(ExpectedCurlyBraceAfter, Error,
-                      "expected `{` after `{0}`", Lex::TokenKind);
-    emitter_.Emit(OpeningBracketInsertionPoint(), ExpectedCurlyBraceAfter,
-                  tokens().GetKind(default_token));
-    AddLeafNode(start_kind, default_token, /*has_error=*/true);
-    return std::nullopt;
-  }
+auto Context::DiagnoseExpectedOpenCurlyBrace(Lex::TokenIndex default_token,
+                                             NodeKind start_kind) -> void {
+  CARBON_DIAGNOSTIC(ExpectedCurlyBraceAfter, Error, "expected `{` after `{0}`",
+                    Lex::TokenKind);
+  emitter_.Emit(OpeningBracketInsertionPoint(), ExpectedCurlyBraceAfter,
+                tokens().GetKind(default_token));
+  AddLeafNode(start_kind, default_token, /*has_error=*/true);
 }
 
-auto Context::ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
-                                     NodeKind start_kind)
-    -> std::optional<Lex::TokenIndex> {
-  if (auto open_paren = ConsumeIf(Lex::TokenKind::OpenParen)) {
-    AddLeafNode(start_kind, *open_paren, /*has_error=*/false);
-    return open_paren;
-  } else {
-    CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "expected `(` after `{0}`",
-                      Lex::TokenKind);
-    emitter_.Emit(OpeningBracketInsertionPoint(), ExpectedParenAfter,
-                  tokens().GetKind(default_token));
-    AddLeafNode(start_kind, default_token, /*has_error=*/true);
-    return std::nullopt;
-  }
+auto Context::DiagnoseExpectedOpenParen(Lex::TokenIndex default_token,
+                                        NodeKind start_kind) -> void {
+  CARBON_DIAGNOSTIC(ExpectedParenAfter, Error, "expected `(` after `{0}`",
+                    Lex::TokenKind);
+  emitter_.Emit(OpeningBracketInsertionPoint(), ExpectedParenAfter,
+                tokens().GetKind(default_token));
+  AddLeafNode(start_kind, default_token, /*has_error=*/true);
 }
 
-auto Context::ConsumeAndAddCloseSymbol(State state, NodeKind close_kind)
+auto Context::DiagnoseAndSkipToCloseSymbol(State state, NodeKind close_kind)
     -> void {
   Lex::TokenKind open_token_kind = tokens().GetKind(state.token);
-
   if (!open_token_kind.is_opening_symbol()) {
     AddNode(close_kind, state.token, /*has_error=*/true);
-  } else if (auto close_token = ConsumeIf(open_token_kind.closing_symbol())) {
-    AddNode(close_kind, *close_token, state.has_error);
-  } else {
-    CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
-                      "unexpected tokens before `{0}`", Lex::TokenKind);
-    CARBON_DIAGNOSTIC_LABEL(GroupOpenedHere, Info, "matching this `{0}`",
-                            Lex::TokenKind);
-    auto matched_close = tokens().GetMatchedClosingToken(state.token);
-    emitter_
-        .Build(DiagnosticLoc::Tokens(
-                   {.begin = *position_,
-                    .end = Lex::TokenIndex(matched_close.index - 1)}),
-               ExpectedCloseSymbol, open_token_kind.closing_symbol())
-        .Attach(state.token, GroupOpenedHere, open_token_kind)
-        .Emit();
-
-    SkipTo(matched_close);
-    AddNode(close_kind, Consume(), /*has_error=*/true);
-  }
-}
-
-auto Context::ConsumeAndAddLeafNodeIf(Lex::TokenKind token_kind,
-                                      NodeKind node_kind) -> bool {
-  auto token = ConsumeIf(token_kind);
-  if (!token) {
-    return false;
+    return;
   }
 
-  AddLeafNode(node_kind, *token);
-  return true;
-}
+  CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
+                    "unexpected tokens before `{0}`", Lex::TokenKind);
+  CARBON_DIAGNOSTIC_LABEL(GroupOpenedHere, Info, "matching this `{0}`",
+                          Lex::TokenKind);
+  auto matched_close = tokens().GetMatchedClosingToken(state.token);
+  emitter_
+      .Build(DiagnosticLoc::Tokens(
+                 {.begin = *position_,
+                  .end = Lex::TokenIndex(matched_close.index - 1)}),
+             ExpectedCloseSymbol, open_token_kind.closing_symbol())
+      .Attach(state.token, GroupOpenedHere, open_token_kind)
+      .Emit();
 
-auto Context::ConsumeChecked(Lex::TokenKind kind) -> Lex::TokenIndex {
-  CARBON_CHECK(PositionIs(kind), "Required {0}, found {1}", kind,
-               PositionKind());
-  return Consume();
+  SkipTo(matched_close);
+  AddNode(close_kind, Consume(), /*has_error=*/true);
 }
 
 auto Context::FindNextOf(std::initializer_list<Lex::TokenKind> desired_kinds)
@@ -222,112 +192,25 @@ auto Context::SkipTo(Lex::TokenIndex t) -> void {
   CARBON_CHECK(position_ != end_, "Skipped past EOF.");
 }
 
-// Determines whether the given token is considered to be the start of an
-// operand according to the rules for infix operator parsing.
-static auto IsAssumedStartOfOperand(Lex::TokenKind kind) -> bool {
-  return kind.IsOneOf({Lex::TokenKind::OpenParen, Lex::TokenKind::Identifier,
-                       Lex::TokenKind::IntLiteral, Lex::TokenKind::RealLiteral,
-                       Lex::TokenKind::StringLiteral});
-}
-
-// Determines whether the given token is considered to be the end of an
-// operand according to the rules for infix operator parsing.
-static auto IsAssumedEndOfOperand(Lex::TokenKind kind) -> bool {
-  return kind.IsOneOf(
-      {Lex::TokenKind::CloseParen, Lex::TokenKind::CloseCurlyBrace,
-       Lex::TokenKind::CloseSquareBracket, Lex::TokenKind::Identifier,
-       Lex::TokenKind::IntLiteral, Lex::TokenKind::RealLiteral,
-       Lex::TokenKind::StringLiteral});
-}
-
-// Determines whether the given token could possibly be the start of an
-// operand. This is conservatively correct, and will never incorrectly return
-// `false`, but can incorrectly return `true`.
-static auto IsPossibleStartOfOperand(Lex::TokenKind kind) -> bool {
-  return !kind.IsOneOf(
-      {Lex::TokenKind::CloseParen, Lex::TokenKind::CloseCurlyBrace,
-       Lex::TokenKind::CloseSquareBracket, Lex::TokenKind::Comma,
-       Lex::TokenKind::Semi, Lex::TokenKind::Colon});
-}
-
-auto Context::IsLexicallyValidInfixOperator() -> bool {
-  CARBON_CHECK(position_ != end_, "Expected an operator token.");
-
-  bool leading_space = tokens().HasLeadingWhitespace(*position_);
-  bool trailing_space = tokens().HasTrailingWhitespace(*position_);
-
-  // If there's whitespace on both sides, it's an infix operator.
-  if (leading_space && trailing_space) {
-    return true;
-  }
-
-  // If there's whitespace on exactly one side, it's not an infix operator.
-  if (leading_space || trailing_space) {
-    return false;
-  }
-
-  // Otherwise, for an infix operator, the preceding token must be any close
-  // bracket, identifier, or literal and the next token must be an open paren,
-  // identifier, or literal.
-  if (position_ == tokens().tokens().begin() ||
-      !IsAssumedEndOfOperand(tokens().GetKind(*(position_ - 1))) ||
-      !IsAssumedStartOfOperand(tokens().GetKind(*(position_ + 1)))) {
-    return false;
-  }
-
-  return true;
-}
-
-auto Context::IsTrailingOperatorInfix() -> bool {
-  if (position_ == end_) {
-    return false;
-  }
-
-  // An operator that follows the infix operator rules is parsed as
-  // infix, unless the next token means that it can't possibly be.
-  if (IsLexicallyValidInfixOperator() &&
-      IsPossibleStartOfOperand(tokens().GetKind(*(position_ + 1)))) {
-    return true;
-  }
-
-  // A trailing operator with leading whitespace that's not valid as infix is
-  // not valid at all. If the next token looks like the start of an operand,
-  // then parse as infix, otherwise as postfix. Either way we'll produce a
-  // diagnostic later on.
-  if (tokens().HasLeadingWhitespace(*position_) &&
-      IsAssumedStartOfOperand(tokens().GetKind(*(position_ + 1)))) {
-    return true;
-  }
-
-  return false;
-}
-
-auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
-  if (!PositionKind().is_symbol()) {
-    // Whitespace-based fixity rules only apply to symbolic operators.
-    return;
-  }
-
+auto Context::DiagnoseInvalidOperatorFixity(OperatorFixity fixity) -> void {
   if (fixity == OperatorFixity::Infix) {
     // Infix operators must satisfy the infix operator rules.
-    if (!IsLexicallyValidInfixOperator()) {
-      CARBON_DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
-                        "whitespace missing {0:=-1:before|=0:around|=1:after} "
-                        "binary operator",
-                        Diagnostics::IntAsSelect);
-      // Whitespace missing on one side goes at that side. Whitespace missing
-      // around the operator is about the operator.
-      Diagnostics::IntAsSelect pos(0);
-      DiagnosticLoc loc = *position_;
-      if (tokens().HasLeadingWhitespace(*position_)) {
-        pos.value = 1;
-        loc = DiagnosticLoc::After(*position_);
-      } else if (tokens().HasTrailingWhitespace(*position_)) {
-        pos.value = -1;
-        loc = DiagnosticLoc::Before(*position_);
-      }
-      emitter_.Emit(loc, BinaryOperatorRequiresWhitespace, pos);
+    CARBON_DIAGNOSTIC(BinaryOperatorRequiresWhitespace, Error,
+                      "whitespace missing {0:=-1:before|=0:around|=1:after} "
+                      "binary operator",
+                      Diagnostics::IntAsSelect);
+    // Whitespace missing on one side goes at that side. Whitespace missing
+    // around the operator is about the operator.
+    Diagnostics::IntAsSelect pos(0);
+    DiagnosticLoc loc = *position_;
+    if (tokens().HasLeadingWhitespace(*position_)) {
+      pos.value = 1;
+      loc = DiagnosticLoc::After(*position_);
+    } else if (tokens().HasTrailingWhitespace(*position_)) {
+      pos.value = -1;
+      loc = DiagnosticLoc::Before(*position_);
     }
+    emitter_.Emit(loc, BinaryOperatorRequiresWhitespace, pos);
   } else {
     bool prefix = fixity == OperatorFixity::Prefix;
 
@@ -340,7 +223,7 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
           "whitespace is not allowed {0:after|before} this unary operator",
           Diagnostics::BoolAsSelect);
       emitter_.Emit(*position_, UnaryOperatorHasWhitespace, prefix);
-    } else if (IsLexicallyValidInfixOperator()) {
+    } else {
       // Pre/postfix operators must not satisfy the infix operator rules.
       CARBON_DIAGNOSTIC(
           UnaryOperatorRequiresWhitespace, Error,
@@ -353,64 +236,45 @@ auto Context::DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
   }
 }
 
-auto Context::ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
-                               bool already_has_error) -> ListTokenKind {
-  if (!PositionIs(Lex::TokenKind::Comma) && !PositionIs(close_kind)) {
-    // Don't error a second time on the same element.
-    if (!already_has_error) {
-      // TODO: Also label the bracket that opened the list, to show which list
-      // this is. That needs the opening token, which callers hold in
-      // `state.token` but don't pass down.
-      CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
-                        "expected `,` or `{0}`", Lex::TokenKind);
-      emitter_.Emit(PointAfterPreviousToken(), UnexpectedTokenAfterListElement,
-                    close_kind);
-      ReturnErrorOnState();
-    }
-
-    // Recover from the invalid token.
-    auto end_of_element = FindNextOf({Lex::TokenKind::Comma, close_kind});
-    // The lexer guarantees that parentheses are balanced.
-    CARBON_CHECK(end_of_element, "missing matching `{0}` for `{1}`",
-                 close_kind.opening_symbol(), close_kind);
-
-    SkipTo(*end_of_element);
+auto Context::RecoverFromInvalidListToken(Lex::TokenKind close_kind,
+                                          bool already_has_error) -> void {
+  // Don't error a second time on the same element.
+  if (!already_has_error) {
+    // TODO: Also label the bracket that opened the list, to show which list
+    // this is. That needs the opening token, which callers hold in
+    // `state.token` but don't pass down.
+    CARBON_DIAGNOSTIC(UnexpectedTokenAfterListElement, Error,
+                      "expected `,` or `{0}`", Lex::TokenKind);
+    emitter_.Emit(PointAfterPreviousToken(), UnexpectedTokenAfterListElement,
+                  close_kind);
+    ReturnErrorOnState();
   }
 
-  if (PositionIs(close_kind)) {
-    return ListTokenKind::Close;
-  } else {
-    AddLeafNode(comma_kind, Consume(),
-                /*has_error=*/comma_kind == NodeKind::InvalidParse);
-    return PositionIs(close_kind) ? ListTokenKind::CommaClose
-                                  : ListTokenKind::Comma;
-  }
+  // Recover from the invalid token.
+  auto end_of_element = FindNextOf({Lex::TokenKind::Comma, close_kind});
+  // The lexer guarantees that parentheses are balanced.
+  CARBON_CHECK(end_of_element, "missing matching `{0}` for `{1}`",
+               close_kind.opening_symbol(), close_kind);
+
+  SkipTo(*end_of_element);
 }
 
-auto Context::AddNodeExpectingDeclSemi(State state, NodeKind node_kind,
-                                       Lex::TokenKind decl_kind,
-                                       bool is_def_allowed) -> void {
+auto Context::RecoverFromMissingDeclSemi(State state, NodeKind node_kind,
+                                         Lex::TokenKind decl_kind,
+                                         bool is_def_allowed) -> void {
   // TODO: This could better handle things like:
   //   base: { }
   //   var n: i32;
   //       ^ Ends up at `n`, instead of `var`.
-  if (state.has_error) {
-    RecoverFromDeclError(state, node_kind,
-                         /*skip_past_likely_end=*/true);
-    return;
-  }
-
-  if (auto semi = ConsumeIf(Lex::TokenKind::Semi)) {
-    AddNode(node_kind, *semi, /*has_error=*/false);
-  } else {
+  if (!state.has_error) {
     if (is_def_allowed) {
       DiagnoseExpectedDeclSemiOrDefinition(decl_kind);
     } else {
       DiagnoseExpectedDeclSemi(decl_kind);
     }
-    RecoverFromDeclError(state, node_kind,
-                         /*skip_past_likely_end=*/true);
   }
+  RecoverFromDeclError(state, node_kind,
+                       /*skip_past_likely_end=*/true);
 }
 
 auto Context::RecoverFromDeclError(State state, NodeKind node_kind,
@@ -494,6 +358,16 @@ static auto ParsingInDeferredDefinitionScope(Context& context) -> bool {
 auto Context::AddFunctionDefinitionStart(Lex::TokenIndex token, bool has_error)
     -> void {
   auto start_id = AddNode<NodeKind::FunctionDefinitionStart>(token, has_error);
+  if (ParsingInDeferredDefinitionScope(*this)) {
+    deferred_definition_stack_.push_back(
+        tree_->deferred_definitions_.Add({.start_id = start_id}));
+  }
+}
+
+auto Context::AddFunctionTerseDefinitionStart(Lex::TokenIndex token,
+                                              bool has_error) -> void {
+  auto start_id =
+      AddNode<NodeKind::FunctionTerseDefinitionStart>(token, has_error);
   if (ParsingInDeferredDefinitionScope(*this)) {
     deferred_definition_stack_.push_back(
         tree_->deferred_definitions_.Add({.start_id = start_id}));

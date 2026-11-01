@@ -202,6 +202,7 @@ cc_library(
         ":token_kind",
         ":tokenized_buffer",
         "//common:check",
+        "//common:preserve_none",
         "//common:vlog",
         "//toolchain/base:kind_switch",
         "//toolchain/base:shared_value_stores",

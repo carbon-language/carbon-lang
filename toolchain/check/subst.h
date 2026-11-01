@@ -79,6 +79,12 @@ class SubstInstCallbacks {
     return orig_inst_id;
   }
 
+  // Rebuilds a specific given the original specific's ID and the new
+  // arguments. By default this just calls GetOrAdd to make the specific, but
+  // does not resolve the specific's decl block.
+  virtual auto RebuildSpecific(SemIR::SpecificId orig_specific_id,
+                               SemIR::InstBlockId args_id) -> SemIR::SpecificId;
+
   // Builds a new constant by evaluating `new_inst`, and returns its `InstId`.
   //
   // This can be used to implement `Rebuild` in straightforward cases.

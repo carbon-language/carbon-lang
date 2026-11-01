@@ -177,10 +177,16 @@ using AnyClassDeclId =
                 ChoiceDefinitionStartId>;
 using AnyFunctionDeclId =
     NodeIdOneOf<FunctionDeclId, FunctionDefinitionStartId,
-                BuiltinFunctionDefinitionStartId, LambdaDefinitionStartId>;
+                FunctionTerseDefinitionStartId,
+                BuiltinFunctionDefinitionStartId, LambdaDefinitionStartId,
+                LambdaTerseDefinitionStartId>;
+using AnyFunctionDefinitionStartId =
+    NodeIdOneOf<FunctionDefinitionStartId, FunctionTerseDefinitionStartId>;
 using AnyFunctionDefinitionId =
     NodeIdOneOf<FunctionDefinitionId, FunctionTerseDefinitionId,
                 BuiltinFunctionDefinitionId>;
+using AnyLambdaDefinitionStartId =
+    NodeIdOneOf<LambdaDefinitionStartId, LambdaTerseDefinitionStartId>;
 using AnyImplDeclId = NodeIdOneOf<ImplDeclId, ImplDefinitionStartId>;
 using AnyInterfaceDeclId =
     NodeIdOneOf<InterfaceDeclId, InterfaceDefinitionStartId>;
@@ -197,6 +203,8 @@ using AnyRuntimeBindingPatternName =
                 UnderscoreNameId>;
 using AnyPrimitiveFormIdId =
     NodeIdOneOf<RefPrimitiveFormId, VarPrimitiveFormId, ValPrimitiveFormId>;
+using AnyTerseFunctionDefinitionId =
+    NodeIdOneOf<FunctionTerseDefinitionId, LambdaTerseDefinitionId>;
 
 // NodeId with kind that is anything but T::Kind.
 template <typename T>

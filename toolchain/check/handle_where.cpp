@@ -8,6 +8,7 @@
 #include "toolchain/check/facet_type.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
+#include "toolchain/check/identified_facet_type.h"
 #include "toolchain/check/inst.h"
 #include "toolchain/check/period_self.h"
 #include "toolchain/check/subst.h"
@@ -99,14 +100,14 @@ auto HandleParseNode(Context& context, Parse::WhereOperandId node_id) -> bool {
     if (identified_id.has_value()) {
       const auto& identified =
           context.identified_facet_types().Get(identified_id);
-      if (identified.is_valid_impl_as_target()) {
-        auto impl_as_target = EvaluateIdentifiedWitnesses(
-            context, node_id, identified.impl_as_target_interface());
+      auto impl_as_target =
+          identified.EvaluateImplWitnessesToGetImplAsTarget(context, node_id);
+      if (impl_as_target.is_valid()) {
         auto& declaring = context.declaring_impl_decls().back();
         if (declaring.specific_interface != SemIR::SpecificInterface::None) {
-          CARBON_CHECK(declaring.specific_interface == impl_as_target);
+          CARBON_CHECK(declaring.specific_interface == impl_as_target.target());
         }
-        declaring.specific_interface = impl_as_target;
+        declaring.specific_interface = impl_as_target.target();
       }
     }
   }

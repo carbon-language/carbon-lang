@@ -370,12 +370,12 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ ├─StructPattern '}'
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -391,12 +391,12 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─RefBindingName 'ref'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ ├─StructPattern '}'
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -419,7 +419,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'm'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ ├─StructPattern '}'
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -434,7 +434,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
@@ -464,7 +464,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
@@ -472,12 +472,12 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'a'
 // CHECK:STDOUT:   │ │ │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'b'
 // CHECK:STDOUT:   │ │ │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ │ ├─StructPattern '}'
 // CHECK:STDOUT:   │ │ ├─StructPatternDesignatedField '='
 // CHECK:STDOUT:   │ ├─StructPattern '}'
@@ -494,7 +494,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature ',' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse ',' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse ',' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ',' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ',' has_error
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
@@ -510,7 +510,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature '=' has_error
 // CHECK:STDOUT:   │ │ │   ├─InvalidParse '=' has_error
 // CHECK:STDOUT:   │ │ │   ├─InvalidParse '=' has_error
-// CHECK:STDOUT:   │ │ │ ╭─LetBindingPattern '=' has_error
+// CHECK:STDOUT:   │ │ │ ╭─StructPatternFieldLetBindingPattern '=' has_error
 // CHECK:STDOUT:   │ │ │ ├─DefaultValueExprStart '='
 // CHECK:STDOUT:   │ │ │ ├─IdentifierNameExpr 'y'
 // CHECK:STDOUT:   │ │ ├─DefaultValuePattern '=' has_error
@@ -599,7 +599,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature ',' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse ',' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse ',' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ',' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ',' has_error
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
@@ -650,7 +650,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature ':' has_error
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -665,7 +665,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '}' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -680,7 +680,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -785,7 +785,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'foo'
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '.' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '.' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'foo' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern 'foo' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -800,12 +800,12 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -820,12 +820,12 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'foo'
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse 'y' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse 'y' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern 'foo' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern 'foo' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -840,7 +840,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature '!' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '!' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '!' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern '!' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern '!' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -917,7 +917,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature '"foo"' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '"foo"' has_error
 // CHECK:STDOUT:   │ │ │ ├─InvalidParse '"foo"' has_error
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern '"foo"' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern '"foo"' has_error
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
@@ -941,13 +941,13 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │   │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │   │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │   ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │   ├─StructPatternFieldVarBindingPattern ':'
 // CHECK:STDOUT:   │ │   ├─PatternListComma ','
 // CHECK:STDOUT:   │ │   │ ╭─TuplePatternStart '('
 // CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │   │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │   │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │   │ ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │   │ ├─StructPatternFieldVarBindingPattern ':'
 // CHECK:STDOUT:   │ │   │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │   │ │ ╭─IdentifierNameNotBeforeSignature 'z'
 // CHECK:STDOUT:   │ │   │ │ ├─BindingPatternTypeStart ':'
@@ -969,13 +969,13 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │   ╭─TuplePatternStart '('
 // CHECK:STDOUT:   │ │ │   │ ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │   │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │   │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │   ├─VarBindingPattern ':'
+// CHECK:STDOUT:   │ │ │   ├─StructPatternFieldVarBindingPattern ':'
 // CHECK:STDOUT:   │ │ │   ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │   │ ╭─IdentifierNameNotBeforeSignature 'z'
 // CHECK:STDOUT:   │ │ │   │ ├─BindingPatternTypeStart ':'
@@ -997,18 +997,18 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │ ╭─StructPatternStart '{'
 // CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'y'
 // CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'z'
 // CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
 // CHECK:STDOUT:   │ │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ │ ├─StructPatternFieldLetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─StructPattern '}'
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
@@ -1024,7 +1024,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │   │ ╭─UnderscoreName '_'
 // CHECK:STDOUT:   │ │   │ ├─BindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │   │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │   ├─VarBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │   ├─StructPatternFieldVarBindingPattern ':' has_error
 // CHECK:STDOUT:   │ │ ╭─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─VariablePattern 'var'
 // CHECK:STDOUT:   │ ├─VariableInitializer '='
@@ -1037,7 +1037,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ╭─RefBindingName 'ref' has_error
 // CHECK:STDOUT:   │ │ │ ├─BindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │ │ ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ ├─LetBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ ├─StructPatternFieldLetBindingPattern ':' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -1048,7 +1048,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │   ╭─UnderscoreName '_'
 // CHECK:STDOUT:   │ │ │   ├─BindingPatternTypeStart ':' has_error
 // CHECK:STDOUT:   │ │ │   ├─IntTypeLiteral 'i32'
-// CHECK:STDOUT:   │ │ │ ╭─VarBindingPattern ':' has_error
+// CHECK:STDOUT:   │ │ │ ╭─StructPatternFieldVarBindingPattern ':' has_error
 // CHECK:STDOUT:   │ │ ├─VariablePattern 'var' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='

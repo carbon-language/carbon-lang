@@ -157,7 +157,7 @@ fn ComplexReturnForm() ->? X.Y(Z);
 
 fn RefReturn() -> ref u32;
 fn ComplexRefReturn() -> ref X.Y(Z);
-let a: auto = fn -> ref u32 => 0;
+let a: auto = fn -> ref u32 { return 0; };
 
 // --- fail_ref_return_missing_type.carbon
 
@@ -170,8 +170,8 @@ fn RefReturn() -> ref;
 fn ValReturn() -> val u32;
 fn VarReturn() -> var u32;
 fn ComplexValReturn() -> val X.Y(Z);
-let a: auto = fn -> val u32 => 0;
-let b: auto = fn -> var u32 => 0;
+let a: auto = fn -> val u32 { return 0; };
+let b: auto = fn -> var u32 { return 0; };
 
 // --- fail_val_return_missing_type.carbon
 
@@ -534,9 +534,11 @@ fn ValReturn() -> val;
 // CHECK:STDOUT:   │ │   │   ╭─UnsignedIntTypeLiteral 'u32'
 // CHECK:STDOUT:   │ │   │ ╭─RefPrimitiveForm 'ref'
 // CHECK:STDOUT:   │ │   ├─ReturnType '->'
-// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '=>'
-// CHECK:STDOUT:   │ │ ├─IntLiteral '0'
-// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   │ ├─Lambda '}'
 // CHECK:STDOUT:   ├─LetDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)
@@ -593,9 +595,11 @@ fn ValReturn() -> val;
 // CHECK:STDOUT:   │ │   │   ╭─UnsignedIntTypeLiteral 'u32'
 // CHECK:STDOUT:   │ │   │ ╭─ValPrimitiveForm 'val'
 // CHECK:STDOUT:   │ │   ├─ReturnType '->'
-// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '=>'
-// CHECK:STDOUT:   │ │ ├─IntLiteral '0'
-// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   │ ├─Lambda '}'
 // CHECK:STDOUT:   ├─LetDecl ';'
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
 // CHECK:STDOUT:   │ │ ╭─IdentifierNameNotBeforeSignature 'b'
@@ -607,9 +611,11 @@ fn ValReturn() -> val;
 // CHECK:STDOUT:   │ │   │   ╭─UnsignedIntTypeLiteral 'u32'
 // CHECK:STDOUT:   │ │   │ ╭─VarPrimitiveForm 'var'
 // CHECK:STDOUT:   │ │   ├─ReturnType '->'
-// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '=>'
-// CHECK:STDOUT:   │ │ ├─IntLiteral '0'
-// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '{'
+// CHECK:STDOUT:   │ │ │ ╭─ReturnStatementStart 'return'
+// CHECK:STDOUT:   │ │ │ ├─IntLiteral '0'
+// CHECK:STDOUT:   │ │ ├─ReturnStatement ';'
+// CHECK:STDOUT:   │ ├─Lambda '}'
 // CHECK:STDOUT:   ├─LetDecl ';'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

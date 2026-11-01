@@ -7,6 +7,7 @@
 
 #include <cstdint>
 
+#include "common/check.h"
 #include "common/ostream.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/SmallVector.h"
@@ -128,7 +129,22 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
     LineIndex start_line;
   };
 
+  // The number of `TokenKind::FileEnd` entries guaranteed to follow the last
+  // token in the array returned by `kind_data`.
+  static constexpr int32_t KindDataPadding = 64;
+
   auto GetKind(TokenIndex token) const -> TokenKind;
+
+  // Returns a flat, contiguous array of the kinds of all tokens, indexed by
+  // `TokenIndex`. The first `size()` entries are the kinds of the tokens, and
+  // they are followed by at least `KindDataPadding` entries of
+  // `TokenKind::FileEnd` so that callers can scan past the end of the tokens
+  // without bounds checks, for example with SIMD loads.
+  //
+  // The returned pointer is invalidated by
+  // `AddPostLexingRecoveryTokenAsIdentifier`.
+  auto kind_data() const -> const TokenKind* { return token_kinds_.data(); }
+
   auto GetLine(TokenIndex token) const -> LineIndex;
 
   // Returns the 1-based line number.
@@ -263,10 +279,8 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   // recovery tokens inserted inline by lexing, such as matching brackets, but
   // excludes recovery tokens added after lexing finished.
   auto tokens() const -> llvm::iterator_range<TokenIterator> {
-    return llvm::make_range(
-        TokenIterator(TokenIndex(0)),
-        TokenIterator(
-            TokenIndex(token_infos_.size() - post_lexing_recovery_tokens_)));
+    return llvm::make_range(TokenIterator(TokenIndex(0)),
+                            TokenIterator(TokenIndex(num_lexed_tokens())));
   }
 
   auto size() const -> int { return token_infos_.size(); }
@@ -359,8 +373,21 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 
   auto FindLineIndex(int32_t byte_offset) const -> LineIndex;
 
+  // Returns the number of tokens produced by lexing, excluding recovery tokens
+  // added after lexing finished. This is the end of the `tokens()` range.
+  auto num_lexed_tokens() const -> int32_t {
+    return token_infos_.size() - post_lexing_recovery_tokens_;
+  }
+
   // Adds the token and adjusts the expected tree size.
   auto AddToken(TokenInfo info) -> TokenIndex;
+
+  // Builds `token_kinds_` and `token_has_leading_space_` from `token_infos_`,
+  // including the `FileEnd` padding. The lexer calls this once its token
+  // sequence is complete, and again if bracket recovery rewrites the sequence.
+  // Until then, `GetKind`, `HasLeadingWhitespace`, and `HasTrailingWhitespace`
+  // must not be used; the lexer reads `token_infos_` directly instead.
+  auto BuildTokenArrays() -> void;
 
   // Adds a post-lexing recovery token and adjusts the buffer state.
   auto AddPostLexingRecoveryToken(TokenInfo info) -> TokenIndex;
@@ -383,6 +410,29 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
   SourceBuffer* source_;
 
   ValueStore<TokenIndex, TokenInfo> token_infos_;
+
+  // The kind of each token in `token_infos_`, as a flat array indexed by the
+  // token index, followed by `KindDataPadding` entries of `TokenKind::FileEnd`.
+  // The kind is also stored in each `TokenInfo`, but this flat array makes the
+  // kind, which is by far the hottest token query after lexing, a single
+  // contiguous load rather than a chunked `ValueStore` lookup. It also allows
+  // scanning kinds in bulk; see `kind_data`.
+  //
+  // This is built from `token_infos_` in one pass once lexing is complete, by
+  // `BuildTokenArrays`, rather than maintained while lexing: the lexer's token
+  // emission is hot enough that even a few extra instructions there cost more
+  // than the pass.
+  llvm::SmallVector<TokenKind, 0> token_kinds_;
+
+  // Whether each token in `token_infos_` has leading whitespace, as a flat
+  // array indexed by the token index. This duplicates
+  // `TokenInfo::has_leading_space` for the same reason as `token_kinds_` and is
+  // built at the same time.
+  //
+  // This intentionally uses a byte-per-token `SmallVector<bool, 0>` rather than
+  // `llvm::BitVector` to facilitate vectorized population in
+  // `BuildTokenArrays`.
+  llvm::SmallVector<bool, 0> token_has_leading_space_;
 
   ValueStore<LineIndex, LineInfo> line_infos_;
 
@@ -420,19 +470,28 @@ class TokenizedBuffer : public Printable<TokenizedBuffer> {
 };
 
 inline auto TokenizedBuffer::GetKind(TokenIndex token) const -> TokenKind {
-  return token_infos_.Get(token).kind();
+  CARBON_DCHECK(token.index >= 0 && token.index < size(), "{0}", token);
+  CARBON_DCHECK(static_cast<size_t>(token.index) < token_kinds_.size(),
+                "Token arrays haven't been built yet");
+  return token_kinds_[token.index];
 }
 
 inline auto TokenizedBuffer::HasLeadingWhitespace(TokenIndex token) const
     -> bool {
-  return token_infos_.Get(token).has_leading_space();
+  CARBON_DCHECK(token.index >= 0 && token.index < size(), "{0}", token);
+  CARBON_DCHECK(
+      static_cast<size_t>(token.index) < token_has_leading_space_.size(),
+      "Token arrays haven't been built yet");
+  return token_has_leading_space_[token.index];
 }
 
 inline auto TokenizedBuffer::HasTrailingWhitespace(TokenIndex token) const
     -> bool {
-  TokenIterator it(token);
-  ++it;
-  return it != tokens().end() && token_infos_.Get(*it).has_leading_space();
+  CARBON_DCHECK(token.index >= 0 && token.index < size(), "{0}", token);
+  // Trailing whitespace is the leading whitespace of the next lexed token, if
+  // there is one.
+  int32_t next = token.index + 1;
+  return next < num_lexed_tokens() && HasLeadingWhitespace(TokenIndex(next));
 }
 
 inline auto TokenizedBuffer::AddToken(TokenInfo info) -> TokenIndex {

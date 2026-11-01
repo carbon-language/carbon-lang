@@ -240,21 +240,33 @@ static auto DiagnoseInvalidQualifiedNameAccess(
   // TODO: Will an access scope always be a type? Should we support access
   // within `impl` scopes?
   auto scope_type_id =
-      context.types().GetTypeIdForTypeConstantId(access_info.constant_id);
+      context.types().TryGetTypeIdForTypeConstantId(access_info.constant_id);
 
   if (access_kind == SemIR::AccessKind::Private && is_parent_access) {
     // TODO: Do we need to support parent access for entities other than
     // classes?
-    auto class_type = context.constant_values().GetInstAs<SemIR::ClassType>(
-        access_info.constant_id);
-    const auto& class_info = context.classes().Get(class_type.class_id);
+    auto class_id = SemIR::ClassId::None;
+    auto specific_id = SemIR::SpecificId::None;
+    auto inst = context.constant_values().GetInst(access_info.constant_id);
+    if (auto class_type = inst.TryAs<SemIR::ClassType>()) {
+      class_id = class_type->class_id;
+      specific_id = class_type->specific_id;
+    } else if (auto param_class_type =
+                   context.insts().TryGetAs<SemIR::ParameterizedClassType>(
+                       context.types().GetTypeInstId(inst.type_id()))) {
+      class_id = param_class_type->class_id;
+    } else {
+      CARBON_FATAL("Expected either ClassType or ParameterizedClassType");
+    }
+
+    const auto& class_info = context.classes().Get(class_id);
 
     if (auto base_type_id =
-            class_info.GetBaseType(context.sem_ir(), class_type.specific_id);
+            class_info.GetBaseType(context.sem_ir(), specific_id);
         base_type_id.has_value()) {
       scope_type_id = base_type_id;
-    } else if (auto adapted_type_id = class_info.GetAdaptedType(
-                   context.sem_ir(), class_type.specific_id);
+    } else if (auto adapted_type_id =
+                   class_info.GetAdaptedType(context.sem_ir(), specific_id);
                adapted_type_id.has_value()) {
       scope_type_id = adapted_type_id;
     } else {

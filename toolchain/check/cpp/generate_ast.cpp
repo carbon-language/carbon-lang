@@ -14,6 +14,7 @@
 #include "clang/Basic/DiagnosticParse.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/Module.h"
+#include "clang/Basic/TargetOptions.h"
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
@@ -103,6 +104,7 @@ class ShallowCopyCompilerInvocation : public clang::CompilerInvocation {
     // Make a deep copy of options that we modify.
     FrontendOpts = std::make_shared<clang::FrontendOptions>(*FrontendOpts);
     PPOpts = std::make_shared<clang::PreprocessorOptions>(*PPOpts);
+    TargetOpts = std::make_shared<clang::TargetOptions>(*TargetOpts);
   }
 };
 
@@ -214,8 +216,8 @@ auto CarbonExternalASTSource::MapInstIdToClangDeclOrType(LookupResult lookup)
   CARBON_KIND_SWITCH(target_inst) {
     case CARBON_KIND(SemIR::Namespace namespace_info): {
       auto* decl_context =
-          ExportNameScopeToCpp(*context_, SemIR::LocId(target_inst_id),
-                               namespace_info.name_scope_id);
+          ExportLookupNamespaceToCpp(*context_, SemIR::LocId(target_inst_id),
+                                     namespace_info.name_scope_id);
       if (!decl_context) {
         return nullptr;
       }
@@ -258,39 +260,28 @@ auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
   auto& ast_context = context_->ast_context();
   auto* identifier = &ast_context.Idents.get(carbon_namespace_name);
 
-  auto* decl_context = ast_context.getTranslationUnitDecl();
+  auto* tu_decl = ast_context.getTranslationUnitDecl();
 
-  // Check if it already exists.
-  clang::NamespaceDecl* carbon_cpp_namespace = nullptr;
-  auto lookup_result = decl_context->lookup(identifier);
-  if (!lookup_result.empty()) {
-    carbon_cpp_namespace = cast<clang::NamespaceDecl>(lookup_result.front());
-  } else {
-    // Create it if it doesn't exist.
-    carbon_cpp_namespace = clang::NamespaceDecl::Create(
-        ast_context, decl_context, /*Inline=*/false, clang::SourceLocation(),
-        clang::SourceLocation(), identifier, /*PrevDecl=*/nullptr,
-        /*Nested=*/false);
-    decl_context->addDecl(carbon_cpp_namespace);
+  // Create or find the semantic `::Carbon` namespace for this C++ domain, which
+  // is used as the parent `DeclContext` for package sub-namespaces.
+  auto& domain = context_->cpp_context()->domain();
+  auto* semantic_carbon_namespace = domain.carbon_namespace();
+  if (!semantic_carbon_namespace) {
+    semantic_carbon_namespace =
+        CreateSemanticNamespace(*context_, tu_decl, identifier);
+    domain.set_carbon_namespace(semantic_carbon_namespace);
   }
 
-  // We provide custom lookup results within this namespace.
-  carbon_cpp_namespace->getPrimaryContext()->setHasExternalVisibleStorage();
-
-  // Create or find the sub-namespace for this file's package, which is used as
-  // the parent `DeclContext` for package-scope entities so that the package
-  // name is included in C++ mangled names.
+  // Create or find the semantic sub-namespace for this file's package, which is
+  // used as the parent `DeclContext` for package-scope entities so that the
+  // package name is included in C++ mangled names.
   auto& package_scope =
       context_->name_scopes().Get(SemIR::NameScopeId::Package);
   auto package_name = context_->names().GetIRBaseName(package_scope.name_id());
   auto* package_identifier = &ast_context.Idents.get(package_name);
-  auto* package_cpp_namespace = ExportPackageNamespaceToCpp(
-      *context_, carbon_cpp_namespace, package_identifier);
+  auto* package_cpp_namespace = ExportNamespaceToCpp(
+      *context_, semantic_carbon_namespace, package_identifier);
 
-  // Register this file's package scope as corresponding to the package
-  // sub-namespace in C++, and also map the `Carbon` namespace itself to the
-  // package scope so that C++ lookups in `Carbon` find package-scope entities
-  // directly (and do not find the current package name).
   auto package_key =
       SemIR::ClangDeclKey::ForNonFunctionDecl(package_cpp_namespace);
   auto package_clang_decl_id = context_->clang_decls().Add(
@@ -298,22 +289,40 @@ auto CarbonExternalASTSource::BuildCarbonNamespace() -> void {
   package_scope.set_clang_decl_context_id(package_clang_decl_id,
                                           /*is_cpp_scope=*/false);
 
+  // Create a per-file lookup-only `::Carbon` namespace, mapped to the package
+  // scope so that C++ lookups in `Carbon` find package-scope entities directly
+  // (and do not find the current package name), and are isolated to this file.
+  auto* lookup_carbon_namespace = clang::NamespaceDecl::Create(
+      ast_context, tu_decl, /*Inline=*/false, clang::SourceLocation(),
+      clang::SourceLocation(), identifier, /*PrevDecl=*/nullptr,
+      /*Nested=*/false);
+  tu_decl->addDecl(lookup_carbon_namespace);
+  lookup_carbon_namespace->setHasExternalVisibleStorage();
+
+  context_->cpp_context()->set_carbon_lookup_namespace(lookup_carbon_namespace);
+  context_->cpp_context()->lookup_namespaces().Insert(
+      SemIR::NameScopeId::Package, lookup_carbon_namespace);
+
   auto carbon_key =
-      SemIR::ClangDeclKey::ForNonFunctionDecl(carbon_cpp_namespace);
+      SemIR::ClangDeclKey::ForNonFunctionDecl(lookup_carbon_namespace);
   context_->clang_decls().Add(
       {.key = carbon_key, .inst_id = SemIR::Namespace::PackageInstId});
 }
 
 auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
-    const clang::DeclContext* decl_context, clang::DeclarationName decl_name,
-    const clang::DeclContext* /*OriginalDC*/) -> bool {
-  auto clang_decl = GetCarbonOwnedDecl(decl_context);
+    const clang::DeclContext* const_decl_context,
+    clang::DeclarationName decl_name, const clang::DeclContext* /*OriginalDC*/)
+    -> bool {
+  // Clang expects us to modify the DeclContext but passes it as `const`.
+  // TODO: Fix clang to pass in a mutable DeclContext.
+  auto* decl_context = const_cast<clang::DeclContext*>(const_decl_context);
+
+  auto clang_decl = GetCarbonOwnedDeclAsLookupContext(decl_context);
   if (!clang_decl) {
     return false;
   }
 
-  auto* primary_context =
-      const_cast<clang::DeclContext*>(decl_context->getPrimaryContext());
+  auto* primary_context = decl_context->getPrimaryContext();
   if (auto* lookup_map = primary_context->getLookupPtr()) {
     if (auto it = lookup_map->find(decl_name);
         it != lookup_map->end() && !it->second.isNull()) {
@@ -390,15 +399,31 @@ auto CarbonExternalASTSource::FindExternalVisibleDeclsByName(
     }
 
     case CARBON_KIND(clang::QualType type): {
-      // Create a typedef declaration to model the type result.
+      // Create a typedef declaration to model the type result. We create the
+      // typedef declaration in whatever name context the lookup was performed
+      // in, since we don't have a Carbon declaration to take a name scope from.
+      // But if that context was a namespace, map from the lookup-only namespace
+      // to the corresponding semantic namespace so that lookup-only
+      // NamespaceDecls are never the parent DeclContext of exported entities.
       // TODO: If the type is a tag type that was declared with this name in
       // this context, use the tag decl directly.
+      auto* semantic_decl_context = decl_context;
+      if (auto namespace_info = context_->insts().TryGetAs<SemIR::Namespace>(
+              clang_decl->inst_id)) {
+        semantic_decl_context = ExportNameScopeToCpp(
+            *context_, SemIR::LocId(result.scope_result.target_inst_id()),
+            namespace_info->name_scope_id);
+        if (!semantic_decl_context) {
+          SetNoExternalVisibleDeclsForName(decl_context, decl_name);
+          return false;
+        }
+      }
       auto& ast_context = context_->ast_context();
       auto loc = GetCppLocation(
           *context_, SemIR::LocId(result.scope_result.target_inst_id()));
       auto* typedef_decl = clang::TypedefDecl::Create(
-          ast_context, const_cast<clang::DeclContext*>(decl_context), loc, loc,
-          identifier, ast_context.getTrivialTypeSourceInfo(type, loc));
+          ast_context, semantic_decl_context, loc, loc, identifier,
+          ast_context.getTrivialTypeSourceInfo(type, loc));
       if (isa<clang::CXXRecordDecl>(decl_context)) {
         typedef_decl->setAccess(
             MapToCppAccess(result.scope_result.access_kind()));
@@ -537,10 +562,16 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
   class_decl->completeDefinition();
 
   // Now the class is complete, we can define the virtual function thunks.
-  for (auto virtual_fn : pending_virtual_functions) {
-    DefineExportedVirtualFunction(*context_, virtual_fn.loc_id,
-                                  virtual_fn.function_id,
-                                  virtual_fn.method_decl);
+  if (llvm::isa<clang::ClassTemplateSpecializationDecl>(class_decl) &&
+      !pending_virtual_functions.empty()) {
+    context_->TODO(class_info.first_decl_id(),
+                   "generic class overriding methods from a C++ virtual class");
+  } else {
+    for (auto virtual_fn : pending_virtual_functions) {
+      DefineExportedVirtualFunction(*context_, virtual_fn.loc_id,
+                                    virtual_fn.function_id,
+                                    virtual_fn.method_decl);
+    }
   }
 }
 
@@ -1066,13 +1097,42 @@ auto InjectAstFromInlineCode(Context& context, SemIR::LocId loc_id,
   ParseInjectedTokens(*cpp_context);
 }
 
-auto FinishAst(Context& context) -> void {
+auto FinalizeCppAstFragment(Context& context) -> void {
+  // `FinalizeCppAst` operates very close to where AST fragment is
+  // nullified. Builds may call this function with a null AST fragment,
+  // so we exit early in the case where it's null.
+  //
+  // TODO: investigate if we can avoid AST fragment resolution when the
+  // fragment is null.
+  if (!context.cpp_context()) {
+    return;
+  }
+
+  // Finalize the per-Context AST fragment. The final ActOnEndOfTranslationUnit
+  // call for the CppDomain is performed in FinalizeCppDomain once all files
+  // sharing the domain have been checked.
+  context.cpp_context()->sema().ActOnEndOfTranslationUnitFragment(
+      clang::TUFragmentKind::Normal);
+  FlushDiagnosticConsumer(
+      *context.cpp_context()->sema().getDiagnostics().getClient());
+  context.emitter().Flush();
+}
+
+auto DisconnectCppAst(Context& context) -> void {
+  // `DisconnectCppAst` operates very close to where AST fragment is
+  // nullified. Builds may call this function with a null AST fragment,
+  // so we exit early in the case where it's null.
+  //
+  // TODO: investigate if we can avoid AST fragment disconnection when
+  // the fragment is null.
   if (!context.cpp_context()) {
     return;
   }
 
   // Leave the module we entered to encapsulate the contents of this Carbon
-  // file.
+  // file. This happens here rather than in `FinalizeCppAstFragment`, because
+  // that can run more than once for a file, but the module is only entered
+  // once.
   auto end_loc_id =
       SemIR::LocId(*(context.sem_ir().parse_tree().postorder().end() - 1));
   // Shuffle the end of file location back by one character to work around a
@@ -1084,14 +1144,20 @@ auto FinishAst(Context& context) -> void {
   LeaveModule(*context.cpp_context(),
               GetCppLocation(context, end_loc_id).getLocWithOffset(-1));
 
-  // Finalize the per-Context AST fragment. The final ActOnEndOfTranslationUnit
-  // call for the CppDomain is performed in FinalizeCppDomain once all files
-  // sharing the domain have been checked.
-  context.cpp_context()->sema().ActOnEndOfTranslationUnitFragment(
-      clang::TUFragmentKind::Normal);
-  FlushDiagnosticConsumer(
-      *context.cpp_context()->sema().getDiagnostics().getClient());
-  context.emitter().Flush();
+  // Hide the per-file lookup-only `::Carbon` namespace from the further lookup
+  // results and remove it from the translation unit's name lookup table if it's
+  // already there, so that subsequent files in a shared C++ AST domain do not
+  // see it.
+  if (auto* lookup_ns = context.cpp_context()->carbon_lookup_namespace()) {
+    lookup_ns->clearIdentifierNamespace();
+    auto* tu_decl = context.ast_context().getTranslationUnitDecl();
+    if (auto* lookup = tu_decl->getLookupPtr()) {
+      if (auto it = lookup->find(lookup_ns->getDeclName());
+          it != lookup->end()) {
+        it->second.remove(lookup_ns);
+      }
+    }
+  }
 
   // Remove the `CarbonExternalASTSource` installed in `GenerateAst` and
   // replace it with a `ReadOnlyASTSource`. This is necessary because

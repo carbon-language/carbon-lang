@@ -547,6 +547,25 @@ cc_test(
 )
 
 cc_library(
+    name = "preserve_none",
+    hdrs = ["preserve_none.h"],
+    deps = [
+        "@llvm-project//llvm:Support",
+    ],
+)
+
+cc_test(
+    name = "preserve_none_test",
+    size = "small",
+    srcs = ["preserve_none_test.cpp"],
+    deps = [
+        ":preserve_none",
+        "//testing/base:gtest_main",
+        "@googletest//:gtest",
+    ],
+)
+
+cc_library(
     name = "pretty_stack_trace_function",
     hdrs = ["pretty_stack_trace_function.h"],
     deps = [

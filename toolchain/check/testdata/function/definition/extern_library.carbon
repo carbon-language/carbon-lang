@@ -58,8 +58,7 @@ extern fn F();
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE+4]]:1-8: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: imported from: fail_two_file_impl_mismatch.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_two_file_impl_mismatch.impl.carbon:[[@LINE+3]]:1-8: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: two_file_impl_mismatch.carbon:4:1-14: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn F() {}

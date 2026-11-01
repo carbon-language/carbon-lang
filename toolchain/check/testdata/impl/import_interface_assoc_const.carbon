@@ -89,11 +89,10 @@ import library "interface";
 
 class C6 { }
 impl C6 as I where .T = {};
-// CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE+6]]:1-14: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: imported from: fail_missing_on_definition.carbon:[[@LINE-5]]:1 [InImport]
+// CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE+5]]:1-14: error: associated constant T not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
 // CHECK:STDERR: interface.carbon:3:19-25: note: associated constant declared here [AssociatedConstantHere]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE-5]]:1-27: error: impl declared but not defined [ImplMissingDefinition]
+// CHECK:STDERR: fail_missing_on_definition.carbon:[[@LINE-4]]:1-27: error: impl declared but not defined [ImplMissingDefinition]
 // CHECK:STDERR:
 impl C6 as I { }
 
@@ -1002,7 +1001,7 @@ impl CD as IF where .F = 0 {
 // CHECK:STDOUT:     %C6.ref: type = name_ref C6, file.%C6.decl [concrete = constants.%C6]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, imports.%Main.I [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc12: <witness> = impl_self_witness @C6.as.I.impl.e1b87a.2.%C6.ref, @I [concrete = constants.%.7ff]
+// CHECK:STDOUT:   %.loc11: <witness> = impl_self_witness @C6.as.I.impl.e1b87a.2.%C6.ref, @I [concrete = constants.%.7ff]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: interface @I [from "interface.carbon"] {

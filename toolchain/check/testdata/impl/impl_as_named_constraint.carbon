@@ -151,6 +151,18 @@ constraint B(X: Undefined) {
 
 impl () as B(1) {}
 
+// --- impl_as_constraint_duplicates_interface.carbon
+library "[[@TEST_NAME]]";
+
+interface I(T: type) {}
+constraint J {
+  extend require impls I(Self);
+}
+
+// This impls `I(())` twice, which should be deduplicated to a single specific
+// interface.
+impl () as I(()) & J {}
+
 // --- impl_as_constraint_where_rewrite.carbon
 library "[[@TEST_NAME]]";
 
@@ -345,6 +357,31 @@ fn G() {
   F(());
 }
 
+// --- access_through_nested_specific_in_named_constraint.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+impl forall [T: type] T as Z where .Z1 = {} {}
+
+class C(T: type) {
+    alias U = T.(Z.Z1);
+}
+
+interface K {}
+
+constraint J {
+    extend require impls Z;
+    // When identifying `() as J` for the impl below, this forms a specific `C(())`
+    // which contains an access of `().(Z.Z1)`. The `() as Z` lookup _should_ find
+    // the impl below, not the blanket impl above. If we find the above impl, then
+    // the access of `U` here resolves to `{}` incorrectly.
+    require C(Self).U impls K;
+}
+
+impl () as K {}
+
+impl () as J where .Z1 = () {}
+
 // --- witness_access_in_named_constraint.carbon
 library "[[@TEST_NAME]]";
 
@@ -382,6 +419,41 @@ impl G(C) as N {}
 fn F() -> G(C).(Z(G(C)).Result) {
   return ();
 }
+
+// --- rewrite_twice_same.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+constraint J {
+    extend require impls Z where .Z1 = ();
+}
+impl () as J where .Z1 = () {}
+
+// --- fail_rewrite_twice_different.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+constraint J {
+    extend require impls Z where .Z1 = {};
+}
+// CHECK:STDERR: fail_rewrite_twice_different.carbon:[[@LINE+2]]:12-27: error: associated constant Z1 given value `()` that is different from previously given value `{}` [AssociatedConstantGivenDifferentValues]
+// CHECK:STDERR:
+impl () as J where .Z1 = () {}
+
+// --- fail_rewrite_twice_different_named_constraints.carbon
+library "[[@TEST_NAME]]";
+
+interface Z { let Z1: type; }
+constraint K {
+    extend require impls Z where .Z1 = ();
+}
+constraint J {
+    extend require impls Z where .Z1 = {};
+    extend require impls K;
+}
+// CHECK:STDERR: fail_rewrite_twice_different_named_constraints.carbon:[[@LINE+2]]:12: error: associated constant Z1 given value `{}` that is different from previously given value `()` [AssociatedConstantGivenDifferentValues]
+// CHECK:STDERR:
+impl () as J {}
 
 // CHECK:STDOUT: --- fail_error_self_in_require.carbon
 // CHECK:STDOUT:

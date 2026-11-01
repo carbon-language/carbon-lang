@@ -716,21 +716,19 @@ auto ResolveSpecificDecl(Context& context, SemIR::LocId loc_id,
 }
 
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
-                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id,
-                  bool make_identified_specific) -> SemIR::SpecificId {
-  auto specific_id = context.specifics().GetOrAdd(generic_id, args_id,
-                                                  make_identified_specific);
+                  SemIR::GenericId generic_id, SemIR::InstBlockId args_id)
+    -> SemIR::SpecificId {
+  auto specific_id = context.specifics().GetOrAdd(
+      generic_id, args_id, context.eval_impl_lookup_to_identified_witness());
   ResolveSpecificDecl(context, loc_id, specific_id);
   return specific_id;
 }
 
 auto MakeSpecific(Context& context, SemIR::LocId loc_id,
                   SemIR::GenericId generic_id,
-                  llvm::ArrayRef<SemIR::InstId> args,
-                  bool make_identified_specific) -> SemIR::SpecificId {
+                  llvm::ArrayRef<SemIR::InstId> args) -> SemIR::SpecificId {
   auto args_id = context.inst_blocks().AddCanonical(args);
-  return MakeSpecific(context, loc_id, generic_id, args_id,
-                      make_identified_specific);
+  return MakeSpecific(context, loc_id, generic_id, args_id);
 }
 
 static auto MakeSelfSpecificId(Context& context, SemIR::GenericId generic_id)
@@ -766,24 +764,27 @@ auto MakeSelfSpecific(Context& context, SemIR::LocId loc_id,
 }
 
 auto ResolveSpecificDefinition(Context& context, SemIR::LocId loc_id,
-                               SemIR::SpecificId specific_id) -> bool {
+                               SemIR::SpecificId specific_id)
+    -> DefinitionResolution {
   // TODO: Handle recursive resolution of the same generic definition.
   auto& specific = context.specifics().Get(specific_id);
   auto generic_id = specific.generic_id;
   CARBON_CHECK(generic_id.has_value(), "Specific with no generic ID");
 
-  if (!specific.definition_block_id.has_value()) {
-    // Evaluate the eval block for the definition of the generic.
-    auto& generic = context.generics().Get(generic_id);
-    CARBON_CHECK(generic.decl_block_id.has_value(), "missing declaration");
-    if (!generic.definition_block_id.has_value()) {
-      // The generic is not defined yet.
-      return false;
-    }
-    TryEvalBlockForSpecific(context, loc_id, specific_id,
-                            SemIR::GenericInstIndex::Definition);
+  if (specific.definition_block_id.has_value()) {
+    return DefinitionResolution::PreviouslyResolved;
   }
-  return true;
+
+  // Evaluate the eval block for the definition of the generic.
+  auto& generic = context.generics().Get(generic_id);
+  CARBON_CHECK(generic.decl_block_id.has_value(), "missing declaration");
+  if (!generic.definition_block_id.has_value()) {
+    return DefinitionResolution::NotDefinedYet;
+  }
+
+  TryEvalBlockForSpecific(context, loc_id, specific_id,
+                          SemIR::GenericInstIndex::Definition);
+  return DefinitionResolution::NewlyResolved;
 }
 
 auto DiagnoseIfGenericMissingExplicitParameters(
@@ -878,8 +879,7 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
                                SemIR::GenericId generic_without_self_id,
                                SemIR::GenericId generic_with_self_id,
                                SemIR::SpecificId specific_without_self_id,
-                               SemIR::ConstantId self_facet,
-                               bool make_identified_specific)
+                               SemIR::ConstantId self_facet)
     -> SemIR::SpecificId {
   ValidateGenericWithoutAndWithSelfMatch(context, generic_without_self_id,
                                          generic_with_self_id,
@@ -904,16 +904,15 @@ auto MakeSpecificWithInnerSelf(Context& context, SemIR::LocId loc_id,
     args.push_back(self_facet_inst_id);
   }
 
-  auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args,
-                                  make_identified_specific);
+  auto specific_id = MakeSpecific(context, loc_id, generic_with_self_id, args);
   ResolveSpecificDefinition(context, loc_id, specific_id);
   return specific_id;
 }
 
 auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
                            SemIR::SpecificId specific_id,
-                           SemIR::GenericId target_generic_id,
-                           bool make_identified_specific) -> SemIR::SpecificId {
+                           SemIR::GenericId target_generic_id)
+    -> SemIR::SpecificId {
   if (!specific_id.has_value()) {
     const auto& target_generic = context.generics().Get(target_generic_id);
     auto target_bindings =
@@ -936,8 +935,7 @@ auto CopySpecificToGeneric(Context& context, SemIR::LocId loc_id,
   }
 
   auto args_id = context.specifics().GetArgsOrEmpty(specific_id);
-  return MakeSpecific(context, loc_id, target_generic_id, args_id,
-                      make_identified_specific);
+  return MakeSpecific(context, loc_id, target_generic_id, args_id);
 }
 
 auto DiagnoseImplsOnNonFacetType(Context& context, SemIR::LocId loc_id)

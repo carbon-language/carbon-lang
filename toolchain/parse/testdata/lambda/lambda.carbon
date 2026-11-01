@@ -28,7 +28,7 @@ var d: auto = fn (ref x: i32) ->? ref i32 { return x; };
 // CHECK:STDERR:
 // CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+6]]:17: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+4]]:17: error: expected `=>` or `{` after return type [ExpectedLambdaBodyAfterReturnType]
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+4]]:17: error: expected `{` after return type [ExpectedLambdaBodyAfterReturnType]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+2]]:17: error: expected `impls` in `require` declaration [RequireExpectedImpls]
 // CHECK:STDERR:
@@ -45,7 +45,7 @@ fn F() {
 // --- fail_expected_body_after_return_type.carbon
 
 fn G() {
-  // CHECK:STDERR: fail_expected_body_after_return_type.carbon:[[@LINE+2]]:26: error: expected `=>` or `{` after return type [ExpectedLambdaBodyAfterReturnType]
+  // CHECK:STDERR: fail_expected_body_after_return_type.carbon:[[@LINE+2]]:26: error: expected `{` after return type [ExpectedLambdaBodyAfterReturnType]
   // CHECK:STDERR:
   var x: auto = fn -> i32 ;
 }
@@ -94,9 +94,9 @@ fn G() {
 // CHECK:STDOUT:   │ │   │ │ ├─IntTypeLiteral 'i32'
 // CHECK:STDOUT:   │ │   │ ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │   ├─ExplicitParamList ')'
-// CHECK:STDOUT:   │ │ ╭─LambdaDefinitionStart '=>'
+// CHECK:STDOUT:   │ │ ╭─LambdaTerseDefinitionStart '=>'
 // CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'x'
-// CHECK:STDOUT:   │ ├─Lambda 'fn'
+// CHECK:STDOUT:   │ ├─LambdaTerseDefinition 'fn'
 // CHECK:STDOUT:   ├─VariableDecl ';'
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'
 // CHECK:STDOUT:   │ │   ╭─IdentifierNameNotBeforeSignature 'c'

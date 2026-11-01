@@ -366,8 +366,8 @@ struct Diagnostic {
 // A context names the operation that failed, and when a diagnostic has one that
 // is what the reader is told about; the message is then read against the code
 // like anything else explaining it. Anything presenting a diagnostic as a
-// single sentence -- the headline of the rendering, an editor's hover text --
-// wants this rather than the message.
+// single sentence, such as an editor's hover text, uses this instead of the
+// message.
 inline auto LeadingContext(const Diagnostic& diagnostic) -> const Context* {
   return diagnostic.contexts.empty() ? nullptr : &diagnostic.contexts.front();
 }

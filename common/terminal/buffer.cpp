@@ -7,14 +7,13 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <string_view>
 #include <utility>
 
 #include "common/check.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Sequence.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Support/ConvertUTF.h"
-#include "llvm/Support/Unicode.h"
 
 namespace Carbon::Terminal {
 
@@ -23,59 +22,77 @@ namespace Carbon::Terminal {
 // let a single column of output carry unbounded bytes.
 static constexpr size_t MaxCombiningBytes = 32;
 
-// Glyphs for every combination of line directions, indexed by the direction
-// bits.
-static constexpr std::array<char32_t, 16> Utf8LineGlyphs = {
-    U'·',  // (none): a line between one center and itself, which is a point
-    U'╴',  // left
-    U'╶',  // right
-    U'─',  // left, right
-    U'╵',  // up
-    U'╯',  // left, up
-    U'╰',  // right, up
-    U'┴',  // left, right, up
-    U'╷',  // down
-    U'╮',  // left, down
-    U'╭',  // right, down
-    U'┬',  // left, right, down
-    U'│',  // up, down
-    U'┤',  // left, up, down
-    U'├',  // right, up, down
-    U'┼',  // left, right, up, down
-};
-
-// The ASCII stand-ins. Each keeps the axis its line runs through, which leaves
-// `+` meaning a crossing and nothing else:
+// Glyphs for every combination of line directions and weights, indexed by the
+// heavy bits and then the direction bits.
 //
-// - Running through horizontally is `-`, vertically `|`, and both ways `+`.
-// - A tee keeps its through-stroke and leaves the branch to what is drawn
-//   beside it: the dashes either side of a `|` are what `├` and `┤` reach, and
-//   the line under a `-` is what a `┬` reaches. Drawing a tee as `+` reads as
-//   the crossing it is not.
+// The first row is the all-light set, whose corners are the rounded forms; a
+// corner with any heavy line is square, since Unicode has no rounded heavy
+// corner. The other rows match the Unicode character names, which list the
+// weight of the line in each direction. `DrawLine` never sets a heavy bit
+// without its direction bit, and those entries repeat the glyph with the
+// direction present.
+static constexpr std::array<std::u32string_view, 16> Utf8LineGlyphs = {
+    U"·╴╶─╵╯╰┴╷╮╭┬│┤├┼",  // All light.
+    U"╸╸╾╾┙┙┵┵┑┑┭┭┥┥┽┽",  // Heavy left.
+    U"╺╼╺╼┕┶┕┶┍┮┍┮┝┾┝┾",  // Heavy right.
+    U"━━━━┷┷┷┷┯┯┯┯┿┿┿┿",  // Heavy left and right.
+    U"╹┚┖┸╹┚┖┸╿┦┞╀╿┦┞╀",  // Heavy up.
+    U"┛┛┹┹┛┛┹┹┩┩╃╃┩┩╃╃",  // Heavy left and up.
+    U"┗┺┗┺┗┺┗┺┡╄┡╄┡╄┡╄",  // Heavy right and up.
+    U"┻┻┻┻┻┻┻┻╇╇╇╇╇╇╇╇",  // Heavy left, right, and up.
+    U"╻┒┎┰╽┧┟╁╻┒┎┰╽┧┟╁",  // Heavy down.
+    U"┓┓┱┱┪┪╅╅┓┓┱┱┪┪╅╅",  // Heavy left and down.
+    U"┏┲┏┲┢╆┢╆┏┲┏┲┢╆┢╆",  // Heavy right and down.
+    U"┳┳┳┳╈╈╈╈┳┳┳┳╈╈╈╈",  // Heavy left, right, and down.
+    U"┃┨┠╂┃┨┠╂┃┨┠╂┃┨┠╂",  // Heavy up and down.
+    U"┫┫╉╉┫┫╉╉┫┫╉╉┫┫╉╉",  // Heavy left, up, and down.
+    U"┣╊┣╊┣╊┣╊┣╊┣╊┣╊┣╊",  // Heavy right, up, and down.
+    U"╋╋╋╋╋╋╋╋╋╋╋╋╋╋╋╋",  // All heavy.
+};
+// Every row has a glyph for each set of direction bits.
+static_assert(std::all_of(Utf8LineGlyphs.begin(), Utf8LineGlyphs.end(),
+                          [](std::u32string_view glyphs) {
+                            return glyphs.size() == 16;
+                          }));
+
+// The ASCII glyphs, which use `+` only for a crossing:
+//
+// - A line running through horizontally is `-`, vertically `|`, and both ways
+//   `+`.
 // - A corner is `.` where its line leaves downward and `'` where it arrives
 //   from above, which is where those characters sit in their cells.
+// - A tee where a line leaves a vertical line sideways, `├` or `┤`, is `|`,
+//   and the dash drawn beside it shows the line leaving. A tee where a line
+//   leaves a horizontal line upward or downward, `┴` or `┬`, is the corner
+//   glyph for that direction: the dashes either side show the horizontal line,
+//   and this cell must show the line leaving it, because the rest of that line
+//   can be rows away with only gaps between. `+` would look like a crossing.
 // - A point, a line between one center and itself, is `.`.
 //
-// What a diagnostic draws is then still told apart: the rule closing a snippet
-// from the one separating two, and the anchor opening a diagnostic from the one
-// carrying it on.
+// What a diagnostic draws is then still told apart: the line closing a snippet
+// from the one separating two, and the line opening a diagnostic from the one
+// continuing it.
+//
+// A cell with a heavy line leaving it is `^` instead, under the rule
+// `LineWeight` describes. That covers the top cell of a heavy vertical line, so
+// the line is `^` above `|`.
 static constexpr std::array<char32_t, 16> AsciiLineGlyphs = {
-    U'.',   // (none): a point
-    U'-',   // left
-    U'-',   // right
-    U'-',   // left, right
-    U'|',   // up
-    U'\'',  // left, up
-    U'\'',  // right, up
-    U'-',   // left, right, up
-    U'|',   // down
-    U'.',   // left, down
-    U'.',   // right, down
-    U'-',   // left, right, down
-    U'|',   // up, down
-    U'|',   // left, up, down
-    U'|',   // right, up, down
-    U'+',   // left, right, up, down
+    U'.',   // None: a point.
+    U'-',   // Left.
+    U'-',   // Right.
+    U'-',   // Left and right.
+    U'|',   // Up.
+    U'\'',  // Left and up.
+    U'\'',  // Right and up.
+    U'\'',  // Left, right, and up.
+    U'|',   // Down.
+    U'.',   // Left and down.
+    U'.',   // Right and down.
+    U'.',   // Left, right, and down.
+    U'|',   // Up and down.
+    U'|',   // Left, up, and down.
+    U'|',   // Right, up, and down.
+    U'+',   // Left, right, up, and down.
 };
 
 // Returns the next tab stop after `x` on a line whose stops are `tab_width`
@@ -241,13 +258,8 @@ auto Buffer::PlaceCodePoint(int x, int y, char32_t code_point,
   return x + width;
 }
 
-// Returns the glyphs a cell's directions are read from.
-static auto LineGlyphs(Charset charset) -> const std::array<char32_t, 16>& {
-  return charset == Charset::Utf8 ? Utf8LineGlyphs : AsciiLineGlyphs;
-}
-
-auto Buffer::DrawLine(int x, int y, uint8_t directions, const Style& style)
-    -> void {
+auto Buffer::DrawLine(int x, int y, uint8_t directions, LineWeight weight,
+                      const Style& style) -> void {
   CARBON_DCHECK(directions <= LineDirections,
                 "Direction bits {0} name no glyph.", directions);
   EnsureColumn(x);
@@ -262,7 +274,22 @@ auto Buffer::DrawLine(int x, int y, uint8_t directions, const Style& style)
 
   Cell& cell = CellAt(x, y);
   cell.lines = existing | directions | LineCell;
-  cell.code_point = LineGlyphs(metrics_.charset())[cell.lines & LineDirections];
+  cell.heavy_lines &= ~directions;
+  if (weight == LineWeight::Heavy) {
+    cell.heavy_lines |= directions;
+  }
+  uint8_t cell_directions = cell.lines & LineDirections;
+  bool line_enters_from_above = (cell_directions & LineUp) != 0;
+  bool light_line_leaves_downward =
+      (cell_directions & LineDown) != 0 && (cell.heavy_lines & LineDown) == 0;
+  if (metrics_.charset() == Charset::Utf8) {
+    cell.code_point = Utf8LineGlyphs[cell.heavy_lines][cell_directions];
+  } else if (cell.heavy_lines != 0 && !line_enters_from_above &&
+             !light_line_leaves_downward) {
+    cell.code_point = U'^';
+  } else {
+    cell.code_point = AsciiLineGlyphs[cell_directions];
+  }
   cell.style = style;
 }
 
@@ -279,7 +306,8 @@ static auto CheckLineFits(int position, int length, int limit) -> void {
 }
 
 auto Buffer::DrawHorizontalLine(int x, int y, int length, const Style& style,
-                                LineEnd start, LineEnd end) -> DrawEnd {
+                                LineEnd start, LineEnd end, LineWeight weight)
+    -> DrawEnd {
   CheckOrigin(x, y);
   CheckLineFits(x, length, columns_);
   for (int i : llvm::seq(length)) {
@@ -289,20 +317,76 @@ auto Buffer::DrawHorizontalLine(int x, int y, int length, const Style& style,
     uint8_t directions =
         (i > 0 || start == LineEnd::Edge ? LineLeft : 0) |
         (i + 1 < length || end == LineEnd::Edge ? LineRight : 0);
-    DrawLine(x + i, y, directions, style);
+    DrawLine(x + i, y, directions, weight, style);
   }
   return {.x = x + length, .y = y};
 }
 
 auto Buffer::DrawVerticalLine(int x, int y, int length, const Style& style,
-                              LineEnd start, LineEnd end) -> DrawEnd {
+                              LineEnd start, LineEnd end, LineWeight weight)
+    -> DrawEnd {
   CheckOrigin(x, y);
   CheckLineFits(y, length, MaxRows);
   for (int i : llvm::seq(length)) {
     uint8_t directions =
         (i > 0 || start == LineEnd::Edge ? LineUp : 0) |
         (i + 1 < length || end == LineEnd::Edge ? LineDown : 0);
-    DrawLine(x, y + i, directions, style);
+    DrawLine(x, y + i, directions, weight, style);
+  }
+  return {.x = x, .y = y + length};
+}
+
+auto Buffer::HoldsText(int x, int y) const -> bool {
+  if (x < 0 || x >= width_ || y >= height()) {
+    return false;
+  }
+  const Cell& cell = CellAt(x, y);
+  if ((cell.lines & LineCell) != 0) {
+    return false;
+  }
+  if (cell.code_point != U' ' || cell.is_continuation) {
+    return true;
+  }
+  return !combining_marks_.empty() &&
+         combining_marks_.contains(CellIndex(x, y));
+}
+
+auto Buffer::DrawCrossingVerticalLine(int x, int y, int length,
+                                      const Style& style, LineEnd start)
+    -> DrawEnd {
+  CheckOrigin(x, y);
+  CheckLineFits(y, length, MaxRows);
+
+  for (int i : llvm::seq(length)) {
+    int cell_y = y + i;
+    bool is_center_start = i == 0 && start == LineEnd::Center;
+    uint8_t directions = is_center_start ? LineDown : (LineUp | LineDown);
+    if (cell_y >= height()) {
+      // Rows below the buffer hold nothing drawn earlier.
+      DrawLine(x, cell_y, directions, LineWeight::Light, style);
+      continue;
+    }
+    const Cell& cell = CellAt(x, cell_y);
+    if (is_center_start) {
+      // A line already leaving this cell downward is left as it is, keeping
+      // its weight. Otherwise this line joins the cell.
+      if ((cell.lines & LineDown) == 0) {
+        DrawLine(x, cell_y, LineDown, LineWeight::Light, style);
+      }
+      continue;
+    }
+    if ((cell.lines & LineCell) != 0) {
+      // An earlier line keeps its cell: a crossed line stays unbroken, and a
+      // line already running down this column keeps its weight.
+      continue;
+    }
+    // Skip text, and blank cells beside text, where a line could be mistaken
+    // for part of a word.
+    if (HoldsText(x, cell_y) || HoldsText(x - 1, cell_y) ||
+        HoldsText(x + 1, cell_y)) {
+      continue;
+    }
+    DrawLine(x, cell_y, directions, LineWeight::Light, style);
   }
   return {.x = x, .y = y + length};
 }
@@ -377,18 +461,49 @@ auto Buffer::MeasureText(int x, int y, int margin, llvm::StringRef text) const
 
 // Returns whether wrapped text can be broken at `c`.
 //
-// This is the one definition of where wrapping may introduce a break, so that
-// measuring what text wraps into and drawing it wrapped agree about it.
 // Carriage returns count so that a CRLF ending is whitespace rather than part
 // of the word before it; what becomes of the `\r` is then up to the drawing.
 static constexpr auto IsWrapBreak(char c) -> bool {
   return c == ' ' || c == '\t' || c == '\r';
 }
 
+// Removes the word at the front of `text` and returns it: everything up to the
+// next break or newline, except that with `backticks_are_quotes`, a pair of
+// backticks on one line keeps everything between them in the word. When
+// `text` starts with a break or a newline, returns an empty word and leaves
+// `text` unchanged, so the caller has to step past that character itself.
+//
+// With `IsWrapBreak` this is the one definition of where wrapping may
+// introduce a break, so that measuring what text wraps into and drawing it
+// wrapped agree about it.
+static auto TakeWord(llvm::StringRef& text, bool backticks_are_quotes)
+    -> llvm::StringRef {
+  size_t end = 0;
+  while (end < text.size()) {
+    char c = text[end];
+    if (c == '\n' || IsWrapBreak(c)) {
+      break;
+    }
+    if (backticks_are_quotes && c == '`') {
+      size_t close = text.find('`', end + 1);
+      if (close != llvm::StringRef::npos &&
+          text.slice(end + 1, close).find_first_of("\t\n\r") ==
+              llvm::StringRef::npos) {
+        end = close + 1;
+        continue;
+      }
+    }
+    ++end;
+  }
+  llvm::StringRef word = text.take_front(end);
+  text = text.drop_front(end);
+  return word;
+}
+
 template <typename PlaceFn>
 auto Buffer::WalkWrappedText(int x, int y, int margin, int max_width,
-                             llvm::StringRef text, PlaceFn place) const
-    -> DrawEnd {
+                             llvm::StringRef text, bool backticks_are_quotes,
+                             PlaceFn place) const -> DrawEnd {
   CheckTextSize(text);
   // The block runs from the margin to `margin + max_width`, lies within the
   // buffer, and holds the column the text starts in, which is every bound on
@@ -452,9 +567,7 @@ auto Buffer::WalkWrappedText(int x, int y, int margin, int max_width,
       continue;
     }
 
-    llvm::StringRef word =
-        text.take_until([](char c) { return c == '\n' || IsWrapBreak(c); });
-    text = text.drop_front(word.size());
+    llvm::StringRef word = TakeWord(text, backticks_are_quotes);
 
     // Move a word that doesn't fit down to the next row, which minimizes the
     // overhang when it doesn't fit there either. The word is drawn into the row
@@ -474,9 +587,9 @@ auto Buffer::WalkWrappedText(int x, int y, int margin, int max_width,
 }
 
 auto Buffer::DrawWrappedText(int x, int y, int margin, int max_width,
-                             llvm::StringRef text, const Style& style)
-    -> DrawEnd {
-  return WalkWrappedText(x, y, margin, max_width, text,
+                             llvm::StringRef text, const Style& style,
+                             bool backticks_are_quotes) -> DrawEnd {
+  return WalkWrappedText(x, y, margin, max_width, text, backticks_are_quotes,
                          [&](int cur_x, int cur_y, char32_t code_point) {
                            return PlaceCodePoint(cur_x, cur_y, code_point,
                                                  style);
@@ -484,20 +597,23 @@ auto Buffer::DrawWrappedText(int x, int y, int margin, int max_width,
 }
 
 auto Buffer::MeasureWrappedText(int x, int y, int margin, int max_width,
-                                llvm::StringRef text) const -> DrawEnd {
-  return WalkWrappedText(x, y, margin, max_width, text,
+                                llvm::StringRef text,
+                                bool backticks_are_quotes) const -> DrawEnd {
+  return WalkWrappedText(x, y, margin, max_width, text, backticks_are_quotes,
                          [&](int cur_x, int /*cur_y*/, char32_t code_point) {
                            return cur_x + metrics_.CodePointWidth(code_point);
                          });
 }
 
-auto Buffer::MeasureWrapWidth(llvm::StringRef text) const -> int {
+auto Buffer::MeasureWrapWidth(llvm::StringRef text,
+                              bool backticks_are_quotes) const -> int {
   int width = 0;
   while (!text.empty()) {
-    llvm::StringRef word =
-        text.take_until([](char c) { return c == '\n' || IsWrapBreak(c); });
+    llvm::StringRef word = TakeWord(text, backticks_are_quotes);
     width = std::max(width, metrics_.Width(word));
-    text = text.drop_front(std::max<size_t>(word.size(), 1));
+    if (word.empty()) {
+      text = text.drop_front();
+    }
   }
   return width;
 }

@@ -63,8 +63,7 @@ library "[[@TEST_NAME]]";
 
 import library "basic";
 
-// CHECK:STDERR: fail_extern_library_in_importer.carbon:[[@LINE+4]]:1-30: error: cannot declare imported `fn F` as `extern library` [ExternLibraryInImporter]
-// CHECK:STDERR: imported from: fail_extern_library_in_importer.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_extern_library_in_importer.carbon:[[@LINE+3]]:1-30: error: cannot declare imported `fn F` as `extern library` [ExternLibraryInImporter]
 // CHECK:STDERR: basic.carbon:4:1-14: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 extern library "basic" fn F();

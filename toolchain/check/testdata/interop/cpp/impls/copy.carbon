@@ -83,24 +83,21 @@ library "[[@TEST_NAME]]";
 import Cpp library "types.h";
 
 fn CopyDeletedCopy(c: Cpp.DeletedCopy) -> Cpp.DeletedCopy {
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR: included from: fail_copy_noncopyable.carbon:[[@LINE-4]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: attempt to use a deleted function [CppInteropParseError]
   // CHECK:STDERR: ./types.h:14:3: note: 'DeletedCopy' has been explicitly marked deleted here [CppInteropParseNote]
   // CHECK:STDERR:
   return c;
 }
 
 fn CopyMoveOnly(c: Cpp.MoveOnly) -> Cpp.MoveOnly {
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR: included from: fail_copy_noncopyable.carbon:[[@LINE-12]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: attempt to use a deleted function [CppInteropParseError]
   // CHECK:STDERR: ./types.h:19:3: note: copy constructor is implicitly deleted because 'MoveOnly' has a user-declared move constructor [CppInteropParseNote]
   // CHECK:STDERR:
   return c;
 }
 
 fn CopyDeletedMove(c: Cpp.DeletedMove) -> Cpp.DeletedMove {
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: error: attempt to use a deleted function [CppInteropParseError]
-  // CHECK:STDERR: included from: fail_copy_noncopyable.carbon:[[@LINE-20]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: attempt to use a deleted function [CppInteropParseError]
   // CHECK:STDERR: ./types.h:24:3: note: copy constructor is implicitly deleted because 'DeletedMove' has a user-declared move constructor [CppInteropParseNote]
   // CHECK:STDERR:
   return c;
@@ -124,8 +121,7 @@ fn CopyAmbiguousCopy(c: Cpp.AmbiguousCopy) -> Cpp.AmbiguousCopy {
 
 fn CopyPrivateCopy(c: Cpp.PrivateCopy) -> Cpp.PrivateCopy {
   // TODO: Note is missing location.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: error: cannot access private member `PrivateCopy` of type `Cpp.PrivateCopy` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_copy_noncopyable.carbon:[[@LINE-45]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: cannot access private member `PrivateCopy` of type `Cpp.PrivateCopy` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./types.h:40:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   return c;
@@ -133,8 +129,7 @@ fn CopyPrivateCopy(c: Cpp.PrivateCopy) -> Cpp.PrivateCopy {
 
 fn CopyProtectedCopy(c: Cpp.ProtectedCopy) -> Cpp.ProtectedCopy {
   // TODO: Note is missing location.
-  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+4]]:10: error: cannot access protected member `ProtectedCopy` of type `Cpp.ProtectedCopy` [ClassInvalidMemberAccess]
-  // CHECK:STDERR: included from: fail_copy_noncopyable.carbon:[[@LINE-54]]:10 [InCppInclude]
+  // CHECK:STDERR: fail_copy_noncopyable.carbon:[[@LINE+3]]:10: error: cannot access protected member `ProtectedCopy` of type `Cpp.ProtectedCopy` [ClassInvalidMemberAccess]
   // CHECK:STDERR: ./types.h:45:3: note: declared here [ClassMemberDeclaration]
   // CHECK:STDERR:
   return c;

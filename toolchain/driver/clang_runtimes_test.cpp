@@ -27,7 +27,9 @@
 #include "testing/base/global_exe_path.h"
 #include "toolchain/base/install_paths.h"
 #include "toolchain/base/llvm_tools.h"
+#include "toolchain/diagnostics/null_diagnostics.h"
 #include "toolchain/driver/clang_runner.h"
+#include "toolchain/driver/codegen_options.h"
 #include "toolchain/driver/llvm_runner.h"
 #include "toolchain/driver/runtimes_cache.h"
 #include "tools/cpp/runfiles/runfiles.h"
@@ -270,8 +272,9 @@ class ClangRuntimesTest : public ::testing::Test {
 
   Runtimes::Cache runtimes_cache_ =
       *Runtimes::Cache::MakeSystem(install_paths_);
-  Runtimes::Cache::Features features = {.target = target_};
-  Runtimes runtimes_ = *runtimes_cache_.Lookup(features);
+  Runtimes::Cache::Features features_ = *runner_.ComputeRuntimesFeatures(
+      {.target = target_}, Diagnostics::NullConsumer());
+  Runtimes runtimes_ = *runtimes_cache_.Lookup(features_);
 
   // Note that for debugging it may be useful to replace this with a
   // single-threaded thread pool. However the test will be _much_ slower.
@@ -279,16 +282,28 @@ class ClangRuntimesTest : public ::testing::Test {
 };
 
 TEST_F(ClangRuntimesTest, ResourceDir) {
-  ClangResourceDirBuilder resource_dir_builder(&runner_, &threads_,
-                                               target_triple_, &runtimes_);
+  ClangResourceDirBuilder resource_dir_builder(&runner_, &threads_, &runtimes_,
+                                               features_);
   auto build_result = std::move(resource_dir_builder).Wait();
   ASSERT_TRUE(build_result.ok()) << build_result.error();
   TestResourceDir(std::move(*build_result));
+
+  if (target_triple_.isX86()) {
+    auto v3_features = *runner_.ComputeRuntimesFeatures(
+        {.target = target_, .target_cpu = "x86-64-v3"},
+        Diagnostics::NullConsumer());
+    auto v3_runtimes = *runtimes_cache_.Lookup(v3_features);
+    ClangResourceDirBuilder v3_builder(&runner_, &threads_, &v3_runtimes,
+                                       v3_features);
+    auto v3_result = std::move(v3_builder).Wait();
+    ASSERT_TRUE(v3_result.ok()) << v3_result.error();
+    TestResourceDir(std::move(*v3_result));
+  }
 }
 
 TEST_F(ClangRuntimesTest, Libunwind) {
-  LibunwindBuilder libunwind_builder(&runner_, &threads_, target_triple_,
-                                     &runtimes_);
+  LibunwindBuilder libunwind_builder(&runner_, &threads_, &runtimes_,
+                                     features_);
   auto build_result = std::move(libunwind_builder).Wait();
   ASSERT_TRUE(build_result.ok()) << build_result.error();
   std::filesystem::path runtimes_path = std::move(*build_result);
@@ -303,7 +318,7 @@ TEST_F(ClangRuntimesTest, Libunwind) {
 // sustainable way. Given that, we disable this test by default but include it
 // for debugging purposes.
 TEST_F(ClangRuntimesTest, DISABLED_Libcxx) {
-  LibcxxBuilder libcxx_builder(&runner_, &threads_, target_triple_, &runtimes_);
+  LibcxxBuilder libcxx_builder(&runner_, &threads_, &runtimes_, features_);
   auto build_result = std::move(libcxx_builder).Wait();
   ASSERT_TRUE(build_result.ok()) << build_result.error();
   std::filesystem::path runtimes_path = std::move(*build_result);

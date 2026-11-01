@@ -106,7 +106,7 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
 
 static auto TypeStructureReferencesSelf(
     Context& context, SemIR::LocId loc_id, SemIR::ConstantId const_id,
-    const SemIR::IdentifiedFacetType& identified_facet_type) -> bool {
+    const IdentifiedFacetType& identified_facet_type) -> bool {
   auto find_self = [&](SemIR::TypeIterator& type_iter) -> bool {
     while (true) {
       auto step = type_iter.Next();
@@ -151,9 +151,9 @@ static auto TypeStructureReferencesSelf(
   }
 
   bool interfaces_all_reference_self = true;
-  for (auto [_, specific_interface] : identified_facet_type.required_impls()) {
+  for (auto req_impls : identified_facet_type.required_impls()) {
     SemIR::TypeIterator type_iter(&context.sem_ir());
-    type_iter.Add(specific_interface);
+    type_iter.Add(req_impls.interface.RawValue());
     if (!find_self(type_iter)) {
       // TODO: The IdentifiedFacetType loses the location (since it's
       // canonical), but it would be nice to somehow point this diagnostic at
@@ -165,7 +165,7 @@ static auto TypeStructureReferencesSelf(
           "interface, but found interface `{0}` without a `Self` argument",
           SemIR::SpecificInterface);
       context.emitter().Emit(loc_id, RequireImplsMissingSelf,
-                             specific_interface);
+                             req_impls.interface.RawValue());
       interfaces_all_reference_self = false;
     }
   }
@@ -173,7 +173,7 @@ static auto TypeStructureReferencesSelf(
 }
 
 struct ValidateRequireResult {
-  const SemIR::IdentifiedFacetType* identified_facet_type;
+  const IdentifiedFacetType* identified_facet_type;
 };
 
 // Returns nullopt if a diagnostic has been emitted and the `require` decl is
