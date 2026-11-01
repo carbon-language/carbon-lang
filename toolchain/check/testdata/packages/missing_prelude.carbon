@@ -64,7 +64,7 @@ library "[[@TEST_NAME]]";
 import Core library "prelude_fake_int";
 
 // We don't really care whether this works, but it shouldn't crash or otherwise misbehave.
-// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+22]]:17
+// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+23]]:17
 // CHECK:STDERR: ->     │ let n: Core.X = i32;
 // CHECK:STDERR:        ·                 ┳━━
 // CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert non-type value of type
@@ -72,18 +72,19 @@ import Core library "prelude_fake_int";
 // CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ·                 ╰────┤ type `Core.X` does not implement interface
 // CHECK:STDERR:        ·                      │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                      │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+11]]:17
+// CHECK:STDERR:        ╭─┤ fail_use_fake_int.carbon:[[@LINE+12]]:17
 // CHECK:STDERR: ->     │ let n: Core.X = i32;
-// CHECK:STDERR:        ·                 ┳━━
-// CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert expression of type `type`
-// CHECK:STDERR:        ·                 │  ┃        to `Core.X`
-// CHECK:STDERR:        ·                 │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                 ╰────┤ type `type` does not implement interface
-// CHECK:STDERR:        ·                      │ `Core.ImplicitAs(Core.X)`
-// CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·     ────┬────   ┳━━
+// CHECK:STDERR:        ·         │       ┗━━┫ error: cannot implicitly convert expression of type `type`
+// CHECK:STDERR:        ·         │       │  ┃        to `Core.X`
+// CHECK:STDERR:        ·         │       │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·         ╰────────────┤ initializing this binding [InPatternInit]
+// CHECK:STDERR:        ·                 ╰──────┤ type `type` does not implement interface
+// CHECK:STDERR:        ·                        │ `Core.ImplicitAs(Core.X)`
+// CHECK:STDERR:        ·                        │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let n: Core.X = i32;
@@ -506,8 +507,8 @@ let n: type = i32;
 // CHECK:STDOUT:     .n = %n
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
-// CHECK:STDOUT:   %.loc29_17: %X = converted @__global_init.%.loc29_17.3, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc29_12: type = splice_block %X.ref [concrete = constants.%X] {
+// CHECK:STDOUT:   %.loc30_17: %X = converted @__global_init.%.loc30_17.3, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc30_12: type = splice_block %X.ref [concrete = constants.%X] {
 // CHECK:STDOUT:     %Core.ref: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
 // CHECK:STDOUT:     %X.ref: type = name_ref X, imports.%Core.X [concrete = constants.%X]
 // CHECK:STDOUT:   }
@@ -573,10 +574,10 @@ let n: type = i32;
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Int.specific_fn: <specific function> = specific_function constants.%Int, @Int(Core.IntLiteral, constants.%int_32) [concrete = constants.%Int.specific_fn]
-// CHECK:STDOUT:   %.loc29_17.1: ref %X = temporary_storage
-// CHECK:STDOUT:   %Int.call: init %X to %.loc29_17.1 = call %Int.specific_fn()
-// CHECK:STDOUT:   %.loc29_17.2: type = converted %Int.call, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc29_17.3: type = type_literal <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc30_17.1: ref %X = temporary_storage
+// CHECK:STDOUT:   %Int.call: init %X to %.loc30_17.1 = call %Int.specific_fn()
+// CHECK:STDOUT:   %.loc30_17.2: type = converted %Int.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc30_17.3: type = type_literal <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

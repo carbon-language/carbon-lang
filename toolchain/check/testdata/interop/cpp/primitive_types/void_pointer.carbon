@@ -84,7 +84,7 @@ fn F(input: Cpp.void*) {
   // CHECK:STDERR:        ·                          │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                          ╰────┤ type `Cpp.void*` does not implement interface
   // CHECK:STDERR:        ·                               │ `Core.As(Cpp.S*)`
-  // CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused p: Cpp.S* = input as Cpp.S*;
@@ -109,7 +109,7 @@ fn F(input: Cpp.void*) {
   // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                      ╰────┤ type `Cpp.void*` does not implement interface
   // CHECK:STDERR:        ·                           │ `Core.As(C*)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                           │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused p: C* = input as C*;

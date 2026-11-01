@@ -70,7 +70,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ·              │  ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ·              ╰────┤ type `Core.IntLiteral` does not implement interface
 // CHECK:STDERR:        ·                   │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                   │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: array(1, 39999999999999999993);

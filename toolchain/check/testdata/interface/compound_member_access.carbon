@@ -64,7 +64,7 @@ fn Compound3(generic V: K2, y: V) {
   // CHECK:STDERR:        ·   │  ┃        implementing `K2`
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `V` does not implement interface `Core.ImplicitAs(K2)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   y.(K2.Q2)();
@@ -171,7 +171,7 @@ fn Fails() {
   // CHECK:STDERR:        ·   │  ┃        implementing `A`
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `C` does not implement interface `Core.ImplicitAs(A)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ({} as C).((A & A).G)();
@@ -182,7 +182,7 @@ fn Fails() {
   // CHECK:STDERR:        ·   │  ┃        implementing `A`
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `C` does not implement interface `Core.ImplicitAs(A)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (({} as C) as (C as (A & A))).((A & A).G)();
@@ -193,7 +193,7 @@ fn Fails() {
   // CHECK:STDERR:        ·   │  ┃        implementing `A`
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `C` does not implement interface `Core.ImplicitAs(A)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (({} as C) as (C as (A & A))).(A.G)();

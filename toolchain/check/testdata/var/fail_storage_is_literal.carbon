@@ -21,7 +21,7 @@ fn Main() {
   // CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·                 ╰────┤ type `Core.IntLiteral` does not implement interface
   // CHECK:STDERR:        ·                      │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                      │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused x: 1 = 1;

@@ -17,11 +17,16 @@ class Z {
 }
 
 fn Run() {
-  // CHECK:STDERR:        ╭─┤ fail_init_missing_base.carbon:[[@LINE+7]]:14
+  // CHECK:STDERR:        ╭─┤ fail_init_missing_base.carbon:[[@LINE+12]]:14
+  // CHECK:STDERR:        │   extend base: X;
+  // CHECK:STDERR:        ·   ───────┬───────
+  // CHECK:STDERR:        ·          ╰──┤ field `base` declared here [StructFieldDeclaredHere]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   var _: Z = {};
-  // CHECK:STDERR:        ·              ┳━
-  // CHECK:STDERR:        ·              ┗━━┫ error: missing value for field `base` in struct initialization
-  // CHECK:STDERR:        ·                 ┃        [StructInitMissingFieldInLiteral]
+  // CHECK:STDERR:        ·   ────┬───   ┳━
+  // CHECK:STDERR:        ·       │      ┗━━┫ error: missing value for field `base` in struct initialization
+  // CHECK:STDERR:        ·       │         ┃        [StructInitMissingFieldInLiteral]
+  // CHECK:STDERR:        ·       ╰───────────┤ initializing this variable [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var _: Z = {};

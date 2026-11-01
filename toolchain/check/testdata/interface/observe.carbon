@@ -63,7 +63,7 @@ fn F[T: Transitive](t: T) {
   // CHECK:STDERR:        ·    │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·    ╰────┤ type `T.(Transitive.A)` does not implement interface
   // CHECK:STDERR:        ·         │ `Core.As(T.(Transitive.C))`
-  // CHECK:STDERR:        ·         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·         │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (a as T.C).InR();
@@ -224,7 +224,11 @@ fn F[U: Z](t: U.Z1) {
   // CHECK:STDERR:
   t.TakesC(a);
 
-  // CHECK:STDERR:        ╭─┤ fail_todo_observe_from_type_of_assoc_constant.carbon:[[@LINE+7]]:9
+  // CHECK:STDERR:        ╭─┤ fail_todo_observe_from_type_of_assoc_constant.carbon:[[@LINE+11]]:9
+  // CHECK:STDERR:        │ interface Z {
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ `Z` defined here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   (a as U.T.C).InR();
   // CHECK:STDERR:        ·         ━┳━
   // CHECK:STDERR:        ·          ┗━━┫ error: member name `T` not found in `Z`
@@ -508,7 +512,11 @@ interface A {
 library "[[@TEST_NAME]]";
 
 class C(T: type, U: type) {
-  // CHECK:STDERR:        ╭─┤ fail_wrong_scope_class.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_wrong_scope_class.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ class C(T: type, U: type) {
+  // CHECK:STDERR:        · ─────────────┬─────────────
+  // CHECK:STDERR:        ·              ╰──┤ appears in this definition [ObserveEnclosingScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   observe T == U;
   // CHECK:STDERR:        ·   ━━━┳━━━
   // CHECK:STDERR:        ·      ┗━━┫ error: `observe` can only be used in an `interface` or `function`
@@ -522,7 +530,11 @@ class C(T: type, U: type) {
 library "[[@TEST_NAME]]";
 
 constraint C(T: type, U: type) {
-  // CHECK:STDERR:        ╭─┤ fail_wrong_scope_named_constraint.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_wrong_scope_named_constraint.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ constraint C(T: type, U: type) {
+  // CHECK:STDERR:        · ────────────────┬───────────────
+  // CHECK:STDERR:        ·                 ╰──┤ appears in this definition [ObserveEnclosingScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   observe T == U;
   // CHECK:STDERR:        ·   ━━━┳━━━
   // CHECK:STDERR:        ·      ┗━━┫ error: `observe` can only be used in an `interface` or `function`
@@ -600,6 +612,13 @@ library "[[@TEST_NAME]]";
 // enclosing declaration.
 fn F[T: type, U: type]() {
   if (true) {
+    // CHECK:STDERR:        ╭─┤ fail_wrong_scope_code_block.carbon:[[@LINE+7]]:5
+    // CHECK:STDERR: ->     │     observe T == U;
+    // CHECK:STDERR:        ·     ━━━┳━━━
+    // CHECK:STDERR:        ·        ┗━━┫ error: `observe` can only be used in an `interface` or `function`
+    // CHECK:STDERR:        ·           ┃        [ObserveInWrongScope]
+    // CHECK:STDERR:        ╰────
+    // CHECK:STDERR:
     observe T == U;
   }
 }
@@ -608,6 +627,13 @@ fn F[T: type, U: type]() {
 library "[[@TEST_NAME]]";
 
 // The package namespace is implicit, so no label is attached to it.
+// CHECK:STDERR:        ╭─┤ fail_wrong_scope_file.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ observe () == ();
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `observe` can only be used in an `interface` or `function`
+// CHECK:STDERR:        ·       ┃        [ObserveInWrongScope]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 observe () == ();
 
 // CHECK:STDOUT: --- transitive.carbon

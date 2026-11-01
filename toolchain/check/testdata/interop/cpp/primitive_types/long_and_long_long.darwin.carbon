@@ -85,16 +85,18 @@ import Cpp;
 
 fn F() {
   let carbon_i64: i64 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_implicit_conversion_i64_to_long.carbon:[[@LINE+12]]:35
+  // CHECK:STDERR:        ╭─┤ fail_implicit_conversion_i64_to_long.carbon:[[@LINE+14]]:35
   // CHECK:STDERR: ->     │   let unused cpp_long: Cpp.long = carbon_i64;
-  // CHECK:STDERR:        ·                                   ┳━━━━━━━━━
-  // CHECK:STDERR:        ·                                   ┗━━┫ error: cannot implicitly convert
-  // CHECK:STDERR:        ·                                   │  ┃        expression of type `i64` to
-  // CHECK:STDERR:        ·                                   │  ┃        `Cpp.long`
-  // CHECK:STDERR:        ·                                   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                                   ╰────┤ type `i64` does not implement interface
-  // CHECK:STDERR:        ·                                        │ `Core.ImplicitAs(Cpp.long)`
-  // CHECK:STDERR:        ·                                        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·              ─────────┬────────   ┳━━━━━━━━━
+  // CHECK:STDERR:        ·                       │           ┗━━┫ error: cannot implicitly convert
+  // CHECK:STDERR:        ·                       │           │  ┃        expression of type `i64` to
+  // CHECK:STDERR:        ·                       │           │  ┃        `Cpp.long`
+  // CHECK:STDERR:        ·                       │           │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                       ╰────────────────┤ initializing this binding
+  // CHECK:STDERR:        ·                                   │    │ [InPatternInit]
+  // CHECK:STDERR:        ·                                   ╰──────┤ type `i64` does not implement
+  // CHECK:STDERR:        ·                                          │ interface `Core.ImplicitAs(Cpp.long)`
+  // CHECK:STDERR:        ·                                          │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused cpp_long: Cpp.long = carbon_i64;
@@ -219,21 +221,25 @@ import Cpp;
 fn ComparisonsHeterogeneousLongAndI128() {
   let a: Cpp.long = 1;
   let b: i128 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_todo_comparisons_heterogeneous_long_and_i128.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_comparisons_heterogeneous_long_and_i128.carbon:[[@LINE+10]]:5
   // CHECK:STDERR: ->     │   a == b;
-  // CHECK:STDERR:        ·   ┳━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.EqWith(i128)` in type
-  // CHECK:STDERR:        ·      ┃        `Cpp.long` that does not implement that interface
-  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·   ┬ ━┳ ┬
+  // CHECK:STDERR:        ·   │  ┗━━━━┫ error: type `Cpp.long` does not implement interface
+  // CHECK:STDERR:        ·   │    │  ┃        `Core.EqWith(i128)`
+  // CHECK:STDERR:        ·   │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·   ╰─────────┤ left operand has type `long` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·        ╰──────┤ right operand has type `i128` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a == b;
-  // CHECK:STDERR:        ╭─┤ fail_todo_comparisons_heterogeneous_long_and_i128.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_comparisons_heterogeneous_long_and_i128.carbon:[[@LINE+10]]:5
   // CHECK:STDERR: ->     │   b == a;
-  // CHECK:STDERR:        ·   ┳━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.EqWith(Cpp.long)` in type
-  // CHECK:STDERR:        ·      ┃        `i128` that does not implement that interface
-  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·   ┬ ━┳ ┬
+  // CHECK:STDERR:        ·   │  ┗━━━━┫ error: type `i128` does not implement interface
+  // CHECK:STDERR:        ·   │    │  ┃        `Core.EqWith(Cpp.long)`
+  // CHECK:STDERR:        ·   │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·   ╰─────────┤ left operand has type `i128` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·        ╰──────┤ right operand has type `long` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   b == a;
@@ -335,23 +341,27 @@ fn AssertSameType[T: type](unused a: T, unused b: T) {}
 fn ArithmeticHeterogeneousLongAndI128() {
   let x: Cpp.long = 1;
   let y: i128 = 1;
-  // CHECK:STDERR:        ╭─┤ fail_todo_arithmetic_heterogeneous_long_and_i128.carbon:[[@LINE+9]]:18
+  // CHECK:STDERR:        ╭─┤ fail_todo_arithmetic_heterogeneous_long_and_i128.carbon:[[@LINE+11]]:20
   // CHECK:STDERR: ->     │   AssertSameType(x + y, y);
-  // CHECK:STDERR:        ·                  ┳━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.AddWith(i128)` in type `Cpp.long` that does
-  // CHECK:STDERR:        ·                     ┃        not implement that interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ┳ ┬
+  // CHECK:STDERR:        ·                  │ ┗━━━━┫ error: type `Cpp.long` does not implement interface
+  // CHECK:STDERR:        ·                  │   │  ┃        `Core.AddWith(i128)`
+  // CHECK:STDERR:        ·                  │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰────────┤ left operand has type `long` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                      ╰──────┤ right operand has type `i128`
+  // CHECK:STDERR:        ·                             │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AssertSameType(x + y, y);
-  // CHECK:STDERR:        ╭─┤ fail_todo_arithmetic_heterogeneous_long_and_i128.carbon:[[@LINE+9]]:18
+  // CHECK:STDERR:        ╭─┤ fail_todo_arithmetic_heterogeneous_long_and_i128.carbon:[[@LINE+11]]:20
   // CHECK:STDERR: ->     │   AssertSameType(y + x, y);
-  // CHECK:STDERR:        ·                  ┳━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.AddWith(Cpp.long)` in type `i128` that does
-  // CHECK:STDERR:        ·                     ┃        not implement that interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ┳ ┬
+  // CHECK:STDERR:        ·                  │ ┗━━━━┫ error: type `i128` does not implement interface
+  // CHECK:STDERR:        ·                  │   │  ┃        `Core.AddWith(Cpp.long)`
+  // CHECK:STDERR:        ·                  │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰────────┤ left operand has type `i128` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                      ╰──────┤ right operand has type `long`
+  // CHECK:STDERR:        ·                             │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AssertSameType(y + x, y);
@@ -455,23 +465,27 @@ fn BitWiseHeterogeneousLongAndI128() {
   let a: Cpp.long = 1;
   let b: i128 = 1;
 
-  // CHECK:STDERR:        ╭─┤ fail_todo_bitwise_heterogeneous_long_and_i128.carbon:[[@LINE+9]]:18
+  // CHECK:STDERR:        ╭─┤ fail_todo_bitwise_heterogeneous_long_and_i128.carbon:[[@LINE+11]]:20
   // CHECK:STDERR: ->     │   AssertSameType(a & b, b);
-  // CHECK:STDERR:        ·                  ┳━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.BitAndWith(i128)` in type `Cpp.long` that
-  // CHECK:STDERR:        ·                     ┃        does not implement that interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ┳ ┬
+  // CHECK:STDERR:        ·                  │ ┗━━━━┫ error: type `Cpp.long` does not implement interface
+  // CHECK:STDERR:        ·                  │   │  ┃        `Core.BitAndWith(i128)`
+  // CHECK:STDERR:        ·                  │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰────────┤ left operand has type `long` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                      ╰──────┤ right operand has type `i128`
+  // CHECK:STDERR:        ·                             │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AssertSameType(a & b, b);
-  // CHECK:STDERR:        ╭─┤ fail_todo_bitwise_heterogeneous_long_and_i128.carbon:[[@LINE+9]]:18
+  // CHECK:STDERR:        ╭─┤ fail_todo_bitwise_heterogeneous_long_and_i128.carbon:[[@LINE+11]]:20
   // CHECK:STDERR: ->     │   AssertSameType(b & a, b);
-  // CHECK:STDERR:        ·                  ┳━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.BitAndWith(Cpp.long)` in type `i128` that
-  // CHECK:STDERR:        ·                     ┃        does not implement that interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ┳ ┬
+  // CHECK:STDERR:        ·                  │ ┗━━━━┫ error: type `i128` does not implement interface
+  // CHECK:STDERR:        ·                  │   │  ┃        `Core.BitAndWith(Cpp.long)`
+  // CHECK:STDERR:        ·                  │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰────────┤ left operand has type `i128` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                      ╰──────┤ right operand has type `long`
+  // CHECK:STDERR:        ·                             │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AssertSameType(b & a, b);
@@ -572,12 +586,14 @@ import Cpp;
 
 fn CompoundAssignmentHeterogeneousLongAndI64() {
   var a: Cpp.long = 1;
-  // CHECK:STDERR:        ╭─┤ fail_compound_assignment_heterogeneous_long_and_i64.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_compound_assignment_heterogeneous_long_and_i64.carbon:[[@LINE+10]]:5
   // CHECK:STDERR: ->     │   a += (1 as i64);
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.AddAssignWith(i64)` in
-  // CHECK:STDERR:        ·      ┃        type `Cpp.long` that does not implement that interface
-  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·   ┬ ━┳  ┬───────
+  // CHECK:STDERR:        ·   │  ┗━━━━━┫ error: type `Cpp.long` does not implement interface
+  // CHECK:STDERR:        ·   │     │  ┃        `Core.AddAssignWith(i64)`
+  // CHECK:STDERR:        ·   │     │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·   ╰──────────┤ left operand has type `long` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·         ╰──────┤ right operand has type `i64` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a += (1 as i64);
@@ -636,16 +652,19 @@ fn F() {
 
   // For portability reasons, this is not allowed even though `u64`
   // happens to fit in `unsigned long` on this target.
-  // CHECK:STDERR:        ╭─┤ fail_pass_u64_to_ulong.carbon:[[@LINE+12]]:53
+  // CHECK:STDERR:        ╭─┤ fail_pass_u64_to_ulong.carbon:[[@LINE+15]]:53
   // CHECK:STDERR: ->     │   let unused cpp_unsigned_long: Cpp.unsigned_long = carbon_u64;
-  // CHECK:STDERR:        ·                                                     ━━━━━┳━━━━
-  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        ·              ──────────────────┬─────────────────   ┳━━━━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
   // CHECK:STDERR:        · ┃ error: cannot implicitly convert expression of type `u64` to
   // CHECK:STDERR:        · ┃        `Cpp.unsigned_long`
   // CHECK:STDERR:        · ┃        [ConversionFailure]
-  // CHECK:STDERR:        · ╭────────────────────────────────────────────────────────╯
+  // CHECK:STDERR:        ·                                ╰───────────────────────┤ initializing this
+  // CHECK:STDERR:        ·                                                     │  │ binding
+  // CHECK:STDERR:        ·                                                     │  │ [InPatternInit]
+  // CHECK:STDERR:        · ╭───────────────────────────────────────────────────╯
   // CHECK:STDERR:        · │ type `u64` does not implement interface `Core.ImplicitAs(Cpp.unsigned_long)`
-  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        · │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused cpp_unsigned_long: Cpp.unsigned_long = carbon_u64;

@@ -80,12 +80,13 @@ class J { adapt {}; }
 fn F() {
   let a: J = {} as J;
   let b: J = {} as J;
-  // CHECK:STDERR:        ╭─┤ fail_bit_and_values_no_impl.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_bit_and_values_no_impl.carbon:[[@LINE+9]]:5
   // CHECK:STDERR: ->     │   a & b;
-  // CHECK:STDERR:        ·   ┳━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.BitAndWith(J)` in type `J`
-  // CHECK:STDERR:        ·      ┃        that does not implement that interface
-  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·   ┬ ┳ ┬
+  // CHECK:STDERR:        ·   │ ┗━━━━┫ error: type `J` does not implement interface `Core.BitAndWith(J)`
+  // CHECK:STDERR:        ·   │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·   ╰────────┤ left operand has type `J` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·       ╰──────┤ right operand has type `J` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a & b;

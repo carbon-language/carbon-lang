@@ -72,7 +72,11 @@ interface J {
 }
 
 fn INotJ(generic T: I where .Self impls J) {
-  // CHECK:STDERR:        ╭─┤ fail_name_lookup_through_where_self_impls.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_name_lookup_through_where_self_impls.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ interface I {
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ `I` defined here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   T.G();
   // CHECK:STDERR:        ·   ━┳━
   // CHECK:STDERR:        ·    ┗━━┫ error: member name `G` not found in `I`
@@ -106,7 +110,11 @@ interface A {}
 interface B { fn Bfn(); }
 
 fn F(generic T: A & B) {
-  // CHECK:STDERR:        ╭─┤ fail_facet_type_simple_member_access.carbon:[[@LINE+7]]:6
+  // CHECK:STDERR:        ╭─┤ fail_facet_type_simple_member_access.carbon:[[@LINE+11]]:6
+  // CHECK:STDERR:        │ interface A {}
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ `A` defined here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   T.((A where .Self impls B).Bfn)();
   // CHECK:STDERR:        ·      ━━━━━━━━━━━━━┳━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                   ┗━━┫ error: member name `Bfn` not found in `A`
@@ -115,7 +123,11 @@ fn F(generic T: A & B) {
   // CHECK:STDERR:
   T.((A where .Self impls B).Bfn)();
 
-  // CHECK:STDERR:        ╭─┤ fail_facet_type_simple_member_access.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_facet_type_simple_member_access.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ interface A {}
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ `A` defined here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   (A where .Self impls B).Bfn;
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━┳━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                ┗━━┫ error: member name `Bfn` not found in `A`
@@ -139,7 +151,11 @@ interface J {
 }
 
 fn INotJ[T: I where .Self impls J](x: T) {
-  // CHECK:STDERR:        ╭─┤ fail_name_lookup_instance.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_name_lookup_instance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ interface I {
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ `I` defined here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   x.GNonInstance();
   // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
   // CHECK:STDERR:        ·          ┗━━┫ error: member name `GNonInstance` not found in `I`
@@ -148,7 +164,11 @@ fn INotJ[T: I where .Self impls J](x: T) {
   // CHECK:STDERR:
   x.GNonInstance();
 
-  // CHECK:STDERR:        ╭─┤ fail_name_lookup_instance.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_name_lookup_instance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ interface I {
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ `I` defined here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   x.GSelf();
   // CHECK:STDERR:        ·   ━━━┳━━━
   // CHECK:STDERR:        ·      ┗━━┫ error: member name `GSelf` not found in `I`
@@ -205,7 +225,7 @@ interface J { let B: type; }
 
 fn Test() {
   // TODO: This should pass.
-  // CHECK:STDERR:        ╭─┤ fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+16]]:3
   // CHECK:STDERR:        │ fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
   // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────────────────
   // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
@@ -215,12 +235,16 @@ fn Test() {
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·           ┗━━┫ error: inconsistent deductions for value of generic parameter `T`
   // CHECK:STDERR:        ·              ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        │              Type(I & J where .A = ()));
+  // CHECK:STDERR:        ·              ──────────┬──────────────
+  // CHECK:STDERR:        ·                        ╰──┤ conflicting value for `T` deduced from this argument
+  // CHECK:STDERR:        ·                           │ [DeductionInconsistentArg]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AssertSame(Type((I where .A = ()) & J),
              Type(I & J where .A = ()));
   // TODO: This should pass.
-  // CHECK:STDERR:        ╭─┤ fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+16]]:3
   // CHECK:STDERR:        │ fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
   // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────────────────
   // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
@@ -230,13 +254,17 @@ fn Test() {
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·           ┗━━┫ error: inconsistent deductions for value of generic parameter `T`
   // CHECK:STDERR:        ·              ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        │              Type(I & J where .B = {}));
+  // CHECK:STDERR:        ·              ──────────┬──────────────
+  // CHECK:STDERR:        ·                        ╰──┤ conflicting value for `T` deduced from this argument
+  // CHECK:STDERR:        ·                           │ [DeductionInconsistentArg]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AssertSame(Type(I & (J where .B = {})),
              Type(I & J where .B = {}));
 
   // TODO: This should pass.
-  // CHECK:STDERR:        ╭─┤ fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_compare_equal_with_rewrite.carbon:[[@LINE+16]]:3
   // CHECK:STDERR:        │ fn AssertSame[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
   // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────────────────
   // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
@@ -246,6 +274,10 @@ fn Test() {
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·           ┗━━┫ error: inconsistent deductions for value of generic parameter `T`
   // CHECK:STDERR:        ·              ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        │              Type(I & J where .A = () and .B = {}));
+  // CHECK:STDERR:        ·              ──────────┬──────────────────────────
+  // CHECK:STDERR:        ·                        ╰──┤ conflicting value for `T` deduced from this argument
+  // CHECK:STDERR:        ·                           │ [DeductionInconsistentArg]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   AssertSame(Type((I where .A = ()) & (J where .B = {})),
@@ -263,16 +295,20 @@ interface I {}
 interface J {}
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ fail_compare_not_equal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_compare_not_equal.carbon:[[@LINE+16]]:3
   // CHECK:STDERR:        │ fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
   // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────
   // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
   // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Same(Type(I where .Self impls J), Type(J where .Self impls I));
-  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·           ┗━━┫ error: inconsistent deductions for value of generic parameter `T`
-  // CHECK:STDERR:        ·              ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━┯━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                                  ┗━━━━━┫ error: inconsistent deductions for
+  // CHECK:STDERR:        ·                                     │  ┃        value of generic parameter `T`
+  // CHECK:STDERR:        ·                                     │  ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        ·                                     ╰────┤ conflicting value for `T` deduced
+  // CHECK:STDERR:        ·                                          │ from this argument
+  // CHECK:STDERR:        ·                                          │ [DeductionInconsistentArg]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Same(Type(I where .Self impls J), Type(J where .Self impls I));

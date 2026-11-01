@@ -83,7 +83,7 @@ fn F() {
   // CHECK:STDERR:        ·   │  ┃        `as`
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·   ╰────┤ type `Expect(0)` does not implement interface `Core.As(Expect(1))`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Test(Int32ToInt32(0)) as Expect(1 as i32);

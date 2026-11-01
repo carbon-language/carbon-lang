@@ -21,7 +21,7 @@ interface I {}
 // CHECK:STDERR:        ·      │  ┃        `type`
 // CHECK:STDERR:        ·      │  ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ·      ╰────┤ type `bool` does not implement interface `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·           │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl true as I {}

@@ -62,7 +62,15 @@ class D {
 }
 
 fn B(d: D) {
-  // CHECK:STDERR:        ╭─┤ fail_ambiguous_impls.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_ambiguous_impls.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        │   fn A();
+  // CHECK:STDERR:        ·   ───┬───
+  // CHECK:STDERR:        ·      ╰──┤ candidate `A` declared here [NameAmbiguousCandidate]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   fn A();
+  // CHECK:STDERR:        ·   ───┬───
+  // CHECK:STDERR:        ·      ╰──┤ candidate `A` declared here [NameAmbiguousCandidate]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   D.A();
   // CHECK:STDERR:        ·   ━┳━
   // CHECK:STDERR:        ·    ┗━━┫ error: ambiguous use of name `A` found in multiple extended scopes
@@ -70,7 +78,15 @@ fn B(d: D) {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   D.A();
-  // CHECK:STDERR:        ╭─┤ fail_ambiguous_impls.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_ambiguous_impls.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        │   fn A();
+  // CHECK:STDERR:        ·   ───┬───
+  // CHECK:STDERR:        ·      ╰──┤ candidate `A` declared here [NameAmbiguousCandidate]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   fn A();
+  // CHECK:STDERR:        ·   ───┬───
+  // CHECK:STDERR:        ·      ╰──┤ candidate `A` declared here [NameAmbiguousCandidate]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   d.A();
   // CHECK:STDERR:        ·   ━┳━
   // CHECK:STDERR:        ·    ┗━━┫ error: ambiguous use of name `A` found in multiple extended scopes
@@ -126,7 +142,15 @@ class L {
 }
 
 fn M(l: L) {
-   // CHECK:STDERR:        ╭─┤ fail_ambiguous_impl_and_base.carbon:[[@LINE+7]]:4
+   // CHECK:STDERR:        ╭─┤ fail_ambiguous_impl_and_base.carbon:[[@LINE+15]]:4
+   // CHECK:STDERR:        │   fn K() {}
+   // CHECK:STDERR:        ·   ────┬───
+   // CHECK:STDERR:        ·       ╰──┤ candidate `K` declared here [NameAmbiguousCandidate]
+   // CHECK:STDERR:        ┆
+   // CHECK:STDERR:        │   fn K();
+   // CHECK:STDERR:        ·   ───┬───
+   // CHECK:STDERR:        ·      ╰──┤ candidate `K` declared here [NameAmbiguousCandidate]
+   // CHECK:STDERR:        ┆
    // CHECK:STDERR: ->     │    L.K();
    // CHECK:STDERR:        ·    ━┳━
    // CHECK:STDERR:        ·     ┗━━┫ error: ambiguous use of name `K` found in multiple extended scopes
@@ -134,7 +158,15 @@ fn M(l: L) {
    // CHECK:STDERR:        ╰────
    // CHECK:STDERR:
    L.K();
-   // CHECK:STDERR:        ╭─┤ fail_ambiguous_impl_and_base.carbon:[[@LINE+7]]:4
+   // CHECK:STDERR:        ╭─┤ fail_ambiguous_impl_and_base.carbon:[[@LINE+15]]:4
+   // CHECK:STDERR:        │   fn K() {}
+   // CHECK:STDERR:        ·   ────┬───
+   // CHECK:STDERR:        ·       ╰──┤ candidate `K` declared here [NameAmbiguousCandidate]
+   // CHECK:STDERR:        ┆
+   // CHECK:STDERR:        │   fn K();
+   // CHECK:STDERR:        ·   ───┬───
+   // CHECK:STDERR:        ·      ╰──┤ candidate `K` declared here [NameAmbiguousCandidate]
+   // CHECK:STDERR:        ┆
    // CHECK:STDERR: ->     │    l.K();
    // CHECK:STDERR:        ·    ━┳━
    // CHECK:STDERR:        ·     ┗━━┫ error: ambiguous use of name `K` found in multiple extended scopes
@@ -575,10 +607,10 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B(%d.param: %D) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %D.ref.loc29: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:   %A.ref.loc29: <error> = name_ref A, <error> [concrete = <error>]
-// CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
+// CHECK:STDOUT:   %D.ref.loc37: type = name_ref D, file.%D.decl [concrete = constants.%D]
 // CHECK:STDOUT:   %A.ref.loc37: <error> = name_ref A, <error> [concrete = <error>]
+// CHECK:STDOUT:   %d.ref: %D = name_ref d, %d
+// CHECK:STDOUT:   %A.ref.loc53: <error> = name_ref A, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -939,10 +971,10 @@ fn P(o: O) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @M(%l.param: %L) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %L.ref.loc27: type = name_ref L, file.%L.decl [concrete = constants.%L]
-// CHECK:STDOUT:   %K.ref.loc27: <error> = name_ref K, <error> [concrete = <error>]
-// CHECK:STDOUT:   %l.ref: %L = name_ref l, %l
+// CHECK:STDOUT:   %L.ref.loc35: type = name_ref L, file.%L.decl [concrete = constants.%L]
 // CHECK:STDOUT:   %K.ref.loc35: <error> = name_ref K, <error> [concrete = <error>]
+// CHECK:STDOUT:   %l.ref: %L = name_ref l, %l
+// CHECK:STDOUT:   %K.ref.loc51: <error> = name_ref K, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -45,12 +45,16 @@ class D {
 // The definition of `F(D)` is needed to determine the return type, so it's
 // instantiated at the call.
 fn G(d: D) -> i32 {
-  // CHECK:STDERR:        ╭─┤ fail_instantiation_error.carbon:[[@LINE+13]]:10
+  // CHECK:STDERR:        ╭─┤ fail_instantiation_error.carbon:[[@LINE+17]]:10
   // CHECK:STDERR:        │ fn F[template T: type](x: T) -> auto { return x.n; }
   // CHECK:STDERR:        ·                                               ┬──
   // CHECK:STDERR:        ·                                               ╰──┤ member name `n` not found in
   // CHECK:STDERR:        ·                                                  │ `D`
   // CHECK:STDERR:        ·                                                  │ [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        │
+  // CHECK:STDERR:        │ class D {
+  // CHECK:STDERR:        · ────┬────
+  // CHECK:STDERR:        ·     ╰──┤ `D` defined here [MemberNameNotFoundScope]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return F(d);
   // CHECK:STDERR:        ·          ━━┳━

@@ -131,7 +131,11 @@ impl D as I where .T = C;
 
 interface I {}
 class C {}
-// CHECK:STDERR:        ╭─┤ fail_associated_const_before_interface_definition.carbon:[[@LINE+7]]:19
+// CHECK:STDERR:        ╭─┤ fail_associated_const_before_interface_definition.carbon:[[@LINE+11]]:19
+// CHECK:STDERR:        │ interface I {}
+// CHECK:STDERR:        · ──────┬──────
+// CHECK:STDERR:        ·       ╰──┤ `I` defined here [MemberNameNotFoundSpecificScope]
+// CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ impl D as I where .T = C {}
 // CHECK:STDERR:        ·                   ━┳
 // CHECK:STDERR:        ·                    ┗━━┫ error: member name `T` not found in `I`
@@ -1118,19 +1122,19 @@ impl C as Y {}
 // CHECK:STDOUT:   %I.decl.loc19: type = interface_decl @I [concrete = constants.%I.type] {} {}
 // CHECK:STDOUT:   %C.decl.loc20: type = class_decl @C [concrete = constants.%C] {} {}
 // CHECK:STDOUT:   impl_decl @D.as.<error>.impl [concrete] {} {
-// CHECK:STDOUT:     %D.ref.loc28: type = name_ref D, file.%D.decl [concrete = constants.%D]
-// CHECK:STDOUT:     %I.ref.loc28: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
-// CHECK:STDOUT:     %.Self.frozen.loc28: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %base_facet_type.loc28 = requirement_base_facet_type %I.ref.loc28 [concrete]
-// CHECK:STDOUT:     %.Self.ref.loc28: %I.type = name_ref .Self, %.Self.frozen.loc28 [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.Self.as_type.loc28: type = facet_access_type %.Self.ref.loc28 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %.loc28_19: type = converted %.Self.ref.loc28, %.Self.as_type.loc28 [symbolic_self = constants.%.Self.frozen.as_type]
-// CHECK:STDOUT:     %T.ref.loc28: <error> = name_ref T, <error> [concrete = <error>]
-// CHECK:STDOUT:     %C.ref.loc28: type = name_ref C, file.%C.decl.loc4 [concrete = constants.%C]
-// CHECK:STDOUT:     %rewrite.loc28 = requirement_rewrite %T.ref.loc28, <error> [concrete]
-// CHECK:STDOUT:     %.loc28_13: type = where_expr [concrete = <error>] {
-// CHECK:STDOUT:       %base_facet_type.loc28 = requirement_base_facet_type %I.ref.loc28 [concrete]
-// CHECK:STDOUT:       %rewrite.loc28 = requirement_rewrite %T.ref.loc28, <error> [concrete]
+// CHECK:STDOUT:     %D.ref.loc32: type = name_ref D, file.%D.decl [concrete = constants.%D]
+// CHECK:STDOUT:     %I.ref.loc32: type = name_ref I, file.%I.decl.loc3 [concrete = constants.%I.type]
+// CHECK:STDOUT:     %.Self.frozen.loc32: %I.type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %base_facet_type.loc32 = requirement_base_facet_type %I.ref.loc32 [concrete]
+// CHECK:STDOUT:     %.Self.ref.loc32: %I.type = name_ref .Self, %.Self.frozen.loc32 [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.Self.as_type.loc32: type = facet_access_type %.Self.ref.loc32 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:     %.loc32_19: type = converted %.Self.ref.loc32, %.Self.as_type.loc32 [symbolic_self = constants.%.Self.frozen.as_type]
+// CHECK:STDOUT:     %T.ref.loc32: <error> = name_ref T, <error> [concrete = <error>]
+// CHECK:STDOUT:     %C.ref.loc32: type = name_ref C, file.%C.decl.loc4 [concrete = constants.%C]
+// CHECK:STDOUT:     %rewrite.loc32 = requirement_rewrite %T.ref.loc32, <error> [concrete]
+// CHECK:STDOUT:     %.loc32_13: type = where_expr [concrete = <error>] {
+// CHECK:STDOUT:       %base_facet_type.loc32 = requirement_base_facet_type %I.ref.loc32 [concrete]
+// CHECK:STDOUT:       %rewrite.loc32 = requirement_rewrite %T.ref.loc32, <error> [concrete]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }

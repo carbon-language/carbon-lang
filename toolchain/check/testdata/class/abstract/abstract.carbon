@@ -192,12 +192,17 @@ abstract class Abstract {
 }
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+22]]:28
+  // CHECK:STDERR:        ╭─┤ fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+27]]:28
+  // CHECK:STDERR:        │ abstract class Abstract {
+  // CHECK:STDERR:        · ────────────┬────────────
+  // CHECK:STDERR:        ·             ╰──┤ class declared abstract here [ClassDeclaredAbstractHere]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   let unused l: Abstract = {};
-  // CHECK:STDERR:        ·                            ┳━
-  // CHECK:STDERR:        ·                            ┗━━┫ error: initialization of abstract class
-  // CHECK:STDERR:        ·                               ┃        `Abstract`
-  // CHECK:STDERR:        ·                               ┃        [AbstractTypeInInit]
+  // CHECK:STDERR:        ·              ─────┬─────   ┳━
+  // CHECK:STDERR:        ·                   │        ┗━━┫ error: initialization of abstract class
+  // CHECK:STDERR:        ·                   │           ┃        `Abstract`
+  // CHECK:STDERR:        ·                   │           ┃        [AbstractTypeInInit]
+  // CHECK:STDERR:        ·                   ╰─────────────┤ initializing this binding [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   // CHECK:STDERR:        ╭─┤ fail_abstract_let_temporary_struct_literal.carbon:[[@LINE+14]]:28
@@ -287,7 +292,7 @@ fn Assign(ref a: Abstract) {
   // CHECK:STDERR:        ·       ┳
   // CHECK:STDERR:        ·       ┗━━┫ error: cannot copy value of type `Abstract` [CopyOfUncopyableType]
   // CHECK:STDERR:        ·       ╰────┤ type `Abstract` does not implement interface `Core.Copy`
-  // CHECK:STDERR:        ·            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·            │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a = a;
@@ -994,14 +999,14 @@ fn Assign(ref a: Abstract) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc29_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc29_29.2: ref %Abstract = temporary_storage
-// CHECK:STDOUT:   %.loc29_29.3: init %Abstract to %.loc29_29.2 = class_init () [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc29_29.4: init %Abstract = converted %.loc29_29.1, %.loc29_29.3 [concrete = constants.%Abstract.val]
-// CHECK:STDOUT:   %.loc29_29.5: ref %Abstract = temporary %.loc29_29.2, %.loc29_29.4 [concrete = constants.%.69a]
-// CHECK:STDOUT:   %.loc29_29.6: %Abstract = acquire_value %.loc29_29.5 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc34_29.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc34_29.2: ref %Abstract = temporary_storage
+// CHECK:STDOUT:   %.loc34_29.3: init %Abstract to %.loc34_29.2 = class_init () [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc34_29.4: init %Abstract = converted %.loc34_29.1, %.loc34_29.3 [concrete = constants.%Abstract.val]
+// CHECK:STDOUT:   %.loc34_29.5: ref %Abstract = temporary %.loc34_29.2, %.loc34_29.4 [concrete = constants.%.69a]
+// CHECK:STDOUT:   %.loc34_29.6: %Abstract = acquire_value %.loc34_29.5 [concrete = constants.%Abstract.val]
 // CHECK:STDOUT:   %Abstract.ref: type = name_ref Abstract, file.%Abstract.decl [concrete = constants.%Abstract]
-// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc29_29.6
+// CHECK:STDOUT:   %l: %Abstract = wrapper_binding l, %.loc34_29.6
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %l.patt: %pattern_type.169 = value_binding_pattern l [concrete = constants.%l.patt]
 // CHECK:STDOUT:   }

@@ -51,7 +51,7 @@ import Cpp library "templates.h";
 // CHECK:STDERR:        ·                            │  ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ·                            ╰────┤ type `bool` does not implement interface
 // CHECK:STDERR:        ·                                 │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                 │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                 │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoTypes(Cpp.A, true);

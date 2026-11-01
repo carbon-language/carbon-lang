@@ -30,7 +30,11 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 class C {
-  // CHECK:STDERR:        ╭─┤ fail_require_in_class.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_require_in_class.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ class C {
+  // CHECK:STDERR:        · ────┬────
+  // CHECK:STDERR:        ·     ╰──┤ appears in this definition [RequireEnclosingScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   require impls Y;
   // CHECK:STDERR:        ·   ━━━┳━━━
   // CHECK:STDERR:        ·      ┗━━┫ error: `require` can only be used in an `interface` or `constraint`
@@ -73,7 +77,11 @@ interface Z {
   // TODO: Add `default` modifier.
   fn F() {
     class C {
-      // CHECK:STDERR:        ╭─┤ fail_require_in_nested_class.carbon:[[@LINE+7]]:7
+      // CHECK:STDERR:        ╭─┤ fail_require_in_nested_class.carbon:[[@LINE+11]]:7
+      // CHECK:STDERR:        │     class C {
+      // CHECK:STDERR:        ·     ────┬────
+      // CHECK:STDERR:        ·         ╰──┤ appears in this definition [RequireEnclosingScope]
+      // CHECK:STDERR:        ┆
       // CHECK:STDERR: ->     │       require impls Y;
       // CHECK:STDERR:        ·       ━━┳━━━━
       // CHECK:STDERR:        ·         ┗━━┫ error: `require` can only be used in an `interface` or `constraint`
@@ -119,7 +127,11 @@ class C {
   // The `require` is diagnosed as being in the wrong place. But we can still
   // diagnose issues inside the decl too.
   //
-  // CHECK:STDERR:        ╭─┤ fail_errors_in_require_still_found.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        ╭─┤ fail_errors_in_require_still_found.carbon:[[@LINE+17]]:3
+  // CHECK:STDERR:        │ class C {
+  // CHECK:STDERR:        · ────┬────
+  // CHECK:STDERR:        ·     ╰──┤ appears in this definition [RequireEnclosingScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   require impls Y;
   // CHECK:STDERR:        ·   ━━━┳━━━
   // CHECK:STDERR:        ·      ┗━━┫ error: `require` can only be used in an `interface` or `constraint`
@@ -141,11 +153,13 @@ library "[[@TEST_NAME]]";
 interface Y {}
 
 interface Z {
-  // CHECK:STDERR:        ╭─┤ fail_extend_require_type.carbon:[[@LINE+7]]:18
+  // CHECK:STDERR:        ╭─┤ fail_extend_require_type.carbon:[[@LINE+9]]:18
   // CHECK:STDERR: ->     │   extend require () impls Y;
-  // CHECK:STDERR:        ·                  ━┳
-  // CHECK:STDERR:        ·                   ┗━━┫ error: `extend require impls` with explicit type
-  // CHECK:STDERR:        ·                      ┃        [RequireImplsExtendWithExplicitSelf]
+  // CHECK:STDERR:        ·   ───┬──         ━┳
+  // CHECK:STDERR:        ·      │            ┗━━┫ error: `extend require impls` with explicit type
+  // CHECK:STDERR:        ·      │               ┃        [RequireImplsExtendWithExplicitSelf]
+  // CHECK:STDERR:        ·      ╰─────────────────┤ `extend` supplies the type here
+  // CHECK:STDERR:        ·                        │ [RequireImplsExtendHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend require () impls Y;
@@ -174,7 +188,11 @@ interface Z {
 
   fn F() {
     // The name lookup error still happens, since the `require` is not `extend`.
-    // CHECK:STDERR:        ╭─┤ fail_require_with_nonexistent_type.carbon:[[@LINE+7]]:5
+    // CHECK:STDERR:        ╭─┤ fail_require_with_nonexistent_type.carbon:[[@LINE+11]]:5
+    // CHECK:STDERR:        │ interface Z {
+    // CHECK:STDERR:        · ──────┬──────
+    // CHECK:STDERR:        ·       ╰──┤ `Z` defined here [MemberNameNotFoundSpecificScope]
+    // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     Self.A;
     // CHECK:STDERR:        ·     ━━━┳━━
     // CHECK:STDERR:        ·        ┗━━┫ error: member name `A` not found in `Z`

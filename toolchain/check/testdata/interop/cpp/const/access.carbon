@@ -43,15 +43,15 @@ fn F() {
   // CHECK:STDERR:        ·        ┗━━┫ error: expression is not assignable [AssignmentToNonAssignable]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_const_member_assign.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_const_member_assign.carbon:[[@LINE+11]]:17
   // CHECK:STDERR: ->     │   Cpp.Get().x = 123;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Core.IntLiteral` to
-  // CHECK:STDERR:        ·   │  ┃        `const i32`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(const i32)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                 ┳━━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·                 │  ┃        `Core.IntLiteral` to `const i32`
+  // CHECK:STDERR:        ·                 │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                 ╰────┤ type `Core.IntLiteral` does not implement interface
+  // CHECK:STDERR:        ·                      │ `Core.ImplicitAs(const i32)`
+  // CHECK:STDERR:        ·                      │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.Get().x = 123;

@@ -13,15 +13,15 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_assoc_const_bad_default.carbon
 
 interface I {
-  // CHECK:STDERR:        ╭─┤ fail_assoc_const_bad_default.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_assoc_const_bad_default.carbon:[[@LINE+11]]:17
   // CHECK:STDERR: ->     │   let T: type = 42;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `Core.IntLiteral`
-  // CHECK:STDERR:        ·   │  ┃        to `type`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                 ┳━
+  // CHECK:STDERR:        ·                 ┗━━┫ error: cannot implicitly convert non-type value of type
+  // CHECK:STDERR:        ·                 │  ┃        `Core.IntLiteral` to `type`
+  // CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·                 ╰────┤ type `Core.IntLiteral` does not implement interface
+  // CHECK:STDERR:        ·                      │ `Core.ImplicitAs(type)`
+  // CHECK:STDERR:        ·                      │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let T: type = 42;

@@ -13,15 +13,15 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/operators/builtin/fail_type_mismatch.carbon
 
 fn Main() {
-  // CHECK:STDERR:        ╭─┤ fail_type_mismatch.carbon:[[@LINE+11]]:24
+  // CHECK:STDERR:        ╭─┤ fail_type_mismatch.carbon:[[@LINE+11]]:28
   // CHECK:STDERR: ->     │   var unused x: bool = not 12;
-  // CHECK:STDERR:        ·                        ┳━━━━━
-  // CHECK:STDERR:        ·                        ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                        │  ┃        `Core.IntLiteral` to `bool`
-  // CHECK:STDERR:        ·                        │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                        ╰────┤ type `Core.IntLiteral` does not implement
-  // CHECK:STDERR:        ·                             │ interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·                             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                            ┳━
+  // CHECK:STDERR:        ·                            ┗━━┫ error: cannot implicitly convert expression of
+  // CHECK:STDERR:        ·                            │  ┃        type `Core.IntLiteral` to `bool`
+  // CHECK:STDERR:        ·                            │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                            ╰────┤ type `Core.IntLiteral` does not implement
+  // CHECK:STDERR:        ·                                 │ interface `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·                                 │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused x: bool = not 12;

@@ -30,10 +30,11 @@ library "[[@TEST_NAME]]";
 
 // TODO: We should reject this for using a refutable pattern in an irrefutable pattern context.
 let a: () = ();
-// CHECK:STDERR:        ╭─┤ fail_todo_in_tuple.carbon:[[@LINE+6]]:13
+// CHECK:STDERR:        ╭─┤ fail_todo_in_tuple.carbon:[[@LINE+7]]:13
 // CHECK:STDERR: ->     │ let (b: (), a, c: ()) = ((), (), ());
-// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·     ────────┳────────
 // CHECK:STDERR:        ·             ┗━━┫ error: semantics TODO: `expression pattern` [SemanticsTodo]
+// CHECK:STDERR:        ·             ╰────┤ initializing this pattern [InPatternInit]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let (b: (), a, c: ()) = ((), (), ());
@@ -77,19 +78,22 @@ fn F() {
   // TODO: Replace this with a valid expression pattern once we support refutable
   // pattern contexts.
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_todo_control_flow.carbon:[[@LINE+15]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_control_flow.carbon:[[@LINE+18]]:8
   // CHECK:STDERR: ->     │   let (if true then true else false, true and true) = (true, true);
-  // CHECK:STDERR:        ·        ━━━━━━━━━━━━━━┳━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·                      ┗━━┫ error: semantics TODO: `expression pattern`
-  // CHECK:STDERR:        ·                         ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ·       ─━━━━━━━━━━━━━━┳━━━━━━┯━━━━━━────────────────
+  // CHECK:STDERR:        ·                      ┗━━━━━━━━━┫ error: semantics TODO: `expression pattern`
+  // CHECK:STDERR:        ·                             │  ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ·                             ╰────┤ initializing this pattern [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_todo_control_flow.carbon:[[@LINE+8]]:38
+  // CHECK:STDERR:        ╭─┤ fail_todo_control_flow.carbon:[[@LINE+10]]:38
   // CHECK:STDERR: ->     │   let (if true then true else false, true and true) = (true, true);
-  // CHECK:STDERR:        ·                                      ┳━━━━━━━━━━━━
-  // CHECK:STDERR:        ·                                      ┗━━┫ error: semantics TODO:
-  // CHECK:STDERR:        ·                                         ┃        `expression pattern`
-  // CHECK:STDERR:        ·                                         ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ·       ──────────────────────┬────────┳━━━━━━━━━━━━─
+  // CHECK:STDERR:        ·                             │        ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·                             │           ┃        `expression pattern`
+  // CHECK:STDERR:        ·                             │           ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ·                             ╰─────────────┤ initializing this pattern
+  // CHECK:STDERR:        ·                                           │ [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let (if true then true else false, true and true) = (true, true);
@@ -105,46 +109,46 @@ fn F() {
 // CHECK:STDOUT:   %pattern_type.831: type = pattern_type bool [concrete]
 // CHECK:STDOUT:   %tuple.type: type = tuple_type (bool, bool) [concrete]
 // CHECK:STDOUT:   %pattern_type.860: type = pattern_type %tuple.type [concrete]
-// CHECK:STDOUT:   %.108: %pattern_type.860 = tuple_pattern (@F.%expr_patt.loc23_26, @F.%expr_patt.loc23_43) [concrete]
+// CHECK:STDOUT:   %.108: %pattern_type.860 = tuple_pattern (@F.%expr_patt.loc26_26, @F.%expr_patt.loc26_43) [concrete]
 // CHECK:STDOUT:   %tuple: %tuple.type = tuple_value (%true, %true) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %true.loc23_56: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %true.loc23_62: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc23_66: %tuple.type = tuple_literal (%true.loc23_56, %true.loc23_62) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %true.loc26_56: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %true.loc26_62: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:   %.loc26_66: %tuple.type = tuple_literal (%true.loc26_56, %true.loc26_62) [concrete = constants.%tuple]
 // CHECK:STDOUT:   name_binding_decl {
-// CHECK:STDOUT:     %expr_patt.loc23_26: %pattern_type.831 = expr_pattern %.loc23_8 in [concrete] {
-// CHECK:STDOUT:       %true.loc23_11: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:       if %true.loc23_11 br !if.expr.then else br !if.expr.else
+// CHECK:STDOUT:     %expr_patt.loc26_26: %pattern_type.831 = expr_pattern %.loc26_8 in [concrete] {
+// CHECK:STDOUT:       %true.loc26_11: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:       if %true.loc26_11 br !if.expr.then else br !if.expr.else
 // CHECK:STDOUT:
 // CHECK:STDOUT:     !if.expr.then:
-// CHECK:STDOUT:       %true.loc23_21: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:       br !if.expr.result(%true.loc23_21)
+// CHECK:STDOUT:       %true.loc26_21: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:       br !if.expr.result(%true.loc26_21)
 // CHECK:STDOUT:
 // CHECK:STDOUT:     !if.expr.else:
-// CHECK:STDOUT:       %false.loc23_31: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:       br !if.expr.result(%false.loc23_31)
+// CHECK:STDOUT:       %false.loc26_31: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:       br !if.expr.result(%false.loc26_31)
 // CHECK:STDOUT:
 // CHECK:STDOUT:     !if.expr.result:
-// CHECK:STDOUT:       %.loc23_8: bool = block_arg !if.expr.result [concrete = constants.%true]
+// CHECK:STDOUT:       %.loc26_8: bool = block_arg !if.expr.result [concrete = constants.%true]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %expr_patt.loc23_43: %pattern_type.831 = expr_pattern %.loc23_43 in [concrete] {
-// CHECK:STDOUT:       %true.loc23_38: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:       %false.loc23_43: bool = bool_literal false [concrete = constants.%false]
-// CHECK:STDOUT:       if %true.loc23_38 br !and.rhs else br !.loc23(%false.loc23_43)
+// CHECK:STDOUT:     %expr_patt.loc26_43: %pattern_type.831 = expr_pattern %.loc26_43 in [concrete] {
+// CHECK:STDOUT:       %true.loc26_38: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:       %false.loc26_43: bool = bool_literal false [concrete = constants.%false]
+// CHECK:STDOUT:       if %true.loc26_38 br !and.rhs else br !.loc26(%false.loc26_43)
 // CHECK:STDOUT:
 // CHECK:STDOUT:     !and.rhs:
-// CHECK:STDOUT:       %true.loc23_47: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:       br !.loc23(%true.loc23_47)
+// CHECK:STDOUT:       %true.loc26_47: bool = bool_literal true [concrete = constants.%true]
+// CHECK:STDOUT:       br !.loc26(%true.loc26_47)
 // CHECK:STDOUT:
-// CHECK:STDOUT:     !.loc23:
-// CHECK:STDOUT:       %.loc23_43: bool = block_arg !.loc23 [concrete = constants.%true]
+// CHECK:STDOUT:     !.loc26:
+// CHECK:STDOUT:       %.loc26_43: bool = block_arg !.loc26 [concrete = constants.%true]
 // CHECK:STDOUT:       <elided>
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %.loc23_51: %pattern_type.860 = tuple_pattern (%expr_patt.loc23_26, %expr_patt.loc23_43) [concrete = constants.%.108]
+// CHECK:STDOUT:     %.loc26_51: %pattern_type.860 = tuple_pattern (%expr_patt.loc26_26, %expr_patt.loc26_43) [concrete = constants.%.108]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }

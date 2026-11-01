@@ -86,20 +86,26 @@ class C {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_initializer_mismatch.carbon:[[@LINE+7]]:5
+// CHECK:STDERR:        ╭─┤ fail_initializer_mismatch.carbon:[[@LINE+10]]:5
 // CHECK:STDERR: ->     │ let (x: {}, y: {}) = ({},);
-// CHECK:STDERR:        ·     ━━━━━━━┳━━━━━━
-// CHECK:STDERR:        ·            ┗━━┫ error: tuple pattern expects 2 elements, but tuple literal has 1
-// CHECK:STDERR:        ·               ┃        [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ·     ━━━━━━━┳━━━━━━   ┬────
+// CHECK:STDERR:        ·            ┗━━━━━━━━━━━━┫ error: tuple pattern expects 2 elements, but tuple
+// CHECK:STDERR:        ·                      │  ┃        literal has 1
+// CHECK:STDERR:        ·                      │  ┃        [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ·                      ╰────┤ tuple literal has 1 element
+// CHECK:STDERR:        ·                           │ [TupleLiteralElementCount]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let (x: {}, y: {}) = ({},);
 
-// CHECK:STDERR:        ╭─┤ fail_initializer_mismatch.carbon:[[@LINE+7]]:5
+// CHECK:STDERR:        ╭─┤ fail_initializer_mismatch.carbon:[[@LINE+10]]:5
 // CHECK:STDERR: ->     │ let (a: {}, b: {}) = ({}, {}, {});
-// CHECK:STDERR:        ·     ━━━━━━━┳━━━━━━
-// CHECK:STDERR:        ·            ┗━━┫ error: tuple pattern expects 2 elements, but tuple literal has 3
-// CHECK:STDERR:        ·               ┃        [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ·     ━━━━━━━┳━━━━━━   ┬───────────
+// CHECK:STDERR:        ·            ┗━━━━━━━━━━━━┫ error: tuple pattern expects 2 elements, but tuple
+// CHECK:STDERR:        ·                      │  ┃        literal has 3
+// CHECK:STDERR:        ·                      │  ┃        [TuplePatternSizeDoesntMatchLiteral]
+// CHECK:STDERR:        ·                      ╰────┤ tuple literal has 3 elements
+// CHECK:STDERR:        ·                           │ [TupleLiteralElementCount]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let (a: {}, b: {}) = ({}, {}, {});

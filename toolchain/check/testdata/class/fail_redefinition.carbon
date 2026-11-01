@@ -33,7 +33,11 @@ class Class {
 }
 
 fn Class.F() {}
-// CHECK:STDERR:        ╭─┤ fail_redefinition.carbon:[[@LINE+8]]:10
+// CHECK:STDERR:        ╭─┤ fail_redefinition.carbon:[[@LINE+12]]:10
+// CHECK:STDERR:        │ class Class {
+// CHECK:STDERR:        · ──────┬──────
+// CHECK:STDERR:        ·       ╰──┤ no declaration of `G` in this scope [QualifiedDeclScopeEntity]
+// CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn Class.G() {}
 // CHECK:STDERR:        ·          ┳
 // CHECK:STDERR:        ·          ┗━━┫ error: out-of-line declaration requires a declaration in scoped

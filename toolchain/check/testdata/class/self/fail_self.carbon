@@ -282,7 +282,7 @@ fn CallWrongSelf(ws: WrongSelf) {
   // CHECK:STDERR:        ·   │  ┃        `Class`
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·   ╰────┤ type `WrongSelf` does not implement interface `Core.ImplicitAs(Class)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ws.F();

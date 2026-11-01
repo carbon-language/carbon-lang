@@ -43,7 +43,11 @@ class AdaptNotExtend {
 
 fn F(a: AdaptNotExtend) {
   // `Adapted` is not extended, so lookup for `F` finds nothing.
-  // CHECK:STDERR:        ╭─┤ fail_not_extend.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_not_extend.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ class AdaptNotExtend {
+  // CHECK:STDERR:        · ───────────┬──────────
+  // CHECK:STDERR:        ·            ╰──┤ `AdaptNotExtend` defined here [MemberNameNotFoundScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   a.F();
   // CHECK:STDERR:        ·   ━┳━
   // CHECK:STDERR:        ·    ┗━━┫ error: member name `F` not found in `AdaptNotExtend`
@@ -58,7 +62,11 @@ fn F(a: AdaptNotExtend) {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_misplaced.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_misplaced.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ fn F() {
+  // CHECK:STDERR:        · ────┬───
+  // CHECK:STDERR:        ·     ╰──┤ appears in this definition [ClassSpecificDeclEnclosingScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   adapt i32;
   // CHECK:STDERR:        ·   ━━━━━┳━━━━
   // CHECK:STDERR:        ·        ┗━━┫ error: `adapt` declaration outside class
@@ -69,7 +77,11 @@ fn F() {
 }
 
 interface I {
-  // CHECK:STDERR:        ╭─┤ fail_misplaced.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_misplaced.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ interface I {
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ appears in this definition [ClassSpecificDeclEnclosingScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   adapt i32;
   // CHECK:STDERR:        ·   ━━━━━┳━━━━
   // CHECK:STDERR:        ·        ┗━━┫ error: `adapt` declaration outside class

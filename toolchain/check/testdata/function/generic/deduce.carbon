@@ -103,10 +103,12 @@ library "[[@TEST_NAME]]";
 fn BigStructParam[T: type](unused x: {.c: T, .d: i32, .e: i32}) {}
 
 fn CallBigStructParam() {
-  // CHECK:STDERR:        ╭─┤ fail_deduce_bigger_struct.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_deduce_bigger_struct.carbon:[[@LINE+14]]:3
   // CHECK:STDERR:        │ fn BigStructParam[T: type](unused x: {.c: T, .d: i32, .e: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        · ─────────────────────┬─┬─────────────────────────────────────────
+  // CHECK:STDERR:        ·                      ╰────┤ no value was deduced for this parameter
+  // CHECK:STDERR:        ·                        │  │ [DeductionIncompleteParam]
+  // CHECK:STDERR:        ·                        ╰────┤ while deducing parameters of generic declared here
   // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   BigStructParam({.c = 3, .d = 4});
@@ -125,10 +127,12 @@ library "[[@TEST_NAME]]";
 fn SmallStructParam[T: type](unused x: {.f: T, .g: i32}) {}
 
 fn CallSmallStructParam() {
-  // CHECK:STDERR:        ╭─┤ fail_deduce_smaller_struct.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_deduce_smaller_struct.carbon:[[@LINE+14]]:3
   // CHECK:STDERR:        │ fn SmallStructParam[T: type](unused x: {.f: T, .g: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        · ───────────────────────┬──────────────────────────────────
+  // CHECK:STDERR:        ·                        ╰──┤ no value was deduced for this parameter
+  // CHECK:STDERR:        ·                        │  │ [DeductionIncompleteParam]
+  // CHECK:STDERR:        ·                        ╰────┤ while deducing parameters of generic declared here
   // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   SmallStructParam({.f = 5, .g = 6, .h = 7});
@@ -147,11 +151,14 @@ library "[[@TEST_NAME]]";
 fn WrongNameStructParam[T: type](unused x: {.i: T, .different: i32}) {}
 
 fn CallWrongNameStructParam() {
-  // CHECK:STDERR:        ╭─┤ fail_deduce_struct_wrong_name.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_deduce_struct_wrong_name.carbon:[[@LINE+15]]:3
   // CHECK:STDERR:        │ fn WrongNameStructParam[T: type](unused x: {.i: T, .different: i32}) {}
-  // CHECK:STDERR:        · ─────────────────────────┬────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        · ────────────────────────┬─────────────────────────────────────────────
+  // CHECK:STDERR:        ·                         ╰──┤ no value was deduced for this parameter
+  // CHECK:STDERR:        ·                         │  │ [DeductionIncompleteParam]
+  // CHECK:STDERR:        ·                         ╰────┤ while deducing parameters of generic declared
+  // CHECK:STDERR:        ·                              │ here
+  // CHECK:STDERR:        ·                              │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   WrongNameStructParam({.i = 8, .j = 9});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━
@@ -169,11 +176,14 @@ library "[[@TEST_NAME]]";
 fn WrongOrderStructParam[T: type](unused x: {.first: T, .second: i32}) {}
 
 fn CallWrongOrderStructParam() {
-  // CHECK:STDERR:        ╭─┤ fail_todo_deduce_struct_wrong_order.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_deduce_struct_wrong_order.carbon:[[@LINE+15]]:3
   // CHECK:STDERR:        │ fn WrongOrderStructParam[T: type](unused x: {.first: T, .second: i32}) {}
   // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·                          ╰──┤ no value was deduced for this parameter
+  // CHECK:STDERR:        ·                          │  │ [DeductionIncompleteParam]
+  // CHECK:STDERR:        ·                          ╰────┤ while deducing parameters of generic declared
+  // CHECK:STDERR:        ·                               │ here
+  // CHECK:STDERR:        ·                               │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   WrongOrderStructParam({.second = 11, .first = 10});
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -193,11 +203,14 @@ library "[[@TEST_NAME]]";
 fn ImplicitNotDeducible[T: type, U: type](x: T) -> U;
 
 fn CallImplicitNotDeducible() {
-  // CHECK:STDERR:        ╭─┤ fail_deduce_incomplete.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_deduce_incomplete.carbon:[[@LINE+15]]:3
   // CHECK:STDERR:        │ fn ImplicitNotDeducible[T: type, U: type](x: T) -> U;
-  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────
-  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        · ──────────────────────────┬──────┬───────────────────
+  // CHECK:STDERR:        ·                           ╰─────────┤ while deducing parameters of generic
+  // CHECK:STDERR:        ·                                  │  │ declared here
+  // CHECK:STDERR:        ·                                  │  │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·                                  ╰────┤ no value was deduced for this parameter
+  // CHECK:STDERR:        ·                                       │ [DeductionIncompleteParam]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   ImplicitNotDeducible(42);
   // CHECK:STDERR:        ·   ━━━━━━━━━━━━┳━━━━━━━━━━━
@@ -215,16 +228,20 @@ library "[[@TEST_NAME]]";
 fn ImplicitNotDeducible[T: type](x: T, y: T) -> T;
 
 fn CallImplicitNotDeducible() {
-  // CHECK:STDERR:        ╭─┤ fail_deduce_inconsistent.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_deduce_inconsistent.carbon:[[@LINE+16]]:3
   // CHECK:STDERR:        │ fn ImplicitNotDeducible[T: type](x: T, y: T) -> T;
   // CHECK:STDERR:        · ─────────────────────────┬────────────────────────
   // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
   // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   ImplicitNotDeducible(42, {.x = 12});
-  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·           ┗━━┫ error: inconsistent deductions for value of generic parameter `T`
-  // CHECK:STDERR:        ·              ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━┳━━━━━━━┯━━━━━━━━━
+  // CHECK:STDERR:        ·                    ┗━━━━━━━━━━┫ error: inconsistent deductions for value of
+  // CHECK:STDERR:        ·                            │  ┃        generic parameter `T`
+  // CHECK:STDERR:        ·                            │  ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        ·                            ╰────┤ conflicting value for `T` deduced from this
+  // CHECK:STDERR:        ·                                 │ argument
+  // CHECK:STDERR:        ·                                 │ [DeductionInconsistentArg]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ImplicitNotDeducible(42, {.x = 12});
@@ -1373,7 +1390,7 @@ fn F() {
 // CHECK:STDOUT:   %BigStructParam.ref: %BigStructParam.type = name_ref BigStructParam, file.%BigStructParam.decl [concrete = constants.%BigStructParam]
 // CHECK:STDOUT:   %int_3: Core.IntLiteral = int_value 3 [concrete = constants.%int_3]
 // CHECK:STDOUT:   %int_4: Core.IntLiteral = int_value 4 [concrete = constants.%int_4]
-// CHECK:STDOUT:   %.loc19: %struct_type.c.d = struct_literal (%int_3, %int_4) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc21: %struct_type.c.d = struct_literal (%int_3, %int_4) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1474,7 +1491,7 @@ fn F() {
 // CHECK:STDOUT:   %int_5: Core.IntLiteral = int_value 5 [concrete = constants.%int_5]
 // CHECK:STDOUT:   %int_6: Core.IntLiteral = int_value 6 [concrete = constants.%int_6]
 // CHECK:STDOUT:   %int_7: Core.IntLiteral = int_value 7 [concrete = constants.%int_7]
-// CHECK:STDOUT:   %.loc19: %struct_type.f.g.h = struct_literal (%int_5, %int_6, %int_7) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc21: %struct_type.f.g.h = struct_literal (%int_5, %int_6, %int_7) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1573,7 +1590,7 @@ fn F() {
 // CHECK:STDOUT:   %WrongNameStructParam.ref: %WrongNameStructParam.type = name_ref WrongNameStructParam, file.%WrongNameStructParam.decl [concrete = constants.%WrongNameStructParam]
 // CHECK:STDOUT:   %int_8: Core.IntLiteral = int_value 8 [concrete = constants.%int_8]
 // CHECK:STDOUT:   %int_9: Core.IntLiteral = int_value 9 [concrete = constants.%int_9]
-// CHECK:STDOUT:   %.loc19: %struct_type.i.j = struct_literal (%int_8, %int_9) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc22: %struct_type.i.j = struct_literal (%int_8, %int_9) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1672,7 +1689,7 @@ fn F() {
 // CHECK:STDOUT:   %WrongOrderStructParam.ref: %WrongOrderStructParam.type = name_ref WrongOrderStructParam, file.%WrongOrderStructParam.decl [concrete = constants.%WrongOrderStructParam]
 // CHECK:STDOUT:   %int_11: Core.IntLiteral = int_value 11 [concrete = constants.%int_11]
 // CHECK:STDOUT:   %int_10: Core.IntLiteral = int_value 10 [concrete = constants.%int_10]
-// CHECK:STDOUT:   %.loc19: %struct_type.second.first = struct_literal (%int_11, %int_10) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc22: %struct_type.second.first = struct_literal (%int_11, %int_10) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1877,7 +1894,7 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitNotDeducible.ref: %ImplicitNotDeducible.type = name_ref ImplicitNotDeducible, file.%ImplicitNotDeducible.decl [concrete = constants.%ImplicitNotDeducible]
 // CHECK:STDOUT:   %int_42: Core.IntLiteral = int_value 42 [concrete = constants.%int_42]
 // CHECK:STDOUT:   %int_12: Core.IntLiteral = int_value 12 [concrete = constants.%int_12]
-// CHECK:STDOUT:   %.loc19: %struct_type.x = struct_literal (%int_12) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc23: %struct_type.x = struct_literal (%int_12) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

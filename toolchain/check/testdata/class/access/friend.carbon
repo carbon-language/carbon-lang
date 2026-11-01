@@ -179,7 +179,11 @@ library "[[@TEST_NAME]]";
 class C;
 
 interface I {
-  // CHECK:STDERR:        ╭─┤ fail_friend_not_in_class.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_friend_not_in_class.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ interface I {
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ appears in this definition [FriendEnclosingScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   friend C;
   // CHECK:STDERR:        ·   ━━━━┳━━━━
   // CHECK:STDERR:        ·       ┗━━┫ error: `friend` declaration in non-class scope

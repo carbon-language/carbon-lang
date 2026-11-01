@@ -51,7 +51,7 @@ class B {
     // CHECK:STDERR:        ·             │  ┃        [ConversionFailureNonTypeToFacet]
     // CHECK:STDERR:        ·             ╰────┤ type `<type of B in B as I>` does not implement interface
     // CHECK:STDERR:        ·                  │ `Core.ImplicitAs(type)`
-    // CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+    // CHECK:STDERR:        ·                  │ [MissingImplForType]
     // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     fn A(x: B);

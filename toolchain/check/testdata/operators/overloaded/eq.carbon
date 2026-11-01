@@ -54,24 +54,26 @@ package FailNoImpl;
 class D {};
 
 fn TestEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+9]]:12
   // CHECK:STDERR: ->     │   return a == b;
-  // CHECK:STDERR:        ·          ┳━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.EqWith(D)` in type
-  // CHECK:STDERR:        ·             ┃        `D` that does not implement that interface
-  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·          ┬ ━┳ ┬
+  // CHECK:STDERR:        ·          │  ┗━━━━┫ error: type `D` does not implement interface `Core.EqWith(D)`
+  // CHECK:STDERR:        ·          │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·          ╰─────────┤ left operand has type `D` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·               ╰──────┤ right operand has type `D` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a == b;
 }
 
 fn TestNotEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+9]]:12
   // CHECK:STDERR: ->     │   return a != b;
-  // CHECK:STDERR:        ·          ┳━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.EqWith(D)` in type
-  // CHECK:STDERR:        ·             ┃        `D` that does not implement that interface
-  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·          ┬ ━┳ ┬
+  // CHECK:STDERR:        ·          │  ┗━━━━┫ error: type `D` does not implement interface `Core.EqWith(D)`
+  // CHECK:STDERR:        ·          │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·          ╰─────────┤ left operand has type `D` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·               ╰──────┤ right operand has type `D` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a != b;
@@ -90,24 +92,26 @@ impl C as Core.EqWith(C) {
 }
 
 fn TestRhsBad(a: C, b: D) -> bool {
-  // CHECK:STDERR:        ╭─┤ fail_no_impl_for_args.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR:        ╭─┤ fail_no_impl_for_args.carbon:[[@LINE+9]]:12
   // CHECK:STDERR: ->     │   return a == b;
-  // CHECK:STDERR:        ·          ┳━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.EqWith(D)` in type
-  // CHECK:STDERR:        ·             ┃        `C` that does not implement that interface
-  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·          ┬ ━┳ ┬
+  // CHECK:STDERR:        ·          │  ┗━━━━┫ error: type `C` does not implement interface `Core.EqWith(D)`
+  // CHECK:STDERR:        ·          │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·          ╰─────────┤ left operand has type `C` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·               ╰──────┤ right operand has type `D` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a == b;
 }
 
 fn TestLhsBad(a: D, b: C) -> bool {
-  // CHECK:STDERR:        ╭─┤ fail_no_impl_for_args.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR:        ╭─┤ fail_no_impl_for_args.carbon:[[@LINE+9]]:12
   // CHECK:STDERR: ->     │   return a != b;
-  // CHECK:STDERR:        ·          ┳━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.EqWith(C)` in type
-  // CHECK:STDERR:        ·             ┃        `D` that does not implement that interface
-  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·          ┬ ━┳ ┬
+  // CHECK:STDERR:        ·          │  ┗━━━━┫ error: type `D` does not implement interface `Core.EqWith(C)`
+  // CHECK:STDERR:        ·          │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·          ╰─────────┤ left operand has type `D` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·               ╰──────┤ right operand has type `C` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a != b;

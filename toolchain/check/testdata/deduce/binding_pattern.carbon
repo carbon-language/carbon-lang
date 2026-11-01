@@ -31,7 +31,7 @@ fn F(unused generic U: type, generic V: type) {
   // CHECK:STDERR:        ·               │  ┃        `V`
   // CHECK:STDERR:        ·               │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·               ╰────┤ type `{}` does not implement interface `Core.ImplicitAs(V)`
-  // CHECK:STDERR:        ·                    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                    │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C(V).Create({});

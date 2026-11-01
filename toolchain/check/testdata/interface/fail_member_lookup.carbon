@@ -39,7 +39,7 @@ fn F() {
   // CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·                 ╰────┤ type `<associated entity in Interface>` does not
   // CHECK:STDERR:        ·                      │ implement interface `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                      │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused v: Interface.T;

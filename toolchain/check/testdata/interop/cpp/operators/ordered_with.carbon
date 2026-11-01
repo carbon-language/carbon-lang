@@ -118,13 +118,13 @@ library "[[@TEST_NAME]]";
 
 import Cpp inline '''c++
 struct LessReturnsBoolish {
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+23]]:8
   // CHECK:STDERR: ->     │   auto operator<(LessReturnsBoolish) const -> int;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `i32` to `bool`
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `i32` does not implement interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
@@ -133,9 +133,12 @@ struct LessReturnsBoolish {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   fn Less(self, other: Other) -> bool;
-  // CHECK:STDERR:        ·   ─────────────┬──────────────────────
-  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ──────────────────┬────────────┬────
+  // CHECK:STDERR:        ·                     ╰───────────────┤ while building thunk to match the
+  // CHECK:STDERR:        ·                                  │  │ signature of this function
+  // CHECK:STDERR:        ·                                  │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                                  ╰────┤ return type of function is `bool`
+  // CHECK:STDERR:        ·                                       │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator<(LessReturnsBoolish) const -> int;
@@ -146,7 +149,7 @@ struct LessReturnsBoolish {
 
 struct LessEqualReturnsBoolish {
   auto operator<(LessEqualReturnsBoolish) const -> bool;
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+26]]:8
   // CHECK:STDERR: ->     │   auto operator<=(LessEqualReturnsBoolish) const -> int*;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type
@@ -154,7 +157,7 @@ struct LessEqualReturnsBoolish {
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `Core.Optional(i32* as Core.OptionalStorage)` does not
   // CHECK:STDERR:        ·             │ implement interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
@@ -163,9 +166,13 @@ struct LessEqualReturnsBoolish {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   fn LessOrEquivalent(self, other: Other) -> bool;
-  // CHECK:STDERR:        ·   ─────────────┬──────────────────────────────────
-  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ────────────────────────┬──────────────────┬────
+  // CHECK:STDERR:        ·                           ╰─────────────────────┤ while building thunk to match
+  // CHECK:STDERR:        ·                                              │  │ the signature of this function
+  // CHECK:STDERR:        ·                                              │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                                              ╰────┤ return type of function is
+  // CHECK:STDERR:        ·                                                   │ `bool`
+  // CHECK:STDERR:        ·                                                   │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator<=(LessEqualReturnsBoolish) const -> int*;
@@ -178,7 +185,7 @@ struct GreaterEqualReturnsBoolish {
   auto operator<(GreaterEqualReturnsBoolish) const -> bool;
   auto operator<=(GreaterEqualReturnsBoolish) const -> bool;
   auto operator>(GreaterEqualReturnsBoolish) const -> bool;
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+27]]:8
   // CHECK:STDERR: ->     │   auto operator>=(GreaterEqualReturnsBoolish) const -> Result;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `Cpp.Result` to
@@ -186,7 +193,7 @@ struct GreaterEqualReturnsBoolish {
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `Cpp.Result` does not implement interface
   // CHECK:STDERR:        ·             │ `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
@@ -195,9 +202,14 @@ struct GreaterEqualReturnsBoolish {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   fn GreaterOrEquivalent(self, other: Other) -> bool;
-  // CHECK:STDERR:        ·   ─────────────┬─────────────────────────────────────
-  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ─────────────────────────┬────────────────────┬────
+  // CHECK:STDERR:        ·                            ╰───────────────────────┤ while building thunk to
+  // CHECK:STDERR:        ·                                                 │  │ match the signature of this
+  // CHECK:STDERR:        ·                                                 │  │ function
+  // CHECK:STDERR:        ·                                                 │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                                                 ╰────┤ return type of function
+  // CHECK:STDERR:        ·                                                      │ is `bool`
+  // CHECK:STDERR:        ·                                                      │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator>=(GreaterEqualReturnsBoolish) const -> Result;
@@ -215,13 +227,13 @@ struct GreaterReturnsBoolish {
 };
 
 struct AllReturnBoolish {
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+23]]:8
   // CHECK:STDERR: ->     │   auto operator<(AllReturnBoolish) const -> double;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `f64` to `bool`
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `f64` does not implement interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
@@ -230,19 +242,22 @@ struct AllReturnBoolish {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   fn Less(self, other: Other) -> bool;
-  // CHECK:STDERR:        ·   ─────────────┬──────────────────────
-  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ──────────────────┬────────────┬────
+  // CHECK:STDERR:        ·                     ╰───────────────┤ while building thunk to match the
+  // CHECK:STDERR:        ·                                  │  │ signature of this function
+  // CHECK:STDERR:        ·                                  │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                                  ╰────┤ return type of function is `bool`
+  // CHECK:STDERR:        ·                                       │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator<(AllReturnBoolish) const -> double;
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+24]]:8
   // CHECK:STDERR: ->     │   auto operator<=(AllReturnBoolish) const -> double;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `f64` to `bool`
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `f64` does not implement interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
@@ -251,19 +266,23 @@ struct AllReturnBoolish {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   fn LessOrEquivalent(self, other: Other) -> bool;
-  // CHECK:STDERR:        ·   ─────────────┬──────────────────────────────────
-  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ────────────────────────┬──────────────────┬────
+  // CHECK:STDERR:        ·                           ╰─────────────────────┤ while building thunk to match
+  // CHECK:STDERR:        ·                                              │  │ the signature of this function
+  // CHECK:STDERR:        ·                                              │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                                              ╰────┤ return type of function is
+  // CHECK:STDERR:        ·                                                   │ `bool`
+  // CHECK:STDERR:        ·                                                   │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator<=(AllReturnBoolish) const -> double;
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+23]]:8
   // CHECK:STDERR: ->     │   auto operator>(AllReturnBoolish) const -> double;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `f64` to `bool`
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `f64` does not implement interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
@@ -272,19 +291,22 @@ struct AllReturnBoolish {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   fn Greater(self, other: Other) -> bool;
-  // CHECK:STDERR:        ·   ─────────────┬─────────────────────────
-  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ───────────────────┬──────────────┬────
+  // CHECK:STDERR:        ·                      ╰─────────────────┤ while building thunk to match the
+  // CHECK:STDERR:        ·                                     │  │ signature of this function
+  // CHECK:STDERR:        ·                                     │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                                     ╰────┤ return type of function is `bool`
+  // CHECK:STDERR:        ·                                          │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator>(AllReturnBoolish) const -> double;
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+25]]:8
   // CHECK:STDERR: ->     │   auto operator>=(AllReturnBoolish) const -> double;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `f64` to `bool`
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `f64` does not implement interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
@@ -293,9 +315,14 @@ struct AllReturnBoolish {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   fn GreaterOrEquivalent(self, other: Other) -> bool;
-  // CHECK:STDERR:        ·   ─────────────┬─────────────────────────────────────
-  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ─────────────────────────┬────────────────────┬────
+  // CHECK:STDERR:        ·                            ╰───────────────────────┤ while building thunk to
+  // CHECK:STDERR:        ·                                                 │  │ match the signature of this
+  // CHECK:STDERR:        ·                                                 │  │ function
+  // CHECK:STDERR:        ·                                                 │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                                                 ╰────┤ return type of function
+  // CHECK:STDERR:        ·                                                      │ is `bool`
+  // CHECK:STDERR:        ·                                                      │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator>=(AllReturnBoolish) const -> double;

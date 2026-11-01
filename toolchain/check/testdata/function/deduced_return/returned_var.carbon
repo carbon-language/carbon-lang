@@ -79,13 +79,15 @@ library "[[@TEST_NAME]]";
 
 fn F(b: bool) -> auto {
   if (b) {
-    // CHECK:STDERR:        ╭─┤ fail_return_before_returned_var.carbon:[[@LINE+13]]:5
+    // CHECK:STDERR:        ╭─┤ fail_return_before_returned_var.carbon:[[@LINE+15]]:12
     // CHECK:STDERR: ->     │     return true;
-    // CHECK:STDERR:        ·     ━━━━┳━━━━━━━
-    // CHECK:STDERR:        ·         ┗━━┫ error: cannot implicitly convert expression of type `bool` to `i32`
-    // CHECK:STDERR:        ·         │  ┃        [ConversionFailure]
-    // CHECK:STDERR:        ·         ╰────┤ type `bool` does not implement interface `Core.ImplicitAs(i32)`
-    // CHECK:STDERR:        ·              │ [MissingImplInMemberAccessInContext]
+    // CHECK:STDERR:        ·            ┳━━━
+    // CHECK:STDERR:        ·            ┗━━┫ error: cannot implicitly convert expression of type `bool` to
+    // CHECK:STDERR:        ·            │  ┃        `i32`
+    // CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
+    // CHECK:STDERR:        ·            ╰────┤ type `bool` does not implement interface
+    // CHECK:STDERR:        ·                 │ `Core.ImplicitAs(i32)`
+    // CHECK:STDERR:        ·                 │ [MissingImplForType]
     // CHECK:STDERR:        │   }
     // CHECK:STDERR:        │   returned var r: i32 = 0;
     // CHECK:STDERR:        ·                   ─┬─

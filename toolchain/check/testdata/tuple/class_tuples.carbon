@@ -21,15 +21,16 @@ class D {}
 
 var c: C;
 var d: D;
-// CHECK:STDERR:        ╭─┤ fail_element_type_mismatch.carbon:[[@LINE+11]]:19
+// CHECK:STDERR:        ╭─┤ fail_element_type_mismatch.carbon:[[@LINE+12]]:20
 // CHECK:STDERR: ->     │ var x: (C*, C*) = (c, d);
-// CHECK:STDERR:        ·                   ┳━━━━━
-// CHECK:STDERR:        ·                   ┗━━┫ error: cannot implicitly convert expression of type `C`
-// CHECK:STDERR:        ·                   │  ┃        to `C*`
-// CHECK:STDERR:        ·                   │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                   ╰────┤ type `C` does not implement interface
-// CHECK:STDERR:        ·                        │ `Core.ImplicitAs(C*)`
-// CHECK:STDERR:        ·                        │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · ───────┬───────    ┳
+// CHECK:STDERR:        ·        │           ┗━━┫ error: cannot implicitly convert expression of type `C`
+// CHECK:STDERR:        ·        │           │  ┃        to `C*`
+// CHECK:STDERR:        ·        │           │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·        ╰────────────────┤ initializing this variable [InPatternInit]
+// CHECK:STDERR:        ·                    ╰──────┤ type `C` does not implement interface
+// CHECK:STDERR:        ·                           │ `Core.ImplicitAs(C*)`
+// CHECK:STDERR:        ·                           │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: (C*, C*) = (c, d);
@@ -61,15 +62,16 @@ library "[[@TEST_NAME]]";
 
 class C {}
 
-// CHECK:STDERR:        ╭─┤ fail_type_assign.carbon:[[@LINE+11]]:16
+// CHECK:STDERR:        ╭─┤ fail_type_assign.carbon:[[@LINE+12]]:17
 // CHECK:STDERR: ->     │ var x: (C, ) = (C, );
-// CHECK:STDERR:        ·                ┳━━━━
-// CHECK:STDERR:        ·                ┗━━┫ error: cannot implicitly convert expression of type `type`
-// CHECK:STDERR:        ·                │  ┃        to `C`
-// CHECK:STDERR:        ·                │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                ╰────┤ type `type` does not implement interface
-// CHECK:STDERR:        ·                     │ `Core.ImplicitAs(C)`
-// CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · ──────┬─────    ┳
+// CHECK:STDERR:        ·       │         ┗━━┫ error: cannot implicitly convert expression of type `type`
+// CHECK:STDERR:        ·       │         │  ┃        to `C`
+// CHECK:STDERR:        ·       │         │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·       ╰──────────────┤ initializing this variable [InPatternInit]
+// CHECK:STDERR:        ·                 ╰──────┤ type `type` does not implement interface
+// CHECK:STDERR:        ·                        │ `Core.ImplicitAs(C)`
+// CHECK:STDERR:        ·                        │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: (C, ) = (C, );
@@ -87,7 +89,7 @@ var c: C;
 // CHECK:STDERR:        ·        │  ┃        `type`
 // CHECK:STDERR:        ·        │  ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ·        ╰────┤ type `C` does not implement interface `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·             │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: c;

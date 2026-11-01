@@ -25,11 +25,13 @@ import Lib;
 fn A[T: Lib.Z](unused x: {.a: T}) {}
 
 fn B() {
-  // CHECK:STDERR:        ╭─┤ fail_deduce_imported_function.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_deduce_imported_function.carbon:[[@LINE+14]]:3
   // CHECK:STDERR:        │ fn A[T: Lib.Z](unused x: {.a: T}) {}
-  // CHECK:STDERR:        · ─────────────────┬─────────────────
-  // CHECK:STDERR:        ·                  ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                     │ [DeductionGenericHere]
+  // CHECK:STDERR:        · ─────────┬───────┬─────────────────
+  // CHECK:STDERR:        ·          ╰──────────┤ no value was deduced for this parameter
+  // CHECK:STDERR:        ·                  │  │ [DeductionIncompleteParam]
+  // CHECK:STDERR:        ·                  ╰────┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                       │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   A({.b = {}});
   // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
@@ -39,7 +41,7 @@ fn B() {
   // CHECK:STDERR:
   A({.b = {}});
 
-  // CHECK:STDERR:        ╭─┤ fail_deduce_imported_function.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        ╭─┤ fail_deduce_imported_function.carbon:[[@LINE+15]]:3
   // CHECK:STDERR: ->     │   Lib.A({.b = {}});
   // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━
   // CHECK:STDERR:        ·           ┗━━┫ error: cannot deduce value for generic parameter `T`
@@ -47,9 +49,11 @@ fn B() {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ lib.carbon
   // CHECK:STDERR:        │ fn A[T: Z](unused x: {.a: T}) {}
-  // CHECK:STDERR:        · ───────────────┬───────────────
-  // CHECK:STDERR:        ·                ╰──┤ while deducing parameters of generic declared here
-  // CHECK:STDERR:        ·                   │ [DeductionGenericHere]
+  // CHECK:STDERR:        · ───────┬───────┬───────────────
+  // CHECK:STDERR:        ·        ╰──────────┤ no value was deduced for this parameter
+  // CHECK:STDERR:        ·                │  │ [DeductionIncompleteParam]
+  // CHECK:STDERR:        ·                ╰────┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                     │ [DeductionGenericHere]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Lib.A({.b = {}});
@@ -242,13 +246,13 @@ fn B() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc19: %A.type.9f4 = name_ref A, file.%A.decl [concrete = constants.%A.921]
-// CHECK:STDOUT:   %.loc19_12: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc19_13: %struct_type.b = struct_literal (%.loc19_12) [concrete = constants.%struct]
+// CHECK:STDOUT:   %A.ref.loc21: %A.type.9f4 = name_ref A, file.%A.decl [concrete = constants.%A.921]
+// CHECK:STDOUT:   %.loc21_12: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc21_13: %struct_type.b = struct_literal (%.loc21_12) [concrete = constants.%struct]
 // CHECK:STDOUT:   %Lib.ref: <namespace> = name_ref Lib, imports.%Lib [concrete = imports.%Lib]
-// CHECK:STDOUT:   %A.ref.loc34: %A.type.42a = name_ref A, imports.%Lib.A [concrete = constants.%A.b9a]
-// CHECK:STDOUT:   %.loc34_16: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc34_17: %struct_type.b = struct_literal (%.loc34_16) [concrete = constants.%struct]
+// CHECK:STDOUT:   %A.ref.loc38: %A.type.42a = name_ref A, imports.%Lib.A [concrete = constants.%A.b9a]
+// CHECK:STDOUT:   %.loc38_16: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc38_17: %struct_type.b = struct_literal (%.loc38_16) [concrete = constants.%struct]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

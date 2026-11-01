@@ -65,7 +65,11 @@ fn If1(b: bool) -> bool {
     return false;
   } else {
   }
-// CHECK:STDERR:        ╭─┤ fail_reachable_fallthrough.carbon:[[@LINE+7]]:1
+// CHECK:STDERR:        ╭─┤ fail_reachable_fallthrough.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn If1(b: bool) -> bool {
+// CHECK:STDERR:        ·                    ──┬─
+// CHECK:STDERR:        ·                      ╰──┤ return type declared here [MissingReturnStatementType]
+// CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ }
 // CHECK:STDERR:        · ┳
 // CHECK:STDERR:        · ┗━━┫ error: missing `return` at end of function with declared return type
@@ -79,7 +83,11 @@ fn If2(b: bool) -> bool {
   } else {
     return true;
   }
-// CHECK:STDERR:        ╭─┤ fail_reachable_fallthrough.carbon:[[@LINE+7]]:1
+// CHECK:STDERR:        ╭─┤ fail_reachable_fallthrough.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn If2(b: bool) -> bool {
+// CHECK:STDERR:        ·                    ──┬─
+// CHECK:STDERR:        ·                      ╰──┤ return type declared here [MissingReturnStatementType]
+// CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ }
 // CHECK:STDERR:        · ┳
 // CHECK:STDERR:        · ┗━━┫ error: missing `return` at end of function with declared return type
@@ -92,7 +100,11 @@ fn If3(b: bool) -> bool {
   if (b) {
     return false;
   }
-// CHECK:STDERR:        ╭─┤ fail_reachable_fallthrough.carbon:[[@LINE+7]]:1
+// CHECK:STDERR:        ╭─┤ fail_reachable_fallthrough.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │ fn If3(b: bool) -> bool {
+// CHECK:STDERR:        ·                    ──┬─
+// CHECK:STDERR:        ·                      ╰──┤ return type declared here [MissingReturnStatementType]
+// CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ }
 // CHECK:STDERR:        · ┳
 // CHECK:STDERR:        · ┗━━┫ error: missing `return` at end of function with declared return type

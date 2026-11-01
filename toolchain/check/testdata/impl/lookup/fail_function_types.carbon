@@ -36,7 +36,7 @@ fn F() {
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `<type of G in () as Z>*` does not implement interface
   // CHECK:STDERR:        ·        │ `Core.As(type)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   &(().(Z.G)) as type;
@@ -61,7 +61,7 @@ fn F() {
   // CHECK:STDERR:        ·   │  ┃        with `as`
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `<type of F>*` does not implement interface `Core.As(type)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   &F as type;

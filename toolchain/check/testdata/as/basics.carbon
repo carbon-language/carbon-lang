@@ -114,7 +114,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ·             │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·             ╰────┤ type `Core.IntLiteral` does not implement interface
 // CHECK:STDERR:        ·                  │ `Core.As({})`
-// CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                  │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: {} = 1 as {};
@@ -131,7 +131,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ·                                │  ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ·                                ╰────┤ type `{.x: ()}` does not implement
 // CHECK:STDERR:        ·                                     │ interface `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                     │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                     │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let n: {.x: ()} = {.x = ()} as {.x = ()};

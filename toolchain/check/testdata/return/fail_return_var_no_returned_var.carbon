@@ -13,7 +13,11 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_return_var_no_returned_var.carbon
 
 fn Procedure() -> {} {
-  // CHECK:STDERR:        ╭─┤ fail_return_var_no_returned_var.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_return_var_no_returned_var.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ fn Procedure() -> {} {
+  // CHECK:STDERR:        ·                   ─┬
+  // CHECK:STDERR:        ·                    ╰──┤ return type of function is `{}` [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return var;
   // CHECK:STDERR:        ·   ━━━━━┳━━━━━
   // CHECK:STDERR:        ·        ┗━━┫ error: `return var;` with no `returned var` in scope

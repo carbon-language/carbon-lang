@@ -461,15 +461,16 @@ library "[[@TEST_NAME]]";
 import Cpp library "return_const_lvalue_ref.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+11]]:29
+  // CHECK:STDERR:        ╭─┤ fail_call_return_const_lvalue_ref_const_correctness.carbon:[[@LINE+12]]:29
   // CHECK:STDERR: ->     │   let unused ref s: Cpp.S = Cpp.ReturnConstLValue();
-  // CHECK:STDERR:        ·                             ┳━━━━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·                             ┗━━┫ error: cannot implicitly convert expression of
-  // CHECK:STDERR:        ·                             │  ┃        type `const Cpp.S` to `Cpp.S`
-  // CHECK:STDERR:        ·                             │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                             ╰────┤ type `const Cpp.S` does not implement
-  // CHECK:STDERR:        ·                                  │ interface `Core.ImplicitAs(Cpp.S)`
-  // CHECK:STDERR:        ·                                  │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·              ──────┬─────   ┳━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                    │        ┗━━┫ error: cannot implicitly convert expression of
+  // CHECK:STDERR:        ·                    │        │  ┃        type `const Cpp.S` to `Cpp.S`
+  // CHECK:STDERR:        ·                    │        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                    ╰─────────────┤ initializing this binding [InPatternInit]
+  // CHECK:STDERR:        ·                             ╰──────┤ type `const Cpp.S` does not implement
+  // CHECK:STDERR:        ·                                    │ interface `Core.ImplicitAs(Cpp.S)`
+  // CHECK:STDERR:        ·                                    │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused ref s: Cpp.S = Cpp.ReturnConstLValue();

@@ -14,15 +14,15 @@
 
 fn Main() {
   var a: i32 = 3;
-  // CHECK:STDERR:        ╭─┤ fail_type_mismatch_assignment.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_type_mismatch_assignment.carbon:[[@LINE+11]]:7
   // CHECK:STDERR: ->     │   a = 5.6;
-  // CHECK:STDERR:        ·   ┳━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Core.FloatLiteral`
-  // CHECK:STDERR:        ·   │  ┃        to `i32`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.FloatLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·       ┳━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·       │  ┃        `Core.FloatLiteral` to `i32`
+  // CHECK:STDERR:        ·       │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·       ╰────┤ type `Core.FloatLiteral` does not implement interface
+  // CHECK:STDERR:        ·            │ `Core.ImplicitAs(i32)`
+  // CHECK:STDERR:        ·            │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a = 5.6;

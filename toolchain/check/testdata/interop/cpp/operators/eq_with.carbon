@@ -93,13 +93,13 @@ library "[[@TEST_NAME]]";
 import Cpp inline '''c++
 struct NeqBoolish {
   auto operator==(NeqBoolish) const -> bool;
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+24]]:8
   // CHECK:STDERR: ->     │   auto operator!=(NeqBoolish) const -> int;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `i32` to `bool`
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `i32` does not implement interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
@@ -108,16 +108,20 @@ struct NeqBoolish {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   default fn NotEqual(self, other: Other) -> bool {
-  // CHECK:STDERR:        ·   ─────────────┬───────────────────────────────────
-  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ────────────────────────┬──────────────────┬─────
+  // CHECK:STDERR:        ·                           ╰─────────────────────┤ while building thunk to match
+  // CHECK:STDERR:        ·                                              │  │ the signature of this function
+  // CHECK:STDERR:        ·                                              │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                                              ╰────┤ return type of function is
+  // CHECK:STDERR:        ·                                                   │ `bool`
+  // CHECK:STDERR:        ·                                                   │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator!=(NeqBoolish) const -> int;
 };
 
 struct EqBoolish {
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+25]]:8
   // CHECK:STDERR: ->     │   auto operator==(EqBoolish) const -> int*;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type
@@ -125,7 +129,7 @@ struct EqBoolish {
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `Core.Optional(i32* as Core.OptionalStorage)` does not
   // CHECK:STDERR:        ·             │ implement interface `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
@@ -134,9 +138,12 @@ struct EqBoolish {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   fn Equal(self, other: Other) -> bool;
-  // CHECK:STDERR:        ·   ─────────────┬───────────────────────
-  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ──────────────────┬─────────────┬────
+  // CHECK:STDERR:        ·                     ╰────────────────┤ while building thunk to match the
+  // CHECK:STDERR:        ·                                   │  │ signature of this function
+  // CHECK:STDERR:        ·                                   │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                                   ╰────┤ return type of function is `bool`
+  // CHECK:STDERR:        ·                                        │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator==(EqBoolish) const -> int*;
@@ -148,7 +155,7 @@ struct BothBoolish {
     False,
     True,
   };
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+25]]:8
   // CHECK:STDERR: ->     │   auto operator==(BothBoolish) const -> Result;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `Cpp.Result` to
@@ -156,7 +163,7 @@ struct BothBoolish {
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `Cpp.Result` does not implement interface
   // CHECK:STDERR:        ·             │ `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
@@ -165,13 +172,16 @@ struct BothBoolish {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   fn Equal(self, other: Other) -> bool;
-  // CHECK:STDERR:        ·   ─────────────┬───────────────────────
-  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ──────────────────┬─────────────┬────
+  // CHECK:STDERR:        ·                     ╰────────────────┤ while building thunk to match the
+  // CHECK:STDERR:        ·                                   │  │ signature of this function
+  // CHECK:STDERR:        ·                                   │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                                   ╰────┤ return type of function is `bool`
+  // CHECK:STDERR:        ·                                        │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator==(BothBoolish) const -> Result;
-  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+26]]:8
   // CHECK:STDERR: ->     │   auto operator!=(BothBoolish) const -> Result;
   // CHECK:STDERR:        ·        ┳
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `Cpp.Result` to
@@ -179,7 +189,7 @@ struct BothBoolish {
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `Cpp.Result` does not implement interface
   // CHECK:STDERR:        ·             │ `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        │ fn EqWith[U: type, T: Core.EqWith(U)](x: T, y: U) {
   // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
@@ -188,9 +198,13 @@ struct BothBoolish {
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
   // CHECK:STDERR:        │   default fn NotEqual(self, other: Other) -> bool {
-  // CHECK:STDERR:        ·   ─────────────┬───────────────────────────────────
-  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ────────────────────────┬──────────────────┬─────
+  // CHECK:STDERR:        ·                           ╰─────────────────────┤ while building thunk to match
+  // CHECK:STDERR:        ·                                              │  │ the signature of this function
+  // CHECK:STDERR:        ·                                              │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                                              ╰────┤ return type of function is
+  // CHECK:STDERR:        ·                                                   │ `bool`
+  // CHECK:STDERR:        ·                                                   │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   auto operator!=(BothBoolish) const -> Result;

@@ -94,12 +94,13 @@ fn F(x: i32);
 fn G() {
   var y: i32 = 0;
 
-  // CHECK:STDERR:        ╭─┤ fail_unnecessary_ref.carbon:[[@LINE+8]]:27
+  // CHECK:STDERR:        ╭─┤ fail_unnecessary_ref.carbon:[[@LINE+9]]:27
   // CHECK:STDERR: ->     │   var unused z: (i32,) = (ref y,);
-  // CHECK:STDERR:        ·                           ┳━━━━
-  // CHECK:STDERR:        ·                           ┗━━┫ error: `ref` tag is not an argument to a `ref`
-  // CHECK:STDERR:        ·                              ┃        parameter
-  // CHECK:STDERR:        ·                              ┃        [RefTagNoRefParam]
+  // CHECK:STDERR:        ·   ──────────┬─────────    ┳━━━━
+  // CHECK:STDERR:        ·             │             ┗━━┫ error: `ref` tag is not an argument to a `ref`
+  // CHECK:STDERR:        ·             │                ┃        parameter
+  // CHECK:STDERR:        ·             │                ┃        [RefTagNoRefParam]
+  // CHECK:STDERR:        ·             ╰──────────────────┤ initializing this variable [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused z: (i32,) = (ref y,);

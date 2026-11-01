@@ -32,13 +32,15 @@ fn H() {
 library "[[@TEST_NAME]]";
 
 fn F(generic N: i32) {
-  // CHECK:STDERR:        ╭─┤ fail_init_dependent_bound.carbon:[[@LINE+9]]:35
+  // CHECK:STDERR:        ╭─┤ fail_init_dependent_bound.carbon:[[@LINE+11]]:35
   // CHECK:STDERR: ->     │   var unused arr: array(i32, N) = (1, 2, 3);
-  // CHECK:STDERR:        ·                                   ┳━━━━━━━━
-  // CHECK:STDERR:        ·                                   ┗━━┫ error: cannot initialize array with
-  // CHECK:STDERR:        ·                                      ┃        dependent bound from a list of
-  // CHECK:STDERR:        ·                                      ┃        initializers
-  // CHECK:STDERR:        ·                                      ┃        [ArrayInitDependentBound]
+  // CHECK:STDERR:        ·   ──────────────┬──────────────   ┳━━━━━━━━
+  // CHECK:STDERR:        ·                 │                 ┗━━┫ error: cannot initialize array with
+  // CHECK:STDERR:        ·                 │                    ┃        dependent bound from a list of
+  // CHECK:STDERR:        ·                 │                    ┃        initializers
+  // CHECK:STDERR:        ·                 │                    ┃        [ArrayInitDependentBound]
+  // CHECK:STDERR:        ·                 ╰──────────────────────┤ initializing this variable
+  // CHECK:STDERR:        ·                                        │ [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused arr: array(i32, N) = (1, 2, 3);

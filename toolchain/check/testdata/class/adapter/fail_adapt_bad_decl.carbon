@@ -15,21 +15,25 @@
 library "[[@TEST_NAME]]";
 
 class Bad {
-  // CHECK:STDERR:        ╭─┤ fail_not_type.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_not_type.carbon:[[@LINE+11]]:9
   // CHECK:STDERR: ->     │   adapt 100;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `Core.IntLiteral`
-  // CHECK:STDERR:        ·   │  ┃        to `type`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·         ┳━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: cannot implicitly convert non-type value of type
+  // CHECK:STDERR:        ·         │  ┃        `Core.IntLiteral` to `type`
+  // CHECK:STDERR:        ·         │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·         ╰────┤ type `Core.IntLiteral` does not implement interface
+  // CHECK:STDERR:        ·              │ `Core.ImplicitAs(type)`
+  // CHECK:STDERR:        ·              │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   adapt 100;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_not_type.carbon:[[@LINE+7]]:18
+// CHECK:STDERR:        ╭─┤ fail_not_type.carbon:[[@LINE+11]]:18
+// CHECK:STDERR:        │ class Bad {
+// CHECK:STDERR:        · ─────┬─────
+// CHECK:STDERR:        ·      ╰──┤ `Bad` defined here [MemberNameNotFoundScope]
+// CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn Use(b: Bad) { b.F(); }
 // CHECK:STDERR:        ·                  ━┳━
 // CHECK:STDERR:        ·                   ┗━━┫ error: member name `F` not found in `Bad`
@@ -43,15 +47,15 @@ fn Use(b: Bad) { b.F(); }
 library "[[@TEST_NAME]]";
 
 class Bad {
-  // CHECK:STDERR:        ╭─┤ fail_extend_not_type.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_extend_not_type.carbon:[[@LINE+11]]:16
   // CHECK:STDERR: ->     │   extend adapt 100;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `Core.IntLiteral`
-  // CHECK:STDERR:        ·   │  ┃        to `type`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                ┳━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot implicitly convert non-type value of type
+  // CHECK:STDERR:        ·                │  ┃        `Core.IntLiteral` to `type`
+  // CHECK:STDERR:        ·                │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·                ╰────┤ type `Core.IntLiteral` does not implement interface
+  // CHECK:STDERR:        ·                     │ `Core.ImplicitAs(type)`
+  // CHECK:STDERR:        ·                     │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend adapt 100;
@@ -108,7 +112,11 @@ library "[[@TEST_NAME]]";
 adapt {};
 
 interface I {
-  // CHECK:STDERR:        ╭─┤ fail_bad_scope.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_bad_scope.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ interface I {
+  // CHECK:STDERR:        · ──────┬──────
+  // CHECK:STDERR:        ·       ╰──┤ appears in this definition [ClassSpecificDeclEnclosingScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   adapt {};
   // CHECK:STDERR:        ·   ━━━━┳━━━━
   // CHECK:STDERR:        ·       ┗━━┫ error: `adapt` declaration outside class
@@ -120,7 +128,11 @@ interface I {
 
 class C {
   interface I {
-    // CHECK:STDERR:        ╭─┤ fail_bad_scope.carbon:[[@LINE+7]]:5
+    // CHECK:STDERR:        ╭─┤ fail_bad_scope.carbon:[[@LINE+11]]:5
+    // CHECK:STDERR:        │   interface I {
+    // CHECK:STDERR:        ·   ──────┬──────
+    // CHECK:STDERR:        ·         ╰──┤ appears in this definition [ClassSpecificDeclEnclosingScope]
+    // CHECK:STDERR:        ┆
     // CHECK:STDERR: ->     │     adapt {};
     // CHECK:STDERR:        ·     ━━━━┳━━━━
     // CHECK:STDERR:        ·         ┗━━┫ error: `adapt` declaration outside class

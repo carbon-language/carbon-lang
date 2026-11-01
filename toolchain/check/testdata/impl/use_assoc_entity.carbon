@@ -434,7 +434,7 @@ interface K {
 }
 
 impl () as K where .V = {.a: ()} {
-  // CHECK:STDERR:        ╭─┤ fail_associated_type_in_signature_mismatch.carbon:[[@LINE+28]]:3
+  // CHECK:STDERR:        ╭─┤ fail_associated_type_in_signature_mismatch.carbon:[[@LINE+31]]:3
   // CHECK:STDERR:        │   fn F(self, v: V) -> V;
   // CHECK:STDERR:        ·   ───────────┬──────────
   // CHECK:STDERR:        ·              ╰──┤ while building thunk to match the signature of this function
@@ -449,11 +449,14 @@ impl () as K where .V = {.a: ()} {
   // CHECK:STDERR:        ·                          │ [InCallToFunctionParam]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_associated_type_in_signature_mismatch.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        ╭─┤ fail_associated_type_in_signature_mismatch.carbon:[[@LINE+16]]:3
   // CHECK:STDERR:        │   fn F(self, v: V) -> V;
-  // CHECK:STDERR:        ·   ───────────┬──────────
-  // CHECK:STDERR:        ·              ╰──┤ while building thunk to match the signature of this function
-  // CHECK:STDERR:        ·                 │ [ThunkSignature]
+  // CHECK:STDERR:        ·   ───────────┬────────┬─
+  // CHECK:STDERR:        ·              ╰───────────┤ while building thunk to match the signature of this
+  // CHECK:STDERR:        ·                       │  │ function
+  // CHECK:STDERR:        ·                       │  │ [ThunkSignature]
+  // CHECK:STDERR:        ·                       ╰────┤ return type of function is `{.a: ()}`
+  // CHECK:STDERR:        ·                            │ [ReturnTypeHereNote]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   fn F(unused self, v: {.x: ()}) -> {.x: ()} { return v; }
   // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

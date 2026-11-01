@@ -33,21 +33,23 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   var x: () = ();
-  // CHECK:STDERR:        ╭─┤ fail_ref_out_of_place.carbon:[[@LINE+8]]:22
+  // CHECK:STDERR:        ╭─┤ fail_ref_out_of_place.carbon:[[@LINE+9]]:22
   // CHECK:STDERR: ->     │   let unused y: () = ref x;
-  // CHECK:STDERR:        ·                      ┳━━━━
-  // CHECK:STDERR:        ·                      ┗━━┫ error: `ref` tag is not an argument to a `ref`
-  // CHECK:STDERR:        ·                         ┃        parameter
-  // CHECK:STDERR:        ·                         ┃        [RefTagNoRefParam]
+  // CHECK:STDERR:        ·              ──┬──   ┳━━━━
+  // CHECK:STDERR:        ·                │     ┗━━┫ error: `ref` tag is not an argument to a `ref`
+  // CHECK:STDERR:        ·                │        ┃        parameter
+  // CHECK:STDERR:        ·                │        ┃        [RefTagNoRefParam]
+  // CHECK:STDERR:        ·                ╰──────────┤ initializing this binding [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused y: () = ref x;
-  // CHECK:STDERR:        ╭─┤ fail_ref_out_of_place.carbon:[[@LINE+8]]:23
+  // CHECK:STDERR:        ╭─┤ fail_ref_out_of_place.carbon:[[@LINE+9]]:23
   // CHECK:STDERR: ->     │   let unused z: () = (ref x);
-  // CHECK:STDERR:        ·                       ┳━━━━
-  // CHECK:STDERR:        ·                       ┗━━┫ error: `ref` tag is not an argument to a `ref`
-  // CHECK:STDERR:        ·                          ┃        parameter
-  // CHECK:STDERR:        ·                          ┃        [RefTagNoRefParam]
+  // CHECK:STDERR:        ·              ──┬──    ┳━━━━
+  // CHECK:STDERR:        ·                │      ┗━━┫ error: `ref` tag is not an argument to a `ref`
+  // CHECK:STDERR:        ·                │         ┃        parameter
+  // CHECK:STDERR:        ·                │         ┃        [RefTagNoRefParam]
+  // CHECK:STDERR:        ·                ╰───────────┤ initializing this binding [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused z: () = (ref x);

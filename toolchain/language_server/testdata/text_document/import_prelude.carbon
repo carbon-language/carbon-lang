@@ -68,11 +68,11 @@
 // CHECK:STDOUT:         "message": "cannot implicitly convert expression of type `str` to `i32`",
 // CHECK:STDOUT:         "range": {
 // CHECK:STDOUT:           "end": {
-// CHECK:STDOUT:             "character": 31,
+// CHECK:STDOUT:             "character": 30,
 // CHECK:STDOUT:             "line": 0
 // CHECK:STDOUT:           },
 // CHECK:STDOUT:           "start": {
-// CHECK:STDOUT:             "character": 18,
+// CHECK:STDOUT:             "character": 25,
 // CHECK:STDOUT:             "line": 0
 // CHECK:STDOUT:           }
 // CHECK:STDOUT:         },

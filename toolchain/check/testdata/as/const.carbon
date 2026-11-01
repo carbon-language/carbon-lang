@@ -66,7 +66,7 @@ fn Use() {
   // CHECK:STDERR:        ·                        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                        ╰────┤ type `const X` does not implement interface
   // CHECK:STDERR:        ·                             │ `Core.As(X)`
-  // CHECK:STDERR:        ·                             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                             │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: X* = &(reference as X);
@@ -78,7 +78,7 @@ fn Use() {
   // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                      ╰────┤ type `const X*` does not implement interface
   // CHECK:STDERR:        ·                           │ `Core.As(X*)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                           │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused b: X* = ptr as X*;

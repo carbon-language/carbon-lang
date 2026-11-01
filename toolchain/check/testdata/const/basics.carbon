@@ -59,13 +59,20 @@ class C;
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G(p: const (const C)**) -> C** {
-  // CHECK:STDERR:        ╭─┤ fail_collapse_in_error.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_collapse_in_error.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR:        │ fn G(p: const (const C)**) -> C** {
+  // CHECK:STDERR:        ·                               ─┬─
+  // CHECK:STDERR:        ·                                ╰──┤ return type of function is `C**`
+  // CHECK:STDERR:        ·                                   │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ━┳━━━━━━━
-  // CHECK:STDERR:        ·    ┗━━┫ error: cannot implicitly convert expression of type `const C**` to `C**`
-  // CHECK:STDERR:        ·    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·    ╰────┤ type `const C**` does not implement interface `Core.ImplicitAs(C**)`
-  // CHECK:STDERR:        ·         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `const C**` to
+  // CHECK:STDERR:        ·          │  ┃        `C**`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `const C**` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(C**)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
@@ -134,7 +141,7 @@ fn PassConstReferenceToReference(p: const X*) {
   // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `const X` to `X`
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `const X` does not implement interface `Core.ImplicitAs(X)`
-  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->(X.TakeSelf)();
@@ -150,47 +157,48 @@ interface J {}
 // type. The operand of `const` is parenthesized if it's a facet type formed
 // with `&` or `where`.
 fn F() -> const (I & J);
-// CHECK:STDERR:        ╭─┤ fail_print_const_facet_type.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        ╭─┤ fail_print_const_facet_type.carbon:[[@LINE+12]]:11
 // CHECK:STDERR:        │ fn F() -> const (I & J);
-// CHECK:STDERR:        · ────────────┬───────────
-// CHECK:STDERR:        ·             ╰──┤ previously declared with return type `const (I & J)`
-// CHECK:STDERR:        ·                │ [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ·           ──────┬──────
+// CHECK:STDERR:        ·                 ╰──┤ previously declared with return type `const (I & J)`
+// CHECK:STDERR:        ·                    │ [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F() -> {};
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━
-// CHECK:STDERR:        ·       ┗━━┫ error: function redeclaration differs because return type is `{}`
-// CHECK:STDERR:        ·          ┃        [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR:        ·           ┳━
+// CHECK:STDERR:        ·           ┗━━┫ error: function redeclaration differs because return type is `{}`
+// CHECK:STDERR:        ·              ┃        [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> {};
 
 fn G() -> const (I where .T = ());
-// CHECK:STDERR:        ╭─┤ fail_print_const_facet_type.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        ╭─┤ fail_print_const_facet_type.carbon:[[@LINE+13]]:11
 // CHECK:STDERR:        │ fn G() -> const (I where .T = ());
-// CHECK:STDERR:        · ─────────┬────────────────────────
-// CHECK:STDERR:        ·          ╰──┤ previously declared with return type `const (I where .(I.T) = ())`
-// CHECK:STDERR:        ·             │ [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ·           ┬──────────────────────
+// CHECK:STDERR:        ·           ╰──┤ previously declared with return type
+// CHECK:STDERR:        ·              │ `const (I where .(I.T) = ())`
+// CHECK:STDERR:        ·              │ [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn G() -> {};
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━
-// CHECK:STDERR:        ·       ┗━━┫ error: function redeclaration differs because return type is `{}`
-// CHECK:STDERR:        ·          ┃        [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR:        ·           ┳━
+// CHECK:STDERR:        ·           ┗━━┫ error: function redeclaration differs because return type is `{}`
+// CHECK:STDERR:        ·              ┃        [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G() -> {};
 
 // No parentheses are needed for a single interface.
 fn H() -> const I;
-// CHECK:STDERR:        ╭─┤ fail_print_const_facet_type.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        ╭─┤ fail_print_const_facet_type.carbon:[[@LINE+12]]:11
 // CHECK:STDERR:        │ fn H() -> const I;
-// CHECK:STDERR:        · ─────────┬────────
-// CHECK:STDERR:        ·          ╰──┤ previously declared with return type `const I`
-// CHECK:STDERR:        ·             │ [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ·           ───┬───
+// CHECK:STDERR:        ·              ╰──┤ previously declared with return type `const I`
+// CHECK:STDERR:        ·                 │ [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn H() -> {};
-// CHECK:STDERR:        · ━━━━━━┳━━━━━━
-// CHECK:STDERR:        ·       ┗━━┫ error: function redeclaration differs because return type is `{}`
-// CHECK:STDERR:        ·          ┃        [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR:        ·           ┳━
+// CHECK:STDERR:        ·           ┗━━┫ error: function redeclaration differs because return type is `{}`
+// CHECK:STDERR:        ·              ┃        [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn H() -> {};

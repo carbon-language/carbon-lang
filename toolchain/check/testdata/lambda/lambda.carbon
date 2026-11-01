@@ -258,24 +258,27 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn Outer() -> i32 {
-  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+8]]:18
+  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+9]]:18
   // CHECK:STDERR: ->     │   (fn () -> i32 {});
-  // CHECK:STDERR:        ·                  ┳
-  // CHECK:STDERR:        ·                  ┗━━┫ error: missing `return` at end of function with declared
-  // CHECK:STDERR:        ·                     ┃        return type
-  // CHECK:STDERR:        ·                     ┃        [MissingReturnStatement]
+  // CHECK:STDERR:        ·             ─┬─  ┳
+  // CHECK:STDERR:        ·              │   ┗━━┫ error: missing `return` at end of function with declared
+  // CHECK:STDERR:        ·              │      ┃        return type
+  // CHECK:STDERR:        ·              │      ┃        [MissingReturnStatement]
+  // CHECK:STDERR:        ·              ╰────────┤ return type declared here [MissingReturnStatementType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn () -> i32 {});
-  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+11]]:20
+  // CHECK:STDERR:        ╭─┤ fail_return.carbon:[[@LINE+13]]:27
   // CHECK:STDERR: ->     │   (fn () -> bool { return 1; });
-  // CHECK:STDERR:        ·                    ┳━━━━━━━━
-  // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                    │  ┃        `Core.IntLiteral` to `bool`
-  // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                    ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(bool)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·             ──┬─          ┳
+  // CHECK:STDERR:        ·               │           ┗━━┫ error: cannot implicitly convert expression of
+  // CHECK:STDERR:        ·               │           │  ┃        type `Core.IntLiteral` to `bool`
+  // CHECK:STDERR:        ·               │           │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·               ╰────────────────┤ return type of function is `bool`
+  // CHECK:STDERR:        ·                           │    │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ·                           ╰──────┤ type `Core.IntLiteral` does not implement
+  // CHECK:STDERR:        ·                                  │ interface `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·                                  │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn () -> bool { return 1; });
@@ -423,7 +426,7 @@ fn F() {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn (unused x: Incomplete) {});
-  // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+19]]:10
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+21]]:10
   // CHECK:STDERR:        │ class Incomplete;
   // CHECK:STDERR:        · ────────┬────────
   // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
@@ -434,12 +437,14 @@ fn F() {
   // CHECK:STDERR:        ·                   ┃        [IncompleteTypeInFunctionReturnType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+8]]:25
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_type.carbon:[[@LINE+10]]:25
   // CHECK:STDERR: ->     │   (fn () -> Incomplete {});
-  // CHECK:STDERR:        ·                         ┳
-  // CHECK:STDERR:        ·                         ┗━━┫ error: missing `return` at end of function with
-  // CHECK:STDERR:        ·                            ┃        declared return type
-  // CHECK:STDERR:        ·                            ┃        [MissingReturnStatement]
+  // CHECK:STDERR:        ·             ─────┬────  ┳
+  // CHECK:STDERR:        ·                  │      ┗━━┫ error: missing `return` at end of function with
+  // CHECK:STDERR:        ·                  │         ┃        declared return type
+  // CHECK:STDERR:        ·                  │         ┃        [MissingReturnStatement]
+  // CHECK:STDERR:        ·                  ╰───────────┤ return type declared here
+  // CHECK:STDERR:        ·                              │ [MissingReturnStatementType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (fn () -> Incomplete {});
@@ -462,15 +467,16 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_conversion.carbon:[[@LINE+11]]:16
+  // CHECK:STDERR:        ╭─┤ fail_conversion.carbon:[[@LINE+12]]:16
   // CHECK:STDERR: ->     │   let _: i32 = fn () {};
-  // CHECK:STDERR:        ·                ┳━━━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·                │  ┃        `<type of function expression>` to `i32`
-  // CHECK:STDERR:        ·                │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                ╰────┤ type `<type of function expression>` does not implement
-  // CHECK:STDERR:        ·                     │ interface `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·       ───┬──   ┳━━━━━━
+  // CHECK:STDERR:        ·          │     ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·          │     │  ┃        `<type of function expression>` to `i32`
+  // CHECK:STDERR:        ·          │     │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰──────────┤ initializing this binding [InPatternInit]
+  // CHECK:STDERR:        ·                ╰──────┤ type `<type of function expression>` does not implement
+  // CHECK:STDERR:        ·                       │ interface `Core.ImplicitAs(i32)`
+  // CHECK:STDERR:        ·                       │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = fn () {};

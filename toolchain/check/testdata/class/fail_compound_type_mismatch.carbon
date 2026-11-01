@@ -25,7 +25,7 @@ fn AccessBInA(a: A) -> i32 {
   // CHECK:STDERR:        ·             ┗━━┫ error: cannot implicitly convert expression of type `A` to `B`
   // CHECK:STDERR:        ·             │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·             ╰────┤ type `A` does not implement interface `Core.ImplicitAs(B)`
-  // CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                  │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a.(B.b);

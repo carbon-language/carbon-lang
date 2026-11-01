@@ -47,11 +47,15 @@ class D {
 }
 
 fn Test(d: D) {
-  // CHECK:STDERR:        ╭─┤ fail_no_such_member.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_no_such_member.carbon:[[@LINE+15]]:3
   // CHECK:STDERR:        │   let n: i32 = x.n;
   // CHECK:STDERR:        ·                ─┬─
   // CHECK:STDERR:        ·                 ╰──┤ member name `n` not found in `D`
   // CHECK:STDERR:        ·                    │ [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ class D {
+  // CHECK:STDERR:        · ────┬────
+  // CHECK:STDERR:        ·     ╰──┤ `D` defined here [MemberNameNotFoundScope]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F(d);
   // CHECK:STDERR:        ·   ┳
@@ -83,7 +87,7 @@ fn Test(e: E) {
   // CHECK:STDERR:        ·                │  │ [ConversionFailure]
   // CHECK:STDERR:        ·                ╰────┤ type `F` does not implement interface
   // CHECK:STDERR:        ·                     │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                     │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F(e);
   // CHECK:STDERR:        ·   ┳

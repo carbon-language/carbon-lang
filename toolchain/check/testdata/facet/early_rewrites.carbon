@@ -148,7 +148,7 @@ class D;
 // CHECK:STDERR:        ·                                      │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·                                      ╰────┤ type `type` does not implement
 // CHECK:STDERR:        ·                                           │ interface `Core.ImplicitAs(.(Z.Z1))`
-// CHECK:STDERR:        ·                                           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                           │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z1 = () and .Z2 = C(.Self, .Z1) {}
@@ -190,7 +190,7 @@ class D;
 // CHECK:STDERR:        ·                         │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·                         ╰────┤ type `type` does not implement interface
 // CHECK:STDERR:        ·                              │ `Core.ImplicitAs(.(Z.Z1))`
-// CHECK:STDERR:        ·                              │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                              │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl D as Z where .Z2 = C(.Self, .Z1) and .Z1 = () {}

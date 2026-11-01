@@ -45,12 +45,13 @@ library "[[@TEST_NAME]]";
 fn TestWrongType() {
   class C{}
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_wrong_type.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_wrong_type.carbon:[[@LINE+9]]:10
   // CHECK:STDERR: ->     │   "Test"[C];
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.IndexWith(type)` in type
-  // CHECK:STDERR:        ·      ┃        `str` that does not implement that interface
-  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·   ───┬── ┳
+  // CHECK:STDERR:        ·      │   ┗━━┫ error: type `str` does not implement interface
+  // CHECK:STDERR:        ·      │      ┃        `Core.IndexWith(type)`
+  // CHECK:STDERR:        ·      │      ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·      ╰────────┤ indexing an object with type `str` [IndexedObjectType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   "Test"[C];

@@ -77,19 +77,19 @@ fn F(generic T: IMisuse) { T.Op(); }
 
 fn G() {
   var c: C;
-  // CHECK:STDERR:        ╭─┤ fail_misusing_invalid_interface.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        ╭─┤ fail_misusing_invalid_interface.carbon:[[@LINE+15]]:5
   // CHECK:STDERR:        │ fn F(generic T: IMisuse) { T.Op(); }
   // CHECK:STDERR:        ·              ─────┬────
   // CHECK:STDERR:        ·                   ╰──┤ initializing generic parameter `T` declared here
   // CHECK:STDERR:        ·                      │ [InitializingGenericParam]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F(c);
-  // CHECK:STDERR:        ·   ┳━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `C` into type
-  // CHECK:STDERR:        ·   │  ┃        implementing `IMisuse`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `C` does not implement interface `Core.ImplicitAs(IMisuse)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: cannot implicitly convert non-type value of type `C` into type
+  // CHECK:STDERR:        ·     │  ┃        implementing `IMisuse`
+  // CHECK:STDERR:        ·     │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·     ╰────┤ type `C` does not implement interface `Core.ImplicitAs(IMisuse)`
+  // CHECK:STDERR:        ·          │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(c);
@@ -141,19 +141,19 @@ fn F(generic T: IMisuse) { T.Op(); }
 
 fn G() {
   var c: C;
-  // CHECK:STDERR:        ╭─┤ fail_using_invalid_interface.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        ╭─┤ fail_using_invalid_interface.carbon:[[@LINE+15]]:5
   // CHECK:STDERR:        │ fn F(generic T: IMisuse) { T.Op(); }
   // CHECK:STDERR:        ·              ─────┬────
   // CHECK:STDERR:        ·                   ╰──┤ initializing generic parameter `T` declared here
   // CHECK:STDERR:        ·                      │ [InitializingGenericParam]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   F(c);
-  // CHECK:STDERR:        ·   ┳━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `C` into type
-  // CHECK:STDERR:        ·   │  ┃        implementing `IMisuse`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR:        ·   ╰────┤ type `C` does not implement interface `Core.ImplicitAs(IMisuse)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: cannot implicitly convert non-type value of type `C` into type
+  // CHECK:STDERR:        ·     │  ┃        implementing `IMisuse`
+  // CHECK:STDERR:        ·     │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·     ╰────┤ type `C` does not implement interface `Core.ImplicitAs(IMisuse)`
+  // CHECK:STDERR:        ·          │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(c);

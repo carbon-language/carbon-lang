@@ -102,7 +102,11 @@ constraint Z {
 fn F(generic T: Z) {
   // This should fail name lookup since Z does not extend Y.
   //
-  // CHECK:STDERR:        ╭─┤ fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_implicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ constraint Z {
+  // CHECK:STDERR:        · ───────┬──────
+  // CHECK:STDERR:        ·        ╰──┤ `Z` defined here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   T.YY();
   // CHECK:STDERR:        ·   ━━┳━
   // CHECK:STDERR:        ·     ┗━━┫ error: member name `YY` not found in `Z`
@@ -126,7 +130,11 @@ constraint Z {
 fn F(generic T: Z) {
   // This should fail name lookup since Z does not extend Y.
   //
-  // CHECK:STDERR:        ╭─┤ fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_explicit_self_no_extend_name_lookup_fails.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ constraint Z {
+  // CHECK:STDERR:        · ───────┬──────
+  // CHECK:STDERR:        ·        ╰──┤ `Z` defined here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   T.YY();
   // CHECK:STDERR:        ·   ━━┳━
   // CHECK:STDERR:        ·     ┗━━┫ error: member name `YY` not found in `Z`
@@ -429,7 +437,7 @@ constraint Z(T: type) {
   // CHECK:STDERR:        ·           │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·           ╰────┤ type `Core.IntLiteral` does not implement interface
   // CHECK:STDERR:        ·                │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·                │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   require 1 impls Y;

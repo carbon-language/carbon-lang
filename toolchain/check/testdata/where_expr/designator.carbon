@@ -34,7 +34,11 @@ interface J {
   let Member: type;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_wrong_member.carbon:[[@LINE+8]]:38
+// CHECK:STDERR:        ╭─┤ fail_wrong_member.carbon:[[@LINE+12]]:38
+// CHECK:STDERR:        │ interface J {
+// CHECK:STDERR:        · ──────┬──────
+// CHECK:STDERR:        ·       ╰──┤ `J` defined here [MemberNameNotFoundSpecificScope]
+// CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn PeriodMismatch(generic W: J where .Mismatch = {});
 // CHECK:STDERR:        ·                                      ┳━━━━━━━━
 // CHECK:STDERR:        ·                                      ┗━━┫ error: member name `Mismatch` not
@@ -50,14 +54,12 @@ library "[[@TEST_NAME]]";
 
 fn Foo() -> () {
   var unused x: ();
-  // CHECK:STDERR:        ╭─┤ fail_designator_matches_var.carbon:[[@LINE+10]]:10
+  // CHECK:STDERR:        ╭─┤ fail_designator_matches_var.carbon:[[@LINE+8]]:10
   // CHECK:STDERR: ->     │   return .x;
   // CHECK:STDERR:        ·          ━┳
   // CHECK:STDERR:        ·           ┗━━┫ error: name `.Self` not found [NameNotFound]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        ├─┤ fail_designator_matches_var.carbon
-  // CHECK:STDERR:        · ╰──┤ designator may only be used when `.Self` is in scope
-  // CHECK:STDERR:        ·    │ [NoPeriodSelfForDesignator]
+  // CHECK:STDERR:        ·           ╰────┤ designator may only be used when `.Self` is in scope
+  // CHECK:STDERR:        ·                │ [NoPeriodSelfForDesignator]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return .x;
@@ -68,14 +70,12 @@ fn Foo() -> () {
 library "[[@TEST_NAME]]";
 
 fn Bar() -> () {
-  // CHECK:STDERR:        ╭─┤ fail_unknown_designator.carbon:[[@LINE+10]]:10
+  // CHECK:STDERR:        ╭─┤ fail_unknown_designator.carbon:[[@LINE+8]]:10
   // CHECK:STDERR: ->     │   return .undef;
   // CHECK:STDERR:        ·          ━━━┳━━
   // CHECK:STDERR:        ·             ┗━━┫ error: name `.Self` not found [NameNotFound]
-  // CHECK:STDERR:        ┆
-  // CHECK:STDERR:        ├─┤ fail_unknown_designator.carbon
-  // CHECK:STDERR:        · ╰──┤ designator may only be used when `.Self` is in scope
-  // CHECK:STDERR:        ·    │ [NoPeriodSelfForDesignator]
+  // CHECK:STDERR:        ·             ╰────┤ designator may only be used when `.Self` is in scope
+  // CHECK:STDERR:        ·                  │ [NoPeriodSelfForDesignator]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return .undef;

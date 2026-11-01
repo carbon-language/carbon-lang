@@ -24,36 +24,41 @@ namespace N;
 var a: i32 = N[0];
 
 fn F();
-// CHECK:STDERR:        ╭─┤ fail_invalid_base.carbon:[[@LINE+9]]:14
+// CHECK:STDERR:        ╭─┤ fail_invalid_base.carbon:[[@LINE+10]]:16
 // CHECK:STDERR: ->     │ var b: i32 = F[1];
-// CHECK:STDERR:        ·              ┳━━━
-// CHECK:STDERR:        ·              ┗━━┫ error: cannot access member of interface
-// CHECK:STDERR:        ·                 ┃        `Core.IndexWith(Core.IntLiteral)` in type `<type of F>`
-// CHECK:STDERR:        ·                 ┃        that does not implement that interface
-// CHECK:STDERR:        ·                 ┃        [MissingImplInMemberAccess]
+// CHECK:STDERR:        ·              ┬ ┳
+// CHECK:STDERR:        ·              │ ┗━━┫ error: type `<type of F>` does not implement interface
+// CHECK:STDERR:        ·              │    ┃        `Core.IndexWith(Core.IntLiteral)`
+// CHECK:STDERR:        ·              │    ┃        [MissingImplForType]
+// CHECK:STDERR:        ·              ╰──────┤ indexing an object with type `<type of F>`
+// CHECK:STDERR:        ·                     │ [IndexedObjectType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: i32 = F[1];
 
-// CHECK:STDERR:        ╭─┤ fail_invalid_base.carbon:[[@LINE+10]]:14
+// CHECK:STDERR:        ╭─┤ fail_invalid_base.carbon:[[@LINE+12]]:31
 // CHECK:STDERR: ->     │ var c: i32 = {.a = 1, .b = 2}[0];
-// CHECK:STDERR:        ·              ┳━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        ·              ┗━━┫ error: cannot access member of interface
-// CHECK:STDERR:        ·                 ┃        `Core.IndexWith(Core.IntLiteral)` in type
-// CHECK:STDERR:        ·                 ┃        `{.a: Core.IntLiteral, .b: Core.IntLiteral}` that does
-// CHECK:STDERR:        ·                 ┃        not implement that interface
-// CHECK:STDERR:        ·                 ┃        [MissingImplInMemberAccess]
+// CHECK:STDERR:        ·              ────────┬─────── ┳
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: type `{.a: Core.IntLiteral, .b: Core.IntLiteral}` does not implement
+// CHECK:STDERR:        · ┃        interface `Core.IndexWith(Core.IntLiteral)`
+// CHECK:STDERR:        · ┃        [MissingImplForType]
+// CHECK:STDERR:        ·                      ╰───────────┤ indexing an object with type
+// CHECK:STDERR:        ·                                  │ `{.a: Core.IntLiteral, .b: Core.IntLiteral}`
+// CHECK:STDERR:        ·                                  │ [IndexedObjectType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c: i32 = {.a = 1, .b = 2}[0];
 
-// CHECK:STDERR:        ╭─┤ fail_invalid_base.carbon:[[@LINE+9]]:14
+// CHECK:STDERR:        ╭─┤ fail_invalid_base.carbon:[[@LINE+11]]:33
 // CHECK:STDERR: ->     │ var d: i32 = {.a: i32, .b: i32}[0];
-// CHECK:STDERR:        ·              ┳━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        ·              ┗━━┫ error: cannot access member of interface
-// CHECK:STDERR:        ·                 ┃        `Core.IndexWith(Core.IntLiteral)` in type `type` that
-// CHECK:STDERR:        ·                 ┃        does not implement that interface
-// CHECK:STDERR:        ·                 ┃        [MissingImplInMemberAccess]
+// CHECK:STDERR:        ·              ─────────┬──────── ┳
+// CHECK:STDERR:        ·                       │         ┗━━┫ error: type `type` does not implement
+// CHECK:STDERR:        ·                       │            ┃        interface
+// CHECK:STDERR:        ·                       │            ┃        `Core.IndexWith(Core.IntLiteral)`
+// CHECK:STDERR:        ·                       │            ┃        [MissingImplForType]
+// CHECK:STDERR:        ·                       ╰──────────────┤ indexing an object with type `type`
+// CHECK:STDERR:        ·                                      │ [IndexedObjectType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var d: i32 = {.a: i32, .b: i32}[0];
@@ -123,21 +128,21 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %F.decl: %F.type = fn_decl @F [concrete = constants.%F] {} {}
 // CHECK:STDOUT:   %b.var: ref %i32 = var_storage %b.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc36: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc37: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %b: ref %i32 = wrapper_binding b, %b.var [concrete = %b.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.d94 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.d94 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c.var: ref %i32 = var_storage %c.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc48: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc51: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %c: ref %i32 = wrapper_binding c, %c.var [concrete = %c.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %c.patt: %pattern_type.d94 = ref_binding_pattern c [concrete = constants.%c.patt]
 // CHECK:STDOUT:     %c.var_patt: %pattern_type.d94 = var_pattern %c.patt [concrete = constants.%c.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.var: ref %i32 = var_storage %d.var_patt [concrete]
-// CHECK:STDOUT:   %i32.loc59: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc64: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %d: ref %i32 = wrapper_binding d, %d.var [concrete = %d.var]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.d94 = ref_binding_pattern d [concrete = constants.%d.patt]
@@ -153,19 +158,19 @@ var d: i32 = {.a: i32, .b: i32}[0];
 // CHECK:STDOUT:   %int_0.loc24: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   assign file.%a.var, <error>
 // CHECK:STDOUT:   %F.ref: %F.type = name_ref F, file.%F.decl [concrete = constants.%F]
-// CHECK:STDOUT:   %int_1.loc36: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc37: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   assign file.%b.var, <error>
-// CHECK:STDOUT:   %int_1.loc48: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
+// CHECK:STDOUT:   %int_1.loc51: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %int_2: Core.IntLiteral = int_value 2 [concrete = constants.%int_2]
-// CHECK:STDOUT:   %.loc48_29.1: %struct_type.a.b.cfd = struct_literal (%int_1.loc48, %int_2) [concrete = constants.%struct]
-// CHECK:STDOUT:   %int_0.loc48: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
-// CHECK:STDOUT:   %struct: %struct_type.a.b.cfd = struct_value (%int_1.loc48, %int_2) [concrete = constants.%struct]
-// CHECK:STDOUT:   %.loc48_29.2: %struct_type.a.b.cfd = converted %.loc48_29.1, %struct [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc51_29.1: %struct_type.a.b.cfd = struct_literal (%int_1.loc51, %int_2) [concrete = constants.%struct]
+// CHECK:STDOUT:   %int_0.loc51: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %struct: %struct_type.a.b.cfd = struct_value (%int_1.loc51, %int_2) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc51_29.2: %struct_type.a.b.cfd = converted %.loc51_29.1, %struct [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%c.var, <error>
-// CHECK:STDOUT:   %i32.loc59_19: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %i32.loc59_28: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc64_19: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc64_28: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   %struct_type.a.b: type = struct_type {.a: %i32, .b: %i32} [concrete = constants.%struct_type.a.b.250]
-// CHECK:STDOUT:   %int_0.loc59: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
+// CHECK:STDOUT:   %int_0.loc64: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   assign file.%d.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

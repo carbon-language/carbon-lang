@@ -67,20 +67,20 @@ library "[[@TEST_NAME]]";
 
 class Class(T: type, N: i32) {}
 
-// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+16]]:8
+// CHECK:STDERR:        ╭─┤ fail_no_conversion.carbon:[[@LINE+16]]:14
 // CHECK:STDERR:        │ class Class(T: type, N: i32) {}
 // CHECK:STDERR:        ·             ───┬───
 // CHECK:STDERR:        ·                ╰──┤ initializing generic parameter `T` declared here
 // CHECK:STDERR:        ·                   │ [InitializingGenericParam]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ var a: Class(5, i32*);
-// CHECK:STDERR:        ·        ┳━━━━━━━━━━━━━
-// CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert non-type value of type
-// CHECK:STDERR:        ·        │  ┃        `Core.IntLiteral` to `type`
-// CHECK:STDERR:        ·        │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        ·        ╰────┤ type `Core.IntLiteral` does not implement interface
-// CHECK:STDERR:        ·             │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·              ┳
+// CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert non-type value of type
+// CHECK:STDERR:        ·              │  ┃        `Core.IntLiteral` to `type`
+// CHECK:STDERR:        ·              │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·              ╰────┤ type `Core.IntLiteral` does not implement interface
+// CHECK:STDERR:        ·                   │ `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·                   │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: Class(5, i32*);

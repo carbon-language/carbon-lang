@@ -294,7 +294,7 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:        · ╭─────────────────────────────────╯
   // CHECK:STDERR:        · │ type `{.a: Core.IntLiteral, .b: Core.IntLiteral, .c: Core.IntLiteral}` does
   // CHECK:STDERR:        · │ not implement interface `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        · │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -315,7 +315,7 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:        ·                       ╰────┤ type `{.a: i32, .b: i32, .c: i32}` does not
   // CHECK:STDERR:        ·                            │ implement interface
   // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                            │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -336,7 +336,7 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:        ·                       ╰────┤ type `{.a: i32, .b: i32, .c: i32}` does not
   // CHECK:STDERR:        ·                            │ implement interface
   // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                            │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -357,7 +357,7 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:        ·                       ╰────┤ type `{.a: i32, .b: i32, .c: i32}` does not
   // CHECK:STDERR:        ·                            │ implement interface
   // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                            │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -379,7 +379,7 @@ fn ThreeFields(value: {.a: i32, .b: i32, .c: i32}, ref reference: {.a: i32, .b: 
   // CHECK:STDERR:        · ╭─────────────────────────────────╯
   // CHECK:STDERR:        · │ type `{.b: Core.IntLiteral, .c: Core.IntLiteral, .a: Core.IntLiteral}` does
   // CHECK:STDERR:        · │ not implement interface `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        · │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -470,7 +470,7 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                    ╰────┤ type `()` does not implement interface
   // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(Cpp.NoFields)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                         │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassNoFields(NoFields s) -> void;
@@ -489,7 +489,7 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                    ╰────┤ type `()` does not implement interface
   // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(Cpp.NoFields)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                         │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassNoFields(NoFields s) -> void;
@@ -508,7 +508,7 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                    ╰────┤ type `()` does not implement interface
   // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(Cpp.NoFields)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                         │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassNoFields(NoFields s) -> void;
@@ -527,7 +527,7 @@ fn Empty(value: (), ref reference: ()) {
   // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                    ╰────┤ type `()` does not implement interface
   // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(Cpp.NoFields)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                         │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassNoFields(NoFields s) -> void;
@@ -554,7 +554,7 @@ fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
   // CHECK:STDERR:        ·                          │ `(Core.IntLiteral, Core.IntLiteral, Core.IntLiteral)`
   // CHECK:STDERR:        ·                          │ does not implement interface
   // CHECK:STDERR:        ·                          │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -573,7 +573,7 @@ fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
   // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                       ╰────┤ type `(i32, i32, i32)` does not implement interface
   // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                            │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -592,7 +592,7 @@ fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
   // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                       ╰────┤ type `(i32, i32, i32)` does not implement interface
   // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                            │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -611,7 +611,7 @@ fn ThreeFields(value: (i32, i32, i32), ref reference: (i32, i32, i32)) {
   // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                       ╰────┤ type `(i32, i32, i32)` does not implement interface
   // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(Cpp.ThreeFields)`
-  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                            │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./struct_init.h
   // CHECK:STDERR:        │ auto PassThreeFields(ThreeFields t) -> void;
@@ -649,7 +649,7 @@ fn F() {
   // CHECK:STDERR:        ·               │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·               ╰────┤ type `{}` does not implement interface
   // CHECK:STDERR:        ·                    │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                    │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./int_from_struct.h
   // CHECK:STDERR:        │ auto PassInt(int n) -> void;
@@ -667,7 +667,7 @@ fn F() {
   // CHECK:STDERR:        ·               │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·               ╰────┤ type `()` does not implement interface
   // CHECK:STDERR:        ·                    │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                    │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./int_from_struct.h
   // CHECK:STDERR:        │ auto PassInt(int n) -> void;
@@ -696,7 +696,7 @@ fn F() {
   // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                      ╰────┤ type `{}` does not implement interface
   // CHECK:STDERR:        ·                           │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                           │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./int_from_struct.h
   // CHECK:STDERR:        │ auto PassOverloaded(int n) -> void;
@@ -715,7 +715,7 @@ fn F() {
   // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                      ╰────┤ type `()` does not implement interface
   // CHECK:STDERR:        ·                           │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                           │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./int_from_struct.h
   // CHECK:STDERR:        │ auto PassOverloaded(int n) -> void;
@@ -782,7 +782,7 @@ fn F() {
   // CHECK:STDERR:        · ╭──────────────────────────╯
   // CHECK:STDERR:        · │ type `{.a: {.x: Core.IntLiteral, .y: Core.IntLiteral}, .n: Core.IntLiteral}`
   // CHECK:STDERR:        · │ does not implement interface `Core.ImplicitAs(Cpp.B)`
-  // CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        · │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./nested_structs.h
   // CHECK:STDERR:        │ void TakeB(B);
@@ -830,7 +830,7 @@ fn F() {
   // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                      ╰────┤ type `i32` does not implement interface
   // CHECK:STDERR:        ·                           │ `Core.ImplicitAs(u32)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                           │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./signedness_change.h
   // CHECK:STDERR:        │ auto signedness_foo(unsigned int a) -> void;
@@ -861,7 +861,7 @@ fn F() {
   // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                      ╰────┤ type `i32` does not implement interface
   // CHECK:STDERR:        ·                           │ `Core.ImplicitAs(i16)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                           │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./downsizing_rejected.h
   // CHECK:STDERR:        │ auto downsizing_foo(short a) -> void;

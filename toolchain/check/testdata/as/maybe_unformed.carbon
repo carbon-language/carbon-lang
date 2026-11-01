@@ -50,7 +50,7 @@ fn Use() {
   // CHECK:STDERR:        ·                                         ╰────┤ type `X` does not implement
   // CHECK:STDERR:        ·                                              │ interface
   // CHECK:STDERR:        ·                                              │ `Core.As(Core.MaybeUnformed(X))`
-  // CHECK:STDERR:        ·                                              │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                              │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused i: Core.MaybeUnformed(X) = Init() as Core.MaybeUnformed(X);
@@ -65,7 +65,7 @@ fn Use() {
   // CHECK:STDERR:        ·                                         ╰────┤ type `X` does not implement
   // CHECK:STDERR:        ·                                              │ interface
   // CHECK:STDERR:        ·                                              │ `Core.As(Core.MaybeUnformed(X))`
-  // CHECK:STDERR:        ·                                              │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                              │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused v: Core.MaybeUnformed(X) = value as Core.MaybeUnformed(X);
@@ -92,7 +92,7 @@ fn Use() {
   // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                     ╰────┤ type `Core.MaybeUnformed(X)` does not implement
   // CHECK:STDERR:        ·                          │ interface `Core.As(X)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused i: X = Init() as X;
@@ -106,7 +106,7 @@ fn Use() {
   // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                     ╰────┤ type `Core.MaybeUnformed(X)` does not implement
   // CHECK:STDERR:        ·                          │ interface `Core.UnsafeAs(X)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused j: X = Init() unsafe as X;
@@ -118,7 +118,7 @@ fn Use() {
   // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                     ╰────┤ type `Core.MaybeUnformed(X)` does not implement
   // CHECK:STDERR:        ·                          │ interface `Core.As(X)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused v: X = value as X;
@@ -130,7 +130,7 @@ fn Use() {
   // CHECK:STDERR:        ·                        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                        ╰────┤ type `Core.MaybeUnformed(X)` does not implement
   // CHECK:STDERR:        ·                             │ interface `Core.As(X)`
-  // CHECK:STDERR:        ·                             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                             │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: X* = &(reference as X);
@@ -142,7 +142,7 @@ fn Use() {
   // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                      ╰────┤ type `Core.MaybeUnformed(X)*` does not implement
   // CHECK:STDERR:        ·                           │ interface `Core.As(X*)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                           │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused b: X* = ptr as X*;

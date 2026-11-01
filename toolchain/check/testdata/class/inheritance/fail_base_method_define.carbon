@@ -22,7 +22,11 @@ class D {
   extend base: B;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_base_method_define.carbon:[[@LINE+7]]:6
+// CHECK:STDERR:        ╭─┤ fail_base_method_define.carbon:[[@LINE+11]]:6
+// CHECK:STDERR:        │ class D {
+// CHECK:STDERR:        · ────┬────
+// CHECK:STDERR:        ·     ╰──┤ no declaration of `F` in this scope [QualifiedDeclScopeEntity]
+// CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn D.F() {}
 // CHECK:STDERR:        ·      ┳
 // CHECK:STDERR:        ·      ┗━━┫ error: out-of-line declaration requires a declaration in scoped entity

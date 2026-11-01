@@ -40,7 +40,7 @@ impl i32 as I {
   // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·        ╰────┤ type `C(i32 as I)` does not implement interface
   // CHECK:STDERR:        ·        │    │ `Core.ImplicitAs(C(i32))`
-  // CHECK:STDERR:        ·        │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │    │ [MissingImplForType]
   // CHECK:STDERR:        ·        ╰──────┤ initializing function parameter [InCallToFunctionParam]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:

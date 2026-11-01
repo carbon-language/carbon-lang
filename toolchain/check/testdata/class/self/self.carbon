@@ -105,7 +105,7 @@ class Class {
   // CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·                 ╰────┤ type `Class` does not implement interface
   // CHECK:STDERR:        ·                      │ `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                      │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F(self) -> self;

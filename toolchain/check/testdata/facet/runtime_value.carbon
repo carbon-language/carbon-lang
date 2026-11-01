@@ -44,12 +44,13 @@ fn F(c: C) {
   // TODO: This copy should work, but the narrowing prevents it currently.
   //
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_todo_facet_copy_narrowing_from_reference.carbon:[[@LINE+8]]:21
+  // CHECK:STDERR:        ╭─┤ fail_todo_facet_copy_narrowing_from_reference.carbon:[[@LINE+9]]:21
   // CHECK:STDERR: ->     │   let unused a: I = c.ij;
-  // CHECK:STDERR:        ·                     ┳━━━
-  // CHECK:STDERR:        ·                     ┗━━┫ error: semantics TODO:
-  // CHECK:STDERR:        ·                        ┃        `conversion of runtime facet value`
-  // CHECK:STDERR:        ·                        ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ·              ──┬─   ┳━━━
+  // CHECK:STDERR:        ·                │    ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·                │       ┃        `conversion of runtime facet value`
+  // CHECK:STDERR:        ·                │       ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ·                ╰─────────┤ initializing this binding [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: I = c.ij;
@@ -228,8 +229,8 @@ fn F(T: type) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
 // CHECK:STDOUT:   %ij.ref: %C.elem = name_ref ij, @C.%field_decl [concrete = @C.%field_decl]
-// CHECK:STDOUT:   %.loc25_22.1: ref %facet_type = class_element_access %c.ref, element0
-// CHECK:STDOUT:   %.loc25_22.2: %facet_type = acquire_value %.loc25_22.1
+// CHECK:STDOUT:   %.loc26_22.1: ref %facet_type = class_element_access %c.ref, element0
+// CHECK:STDOUT:   %.loc26_22.2: %facet_type = acquire_value %.loc26_22.1
 // CHECK:STDOUT:   %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   %a: %I.type = wrapper_binding a, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

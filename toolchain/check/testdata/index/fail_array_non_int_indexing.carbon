@@ -21,7 +21,7 @@ var a: array(i32, 1) = (12,);
 // CHECK:STDERR:        ·                │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·                ╰────┤ type `Core.FloatLiteral` does not implement interface
 // CHECK:STDERR:        ·                     │ `Core.ImplicitAs(i32)`
-// CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                     │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: i32 = a[2.6];

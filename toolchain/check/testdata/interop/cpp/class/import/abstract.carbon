@@ -81,12 +81,17 @@ library "[[@TEST_NAME]]";
 import Cpp library "abstract_final.h";
 
 class C {
-  // CHECK:STDERR:        ╭─┤ fail_derive_from_abstract_final.carbon:[[@LINE+8]]:16
+  // CHECK:STDERR:        ╭─┤ fail_derive_from_abstract_final.carbon:[[@LINE+13]]:16
   // CHECK:STDERR: ->     │   extend base: Cpp.AbstractFinal;
   // CHECK:STDERR:        ·                ┳━━━━━━━━━━━━━━━━
   // CHECK:STDERR:        ·                ┗━━┫ error: deriving from final type `AbstractFinal`; base type
   // CHECK:STDERR:        ·                   ┃        must be an `abstract` or `base` class
   // CHECK:STDERR:        ·                   ┃        [BaseIsFinal]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./abstract_final.h
+  // CHECK:STDERR:        │ struct AbstractFinal final {
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ declared without `abstract` or `base` here [BaseClassNotInheritable]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend base: Cpp.AbstractFinal;
