@@ -275,11 +275,11 @@ fn EqualWitnesses(p: Wrap(Cpp.Copyable)*) -> Wrap(Cpp.Copyable)* {
 // CHECK:STDOUT:   %Wrap.064: type = class_type @Wrap, @Wrap(%Copy.facet.07e) [concrete]
 // CHECK:STDOUT:   %ptr.5a2: type = ptr_type %Wrap.064 [concrete]
 // CHECK:STDOUT:   %Copy.impl_witness.35f: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%Wrap.064) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.fbc: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Wrap.064) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.4dc: %ptr.as.Copy.impl.Op.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet.d17: %Copy.type.bd0 = facet_value %ptr.5a2, (%Copy.impl_witness.35f) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.e69: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet.d17) [concrete]
 // CHECK:STDOUT:   %.a85: type = fn_type_with_self_type %Copy.WithSelf.Op.type.e69, %Copy.facet.d17 [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.fbc: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Wrap.064) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.4dc: %ptr.as.Copy.impl.Op.type.fbc = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.4dc, @ptr.as.Copy.impl.Op(%Wrap.064) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
