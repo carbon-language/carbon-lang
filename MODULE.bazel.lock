@@ -356,6 +356,28 @@
         ]
       }
     },
+    "//bazel/tree_sitter_rules:defs.bzl%tree_sitter_binary": {
+      "os:osx,arch:aarch64": {
+        "bzlTransitiveDigest": "PmEACwgAN+3FiJTfG2nYEDfxR+8gLASThUonyR7eIo4=",
+        "usagesDigest": "JI/TiF26UX5dOjEzqMQNCtl46LQDOTLjo8Y3Ok3mwN0=",
+        "recordedFileInputs": {},
+        "recordedDirentsInputs": {},
+        "envVariables": {},
+        "generatedRepoSpecs": {
+          "tree_sitter_binary": {
+            "repoRuleId": "@@//bazel/tree_sitter_rules:defs.bzl%_tree_sitter_binary",
+            "attributes": {}
+          }
+        },
+        "recordedRepoMappingEntries": [
+          [
+            "",
+            "bazel_skylib",
+            "bazel_skylib+"
+          ]
+        ]
+      }
+    },
     "@@cgrindel_bazel_starlib+//tools/git:extensions.bzl%local_git_ext": {
       "general": {
         "bzlTransitiveDigest": "Q/NQyKFI2DljjsevKbLpWlOrT/bOsP3m/A8uvcXQb40=",
