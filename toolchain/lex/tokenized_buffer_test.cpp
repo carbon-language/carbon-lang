@@ -1096,10 +1096,13 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   // We increase the number of digits until the first one that is to large.
   Testing::MockDiagnosticConsumer consumer;
   // The bit width's digits are marked as the range that is too long.
-  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
-                            Diagnostics::Kind::TooManyTypeBitWidthDigits,
-                            Diagnostics::Level::Error, 1, 2, 1, _, 1, 2,
-                            testing::Gt(1))));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(Testing::IsDiagnosticWithRange(
+          Diagnostics::Kind::TooManyTypeBitWidthDigits,
+          Diagnostics::Level::Error,
+          {.line_number = 1, .column_number = 2, .length = 1}, _,
+          {.line_number = 1, .column_number = 2, .length = testing::Gt(1)})));
   std::string code = "i";
   // A 128-bit APInt should be plenty large, but if needed in the future it can
   // be widened without issue.
@@ -1133,8 +1136,10 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   EXPECT_CALL(consumer,
               HandleDiagnostic(Testing::IsDiagnosticWithRange(
                   Diagnostics::Kind::TooManyTypeBitWidthDigits,
-                  Diagnostics::Level::Error, 1, 2, 1,
-                  HasSubstr(llvm::formatv(" {0} ", Count)), 1, 2, Count)));
+                  Diagnostics::Level::Error,
+                  {.line_number = 1, .column_number = 2, .length = 1},
+                  HasSubstr(llvm::formatv(" {0} ", Count)),
+                  {.line_number = 1, .column_number = 2, .length = Count})));
   code = "i";
   code.append(Count, '9');
   auto& buffer = compile_helper_.GetTokenizedBuffer(code, &consumer);
@@ -1292,10 +1297,12 @@ TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
   Testing::MockDiagnosticConsumer consumer;
   // The message is located at the `\` that starts the escape, and the escape
   // is marked.
-  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
-                            Diagnostics::Kind::UnknownEscapeSequence,
-                            Diagnostics::Level::Error, 1, 7, 1,
-                            HasSubstr("`b`"), 1, 7, 2)));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(Testing::IsDiagnosticWithRange(
+          Diagnostics::Kind::UnknownEscapeSequence, Diagnostics::Level::Error,
+          {.line_number = 1, .column_number = 7, .length = 1}, HasSubstr("`b`"),
+          {.line_number = 1, .column_number = 7, .length = 2})));
   compile_helper_.GetTokenizedBuffer(R"("hello\bworld")", &consumer);
 }
 
@@ -1303,9 +1310,12 @@ TEST_F(LexerTest, DiagnosticBadHex) {
   Testing::MockDiagnosticConsumer consumer;
   // The message is located at the first digit that isn't an uppercase
   // hexadecimal digit, and the escape before it is marked.
-  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
-                            Diagnostics::Kind::HexadecimalEscapeMissingDigits,
-                            Diagnostics::Level::Error, 1, 9, 0, _, 1, 7, 2)));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(Testing::IsDiagnosticWithRange(
+                  Diagnostics::Kind::HexadecimalEscapeMissingDigits,
+                  Diagnostics::Level::Error,
+                  {.line_number = 1, .column_number = 9, .length = 0}, _,
+                  {.line_number = 1, .column_number = 7, .length = 2})));
   compile_helper_.GetTokenizedBuffer(R"("hello\xabworld")", &consumer);
 }
 
@@ -1340,9 +1350,12 @@ TEST_F(LexerTest, DiagnosticMissingTerminator) {
   Testing::MockDiagnosticConsumer consumer;
   // The terminator goes where the literal stops, and the whole literal is
   // marked.
-  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
-                            Diagnostics::Kind::UnterminatedString,
-                            Diagnostics::Level::Error, 1, 5, 0, _, 1, 1, 4)));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(Testing::IsDiagnosticWithRange(
+          Diagnostics::Kind::UnterminatedString, Diagnostics::Level::Error,
+          {.line_number = 1, .column_number = 5, .length = 0}, _,
+          {.line_number = 1, .column_number = 1, .length = 4})));
   compile_helper_.GetTokenizedBuffer(R"(#" ")", &consumer);
 }
 
@@ -1350,9 +1363,12 @@ TEST_F(LexerTest, DiagnosticMissingMultiLineTerminator) {
   Testing::MockDiagnosticConsumer consumer;
   // The literal runs to the end of the file, which is where the terminator
   // goes, and the literal is marked from its introducer.
-  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
-                            Diagnostics::Kind::UnterminatedString,
-                            Diagnostics::Level::Error, 3, 1, 0, _, 1, 1, _)));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(Testing::IsDiagnosticWithRange(
+          Diagnostics::Kind::UnterminatedString, Diagnostics::Level::Error,
+          {.line_number = 3, .column_number = 1, .length = 0}, _,
+          {.line_number = 1, .column_number = 1, .length = _})));
   compile_helper_.GetTokenizedBuffer(
       "'''\n"
       "  text\n",
@@ -1402,9 +1418,12 @@ TEST_F(LexerTest, PointAfterRecoveryToken) {
 
 TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsDiagnosticWithRange(
-                            Diagnostics::Kind::UnrecognizedCharacters,
-                            Diagnostics::Level::Error, 1, 1, 1, _, 1, 1, 1)));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(Testing::IsDiagnosticWithRange(
+          Diagnostics::Kind::UnrecognizedCharacters, Diagnostics::Level::Error,
+          {.line_number = 1, .column_number = 1, .length = 1}, _,
+          {.line_number = 1, .column_number = 1, .length = 1})));
   compile_helper_.GetTokenizedBuffer("\b", &consumer);
 }
 

@@ -14,10 +14,10 @@ namespace Carbon::Lex {
 // range names the point between two characters, where something missing would
 // be written.
 //
-// A `const char*` converts implicitly to the one character it points at, and
-// any other range has to be made by a factory function. Converting a bare
-// `const char*` to `llvm::StringRef` scans to the next null, which in a source
-// buffer is the end of the file.
+// A `const char*` into the source buffer converts implicitly to the one
+// character it points at, and any other range has to be made by a factory
+// function. Converting a bare `const char*` to `llvm::StringRef` scans for a
+// null byte, and a source buffer isn't guaranteed to have one.
 class SourceLoc {
  public:
   // The character at `pos`, which must point into the source buffer.

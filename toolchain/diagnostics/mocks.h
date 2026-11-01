@@ -98,33 +98,37 @@ inline auto IsDiagnostic(
       testing::Field("labels", &Diagnostics::Diagnostic::labels, labels));
 }
 
+// The start and length expected of a location, in `IsDiagnosticWithRange`.
+struct ExpectedLoc {
+  testing::Matcher<int> line_number;
+  testing::Matcher<int> column_number;
+  testing::Matcher<int> length;
+};
+
 // Matches a diagnostic with one message and one range attached to it with no
 // text, checking the lengths of the message's location and of the range as
 // well as their starts.
 inline auto IsDiagnosticWithRange(testing::Matcher<Diagnostics::Kind> kind,
                                   testing::Matcher<Diagnostics::Level> level,
-                                  testing::Matcher<int> line_number,
-                                  testing::Matcher<int> column_number,
-                                  testing::Matcher<int> length,
+                                  ExpectedLoc loc,
                                   testing::Matcher<std::string> message,
-                                  testing::Matcher<int> range_line_number,
-                                  testing::Matcher<int> range_column_number,
-                                  testing::Matcher<int> range_length)
+                                  ExpectedLoc range)
     -> testing::Matcher<Diagnostics::Diagnostic> {
   return IsDiagnostic(
       level,
       testing::AllOf(
-          IsDiagnosticMessage(kind, level, line_number, column_number, message),
+          IsDiagnosticMessage(kind, level, loc.line_number, loc.column_number,
+                              message),
           testing::Field(
               "loc", &Diagnostics::Message::loc,
-              testing::Field("length", &Diagnostics::Loc::length, length))),
+              testing::Field("length", &Diagnostics::Loc::length, loc.length))),
       testing::IsEmpty(),
       testing::ElementsAre(testing::AllOf(
           IsDiagnosticLabel(Diagnostics::LabelCategory::Primary,
-                            range_line_number, range_column_number, ""),
+                            range.line_number, range.column_number, ""),
           testing::Field("loc", &Diagnostics::Label::loc,
                          testing::Field("length", &Diagnostics::Loc::length,
-                                        range_length)))));
+                                        range.length)))));
 }
 
 inline auto IsSingleDiagnostic(testing::Matcher<Diagnostics::Kind> kind,

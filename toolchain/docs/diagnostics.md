@@ -409,11 +409,11 @@ its message is located where they would put the cursor to start fixing it:
     goes and underlines the literal; a `\x` escape without two digits is
     located at the digit that is missing or wrong and underlines the escape.
 
-In the lexer, a location is a `Lex::SourceLoc`. A `const char*` converts to the
-one character it points at, `SourceLoc::Before` makes a point, and
-`SourceLoc::Range` makes any other range. A range is never made from a bare
-`const char*`, because converting one to `llvm::StringRef` scans to the next
-null, which in a source buffer is the end of the file.
+In the lexer, a location is a `Lex::SourceLoc`. A `const char*` into the source
+buffer converts to the one character it points at, `SourceLoc::Before` makes a
+point, and `SourceLoc::Range` makes any other range. A range is never made from
+a bare `const char*`, because converting one to `llvm::StringRef` scans for a
+null byte, and a source buffer isn't guaranteed to have one.
 
 In the parser, a location is a `Parse::DiagnosticLoc`. A token converts to one,
 `DiagnosticLoc::Tokens` covers a run of tokens, and `Before` and `After` make

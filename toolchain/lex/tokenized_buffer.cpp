@@ -558,8 +558,9 @@ auto TokenizedBuffer::TokenRangeToDiagnosticLoc(
   }
   auto end_loc = TokenToDiagnosticLoc(tokens.end);
   begin_loc.last_byte_offset = end_loc.last_byte_offset;
-  // For multiline locations we simply return the rest of the line for now
-  // since true multiline locations are not yet supported.
+  // TODO: A range across lines covers only the rest of its first line, because
+  // a `Diagnostics::Loc` is on one line. Cover the whole range once a location
+  // can span lines.
   if (begin_loc.loc.line_number != end_loc.loc.line_number) {
     begin_loc.loc.length =
         begin_loc.loc.line.size() - begin_loc.loc.column_number + 1;

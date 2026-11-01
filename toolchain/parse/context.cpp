@@ -107,17 +107,13 @@ auto Context::ConsumeAndAddCloseSymbol(State state, NodeKind close_kind)
     CARBON_DIAGNOSTIC_LABEL(GroupOpenedHere, Info, "matching this `{0}`",
                             Lex::TokenKind);
     auto matched_close = tokens().GetMatchedClosingToken(state.token);
-    auto diag =
-        emitter_.Build(DiagnosticLoc::Tokens(
-                           {.begin = *position_,
-                            .end = Lex::TokenIndex(matched_close.index - 1)}),
-                       ExpectedCloseSymbol, open_token_kind.closing_symbol());
-    // The message's line already shows an opening token on that line, so only
-    // one on an earlier line is labeled.
-    if (tokens().GetLine(state.token) != tokens().GetLine(*position_)) {
-      diag.Attach(state.token, GroupOpenedHere, open_token_kind);
-    }
-    diag.Emit();
+    emitter_
+        .Build(DiagnosticLoc::Tokens(
+                   {.begin = *position_,
+                    .end = Lex::TokenIndex(matched_close.index - 1)}),
+               ExpectedCloseSymbol, open_token_kind.closing_symbol())
+        .Attach(state.token, GroupOpenedHere, open_token_kind)
+        .Emit();
 
     SkipTo(matched_close);
     AddNode(close_kind, Consume(), /*has_error=*/true);
