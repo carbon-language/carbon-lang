@@ -13,7 +13,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_member_of_function.carbon
 
 fn A() {
-  // CHECK:STDERR: fail_member_of_function.carbon:[[@LINE+2]]:3-5: error: type `<type of A>` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╭─┤ fail_member_of_function.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   A.y;
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: type `<type of A>` does not support qualified expressions
+  // CHECK:STDERR:        ·       ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   A.y;
 }

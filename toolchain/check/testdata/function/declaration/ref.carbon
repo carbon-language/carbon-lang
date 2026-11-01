@@ -33,7 +33,12 @@ library "[[@TEST_NAME]]";
 
 // TODO: Per p5434, a return form starting with `(` is a compound form, which
 // isn't supported yet.
-// CHECK:STDERR: fail_todo_ref_return_parenthesized.carbon:[[@LINE+2]]:12-18: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+// CHECK:STDERR:        ╭─┤ fail_todo_ref_return_parenthesized.carbon:[[@LINE+7]]:12
+// CHECK:STDERR: ->     │ fn F() -> (ref i32);
+// CHECK:STDERR:        ·            ━━━┳━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: `ref` tag is not an argument to a `ref` parameter
+// CHECK:STDERR:        ·                  ┃        [RefTagNoRefParam]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> (ref i32);
 

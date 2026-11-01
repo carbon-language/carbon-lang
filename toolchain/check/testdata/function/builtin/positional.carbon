@@ -14,15 +14,35 @@
 
 // --- fail_positional.carbon
 
-// CHECK:STDERR: fail_positional.carbon:[[@LINE+4]]:1-15: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_positional.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ fn Add -> i32 = "int.sadd";
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: semantics TODO: `function with positional parameters`
+// CHECK:STDERR:        ·           ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_positional.carbon:[[@LINE+2]]:1-15: error: invalid signature for builtin function "int.sadd" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_positional.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn Add -> i32 = "int.sadd";
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: invalid signature for builtin function "int.sadd"
+// CHECK:STDERR:        ·           ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Add -> i32 = "int.sadd";
 
-// CHECK:STDERR: fail_positional.carbon:[[@LINE+4]]:1-8: error: semantics TODO: `function with positional parameters` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_positional.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ fn Mul = "int.smul";
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: semantics TODO: `function with positional parameters`
+// CHECK:STDERR:        ·        ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_positional.carbon:[[@LINE+2]]:1-8: error: invalid signature for builtin function "int.smul" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_positional.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn Mul = "int.smul";
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: invalid signature for builtin function "int.smul"
+// CHECK:STDERR:        ·        ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Mul = "int.smul";
 
@@ -65,7 +85,7 @@ fn Mul = "int.smul";
 // CHECK:STDOUT:     %return.patt: %pattern_type.d94 = return_slot_pattern %return.param_patt, %i32 [concrete = constants.%return.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc6: Core.Form = init_form %i32 [concrete = constants.%.0b3]
+// CHECK:STDOUT:     %.loc16: Core.Form = init_form %i32 [concrete = constants.%.0b3]
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param0
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
 // CHECK:STDOUT:   }

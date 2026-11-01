@@ -154,9 +154,18 @@ interface X {
 
 impl A as X {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_inheritance_value_conversion_copy_return.carbon:[[@LINE+4]]:3-14: error: cannot copy value of type `A` [CopyOfUncopyableType]
-  // CHECK:STDERR: fail_inheritance_value_conversion_copy_return.carbon:[[@LINE+3]]:3-14: note: type `A` does not implement interface `Core.Copy` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_inheritance_value_conversion_copy_return.carbon:[[@LINE-7]]:3-17: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:        ╭─┤ fail_inheritance_value_conversion_copy_return.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │   fn F() -> Self;
+  // CHECK:STDERR:        ·   ───────┬───────
+  // CHECK:STDERR:        ·          ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·             │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   fn F() -> B;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: cannot copy value of type `A` [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·         ╰────┤ type `A` does not implement interface `Core.Copy`
+  // CHECK:STDERR:        ·              │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F() -> B;
   //@dump-sem-ir-end
@@ -174,10 +183,20 @@ class A {}
 class B {}
 
 impl A as I {
-  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE+5]]:3-13: error: cannot implicitly convert expression of type `A` to `B` [ConversionFailure]
-  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE+4]]:3-13: note: type `A` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE+3]]:8-11: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fail_param_type_mismatch.carbon:[[@LINE-10]]:3-16: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:        ╭─┤ fail_param_type_mismatch.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR:        │   fn F(a: Self);
+  // CHECK:STDERR:        ·   ───────┬──────
+  // CHECK:STDERR:        ·          ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·             │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   fn F(a: B);
+  // CHECK:STDERR:        ·   ━━━━━┳━┯━━━
+  // CHECK:STDERR:        ·        ┗━━━━┫ error: cannot implicitly convert expression of type `A` to `B`
+  // CHECK:STDERR:        ·        │ │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰──────┤ type `A` does not implement interface `Core.ImplicitAs(B)`
+  // CHECK:STDERR:        ·          │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ╰──────┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F(a: B);
 }
@@ -194,9 +213,19 @@ class A {}
 class B {}
 
 impl A as I {
-  // CHECK:STDERR: fail_return_mismatch.carbon:[[@LINE+4]]:3-14: error: cannot implicitly convert expression of type `B` to `A` [ConversionFailure]
-  // CHECK:STDERR: fail_return_mismatch.carbon:[[@LINE+3]]:3-14: note: type `B` does not implement interface `Core.ImplicitAs(A)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_return_mismatch.carbon:[[@LINE-9]]:3-17: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:        ╭─┤ fail_return_mismatch.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        │   fn F() -> Self;
+  // CHECK:STDERR:        ·   ───────┬───────
+  // CHECK:STDERR:        ·          ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·             │ [ThunkSignature]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   fn F() -> B;
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: cannot implicitly convert expression of type `B` to `A`
+  // CHECK:STDERR:        ·         │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·         ╰────┤ type `B` does not implement interface `Core.ImplicitAs(A)`
+  // CHECK:STDERR:        ·              │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F() -> B;
 }
@@ -232,8 +261,17 @@ interface I {
 
 impl () as I {
   // TODO: The proposal says to reject this. But should we really do so?
-  // CHECK:STDERR: fail_return_empty_tuple_mismatch.carbon:[[@LINE+3]]:3-22: error: function redeclaration differs because return type is `()` [FunctionRedeclReturnTypeDiffers]
-  // CHECK:STDERR: fail_return_empty_tuple_mismatch.carbon:[[@LINE-6]]:3-16: note: previously declared with no return type [FunctionRedeclReturnTypePreviousNoReturn]
+  // CHECK:STDERR:        ╭─┤ fail_return_empty_tuple_mismatch.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │   fn NoReturn();
+  // CHECK:STDERR:        ·   ───────┬──────
+  // CHECK:STDERR:        ·          ╰──┤ previously declared with no return type
+  // CHECK:STDERR:        ·             │ [FunctionRedeclReturnTypePreviousNoReturn]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   fn NoReturn() -> ();
+  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: function redeclaration differs because return type is `()`
+  // CHECK:STDERR:        ·              ┃        [FunctionRedeclReturnTypeDiffers]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn NoReturn() -> ();
 }
@@ -241,14 +279,35 @@ impl () as I {
 class C {}
 
 impl C as I {
-  // CHECK:STDERR: fail_return_empty_tuple_mismatch.carbon:[[@LINE+3]]:3-21: error: function redeclaration differs because return type is `C` [FunctionRedeclReturnTypeDiffers]
-  // CHECK:STDERR: fail_return_empty_tuple_mismatch.carbon:[[@LINE-15]]:3-16: note: previously declared with no return type [FunctionRedeclReturnTypePreviousNoReturn]
+  // CHECK:STDERR:        ╭─┤ fail_return_empty_tuple_mismatch.carbon:[[@LINE+25]]:3
+  // CHECK:STDERR:        │   fn NoReturn();
+  // CHECK:STDERR:        ·   ───────┬──────
+  // CHECK:STDERR:        ·          ╰──┤ previously declared with no return type
+  // CHECK:STDERR:        ·             │ [FunctionRedeclReturnTypePreviousNoReturn]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   fn NoReturn() -> C;
+  // CHECK:STDERR:        ·   ━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: function redeclaration differs because return type is `C`
+  // CHECK:STDERR:        ·               ┃        [FunctionRedeclReturnTypeDiffers]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR: ->     ╭─┤ fail_param_type_incomplete.carbon
+  // CHECK:STDERR:        · ┗━━┫ error: parameter has incomplete type `B` in function definition
+  // CHECK:STDERR:        ·    ┃        [IncompleteTypeInFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ class B;
+  // CHECK:STDERR:        · ────┬───
+  // CHECK:STDERR:        ·     ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │     fn F(c: C);
+  // CHECK:STDERR:        ·     ─────┬─────
+  // CHECK:STDERR:        ·          ╰──┤ while building thunk calling this function [ThunkCallee]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn NoReturn() -> C;
 }
 
 // --- fail_param_type_incomplete.carbon
-// CHECK:STDERR: fail_param_type_incomplete.carbon: error: parameter has incomplete type `B` in function definition [IncompleteTypeInFunctionParam]
 
 library "[[@TEST_NAME]]";
 
@@ -256,17 +315,24 @@ interface I(T: type) {
   fn F(a: T);
 }
 
-// CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+1]]:1-8: note: class was forward declared here [ClassForwardDeclaredHere]
 class B;
 
 class C {
   impl as I(B) {
-    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+7]]:5-15: note: while building thunk calling this function [ThunkCallee]
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+5]]:5-15: error: cannot implicitly convert expression of type `B` to `C` [ConversionFailure]
-    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+4]]:5-15: note: type `B` does not implement interface `Core.ImplicitAs(C)` [MissingImplInMemberAccessInContext]
-    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE+3]]:10-13: note: initializing function parameter [InCallToFunctionParam]
-    // CHECK:STDERR: fail_param_type_incomplete.carbon:[[@LINE-13]]:3-13: note: while building thunk to match the signature of this function [ThunkSignature]
+    // CHECK:STDERR:        ╭─┤ fail_param_type_incomplete.carbon:[[@LINE+15]]:5
+    // CHECK:STDERR:        │   fn F(a: T);
+    // CHECK:STDERR:        ·   ─────┬─────
+    // CHECK:STDERR:        ·        ╰──┤ while building thunk to match the signature of this function
+    // CHECK:STDERR:        ·           │ [ThunkSignature]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     fn F(c: C);
+    // CHECK:STDERR:        ·     ━━━━━┳━┯━━━
+    // CHECK:STDERR:        ·          ┗━━━━┫ error: cannot implicitly convert expression of type `B` to `C`
+    // CHECK:STDERR:        ·          │ │  ┃        [ConversionFailure]
+    // CHECK:STDERR:        ·          ╰──────┤ type `B` does not implement interface `Core.ImplicitAs(C)`
+    // CHECK:STDERR:        ·            │    │ [MissingImplInMemberAccessInContext]
+    // CHECK:STDERR:        ·            ╰──────┤ initializing function parameter [InCallToFunctionParam]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     fn F(c: C);
   }
@@ -1032,23 +1098,23 @@ impl () as I({}) {
 // CHECK:STDOUT:   %pattern_type.e39: type = pattern_type %B [concrete]
 // CHECK:STDOUT:   %return.param_patt.934: %pattern_type.e39 = out_param_pattern [concrete]
 // CHECK:STDOUT:   %return.patt.911: %pattern_type.e39 = return_slot_pattern %return.param_patt.934, %B [concrete]
-// CHECK:STDOUT:   %A.as.X.impl.F.type.48cdab.1: type = fn_type @A.as.X.impl.F.loc17_14.1 [concrete]
+// CHECK:STDOUT:   %A.as.X.impl.F.type.48cdab.1: type = fn_type @A.as.X.impl.F.loc26_14.1 [concrete]
 // CHECK:STDOUT:   %A.as.X.impl.F.bd5be1.1: %A.as.X.impl.F.type.48cdab.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %X.facet: %X.type = facet_value %A, (%X.impl_witness) [concrete]
-// CHECK:STDOUT:   %A.as.X.impl.F.type.48cdab.2: type = fn_type @A.as.X.impl.F.loc17_14.2 [concrete]
+// CHECK:STDOUT:   %A.as.X.impl.F.type.48cdab.2: type = fn_type @A.as.X.impl.F.loc26_14.2 [concrete]
 // CHECK:STDOUT:   %A.as.X.impl.F.bd5be1.2: %A.as.X.impl.F.type.48cdab.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %Destroy.type: type = facet_type <@Destroy> [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.type: type = facet_type <@SubobjectDestroy> [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc17_14.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc26_14.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.9bf: %SubobjectDestroy.type = facet_value %A, (%custom_witness.b80ef6.2) [concrete]
 // CHECK:STDOUT:   %DestroyImpl.impl_witness.6d1: <witness> = impl_witness imports.%DestroyImpl.impl_witness_table, @T.as_type.as.DestroyImpl.impl(%SubobjectDestroy.facet.9bf) [concrete]
 // CHECK:STDOUT:   %Destroy.facet.35e: %Destroy.type = facet_value %A, (%DestroyImpl.impl_witness.6d1, %custom_witness.b80ef6.2) [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc17_14.4 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc26_14.4 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.4: %SubobjectDestroy.WithSelf.Op.type.6870fd.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.4: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.4), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.92e: %SubobjectDestroy.type = facet_value %B, (%custom_witness.b80ef6.4) [concrete]
@@ -1062,17 +1128,17 @@ impl () as I({}) {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: impl @A.as.X.impl: %A.ref as %X.ref {
-// CHECK:STDOUT:   %A.as.X.impl.F.decl.loc17_14.1: %A.as.X.impl.F.type.48cdab.1 = fn_decl @A.as.X.impl.F.loc17_14.1 [concrete = constants.%A.as.X.impl.F.bd5be1.1] {
+// CHECK:STDOUT:   %A.as.X.impl.F.decl.loc26_14.1: %A.as.X.impl.F.type.48cdab.1 = fn_decl @A.as.X.impl.F.loc26_14.1 [concrete = constants.%A.as.X.impl.F.bd5be1.1] {
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.e39 = out_param_pattern [concrete = constants.%return.param_patt.934]
 // CHECK:STDOUT:     %return.patt: %pattern_type.e39 = return_slot_pattern %return.param_patt, %B.ref [concrete = constants.%return.patt.911]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %B.ref: type = name_ref B, file.%B.decl [concrete = constants.%B]
-// CHECK:STDOUT:     %.loc17: Core.Form = init_form %B.ref [concrete = constants.%.d83]
+// CHECK:STDOUT:     %.loc26: Core.Form = init_form %B.ref [concrete = constants.%.d83]
 // CHECK:STDOUT:     %return.param: ref %B = out_param call_param0
 // CHECK:STDOUT:     %return: ref %B = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %A.as.X.impl.F.decl.loc17_14.2: %A.as.X.impl.F.type.48cdab.2 = fn_decl @A.as.X.impl.F.loc17_14.2 [concrete = constants.%A.as.X.impl.F.bd5be1.2] {
+// CHECK:STDOUT:   %A.as.X.impl.F.decl.loc26_14.2: %A.as.X.impl.F.type.48cdab.2 = fn_decl @A.as.X.impl.F.loc26_14.2 [concrete = constants.%A.as.X.impl.F.bd5be1.2] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     <elided>
@@ -1081,57 +1147,57 @@ impl () as I({}) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
 // CHECK:STDOUT:   .B = <poisoned>
-// CHECK:STDOUT:   .F = %A.as.X.impl.F.decl.loc17_14.1
+// CHECK:STDOUT:   .F = %A.as.X.impl.F.decl.loc26_14.1
 // CHECK:STDOUT:   extend %X.ref
 // CHECK:STDOUT:   witness = %X.impl_witness
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.as.X.impl.F.loc17_14.1() -> out %return.param: %B;
+// CHECK:STDOUT: fn @A.as.X.impl.F.loc26_14.1() -> out %return.param: %B;
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.as.X.impl.F.loc17_14.2() -> out %return.param: %A [thunk @A.as.X.impl.%A.as.X.impl.F.decl.loc17_14.1 for @X.WithSelf.%X.WithSelf.F.decl, @X.WithSelf.F(constants.%X.facet)] {
+// CHECK:STDOUT: fn @A.as.X.impl.F.loc26_14.2() -> out %return.param: %A [thunk @A.as.X.impl.%A.as.X.impl.F.decl.loc26_14.1 for @X.WithSelf.%X.WithSelf.F.decl, @X.WithSelf.F(constants.%X.facet)] {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %F.ref: %A.as.X.impl.F.type.48cdab.1 = name_ref F, @A.as.X.impl.%A.as.X.impl.F.decl.loc17_14.1 [concrete = constants.%A.as.X.impl.F.bd5be1.1]
-// CHECK:STDOUT:   %.loc17_14.1: ref %B = temporary_storage
-// CHECK:STDOUT:   %A.as.X.impl.F.call: init %B to %.loc17_14.1 = call %F.ref()
-// CHECK:STDOUT:   %.loc17_14.2: ref %B = temporary %.loc17_14.1, %A.as.X.impl.F.call
-// CHECK:STDOUT:   %.loc17_14.3: ref %A = class_element_access %.loc17_14.2, element0
-// CHECK:STDOUT:   %.loc17_14.4: ref %A = converted %A.as.X.impl.F.call, %.loc17_14.3
-// CHECK:STDOUT:   %.loc17_14.5: %A = acquire_value %.loc17_14.4
-// CHECK:STDOUT:   %Destroy.facet.loc17_14.1: %Destroy.type = facet_value constants.%B, (constants.%DestroyImpl.impl_witness.131, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet.09e]
-// CHECK:STDOUT:   %.loc17_14.6: %Destroy.type = converted constants.%B, %Destroy.facet.loc17_14.1 [concrete = constants.%Destroy.facet.09e]
-// CHECK:STDOUT:   %Destroy.facet.loc17_14.2: %Destroy.type = facet_value constants.%B, (constants.%DestroyImpl.impl_witness.131, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet.09e]
-// CHECK:STDOUT:   %.loc17_14.7: %Destroy.type = converted constants.%B, %Destroy.facet.loc17_14.2 [concrete = constants.%Destroy.facet.09e]
+// CHECK:STDOUT:   %F.ref: %A.as.X.impl.F.type.48cdab.1 = name_ref F, @A.as.X.impl.%A.as.X.impl.F.decl.loc26_14.1 [concrete = constants.%A.as.X.impl.F.bd5be1.1]
+// CHECK:STDOUT:   %.loc26_14.1: ref %B = temporary_storage
+// CHECK:STDOUT:   %A.as.X.impl.F.call: init %B to %.loc26_14.1 = call %F.ref()
+// CHECK:STDOUT:   %.loc26_14.2: ref %B = temporary %.loc26_14.1, %A.as.X.impl.F.call
+// CHECK:STDOUT:   %.loc26_14.3: ref %A = class_element_access %.loc26_14.2, element0
+// CHECK:STDOUT:   %.loc26_14.4: ref %A = converted %A.as.X.impl.F.call, %.loc26_14.3
+// CHECK:STDOUT:   %.loc26_14.5: %A = acquire_value %.loc26_14.4
+// CHECK:STDOUT:   %Destroy.facet.loc26_14.1: %Destroy.type = facet_value constants.%B, (constants.%DestroyImpl.impl_witness.131, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet.09e]
+// CHECK:STDOUT:   %.loc26_14.6: %Destroy.type = converted constants.%B, %Destroy.facet.loc26_14.1 [concrete = constants.%Destroy.facet.09e]
+// CHECK:STDOUT:   %Destroy.facet.loc26_14.2: %Destroy.type = facet_value constants.%B, (constants.%DestroyImpl.impl_witness.131, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet.09e]
+// CHECK:STDOUT:   %.loc26_14.7: %Destroy.type = converted constants.%B, %Destroy.facet.loc26_14.2 [concrete = constants.%Destroy.facet.09e]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc17_14.2)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc26_14.2)
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc17_14.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc26_14.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc17_14.2(%self.param: ref %A) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc26_14.2(%self.param: ref %A) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc17_14.3(%self.param: ref %struct_type.base.cb7) {
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc26_14.3(%self.param: ref %struct_type.base.cb7) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc17_14.1: ref %A = struct_access %self.param, element0
-// CHECK:STDOUT:   %Destroy.facet.loc17_14.1: %Destroy.type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.35e]
-// CHECK:STDOUT:   %.loc17_14.2: %Destroy.type = converted constants.%A, %Destroy.facet.loc17_14.1 [concrete = constants.%Destroy.facet.35e]
-// CHECK:STDOUT:   %Destroy.facet.loc17_14.2: %Destroy.type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.35e]
-// CHECK:STDOUT:   %.loc17_14.3: %Destroy.type = converted constants.%A, %Destroy.facet.loc17_14.2 [concrete = constants.%Destroy.facet.35e]
+// CHECK:STDOUT:   %.loc26_14.1: ref %A = struct_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.facet.loc26_14.1: %Destroy.type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.35e]
+// CHECK:STDOUT:   %.loc26_14.2: %Destroy.type = converted constants.%A, %Destroy.facet.loc26_14.1 [concrete = constants.%Destroy.facet.35e]
+// CHECK:STDOUT:   %Destroy.facet.loc26_14.2: %Destroy.type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.35e]
+// CHECK:STDOUT:   %.loc26_14.3: %Destroy.type = converted constants.%A, %Destroy.facet.loc26_14.2 [concrete = constants.%Destroy.facet.35e]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc17_14.1)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc26_14.1)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc17_14.4(%self.param: ref %B) {
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc26_14.4(%self.param: ref %B) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %base.ref: %B.elem = name_ref base, @B.%.loc5 [concrete = @B.%.loc5]
-// CHECK:STDOUT:   %.loc17_14.1: ref %A = class_element_access %self.param, element0
-// CHECK:STDOUT:   %Destroy.facet.loc17_14.1: %Destroy.type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.35e]
-// CHECK:STDOUT:   %.loc17_14.2: %Destroy.type = converted constants.%A, %Destroy.facet.loc17_14.1 [concrete = constants.%Destroy.facet.35e]
-// CHECK:STDOUT:   %Destroy.facet.loc17_14.2: %Destroy.type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.35e]
-// CHECK:STDOUT:   %.loc17_14.3: %Destroy.type = converted constants.%A, %Destroy.facet.loc17_14.2 [concrete = constants.%Destroy.facet.35e]
+// CHECK:STDOUT:   %.loc26_14.1: ref %A = class_element_access %self.param, element0
+// CHECK:STDOUT:   %Destroy.facet.loc26_14.1: %Destroy.type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.35e]
+// CHECK:STDOUT:   %.loc26_14.2: %Destroy.type = converted constants.%A, %Destroy.facet.loc26_14.1 [concrete = constants.%Destroy.facet.35e]
+// CHECK:STDOUT:   %Destroy.facet.loc26_14.2: %Destroy.type = facet_value constants.%A, (constants.%DestroyImpl.impl_witness.6d1, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.35e]
+// CHECK:STDOUT:   %.loc26_14.3: %Destroy.type = converted constants.%A, %Destroy.facet.loc26_14.2 [concrete = constants.%Destroy.facet.35e]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc17_14.1)
+// CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%.loc26_14.1)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

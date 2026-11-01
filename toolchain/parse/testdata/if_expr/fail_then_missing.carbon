@@ -9,7 +9,12 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if_expr/fail_then_missing.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_then_missing.carbon:[[@LINE+2]]:23: error: expected `then` after `if` condition [ExpectedThenAfterIf]
+  // CHECK:STDERR:        ╭─┤ fail_then_missing.carbon:[[@LINE+7]]:23
+  // CHECK:STDERR: ->     │   var n: i32 = if true;
+  // CHECK:STDERR:        ·                       ┳
+  // CHECK:STDERR:        ·                       ┗━━┫ error: expected `then` after `if` condition
+  // CHECK:STDERR:        ·                          ┃        [ExpectedThenAfterIf]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var n: i32 = if true;
 }

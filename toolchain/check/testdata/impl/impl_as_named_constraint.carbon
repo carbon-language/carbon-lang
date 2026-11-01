@@ -15,7 +15,11 @@ library "[[@TEST_NAME]]";
 
 constraint A {}
 
-// CHECK:STDERR: fail_empty_constraint.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╭─┤ fail_empty_constraint.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl () as A {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as A {}
 
@@ -29,7 +33,11 @@ constraint B {
   extend require impls A2;
 }
 
-// CHECK:STDERR: fail_too_many_interfaces_in_constraint.carbon:[[@LINE+2]]:1-14: error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╭─┤ fail_too_many_interfaces_in_constraint.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl () as B {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: impl as 2 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as B {}
 
@@ -51,7 +59,11 @@ constraint B {
   require impls A;
 }
 
-// CHECK:STDERR: fail_one_impls_interface_in_constraint.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╭─┤ fail_one_impls_interface_in_constraint.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl () as B {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as B {}
 
@@ -80,7 +92,11 @@ constraint C {
   require impls B;
 }
 
-// CHECK:STDERR: fail_nested_constraints_not_extend_outer.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╭─┤ fail_nested_constraints_not_extend_outer.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl () as C {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as C {}
 
@@ -96,7 +112,11 @@ constraint C {
   extend require impls B;
 }
 
-// CHECK:STDERR: fail_nested_constraints_not_extend_inner.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╭─┤ fail_nested_constraints_not_extend_inner.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl () as C {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as C {}
 
@@ -112,7 +132,11 @@ constraint C {
   require impls B;
 }
 
-// CHECK:STDERR: fail_nested_constraints_not_extend_both.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╭─┤ fail_nested_constraints_not_extend_both.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl () as C {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as C {}
 
@@ -128,8 +152,17 @@ constraint B(X: type, Y: type) {
 // This should impl () as A({}).
 impl () as B((), {}) {}
 
-// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE+3]]:1-18: error: found non-final `impl` with the same type structure as another non-final `impl` [ImplNonFinalSameTypeStructure]
-// CHECK:STDERR: fail_duplicate_through_generic_constraint.carbon:[[@LINE-3]]:1-22: note: other `impl` here [ImplNonFinalSameTypeStructureNote]
+// CHECK:STDERR:        ╭─┤ fail_duplicate_through_generic_constraint.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ impl () as B((), {}) {}
+// CHECK:STDERR:        · ───────────┬──────────
+// CHECK:STDERR:        ·            ╰──┤ other `impl` here [ImplNonFinalSameTypeStructureNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl () as A({}) {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: found non-final `impl` with the same type structure as another
+// CHECK:STDERR:        ·    ┃        non-final `impl`
+// CHECK:STDERR:        ·    ┃        [ImplNonFinalSameTypeStructure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as A({}) {}
 
@@ -142,7 +175,11 @@ interface A(T: type) {}
 // the constraint.
 //@dump-sem-ir-begin
 //
-// CHECK:STDERR: fail_error_self_in_require.carbon:[[@LINE+2]]:17-25: error: name `Undefined` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_error_self_in_require.carbon:[[@LINE+6]]:17
+// CHECK:STDERR: ->     │ constraint B(X: Undefined) {
+// CHECK:STDERR:        ·                 ━━━━┳━━━━
+// CHECK:STDERR:        ·                     ┗━━┫ error: name `Undefined` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 constraint B(X: Undefined) {
   extend require impls A(X);
@@ -276,10 +313,23 @@ class C;
 // the first one. Once rewrites can be done in the impl defn body, these errors
 // won't always have the same location (with the location being the decl)
 // though.
-// CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE+5]]:1-13: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
+// CHECK:STDERR:        ╭─┤ fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE+18]]:1
+// CHECK:STDERR: ->     │ impl C as N {}
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: accessing member from impl before it has a defined value
+// CHECK:STDERR:        ·          ┃        [ImplAccessMemberBeforeSet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE+3]]:1-13: error: associated constant I1 not given a value in impl of interface I [ImplAssociatedConstantNeedsValue]
-// CHECK:STDERR: fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE-16]]:7-14: note: associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:        ╭─┤ fail_impl_as_constraint_missing_rewrite.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        │   let I1: type;
+// CHECK:STDERR:        ·       ────┬───
+// CHECK:STDERR:        ·           ╰──┤ associated constant declared here [AssociatedConstantHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl C as N {}
+// CHECK:STDERR:        · ━━━━━┳━━━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: associated constant I1 not given a value in impl of interface I
+// CHECK:STDERR:        ·         ┃        [ImplAssociatedConstantNeedsValue]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl C as N {}
 
@@ -297,7 +347,11 @@ constraint Y {
 }
 
 // Y does not have any extend require on `Self`.
-// CHECK:STDERR: fail_no_require_self.carbon:[[@LINE+2]]:1-14: error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╭─┤ fail_no_require_self.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ impl () as Y {}
+// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: impl as 0 interfaces, expected 1 [ImplOfNotOneInterface]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as Y {}
 
@@ -436,7 +490,13 @@ interface Z { let Z1: type; }
 constraint J {
     extend require impls Z where .Z1 = {};
 }
-// CHECK:STDERR: fail_rewrite_twice_different.carbon:[[@LINE+2]]:12-27: error: associated constant Z1 given value `()` that is different from previously given value `{}` [AssociatedConstantGivenDifferentValues]
+// CHECK:STDERR:        ╭─┤ fail_rewrite_twice_different.carbon:[[@LINE+8]]:12
+// CHECK:STDERR: ->     │ impl () as J where .Z1 = () {}
+// CHECK:STDERR:        ·            ┳━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: associated constant Z1 given value `()` that is different
+// CHECK:STDERR:        ·               ┃        from previously given value `{}`
+// CHECK:STDERR:        ·               ┃        [AssociatedConstantGivenDifferentValues]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as J where .Z1 = () {}
 
@@ -451,7 +511,13 @@ constraint J {
     extend require impls Z where .Z1 = {};
     extend require impls K;
 }
-// CHECK:STDERR: fail_rewrite_twice_different_named_constraints.carbon:[[@LINE+2]]:12: error: associated constant Z1 given value `{}` that is different from previously given value `()` [AssociatedConstantGivenDifferentValues]
+// CHECK:STDERR:        ╭─┤ fail_rewrite_twice_different_named_constraints.carbon:[[@LINE+8]]:12
+// CHECK:STDERR: ->     │ impl () as J {}
+// CHECK:STDERR:        ·            ┳
+// CHECK:STDERR:        ·            ┗━━┫ error: associated constant Z1 given value `{}` that is different
+// CHECK:STDERR:        ·               ┃        from previously given value `()`
+// CHECK:STDERR:        ·               ┃        [AssociatedConstantGivenDifferentValues]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl () as J {}
 

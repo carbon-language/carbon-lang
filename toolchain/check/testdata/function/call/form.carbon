@@ -70,20 +70,43 @@ library "[[@TEST_NAME]]";
 import Core library "core";
 
 fn F() -> Core.Form;
-// CHECK:STDERR: fail_param_form_not_constant.carbon:[[@LINE+2]]:10-12: error: cannot evaluate form expression [FormExprEvaluationFailure]
+// CHECK:STDERR:        ╭─┤ fail_param_form_not_constant.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ fn G(x:? F());
+// CHECK:STDERR:        ·          ━┳━
+// CHECK:STDERR:        ·           ┗━━┫ error: cannot evaluate form expression
+// CHECK:STDERR:        ·              ┃        [FormExprEvaluationFailure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G(x:? F());
 
 // --- fail_form_param_not_form.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_form_param_not_form.carbon:[[@LINE+3]]:10-12: error: cannot implicitly convert expression of type `type` to `Core.Form` [ConversionFailure]
-// CHECK:STDERR: fail_form_param_not_form.carbon:[[@LINE+2]]:10-12: note: type `type` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_form_param_not_form.carbon:[[@LINE+11]]:10
+// CHECK:STDERR: ->     │ fn F(x:? i32);
+// CHECK:STDERR:        ·          ┳━━
+// CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `type` to
+// CHECK:STDERR:        ·          │  ┃        `Core.Form`
+// CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·          ╰────┤ type `type` does not implement interface
+// CHECK:STDERR:        ·               │ `Core.ImplicitAs(Core.Form)`
+// CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(x:? i32);
-// CHECK:STDERR: fail_form_param_not_form.carbon:[[@LINE+4]]:6-8: error: `ref` is only allowed on a runtime binding [ExpectedRuntimeBindingPatternAfterRef]
+// CHECK:STDERR:        ╭─┤ fail_form_param_not_form.carbon:[[@LINE+14]]:6
+// CHECK:STDERR: ->     │ fn G(ref x:? i32);
+// CHECK:STDERR:        ·      ━┳━
+// CHECK:STDERR:        ·       ┗━━┫ error: `ref` is only allowed on a runtime binding
+// CHECK:STDERR:        ·          ┃        [ExpectedRuntimeBindingPatternAfterRef]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_form_param_not_form.carbon:[[@LINE+2]]:11-12: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_form_param_not_form.carbon:[[@LINE+7]]:11
+// CHECK:STDERR: ->     │ fn G(ref x:? i32);
+// CHECK:STDERR:        ·           ━┳
+// CHECK:STDERR:        ·            ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·               ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G(ref x:? i32);
 
@@ -94,8 +117,16 @@ fn F(x:? form(ref i32));
 
 fn G() {
   var y: i32 = 0;
-  // CHECK:STDERR: fail_missing_ref_tag.carbon:[[@LINE+3]]:5: error: argument to `ref` parameter not marked with `ref` [RefParamNoRefTag]
-  // CHECK:STDERR: fail_missing_ref_tag.carbon:[[@LINE-5]]:6-22: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_missing_ref_tag.carbon:[[@LINE+11]]:5
+  // CHECK:STDERR:        │ fn F(x:? form(ref i32));
+  // CHECK:STDERR:        ·      ────────┬────────
+  // CHECK:STDERR:        ·              ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(y);
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: argument to `ref` parameter not marked with `ref`
+  // CHECK:STDERR:        ·        ┃        [RefParamNoRefTag]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(y);
 }
@@ -121,9 +152,21 @@ fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
 fn G() {
   var x: i32;
-  // CHECK:STDERR: fail_todo_composite_generic_form.carbon:[[@LINE+4]]:3-47: error: cannot implicitly convert expression of type `(Core.Form, Core.Form)` to `Core.Form` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_composite_generic_form.carbon:[[@LINE+3]]:3-47: note: type `(Core.Form, Core.Form)` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_todo_composite_generic_form.carbon:[[@LINE-6]]:14-26: note: initializing generic parameter `Fm` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_todo_composite_generic_form.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR:        │ fn F(generic Fm: Core.Form, unused x:? Fm) {}
+  // CHECK:STDERR:        ·              ──────┬──────
+  // CHECK:STDERR:        ·                    ╰──┤ initializing generic parameter `Fm` declared here
+  // CHECK:STDERR:        ·                       │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F((form(var i32), form(ref i32)), (x, ref x));
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·   │  ┃        `(Core.Form, Core.Form)` to `Core.Form`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·   ╰────┤ type `(Core.Form, Core.Form)` does not implement interface
+  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Core.Form)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F((form(var i32), form(ref i32)), (x, ref x));
 }
@@ -137,8 +180,17 @@ fn F[Fm: Core.Form](v:? Fm);
 
 fn G() {
   var v: i32 = 0;
-  // CHECK:STDERR: fail_todo_deduce_generic_form.carbon:[[@LINE+3]]:3-10: error: cannot deduce value for generic parameter `Fm` [DeductionIncomplete]
-  // CHECK:STDERR: fail_todo_deduce_generic_form.carbon:[[@LINE-5]]:1-28: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_todo_deduce_generic_form.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn F[Fm: Core.Form](v:? Fm);
+  // CHECK:STDERR:        · ──────────────┬─────────────
+  // CHECK:STDERR:        ·               ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                  │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(ref v);
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: cannot deduce value for generic parameter `Fm`
+  // CHECK:STDERR:        ·          ┃        [DeductionIncomplete]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(ref v);
 }
@@ -152,9 +204,19 @@ fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
 fn G() {
   var x: i32;
-  // CHECK:STDERR: fail_form_generic_arg_not_form.carbon:[[@LINE+4]]:3-11: error: cannot implicitly convert expression of type `type` to `Core.Form` [ConversionFailure]
-  // CHECK:STDERR: fail_form_generic_arg_not_form.carbon:[[@LINE+3]]:3-11: note: type `type` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_form_generic_arg_not_form.carbon:[[@LINE-6]]:14-26: note: initializing generic parameter `Fm` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_form_generic_arg_not_form.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        │ fn F(generic Fm: Core.Form, unused x:? Fm) {}
+  // CHECK:STDERR:        ·              ──────┬──────
+  // CHECK:STDERR:        ·                    ╰──┤ initializing generic parameter `Fm` declared here
+  // CHECK:STDERR:        ·                       │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(i32, x);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `type` to `Core.Form`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·   ╰────┤ type `type` does not implement interface `Core.ImplicitAs(Core.Form)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(i32, x);
 }
@@ -168,9 +230,20 @@ fn F(generic Fm: Core.Form, unused x:? Fm) {}
 
 fn G() {
   var x: i32;
-  // CHECK:STDERR: fail_form_generic_missing_ref_tag.carbon:[[@LINE+4]]:20: error: argument to `ref` parameter not marked with `ref` [RefParamNoRefTag]
-  // CHECK:STDERR: fail_form_generic_missing_ref_tag.carbon: note: initializing function parameter [InCallToFunctionParam]
-  // CHECK:STDERR: fail_form_generic_missing_ref_tag.carbon:[[@LINE-6]]:36-41: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_form_generic_missing_ref_tag.carbon:[[@LINE+15]]:20
+  // CHECK:STDERR:        │ fn F(generic Fm: Core.Form, unused x:? Fm) {}
+  // CHECK:STDERR:        ·                                    ───┬──
+  // CHECK:STDERR:        ·                                       ╰──┤ initializing function parameter
+  // CHECK:STDERR:        ·                                          │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(form(ref i32), x);
+  // CHECK:STDERR:        ·                    ┳
+  // CHECK:STDERR:        ·                    ┗━━┫ error: argument to `ref` parameter not marked with `ref`
+  // CHECK:STDERR:        ·                       ┃        [RefParamNoRefTag]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ fail_form_generic_missing_ref_tag.carbon
+  // CHECK:STDERR:        · ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(form(ref i32), x);
 }
@@ -179,7 +252,12 @@ fn G() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_todo_local_init_form_binding.carbon:[[@LINE+2]]:7-23: error: semantics TODO: `support local form bindings` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_local_init_form_binding.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   let x:? form(var i32) = 0;
+  // CHECK:STDERR:        ·       ━━━━━━━━┳━━━━━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: semantics TODO: `support local form bindings`
+  // CHECK:STDERR:        ·                  ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let x:? form(var i32) = 0;
 }
@@ -192,7 +270,12 @@ import Core library "core";
 // TODO: this code should fail for a different reason, but right now we don't
 // have a way to write correct code that reaches the TODO we're exercising here.
 fn F(generic Form: Core.Form) {
-  // CHECK:STDERR: fail_todo_local_symbolic_form_binding.carbon:[[@LINE+2]]:7-14: error: semantics TODO: `support local form bindings` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_local_symbolic_form_binding.carbon:[[@LINE+7]]:7
+  // CHECK:STDERR: ->     │   let y:? Form = 0;
+  // CHECK:STDERR:        ·       ━━━━┳━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: semantics TODO: `support local form bindings`
+  // CHECK:STDERR:        ·              ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let y:? Form = 0;
 }
@@ -293,11 +376,24 @@ fn G[T: I](x: T) {
 // --- fail_return_form_not_form.carbon
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+3]]:12-14: error: cannot implicitly convert expression of type `type` to `Core.Form` [ConversionFailure]
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+2]]:12-14: note: type `type` does not implement interface `Core.ImplicitAs(Core.Form)` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_return_form_not_form.carbon:[[@LINE+11]]:12
+// CHECK:STDERR: ->     │ fn F() ->? i32;
+// CHECK:STDERR:        ·            ┳━━
+// CHECK:STDERR:        ·            ┗━━┫ error: cannot implicitly convert expression of type `type` to
+// CHECK:STDERR:        ·            │  ┃        `Core.Form`
+// CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·            ╰────┤ type `type` does not implement interface
+// CHECK:STDERR:        ·                 │ `Core.ImplicitAs(Core.Form)`
+// CHECK:STDERR:        ·                 │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() ->? i32;
-// CHECK:STDERR: fail_return_form_not_form.carbon:[[@LINE+2]]:12-18: error: `ref` tag is not an argument to a `ref` parameter [RefTagNoRefParam]
+// CHECK:STDERR:        ╭─┤ fail_return_form_not_form.carbon:[[@LINE+7]]:12
+// CHECK:STDERR: ->     │ fn F() ->? ref i32;
+// CHECK:STDERR:        ·            ━━━┳━━━
+// CHECK:STDERR:        ·               ┗━━┫ error: `ref` tag is not an argument to a `ref` parameter
+// CHECK:STDERR:        ·                  ┃        [RefTagNoRefParam]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() ->? ref i32;
 

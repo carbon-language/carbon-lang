@@ -123,7 +123,12 @@ import Cpp library "wchar_t_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_wchar_t_param.carbon:[[@LINE+2]]:3-14: error: semantics TODO: `Unsupported: parameter type: wchar_t` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_wchar_t_param.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.foo('X');
+  // CHECK:STDERR:        ·   ━━━━━━┳━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: semantics TODO: `Unsupported: parameter type: wchar_t`
+  // CHECK:STDERR:        ·            ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo('X');
   //@dump-sem-ir-end
@@ -135,15 +140,19 @@ fn F() {
 
 // --- char8_t_param.h
 
+// CHECK:STDERR:        ╷ ╭── included from: fail_todo_import_char8_t_param.carbon [InCppInclude]
+// CHECK:STDERR:        ├─┤ ./char8_t_param.h:[[@LINE+6]]:10
+// CHECK:STDERR: ->     │ auto foo(char8_t c) -> void;
+// CHECK:STDERR:        ·          ┳
+// CHECK:STDERR:        ·          ┗━━┫ error: unknown type name 'char8_t' [CppInteropParseError]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 auto foo(char8_t c) -> void;
 
 // --- fail_todo_import_char8_t_param.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: included from: fail_todo_import_char8_t_param.carbon:[[@LINE+3]]:10 [InCppInclude]
-// CHECK:STDERR: ./char8_t_param.h:2:10: error: unknown type name 'char8_t' [CppInteropParseError]
-// CHECK:STDERR:
 import Cpp library "char8_t_param.h";
 
 fn F() {
@@ -168,7 +177,12 @@ import Cpp library "char16_t_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_char16_t_param.carbon:[[@LINE+2]]:3-12: error: semantics TODO: `Unsupported: parameter type: char16_t` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_char16_t_param.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.foo(1);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: semantics TODO: `Unsupported: parameter type: char16_t`
+  // CHECK:STDERR:        ·           ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(1);
   //@dump-sem-ir-end
@@ -190,7 +204,12 @@ import Cpp library "char32_t_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_char32_t_param.carbon:[[@LINE+2]]:3-12: error: semantics TODO: `Unsupported: parameter type: char32_t` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_char32_t_param.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.foo(1);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: semantics TODO: `Unsupported: parameter type: char32_t`
+  // CHECK:STDERR:        ·           ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(1);
   //@dump-sem-ir-end
@@ -234,8 +253,17 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_overflow_max.carbon:[[@LINE+3]]:11-16: error: integer value 32768 too large for type `i16` [IntTooLargeForType]
-  // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_import_short_param_overflow_max.carbon:[[@LINE+12]]:11
+  // CHECK:STDERR: ->     │   Cpp.foo(0x8000);
+  // CHECK:STDERR:        ·           ━━━┳━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: integer value 32768 too large for type `i16`
+  // CHECK:STDERR:        ·                 ┃        [IntTooLargeForType]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./short_param.h
+  // CHECK:STDERR:        │ auto foo(short a) -> void;
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(0x8000);
 }
@@ -259,8 +287,17 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_overflow_min.carbon:[[@LINE+3]]:11-17: error: integer value -32769 too large for type `i16` [IntTooLargeForType]
-  // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_import_short_param_overflow_min.carbon:[[@LINE+12]]:11
+  // CHECK:STDERR: ->     │   Cpp.foo(-0x8001);
+  // CHECK:STDERR:        ·           ━━━┳━━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: integer value -32769 too large for type `i16`
+  // CHECK:STDERR:        ·                 ┃        [IntTooLargeForType]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./short_param.h
+  // CHECK:STDERR:        │ auto foo(short a) -> void;
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(-0x8001);
 }
@@ -272,9 +309,20 @@ library "[[@TEST_NAME]]";
 import Cpp library "short_param.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+4]]:11-18: error: cannot implicitly convert expression of type `i32` to `i16` [ConversionFailure]
-  // CHECK:STDERR: fail_import_short_param_int32_arg.carbon:[[@LINE+3]]:11-18: note: type `i32` does not implement interface `Core.ImplicitAs(i16)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: ./short_param.h:2:16: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_import_short_param_int32_arg.carbon:[[@LINE+15]]:11
+  // CHECK:STDERR: ->     │   Cpp.foo(1 as i32);
+  // CHECK:STDERR:        ·           ┳━━━━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: cannot implicitly convert expression of type `i32` to
+  // CHECK:STDERR:        ·           │  ┃        `i16`
+  // CHECK:STDERR:        ·           │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·           ╰────┤ type `i32` does not implement interface `Core.ImplicitAs(i16)`
+  // CHECK:STDERR:        ·                │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./short_param.h
+  // CHECK:STDERR:        │ auto foo(short a) -> void;
+  // CHECK:STDERR:        ·                ┬
+  // CHECK:STDERR:        ·                ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(1 as i32);
 }
@@ -502,7 +550,12 @@ import Cpp library "bit_int_24_param.h";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_import_bit_int_24_param.carbon:[[@LINE+2]]:3-12: error: semantics TODO: `Unsupported: parameter type: bit_int_24` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_bit_int_24_param.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.foo(1);
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: semantics TODO: `Unsupported: parameter type: bit_int_24`
+  // CHECK:STDERR:        ·           ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.foo(1);
   //@dump-sem-ir-end
@@ -1021,7 +1074,7 @@ fn F() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
-// CHECK:STDOUT:   %.loc10: Core.CharLiteral = char_value U+0058 [concrete = constants.%.d16]
+// CHECK:STDOUT:   %.loc15: Core.CharLiteral = char_value U+0058 [concrete = constants.%.d16]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1074,13 +1127,13 @@ fn F() {
 // CHECK:STDOUT:   %foo.ref: %foo.cpp_overload_set.type = name_ref foo, imports.%foo.cpp_overload_set.value [concrete = constants.%foo.cpp_overload_set.value]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1.5b8]
 // CHECK:STDOUT:   %impl.elem0: %.33a = impl_witness_access constants.%ImplicitAs.impl_witness.d73, element0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.f60]
-// CHECK:STDOUT:   %bound_method.loc11_11.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
+// CHECK:STDOUT:   %bound_method.loc8_11.1: <bound method> = bound_method %int_1, %impl.elem0 [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.bound]
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @Core.IntLiteral.as.ImplicitAs.impl.Convert(constants.%int_32) [concrete = constants.%Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc11_11.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc11_11.2(%int_1) [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc11_11.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %.loc11_11.2: %i32 = converted %int_1, %.loc11_11.1 [concrete = constants.%int_1.68a]
-// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc11_11.2)
+// CHECK:STDOUT:   %bound_method.loc8_11.2: <bound method> = bound_method %int_1, %specific_fn [concrete = constants.%bound_method]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.call: init %i32 = call %bound_method.loc8_11.2(%int_1) [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc8_11.1: %i32 = value_of_initializer %Core.IntLiteral.as.ImplicitAs.impl.Convert.call [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %.loc8_11.2: %i32 = converted %int_1, %.loc8_11.1 [concrete = constants.%int_1.68a]
+// CHECK:STDOUT:   %foo.call: init %empty_tuple.type = call imports.%foo.decl(%.loc8_11.2)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

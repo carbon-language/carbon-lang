@@ -62,8 +62,16 @@ import Cpp;
 class FinalClass {}
 
 inline Cpp '''
-// CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE+3]]:12: error: base 'FinalClass' is marked 'final' [CppInteropParseError]
-// CHECK:STDERR: fail_derive_from_final.carbon:[[@LINE-4]]:18: note: 'FinalClass' declared here [CppInteropParseNote]
+// CHECK:STDERR:        ╭─┤ fail_derive_from_final.carbon:[[@LINE+11]]:12
+// CHECK:STDERR:        │ class FinalClass {}
+// CHECK:STDERR:        ·                  ┬
+// CHECK:STDERR:        ·                  ╰──┤ 'FinalClass' declared here [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ struct A : Carbon::FinalClass {};
+// CHECK:STDERR:        ·            ┳
+// CHECK:STDERR:        ·            ┗━━┫ error: base 'FinalClass' is marked 'final'
+// CHECK:STDERR:        ·               ┃        [CppInteropParseError]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 struct A : Carbon::FinalClass {};
 ''';
@@ -80,16 +88,40 @@ struct VirtualDestructor {
 };
 ''';
 
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:1-34: error: cannot convert type `AbstractWithVdtor` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: min_prelude/parts/destroy.carbon:32:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR:        ╭─┤ fail_abstract.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ abstract class AbstractWithVdtor {
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: cannot convert type `AbstractWithVdtor` into type implementing
+// CHECK:STDERR:        ·    ┃        `Core.Destroy`
+// CHECK:STDERR:        ·    ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
+// CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract class AbstractWithVdtor {
   extend base: Cpp.VirtualDestructor;
 }
 
 inline Cpp '''
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:27: error: variable type 'Carbon::AbstractWithVdtor' (aka 'Carbon::Main::AbstractWithVdtor') is an abstract class [CppInteropParseError]
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE-6]]:34: note: unimplemented pure virtual method '~AbstractWithVdtor' in 'AbstractWithVdtor' [CppInteropParseNote]
+// CHECK:STDERR:        ╭─┤ fail_abstract.carbon:[[@LINE+16]]:27
+// CHECK:STDERR:        │ abstract class AbstractWithVdtor {
+// CHECK:STDERR:        ·                                  ┬
+// CHECK:STDERR:        ·                                  ╰──┤ unimplemented pure virtual method
+// CHECK:STDERR:        ·                                     │ '~AbstractWithVdtor' in
+// CHECK:STDERR:        ·                                     │ 'AbstractWithVdtor'
+// CHECK:STDERR:        ·                                     │ [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ Carbon::AbstractWithVdtor x;
+// CHECK:STDERR:        ·                           ┳
+// CHECK:STDERR:        ·                           ┗━━┫ error: variable type 'Carbon::AbstractWithVdtor'
+// CHECK:STDERR:        ·                              ┃        (aka 'Carbon::Main::AbstractWithVdtor') is
+// CHECK:STDERR:        ·                              ┃        an abstract class
+// CHECK:STDERR:        ·                              ┃        [CppInteropParseError]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 Carbon::AbstractWithVdtor x;
 ''';
@@ -101,10 +133,28 @@ import Cpp;
 
 // TODO: Find a way to export this to C++ as an abstract class, despite not
 // having a vptr.
-// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+5]]:1-39: error: semantics TODO: `exporting abstract class with no abstract methods and non-virtual destructor to C++` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+23]]:1
+// CHECK:STDERR: ->     │ abstract class AbstractNonvirtualDtor {}
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `exporting abstract class with no abstract methods and non-virtual destructor to C++`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+3]]:1-39: error: cannot convert type `AbstractNonvirtualDtor` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: min_prelude/parts/destroy.carbon:32:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR:        ╭─┤ fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ abstract class AbstractNonvirtualDtor {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: cannot convert type `AbstractNonvirtualDtor` into type implementing
+// CHECK:STDERR:        ·    ┃        `Core.Destroy`
+// CHECK:STDERR:        ·    ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
+// CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract class AbstractNonvirtualDtor {}
 
@@ -120,8 +170,19 @@ import Cpp;
 // TODO: We should support generating a base subobject destructor for an
 // abstract class, even though we refuse to generate a complete object
 // destructor.
-// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor_but_virtual_fns.carbon:[[@LINE+3]]:1-41: error: cannot convert type `AbstractWithMethodNoVptr` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: min_prelude/parts/destroy.carbon:32:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR:        ╭─┤ fail_todo_abstract_nonvirtual_dtor_but_virtual_fns.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ abstract class AbstractWithMethodNoVptr {
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: cannot convert type `AbstractWithMethodNoVptr` into type
+// CHECK:STDERR:        ·    ┃        implementing `Core.Destroy`
+// CHECK:STDERR:        ·    ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
+// CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract class AbstractWithMethodNoVptr {
   abstract fn F(self);
@@ -140,16 +201,40 @@ import Cpp;
 // TODO: We should support generating a base subobject destructor for an
 // abstract class, even though we refuse to generate a complete object
 // destructor.
-// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+3]]:1-35: error: cannot convert type `AbstractWithMethod` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: min_prelude/parts/destroy.carbon:32:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR:        ╭─┤ fail_variable_with_abstract_method.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ abstract class AbstractWithMethod {
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: cannot convert type `AbstractWithMethod` into type implementing
+// CHECK:STDERR:        ·    ┃        `Core.Destroy`
+// CHECK:STDERR:        ·    ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
+// CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract class AbstractWithMethod {
   abstract fn F(self);
 }
 
 inline Cpp '''
-// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+3]]:28: error: variable type 'Carbon::AbstractWithMethod' (aka 'Carbon::Main::AbstractWithMethod') is an abstract class [CppInteropParseError]
-// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE-5]]:22: note: unimplemented pure virtual method 'F' in 'AbstractWithMethod' [CppInteropParseNote]
+// CHECK:STDERR:        ╭─┤ fail_variable_with_abstract_method.carbon:[[@LINE+16]]:28
+// CHECK:STDERR:        │   abstract fn F(self);
+// CHECK:STDERR:        ·                      ┬
+// CHECK:STDERR:        ·                      ╰──┤ unimplemented pure virtual method 'F' in
+// CHECK:STDERR:        ·                         │ 'AbstractWithMethod'
+// CHECK:STDERR:        ·                         │ [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ Carbon::AbstractWithMethod x_abstract;
+// CHECK:STDERR:        ·                            ┳
+// CHECK:STDERR:        ·                            ┗━━┫ error: variable type
+// CHECK:STDERR:        ·                               ┃        'Carbon::AbstractWithMethod' (aka
+// CHECK:STDERR:        ·                               ┃        'Carbon::Main::AbstractWithMethod') is an
+// CHECK:STDERR:        ·                               ┃        abstract class
+// CHECK:STDERR:        ·                               ┃        [CppInteropParseError]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 Carbon::AbstractWithMethod x_abstract;
 ''';
@@ -162,8 +247,19 @@ import Cpp;
 // TODO: We should support generating a base subobject destructor for an
 // abstract class, even though we refuse to generate a complete object
 // destructor.
-// CHECK:STDERR: fail_todo_abstract_method_overridden_in_cpp.carbon:[[@LINE+3]]:1-35: error: cannot convert type `AbstractToOverride` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: min_prelude/parts/destroy.carbon:32:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR:        ╭─┤ fail_todo_abstract_method_overridden_in_cpp.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ abstract class AbstractToOverride {
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: cannot convert type `AbstractToOverride` into type implementing
+// CHECK:STDERR:        ·    ┃        `Core.Destroy`
+// CHECK:STDERR:        ·    ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ min_prelude/parts/destroy.carbon
+// CHECK:STDERR:        │ fn SelfDestruct[T: Destroy](ref t: T) {
+// CHECK:STDERR:        · ───────────────────┬───────────────────
+// CHECK:STDERR:        ·                    ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·                       │ [DeductionGenericHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 abstract class AbstractToOverride {
   abstract fn F(ref self);

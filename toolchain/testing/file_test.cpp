@@ -208,23 +208,35 @@ auto ToolchainFileTest::Run(
     filtered_test_args = test_args;
   }
 
-  // Most tests are about which diagnostics are produced and what they point at
-  // rather than how they are drawn, so they render compactly: one line per
-  // part, led by its location and the extent of its range. Nothing is then
-  // positioned against a line number, so adding a `CHECK` line above a
-  // diagnostic doesn't move anything inside one. A test that is about the
-  // drawing itself asks for `--diagnostic-snippets` in its `ARGS` and takes on
-  // goldens whose frames number their own `CHECK` lines. This is applied here
-  // rather than in `GetDefaultArgs` so that a test writing its own `ARGS` line
-  // still renders compactly unless it asks not to.
-  bool chooses_snippets =
+  // Tests capture frames without line numbers, so that a frame shows one
+  // location, which autoupdate maintains as a `[[@LINE...]]` offset, and
+  // adding a `CHECK` line above a diagnostic changes nothing inside it. A test
+  // writing any snippet or line-number flag in its `ARGS` gets the driver's
+  // defaults for the rest, which is how toolchain/diagnostics/testdata keeps
+  // full numbering. This is applied here rather than in `GetDefaultArgs` so
+  // that a test writing its own `ARGS` line still gets it.
+  bool chooses_rendering =
       llvm::any_of(filtered_test_args, [](llvm::StringRef arg) {
         return arg == "--diagnostic-snippets" ||
-               arg == "--no-diagnostic-snippets";
+               arg == "--no-diagnostic-snippets" ||
+               arg == "--diagnostic-line-numbers" ||
+               arg == "--no-diagnostic-line-numbers";
       });
-  if (!chooses_snippets) {
+  if (!chooses_rendering) {
     filtered_test_args.insert(filtered_test_args.begin(),
-                              "--no-diagnostic-snippets");
+                              "--no-diagnostic-line-numbers");
+  }
+
+  // Goldens capture box drawing, which nearly every terminal gets, so that
+  // they show the line weights a user sees. A test about the ASCII form asks
+  // for `--terminal-unicode=never` in its `ARGS`.
+  bool chooses_charset =
+      llvm::any_of(filtered_test_args, [](llvm::StringRef arg) {
+        return arg.starts_with("--terminal-unicode");
+      });
+  if (!chooses_charset) {
+    filtered_test_args.insert(filtered_test_args.begin(),
+                              "--terminal-unicode=always");
   }
 
   Driver driver(overlay_fs, &data_->installation, input_stream, &output_stream,
@@ -413,9 +425,39 @@ auto ToolchainFileTest::DoExtraCheckReplacements(std::string& check_line) const
 auto ToolchainFileTest::FinalizeCheckLines(CheckLineArray& check_lines,
                                            bool is_stderr) const -> void {
   if (is_stderr) {
-    // A diagnostic's headline carries its location only when snippets are off;
-    // with them on, the location is on the frame row below it. A compact
-    // location can carry the extent of its range as `-<end>` after the column.
+    // A blank row ends each diagnostic. Within one, the rows before the first
+    // row with a line number, such as a frame's path rows, take that row's
+    // location, so that they stay with the frame instead of attaching to
+    // whatever came before it. Later rows without a location follow the rows
+    // before them, as they always do.
+    //
+    // TODO: A frame whose first location row names only a file, or a file
+    // outside the test such as the prelude, has no line number here, so it is
+    // placed after the diagnostic before it, sometimes in another file's split.
+    // Matching the file name in such a location row against the test's files
+    // would at least place it in that file's split.
+    llvm::SmallVector<FileTestAutoupdater::CheckLine*> unplaced_rows;
+    bool block_placed = false;
+    for (auto& check_line : check_lines) {
+      if (check_line.line() == "// CHECK:STDERR:") {
+        unplaced_rows.clear();
+        block_placed = false;
+      } else if (block_placed) {
+        // Trailing rows are placed by the rows before them.
+      } else if (check_line.line_number() == -1) {
+        unplaced_rows.push_back(&check_line);
+      } else {
+        for (FileTestAutoupdater::CheckLine* row : unplaced_rows) {
+          row->set_location(check_line.file_number(), check_line.line_number());
+        }
+        unplaced_rows.clear();
+        block_placed = true;
+      }
+    }
+
+    // This matches the message's line in the compact form, which starts with
+    // its location when it has one, and that location can end with the extent
+    // of its range as `-<end>`. No row of a frame matches.
     static const RE2 is_new_diagnostic_re(
         R"(^// CHECK:STDERR: (?:.*:\d*:\d*(?:-\d+)?: )?(?:error|warning): )");
     // If a diagnostic isn't attached to a line, try to position it with its

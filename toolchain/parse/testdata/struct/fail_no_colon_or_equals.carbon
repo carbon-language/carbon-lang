@@ -8,7 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/struct/fail_no_colon_or_equals.carbon
 
-// CHECK:STDERR: fail_no_colon_or_equals.carbon:[[@LINE+2]]:11: error: expected `.field: field_type` or `.field = value` [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╭─┤ fail_no_colon_or_equals.carbon:[[@LINE+7]]:11
+// CHECK:STDERR: ->     │ var x: {.a} = {};
+// CHECK:STDERR:        ·           ┳
+// CHECK:STDERR:        ·           ┗━━┫ error: expected `.field: field_type` or `.field = value`
+// CHECK:STDERR:        ·              ┃        [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: {.a} = {};
 

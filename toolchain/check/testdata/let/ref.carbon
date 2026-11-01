@@ -27,7 +27,13 @@ fn F(a: i32) {
 library "[[@TEST_NAME]]";
 
 fn F(a: i32) {
-  // CHECK:STDERR: fail_ref_to_value.carbon:[[@LINE+2]]:27: error: cannot bind durable reference to non-reference value of type `i32` [ConversionFailureNonRefToRef]
+  // CHECK:STDERR:        ╭─┤ fail_ref_to_value.carbon:[[@LINE+8]]:27
+  // CHECK:STDERR: ->     │   let unused ref b: i32 = a;
+  // CHECK:STDERR:        ·                           ┳
+  // CHECK:STDERR:        ·                           ┗━━┫ error: cannot bind durable reference to
+  // CHECK:STDERR:        ·                              ┃        non-reference value of type `i32`
+  // CHECK:STDERR:        ·                              ┃        [ConversionFailureNonRefToRef]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused ref b: i32 = a;
 }
@@ -39,7 +45,13 @@ library "[[@TEST_NAME]]";
 fn G() -> i32;
 
 fn F() {
-  // CHECK:STDERR: fail_ref_to_temporary.carbon:[[@LINE+2]]:27-29: error: cannot bind durable reference to non-reference value of type `i32` [ConversionFailureNonRefToRef]
+  // CHECK:STDERR:        ╭─┤ fail_ref_to_temporary.carbon:[[@LINE+8]]:27
+  // CHECK:STDERR: ->     │   let unused ref a: i32 = G();
+  // CHECK:STDERR:        ·                           ┳━━
+  // CHECK:STDERR:        ·                           ┗━━┫ error: cannot bind durable reference to
+  // CHECK:STDERR:        ·                              ┃        non-reference value of type `i32`
+  // CHECK:STDERR:        ·                              ┃        [ConversionFailureNonRefToRef]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused ref a: i32 = G();
 }

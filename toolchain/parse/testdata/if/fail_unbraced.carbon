@@ -10,13 +10,25 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/if/fail_unbraced.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+2]]:9: error: expected braced code block [ExpectedCodeBlock]
+  // CHECK:STDERR:        ╭─┤ fail_unbraced.carbon:[[@LINE+6]]:9
+  // CHECK:STDERR: ->     │   if (a)
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected braced code block [ExpectedCodeBlock]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   if (a)
-    // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+2]]:11: error: expected braced code block [ExpectedCodeBlock]
+    // CHECK:STDERR:        ╭─┤ fail_unbraced.carbon:[[@LINE+6]]:11
+    // CHECK:STDERR: ->     │     if (b)
+    // CHECK:STDERR:        ·           ┳
+    // CHECK:STDERR:        ·           ┗━━┫ error: expected braced code block [ExpectedCodeBlock]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     if (b)
-      // CHECK:STDERR: fail_unbraced.carbon:[[@LINE+2]]:13: error: expected braced code block [ExpectedCodeBlock]
+      // CHECK:STDERR:        ╭─┤ fail_unbraced.carbon:[[@LINE+6]]:13
+      // CHECK:STDERR: ->     │       if (c)
+      // CHECK:STDERR:        ·             ┳
+      // CHECK:STDERR:        ·             ┗━━┫ error: expected braced code block [ExpectedCodeBlock]
+      // CHECK:STDERR:        ╰────
       // CHECK:STDERR:
       if (c)
         d;

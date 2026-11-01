@@ -82,9 +82,20 @@ fn G() {
 library "[[@TEST_NAME]]";
 
 fn F() {
-  // CHECK:STDERR: fail_nested.carbon:[[@LINE+4]]:41-43: error: `var` nested within another `var` [NestedVar]
+  // CHECK:STDERR:        ╭─┤ fail_nested.carbon:[[@LINE+15]]:41
+  // CHECK:STDERR: ->     │   let (unused x: (), var (unused y: (), var unused z: ())) = ((), ((), ()));
+  // CHECK:STDERR:        ·                                         ┳━━
+  // CHECK:STDERR:        ·                                         ┗━━┫ error: `var` nested within another
+  // CHECK:STDERR:        ·                                            ┃        `var`
+  // CHECK:STDERR:        ·                                            ┃        [NestedVar]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_nested.carbon:[[@LINE+2]]:41-56: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_nested.carbon:[[@LINE+7]]:41
+  // CHECK:STDERR: ->     │   let (unused x: (), var (unused y: (), var unused z: ())) = ((), ((), ()));
+  // CHECK:STDERR:        ·                                         ━━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let (unused x: (), var (unused y: (), var unused z: ())) = ((), ((), ()));
 }
@@ -94,9 +105,20 @@ fn F() {
 library "[[@TEST_NAME]]";
 
 fn f() {
-  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+4]]:15-21: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_compile_time.carbon:[[@LINE+15]]:15
+  // CHECK:STDERR: ->     │   var generic T: type;
+  // CHECK:STDERR:        ·               ┳━━━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·                  ┃        `handle invalid parse trees in `check``
+  // CHECK:STDERR:        ·                  ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_compile_time.carbon:[[@LINE+2]]:22: error: found generic binding inside `var` pattern [NonRegularBindingInVarDecl]
+  // CHECK:STDERR:        ╭─┤ fail_compile_time.carbon:[[@LINE+7]]:22
+  // CHECK:STDERR: ->     │   var generic T: type;
+  // CHECK:STDERR:        ·                      ┳
+  // CHECK:STDERR:        ·                      ┗━━┫ error: found generic binding inside `var` pattern
+  // CHECK:STDERR:        ·                         ┃        [NonRegularBindingInVarDecl]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var generic T: type;
   let (x: (), generic T: type) = ((), ());
@@ -106,11 +128,21 @@ fn f() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+2]]:10-14: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
+// CHECK:STDERR:        ╭─┤ fail_implicit.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ fn F[var u: ()]();
+// CHECK:STDERR:        ·          ━━┳━━
+// CHECK:STDERR:        ·            ┗━━┫ error: implicit parameters of functions must be constant
+// CHECK:STDERR:        ·               ┃        [ImplictParamMustBeConstant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F[var u: ()]();
 
-// CHECK:STDERR: fail_implicit.carbon:[[@LINE+2]]:10-16: error: implicit parameters of functions must be constant [ImplictParamMustBeConstant]
+// CHECK:STDERR:        ╭─┤ fail_implicit.carbon:[[@LINE+7]]:10
+// CHECK:STDERR: ->     │ fn G[var T: type]();
+// CHECK:STDERR:        ·          ━━━┳━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: implicit parameters of functions must be constant
+// CHECK:STDERR:        ·                ┃        [ImplictParamMustBeConstant]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G[var T: type]();
 

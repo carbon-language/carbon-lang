@@ -17,23 +17,47 @@ package User;
 class C {};
 
 fn TestUnary(a: C) -> C {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-11: error: cannot access member of interface `Core.Negate` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   return -a;
+  // CHECK:STDERR:        ·          ┳━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.Negate` in type `C`
+  // CHECK:STDERR:        ·             ┃        that does not implement that interface
+  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return -a;
 }
 
 fn TestBinary(a: C, b: C) -> C {
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:10-14: error: cannot access member of interface `Core.AddWith(C)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   return a + b;
+  // CHECK:STDERR:        ·          ┳━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.AddWith(C)` in type
+  // CHECK:STDERR:        ·             ┃        `C` that does not implement that interface
+  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a + b;
 }
 
 fn TestRef(b: C) {
   var a: C = {};
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:3-8: error: cannot access member of interface `Core.AddAssignWith(C)` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   a += b;
+  // CHECK:STDERR:        ·   ┳━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.AddAssignWith(C)` in type
+  // CHECK:STDERR:        ·      ┃        `C` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a += b;
-  // CHECK:STDERR: fail_no_impl.carbon:[[@LINE+2]]:3-5: error: cannot access member of interface `Core.Inc` in type `C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   ++a;
+  // CHECK:STDERR:        ·   ┳━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.Inc` in type `C` that does
+  // CHECK:STDERR:        ·      ┃        not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ++a;
 }
@@ -77,7 +101,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc32_3.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc44_3.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.076: %SubobjectDestroy.type = facet_value %C, (%custom_witness.b80ef6.2) [concrete]
@@ -135,15 +159,15 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %b.param_patt: %pattern_type.4a7 = value_param_pattern [concrete = constants.%b.param_patt]
 // CHECK:STDOUT:     %b.patt: %pattern_type.4a7 = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.4a7 = out_param_pattern [concrete = constants.%return.param_patt.415]
-// CHECK:STDOUT:     %return.patt: %pattern_type.4a7 = return_slot_pattern %return.param_patt, %C.ref.loc25_30 [concrete = constants.%return.patt.340]
+// CHECK:STDOUT:     %return.patt: %pattern_type.4a7 = return_slot_pattern %return.param_patt, %C.ref.loc31_30 [concrete = constants.%return.patt.340]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc25_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %.loc25: Core.Form = init_form %C.ref.loc25_30 [concrete = constants.%.79c]
+// CHECK:STDOUT:     %C.ref.loc31_30: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %.loc31: Core.Form = init_form %C.ref.loc31_30 [concrete = constants.%.79c]
 // CHECK:STDOUT:     %a.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc25_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc31_18: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %a: %C = wrapper_binding a, %a.param
 // CHECK:STDOUT:     %b.param: %C = value_param call_param1
-// CHECK:STDOUT:     %C.ref.loc25_24: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc31_24: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %b: %C = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %C = out_param call_param2
 // CHECK:STDOUT:     %return: ref %C = return_slot %return.param
@@ -153,7 +177,7 @@ fn TestRef(b: C) {
 // CHECK:STDOUT:     %b.patt: %pattern_type.4a7 = wrapper_binding_pattern b, %b.param_patt [concrete = constants.%b.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %b.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc31: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc43: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %b: %C = wrapper_binding b, %b.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -182,29 +206,29 @@ fn TestRef(b: C) {
 // CHECK:STDOUT: fn @TestRef(%b.param: %C) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %a.var: ref %C = var_storage %a.var_patt
-// CHECK:STDOUT:   %.loc32_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc32_15.2: init %C to %a.var = class_init () [concrete = constants.%C.val]
-// CHECK:STDOUT:   %.loc32_3.1: init %C = converted %.loc32_15.1, %.loc32_15.2 [concrete = constants.%C.val]
-// CHECK:STDOUT:   assign %a.var, %.loc32_3.1
-// CHECK:STDOUT:   %C.ref.loc32: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc44_15.1: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc44_15.2: init %C to %a.var = class_init () [concrete = constants.%C.val]
+// CHECK:STDOUT:   %.loc44_3.1: init %C = converted %.loc44_15.1, %.loc44_15.2 [concrete = constants.%C.val]
+// CHECK:STDOUT:   assign %a.var, %.loc44_3.1
+// CHECK:STDOUT:   %C.ref.loc44: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %a: ref %C = wrapper_binding a, %a.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %a.patt: %pattern_type.4a7 = ref_binding_pattern a [concrete = constants.%a.patt.28f]
 // CHECK:STDOUT:     %a.var_patt: %pattern_type.4a7 = var_pattern %a.patt [concrete = constants.%a.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %a.ref.loc35: ref %C = name_ref a, %a
+// CHECK:STDOUT:   %a.ref.loc53: ref %C = name_ref a, %a
 // CHECK:STDOUT:   %b.ref: %C = name_ref b, %b
-// CHECK:STDOUT:   %a.ref.loc38: ref %C = name_ref a, %a
-// CHECK:STDOUT:   %Destroy.facet.loc32_3.1: %Destroy.type = facet_value constants.%C, (constants.%DestroyImpl.impl_witness.6fa, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc32_3.2: %Destroy.type = converted constants.%C, %Destroy.facet.loc32_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc32_3.2: %Destroy.type = facet_value constants.%C, (constants.%DestroyImpl.impl_witness.6fa, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc32_3.3: %Destroy.type = converted constants.%C, %Destroy.facet.loc32_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %a.ref.loc62: ref %C = name_ref a, %a
+// CHECK:STDOUT:   %Destroy.facet.loc44_3.1: %Destroy.type = facet_value constants.%C, (constants.%DestroyImpl.impl_witness.6fa, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc44_3.2: %Destroy.type = converted constants.%C, %Destroy.facet.loc44_3.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc44_3.2: %Destroy.type = facet_value constants.%C, (constants.%DestroyImpl.impl_witness.6fa, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc44_3.3: %Destroy.type = converted constants.%C, %Destroy.facet.loc44_3.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet) [concrete = constants.%SelfDestruct.specific_fn]
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%a.var)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc32_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc44_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc32_3.2(%self.param: ref %C) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc44_3.2(%self.param: ref %C) = "no_op";
 // CHECK:STDOUT:

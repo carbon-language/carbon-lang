@@ -28,7 +28,12 @@ export Foo.Bar;
 
 package Pkg;
 
-// CHECK:STDERR: fail_expr.carbon:[[@LINE+2]]:7: error: `export` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╭─┤ fail_expr.carbon:[[@LINE+7]]:7
+// CHECK:STDERR: ->     │ export ();
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: `export` introducer should be followed by a name
+// CHECK:STDERR:        ·          ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export ();
 
@@ -36,7 +41,13 @@ export ();
 
 package Pkg;
 
-// CHECK:STDERR: fail_package_in_name.carbon:[[@LINE+2]]:8-14: error: `export` introducer should be followed by a name; prefix reserved word with `r#` to form a valid identifier [ExpectedDeclName]
+// CHECK:STDERR:        ╭─┤ fail_package_in_name.carbon:[[@LINE+8]]:8
+// CHECK:STDERR: ->     │ export package.Bar;
+// CHECK:STDERR:        ·        ┳━━━━━━
+// CHECK:STDERR:        ·        ┗━━┫ error: `export` introducer should be followed by a name; prefix
+// CHECK:STDERR:        ·           ┃        reserved word with `r#` to form a valid identifier
+// CHECK:STDERR:        ·           ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export package.Bar;
 
@@ -44,7 +55,12 @@ export package.Bar;
 
 package Pkg;
 
-// CHECK:STDERR: fail_keyword_only:[[@LINE+2]]:7: error: `export` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╭─┤ fail_keyword_only:[[@LINE+7]]:7
+// CHECK:STDERR: ->     │ export
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: `export` introducer should be followed by a name
+// CHECK:STDERR:        ·          ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export
 
@@ -52,7 +68,12 @@ export
 
 package Pkg;
 
-// CHECK:STDERR: fail_no_name.carbon:[[@LINE+2]]:7: error: `export` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╭─┤ fail_no_name.carbon:[[@LINE+7]]:7
+// CHECK:STDERR: ->     │ export ;
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: `export` introducer should be followed by a name
+// CHECK:STDERR:        ·          ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export ;
 
@@ -60,7 +81,12 @@ export ;
 
 package Pkg;
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:11: error: `export` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_no_semi.carbon:[[@LINE+7]]:11
+// CHECK:STDERR: ->     │ export Foo
+// CHECK:STDERR:        ·           ┳
+// CHECK:STDERR:        ·           ┗━━┫ error: `export` declarations must end with a `;`
+// CHECK:STDERR:        ·              ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export Foo
 
@@ -68,7 +94,12 @@ export Foo
 
 package Pkg;
 
-// CHECK:STDERR: fail_incomplete_qual_name.carbon:[[@LINE+2]]:12: error: `.` should be followed by a name [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR:        ╭─┤ fail_incomplete_qual_name.carbon:[[@LINE+7]]:12
+// CHECK:STDERR: ->     │ export Foo.;
+// CHECK:STDERR:        ·            ┳
+// CHECK:STDERR:        ·            ┗━━┫ error: `.` should be followed by a name
+// CHECK:STDERR:        ·               ┃        [ExpectedDeclNameAfterPeriod]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export Foo.;
 
@@ -76,7 +107,12 @@ export Foo.;
 
 package Pkg;
 
-// CHECK:STDERR: fail_incomplete_qual_name2.carbon:[[@LINE+2]]:7: error: `export` introducer should be followed by a name [ExpectedDeclName]
+// CHECK:STDERR:        ╭─┤ fail_incomplete_qual_name2.carbon:[[@LINE+7]]:7
+// CHECK:STDERR: ->     │ export .Bar;
+// CHECK:STDERR:        ·       ┳
+// CHECK:STDERR:        ·       ┗━━┫ error: `export` introducer should be followed by a name
+// CHECK:STDERR:        ·          ┃        [ExpectedDeclName]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export .Bar;
 
@@ -94,14 +130,27 @@ package Pkg;
 
 export Foo;
 
-// CHECK:STDERR: fail_before_import.carbon:[[@LINE+3]]:1-6: error: `import` declarations must come after the `package` declaration (if present) and before any other entities in the file [ImportTooLate]
-// CHECK:STDERR: fail_before_import.carbon:[[@LINE-3]]:1-6: note: first declaration is here [FirstDecl]
+// CHECK:STDERR:        ╭─┤ fail_before_import.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ export Foo;
+// CHECK:STDERR:        · ───┬──
+// CHECK:STDERR:        ·    ╰──┤ first declaration is here [FirstDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ import library "lib";
+// CHECK:STDERR:        · ┳━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: `import` declarations must come after the `package` declaration (if
+// CHECK:STDERR:        ·    ┃        present) and before any other entities in the file
+// CHECK:STDERR:        ·    ┃        [ImportTooLate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import library "lib";
 
 // --- fail_in_default_library.carbon
 
-// CHECK:STDERR: fail_in_default_library.carbon:[[@LINE+2]]:1-6: error: `export` is only allowed in API files [ExportFromImpl]
+// CHECK:STDERR:        ╭─┤ fail_in_default_library.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ export Foo;
+// CHECK:STDERR:        · ━━━┳━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `export` is only allowed in API files [ExportFromImpl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export Foo;
 
@@ -109,7 +158,11 @@ export Foo;
 
 impl package Pkg;
 
-// CHECK:STDERR: fail_in_impl.carbon:[[@LINE+2]]:1-6: error: `export` is only allowed in API files [ExportFromImpl]
+// CHECK:STDERR:        ╭─┤ fail_in_impl.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ export Foo;
+// CHECK:STDERR:        · ━━━┳━━
+// CHECK:STDERR:        ·    ┗━━┫ error: `export` is only allowed in API files [ExportFromImpl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 export Foo;
 

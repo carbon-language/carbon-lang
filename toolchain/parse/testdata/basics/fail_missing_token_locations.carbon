@@ -11,7 +11,12 @@
 // --- fail_semi_before_comment.carbon
 
 // The `;` goes after the `1`, before the spaces and the comment.
-// CHECK:STDERR: fail_semi_before_comment.carbon:[[@LINE+2]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_semi_before_comment.carbon:[[@LINE+7]]:15
+// CHECK:STDERR: ->     │ var x: i32 = 1  // The value.
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: `var` declarations must end with a `;`
+// CHECK:STDERR:        ·                  ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: i32 = 1  // The value.
 var y: i32 = 2;
@@ -19,9 +24,18 @@ var y: i32 = 2;
 // --- fail_expr_at_line_end.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_expr_at_line_end.carbon:[[@LINE+4]]:15: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_expr_at_line_end.carbon:[[@LINE+13]]:15
+  // CHECK:STDERR: ->     │   var x: i32 =
+  // CHECK:STDERR:        ·               ┳
+  // CHECK:STDERR:        ·               ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_expr_at_line_end.carbon:[[@LINE+2]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╭─┤ fail_expr_at_line_end.carbon:[[@LINE+7]]:15
+  // CHECK:STDERR: ->     │   var x: i32 =
+  // CHECK:STDERR:        ·               ┳
+  // CHECK:STDERR:        ·               ┗━━┫ error: `var` declarations must end with a `;`
+  // CHECK:STDERR:        ·                  ┃        [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var x: i32 =
   var y: i32 = 2;
@@ -33,7 +47,11 @@ fn F() {
 // than at the end of the line before.
 fn F() {
   var x: i32 = 1;
-  // CHECK:STDERR: fail_expr_at_statement_start.carbon:[[@LINE+2]]:3: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_expr_at_statement_start.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   = 3;
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   = 3;
 }

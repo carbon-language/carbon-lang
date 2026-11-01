@@ -42,11 +42,23 @@ alias IntLiteral = MakeIntLiteral();
 fn SubCharInt(c: CharLiteral, n: IntLiteral) -> CharLiteral = "char_literal.sub_int";
 fn Negate(n: IntLiteral) -> IntLiteral = "int.snegate";
 
-// CHECK:STDERR: fail_invalid_result.carbon:[[@LINE+2]]:22-46: error: character arithmetic result -1 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_invalid_result.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let a: CharLiteral = SubCharInt('\u{0000}', 1);
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result -1 is not a valid
+// CHECK:STDERR:        ·                         ┃        Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: CharLiteral = SubCharInt('\u{0000}', 1);
 
-// CHECK:STDERR: fail_invalid_result.carbon:[[@LINE+2]]:22-56: error: character arithmetic result 1114112 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_invalid_result.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let b: CharLiteral = SubCharInt('\u{10FFFF}', Negate(1));
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 1114112 is not a
+// CHECK:STDERR:        ·                         ┃        valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: CharLiteral = SubCharInt('\u{10FFFF}', Negate(1));
 

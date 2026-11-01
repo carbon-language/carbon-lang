@@ -13,12 +13,24 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/pointer/fail_address_of_error.carbon
 
 fn Test() {
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+2]]:4-13: error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_address_of_error.carbon:[[@LINE+6]]:4
+  // CHECK:STDERR: ->     │   &undeclared;
+  // CHECK:STDERR:        ·    ━━━━━┳━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   &undeclared;
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+4]]:6-15: error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_address_of_error.carbon:[[@LINE+12]]:6
+  // CHECK:STDERR: ->     │   &(&undeclared);
+  // CHECK:STDERR:        ·      ━━━━━┳━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: name `undeclared` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_address_of_error.carbon:[[@LINE+2]]:3: error: cannot take the address of non-reference expression [AddrOfNonRef]
+  // CHECK:STDERR:        ╭─┤ fail_address_of_error.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   &(&undeclared);
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot take the address of non-reference expression [AddrOfNonRef]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   &(&undeclared);
 }
@@ -50,11 +62,11 @@ fn Test() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Test() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %undeclared.ref.loc18: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc18: <error> = addr_of %undeclared.ref.loc18 [concrete = <error>]
-// CHECK:STDOUT:   %undeclared.ref.loc23: <error> = name_ref undeclared, <error> [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc23_5: <error> = addr_of %undeclared.ref.loc23 [concrete = <error>]
-// CHECK:STDOUT:   %addr.loc23_3: <error> = addr_of <error> [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc22: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc22: <error> = addr_of %undeclared.ref.loc22 [concrete = <error>]
+// CHECK:STDOUT:   %undeclared.ref.loc35: <error> = name_ref undeclared, <error> [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc35_5: <error> = addr_of %undeclared.ref.loc35 [concrete = <error>]
+// CHECK:STDOUT:   %addr.loc35_3: <error> = addr_of <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

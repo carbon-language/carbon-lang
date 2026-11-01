@@ -91,13 +91,21 @@ static auto Narrow() -> Terminal::Capabilities {
 
 // Renders `diagnostic` for `capabilities`.
 static auto Render(const Terminal::Capabilities& capabilities,
-                   const Diagnostic& diagnostic, bool snippets = true)
-    -> std::string {
+                   const Diagnostic& diagnostic, bool snippets = true,
+                   bool line_numbers = true) -> std::string {
   Renderer renderer(capabilities);
   renderer.set_snippets(snippets);
+  renderer.set_line_numbers(line_numbers);
   llvm::SmallString<256> bytes;
   renderer.Render(bytes, diagnostic);
   return std::string(bytes);
+}
+
+// Renders `diagnostic` framed, with line numbers off.
+static auto RenderUnnumbered(const Terminal::Capabilities& capabilities,
+                             const Diagnostic& diagnostic) -> std::string {
+  return Render(capabilities, diagnostic, /*snippets=*/true,
+                /*line_numbers=*/false);
 }
 
 // Renders a diagnostic with a single message at `level`.
@@ -1164,6 +1172,106 @@ TEST(RendererTest, FirstContextMessageTakesTheDiagnosticLevel) {
   EXPECT_THAT(Render(Plain(), diagnostic), Eq("error: in call\n"
                                               "note: in other call\n"
                                               "note: the problem\n"));
+}
+
+TEST(RendererTest, UnnumberedGutterStillPointsToTheReportedLine) {
+  Diagnostic diagnostic = {
+      .level = Level::Error,
+      .message = MakeMessage(At(3, 1, 2), "bad"),
+      .labels = {MakeLabel(LabelCategory::Info, At(1, 1, 2), "here")}};
+  // The same rows in the same columns as `MergedShowsASingleSkippedLine`,
+  // with no numbers in the gutter. The `->` still points to the reported line.
+  EXPECT_THAT(RenderUnnumbered(Plain(), diagnostic),
+              Eq("       .-| foo.carbon:3:1\n"
+                 "       | fn Run0() {}\n"
+                 "       : -.\n"
+                 "       :  '--| here\n"
+                 "       |\n"
+                 "->     | fn Main() {\n"
+                 "       : ^^\n"
+                 "       :  '--| error: bad\n"
+                 "       '----\n"
+                 ""));
+}
+
+TEST(RendererTest, UnnumberedFramesNameALaterFileAlone) {
+  Loc other = {.filename = "bar.carbon",
+               .line = "class C {",
+               .line_number = 9,
+               .column_number = 1,
+               .length = 9};
+  Diagnostic diagnostic = {
+      .level = Level::Error,
+      .message = MakeMessage(At(4, 3, 7), "bad"),
+      .labels = {MakeLabel(LabelCategory::Info, other, "declared here")}};
+  EXPECT_THAT(RenderUnnumbered(Plain(), diagnostic),
+              Eq("       .-| foo.carbon:4:3\n"
+                 "->     |   Run0(1);\n"
+                 "       :   ^^^^^^^\n"
+                 "       :      '--| error: bad\n"
+                 "       :\n"
+                 "       |-| bar.carbon\n"
+                 "       | class C {\n"
+                 "       : ----.----\n"
+                 "       :     '--| declared here\n"
+                 "       '----\n"
+                 ""));
+}
+
+TEST(RendererTest, UnnumberedPathStepsKeepOnlyTheirFiles) {
+  Loc import_loc = {.filename = "c.carbon",
+                    .line = "import library \"a\";",
+                    .line_number = 1,
+                    .column_number = 1,
+                    .length = 6};
+  Loc reported = {.filename = "a.carbon",
+                  .line = "class Shape {}",
+                  .line_number = 3,
+                  .column_number = 1,
+                  .length = 14};
+  Diagnostic diagnostic = {
+      .level = Level::Error,
+      .message = MakeMessage(reported, "duplicate name",
+                             {MakeOrigin(import_loc, "in import")})};
+  // The step is drawn above the message's location row, but only the location
+  // row keeps its full location.
+  EXPECT_THAT(RenderUnnumbered(Plain(), diagnostic),
+              Eq("       | .-- in import: c.carbon\n"
+                 "       |-| a.carbon:3:1\n"
+                 "->     | class Shape {}\n"
+                 "       : ^^^^^^^^^^^^^^\n"
+                 "       :        '--| error: duplicate name\n"
+                 "       '----\n"
+                 ""));
+}
+
+TEST(RendererTest, UnnumberedFramesKeepTheFirstLocationRowsLocation) {
+  Diagnostic diagnostic = {
+      .level = Level::Error,
+      .message = MakeMessage({}, "bad"),
+      .labels = {MakeLabel(LabelCategory::Info, At(4, 3, 7), "here")}};
+  // The message has no location, so its location row shows `<no location>` and
+  // gets the `->`. The label's location row is the first with a location, so it
+  // keeps that location in full; only the gutter's number is withheld.
+  EXPECT_THAT(Render(Plain(), diagnostic), Eq("->     .-| <no location>\n"
+                                              "       : '--| error: bad\n"
+                                              "       :\n"
+                                              "       |-| foo.carbon:4:3\n"
+                                              "     4 |   Run0(1);\n"
+                                              "       :   ---.---\n"
+                                              "       :      '--| here\n"
+                                              "       '----\n"
+                                              ""));
+  EXPECT_THAT(RenderUnnumbered(Plain(), diagnostic),
+              Eq("->     .-| <no location>\n"
+                 "       : '--| error: bad\n"
+                 "       :\n"
+                 "       |-| foo.carbon:4:3\n"
+                 "       |   Run0(1);\n"
+                 "       :   ---.---\n"
+                 "       :      '--| here\n"
+                 "       '----\n"
+                 ""));
 }
 
 TEST(RendererTest, KindIsIncludedWhenAsked) {
@@ -2506,6 +2614,22 @@ TEST(RendererTest, AControlByteInAFilenameCannotBreakTheFrame) {
   // The location row stays a single row: the location's own bytes add no
   // newline of their own, so the frame still has exactly the rows it draws.
   EXPECT_THAT(rendered, Not(HasSubstr("\n\n"))) << rendered;
+}
+
+TEST(RendererTest, AControlByteInAnUnnumberedFilenameCannotBreakTheFrame) {
+  // With line numbers off, a second file's location row shows only its
+  // filename, which has its control bytes replaced the same way.
+  Loc other = {.filename = "ab\ncd.carbon",
+               .line = "class C {",
+               .line_number = 9,
+               .column_number = 1,
+               .length = 9};
+  Diagnostic diagnostic = {
+      .level = Level::Error,
+      .message = MakeMessage(At(4, 3, 7), "bad"),
+      .labels = {MakeLabel(LabelCategory::Info, other, "declared here")}};
+  std::string rendered = RenderUnnumbered(Plain(), diagnostic);
+  EXPECT_THAT(rendered, HasSubstr("|-| ab cd.carbon\n")) << rendered;
 }
 
 TEST(RendererTest, AMergedPairWithoutFileTextStillElides) {

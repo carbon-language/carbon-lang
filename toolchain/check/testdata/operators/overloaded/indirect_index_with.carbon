@@ -89,7 +89,13 @@ library "[[@TEST_NAME]]";
 import library "types";
 
 fn F(c: CNonCopy, s: SubscriptType) {
-  // CHECK:STDERR: fail_at_non_copyable.carbon:[[@LINE+2]]:3-38: error: cannot access member of interface `Core.IndexWith(SubscriptType)` in type `CNonCopy` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_at_non_copyable.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   c.(Core.IndexWith(SubscriptType).At)(s);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.IndexWith(SubscriptType)`
+  // CHECK:STDERR:        ·      ┃        in type `CNonCopy` that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c.(Core.IndexWith(SubscriptType).At)(s);
 }

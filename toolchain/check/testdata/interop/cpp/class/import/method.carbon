@@ -59,24 +59,67 @@ library "[[@TEST_NAME]]";
 import Cpp library "object_param_qualifiers.h";
 
 fn Value(v: Cpp.HasQualifiers) {
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+3]]:3-9: error: no matching function for call to 'plain' [CppInteropParseError]
-  // CHECK:STDERR: ./object_param_qualifiers.h:3:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR: ->     │   v.plain();
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: no matching function for call to 'plain' [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./object_param_qualifiers.h
+  // CHECK:STDERR:        │   void plain();
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ candidate function not viable: 'this' argument has type 'const
+  // CHECK:STDERR:        ·           │ HasQualifiers', but method is not marked const
+  // CHECK:STDERR:        ·           │ [CppInteropParseNote]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   v.plain();
 
   // TODO: This should remain invalid once we support `volatile`.
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+3]]:3-17: error: no matching function for call to 'volatile_this' [CppInteropParseError]
-  // CHECK:STDERR: ./object_param_qualifiers.h:5:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   v.volatile_this();
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: no matching function for call to 'volatile_this'
+  // CHECK:STDERR:        ·             ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./object_param_qualifiers.h
+  // CHECK:STDERR:        │   void volatile_this() volatile;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ candidate function not viable: 'this' argument has type 'const
+  // CHECK:STDERR:        ·           │ HasQualifiers', but method is not marked const
+  // CHECK:STDERR:        ·           │ [CppInteropParseNote]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   v.volatile_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+3]]:3-12: error: no matching function for call to 'ref_this' [CppInteropParseError]
-  // CHECK:STDERR: ./object_param_qualifiers.h:7:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   v.ref_this();
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: no matching function for call to 'ref_this'
+  // CHECK:STDERR:        ·           ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./object_param_qualifiers.h
+  // CHECK:STDERR:        │   void ref_this() &;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ candidate function not viable: 'this' argument has type 'const
+  // CHECK:STDERR:        ·           │ HasQualifiers', but method is not marked const
+  // CHECK:STDERR:        ·           │ [CppInteropParseNote]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   v.ref_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+3]]:3-16: error: no matching function for call to 'ref_ref_this' [CppInteropParseError]
-  // CHECK:STDERR: ./object_param_qualifiers.h:10:8: note: candidate function not viable: 'this' argument has type 'const HasQualifiers', but method is not marked const [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_bad_object_param_qualifiers_by_value.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   v.ref_ref_this();
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: no matching function for call to 'ref_ref_this'
+  // CHECK:STDERR:        ·             ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./object_param_qualifiers.h
+  // CHECK:STDERR:        │   void ref_ref_this() &&;
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ candidate function not viable: 'this' argument has type 'const
+  // CHECK:STDERR:        ·           │ HasQualifiers', but method is not marked const
+  // CHECK:STDERR:        ·           │ [CppInteropParseNote]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   v.ref_ref_this();
 }
@@ -89,7 +132,13 @@ import Cpp library "object_param_qualifiers.h";
 
 fn Ref(p: Cpp.HasQualifiers*) {
   // TODO: This should eventually be accepted if we support `volatile`.
-  // CHECK:STDERR: fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+2]]:3-20: error: semantics TODO: `Unsupported: parameter type: volatile struct HasQualifiers &` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_bad_object_param_qualifiers_by_ref.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   p->volatile_this();
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·      ┃        `Unsupported: parameter type: volatile struct HasQualifiers &`
+  // CHECK:STDERR:        ·      ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->volatile_this();
 }
@@ -101,15 +150,36 @@ library "[[@TEST_NAME]]";
 import Cpp library "object_param_qualifiers.h";
 
 fn Ref(p: Cpp.HasQualifiers*) {
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+4]]:3-17: error: no matching function for call to 'ref_ref_this' [CppInteropParseError]
-  // CHECK:STDERR: ./object_param_qualifiers.h:10:8: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./object_param_qualifiers.h:10:20-21: note: expects an rvalue for object argument [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   p->ref_ref_this();
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: no matching function for call to 'ref_ref_this'
+  // CHECK:STDERR:        ·             ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./object_param_qualifiers.h
+  // CHECK:STDERR:        │   void ref_ref_this() &&;
+  // CHECK:STDERR:        ·        ┬           ─┬
+  // CHECK:STDERR:        ·        ╰───────────────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·                     ╰────┤ expects an rvalue for object argument
+  // CHECK:STDERR:        ·                          │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->ref_ref_this();
 
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+4]]:3-23: error: no matching function for call to 'const_ref_ref_this' [CppInteropParseError]
-  // CHECK:STDERR: ./object_param_qualifiers.h:11:8: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./object_param_qualifiers.h:11:26-27: note: expects an rvalue for object argument [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_bad_object_param_qualifiers_ref_ref.carbon:[[@LINE+15]]:3
+  // CHECK:STDERR: ->     │   p->const_ref_ref_this();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: no matching function for call to 'const_ref_ref_this'
+  // CHECK:STDERR:        ·                ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./object_param_qualifiers.h
+  // CHECK:STDERR:        │   void const_ref_ref_this() const&&;
+  // CHECK:STDERR:        ·        ┬                 ─┬
+  // CHECK:STDERR:        ·        ╰─────────────────────┤ candidate function not viable
+  // CHECK:STDERR:        ·                           │  │ [CppInteropParseNote]
+  // CHECK:STDERR:        ·                           ╰────┤ expects an rvalue for object argument
+  // CHECK:STDERR:        ·                                │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->const_ref_ref_this();
 }
@@ -123,9 +193,19 @@ import Cpp library "object_param_qualifiers.h";
 fn Make() -> Cpp.HasQualifiers;
 
 fn F() {
-  // CHECK:STDERR: fail_bad_object_param_qualifiers_for_temporary.carbon:[[@LINE+4]]:3-17: error: no matching function for call to 'ref_this' [CppInteropParseError]
-  // CHECK:STDERR: ./object_param_qualifiers.h:7:8: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: ./object_param_qualifiers.h:7:16-17: note: expects an lvalue for object argument [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_bad_object_param_qualifiers_for_temporary.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR: ->     │   Make().ref_this();
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: no matching function for call to 'ref_this'
+  // CHECK:STDERR:        ·             ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./object_param_qualifiers.h
+  // CHECK:STDERR:        │   void ref_this() &;
+  // CHECK:STDERR:        ·        ┬       ─┬
+  // CHECK:STDERR:        ·        ╰───────────┤ candidate function not viable [CppInteropParseNote]
+  // CHECK:STDERR:        ·                 ╰────┤ expects an lvalue for object argument
+  // CHECK:STDERR:        ·                      │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Make().ref_this();
 }
@@ -200,7 +280,12 @@ struct ExplicitObjectParamUnsupported {
 ''';
 
 fn Call(e: Cpp.ExplicitObjectParamUnsupported) {
-  // CHECK:STDERR: fail_call_explicit_object_param_with_unsupported_type_param.carbon:[[@LINE+2]]:3-45: error: semantics TODO: `Unsupported: parameter type: _BitInt(23)` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_call_explicit_object_param_with_unsupported_type_param.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   e.(Cpp.ExplicitObjectParamUnsupported.F)(1);
+  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: semantics TODO: `Unsupported: parameter type: _BitInt(23)`
+  // CHECK:STDERR:        ·              ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   e.(Cpp.ExplicitObjectParamUnsupported.F)(1);
 }

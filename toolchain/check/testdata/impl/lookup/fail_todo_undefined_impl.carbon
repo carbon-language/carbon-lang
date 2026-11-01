@@ -23,7 +23,12 @@ class C {
 }
 
 fn F() {
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+2]]:3-5: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ╭─┤ fail_todo_undefined_impl.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   C.F();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: accessing member from impl before it has a defined value
+  // CHECK:STDERR:        ·       ┃        [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C.F();
 }
@@ -35,9 +40,18 @@ impl C as I {
 }
 
 fn G() {
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE+4]]:3-5: error: accessing member from impl before it has a defined value [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ╭─┤ fail_todo_undefined_impl.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR: ->     │   C.F();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: accessing member from impl before it has a defined value
+  // CHECK:STDERR:        ·       ┃        [ImplAccessMemberBeforeSet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_undefined_impl.carbon:[[@LINE-18]]:3-19: error: impl declared but not defined [ImplMissingDefinition]
+  // CHECK:STDERR:        ╭─┤ fail_todo_undefined_impl.carbon:[[@LINE-28]]:3
+  // CHECK:STDERR: ->     │   extend impl as I;
+  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: impl declared but not defined [ImplMissingDefinition]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   C.F();
 }
@@ -89,7 +103,7 @@ fn G() {
 // CHECK:STDOUT:     %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc33: <witness> = impl_self_witness @C.as.I.impl.e10.%C.ref, @I [concrete = constants.%.b7f]
+// CHECK:STDOUT:   %.loc38: <witness> = impl_self_witness @C.as.I.impl.e10.%C.ref, @I [concrete = constants.%.b7f]
 // CHECK:STDOUT:   %G.decl: %G.type = fn_decl @G [concrete = constants.%G] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

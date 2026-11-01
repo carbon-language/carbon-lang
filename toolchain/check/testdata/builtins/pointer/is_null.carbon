@@ -55,23 +55,48 @@ library "[[@TEST_NAME]]";
 
 fn MakeUnformed(t: type) -> type = "maybe_unformed.make_type";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-22: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn NoParam() -> bool = "pointer.is_null";
+// CHECK:STDERR:        · ━━━━━━━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        ·            ┗━━┫ error: invalid signature for builtin function "pointer.is_null"
+// CHECK:STDERR:        ·               ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NoParam() -> bool = "pointer.is_null";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-36: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn NoRetType(p: MakeUnformed({}*)) = "pointer.is_null";
+// CHECK:STDERR:        · ━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: invalid signature for builtin function "pointer.is_null"
+// CHECK:STDERR:        ·                ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NoRetType(p: MakeUnformed({}*)) = "pointer.is_null";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-45: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn WrongRetType(p: MakeUnformed({}*)) -> {} = "pointer.is_null";
+// CHECK:STDERR:        · ━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: invalid signature for builtin function "pointer.is_null"
+// CHECK:STDERR:        ·                ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn WrongRetType(p: MakeUnformed({}*)) -> {} = "pointer.is_null";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-31: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn NoUnformed(p: {}*) -> bool = "pointer.is_null";
+// CHECK:STDERR:        · ━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: invalid signature for builtin function "pointer.is_null"
+// CHECK:STDERR:        ·                ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NoUnformed(p: {}*) -> bool = "pointer.is_null";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-44: error: invalid signature for builtin function "pointer.is_null" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
+// CHECK:STDERR:        · ━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: invalid signature for builtin function "pointer.is_null"
+// CHECK:STDERR:        ·                ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NotPointer(p: MakeUnformed({})) -> bool = "pointer.is_null";
 

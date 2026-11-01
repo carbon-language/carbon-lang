@@ -16,7 +16,11 @@ library "[[@TEST_NAME]]";
 
 fn Main() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_not_found.carbon:[[@LINE+2]]:3: error: name `x` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_not_found.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   x;
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: name `x` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   x;
   //@dump-sem-ir-end
@@ -28,7 +32,12 @@ library "[[@TEST_NAME]]";
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_qualififier_unsupported.carbon:[[@LINE+2]]:3-8: error: type `bool` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╭─┤ fail_qualififier_unsupported.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   true.b;
+  // CHECK:STDERR:        ·   ━━━┳━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: type `bool` does not support qualified expressions
+  // CHECK:STDERR:        ·         ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   true.b;
   //@dump-sem-ir-end

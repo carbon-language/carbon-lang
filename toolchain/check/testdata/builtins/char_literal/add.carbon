@@ -41,22 +41,54 @@ alias IntLiteral = MakeIntLiteral();
 fn AddCharInt(c: CharLiteral, n: IntLiteral) -> CharLiteral = "char_literal.add";
 fn Negate(n: IntLiteral) -> IntLiteral = "int.snegate";
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:22-54: error: character arithmetic result 4503599627370593 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let a: CharLiteral = AddCharInt('a', 0x10000000000000);
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 4503599627370593 is
+// CHECK:STDERR:        ·                         ┃        not a valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: CharLiteral = AddCharInt('a', 0x10000000000000);
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+5]]:5: error: duplicate name `a` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE-3]]:5-18: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+19]]:5
+// CHECK:STDERR:        │ let a: CharLiteral = AddCharInt('a', 0x10000000000000);
+// CHECK:STDERR:        ·     ───────┬──────
+// CHECK:STDERR:        ·            ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ let a: CharLiteral = AddCharInt('\u{10FFFF}', 1);
+// CHECK:STDERR:        ·     ┳
+// CHECK:STDERR:        ·     ┗━━┫ error: duplicate name `a` being declared in the same scope
+// CHECK:STDERR:        ·        ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:22-48: error: character arithmetic result 1114112 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let a: CharLiteral = AddCharInt('\u{10FFFF}', 1);
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 1114112 is not a
+// CHECK:STDERR:        ·                         ┃        valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: CharLiteral = AddCharInt('\u{10FFFF}', 1);
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:22-46: error: character arithmetic result 55296 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let b: CharLiteral = AddCharInt('\u{D7FF}', 1);
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result 55296 is not a
+// CHECK:STDERR:        ·                         ┃        valid Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: CharLiteral = AddCharInt('\u{D7FF}', 1);
 
-// CHECK:STDERR: fail_overflow.carbon:[[@LINE+2]]:22-48: error: character arithmetic result -1 is not a valid Unicode code point [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╭─┤ fail_overflow.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let c: CharLiteral = AddCharInt('a', Negate(98));
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: character arithmetic result -1 is not a valid
+// CHECK:STDERR:        ·                         ┃        Unicode code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralArithmeticResult]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let c: CharLiteral = AddCharInt('a', Negate(98));
 

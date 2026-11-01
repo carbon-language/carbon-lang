@@ -39,12 +39,34 @@ let value: X = Init();
 fn Use() {
   // TODO: These should probably be valid.
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+3]]:41-71: error: cannot convert expression of type `X` to `Core.MaybeUnformed(X)` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+2]]:41-71: note: type `X` does not implement interface `Core.As(Core.MaybeUnformed(X))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_todo_add_unformed_nonref.carbon:[[@LINE+14]]:41
+  // CHECK:STDERR: ->     │   var unused i: Core.MaybeUnformed(X) = Init() as Core.MaybeUnformed(X);
+  // CHECK:STDERR:        ·                                         ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                                         ┗━━┫ error: cannot convert expression of
+  // CHECK:STDERR:        ·                                         │  ┃        type `X` to
+  // CHECK:STDERR:        ·                                         │  ┃        `Core.MaybeUnformed(X)` with
+  // CHECK:STDERR:        ·                                         │  ┃        `as`
+  // CHECK:STDERR:        ·                                         │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                                         ╰────┤ type `X` does not implement
+  // CHECK:STDERR:        ·                                              │ interface
+  // CHECK:STDERR:        ·                                              │ `Core.As(Core.MaybeUnformed(X))`
+  // CHECK:STDERR:        ·                                              │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused i: Core.MaybeUnformed(X) = Init() as Core.MaybeUnformed(X);
-  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+3]]:41-70: error: cannot convert expression of type `X` to `Core.MaybeUnformed(X)` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_add_unformed_nonref.carbon:[[@LINE+2]]:41-70: note: type `X` does not implement interface `Core.As(Core.MaybeUnformed(X))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_todo_add_unformed_nonref.carbon:[[@LINE+14]]:41
+  // CHECK:STDERR: ->     │   let unused v: Core.MaybeUnformed(X) = value as Core.MaybeUnformed(X);
+  // CHECK:STDERR:        ·                                         ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                                         ┗━━┫ error: cannot convert expression of
+  // CHECK:STDERR:        ·                                         │  ┃        type `X` to
+  // CHECK:STDERR:        ·                                         │  ┃        `Core.MaybeUnformed(X)` with
+  // CHECK:STDERR:        ·                                         │  ┃        `as`
+  // CHECK:STDERR:        ·                                         │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                                         ╰────┤ type `X` does not implement
+  // CHECK:STDERR:        ·                                              │ interface
+  // CHECK:STDERR:        ·                                              │ `Core.As(Core.MaybeUnformed(X))`
+  // CHECK:STDERR:        ·                                              │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused v: Core.MaybeUnformed(X) = value as Core.MaybeUnformed(X);
   //@dump-sem-ir-end
@@ -62,26 +84,66 @@ var reference: Core.MaybeUnformed(X);
 let ptr: Core.MaybeUnformed(X)* = &reference;
 
 fn Use() {
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:21-31: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+2]]:21-31: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_unformed.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR: ->     │   var unused i: X = Init() as X;
+  // CHECK:STDERR:        ·                     ┳━━━━━━━━━━
+  // CHECK:STDERR:        ·                     ┗━━┫ error: cannot convert expression of type
+  // CHECK:STDERR:        ·                     │  ┃        `Core.MaybeUnformed(X)` to `X` with `as`
+  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                     ╰────┤ type `Core.MaybeUnformed(X)` does not implement
+  // CHECK:STDERR:        ·                          │ interface `Core.As(X)`
+  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused i: X = Init() as X;
   // TODO: The diagnostic should explain that the reason we can't perform this
   // conversion is due to the expression category.
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:21-38: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `unsafe as` [ConversionFailure]
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+2]]:21-38: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.UnsafeAs(X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_unformed.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR: ->     │   var unused j: X = Init() unsafe as X;
+  // CHECK:STDERR:        ·                     ┳━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                     ┗━━┫ error: cannot convert expression of type
+  // CHECK:STDERR:        ·                     │  ┃        `Core.MaybeUnformed(X)` to `X` with `unsafe as`
+  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                     ╰────┤ type `Core.MaybeUnformed(X)` does not implement
+  // CHECK:STDERR:        ·                          │ interface `Core.UnsafeAs(X)`
+  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused j: X = Init() unsafe as X;
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:21-30: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+2]]:21-30: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_unformed.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR: ->     │   let unused v: X = value as X;
+  // CHECK:STDERR:        ·                     ┳━━━━━━━━━
+  // CHECK:STDERR:        ·                     ┗━━┫ error: cannot convert expression of type
+  // CHECK:STDERR:        ·                     │  ┃        `Core.MaybeUnformed(X)` to `X` with `as`
+  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                     ╰────┤ type `Core.MaybeUnformed(X)` does not implement
+  // CHECK:STDERR:        ·                          │ interface `Core.As(X)`
+  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused v: X = value as X;
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:24-37: error: cannot convert expression of type `Core.MaybeUnformed(X)` to `X` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+2]]:24-37: note: type `Core.MaybeUnformed(X)` does not implement interface `Core.As(X)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_unformed.carbon:[[@LINE+11]]:24
+  // CHECK:STDERR: ->     │   let unused a: X* = &(reference as X);
+  // CHECK:STDERR:        ·                        ┳━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                        ┗━━┫ error: cannot convert expression of type
+  // CHECK:STDERR:        ·                        │  ┃        `Core.MaybeUnformed(X)` to `X` with `as`
+  // CHECK:STDERR:        ·                        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                        ╰────┤ type `Core.MaybeUnformed(X)` does not implement
+  // CHECK:STDERR:        ·                             │ interface `Core.As(X)`
+  // CHECK:STDERR:        ·                             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: X* = &(reference as X);
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+3]]:22-30: error: cannot convert expression of type `Core.MaybeUnformed(X)*` to `X*` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_cannot_remove_unformed.carbon:[[@LINE+2]]:22-30: note: type `Core.MaybeUnformed(X)*` does not implement interface `Core.As(X*)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_cannot_remove_unformed.carbon:[[@LINE+11]]:22
+  // CHECK:STDERR: ->     │   let unused b: X* = ptr as X*;
+  // CHECK:STDERR:        ·                      ┳━━━━━━━━
+  // CHECK:STDERR:        ·                      ┗━━┫ error: cannot convert expression of type
+  // CHECK:STDERR:        ·                      │  ┃        `Core.MaybeUnformed(X)*` to `X*` with `as`
+  // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                      ╰────┤ type `Core.MaybeUnformed(X)*` does not implement
+  // CHECK:STDERR:        ·                           │ interface `Core.As(X*)`
+  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused b: X* = ptr as X*;
 }
@@ -208,7 +270,7 @@ fn Use() {
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc15_3.4 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc26_3.4 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.4: %SubobjectDestroy.WithSelf.Op.type.6870fd.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.4: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.4), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.4df: %SubobjectDestroy.type = facet_value %MaybeUnformed.67f, (%custom_witness.b80ef6.4) [concrete]
@@ -235,19 +297,19 @@ fn Use() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %i.var: ref %MaybeUnformed.67f = var_storage %i.var_patt
 // CHECK:STDOUT:   %Init.ref: %Init.type = name_ref Init, file.%Init.decl [concrete = constants.%Init]
-// CHECK:STDOUT:   %.loc15_46: ref %X = temporary_storage
-// CHECK:STDOUT:   %Init.call: init %X to %.loc15_46 = call %Init.ref()
-// CHECK:STDOUT:   %Core.ref.loc15_51: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %MaybeUnformed.ref.loc15_55: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:   %X.ref.loc15_70: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %MaybeUnformed.loc15_71: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.67f]
-// CHECK:STDOUT:   %.loc15_48: %MaybeUnformed.67f = converted %Init.call, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc26_46: ref %X = temporary_storage
+// CHECK:STDOUT:   %Init.call: init %X to %.loc26_46 = call %Init.ref()
+// CHECK:STDOUT:   %Core.ref.loc26_51: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %MaybeUnformed.ref.loc26_55: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:   %X.ref.loc26_70: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %MaybeUnformed.loc26_71: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.67f]
+// CHECK:STDOUT:   %.loc26_48: %MaybeUnformed.67f = converted %Init.call, <error> [concrete = <error>]
 // CHECK:STDOUT:   assign %i.var, <error>
-// CHECK:STDOUT:   %.loc15_37: type = splice_block %MaybeUnformed.loc15_37 [concrete = constants.%MaybeUnformed.67f] {
-// CHECK:STDOUT:     %Core.ref.loc15_17: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %MaybeUnformed.ref.loc15_21: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:     %X.ref.loc15_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %MaybeUnformed.loc15_37: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.67f]
+// CHECK:STDOUT:   %.loc26_37: type = splice_block %MaybeUnformed.loc26_37 [concrete = constants.%MaybeUnformed.67f] {
+// CHECK:STDOUT:     %Core.ref.loc26_17: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %MaybeUnformed.ref.loc26_21: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:     %X.ref.loc26_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %MaybeUnformed.loc26_37: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.67f]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %i: ref %MaybeUnformed.67f = wrapper_binding i, %i.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -255,40 +317,40 @@ fn Use() {
 // CHECK:STDOUT:     %i.var_patt: %pattern_type.55d = var_pattern %i.patt [concrete = constants.%i.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %value.ref: %X = name_ref value, file.%value
-// CHECK:STDOUT:   %Core.ref.loc19_50: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:   %MaybeUnformed.ref.loc19_54: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:   %X.ref.loc19_69: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:   %MaybeUnformed.loc19_70: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.67f]
-// CHECK:STDOUT:   %.loc19_47: %MaybeUnformed.67f = converted %value.ref, <error> [concrete = <error>]
-// CHECK:STDOUT:   %.loc19_37: type = splice_block %MaybeUnformed.loc19_37 [concrete = constants.%MaybeUnformed.67f] {
-// CHECK:STDOUT:     %Core.ref.loc19_17: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
-// CHECK:STDOUT:     %MaybeUnformed.ref.loc19_21: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
-// CHECK:STDOUT:     %X.ref.loc19_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
-// CHECK:STDOUT:     %MaybeUnformed.loc19_37: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.67f]
+// CHECK:STDOUT:   %Core.ref.loc41_50: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:   %MaybeUnformed.ref.loc41_54: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:   %X.ref.loc41_69: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:   %MaybeUnformed.loc41_70: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.67f]
+// CHECK:STDOUT:   %.loc41_47: %MaybeUnformed.67f = converted %value.ref, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc41_37: type = splice_block %MaybeUnformed.loc41_37 [concrete = constants.%MaybeUnformed.67f] {
+// CHECK:STDOUT:     %Core.ref.loc41_17: <namespace> = name_ref Core, imports.%Core [concrete = imports.%Core]
+// CHECK:STDOUT:     %MaybeUnformed.ref.loc41_21: %MaybeUnformed.type = name_ref MaybeUnformed, imports.%Core.MaybeUnformed [concrete = constants.%MaybeUnformed.generic]
+// CHECK:STDOUT:     %X.ref.loc41_36: type = name_ref X, file.%X.decl [concrete = constants.%X]
+// CHECK:STDOUT:     %MaybeUnformed.loc41_37: type = class_type @MaybeUnformed, @MaybeUnformed(constants.%X) [concrete = constants.%MaybeUnformed.67f]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %v: %MaybeUnformed.67f = wrapper_binding v, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %v.patt: %pattern_type.55d = value_binding_pattern v [concrete = constants.%v.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc15_3.1: %Destroy.type = facet_value constants.%MaybeUnformed.67f, (constants.%DestroyImpl.impl_witness.8e6, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc15_3.1: %Destroy.type = converted constants.%MaybeUnformed.67f, %Destroy.facet.loc15_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc15_3.2: %Destroy.type = facet_value constants.%MaybeUnformed.67f, (constants.%DestroyImpl.impl_witness.8e6, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc15_3.2: %Destroy.type = converted constants.%MaybeUnformed.67f, %Destroy.facet.loc15_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc26_3.1: %Destroy.type = facet_value constants.%MaybeUnformed.67f, (constants.%DestroyImpl.impl_witness.8e6, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc26_3.1: %Destroy.type = converted constants.%MaybeUnformed.67f, %Destroy.facet.loc26_3.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc26_3.2: %Destroy.type = facet_value constants.%MaybeUnformed.67f, (constants.%DestroyImpl.impl_witness.8e6, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc26_3.2: %Destroy.type = converted constants.%MaybeUnformed.67f, %Destroy.facet.loc26_3.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%i.var)
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc15_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc26_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc15_3.2(%self.param: ref %X) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc26_3.2(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc15_3.3(%self.param: ref %.f01) {
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc26_3.3(%self.param: ref %.f01) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc15_3.4(%self.param: ref %MaybeUnformed.67f) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc26_3.4(%self.param: ref %MaybeUnformed.67f) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:

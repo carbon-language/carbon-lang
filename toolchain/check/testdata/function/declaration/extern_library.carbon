@@ -32,8 +32,19 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_extern_library_nonowner.carbon:[[@LINE+3]]:1-14: error: declaration in library "extern_library_nonowner" doesn't match `extern library` declaration [ExternLibraryIncorrect]
-// CHECK:STDERR: extern_library.carbon:4:1-45: note: previously declared with `extern library` here [ExternLibraryExpected]
+// CHECK:STDERR:        ╭─┤ fail_extern_library_nonowner.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ extern fn F();
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: declaration in library "extern_library_nonowner" doesn't match
+// CHECK:STDERR:        ·    ┃        `extern library` declaration
+// CHECK:STDERR:        ·    ┃        [ExternLibraryIncorrect]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_library.carbon
+// CHECK:STDERR:        │ extern library "extern_library_owner" fn F();
+// CHECK:STDERR:        · ──────────────────────┬──────────────────────
+// CHECK:STDERR:        ·                       ╰──┤ previously declared with `extern library` here
+// CHECK:STDERR:        ·                          │ [ExternLibraryExpected]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern fn F();
 
@@ -43,8 +54,17 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_extern_library_nonextern.carbon:[[@LINE+3]]:1-7: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern_library.carbon:4:1-45: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_extern_library_nonextern.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ fn F();
+// CHECK:STDERR:        · ━━━┳━━━
+// CHECK:STDERR:        ·    ┗━━┫ error: redeclarations of `fn F` must match use of `extern`
+// CHECK:STDERR:        ·       ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_library.carbon
+// CHECK:STDERR:        │ extern library "extern_library_owner" fn F();
+// CHECK:STDERR:        · ──────────────────────┬──────────────────────
+// CHECK:STDERR:        ·                       ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F();
 
@@ -54,8 +74,19 @@ library "[[@TEST_NAME]]";
 
 import library "extern_library";
 
-// CHECK:STDERR: fail_extern_library_redecl.carbon:[[@LINE+3]]:1-45: error: declaration in library "extern_library_redecl" doesn't match `extern library` declaration [ExternLibraryIncorrect]
-// CHECK:STDERR: extern_library.carbon:4:1-45: note: previously declared with `extern library` here [ExternLibraryExpected]
+// CHECK:STDERR:        ╭─┤ fail_extern_library_redecl.carbon:[[@LINE+14]]:1
+// CHECK:STDERR: ->     │ extern library "extern_library_owner" fn F();
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: declaration in library "extern_library_redecl" doesn't match
+// CHECK:STDERR:        ·    ┃        `extern library` declaration
+// CHECK:STDERR:        ·    ┃        [ExternLibraryIncorrect]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_library.carbon
+// CHECK:STDERR:        │ extern library "extern_library_owner" fn F();
+// CHECK:STDERR:        · ──────────────────────┬──────────────────────
+// CHECK:STDERR:        ·                       ╰──┤ previously declared with `extern library` here
+// CHECK:STDERR:        ·                          │ [ExternLibraryExpected]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library "extern_library_owner" fn F();
 
@@ -63,16 +94,25 @@ extern library "extern_library_owner" fn F();
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_extern_library_collision.carbon [InImport]
+// CHECK:STDERR:        ├─┤ extern_library_copy.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ extern library "extern_library_owner" fn F();
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: duplicate name `F` being declared in the same scope
+// CHECK:STDERR:        ·                     ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_library.carbon
+// CHECK:STDERR:        │ extern library "extern_library_owner" fn F();
+// CHECK:STDERR:        · ──────────────────────┬──────────────────────
+// CHECK:STDERR:        ·                       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 extern library "extern_library_owner" fn F();
 
 // --- fail_extern_library_collision.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_extern_library_collision.carbon:[[@LINE+4]]:1 [InImport]
-// CHECK:STDERR: extern_library_copy.carbon:4:1-45: error: duplicate name `F` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: extern_library.carbon:4:1-45: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR:
 import library "extern_library";
 import library "extern_library_copy";
 
@@ -86,9 +126,20 @@ extern library "extern_library_owner" fn F();
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_library_mismatch_owner.carbon:[[@LINE+4]]:41: error: `import` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_extern_library_mismatch_owner.carbon:[[@LINE+15]]:41
+// CHECK:STDERR: ->     │ import library "extern_library_mismatch"
+// CHECK:STDERR:        ·                                         ┳
+// CHECK:STDERR:        ·                                         ┗━━┫ error: `import` declarations must
+// CHECK:STDERR:        ·                                            ┃        end with a `;`
+// CHECK:STDERR:        ·                                            ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_extern_library_mismatch_owner.carbon:[[@LINE+2]]:1-40: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_extern_library_mismatch_owner.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ import library "extern_library_mismatch"
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+// CHECK:STDERR:        ·                 ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import library "extern_library_mismatch"
 
@@ -98,7 +149,12 @@ extern fn F();
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_self_library.carbon:[[@LINE+2]]:1-36: error: `extern library` cannot specify the current library [ExternLibraryIsCurrentLibrary]
+// CHECK:STDERR:        ╭─┤ fail_extern_self_library.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ extern library "extern_self_library" fn F();
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: `extern library` cannot specify the current library
+// CHECK:STDERR:        ·                     ┃        [ExternLibraryIsCurrentLibrary]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library "extern_self_library" fn F();
 
@@ -114,8 +170,17 @@ library "[[@TEST_NAME]]";
 
 import library "extern_of_import";
 
-// CHECK:STDERR: fail_extern_of_import_redecl.carbon:[[@LINE+3]]:1-41: error: redeclarations of `fn F` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: extern_of_import.carbon:4:1-7: note: previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╭─┤ fail_extern_of_import_redecl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ extern library "extern_of_import" fn F();
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: redeclarations of `fn F` must match use of `extern`
+// CHECK:STDERR:        ·                     ┃        [RedeclExternMismatch]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ extern_of_import.carbon
+// CHECK:STDERR:        │ fn F();
+// CHECK:STDERR:        · ───┬───
+// CHECK:STDERR:        ·    ╰──┤ previously declared here [RedeclPrevDecl]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library "extern_of_import" fn F();
 
@@ -123,7 +188,13 @@ extern library "extern_of_import" fn F();
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_extern_library_on_definition.carbon:[[@LINE+2]]:1-37: error: a library cannot be provided for an `extern` modifier on a definition [ExternLibraryOnDefinition]
+// CHECK:STDERR:        ╭─┤ fail_extern_library_on_definition.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ extern library "extern_library_owner" fn F() {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: a library cannot be provided for an `extern` modifier on a
+// CHECK:STDERR:        ·    ┃        definition
+// CHECK:STDERR:        ·    ┃        [ExternLibraryOnDefinition]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extern library "extern_library_owner" fn F() {}
 

@@ -33,7 +33,12 @@ library "[[@TEST_NAME]]";
 import Cpp library "enum.h";
 
 fn F() {
-  // CHECK:STDERR: fail_name_without_scope.carbon:[[@LINE+2]]:28-32: error: member name `b` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╭─┤ fail_name_without_scope.carbon:[[@LINE+7]]:28
+  // CHECK:STDERR: ->     │   let unused b: Cpp.Enum = Cpp.b;
+  // CHECK:STDERR:        ·                            ━━┳━━
+  // CHECK:STDERR:        ·                              ┗━━┫ error: member name `b` not found in `Cpp`
+  // CHECK:STDERR:        ·                                 ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused b: Cpp.Enum = Cpp.b;
 }

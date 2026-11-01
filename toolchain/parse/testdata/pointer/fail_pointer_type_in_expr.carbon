@@ -9,7 +9,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/pointer/fail_pointer_type_in_expr.carbon
 
 fn F() -> i32 {
-  // CHECK:STDERR: fail_pointer_type_in_expr.carbon:[[@LINE+2]]:14: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_pointer_type_in_expr.carbon:[[@LINE+8]]:14
+  // CHECK:STDERR: ->     │   return *i32*;
+  // CHECK:STDERR:        ·              ┳
+  // CHECK:STDERR:        ·              ┗━━┫ error: parentheses are required to disambiguate operator
+  // CHECK:STDERR:        ·                 ┃        precedence
+  // CHECK:STDERR:        ·                 ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return *i32*;
 }

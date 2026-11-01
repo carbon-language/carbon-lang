@@ -74,8 +74,17 @@ let T: type = Y;
 fn F(template T: type, unused y: T) {}
 
 fn H(y: Y) {
-  // CHECK:STDERR: fail_non_constant_type_argument.carbon:[[@LINE+3]]:3-9: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
-  // CHECK:STDERR: fail_non_constant_type_argument.carbon:[[@LINE-4]]:6-21: note: initializing generic parameter `T` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_non_constant_type_argument.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn F(template T: type, unused y: T) {}
+  // CHECK:STDERR:        ·      ────────┬───────
+  // CHECK:STDERR:        ·              ╰──┤ initializing generic parameter `T` declared here
+  // CHECK:STDERR:        ·                 │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(T, y);
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: argument for generic parameter is not a compile-time constant
+  // CHECK:STDERR:        ·         ┃        [CompTimeArgumentNotConstant]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(T, y);
 }
@@ -88,8 +97,17 @@ class Y {}
 fn F(unused template X: Y) {}
 
 fn H(y: Y) {
-  // CHECK:STDERR: fail_non_constant_nontype_argument.carbon:[[@LINE+3]]:3-6: error: argument for generic parameter is not a compile-time constant [CompTimeArgumentNotConstant]
-  // CHECK:STDERR: fail_non_constant_nontype_argument.carbon:[[@LINE-4]]:13-25: note: initializing generic parameter `X` declared here [InitializingGenericParam]
+  // CHECK:STDERR:        ╭─┤ fail_non_constant_nontype_argument.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn F(unused template X: Y) {}
+  // CHECK:STDERR:        ·             ──────┬──────
+  // CHECK:STDERR:        ·                   ╰──┤ initializing generic parameter `X` declared here
+  // CHECK:STDERR:        ·                      │ [InitializingGenericParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(y);
+  // CHECK:STDERR:        ·   ━━┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: argument for generic parameter is not a compile-time constant
+  // CHECK:STDERR:        ·        ┃        [CompTimeArgumentNotConstant]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(y);
 }

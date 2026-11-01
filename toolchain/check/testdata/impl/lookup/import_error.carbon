@@ -18,7 +18,13 @@ interface Z {
 }
 
 // The value of .X is an error.
-// CHECK:STDERR: fail_error_interface_z.carbon:[[@LINE+2]]:34-60: error: associated constant `.(Z.X)` given two different values `{}` and `()` [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR:        ╭─┤ fail_error_interface_z.carbon:[[@LINE+8]]:34
+// CHECK:STDERR: ->     │ final impl forall [T: type] T as Z where .X = {} and .X = () {}
+// CHECK:STDERR:        ·                                  ┳━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                                  ┗━━┫ error: associated constant `.(Z.X)` given
+// CHECK:STDERR:        ·                                     ┃        two different values `{}` and `()`
+// CHECK:STDERR:        ·                                     ┃        [AssociatedConstantWithDifferentValues]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 final impl forall [T: type] T as Z where .X = {} and .X = () {}
 
@@ -30,8 +36,16 @@ import library "error_interface_z";
 fn F[unused U: type](generic T: Z) {
   // The value of `.X` is an error. It should not crash though.
   //
-  // CHECK:STDERR: fail_import_error.carbon:[[@LINE+3]]:23-24: error: cannot implicitly convert expression of type `()` to `T.(Z.X)` [ConversionFailure]
-  // CHECK:STDERR: fail_import_error.carbon:[[@LINE+2]]:23-24: note: type `()` does not implement interface `Core.ImplicitAs(T.(Z.X))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_import_error.carbon:[[@LINE+11]]:23
+  // CHECK:STDERR: ->     │   let unused a: T.X = ();
+  // CHECK:STDERR:        ·                       ┳━
+  // CHECK:STDERR:        ·                       ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·                       │  ┃        `()` to `T.(Z.X)`
+  // CHECK:STDERR:        ·                       │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                       ╰────┤ type `()` does not implement interface
+  // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(T.(Z.X))`
+  // CHECK:STDERR:        ·                            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: T.X = ();
 }

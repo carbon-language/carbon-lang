@@ -29,7 +29,11 @@ class C {
 }
 
 fn F(c: const C) {
-  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+2]]:3-5: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:        ╭─┤ fail_const_member_assign.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   c.x = ();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c.x = ();
 }
@@ -42,7 +46,11 @@ class C {
 }
 
 fn F(ref c: const C) {
-  // CHECK:STDERR: fail_const_ref_member_assign.carbon:[[@LINE+2]]:3-5: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:        ╭─┤ fail_const_ref_member_assign.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   c.x = ();
+  // CHECK:STDERR:        ·   ━┳━
+  // CHECK:STDERR:        ·    ┗━━┫ error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c.x = ();
 }

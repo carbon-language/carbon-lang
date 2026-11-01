@@ -38,8 +38,17 @@ class C(N: i32) {
 }
 
 // C extends K so the type of K is completed, but is invalid.
-// CHECK:STDERR: fail_class_extend_impl_does_need_complete_interface.carbon:[[@LINE+3]]:13-20: error: parameter has incomplete type `C(-1)` in function definition [IncompleteTypeInFunctionParam]
-// CHECK:STDERR: fail_class_extend_impl_does_need_complete_interface.carbon:[[@LINE-5]]:18-33: note: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:        ╭─┤ fail_class_extend_impl_does_need_complete_interface.carbon:[[@LINE+12]]:13
+// CHECK:STDERR:        │   extend impl as K(Array(i32, N)) {}
+// CHECK:STDERR:        ·                  ────────┬───────
+// CHECK:STDERR:        ·                          ╰──┤ array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F(unused v: C(-1)) {}
+// CHECK:STDERR:        ·             ┳━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: parameter has incomplete type `C(-1)` in function
+// CHECK:STDERR:        ·                ┃        definition
+// CHECK:STDERR:        ·                ┃        [IncompleteTypeInFunctionParam]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused v: C(-1)) {}
 
@@ -77,9 +86,23 @@ interface I(N: i32) {
 // need a location for the type in context.bind_name_map() to use as the
 // location to Convert().
 //
-// CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+4]]:13-20: error: parameter has incomplete type `I(-1)` in function definition [IncompleteTypeInFunctionParam]
-// CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE-10]]:24-27: note: `J(N)` evaluates to incomplete type `J(-1)` [IncompleteTypeInMonomorphization]
-// CHECK:STDERR: fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE-14]]:24-39: note: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:        ╭─┤ fail_interface_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+18]]:13
+// CHECK:STDERR:        │   extend require impls K(Array(i32, N));
+// CHECK:STDERR:        ·                        ────────┬───────
+// CHECK:STDERR:        ·                                ╰──┤ array bound of -1 is negative
+// CHECK:STDERR:        ·                                   │ [ArrayBoundNegative]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │   extend require impls J(N);
+// CHECK:STDERR:        ·                        ──┬─
+// CHECK:STDERR:        ·                          ╰──┤ `J(N)` evaluates to incomplete type `J(-1)`
+// CHECK:STDERR:        ·                             │ [IncompleteTypeInMonomorphization]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F(unused v: I(-1)) {}
+// CHECK:STDERR:        ·             ┳━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: parameter has incomplete type `I(-1)` in function
+// CHECK:STDERR:        ·                ┃        definition
+// CHECK:STDERR:        ·                ┃        [IncompleteTypeInFunctionParam]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused v: I(-1)) {}
 
@@ -112,9 +135,23 @@ constraint I(N: i32) {
 }
 
 // I extends J extends K so the type of K is completed, but is invalid.
-// CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+4]]:13-20: error: parameter has incomplete type `I(-1)` in function definition [IncompleteTypeInFunctionParam]
-// CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE-5]]:24-27: note: `J(N)` evaluates to incomplete type `J(-1)` [IncompleteTypeInMonomorphization]
-// CHECK:STDERR: fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE-9]]:24-39: note: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:        ╭─┤ fail_constraint_extend_require_impls_does_need_complete_interface.carbon:[[@LINE+18]]:13
+// CHECK:STDERR:        │   extend require impls K(Array(i32, N));
+// CHECK:STDERR:        ·                        ────────┬───────
+// CHECK:STDERR:        ·                                ╰──┤ array bound of -1 is negative
+// CHECK:STDERR:        ·                                   │ [ArrayBoundNegative]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │   extend require impls J(N);
+// CHECK:STDERR:        ·                        ──┬─
+// CHECK:STDERR:        ·                          ╰──┤ `J(N)` evaluates to incomplete type `J(-1)`
+// CHECK:STDERR:        ·                             │ [IncompleteTypeInMonomorphization]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F(unused v: I(-1)) {}
+// CHECK:STDERR:        ·             ┳━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: parameter has incomplete type `I(-1)` in function
+// CHECK:STDERR:        ·                ┃        definition
+// CHECK:STDERR:        ·                ┃        [IncompleteTypeInFunctionParam]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused v: I(-1)) {}
 
