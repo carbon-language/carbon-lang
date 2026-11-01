@@ -15,7 +15,8 @@ static auto HandleMatchHandlerStart(Context& context, NodeKind label_kind)
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedMatchCaseArrow, Error,
                         "expected `=>` introducing statement block");
-      context.emitter().Emit(*context.position(), ExpectedMatchCaseArrow);
+      context.emitter().Emit(context.PointAfterPreviousToken(),
+                             ExpectedMatchCaseArrow);
     }
 
     context.AddNode(label_kind, *context.position(), /*has_error=*/true);
@@ -33,7 +34,8 @@ static auto HandleMatchHandlerStart(Context& context, NodeKind label_kind)
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedMatchCaseBlock, Error,
                         "expected `{{` after `=>`");
-      context.emitter().Emit(*context.position(), ExpectedMatchCaseBlock);
+      context.emitter().Emit(context.OpeningBracketInsertionPoint(),
+                             ExpectedMatchCaseBlock);
     }
 
     context.AddNode(NodeKind::MatchHandlerStart, *context.position(),
@@ -77,7 +79,8 @@ auto HandleMatchConditionFinish(Context& context) -> void {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedMatchCasesBlock, Error,
                         "expected `{{` starting block with cases");
-      context.emitter().Emit(*context.position(), ExpectedMatchCasesBlock);
+      context.emitter().Emit(context.OpeningBracketInsertionPoint(),
+                             ExpectedMatchCasesBlock);
     }
 
     context.AddNode(NodeKind::MatchStatementStart, *context.position(),
@@ -94,7 +97,8 @@ auto HandleMatchConditionFinish(Context& context) -> void {
   state.has_error = false;
   if (context.PositionIs(Lex::TokenKind::CloseCurlyBrace)) {
     CARBON_DIAGNOSTIC(ExpectedMatchCases, Error, "expected cases");
-    context.emitter().Emit(*context.position(), ExpectedMatchCases);
+    context.emitter().Emit(context.PointAfterPreviousToken(),
+                           ExpectedMatchCases);
     state.has_error = true;
   }
 
@@ -174,7 +178,7 @@ auto HandleMatchCaseAfterPattern(Context& context) -> void {
       if (!state.has_error) {
         CARBON_DIAGNOSTIC(ExpectedMatchCaseGuardOpenParen, Error,
                           "expected `(` after `if`");
-        context.emitter().Emit(*context.position(),
+        context.emitter().Emit(context.OpeningBracketInsertionPoint(),
                                ExpectedMatchCaseGuardOpenParen);
       }
 
@@ -207,7 +211,7 @@ auto HandleMatchCaseGuardFinish(Context& context) -> void {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedMatchCaseGuardCloseParen, Error,
                         "expected `)`");
-      context.emitter().Emit(*context.position(),
+      context.emitter().Emit(context.PointAfterPreviousToken(),
                              ExpectedMatchCaseGuardCloseParen);
     }
 

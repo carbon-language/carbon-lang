@@ -20,24 +20,24 @@ var d: auto = fn (ref x: i32) ->? ref i32 { return x; };
 // Tests that the compiler does not crash when a LambdaIntroducer (`fn`)
 // is left unconsumed inside an invalid binary operator sequence.
 
-// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+6]]:10: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+12]]:10: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+4]]:16: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+10]]:16: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+2]]:16: error: whitespace missing before binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+8]]:16: error: whitespace missing before binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+6]]:17: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+4]]:17: error: expected `{` after return type [ExpectedLambdaBodyAfterReturnType]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+2]]:17: error: expected `impls` in `require` declaration [RequireExpectedImpls]
 // CHECK:STDERR:
 require j%-fn->>
-// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+6]]:1: error: expected expression [ExpectedExpr]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+4]]:1: error: expected `{` after return type [ExpectedLambdaBodyAfterReturnType]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_unconsumed_lambda_introducer.carbon:[[@LINE+2]]:1: error: expected `impls` in `require` declaration [RequireExpectedImpls]
-// CHECK:STDERR:
 
 // --- fail_expected_body.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_expected_body.carbon:[[@LINE+2]]:20: error: expected `->`, `=>`, or `{` [ExpectedLambdaBody]
+  // CHECK:STDERR: fail_expected_body.carbon:[[@LINE+2]]:19: error: expected `->`, `=>`, or `{` [ExpectedLambdaBody]
   // CHECK:STDERR:
   var x: auto = fn ;
 }
@@ -45,7 +45,7 @@ fn F() {
 // --- fail_expected_body_after_return_type.carbon
 
 fn G() {
-  // CHECK:STDERR: fail_expected_body_after_return_type.carbon:[[@LINE+2]]:27: error: expected `{` after return type [ExpectedLambdaBodyAfterReturnType]
+  // CHECK:STDERR: fail_expected_body_after_return_type.carbon:[[@LINE+2]]:26: error: expected `{` after return type [ExpectedLambdaBodyAfterReturnType]
   // CHECK:STDERR:
   var x: auto = fn -> i32 ;
 }

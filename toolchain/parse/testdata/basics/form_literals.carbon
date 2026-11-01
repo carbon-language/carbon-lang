@@ -29,25 +29,27 @@ fn F() {
   // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:8: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
   form();
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:8-10: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:8: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
   // CHECK:STDERR:
   form(i32);
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8-12: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+5]]:8: error: expected `ref`, `var`, or `val` after `form(` [ExpectedCategoryModifier]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:14-16: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+3]]:14-28: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:7: note: matching this `(` [GroupOpenedHere]
   // CHECK:STDERR:
   form(whole lot of nonsense);
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:18-20: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+3]]:18-32: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:7: note: matching this `(` [GroupOpenedHere]
   // CHECK:STDERR:
   form(var whole lot of nonsense);
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8-12: error: expected `(` after `form` [ExpectedParenAfter]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected `(` after `form` [ExpectedParenAfter]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:8-12: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:7: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   form whole lot of nonsense;
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8-10: error: expected `(` after `form` [ExpectedParenAfter]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+4]]:8: error: expected `(` after `form` [ExpectedParenAfter]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:8-10: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR: fail_invalid_form_literal.carbon:[[@LINE+2]]:7: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   form var whole lot of nonsense;
 }

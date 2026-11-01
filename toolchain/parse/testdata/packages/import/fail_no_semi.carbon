@@ -8,10 +8,10 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/import/fail_no_semi.carbon
 
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:16: error: `import` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:
 import Geometry
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+8]]:26: error: `import` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─ImportIntroducer 'import'

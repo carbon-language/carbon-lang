@@ -11,9 +11,9 @@
 fn F() {
   // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+10]]:7: error: expected `(` after `for` [ExpectedParenAfter]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+8]]:7: error: expected pattern [ExpectedPattern]
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+8]]:6: error: expected pattern [ExpectedPattern]
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+6]]:7: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+6]]:6: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
   // CHECK:STDERR: fail_square_brackets.carbon:[[@LINE+4]]:7: error: expected braced code block [ExpectedCodeBlock]
   // CHECK:STDERR:

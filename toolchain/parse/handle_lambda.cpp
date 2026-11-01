@@ -60,12 +60,13 @@ static auto ParseLambdaBody(Context& context, Context::State state,
     if (has_return_type) {
       CARBON_DIAGNOSTIC(ExpectedLambdaBodyAfterReturnType, Error,
                         "expected `{{` after return type");
-      context.emitter().Emit(*context.position(),
+      context.emitter().Emit(context.PointAfterPreviousToken(),
                              ExpectedLambdaBodyAfterReturnType);
     } else {
       CARBON_DIAGNOSTIC(ExpectedLambdaBody, Error,
                         "expected `->`, `=>`, or `{{`");
-      context.emitter().Emit(*context.position(), ExpectedLambdaBody);
+      context.emitter().Emit(context.PointAfterPreviousToken(),
+                             ExpectedLambdaBody);
     }
 
     // Bundle everything into a complete lambda node for error recovery --

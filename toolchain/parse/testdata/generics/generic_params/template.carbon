@@ -22,7 +22,7 @@ fn foo(template ref a: i32);
 // CHECK:STDERR:
 fn foo(template ref a: i32);
 
-// CHECK:STDERR: fail_template_ref.carbon:[[@LINE+2]]:12-19: error: expected name in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_template_ref.carbon:[[@LINE+2]]:11: error: expected name in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR:
 fn foo(ref template a: i32);
 

@@ -21,7 +21,7 @@ fn F() {
   // CHECK:STDERR:
   z.(a, b);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:8: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:7: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
   // CHECK:STDERR:
   w.(c d e ());
 
@@ -37,7 +37,7 @@ fn F() {
   // CHECK:STDERR:
   t->(2, 3);
 
-  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:9: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
+  // CHECK:STDERR: fail_tuple_instead_of_compound_member_access.carbon:[[@LINE+2]]:8: error: expected `)` [UnexpectedTokenInCompoundMemberAccess]
   // CHECK:STDERR:
   s->(g h i ());
 }

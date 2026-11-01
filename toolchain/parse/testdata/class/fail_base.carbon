@@ -13,25 +13,25 @@ class A {
   // CHECK:STDERR:
   base;
 
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+2]]:8-12: error: `class` or `:` expected after `base` [ExpectedAfterBase]
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+2]]:7: error: `class` or `:` expected after `base` [ExpectedAfterBase]
   // CHECK:STDERR:
   base calss X {}
 
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+2]]:9: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+2]]:8: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
   base: ;
 
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+2]]:12: error: `base` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:
   base: { }
   // We should resume parsing here after the previous error.
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+2]]:3-5: error: `base` declarations must end with a `;` [ExpectedDeclSemi]
-  // CHECK:STDERR:
   var n: i32;
 }
 
 base class Foo {}
 
 class B {
-  // CHECK:STDERR: fail_base.carbon:[[@LINE+2]]:15-17: error: `class` or `:` expected after `base` [ExpectedAfterBase]
+  // CHECK:STDERR: fail_base.carbon:[[@LINE+2]]:14: error: `class` or `:` expected after `base` [ExpectedAfterBase]
   // CHECK:STDERR:
   extend base Foo;
 }

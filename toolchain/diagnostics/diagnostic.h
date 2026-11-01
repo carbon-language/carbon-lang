@@ -163,7 +163,11 @@ struct Loc {
   int32_t column_number = -1;
 
   // The number of bytes the location covers in `line`, starting at
-  // `column_number`. Should always be at least 1.
+  // `column_number`.
+  //
+  // Zero names the point just before `column_number`, where something missing
+  // would be written. That point can be just past the end of `line`, so
+  // `column_number` can be one more than the line's length.
   //
   // This is the range underlined in the source snippet. A message's own
   // location is a point that an editor puts a cursor on, so where a range was

@@ -543,21 +543,30 @@ auto TokenizedBuffer::SourcePointerToDiagnosticLoc(const char* loc) const
   auto line_range = line_infos_.values();
 
   // Find the first line starting after the given location.
-  const auto next_line_it = llvm::partition_point(
+  auto next_line_it = llvm::partition_point(
       line_range,
       [offset](const LineInfo& line) { return line.start <= offset; });
 
   // Step back one line to find the line containing the given position.
   CARBON_CHECK(next_line_it != line_range.begin(),
                "location precedes the start of the first line");
-  const auto line_it = std::prev(next_line_it);
+  auto line_it = std::prev(next_line_it);
+
+  // A file that doesn't end in a newline has an empty line after its last one,
+  // starting at the end of the file. The end of the file is the end of the
+  // last line instead.
+  llvm::StringRef text = source_->text();
+  if (line_it->start == offset && line_it != line_range.begin() &&
+      offset == static_cast<int32_t>(text.size()) && !text.ends_with("\n")) {
+    next_line_it = line_it;
+    --line_it;
+  }
   int line_number = line_it - line_range.begin();
   int column_number = offset - line_it->start;
 
   // Grab the line from the buffer by slicing from this line to the next
   // minus the newline. When on the last line, instead use the start to the end
   // of the buffer.
-  llvm::StringRef text = source_->text();
   llvm::StringRef line = next_line_it != line_range.end()
                              ? text.slice(line_it->start, next_line_it->start)
                              : text.substr(line_it->start);
@@ -586,6 +595,43 @@ auto TokenizedBuffer::TokenToDiagnosticLoc(TokenIndex token) const
   // is a recovery token that doesn't correspond to the original source?
   auto converted = SourcePointerToDiagnosticLoc(token_start);
   converted.loc.length = GetTokenText(token).size();
+  return converted;
+}
+
+auto TokenizedBuffer::TokenRangeToDiagnosticLoc(
+    InclusiveTokenRange tokens) const -> Diagnostics::ConvertedLoc {
+  auto begin_loc = TokenToDiagnosticLoc(tokens.begin);
+  if (tokens.begin == tokens.end) {
+    return begin_loc;
+  }
+  auto end_loc = TokenToDiagnosticLoc(tokens.end);
+  begin_loc.last_byte_offset = end_loc.last_byte_offset;
+  // TODO: A range across lines covers only the rest of its first line, because
+  // a `Diagnostics::Loc` is on one line. Cover the whole range once a location
+  // can span lines.
+  if (begin_loc.loc.line_number != end_loc.loc.line_number) {
+    begin_loc.loc.length =
+        begin_loc.loc.line.size() - begin_loc.loc.column_number + 1;
+  } else {
+    if (begin_loc.loc.column_number != end_loc.loc.column_number) {
+      begin_loc.loc.length = end_loc.loc.column_number + end_loc.loc.length -
+                             begin_loc.loc.column_number;
+    }
+  }
+  return begin_loc;
+}
+
+auto TokenizedBuffer::PointAfterTokenToDiagnosticLoc(TokenIndex token) const
+    -> Diagnostics::ConvertedLoc {
+  // A recovery token isn't in the source. It was inserted just past the token
+  // before it, which puts the point just past it there too.
+  while (IsRecoveryToken(token)) {
+    token = TokenIndex(token.index - 1);
+  }
+  auto converted = SourcePointerToDiagnosticLoc(
+      source_->text().begin() + token_infos_.Get(token).byte_offset() +
+      GetTokenText(token).size());
+  converted.loc.length = 0;
   return converted;
 }
 
