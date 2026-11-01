@@ -106,3 +106,30 @@ void F() {
   b.F();
 }
 ''';
+
+// --- access_exported_private_member_of_friend.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+inline Cpp '''
+class C;
+''';
+
+alias C = Cpp.C;
+
+class A {}
+
+class B {
+  friend C;
+  fn Make() -> Self { return {}; }
+  private fn F() {}
+}
+
+inline Cpp '''
+class C {
+  void G() {
+    auto b = Carbon::B::Make();
+    b.F();
+  }
+};
+''';
