@@ -15,7 +15,8 @@ fn F() {
   // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:7: error: expected expression [ExpectedExpr]
   // CHECK:STDERR:
   if () {}
-  // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:9: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+3]]:9: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+  // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:6: note: matching this `(` [GroupOpenedHere]
   // CHECK:STDERR:
   if (b c) {}
   // CHECK:STDERR: fail_errors.carbon:[[@LINE+2]]:9: error: expected braced code block [ExpectedCodeBlock]

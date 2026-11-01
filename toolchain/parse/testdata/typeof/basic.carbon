@@ -32,7 +32,8 @@ var x: typeof();
 
 // --- fail_no_close_paren.carbon
 
-// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+2]]:17: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+3]]:17: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+// CHECK:STDERR: fail_no_close_paren.carbon:[[@LINE+2]]:14: note: matching this `(` [GroupOpenedHere]
 // CHECK:STDERR:
 var x: typeof(y z);
 
@@ -40,7 +41,7 @@ var x: typeof(y z);
 
 var x: typeof(y
               // CHECK:STDERR: fail_no_close_paren_multiline.carbon:[[@LINE+3]]:15: error: unexpected tokens before `)` [ExpectedCloseSymbol]
-              // CHECK:STDERR: fail_no_close_paren_multiline.carbon:[[@LINE-2]]:14: note: to match this `(` [GroupOpenedHere]
+              // CHECK:STDERR: fail_no_close_paren_multiline.carbon:[[@LINE-2]]:14: note: matching this `(` [GroupOpenedHere]
               // CHECK:STDERR:
               z);
 

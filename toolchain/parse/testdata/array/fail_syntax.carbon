@@ -18,23 +18,25 @@ var x: array(i32);
 
 // --- fail_invalid_char.carbon
 
-// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+8]]:17: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+9]]:17: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+6]]:17: error: expected `,` in `array(Type, Count)` [ExpectedArrayComma]
+// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+7]]:17: error: expected `,` in `array(Type, Count)` [ExpectedArrayComma]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+4]]:17: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+5]]:17: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+2]]:17: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+3]]:17: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+// CHECK:STDERR: fail_invalid_char.carbon:[[@LINE+2]]:16: note: matching this `(` [GroupOpenedHere]
 // CHECK:STDERR:
 fn X() -> array(:);
 
 // --- fail_unlexed_expr.carbon
 
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+6]]:14: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+7]]:14: error: encountered unrecognized characters while parsing [UnrecognizedCharacters]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+4]]:14: error: expected `,` in `array(Type, Count)` [ExpectedArrayComma]
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+5]]:14: error: expected `,` in `array(Type, Count)` [ExpectedArrayComma]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+2]]:14: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+3]]:14: error: unexpected tokens before `)` [ExpectedCloseSymbol]
+// CHECK:STDERR: fail_unlexed_expr.carbon:[[@LINE+2]]:13: note: matching this `(` [GroupOpenedHere]
 // CHECK:STDERR:
 var y: array(`);
 
