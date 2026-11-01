@@ -11,6 +11,7 @@
 #include "common/ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "toolchain/base/canonical_value_store.h"
+#include "toolchain/base/stable_stack.h"
 #include "toolchain/base/value_store.h"
 #include "toolchain/check/core_identifier.h"
 #include "toolchain/check/cpp/context.h"
@@ -307,9 +308,7 @@ class Context {
     SemIR::LocId loc_id;
   };
 
-  auto where_stack() -> llvm::SmallVector<WhereStackEntry>& {
-    return where_stack_;
-  }
+  auto where_stack() -> StableStack<WhereStackEntry>& { return where_stack_; }
 
   auto binding_type_where_count() -> int32_t& {
     return binding_type_where_count_;
@@ -320,7 +319,7 @@ class Context {
     SemIR::SpecificInterface specific_interface;
     auto operator==(const DeclaringImplDecl& rhs) const -> bool = default;
   };
-  auto declaring_impl_decls() -> llvm::SmallVector<DeclaringImplDecl>& {
+  auto declaring_impl_decls() -> StableStack<DeclaringImplDecl>& {
     return declaring_impl_decls_;
   }
 
@@ -644,7 +643,7 @@ class Context {
 
   // Tracks information about constraints in the current `where` expression
   // being checked so that they can be used by later constraints.
-  llvm::SmallVector<WhereStackEntry> where_stack_;
+  StableStack<WhereStackEntry> where_stack_;
 
   // Counts the number of `where` expressions in the type of the binding
   // currently being checked.
@@ -653,7 +652,7 @@ class Context {
   // Track impl declarations that are underway. If we're declaring an impl for
   // `C as I`, an impl lookup query for `C as I` or `.Self as I` should find
   // that impl being declared (even though it does not yet exist).
-  llvm::SmallVector<DeclaringImplDecl> declaring_impl_decls_;
+  StableStack<DeclaringImplDecl> declaring_impl_decls_;
 
   // Tracks if we are currently identifying a facet type, which causes
   // LookupImplWitness instructions to not resolve to final witnesses by
