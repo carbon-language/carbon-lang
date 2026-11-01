@@ -81,6 +81,11 @@ struct ConversionTarget {
   // `diagnose` should be false. If `diagnose` is false, an `ErrorInst` may be
   // returned, but it must be discarded.
   bool diagnose = true;
+  // Whether a failure is located at the conversion's `loc_id` instead of at the
+  // expression being converted. This is for a conversion that the syntax at
+  // `loc_id` requires of a subexpression, such as converting the object of a
+  // member access to the class that has the member.
+  bool locate_failure_at_loc_id = false;
 
   // Are we converting this value into an initializer for an object?
   auto is_initializer() const -> bool {

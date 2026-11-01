@@ -98,6 +98,11 @@ class Emitter {
     auto Attach(LocT loc, LabelCategory category = LabelCategory::Primary)
         -> Builder&;
 
+    // Returns whether the diagnostic is located at `loc`: where its leading
+    // context is when it has one, and otherwise where its message is. A scope
+    // uses this to avoid attaching a label to that same location.
+    auto IsLocatedAt(LocT loc) -> bool;
+
     // Emits the built diagnostic and its attached labels.
     // For the expected usage see the builder API: `Emitter::Build`.
     template <typename... Args>
@@ -416,6 +421,18 @@ auto Emitter<LocT>::Builder::Attach(LocT loc, LabelCategory category)
                           .loc = loc_value,
                           .location_info = std::move(location_info)});
   return *this;
+}
+
+template <typename LocT>
+auto Emitter<LocT>::Builder::IsLocatedAt(LocT loc) -> bool {
+  llvm::SmallVector<LocationInfo, 0> location_info;
+  Loc converted = ConvertLoc(LocT(loc), location_info);
+  const Loc& located =
+      contexts_.empty() ? message_->loc : contexts_.front().loc;
+  return converted.filename == located.filename &&
+         converted.line_number == located.line_number &&
+         converted.column_number == located.column_number &&
+         converted.length == located.length;
 }
 
 template <typename LocT>

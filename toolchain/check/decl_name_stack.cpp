@@ -160,13 +160,18 @@ auto DeclNameStack::AddName(NameContext name_context, SemIR::InstId target_id,
         if (name_context.has_qualifiers) {
           auto inst = context_->insts().Get(name_scope.inst_id());
           if (!inst.Is<SemIR::Namespace>()) {
-            // TODO: Point at the declaration for the scoped entity.
             CARBON_DIAGNOSTIC(
                 QualifiedDeclOutsideScopeEntity, Error,
                 "out-of-line declaration requires a declaration in "
                 "scoped entity");
-            context_->emitter().Emit(name_context.loc_id,
-                                     QualifiedDeclOutsideScopeEntity);
+            CARBON_DIAGNOSTIC_LABEL(QualifiedDeclScopeEntity, Info,
+                                    "no declaration of `{0}` in this scope",
+                                    SemIR::NameId);
+            context_->emitter()
+                .Build(name_context.loc_id, QualifiedDeclOutsideScopeEntity)
+                .Attach(name_scope.inst_id(), QualifiedDeclScopeEntity,
+                        name_context.name_id)
+                .Emit();
           }
         }
 

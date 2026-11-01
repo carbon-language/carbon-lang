@@ -593,6 +593,23 @@ fn F[W: A, X: I(W)](x: X) {
   x.TakesT(v);
 }
 
+// --- fail_wrong_scope_code_block.carbon
+library "[[@TEST_NAME]]";
+
+// A code block's scope has no instruction, so no label is attached to an
+// enclosing declaration.
+fn F[T: type, U: type]() {
+  if (true) {
+    observe T == U;
+  }
+}
+
+// --- fail_wrong_scope_file.carbon
+library "[[@TEST_NAME]]";
+
+// The package namespace is implicit, so no label is attached to it.
+observe () == ();
+
 // CHECK:STDOUT: --- transitive.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {

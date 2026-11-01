@@ -101,7 +101,18 @@ auto HandleParseNode(Context& context, Parse::NamespaceId node_id) -> bool {
             name_context.parent_scope_id)) {
       CARBON_DIAGNOSTIC(NamespaceDeclNotAtTopLevel, Error,
                         "`namespace` declaration not at top level");
-      context.emitter().Emit(node_id, NamespaceDeclNotAtTopLevel);
+      auto builder =
+          context.emitter().Build(node_id, NamespaceDeclNotAtTopLevel);
+      if (name_context.parent_scope_id.has_value()) {
+        auto scope_inst_id =
+            context.name_scopes().Get(name_context.parent_scope_id).inst_id();
+        if (scope_inst_id.has_value()) {
+          CARBON_DIAGNOSTIC_LABEL(NamespaceEnclosingScope, Info,
+                                  "appears in this definition");
+          builder.Attach(scope_inst_id, NamespaceEnclosingScope);
+        }
+      }
+      builder.Emit();
     }
   }
 
