@@ -104,7 +104,7 @@ auto Context::ConsumeAndAddCloseSymbol(State state, NodeKind close_kind)
   } else {
     CARBON_DIAGNOSTIC(ExpectedCloseSymbol, Error,
                       "unexpected tokens before `{0}`", Lex::TokenKind);
-    CARBON_DIAGNOSTIC_LABEL(GroupOpenedHere, Info, "to match this `{0}`",
+    CARBON_DIAGNOSTIC_LABEL(GroupOpenedHere, Info, "matching this `{0}`",
                             Lex::TokenKind);
     auto matched_close = tokens().GetMatchedClosingToken(state.token);
     auto diag =

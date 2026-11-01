@@ -99,7 +99,7 @@ library "[[@TEST_NAME]]";
 class Core {
   // CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+2]]:27-30: warning: binding `N` unused [UnusedBinding]
   // CHECK:STDERR:
-  fn Int[T: type](generic N: T) -> {} { return {}; }
+  fn Int[T: type](generic _: T) -> {} { return {}; }
 }
 
 // CHECK:STDERR: fail_prelude_as_class.carbon:[[@LINE+2]]:15-17: error: `Core.Int` implicitly referenced here, but package `Core` not found [CoreNotFound]

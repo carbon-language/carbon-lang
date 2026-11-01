@@ -455,7 +455,7 @@ auto NumericLiteral::Parser::CheckFractionalPart() -> bool {
     emitter_
         .Build(literal_.text_.begin() + literal_.radix_point_,
                InvalidRealLiteralRadix, static_cast<int>(radix_))
-        .Attach(SourceLoc::Range(literal_.text()))
+        .Attach(SourceLoc::Range(literal_.text_))
         .Emit();
     // Carry on and parse the real literal anyway.
   }
