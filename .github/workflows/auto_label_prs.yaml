@@ -113,7 +113,7 @@ jobs:
       # and it applies orthogonally to the others.
       - id: bot
         if:
-          contains(fromJSON('["CarbonInfraBot", "dependabot"]'),
+          contains(fromJSON('["CarbonInfraBot", "dependabot[bot]"]'),
           github.event.pull_request.user.login)
         run: |
           gh pr edit "${PR}" --add-label "bot" --repo carbon-language/carbon-lang
