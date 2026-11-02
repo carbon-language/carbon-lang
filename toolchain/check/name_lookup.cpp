@@ -532,7 +532,7 @@ static auto IsFriend(Context& context, const SemIR::NameScope& target_scope)
   }
   const auto& class_info = context.classes().Get(class_type->class_id);
 
-  return (bool)class_info.friend_scopes.Lookup(access_context_const_id);
+  return !!class_info.friend_scopes.Lookup(access_context_const_id);
 }
 
 auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
