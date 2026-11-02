@@ -248,6 +248,21 @@ static auto BuildDefaultWitness(
                             query_specific_interface, {fn_id});
 }
 
+// Returns true if the class type is trivially-destructible.
+//
+// TODO: This function is overly permissive. It considers any type that has a
+// trivial, non-deleted destructor to be trivially-destructible, which is a
+// larger set. It also doesn't perform context-dependent checking, which also
+// results in some types being misclassified. We need to replace this function
+// with a dedicated Clang lookup after llvm/llvm-project#238456 is merged.
+static auto IsTriviallyDestructibleClassType(
+    const clang::CXXRecordDecl* class_decl) -> bool {
+  CARBON_CHECK(class_decl != nullptr, "Not a class type");
+
+  return class_decl->hasTrivialDestructor() &&
+         !class_decl->hasDeletedDestructor();
+}
+
 static auto BuildCppSubobjectDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
@@ -259,8 +274,7 @@ static auto BuildCppSubobjectDestroyWitness(
     return SemIR::InstId::None;
   }
   auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
-  if (!class_decl || (class_decl->hasTrivialDestructor() &&
-                      !class_decl->hasDeletedDestructor())) {
+  if (!class_decl || IsTriviallyDestructibleClassType(class_decl)) {
     return BuildTrivialSubobjectDestroyWitness(
         context, loc_id, query_self_const_id, query_specific_interface);
   }
