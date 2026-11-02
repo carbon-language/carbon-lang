@@ -40,6 +40,15 @@ fn G() {
 //@dump-sem-ir-end
 }
 
+// --- fail_uninitialized_var.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
+    // CHECK:STDERR: fail_uninitialized_var.carbon:[[@LINE+2]]:5-23: error: expected `=`; `var` declaration with type `auto` must have an initializer [ExpectedInitializerAfterAutoTypedVar]
+    // CHECK:STDERR:
+    var unused x: auto;
+}
+
 // CHECK:STDOUT: --- var.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
