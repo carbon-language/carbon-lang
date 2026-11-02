@@ -470,4 +470,17 @@ auto InStaticClassScopeVar(Context& context) -> bool {
              .modifier_set.HasAnyOf(KeywordModifierSet::Static);
 }
 
+auto LookupClassFieldByStructField(Context& context,
+                                   const SemIR::NameScope& class_scope,
+                                   const SemIR::StructTypeField& struct_field)
+    -> std::optional<SemIR::InstStore::GetAsWithIdResult<SemIR::FieldDecl>> {
+  auto entry_id = class_scope.Lookup(struct_field.name_id);
+  if (!entry_id) {
+    return std::nullopt;
+  }
+  auto entry_inst_id = class_scope.GetEntry(*entry_id).result.target_inst_id();
+  LoadImportRef(context, entry_inst_id);
+  return SemIR::GetClassFieldFromScopeEntry(context.sem_ir(), entry_inst_id);
+}
+
 }  // namespace Carbon::Check
