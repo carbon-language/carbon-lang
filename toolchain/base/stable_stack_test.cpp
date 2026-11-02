@@ -55,7 +55,7 @@ static auto GrowCapacityTimes(StableStack<T>& stack, int n, F factory) -> void {
 TEST(StableStack, PushPop) {
   StableStack<int> stack;
   int i = 0;
-  GrowCapacityTimes(stack, 3, [&i]() { return i++; });
+  GrowCapacityTimes(stack, 3, [&i] { return i++; });
   EXPECT_EQ(stack.size(), i);
 
   stack.Push(i++);
@@ -120,7 +120,7 @@ TEST(StableStack, CopyConstructDestroy) {
   {
     StableStack<Counter> stack;
     GrowCapacityTimes(stack, 3,
-                      [&]() { return Counter(&constructed, &destroyed); });
+                      [&] { return Counter(&constructed, &destroyed); });
     EXPECT_EQ(constructed, stack.size());
     // Each Counter constructed in the lambda was destroyed.
     EXPECT_EQ(destroyed, stack.size());
@@ -161,7 +161,7 @@ TEST(StableStack, MoveConstructDestroy) {
   {
     StableStack<Counter> stack;
     GrowCapacityTimes(stack, 3,
-                      [&]() { return Counter(&constructed, &destroyed); });
+                      [&] { return Counter(&constructed, &destroyed); });
     EXPECT_EQ(constructed, stack.size());
     // Each Counter constructed in the lambda was destroyed.
     EXPECT_EQ(destroyed, stack.size());
@@ -416,7 +416,7 @@ TEST(StableStack, Equal) {
   EXPECT_EQ(stack, stack2);
 
   int i = 0;
-  GrowCapacityTimes(stack, 3, [&i]() { return i++; });
+  GrowCapacityTimes(stack, 3, [&i] { return i++; });
   EXPECT_NE(stack, stack2);
 
   for (auto j = 0; j < stack.size(); ++j) {
@@ -437,6 +437,26 @@ TEST(StableStack, Equal) {
     stack.Pop();
     EXPECT_EQ(stack, stack2);
   }
+}
+
+TEST(StableStack, EmptyDuringDestroy) {
+  bool test_empty = false;
+  struct S {
+    StableStack<S>* stack;
+    bool* test_empty;
+
+    ~S() {
+      if (*test_empty) {
+        EXPECT_TRUE(stack->empty());
+      }
+    }
+  };
+  StableStack<S> stack;
+  GrowCapacityTimes(
+      stack, 3, [&] { return S{.stack = &stack, .test_empty = &test_empty}; });
+
+  // `S` tests that `stack` appears empty while each `S` is destroyed.
+  test_empty = true;
 }
 
 }  // namespace
