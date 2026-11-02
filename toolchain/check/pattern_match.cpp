@@ -23,6 +23,7 @@
 #include "toolchain/check/type.h"
 #include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/sem_ir/expr_info.h"
+#include "toolchain/sem_ir/generic.h"
 #include "toolchain/sem_ir/ids.h"
 #include "toolchain/sem_ir/inst_kind.h"
 #include "toolchain/sem_ir/pattern.h"
@@ -200,6 +201,8 @@ class MatchContext {
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::TuplePattern tuple_pattern,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
+  auto DoPreWork(State state, SemIR::StructPattern struct_pattern,
+                 SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::SpliceInst splice,
                  SemIR::InstId scrutinee_id, WorkItem entry) -> void;
   auto DoPreWork(State state, SemIR::SpecificConstant specific_constant,
@@ -222,6 +225,8 @@ class MatchContext {
   auto DoPostWork(State state, SemIR::ReturnSlotPattern return_slot_pattern,
                   WorkItem entry) -> void;
   auto DoPostWork(State state, SemIR::TuplePattern tuple_pattern,
+                  WorkItem entry) -> void;
+  auto DoPostWork(State state, SemIR::StructPattern struct_pattern,
                   WorkItem entry) -> void;
   auto DoPostWork(State state, SemIR::SpecificConstant specific_constant,
                   WorkItem entry) -> void;
@@ -819,6 +824,105 @@ auto MatchContext::DoPostWork(State /*state*/,
   results_stack_.AppendToTop(tuple_value_id);
 }
 
+auto MatchContext::DoPreWork(State state, SemIR::StructPattern struct_pattern,
+                             SemIR::InstId scrutinee_id, WorkItem entry)
+    -> void {
+  if (struct_pattern.type_id == SemIR::ErrorInst::TypeId) {
+    return;
+  }
+  auto subpattern_ids = context_.inst_blocks().Get(struct_pattern.elements_id);
+  if (need_subpattern_results()) {
+    results_stack_.PushArray();
+    AddAsPostWork(entry);
+  }
+
+  if (!scrutinee_id.has_value()) {
+    CARBON_CHECK(std::holds_alternative<CalleeState*>(state) ||
+                 std::holds_alternative<ThunkState*>(state));
+    for (auto subpattern_id : llvm::reverse(subpattern_ids)) {
+      AddWork({.pattern_id = subpattern_id,
+               .work = PreWork{.scrutinee_id = SemIR::InstId::None},
+               .allow_unmarked_ref = entry.allow_unmarked_ref});
+    }
+    return;
+  }
+
+  // TODO: Handle `_` fields in the pattern struct. If the final field is `_`,
+  // then number of fields in the expected type will be less than, or equal to,
+  // the number of fields in the scrutinee. Unmatched fields in the scrutinee
+  // should be discarded.
+  auto expected_type_id = GetScrutineeTypeInSpecific(context_, entry.pattern_id,
+                                                     specific_id_stack_.back());
+
+  // TODO: This conversion is required to convert a StructLiteral into a
+  // StructValue, because a StructLiteral scrutinee will produce a
+  // StructAccess inst with a `Mixed` expression category, which can fail when
+  // performing type conversions on fields (E.g., let {.a = b: i32} = {.a = 1}
+  // needs to convert the IntLiteral `1` to an i32). If we can compute the
+  // category of a StructAccess, where the struct being accessed as a `Mixed`
+  // category, then we should be able to remove this conversion.
+  scrutinee_id = ConvertToValueOrRefOfType(
+      context_, SemIR::LocId(entry.pattern_id), scrutinee_id, expected_type_id);
+
+  if (scrutinee_id == SemIR::ErrorInst::InstId) {
+    return;
+  }
+
+  auto scrutinee = context_.insts().GetWithLocId(scrutinee_id);
+
+  auto pattern_struct_type_inst =
+      context_.types().GetAs<SemIR::StructType>(expected_type_id);
+
+  auto pattern_struct_fields =
+      context_.struct_type_fields().Get(pattern_struct_type_inst.fields_id);
+
+  auto scrutinee_struct_type_inst = context_.insts().GetAs<SemIR::StructType>(
+      context_.types().GetTypeInstId(scrutinee.inst.type_id()));
+
+  auto scrutinee_struct_fields =
+      context_.struct_type_fields().Get(scrutinee_struct_type_inst.fields_id);
+
+  llvm::SmallVector<SemIR::InstId> field_access_insts;
+  field_access_insts.reserve(subpattern_ids.size());
+
+  // TODO: This loop is O(m*n) for the number of fields in the
+  // pattern/scrutinee. The nested looping should be removed once struct field
+  // lookup is improved (see related TODO in PerformActionHelper in
+  // member_access.cpp)
+  for (auto field : pattern_struct_fields) {
+    for (auto [i, s_field] : llvm::enumerate(scrutinee_struct_fields)) {
+      if (field.name_id == s_field.name_id) {
+        field_access_insts.push_back(GetOrAddInst<SemIR::StructAccess>(
+            context_, scrutinee.loc_id,
+            {.type_id =
+                 context_.types().GetTypeIdForTypeInstId(s_field.type_inst_id),
+             .struct_id = scrutinee_id,
+             .index = SemIR::ElementIndex(i)}));
+        break;
+      }
+    }
+  }
+  for (auto [subpattern_id, subscrutinee_id] :
+       llvm::reverse(llvm::zip_equal(subpattern_ids, field_access_insts))) {
+    AddWork({.pattern_id = subpattern_id,
+             .work = PreWork{.scrutinee_id = subscrutinee_id},
+             .allow_unmarked_ref = entry.allow_unmarked_ref});
+  }
+}
+
+auto MatchContext::DoPostWork(State /*state*/,
+                              SemIR::StructPattern /*struct_pattern*/,
+                              WorkItem entry) -> void {
+  auto elements_id = context_.inst_blocks().Add(results_stack_.PeekArray());
+  results_stack_.PopArray();
+  auto struct_value_id = AddInst<SemIR::StructValue>(
+      context_, SemIR::LocId(entry.pattern_id),
+      {.type_id = GetScrutineeTypeInSpecific(context_, entry.pattern_id,
+                                             specific_id_stack_.back()),
+       .elements_id = elements_id});
+  results_stack_.AppendToTop(struct_value_id);
+}
+
 // TODO: There is a cycle through pattern matching with an action.
 // NOLINTNEXTLINE(misc-no-recursion)
 auto MatchContext::DoPreWork(State state, SemIR::SpliceInst /*splice*/,
@@ -1019,6 +1123,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
           DoPreWork(state, tuple_pattern, work.scrutinee_id, entry);
           break;
         }
+        case CARBON_KIND(SemIR::StructPattern struct_pattern): {
+          DoPreWork(state, struct_pattern, work.scrutinee_id, entry);
+          break;
+        }
         case CARBON_KIND(SemIR::SpliceInst splice_inst): {
           DoPreWork(state, splice_inst, work.scrutinee_id, entry);
           break;
@@ -1065,6 +1173,10 @@ auto MatchContext::Dispatch(State state, WorkItem entry) -> void {
         }
         case CARBON_KIND(SemIR::TuplePattern tuple_pattern): {
           DoPostWork(state, tuple_pattern, entry);
+          break;
+        }
+        case CARBON_KIND(SemIR::StructPattern struct_pattern): {
+          DoPostWork(state, struct_pattern, entry);
           break;
         }
         case CARBON_KIND(SemIR::SpecificConstant specific_constant): {

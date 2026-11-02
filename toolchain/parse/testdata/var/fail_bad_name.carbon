@@ -12,11 +12,11 @@
 // CHECK:STDERR:
 var *;
 
-// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+2]]:11: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
+// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+2]]:5-10: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
 // CHECK:STDERR:
 var choice: i32;
 
-// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+2]]:7: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
+// CHECK:STDERR: fail_bad_name.carbon:[[@LINE+2]]:5-6: error: expected name in binding pattern; prefix reserved word with `r#` to form a valid identifier [ExpectedBindingPattern]
 // CHECK:STDERR:
 var f2: f32;
 

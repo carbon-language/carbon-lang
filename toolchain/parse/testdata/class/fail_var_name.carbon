@@ -15,11 +15,11 @@ class C {
 
   var name;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:7: error: expected pattern [ExpectedPattern]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:6: error: expected pattern [ExpectedPattern]
   // CHECK:STDERR:
   var :;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:7: error: expected pattern [ExpectedPattern]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:6: error: expected pattern [ExpectedPattern]
   // CHECK:STDERR:
   var : C;
 
@@ -27,17 +27,17 @@ class C {
   // CHECK:STDERR:
   var name:;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:12: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:11: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   var name C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:14: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   var name: C C;
 
   var self: C;
 
-  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:12-15: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_var_name.carbon:[[@LINE+2]]:11: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   var name name: C;
 

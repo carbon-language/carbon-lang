@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           egress-policy: block
           # When adding endpoints, see README.md.
@@ -33,6 +33,7 @@ jobs:
             download.gnome.org:443
             downloads.sourceforge.net:443
             files.pythonhosted.org:443
+            formulae.brew.sh:443
             github.com:443
             go.dev:443
             mirror.bazel.build:443
@@ -40,6 +41,7 @@ jobs:
             nodejs.org:443
             oauth2.googleapis.com:443
             objects.githubusercontent.com:443
+            pkg-containers.githubusercontent.com:443
             pypi.org:443
             raw.githubusercontent.com:443
             registry.npmjs.org:443
@@ -60,7 +62,7 @@ jobs:
           matrix_runner: ubuntu-22.04
           remote_cache_upload: '--remote_upload_local_results=false'
 
-      - uses: j178/prek-action@01345c78b7de7d79edf368729212760396ba9345 # v2
+      - uses: j178/prek-action@44924fe9ef4a6f88253c4b6b1bf11c689d3ce53d # v3.1.0
 
       # We want to automatically create github suggestions for prek file
       # changes for a pull request. But `pull_request` actions never have write

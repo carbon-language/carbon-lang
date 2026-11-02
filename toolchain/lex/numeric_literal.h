@@ -11,6 +11,7 @@
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringRef.h"
 #include "toolchain/diagnostics/emitter.h"
+#include "toolchain/lex/source_loc.h"
 
 namespace Carbon::Lex {
 
@@ -52,7 +53,7 @@ class NumericLiteral {
 
   // Compute the value of the token, if possible. Emit diagnostics to the given
   // emitter if the token is not valid.
-  auto ComputeValue(Diagnostics::Emitter<const char*>& emitter) const -> Value;
+  auto ComputeValue(Diagnostics::Emitter<SourceLoc>& emitter) const -> Value;
 
   // Get the text corresponding to this literal.
   auto text() const -> llvm::StringRef { return text_; }

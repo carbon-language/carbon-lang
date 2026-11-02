@@ -32,13 +32,13 @@ using Terminal::Metrics;
 using Terminal::Style;
 
 // The columns from the frame to the content beside it: the frame itself, and
-// the stub next to it that a source row leaves blank.
+// the column next to it that a source row leaves blank.
 static constexpr int FrameToContentWidth = 2;
 
-// Points at the lines the problem is on -- every line holding a range that is
-// part of it -- from the margin outside the line numbers. A merged snippet can
-// open on some other line, so without this there is nothing saying which lines
-// the problem is actually on.
+// Points, from the margin outside the line numbers, to the one row to begin
+// reading at: the source row the leading part's text is placed under, or that
+// part's location row when it has no source. A merged snippet can start on
+// another line, so this shows which row the problem is on.
 //
 // Two ASCII characters rather than one of the arrows, which all read better and
 // none of which measure reliably: they are East Asian Ambiguous, so a font may
@@ -47,34 +47,40 @@ static constexpr int FrameToContentWidth = 2;
 // glyph. This is two columns because it is two characters, so nothing can
 // disagree about it, and a font with programming ligatures draws it as an arrow
 // anyway.
-static constexpr llvm::StringLiteral LineMark = "->";
+static constexpr llvm::StringLiteral LineArrow = "->";
 
-// The columns the mark spends before the line numbers. No space after it: the
+// The columns the arrow spends before the line numbers. No space after it: the
 // numbers are right-aligned in a field of their own, so a number shorter than
 // that field already leaves a gap, and a number filling it is the widest there
-// is to keep the mark off.
-static constexpr int MarginWidth = LineMark.size();
+// is to keep the arrow off.
+static constexpr int MarginWidth = LineArrow.size();
 
-// The columns an anchor spends before the location it names: `╭─┤ `.
-static constexpr int AnchorPrefixWidth = 4;
+// The columns a location row spends before the location it names: `╭─┤ `.
+static constexpr int LocationPrefixWidth = 4;
 
-// The columns a connector spends before what it reaches: three of line, and
-// then either a space or, where it reaches a label, the bar framing it.
-static constexpr int ConnectorWidth = 4;
+// The columns a label line or a path row's line spends reaching its text: three
+// of line, and then either a space or, where it reaches a label, the bar
+// framing it.
+static constexpr int LineToTextWidth = 4;
 
 // The columns the bar framing a label's left side spends before its text:
 // `┤ `. The bar runs down every row the label takes, so that what belongs to
 // the label is bounded rather than left to be inferred from indentation.
 static constexpr int LabelFrameWidth = 2;
 
-// The columns between a label's anchor and its text: the connector reaching
-// the bar that frames it, and the bar's own space before the words.
-static constexpr int LabelIndentWidth = ConnectorWidth - 1 + LabelFrameWidth;
+// The columns between a label line and its label's text: the label line
+// reaching the bar that frames the text, and the bar's own space before the
+// words.
+static constexpr int LabelIndentWidth = LineToTextWidth - 1 + LabelFrameWidth;
 
-// The columns a rule bracketing a snippet reaches across, starting at the
-// frame. Long enough to read as a divider rather than as another branch off the
-// frame, which is what the connector on a context row looks like.
-static constexpr int SnippetRuleWidth = 13;
+// The columns each label's text starts right of where the text above it
+// starts, so the indentation steps with the order the rows are read in.
+static constexpr int LabelStepWidth = 2;
+
+// The columns of the close, `╰────`, starting at the frame. The blank line
+// after a diagnostic separates it from the next, so the close only needs to
+// turn the frame's corner.
+static constexpr int CloseRuleWidth = 5;
 
 // The columns of source a diagnostic aims to show: the width code is formatted
 // to, so a formatted line is shown whole and nothing wider is asked for than
@@ -102,16 +108,25 @@ static constexpr size_t MaxDrawnBytes = 1 << 16;
 // Columns between tab stops, matching what a terminal does with a tab.
 static constexpr int SourceTabWidth = 8;
 
-// What marks each end of a source line that windowing elided.
-static constexpr llvm::StringLiteral WindowMarker = "...";
+// What is drawn at each end of a source line that windowing elided.
+static constexpr llvm::StringLiteral WindowEllipsis = "...";
 
 // The fewest columns of source a window shows, however narrow the terminal
 // is.
 static constexpr int MinWindowColumns = 16;
 
+// Diagnostics quote code between backticks, and a quoted run is one word to
+// wrapping, so a type written with spaces in it, or a snippet of syntax, is
+// never split across rows.
+static constexpr bool BackticksAreQuotes = true;
+
 // The most lines shown rather than elided between two spans in one file. One
 // line of context is worth as much as the row saying it was skipped.
 static constexpr int MaxShownGap = 1;
+
+// What a location row names for a part with no location at all, whose text is
+// still placed under a location row.
+static constexpr llvm::StringLiteral NoLocationText = "<no location>";
 
 // The fewest columns a framed diagnostic is drawn in, below which the compact
 // form is used instead. A frame, its gutter, and a label hanging off a span
@@ -134,16 +149,22 @@ static auto LevelText(Level level) -> llvm::StringRef {
   }
 }
 
-// Returns the style the marks under the source take, which is the color of
+// Returns the style the underlines under the source take, which is the color of
 // whatever they belong to without its weight. Bold reaches the line-drawing
 // glyphs unevenly -- several terminals leave them alone and others only
 // brighten them -- so the weight says nothing reliable there while it still
 // says something on words.
-static auto MarkStyle(const Style& style) -> Style { return style.Bold(false); }
+//
+// `RotateUnderlineStyles` makes one exception: the heavy underline keeps its
+// bold. A terminal that ignores bold on line art loses nothing there, and one
+// that renders it matches the underline to the bold text placed under it.
+static auto UnderlineStyle(const Style& style) -> Style {
+  return style.Bold(false);
+}
 
 // The colors one theme is drawn in: what a diagnostic of that level, or the
-// notes explaining one, take for their words and for the marks under the source
-// that belong to them.
+// notes explaining one, take for their words and for the underlines under the
+// source that belong to them.
 //
 // The second is the theme's own color, which a range alone on its line takes.
 // Where several share a line, the whole ramp is handed out left to right
@@ -166,7 +187,7 @@ using Theme = llvm::ArrayRef<Terminal::Color>;
 // See /toolchain/docs/diagnostics_rendering.md#the-palette for where these
 // values came from and the distances and contrast ratios they satisfy. Changing
 // one means checking it against those, not against how it looks on a swatch:
-// these are drawn as marks a pixel tall.
+// these are drawn as underlines a pixel tall.
 static constexpr Terminal::Color DarkBgErrorTheme[] = {
     {0xb5, 0x56, 0x00}, {0xff, 0x72, 0x61}, {0xff, 0xbc, 0xc8}};
 static constexpr Terminal::Color DarkBgWarningTheme[] = {
@@ -256,8 +277,8 @@ static auto ExplanationTheme(const Terminal::Capabilities& capabilities)
 static constexpr int ThemeCenter = 1;
 
 // Returns the style a theme's words are drawn in. Also the color of the
-// underline beneath the source that belongs to it, so that a mark and the
-// sentence explaining it look like one thing.
+// underline beneath the source that belongs to it, so that the underline and
+// the sentence explaining it look like one thing.
 static auto ThemeStyle(Theme theme) -> Style {
   return Style().Bold().Foreground(theme[ThemeCenter]);
 }
@@ -279,7 +300,7 @@ static auto KindStyle() -> Style { return Style().Dim(); }
 // reached rather than anything about the code itself. Dim so that a reader who
 // already knows the path can skip it, and unlike the frame nothing is lost on a
 // terminal that ignores dim. It covers the whole row, quoted code included.
-static auto ContextStyle() -> Style { return Style().Dim(); }
+static auto PathStyle() -> Style { return Style().Dim(); }
 
 namespace {
 
@@ -289,20 +310,20 @@ namespace {
 // drawing, which picks its own glyphs and forms the corners and tees where
 // lines meet.
 struct Glyphs {
-  // Marks a row that annotates source rather than being source, so that which
-  // rows are the reader's code is visible at a glance.
-  char32_t annotation;
-  // Marks where lines of source were skipped.
+  // The frame's glyph on underline rows and label rows, so that which rows are
+  // the reader's code is visible at a glance.
+  char32_t dotted_frame;
+  // Drawn where lines of source were skipped.
   char32_t elision;
 
   static auto For(Charset charset) -> Glyphs {
     if (charset == Charset::Utf8) {
-      return {.annotation = U'·', .elision = U'┆'};
+      return {.dotted_frame = U'·', .elision = U'┆'};
     }
-    // An ASCII terminal has one broken bar to spend on both the annotation and
-    // the elision. A row holding nothing but the bar is an elision; one with an
-    // underline after it is not.
-    return {.annotation = U':', .elision = U':'};
+    // ASCII has one broken bar for both the underline rows and the elision. A
+    // row holding nothing but the bar is an elision; one with an underline
+    // after it is not.
+    return {.dotted_frame = U':', .elision = U':'};
   }
 };
 
@@ -330,8 +351,8 @@ namespace {
 // everything drawn is placed by column. The two count the same line and
 // neither follows from the other, so this keeps them from being taken for each
 // other in the one place both are in scope. Columns stay `int`, which is what
-// `Terminal::Buffer` addresses its grid with, so what this marks is the count
-// that is not a coordinate.
+// `Terminal::Buffer` addresses its grid with, so the count that is not a
+// coordinate is the one given this type.
 //
 // TODO: Move this out of this file, and use it for the byte counts elsewhere
 // that are called columns, starting with `Loc::column_number`.
@@ -384,22 +405,30 @@ struct PreparedSource {
     return std::max(metrics.Width(text), span_start + span_length);
   }
 
-  // The column a label's connector runs down, which layout sets to whichever
-  // end of the span the label attaches to. Until then it is the middle, which
-  // is what a span with no label of its own is measured from.
-  int anchor = 0;
+  // The column the label line runs down, which layout slides between where the
+  // span starts and its middle. Until it is set it is the middle, which is what
+  // a span with no label of its own is measured from.
+  int line_column = 0;
+
+  // The column the label's text starts in. Layout sets it right of every
+  // label line on the line, and `LabelStepWidth` right of where the text of the
+  // nearest label above that is not out-dented starts.
+  int label_x = 0;
 
   // Where the underline stops at each end. Layout sets an end to `Center` when
-  // another range begins or ends in the next column, so that the two marks
+  // another range begins or ends in the next column, so that the two underlines
   // don't run together; an end with nothing beside it covers its whole column.
   LineEnd left_end = LineEnd::Edge;
   LineEnd right_end = LineEnd::Edge;
 
-  // Whether the label's connector is drawn in place of the underline rather
-  // than hanging off it. A mark of one column with an end pulled in has no
-  // junction to offer, and the line down its column says the column is marked
-  // without saying the mark carries on anywhere.
-  bool connector_stands_in = false;
+  // Whether the label line is drawn in place of the underline rather than
+  // hanging off it. An underline of one column with an end pulled in has no
+  // junction to offer, and the line down its column says the column is
+  // underlined without saying the underline carries on anywhere.
+  bool label_line_stands_in = false;
+
+  // Returns the column in the middle of the span.
+  auto Middle() const -> int { return span_start + span_length / 2; }
 
   // Returns whether the underline covers `column` at all.
   auto Covers(int column) const -> bool {
@@ -408,7 +437,8 @@ struct PreparedSource {
 
   // Returns whether the underline runs out through the left or the right side
   // of `column`. An end pulled in to clear the range beside it gives up the
-  // side it was pulled in on, which is the side a connector could not tee into.
+  // side it was pulled in on, which is the side a label line could not tee
+  // into.
   auto ReachesLeftOf(int column) const -> bool {
     return Covers(column) && (column > span_start || left_end == LineEnd::Edge);
   }
@@ -418,7 +448,7 @@ struct PreparedSource {
   }
 
   // Returns whether any column of the underline runs out through both of its
-  // sides, which is what a connector needs one to do to tee into it.
+  // sides, which is what a label line needs one to do to tee into it.
   auto Joinable() const -> bool {
     if (span_length == 1) {
       return left_end == LineEnd::Edge && right_end == LineEnd::Edge;
@@ -447,14 +477,26 @@ struct PreparedPart {
   // What this is to the reader.
   Part role = Part::Explanation;
 
+  // Whether this part states the problem: the message, or the context that
+  // `LeadingContext` returns. Its text begins with the level word and is
+  // bold, and its underline is the heavy one.
+  //
+  // TODO: The design has a context scope attach a label instead of leading the
+  // diagnostic. Make the message always lead once contexts are labels.
+  bool is_leading = false;
+
+  // Whether this part's range is drawn as the heavy underline: the range the
+  // leading part's text is placed under, or a problem range identical to it.
+  // It keeps the level's center color and is left out of the ramp. Set
+  // during layout.
+  bool is_heavy_underline = false;
+
   // Whether this part's range came from the message's own location rather than
   // from a range attached to the diagnostic. Only the message has one.
   //
-  // Every diagnostic marks at least one range as part of the problem. Where one
-  // was attached, it says where the problem is better than the message's
-  // location does, and this range gives way to it: a range containing the
-  // location hosts the message's words, and one that doesn't leaves the message
-  // marking nothing of its own.
+  // An attached problem range containing the location takes its place: the
+  // message's text is placed under that range, and the location has no
+  // underline of its own. See `FindMessageHost`.
   bool from_message_loc = false;
 
   // The word leading this part's text, including its separator, and empty for
@@ -464,12 +506,12 @@ struct PreparedPart {
   // The style of that word and of this part's text.
   Style style;
 
-  // The style of the underline under this part's source, and of the connector
+  // The style of the underline under this part's source, and of the label line
   // and bar of the label hanging off it. The rotation moves this along the
-  // theme's ramp, which is why it is not `style`: the level word, the mark
-  // in the margin, and the line number beside the reported line all say what
-  // the diagnostic is, so where a range sits on a line must not recolor them.
-  Style mark_style;
+  // theme's ramp, which is why it is not `style`: the level word, the arrow in
+  // the margin, and the line number beside the reported line all say what the
+  // diagnostic is, so where a range sits on a line must not recolor them.
+  Style underline_style;
 
   // `file:line:column`, with unknown parts left off, and empty for a part
   // with no location at all.
@@ -481,12 +523,12 @@ struct PreparedPart {
   // framed form says it with the underline instead.
   int32_t location_end_column = 0;
 
-  // The part's words when they go on a row of their own: the headline, and any
-  // part with no source to hang them against. Empty when they hang as a label.
+  // The part's text when it is placed under the part's location row, which is
+  // for any part with no source. Empty when the text is a label.
   std::string text;
 
-  // The part's words when they hang against the source it marks, which is any
-  // part that has source and isn't the headline. Empty otherwise.
+  // The part's text when it is placed under the underline on its source, which
+  // is for any part that has source. Empty otherwise.
   std::string label;
 
   // ` [Kind]`, or empty when kinds aren't being included. It goes at the end
@@ -495,8 +537,9 @@ struct PreparedPart {
   // twice.
   std::string kind_suffix;
 
-  // Returns the suffix for a row, which is empty unless that row is the last
-  // one carrying this part's words.
+  // Returns the suffix for a row drawing this part's text. The text goes on
+  // exactly one kind of row -- a label row when the part has source, a location
+  // label row otherwise -- so a row of the other kind gets no suffix.
   auto KindSuffixOn(bool is_label_row) const -> llvm::StringRef {
     return is_label_row == label.empty() ? llvm::StringRef() : kind_suffix;
   }
@@ -535,65 +578,65 @@ static auto RotatedStyle(const Style& style, Theme theme, int index, int count)
 
 namespace {
 
-// How a label's connector meets the underline it hangs from.
+// How a label line meets the underline it hangs from.
 enum class Attachment : int8_t {
   // Tees into the underline where it hangs from. Line drawing forms the
   // junction the same way it forms the frame's own.
   Tee,
-  // Stands in for the mark, in the one column it had, because the underline
-  // offers no column to tee into: a mark that stops at a cell's center to
-  // clear the range beside it would form a corner there, and a corner reads as
-  // a mark turning rather than as one a connector leaves.
+  // Stands in for the underline, in the one column it had, because the
+  // underline offers no column to tee into: an underline that stops at a cell's
+  // center to clear the range beside it would form a corner there, and a corner
+  // reads as an underline turning rather than as one a label line leaves.
   Through,
 };
 
-// Where a label's connector meets its underline, and the column it runs down.
+// Where a label line meets its underline, and the column it runs down.
 struct Placement {
   Attachment attachment;
-  int anchor;
+  int line_column;
 };
 
 // A row of the rendering, laid out before anything is measured or drawn.
 struct Row {
   enum class Kind : int8_t {
-    // A message on a row of its own, inside the frame.
-    Message,
-    // The location the snippet below it comes from.
-    Anchor,
+    // `╭─┤ location`: the location of the snippet below it, or of a part with
+    // no source whose text is placed under it.
+    Location,
     // A line of source, with its number beside the frame.
     Source,
-    // The underline marking a span in the source above.
-    Annotation,
-    // The text hanging off that underline, framed by a bar the underline's
-    // connector reaches.
+    // The underlines under the source above, one for every span on it.
+    Underline,
+    // The text hanging off that underline, framed by a bar the label line
+    // reaches.
     Label,
     // A label that wouldn't fit hanging off its span, out-dented to the column
     // the source starts in with its own frame reaching back to the span.
     RoutedLabel,
-    // A stand-in for lines of source that were skipped.
+    // The text of a part with no source, placed under its location row the way
+    // a label is placed under its underline.
+    LocationLabel,
+    // `┆`, continuing the frame across whatever isn't contiguous: skipped
+    // lines of source, or the step to the next location row.
     Elision,
-    // Nothing but the frame, setting a snippet off from the anchor above it.
-    Gap,
-    // The rule closing off one snippet before the next begins.
-    Separator,
-    // How the location in the anchor below it was reached.
-    Context,
+    // How the location in the location row below it was reached.
+    Path,
   };
 
   Kind kind;
   // The part this row belongs to, or null for a row that draws only frame and
   // for a source line shown between two spans.
   const PreparedPart* part = nullptr;
-  // `Annotation` rows: every span underlined, widest first, which is the order
-  // they are drawn in so that the narrowest mark on a column is what shows.
+  // `Underline` rows: every span underlined, in the order they are drawn:
+  // widest first, so that the narrowest underline on a column is what shows,
+  // with the heavy underline last so that nothing repaints it.
   llvm::SmallVector<const PreparedPart*, 0> spans;
-  // `Source` rows: the part whose style the margin mark and line number
-  // take, set on every line holding a range that is part of the problem, and
-  // null on every other line.
+  // `Source` rows: the part whose style the margin arrow and line number take,
+  // set on the one line the leading part's text is placed under, and null on
+  // every other line.
   const PreparedPart* points_here = nullptr;
   // `Source` rows: the number to draw, or -1 when there is none to show.
   int line_number = -1;
-  // `Source` rows: the text.
+  // The row's text: a line of source, or the text of a label or location label.
   std::string text;
 };
 
@@ -699,12 +742,12 @@ static auto PrepareSource(Metrics metrics, llvm::StringRef line,
 
   result.span_start = start_column;
   result.span_length = std::max(end_column - start_column, 1);
-  result.anchor = result.span_start + result.span_length / 2;
+  result.line_column = result.Middle();
   return result;
 }
 
-// Narrows `source` to `columns` around `focus`, marking each end that was
-// elided.
+// Narrows `source` to `columns` around `focus`, with `WindowEllipsis` at each
+// end that was elided.
 //
 // A source line and its underline that wrap onto different rows lose the
 // alignment between them, which is the whole point of a snippet, so a line too
@@ -717,16 +760,16 @@ static auto WindowSource(Metrics metrics, PreparedSource& source, int columns,
                          int focus) -> void {
   // The width includes the column past the text that a span starting at the
   // end of the line is drawn in, so a line that exactly fills the columns is
-  // still windowed to bring that mark inside them.
+  // still windowed to bring that underline inside them.
   int width = source.Width(metrics);
   if (width <= columns) {
     return;
   }
 
-  // Both markers are accounted for whether or not both are needed, so that how
+  // Both ellipses are accounted for whether or not both are needed, so that how
   // much source a window shows doesn't depend on where in the line it lands.
-  auto marker_width = static_cast<int>(WindowMarker.size());
-  int inner = std::max(columns - 2 * marker_width, MinWindowColumns);
+  auto ellipsis_width = static_cast<int>(WindowEllipsis.size());
+  int inner = std::max(columns - 2 * ellipsis_width, MinWindowColumns);
   int begin = std::clamp(focus - inner / 4, 0, std::max(width - inner, 0));
 
   // The text is walked rather than indexed, so no byte offset into it is ever
@@ -743,12 +786,12 @@ static auto WindowSource(Metrics metrics, PreparedSource& source, int columns,
   std::string text;
   int shift = 0;
   if (!before.empty()) {
-    text.append(WindowMarker.begin(), WindowMarker.end());
-    shift = marker_width;
+    text.append(WindowEllipsis.begin(), WindowEllipsis.end());
+    shift = ellipsis_width;
   }
   text.append(window.begin(), window.end());
   if (!rest.empty()) {
-    text.append(WindowMarker.begin(), WindowMarker.end());
+    text.append(WindowEllipsis.begin(), WindowEllipsis.end());
   }
 
   // Both ends of the span move by what was really dropped from in front of it,
@@ -756,8 +799,8 @@ static auto WindowSource(Metrics metrics, PreparedSource& source, int columns,
   // than carrying the length is what keeps a span the window clipped short --
   // one windowed around another span on its row, off one edge -- from
   // underlining the source that took its place: what was clipped away is not
-  // marked. Every column is drawable and none is past the last cell, so the
-  // mark stays a mark and never reaches past the grid.
+  // underlined. Every column is drawable and none is past the last cell, so the
+  // underline stays an underline and never reaches past the grid.
   int visible = metrics.Width(text);
   int offset = shift - dropped;
   int old_end = source.span_start + source.span_length;
@@ -765,7 +808,7 @@ static auto WindowSource(Metrics metrics, PreparedSource& source, int columns,
       std::clamp(source.span_start + offset, 0, std::min(visible, columns - 1));
   int span_end = std::clamp(old_end + offset, source.span_start + 1, columns);
   source.span_length = span_end - source.span_start;
-  source.anchor = source.span_start + source.span_length / 2;
+  source.line_column = source.Middle();
   source.text = std::move(text);
 }
 
@@ -800,12 +843,12 @@ static auto LineFromFile(const PreparedPart& part, int number)
 // Returns a part of a diagnostic prepared for drawing: `text` said at `loc`,
 // drawn as `role` says and named `name` where kinds are being included.
 //
-// `is_headline` says that the words lead the diagnostic, so they go on the
-// headline row rather than against the source they point at.
+// `is_leading` is set for the part that states the problem; see
+// `PreparedPart::is_leading`.
 static auto PreparePart(Metrics metrics, Part role, bool from_message_loc,
                         llvm::StringRef level_text, Style style, const Loc& loc,
-                        std::string text, llvm::StringRef name,
-                        bool is_headline, bool include_kind) -> PreparedPart {
+                        std::string text, llvm::StringRef name, bool is_leading,
+                        bool include_kind) -> PreparedPart {
   // Text past any legitimate size is truncated rather than handed to the
   // buffer, whose own limit on a single draw is a CHECK; nothing a diagnostic
   // says comes near either bound.
@@ -815,10 +858,11 @@ static auto PreparePart(Metrics metrics, Part role, bool from_message_loc,
 
   PreparedPart result = {
       .role = role,
+      .is_leading = is_leading,
       .from_message_loc = from_message_loc,
       .level_text = level_text,
       .style = style,
-      .mark_style = MarkStyle(style),
+      .underline_style = UnderlineStyle(style),
       .location = FormatLocation(loc),
       .location_end_column = loc.column_number > 0 && loc.length > 1
                                  ? loc.column_number + loc.length - 1
@@ -836,10 +880,10 @@ static auto PreparePart(Metrics metrics, Part role, bool from_message_loc,
                                   Bytes(loc.length));
   }
 
-  // Words that lead the diagnostic go on its headline, and words with no source
-  // to point at have nowhere to go but a row of their own. Everything else is
-  // read against the code it marks.
-  if (is_headline || !result.has_source) {
+  // Text with no source to underline is placed under the part's location row.
+  // Everything else, the message included, is a label placed under its
+  // underline.
+  if (!result.has_source) {
     result.text = std::move(text);
   } else {
     result.label = std::move(text);
@@ -855,8 +899,8 @@ static auto PreparePart(Metrics metrics, Part role, bool from_message_loc,
     }
   }
   // A label that scrubbed away to spaces has nothing to hang, and hanging it
-  // would spend rows and a connector on drawing nothing. It becomes what a
-  // label with no words is: a mark and nothing else.
+  // would spend rows and a label line on drawing nothing. It becomes what a
+  // label with no words is: an underline and nothing else.
   if (result.label.find_first_not_of(' ') == std::string::npos) {
     result.label.clear();
   }
@@ -870,7 +914,7 @@ static auto PreparePart(Metrics metrics, Part role, bool from_message_loc,
 // Returns how `part`, which is location information, is spelled: what it says
 // and then where, so that the words read as leading to the location. A part
 // missing either half is just the other.
-static auto ContextText(const PreparedPart& part) -> std::string {
+static auto PathText(const PreparedPart& part) -> std::string {
   if (part.location.empty()) {
     return part.text;
   }
@@ -880,114 +924,108 @@ static auto ContextText(const PreparedPart& part) -> std::string {
   return part.text + ": " + part.location;
 }
 
-// Returns what a part drawn on a row of its own says. Location information
-// that never found an anchor to lead into says where it is here instead.
-static auto MessageRowText(const PreparedPart& part) -> std::string {
-  return part.role == Part::LocationInfo ? ContextText(part) : part.text;
+// Returns whether `part` gets a location row: every part with a snippet to show
+// or text to place under one, and the leading part, whose level word is
+// always drawn. A range with no source and no text draws nothing.
+static auto HasLocationRow(const PreparedPart& part) -> bool {
+  return part.role != Part::LocationInfo &&
+         (part.has_source || !part.text.empty() || part.is_leading);
 }
 
-// Returns where `label`'s connector meets the underline it hangs from, and the
-// column it runs down from there.
+// Returns whether a label line running down `column` can tee into the underline
+// of `against` there.
 //
-// The connector tees into the middle of the underline, which reads as pointing
-// into the range rather than as running off an end of it, and slides left when
-// the words don't fit -- but only as far as it has to, and never past where the
-// range starts. Moving the connector is what a label gives up before it starts
-// wrapping.
+// Whether a column offers a junction is asked of every underline on the row
+// rather than of `against` alone, since a cell holds all of them together: a
+// range drawn over this one covers what its own end gave up, and a label line
+// meeting that reads as the tee it is drawn as. Asking only `against` would
+// leave a label line running through a column another underline had filled,
+// crossing it.
+static auto TeesAt(const PreparedSource& against,
+                   llvm::ArrayRef<PreparedPart*> spans, int column) -> bool {
+  return against.Covers(column) &&
+         llvm::any_of(spans,
+                      [&](const PreparedPart* span) {
+                        return span->source.ReachesLeftOf(column);
+                      }) &&
+         llvm::any_of(spans, [&](const PreparedPart* span) {
+           return span->source.ReachesRightOf(column);
+         });
+}
+
+// Returns where a label line asked to run down `desired` meets the underline of
+// `against`, and the column it runs down.
 //
-// An end pulled in to clear the range beside it has no junction to offer
-// either, and a connector meeting one would form a corner, which reads as the
-// underline turning down rather than as a line leaving it. So the connector
-// steps a column away from that range, where the marks run out through both
-// sides again. Where no column of its range does -- a single column, or two
-// with a range on either side -- it takes a column instead of teeing into one,
-// and the underline gives that column up to it.
+// An end pulled in to clear the range beside it has no junction to offer, and
+// a label line meeting one would form a corner, which looks like the underline
+// turning down. So the label line steps a column away from that range, where
+// the underlines run out through both sides again. Where no column of its range
+// does -- an underline of one column that gave up an end -- the label line is
+// drawn down that column in place of the underline. A wider underline never
+// reaches this: an end gives way only where the range keeps a column a label
+// line can tee into.
 //
-// Whether a column offers a junction is asked of every mark on the row rather
-// than of `against` alone, since a cell holds all of them together: a range
-// drawn over this one covers what its own end gave up, and a connector meeting
-// that reads as the tee it is drawn as. Asking only `against` would leave a
-// connector running through a column another mark had filled, crossing it.
-//
-// `against` is what the connector leaves, which is the label's own range except
-// for the message's: where a range drawn on the same row contains the message's
-// location, the words belong to that range.
-static auto PlaceLabel(Metrics metrics, const PreparedPart& label,
-                       const PreparedSource& against,
-                       llvm::ArrayRef<PreparedPart*> spans, int content_x,
-                       int columns) -> Placement {
-  int width = metrics.Width(label.label);
-  int middle = against.span_start + against.span_length / 2;
-  int anchor = middle;
-  if (content_x + anchor + LabelIndentWidth + width > columns) {
-    anchor = std::clamp(columns - content_x - LabelIndentWidth - width,
-                        against.span_start, anchor);
+// `against` is the range the label line leaves: the label's own, or for the
+// message, a range on the same row that contains the message's location.
+static auto PlaceLabel(const PreparedSource& against,
+                       llvm::ArrayRef<PreparedPart*> spans, int desired)
+    -> Placement {
+  if (TeesAt(against, spans, desired)) {
+    return {Attachment::Tee, desired};
   }
-  auto tees_at = [&](int column) {
-    return against.Covers(column) &&
-           llvm::any_of(spans,
-                        [&](const PreparedPart* span) {
-                          return span->source.ReachesLeftOf(column);
-                        }) &&
-           llvm::any_of(spans, [&](const PreparedPart* span) {
-             return span->source.ReachesRightOf(column);
-           });
-  };
-  if (tees_at(anchor)) {
-    return {Attachment::Tee, anchor};
-  }
-  // Only an end fails to offer a junction, so the step is inward, away from the
-  // range that pulled that end in.
-  int step = anchor == against.span_start ? 1 : -1;
-  if (tees_at(anchor + step)) {
-    return {Attachment::Tee, anchor + step};
+  // Only an end fails to offer a junction, so the step is inward, away from
+  // the range that pulled that end in.
+  int step = desired == against.span_start ? 1 : -1;
+  if (TeesAt(against, spans, desired + step)) {
+    return {Attachment::Tee, desired + step};
   }
   // Nothing to tee into, so every label on this range takes the same column,
   // which is the one the underline is measured from rather than wherever the
   // words happened to have to start.
-  return {Attachment::Through, middle};
+  return {Attachment::Through, against.Middle()};
 }
 
-// Draws the mark under `span`, in source drawn from column `x`, on row `y`.
+// Draws the underline under `span`, in source drawn from column `x`, on row
+// `y`.
+//
+// The heavy underline is drawn heavy in both character sets. ASCII draws a
+// heavy line as `^`, so that underline stays distinct without color.
 static auto DrawUnderline(Buffer& buffer, int x, int y,
                           const PreparedPart& span, const Style& style)
     -> void {
-  // A connector with no column to tee into is drawn down the mark's own column
-  // in place of it. Only a mark of one column is ever left with none, so there
-  // is nothing of it to draw beside the line: an end gives up its half column
-  // only where the range can still carry its label without it.
-  if (span.source.connector_stands_in) {
+  // A label line with no column to tee into is drawn down the underline's own
+  // column in place of it. Only an underline of one column is ever left with
+  // none, so there is nothing of it to draw beside the line: an end gives up
+  // its half column only where the range can still carry its label without it.
+  if (span.source.label_line_stands_in) {
     return;
   }
-  buffer.DrawHorizontalLine(x + span.source.span_start, y,
-                            span.source.span_length, style,
-                            span.source.left_end, span.source.right_end);
+  buffer.DrawHorizontalLine(
+      x + span.source.span_start, y, span.source.span_length, style,
+      span.source.left_end, span.source.right_end,
+      span.is_heavy_underline ? Terminal::LineWeight::Heavy
+                              : Terminal::LineWeight::Light);
 }
 
 // Returns the part whose range stands in for `message_part`'s own, or null when
-// nothing does and the message marks where it points.
+// nothing does and the message's own location is underlined.
 //
 // A range attached as part of the problem says where the problem is in terms
 // the reader can see, which the message's location -- a point, and often one
 // chosen for an editor to put a cursor on rather than for anyone to look at --
-// does not. So a range marking the line that location names stands in for it
-// entirely: the message marks nothing of its own, and whatever words it has
-// left once a context leads the diagnostic hang from that range instead.
+// does not. So a range containing that location is underlined in its place: the
+// message underlines nothing of its own, and its text is placed under that
+// range.
 //
-// It has to be that line. A range elsewhere says nothing about the code the
-// location names, and taking its place would point the message's words at code
-// they aren't about while dropping the line they are.
-//
-// The range containing the location is the one that takes it, since that is the
-// one drawn over the column the location names. Failing that it is the first
-// attached to the line, which is the one whose author put it first.
+// It has to contain the location. A range elsewhere, even on the same line, is
+// not about the code the location names, and placing the message under it
+// would drop the underline on the code the message is about.
 //
 // `candidates` are the ranges drawn alongside the message's, which is what a
-// range has to be to take its place: one drawn under an anchor of its own is
-// read against the code below that one instead.
+// range has to be to take its place: one drawn under a location row of its own
+// is read against the code below that one instead.
 static auto FindMessageHost(llvm::ArrayRef<PreparedPart*> candidates,
                             const PreparedPart& message_part) -> PreparedPart* {
-  PreparedPart* host = nullptr;
   int column = message_part.source.span_start;
   for (PreparedPart* candidate : candidates) {
     if (candidate == &message_part || candidate->role != Part::Problem ||
@@ -1000,34 +1038,56 @@ static auto FindMessageHost(llvm::ArrayRef<PreparedPart*> candidates,
         column < source.span_start + source.span_length) {
       return candidate;
     }
-    if (!host) {
-      host = candidate;
-    }
   }
-  return host;
+  return nullptr;
 }
 
-// Recolors the marks of `spans`, which share one line, along their themes'
+// Recolors the underlines of `spans`, which share one line, along their themes'
 // ramps. Each theme counts its own way through its colors, left to right, so
-// they run in the order the code they mark is read.
-static auto RotateMarkStyles(llvm::ArrayRef<PreparedPart*> spans,
-                             Theme problem_theme, Theme explanation_theme)
+// they run in the order the code they underline is read.
+//
+// The heavy underline is left out of the ramp: it keeps the level's center
+// color and its bold, matching the level word. The other problem ranges on its
+// line take successive colors from the ramp with the center left out, so that
+// only the heavy underline has the center color.
+static auto RotateUnderlineStyles(llvm::ArrayRef<PreparedPart*> spans,
+                                  Theme problem_theme, Theme explanation_theme)
     -> void {
   llvm::SmallVector<PreparedPart*> across(spans);
   llvm::stable_sort(across,
                     [](const PreparedPart* lhs, const PreparedPart* rhs) {
                       return lhs->source.span_start < rhs->source.span_start;
                     });
+  bool leading_on_line = llvm::any_of(across, [](const PreparedPart* span) {
+    return span->is_heavy_underline;
+  });
+  llvm::SmallVector<Terminal::Color> around_center;
+  if (leading_on_line) {
+    for (auto [index, color] : llvm::enumerate(problem_theme)) {
+      if (static_cast<int>(index) != ThemeCenter) {
+        around_center.push_back(color);
+      }
+    }
+  }
   int totals[2] = {0, 0};
   for (const PreparedPart* span : across) {
-    ++totals[span->role == Part::Problem];
+    totals[span->role == Part::Problem] += !span->is_heavy_underline;
   }
   int counts[2] = {0, 0};
   for (PreparedPart* span : across) {
+    if (span->is_heavy_underline) {
+      span->underline_style = span->style;
+      continue;
+    }
     bool is_problem = span->role == Part::Problem;
     int& count = counts[is_problem];
-    span->mark_style = RotatedStyle(
-        span->mark_style, is_problem ? problem_theme : explanation_theme,
+    if (is_problem && leading_on_line) {
+      span->underline_style = span->underline_style.Foreground(
+          around_center[count++ % around_center.size()]);
+      continue;
+    }
+    span->underline_style = RotatedStyle(
+        span->underline_style, is_problem ? problem_theme : explanation_theme,
         count++, totals[is_problem]);
   }
 }
@@ -1041,12 +1101,12 @@ static auto RotateMarkStyles(llvm::ArrayRef<PreparedPart*> spans,
 //
 // The gap is worth having but not worth paying for. An end gives way only
 // where the range can still carry its label without it: two columns can spare
-// one end but not both, since a connector needs a column the mark runs out
-// through on both sides and after the left end gave way only the right one is
-// left. Left is considered first, so the range that begins at a boundary is
+// one end but not both, since a label line needs a column the underline runs
+// out through on both sides and after the left end gave way only the right one
+// is left. Left is considered first, so the range that begins at a boundary is
 // always the one that gives way there, and every boundary ends up with a gap.
-// One column can spare neither end, and the accepted answer there is the line
-// the connector leaves or a point where it has no connector.
+// One column can spare neither end, and the accepted answer there is the label
+// line drawn down that column, or a point where it has no label line.
 static auto SeparateTouchingEnds(
     llvm::ArrayRef<PreparedPart*> spans,
     const llvm::SmallPtrSetImpl<const PreparedPart*>& carries_label) -> void {
@@ -1075,33 +1135,107 @@ static auto SeparateTouchingEnds(
   }
 }
 
-// Sets each label's anchor to where its connector runs down, asked of the
-// underline it hangs from against everything else marked on the line.
+// Returns the range `label` is placed under: the message host's for the
+// message's own part when a host has taken its place, and otherwise its own.
+static auto LabelSource(const PreparedPart* label,
+                        const PreparedPart* message_part,
+                        const PreparedPart* message_host)
+    -> const PreparedSource& {
+  return label == message_part && message_host ? message_host->source
+                                               : label->source;
+}
+
+// Sets the column each label line runs down, choosing for the whole line at
+// once. `labels` are in reading order, which the loop assigning each label its
+// step relies on.
 //
-// `message_part` and `message_host` are as in `add_line` below: the message's
-// words hang from the host's range when one has taken its place.
-static auto PlaceLabels(Metrics metrics, llvm::ArrayRef<PreparedPart*> labels,
+// Each label line starts at the middle of its underline, so that it points into
+// the range. Every label's text starts right of every label line's column, so
+// when the text on the line needs more room than the rightmost label lines
+// leave, each label line right of where the text has to start slides left,
+// whichever label it belongs to: only as far as the text needs to fit on one
+// row, and never past where its own range starts. Label lines slide before any
+// text wraps, and the label line of a label that will be out-dented still
+// slides for the others.
+//
+// `message_part` and `message_host` are as in `RowLayout::AddLine`: the
+// message's text is placed under the host's range when one has taken its
+// place.
+static auto PlaceLabels(const Buffer& buffer,
+                        llvm::ArrayRef<PreparedPart*> labels,
                         const PreparedPart* message_part,
                         const PreparedPart* message_host,
                         llvm::ArrayRef<PreparedPart*> spans, int content_x,
                         int columns) -> void {
+  Metrics metrics = buffer.metrics();
+  auto against = [&](const PreparedPart* label) -> const PreparedSource& {
+    return LabelSource(label, message_part, message_host);
+  };
+  // The leftmost column each label line can run down: where its range starts,
+  // or the next column when the start has no junction, and the middle when
+  // neither has one.
+  auto floor_of = [&](const PreparedSource& source) {
+    for (int column : {source.span_start, source.span_start + 1}) {
+      if (TeesAt(source, spans, column)) {
+        return column;
+      }
+    }
+    return source.Middle();
+  };
+
+  // The base is the column the first label's text starts in. These are the
+  // base with every label line at its middle, and the lowest base, with every
+  // label line at its floor.
+  int natural_base = 0;
+  int lowest_base = 0;
+  for (const PreparedPart* label : labels) {
+    natural_base =
+        std::max(natural_base, against(label).Middle() + LabelIndentWidth);
+    lowest_base =
+        std::max(lowest_base, floor_of(against(label)) + LabelIndentWidth);
+  }
+
+  // The most columns right of the base that any label needs: its step, level
+  // word, and text on one row. A label whose widest word does not fit even
+  // from the lowest base will be out-dented, so its text needs nothing of the
+  // base, though its label line still slides with the rest.
+  int width_limit = columns - content_x;
+  int worst = 0;
+  bool any_fits = false;
+  int step = 0;
+  for (const PreparedPart* label : labels) {
+    int prefix_width = label->is_leading ? metrics.Width(label->level_text) : 0;
+    if (lowest_base + step + prefix_width +
+            buffer.MeasureWrapWidth(label->label, BackticksAreQuotes) >
+        width_limit) {
+      continue;
+    }
+    worst = std::max(worst, step + prefix_width + metrics.Width(label->label));
+    any_fits = true;
+    step += LabelStepWidth;
+  }
+  int target_base = natural_base;
+  if (any_fits) {
+    target_base =
+        std::max(lowest_base, std::min(width_limit - worst, natural_base));
+  }
+
   for (PreparedPart* label : labels) {
-    const PreparedSource& against = label == message_part && message_host
-                                        ? message_host->source
-                                        : label->source;
-    Placement placement =
-        PlaceLabel(metrics, *label, against, spans, content_x, columns);
-    label->source.anchor = placement.anchor;
-    // A connector drawn in place of a mark is recorded on the range it stands
-    // in for, not on the label that asked for it -- and on every range drawn
-    // over exactly the same column, since a second mark there would be a half
-    // mark beside the connector rather than a stroke through it, which is the
-    // one thing that would leave a corner in the cell.
+    const PreparedSource& source = against(label);
+    int desired = std::clamp(target_base - LabelIndentWidth, floor_of(source),
+                             source.Middle());
+    Placement placement = PlaceLabel(source, spans, desired);
+    label->source.line_column = placement.line_column;
+    // A label line drawn in place of an underline is recorded on the range it
+    // stands in for, not on the label that asked for it -- and on every range
+    // drawn over exactly the same column, since a second underline there would
+    // be a half-cell line beside the label line rather than a line through it,
+    // which is the one thing that would leave a corner in the cell.
     if (placement.attachment == Attachment::Through) {
       for (PreparedPart* span : spans) {
-        if (span->source.span_start == against.span_start &&
-            span->source.span_length == against.span_length) {
-          span->source.connector_stands_in = true;
+        if (span->source.span_start == source.span_start &&
+            span->source.span_length == source.span_length) {
+          span->source.label_line_stands_in = true;
         }
       }
     }
@@ -1111,16 +1245,17 @@ static auto PlaceLabels(Metrics metrics, llvm::ArrayRef<PreparedPart*> labels,
 // Returns the spans on `line` that draw an underline: all of them, except
 // `message_part` once `message_host` has taken its place.
 //
-// Everything marking the line goes on the one row below it, so that the marks
-// read as marking that line rather than as a stack of rows each of which has to
-// be traced back up to it. Ranges that overlap are drawn widest first, so the
-// narrowest mark covering a column is the one that shows: a range containing
-// another says less about the columns they share than the range inside it does,
-// and a mark that is part of the problem says more than one that only explains
-// it.
+// Every underline for the line goes on the one row below it, so that the
+// underlines read as underlining that line rather than as a stack of rows each
+// of which has to be traced back up to it. Ranges that overlap are drawn widest
+// first, so the narrowest underline covering a column is the one that shows: a
+// range containing another says less about the columns they share than the
+// range inside it does, and an underline that is part of the problem says more
+// than one that only explains it. The heavy underline is the exception; see
+// `MoveHeavyUnderlinesLast`.
 //
 // Ranges shouldn't overlap in the first place -- one covering another means two
-// parts of the diagnostic marking the same code -- but they are attached by
+// parts of the diagnostic attached to the same code -- but they are attached by
 // layers that never see each other, so this repairs what it is given rather
 // than checking a rule nothing is in a position to enforce.
 static auto SpansWidestFirst(llvm::ArrayRef<PreparedPart*> line,
@@ -1143,6 +1278,45 @@ static auto SpansWidestFirst(llvm::ArrayRef<PreparedPart*> line,
   return spans;
 }
 
+// Sets `is_heavy_underline` on the spans drawn as the heavy underline and moves
+// them to the end of `spans`. Returns the span the leading part's text is
+// placed under, or null when that text is not placed on this line.
+static auto MoveHeavyUnderlinesLast(llvm::MutableArrayRef<PreparedPart*> spans,
+                                    const PreparedPart* message_part,
+                                    const PreparedPart* message_host)
+    -> const PreparedPart* {
+  // The leading part's text is placed under its own range, or under the host
+  // of the message's location when the message leads.
+  const PreparedPart* leading_host =
+      message_part && message_part->is_leading ? message_host : nullptr;
+  const PreparedPart* heavy_underline = nullptr;
+  for (PreparedPart* span : spans) {
+    span->is_heavy_underline = span->is_leading || span == leading_host;
+    if (span->is_heavy_underline) {
+      heavy_underline = span;
+    }
+  }
+  // A problem range identical to the leading one underlines the same source.
+  // Identical ranges are drawn over each other, so it takes the heavy
+  // underline's weight and color; otherwise it would repaint that stretch
+  // light, in a rotated color.
+  if (heavy_underline) {
+    for (PreparedPart* span : spans) {
+      span->is_heavy_underline |=
+          span->role == Part::Problem &&
+          span->source.span_start == heavy_underline->source.span_start &&
+          span->source.span_length == heavy_underline->source.span_length;
+    }
+  }
+  // The heavy underline is drawn last, over every other range on the row, so
+  // that no narrower range redraws a cell of it light. A range inside it shows
+  // as the tee where its label line leaves the heavy underline.
+  std::stable_partition(
+      spans.begin(), spans.end(),
+      [](const PreparedPart* span) { return !span->is_heavy_underline; });
+  return heavy_underline;
+}
+
 // Returns the parts whose words hang off `spans`, in the order of `spans`.
 static auto LabelsHangingFrom(llvm::ArrayRef<PreparedPart*> spans,
                               PreparedPart* message_part,
@@ -1150,16 +1324,40 @@ static auto LabelsHangingFrom(llvm::ArrayRef<PreparedPart*> spans,
     -> llvm::SmallVector<PreparedPart*> {
   llvm::SmallVector<PreparedPart*> labels;
   for (PreparedPart* span : spans) {
-    if (!span->label.empty()) {
-      labels.push_back(span);
-    }
-    // A range standing in for the part's location hangs the part's own words
-    // from its underline alongside whatever it has to say itself.
+    // The host of the part's location has the part's text placed under it as
+    // well as its own, and the part's text comes first, so the sentence
+    // stating the problem is next to the underline with the range's own text
+    // below.
     if (span == message_host && !message_part->label.empty()) {
       labels.push_back(message_part);
     }
+    if (!span->label.empty()) {
+      labels.push_back(span);
+    }
   }
   return labels;
+}
+
+// Sorts `labels` into the order their rows are drawn in.
+//
+// The rows read top to bottom the way the code reads left to right: the
+// leading part first, then each label in the order of the middle of its
+// range. Ordering by the range, not the label line, keeps a sliding label line
+// from reordering the rows. A label line that descends through rows drawn above
+// it breaks around what they drew.
+static auto SortLabelsForReading(llvm::MutableArrayRef<PreparedPart*> labels,
+                                 const PreparedPart* message_part,
+                                 const PreparedPart* message_host) -> void {
+  auto order_key = [&](const PreparedPart* label) {
+    return LabelSource(label, message_part, message_host).Middle();
+  };
+  llvm::stable_sort(labels,
+                    [&](const PreparedPart* lhs, const PreparedPart* rhs) {
+                      if (lhs->is_leading != rhs->is_leading) {
+                        return lhs->is_leading;
+                      }
+                      return order_key(lhs) < order_key(rhs);
+                    });
 }
 
 namespace {
@@ -1174,24 +1372,27 @@ namespace {
 class RowLayout {
  public:
   RowLayout(const Buffer& buffer, llvm::MutableArrayRef<PreparedPart> parts,
-            int headline, Theme problem_theme, Theme explanation_theme,
+            int leading, Theme problem_theme, Theme explanation_theme,
             int source_columns, int content_x, int columns);
 
   // Returns the rows, in the order they are drawn.
   auto LayOut() && -> llvm::SmallVector<Row>;
 
  private:
-  // Adds the rows for `parts_[index]`: its own text, the anchor naming its
-  // location, and the snippet below that, which also shows the spans of the
-  // parts `TakeGroup` gathers with it.
+  // Adds the rows for `parts_[index]`: the path to its location, the location
+  // row naming it, its text when it has no source, and the snippet below that,
+  // which also shows the spans of the parts `TakeGroup` gathers with it.
   auto AddBlock(size_t index) -> void;
 
-  // Returns the spans shown under the anchor of `parts_[index]`: its own and
-  // every later span in the same file, shown as one view of it in source order
-  // with the lines between them elided. Each is marked as drawn.
+  // Returns the spans shown under the location row of `parts_[index]`: its own
+  // and every later span in the same file, shown as one view of it in source
+  // order with the lines between them elided. A part that names only a file has
+  // no span of its own, but its location row is still the one the file's spans
+  // are shown under, so that the file doesn't get a second location row for the
+  // first of them. Records the later spans as drawn.
   auto TakeGroup(size_t index) -> llvm::SmallVector<PreparedPart*>;
 
-  // Adds the rows showing `group`'s source below its anchor, one line of
+  // Adds the rows showing `group`'s source below its location row, one line of
   // source at a time.
   auto AddSnippet(llvm::ArrayRef<PreparedPart*> group,
                   PreparedPart* message_part, PreparedPart* message_host)
@@ -1202,7 +1403,7 @@ class RowLayout {
   auto AddLinesBetween(const PreparedPart& previous, int next) -> void;
 
   // Adds the rows drawing the spans that fall on one source line: the line
-  // itself, the underlines beneath it, and the labels hanging off those.
+  // itself, the underline row beneath it, and the label rows under that.
   //
   // `message_part` is the range standing in for the part's own location, and
   // `message_host` the attached range that has taken its place, in which case
@@ -1210,26 +1411,18 @@ class RowLayout {
   auto AddLine(llvm::ArrayRef<PreparedPart*> line, PreparedPart* message_part,
                PreparedPart* message_host) -> void;
 
-  // Adds a row for each of `labels`, below the underlines they hang off.
+  // Adds a row for each of `labels`, in order, below their underline row, and
+  // sets where each label's text starts.
   auto AddLabelRows(llvm::ArrayRef<PreparedPart*> labels) -> void;
 
-  // Adds `part`'s own text on a row of its own, which the drawing wraps into
-  // the column after the level word.
-  //
-  // TODO: No toolchain diagnostic should reach this: the goal is every part
-  // attached to a location that reaches source, with one genuinely about a
-  // file as a whole anchored at the file's start or end and drawn in a form of
-  // its own. That restructuring starts with the emitting diagnostics.
-  auto AddMessageRows(const PreparedPart& part) -> void;
-
-  // Returns whether the last row added was part of a snippet, and so wants
-  // closing off before the next one starts.
+  // Returns whether the last row added was below a location row, so that the
+  // step to the next location row gets an elision.
   auto InSnippet() const -> bool;
 
   const Buffer* buffer_;
   Metrics metrics_;
   llvm::MutableArrayRef<PreparedPart> parts_;
-  int headline_;
+  int leading_;
   Theme problem_theme_;
   Theme explanation_theme_;
   int source_columns_;
@@ -1237,15 +1430,16 @@ class RowLayout {
   int columns_;
 
   // Whether a part has to open a block of its own rather than being merged
-  // into an earlier one: it has something to say on a row of its own, or there
-  // is location information above it that needs its anchor to lead into.
+  // into an earlier one: its text is placed under a location row of its own, or
+  // there is location information above it that needs its location row to lead
+  // into.
   llvm::SmallVector<bool> opens_block_;
 
   // Whether each part's rows have been added.
   llvm::SmallVector<bool> drawn_;
 
-  // Location information waiting for the anchor it describes.
-  llvm::SmallVector<const PreparedPart*> context_;
+  // Location information waiting for the location row it describes.
+  llvm::SmallVector<const PreparedPart*> path_;
 
   llvm::SmallVector<Row> rows_;
 };
@@ -1253,13 +1447,13 @@ class RowLayout {
 }  // namespace
 
 RowLayout::RowLayout(const Buffer& buffer,
-                     llvm::MutableArrayRef<PreparedPart> parts, int headline,
+                     llvm::MutableArrayRef<PreparedPart> parts, int leading,
                      Theme problem_theme, Theme explanation_theme,
                      int source_columns, int content_x, int columns)
     : buffer_(&buffer),
       metrics_(buffer.metrics()),
       parts_(parts),
-      headline_(headline),
+      leading_(leading),
       problem_theme_(problem_theme),
       explanation_theme_(explanation_theme),
       source_columns_(source_columns),
@@ -1267,16 +1461,14 @@ RowLayout::RowLayout(const Buffer& buffer,
       columns_(columns),
       opens_block_(parts.size(), false),
       drawn_(parts.size(), false) {
-  bool context_pending = false;
+  bool path_pending = false;
   for (auto [index, part] : llvm::enumerate(parts)) {
     if (part.role == Part::LocationInfo) {
-      context_pending = true;
+      path_pending = true;
       continue;
     }
-    opens_block_[index] =
-        context_pending ||
-        (static_cast<int>(index) != headline && !part.text.empty());
-    context_pending = false;
+    opens_block_[index] = path_pending || !part.text.empty();
+    path_pending = false;
   }
 }
 
@@ -1286,56 +1478,59 @@ auto RowLayout::LayOut() && -> llvm::SmallVector<Row> {
       AddBlock(index);
     }
   }
-  for (const PreparedPart* reached_from : context_) {
-    AddMessageRows(*reached_from);
-  }
+  CARBON_CHECK(path_.empty(), "Location information precedes its part.");
   return std::move(rows_);
 }
 
 auto RowLayout::AddBlock(size_t index) -> void {
   drawn_[index] = true;
   PreparedPart& part = parts_[index];
-  bool is_headline = static_cast<int>(index) == headline_;
 
   // Location information says how the location after it was reached, so it
-  // waits and is then drawn above that location's anchor.
+  // waits and is then drawn above the location row for that location.
   if (part.role == Part::LocationInfo) {
-    context_.push_back(&part);
+    path_.push_back(&part);
+    return;
+  }
+
+  // A part with no source and no text draws nothing, so the path waiting for
+  // its location row is dropped.
+  if (!HasLocationRow(part)) {
+    path_.clear();
     return;
   }
 
   if (InSnippet()) {
-    rows_.push_back({.kind = Row::Kind::Separator});
+    rows_.push_back({.kind = Row::Kind::Elision});
   }
 
-  if (!is_headline && !part.text.empty()) {
-    AddMessageRows(part);
+  for (const PreparedPart* reached_from : path_) {
+    rows_.push_back({.kind = Row::Kind::Path, .part = reached_from});
   }
-  // An anchor is drawn where a snippet follows it, so a part with no source
-  // to show gets none: its words go on a row of their own, and an anchor
-  // above them would lead nowhere. The headline is the exception -- its
-  // location is the diagnostic's, worth saying even when it names only a
-  // file, as for a diagnostic about a file rather than about code in one.
-  bool anchored = !part.location.empty() && (part.has_source || is_headline);
-  // Without an anchor below them there is nothing for the steps to lead into,
-  // so they say where they are on rows of their own instead.
-  for (const PreparedPart* reached_from : context_) {
-    if (anchored) {
-      rows_.push_back({.kind = Row::Kind::Context, .part = reached_from});
-    } else {
-      AddMessageRows(*reached_from);
-    }
-  }
-  context_.clear();
+  path_.clear();
 
   llvm::SmallVector<PreparedPart*> group = TakeGroup(index);
-  if (anchored) {
-    rows_.push_back({.kind = Row::Kind::Anchor, .part = &part});
+  rows_.push_back({.kind = Row::Kind::Location, .part = &part});
+
+  // A part with no source has its text placed under its location row. The
+  // file's spans, if any, follow below an elision, since they are elsewhere in
+  // the file.
+  //
+  // TODO: No toolchain diagnostic should reach this: the goal is every part
+  // attached to a location that reaches source, with one about a file as a
+  // whole located at the file's start or end and drawn in a form of its own.
+  // That restructuring starts with the emitting diagnostics.
+  if (!part.has_source) {
+    rows_.push_back(
+        {.kind = Row::Kind::LocationLabel, .part = &part, .text = part.text});
+    if (!group.empty()) {
+      rows_.push_back({.kind = Row::Kind::Elision});
+    }
   }
 
-  // The spans shown under one anchor are the ones drawn alongside each other
-  // here, so the group is what a range has to be in to stand in for the
-  // part's location: a range under an anchor of its own is read against
+  // The spans shown under one location row are the ones drawn alongside each
+  // other here, so the group is what a range has to be in to stand in for the
+  // part's location: a range under a location row of its own is read against
   // the code below that one instead.
   PreparedPart* message_part = nullptr;
   for (PreparedPart* member : group) {
@@ -1347,11 +1542,11 @@ auto RowLayout::AddBlock(size_t index) -> void {
   PreparedPart* message_host =
       message_part ? FindMessageHost(group, *message_part) : nullptr;
   if (message_host) {
-    // The part marks nothing of its own once something else has taken its
+    // The part underlines nothing of its own once something else has taken its
     // place, so the line it named is not part of the snippet either -- unless
-    // an attached range is on it too. Leaving it in shows a line of source
-    // with nothing marking it, which reads as a line the reader is meant to
-    // find something in.
+    // an attached range is on it too. Leaving it in shows a line of source with
+    // nothing underlined, which reads as a line the reader is meant to find
+    // something in.
     llvm::erase(group, message_part);
   }
 
@@ -1361,10 +1556,11 @@ auto RowLayout::AddBlock(size_t index) -> void {
 auto RowLayout::TakeGroup(size_t index) -> llvm::SmallVector<PreparedPart*> {
   const PreparedPart& part = parts_[index];
   llvm::SmallVector<PreparedPart*> group;
-  if (!part.has_source) {
+  if (part.has_source) {
+    group.push_back(&parts_[index]);
+  } else if (part.file.empty()) {
     return group;
   }
-  group.push_back(&parts_[index]);
   for (size_t other : llvm::seq(index + 1, parts_.size())) {
     if (!drawn_[other] && !opens_block_[other] && parts_[other].has_source &&
         parts_[other].file == part.file) {
@@ -1382,17 +1578,6 @@ auto RowLayout::TakeGroup(size_t index) -> llvm::SmallVector<PreparedPart*> {
 auto RowLayout::AddSnippet(llvm::ArrayRef<PreparedPart*> group,
                            PreparedPart* message_part,
                            PreparedPart* message_host) -> void {
-  if (group.empty()) {
-    return;
-  }
-
-  // A snippet always starts a row below its anchor, so that the code doesn't
-  // read as running on from the file name. Where the file goes on above the
-  // first line shown, that row says so instead.
-  int first_line = group.front()->line_number;
-  rows_.push_back(
-      {.kind = first_line > 1 ? Row::Kind::Elision : Row::Kind::Gap});
-
   // Spans on one line are drawn together, against the one row that shows it.
   const PreparedPart* previous = nullptr;
   for (size_t begin = 0; begin < group.size();) {
@@ -1447,29 +1632,30 @@ auto RowLayout::AddLine(llvm::ArrayRef<PreparedPart*> line,
 
   llvm::SmallVector<PreparedPart*> spans =
       SpansWidestFirst(line, message_part, message_host);
-  RotateMarkStyles(spans, problem_theme_, explanation_theme_);
-  // The part's connector and bar follow the range hosting its words, so
-  // the rotation's choice for the host is copied after it is made.
+  const PreparedPart* heavy_underline =
+      MoveHeavyUnderlinesLast(spans, message_part, message_host);
+  RotateUnderlineStyles(spans, problem_theme_, explanation_theme_);
+  // The part's label line and bar follow the range hosting its words, so the
+  // rotation's choice for the host is copied after it is made.
   if (message_host && llvm::is_contained(spans, message_host)) {
-    message_part->mark_style = message_host->mark_style;
+    message_part->underline_style = message_host->underline_style;
   }
 
-  // The mark in the margin picks out the lines the problem is on, which is
-  // every line holding a range that is part of it. It is drawn in what the
-  // headline is drawn in, so that it reads as part of the same sentence.
-  bool marks_problem = llvm::any_of(spans, [](const PreparedPart* span) {
-    return span->role == Part::Problem;
-  });
+  // The `->` in the margin points to the one line to begin reading at: the line
+  // the leading part's text is placed under, wherever it is in the frame. A
+  // problem range on any other line keeps its color and nothing more. The
+  // `->` and line number take the leading part's style, matching its level
+  // word.
   rows_.push_back({.kind = Row::Kind::Source,
                    .part = line.front(),
-                   .points_here = marks_problem ? &parts_[headline_] : nullptr,
+                   .points_here = heavy_underline ? &parts_[leading_] : nullptr,
                    .line_number = line.front()->line_number,
                    .text = line.front()->source.text});
 
   llvm::SmallVector<PreparedPart*> labels =
       LabelsHangingFrom(spans, message_part, message_host);
 
-  // The ranges a connector will hang from, which is what decides whether a
+  // The ranges a label line will hang from, which is what decides whether a
   // range can afford to give up half a column at an end.
   llvm::SmallPtrSet<const PreparedPart*, 4> carries_label;
   for (PreparedPart* label : labels) {
@@ -1478,43 +1664,51 @@ auto RowLayout::AddLine(llvm::ArrayRef<PreparedPart*> line,
   }
 
   SeparateTouchingEnds(spans, carries_label);
-  PlaceLabels(metrics_, labels, message_part, message_host, spans, content_x_,
+  SortLabelsForReading(labels, message_part, message_host);
+  PlaceLabels(*buffer_, labels, message_part, message_host, spans, content_x_,
               columns_);
 
-  // Right to left, so that each label's connector reaches across the ones
-  // already hanging rather than descending through them.
-  llvm::stable_sort(labels,
-                    [](const PreparedPart* lhs, const PreparedPart* rhs) {
-                      return lhs->source.anchor > rhs->source.anchor;
-                    });
-
   rows_.push_back(
-      {.kind = Row::Kind::Annotation, .spans = {spans.begin(), spans.end()}});
+      {.kind = Row::Kind::Underline, .spans = {spans.begin(), spans.end()}});
   AddLabelRows(labels);
 }
 
 auto RowLayout::AddLabelRows(llvm::ArrayRef<PreparedPart*> labels) -> void {
+  // The leftmost column the next label's text may start in, stepping right
+  // with each label so the indentation follows the row order. It starts right
+  // of every label line's column, so a label line descending to a later label
+  // runs beside the text above it, crossing each row in a single cell of a
+  // run and never at a junction.
+  int next_label_x = 0;
+  for (const PreparedPart* label : labels) {
+    next_label_x =
+        std::max(next_label_x, label->source.line_column + LabelIndentWidth);
+  }
   for (PreparedPart* label : labels) {
+    label->source.label_x =
+        std::max(next_label_x, label->source.line_column + LabelIndentWidth);
     // A single unbreakable word can be wider than what is left to the right
     // of where the label hangs, and hanging it there would push it out of the
     // frame. Wrapping never breaks a word, so the widest one is the least
     // width the label can be drawn in. Below that the label is out-dented to
     // the column the source starts in, where the whole width is available,
-    // and the line reaching back to the connector is what says which range it
+    // and the line reaching back to the label line is what says which range it
     // belongs to.
-    bool routed = content_x_ + label->source.anchor + LabelIndentWidth +
-                      buffer_->MeasureWrapWidth(label->label) >
-                  columns_;
+    int prefix_width =
+        label->is_leading ? metrics_.Width(label->level_text) : 0;
+    bool routed =
+        content_x_ + label->source.label_x + prefix_width +
+            buffer_->MeasureWrapWidth(label->label, BackticksAreQuotes) >
+        columns_;
+    // An out-dented label's text starts at the source's column, so it does
+    // not move where the next label's text starts.
+    if (!routed) {
+      next_label_x = label->source.label_x + LabelStepWidth;
+    }
     rows_.push_back({.kind = routed ? Row::Kind::RoutedLabel : Row::Kind::Label,
                      .part = label,
                      .text = label->label});
   }
-}
-
-auto RowLayout::AddMessageRows(const PreparedPart& part) -> void {
-  rows_.push_back({.kind = Row::Kind::Message,
-                   .part = &part,
-                   .text = MessageRowText(part)});
 }
 
 auto RowLayout::InSnippet() const -> bool {
@@ -1523,56 +1717,62 @@ auto RowLayout::InSnippet() const -> bool {
   }
   switch (rows_.back().kind) {
     case Row::Kind::Source:
-    case Row::Kind::Annotation:
+    case Row::Kind::Underline:
     case Row::Kind::Label:
     case Row::Kind::RoutedLabel:
+    case Row::Kind::LocationLabel:
     case Row::Kind::Elision:
-    case Row::Kind::Gap:
       return true;
-    case Row::Kind::Message:
-    case Row::Kind::Anchor:
-    case Row::Kind::Separator:
-    case Row::Kind::Context:
+    case Row::Kind::Location:
+    case Row::Kind::Path:
       return false;
   }
 }
 
-// Draws the line running from an underline at `annotation_y` down to `meet_y`,
-// in the column a label hangs from.
+// Draws the leading part's label line, from the underline at `underline_y` down
+// to `meet_y`.
 //
 // It stops at the center of the cell the underline drew rather than redrawing
 // it, so where the underline runs out through both sides of that cell the two
-// form a junction. Where it stands in for a mark of one column instead,
-// stopping at the center is what keeps the mark to the lower half of its cell,
-// so that two of them in neighboring columns read as two marks rather than as
-// one line drawn down both.
-static auto DrawConnector(Buffer& buffer, int x, int annotation_y, int meet_y,
-                          const Style& style) -> void {
-  buffer.DrawVerticalLine(x, annotation_y, meet_y - annotation_y + 1, style,
-                          LineEnd::Center, LineEnd::Center);
+// form a junction. Where it stands in for an underline of one column instead,
+// stopping at the center is what keeps the underline to the lower half of its
+// cell, so that two of them in neighboring columns read as two underlines
+// rather than as one line drawn down both.
+//
+// The cell on the underline row is drawn heavy whatever `weight` is, since it
+// is part of the heavy underline. Under ASCII, where `weight` is light, that
+// cell keeps the tee inside the `^` run, or is the `^` itself when the label
+// line is drawn in place of a one-column underline.
+static auto DrawLeadingLabelLine(Buffer& buffer, int x, int underline_y,
+                                 int meet_y, const Style& style,
+                                 Terminal::LineWeight weight) -> void {
+  buffer.DrawVerticalLine(x, underline_y, 1, style, LineEnd::Center,
+                          LineEnd::Edge, Terminal::LineWeight::Heavy);
+  buffer.DrawVerticalLine(x, underline_y + 1, meet_y - underline_y, style,
+                          LineEnd::Edge, LineEnd::Center, weight);
 }
 
 // Draws `number` in the columns before the frame, or nothing when there is no
 // line to name.
 //
-// `points_here` is the message whose location is on this line, which takes the
-// margin outside the numbers and colors the number to match what the headline
-// says. Everything else keeps the frame's own color, so the one line the
-// message is about is the one that isn't part of the frame.
+// `points_here` is the leading part when its text is placed under this line.
+// It draws `->` in the margin and colors the number to match the level word.
+// Every other number keeps the frame's color, so the line to begin reading at
+// is the one that stands out from the frame.
 static auto DrawLineNumber(Buffer& buffer, int frame_x, int y, int number,
                            const PreparedPart* points_here) -> void {
   if (number <= 0) {
     return;
   }
   std::string text = std::to_string(number);
-  // The line the problem is on takes the headline's color and its weight, and
+  // The line the problem is on takes the leading part's color and weight, and
   // every other line number is left as light as the frame it belongs to, so
   // that the one being reported is the one that stands out rather than every
   // number competing with it.
   Style style = points_here ? points_here->style : FrameStyle().Bold(false);
   buffer.DrawText(frame_x - 1 - text.size(), y, text, style);
   if (points_here) {
-    buffer.DrawText(0, y, LineMark, style);
+    buffer.DrawText(0, y, LineArrow, style);
   }
 }
 
@@ -1587,20 +1787,9 @@ static auto WrappedSharesRow(const Buffer& buffer, int x, int y, int columns,
     -> bool {
   return buffer
              .MeasureWrappedText(x, y, /*margin=*/x, columns,
-                                 (llvm::Twine(text) + suffix).str())
+                                 (llvm::Twine(text) + suffix).str(),
+                                 BackticksAreQuotes)
              .y == y;
-}
-
-// Returns the row after what `DrawWrapped` below draws, without drawing it.
-static auto MeasureWrapped(const Buffer& buffer, int x, int y, int columns,
-                           llvm::StringRef text, llvm::StringRef suffix)
-    -> int {
-  Buffer::DrawEnd end =
-      buffer.MeasureWrappedText(x, y, /*margin=*/x, columns, text);
-  if (suffix.empty() || WrappedSharesRow(buffer, x, y, columns, text, suffix)) {
-    return end.y + 1;
-  }
-  return end.y + 2;
 }
 
 // Draws `text` wrapped into `columns` at (x, y), with `suffix` after it, and
@@ -1613,11 +1802,14 @@ static auto DrawWrapped(Buffer& buffer, int x, int y, int columns,
                         llvm::StringRef text, llvm::StringRef suffix,
                         Style style = Style()) -> int {
   if (suffix.empty()) {
-    return buffer.DrawWrappedText(x, y, /*margin=*/x, columns, text, style).y +
+    return buffer
+               .DrawWrappedText(x, y, /*margin=*/x, columns, text, style,
+                                BackticksAreQuotes)
+               .y +
            1;
   }
-  Buffer::DrawEnd end =
-      buffer.DrawWrappedText(x, y, /*margin=*/x, columns, text, style);
+  Buffer::DrawEnd end = buffer.DrawWrappedText(x, y, /*margin=*/x, columns,
+                                               text, style, BackticksAreQuotes);
   if (WrappedSharesRow(buffer, x, y, columns, text, suffix)) {
     buffer.DrawText(end.x, end.y, suffix, KindStyle());
     return end.y + 1;
@@ -1641,7 +1833,7 @@ auto Renderer::Render(Terminal::OutputBufferRef out,
   // A `PreparedPart` is undesirably large for inline storage by
   // SmallVector, so we specify 0.
   llvm::SmallVector<PreparedPart, 0> parts;
-  int headline = -1;
+  int leading = -1;
 
   // Which colors this terminal gets, decided once: everything drawn takes one
   // of them.
@@ -1651,22 +1843,22 @@ auto Renderer::Render(Terminal::OutputBufferRef out,
   // What leads the diagnostic is drawn at its level and everything else as
   // something explaining it, except that a primary range is part of the problem
   // and so keeps the level's color wherever down the frame it sits.
-  auto add_part = [&](bool is_headline, bool is_problem, bool from_message_loc,
+  auto add_part = [&](bool is_leading, bool is_problem, bool from_message_loc,
                       const Loc& loc, std::string text, llvm::StringRef name) {
-    if (is_headline) {
-      headline = parts.size();
+    if (is_leading) {
+      leading = parts.size();
     }
     parts.push_back(
         PreparePart(metrics, is_problem ? Part::Problem : Part::Explanation,
                     from_message_loc,
-                    is_headline ? LevelText(diagnostic.level) : ExplanationText,
+                    is_leading ? LevelText(diagnostic.level) : ExplanationText,
                     ThemeStyle(is_problem ? problem_theme : explanation_theme),
-                    loc, std::move(text), name, is_headline, include_kind_));
+                    loc, std::move(text), name, is_leading, include_kind_));
   };
 
   // The same file reached the same way is a path drawn once. A path says how a
-  // file was got to, so every range marked in that file has the same one, and
-  // repeating it under each of them says nothing the first didn't.
+  // file was got to, so every range underlined in that file has the same one,
+  // and repeating it under each of them says nothing the first didn't.
   std::string last_place;
   auto add_location_info = [&](llvm::ArrayRef<LocationInfo> steps,
                                const Loc& reaches) {
@@ -1681,8 +1873,8 @@ auto Renderer::Render(Terminal::OutputBufferRef out,
     for (const LocationInfo& step : steps) {
       parts.push_back(PreparePart(
           metrics, Part::LocationInfo, /*from_message_loc=*/false,
-          /*level_text=*/"", ContextStyle(), step.loc, step.Format(), step.name,
-          /*is_headline=*/false, include_kind_));
+          /*level_text=*/"", PathStyle(), step.loc, step.Format(), step.name,
+          /*is_leading=*/false, include_kind_));
     }
   };
 
@@ -1692,25 +1884,28 @@ auto Renderer::Render(Terminal::OutputBufferRef out,
     add_location_info(context.location_info, context.loc);
     // Only the leading context is the failure being reported; the rest name
     // operations it happened inside, which explain it.
-    bool is_headline = &context == leading_context;
-    add_part(is_headline, is_headline, /*from_message_loc=*/false, context.loc,
+    bool is_leading = &context == leading_context;
+    add_part(is_leading, is_leading, /*from_message_loc=*/false, context.loc,
              context.Format(), context.name);
   }
   const Message& message = diagnostic.message;
   add_location_info(message.location_info, message.loc);
   // The message states the problem whether or not a context leads it: a
   // context gives it a sentence to sit under, and doesn't demote what it says
-  // to an explanation of something else. Marking it otherwise puts an
-  // informational connector on a range that is marked as part of the problem.
+  // to an explanation of something else. Doing otherwise puts an informational
+  // label line on a range that is underlined as part of the problem.
   bool message_leads = leading_context == nullptr;
   add_part(message_leads, /*is_problem=*/true, /*from_message_loc=*/true,
            message.loc, message.Format(), message.kind.name());
+  // A label's location information is not drawn: how the file holding a
+  // declaration was reached is rarely useful, and Clang and GCC omit note
+  // include stacks for the same reason. Only the path to the problem itself,
+  // the message's own location and a context's, is shown.
   for (const Label& label : diagnostic.labels) {
-    add_location_info(label.location_info, label.loc);
-    add_part(/*is_headline=*/false, label.category == LabelCategory::Primary,
+    add_part(/*is_leading=*/false, label.category == LabelCategory::Primary,
              /*from_message_loc=*/false, label.loc, label.Format(), label.name);
   }
-  CARBON_CHECK(headline >= 0, "Either the context or the message leads.");
+  CARBON_CHECK(leading >= 0, "Either the context or the message leads.");
 
   // With snippets off, every diagnostic takes the compact form: nothing below
   // is drawn, so none of its geometry needs deciding.
@@ -1765,17 +1960,355 @@ auto Renderer::Render(Terminal::OutputBufferRef out,
     return;
   }
 
-  RenderFramed(out, parts, headline, diagnostic.level, frame_x, content_x,
+  RenderFramed(out, parts, leading, diagnostic.level, frame_x, content_x,
                source_columns, columns);
 }
 
-// Draws the framed form: the headline, and under it one frame holding every
-// anchor, snippet, and label. The geometry arrives from `Render`, which chose
-// it; the spans are windowed in `LayOutRows`, which knows which of them share
-// a view of a line.
+namespace {
+
+// Draws the rows `RowLayout` lays out, with the frame beside them.
+class FrameRenderer {
+ public:
+  FrameRenderer(Buffer& buffer, Charset charset, int frame_x, int content_x,
+                int columns, Style dotted_frame_style)
+      : buffer_(&buffer),
+        glyphs_(Glyphs::For(charset)),
+        charset_(charset),
+        frame_x_(frame_x),
+        content_x_(content_x),
+        columns_(columns),
+        dotted_frame_style_(dotted_frame_style) {}
+
+  // Draws `rows` from the buffer's first row, followed by the closing rule.
+  auto Draw(llvm::ArrayRef<Row> rows) -> void;
+
+ private:
+  // Each of these draws one kind of row starting at row `y`, and returns the
+  // row after what it drew, which is further down when text wraps.
+  auto DrawLocationRow(const PreparedPart& part, int y) -> int;
+  auto DrawPath(const PreparedPart& part, int y) -> int;
+  auto DrawSource(const Row& row, int y) -> int;
+  auto DrawUnderlineRow(const Row& row, int y) -> int;
+  auto DrawLabel(const Row& row, int y) -> int;
+  auto DrawRoutedLabel(const Row& row, int y) -> int;
+  auto DrawLocationLabel(const Row& row, int y) -> int;
+
+  // Draws the frame beside rows `[y, next_y)`, which hold a row of `kind`.
+  auto DrawFrame(Row::Kind kind, int y, int next_y) -> void;
+
+  // Returns the stroke weight of the label line and bar of `part`'s label:
+  // heavy for the leading part under Unicode, matching its heavy underline.
+  // ASCII draws a heavy line as `^`, which belongs on the underline row alone,
+  // so there the leading part's label line and bar are light like every other
+  // label's.
+  auto LabelWeight(const PreparedPart& part) const -> Terminal::LineWeight;
+
+  // Draws `text` for `part` from (x, y), after its level word and in bold when
+  // it leads, and returns the row after the text.
+  auto DrawLabelText(const PreparedPart& part, llvm::StringRef text, int x,
+                     int y, bool is_label_row) -> int;
+
+  // Draws a label's bar in column `x` as a separate line on each of rows
+  // `[y, next_y)` instead of one line through them, so that each cell is drawn
+  // as a bar: the one the label line meets is a tee instead of the corner an
+  // end would be, and a label of one row is framed the same as a label of ten.
+  auto DrawBar(int x, int y, int next_y, const Style& style,
+               Terminal::LineWeight weight) -> void;
+
+  // Draws a label line from the underline row down to row `y` in column `x`,
+  // ending in the upper half of the corner that turns toward the label. The
+  // leading part's label row is the first under its underline, so its label
+  // line runs down a clear column and joins what it meets. Every other label
+  // line crosses the label rows drawn above it without joining them, so what
+  // they drew stays whole, and the upper half of its corner is drawn
+  // separately.
+  auto DrawLabelLine(const PreparedPart& part, int x, int y, const Style& style,
+                     Terminal::LineWeight weight) -> void;
+
+  // Draws a label line from the underline row down to the row above `to_y` in
+  // column `x`. It breaks around every line drawn earlier and skips the rows of
+  // out-dented blocks, resuming below each one.
+  auto DrawCrossing(int x, int to_y, const Style& style) -> void;
+
+  Buffer* buffer_;
+  Glyphs glyphs_;
+  Charset charset_;
+  int frame_x_;
+  int content_x_;
+  int columns_;
+
+  // The frame's glyph on underline and label rows is in the frame's column, so
+  // it takes one color for the whole diagnostic instead of the color of the
+  // range on that row: the leading part's, which the `->` and the reported
+  // line's number also take.
+  Style dotted_frame_style_;
+
+  // The row the underlines were drawn on, which every label below it connects
+  // back up to. A label can be several rows down from it, since the labels on
+  // one underline row stack.
+  int underline_y_ = -1;
+
+  // The rows below the underline row that out-dented labels' text occupies, as
+  // `[first, past-the-last)` pairs in drawing order. A label line descending
+  // past them skips these rows.
+  llvm::SmallVector<std::pair<int, int>> outdented_rows_;
+};
+
+}  // namespace
+
+auto FrameRenderer::Draw(llvm::ArrayRef<Row> rows) -> void {
+  // A row that wraps pushes the ones below it down, so `y` follows what was
+  // drawn instead of counting rows.
+  int y = 0;
+  for (const Row& row : rows) {
+    int next_y = y + 1;
+    switch (row.kind) {
+      case Row::Kind::Location:
+        next_y = DrawLocationRow(*row.part, y);
+        break;
+      case Row::Kind::Path:
+        next_y = DrawPath(*row.part, y);
+        break;
+      case Row::Kind::Source:
+        next_y = DrawSource(row, y);
+        break;
+      case Row::Kind::Underline:
+        next_y = DrawUnderlineRow(row, y);
+        break;
+      case Row::Kind::Label:
+        next_y = DrawLabel(row, y);
+        break;
+      case Row::Kind::RoutedLabel:
+        next_y = DrawRoutedLabel(row, y);
+        break;
+      case Row::Kind::LocationLabel:
+        next_y = DrawLocationLabel(row, y);
+        break;
+      case Row::Kind::Elision:
+        break;
+    }
+    DrawFrame(row.kind, y, next_y);
+    y = next_y;
+  }
+
+  // The closing rule turns the corner the frame's last row left for it.
+  buffer_->DrawVerticalLine(frame_x_, y, 1, FrameStyle(), LineEnd::Edge,
+                            LineEnd::Center);
+  buffer_->DrawHorizontalLine(frame_x_, y, CloseRuleWidth, FrameStyle(),
+                              LineEnd::Center, LineEnd::Edge);
+}
+
+// Draws `╭─┤ location`. The bracket is drawn as lines so that the character set
+// decides how it looks, and so that a path row above can connect down into it.
+auto FrameRenderer::DrawLocationRow(const PreparedPart& part, int y) -> int {
+  buffer_->DrawHorizontalLine(frame_x_, y, 3, FrameStyle());
+  buffer_->DrawVerticalLine(frame_x_ + 2, y, 1, FrameStyle(), LineEnd::Edge,
+                            LineEnd::Edge);
+  buffer_->DrawText(frame_x_ + LocationPrefixWidth, y,
+                    part.location.empty() ? llvm::StringRef(NoLocationText)
+                                          : llvm::StringRef(part.location),
+                    Style());
+  // The `->` points to where the leading part's text is placed. With no source
+  // row for it, that is this location row.
+  if (part.is_leading && !part.has_source) {
+    buffer_->DrawText(0, y, LineArrow, part.style);
+  }
+  return y + 1;
+}
+
+// Draws a step of a path. Its line descends into the bracket before the file
+// name in the location row below, so the row shows that it leads there. It is
+// drawn downwards so that several steps stack into one line.
+auto FrameRenderer::DrawPath(const PreparedPart& part, int y) -> int {
+  int bracket_x = frame_x_ + 2;
+  buffer_->DrawVerticalLine(bracket_x, y, 2, FrameStyle());
+  buffer_->DrawHorizontalLine(bracket_x, y, LineToTextWidth - 1, FrameStyle(),
+                              LineEnd::Center, LineEnd::Edge);
+  std::string text = PathText(part);
+  int text_x = bracket_x + LineToTextWidth;
+  Buffer::DrawEnd end = buffer_->DrawText(text_x, y, text, PathStyle());
+  buffer_->DrawText(end.x, end.y, part.kind_suffix, KindStyle());
+  return y + 1;
+}
+
+auto FrameRenderer::DrawSource(const Row& row, int y) -> int {
+  DrawLineNumber(*buffer_, frame_x_, y, row.line_number, row.points_here);
+  buffer_->DrawText(content_x_, y, row.text, Style());
+  return y + 1;
+}
+
+auto FrameRenderer::DrawUnderlineRow(const Row& row, int y) -> int {
+  underline_y_ = y;
+  outdented_rows_.clear();
+  for (const PreparedPart* span : row.spans) {
+    DrawUnderline(*buffer_, content_x_, y, *span, span->underline_style);
+  }
+  return y + 1;
+}
+
+// Draws a label to the right of its label line, which meets the bar framing it
+// on its first row, where the text and any level word begin, so that following
+// the line from the underline arrives at the start of the sentence. The bar
+// continues down every row the text wraps onto.
+auto FrameRenderer::DrawLabel(const Row& row, int y) -> int {
+  const PreparedPart& part = *row.part;
+  int line_x = content_x_ + part.source.line_column;
+  int text_x = content_x_ + part.source.label_x;
+  int bar_x = text_x - LabelFrameWidth;
+  const Style& style = part.underline_style;
+  Terminal::LineWeight weight = LabelWeight(part);
+  int next_y = DrawLabelText(part, row.text, text_x, y, /*is_label_row=*/true);
+  DrawBar(bar_x, y, next_y, style, weight);
+  DrawLabelLine(part, line_x, y, style, weight);
+  buffer_->DrawHorizontalLine(line_x, y, bar_x - line_x + 1, style,
+                              LineEnd::Center, LineEnd::Center, weight);
+  return next_y;
+}
+
+// Draws a label out-dented past its label line, where there is no room to meet
+// it from the left. The bar framing it connects instead: its top turns right
+// along the row under the underline row and runs to the label line. Meeting the
+// label at its top lets the bar be directly against the text, which is the
+// width out-denting is for.
+auto FrameRenderer::DrawRoutedLabel(const Row& row, int y) -> int {
+  const PreparedPart& part = *row.part;
+  int line_x = content_x_ + part.source.line_column;
+  int bar_x = content_x_;
+  int text_x = bar_x + LabelFrameWidth;
+  const Style& style = part.underline_style;
+  Terminal::LineWeight weight = LabelWeight(part);
+  DrawLabelLine(part, line_x, y, style, weight);
+  buffer_->DrawHorizontalLine(bar_x, y, line_x - bar_x + 1, style,
+                              LineEnd::Center, LineEnd::Center, weight);
+  int next_y =
+      DrawLabelText(part, row.text, text_x, y + 1, /*is_label_row=*/true);
+  buffer_->DrawVerticalLine(bar_x, y, next_y - y, style, LineEnd::Center,
+                            LineEnd::Edge, weight);
+  // The block occupies its rows from the bar to the right edge, blank cells
+  // included, so a later label line skips those rows instead of showing through
+  // the gaps between words.
+  outdented_rows_.push_back({y + 1, next_y});
+  return next_y;
+}
+
+// Draws the text of a part with no source under its location row, the way a
+// label is placed under its underline, with the label line's corner in the
+// source's first column. There is no underline above it, so the line starts at
+// the corner.
+auto FrameRenderer::DrawLocationLabel(const Row& row, int y) -> int {
+  const PreparedPart& part = *row.part;
+  int line_x = content_x_;
+  int text_x = content_x_ + LabelIndentWidth;
+  int bar_x = text_x - LabelFrameWidth;
+  const Style& style = part.underline_style;
+  Terminal::LineWeight weight = LabelWeight(part);
+  int next_y = DrawLabelText(part, row.text, text_x, y, /*is_label_row=*/false);
+  DrawBar(bar_x, y, next_y, style, weight);
+  buffer_->DrawVerticalLine(line_x, y, 1, style, LineEnd::Edge, LineEnd::Center,
+                            weight);
+  buffer_->DrawHorizontalLine(line_x, y, bar_x - line_x + 1, style,
+                              LineEnd::Center, LineEnd::Center, weight);
+  return next_y;
+}
+
+auto FrameRenderer::DrawFrame(Row::Kind kind, int y, int next_y) -> void {
+  // The frame's line runs the whole height of the row, edge to edge, so that
+  // consecutive rows' lines join without either reaching into the other's
+  // cells. Only the first row's line starts at a center, which leaves that
+  // cell a corner for the location row to turn. The line is drawn a row at a
+  // time: drawing it first would need its full height, which isn't known until
+  // the rows that wrap are drawn, and drawing it last would cover the glyphs
+  // drawn over it below.
+  buffer_->DrawVerticalLine(frame_x_, y, next_y - y, FrameStyle(),
+                            y == 0 ? LineEnd::Center : LineEnd::Edge,
+                            LineEnd::Edge);
+  char32_t glyph = glyphs_.dotted_frame;
+  Style style = dotted_frame_style_;
+  switch (kind) {
+    case Row::Kind::Underline:
+    case Row::Kind::Label:
+    case Row::Kind::RoutedLabel:
+    case Row::Kind::LocationLabel:
+      break;
+    case Row::Kind::Elision:
+      glyph = glyphs_.elision;
+      style = FrameStyle();
+      break;
+    case Row::Kind::Location:
+    case Row::Kind::Path:
+    case Row::Kind::Source:
+      return;
+  }
+  for (int row_y : llvm::seq(y, next_y)) {
+    buffer_->DrawCodePoint(frame_x_, row_y, glyph, style);
+  }
+}
+
+auto FrameRenderer::LabelWeight(const PreparedPart& part) const
+    -> Terminal::LineWeight {
+  return part.is_leading && charset_ == Charset::Utf8
+             ? Terminal::LineWeight::Heavy
+             : Terminal::LineWeight::Light;
+}
+
+auto FrameRenderer::DrawLabelText(const PreparedPart& part,
+                                  llvm::StringRef text, int x, int y,
+                                  bool is_label_row) -> int {
+  Style style;
+  if (part.is_leading) {
+    x = buffer_->DrawText(x, y, part.level_text, part.style).x;
+    style = Style().Bold();
+  }
+  return DrawWrapped(*buffer_, x, y, columns_ - x, text,
+                     part.KindSuffixOn(is_label_row), style);
+}
+
+auto FrameRenderer::DrawBar(int x, int y, int next_y, const Style& style,
+                            Terminal::LineWeight weight) -> void {
+  for (int bar_y : llvm::seq(y, next_y)) {
+    buffer_->DrawVerticalLine(x, bar_y, 1, style, LineEnd::Edge, LineEnd::Edge,
+                              weight);
+  }
+}
+
+auto FrameRenderer::DrawLabelLine(const PreparedPart& part, int x, int y,
+                                  const Style& style,
+                                  Terminal::LineWeight weight) -> void {
+  CARBON_CHECK(underline_y_ >= 0,
+               "A label row follows the underline row it is placed under.");
+  if (part.is_leading) {
+    DrawLeadingLabelLine(*buffer_, x, underline_y_, y, style, weight);
+  } else {
+    DrawCrossing(x, y, style);
+    buffer_->DrawVerticalLine(x, y, 1, style, LineEnd::Edge, LineEnd::Center);
+  }
+}
+
+auto FrameRenderer::DrawCrossing(int x, int to_y, const Style& style) -> void {
+  int from_y = underline_y_;
+  LineEnd start = LineEnd::Center;
+  for (auto [top, bottom] : outdented_rows_) {
+    if (bottom <= from_y || top >= to_y) {
+      continue;
+    }
+    if (top > from_y) {
+      buffer_->DrawCrossingVerticalLine(x, from_y, top - from_y, style, start);
+    }
+    from_y = bottom;
+    start = LineEnd::Edge;
+  }
+  if (from_y < to_y) {
+    buffer_->DrawCrossingVerticalLine(x, from_y, to_y - from_y, style, start);
+  }
+}
+
+// Draws the framed form: one frame holding every location row, snippet, and
+// label, with the leading part's text placed under the range that is wrong.
+// `Render` chose the geometry; `RowLayout::AddLine` windows the spans, since it
+// knows which of them share a view of a line.
 auto Renderer::RenderFramed(Terminal::OutputBufferRef out,
                             llvm::MutableArrayRef<Internal::PreparedPart> parts,
-                            int headline, Level level, int frame_x,
+                            int leading, Level level, int frame_x,
                             int content_x, int source_columns,
                             int columns) const -> void {
   Theme problem_theme = LevelTheme(level, capabilities_);
@@ -1789,233 +2322,30 @@ auto Renderer::RenderFramed(Terminal::OutputBufferRef out,
   Buffer buffer(layout_capabilities);
 
   llvm::SmallVector<Row> rows =
-      RowLayout(buffer, parts, headline, problem_theme, explanation_theme,
+      RowLayout(buffer, parts, leading, problem_theme, explanation_theme,
                 source_columns, content_x, columns)
           .LayOut();
 
-  Glyphs glyphs = Glyphs::For(capabilities_.charset);
-
-  // The headline, wrapped under itself so that a continuation of it can't read
-  // as the start of another diagnostic.
-  const PreparedPart& head = parts[headline];
-  // The separator beside an annotation runs down the frame's own column and
-  // reads as part of it, so it takes one color for the whole diagnostic rather
-  // than the color of whichever range happens to be on that row. That color is
-  // the headline's, which is what the mark in the margin and the line number
-  // beside the reported line take.
-  const Style annotation_style = MarkStyle(head.style);
-  Buffer::DrawEnd end = buffer.DrawText(0, 0, head.level_text, head.style);
-  int head_x = end.x;
-  int head_bottom = DrawWrapped(buffer, head_x, 0, columns - head_x, head.text,
-                                head.kind_suffix, Style().Bold());
-
-  // Then everything else, hanging off one vertical line down the frame's
-  // column. Its corners and tees come out of the junctions the buffer forms
-  // where the stubs meet it, and rows that mark themselves draw their glyph
-  // over it. A row that wraps pushes the ones below it down, so the cursor
-  // follows what was drawn rather than counting rows.
-  int frame_top = head_bottom;
-  int y = frame_top;
-  // The row the underlines were drawn on, which is where every label below it
-  // reaches back up to. A label can be several rows down from it, since the
-  // labels on one underline stack.
-  int annotation_y = -1;
-  // A routed label's words, held back until every connector is drawn; see the
-  // `RoutedLabel` case below.
-  struct DeferredText {
-    int x;
-    int y;
-    int columns;
-    const Row* row;
-  };
-  llvm::SmallVector<DeferredText> deferred_text;
-  for (const Row& row : rows) {
-    CARBON_CHECK(annotation_y >= 0 || (row.kind != Row::Kind::Label &&
-                                       row.kind != Row::Kind::RoutedLabel),
-                 "A label hangs off the underline laid out above it.");
-    int next_y = y + 1;
-    const PreparedPart* part = row.part;
-    // What this row draws over the frame, from `mark_from` down, or nothing to
-    // leave the frame's own line showing through.
-    std::optional<char32_t> mark;
-    Style mark_style = FrameStyle();
-    int mark_from = y;
-    switch (row.kind) {
-      case Row::Kind::Message: {
-        buffer.DrawHorizontalLine(frame_x, y, 2, FrameStyle(), LineEnd::Center,
-                                  LineEnd::Edge);
-        Buffer::DrawEnd end =
-            buffer.DrawText(content_x + 1, y, part->level_text, part->style);
-        next_y = DrawWrapped(
-            buffer, end.x, y, columns - end.x, row.text,
-            part->KindSuffixOn(/*is_label_row=*/false),
-            part->role == Part::LocationInfo ? ContextStyle() : Style());
-        mark = glyphs.annotation;
-        mark_from = y + 1;
-        break;
-      }
-      case Row::Kind::Anchor:
-        // `╭─┤ location`. The bracket is drawn as lines so that the character
-        // set decides how it looks, and so that the context above can reach
-        // down into it.
-        buffer.DrawHorizontalLine(frame_x, y, 3, FrameStyle());
-        buffer.DrawVerticalLine(frame_x + 2, y, 1, FrameStyle(), LineEnd::Edge,
-                                LineEnd::Edge);
-        buffer.DrawText(frame_x + AnchorPrefixWidth, y, part->location,
-                        Style());
-        break;
-      case Row::Kind::Context: {
-        // The connector descends into the bracket before the file name in the
-        // anchor below, so the row reads as leading to it. Drawn downwards so
-        // that several of these stack into one line.
-        int bracket_x = frame_x + 2;
-        buffer.DrawVerticalLine(bracket_x, y, 2, FrameStyle());
-        buffer.DrawHorizontalLine(bracket_x, y, ConnectorWidth - 1,
-                                  FrameStyle(), LineEnd::Center, LineEnd::Edge);
-        std::string text = ContextText(*part);
-        int text_x = bracket_x + ConnectorWidth;
-        Buffer::DrawEnd end = buffer.DrawText(text_x, y, text, ContextStyle());
-        buffer.DrawText(end.x, end.y, part->kind_suffix, KindStyle());
-        break;
-      }
-      case Row::Kind::Source:
-        DrawLineNumber(buffer, frame_x, y, row.line_number, row.points_here);
-        buffer.DrawText(content_x, y, row.text, Style());
-        break;
-      case Row::Kind::Annotation: {
-        annotation_y = y;
-        for (const PreparedPart* span : row.spans) {
-          DrawUnderline(buffer, content_x, y, *span, span->mark_style);
-        }
-        mark = glyphs.annotation;
-        mark_style = annotation_style;
-        break;
-      }
-      case Row::Kind::Label: {
-        // The label hangs to the right of the connector, which comes in from
-        // the left to meet the bar framing it, at its middle row -- the row
-        // above the middle when it has an even number of them.
-        int anchor_x = content_x + part->source.anchor;
-        int text_x = anchor_x + LabelIndentWidth;
-        int bar_x = text_x - LabelFrameWidth;
-        const Style& style = part->mark_style;
-        next_y = DrawWrapped(buffer, text_x, y, columns - text_x, row.text,
-                             part->KindSuffixOn(/*is_label_row=*/true));
-
-        // The bar is a stroke on each of the label's rows rather than one line
-        // running between them, so every cell of it reads as a bar: the one the
-        // connector arrives at is a tee rather than the corner an end would be,
-        // and a label of one row is framed the same as a label of ten.
-        for (int bar_y : llvm::seq(y, next_y)) {
-          buffer.DrawVerticalLine(bar_x, bar_y, 1, style, LineEnd::Edge,
-                                  LineEnd::Edge);
-        }
-        // The connector runs from the underline down past whatever labels are
-        // already hanging to the right of this one, all of which leave the
-        // column it descends in clear -- except a routed label, whose words
-        // are drawn last so that they win the cell; see below.
-        int meet_y = y + (next_y - y - 1) / 2;
-        DrawConnector(buffer, anchor_x, annotation_y, meet_y, style);
-        buffer.DrawHorizontalLine(anchor_x, meet_y, ConnectorWidth, style);
-        mark = glyphs.annotation;
-        mark_style = annotation_style;
-        break;
-      }
-      case Row::Kind::RoutedLabel: {
-        // The label is out-dented past its anchor, so there is no room to reach
-        // it from the left and the bar framing it is what reaches back instead:
-        // its top turns right along the row under the underline and runs to the
-        // anchor. Meeting the label at its top rather than its middle is what
-        // lets the bar sit directly against the text, which is where the width
-        // this form exists to find comes from.
-        int anchor_x = content_x + part->source.anchor;
-        int bar_x = content_x;
-        int text_x = bar_x + LabelFrameWidth;
-        const Style& style = part->mark_style;
-        DrawConnector(buffer, anchor_x, annotation_y, y, style);
-        buffer.DrawHorizontalLine(bar_x, y, anchor_x - bar_x + 1, style);
-
-        // The words reach across the full width, so a label drawn after this
-        // one -- to its left, and so below it -- runs its connector through
-        // their rows. The words win the cells they share: they are measured
-        // now, so the rows below land where they will, and drawn once every
-        // connector is down, so a connector crossing this label is interrupted
-        // by its words rather than striking through them.
-        next_y =
-            MeasureWrapped(buffer, text_x, y + 1, columns - text_x, row.text,
-                           part->KindSuffixOn(/*is_label_row=*/true));
-        deferred_text.push_back({.x = text_x,
-                                 .y = y + 1,
-                                 .columns = columns - text_x,
-                                 .row = &row});
-        buffer.DrawVerticalLine(bar_x, y, next_y - y, style, LineEnd::Center,
-                                LineEnd::Edge);
-        mark = glyphs.annotation;
-        mark_style = annotation_style;
-        break;
-      }
-      case Row::Kind::Elision:
-        mark = glyphs.elision;
-        break;
-      case Row::Kind::Gap:
-        // The frame's own line running through is all this row is.
-        break;
-      case Row::Kind::Separator:
-        // The same rule that closes the diagnostic, tee'd because the frame
-        // carries on past it.
-        buffer.DrawHorizontalLine(frame_x, y, SnippetRuleWidth, FrameStyle(),
-                                  LineEnd::Center, LineEnd::Edge);
-        break;
-    }
-
-    // The frame's line runs the whole height of the row, edge to edge, so that
-    // consecutive rows carry on into each other without either reaching into
-    // the other's cells. Only the topmost row starts at a center, which is what
-    // leaves that cell a corner for the anchor to turn. It can't be drawn in
-    // one pass afterwards because a row that wraps pushes the ones below it
-    // down, so how far it reaches isn't known until every row is drawn -- and
-    // it can't be drawn in one pass beforehand because it would cover the
-    // glyphs.
-    buffer.DrawVerticalLine(frame_x, y, next_y - y, FrameStyle(),
-                            y == frame_top ? LineEnd::Center : LineEnd::Edge,
-                            LineEnd::Edge);
-    if (mark) {
-      for (int row_y : llvm::seq(mark_from, next_y)) {
-        buffer.DrawCodePoint(frame_x, row_y, *mark, mark_style);
-      }
-    }
-    y = next_y;
-  }
-
-  // The routed labels' words, drawn over whatever connectors crossed them.
-  for (const DeferredText& text : deferred_text) {
-    DrawWrapped(buffer, text.x, text.y, text.columns, text.row->text,
-                text.row->part->KindSuffixOn(/*is_label_row=*/true));
-  }
-
-  // The closing rule turns the corner the frame's last row left for it.
-  buffer.DrawVerticalLine(frame_x, y, 1, FrameStyle(), LineEnd::Edge,
-                          LineEnd::Center);
-  buffer.DrawHorizontalLine(frame_x, y, SnippetRuleWidth, FrameStyle(),
-                            LineEnd::Center, LineEnd::Edge);
+  FrameRenderer(buffer, capabilities_.charset, frame_x, content_x, columns,
+                UnderlineStyle(parts[leading].style))
+      .Draw(rows);
   buffer.Render(out, capabilities_.color_mode);
 }
 
 // Draws the row `part` takes in the compact form -- its location with the
 // extent of its range, level word, words, and kind -- and returns whether one
-// was drawn: a part that only marks a range has nothing to say on a row of its
-// own.
+// was drawn: a part that only underlines a range has nothing to say on a row of
+// its own.
 //
 // Location information reads words first, leading to its own location, as it
 // does in the frame. Reading it the other way around would make the words say
 // the wrong thing.
-static auto DrawMessageRow(Buffer& buffer, int y, const PreparedPart& part)
+static auto DrawCompactRow(Buffer& buffer, int y, const PreparedPart& part)
     -> bool {
   // With no frame for a label to hang off, its words serve as the part's own.
   const std::string& words = part.text.empty() ? part.label : part.text;
   if (part.role == Part::LocationInfo) {
-    Buffer::DrawEnd end =
-        buffer.DrawText(0, y, ContextText(part), ContextStyle());
+    Buffer::DrawEnd end = buffer.DrawText(0, y, PathText(part), PathStyle());
     buffer.DrawText(end.x, end.y, part.kind_suffix, KindStyle());
     return true;
   }
@@ -2049,7 +2379,7 @@ auto Renderer::RenderCompact(Terminal::OutputBufferRef out,
   Buffer buffer(capabilities_);
   int y = 0;
   for (const PreparedPart& part : parts) {
-    if (DrawMessageRow(buffer, y, part)) {
+    if (DrawCompactRow(buffer, y, part)) {
       ++y;
     }
   }
@@ -2101,7 +2431,7 @@ auto PrintSnippet(llvm::raw_ostream& out, const Loc& loc, int indent) -> void {
   buffer.DrawVerticalLine(frame_x, /*y=*/0, /*length=*/2, FrameStyle());
   buffer.DrawText(frame_x - 1 - number.size(), 0, number, FrameStyle());
   buffer.DrawText(content_x, 0, source.text, Style());
-  buffer.DrawCodePoint(frame_x, 1, glyphs.annotation, FrameStyle());
+  buffer.DrawCodePoint(frame_x, 1, glyphs.dotted_frame, FrameStyle());
   buffer.DrawHorizontalLine(content_x + source.span_start, 1,
                             source.span_length, Style(), LineEnd::Edge,
                             LineEnd::Edge);
