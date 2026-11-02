@@ -100,13 +100,13 @@ let {.x = x: i32,,} = {};
 
 // --- fail_struct_pattern_missing_comma.carbon
 
-// CHECK:STDERR: fail_struct_pattern_missing_comma.carbon:[[@LINE+2]]:21: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
+// CHECK:STDERR: fail_struct_pattern_missing_comma.carbon:[[@LINE+2]]:20: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
 // CHECK:STDERR:
 let {.x = x: i32 .y = y: i32} = {};
 
 // --- fail_struct_pattern_missing_pattern.carbon
 
-// CHECK:STDERR: fail_struct_pattern_missing_pattern.carbon:[[@LINE+2]]:11: error: expected pattern [ExpectedPattern]
+// CHECK:STDERR: fail_struct_pattern_missing_pattern.carbon:[[@LINE+2]]:10: error: expected pattern [ExpectedPattern]
 // CHECK:STDERR:
 let {.x = } = {};
 
@@ -118,19 +118,19 @@ let {:i32} = {};
 
 // --- fail_struct_pattern_shorthand_missing_expression.carbon
 
-// CHECK:STDERR: fail_struct_pattern_shorthand_missing_expression.carbon:[[@LINE+2]]:9: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_struct_pattern_shorthand_missing_expression.carbon:[[@LINE+2]]:8: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 let {x: } = {};
 
 // --- fail_struct_pattern_shorthand_missing_comma.carbon
 
-// CHECK:STDERR: fail_struct_pattern_shorthand_missing_comma.carbon:[[@LINE+2]]:13: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
+// CHECK:STDERR: fail_struct_pattern_shorthand_missing_comma.carbon:[[@LINE+2]]:12: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
 // CHECK:STDERR:
 let {x: i32 y: i32} = {};
 
 // --- fail_struct_pattern_missing_equals.carbon
 
-// CHECK:STDERR: fail_struct_pattern_missing_equals.carbon:[[@LINE+2]]:9: error: expected `= value` after `.field` [ExpectedStructPatternDesignatedField]
+// CHECK:STDERR: fail_struct_pattern_missing_equals.carbon:[[@LINE+2]]:8: error: expected `= value` after `.field` [ExpectedStructPatternDesignatedField]
 // CHECK:STDERR:
 let {.x x:i32} = {};
 
@@ -148,25 +148,25 @@ let{_, .x = x: i32} = {};
 
 // --- fail_struct_pattern_extra_token_end.carbon
 
-// CHECK:STDERR: fail_struct_pattern_extra_token_end.carbon:[[@LINE+2]]:18-20: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
+// CHECK:STDERR: fail_struct_pattern_extra_token_end.carbon:[[@LINE+2]]:17: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
 // CHECK:STDERR:
 let {.x = x: i32 foo, .y = y: i32} = {};
 
 // --- fail_struct_pattern_extra_token_start.carbon
 
-// CHECK:STDERR: fail_struct_pattern_extra_token_start.carbon:[[@LINE+2]]:23: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_struct_pattern_extra_token_start.carbon:[[@LINE+2]]:22: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR:
 let {.x = x: i32, foo .y = y: i32} = {};
 
 // --- fail_struct_pattern_shorthand_extra_token_end.carbon
 
-// CHECK:STDERR: fail_struct_pattern_shorthand_extra_token_end.carbon:[[@LINE+2]]:13-15: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
+// CHECK:STDERR: fail_struct_pattern_shorthand_extra_token_end.carbon:[[@LINE+2]]:12: error: expected `,` or `}` [UnexpectedTokenAfterListElement]
 // CHECK:STDERR:
 let {x: i32 foo, y: i32} = {};
 
 // --- fail_struct_pattern_shorthand_extra_token_start.carbon
 
-// CHECK:STDERR: fail_struct_pattern_shorthand_extra_token_start.carbon:[[@LINE+2]]:18: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
+// CHECK:STDERR: fail_struct_pattern_shorthand_extra_token_start.carbon:[[@LINE+2]]:17: error: expected `:` or `:?` in binding pattern [ExpectedBindingPattern]
 // CHECK:STDERR:
 let {x: i32, foo y: i32} = {};
 
@@ -179,22 +179,22 @@ let {!x = x: i32} = {};
 // --- fail_struct_pattern_extra_token_middle.carbon
 
 // recover on `=`
-// CHECK:STDERR: fail_struct_pattern_extra_token_middle.carbon:[[@LINE+2]]:9-11: error: expected `= value` after `.field` [ExpectedStructPatternDesignatedField]
+// CHECK:STDERR: fail_struct_pattern_extra_token_middle.carbon:[[@LINE+2]]:8: error: expected `= value` after `.field` [ExpectedStructPatternDesignatedField]
 // CHECK:STDERR:
 let {.x foo = x: ()} = {};
 
 // no equals or comma - recover on `}`
-// CHECK:STDERR: fail_struct_pattern_extra_token_middle.carbon:[[@LINE+2]]:9-11: error: expected `= value` after `.field` [ExpectedStructPatternDesignatedField]
+// CHECK:STDERR: fail_struct_pattern_extra_token_middle.carbon:[[@LINE+2]]:8: error: expected `= value` after `.field` [ExpectedStructPatternDesignatedField]
 // CHECK:STDERR:
 let {.x foo x: ()} = {};
 
 // no equals, trailing comma - recover on `,`
-// CHECK:STDERR: fail_struct_pattern_extra_token_middle.carbon:[[@LINE+2]]:9-11: error: expected `= value` after `.field` [ExpectedStructPatternDesignatedField]
+// CHECK:STDERR: fail_struct_pattern_extra_token_middle.carbon:[[@LINE+2]]:8: error: expected `= value` after `.field` [ExpectedStructPatternDesignatedField]
 // CHECK:STDERR:
 let {.x foo x: (),} = {};
 
 // no equals, second field - recover on `,`
-// CHECK:STDERR: fail_struct_pattern_extra_token_middle.carbon:[[@LINE+2]]:9-11: error: expected `= value` after `.field` [ExpectedStructPatternDesignatedField]
+// CHECK:STDERR: fail_struct_pattern_extra_token_middle.carbon:[[@LINE+2]]:8: error: expected `= value` after `.field` [ExpectedStructPatternDesignatedField]
 // CHECK:STDERR:
 let {.x foo x: (), .y = y: ()} = {};
 
@@ -224,13 +224,13 @@ let{x: i32, {y: i32, z: i32}} = {};
 
 // --- fail_struct_pattern_unused_shorthand.carbon
 
-// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:7: error: anonymous binding found in struct pattern; use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
+// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:6: error: anonymous binding found in struct pattern; use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
 // CHECK:STDERR:
 var {_: i32} = {};
-// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:11: error: anonymous binding found in struct pattern; use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
+// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:10: error: anonymous binding found in struct pattern; use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
 // CHECK:STDERR:
 let {ref _: i32} = {};
-// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:11: error: anonymous binding found in struct pattern; use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
+// CHECK:STDERR: fail_struct_pattern_unused_shorthand.carbon:[[@LINE+2]]:10: error: anonymous binding found in struct pattern; use `.field = _: field_type` or `unused field: field_type` [AnonymousBindingInStructPattern]
 // CHECK:STDERR:
 let {var _: i32} = {};
 

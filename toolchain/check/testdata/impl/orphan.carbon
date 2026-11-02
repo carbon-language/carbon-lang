@@ -351,8 +351,7 @@ library "[[@TEST_NAME]]";
 
 import library "use_extern_class";
 
-// CHECK:STDERR: fail_todo_extern_class.carbon:[[@LINE+2]]:1-15: error: redeclaration of `class C` is redundant [RedeclRedundant]
-// CHECK:STDERR: imported from: fail_todo_extern_class.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_todo_extern_class.carbon:[[@LINE+1]]:1-15: error: redeclaration of `class C` is redundant [RedeclRedundant]
 extern class C;
 
 // --- fail_use_extern_class.carbon

@@ -163,7 +163,11 @@ struct Loc {
   int32_t column_number = -1;
 
   // The number of bytes the location covers in `line`, starting at
-  // `column_number`. Should always be at least 1.
+  // `column_number`.
+  //
+  // Zero names the point just before `column_number`, where something missing
+  // would be written. That point can be just past the end of `line`, so
+  // `column_number` can be one more than the line's length.
   //
   // This is the range underlined in the source snippet. A message's own
   // location is a point that an editor puts a cursor on, so where a range was
@@ -362,8 +366,8 @@ struct Diagnostic {
 // A context names the operation that failed, and when a diagnostic has one that
 // is what the reader is told about; the message is then read against the code
 // like anything else explaining it. Anything presenting a diagnostic as a
-// single sentence -- the headline of the rendering, an editor's hover text --
-// wants this rather than the message.
+// single sentence, such as an editor's hover text, uses this instead of the
+// message.
 inline auto LeadingContext(const Diagnostic& diagnostic) -> const Context* {
   return diagnostic.contexts.empty() ? nullptr : &diagnostic.contexts.front();
 }

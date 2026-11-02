@@ -31,25 +31,25 @@ class A {
 }
 
 class B {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:12-22: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:11: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
   // CHECK:STDERR:
   friend X extra_token;
 }
 
 class C {
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:9: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
+  // CHECK:STDERR:
   friend
-// CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:1: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
-// CHECK:STDERR:
 }
 
 class D {
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:11: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:
   friend X
-// CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:1: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR:
 }
 
 class E {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:10-14: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
+  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:10-14: error: expected identifier for friend declaration; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierForFriend]
   // CHECK:STDERR:
   friend class;
 }
@@ -108,7 +108,8 @@ class E {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'E'
 // CHECK:STDOUT:   │ ╭─ClassDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─FriendIntroducer 'friend'
-// CHECK:STDOUT:   │ ├─FriendDecl ';' has_error
+// CHECK:STDOUT:   │ │ ├─IdentifierNameExpr 'class'
+// CHECK:STDOUT:   │ ├─FriendDecl ';'
 // CHECK:STDOUT:   ├─ClassDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

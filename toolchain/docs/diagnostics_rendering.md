@@ -74,20 +74,20 @@ and one or more **ranges** that the problem covers: the location's own, plus
 any the emitter added, such as the operand of an `&` that has no address to
 take. A range containing the location is underlined instead of the location
 itself, and the message's text is placed under that range; every other range
-is underlined by itself. In the rendered form the text appears under the range
-it marks, and in the compact form or an editor it appears by itself, so it is
-worded for both.
+is underlined by itself. In the rendered form the text appears under its range,
+and in the compact form or an editor it appears by itself, so it is worded for
+both.
 
 **Labels** are attached to the message to explain it. A label is a range of
 source with optional **text** saying what that range has to do with the
-problem, read together with the code it marks: `declared here` is not a
-sentence anyone would read alone. A label with no text marks its range and
-nothing more, telling the reader to look there but not why, which is all a
+problem, read together with the code it is attached to: `declared here` is not
+a sentence anyone would read alone. A label with no text underlines its range
+and nothing more, telling the reader to look there but not why, which is all a
 Clang note's ranges convey.
 
 The **path** is how the message's location was reached: an import, an
 `#include`, a macro expansion. Each **step** is drawn as a single
-`<text>: <location>` row above the anchor of the file it reached, with no
+`<text>: <location>` row above the location row of the file it reached, with no
 snippet. The emitter calls a step location information.
 
 Which code emits the message and which attaches a label is the emitter's
@@ -218,61 +218,62 @@ it, under the exact range that is wrong:
 
 ```
        ╷ ╭── imported from: c.carbon:2:1        path row
-       ├─┤ b.carbon:3:1                         anchor
-->   3 │ fn Shape() {}                          source row, marked in the margin
-       · ━━━━━━┳━━━━━                           mark row: the mark
-       ·       ┗━━┫ error: duplicate name ...   label row: connector, bar, text
+       ├─┤ b.carbon:3:1                         location row
+->   3 │ fn Shape() {}                          source row, `->` in the margin
+       · ━━━━━━┳━━━━━                           underline row: the heavy underline
+       ·       ┗━━┫ error: duplicate name ...   label row: label line, bar, text
        ┆                                        elision
-       ├─┤ a.carbon:3:7                         anchor for a second file
+       ├─┤ a.carbon:3:7                         location row for a second file
      3 │ class Shape {}                         source row
-       ·       ──┬──                            mark row
+       ·       ──┬──                            underline row
        ·         ╰──┤ previously declared here  label row
        ╰────                                    close
 ```
 
--   The **frame** runs from the `╭` of the first anchor to the `╰────`
+-   The **frame** runs from the `╭` of the first location row to the `╰────`
     **close**.
 
--   An **anchor**, `╭─┤ <file>:<line>:<column>`, gives the location of the part
-    whose snippet is below it: the message's, or a label's for a file the
+-   A **location row**, `╭─┤ <file>:<line>:<column>`, gives the location of the
+    part whose snippet is below it: the message's, or a label's for a file the
     message is not in. It is a location to go to, not the first row shown:
     ranges in one file share one view of it in source order, so a declaration
-    above the problem is drawn above the message, and the anchor's line can
-    name a row further down. Unknown parts of the location are omitted from
-    the right. The frame's first anchor starts with `╭`, any other with `├`.
+    above the problem is drawn above the message, and the location row's line
+    can name a row further down. Unknown parts of the location are omitted from
+    the right. The frame's first location row starts with `╭`, any other with
+    `├`.
 
 -   A **source row** is a line of the file, numbered in the gutter. The line
-    the message is placed under is marked `->` in the **margin**, and its
-    number takes the level's color: that is where to begin reading, wherever
-    it is in the frame.
+    the message is placed under has `->` in the **margin**, and its number
+    takes the level's color: that is where to begin reading, wherever it is in
+    the frame.
 
--   A **mark row** holds the **marks**, the underlines under ranges, with `·`
-    in place of the frame so the row isn't mistaken for source. The mark the
-    message is placed under is heavy; every other mark is light, in the
-    level's colors for
-    another of the message's ranges and the label color for a label's.
-    Everything marking one line goes on one row.
+-   An **underline row** holds the **underlines** under ranges, with `·` in
+    place of the frame so the row isn't mistaken for source. The underline the
+    message is placed under is heavy; every other underline is light, in the
+    level's colors for another of the message's ranges and the label color for a
+    label's. Every underline for one line goes on one row.
 
--   A **label row** holds the text placed under a mark: a **connector** leaves
-    the mark at a tee and meets the **bar** framing the text, `╰──┤`. The
-    message's row is a label row beginning with the **level word**, `error:`,
-    with bold text and a heavy connector and bar.
+-   A **label row** holds the text placed under an underline: a **label line**
+    leaves the underline at a tee and meets the **bar** framing the text,
+    `╰──┤`. The message's row is a label row beginning with the **level word**,
+    `error:`, with bold text and a heavy label line and bar.
 
 -   An **elision row**, `┆`, continues the frame as a dotted line across
-    whatever isn't contiguous: skipped lines, or the step to the next anchor. A
-    single skipped line is shown instead, which takes the same number of rows.
+    whatever isn't contiguous: skipped lines, or the step to the next location
+    row. A single skipped line is shown instead, which takes the same number of
+    rows.
 
--   A **path row**, `╭── <text>: <location>`, is drawn above an anchor and
+-   A **path row**, `╭── <text>: <location>`, is drawn above a location row and
     states how that file was reached, its line continuing down into the
-    anchor's bracket.
+    location row's bracket.
 
 -   A part with **no source**, because its location names only a file or nothing
-    at all, is the fallback. It still gets an anchor, naming what location it
-    has or `<no location>`, and its text is placed under the anchor instead of
-    under a mark, starting at the source's first column. A message's text is
-    placed the same way, beginning with the level word, with the `->` on its
-    anchor, and the file's other ranges follow under that anchor past an
-    elision:
+    at all, is the fallback. It still gets a location row, naming what location
+    it has or `<no location>`, and its text is placed under the location row
+    instead of under an underline, starting at the source's first column. A
+    message's text is placed the same way, beginning with the level word, with
+    the `->` on its location row, and the file's other ranges follow under that
+    location row past an elision:
 
     ```
     ->     ╭─┤ thunk.carbon
@@ -295,50 +296,52 @@ it, under the exact range that is wrong:
 ### Finding the message
 
 There is no headline. Everything that makes the message findable is on its own
-row: the level word, its weight and color, the heavy mark, and the `->` in the
-margin of its line. With color the red `error:` is the first thing seen;
-without it the `->` points to the heavy mark, whose connector runs down to the
-sentence. The reading order is the same either way: the sentence and its code,
-the other labels as needed, and the anchors as the coordinates for going there.
+row: the level word, its weight and color, the heavy underline, and the `->` in
+the margin of its line. With color the red `error:` is the first thing seen;
+without it the `->` points to the heavy underline, whose label line runs down to
+the sentence. The reading order is the same either way: the sentence and its
+code, the other labels as needed, and the location rows as the coordinates for
+going there.
 
 The drawback is that the message is not at a fixed row of its frame, since a
 declaration above the problem is drawn first. The fixed positions to scan for
 in a long log are the `╭` that starts every diagnostic and the `->` in column
 zero, drawn once per frame on the row to begin reading at. A message with no
-source to mark is placed under its anchor, and the `->` marks the anchor.
+source to underline is placed under its location row, and the `->` points to
+that row.
 
 One frame per diagnostic, rather than one per message, shows the reader where
 one problem ends and the next begins. Each file the diagnostic points into
-gets an anchor inside that frame, and the frame continues as a dotted `┆`
+gets a location row inside that frame, and the frame continues as a dotted `┆`
 rather than breaking.
 
 The message is placed under its location's range unless another of its ranges
 contains that location, in which case that range is used instead: the location
 is a point chosen for a cursor, and the range shows what the problem covers.
-Overlapping ranges are drawn widest first, so the narrowest mark on a column is
-the one left visible, except that the heavy mark is drawn last so nothing
-repaints it. A range inside it appears only as the tee where its connector
-leaves the heavy stroke, or not at all if it has no text.
+Overlapping ranges are drawn widest first, so the narrowest underline on a
+column is the one left visible, except that the heavy underline is drawn last so
+nothing repaints it. A range inside it appears only as the tee where its label
+line leaves the heavy underline, or not at all if it has no text.
 
 ### Placing the text
 
-The rows under a mark row hold the text placed under its marks, laid out by
-these rules in this order.
+The rows under an underline row hold the text placed under its underlines, laid
+out by these rules in this order.
 
 **Order.** The rows read top to bottom the way the code reads left to right: the
 message first, then each label in the order of its range. Each label's text
 starts two columns right of the text above, so the indentation steps with the
 order.
 
-**Meeting the text.** A connector reaches the bar on the first row of its text,
+**Meeting the text.** A label line reaches the bar on the first row of its text,
 where the level word is, so following the heavy line arrives at the start of
 the sentence. The bar continues down every row the text wraps onto.
 
 **Placement.** Every label's text, the message's included, starts right of every
-connector's column, so a connector descending to a later label runs beside the
+label line's column, so a label line descending to a later label runs beside the
 text above it, never behind it.
 
-**Crossings.** Reading order makes a later connector descend through rows
+**Crossings.** Reading order makes a later label line descend through rows
 already drawn. Earlier rows keep what they drew: the descending line breaks
 around each run it meets in a single cell, never at a junction, and the gap
 shows that the two don't connect. On a terminal wide enough that nothing wraps
@@ -346,33 +349,33 @@ this is the common shape: a label right of a one-row message descends `┬`, a
 gap, `╰`, with no vertical cell showing. The tee and the corner are what show
 the connection.
 
-**Out-dented blocks.** Text that does not fit under its mark, because its
-widest word does not fit right of the connector, is out-dented to the source's
+**Out-dented blocks.** Text that does not fit under its underline, because its
+widest word does not fit right of the label line, is out-dented to the source's
 column (see [Fitting the terminal](#fitting-the-terminal)). A block occupies
-its rows entirely, blank cells included, so a connector descending past it
+its rows entirely, blank cells included, so a label line descending past it
 skips those rows and resumes below.
 
 **Quoted code.** Wrapping breaks at spaces, except inside backticks: a quoted
 type or snippet moves to the next row whole or extends past the edge like a
 path.
 
-A mark and the connector and bar of its label take the color of the message they
-belong to, following `rustc`; the label's text does not, since color belongs on
-what it points at. Only the message's marks are heavy and bold: the heavy
-strokes supply the emphasis where a terminal ignores bold on line art, and bold
-matches the marks to the text where it doesn't.
+An underline and the label line and bar of its label take the color of the
+message they belong to, following `rustc`; the label's text does not, since
+color belongs on what it points at. Only the message's underlines are heavy and
+bold: the heavy stroke weight supplies the emphasis where a terminal ignores
+bold on line art, and bold matches the underlines to the text where it doesn't.
 
 Ranges that touch would run together, so an end that meets another range stops
 at the center of its cell, leaving a gap, but only where the range still has a
-column for its label's connector. A one-column mark that gives up an end has
-nothing to tee into, so its connector is drawn down the column in place of it,
-from the cell's center, and two such columns side by side look like two marks.
-ASCII has no half cell, so it does not draw the gap.
+column for its label line. A one-column underline that gives up an end has
+nothing to tee into, so its label line is drawn down the column in place of it,
+from the cell's center, and two such columns side by side look like two
+underlines. ASCII has no half cell, so it does not draw the gap.
 
 ### Several files in one diagnostic
 
-Each file a diagnostic points into gets an anchor, in the order the parts reach
-it, and the frame runs down through all of them.
+Each file a diagnostic points into gets a location row, in the order the parts
+reach it, and the frame runs down through all of them.
 
 Only the path to the problem itself is drawn: the message's own location, never
 a label's. How the file holding a declaration was reached is rarely useful to
@@ -410,49 +413,49 @@ Sixty columns is a guess; nothing depends on it being right.
 
 Clang's diagnostics are drawn here rather than by Clang. Its message, location,
 ranges, and fix-its each become the thing they correspond to. A location names a
-point and is marked as the one column Clang's caret marks; a range containing
-that point is used instead, the `~~~` of `^~~~`, so the text is placed under the
-whole range. The diagnostic's other ranges are the message's, in the level's
-color; a note's are labels with no text, in the label color, as Clang would draw
-them. A fix-it becomes a label saying what to do, which is still shown in the
-compact form, where an inline rendering would not be; carrying the edit as data
-is [future work](#future-work).
+point and is underlined as the one column Clang's caret points to; a range
+containing that point is used instead, the `~~~` of `^~~~`, so the text is
+placed under the whole range. The diagnostic's other ranges are the message's,
+in the level's color; a note's are labels with no text, in the label color, as
+Clang would draw them. A fix-it becomes a label saying what to do, which is
+still shown in the compact form, where an inline rendering would not be;
+carrying the edit as data is [future work](#future-work).
 
 `SemIR::ConvertClangRangeToLoc` turns a Clang range into the location the
 renderer needs, on both the path with a Carbon `Context` and the one without.
 Several notes on one line share its source row, each placed under its own
-mark.
+underline.
 
 Overload-resolution candidate notes are written as
-`<what was considered>: <why it was not viable>` and mark the source the second
-half is about, so each becomes two labels: the candidate on the declaration the
-note names, and the reason on what Clang marked. The notes split are listed by
-kind, since any note might contain a colon. Moving the split upstream is
-[future work](#future-work).
+`<what was considered>: <why it was not viable>` and are located at the
+source the second half is about, so each becomes two labels: the candidate on
+the declaration the note names, and the reason on the source Clang located it
+at. The notes split are listed by kind, since any note might contain a colon.
+Moving the split upstream is [future work](#future-work).
 
 The `#include` and macro expansion stacks arrive as location information and
 read `included from`, `imported from module at`, and `expanded from macro
-defined at` above the anchor of the message's own location. They are left out
-for a note, as Clang leaves them out.
+defined at` above the location row of the message's own location. They are left
+out for a note, as Clang leaves them out.
 
 ## Style
 
 ### The palette
 
-Styles are named for what they mark, so changing a color is one edit.
+Styles are named for what they apply to, so changing a color is one edit.
 
 | Element                      | Style                 | Rationale                                                                                   |
 | :--------------------------- | :-------------------- | :------------------------------------------------------------------------------------------ |
 | `error`                      | bold, bright red      | Clang, GCC, and `rustc` agree.                                                              |
 | `warning`                    | bold, bright yellow   | `rustc`'s choice and the conventional caution color; Clang and GCC use magenta.             |
-| `note`                       | bold, bright cyan     | GCC's choice; distinct from error and warning at any brightness. Begins a label's line in the compact form; in the frame a label's text is placed under its mark or anchor with no level word. |
+| `note`                       | bold, bright cyan     | GCC's choice; distinct from error and warning at any brightness. Begins a label's line in the compact form; in the frame a label's text is placed under its underline or location row with no level word. |
 | Message                      | bold, no color        | The longest run of text; color belongs on what it points at. Bold only when placed under code. |
 | Frame                        | bold, bright blue     | `rustc`'s choice. Not dim, which several terminals don't implement.                        |
 | Line numbers                 | bright blue           | Not bold, so the one number colored as the reported line stands out.                        |
-| Location in an anchor        | plain                 | The bracket already delimits it.                                                            |
+| Location in a location row   | plain                 | The bracket already delimits it.                                                            |
 | Location in the compact form | bold                  | Begins the line with nothing around it.                                                     |
-| The message's marks          | the level color, bold | Makes the range and the sentence one unit.                                                  |
-| A label's marks and connectors | the label ramp      | Connects a mark to its text. Not bold or heavy: that emphasis is the message's alone.      |
+| The message's underlines     | the level color, bold | Makes the range and the sentence one unit.                                                  |
+| A label's underlines and label lines | the label ramp | Connects an underline to its text. Not bold or heavy: that emphasis is the message's alone. |
 | Path                         | dim                   | How the reader got here, not what is wrong.                                                 |
 | Kind                         | dim                   | Only present under a flag.                                                                  |
 
@@ -469,9 +472,9 @@ express more, colors are given as RGB, and each theme gets a ramp of three:
 
 A ramp is assigned darker, center, lighter, so several ranges on one line read
 as a progression; a range with no others of its theme beside it takes the
-center. The mark the message is placed under always takes the center, and its
-other ranges on that line take successive colors from the ramp, with the center
-left out.
+center. The underline the message is placed under always takes the center, and
+its other ranges on that line take successive colors from the ramp, with the
+center left out.
 
 The three centers are at one lightness: bright yellow is over four times the
 luminance of bright red, which would make a warning brighter than an error, and
@@ -487,40 +490,41 @@ rendered without dim would make the frame as prominent as the code.
 
 ### Character set
 
-| Element                     | `Charset::Utf8`   | `Charset::Ascii`         |
-| :-------------------------- | :---------------- | :----------------------- |
-| Frame and connectors        | `│ ╭ ├ ╰ ─ ┤ ╯`   | `\| . \| ' - \| '`       |
-| Frame stub above a path row | `╷`               | `\|`                     |
-| Mark and label rows' frame  | `·`               | `:`                      |
-| Elision                     | `┆`               | `:`                      |
-| Light marks                 | `─ ┬ ╷ ╴ ╶`       | `- . \| - -`             |
-| The message's marks         | `━ ┳ ┗ ┫ ┃ ╻ ╸ ╺` | `^ ^ ' \| \| ^ ^ ^`      |
-| Out-dented message's reach  | `┏ ┛`             | `. '`                    |
-| A label's tee on the heavy  | `┯`               | `.`                      |
-| The margin's pointer        | `->`              | `->`                     |
+| Element                         | `Charset::Utf8`   | `Charset::Ascii`         |
+| :------------------------------ | :---------------- | :----------------------- |
+| Frame and label lines           | `│ ╭ ├ ╰ ─ ┤ ╯`   | `\| . \| ' - \| '`       |
+| Frame's start above a path row  | `╷`               | `\|`                     |
+| Underline and label rows' frame | `·`               | `:`                      |
+| Elision                         | `┆`               | `:`                      |
+| Light underlines                | `─ ┬ ╷ ╴ ╶`       | `- . \| - -`             |
+| The message's underlines        | `━ ┳ ┗ ┫ ┃ ╻ ╸ ╺` | `^ ^ ' \| \| ^ ^ ^`      |
+| Out-dented message's reach      | `┏ ┛`             | `. '`                    |
+| A label's tee on the heavy      | `┯`               | `.`                      |
+| The margin's pointer            | `->`              | `->`                     |
 
-The last two light marks and the last two heavy ones are ends that stop at the
-center of their cell, the gap between touching ranges.
+The last two light underline glyphs and the last two heavy ones are ends that
+stop at the center of their cell, the gap between touching ranges.
 
 Everything is drawn as lines through `Terminal::Buffer`, which picks the glyph
-for the character set and forms corners and tees where lines meet, so a
-connector joins an underline at a junction and a light connector on the heavy
+for the character set and forms corners and tees where lines meet, so a label
+line joins an underline at a junction and a light label line on the heavy
 underline forms `┯`. Each glyph is one column in both character sets, so the
-frame occupies the same columns. A label's connector never joins the message's:
-sharing its column it leaves the shared stretch heavy, and crossing its rows it
-gaps.
+frame occupies the same columns. No other label line joins the message's:
+sharing its column one leaves the shared stretch heavy, and crossing its rows
+one gaps.
 
-ASCII has no weights, so weight degrades to one distinction. A cell holding a
-heavy stroke that no line enters from above is `^`, the emphatic underline C++
-compilers have long used: the heavy run, the tee the message's own connector
-leaves it by, and a one-column mark that the connector replaces. The connector
-below keeps a label's strokes. A light tee degrades to `.`, the corner for a
-line leaving downward, on a light run or the heavy one: the dashes either side
-draw the through-stroke, and the branch is the only thing marking the connection
-when the connector below may be rows away with only gaps between. `+` is a
-crossing where lines connect, which a diagnostic never draws.
+ASCII has no weights, so weight degrades to one distinction. A cell with a heavy
+line leaving it that no line enters from above is `^`, the emphatic underline
+C++ compilers have long used: the heavy underline, the tee where the message's
+own label line leaves it, and a one-column underline that the label line
+replaces. Below that cell the label line is drawn as a light line, as a label's
+is. A light tee degrades to `.`, the corner for a line leaving downward, on a
+light underline or the heavy one: the dashes either side draw the underline, and
+the `.` is the only thing showing where the label line leaves it when the rest
+of the label line may be rows away with only gaps between. `+` is a crossing
+where lines connect, which a diagnostic never draws.
 
-A run of `~` provides no junction for a connector to join, and Unicode has no
+A run of `~` provides no junction for a label line to join, and Unicode has no
 one-column wavy character. A glyph also has to be one column in practice, not
 only by the width tables: a terminal that counts one as two cells shifts the
 rest of its row, and in the margin that puts the source a column off from its
@@ -533,8 +537,8 @@ something other than color, so plain output loses appearance and no information.
 
 ## Fitting the terminal
 
-Nothing a diagnostic says is ever dropped; source outside a marked range is what
-gets elided. The width comes from `COLUMNS` if exported, otherwise from the
+Nothing a diagnostic says is ever dropped; source outside an underlined range is
+what gets elided. The width comes from `COLUMNS` if exported, otherwise from the
 terminal with `TIOCGWINSZ`, and otherwise is the width code is formatted to plus
 the gutter, so a formatted line is shown whole.
 
@@ -548,15 +552,15 @@ the gutter, so a formatted line is shown whole.
     another diagnostic. Wrapping breaks only at spaces outside backticks, so a
     path, a URL, or a quoted type overhangs rather than splitting.
 
--   Connectors slide left before any text wraps. Since text starts right of
-    every connector, making room for one label's text can require moving
-    several: each connector right of where the text needs to start slides
+-   Label lines slide left before any text wraps. Since text starts right of
+    every label line, making room for one label's text can require moving
+    several: each label line right of where the text needs to start slides
     within its own range, as far as the widest word requires, whichever label
     it belongs to.
 
 -   A label whose widest word still does not fit is out-dented to the
     source's column, keeping its place in the reading order, with the top of
-    its bar turning right to reach back to its connector. Several such blocks
+    its bar turning right to reach back to its label line. Several such blocks
     stack in that order.
 
 ## Normalizing source text
@@ -582,11 +586,11 @@ Generating them is the HTML target under [Future work](#future-work).
 The message is placed under the operator, which connects the syntax to the
 interface it reports missing, a rule the reader has no other way to learn. The
 operands are labeled with the types they contributed, since a type is nothing
-the source can show. Their marks take successive colors from the label ramp, the
-labels read in operand order stepping right, and the right operand's connector
-runs beside the message, crossing its run in single cells. That connector is at
-its range's start rather than its middle because the message's text occupies the
-columns its middle would need.
+the source can show. Their underlines take successive colors from the label
+ramp, the labels read in operand order stepping right, and the right operand's
+label line runs beside the message, crossing its line in single cells. That
+label line is at its range's start rather than its middle because the message's
+text occupies the columns its middle would need.
 
 <!-- The colored examples are the renderer's terminal output with its ANSI
 styling transcribed into inline-styled HTML, so that the rendered markdown
@@ -611,8 +615,9 @@ rendered rather than raw. -->
 ### Several files, reached by an import
 
 The problem is in an imported file, so the path by which the reader's own build
-reached it draws above its anchor, dim. The declaration it collides with gets a
-bare anchor, since a label's path is never drawn, and the label marks the name.
+reached it draws above its location row, dim. The declaration it collides with
+gets a location row with no path, since a label's path is never drawn, and the
+label is attached to the name.
 
 <!-- rumdl-disable -->
 
@@ -659,9 +664,9 @@ completing a type, attached one to whatever was diagnosed inside it.
 
 ### Without color or Unicode
 
-The message's mark degrades to `^`, every other mark to `-` with a `.` where a
-label leaves it, and the `->`, the `^` run, and the level word still say where
-to look first:
+The message's underline degrades to `^`, every other underline to `-` with a `.`
+where a label line leaves it, and the `->`, the `^` run, and the level word
+still say where to look first:
 
 ```
        .-| foo.carbon:4:3
@@ -689,7 +694,7 @@ Three invariants shape the code:
 
 -   Everything is drawn as lines through the buffer, so every corner and tee is
     a junction it forms, and the ASCII fallback is whatever it draws lines
-    with. The message's marks are the same lines drawn heavy.
+    with. The message's underlines are the same lines drawn heavy.
 
 -   The renderer repairs what it is given rather than failing: a range past the
     end of its line is clamped, a location missing parts still draws, and
@@ -734,12 +739,12 @@ File tests cover the rendering end to end. `toolchain/diagnostics/testdata`
 keeps full numbering, and its `fail_rendering.carbon` checks the ASCII form.
 Every other `file_test` runs with `--terminal-unicode=always` and
 `--no-diagnostic-line-numbers`, so its goldens are the frames nearly every
-terminal gets, with one location apiece, the leading anchor's, which autoupdate
-maintains as a `[[@LINE...]]` offset. Full numbering would make a golden depend
-on the positions of its own `CHECK` lines, and an anchor in a second file names
-lines no offset can express. The rows above the leading anchor, the path, take
-its location in `ToolchainFileTest::FinalizeCheckLines` so a frame moves as one
-block.
+terminal gets, with one location apiece, the leading location row's, which
+autoupdate maintains as a `[[@LINE...]]` offset. Full numbering would make a
+golden depend on the positions of its own `CHECK` lines, and a location row in a
+second file names lines no offset can express. The rows above the leading
+location row, the path, take its location in
+`ToolchainFileTest::FinalizeCheckLines` so a frame moves as one block.
 
 Goldens differ from what a user sees in two ways: every file test also passes
 `--include-diagnostic-kind`, so a wrapped block may use an extra row that only
@@ -753,16 +758,16 @@ None of this is needed for the rendering to be useful.
 -   Removing location-less parts: everything that reaches the renderer with
     only a filename, such as conversions in compiler-generated thunks and C++
     imports without a mapped location, restructured to carry one, and a
-    diagnostic about a file as a whole anchored at its start or end.
+    diagnostic about a file as a whole located at its start or end.
 
 -   Ranges spanning several lines, which are clamped to their first line today,
     usually a declaration's least informative part.
 
 -   Two ranges on one line too far apart to share a window. The one outside the
-    window is marked at its edge, over the `...`, rather than getting its own
-    view of the line.
+    window is underlined at its edge, over the `...`, rather than getting its
+    own view of the line.
 
--   Marking ranges within the source row, with color on or behind the text,
+-   Showing ranges within the source row, with color on or behind the text,
     where past two or three the underlines stack faster than a reader can match
     them; it has to leave the row no worse to read without color.
 
@@ -802,24 +807,24 @@ None of this is needed for the rendering to be useful.
 ## Alternatives considered
 
 -   A headline row above the frame, as an earlier iteration did. It uses a row
-    to say, away from the code, what the message says better on its mark, and
-    splits the cues a reader finds a diagnostic by between the headline and the
-    mark below. It provides a fixed row to scan for, which the `╭` corner and
-    the margin's `->` provide instead.
+    to say, away from the code, what the message says better on its underline,
+    and splits the cues a reader finds a diagnostic by between the headline and
+    the underline below. It provides a fixed row to scan for, which the `╭`
+    corner and the margin's `->` provide instead.
 
--   Stacking labels rightmost first, so no connector crosses another. Every
+-   Stacking labels rightmost first, so no label line crosses another. Every
     line stayed whole, but the rows read in reverse and the message could end
-    up mid-stack. Reading order matters more than unbroken connectors.
+    up mid-stack. Reading order matters more than unbroken label lines.
 
 -   Meeting wrapped words at their middle row, where a brace would. A reader
     following the heavy line then arrives partway through the sentence.
 
 -   Out-denting a label before its text fails to fit, whenever placing it under
-    its mark would wrap deeply. At seventy columns a message anchored far right
-    can wrap four ways in a twenty-column column where out-denting would give
-    two clean rows. Placing it under the mark is kept: out-denting adds a
-    reach-back row and moves the text away from its mark, and a threshold would
-    be one more guess.
+    its underline would wrap deeply. At seventy columns a message placed far
+    right can wrap four ways in a twenty-column column where out-denting would
+    give two clean rows. Placing it under the underline is kept: out-denting
+    adds a reach-back row and moves the text away from its underline, and a
+    threshold would be one more guess.
 
 -   Clang and GCC's location-first header. The message is what the reader
     needs, and the tooling case for the location is met by the language server
@@ -831,33 +836,33 @@ None of this is needed for the rendering to be useful.
 -   A frame per file, separated by blank lines: a blank line stops meaning
     "next diagnostic", and it uses more rows.
 
--   A heavier frame, with a blank row under each anchor, a rule between
+-   A heavier frame, with a blank row under each location row, a rule between
     snippets, and a full-width close. Each added a row that showed nothing the
     neighboring rows didn't already show.
 
--   A path above every anchor. On anything explanatory it restates the
+-   A path above every location row. On anything explanatory it restates the
     filename, and it was the most prominent text in the frame and the least
     useful.
 
 -   A message row, `├─ note: <text>`, for a part with no source, as an earlier
-    iteration did. It was a row shorter than an anchor and its label, but a
+    iteration did. It was a row shorter than a location row and its label, but a
     form of its own, which dropped the part's filename and began with a level
     word no other label has.
 
--   Closing the anchor after the location, `╭─┤ file:1:1 │`, as `ariadne`
-    draws it: the location then looks like a caption rather than where the
-    snippet comes from.
+-   Closing the location row's bracket after the location, `╭─┤ file:1:1 │`, as
+    `ariadne` draws it: the location then looks like a caption rather than where
+    the snippet comes from.
 
--   Placing the path below the anchor. It only reads correctly with the steps
-    reversed, since each row's subject is the file named on the row above.
+-   Placing the path below the location row. It only reads correctly with the
+    steps reversed, since each row's subject is the file named on the row above.
 
--   Underlining with `~`, as Clang does: a run of characters gives a connector
+-   Underlining with `~`, as Clang does: a run of characters gives a label line
     no junction to join, and doesn't degrade through the same line drawing as
     the frame.
 
 -   Reverse video on the source row instead of an underline, which halves a
-    snippet's rows. It shows nothing without color, and the mark row is where
-    every connector tees in.
+    snippet's rows. It shows nothing without color, and the underline row is
+    where every label line tees in.
 
 -   Emoji for the severity. They are one column in some terminals and two in
     others, and a font drawing one in color ignores the color asked for, which

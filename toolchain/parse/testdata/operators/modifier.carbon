@@ -25,7 +25,7 @@ fn G() {
   // CHECK:STDERR:
   a unsafe * b;
 
-  // CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:5-10: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:4: error: expected `;` after expression statement [ExpectedExprSemi]
   // CHECK:STDERR:
   a unsafe;
 

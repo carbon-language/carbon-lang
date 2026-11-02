@@ -115,14 +115,12 @@ import library "equal_constraint";
 import library "nested_rewrites";
 
 fn Calls() {
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+4]]:3-13: error: cannot convert type `bool` into type implementing `N where .(N.P) = {}` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: imported from: fail_import_rewrites.carbon:[[@LINE-5]]:1 [InImport]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+3]]:3-13: error: cannot convert type `bool` into type implementing `N where .(N.P) = {}` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: equal_constraint.carbon:9:18-35: note: initializing generic parameter `T` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   Equal(bool);
 
-  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+4]]:3-20: error: cannot convert type `i32` into type implementing `A where .(A.C) = () and .(A.B) = bool` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: imported from: fail_import_rewrites.carbon:[[@LINE-11]]:1 [InImport]
+  // CHECK:STDERR: fail_import_rewrites.carbon:[[@LINE+3]]:3-20: error: cannot convert type `i32` into type implementing `A where .(A.C) = () and .(A.B) = bool` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: nested_rewrites.carbon:10:26-61: note: initializing generic parameter `D` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   NestedRewrite(i32);

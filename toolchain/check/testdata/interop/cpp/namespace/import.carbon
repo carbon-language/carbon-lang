@@ -128,10 +128,9 @@ fn MyF() {
   // file split.
   // TODO: Pass a location into Clang when performing C++ name lookup so that
   // its error has a location attached.
-  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+6]]:3-7: error: name `error` not found [NameNotFound]
+  // CHECK:STDERR: fail_import_inline_ambiguity.carbon:[[@LINE+5]]:3-7: error: name `error` not found [NameNotFound]
   // CHECK:STDERR:
   // CHECK:STDERR: error: reference to 'N' is ambiguous [CppInteropParseError]
-  // CHECK:STDERR: included from: fail_import_inline_ambiguity.carbon:[[@LINE-11]]:10 [InCppInclude]
   // CHECK:STDERR: ./inline_ambiguity.h:2:11: note: candidate found by name lookup is 'N' [CppInteropParseNote]
   // CHECK:STDERR: ./inline_ambiguity.h:3:30: note: candidate found by name lookup is '(anonymous namespace)::N' [CppInteropParseNote]
   error;
