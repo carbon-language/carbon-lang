@@ -2182,6 +2182,46 @@ class Derived {
   extend base: Cpp.Base;
 };
 
+// --- fail_access_private_parent_member_in_unrelated_fn.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+base class A {
+  private fn F();
+}
+
+class B {
+  extend base: A;
+}
+
+inline Cpp '''
+int G() {
+  // CHECK:STDERR:        ╭─┤ fail_access_private_parent_member_in_unrelated_fn.carbon:[[@LINE+22]]:14
+  // CHECK:STDERR:        │   private fn F();
+  // CHECK:STDERR:        ·   ───────┬───────
+  // CHECK:STDERR:        ·          ╰──┤ declared here [ClassMemberDeclaration]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Carbon::B::F();
+  // CHECK:STDERR:        ·              ┳
+  // CHECK:STDERR:        ·              ┗━━┫ error: cannot access private member `F` of type `A`
+  // CHECK:STDERR:        ·                 ┃        [ClassInvalidMemberAccess]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  // CHECK:STDERR:        ╭─┤ fail_access_private_parent_member_in_unrelated_fn.carbon:[[@LINE+11]]:14
+  // CHECK:STDERR:        │   private fn F();
+  // CHECK:STDERR:        ·                 ┬
+  // CHECK:STDERR:        ·                 ╰──┤ implicitly declared private here [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   Carbon::B::F();
+  // CHECK:STDERR:        ·              ┳
+  // CHECK:STDERR:        ·              ┗━━┫ error: 'F' is a private member of 'Carbon::Main::A'
+  // CHECK:STDERR:        ·                 ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
+  Carbon::B::F();
+}
+''';
+
 // CHECK:STDOUT: --- import_non_function_member_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
