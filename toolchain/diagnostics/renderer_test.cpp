@@ -92,7 +92,7 @@ static auto Narrow() -> Terminal::Capabilities {
 // Renders `diagnostic` for `capabilities`.
 static auto Render(const Terminal::Capabilities& capabilities,
                    const Diagnostic& diagnostic, bool snippets = true,
-                   bool line_numbers = true) -> std::string {
+                   LineNumbers line_numbers = LineNumbers::All) -> std::string {
   Renderer renderer(capabilities);
   renderer.set_snippets(snippets);
   renderer.set_line_numbers(line_numbers);
@@ -101,11 +101,11 @@ static auto Render(const Terminal::Capabilities& capabilities,
   return std::string(bytes);
 }
 
-// Renders `diagnostic` framed, with line numbers off.
+// Renders `diagnostic` framed, with `LineNumbers::First`.
 static auto RenderUnnumbered(const Terminal::Capabilities& capabilities,
                              const Diagnostic& diagnostic) -> std::string {
   return Render(capabilities, diagnostic, /*snippets=*/true,
-                /*line_numbers=*/false);
+                LineNumbers::First);
 }
 
 // Renders a diagnostic with a single message at `level`.
@@ -2617,8 +2617,8 @@ TEST(RendererTest, AControlByteInAFilenameCannotBreakTheFrame) {
 }
 
 TEST(RendererTest, AControlByteInAnUnnumberedFilenameCannotBreakTheFrame) {
-  // With line numbers off, a second file's location row shows only its
-  // filename, which has its control bytes replaced the same way.
+  // With `LineNumbers::First`, a second file's location row shows only its
+  // filename, and the newline in the filename is drawn as a space.
   Loc other = {.filename = "ab\ncd.carbon",
                .line = "class C {",
                .line_number = 9,

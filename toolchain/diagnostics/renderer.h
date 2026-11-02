@@ -5,6 +5,7 @@
 #ifndef CARBON_TOOLCHAIN_DIAGNOSTICS_RENDERER_H_
 #define CARBON_TOOLCHAIN_DIAGNOSTICS_RENDERER_H_
 
+#include <cstdint>
 #include <string>
 
 #include "common/ostream.h"
@@ -18,6 +19,17 @@ namespace Carbon::Diagnostics {
 namespace Internal {
 struct PreparedPart;
 }  // namespace Internal
+
+// Which line numbers the framed form shows.
+enum class LineNumbers : int8_t {
+  // Every line of source is numbered, and every location has its line and
+  // column.
+  All,
+  // Only the first location row that has a location keeps its line and
+  // column. The gutter has no numbers, and every other location shows only its
+  // file name.
+  First,
+};
 
 // Draws diagnostics for a terminal.
 //
@@ -76,15 +88,16 @@ class Renderer {
   // which suits a build log.
   auto set_snippets(bool value) -> void { snippets_ = value; }
 
-  // Sets whether the framed form shows line numbers. With them off, the gutter
-  // has no numbers, the first location row with a location shows it in full,
-  // and every other location shows only its file name. The layout is the same
-  // as with numbers.
+  // Sets which line numbers the framed form shows. The layout is the same
+  // either way.
   //
-  // This is for golden files. Gutter numbers would make a golden depend on
-  // the positions of its own `CHECK` lines, and a second file's location row
-  // names a line that no offset can express.
-  auto set_line_numbers(bool value) -> void { line_numbers_ = value; }
+  // `LineNumbers::First` is for golden files. Adding a `CHECK` line changes the
+  // number of every source line below it, so a golden can only hold a line
+  // number as a `[[@LINE...]]` offset from its `CHECK` line. Autoupdate writes
+  // that offset for the first location row only: it doesn't rewrite gutter
+  // numbers, and a frame's `CHECK` lines are all in that row's file, so a
+  // location in another file has no offset from them.
+  auto set_line_numbers(LineNumbers value) -> void { line_numbers_ = value; }
 
   auto set_capabilities(const Terminal::Capabilities& capabilities) -> void {
     capabilities_ = capabilities;
@@ -105,7 +118,7 @@ class Renderer {
   Terminal::Capabilities capabilities_;
   bool include_kind_ = false;
   bool snippets_ = true;
-  bool line_numbers_ = true;
+  LineNumbers line_numbers_ = LineNumbers::All;
 };
 
 // Returns `loc` as `<filename>:<line>:<column>`, with the parts that are

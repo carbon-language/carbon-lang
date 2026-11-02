@@ -208,23 +208,24 @@ auto ToolchainFileTest::Run(
     filtered_test_args = test_args;
   }
 
-  // Tests capture frames without line numbers, so that a frame shows one
-  // location, which autoupdate maintains as a `[[@LINE...]]` offset, and
-  // adding a `CHECK` line above a diagnostic changes nothing inside it. A test
-  // writing any snippet or line-number flag in its `ARGS` gets the driver's
-  // defaults for the rest, which is how toolchain/diagnostics/testdata keeps
-  // full numbering. This is applied here rather than in `GetDefaultArgs` so
-  // that a test writing its own `ARGS` line still gets it.
+  // Tests pass `--diagnostic-line-numbers=first`, so the only line number in a
+  // frame is its first location row's, which autoupdate rewrites as a
+  // `[[@LINE...]]` offset. Adding a `CHECK` line above a diagnostic then
+  // doesn't change its frame. A test that sets a snippet or line-number option
+  // in its `ARGS` gets the driver's defaults for the other options, which is
+  // how toolchain/diagnostics/testdata keeps every line number. This is added
+  // here and not in `GetDefaultArgs`, so that a test with its own `ARGS` line
+  // still gets it.
   bool chooses_rendering =
       llvm::any_of(filtered_test_args, [](llvm::StringRef arg) {
         return arg == "--diagnostic-snippets" ||
                arg == "--no-diagnostic-snippets" ||
                arg == "--diagnostic-line-numbers" ||
-               arg == "--no-diagnostic-line-numbers";
+               arg.starts_with("--diagnostic-line-numbers=");
       });
   if (!chooses_rendering) {
     filtered_test_args.insert(filtered_test_args.begin(),
-                              "--no-diagnostic-line-numbers");
+                              "--diagnostic-line-numbers=first");
   }
 
   // Goldens capture box drawing, which nearly every terminal gets, so that

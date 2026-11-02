@@ -158,7 +158,7 @@ extern "C" int LLVMFuzzerTestOneInput(const unsigned char* data, size_t size) {
   // reason a compiler dies while reporting a problem. Every form has to hold to
   // it, so all of them are drawn; a crash in any is a crash in the error path.
   for (bool snippets : {true, false}) {
-    for (bool line_numbers : {true, false}) {
+    for (LineNumbers line_numbers : {LineNumbers::All, LineNumbers::First}) {
       renderer.set_snippets(snippets);
       renderer.set_line_numbers(line_numbers);
       llvm::SmallString<256> rendered;

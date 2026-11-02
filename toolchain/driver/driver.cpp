@@ -12,6 +12,7 @@
 #include "common/command_line.h"
 #include "common/pretty_stack_trace_function.h"
 #include "common/version.h"
+#include "toolchain/diagnostics/renderer.h"
 #include "toolchain/diagnostics/stream_consumer.h"
 #include "toolchain/driver/build_runtimes_subcommand.h"
 #include "toolchain/driver/build_subcommand.h"
@@ -36,7 +37,8 @@ struct Options {
   bool fuzzing = false;
   bool include_diagnostic_kind = false;
   bool diagnostic_snippets = true;
-  bool diagnostic_line_numbers = true;
+  Diagnostics::LineNumbers diagnostic_line_numbers =
+      Diagnostics::LineNumbers::All;
   bool threads = true;
   bool build_runtimes_on_demand = false;
 
@@ -157,22 +159,29 @@ against nothing, which suits a build log.
         arg_b.Set(&diagnostic_snippets);
       });
 
-  b.AddFlag(
+  b.AddOneOfOption(
       {
           .name = "diagnostic-line-numbers",
+          .value_name = "(all|first)",
           .help = R"""(
-Whether diagnostics show line numbers.
+Which line numbers diagnostics show.
 
-By default every line of source shown is numbered and every location is
-complete. `--no-diagnostic-line-numbers` leaves the lines unnumbered and keeps
-one location per diagnostic in full, normally the one it is reported at; every
-other location is reduced to its file name. Golden test files capture
-diagnostics this way so that they don't change when the lines of a test move.
+By default every line of source shown is numbered, and every location has its
+line and column. With `first`, only the first location in each diagnostic keeps
+its line and column, normally the one it is reported at. The lines of source are
+unnumbered, and every other location shows only its file name. Golden test
+files use `first` so that their expected output doesn't change when lines of a
+test move.
 )""",
       },
       [&](auto& arg_b) {
-        arg_b.Default(true);
-        arg_b.Set(&diagnostic_line_numbers);
+        arg_b.SetOneOf(
+            {
+                arg_b.OneOfValue("all", Diagnostics::LineNumbers::All)
+                    .Default(true),
+                arg_b.OneOfValue("first", Diagnostics::LineNumbers::First),
+            },
+            &diagnostic_line_numbers);
       });
 
   b.AddOneOfOption(

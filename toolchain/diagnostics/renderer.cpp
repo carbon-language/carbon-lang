@@ -1964,11 +1964,15 @@ auto Renderer::Render(Terminal::OutputBufferRef out,
     return;
   }
 
-  // Which parts get location rows doesn't depend on `location`, so this changes
-  // the text drawn and not the rows. The compact form above keeps its numbers,
-  // since autoupdate maintains the location at the start of each of its lines
-  // as an offset.
-  if (!line_numbers_) {
+  // Golden files use `LineNumbers::First`. Autoupdate rewrites only the first
+  // location row's line number as a `[[@LINE...]]` offset, and any other line
+  // number in a golden would change whenever a `CHECK` line is added above the
+  // line it names. So only that row keeps its line and column, every other
+  // location is reduced to its file name, and `FrameRenderer` omits the
+  // gutter's numbers. The rows and layout don't change. The compact form above
+  // keeps every line number, because autoupdate rewrites the location that
+  // starts each of its lines as an offset.
+  if (line_numbers_ == LineNumbers::First) {
     bool location_kept = false;
     for (PreparedPart& part : parts) {
       if (HasLocationRow(part) && !location_kept && !part.location.empty()) {
@@ -2351,7 +2355,8 @@ auto Renderer::RenderFramed(Terminal::OutputBufferRef out,
           .LayOut();
 
   FrameRenderer(buffer, capabilities_.charset, frame_x, content_x, columns,
-                UnderlineStyle(parts[leading].style), line_numbers_)
+                UnderlineStyle(parts[leading].style),
+                /*numbered=*/line_numbers_ == LineNumbers::All)
       .Draw(rows);
   buffer.Render(out, capabilities_.color_mode);
 }
