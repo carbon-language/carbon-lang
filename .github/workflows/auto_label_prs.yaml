@@ -4,6 +4,7 @@
 
 name: 'Auto label PRs'
 on:
+  # zizmor: ignore[dangerous-triggers] - {necessary to mutate the PR}
   pull_request_target:
     types: [opened, ready_for_review]
 
