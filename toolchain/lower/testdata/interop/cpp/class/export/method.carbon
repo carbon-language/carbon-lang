@@ -124,7 +124,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.A.Main(ptr noundef nonnull align 1 %self) #6 !dbg !35 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.A.Main(ptr noundef nonnull align 1 %self) #6 !dbg !35 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.A.Main(ptr %self), !dbg !37
 // CHECK:STDOUT:   ret void, !dbg !37
@@ -248,7 +248,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.ArgsA.Main(ptr noundef nonnull align 1 %self, ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #6 !dbg !81 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.ArgsA.Main(ptr noundef nonnull align 1 %self, ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #6 !dbg !81 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_29.2 = load i32, ptr %_, align 4, !dbg !85
 // CHECK:STDOUT:   %ArgsA.F.call = call i32 @_CF.ArgsA.Main(ptr %self, i32 %.loc6_29.2), !dbg !85
@@ -364,7 +364,7 @@ fn CallCallF() { Cpp.CallStaticF(); }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.StaticA.Main() #4 !dbg !112 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.StaticA.Main() #4 !dbg !112 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CF.StaticA.Main(), !dbg !113
 // CHECK:STDOUT:   ret void, !dbg !113
