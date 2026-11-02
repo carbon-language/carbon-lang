@@ -15,7 +15,8 @@ auto HandleBaseAfterIntroducer(Context& context) -> void {
                                        NodeKind::BaseColon)) {
     CARBON_DIAGNOSTIC(ExpectedAfterBase, Error,
                       "`class` or `:` expected after `base`");
-    context.emitter().Emit(*context.position(), ExpectedAfterBase);
+    context.emitter().Emit(context.PointAfterPreviousToken(),
+                           ExpectedAfterBase);
     auto base_token = *(context.position() - 1);
     auto previous_token = Lex::TokenIndex(base_token.index - 1);
     if (context.tokens().GetKind(previous_token) != Lex::TokenKind::Extend) {

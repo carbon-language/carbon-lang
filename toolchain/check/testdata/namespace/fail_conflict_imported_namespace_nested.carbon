@@ -24,8 +24,7 @@ import Other;
 // CHECK:STDERR: fail_conflict.carbon:[[@LINE-2]]:1-13: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 namespace Other;
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:10-15: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]
-// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE-6]]:1 [InImport]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:10-15: error: imported packages cannot be used for declarations [QualifiedDeclOutsidePackage]
 // CHECK:STDERR: fn.carbon:3:1-17: note: package imported here [QualifiedDeclOutsidePackageSource]
 // CHECK:STDERR:
 fn Other.Nested.F();

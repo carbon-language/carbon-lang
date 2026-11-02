@@ -20,9 +20,9 @@ match_first;
 
 // --- fail_eof.carbon
 
-match_first
-// CHECK:STDERR: fail_eof.carbon:[[@LINE+2]]:1: error: expected `{` after `match_first` [ExpectedCurlyBraceAfter]
+// CHECK:STDERR: fail_eof.carbon:[[@LINE+2]]:12: error: expected `{` after `match_first` [ExpectedCurlyBraceAfter]
 // CHECK:STDERR:
+match_first
 
 // --- with_impls.carbon
 

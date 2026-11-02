@@ -42,8 +42,7 @@ class C {
   }
 }
 
-// CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+4]]:28-33: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: imported from: fail_misusing_invalid_interface.carbon:[[@LINE-15]]:1 [InImport]
+// CHECK:STDERR: fail_misusing_invalid_interface.carbon:[[@LINE+3]]:28-33: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
 // CHECK:STDERR: fail_invalid_interface.carbon:12:3-29: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR:
 fn F(generic T: IMisuse) { T.Op(); }
@@ -66,8 +65,7 @@ class ArgC {}
 
 class C {
   impl as IMisuse where .Arg = ArgC {
-    // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+4]]:27-38: error: cannot convert type `ArgC` into type implementing `I` [ConversionFailureTypeToFacet]
-    // CHECK:STDERR: imported from: fail_using_invalid_interface.carbon:[[@LINE-7]]:1 [InImport]
+    // CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+3]]:27-38: error: cannot convert type `ArgC` into type implementing `I` [ConversionFailureTypeToFacet]
     // CHECK:STDERR: fail_invalid_interface.carbon:5:14-17: note: initializing generic parameter `T` declared here [InitializingGenericParam]
     // CHECK:STDERR:
     fn Op(unused self) -> ArgToI(ArgC) {
@@ -76,8 +74,7 @@ class C {
   }
 }
 
-// CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+4]]:28-33: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: imported from: fail_using_invalid_interface.carbon:[[@LINE-17]]:1 [InImport]
+// CHECK:STDERR: fail_using_invalid_interface.carbon:[[@LINE+3]]:28-33: error: 0 arguments passed to function expecting 1 argument [CallArgCountMismatch]
 // CHECK:STDERR: fail_invalid_interface.carbon:12:3-29: note: calling function declared here [InCallToEntity]
 // CHECK:STDERR:
 fn F(generic T: IMisuse) { T.Op(); }
