@@ -248,7 +248,7 @@ static auto BuildDefaultWitness(
                             query_specific_interface, {fn_id});
 }
 
-static auto BuildCppDestroyWitness(
+static auto BuildCppSubobjectDestroyWitness(
     Context& context, SemIR::LocId loc_id,
     SemIR::ConstantId query_self_const_id,
     SemIR::SpecificInterface query_specific_interface) -> SemIR::InstId {
@@ -260,8 +260,8 @@ static auto BuildCppDestroyWitness(
   }
   auto* class_decl = dyn_cast<clang::CXXRecordDecl>(tag_decl);
   if (!class_decl) {
-    return BuildTrivialDestroyWitness(context, loc_id, query_self_const_id,
-                                      query_specific_interface);
+    return BuildTrivialSubobjectDestroyWitness(
+        context, loc_id, query_self_const_id, query_specific_interface);
   }
   SemIR::ClangDeclSignatureId signature_id = MakeSignature(context, {});
 
@@ -271,11 +271,8 @@ static auto BuildCppDestroyWitness(
   if (fn_id == SemIR::ErrorInst::InstId || fn_id == SemIR::InstId::None) {
     return fn_id;
   }
-  return BuildDestroyWitness(
-      context, loc_id,
-      GetFacetAccessType(
-          context, context.constant_values().GetInstId(query_self_const_id)),
-      query_self_const_id, query_specific_interface, {fn_id});
+  return BuildCustomWitness(context, loc_id, query_self_const_id,
+                            query_specific_interface, {fn_id});
 }
 
 // Attempts to build a witness table entry for a C++ unary operator.
@@ -619,9 +616,9 @@ auto LookupCppImpl(Context& context, SemIR::LocId loc_id,
     case SemIR::CoreInterface::Default:
       return BuildDefaultWitness(context, loc_id, query_self_const_id,
                                  query_specific_interface);
-    case SemIR::CoreInterface::Destroy:
-      return BuildCppDestroyWitness(context, loc_id, query_self_const_id,
-                                    query_specific_interface);
+    case SemIR::CoreInterface::SubobjectDestroy:
+      return BuildCppSubobjectDestroyWitness(
+          context, loc_id, query_self_const_id, query_specific_interface);
 
     case SemIR::CoreInterface::CppRangeForIterate:
       return BuildCppRangeForIterateWitness(

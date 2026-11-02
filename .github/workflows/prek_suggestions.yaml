@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
         with:
           disable-sudo: true
           egress-policy: block
@@ -42,6 +42,7 @@ jobs:
             github.com:443
             objects.githubusercontent.com:443
             raw.githubusercontent.com:443
+            release-assets.githubusercontent.com:443
 
       - uses: reviewdog/action-setup@3f401fe1d58fe77e10d665ab713057375e39b887 # v1.3.0
         with:

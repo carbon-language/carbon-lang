@@ -80,7 +80,8 @@ struct VirtualDestructor {
 };
 ''';
 
-// CHECK:STDERR: fail_abstract.carbon:[[@LINE+2]]:1-34: error: cannot access member of interface `Core.Destroy` in type `AbstractWithVdtor` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fail_abstract.carbon:[[@LINE+3]]:1-34: error: cannot convert type `AbstractWithVdtor` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: min_prelude/parts/destroy.carbon:32:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 abstract class AbstractWithVdtor {
   extend base: Cpp.VirtualDestructor;
@@ -100,9 +101,10 @@ import Cpp;
 
 // TODO: Find a way to export this to C++ as an abstract class, despite not
 // having a vptr.
-// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+4]]:1-39: error: semantics TODO: `exporting abstract class with no abstract methods and non-virtual destructor to C++` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+5]]:1-39: error: semantics TODO: `exporting abstract class with no abstract methods and non-virtual destructor to C++` [SemanticsTodo]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+2]]:1-39: error: cannot access member of interface `Core.Destroy` in type `AbstractNonvirtualDtor` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor.carbon:[[@LINE+3]]:1-39: error: cannot convert type `AbstractNonvirtualDtor` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: min_prelude/parts/destroy.carbon:32:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 abstract class AbstractNonvirtualDtor {}
 
@@ -118,7 +120,8 @@ import Cpp;
 // TODO: We should support generating a base subobject destructor for an
 // abstract class, even though we refuse to generate a complete object
 // destructor.
-// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor_but_virtual_fns.carbon:[[@LINE+2]]:1-41: error: cannot access member of interface `Core.Destroy` in type `AbstractWithMethodNoVptr` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fail_todo_abstract_nonvirtual_dtor_but_virtual_fns.carbon:[[@LINE+3]]:1-41: error: cannot convert type `AbstractWithMethodNoVptr` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: min_prelude/parts/destroy.carbon:32:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 abstract class AbstractWithMethodNoVptr {
   abstract fn F(self);
@@ -137,7 +140,8 @@ import Cpp;
 // TODO: We should support generating a base subobject destructor for an
 // abstract class, even though we refuse to generate a complete object
 // destructor.
-// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+2]]:1-35: error: cannot access member of interface `Core.Destroy` in type `AbstractWithMethod` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fail_variable_with_abstract_method.carbon:[[@LINE+3]]:1-35: error: cannot convert type `AbstractWithMethod` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: min_prelude/parts/destroy.carbon:32:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 abstract class AbstractWithMethod {
   abstract fn F(self);
@@ -158,7 +162,8 @@ import Cpp;
 // TODO: We should support generating a base subobject destructor for an
 // abstract class, even though we refuse to generate a complete object
 // destructor.
-// CHECK:STDERR: fail_todo_abstract_method_overridden_in_cpp.carbon:[[@LINE+2]]:1-35: error: cannot access member of interface `Core.Destroy` in type `AbstractToOverride` that does not implement that interface [MissingImplInMemberAccess]
+// CHECK:STDERR: fail_todo_abstract_method_overridden_in_cpp.carbon:[[@LINE+3]]:1-35: error: cannot convert type `AbstractToOverride` into type implementing `Core.Destroy` [ConversionFailureTypeToFacet]
+// CHECK:STDERR: min_prelude/parts/destroy.carbon:32:1-39: note: while deducing parameters of generic declared here [DeductionGenericHere]
 // CHECK:STDERR:
 abstract class AbstractToOverride {
   abstract fn F(ref self);

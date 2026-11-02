@@ -13,7 +13,7 @@
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_tuple_pattern.carbon:[[@LINE+2]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR: fail_tuple_pattern.carbon:[[@LINE+2]]:6: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   let (T: type, U: type);
 }
@@ -23,7 +23,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_tuple_pattern_with_default.carbon:[[@LINE+2]]:15: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR: fail_tuple_pattern_with_default.carbon:[[@LINE+2]]:14: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   default let (T: type, U: type) = ({}, {});
 }
@@ -33,7 +33,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_var_pattern.carbon:[[@LINE+2]]:7-9: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR: fail_var_pattern.carbon:[[@LINE+2]]:6: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   let var T: type;
 }
@@ -43,7 +43,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_var_pattern_with_default.carbon:[[@LINE+2]]:15-17: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR: fail_var_pattern_with_default.carbon:[[@LINE+2]]:14: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   default let var T: type = {};
 }
@@ -83,7 +83,7 @@ interface I {
 library "[[@TEST_NAME]]";
 
 interface I {
-  // CHECK:STDERR: fail_underscore.carbon:[[@LINE+2]]:7: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR: fail_underscore.carbon:[[@LINE+2]]:7: error: expected identifier in associated constant declaration; prefix reserved word with `r#` to form a valid identifier [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   let _: {};
 }
@@ -201,7 +201,11 @@ interface I {
 // CHECK:STDOUT:   │   ├─IdentifierNameNotBeforeSignature 'I'
 // CHECK:STDOUT:   │ ╭─InterfaceDefinitionStart '{'
 // CHECK:STDOUT:   │ │ ╭─AssociatedConstantIntroducer 'let'
-// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';' has_error
+// CHECK:STDOUT:   │ │ │ ╭─IdentifierNameNotBeforeSignature '_'
+// CHECK:STDOUT:   │ │ │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ │ │ ├─StructLiteral '}'
+// CHECK:STDOUT:   │ │ ├─AssociatedConstantNameAndType ':'
+// CHECK:STDOUT:   │ ├─AssociatedConstantDecl ';'
 // CHECK:STDOUT:   ├─InterfaceDefinition '}'
 // CHECK:STDOUT:   ├─FileEnd ''
 // CHECK:STDOUT:   (root)

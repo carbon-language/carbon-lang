@@ -95,31 +95,19 @@ static auto ValidateCoreInterfaceAssociatedFunction(
   return true;
 }
 
-static auto ValidateCoreDestroy(Context& context, SemIR::LocId loc_id,
-                                SemIR::InstBlockId associated_entities_id)
-    -> bool {
+static auto ValidateCoreSubobjectDestroy(
+    Context& context, SemIR::LocId loc_id,
+    SemIR::InstBlockId associated_entities_id) -> bool {
   auto assoc_entities = context.inst_blocks().Get(associated_entities_id);
-  if (assoc_entities.size() != 3) {
-    context.TODO(
-        loc_id,
-        "interface `Core.Destroy` needs exactly 3 associated functions");
+  if (assoc_entities.size() != 1) {
+    context.TODO(loc_id,
+                 "interface `Core.SubobjectDestroy` needs exactly 1 associated "
+                 "function");
     return false;
   }
 
   if (!ValidateCoreInterfaceAssociatedFunction(context, assoc_entities[0], 1,
                                                CoreIdentifier::Op)) {
-    return false;
-  }
-
-  if (!ValidateCoreInterfaceAssociatedFunction(
-          context, assoc_entities[1], 2, CoreIdentifier::SubobjectDestroy,
-          SemIR::Function::InterfaceModifier::Final)) {
-    return false;
-  }
-
-  if (!ValidateCoreInterfaceAssociatedFunction(
-          context, assoc_entities[2], 3, CoreIdentifier::SelfDestruct,
-          SemIR::Function::InterfaceModifier::Final)) {
     return false;
   }
 
@@ -339,9 +327,9 @@ auto HandleParseNode(Context& context, Parse::InterfaceDefinitionId node_id)
 
   if (context.sem_ir().package_id() == PackageNameId::Core) {
     switch (interface_info.core_interface) {
-      case SemIR::CoreInterface::Destroy:
-        return ValidateCoreDestroy(context, node_id,
-                                   interface_info.associated_entities_id);
+      case SemIR::CoreInterface::SubobjectDestroy:
+        return ValidateCoreSubobjectDestroy(
+            context, node_id, interface_info.associated_entities_id);
       case SemIR::CoreInterface::AddAssignWith:
       case SemIR::CoreInterface::AddWith:
       case SemIR::CoreInterface::Copy:

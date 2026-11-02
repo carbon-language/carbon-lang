@@ -6,11 +6,13 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <limits>
 #include <optional>
 #include <utility>
 
 #include "common/check.h"
+#include "common/preserve_none.h"
 #include "common/vlog.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -22,6 +24,7 @@
 #include "toolchain/lex/helpers.h"
 #include "toolchain/lex/mismatched_brackets.h"
 #include "toolchain/lex/numeric_literal.h"
+#include "toolchain/lex/source_loc.h"
 #include "toolchain/lex/string_literal.h"
 #include "toolchain/lex/token_index.h"
 #include "toolchain/lex/token_info.h"
@@ -98,6 +101,14 @@ class [[clang::internal_linkage]] Lexer {
   // useful to have in the profile and it doesn't simplify by inlining at all.
   // But because it can, the compiler will flatten this otherwise.
   [[gnu::noinline]] auto MakeLines(llvm::StringRef source_text) -> void;
+#if CARBON_USE_SIMD && __AVX2__
+  // Scans 64-byte blocks of `source_text` for `'\n'` with AVX2, appends the
+  // completed `LineInfo`s to `buffer_.line_infos_`, and advances `start` and
+  // `search_start` to the start of the in-progress line and the start of the
+  // remaining `< 64`-byte tail respectively.
+  auto MakeLinesAVX2(llvm::StringRef source_text, ssize_t& start,
+                     ssize_t& search_start) -> void;
+#endif
 
   auto current_line() -> LineIndex { return line_index_; }
 
@@ -185,9 +196,6 @@ class [[clang::internal_linkage]] Lexer {
   auto LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
                              ssize_t& position) -> LexResult;
 
-  auto LexSymbolToken(llvm::StringRef source_text, ssize_t& position)
-      -> LexResult;
-
   // Given a word that has already been lexed, determine whether it is a type
   // literal and if so form the corresponding token.
   auto LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
@@ -252,7 +260,7 @@ class [[clang::internal_linkage]] Lexer {
 
   Diagnostics::ErrorTrackingConsumer consumer_;
 
-  TokenizedBuffer::SourcePointerDiagnosticEmitter emitter_;
+  TokenizedBuffer::SourceLocDiagnosticEmitter emitter_;
 
   TokenizedBuffer::TokenDiagnosticEmitter token_emitter_;
 };
@@ -307,6 +315,31 @@ static constexpr std::array<bool, 256> IsIdByteTable = [] {
   }
   // Identifiers can only have `$` in start.
   table['$'] = false;
+  return table;
+}();
+
+// A table of booleans classifying the bytes that end a run of unrecognized
+// characters forming an error token: alphanumeric characters, `_`, tabs and
+// newlines, and any character that is by itself a symbol.
+static constexpr std::array<bool, 256> IsErrorEndByteTable = [] {
+  std::array<bool, 256> table = {};
+  for (char c = '0'; c <= '9'; ++c) {
+    table[c] = true;
+  }
+  for (char c = 'A'; c <= 'Z'; ++c) {
+    table[c] = true;
+  }
+  for (char c = 'a'; c <= 'z'; ++c) {
+    table[c] = true;
+  }
+  table['_'] = true;
+  table['\t'] = true;
+  table['\n'] = true;
+#define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
+  if (sizeof(Spelling) == 2) {                   \
+    table[(Spelling)[0]] = true;                 \
+  }
+#include "toolchain/lex/token_kind.def"
   return table;
 }();
 
@@ -527,23 +560,6 @@ static auto ScanForIdentifierPrefix(llvm::StringRef text) -> llvm::StringRef {
   return ScanForIdentifierPrefixScalar(text, 0);
 }
 
-using DispatchFunctionT = auto(Lexer& lexer, llvm::StringRef source_text,
-                               ssize_t position) [[clang::preserve_none]]
--> void;
-using DispatchTableT = std::array<DispatchFunctionT*, 256>;
-
-static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
-  std::array<TokenKind, 256> table = {};
-#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = TokenKind::TokenName;
-#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
-  table[(Spelling)[0]] = TokenKind::TokenName;
-#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
-  table[(Spelling)[0]] = TokenKind::TokenName;
-#include "toolchain/lex/token_kind.def"
-  return table;
-}();
-
 // We use a collection of static member functions for table-based dispatch to
 // lexer methods. These are named static member functions so that they show up
 // helpfully in profiles and backtraces, but they tend to not contain the
@@ -552,12 +568,16 @@ static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
 // build efficient dispatch tables out of them. All of them end by doing a
 // must-tail return call to this routine. It handles continuing the dispatch
 // chain.
-[[clang::preserve_none]] static auto DispatchNext(Lexer& lexer,
-                                                  llvm::StringRef source_text,
-                                                  ssize_t position) -> void;
+CARBON_PRESERVE_NONE static auto DispatchNext(Lexer& lexer,
+                                              llvm::StringRef source_text,
+                                              ssize_t position) -> void;
 
-[[clang::preserve_none]] static auto DispatchLexError(
-    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+using DispatchFunctionT = decltype(DispatchNext);
+using DispatchTableT = std::array<DispatchFunctionT*, 256>;
+
+CARBON_PRESERVE_NONE static auto DispatchLexError(Lexer& lexer,
+                                                  llvm::StringRef source_text,
+                                                  ssize_t position) -> void {
   Lexer::LexResult result = lexer.LexError(source_text, position);
   CARBON_CHECK(result, "Failed to form a token!");
   // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
@@ -568,7 +588,7 @@ static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
 // lexes a token. If no token is matched, they tail-dispatch to the error token
 // handler; otherwise they continue dispatching the next token.
 #define CARBON_DISPATCH_LEX_TOKEN(LexMethod)                                   \
-  [[clang::preserve_none]] static auto Dispatch##LexMethod(                    \
+  CARBON_PRESERVE_NONE static auto Dispatch##LexMethod(                        \
       Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {   \
     if (LLVM_LIKELY(lexer.LexMethod(source_text, position))) {                 \
       /* NOLINTNEXTLINE(readability-avoid-return-with-void-value) */           \
@@ -577,13 +597,13 @@ static constexpr std::array<TokenKind, 256> OneCharTokenKindTable = [] {
     /* NOLINTNEXTLINE(readability-avoid-return-with-void-value) */             \
     [[clang::musttail]] return DispatchLexError(lexer, source_text, position); \
   }
-CARBON_DISPATCH_LEX_TOKEN(LexSymbolToken)
 CARBON_DISPATCH_LEX_TOKEN(LexKeywordOrIdentifier)
 CARBON_DISPATCH_LEX_TOKEN(LexNumericLiteral)
 CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 
-[[clang::preserve_none]] static auto DispatchLexHash(
-    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+CARBON_PRESERVE_NONE static auto DispatchLexHash(Lexer& lexer,
+                                                 llvm::StringRef source_text,
+                                                 ssize_t position) -> void {
   if (lexer.LexHash(source_text, position)) {
     // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);
@@ -594,25 +614,46 @@ CARBON_DISPATCH_LEX_TOKEN(LexStringLiteral)
 }
 
 // A set of custom dispatch functions that preselect the symbol token to lex.
-#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                          \
-  [[clang::preserve_none]] static auto Dispatch##LexMethod##SymbolToken(     \
-      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
-    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                  \
-        source_text,                                                         \
-        OneCharTokenKindTable[static_cast<unsigned char>(                    \
-            source_text[position])],                                         \
-        position);                                                           \
-    CARBON_CHECK(result, "Failed to form a token!");                         \
-    [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
+#define CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexMethod)                           \
+  template <TokenKind::RawEnumType Kind>                                      \
+  CARBON_PRESERVE_NONE static auto Dispatch##LexMethod##SymbolToken(          \
+      Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {  \
+    Lexer::LexResult result = lexer.LexMethod##SymbolToken(                   \
+        source_text, TokenKind::Make(Kind), position);                        \
+    CARBON_CHECK(result, "Failed to form a token!");                          \
+    /* NOLINTNEXTLINE(readability-avoid-return-with-void-value): musttail. */ \
+    [[clang::musttail]] return DispatchNext(lexer, source_text, position);    \
   }
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOneChar)
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexOpening)
 CARBON_DISPATCH_LEX_SYMBOL_TOKEN(LexClosing)
 
+template <char FirstChar>
+CARBON_PRESERVE_NONE static auto DispatchLexSymbolToken(
+    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+  CARBON_DCHECK(source_text[position] == FirstChar);
+  llvm::StringRef tail = source_text.substr(position + 1);
+#define CARBON_SYMBOL_TOKEN(Name, Spelling)                                    \
+  if constexpr ((Spelling)[0] == FirstChar) {                                  \
+    if (tail.starts_with(llvm::StringLiteral(Spelling).substr(1))) {           \
+      lexer.LexToken(TokenKind::Name, position);                               \
+      /* NOLINTNEXTLINE(readability-avoid-return-with-void-value): musttail */ \
+      [[clang::musttail]] return DispatchNext(                                 \
+          lexer, source_text, position + (sizeof(Spelling) - 1));              \
+    }                                                                          \
+  }
+#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)
+#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName)
+#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName)
+#include "toolchain/lex/token_kind.def"
+  // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
+  [[clang::musttail]] return DispatchLexError(lexer, source_text, position);
+}
+
 // Define a set of non-token dispatch functions that handle things like
 // whitespace and comments.
 #define CARBON_DISPATCH_LEX_NON_TOKEN(LexMethod)                             \
-  [[clang::preserve_none]] static auto Dispatch##LexMethod(                  \
+  CARBON_PRESERVE_NONE static auto Dispatch##LexMethod(                      \
       Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void { \
     lexer.LexMethod(source_text, position);                                  \
     [[clang::musttail]] return DispatchNext(lexer, source_text, position);   \
@@ -621,7 +662,7 @@ CARBON_DISPATCH_LEX_NON_TOKEN(LexHorizontalWhitespace)
 CARBON_DISPATCH_LEX_NON_TOKEN(LexVerticalWhitespace)
 CARBON_DISPATCH_LEX_NON_TOKEN(LexCR)
 
-[[clang::preserve_none]] static auto DispatchLexCommentOrSlash(
+CARBON_PRESERVE_NONE static auto DispatchLexCommentOrSlash(
     Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
   CARBON_DCHECK(source_text[position] == '/');
 
@@ -638,8 +679,8 @@ CARBON_DISPATCH_LEX_NON_TOKEN(LexCR)
   }
 
   // NOLINTNEXTLINE(readability-avoid-return-with-void-value): For musttail.
-  [[clang::musttail]] return DispatchLexSymbolToken(lexer, source_text,
-                                                    position);
+  [[clang::musttail]] return DispatchLexSymbolToken<'/'>(lexer, source_text,
+                                                         position);
 }
 
 // Build a table of function pointers that we can use to dispatch to the
@@ -682,12 +723,10 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   }
 
   // Symbols have some special dispatching. First, set the first character of
-  // each symbol token spelling to dispatch to the symbol lexer. We don't
-  // provide a pre-computed token here, so the symbol lexer will compute the
-  // exact symbol token kind. We'll override this with more specific dispatch
-  // below.
+  // each symbol token spelling to dispatch to the symbol lexer for that
+  // starting character. We'll override this with more specific dispatch below.
 #define CARBON_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = &DispatchLexSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexSymbolToken<(Spelling)[0]>;
 #include "toolchain/lex/token_kind.def"
 
   // Now special cased single-character symbols that are guaranteed to not
@@ -697,11 +736,11 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
   // needs to override some of the generic handling above, and provide a
   // custom token.
 #define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling) \
-  table[(Spelling)[0]] = &DispatchLexOneCharSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexOneCharSymbolToken<TokenKind::TokenName>;
 #define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName) \
-  table[(Spelling)[0]] = &DispatchLexOpeningSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexOpeningSymbolToken<TokenKind::TokenName>;
 #define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName) \
-  table[(Spelling)[0]] = &DispatchLexClosingSymbolToken;
+  table[(Spelling)[0]] = &DispatchLexClosingSymbolToken<TokenKind::TokenName>;
 #include "toolchain/lex/token_kind.def"
 
   // Override the handling for `/` to consider comments as well as a `/`
@@ -744,8 +783,9 @@ static constexpr auto MakeDispatchTable() -> DispatchTableT {
 
 static constexpr DispatchTableT DispatchTable = MakeDispatchTable();
 
-[[clang::preserve_none]] static auto DispatchFileEnd(
-    Lexer& lexer, llvm::StringRef source_text, ssize_t position) -> void {
+CARBON_PRESERVE_NONE static auto DispatchFileEnd(Lexer& lexer,
+                                                 llvm::StringRef source_text,
+                                                 ssize_t position) -> void {
   if (lexer.has_dump_sem_ir_ranges()) {
     // Incomplete ranges will use the next token for their end; we want that to
     // be `FileEnd` in this case, so check before adding `FileEnd`. The argument
@@ -761,9 +801,9 @@ static constexpr DispatchTableT DispatchTable = MakeDispatchTable();
   lexer.LexFileEnd(source_text, position);
 }
 
-[[clang::preserve_none]] static auto DispatchNext(Lexer& lexer,
-                                                  llvm::StringRef source_text,
-                                                  ssize_t position) -> void {
+CARBON_PRESERVE_NONE static auto DispatchNext(Lexer& lexer,
+                                              llvm::StringRef source_text,
+                                              ssize_t position) -> void {
   if (LLVM_LIKELY(position < static_cast<ssize_t>(source_text.size()))) {
     // The common case is to tail recurse based on the next character. Note
     // that because this is a must-tail return, this cannot fail to tail-call
@@ -851,6 +891,95 @@ auto Lexer::Lex() && -> TokenizedBuffer {
   return std::move(buffer_);
 }
 
+#if CARBON_USE_SIMD && __AVX2__
+auto Lexer::MakeLinesAVX2(llvm::StringRef source_text, ssize_t& start,
+                          ssize_t& search_start) -> void {
+  const char* const text = source_text.data();
+  const ssize_t size = source_text.size();
+  constexpr int BlockSize = 64;
+  constexpr int DecodedPerStep = 4;
+
+  // Buffer the 32-bit byte offset following each `'\n'` (`int32_t` matches
+  // `LineInfo::start` under Carbon's `< 2 GiB` source limit) in a contiguous
+  // array, then `Reserve` and `Add` `LineInfo`s in a second pass so the SIMD
+  // loop only performs flat 32-bit stores rather than chunked `ValueStore::Add`
+  // capacity checks.
+  //
+  // Initial capacity model (`size / 16 + 2 * BlockSize`):
+  // - `size / 16` estimates one newline every 16 bytes (~2-3x denser than
+  //   typical source lines), avoiding reallocation on ordinary files while
+  //   keeping temporary memory to `size / 4` bytes.
+  // - Maintaining at least `BlockSize` (64) unused slots before each iteration
+  //   guarantees room for the worst case where all 64 bytes are `'\n'` (and up
+  //   to 16 speculative 4-slot writes), replacing per-newline bounds checks
+  //   with one cold check per 64-byte block that doubles the buffer on
+  //   newline-dense inputs. Adding `2 * BlockSize` up front preserves that
+  //   headroom even when `size / 16` is small.
+  llvm::SmallVector<int32_t, 0> line_starts;
+  line_starts.resize_for_overwrite(size / 16 + 2 * BlockSize);
+  int32_t* line_starts_end = line_starts.data();
+
+  // Broadcast `'\n'` to all 32 byte lanes of a 256-bit register.
+  const __m256i newline = _mm256_set1_epi8('\n');
+  for (; search_start + BlockSize <= size; search_start += BlockSize) {
+    if (LLVM_UNLIKELY(line_starts_end + BlockSize >
+                      line_starts.data() + line_starts.size())) {
+      ssize_t count = line_starts_end - line_starts.data();
+      line_starts.resize_for_overwrite(line_starts.size() * 2);
+      line_starts_end = line_starts.data() + count;
+    }
+
+    // Load two unaligned 32-byte halves of the 64-byte block.
+    // `_mm256_cmpeq_epi8` compares 32 bytes in parallel (`0xFF` if equal,
+    // `0x00` otherwise), and `_mm256_movemask_epi8` packs bit 7 of each byte
+    // into a 32-bit `int` mask. Cast to `uint32_t` before widening to
+    // `uint64_t` so bit 31 is zero-extended rather than sign-extended.
+    __m256i low_block = _mm256_loadu_si256(
+        reinterpret_cast<const __m256i*>(text + search_start));
+    __m256i high_block = _mm256_loadu_si256(
+        reinterpret_cast<const __m256i*>(text + search_start + 32));
+    uint64_t mask =
+        static_cast<uint32_t>(
+            _mm256_movemask_epi8(_mm256_cmpeq_epi8(low_block, newline))) |
+        (static_cast<uint64_t>(static_cast<uint32_t>(
+             _mm256_movemask_epi8(_mm256_cmpeq_epi8(high_block, newline))))
+         << 32);
+
+    // Most 64-byte blocks contain 0 to 4 newlines. Unrolling a `while (mask)`
+    // loop with `#pragma clang loop unroll_count(4)` would emit a
+    // data-dependent exit branch on every bit, suffering branch mispredictions
+    // as newline counts vary from block to block. Instead, advance
+    // `line_starts_end` by `std::popcount(mask)` up front and use
+    // `#pragma clang loop unroll(full)` to unroll 4 unconditional steps of
+    // `std::countr_zero` (`tzcnt`, byte index of lowest set bit) +
+    // `mask &= mask - 1` (`blsr`, clear lowest set bit). Any extra writes when
+    // fewer than 4 bits are set land harmlessly in the `BlockSize` slack past
+    // `line_starts_end` and are overwritten by the next block; blocks with > 4
+    // newlines repeat the 4-wide body (at most `64 / 4 = 16` iterations).
+    int32_t base = search_start + 1;
+    int32_t* out = line_starts_end;
+    line_starts_end += std::popcount(mask);
+    do {
+#pragma clang loop unroll(full)
+      for (int i = 0; i < DecodedPerStep; ++i) {
+        out[i] = base + std::countr_zero(mask);
+        mask &= mask - 1;
+      }
+      out += DecodedPerStep;
+    } while (LLVM_UNLIKELY(mask != 0));
+  }
+
+  // Reserve room for all lines ended in the AVX2 scan plus the final line and
+  // potential trailing blank line added in `MakeLines`.
+  buffer_.line_infos_.Reserve((line_starts_end - line_starts.data()) + 2);
+  for (const int32_t* next_start = line_starts.data();
+       next_start != line_starts_end; ++next_start) {
+    buffer_.line_infos_.Add(LineInfo(start));
+    start = *next_start;
+  }
+}
+#endif
+
 auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
   if (source_text.empty()) {
     // Construct a single line for empty input.
@@ -879,12 +1008,22 @@ auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
   // is likely to be difficult.
   const char* const text = source_text.data();
   const ssize_t size = source_text.size();
+  // `start` is the byte offset of the line currently being scanned, while
+  // `search_start` is where newline scanning resumes. Separating them lets
+  // `MakeLinesAVX2` advance `search_start` to the end of the last 64-byte block
+  // so the scalar `memchr` tail only scans the `< 64` remaining bytes even when
+  // a line straddles the boundary.
   ssize_t start = 0;
+  ssize_t search_start = 0;
+#if CARBON_USE_SIMD && __AVX2__
+  MakeLinesAVX2(source_text, start, search_start);
+#endif
   while (const char* nl = reinterpret_cast<const char*>(
-             memchr(&text[start], '\n', size - start))) {
+             memchr(&text[search_start], '\n', size - search_start))) {
     ssize_t nl_index = nl - text;
     buffer_.line_infos_.Add(LineInfo(start));
     start = nl_index + 1;
+    search_start = start;
   }
   // The last line ends at the end of the file.
   buffer_.line_infos_.Add(LineInfo(start));
@@ -902,16 +1041,62 @@ auto Lexer::MakeLines(llvm::StringRef source_text) -> void {
   line_index_ = LineIndex(0);
 }
 
-auto Lexer::SkipHorizontalWhitespace(llvm::StringRef source_text,
-                                     ssize_t& position) -> void {
-  // Handle adjacent whitespace quickly. This comes up frequently for example
-  // due to indentation. We don't expect *huge* runs, so just use a scalar
-  // loop. While still scalar, this avoids repeated table dispatch and marking
-  // whitespace.
-  while (position < static_cast<ssize_t>(source_text.size()) &&
+static auto SkipHorizontalWhitespaceScalar(llvm::StringRef source_text,
+                                           ssize_t& position) -> void {
+  const ssize_t size = source_text.size();
+  while (position < size &&
          (source_text[position] == ' ' || source_text[position] == '\t')) {
     ++position;
   }
+}
+
+#if CARBON_USE_SIMD && __x86_64__
+// Advances `position` past contiguous `' '` and `'\t'` bytes in `source_text`
+// using 16-byte SSE2 scans, falling back to `SkipHorizontalWhitespaceScalar`
+// for any `< 16`-byte tail near EOF.
+static auto SkipHorizontalWhitespaceX86(llvm::StringRef source_text,
+                                        ssize_t& position) -> void {
+  const ssize_t size = source_text.size();
+  const char* const data = source_text.data();
+  // Broadcast `' '` and `'\t'` across all 16 byte lanes of 128-bit registers.
+  const __m128i spaces = _mm_set1_epi8(' ');
+  const __m128i tabs = _mm_set1_epi8('\t');
+  while (LLVM_LIKELY(position + 16 <= size)) {
+    // Unaligned 16-byte load; the loop guard guarantees `[position, position +
+    // 16)` lies within `source_text` without requiring trailing buffer padding.
+    __m128i chunk =
+        _mm_loadu_si128(reinterpret_cast<const __m128i*>(data + position));
+    // `_mm_cmpeq_epi8` sets matching byte lanes to `0xFF` and others to `0x00`;
+    // OR-ing the two comparisons marks every `' '` or `'\t'` byte with `0xFF`.
+    __m128i is_ws = _mm_or_si128(_mm_cmpeq_epi8(chunk, spaces),
+                                 _mm_cmpeq_epi8(chunk, tabs));
+    // `_mm_movemask_epi8` packs bit 7 of each byte into the low 16 bits of an
+    // `int`. Invert and mask to 16 bits so set bits mark non-whitespace bytes.
+    // Most indentation runs are shorter than 16 characters, so predict a hit
+    // here and advance directly to the first non-whitespace byte with
+    // `tzcnt`/`bsf`
+    // (`std::countr_zero`) instead of looping per byte.
+    uint32_t non_ws_mask =
+        ~static_cast<uint32_t>(_mm_movemask_epi8(is_ws)) & 0xFFFFU;
+    if (LLVM_LIKELY(non_ws_mask != 0)) {
+      position += std::countr_zero(non_ws_mask);
+      return;
+    }
+    position += 16;
+  }
+  SkipHorizontalWhitespaceScalar(source_text, position);
+}
+#endif
+
+auto Lexer::SkipHorizontalWhitespace(llvm::StringRef source_text,
+                                     ssize_t& position) -> void {
+  // Handle adjacent whitespace quickly. This comes up frequently for example
+  // due to indentation.
+#if CARBON_USE_SIMD && __x86_64__
+  SkipHorizontalWhitespaceX86(source_text, position);
+#else
+  SkipHorizontalWhitespaceScalar(source_text, position);
+#endif
 }
 
 auto Lexer::AdvanceToLine(llvm::StringRef source_text, ssize_t& position,
@@ -929,6 +1114,13 @@ auto Lexer::LexHorizontalWhitespace(llvm::StringRef source_text,
                                     ssize_t& position) -> void {
   CARBON_DCHECK(source_text[position] == ' ' || source_text[position] == '\t');
   NoteWhitespace();
+  ++position;
+  // Check if we're already done before an optimized skip routine.
+  if (LLVM_LIKELY(position < static_cast<ssize_t>(source_text.size()) &&
+                  source_text[position] != ' ' &&
+                  source_text[position] != '\t')) {
+    return;
+  }
   // Skip runs using an optimized code path.
   SkipHorizontalWhitespace(source_text, position);
 }
@@ -1063,7 +1255,8 @@ auto Lexer::LexComment(llvm::StringRef source_text, ssize_t& position) -> void {
     }
     CARBON_DIAGNOSTIC(NoWhitespaceAfterCommentIntroducer, Error,
                       "whitespace is required after '//'");
-    emitter_.Emit(comment_text.begin() + 2, NoWhitespaceAfterCommentIntroducer);
+    emitter_.Emit(SourceLoc::Before(comment_text.begin() + 2),
+                  NoWhitespaceAfterCommentIntroducer);
 
     // We use this to tweak the lexing of blocks below.
     is_valid_after_slashes = false;
@@ -1226,7 +1419,9 @@ auto Lexer::CanFormRealLiteral() -> bool {
   if (has_leading_space_) {
     return true;
   }
-  auto kind = buffer_.GetKind(buffer_.tokens().end()[-1]);
+  // The flat kind array isn't built until lexing finishes, so look at the
+  // token info directly.
+  auto kind = buffer_.token_infos_.Get(buffer_.tokens().end()[-1]).kind();
   return kind != TokenKind::Period && kind != TokenKind::MinusGreater;
 }
 
@@ -1265,13 +1460,18 @@ auto Lexer::LexNumericLiteral(llvm::StringRef source_text, ssize_t& position)
   }
 }
 
-static auto DiagnoseUnterminatedString(
-    Diagnostics::Emitter<const char*>& emitter, const StringLiteral& literal,
-    bool is_char) -> void {
+static auto DiagnoseUnterminatedString(Diagnostics::Emitter<SourceLoc>& emitter,
+                                       const StringLiteral& literal,
+                                       bool is_char) -> void {
   CARBON_DIAGNOSTIC(UnterminatedString, Error,
                     "{0:character|string} literal is missing a terminator",
                     Diagnostics::BoolAsSelect);
-  emitter.Emit(literal.text().begin(), UnterminatedString, is_char);
+  // The terminator goes where the literal stops.
+  emitter
+      .Build(SourceLoc::Before(literal.text().end()), UnterminatedString,
+             is_char)
+      .Attach(SourceLoc::Range(literal.text()))
+      .Emit();
 }
 
 auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
@@ -1311,7 +1511,9 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
                       "invalid multi-line string literal introducer; a file "
                       "type indicator may not contain `'`, `#`, or `\"`, and "
                       "the content must begin on a new line");
-    emitter_.Emit(literal->text().begin(), MultiLineStringInvalidIntroducer);
+    emitter_.Build(literal->text().begin(), MultiLineStringInvalidIntroducer)
+        .Attach(SourceLoc::Range(literal->text()))
+        .Emit();
     return lex_as_error();
   }
 
@@ -1340,6 +1542,10 @@ auto Lexer::LexStringLiteral(llvm::StringRef source_text, ssize_t& position)
     }
   }
 
+  // TODO: Recover from an unterminated literal in a way that lets parsing
+  // continue as if it were terminated. The error token makes the parser also
+  // report the enclosing construct as incomplete, for example a missing `;`
+  // after `var s: str = "abc`.
   if (!literal->is_terminated()) {
     DiagnoseUnterminatedString(emitter_, *literal, /*is_char=*/false);
     return lex_as_error();
@@ -1420,27 +1626,6 @@ auto Lexer::LexClosingSymbolToken(llvm::StringRef source_text, TokenKind kind,
   return token;
 }
 
-auto Lexer::LexSymbolToken(llvm::StringRef source_text, ssize_t& position)
-    -> LexResult {
-  // One character symbols and grouping symbols are handled with dedicated
-  // dispatch. We only lex the multi-character tokens here.
-  TokenKind kind = llvm::StringSwitch<TokenKind>(source_text.substr(position))
-#define CARBON_SYMBOL_TOKEN(Name, Spelling) \
-  .StartsWith(Spelling, TokenKind::Name)
-#define CARBON_ONE_CHAR_SYMBOL_TOKEN(TokenName, Spelling)
-#define CARBON_OPENING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, ClosingName)
-#define CARBON_CLOSING_GROUP_SYMBOL_TOKEN(TokenName, Spelling, OpeningName)
-#include "toolchain/lex/token_kind.def"
-                       .Default(TokenKind::Error);
-  if (kind == TokenKind::Error) {
-    return LexResult::NoMatch();
-  }
-
-  TokenIndex token = LexToken(kind, position);
-  position += kind.fixed_spelling().size();
-  return token;
-}
-
 auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
     -> LexResult {
   if (word.size() < 2) {
@@ -1487,8 +1672,11 @@ auto Lexer::LexWordAsTypeLiteralToken(llvm::StringRef word, int32_t byte_offset)
                       "found a type literal with a bit width using {0} digits, "
                       "which is greater than the limit of {1}",
                       size_t, size_t);
-    emitter_.Emit(word.begin() + 1, TooManyTypeBitWidthDigits, suffix.size(),
-                  DigitLimit);
+    emitter_
+        .Build(word.begin() + 1, TooManyTypeBitWidthDigits, suffix.size(),
+               DigitLimit)
+        .Attach(SourceLoc::Range(suffix))
+        .Emit();
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
 
@@ -1520,7 +1708,8 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
 
   if (!has_leading_space_) {
     auto prev_token = buffer_.tokens().end()[-1];
-    auto kind = buffer_.GetKind(prev_token);
+    // The flat kind array isn't built yet, so look at the token info directly.
+    auto kind = buffer_.token_infos_.Get(prev_token).kind();
     if (kind.is_word()) {
       CARBON_DIAGNOSTIC(
           CharacterOnlyAllowedAtStart, Error,
@@ -1547,7 +1736,7 @@ auto Lexer::LexWordAsDollarIntLiteralToken(llvm::StringRef word,
   if (word.size() < 2) {
     CARBON_DIAGNOSTIC(DollarIntLiteralMissingNumber, Error,
                       "expected digits after `$`");
-    emitter_.Emit(word.begin() + 1, DollarIntLiteralMissingNumber);
+    emitter_.Emit(SourceLoc::Before(word.end()), DollarIntLiteralMissingNumber);
     return LexTokenWithPayload(TokenKind::Error, word.size(), byte_offset);
   }
   if (word[1] == '0' && word.size() > 2) {
@@ -1681,21 +1870,7 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
     -> LexResult {
   llvm::StringRef error_text =
       source_text.substr(position).take_while([](char c) {
-        if (IsAlnum(c)) {
-          return false;
-        }
-        switch (c) {
-          case '_':
-          case '\t':
-          case '\n':
-            return false;
-          default:
-            break;
-        }
-        return llvm::StringSwitch<bool>(llvm::StringRef(&c, 1))
-#define CARBON_SYMBOL_TOKEN(Name, Spelling) .StartsWith(Spelling, false)
-#include "toolchain/lex/token_kind.def"
-            .Default(true);
+        return !IsErrorEndByteTable[static_cast<unsigned char>(c)];
       });
   if (error_text.empty()) {
     // TODO: Reimplement this to use the lexer properly. In the meantime,
@@ -1707,7 +1882,9 @@ auto Lexer::LexError(llvm::StringRef source_text, ssize_t& position)
       LexTokenWithPayload(TokenKind::Error, error_text.size(), position);
   CARBON_DIAGNOSTIC(UnrecognizedCharacters, Error,
                     "encountered unrecognized characters while parsing");
-  emitter_.Emit(error_text.begin(), UnrecognizedCharacters);
+  emitter_.Build(error_text.begin(), UnrecognizedCharacters)
+      .Attach(SourceLoc::Range(error_text))
+      .Emit();
 
   position += error_text.size();
   return token;
@@ -1750,6 +1927,11 @@ auto Lexer::LexFileEnd(llvm::StringRef source_text, ssize_t position) -> void {
 }
 
 auto Lexer::Finalize() -> void {
+  // The token sequence is complete, except for any bracket recovery below, so
+  // build the flat token arrays. Bracket recovery reads them, and rebuilds them
+  // if it changes the sequence.
+  buffer_.BuildTokenArrays();
+
   // If we had any mismatched brackets, issue diagnostics and fix them.
   if (has_mismatched_brackets_ || !open_groups_.empty()) {
     DiagnoseAndFixMismatchedBrackets();
@@ -1800,7 +1982,8 @@ class Lexer::ErrorRecoveryBuffer {
   }
 
   // Replace the given token with an error token. We do this immediately,
-  // because we don't benefit from buffering it.
+  // because we don't benefit from buffering it. The flat token arrays are
+  // brought up to date when `Apply` rebuilds them.
   auto ReplaceWithError(TokenIndex token) -> void {
     auto& token_info = buffer_->token_infos_.Get(token);
     int error_length = buffer_->GetTokenText(token).size();
@@ -1851,6 +2034,9 @@ class Lexer::ErrorRecoveryBuffer {
       new_token_index_[old_idx.index] = buffer_->token_infos_.Add(
           old_tokens.Get(old_idx).WithLeadingSpace(false));
     }
+
+    // The token sequence changed, so rebuild the flat token arrays from it.
+    buffer_->BuildTokenArrays();
   }
 
   // Maps a token index from before `Apply` to the same token's index after it.
@@ -2215,12 +2401,12 @@ static auto TokenEndPosition(const TokenizedBuffer& buffer, TokenIndex token)
   return TokenStartPosition(buffer, token) + buffer.GetTokenText(token).size();
 }
 
-// Where in the source a bracket that `correction` proposes would be written:
-// just past the end of the token it goes after, rather than at the start of the
-// token it goes before. For `f(x` on one line and `;` on the next, that points
-// the suggestion at the position directly after the `x`, where the `)` belongs,
-// instead of down at the `;`. Where the two tokens are separated, the bracket
-// is then placed on the side that matches how it would be written.
+// Where a user would insert the bracket that `correction` proposes: just past
+// the end of the token it goes after, rather than at the start of the token it
+// goes before. For `f(x` on one line and `;` on the next, that points the
+// suggestion at the position directly after the `x`, where the `)` belongs,
+// instead of down at the `;`. An opening bracket and a `}` closing a multi-line
+// scope are inserted elsewhere, as described below.
 static auto BracketInsertionPosition(const TokenizedBuffer& buffer,
                                      const BracketCorrection& correction)
     -> const char* {
@@ -2259,9 +2445,12 @@ static auto BracketInsertionPosition(const TokenizedBuffer& buffer,
                         buffer.GetIndentColumnNumber(open_line) - 1);
     }
   } else if (correction.fix_token_kind.is_opening_symbol()) {
-    // An opening bracket binds to what comes after it, so it belongs on the far
-    // side of any space separating it from the token it follows.
-    pos = skip_spaces(pos, NoLimit);
+    // An opening bracket is inserted against the token after it when that token
+    // is on the same line.
+    TokenIndex insert_before(insert_after.index + 1);
+    if (buffer.GetEndLoc(insert_after).first == buffer.GetLine(insert_before)) {
+      pos = TokenStartPosition(buffer, insert_before);
+    }
   }
   return pos;
 }
@@ -2302,8 +2491,9 @@ auto Lexer::DiagnoseAndFixMismatchedBrackets() -> void {
       // on the bracket rather than suggest one of them.
       fixes.ReplaceWithError(correction.diagnostic_token_index);
     } else {
-      builder.Attach(BracketInsertionPosition(buffer_, correction),
-                     PossiblyMissingBracketHere, correction.fix_token_kind);
+      builder.Attach(
+          SourceLoc::Before(BracketInsertionPosition(buffer_, correction)),
+          PossiblyMissingBracketHere, correction.fix_token_kind);
       insertion_ids[correction_index] =
           correction.fix_action == BracketFixAction::InsertBefore
               ? fixes.InsertBefore(correction.fix_token_index,

@@ -93,8 +93,7 @@ fn F() -> auto { return 0 as i32; }
 // --- fail_api_def.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_api_def.impl.carbon:[[@LINE+6]]:1-14: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: imported from: fail_api_def.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_api_def.impl.carbon:[[@LINE+5]]:1-14: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
 // CHECK:STDERR: api_def.carbon:3:1-16: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_api_def.impl.carbon:[[@LINE+2]]:1-14: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
@@ -109,8 +108,7 @@ fn F() -> i32;
 // --- fail_api_decl.impl.carbon
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_api_decl.impl.carbon:[[@LINE+4]]:1-16: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
-// CHECK:STDERR: imported from: fail_api_decl.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_api_decl.impl.carbon:[[@LINE+3]]:1-16: error: redeclaration of function with deduced return type [DeducedReturnTypeRedecl]
 // CHECK:STDERR: api_decl.carbon:3:1-14: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn F() -> auto { return 0 as i32; }

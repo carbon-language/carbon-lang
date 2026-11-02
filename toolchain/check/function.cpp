@@ -591,7 +591,8 @@ auto ResolveReturnTypeInSpecific(Context& context, SemIR::LocId loc_id,
 
   // Otherwise, the return type and the return pattern were created
   // within the definition of the generic, and are computed by its eval block.
-  if (!ResolveSpecificDefinition(context, loc_id, specific_id)) {
+  if (ResolveSpecificDefinition(context, loc_id, specific_id) ==
+      DefinitionResolution::NotDefinedYet) {
     // We're within the definition of the function, after its return type was
     // deduced. In the self specific, the return type is just the deduced type,
     // but we can't compute it for any other specific until the definition is

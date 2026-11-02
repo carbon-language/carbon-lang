@@ -2,12 +2,14 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
+// INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/default.carbon
 // INCLUDE-FILE: toolchain/testing/testdata/min_prelude/parts/int_literal.carbon
 
 // --- min_prelude/parts/array.carbon
 
 package Core library "prelude/parts/array";
 
+export import library "prelude/parts/default";
 export import library "prelude/parts/int_literal";
 
 // Arrays.

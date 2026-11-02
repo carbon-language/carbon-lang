@@ -20,6 +20,7 @@
 #include "toolchain/base/kind_switch.h"
 #include "toolchain/check/cpp/generate_ast.h"
 #include "toolchain/check/cpp/import.h"
+#include "toolchain/check/cpp/location.h"
 #include "toolchain/check/diagnostic_helpers.h"
 #include "toolchain/check/generic.h"
 #include "toolchain/check/handle.h"
@@ -96,7 +97,8 @@ auto CheckUnit::Run() -> void {
     context_.sem_ir().set_has_errors(true);
 
     // TODO: Are there more steps from `FinishRun` we should be doing here?
-    FinishAst(context_);
+    FinalizeCppAstFragment(context_);
+    DisconnectCppAst(context_);
     return;
   }
 
@@ -460,7 +462,7 @@ auto CheckUnit::CheckRequiredDeclarations() -> void {
   }
 }
 
-auto CheckUnit::CheckRequiredDefinitions() -> void {
+auto CheckUnit::CheckRequiredDefinitions() -> bool {
   CARBON_DIAGNOSTIC(MissingDefinitionInImpl, Error,
                     "no definition found for declaration in impl file");
   for (SemIR::InstId decl_inst_id : context_.definitions_required_by_decl()) {
@@ -503,25 +505,38 @@ auto CheckUnit::CheckRequiredDefinitions() -> void {
       }
     }
   }
+  context_.definitions_required_by_decl().clear();
 
+  auto new_resolution_occurred = false;
   for (auto [loc, specific_id] :
        GrowingRange(context_.definitions_required_by_use())) {
     // This is using the location for the use. We could track the
     // list of enclosing locations if this was used from a generic.
-    if (!ResolveSpecificDefinition(context_, loc, specific_id)) {
-      CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
-                        "use of undefined generic function");
-      CARBON_DIAGNOSTIC_LABEL(MissingGenericFunctionDefinitionHere, Info,
-                              "generic function declared here");
-      auto generic_decl_id =
-          context_.generics()
-              .Get(context_.specifics().Get(specific_id).generic_id)
-              .decl_id;
-      emitter_.Build(loc, MissingGenericFunctionDefinition)
-          .Attach(generic_decl_id, MissingGenericFunctionDefinitionHere)
-          .Emit();
+    switch (ResolveSpecificDefinition(context_, loc, specific_id)) {
+      case DefinitionResolution::NewlyResolved:
+        new_resolution_occurred = true;
+        break;
+      case DefinitionResolution::PreviouslyResolved:
+        break;
+      case DefinitionResolution::NotDefinedYet: {
+        CARBON_DIAGNOSTIC(MissingGenericFunctionDefinition, Error,
+                          "use of undefined generic function");
+        CARBON_DIAGNOSTIC_LABEL(MissingGenericFunctionDefinitionHere, Info,
+                                "generic function declared here");
+        auto generic_decl_id =
+            context_.generics()
+                .Get(context_.specifics().Get(specific_id).generic_id)
+                .decl_id;
+        emitter_.Build(loc, MissingGenericFunctionDefinition)
+            .Attach(generic_decl_id, MissingGenericFunctionDefinitionHere)
+            .Emit();
+        break;
+      }
     }
   }
+
+  context_.definitions_required_by_use().clear();
+  return new_resolution_occurred;
 }
 
 auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
@@ -613,13 +628,56 @@ auto CheckUnit::CheckPoisonedConcreteImplLookupQueries() -> void {
 auto CheckUnit::CheckImpls() -> void { ValidateImplsInFile(context_); }
 
 auto CheckUnit::FinishRun() -> void {
+  // TODO: Find a more optimal way to evaluate mutually-dependent interop
+  // between Carbon and C++.
+  //
+  // Experimental evidence indicates that each additional loop doubles the
+  // run-time of `fail_todo_bidirectional_intorp_too_deep.carbon`. That unit
+  // test isn't terribly complex, so we should probably solve this fairly soon.
+  //
+  // We chose 10 loops to make progress without significantly slowing down debug
+  // unit tests.
+  constexpr auto max_resolution_check_cycles = 10;
+  auto num_resolution_check_cycles = 0;
+
+  while (num_resolution_check_cycles++ < max_resolution_check_cycles) {
+    // Finalizes the C++ portion of the compilation, allowing any pending C++
+    // template instantiations to complete Carbon types and generate required
+    // thunks or function calls.
+    FinalizeCppAstFragment(context_);
+
+    if (!CheckRequiredDefinitions()) {
+      break;
+    }
+  }
+
+  if (num_resolution_check_cycles > max_resolution_check_cycles) {
+    // Point at the code that queued the next C++ instantiation, because that
+    // is what needed another pass. If nothing is queued, point at the top of
+    // the file.
+    auto loc_id = SemIR::LocId::None;
+    auto* cpp_context = context_.cpp_context();
+    if (cpp_context && !cpp_context->sema().PendingInstantiations.empty()) {
+      loc_id = AddImportIRInst(
+          context_.sem_ir(),
+          cpp_context->sema().PendingInstantiations.front().second);
+    }
+    context_.TODO(
+        loc_id, llvm::formatv(
+                    "maximum depth for bidirectional Carbon/C++ interop is {}",
+                    max_resolution_check_cycles));
+    if (cpp_context) {
+      cpp_context->sema().PendingInstantiations.clear();
+    }
+  }
+
   CheckRequiredDeclarations();
-  CheckRequiredDefinitions();
   CheckPoisonedConcreteImplLookupQueries();
   CheckImpls();
 
-  // Finalizes the C++ portion of the compilation.
-  FinishAst(context_);
+  // Disconnects AST generation from the context before popping the file-level
+  // scope and destroying the context.
+  DisconnectCppAst(context_);
 
   // Pop information for the file-level scope.
   context_.sem_ir().set_top_inst_block_id(context_.inst_block_stack().Pop());

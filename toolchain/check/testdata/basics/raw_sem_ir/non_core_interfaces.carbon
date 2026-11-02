@@ -15,7 +15,7 @@
 
 // --- non_core.carbon
 package NonCore;
-interface Destroy {
+interface SubobjectDestroy {
   let T1: type;
   let T2: type;
 }
@@ -29,9 +29,9 @@ interface Copy {
 }
 
 //@dump-sem-ir-begin
-fn UseNonCoreDestroy[T: NonCore.Destroy](_: T.T1, _: T.T2) {}
+fn UseNonCoreSubobjectDestroy[T: NonCore.SubobjectDestroy](_: T.T1, _: T.T2) {}
 fn UseLocalCopy[T: Copy](_: T.T1, _: T.T2) {}
-fn HasRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, _: T.T2) {}
+fn HasRewrites[T: Copy where .Self impls NonCore.SubobjectDestroy and .T1 = ()](_: T.T1, _: T.T2) {}
 //@dump-sem-ir-end
 
 // CHECK:STDOUT: ---
@@ -39,7 +39,7 @@ fn HasRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, 
 // CHECK:STDOUT: sem_ir:
 // CHECK:STDOUT:   names:
 // CHECK:STDOUT:     name0:           NonCore
-// CHECK:STDOUT:     name1:           Destroy
+// CHECK:STDOUT:     name1:           SubobjectDestroy
 // CHECK:STDOUT:     name2:           T1
 // CHECK:STDOUT:     name3:           T2
 // CHECK:STDOUT:   import_irs:
@@ -179,7 +179,7 @@ fn HasRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, 
 // CHECK:STDOUT:       floats:          {}
 // CHECK:STDOUT:       identifiers:
 // CHECK:STDOUT:         identifier0:     NonCore
-// CHECK:STDOUT:         identifier1:     Destroy
+// CHECK:STDOUT:         identifier1:     SubobjectDestroy
 // CHECK:STDOUT:         identifier2:     T1
 // CHECK:STDOUT:         identifier3:     T2
 // CHECK:STDOUT:       strings:         {}
@@ -192,9 +192,9 @@ fn HasRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, 
 // CHECK:STDOUT:     name1:           Copy
 // CHECK:STDOUT:     name2:           T1
 // CHECK:STDOUT:     name3:           T2
-// CHECK:STDOUT:     name4:           UseNonCoreDestroy
+// CHECK:STDOUT:     name4:           UseNonCoreSubobjectDestroy
 // CHECK:STDOUT:     name5:           T
-// CHECK:STDOUT:     name6:           Destroy
+// CHECK:STDOUT:     name6:           SubobjectDestroy
 // CHECK:STDOUT:     name7:           UseLocalCopy
 // CHECK:STDOUT:     name8:           HasRewrites
 // CHECK:STDOUT:   import_irs:
@@ -1299,9 +1299,9 @@ fn HasRewrites[T: Copy where .Self impls NonCore.Destroy and .T1 = ()](_: T.T1, 
 // CHECK:STDOUT:         identifier1:     Copy
 // CHECK:STDOUT:         identifier2:     T1
 // CHECK:STDOUT:         identifier3:     T2
-// CHECK:STDOUT:         identifier4:     UseNonCoreDestroy
+// CHECK:STDOUT:         identifier4:     UseNonCoreSubobjectDestroy
 // CHECK:STDOUT:         identifier5:     T
-// CHECK:STDOUT:         identifier6:     Destroy
+// CHECK:STDOUT:         identifier6:     SubobjectDestroy
 // CHECK:STDOUT:         identifier7:     UseLocalCopy
 // CHECK:STDOUT:         identifier8:     HasRewrites
 // CHECK:STDOUT:       strings:         {}

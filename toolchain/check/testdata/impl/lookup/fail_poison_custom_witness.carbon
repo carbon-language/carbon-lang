@@ -14,30 +14,25 @@
 
 package Core library "destroy";
 
-// TODO: uncomment when `require impls` adds a witness table entry.
-// interface SubobjectDestroy {
-//   final fn Op(ref self) = "subobject.destroy";
-// }
+interface SubobjectDestroy {
+  fn Op(ref self);
+}
 
-interface Destroy {
+impl forall [T: type] T as SubobjectDestroy {
+  fn Op(unused ref self) {}
+}
+
+// TODO: rename to `Destroy` when `require impls` adds a witness table entry.
+interface DestroyImpl {
   // TODO: uncomment when `require impls` adds a witness table entry.
   // require impls SubobjectDestroy;
 
   // TODO: change `Self` to `partial Self`.
   fn Op(ref self);
+}
 
-  // TODO: remove when `require impls` adds a witness table entry.
-  final fn SubobjectDestroy(unused ref self) {
-    // This function body is ignored by the toolchain. We can't use
-    // a built-in because the compiler treats it as an error. We
-    // should address this at some point, but it's not a high
-    // priority right now.
-  }
-
-  final fn SelfDestruct(ref self) {
-    self.Op();
-    self.SubobjectDestroy();
-  }
+impl forall [T: SubobjectDestroy] T as DestroyImpl {
+  fn Op(ref self) = "no_op";
 }
 
 // TODO: uncomment when `require impls` adds a witness table entry.
@@ -45,9 +40,7 @@ interface Destroy {
 //   alias Op = T.Op;
 // }
 
-impl forall [T: type] T as Destroy {
-  fn Op(unused ref self) {}
-}
+fn SelfDestruct[T: DestroyImpl](unused ref t: T) {}
 
 // --- fail_poison_custom_witness.carbon
 
@@ -63,9 +56,8 @@ struct A {
 };
 ''';
 
-// CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE+4]]:1-9: error: found `impl` for Cpp.A as Destroy, which has a custom witness [PoisonedImplLookupCustomResult]
-// CHECK:STDERR: imported from: fail_poison_custom_witness.carbon:[[@LINE-12]]:1 [InImport]
-// CHECK:STDERR: destroy.carbon:35:1-36: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
+// CHECK:STDERR: fail_poison_custom_witness.carbon:[[@LINE+3]]:1-9: error: found `impl` for Cpp.A as SubobjectDestroy, which has a custom witness [PoisonedImplLookupCustomResult]
+// CHECK:STDERR: destroy.carbon:8:1-45: note: the use tried to select the `impl` here, but a custom witness was already chosen [PoisonedImplLookupCustomResultNoteBadImpl]
 // CHECK:STDERR:
 class B {
   extend base: Cpp.A;

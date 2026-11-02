@@ -53,7 +53,7 @@
 '\xC3\xFF'
 // CHECK:STDOUT:   - { index:  4, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'\\xC3\\xFF'", has_leading_space: true }
 
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:1: error: empty character literal [CharLiteralEmpty]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: empty character literal [CharLiteralEmpty]
 // CHECK:STDERR:
 ''
 // CHECK:STDOUT:   - { index:  5, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "''", has_leading_space: true }
@@ -75,7 +75,7 @@
 
 // CHECK:STDERR: fail_invalid.carbon:[[@LINE+4]]:1: error: unexpected `#` before character literal [CharLiteralRaw]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:1: error: empty character literal [CharLiteralEmpty]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:4: error: empty character literal [CharLiteralEmpty]
 // CHECK:STDERR:
 ##''##
 // CHECK:STDOUT:   - { index:  9, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "##''##", has_leading_space: true }
@@ -94,17 +94,17 @@
 ##'#\'##
 // CHECK:STDOUT:   - { index: 11, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "##'#\\'##", has_leading_space: true }
 
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:1: error: character literal is missing a terminator [UnterminatedString]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:2: error: character literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR:
 '
 // CHECK:STDOUT:   - { index: 12, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'", has_leading_space: true }
 
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:1: error: character literal is missing a terminator [UnterminatedString]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:4: error: character literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR:
 '\'
 // CHECK:STDOUT:   - { index: 13, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'\\'", has_leading_space: true }
 
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:1: error: character literal is missing a terminator [UnterminatedString]
+// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:3: error: character literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR:
 '\
 // CHECK:STDOUT:   - { index: 14, kind:       "Error", line: {{ *}}[[@LINE-1]], column:   1, indent: 1, spelling: "'\\", has_leading_space: true }

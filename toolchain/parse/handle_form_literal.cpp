@@ -40,7 +40,8 @@ auto HandlePrimitiveForm(Context& context) -> void {
   } else {
     CARBON_DIAGNOSTIC(ExpectedCategoryModifier, Error,
                       "expected `ref`, `var`, or `val` after `form(`");
-    context.emitter().Emit(*context.position(), ExpectedCategoryModifier);
+    context.emitter().Emit(context.PointAfterPreviousToken(),
+                           ExpectedCategoryModifier);
     state.has_error = true;
   }
   context.PushState(state, StateKind::PrimitiveFormFinish);

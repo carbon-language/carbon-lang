@@ -10,65 +10,65 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/interface/fail_incorrect_subobject_destroy_method_declarations.carbon
 
-// TODO: change to `SubobjectDestroy` when `require impls` adds a witness table entry.
 
-// --- fail_op_not_declared.carbon
+// --- fail_too_few_assoc_functions_declared.carbon
 
-package Core library "op_not_declared";
+package Core library "too_few_assoc_functions_declared";
 
-// CHECK:STDERR: fail_op_not_declared.carbon:[[@LINE+2]]:1-19: error: semantics TODO: `interface `Core.Destroy` needs exactly 3 associated functions` [SemanticsTodo]
+// CHECK:STDERR: fail_too_few_assoc_functions_declared.carbon:[[@LINE+2]]:1-28: error: semantics TODO: `interface `Core.SubobjectDestroy` needs exactly 1 associated function` [SemanticsTodo]
 // CHECK:STDERR:
-interface Destroy {
+interface SubobjectDestroy {
+}
+
+// --- fail_too_many_assoc_functions_declared.carbon
+
+package Core library "too_many_assoc_functions_declared";
+
+// CHECK:STDERR: fail_too_many_assoc_functions_declared.carbon:[[@LINE+2]]:1-28: error: semantics TODO: `interface `Core.SubobjectDestroy` needs exactly 1 associated function` [SemanticsTodo]
+// CHECK:STDERR:
+interface SubobjectDestroy {
   fn Op(ref self);
-  final fn SelfDestruct(unused ref self) {}
+  fn Extra(ref self) {}
 }
 
 // --- fail_op_associated_type.carbon
 
 package Core library "op_associated_type";
 
-interface Destroy {
-  fn Op(ref self);
-  // CHECK:STDERR: fail_op_associated_type.carbon:[[@LINE+2]]:7-28: error: semantics TODO: `associated entity must be a method` [SemanticsTodo]
+interface SubobjectDestroy {
+  // CHECK:STDERR: fail_op_associated_type.carbon:[[@LINE+2]]:7-14: error: semantics TODO: `associated entity must be a method` [SemanticsTodo]
   // CHECK:STDERR:
-  let SubobjectDestroy: type;
-  final fn SelfDestruct(unused ref self) {}
+  let Op: type;
 }
 
 // --- fail_op_wrong_name.carbon
 
 package Core library "op_wrong_name";
 
-interface Destroy {
-  fn Op(ref self);
-  // CHECK:STDERR: fail_op_wrong_name.carbon:[[@LINE+2]]:3-42: error: semantics TODO: `associated function #2 must be named `SubobjectDestroy`` [SemanticsTodo]
+interface SubobjectDestroy {
+  // CHECK:STDERR: fail_op_wrong_name.carbon:[[@LINE+2]]:3-39: error: semantics TODO: `associated function #1 must be named `Op`` [SemanticsTodo]
   // CHECK:STDERR:
-  final fn SelfDestruct(unused ref self) {}
-  final fn SubobjectDestroy(unused ref self) {}
+  final fn SubobjectDestroy(ref self) {}
 }
 
 // --- fail_op_no_params.carbon
 
 package Core library "op_no_params";
 
-interface Destroy {
-  fn Op(ref self);
-  // CHECK:STDERR: fail_op_no_params.carbon:[[@LINE+2]]:3-31: error: semantics TODO: `associated function must have exactly 1 parameter` [SemanticsTodo]
+interface SubobjectDestroy {
+  // CHECK:STDERR: fail_op_no_params.carbon:[[@LINE+2]]:3-10: error: semantics TODO: `associated function must have exactly 1 parameter` [SemanticsTodo]
   // CHECK:STDERR:
-  final fn SubobjectDestroy() {}
-  final fn SelfDestruct(unused ref self) {}
+  fn Op();
 }
 
 // --- fail_op_two_params.carbon
 
 package Core library "op_two_params";
 
-interface Destroy {
-  fn Op(ref self);
-  // CHECK:STDERR: fail_op_two_params.carbon:[[@LINE+2]]:3-62: error: semantics TODO: `associated function must have exactly 1 parameter` [SemanticsTodo]
+interface SubobjectDestroy {
+  // CHECK:STDERR: fail_op_two_params.carbon:[[@LINE+2]]:3-27: error: semantics TODO: `associated function must have exactly 1 parameter` [SemanticsTodo]
   // CHECK:STDERR:
-  final fn SubobjectDestroy(unused ref self, unused x: Self) {}
-  final fn SelfDestruct(unused ref self) {}
+  fn Op(ref self, x: Self);
 }
 
 // --- fail_op_param_not_self.carbon
@@ -77,70 +77,58 @@ package Core library "op_param_not_self";
 
 class C {}
 
-interface Destroy {
-  fn Op(ref self);
-  // CHECK:STDERR: fail_op_param_not_self.carbon:[[@LINE+2]]:3-46: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
+interface SubobjectDestroy {
+  // CHECK:STDERR: fail_op_param_not_self.carbon:[[@LINE+2]]:3-14: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
   // CHECK:STDERR:
-  final fn SubobjectDestroy(unused ref c: C) {}
-  final fn SelfDestruct(unused ref self) {}
+  fn Op(c: C);
 }
 
 // --- fail_op_param_is_generic.carbon
 
 package Core library "op_param_is_generic";
 
-interface Destroy {
-  fn Op(ref self);
-  // CHECK:STDERR: fail_op_param_is_generic.carbon:[[@LINE+2]]:3-55: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
+interface SubobjectDestroy {
+  // CHECK:STDERR: fail_op_param_is_generic.carbon:[[@LINE+2]]:3-27: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
   // CHECK:STDERR:
-  final fn SubobjectDestroy[T: type](unused ref c: T) {}
-  final fn SelfDestruct(unused ref self) {}
+  fn Op[T: type](ref c: T);
 }
 
 // --- fail_op_self_param_not_reference.carbon
 
 package Core library "op_self_param_not_reference";
 
-interface Destroy {
-  fn Op(ref self);
-  // CHECK:STDERR: fail_op_self_param_not_reference.carbon:[[@LINE+2]]:3-42: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
+interface SubobjectDestroy {
+  // CHECK:STDERR: fail_op_self_param_not_reference.carbon:[[@LINE+2]]:3-14: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
   // CHECK:STDERR:
-  final fn SubobjectDestroy(unused self) {}
-  final fn SelfDestruct(unused ref self) {}
+  fn Op(self);
 }
 
 // --- fail_op_explicit_self_type.carbon
 
 package Core library "op_explicit_self_type";
 
-interface Destroy {
-  fn Op(ref self);
-  // CHECK:STDERR: fail_op_explicit_self_type.carbon:[[@LINE+2]]:3-49: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
+interface SubobjectDestroy {
+  // CHECK:STDERR: fail_op_explicit_self_type.carbon:[[@LINE+2]]:3-21: error: semantics TODO: `associated function must take `ref self` as its parameter` [SemanticsTodo]
   // CHECK:STDERR:
-  final fn SubobjectDestroy(unused ref s: Self) {}
-  final fn SelfDestruct(unused ref self) {}
+  fn Op(ref s: Self);
 }
 
-// --- fail_op_not_final.carbon
+// --- fail_op_final.carbon
 
-package Core library "op_not_final";
+package Core library "op_final";
 
-interface Destroy {
-  fn Op(ref self);
-  // CHECK:STDERR: fail_op_not_final.carbon:[[@LINE+2]]:3-40: error: semantics TODO: `associated function must be `final`` [SemanticsTodo]
+interface SubobjectDestroy {
+  // CHECK:STDERR: fail_op_final.carbon:[[@LINE+2]]:3-32: error: semantics TODO: `associated function must not have an interface modifier` [SemanticsTodo]
   // CHECK:STDERR:
-  fn SubobjectDestroy(unused ref self) {}
-  final fn SelfDestruct(unused ref self) {}
+  final fn Op(unused ref self) {}
 }
 
 // --- fail_op_default.carbon
 
 package Core library "op_default";
 
-interface Destroy {
-  fn Op(ref self);
-  // CHECK:STDERR: fail_op_default.carbon:[[@LINE+2]]:3-48: error: semantics TODO: `associated function must be `final`` [SemanticsTodo]
+interface SubobjectDestroy {
+  // CHECK:STDERR: fail_op_default.carbon:[[@LINE+2]]:3-34: error: semantics TODO: `associated function must not have an interface modifier` [SemanticsTodo]
   // CHECK:STDERR:
-  default fn SubobjectDestroy(unused ref self) {}
-  final fn SelfDestruct(unused ref self) {}
+  default fn Op(unused ref self) {}
 }

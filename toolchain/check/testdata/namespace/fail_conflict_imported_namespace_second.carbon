@@ -24,14 +24,12 @@ package Example;
 
 import library "fn";
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:11-12: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:11-12: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
 // CHECK:STDERR: fn.carbon:4:1-8: note: name is previously declared here [NameDeclPrevious]
 // CHECK:STDERR:
 namespace NS;
 
-// CHECK:STDERR: fail_conflict.carbon:[[@LINE+4]]:4-5: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
-// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE-9]]:1 [InImport]
+// CHECK:STDERR: fail_conflict.carbon:[[@LINE+3]]:4-5: error: name qualifiers are only allowed for entities that provide a scope [QualifiedNameInNonScope]
 // CHECK:STDERR: fn.carbon:4:1-8: note: referenced non-scope entity declared here [QualifiedNameNonScopeEntity]
 // CHECK:STDERR:
 fn NS.Foo();
@@ -87,7 +85,7 @@ fn NS.Foo();
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %.loc10: <namespace> = namespace [concrete] {}
+// CHECK:STDOUT:   %.loc9: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT:   %Foo.decl: %Foo.type = fn_decl @Foo [concrete = constants.%Foo] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

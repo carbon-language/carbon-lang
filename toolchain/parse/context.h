@@ -9,6 +9,7 @@
 
 #include "common/check.h"
 #include "common/vlog.h"
+#include "llvm/ADT/StringRef.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/node_ids.h"
@@ -44,23 +45,80 @@ enum class BindingContext : uint8_t {
   CompileTimeEntityParam,
 };
 
+// The location of a parse diagnostic: a run of tokens, or the point just before
+// or just past a token, where something missing would be written.
+class DiagnosticLoc {
+ public:
+  enum class Kind : int8_t {
+    Tokens,
+    PointBefore,
+    PointAfter,
+  };
+
+  // NOLINTNEXTLINE(google-explicit-constructor): A token is a location.
+  DiagnosticLoc(Lex::TokenIndex token)
+      : DiagnosticLoc(Kind::Tokens, {.begin = token, .end = token}) {}
+
+  // The tokens from `tokens.begin` through `tokens.end`.
+  static auto Tokens(Lex::InclusiveTokenRange tokens) -> DiagnosticLoc {
+    return DiagnosticLoc(Kind::Tokens, tokens);
+  }
+
+  // The point just before `token`.
+  static auto Before(Lex::TokenIndex token) -> DiagnosticLoc {
+    return DiagnosticLoc(Kind::PointBefore, {.begin = token, .end = token});
+  }
+
+  // The point just past `token`.
+  static auto After(Lex::TokenIndex token) -> DiagnosticLoc {
+    return DiagnosticLoc(Kind::PointAfter, {.begin = token, .end = token});
+  }
+
+  auto kind() const -> Kind { return kind_; }
+
+  // The tokens this location covers, or the one token a point is before or
+  // after.
+  auto tokens() const -> Lex::InclusiveTokenRange { return tokens_; }
+
+ private:
+  explicit DiagnosticLoc(Kind kind, Lex::InclusiveTokenRange tokens)
+      : kind_(kind), tokens_(tokens) {}
+
+  Kind kind_;
+  Lex::InclusiveTokenRange tokens_;
+};
+
 // Context and shared functionality for parser handlers. See state.def for state
 // documentation.
 class Context {
  public:
   // A token-based emitter for use during parse.
-  class DiagnosticEmitter : public Diagnostics::Emitter<Lex::TokenIndex> {
+  class DiagnosticEmitter : public Diagnostics::Emitter<DiagnosticLoc> {
    public:
     explicit DiagnosticEmitter(Diagnostics::Consumer* consumer,
                                Context* context)
         : Emitter(consumer), context_(context) {}
 
    protected:
-    // Applies the `position_` to the `last_byte_offset` returned by
-    // `TokenToDiagnosticLoc`.
-    auto ConvertLoc(Lex::TokenIndex token, ContextFnT /*context_fn*/) const
+    // Applies the `position_` to the `last_byte_offset` of the converted
+    // location, so that a diagnostic sorts by how far the parser had read even
+    // when the location it names is earlier. Diagnostics with the same offset
+    // stay in the order they were emitted.
+    auto ConvertLoc(DiagnosticLoc loc, ContextFnT /*context_fn*/) const
         -> Diagnostics::ConvertedLoc override {
-      auto converted = context_->tokens().TokenToDiagnosticLoc(token);
+      auto converted =
+          context_->tokens().TokenRangeToDiagnosticLoc(loc.tokens());
+      switch (loc.kind()) {
+        case DiagnosticLoc::Kind::Tokens:
+          break;
+        case DiagnosticLoc::Kind::PointBefore:
+          converted.loc.length = 0;
+          break;
+        case DiagnosticLoc::Kind::PointAfter:
+          converted = context_->tokens().PointAfterTokenToDiagnosticLoc(
+              loc.tokens().begin);
+          break;
+      }
       converted.last_byte_offset =
           std::max(converted.last_byte_offset,
                    context_->tokens().GetByteOffset(*context_->position()));
@@ -173,10 +231,9 @@ class Context {
                                kind != NodeKind::InvalidParseSubtree),
                  "{0} nodes must always have an error", kind);
     tree_->node_impls_.push_back(Tree::NodeImpl(kind, has_error, token));
-    CARBON_VLOG("Add #node{0}: {1}",
-                llvm::format_hex_no_prefix(tree_->node_impls_.size() - 1, 0,
-                                           /*Upper=*/true),
-                tree_->node_impls_.back());
+    if (vlog_stream_ != nullptr) {
+      VlogAddNode();
+    }
   }
 
   // Adds a node and returns its typed NodeId.
@@ -209,7 +266,16 @@ class Context {
   //   ```
   auto ReplacePlaceholderNode(int32_t position, NodeKind kind,
                               Lex::TokenIndex token, bool has_error = false)
-      -> void;
+      -> void {
+    CARBON_CHECK(
+        kind != NodeKind::InvalidParse && kind != NodeKind::InvalidParseSubtree,
+        "{0} shouldn't occur in Placeholder use-cases", kind);
+    CARBON_CHECK(position >= 0 && position < tree_->size(),
+                 "position: {0} size: {1}", position, tree_->size());
+    auto* node_impl = &tree_->node_impls_[position];
+    CARBON_CHECK(node_impl->kind() == NodeKind::Placeholder);
+    *node_impl = Tree::NodeImpl(kind, has_error, token);
+  }
 
   // Returns the current position and moves past it.
   auto Consume() -> Lex::TokenIndex { return *(position_++); }
@@ -223,30 +289,66 @@ class Context {
   // was found.
   auto ConsumeAndAddOpenCurlyBrace(Lex::TokenIndex default_token,
                                    NodeKind start_kind)
-      -> std::optional<Lex::TokenIndex>;
+      -> std::optional<Lex::TokenIndex> {
+    if (!PositionIs(Lex::TokenKind::OpenCurlyBrace)) {
+      DiagnoseExpectedOpenCurlyBrace(default_token, start_kind);
+      return std::nullopt;
+    }
+    auto open_curly = Consume();
+    AddLeafNode(start_kind, open_curly, /*has_error=*/false);
+    return open_curly;
+  }
 
   // Parses an open paren token, possibly diagnosing if necessary. Creates a
   // leaf parse node of the specified start kind. The default_token is used when
   // there's no open paren. Returns the open paren token if it was found.
   auto ConsumeAndAddOpenParen(Lex::TokenIndex default_token,
                               NodeKind start_kind)
-      -> std::optional<Lex::TokenIndex>;
+      -> std::optional<Lex::TokenIndex> {
+    if (!PositionIs(Lex::TokenKind::OpenParen)) {
+      DiagnoseExpectedOpenParen(default_token, start_kind);
+      return std::nullopt;
+    }
+    auto open_paren = Consume();
+    AddLeafNode(start_kind, open_paren, /*has_error=*/false);
+    return open_paren;
+  }
 
   // Parses a closing symbol corresponding to the opening symbol `state.token`,
   // possibly skipping forward and diagnosing if necessary. Creates a parse node
   // of the specified close kind. If `state.token` is not an opening symbol,
   // no input will be consumed, and no diagnostic will be emitted, but the parse
   // node will still be marked as having an error.
-  auto ConsumeAndAddCloseSymbol(State state, NodeKind close_kind) -> void;
+  auto ConsumeAndAddCloseSymbol(State state, NodeKind close_kind) -> void {
+    Lex::TokenKind open_token_kind = tokens().GetKind(state.token);
+    if (open_token_kind.is_opening_symbol() &&
+        PositionIs(open_token_kind.closing_symbol())) {
+      AddNode(close_kind, Consume(), state.has_error);
+    } else {
+      DiagnoseAndSkipToCloseSymbol(state, close_kind);
+    }
+  }
 
   // Composes `ConsumeIf` and `AddLeafNode`, returning false when ConsumeIf
   // fails.
   auto ConsumeAndAddLeafNodeIf(Lex::TokenKind token_kind, NodeKind node_kind)
-      -> bool;
+      -> bool {
+    auto token = ConsumeIf(token_kind);
+    if (!token) {
+      return false;
+    }
+
+    AddLeafNode(node_kind, *token);
+    return true;
+  }
 
   // Returns the current position and moves past it. Requires the token is the
   // expected kind.
-  auto ConsumeChecked(Lex::TokenKind kind) -> Lex::TokenIndex;
+  auto ConsumeChecked(Lex::TokenKind kind) -> Lex::TokenIndex {
+    CARBON_CHECK(PositionIs(kind), "Required {0}, found {1}", kind,
+                 PositionKind());
+    return Consume();
+  }
 
   // If the current position's token matches this `Kind`, returns it and
   // advances to the next position. Otherwise returns an empty optional.
@@ -289,16 +391,88 @@ class Context {
 
   // Returns true if the current token satisfies the lexical validity rules
   // for an infix operator.
-  auto IsLexicallyValidInfixOperator() -> bool;
+  auto IsLexicallyValidInfixOperator() -> bool {
+    CARBON_CHECK(position_ != end_, "Expected an operator token.");
+
+    bool leading_space = tokens().HasLeadingWhitespace(*position_);
+    bool trailing_space = tokens().HasTrailingWhitespace(*position_);
+
+    // If there's whitespace on both sides, it's an infix operator.
+    if (leading_space && trailing_space) {
+      return true;
+    }
+
+    // If there's whitespace on exactly one side, it's not an infix operator.
+    if (leading_space || trailing_space) {
+      return false;
+    }
+
+    // Otherwise, for an infix operator, the preceding token must be any close
+    // bracket, identifier, or literal and the next token must be an open paren,
+    // identifier, or literal.
+    if (position_ == tokens().tokens().begin() ||
+        !IsAssumedEndOfOperand(tokens().GetKind(*(position_ - 1))) ||
+        !IsAssumedStartOfOperand(tokens().GetKind(*(position_ + 1)))) {
+      return false;
+    }
+
+    return true;
+  }
 
   // Determines whether the current trailing operator should be treated as
   // infix.
-  auto IsTrailingOperatorInfix() -> bool;
+  auto IsTrailingOperatorInfix() -> bool {
+    if (position_ == end_) {
+      return false;
+    }
+
+    // An operator that follows the infix operator rules is parsed as
+    // infix, unless the next token means that it can't possibly be.
+    if (IsLexicallyValidInfixOperator() &&
+        IsPossibleStartOfOperand(tokens().GetKind(*(position_ + 1)))) {
+      return true;
+    }
+
+    // A trailing operator with leading whitespace that's not valid as infix is
+    // not valid at all. If the next token looks like the start of an operand,
+    // then parse as infix, otherwise as postfix. Either way we'll produce a
+    // diagnostic later on.
+    if (tokens().HasLeadingWhitespace(*position_) &&
+        IsAssumedStartOfOperand(tokens().GetKind(*(position_ + 1)))) {
+      return true;
+    }
+
+    return false;
+  }
 
   // Diagnoses whether the current token is not written properly for the given
   // fixity. For example, because mandatory whitespace is missing. Regardless of
   // whether there's an error, it's expected that parsing continues.
-  auto DiagnoseOperatorFixity(OperatorFixity fixity) -> void;
+  auto DiagnoseOperatorFixity(OperatorFixity fixity) -> void {
+    if (!PositionKind().is_symbol()) {
+      // Whitespace-based fixity rules only apply to symbolic operators.
+      return;
+    }
+
+    if (fixity == OperatorFixity::Infix) {
+      // Infix operators must satisfy the infix operator rules.
+      if (IsLexicallyValidInfixOperator()) {
+        return;
+      }
+    } else {
+      bool prefix = fixity == OperatorFixity::Prefix;
+
+      // Whitespace is not permitted between a symbolic pre/postfix operator
+      // and its operand, and pre/postfix operators must not satisfy the infix
+      // operator rules.
+      if (!(prefix ? tokens().HasTrailingWhitespace(*position_)
+                   : tokens().HasLeadingWhitespace(*position_)) &&
+          !IsLexicallyValidInfixOperator()) {
+        return;
+      }
+    }
+    DiagnoseInvalidOperatorFixity(fixity);
+  }
 
   // If the current position is a `,`, consumes it, adds the provided token, and
   // returns `Comma`. Returns `Close` if the current position is close_token
@@ -307,7 +481,20 @@ class Context {
   // position, and may emit errors. Pass already_has_error in order to suppress
   // duplicate errors.
   auto ConsumeListToken(NodeKind comma_kind, Lex::TokenKind close_kind,
-                        bool already_has_error) -> ListTokenKind;
+                        bool already_has_error) -> ListTokenKind {
+    if (!PositionIs(Lex::TokenKind::Comma) && !PositionIs(close_kind)) {
+      RecoverFromInvalidListToken(close_kind, already_has_error);
+    }
+
+    if (PositionIs(close_kind)) {
+      return ListTokenKind::Close;
+    } else {
+      AddLeafNode(comma_kind, Consume(),
+                  /*has_error=*/comma_kind == NodeKind::InvalidParse);
+      return PositionIs(close_kind) ? ListTokenKind::CommaClose
+                                    : ListTokenKind::Comma;
+    }
+  }
 
   // Gets the kind of the next token to be consumed. If `lookahead` is
   // provided, it specifies which token to inspect.
@@ -325,15 +512,17 @@ class Context {
 
   // Pops the state and keeps the value for inspection.
   auto PopState() -> State {
-    auto back = state_stack_.pop_back_val();
-    CARBON_VLOG("Pop {0}: {1}\n", state_stack_.size(), back);
-    return back;
+    if (vlog_stream_ != nullptr) {
+      VlogPopState("Pop");
+    }
+    return state_stack_.pop_back_val();
   }
 
   // Pops the state and discards it.
   auto PopAndDiscardState() -> void {
-    CARBON_VLOG("PopAndDiscard {0}: {1}\n", state_stack_.size() - 1,
-                state_stack_.back());
+    if (vlog_stream_ != nullptr) {
+      VlogPopState("PopAndDiscard");
+    }
     state_stack_.pop_back();
   }
 
@@ -397,8 +586,10 @@ class Context {
 
   // Pushes a constructed state onto the stack.
   auto PushState(State state) -> void {
-    CARBON_VLOG("Push {0}: {1}\n", state_stack_.size(), state);
     state_stack_.push_back(state);
+    if (vlog_stream_ != nullptr) {
+      VlogPushState();
+    }
     CARBON_CHECK(state_stack_.size() < (1 << 20),
                  "Excessive stack size: likely infinite loop");
   }
@@ -417,7 +608,13 @@ class Context {
   // diagnostics.
   auto AddNodeExpectingDeclSemi(State state, NodeKind node_kind,
                                 Lex::TokenKind decl_kind, bool is_def_allowed)
-      -> void;
+      -> void {
+    if (!state.has_error && PositionIs(Lex::TokenKind::Semi)) {
+      AddNode(node_kind, Consume(), /*has_error=*/false);
+      return;
+    }
+    RecoverFromMissingDeclSemi(state, node_kind, decl_kind, is_def_allowed);
+  }
 
   // Emits a diagnostic for a declaration missing a semi.
   auto DiagnoseExpectedDeclSemi(Lex::TokenKind expected_kind) -> void;
@@ -487,6 +684,17 @@ class Context {
   auto position() -> Lex::TokenIterator& { return position_; }
   auto position() const -> Lex::TokenIterator { return position_; }
 
+  // Returns the point just past the token before `position_`, which is where a
+  // token missing at `position_` would be written.
+  auto PointAfterPreviousToken() const -> DiagnosticLoc {
+    return DiagnosticLoc::After(*(position_ - 1));
+  }
+
+  // Returns where a user would insert an opening bracket missing at
+  // `position_`: against the token at `position_` when it's on the line where
+  // the previous token ends, and otherwise just past the previous token.
+  auto OpeningBracketInsertionPoint() const -> DiagnosticLoc;
+
   auto state_stack() -> llvm::SmallVector<State>& { return state_stack_; }
 
   auto state_stack() const -> const llvm::SmallVector<State>& {
@@ -506,6 +714,71 @@ class Context {
   }
 
  private:
+  // Determines whether the given token is considered to be the start of an
+  // operand according to the rules for infix operator parsing.
+  static auto IsAssumedStartOfOperand(Lex::TokenKind kind) -> bool {
+    return kind.IsOneOf({Lex::TokenKind::OpenParen, Lex::TokenKind::Identifier,
+                         Lex::TokenKind::IntLiteral,
+                         Lex::TokenKind::RealLiteral,
+                         Lex::TokenKind::StringLiteral});
+  }
+
+  // Determines whether the given token is considered to be the end of an
+  // operand according to the rules for infix operator parsing.
+  static auto IsAssumedEndOfOperand(Lex::TokenKind kind) -> bool {
+    return kind.IsOneOf(
+        {Lex::TokenKind::CloseParen, Lex::TokenKind::CloseCurlyBrace,
+         Lex::TokenKind::CloseSquareBracket, Lex::TokenKind::Identifier,
+         Lex::TokenKind::IntLiteral, Lex::TokenKind::RealLiteral,
+         Lex::TokenKind::StringLiteral});
+  }
+
+  // Determines whether the given token could possibly be the start of an
+  // operand. This is conservatively correct, and will never incorrectly return
+  // `false`, but can incorrectly return `true`.
+  static auto IsPossibleStartOfOperand(Lex::TokenKind kind) -> bool {
+    return !kind.IsOneOf(
+        {Lex::TokenKind::CloseParen, Lex::TokenKind::CloseCurlyBrace,
+         Lex::TokenKind::CloseSquareBracket, Lex::TokenKind::Comma,
+         Lex::TokenKind::Semi, Lex::TokenKind::Colon});
+  }
+
+  // The following are the slow paths of inline methods above, which are kept
+  // out of line so that the inline fast paths stay small. They handle verbose
+  // logging, diagnostics, and error recovery.
+
+  // Logs the most recently added node.
+  [[gnu::cold]] auto VlogAddNode() const -> void;
+  // Logs the most recently pushed state.
+  [[gnu::cold]] auto VlogPushState() const -> void;
+  // Logs the state that is about to be popped, prefixed by `label`.
+  [[gnu::cold]] auto VlogPopState(llvm::StringLiteral label) const -> void;
+
+  // Diagnoses a missing open curly brace in `ConsumeAndAddOpenCurlyBrace`.
+  [[gnu::cold]] auto DiagnoseExpectedOpenCurlyBrace(
+      Lex::TokenIndex default_token, NodeKind start_kind) -> void;
+  // Diagnoses a missing open paren in `ConsumeAndAddOpenParen`.
+  [[gnu::cold]] auto DiagnoseExpectedOpenParen(Lex::TokenIndex default_token,
+                                               NodeKind start_kind) -> void;
+  // Handles the error cases of `ConsumeAndAddCloseSymbol`, diagnosing and
+  // skipping to the matching closing symbol when `state.token` is an opening
+  // symbol.
+  [[gnu::cold]] auto DiagnoseAndSkipToCloseSymbol(State state,
+                                                  NodeKind close_kind) -> void;
+  // Diagnoses the current operator token not being written properly for the
+  // given fixity in `DiagnoseOperatorFixity`.
+  [[gnu::cold]] auto DiagnoseInvalidOperatorFixity(OperatorFixity fixity)
+      -> void;
+  // Diagnoses and skips past an invalid token in `ConsumeListToken`, leaving
+  // the position at either a `,` or `close_kind`.
+  [[gnu::cold]] auto RecoverFromInvalidListToken(Lex::TokenKind close_kind,
+                                                 bool already_has_error)
+      -> void;
+  // Handles the error cases of `AddNodeExpectingDeclSemi`.
+  [[gnu::cold]] auto RecoverFromMissingDeclSemi(State state, NodeKind node_kind,
+                                                Lex::TokenKind decl_kind,
+                                                bool is_def_allowed) -> void;
+
   // Prints a single token for a stack dump. Used by PrintForStackDump.
   auto PrintTokenForStackDump(llvm::raw_ostream& output,
                               Lex::TokenIndex token) const -> void;

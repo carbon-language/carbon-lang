@@ -12,7 +12,7 @@
 // CHECK:STDOUT: - filename: fail_decimal_escape.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_decimal_escape.carbon:[[@LINE+2]]:4: error: decimal digit follows `\0` escape sequence. Use `\x00` instead of `\0` if the next character is a digit [DecimalEscapeSequence]
+// CHECK:STDERR: fail_decimal_escape.carbon:[[@LINE+2]]:2: error: decimal digit follows `\0` escape sequence. Use `\x00` instead of `\0` if the next character is a digit [DecimalEscapeSequence]
 // CHECK:STDERR:
 "\01"
 // CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "\"\\01\"", value: "\x001", has_leading_space: true }
@@ -21,7 +21,7 @@
 // CHECK:STDOUT: - filename: fail_unterminated.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_unterminated.carbon:[[@LINE+2]]:1: error: string literal is missing a terminator [UnterminatedString]
+// CHECK:STDERR: fail_unterminated.carbon:[[@LINE+2]]:3: error: string literal is missing a terminator [UnterminatedString]
 // CHECK:STDERR:
 "s
 // CHECK:STDOUT:   - { index: 1, kind:     "Error", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "\"s", has_leading_space: true }
@@ -31,10 +31,19 @@
 // CHECK:STDOUT: - filename: fail_unknown_escape.carbon
 // CHECK:STDOUT:   tokens:
 
-// CHECK:STDERR: fail_unknown_escape.carbon:[[@LINE+2]]:3: error: unrecognized escape sequence `w` [UnknownEscapeSequence]
+// CHECK:STDERR: fail_unknown_escape.carbon:[[@LINE+2]]:2: error: unrecognized escape sequence `w` [UnknownEscapeSequence]
 // CHECK:STDERR:
 "\w"
 // CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "\"\\w\"", value: "w", has_leading_space: true }
+
+// --- fail_raw_unknown_escape.carbon
+// CHECK:STDOUT: - filename: fail_raw_unknown_escape.carbon
+// CHECK:STDOUT:   tokens:
+
+// CHECK:STDERR: fail_raw_unknown_escape.carbon:[[@LINE+2]]:3: error: unrecognized escape sequence `w` [UnknownEscapeSequence]
+// CHECK:STDERR:
+#"\#w"#
+// CHECK:STDOUT:   - { index: 1, kind: "StringLiteral", line: {{ *}}[[@LINE-1]], column: 1, indent: 1, spelling: "#\"\\#w\"#", value: "w", has_leading_space: true }
 
 // --- fail_unicode_escape_missing_braced_digits.carbon
 // CHECK:STDOUT: - filename: fail_unicode_escape_missing_braced_digits.carbon
