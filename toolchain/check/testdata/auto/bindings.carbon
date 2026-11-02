@@ -40,6 +40,16 @@ fn G() {
 //@dump-sem-ir-end
 }
 
+// --- fail_todo_tuple.carbon
+library "[[@TEST_NAME]]";
+
+fn F() {
+    // CHECK:STDERR: fail_todo_tuple.carbon:[[@LINE+2]]:20-23: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
+    // CHECK:STDERR:
+    let unused x: (auto, auto) = (86, false);
+    var unused y: (auto, auto) = ({}, "str");
+}
+
 // --- fail_uninitialized_var.carbon
 library "[[@TEST_NAME]]";
 
