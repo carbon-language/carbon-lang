@@ -9,7 +9,7 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/fail_in_interface.carbon
 
 interface I {
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:7-9: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:6: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   let var a: ();
 
@@ -17,7 +17,7 @@ interface I {
   // CHECK:STDERR:
   var b: ();
 
-  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:7-9: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
+  // CHECK:STDERR: fail_in_interface.carbon:[[@LINE+2]]:6: error: expected identifier in associated constant declaration [ExpectedAssociatedConstantIdentifier]
   // CHECK:STDERR:
   let var c: ();
 

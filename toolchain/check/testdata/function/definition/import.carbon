@@ -51,13 +51,11 @@ library "[[@TEST_NAME]]";
 
 import library "fns";
 
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+4]]:1-8: error: redeclaration of `fn A` is redundant [RedeclRedundant]
-// CHECK:STDERR: imported from: fail_def_ownership.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+3]]:1-8: error: redeclaration of `fn A` is redundant [RedeclRedundant]
 // CHECK:STDERR: fns.carbon:4:1-8: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn A() {};
-// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+4]]:1-20: error: redeclaration of `fn B` is redundant [RedeclRedundant]
-// CHECK:STDERR: imported from: fail_def_ownership.carbon:[[@LINE-8]]:1 [InImport]
+// CHECK:STDERR: fail_def_ownership.carbon:[[@LINE+3]]:1-20: error: redeclaration of `fn B` is redundant [RedeclRedundant]
 // CHECK:STDERR: fns.carbon:5:1-21: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn B(b: i32) -> i32;
@@ -68,14 +66,12 @@ library "[[@TEST_NAME]]";
 
 import library "extern";
 
-// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+4]]:1-7: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: imported from: fail_redecl_then_def.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+3]]:1-7: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern.carbon:4:1-14: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn A();
 
-// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+4]]:1-8: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: imported from: fail_redecl_then_def.carbon:[[@LINE-9]]:1 [InImport]
+// CHECK:STDERR: fail_redecl_then_def.carbon:[[@LINE+3]]:1-8: error: redeclarations of `fn A` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: extern.carbon:4:1-14: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 fn A() {}
@@ -86,8 +82,7 @@ library "[[@TEST_NAME]]";
 
 import library "fns";
 
-// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+4]]:1-14: error: redeclarations of `fn D` must match use of `extern` [RedeclExternMismatch]
-// CHECK:STDERR: imported from: fail_mix_extern_decl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_mix_extern_decl.carbon:[[@LINE+3]]:1-14: error: redeclarations of `fn D` must match use of `extern` [RedeclExternMismatch]
 // CHECK:STDERR: fns.carbon:7:1-7: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 extern fn D();
@@ -413,7 +408,7 @@ fn D() {}
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
 // CHECK:STDOUT:   %A.type.9f4a6d.1: type = fn_type @A.1 [concrete]
 // CHECK:STDOUT:   %A.921eb9.1: %A.type.9f4a6d.1 = struct_value () [concrete]
-// CHECK:STDOUT:   %A.type.9f4a6d.2: type = fn_type @A.loc10 [concrete]
+// CHECK:STDOUT:   %A.type.9f4a6d.2: type = fn_type @A.loc9 [concrete]
 // CHECK:STDOUT:   %A.921eb9.2: %A.type.9f4a6d.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_32: Core.IntLiteral = int_value 32 [concrete]
 // CHECK:STDOUT:   %Int.type: type = parameterized_class_name_type @Int [concrete]
@@ -446,12 +441,12 @@ fn D() {}
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %A.decl: %A.type.9f4a6d.2 = fn_decl @A.loc10 [concrete = constants.%A.921eb9.2] {} {}
+// CHECK:STDOUT:   %A.decl: %A.type.9f4a6d.2 = fn_decl @A.loc9 [concrete = constants.%A.921eb9.2] {} {}
 // CHECK:STDOUT:   %B.decl: %B.type = fn_decl @B [concrete = constants.%B] {} {
-// CHECK:STDOUT:     %i32.loc15_17: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:     %.loc15: Core.Form = init_form %i32.loc15_17 [concrete = constants.%.0b3]
+// CHECK:STDOUT:     %i32.loc13_17: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %.loc13: Core.Form = init_form %i32.loc13_17 [concrete = constants.%.0b3]
 // CHECK:STDOUT:     %b.param: %i32 = value_param call_param0
-// CHECK:STDOUT:     %i32.loc15_9: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:     %i32.loc13_9: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %b: %i32 = wrapper_binding b, %b.param
 // CHECK:STDOUT:     %return.param: ref %i32 = out_param call_param1
 // CHECK:STDOUT:     %return: ref %i32 = return_slot %return.param
@@ -460,7 +455,7 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A.1 [from "fns.carbon"];
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @A.loc10() {
+// CHECK:STDOUT: fn @A.loc9() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
@@ -484,13 +479,13 @@ fn D() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
-// CHECK:STDOUT:     .A = %A.decl.loc10
+// CHECK:STDOUT:     .A = %A.decl.loc9
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %A.decl.loc10: %A.type = fn_decl @A [concrete = constants.%A] {} {}
-// CHECK:STDOUT:   %A.decl.loc16: %A.type = fn_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc9: %A.type = fn_decl @A [concrete = constants.%A] {} {}
+// CHECK:STDOUT:   %A.decl.loc14: %A.type = fn_decl @A [concrete = constants.%A] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: extern fn @A() [from "extern.carbon"] {
@@ -521,13 +516,13 @@ fn D() {}
 // CHECK:STDOUT:     .A = imports.%Main.A
 // CHECK:STDOUT:     .B = imports.%Main.B
 // CHECK:STDOUT:     .C = imports.%Main.C
-// CHECK:STDOUT:     .D = %D.decl.loc10
+// CHECK:STDOUT:     .D = %D.decl.loc9
 // CHECK:STDOUT:     .Core = imports.%Core
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %default.import = import <none>
-// CHECK:STDOUT:   %D.decl.loc10: %D.type = fn_decl @D [concrete = constants.%D] {} {}
-// CHECK:STDOUT:   %D.decl.loc12: %D.type = fn_decl @D [concrete = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc9: %D.type = fn_decl @D [concrete = constants.%D] {} {}
+// CHECK:STDOUT:   %D.decl.loc11: %D.type = fn_decl @D [concrete = constants.%D] {} {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @D() [from "fns.carbon"] {

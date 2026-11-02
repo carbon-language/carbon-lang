@@ -12,13 +12,13 @@ fn F() {
   // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+2]]:7: error: expected `(` after `for` [ExpectedParenAfter]
   // CHECK:STDERR:
   for {
+  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+6]]:4: error: expected `in` after loop pattern [ExpectedIn]
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+4]]:4: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+2]]:4: error: expected braced code block [ExpectedCodeBlock]
+  // CHECK:STDERR:
   }
-// CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+8]]:1: error: expected `in` after loop pattern [ExpectedIn]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+6]]:1: error: expected expression [ExpectedExpr]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+4]]:1: error: expected braced code block [ExpectedCodeBlock]
-// CHECK:STDERR:
 // CHECK:STDERR: fail_missing_cond.carbon:[[@LINE+2]]:1: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 }

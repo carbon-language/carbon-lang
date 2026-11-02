@@ -52,8 +52,7 @@ interface C;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+6]]:1-12: error: redeclaration of `interface C` is redundant [RedeclRedundant]
-// CHECK:STDERR: imported from: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+5]]:1-12: error: redeclaration of `interface C` is redundant [RedeclRedundant]
 // CHECK:STDERR: decl_in_api_decl_in_impl.carbon:4:1-12: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 // CHECK:STDERR: fail_decl_in_api_decl_in_impl.impl.carbon:[[@LINE+2]]:1-12: error: no definition found for declaration in impl file [MissingDefinitionInImpl]
@@ -70,8 +69,7 @@ interface D;
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE+4]]:1-12: error: redeclaration of `interface D` is redundant [RedeclRedundant]
-// CHECK:STDERR: imported from: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE-3]]:1 [InImport]
+// CHECK:STDERR: fail_decl_in_api_decl_and_definition_in_impl.impl.carbon:[[@LINE+3]]:1-12: error: redeclaration of `interface D` is redundant [RedeclRedundant]
 // CHECK:STDERR: decl_in_api_decl_and_definition_in_impl.carbon:4:1-12: note: previously declared here [RedeclPrevDecl]
 // CHECK:STDERR:
 interface D;

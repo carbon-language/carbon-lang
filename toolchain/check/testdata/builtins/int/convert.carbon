@@ -241,8 +241,7 @@ import library "int_ops";
 
 let not_constant: Core.IntLiteral = 0;
 
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:33-63: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: imported from: fail_not_constant.carbon:[[@LINE-5]]:1 [InImport]
+// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+3]]:33-63: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: int_ops.carbon:16:1-49: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let convert_not_constant: i16 = IntLiteralToInt16(not_constant);

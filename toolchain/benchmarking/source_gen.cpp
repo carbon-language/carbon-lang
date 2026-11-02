@@ -2032,10 +2032,10 @@ static auto IdentifierChars() -> llvm::ArrayRef<char> {
 }
 
 static constexpr llvm::StringRef NonCarbonCppKeywords[] = {
-    "asm",  "catch",    "do",       "double",   "float", "goto", "int",
-    "long", "new",      "operator", "signed",   "std",   "this", "throw",
-    "try",  "typename", "unix",     "unsigned", "using", "xor",  "M_E",
-    "M_El", "M_PI",     "NAN",      "NULL",
+    "asm",   "catch", "do",       "double",   "enum",     "float", "goto",
+    "int",   "long",  "new",      "operator", "signed",   "std",   "this",
+    "throw", "try",   "typename", "unix",     "unsigned", "using", "xor",
+    "M_E",   "M_El",  "M_PI",     "NAN",      "NULL",
 };
 
 // Names that generated code declares itself, which random identifiers must
