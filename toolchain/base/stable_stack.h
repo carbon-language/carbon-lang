@@ -46,8 +46,7 @@ class StableStack {
   // Copying the stack.
   StableStack(const StableStack& rhs)
     requires(std::is_copy_constructible_v<T>)
-      : size_(rhs.size_),
-        used_chunks_(rhs.used_chunks_),
+      : used_chunks_(rhs.used_chunks_),
         size_in_last_chunk_(rhs.size_in_last_chunk_) {
     CopyConstructFrom(rhs);
   }
@@ -65,7 +64,6 @@ class StableStack {
     // to construct all of the new values before destroying the old.
     DestroyAll();
     chunks_.clear();
-    size_ = rhs.size_;
     used_chunks_ = rhs.used_chunks_;
     size_in_last_chunk_ = rhs.size_in_last_chunk_;
     CopyConstructFrom(rhs);
@@ -76,7 +74,6 @@ class StableStack {
   // capacity.
   StableStack(StableStack&& rhs) noexcept
       : chunks_(std::exchange(rhs.chunks_, {})),
-        size_(std::exchange(rhs.size_, 0)),
         used_chunks_(std::exchange(rhs.used_chunks_, 0)),
         size_in_last_chunk_(std::exchange(rhs.size_in_last_chunk_, 0)) {}
   auto operator=(StableStack&& rhs) noexcept -> StableStack& {
@@ -91,7 +88,6 @@ class StableStack {
     // to construct all of the new values before destroying the old.
     DestroyAll();
     chunks_ = std::exchange(rhs.chunks_, {});
-    size_ = std::exchange(rhs.size_, 0);
     used_chunks_ = std::exchange(rhs.used_chunks_, 0);
     size_in_last_chunk_ = std::exchange(rhs.size_in_last_chunk_, 0);
     return *this;
@@ -148,7 +144,6 @@ class StableStack {
     auto [chunk, index] = GetIndexAtBack();
     auto& ref = Get(chunk, index);
 
-    size_--;
     size_in_last_chunk_--;
     if (size_in_last_chunk_ == 0) {
       used_chunks_--;
@@ -177,18 +172,19 @@ class StableStack {
   }
 
   // Whether there are any elements pushed onto the stack.
-  auto empty() const -> bool { return size_ == 0; }
+  auto empty() const -> bool { return used_chunks_ == 0; }
   // The number of elements pushed onto the stack.
-  auto size() const -> int32_t { return size_; }
+  auto size() const -> int32_t {
+    if (used_chunks_ == 0) {
+      return 0;
+    }
+    auto full_chunks = used_chunks_ - 1;
+    auto full_chunks_capacity = GetSumCapacity(full_chunks);
+    return full_chunks_capacity + size_in_last_chunk_;
+  }
   // Compute the capacity of the stack. The total capacity is not cached, so
   // this takes work proportional to `log(capacity of the stack)`.
-  auto capacity() const -> int32_t {
-    int32_t capacity = 0;
-    for (const auto& chunk : chunks_) {
-      capacity += chunk.capacity;
-    }
-    return capacity;
-  }
+  auto capacity() const -> int32_t { return GetSumCapacity(chunks_.size()); }
 
   // Compares the contents of two stacks for equality.
   friend auto operator==(const StableStack& lhs, const StableStack& rhs) -> bool
@@ -275,7 +271,6 @@ class StableStack {
     // Make `this` appear empty while destroying its elements in case they try
     // to use the stack mid-destruction.
     auto chunks = std::exchange(chunks_, {});
-    [[maybe_unused]] auto size = std::exchange(size_, 0);
     auto size_in_last_chunk = std::exchange(size_in_last_chunk_, 0);
     auto used_chunks = std::exchange(used_chunks_, 0);
 
@@ -349,19 +344,17 @@ class StableStack {
   auto PushSlot() -> void* {
     if (empty()) {
       auto& chunk = AddChunk();
-      size_ = size_in_last_chunk_ = 1;
+      size_in_last_chunk_ = 1;
       return chunk.array;
     }
     int32_t chunk = used_chunks_ - 1;
     if (size_in_last_chunk_ == chunks_[chunk].capacity) {
       auto& chunk = AddChunk();
       size_in_last_chunk_ = 1;
-      size_++;
       return chunk.array;
     } else {
       int32_t index = size_in_last_chunk_;
       size_in_last_chunk_++;
-      size_++;
       return static_cast<T*>(chunks_[chunk].array) + index;
     }
   }
@@ -379,23 +372,30 @@ class StableStack {
     return chunks_[used_chunks_ - 1];
   }
 
+  // The capacity of the first chunk.
+  static auto FirstChunkCapacity() -> int32_t {
+    return 2;  // FIXME.
+  }
+  // The total capacity of the first `num_chunks` chunks.
+  static auto GetSumCapacity(int32_t num_chunks) -> int32_t {
+    auto chunks_capacity = ((1 << num_chunks) - 1) * FirstChunkCapacity();
+    return chunks_capacity;
+  }
+  // The individual capacity to use for the next chunk.
   auto NextChunkCapacity() -> int32_t {
     if (chunks_.empty()) {
       // The size of the first chunk. We use a fairly small number since
       // StableStack is intended for holding larger classes, since those are
       // cases we need to hold references into the stack.
       // TODO: Maybe choose something inversely proportional to sizeof(T)?
-      return 2;
+      return FirstChunkCapacity();
     }
-    // The growth factor from each chunk to the next. 2 matches the growth
-    // factor of llvm::SmallVector.
-    // https://github.com/llvm/llvm-project/blob/52be14d081f369c826a54c949b55eb1e1ba8c68c/llvm/lib/Support/SmallVector.cpp#L107
+    // We use a growth factor of 2 so that we can do bitshifts in
+    // GetSumCapacity() to compute total capacity in O(1) time.
     return chunks_.back().capacity * 2;
   }
 
   llvm::SmallVector<Chunk, 1> chunks_;
-  // The total number of values in the stack.
-  int32_t size_ = 0;
   // The number of elements in `chunks_` that are being used, which have at
   // least one value stored in them.
   int32_t used_chunks_ = 0;
