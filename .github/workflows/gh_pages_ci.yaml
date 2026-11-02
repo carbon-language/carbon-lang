@@ -40,7 +40,7 @@ jobs:
       - name: Prebuild actions
         run: ./website/prebuild.py
       - name: Setup Ruby
-        uses: ruby/setup-ruby@6ca151fd1bfcfd6fe0c4eb6837eb0584d0134a0c # v1.290.0
+        uses: ruby/setup-ruby@7f797815d8adceb1c412e7abefdd1ab4abc47a5f # v1.335.0
         with:
           # Runs 'bundle install' and caches installed gems automatically.
           bundler-cache: true
