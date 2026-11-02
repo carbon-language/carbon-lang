@@ -170,10 +170,11 @@ auto HandleParseNode(Context& context, Parse::AutoTypeLiteralId node_id)
        next_node_kind == Parse::NodeKind::VarPrimitiveForm) &&
       context.parse_tree().node_kind(Parse::NodeId(node_id.index + 2)) ==
           Parse::NodeKind::ReturnType;
-  bool is_binding_pattern =
+  bool is_initialized_pattern_decl =
       next_node_kind == Parse::NodeKind::VarBindingPattern ||
       next_node_kind == Parse::NodeKind::LetBindingPattern;
-  if (is_return_type || is_return_primitive_form || is_binding_pattern) {
+  if (is_return_type || is_return_primitive_form ||
+      is_initialized_pattern_decl) {
     context.node_stack().Push(node_id, SemIR::AutoType::TypeInstId);
     return true;
   }
