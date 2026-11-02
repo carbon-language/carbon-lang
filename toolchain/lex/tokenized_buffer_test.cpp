@@ -714,6 +714,99 @@ TEST_F(LexerTest, Whitespace) {
   ASSERT_EQ(pos + 1, std::size(space));
 }
 
+TEST_F(LexerTest, KindDataAndWhitespaceForLongInput) {
+  // The token kinds and whitespace flags are built in bulk once lexing
+  // finishes, so check them on an input long enough to exercise the bulk path
+  // as well as its tail, with a mix of kinds and whitespace.
+  constexpr llvm::StringLiteral Line =
+      "fn x(a: i32) -> bool { return a+1 == 2; }\n";
+  constexpr int Repeats = 37;
+  std::string source;
+  for (int i = 0; i < Repeats; ++i) {
+    source += Line;
+  }
+  auto& buffer = compile_helper_.GetTokenizedBuffer(source);
+  EXPECT_FALSE(buffer.has_errors());
+
+  struct ExpectedLineToken {
+    TokenKind kind;
+    bool has_leading_space;
+  };
+  const ExpectedLineToken expected_line[] = {
+      {TokenKind::Fn, true},              //
+      {TokenKind::Identifier, true},      //
+      {TokenKind::OpenParen, false},      //
+      {TokenKind::Identifier, false},     //
+      {TokenKind::Colon, false},          //
+      {TokenKind::IntTypeLiteral, true},  //
+      {TokenKind::CloseParen, false},     //
+      {TokenKind::MinusGreater, true},    //
+      {TokenKind::Bool, true},            //
+      {TokenKind::OpenCurlyBrace, true},  //
+      {TokenKind::Return, true},          //
+      {TokenKind::Identifier, true},      //
+      {TokenKind::Plus, false},           //
+      {TokenKind::IntLiteral, false},     //
+      {TokenKind::EqualEqual, true},      //
+      {TokenKind::IntLiteral, true},      //
+      {TokenKind::Semi, false},           //
+      {TokenKind::CloseCurlyBrace, true},
+  };
+  constexpr int TokensPerLine = std::size(expected_line);
+  ASSERT_EQ(buffer.size(), 2 + Repeats * TokensPerLine);
+
+  const TokenKind* kind_data = buffer.kind_data();
+  for (TokenIndex token : buffer.tokens()) {
+    SCOPED_TRACE(
+        llvm::formatv("Token #{0}: '{1}'", token, buffer.GetTokenText(token)));
+    ExpectedLineToken expected;
+    if (token.index == 0) {
+      expected = {TokenKind::FileStart, false};
+    } else if (token.index == buffer.size() - 1) {
+      expected = {TokenKind::FileEnd, true};
+    } else {
+      // The start of the file counts as whitespace, so the first `fn` matches
+      // the pattern too.
+      expected = expected_line[(token.index - 1) % TokensPerLine];
+    }
+    EXPECT_EQ(buffer.GetKind(token), expected.kind);
+    EXPECT_EQ(kind_data[token.index], expected.kind);
+    EXPECT_EQ(buffer.HasLeadingWhitespace(token), expected.has_leading_space);
+    if (token.index + 1 < buffer.size()) {
+      EXPECT_EQ(buffer.HasTrailingWhitespace(token),
+                buffer.HasLeadingWhitespace(TokenIndex(token.index + 1)));
+    } else {
+      EXPECT_FALSE(buffer.HasTrailingWhitespace(token));
+    }
+  }
+  for (int i = 0; i < TokenizedBuffer::KindDataPadding; ++i) {
+    EXPECT_EQ(kind_data[buffer.size() + i], TokenKind::FileEnd) << i;
+  }
+
+  // Adding recovery tokens after lexing extends the arrays and keeps the
+  // padding intact.
+  int lexed_size = buffer.size();
+  for (int i = 0; i < 3; ++i) {
+    TokenIndex fn_token(1 + i * TokensPerLine);
+    TokenIndex recovered =
+        buffer.AddPostLexingRecoveryTokenAsIdentifier(fn_token);
+    EXPECT_EQ(recovered.index, lexed_size + i);
+    EXPECT_EQ(buffer.GetKind(recovered), TokenKind::Identifier);
+    EXPECT_EQ(buffer.GetTokenText(recovered), "fn");
+    EXPECT_EQ(buffer.HasLeadingWhitespace(recovered),
+              buffer.HasLeadingWhitespace(fn_token));
+  }
+  EXPECT_EQ(buffer.size(), lexed_size + 3);
+  EXPECT_EQ(buffer.tokens().end() - buffer.tokens().begin(), lexed_size);
+  kind_data = buffer.kind_data();
+  for (TokenIndex token : buffer.tokens()) {
+    EXPECT_EQ(kind_data[token.index], buffer.GetKind(token));
+  }
+  for (int i = 0; i < TokenizedBuffer::KindDataPadding; ++i) {
+    EXPECT_EQ(kind_data[buffer.size() + i], TokenKind::FileEnd) << i;
+  }
+}
+
 TEST_F(LexerTest, Keywords) {
   TokenKind keywords[] = {
 #define CARBON_TOKEN(TokenName)
@@ -1095,9 +1188,14 @@ TEST_F(LexerTest, TypeLiterals) {
 TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   // We increase the number of digits until the first one that is to large.
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            Diagnostics::Kind::TooManyTypeBitWidthDigits,
-                            Diagnostics::Level::Error, 1, 2, _)));
+  // The bit width's digits are marked as the range that is too long.
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(Testing::IsDiagnosticWithRange(
+          Diagnostics::Kind::TooManyTypeBitWidthDigits,
+          Diagnostics::Level::Error,
+          {.line_number = 1, .column_number = 2, .length = 1}, _,
+          {.line_number = 1, .column_number = 2, .length = testing::Gt(1)})));
   std::string code = "i";
   // A 128-bit APInt should be plenty large, but if needed in the future it can
   // be widened without issue.
@@ -1128,10 +1226,13 @@ TEST_F(LexerTest, TypeLiteralTooManyDigits) {
   // Make sure we can also gracefully reject very large number of digits without
   // crashing or hanging, and show the correct number.
   constexpr int Count = 10000;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            Diagnostics::Kind::TooManyTypeBitWidthDigits,
-                            Diagnostics::Level::Error, 1, 2,
-                            HasSubstr(llvm::formatv(" {0} ", Count)))));
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(Testing::IsDiagnosticWithRange(
+                  Diagnostics::Kind::TooManyTypeBitWidthDigits,
+                  Diagnostics::Level::Error,
+                  {.line_number = 1, .column_number = 2, .length = 1},
+                  HasSubstr(llvm::formatv(" {0} ", Count)),
+                  {.line_number = 1, .column_number = 2, .length = Count})));
   code = "i";
   code.append(Count, '9');
   auto& buffer = compile_helper_.GetTokenizedBuffer(code, &consumer);
@@ -1235,8 +1336,9 @@ TEST_F(LexerTest, InvalidCommentRunsLumpTogether) {
   // no matter which invalid byte follows each `//`; a valid comment ends the
   // run and starts its own record.
   Testing::MockDiagnosticConsumer consumer;
+  // The whitespace goes just past the `//`.
   EXPECT_CALL(consumer,
-              HandleDiagnostic(IsSingleDiagnostic(
+              HandleDiagnostic(Testing::IsPointDiagnostic(
                   Diagnostics::Kind::NoWhitespaceAfterCommentIntroducer,
                   Diagnostics::Level::Error, 1, 3, _)));
   auto& buffer = compile_helper_.GetTokenizedBuffer(
@@ -1276,8 +1378,9 @@ TEST_F(LexerTest, InvalidCommentRunAtEof) {
 
 TEST_F(LexerTest, DiagnosticWhitespace) {
   Testing::MockDiagnosticConsumer consumer;
+  // The whitespace goes just past the `//`.
   EXPECT_CALL(consumer,
-              HandleDiagnostic(IsSingleDiagnostic(
+              HandleDiagnostic(Testing::IsPointDiagnostic(
                   Diagnostics::Kind::NoWhitespaceAfterCommentIntroducer,
                   Diagnostics::Level::Error, 1, 3, _)));
   compile_helper_.GetTokenizedBuffer("//no space after comment", &consumer);
@@ -1285,23 +1388,34 @@ TEST_F(LexerTest, DiagnosticWhitespace) {
 
 TEST_F(LexerTest, DiagnosticUnrecognizedEscape) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer,
-              HandleDiagnostic(IsSingleDiagnostic(
-                  Diagnostics::Kind::UnknownEscapeSequence,
-                  Diagnostics::Level::Error, 1, 8, HasSubstr("`b`"))));
+  // The message is located at the `\` that starts the escape, and the escape
+  // is marked.
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(Testing::IsDiagnosticWithRange(
+          Diagnostics::Kind::UnknownEscapeSequence, Diagnostics::Level::Error,
+          {.line_number = 1, .column_number = 7, .length = 1}, HasSubstr("`b`"),
+          {.line_number = 1, .column_number = 7, .length = 2})));
   compile_helper_.GetTokenizedBuffer(R"("hello\bworld")", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticBadHex) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            Diagnostics::Kind::HexadecimalEscapeMissingDigits,
-                            Diagnostics::Level::Error, 1, 9, _)));
+  // The message is located at the first digit that isn't an uppercase
+  // hexadecimal digit, and the escape before it is marked.
+  EXPECT_CALL(consumer,
+              HandleDiagnostic(Testing::IsDiagnosticWithRange(
+                  Diagnostics::Kind::HexadecimalEscapeMissingDigits,
+                  Diagnostics::Level::Error,
+                  {.line_number = 1, .column_number = 9, .length = 0}, _,
+                  {.line_number = 1, .column_number = 7, .length = 2})));
   compile_helper_.GetTokenizedBuffer(R"("hello\xabworld")", &consumer);
 }
 
 TEST_F(LexerTest, DiagnosticInvalidDigit) {
   Testing::MockDiagnosticConsumer consumer;
+  // Only the invalid digit is marked, since the message says which literal it
+  // is in.
   EXPECT_CALL(consumer,
               HandleDiagnostic(IsSingleDiagnostic(
                   Diagnostics::Kind::InvalidDigit, Diagnostics::Level::Error, 1,
@@ -1327,17 +1441,82 @@ TEST_F(LexerTest, DiagnosticLfCr) {
 
 TEST_F(LexerTest, DiagnosticMissingTerminator) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            Diagnostics::Kind::UnterminatedString,
-                            Diagnostics::Level::Error, 1, 1, _)));
+  // The terminator goes where the literal stops, and the whole literal is
+  // marked.
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(Testing::IsDiagnosticWithRange(
+          Diagnostics::Kind::UnterminatedString, Diagnostics::Level::Error,
+          {.line_number = 1, .column_number = 5, .length = 0}, _,
+          {.line_number = 1, .column_number = 1, .length = 4})));
   compile_helper_.GetTokenizedBuffer(R"(#" ")", &consumer);
+}
+
+TEST_F(LexerTest, DiagnosticMissingMultiLineTerminator) {
+  Testing::MockDiagnosticConsumer consumer;
+  // The literal runs to the end of the file, which is where the terminator
+  // goes, and the literal is marked from its introducer.
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(Testing::IsDiagnosticWithRange(
+          Diagnostics::Kind::UnterminatedString, Diagnostics::Level::Error,
+          {.line_number = 3, .column_number = 1, .length = 0}, _,
+          {.line_number = 1, .column_number = 1, .length = _})));
+  compile_helper_.GetTokenizedBuffer(
+      "'''\n"
+      "  text\n",
+      &consumer);
+}
+
+TEST_F(LexerTest, DiagnosticPointAtEndOfFile) {
+  Testing::MockDiagnosticConsumer consumer;
+  // A file that doesn't end in a newline ends at the end of its last line.
+  EXPECT_CALL(consumer, HandleDiagnostic(Testing::IsPointDiagnostic(
+                            Diagnostics::Kind::DollarIntLiteralMissingNumber,
+                            Diagnostics::Level::Error, 1, 2, _)));
+  compile_helper_.GetTokenizedBuffer("$", &consumer);
+}
+
+// Returns the line and column of the point just past `token`, checking that it
+// is a point.
+static auto PointAfter(const TokenizedBuffer& buffer, int token)
+    -> std::pair<int, int> {
+  auto loc = buffer.PointAfterTokenToDiagnosticLoc(TokenIndex(token)).loc;
+  EXPECT_THAT(loc.length, Eq(0));
+  return {loc.line_number, loc.column_number};
+}
+
+TEST_F(LexerTest, PointAfterToken) {
+  // Tokens are `FileStart`, `a`, `b`, the string literal, and `FileEnd`.
+  auto& buffer = compile_helper_.GetTokenizedBuffer(
+      "a  b\n"
+      "'''\n"
+      "  c\n"
+      "'''");
+  // The point is before the spaces after the token.
+  EXPECT_THAT(PointAfter(buffer, 1), Pair(1, 2));
+  // The point just past the last token on a line is at the end of the line.
+  EXPECT_THAT(PointAfter(buffer, 2), Pair(1, 5));
+  // A token spanning lines ends on its last line, which here ends the file.
+  EXPECT_THAT(PointAfter(buffer, 3), Pair(4, 4));
+}
+
+TEST_F(LexerTest, PointAfterRecoveryToken) {
+  // The lexer inserts a `)` after `a`. It isn't in the source, so the point
+  // just past it is the point just past `a`.
+  auto& buffer = compile_helper_.GetTokenizedBuffer("(a");
+  ASSERT_TRUE(buffer.IsRecoveryToken(TokenIndex(3)));
+  EXPECT_THAT(PointAfter(buffer, 3), Pair(1, 3));
 }
 
 TEST_F(LexerTest, DiagnosticUnrecognizedChar) {
   Testing::MockDiagnosticConsumer consumer;
-  EXPECT_CALL(consumer, HandleDiagnostic(IsSingleDiagnostic(
-                            Diagnostics::Kind::UnrecognizedCharacters,
-                            Diagnostics::Level::Error, 1, 1, _)));
+  EXPECT_CALL(
+      consumer,
+      HandleDiagnostic(Testing::IsDiagnosticWithRange(
+          Diagnostics::Kind::UnrecognizedCharacters, Diagnostics::Level::Error,
+          {.line_number = 1, .column_number = 1, .length = 1}, _,
+          {.line_number = 1, .column_number = 1, .length = 1})));
   compile_helper_.GetTokenizedBuffer("\b", &consumer);
 }
 

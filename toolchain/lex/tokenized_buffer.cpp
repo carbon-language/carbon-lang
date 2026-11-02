@@ -229,9 +229,54 @@ auto TokenizedBuffer::AddPostLexingRecoveryToken(TokenInfo info) -> TokenIndex {
   }
 
   auto token = token_infos_.Add(info);
+  // Overwrite the first `FileEnd` padding entry and append a new one at the end
+  // to keep `KindDataPadding` trailing entries intact.
+  token_kinds_[token.index] = info.kind();
+  token_kinds_.push_back(TokenKind::FileEnd);
+  token_has_leading_space_.push_back(info.has_leading_space());
   recovery_tokens_.push_back(true);
   ++post_lexing_recovery_tokens_;
   return token;
+}
+
+auto TokenizedBuffer::BuildTokenArrays() -> void {
+  int32_t num_tokens = token_infos_.size();
+  token_kinds_.resize_for_overwrite(num_tokens + KindDataPadding);
+  token_has_leading_space_.resize_for_overwrite(num_tokens);
+
+  TokenKind* kinds = token_kinds_.data();
+  bool* has_leading_space = token_has_leading_space_.data();
+  for (const auto& chunk : token_infos_.chunks()) {
+    // Building these flat arrays is only a performance benefit when we can do
+    // so using especially efficient vectorized processing of the underlying
+    // `TokenInfo` structs that are created during lexing. We rely on Clang to
+    // autovectorize the inner loop below, but have to take some care to ensure
+    // that works.
+    //
+    // Because `TokenInfo`'s bitfield loads as 32-bit words, LLVM's default x86
+    // cost model caps the vector width at `256 / 32 = 8` lanes and emits
+    // narrower shuffles; requesting a width of 16 packs each iteration's
+    // extracted bytes into full 128-bit stores via `vpackusdw`/`vpackuswb`.
+    //
+    // We guard the pragma on `NDEBUG` (rather than `__OPTIMIZE__`, which is
+    // also set under `fastbuild`'s `-Og` where the loop vectorizer is disabled)
+    // and skip it under UBSan (whose per-iteration checks block vectorization),
+    // as Clang otherwise diagnoses `-Wpass-failed` under `-Werror`.
+    //
+    // Last but not least, it is important to iterate over `TokenInfo` by value
+    // (8 bytes) so `kind()` and `has_leading_space()` extract from a single SSA
+    // value. When using a reference, Clang lowers them as two narrower memory
+    // loads that AArch64 vectorizes as duplicate strided `ld2` passes over the
+    // chunk instead of single-pass `ldp` loads.
+#if defined(NDEBUG) && !__has_feature(undefined_behavior_sanitizer)
+#pragma clang loop vectorize_width(16)
+#endif
+    for (TokenInfo info : chunk) {
+      *kinds++ = info.kind();
+      *has_leading_space++ = info.has_leading_space();
+    }
+  }
+  std::fill_n(kinds, KindDataPadding, TokenKind::FileEnd);
 }
 
 auto TokenizedBuffer::GetIndentColumnNumber(LineIndex line) const -> int {
@@ -482,6 +527,9 @@ auto TokenizedBuffer::CollectMemUsage(MemUsage& mem_usage,
                                       llvm::StringRef label) const -> void {
   mem_usage.Collect(MemUsage::ConcatLabel(label, "allocator_"), allocator_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "token_infos_"), token_infos_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "token_kinds_"), token_kinds_);
+  mem_usage.Collect(MemUsage::ConcatLabel(label, "token_has_leading_space_"),
+                    token_has_leading_space_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "line_infos_"), line_infos_);
   mem_usage.Collect(MemUsage::ConcatLabel(label, "comments_"), comments_);
 }
@@ -495,21 +543,30 @@ auto TokenizedBuffer::SourcePointerToDiagnosticLoc(const char* loc) const
   auto line_range = line_infos_.values();
 
   // Find the first line starting after the given location.
-  const auto next_line_it = llvm::partition_point(
+  auto next_line_it = llvm::partition_point(
       line_range,
       [offset](const LineInfo& line) { return line.start <= offset; });
 
   // Step back one line to find the line containing the given position.
   CARBON_CHECK(next_line_it != line_range.begin(),
                "location precedes the start of the first line");
-  const auto line_it = std::prev(next_line_it);
+  auto line_it = std::prev(next_line_it);
+
+  // A file that doesn't end in a newline has an empty line after its last one,
+  // starting at the end of the file. The end of the file is the end of the
+  // last line instead.
+  llvm::StringRef text = source_->text();
+  if (line_it->start == offset && line_it != line_range.begin() &&
+      offset == static_cast<int32_t>(text.size()) && !text.ends_with("\n")) {
+    next_line_it = line_it;
+    --line_it;
+  }
   int line_number = line_it - line_range.begin();
   int column_number = offset - line_it->start;
 
   // Grab the line from the buffer by slicing from this line to the next
   // minus the newline. When on the last line, instead use the start to the end
   // of the buffer.
-  llvm::StringRef text = source_->text();
   llvm::StringRef line = next_line_it != line_range.end()
                              ? text.slice(line_it->start, next_line_it->start)
                              : text.substr(line_it->start);
@@ -538,6 +595,43 @@ auto TokenizedBuffer::TokenToDiagnosticLoc(TokenIndex token) const
   // is a recovery token that doesn't correspond to the original source?
   auto converted = SourcePointerToDiagnosticLoc(token_start);
   converted.loc.length = GetTokenText(token).size();
+  return converted;
+}
+
+auto TokenizedBuffer::TokenRangeToDiagnosticLoc(
+    InclusiveTokenRange tokens) const -> Diagnostics::ConvertedLoc {
+  auto begin_loc = TokenToDiagnosticLoc(tokens.begin);
+  if (tokens.begin == tokens.end) {
+    return begin_loc;
+  }
+  auto end_loc = TokenToDiagnosticLoc(tokens.end);
+  begin_loc.last_byte_offset = end_loc.last_byte_offset;
+  // TODO: A range across lines covers only the rest of its first line, because
+  // a `Diagnostics::Loc` is on one line. Cover the whole range once a location
+  // can span lines.
+  if (begin_loc.loc.line_number != end_loc.loc.line_number) {
+    begin_loc.loc.length =
+        begin_loc.loc.line.size() - begin_loc.loc.column_number + 1;
+  } else {
+    if (begin_loc.loc.column_number != end_loc.loc.column_number) {
+      begin_loc.loc.length = end_loc.loc.column_number + end_loc.loc.length -
+                             begin_loc.loc.column_number;
+    }
+  }
+  return begin_loc;
+}
+
+auto TokenizedBuffer::PointAfterTokenToDiagnosticLoc(TokenIndex token) const
+    -> Diagnostics::ConvertedLoc {
+  // A recovery token isn't in the source. It was inserted just past the token
+  // before it, which puts the point just past it there too.
+  while (IsRecoveryToken(token)) {
+    token = TokenIndex(token.index - 1);
+  }
+  auto converted = SourcePointerToDiagnosticLoc(
+      source_->text().begin() + token_infos_.Get(token).byte_offset() +
+      GetTokenText(token).size());
+  converted.loc.length = 0;
   return converted;
 }
 

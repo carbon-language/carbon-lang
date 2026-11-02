@@ -48,13 +48,33 @@ fn TestMethods(c: WithMethods) {
   let unused b: i32 = WithMethods.Static();
 }
 
-// --- generic_non_dependent.carbon
+// --- generic.carbon
 library "[[@TEST_NAME]]";
 
 fn GenericNonDependent[T: type](unused x: T) => 42 as i32;
+fn GenericId[T: Core.Copy](x: T) => x;
+fn GenericPair[T: Core.Copy, U: Core.Copy](x: T, y: U) => (x, y);
+fn GenericCaller[T: Core.Copy](x: T) => GenericId(x);
+fn TemplateDeref[template T: type](p: T*) => *p;
+eval fn EvalGenericId[T: Core.Copy](x: T) => x;
 
-fn TestGenericNonDependent() {
-  let unused a: i32 = GenericNonDependent(true);
+class GenericBox(T: Core.Copy) {
+  fn Get(self: Self) => self.x;
+  fn Make(x: T) => {.x = x} as Self;
+  var x: T;
+}
+
+fn TestGeneric() {
+  let a: i32 = GenericNonDependent(true);
+  let b: i32 = GenericId(a);
+  let c: bool = GenericCaller(true);
+  let p: (i32, bool) = GenericPair(b, c);
+  var v: i32 = p.0;
+  let unused d: i32 = TemplateDeref(&v);
+  var arr: array(i32, EvalGenericId(3));
+  let _: array(i32, 3) = arr;
+  let box: GenericBox(i32) = GenericBox(i32).Make(7);
+  let unused e: i32 = box.Get();
 }
 
 // --- main_run_i32.carbon
@@ -111,10 +131,28 @@ library "[[@TEST_NAME]]";
 
 class Incomplete;
 
+// TODO: This test produces too many error messages for the same problem.
+
 // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+3]]:39-40: error: function returns incomplete type `Incomplete` [IncompleteTypeInFunctionReturnType]
-// CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-3]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
+// CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-5]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
 // CHECK:STDERR:
 fn DerefIncomplete(p: Incomplete*) => *p;
+
+fn GenericDerefIncomplete[template T: type](p: T*) => *p;
+fn CallGenericDerefIncomplete(p: Incomplete*) {
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+11]]:3-27: error: unable to monomorphize specific `GenericDerefIncomplete(Incomplete)` [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-3]]:55-56: note: `T` evaluates to incomplete type `Incomplete` [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-13]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+7]]:3-27: error: unable to monomorphize specific `GenericDerefIncomplete(Incomplete)` [ResolvingSpecificHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-7]]:55-56: note: cannot access member of interface `Core.Copy` in type `Incomplete` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE+4]]:3-27: error: function returns incomplete type `Incomplete` [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-19]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR: fail_incomplete_return.carbon:[[@LINE-11]]:55-56: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR:
+  GenericDerefIncomplete(p);
+}
 
 // --- fail_unused.carbon
 library "[[@TEST_NAME]]";
@@ -125,11 +163,6 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR: fail_unused.carbon:[[@LINE+2]]:41: note: usage here [UnusedButUsedHere]
 // CHECK:STDERR:
 fn UnusedTest(x: i32, unused y: i32) => y;
-
-// --- dependent_return.carbon
-library "[[@TEST_NAME]]";
-
-fn GenericId[T: Core.Copy](x: T) => x;
 
 // --- fail_call_before_deduced.carbon
 library "[[@TEST_NAME]]";

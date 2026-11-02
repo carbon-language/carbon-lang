@@ -56,11 +56,10 @@ package Same library "[[@TEST_NAME]]";
 
 import library "b";
 
-// CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE+7]]:10-12: error: function returns incomplete type `A.C` [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR: fail_named_indirectly_same_package.carbon:[[@LINE+6]]:10-12: error: function returns incomplete type `A.C` [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR: imported from: fail_named_indirectly_same_package.carbon:[[@LINE-3]]:1 [InImport]
 // CHECK:STDERR: imported from: b.carbon:3:1 [InImport]
 // CHECK:STDERR: a.carbon:6:1-10: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: imported from: fail_named_indirectly_same_package.carbon:[[@LINE-6]]:1 [InImport]
 // CHECK:STDERR: b.carbon:7:8-13: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR:
 fn G() { F(); }
@@ -71,11 +70,10 @@ package Other library "[[@TEST_NAME]]";
 
 import Same library "b";
 
-// CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE+7]]:10-17: error: function returns incomplete type `Same.A.C` [IncompleteTypeInFunctionReturnType]
+// CHECK:STDERR: fail_named_indirectly_different_package.carbon:[[@LINE+6]]:10-17: error: function returns incomplete type `Same.A.C` [IncompleteTypeInFunctionReturnType]
 // CHECK:STDERR: imported from: fail_named_indirectly_different_package.carbon:[[@LINE-3]]:1 [InImport]
 // CHECK:STDERR: imported from: b.carbon:3:1 [InImport]
 // CHECK:STDERR: a.carbon:6:1-10: note: class was forward declared here [ClassForwardDeclaredHere]
-// CHECK:STDERR: imported from: fail_named_indirectly_different_package.carbon:[[@LINE-6]]:1 [InImport]
 // CHECK:STDERR: b.carbon:7:8-13: note: return type declared here [IncompleteReturnTypeHere]
 // CHECK:STDERR:
 fn G() { Same.F(); }

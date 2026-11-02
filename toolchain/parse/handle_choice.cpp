@@ -2,6 +2,7 @@
 // Exceptions. See /LICENSE for license information.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/parse/context.h"
 #include "toolchain/parse/handle.h"
 
@@ -23,7 +24,8 @@ auto HandleChoiceDefinitionStart(Context& context) -> void {
     if (!state.has_error) {
       CARBON_DIAGNOSTIC(ExpectedChoiceDefinition, Error,
                         "choice definition expected");
-      context.emitter().Emit(*context.position(), ExpectedChoiceDefinition);
+      context.emitter().Emit(context.OpeningBracketInsertionPoint(),
+                             ExpectedChoiceDefinition);
     }
 
     context.AddNode(NodeKind::ChoiceDefinitionStart, *context.position(),
@@ -55,18 +57,30 @@ auto HandleChoiceAlternative(Context& context) -> void {
 
   auto token = context.ConsumeIf(Lex::TokenKind::Identifier);
   if (!token) {
+    // A word that can't be a name, followed by a token that can follow one,
+    // was most likely meant as the name.
+    bool recover_as_raw =
+        context.PositionKind().is_word() &&
+        context.PositionKind(Lookahead::NextToken)
+            .IsOneOf({Lex::TokenKind::Comma, Lex::TokenKind::CloseCurlyBrace,
+                      Lex::TokenKind::OpenParen});
     if (!state.has_error) {
-      CARBON_DIAGNOSTIC(ExpectedChoiceAlternativeName, Error,
-                        "expected choice alternative name");
-      context.emitter().Emit(*context.position(),
-                             ExpectedChoiceAlternativeName);
+      CARBON_DIAGNOSTIC(
+          ExpectedChoiceAlternativeName, Error,
+          "expected choice alternative name"
+          "{0:; prefix reserved word with `r#` to form a valid identifier|}",
+          Diagnostics::BoolAsSelect);
+      context.emitter().Emit(*context.position(), ExpectedChoiceAlternativeName,
+                             recover_as_raw);
     }
 
-    context.SkipPastLikelyEnd(*context.position());
-
-    context.ReturnErrorOnState();
-
-    return;
+    if (!recover_as_raw) {
+      context.SkipPastLikelyEnd(*context.position());
+      context.ReturnErrorOnState();
+      return;
+    }
+    token = context.tokens().AddPostLexingRecoveryTokenAsIdentifier(
+        context.Consume());
   }
 
   if (context.PositionIs(Lex::TokenKind::OpenParen)) {

@@ -36,9 +36,8 @@ library "[[@TEST_NAME]]";
 import Cpp library "templates.h";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE+6]]:35: error: too few template arguments for class template 'C' [CppInteropParseError]
-// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE+5]]:35: note: template template argument has different template parameters than its corresponding template template parameter [CppInteropParseNote]
-// CHECK:STDERR: included from: fail_template_mismatch.carbon:[[@LINE-5]]:10 [InCppInclude]
+// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE+5]]:35: error: too few template arguments for class template 'C' [CppInteropParseError]
+// CHECK:STDERR: fail_template_mismatch.carbon:[[@LINE+4]]:35: note: template template argument has different template parameters than its corresponding template template parameter [CppInteropParseNote]
 // CHECK:STDERR: ./templates.h:6:66: note: previous template template parameter is here [CppInteropParseNote]
 // CHECK:STDERR: ./templates.h:4:37: note: template is declared here [CppInteropParseNote]
 // CHECK:STDERR:

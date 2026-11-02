@@ -8,12 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/fail_no_semi.carbon
 
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+4]]:4: error: expected pattern [ExpectedPattern]
+// CHECK:STDERR:
+// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:4: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:
 var
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+11]]:26: error: expected pattern [ExpectedPattern]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+9]]:26: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
-// CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_no_semi.carbon
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─VariableIntroducer 'var'

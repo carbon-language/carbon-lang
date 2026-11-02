@@ -47,6 +47,20 @@ enum class LineEnd : int8_t {
   Edge,
 };
 
+// The stroke weight a line is drawn with.
+//
+// Weight is recorded for each direction a line leaves a cell in, and Unicode
+// has a glyph for every mix of light and heavy lines meeting in a cell, so
+// where a heavy line meets a light one each keeps its weight. ASCII has no
+// weights: a cell with a heavy line leaving it is `^`, the underline `rustc`
+// uses for a primary range, unless a line enters it from above or a light line
+// leaves it downward. Those cells keep their light glyph, so the junction or
+// corner stays visible.
+enum class LineWeight : int8_t {
+  Light,
+  Heavy,
+};
+
 // A grid of styled cells staged for rendering to a terminal.
 //
 // Coordinates are 0-based with (0, 0) at the top left, `x` counting terminal
@@ -247,14 +261,17 @@ class Buffer {
   // The block and the origin are checked as drawing checks them, so measuring
   // answers only for arguments drawing would accept.
   auto MeasureWrappedText(int x, int y, int margin, int max_width,
-                          llvm::StringRef text) const -> DrawEnd;
+                          llvm::StringRef text,
+                          bool backticks_are_quotes = false) const -> DrawEnd;
 
   // Returns the fewest columns `text` wraps into without overhanging them,
   // which is the width of its widest word since wrapping never breaks one.
+  // `backticks_are_quotes` is as for `DrawWrappedText`.
   //
   // Wrapping into fewer columns still draws everything; the excess overhangs.
   // So this is a layout preference rather than a minimum.
-  auto MeasureWrapWidth(llvm::StringRef text) const -> int;
+  auto MeasureWrapWidth(llvm::StringRef text,
+                        bool backticks_are_quotes = false) const -> int;
 
   // Draws `code_point` at (x, y), which must be a non-negative column and a row
   // inside `MaxRows`, widening the buffer and adding rows as needed to reach
@@ -286,22 +303,42 @@ class Buffer {
   // containing `-` or `+` is never redrawn as line art.
   //
   // A cell's style is whatever was drawn there last, so crossing lines of
-  // different styles do depend on order.
-  //
-  // TODO: Every line is drawn with one stroke, and a line meeting another
-  // joins it. Diagnostic rendering needs a heavier stroke, to mark the source
-  // a message is about, and a line that passes another without connecting, to
-  // reach a label past the marks between them. Add a weight to these calls
-  // and a crossing form of `DrawVerticalLine`.
+  // different styles depend on order. Weight is kept per direction instead:
+  // each direction a line leaves a cell in has the weight of the line drawn
+  // there last, so crossing lines keep their own weights in either order, and
+  // a heavy line meeting a light one forms a mixed junction.
   auto DrawHorizontalLine(int x, int y, int length, const Style& style,
                           LineEnd start = LineEnd::Center,
-                          LineEnd end = LineEnd::Center) -> DrawEnd;
+                          LineEnd end = LineEnd::Center,
+                          LineWeight weight = LineWeight::Light) -> DrawEnd;
 
   // Draws a vertical line down `length` rows starting at (x, y), with the same
   // meaning for its ends. Returns the row after it, in the column it ran down.
   auto DrawVerticalLine(int x, int y, int length, const Style& style,
                         LineEnd start = LineEnd::Center,
-                        LineEnd end = LineEnd::Center) -> DrawEnd;
+                        LineEnd end = LineEnd::Center,
+                        LineWeight weight = LineWeight::Light) -> DrawEnd;
+
+  // Draws a light vertical line down `length` rows starting at (x, y), behind
+  // everything drawn before it. The line runs out through the bottom of its
+  // last cell.
+  //
+  // The line is drawn only into blank cells with no text directly left or
+  // right of them. Everything drawn earlier stays as it was, so where this
+  // line crosses another, the other line is unbroken and this one has a gap,
+  // and the two don't join. A line beside text could be mistaken for part of
+  // the text, which is why those cells are skipped too.
+  //
+  // With `start` at `LineEnd::Center`, the first cell is the exception: the
+  // line leaves it downward and joins what it holds, as `DrawVerticalLine`
+  // would. If a line already leaves that cell downward, the cell is left
+  // unchanged, so that line keeps its weight. With `start` at `LineEnd::Edge`,
+  // the line enters its first cell from above like the rest, which continues
+  // a line broken off above it.
+  //
+  // Returns the row after the line, in the column it ran down.
+  auto DrawCrossingVerticalLine(int x, int y, int length, const Style& style,
+                                LineEnd start = LineEnd::Center) -> DrawEnd;
 
   // Draws the outline of a box with its top-left corner at (x, y).
   //
@@ -365,6 +402,12 @@ class Buffer {
   // word, and one too long for a row of its own is moved down to one and then
   // overhangs it rather than being broken.
   //
+  // With `backticks_are_quotes`, backticks pair up from the left on each line
+  // and no break falls between a pair, so a quoted type with spaces in it
+  // wraps whole or overhangs, as a URL does. A backtick with no partner later
+  // on its line, or with a tab or carriage return before its partner, is an
+  // ordinary character.
+  //
   // Whitespace stops at the block's edge rather than running past it, so the
   // spaces between two words stay on the row the first of them ended and the
   // row the second wraps onto begins at the margin. Spaces the text opens with,
@@ -397,12 +440,9 @@ class Buffer {
   // with such text, since which breaks a reflow may discard -- every newline,
   // or only those a previous wrapping introduced -- is a question about where
   // that text came from.
-  //
-  // TODO: A break can fall inside a piece of code the text quotes, splitting a
-  // type written with spaces in it across two rows. Take a quote character and
-  // keep what a pair of them encloses in one word, as a URL already is.
   auto DrawWrappedText(int x, int y, int margin, int max_width,
-                       llvm::StringRef text, const Style& style) -> DrawEnd;
+                       llvm::StringRef text, const Style& style,
+                       bool backticks_are_quotes = false) -> DrawEnd;
 
   // Renders the grid, appending the bytes that draw it to `out`.
   //
@@ -444,7 +484,7 @@ class Buffer {
 
   struct Cell {
     // The code point rendered here. For a cell with `lines` set, this is
-    // derived from those bits and the charset.
+    // derived from `lines`, `heavy_lines`, and the charset.
     char32_t code_point = ' ';
 
     Style style;
@@ -452,6 +492,10 @@ class Buffer {
     // Which directions drawn lines leave this cell in, with `LineCell` set,
     // or zero for a cell holding text.
     uint8_t lines = 0;
+
+    // The directions in `lines` that a heavy line leaves in. Always a subset
+    // of the directions set there.
+    uint8_t heavy_lines = 0;
 
     // Whether this cell is the right half of a double-width character, and so
     // renders nothing of its own.
@@ -511,7 +555,8 @@ class Buffer {
                 PlaceFn place) const -> DrawEnd;
   template <typename PlaceFn>
   auto WalkWrappedText(int x, int y, int margin, int max_width,
-                       llvm::StringRef text, PlaceFn place) const -> DrawEnd;
+                       llvm::StringRef text, bool backticks_are_quotes,
+                       PlaceFn place) const -> DrawEnd;
 
   // Adds rows until row `y` exists.
   auto EnsureRow(int y) -> void;
@@ -528,8 +573,14 @@ class Buffer {
   // Appends `code_point` to the marks rendered with the cell before column `x`.
   auto AttachCombiningMark(int x, int y, char32_t code_point) -> void;
 
-  // Adds `directions` to the lines through (x, y) and updates its glyph.
-  auto DrawLine(int x, int y, uint8_t directions, const Style& style) -> void;
+  // Adds `directions` to the lines through (x, y) at `weight`, replacing the
+  // weight those directions had, and updates its glyph.
+  auto DrawLine(int x, int y, uint8_t directions, LineWeight weight,
+                const Style& style) -> void;
+
+  // Returns whether the cell at (x, y) holds text. Cells outside what has been
+  // drawn hold nothing.
+  auto HoldsText(int x, int y) const -> bool;
 
   // Returns the last column in row `y` that renders anything under `mode`, or
   // -1 when the row renders nothing.

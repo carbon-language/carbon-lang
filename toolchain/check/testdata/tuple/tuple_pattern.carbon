@@ -72,7 +72,7 @@ let (x: {}, y: {}) = ({}, {});
 library "[[@TEST_NAME]]";
 
 class C {
-  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+2]]:20: error: found tuple pattern in class `var` decl [FieldWithTuplePattern]
+  // CHECK:STDERR: fail_in_class.carbon:[[@LINE+2]]:7-20: error: tuple pattern in field declaration [FieldWithTuplePattern]
   // CHECK:STDERR:
   var (x: {}, y: {});
 }

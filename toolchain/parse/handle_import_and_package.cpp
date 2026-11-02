@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
 #include "toolchain/base/shared_value_stores.h"
+#include "toolchain/diagnostics/format_providers.h"
 #include "toolchain/lex/token_kind.h"
 #include "toolchain/lex/tokenized_buffer.h"
 #include "toolchain/parse/context.h"
@@ -19,27 +20,27 @@ static auto OnParseError(Context& context, Context::State state,
                   /*has_error=*/true);
 }
 
-// Determines whether the specified modifier appears within the introducer of
-// the given declaration.
+// Finds the specified modifier within the introducer of the given declaration,
+// returning `None` when it isn't there.
 // TODO: Restructure how we handle packaging declarations to avoid the need to
 // do this.
-static auto HasModifier(Context& context, Context::State state,
-                        Lex::TokenKind modifier) -> bool {
+static auto FindModifier(Context& context, Context::State state,
+                         Lex::TokenKind modifier) -> Lex::TokenIndex {
   for (Lex::TokenIterator it(state.token); it != context.position(); ++it) {
     if (context.tokens().GetKind(*it) == modifier) {
-      return true;
+      return *it;
     }
   }
-  return false;
+  return Lex::TokenIndex::None;
 }
 
 // Handles everything after the declaration's introducer.
 template <const Parse::NodeKind& DeclKind>
 static auto HandleDeclContent(Context& context, Context::State state,
-                              bool is_export, bool is_impl,
+                              Lex::TokenIndex export_token, bool is_impl,
                               llvm::function_ref<auto()->void> on_parse_error)
     -> void {
-  Tree::PackagingNames names = {.is_export = is_export};
+  Tree::PackagingNames names = {.is_export = export_token.has_value()};
 
   // Parse the package name.
   if (DeclKind == NodeKind::LibraryDecl ||
@@ -50,7 +51,6 @@ static auto HandleDeclContent(Context& context, Context::State state,
   } else {
     // We require a package name. This is either an identifier or package name
     // keyword.
-    auto package_name_position = *context.position();
     if (auto ident = context.ConsumeIf(Lex::TokenKind::Identifier)) {
       names.package_id =
           PackageNameId::ForIdentifier(context.tokens().GetIdentifier(*ident));
@@ -62,16 +62,38 @@ static auto HandleDeclContent(Context& context, Context::State state,
       names.package_id = PackageNameId::Cpp;
       context.AddLeafNode(NodeKind::CppPackageName, *cpp);
     } else {
-      CARBON_DIAGNOSTIC(ExpectedIdentifierAfterPackage, Error,
-                        "expected identifier after `package`");
-      CARBON_DIAGNOSTIC(ExpectedIdentifierAfterImport, Error,
-                        "expected identifier or `library` after `import`");
-      context.emitter().Emit(package_name_position,
+      // A word that can't be a name, followed by a token that can follow one,
+      // was most likely meant as the name, and is what the message is about.
+      // Otherwise the name is missing, and goes after the token before it.
+      bool recover_as_raw =
+          context.PositionKind().is_word() &&
+          context.PositionKind(Lookahead::NextToken)
+              .IsOneOf({Lex::TokenKind::Semi, Lex::TokenKind::Library});
+      CARBON_DIAGNOSTIC(
+          ExpectedIdentifierAfterPackage, Error,
+          "expected identifier after `package`"
+          "{0:; prefix reserved word with `r#` to form a valid identifier|}",
+          Diagnostics::BoolAsSelect);
+      CARBON_DIAGNOSTIC(
+          ExpectedIdentifierAfterImport, Error,
+          "expected identifier or `library` after `import`"
+          "{0:; prefix reserved word with `r#` to form a valid identifier|}",
+          Diagnostics::BoolAsSelect);
+      context.emitter().Emit(recover_as_raw ? DiagnosticLoc(*context.position())
+                                            : context.PointAfterPreviousToken(),
                              DeclKind == NodeKind::PackageDecl
                                  ? ExpectedIdentifierAfterPackage
-                                 : ExpectedIdentifierAfterImport);
-      on_parse_error();
-      return;
+                                 : ExpectedIdentifierAfterImport,
+                             recover_as_raw);
+      if (!recover_as_raw) {
+        on_parse_error();
+        return;
+      }
+      auto ident = context.tokens().AddPostLexingRecoveryTokenAsIdentifier(
+          context.Consume());
+      names.package_id =
+          PackageNameId::ForIdentifier(context.tokens().GetIdentifier(ident));
+      context.AddLeafNode(NodeKind::IdentifierPackageName, ident);
     }
 
     if (names.is_export) {
@@ -80,7 +102,7 @@ static auto HandleDeclContent(Context& context, Context::State state,
 
       CARBON_DIAGNOSTIC(ExportImportPackage, Error,
                         "`export` cannot be used when importing a package");
-      context.emitter().Emit(package_name_position, ExportImportPackage);
+      context.emitter().Emit(export_token, ExportImportPackage);
     }
   }
 
@@ -114,7 +136,8 @@ static auto HandleDeclContent(Context& context, Context::State state,
       if (!inline_body_token) {
         CARBON_DIAGNOSTIC(ExpectedStringAfterInline, Error,
                           "expected string literal after `inline`");
-        context.emitter().Emit(body_position, ExpectedStringAfterInline);
+        context.emitter().Emit(context.PointAfterPreviousToken(),
+                               ExpectedStringAfterInline);
         on_parse_error();
         return;
       }
@@ -125,7 +148,8 @@ static auto HandleDeclContent(Context& context, Context::State state,
       // before the library name.
       CARBON_DIAGNOSTIC(MissingLibraryKeyword, Error,
                         "missing `library` keyword");
-      context.emitter().Emit(*context.position(), MissingLibraryKeyword);
+      context.emitter().Emit(context.PointAfterPreviousToken(),
+                             MissingLibraryKeyword);
       on_parse_error();
       return;
     }
@@ -203,12 +227,12 @@ auto HandleImport(Context& context) -> void {
 
   if (VerifyInImports(context, state.token)) {
     // Scan the modifiers to see if this import declaration is exported.
-    bool is_export = HasModifier(context, state, Lex::TokenKind::Export);
-    if (is_export) {
+    auto export_token = FindModifier(context, state, Lex::TokenKind::Export);
+    if (export_token.has_value()) {
       RestrictExportToApi(context, state);
     }
 
-    HandleDeclContent<NodeKind::ImportDecl>(context, state, is_export,
+    HandleDeclContent<NodeKind::ImportDecl>(context, state, export_token,
                                             /*is_impl=*/false, on_parse_error);
   } else {
     on_parse_error();
@@ -240,7 +264,7 @@ static auto HandlePackageAndLibraryDecls(Context& context,
     -> void {
   auto state = context.PopState();
 
-  bool is_impl = HasModifier(context, state, Lex::TokenKind::Impl);
+  bool is_impl = FindModifier(context, state, Lex::TokenKind::Impl).has_value();
 
   auto on_parse_error = [&] { OnParseError(context, state, DeclKind); };
 
@@ -262,7 +286,8 @@ static auto HandlePackageAndLibraryDecls(Context& context,
   // `package`/`library` is no longer allowed, but `import` may repeat.
   context.set_packaging_state(Context::PackagingState::InImports);
 
-  HandleDeclContent<DeclKind>(context, state, /*is_export=*/false, is_impl,
+  HandleDeclContent<DeclKind>(context, state,
+                              /*export_token=*/Lex::TokenIndex::None, is_impl,
                               on_parse_error);
 }
 

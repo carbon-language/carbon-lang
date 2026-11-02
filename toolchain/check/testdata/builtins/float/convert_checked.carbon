@@ -138,8 +138,7 @@ import library "f64";
 
 //@dump-sem-ir-begin
 let not_constant_64: f64 = 0.0;
-// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+4]]:33-65: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
-// CHECK:STDERR: imported from: fail_not_constant.carbon:[[@LINE-5]]:1 [InImport]
+// CHECK:STDERR: fail_not_constant.carbon:[[@LINE+3]]:33-65: error: non-constant call to compile-time-only function [NonConstantCallToCompTimeOnlyFunction]
 // CHECK:STDERR: f64.carbon:5:1-36: note: compile-time-only function declared here [CompTimeOnlyFunctionHere]
 // CHECK:STDERR:
 let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
@@ -783,7 +782,7 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_constant_64.patt: %pattern_type.667 = value_binding_pattern not_constant_64 [concrete = constants.%not_constant_64.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %f64.loc11: type = type_literal constants.%f64.761 [concrete = constants.%f64.761]
+// CHECK:STDOUT:   %f64.loc10: type = type_literal constants.%f64.761 [concrete = constants.%f64.761]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %convert_not_constant.patt: %pattern_type.667 = value_binding_pattern convert_not_constant [concrete = constants.%convert_not_constant.patt]
 // CHECK:STDOUT:   }
@@ -803,9 +802,9 @@ let convert_not_constant: f64 = Float64ToFloat64(not_constant_64);
 // CHECK:STDOUT:   %not_constant_64.global_ref: %f64.761 = global_ref file.%not_constant_64
 // CHECK:STDOUT:   %not_constant_64.ref: %f64.761 = name_ref not_constant_64, %not_constant_64.global_ref
 // CHECK:STDOUT:   %Float64ToFloat64.call: init %f64.761 = call %Float64ToFloat64.ref(%not_constant_64.ref)
-// CHECK:STDOUT:   %.loc11_65.1: %f64.761 = value_of_initializer %Float64ToFloat64.call
-// CHECK:STDOUT:   %.loc11_65.2: %f64.761 = converted %Float64ToFloat64.call, %.loc11_65.1
-// CHECK:STDOUT:   %convert_not_constant: %f64.761 = wrapper_binding convert_not_constant, %.loc11_65.2
+// CHECK:STDOUT:   %.loc10_65.1: %f64.761 = value_of_initializer %Float64ToFloat64.call
+// CHECK:STDOUT:   %.loc10_65.2: %f64.761 = converted %Float64ToFloat64.call, %.loc10_65.1
+// CHECK:STDOUT:   %convert_not_constant: %f64.761 = wrapper_binding convert_not_constant, %.loc10_65.2
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
