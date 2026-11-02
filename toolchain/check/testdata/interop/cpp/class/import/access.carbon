@@ -1275,6 +1275,24 @@ class Derived {
   extend base: Cpp.Base;
 };
 
+// --- fail_access_private_parent_member_in_unrelated_fn.carbon
+library "[[@TEST_NAME]]";
+import Cpp;
+
+base class A {
+  private static var x: i32 = 0;
+}
+
+class B {
+  extend base: A;
+}
+
+inline Cpp '''
+int F() {
+  Carbon::B::x;
+}
+''';
+
 // CHECK:STDOUT: --- import_non_function_member_public.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
