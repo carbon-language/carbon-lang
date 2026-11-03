@@ -108,13 +108,17 @@ class StableStack {
   auto Peek(int32_t n) const -> const T& {
     CARBON_CHECK(!empty(), "Peek on an empty stack");
     CARBON_CHECK(n >= 0, "Peek index invalid");
-    auto [chunk, index] = GetIndexFromBack(n);
+    auto i = size() - 1 - n;
+    CARBON_CHECK(i >= 0, "Peek before the start of the stack");
+    auto [chunk, index] = GetIndexFromFront(i);
     return Get(chunk, index);
   }
   auto Peek(int32_t n) -> T& {
     CARBON_CHECK(!empty(), "Peek on an empty stack");
     CARBON_CHECK(n >= 0, "Peek index invalid");
-    auto [chunk, index] = GetIndexFromBack(n);
+    auto i = size() - 1 - n;
+    CARBON_CHECK(i >= 0, "Peek before the start of the stack");
+    auto [chunk, index] = GetIndexFromFront(i);
     return Get(chunk, index);
   }
 
@@ -297,24 +301,17 @@ class StableStack {
     return {chunk, index};
   }
 
-  // Get the index of the element at distance `n` from the element at the back
-  // of the stack. This is an O(n) operation.
-  auto GetIndexFromBack(int32_t n) const
+  // Get the index of the element at position `i` from the front of the stack.
+  auto GetIndexFromFront(int32_t i) const
       -> std::pair<int32_t /*chunk*/, int32_t /*index*/> {
-    auto [chunk, index] = GetIndexAtBack();
-    // Walk through the chunks from the back, subtracting by the capacity, to
-    // find the chunk that contains the position we are seeking.
-    while (n) {
-      auto step = std::min(n, index + 1);
-      index -= step;
-      if (index == -1) {
-        CARBON_CHECK(chunk > 0, "Peek before the start of the stack");
-        chunk--;
-        index = chunks_[chunk].capacity - 1;
-      }
-      n -= step;
-    }
-    return {chunk, index};
+    // Given a capacity, we can tell how many chunks would be needed. So we
+    // compute the number of chunks needed to hold a stack with capacity for
+    // exactly `i` elements. Then the last element in that stack is the index we
+    // want to compute.
+    auto capacity_to_hold_i = i + 1;
+    auto num_chunks = NumChunksNeededForCapacity(capacity_to_hold_i);
+    auto capacity_before_chunk = GetSumCapacity(num_chunks - 1);
+    return {num_chunks - 1, i - capacity_before_chunk};
   }
 
   // Get the element in the specified `chunk` at position `index`.
@@ -369,8 +366,15 @@ class StableStack {
   }
   // The total capacity of the first `num_chunks` chunks.
   static auto GetSumCapacity(int32_t num_chunks) -> int32_t {
-    auto chunks_capacity = ((1 << num_chunks) - 1) * FirstChunkCapacity();
-    return chunks_capacity;
+    return ((1 << num_chunks) - 1) * FirstChunkCapacity();
+  }
+  // Performs the inverse of GetSumCapacity.
+  static auto NumChunksNeededForCapacity(int32_t cap) -> int32_t {
+    // Given this formula, we solve for `num_chunks`.
+    // cap = ((1 << num_chunks) - 1) * FirstChunkCapacity();
+    auto ucap = static_cast<uint32_t>(cap);
+    return std::bit_width(
+        ((ucap + (FirstChunkCapacity() - 1)) / FirstChunkCapacity()));
   }
   // The individual capacity to use for the next chunk.
   auto NextChunkCapacity() -> int32_t {
