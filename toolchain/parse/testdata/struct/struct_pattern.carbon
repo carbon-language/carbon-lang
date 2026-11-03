@@ -341,7 +341,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─StructPatternDesignatedField '='
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
-// CHECK:STDOUT:   │ │ ├─UnderscoreName '_'
+// CHECK:STDOUT:   │ │ ├─PatternListUnderscoreField '_'
 // CHECK:STDOUT:   │ ├─StructPattern '}'
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -361,7 +361,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─StructPatternDesignatedField '='
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
-// CHECK:STDOUT:   │ │ ├─UnderscoreName '_'
+// CHECK:STDOUT:   │ │ ├─PatternListUnderscoreField '_'
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ ├─StructPattern '}'
 // CHECK:STDOUT:   │ ├─LetInitializer '='
@@ -740,7 +740,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─StructPatternDesignatedField '='
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
-// CHECK:STDOUT:   │ │ ├─UnderscoreName '_' has_error
+// CHECK:STDOUT:   │ │ ├─PatternListUnderscoreField '_' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -752,7 +752,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
 // CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
-// CHECK:STDOUT:   │ │ ├─UnderscoreName '_' has_error
+// CHECK:STDOUT:   │ │ ├─PatternListUnderscoreField '_' has_error
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'

@@ -173,7 +173,8 @@ auto HandleStructPatternUnderscore(Context& context) -> void {
     }
   }
 
-  context.AddNode(NodeKind::UnderscoreName, underscore, state.has_error);
+  context.AddNode(NodeKind::PatternListUnderscoreField, underscore,
+                  state.has_error);
 
   if (state.has_error) {
     context.ReturnErrorOnState();

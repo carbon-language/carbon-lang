@@ -135,9 +135,10 @@ let {a: i32, .b = c: bool} = {.b = true, .a = 1};
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_todo_underscore.carbon:[[@LINE+2]]:5-20: error: semantics TODO: `Struct pattern underscore field` [SemanticsTodo]
+// CHECK:STDERR: fail_todo_underscore.carbon:[[@LINE+2]]:19: error: semantics TODO: `Struct pattern underscore field` [SemanticsTodo]
 // CHECK:STDERR:
 let {.a = x: i32, _} = {.a = 1, .b = ()};
+let {.a = y: i32, _,} = {.a = 1, .b = ()};
 //@dump-sem-ir-end
 
 // --- fail_no_matching_field.carbon
