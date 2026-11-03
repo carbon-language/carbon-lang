@@ -18,13 +18,11 @@ TEST(StableStack, Growth) {
   StableStack<int> stack;
   EXPECT_EQ(stack.empty(), true);
   EXPECT_EQ(stack.size(), 0);
-  EXPECT_EQ(stack.capacity(), 0);
 
   int i = 0;
   stack.Push(i++);
   EXPECT_EQ(stack.empty(), false);
   EXPECT_EQ(stack.size(), i);
-  EXPECT_GE(stack.capacity(), 1);
 
   auto capacity = stack.capacity();
   while (stack.capacity() == capacity) {
@@ -297,14 +295,14 @@ TEST(StableStack, MoveStack) {
     constructed = destroyed = 0;
     size = stack.size();
 
+    // Move construction.
     StableStack<Counter> stack2 = std::move(stack);
-    EXPECT_EQ(constructed, 0);
-    EXPECT_EQ(destroyed, 0);
+    // Inline elements are constructed in `stack2` and destroyed in `stack`.
+    EXPECT_EQ(constructed, destroyed);
     constructed = destroyed = 0;
 
     // Moving leaves the source empty.
     EXPECT_EQ(stack.empty(), true);
-    EXPECT_EQ(stack.capacity(), 0);
     for (auto i = 0; i < size; ++i) {
       EXPECT_EQ(stack2.Peek(i).value(), size - 1 - i);
     }
@@ -325,8 +323,8 @@ TEST(StableStack, MoveStack) {
 
     // Move assignment to empty.
     stack3 = std::move(stack2);
-    EXPECT_EQ(constructed, 0);
-    EXPECT_EQ(destroyed, 0);
+    // Inline elements are constructed in `stack3` and destroyed in `stack2`.
+    EXPECT_EQ(constructed, destroyed);
     constructed = destroyed = 0;
 
     stack.Push(Counter(0, &constructed, &destroyed));
@@ -334,8 +332,9 @@ TEST(StableStack, MoveStack) {
 
     // Move assignment to non-empty. We destroy the LHS.
     stack = std::move(stack3);
-    EXPECT_EQ(constructed, 0);
-    EXPECT_EQ(destroyed, 1);
+    // The single element in `stack` is destroyed. Then inline elements are
+    // destroyed in `stack3` and constructed in `stack`.
+    EXPECT_EQ(constructed + 1, destroyed);
     constructed = destroyed = 0;
 
     // Move assignment from empty.
@@ -378,18 +377,23 @@ TEST(StableStack, Peek) {
 
 TEST(StableStack, Reserve) {
   StableStack<int> stack;
-  EXPECT_EQ(stack.capacity(), 0);
-
-  stack.Reserve(2);
-  EXPECT_GE(stack.capacity(), 2);
   auto capacity = stack.capacity();
+
+  stack.Reserve(capacity / 2);
+  EXPECT_EQ(stack.capacity(), capacity);
+  stack.Reserve(capacity);
+  EXPECT_EQ(stack.capacity(), capacity);
+
+  stack.Reserve(capacity + 2);
+  EXPECT_GE(stack.capacity(), capacity + 2);
+  capacity = stack.capacity();
   stack.Reserve(1);
   EXPECT_EQ(stack.capacity(), capacity);
   stack.Reserve(2);
   EXPECT_EQ(stack.capacity(), capacity);
 
-  stack.Reserve(1000);
-  EXPECT_GE(stack.capacity(), 1000);
+  stack.Reserve(capacity + 1000);
+  EXPECT_GE(stack.capacity(), capacity + 1000);
   EXPECT_EQ(stack.size(), 0);
   EXPECT_EQ(stack.empty(), true);
 
