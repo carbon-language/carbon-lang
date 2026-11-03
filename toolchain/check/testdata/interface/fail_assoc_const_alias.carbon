@@ -81,7 +81,6 @@ interface C {
 // CHECK:STDOUT:   %Self.c1f: %J2.type = symbolic_binding Self, 0 [symbolic]
 // CHECK:STDOUT:   %Self.as_type: type = facet_access_type %Self.c1f [symbolic]
 // CHECK:STDOUT:   %I2.lookup_impl_witness: <witness> = lookup_impl_witness %Self.c1f, @I2 [symbolic]
-// CHECK:STDOUT:   %.72a: require_specific_def_type = require_specific_def @V.as_type.as.I2.impl(%Self.c1f) [symbolic]
 // CHECK:STDOUT:   %I2.facet.39b: %I2.type = facet_value %Self.as_type, (%I2.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %impl.elem0.422: type = impl_witness_access %I2.lookup_impl_witness, element0 [symbolic]
 // CHECK:STDOUT:   %.932: Core.Form = init_form %impl.elem0.422 [symbolic]
@@ -112,10 +111,10 @@ interface C {
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %Self.as_type.loc14_14.2: type = facet_access_type @J2.%Self [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
 // CHECK:STDOUT:     %I2.facet.loc14_14.2: %I2.type = facet_value %Self.as_type.loc14_14.2, (constants.%I2.lookup_impl_witness) [symbolic = %I2.facet.loc14_14.1 (constants.%I2.facet.39b)]
-// CHECK:STDOUT:     %.loc14_14.3: %I2.type = converted @J2.%Self, %I2.facet.loc14_14.2 [symbolic = %I2.facet.loc14_14.1 (constants.%I2.facet.39b)]
+// CHECK:STDOUT:     %.loc14_14.2: %I2.type = converted @J2.%Self, %I2.facet.loc14_14.2 [symbolic = %I2.facet.loc14_14.1 (constants.%I2.facet.39b)]
 // CHECK:STDOUT:     %impl.elem0.loc14_14.2: type = impl_witness_access constants.%I2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_14.1 (constants.%impl.elem0.422)]
 // CHECK:STDOUT:     %U2.ref: type = name_ref U2, %impl.elem0.loc14_14.2 [symbolic = %impl.elem0.loc14_14.1 (constants.%impl.elem0.422)]
-// CHECK:STDOUT:     %.loc14_14.4: Core.Form = init_form %U2.ref [symbolic = %.loc14_14.2 (constants.%.932)]
+// CHECK:STDOUT:     %.loc14_14.3: Core.Form = init_form %U2.ref [symbolic = %.loc14_14.1 (constants.%.932)]
 // CHECK:STDOUT:     %return.param: ref @J2.WithSelf.F2.%impl.elem0.loc14_14.1 (%impl.elem0.422) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @J2.WithSelf.F2.%impl.elem0.loc14_14.1 (%impl.elem0.422) = return_slot %return.param
 // CHECK:STDOUT:   }
@@ -135,11 +134,10 @@ interface C {
 // CHECK:STDOUT: generic fn @J2.WithSelf.F2(@J2.%Self: %J2.type) {
 // CHECK:STDOUT:   %Self: %J2.type = symbolic_binding Self, 0 [symbolic = %Self (constants.%Self.c1f)]
 // CHECK:STDOUT:   %Self.as_type.loc14_14.1: type = facet_access_type %Self [symbolic = %Self.as_type.loc14_14.1 (constants.%Self.as_type)]
-// CHECK:STDOUT:   %.loc14_14.1: require_specific_def_type = require_specific_def @V.as_type.as.I2.impl(%Self) [symbolic = %.loc14_14.1 (constants.%.72a)]
 // CHECK:STDOUT:   %I2.lookup_impl_witness: <witness> = lookup_impl_witness %Self, @I2 [symbolic = %I2.lookup_impl_witness (constants.%I2.lookup_impl_witness)]
 // CHECK:STDOUT:   %I2.facet.loc14_14.1: %I2.type = facet_value %Self.as_type.loc14_14.1, (%I2.lookup_impl_witness) [symbolic = %I2.facet.loc14_14.1 (constants.%I2.facet.39b)]
 // CHECK:STDOUT:   %impl.elem0.loc14_14.1: type = impl_witness_access %I2.lookup_impl_witness, element0 [symbolic = %impl.elem0.loc14_14.1 (constants.%impl.elem0.422)]
-// CHECK:STDOUT:   %.loc14_14.2: Core.Form = init_form %impl.elem0.loc14_14.1 [symbolic = %.loc14_14.2 (constants.%.932)]
+// CHECK:STDOUT:   %.loc14_14.1: Core.Form = init_form %impl.elem0.loc14_14.1 [symbolic = %.loc14_14.1 (constants.%.932)]
 // CHECK:STDOUT:   %pattern_type: type = pattern_type %impl.elem0.loc14_14.1 [symbolic = %pattern_type (constants.%pattern_type.ff8)]
 // CHECK:STDOUT:   %return.param_patt.loc14_14.2: @J2.WithSelf.F2.%pattern_type (%pattern_type.ff8) = out_param_pattern [symbolic = %return.param_patt.loc14_14.2 (constants.%return.param_patt)]
 // CHECK:STDOUT:   %return.patt.loc14_11.2: @J2.WithSelf.F2.%pattern_type (%pattern_type.ff8) = return_slot_pattern %return.param_patt.loc14_14.2, %impl.elem0.loc14_14.1 [symbolic = %return.patt.loc14_11.2 (constants.%return.patt)]
@@ -152,11 +150,10 @@ interface C {
 // CHECK:STDOUT: specific @J2.WithSelf.F2(constants.%Self.c1f) {
 // CHECK:STDOUT:   %Self => constants.%Self.c1f
 // CHECK:STDOUT:   %Self.as_type.loc14_14.1 => constants.%Self.as_type
-// CHECK:STDOUT:   %.loc14_14.1 => constants.%.72a
 // CHECK:STDOUT:   %I2.lookup_impl_witness => constants.%I2.lookup_impl_witness
 // CHECK:STDOUT:   %I2.facet.loc14_14.1 => constants.%I2.facet.39b
 // CHECK:STDOUT:   %impl.elem0.loc14_14.1 => constants.%impl.elem0.422
-// CHECK:STDOUT:   %.loc14_14.2 => constants.%.932
+// CHECK:STDOUT:   %.loc14_14.1 => constants.%.932
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.ff8
 // CHECK:STDOUT:   %return.param_patt.loc14_14.2 => constants.%return.param_patt
 // CHECK:STDOUT:   %return.patt.loc14_11.2 => constants.%return.patt

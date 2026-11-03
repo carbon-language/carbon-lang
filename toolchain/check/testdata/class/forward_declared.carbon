@@ -35,11 +35,11 @@ fn F(p: Class*) -> Class* { return p; }
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.20f: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f12: %ptr.as.Copy.impl.Op.type.20f = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.a17: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%Class) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.baf: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Class) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.842: %ptr.as.Copy.impl.Op.type.baf = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.7ee, (%Copy.impl_witness.a17) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.6cc: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.884: type = fn_type_with_self_type %Copy.WithSelf.Op.type.6cc, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.baf: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%Class) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.842: %ptr.as.Copy.impl.Op.type.baf = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.842, @ptr.as.Copy.impl.Op(%Class) [concrete]
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

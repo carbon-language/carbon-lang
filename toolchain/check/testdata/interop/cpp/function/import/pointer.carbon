@@ -599,11 +599,11 @@ fn F() {
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.20f: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.f12: %ptr.as.Copy.impl.Op.type.20f = struct_value () [symbolic]
 // CHECK:STDOUT:   %Copy.impl_witness.f50: <witness> = impl_witness imports.%Copy.impl_witness_table.fb0, @ptr.as.Copy.impl(%DoubleNonNullableParamS) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.5b1: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%DoubleNonNullableParamS) [concrete]
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.43a: %ptr.as.Copy.impl.Op.type.5b1 = struct_value () [concrete]
 // CHECK:STDOUT:   %Copy.facet: %Copy.type = facet_value %ptr.40d, (%Copy.impl_witness.f50) [concrete]
 // CHECK:STDOUT:   %Copy.WithSelf.Op.type.104: type = fn_type @Copy.WithSelf.Op, @Copy.WithSelf(%Copy.facet) [concrete]
 // CHECK:STDOUT:   %.38b: type = fn_type_with_self_type %Copy.WithSelf.Op.type.104, %Copy.facet [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.type.5b1: type = fn_type @ptr.as.Copy.impl.Op, @ptr.as.Copy.impl(%DoubleNonNullableParamS) [concrete]
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.43a: %ptr.as.Copy.impl.Op.type.5b1 = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.as.Copy.impl.Op.specific_fn: <specific function> = specific_function %ptr.as.Copy.impl.Op.43a, @ptr.as.Copy.impl.Op(%DoubleNonNullableParamS) [concrete]
 // CHECK:STDOUT:   %double_non_nullable_param_foo.cpp_overload_set.type: type = cpp_overload_set_type @double_non_nullable_param_foo.cpp_overload_set [concrete]
 // CHECK:STDOUT:   %double_non_nullable_param_foo.cpp_overload_set.value: %double_non_nullable_param_foo.cpp_overload_set.type = cpp_overload_set_value @double_non_nullable_param_foo.cpp_overload_set [concrete]
@@ -1066,11 +1066,11 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.facet.0a4: %Destroy.type = facet_value %ptr.13b, (%custom_witness.b80ef6.1, %DestroyImpl.impl_witness.c03) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.97c: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.0a4) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.361: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.110, @ptr.as.OptionalStorage.impl(%ConstNullableParamS) [concrete]
-// CHECK:STDOUT:   %.c5e: type = maybe_unformed_type %ptr.13b [concrete]
 // CHECK:STDOUT:   %OptionalStorage.facet.9ab: %OptionalStorage.type = facet_value %ptr.13b, (%OptionalStorage.impl_witness.361) [concrete]
 // CHECK:STDOUT:   %Optional.4b8: type = class_type @Optional, @Optional(%OptionalStorage.facet.9ab) [concrete]
 // CHECK:STDOUT:   %const_nullable_foo.type: type = fn_type @const_nullable_foo [concrete]
 // CHECK:STDOUT:   %const_nullable_foo: %const_nullable_foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.c5e: type = maybe_unformed_type %ptr.13b [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.19b: type = facet_type <@ImplicitAs, @ImplicitAs(%Optional.4b8)> [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.b02b67.2: type = facet_type <@ImplicitAs, @ImplicitAs(%T.67d)> [symbolic]
 // CHECK:STDOUT:   %U.862: %ImplicitAs.type.b02b67.2 = symbolic_binding U, 1 [symbolic]
@@ -1088,11 +1088,11 @@ fn F() {
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.3ab: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.653, @U.as_type.as.ImplicitAs.impl.0c0(%OptionalStorage.facet.9ab, %OptionalAs.facet) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.f93: %ImplicitAs.type.19b = facet_value %ptr.13b, (%ImplicitAs.impl_witness.3ab) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.818: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.c21, @const.as.ImplicitAs.impl(%Optional.4b8, %ImplicitAs.facet.f93) [concrete]
-// CHECK:STDOUT:   %const.as.ImplicitAs.impl.Convert.type.c95: type = fn_type @const.as.ImplicitAs.impl.Convert, @const.as.ImplicitAs.impl(%Optional.4b8, %ImplicitAs.facet.f93) [concrete]
-// CHECK:STDOUT:   %const.as.ImplicitAs.impl.Convert.f0b: %const.as.ImplicitAs.impl.Convert.type.c95 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.362: %ImplicitAs.type.19b = facet_value %const.2f4, (%ImplicitAs.impl_witness.818) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.9d7: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.4b8, %ImplicitAs.facet.362) [concrete]
 // CHECK:STDOUT:   %.8ee: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.9d7, %ImplicitAs.facet.362 [concrete]
+// CHECK:STDOUT:   %const.as.ImplicitAs.impl.Convert.type.c95: type = fn_type @const.as.ImplicitAs.impl.Convert, @const.as.ImplicitAs.impl(%Optional.4b8, %ImplicitAs.facet.f93) [concrete]
+// CHECK:STDOUT:   %const.as.ImplicitAs.impl.Convert.f0b: %const.as.ImplicitAs.impl.Convert.type.c95 = struct_value () [concrete]
 // CHECK:STDOUT:   %const.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %const.as.ImplicitAs.impl.Convert.f0b, @const.as.ImplicitAs.impl.Convert(%Optional.4b8, %ImplicitAs.facet.f93) [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc11_26.3 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.4: %SubobjectDestroy.WithSelf.Op.type.6870fd.4 = struct_value () [concrete]
@@ -1123,8 +1123,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.0e8 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.713 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.110 = impl_witness_table (%Core.import_ref.30b, %Core.import_ref.814, %Core.import_ref.470, %Core.import_ref.322, %Core.import_ref.0e8, %Core.import_ref.713), @ptr.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.7b53: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/types/optional, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.7b53), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d0: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d0), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %const_nullable_foo.decl: %const_nullable_foo.type = fn_decl @const_nullable_foo [concrete = constants.%const_nullable_foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1235,11 +1235,11 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.facet.0a4: %Destroy.type = facet_value %ptr.13b, (%custom_witness.b80ef6.1, %DestroyImpl.impl_witness.c03) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.97c: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.0a4) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.361: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.110, @ptr.as.OptionalStorage.impl(%ConstNullableParamS) [concrete]
-// CHECK:STDOUT:   %.c5e: type = maybe_unformed_type %ptr.13b [concrete]
 // CHECK:STDOUT:   %OptionalStorage.facet.9ab: %OptionalStorage.type = facet_value %ptr.13b, (%OptionalStorage.impl_witness.361) [concrete]
 // CHECK:STDOUT:   %Optional.4b8: type = class_type @Optional, @Optional(%OptionalStorage.facet.9ab) [concrete]
 // CHECK:STDOUT:   %const_nullable_foo.type: type = fn_type @const_nullable_foo [concrete]
 // CHECK:STDOUT:   %const_nullable_foo: %const_nullable_foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.c5e: type = maybe_unformed_type %ptr.13b [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.19b: type = facet_type <@ImplicitAs, @ImplicitAs(%Optional.4b8)> [concrete]
 // CHECK:STDOUT:   %OptionalAs.type.5bd: type = facet_type <@OptionalAs, @OptionalAs(%T.220e40.1)> [symbolic]
 // CHECK:STDOUT:   %U.c66: %OptionalAs.type.5bd = symbolic_binding U, 1 [symbolic]
@@ -1251,11 +1251,11 @@ fn F() {
 // CHECK:STDOUT:   %OptionalAs.impl_witness.e49: <witness> = impl_witness imports.%OptionalAs.impl_witness_table.98f, @T.as_type.as.OptionalAs.impl(%OptionalStorage.facet.9ab) [concrete]
 // CHECK:STDOUT:   %OptionalAs.facet: %OptionalAs.type.168 = facet_value %ptr.13b, (%OptionalAs.impl_witness.e49) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.3ab: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.653, @U.as_type.as.ImplicitAs.impl.0c0(%OptionalStorage.facet.9ab, %OptionalAs.facet) [concrete]
-// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.type.d7e: type = fn_type @U.as_type.as.ImplicitAs.impl.Convert.2, @U.as_type.as.ImplicitAs.impl.0c0(%OptionalStorage.facet.9ab, %OptionalAs.facet) [concrete]
-// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.311: %U.as_type.as.ImplicitAs.impl.Convert.type.d7e = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.f93: %ImplicitAs.type.19b = facet_value %ptr.13b, (%ImplicitAs.impl_witness.3ab) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.a91: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.4b8, %ImplicitAs.facet.f93) [concrete]
 // CHECK:STDOUT:   %.56e: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.a91, %ImplicitAs.facet.f93 [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.type.d7e: type = fn_type @U.as_type.as.ImplicitAs.impl.Convert.2, @U.as_type.as.ImplicitAs.impl.0c0(%OptionalStorage.facet.9ab, %OptionalAs.facet) [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.311: %U.as_type.as.ImplicitAs.impl.Convert.type.d7e = struct_value () [concrete]
 // CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %U.as_type.as.ImplicitAs.impl.Convert.311, @U.as_type.as.ImplicitAs.impl.Convert.2(%OptionalStorage.facet.9ab, %OptionalAs.facet) [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc11_26.3 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.4: %SubobjectDestroy.WithSelf.Op.type.6870fd.4 = struct_value () [concrete]
@@ -1280,8 +1280,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.0e8 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.713 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.110 = impl_witness_table (%Core.import_ref.30b, %Core.import_ref.814, %Core.import_ref.470, %Core.import_ref.322, %Core.import_ref.0e8, %Core.import_ref.713), @ptr.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.7b53: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/types/optional, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.7b53), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d0: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d0), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %const_nullable_foo.decl: %const_nullable_foo.type = fn_decl @const_nullable_foo [concrete = constants.%const_nullable_foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1525,11 +1525,11 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.facet.6e0: %Destroy.type = facet_value %ptr.1f0, (%custom_witness.b80ef6.1, %DestroyImpl.impl_witness.82b) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.b5a: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.6e0) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.b77: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.110, @ptr.as.OptionalStorage.impl(%NullableParamS) [concrete]
-// CHECK:STDOUT:   %.280: type = maybe_unformed_type %ptr.1f0 [concrete]
 // CHECK:STDOUT:   %OptionalStorage.facet.9ba: %OptionalStorage.type = facet_value %ptr.1f0, (%OptionalStorage.impl_witness.b77) [concrete]
 // CHECK:STDOUT:   %Optional.37f: type = class_type @Optional, @Optional(%OptionalStorage.facet.9ba) [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.type: type = fn_type @nullable_param_foo [concrete]
 // CHECK:STDOUT:   %nullable_param_foo: %nullable_param_foo.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.280: type = maybe_unformed_type %ptr.1f0 [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.7b3: type = facet_type <@ImplicitAs, @ImplicitAs(%Optional.37f)> [concrete]
 // CHECK:STDOUT:   %OptionalAs.type.5bd: type = facet_type <@OptionalAs, @OptionalAs(%T.220e40.1)> [symbolic]
 // CHECK:STDOUT:   %U.c66: %OptionalAs.type.5bd = symbolic_binding U, 1 [symbolic]
@@ -1541,11 +1541,11 @@ fn F() {
 // CHECK:STDOUT:   %OptionalAs.impl_witness.0b4: <witness> = impl_witness imports.%OptionalAs.impl_witness_table.98f, @T.as_type.as.OptionalAs.impl(%OptionalStorage.facet.9ba) [concrete]
 // CHECK:STDOUT:   %OptionalAs.facet: %OptionalAs.type.300 = facet_value %ptr.1f0, (%OptionalAs.impl_witness.0b4) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.940: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.653, @U.as_type.as.ImplicitAs.impl.0c0(%OptionalStorage.facet.9ba, %OptionalAs.facet) [concrete]
-// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.type.ce0: type = fn_type @U.as_type.as.ImplicitAs.impl.Convert.2, @U.as_type.as.ImplicitAs.impl.0c0(%OptionalStorage.facet.9ba, %OptionalAs.facet) [concrete]
-// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.d9f: %U.as_type.as.ImplicitAs.impl.Convert.type.ce0 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.162: %ImplicitAs.type.7b3 = facet_value %ptr.1f0, (%ImplicitAs.impl_witness.940) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.a1f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.37f, %ImplicitAs.facet.162) [concrete]
 // CHECK:STDOUT:   %.94f: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.a1f, %ImplicitAs.facet.162 [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.type.ce0: type = fn_type @U.as_type.as.ImplicitAs.impl.Convert.2, @U.as_type.as.ImplicitAs.impl.0c0(%OptionalStorage.facet.9ba, %OptionalAs.facet) [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.d9f: %U.as_type.as.ImplicitAs.impl.Convert.type.ce0 = struct_value () [concrete]
 // CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %U.as_type.as.ImplicitAs.impl.Convert.d9f, @U.as_type.as.ImplicitAs.impl.Convert.2(%OptionalStorage.facet.9ba, %OptionalAs.facet) [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc9_26.3 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.4: %SubobjectDestroy.WithSelf.Op.type.6870fd.4 = struct_value () [concrete]
@@ -1576,8 +1576,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.0e8 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.713 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.110 = impl_witness_table (%Core.import_ref.30b, %Core.import_ref.814, %Core.import_ref.470, %Core.import_ref.322, %Core.import_ref.0e8, %Core.import_ref.713), @ptr.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.7b53: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/types/optional, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.7b53), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d0: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d0), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.decl: %nullable_param_foo.type = fn_decl @nullable_param_foo [concrete = constants.%nullable_param_foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1669,13 +1669,13 @@ fn F() {
 // CHECK:STDOUT:   %MaybeUnformed.dac: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.5f3) [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.None.type.629: type = fn_type @ptr.as.OptionalStorage.impl.None, @ptr.as.OptionalStorage.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.None.f84: %ptr.as.OptionalStorage.impl.None.type.629 = struct_value () [symbolic]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT:   %NullableParamS: type = class_type @NullableParamS [concrete]
 // CHECK:STDOUT:   %ptr.1f0: type = ptr_type %NullableParamS [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.1: type = fn_type @SubobjectDestroy.WithSelf.Op.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.1: %SubobjectDestroy.WithSelf.Op.type.6870fd.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
@@ -1684,11 +1684,11 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.facet.6e0: %Destroy.type = facet_value %ptr.1f0, (%custom_witness.b80ef6.1, %DestroyImpl.impl_witness.82b) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.b5a: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.6e0) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.b77: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.110, @ptr.as.OptionalStorage.impl(%NullableParamS) [concrete]
-// CHECK:STDOUT:   %.280: type = maybe_unformed_type %ptr.1f0 [concrete]
 // CHECK:STDOUT:   %OptionalStorage.facet: %OptionalStorage.type = facet_value %ptr.1f0, (%OptionalStorage.impl_witness.b77) [concrete]
 // CHECK:STDOUT:   %Optional.37f: type = class_type @Optional, @Optional(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %Optional.None.type.2bc: type = fn_type @Optional.None, @Optional(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %Optional.None.7f6: %Optional.None.type.2bc = struct_value () [concrete]
+// CHECK:STDOUT:   %.280: type = maybe_unformed_type %ptr.1f0 [concrete]
 // CHECK:STDOUT:   %Optional.None.specific_fn: <specific function> = specific_function %Optional.None.7f6, @Optional.None(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.type: type = fn_type @nullable_param_foo [concrete]
 // CHECK:STDOUT:   %nullable_param_foo: %nullable_param_foo.type = struct_value () [concrete]
@@ -1721,10 +1721,10 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.0e8 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.713 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.110 = impl_witness_table (%Core.import_ref.30b, %Core.import_ref.9ff, %Core.import_ref.a1a, %Core.import_ref.322, %Core.import_ref.0e8, %Core.import_ref.713), @ptr.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.7b5: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/types/optional, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.7b5), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.d6d: @Optional.%Optional.None.type (%Optional.None.type.626) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @Optional.%Optional.None (constants.%Optional.None.3ad)]
 // CHECK:STDOUT:   %NullableParamS.decl: type = class_decl @NullableParamS [concrete = constants.%NullableParamS] {} {}
+// CHECK:STDOUT:   %Core.import_ref.74d0: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d0), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.decl: %nullable_param_foo.type = fn_decl @nullable_param_foo [concrete = constants.%nullable_param_foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1804,12 +1804,12 @@ fn F() {
 // CHECK:STDOUT:   %MaybeUnformed.dac: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.5f3) [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.Some.type.b0c: type = fn_type @ptr.as.OptionalStorage.impl.Some, @ptr.as.OptionalStorage.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.Some.bf1: %ptr.as.OptionalStorage.impl.Some.type.b0c = struct_value () [symbolic]
-// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
-// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
 // CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT:   %ptr.1f0: type = ptr_type %NullableParamS [concrete]
+// CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
+// CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.1: type = fn_type @SubobjectDestroy.WithSelf.Op.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.1: %SubobjectDestroy.WithSelf.Op.type.6870fd.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
@@ -1818,11 +1818,11 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.facet.6e0: %Destroy.type = facet_value %ptr.1f0, (%custom_witness.b80ef6.1, %DestroyImpl.impl_witness.82b) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.b5a: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.6e0) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.b77: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.110, @ptr.as.OptionalStorage.impl(%NullableParamS) [concrete]
-// CHECK:STDOUT:   %.280: type = maybe_unformed_type %ptr.1f0 [concrete]
 // CHECK:STDOUT:   %OptionalStorage.facet: %OptionalStorage.type = facet_value %ptr.1f0, (%OptionalStorage.impl_witness.b77) [concrete]
 // CHECK:STDOUT:   %Optional.37f: type = class_type @Optional, @Optional(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %Optional.Some.type.683: type = fn_type @Optional.Some, @Optional(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %Optional.Some.fff: %Optional.Some.type.683 = struct_value () [concrete]
+// CHECK:STDOUT:   %.280: type = maybe_unformed_type %ptr.1f0 [concrete]
 // CHECK:STDOUT:   %Optional.Some.specific_fn: <specific function> = specific_function %Optional.Some.fff, @Optional.Some(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.type: type = fn_type @nullable_param_foo [concrete]
 // CHECK:STDOUT:   %nullable_param_foo: %nullable_param_foo.type = struct_value () [concrete]
@@ -1862,9 +1862,9 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.0e8 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.713 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.110 = impl_witness_table (%Core.import_ref.30b, %Core.import_ref.814, %Core.import_ref.470, %Core.import_ref.322, %Core.import_ref.0e8, %Core.import_ref.713), @ptr.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.7b5: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/types/optional, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.7b5), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Core.import_ref.9b4: @Optional.%Optional.Some.type (%Optional.Some.type.63b) = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, loaded [symbolic = @Optional.%Optional.Some (constants.%Optional.Some.792)]
+// CHECK:STDOUT:   %Core.import_ref.74d0: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d0), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.decl: %nullable_param_foo.type = fn_decl @nullable_param_foo [concrete = constants.%nullable_param_foo] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -1971,11 +1971,11 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.facet.6e0: %Destroy.type = facet_value %ptr.1f0, (%custom_witness.b80ef6.1, %DestroyImpl.impl_witness.82b) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.b5a: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.6e0) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.b77: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.110, @ptr.as.OptionalStorage.impl(%NullableParamS) [concrete]
-// CHECK:STDOUT:   %.280: type = maybe_unformed_type %ptr.1f0 [concrete]
 // CHECK:STDOUT:   %OptionalStorage.facet: %OptionalStorage.type = facet_value %ptr.1f0, (%OptionalStorage.impl_witness.b77) [concrete]
 // CHECK:STDOUT:   %Optional.37f: type = class_type @Optional, @Optional(%OptionalStorage.facet) [concrete]
 // CHECK:STDOUT:   %nullable_param_get.type: type = fn_type @nullable_param_get [concrete]
 // CHECK:STDOUT:   %nullable_param_get: %nullable_param_get.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.280: type = maybe_unformed_type %ptr.1f0 [concrete]
 // CHECK:STDOUT:   %nullable_param_foo.type: type = fn_type @nullable_param_foo [concrete]
 // CHECK:STDOUT:   %nullable_param_foo: %nullable_param_foo.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc8_49.3 [concrete]
@@ -2001,8 +2001,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.0e8 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.713 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.110 = impl_witness_table (%Core.import_ref.30b, %Core.import_ref.814, %Core.import_ref.a1a, %Core.import_ref.322, %Core.import_ref.0e8, %Core.import_ref.713), @ptr.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.7b5: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/types/optional, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.7b5), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d0: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d0), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %nullable_param_get.decl: %nullable_param_get.type = fn_decl @nullable_param_get [concrete = constants.%nullable_param_get] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
@@ -2169,11 +2169,11 @@ fn F() {
 // CHECK:STDOUT:   %MaybeUnformed.dac: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.5f3) [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.Some.type.b0c: type = fn_type @ptr.as.OptionalStorage.impl.Some, @ptr.as.OptionalStorage.impl(%T.67d) [symbolic]
 // CHECK:STDOUT:   %ptr.as.OptionalStorage.impl.Some.bf1: %ptr.as.OptionalStorage.impl.Some.type.b0c = struct_value () [symbolic]
+// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
+// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SelfDestruct.type: type = fn_type @SelfDestruct [concrete]
-// CHECK:STDOUT:   %SelfDestruct: %SelfDestruct.type = struct_value () [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.1: type = fn_type @SubobjectDestroy.WithSelf.Op.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.1: %SubobjectDestroy.WithSelf.Op.type.6870fd.1 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.1: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.1), @SubobjectDestroy [concrete]
@@ -2182,12 +2182,12 @@ fn F() {
 // CHECK:STDOUT:   %Destroy.facet.bf2: %Destroy.type = facet_value %ptr.6cb, (%custom_witness.b80ef6.1, %DestroyImpl.impl_witness.a4f) [concrete]
 // CHECK:STDOUT:   %MaybeUnformed.fc9: type = class_type @MaybeUnformed, @MaybeUnformed(%Destroy.facet.bf2) [concrete]
 // CHECK:STDOUT:   %OptionalStorage.impl_witness.9df: <witness> = impl_witness imports.%OptionalStorage.impl_witness_table.110, @ptr.as.OptionalStorage.impl(%DeducedPointerS) [concrete]
-// CHECK:STDOUT:   %.fb1: type = maybe_unformed_type %ptr.6cb [concrete]
 // CHECK:STDOUT:   %OptionalStorage.facet.b3a: %OptionalStorage.type = facet_value %ptr.6cb, (%OptionalStorage.impl_witness.9df) [concrete]
 // CHECK:STDOUT:   %Optional.1e6: type = class_type @Optional, @Optional(%OptionalStorage.facet.b3a) [concrete]
 // CHECK:STDOUT:   %pattern_type.7e1: type = pattern_type %Optional.1e6 [concrete]
 // CHECK:STDOUT:   %Direct.type: type = fn_type @Direct [concrete]
 // CHECK:STDOUT:   %Direct: %Direct.type = struct_value () [concrete]
+// CHECK:STDOUT:   %.fb1: type = maybe_unformed_type %ptr.6cb [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.0ff: type = generic_interface_type @ImplicitAs [concrete]
 // CHECK:STDOUT:   %ImplicitAs.generic: %ImplicitAs.type.0ff = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.type.b63: type = facet_type <@ImplicitAs, @ImplicitAs(%Optional.1e6)> [concrete]
@@ -2201,11 +2201,11 @@ fn F() {
 // CHECK:STDOUT:   %OptionalAs.impl_witness.957: <witness> = impl_witness imports.%OptionalAs.impl_witness_table.98f, @T.as_type.as.OptionalAs.impl(%OptionalStorage.facet.b3a) [concrete]
 // CHECK:STDOUT:   %OptionalAs.facet: %OptionalAs.type.51c = facet_value %ptr.6cb, (%OptionalAs.impl_witness.957) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.f71: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.653, @U.as_type.as.ImplicitAs.impl.0c0(%OptionalStorage.facet.b3a, %OptionalAs.facet) [concrete]
-// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.type.5ca: type = fn_type @U.as_type.as.ImplicitAs.impl.Convert.2, @U.as_type.as.ImplicitAs.impl.0c0(%OptionalStorage.facet.b3a, %OptionalAs.facet) [concrete]
-// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.c66: %U.as_type.as.ImplicitAs.impl.Convert.type.5ca = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet.25a: %ImplicitAs.type.b63 = facet_value %ptr.6cb, (%ImplicitAs.impl_witness.f71) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.c06: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%Optional.1e6, %ImplicitAs.facet.25a) [concrete]
 // CHECK:STDOUT:   %.d55: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.c06, %ImplicitAs.facet.25a [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.type.5ca: type = fn_type @U.as_type.as.ImplicitAs.impl.Convert.2, @U.as_type.as.ImplicitAs.impl.0c0(%OptionalStorage.facet.b3a, %OptionalAs.facet) [concrete]
+// CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.c66: %U.as_type.as.ImplicitAs.impl.Convert.type.5ca = struct_value () [concrete]
 // CHECK:STDOUT:   %U.as_type.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %U.as_type.as.ImplicitAs.impl.Convert.c66, @U.as_type.as.ImplicitAs.impl.Convert.2(%OptionalStorage.facet.b3a, %OptionalAs.facet) [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc11_14.3 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.4: %SubobjectDestroy.WithSelf.Op.type.6870fd.4 = struct_value () [concrete]
@@ -2251,8 +2251,8 @@ fn F() {
 // CHECK:STDOUT:   %Core.import_ref.0e8 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %Core.import_ref.713 = import_ref Core//prelude/types/optional, loc{{\d+_\d+}}, unloaded
 // CHECK:STDOUT:   %OptionalStorage.impl_witness_table.110 = impl_witness_table (%Core.import_ref.30b, %Core.import_ref.814, %Core.import_ref.470, %Core.import_ref.322, %Core.import_ref.0e8, %Core.import_ref.713), @ptr.as.OptionalStorage.impl [concrete]
-// CHECK:STDOUT:   %Core.import_ref.7b53: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/types/optional, inst{{[0-9A-F]+}} [indirect], loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
-// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.7b53), @T.as_type.as.DestroyImpl.impl [concrete]
+// CHECK:STDOUT:   %Core.import_ref.74d0: @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op.type (%T.as_type.as.DestroyImpl.impl.Op.type.dea) = import_ref Core//prelude/destroy, loc{{\d+_\d+}}, loaded [symbolic = @T.as_type.as.DestroyImpl.impl.%T.as_type.as.DestroyImpl.impl.Op (constants.%T.as_type.as.DestroyImpl.impl.Op.6e5)]
+// CHECK:STDOUT:   %DestroyImpl.impl_witness_table = impl_witness_table (%Core.import_ref.74d0), @T.as_type.as.DestroyImpl.impl [concrete]
 // CHECK:STDOUT:   %Direct.decl: %Direct.type = fn_decl @Direct [concrete = constants.%Direct] {
 // CHECK:STDOUT:     <elided>
 // CHECK:STDOUT:   } {
