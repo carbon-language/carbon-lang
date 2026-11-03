@@ -41,24 +41,41 @@ jobs:
 
       - name: Replace the description
         env:
-          BODY: ${{ github.event.pull_request.body }}
           DEPENDENCIES: ${{ steps.metadata.outputs.updated-dependencies-json }}
           GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
-          # Only replace a description that Dependabot wrote, which always
-          # contains this marker. This leaves human edits alone, and catches
-          # Dependabot restoring its description when it rebases.
-          if [[ "$BODY" != *dependabot-automerge-start* ]]; then
-            echo "The description isn't Dependabot's, so leaving it alone."
+          # Only replace a description that Dependabot wrote: either nobody has
+          # edited it, or Dependabot last did, such as when rebasing. This
+          # leaves human edits and our own earlier rewrites alone. Don't look
+          # for markers in the text, because Dependabot truncates descriptions
+          # that are too long.
+          # shellcheck disable=SC2016 # The `$`s are GraphQL variables.
+          editor="$(gh api graphql \
+            -f owner="${GITHUB_REPOSITORY%/*}" \
+            -f name="${GITHUB_REPOSITORY#*/}" \
+            -F number="$PR_NUMBER" \
+            -f query='
+              query($owner: String!, $name: String!, $number: Int!) {
+                repository(owner: $owner, name: $name) {
+                  pullRequest(number: $number) { editor { login } }
+                }
+              }' \
+            --jq '.data.repository.pullRequest.editor.login // ""')"
+          if [[ -n "$editor" && "$editor" != "dependabot" ]]; then
+            echo "The description was last edited by $editor, so leaving it."
             exit 0
           fi
 
           # One short line per dependency. GitHub hard-wraps squash commit
-          # messages at 72 columns, so avoid tables and long links.
+          # messages at 72 columns, so avoid tables and long links, and drop
+          # the URL prefix from pre-commit hook names.
           body="$(jq -r '
             unique_by([.dependencyName, .prevVersion, .newVersion])[]
-            | "- `\(.dependencyName)` \(.prevVersion) -> \(.newVersion)"
+            | "- `\(.dependencyName | ltrimstr("https://github.com/"))` "
+              + (.prevVersion | ltrimstr("v")) + " -> "
+              + (.newVersion | ltrimstr("v"))
               + if .updateType == "version-update:semver-major"
                 then " (major)" else "" end
           ' <<<"$DEPENDENCIES")"
