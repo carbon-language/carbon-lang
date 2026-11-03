@@ -8,15 +8,15 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/operators/fail_invalid_infix.carbon
 
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+2]]:19: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+2]]:18: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 var a: i32 = n == ;
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+2]]:14-15: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+2]]:13: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 var b: i32 = == n;
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+4]]:14-15: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+4]]:13: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
-// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+2]]:17: error: expected expression [ExpectedExpr]
+// CHECK:STDERR: fail_invalid_infix.carbon:[[@LINE+2]]:16: error: expected expression [ExpectedExpr]
 // CHECK:STDERR:
 var c: i32 = == ;
 

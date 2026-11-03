@@ -20,6 +20,7 @@ SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 -   [Diagnostic registry](#diagnostic-registry)
 -   [CARBON_DIAGNOSTIC placement](#carbon_diagnostic-placement)
 -   [Choosing what a label marks](#choosing-what-a-label-marks)
+-   [Locating lexer and parser diagnostics](#locating-lexer-and-parser-diagnostics)
 -   [Diagnostic parameter types](#diagnostic-parameter-types)
 -   [Diagnostic message style guide](#diagnostic-message-style-guide)
 -   [Alternatives considered](#alternatives-considered)
@@ -377,6 +378,47 @@ cases the range is somewhere else on a stack that has not been unwound yet.
 Until a diagnostic is migrated its message location supplies the range, which is
 usually the one column an editor would put a cursor on and rarely an extent
 worth looking at.
+
+## Locating lexer and parser diagnostics
+
+A lexer or parser diagnostic is about text the developer is about to edit, so
+its message is located where they would put the cursor to start fixing it:
+
+-   Something missing is located at the point where it would be inserted. A
+    point covers no text: it is a `Diagnostics::Loc` with a `length` of zero. A
+    missing token is inserted just past the token before it, so a missing `;`
+    at the end of a line is located at the end of that line rather than at the
+    first token of the next. An opening bracket is inserted against the token
+    after it when that token is on the same line, so `expected braced code
+    block` in `if (x) return;` is located just before `return`.
+
+-   Something present but wrong is located at the tokens it covers. A word
+    that can't be a name, such as a keyword, in a name's position and followed
+    by a token that can follow the name, is taken as the name: the message
+    covers it and suggests `r#`.
+
+-   Something missing at the start of a construct is located at the token
+    found in its place. The token before the point belongs to another
+    construct, possibly on another line, so an expression statement that starts
+    with `=` is reported at the `=` rather than at the end of the statement
+    before it.
+
+-   Inside a token, the lexer locates the message at the point to fix and
+    attaches the range of what is malformed, which the snippet underlines
+    instead. An unterminated string literal is located where its terminator
+    goes and underlines the literal; a `\x` escape without two digits is
+    located at the digit that is missing or wrong and underlines the escape.
+
+In the lexer, a location is a `Lex::SourceLoc`. A `const char*` into the source
+buffer converts to the one character it points at, `SourceLoc::Before` makes a
+point, and `SourceLoc::Range` makes any other range. A range is never made from
+a bare `const char*`, because converting one to `llvm::StringRef` scans for a
+null byte, and a source buffer isn't guaranteed to have one.
+
+In the parser, a location is a `Parse::DiagnosticLoc`. A token converts to one,
+`DiagnosticLoc::Tokens` covers a run of tokens, and `Before` and `After` make
+the points on either side of a token. `Context::PointAfterPreviousToken` and
+`Context::OpeningBracketInsertionPoint` locate most missing tokens.
 
 ## Diagnostic parameter types
 

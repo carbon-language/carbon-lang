@@ -957,11 +957,11 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -1111,11 +1111,11 @@ fn F() {
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%To) [symbolic]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.6f2: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.3c6 = struct_value () [symbolic]
 // CHECK:STDOUT:   %ImplicitAs.impl_witness.d73: <witness> = impl_witness imports.%ImplicitAs.impl_witness_table.f53, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
-// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %ImplicitAs.facet: %ImplicitAs.type.6b0 = facet_value Core.IntLiteral, (%ImplicitAs.impl_witness.d73) [concrete]
 // CHECK:STDOUT:   %ImplicitAs.WithSelf.Convert.type.58f: type = fn_type @ImplicitAs.WithSelf.Convert, @ImplicitAs.WithSelf(%i32, %ImplicitAs.facet) [concrete]
 // CHECK:STDOUT:   %.33a: type = fn_type_with_self_type %ImplicitAs.WithSelf.Convert.type.58f, %ImplicitAs.facet [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766: type = fn_type @Core.IntLiteral.as.ImplicitAs.impl.Convert, @Core.IntLiteral.as.ImplicitAs.impl(%int_32) [concrete]
+// CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60: %Core.IntLiteral.as.ImplicitAs.impl.Convert.type.766 = struct_value () [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.bound: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60 [concrete]
 // CHECK:STDOUT:   %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn: <specific function> = specific_function %Core.IntLiteral.as.ImplicitAs.impl.Convert.f60, @Core.IntLiteral.as.ImplicitAs.impl.Convert(%int_32) [concrete]
 // CHECK:STDOUT:   %bound_method: <bound method> = bound_method %int_2.ecc, %Core.IntLiteral.as.ImplicitAs.impl.Convert.specific_fn [concrete]
@@ -1860,7 +1860,6 @@ fn F() {
 // CHECK:STDOUT:   %CC.generic: %CC.type = struct_value () [concrete]
 // CHECK:STDOUT:   %CC.c34: type = class_type @CC, @CC(%D) [symbolic]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %DD.481, @Z [symbolic]
-// CHECK:STDOUT:   %.4ca: require_specific_def_type = require_specific_def @DD.as.Z.impl(%E) [symbolic]
 // CHECK:STDOUT:   %Z.facet.6f5: %Z.type = facet_value %DD.481, (%Z.lookup_impl_witness) [symbolic]
 // CHECK:STDOUT:   %CC.a15: type = class_type @CC, @CC(%Z.facet.6f5) [symbolic]
 // CHECK:STDOUT:   %.b28: <witness> = impl_self_witness %CC.a15, @Z [symbolic]
@@ -1871,7 +1870,6 @@ fn F() {
 // CHECK:STDOUT:   %DD.41e: type = class_type @DD, @DD(%EE) [concrete]
 // CHECK:STDOUT:   %.945: <witness> = impl_self_witness %DD.41e, @Z [concrete]
 // CHECK:STDOUT:   %Z.impl_witness.4c0: <witness> = impl_witness @DD.as.Z.impl.%Z.impl_witness_table, @DD.as.Z.impl(%EE) [concrete]
-// CHECK:STDOUT:   %.82f: require_specific_def_type = require_specific_def @DD.as.Z.impl(%EE) [concrete]
 // CHECK:STDOUT:   %Z.facet.b2d: %Z.type = facet_value %DD.41e, (%Z.impl_witness.4c0) [concrete]
 // CHECK:STDOUT:   %CC.f5d: type = class_type @CC, @CC(%Z.facet.b2d) [concrete]
 // CHECK:STDOUT:   %.05a: <witness> = impl_self_witness %CC.f5d, @Z [concrete]
@@ -1943,7 +1941,7 @@ fn F() {
 // CHECK:STDOUT:     %E.ref: type = name_ref E, %E.loc12_15.1 [symbolic = %E.loc12_15.2 (constants.%E)]
 // CHECK:STDOUT:     %DD.loc12_30.1: type = class_type @DD, @DD(constants.%E) [symbolic = %DD.loc12_30.2 (constants.%DD.481)]
 // CHECK:STDOUT:     %Z.facet.loc12_31.1: %Z.type = facet_value %DD.loc12_30.1, (constants.%Z.lookup_impl_witness) [symbolic = %Z.facet.loc12_31.2 (constants.%Z.facet.6f5)]
-// CHECK:STDOUT:     %.loc12_31.1: %Z.type = converted %DD.loc12_30.1, %Z.facet.loc12_31.1 [symbolic = %Z.facet.loc12_31.2 (constants.%Z.facet.6f5)]
+// CHECK:STDOUT:     %.loc12_31: %Z.type = converted %DD.loc12_30.1, %Z.facet.loc12_31.1 [symbolic = %Z.facet.loc12_31.2 (constants.%Z.facet.6f5)]
 // CHECK:STDOUT:     %CC.loc12_31.1: type = class_type @CC, @CC(constants.%Z.facet.6f5) [symbolic = %CC.loc12_31.2 (constants.%CC.a15)]
 // CHECK:STDOUT:     %Z.ref: type = name_ref Z, file.%Z.decl [concrete = constants.%Z.type]
 // CHECK:STDOUT:     %.loc12_17.1: type = splice_block %.loc12_17.2 [concrete = type] {
@@ -1999,7 +1997,6 @@ fn F() {
 // CHECK:STDOUT:   %E.patt.loc12_15.2: %pattern_type.9a5 = symbolic_binding_pattern E, 0 [symbolic = %E.patt.loc12_15.2 (constants.%E.patt)]
 // CHECK:STDOUT:   %E.loc12_15.2: type = symbolic_binding E, 0 [symbolic = %E.loc12_15.2 (constants.%E)]
 // CHECK:STDOUT:   %DD.loc12_30.2: type = class_type @DD, @DD(%E.loc12_15.2) [symbolic = %DD.loc12_30.2 (constants.%DD.481)]
-// CHECK:STDOUT:   %.loc12_31.2: require_specific_def_type = require_specific_def @DD.as.Z.impl(%E.loc12_15.2) [symbolic = %.loc12_31.2 (constants.%.4ca)]
 // CHECK:STDOUT:   %Z.lookup_impl_witness: <witness> = lookup_impl_witness %DD.loc12_30.2, @Z [symbolic = %Z.lookup_impl_witness (constants.%Z.lookup_impl_witness)]
 // CHECK:STDOUT:   %Z.facet.loc12_31.2: %Z.type = facet_value %DD.loc12_30.2, (%Z.lookup_impl_witness) [symbolic = %Z.facet.loc12_31.2 (constants.%Z.facet.6f5)]
 // CHECK:STDOUT:   %CC.loc12_31.2: type = class_type @CC, @CC(%Z.facet.loc12_31.2) [symbolic = %CC.loc12_31.2 (constants.%CC.a15)]
@@ -2090,8 +2087,6 @@ fn F() {
 // CHECK:STDOUT:   %DD.loc9_27.2 => constants.%DD.481
 // CHECK:STDOUT:   %.loc9_34 => constants.%.de2
 // CHECK:STDOUT:   %Z.impl_witness.loc9_34.2 => constants.%Z.impl_witness.7b2
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Z.WithSelf(constants.%Z.facet.fce) {
@@ -2112,7 +2107,6 @@ fn F() {
 // CHECK:STDOUT:   %E.patt.loc12_15.2 => constants.%E.patt
 // CHECK:STDOUT:   %E.loc12_15.2 => constants.%E
 // CHECK:STDOUT:   %DD.loc12_30.2 => constants.%DD.481
-// CHECK:STDOUT:   %.loc12_31.2 => constants.%.4ca
 // CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%Z.lookup_impl_witness
 // CHECK:STDOUT:   %Z.facet.loc12_31.2 => constants.%Z.facet.6f5
 // CHECK:STDOUT:   %CC.loc12_31.2 => constants.%CC.a15
@@ -2135,8 +2129,6 @@ fn F() {
 // CHECK:STDOUT:   %DD.loc9_27.2 => constants.%DD.41e
 // CHECK:STDOUT:   %.loc9_34 => constants.%.945
 // CHECK:STDOUT:   %Z.impl_witness.loc9_34.2 => constants.%Z.impl_witness.4c0
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @CC(constants.%Z.facet.b2d) {
@@ -2148,13 +2140,10 @@ fn F() {
 // CHECK:STDOUT:   %E.patt.loc12_15.2 => constants.%E.patt
 // CHECK:STDOUT:   %E.loc12_15.2 => constants.%EE
 // CHECK:STDOUT:   %DD.loc12_30.2 => constants.%DD.41e
-// CHECK:STDOUT:   %.loc12_31.2 => constants.%.82f
 // CHECK:STDOUT:   %Z.lookup_impl_witness => constants.%Z.impl_witness.4c0
 // CHECK:STDOUT:   %Z.facet.loc12_31.2 => constants.%Z.facet.b2d
 // CHECK:STDOUT:   %CC.loc12_31.2 => constants.%CC.f5d
 // CHECK:STDOUT:   %.loc12_38 => constants.%.05a
 // CHECK:STDOUT:   %Z.impl_witness.loc12_38.2 => constants.%Z.impl_witness.a79
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

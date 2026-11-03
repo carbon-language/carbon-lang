@@ -196,7 +196,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyCallback__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #1 !dbg !36 {
+// CHECK:STDOUT: define linkonce_odr void @_CMyCallback__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #1 !dbg !36 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc8 = load float, ptr %_, align 4, !dbg !39
 // CHECK:STDOUT:   %MyCallback.call = call i32 @_CMyCallback.Main(float %.loc8), !dbg !40
@@ -271,7 +271,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyCallback__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #1 !dbg !55 {
+// CHECK:STDOUT: define linkonce_odr void @_CMyCallback__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #1 !dbg !55 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc5 = load float, ptr %_, align 4, !dbg !58
 // CHECK:STDOUT:   %MyCallback.call = call i32 @_CMyCallback.Main(float %.loc5), !dbg !58
@@ -484,7 +484,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyCallback__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #1 !dbg !108 {
+// CHECK:STDOUT: define linkonce_odr void @_CMyCallback__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #1 !dbg !108 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CMyCallback.Main(ptr %_1, ptr %_), !dbg !112
 // CHECK:STDOUT:   ret void, !dbg !112
@@ -555,7 +555,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CMyCallback__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #1 !dbg !126 {
+// CHECK:STDOUT: define linkonce_odr void @_CMyCallback__carbon_thunk.Main(ptr noundef nonnull align 4 dereferenceable(4) %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) #1 !dbg !126 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_CMyCallback.Main(ptr %_1, ptr %_), !dbg !129
 // CHECK:STDOUT:   ret void, !dbg !129

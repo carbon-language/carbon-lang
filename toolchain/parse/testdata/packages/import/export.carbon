@@ -12,7 +12,7 @@
 
 package Pkg;
 
-// CHECK:STDERR: fail_package.carbon:[[@LINE+2]]:15-17: error: `export` cannot be used when importing a package [ExportImportPackage]
+// CHECK:STDERR: fail_package.carbon:[[@LINE+2]]:1-6: error: `export` cannot be used when importing a package [ExportImportPackage]
 // CHECK:STDERR:
 export import Bar;
 

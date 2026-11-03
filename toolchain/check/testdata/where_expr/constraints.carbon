@@ -120,8 +120,7 @@ class C {}
 impl C as J {}
 
 fn DoesNotImplI() {
-  // CHECK:STDERR: fail_enforce_impls_constraint.carbon:[[@LINE+4]]:3-10: error: cannot convert type `C` into type implementing `J where .Self impls I` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: imported from: fail_enforce_impls_constraint.carbon:[[@LINE-8]]:1 [InImport]
+  // CHECK:STDERR: fail_enforce_impls_constraint.carbon:[[@LINE+3]]:3-10: error: cannot convert type `C` into type implementing `J where .Self impls I` [ConversionFailureTypeToFacet]
   // CHECK:STDERR: state_constraints.carbon:14:18-41: note: initializing generic parameter `V` declared here [InitializingGenericParam]
   // CHECK:STDERR:
   Impls(C);

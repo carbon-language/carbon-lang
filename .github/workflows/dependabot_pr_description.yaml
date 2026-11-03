@@ -1,0 +1,70 @@
+# Part of the Carbon Language project, under the Apache License v2.0 with LLVM
+# Exceptions. See /LICENSE for license information.
+# SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
+# Replaces Dependabot's PR description with a short markdown list of the updated
+# dependencies. We squash-merge using the PR description as the commit message,
+# and Dependabot's descriptions are mostly HTML: release notes, commit lists,
+# and command help. The original description remains in the PR's edit history.
+name: 'Dependabot PR description'
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+
+# Dependabot can push and edit the description in quick succession.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  rewrite:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read # For dependabot/fetch-metadata to read the PR's commit.
+      pull-requests: write # For `gh pr edit`.
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@46b06cea07f9e64621fdf066ba77ac6915163d43 # v2.22.3
+        with:
+          disable-sudo: true
+          egress-policy: block
+          # prettier-ignore
+          allowed-endpoints: >
+            api.github.com:443
+
+      - id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+
+      - name: Replace the description
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+          DEPENDENCIES: ${{ steps.metadata.outputs.updated-dependencies-json }}
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          # Only replace a description that Dependabot wrote, which always
+          # contains this marker. This leaves human edits alone, and catches
+          # Dependabot restoring its description when it rebases.
+          if [[ "$BODY" != *dependabot-automerge-start* ]]; then
+            echo "The description isn't Dependabot's, so leaving it alone."
+            exit 0
+          fi
+
+          # One short line per dependency. GitHub hard-wraps squash commit
+          # messages at 72 columns, so avoid tables and long links.
+          body="$(jq -r '
+            unique_by([.dependencyName, .prevVersion, .newVersion])[]
+            | "- `\(.dependencyName)` \(.prevVersion) -> \(.newVersion)"
+              + if .updateType == "version-update:semver-major"
+                then " (major)" else "" end
+          ' <<<"$DEPENDENCIES")"
+          if [[ -z "$body" ]]; then
+            echo "Found no updated dependencies, so leaving it alone."
+            exit 0
+          fi
+
+          gh pr edit "$PR_URL" --repo "$GITHUB_REPOSITORY" --body "$body"

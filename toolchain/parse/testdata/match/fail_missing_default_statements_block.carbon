@@ -10,9 +10,9 @@
 
 fn f() -> i32 {
   match (3) {
+    // CHECK:STDERR: fail_missing_default_statements_block.carbon:[[@LINE+2]]:15: error: expected `{` after `=>` [ExpectedMatchCaseBlock]
+    // CHECK:STDERR:
     default =>
-  // CHECK:STDERR: fail_missing_default_statements_block.carbon:[[@LINE+2]]:3: error: expected `{` after `=>` [ExpectedMatchCaseBlock]
-  // CHECK:STDERR:
   }
   return 0;
 }

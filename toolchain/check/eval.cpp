@@ -2922,11 +2922,14 @@ static auto MakeConstantForCall(EvalContext& eval_context,
   // Handle calls to `eval` and `musteval` functions.
   if (evaluation_mode != SemIR::Function::EvaluationMode::None) {
     // A non-concrete call to `eval` or `musteval` is a template symbolic
-    // constant, regardless of the phase of the arguments.
+    // constant, unless it is only dependent on `.Self`. Then preserve that so
+    // a Call on the RHS of a `where` does not change the phase of the whole
+    // facet type.
     if (phase != Phase::Concrete) {
       CARBON_CHECK(phase <= Phase::TemplateSymbolic);
-      return MakeConstantResult(eval_context.context(), call,
-                                Phase::TemplateSymbolic);
+      phase = phase == Phase::PeriodSelfSymbolic ? Phase::PeriodSelfSymbolic
+                                                 : Phase::TemplateSymbolic;
+      return MakeConstantResult(eval_context.context(), call, phase);
     }
 
     // TODO: Instead of performing the call immediately, add it to a work queue
@@ -3504,13 +3507,10 @@ auto TryEvalBlockForSpecific(Context& context, SemIR::LocId loc_id,
     result_id = context.constant_values().GetInstId(const_id);
   }
 
-  // TODO: Enable this CHECK once it passes.
-  //
-  // CARBON_CHECK(
-  //     context.generic_region_stack().num_tracked_insts() ==
-  //     num_tracked_insts, "Evaluating {0} added instructions to an enclosing
-  //     generic region", specific_id);
-  static_cast<void>(num_tracked_insts);
+  CARBON_CHECK(
+      context.generic_region_stack().num_tracked_insts() == num_tracked_insts,
+      "Evaluating {0} added instructions to an enclosing generic region",
+      specific_id);
 }
 
 // Information about the function call we are currently executing. Unlike

@@ -125,7 +125,7 @@ void CallF() {
 // CHECK:STDOUT: declare void @_CF.OtherFunction(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.OtherFunction(ptr noundef nonnull align 4 dereferenceable(4) %_) #2 !dbg !41 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.OtherFunction(ptr noundef nonnull align 4 dereferenceable(4) %_) #2 !dbg !41 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !43
 // CHECK:STDOUT:   call void @_CF.OtherFunction(i32 %.1), !dbg !43
@@ -135,7 +135,7 @@ void CallF() {
 // CHECK:STDOUT: declare void @_CF.FirstFunction(i32)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CF__carbon_thunk.FirstFunction(ptr noundef nonnull align 4 dereferenceable(4) %_) #2 !dbg !45 {
+// CHECK:STDOUT: define linkonce_odr void @_CF__carbon_thunk.FirstFunction(ptr noundef nonnull align 4 dereferenceable(4) %_) #2 !dbg !45 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.1 = load i32, ptr %_, align 4, !dbg !47
 // CHECK:STDOUT:   call void @_CF.FirstFunction(i32 %.1), !dbg !47

@@ -4,6 +4,7 @@
 
 # Update versions with:
 #   pre-commit autoupdate --freeze && pre-commit run -a
+# Dependabot also proposes monthly updates; see .github/dependabot.yml.
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 
@@ -32,7 +33,7 @@ repos:
   # Run markdown linting early so that doc style and table-of-contents see the
   # linted state.
   - repo: https://github.com/rvben/rumdl-pre-commit
-    rev: v0.2.58
+    rev: e95b9121d4c55bf12fb7ae52d08d2d8d64789899 # frozen: v0.2.58
     hooks:
       - id: rumdl
         args: [--fix]
@@ -51,7 +52,7 @@ repos:
   # Re-run markdown linting to fix any issues caused by doc style and TOC. This
   # is very fast, so it shouldn't be problematic to run twice.
   - repo: https://github.com/rvben/rumdl-pre-commit
-    rev: v0.2.58
+    rev: e95b9121d4c55bf12fb7ae52d08d2d8d64789899 # frozen: v0.2.58
     hooks:
       - id: rumdl
         args: [--fix]
