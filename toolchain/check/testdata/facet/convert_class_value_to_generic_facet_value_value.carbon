@@ -543,7 +543,7 @@ fn B() {
 // CHECK:STDOUT:   %Self.b9e: %I.type.a43 = symbolic_binding Self, 2 [symbolic]
 // CHECK:STDOUT:   %C: type = class_type @C [concrete]
 // CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
-// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness %empty_struct_type [concrete]
 // CHECK:STDOUT:   %T.patt.3a0592.1: %pattern_type.9a587c.1 = symbolic_binding_pattern T, 0 [symbolic]
 // CHECK:STDOUT:   %T.67d: type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
@@ -570,8 +570,6 @@ fn B() {
 // CHECK:STDOUT:   %C.val: %C = struct_value () [concrete]
 // CHECK:STDOUT:   %.ec3: <witness> = impl_self_witness %C, @I, @I(%empty_struct_type, %empty_tuple.type) [concrete]
 // CHECK:STDOUT:   %I.impl_witness.38c: <witness> = impl_witness @C.as.I.impl.%I.impl_witness_table, @C.as.I.impl(%empty_struct_type) [concrete]
-// CHECK:STDOUT:   %Self.f7f: %I.type.936 = symbolic_binding Self, 2 [symbolic]
-// CHECK:STDOUT:   %complete_type.562: <witness> = complete_type_witness %I.type.936 [concrete]
 // CHECK:STDOUT:   %I.facet.708: %I.type.936 = facet_value %C, (%I.impl_witness.38c) [concrete]
 // CHECK:STDOUT:   %pattern_type.98b: type = pattern_type %C [concrete]
 // CHECK:STDOUT:   %t.param_patt.5f9: %pattern_type.98b = value_param_pattern [concrete]
@@ -715,7 +713,7 @@ fn B() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
 // CHECK:STDOUT: !members:
@@ -809,10 +807,6 @@ fn B() {
 // CHECK:STDOUT:   %V.loc3_14.1 => constants.%empty_struct_type
 // CHECK:STDOUT:   %W.patt.loc3_23.2 => constants.%W.patt
 // CHECK:STDOUT:   %W.loc3_23.1 => constants.%empty_tuple.type
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %I.type => constants.%I.type.936
-// CHECK:STDOUT:   %Self.loc3_31.2 => constants.%Self.f7f
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%T.23e) {
@@ -830,13 +824,6 @@ fn B() {
 // CHECK:STDOUT:   %I.type.loc7_35.2 => constants.%I.type.936
 // CHECK:STDOUT:   %.loc7_37 => constants.%.ec3
 // CHECK:STDOUT:   %I.impl_witness.loc7_37.2 => constants.%I.impl_witness.38c
-// CHECK:STDOUT:
-// CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.562
-// CHECK:STDOUT: }
-// CHECK:STDOUT:
-// CHECK:STDOUT: specific @I.WithSelf(constants.%empty_struct_type, constants.%empty_tuple.type, constants.%Self.b9e) {
-// CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A(constants.%I.facet.708) {
@@ -848,7 +835,7 @@ fn B() {
 // CHECK:STDOUT:   %t.patt.loc9_28.2 => constants.%t.patt.429
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete => constants.%complete_type.357
+// CHECK:STDOUT:   %require_complete => constants.%complete_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_mismatch_impl_constraint_with_fixed_specific.carbon
