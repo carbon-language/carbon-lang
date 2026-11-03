@@ -363,53 +363,18 @@ static auto DiagnoseInvalidQualifiedNameAccess(
       .Emit();
 }
 
-// Returns whether the current access context is friended by
-// `target_scope_const_id`.
-static auto IsFriend(Context& context,
-                     const SemIR::ConstantId& target_scope_const_id) -> bool {
-  // Get the constant ID for the current access context.
-  auto access_context_scope_id = context.access_context();
-  if (!access_context_scope_id.has_value() ||
-      access_context_scope_id == SemIR::NameScopeId::AllowHighestAccessLevel) {
-    return false;
-  }
-  const auto& access_context =
-      context.name_scopes().Get(access_context_scope_id);
-  auto access_context_const_id =
-      context.constant_values().Get(access_context.inst_id());
-
-  // Get the `SemIR::Class` for the target scope. Return early if it's not a
-  // class.
-  auto target_inst_id =
-      context.constant_values().GetInstId(target_scope_const_id);
-  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(target_inst_id);
-  if (!class_type) {
-    return false;
-  }
-  const auto& class_info = context.classes().Get(class_type->class_id);
-
-  return !!class_info.friend_scopes.Lookup(access_context_const_id);
-}
-
 // Returns whether the access is prohibited by the access modifiers.
 //
 // This takes friendship into account. If the current access context is
 // friended by `target_scope_const_id` then any non-hidden access is allowed.
 static auto IsAccessProhibited(Context& context,
                                std::optional<AccessInfo> access_info,
-                               SemIR::AccessKind access_kind,
-                               SemIR::ConstantId target_scope_const_id,
-                               bool is_parent_access) -> bool {
+                               SemIR::AccessKind access_kind) -> bool {
   // Namespace members are always available within the current library;
   // filtering of private names happens in import, not here.
   if (!access_info || !access_info->constant_id.has_value() ||
       context.constant_values().InstIs<SemIR::Namespace>(
           access_info->constant_id)) {
-    return false;
-  }
-
-  if (IsFriend(context, target_scope_const_id) &&
-      access_kind < SemIR::AccessKind::Hidden) {
     return false;
   }
 
@@ -419,20 +384,37 @@ static auto IsAccessProhibited(Context& context,
     case SemIR::AccessKind::Protected:
       return access_info->highest_allowed_access == SemIR::AccessKind::Public;
     case SemIR::AccessKind::Private:
-      return access_info->highest_allowed_access !=
-                 SemIR::AccessKind::Private ||
-             is_parent_access;
+      return access_info->highest_allowed_access != SemIR::AccessKind::Private;
     case SemIR::AccessKind::Hidden:
       return true;
   }
+}
+
+// Returns whether the access context has private access to the class of
+// `extended_scope`, a scope reached through `extend` and looked up in
+// `specific_id`. For example, it does if it's that class or one of its friends,
+// or is nested within one of those.
+static auto HasPrivateAccessToExtendedScope(
+    Context& context, const SemIR::NameScope& extended_scope,
+    SemIR::SpecificId specific_id) -> bool {
+  // The constant value of a generic class's declaration is the generic class
+  // itself rather than a class type, so form the class type for the specific.
+  auto class_decl =
+      context.insts().TryGetAs<SemIR::ClassDecl>(extended_scope.inst_id());
+  if (!class_decl) {
+    return false;
+  }
+  auto class_type_id = GetClassType(context, class_decl->class_id, specific_id);
+  return GetHighestAllowedAccess(
+             context, context.types().GetConstantId(class_type_id)) ==
+         SemIR::AccessKind::Private;
 }
 
 auto CheckAccess(Context& context, SemIR::LocId loc_id,
                  SemIR::LocId member_loc_id, SemIR::NameId name_id,
                  SemIR::AccessKind access_kind, bool is_parent_access,
                  AccessInfo access_info) -> void {
-  if (IsAccessProhibited(context, access_info, access_kind,
-                         access_info.constant_id, is_parent_access)) {
+  if (IsAccessProhibited(context, access_info, access_kind)) {
     DiagnoseInvalidQualifiedNameAccess(context, loc_id, member_loc_id, name_id,
                                        access_kind, is_parent_access,
                                        access_info);
@@ -640,6 +622,9 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
   auto parent_const_id = SemIR::ConstantId::None;
   bool has_error = false;
   bool is_parent_access = false;
+  // Whether the caller provided access information for the current access
+  // context, as opposed to a lookup that doesn't depend on it.
+  const bool has_caller_access_info = access_info.has_value();
 
   // Walk this scope and, if nothing is found here, the scopes it extends.
   while (!scopes.empty()) {
@@ -662,9 +647,26 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
                      .highest_allowed_access = SemIR::AccessKind::Protected};
     }
 
-    auto is_access_prohibited = IsAccessProhibited(
-        context, access_info, access_kind,
-        context.constant_values().Get(name_scope.inst_id()), is_parent_access);
+    // A private member of a scope reached through `extend` is accessible only
+    // if the access context has private access to that scope's class itself.
+    // Private access to the scope the lookup started in doesn't carry over.
+    //
+    // This depends on the current access context, so it only applies when the
+    // caller provided `access_info`. Lookups without it, such as unqualified
+    // name lookup, never find private members of extended scopes.
+    // TODO: Support unqualified lookup of a private member of an extended
+    // scope from a context with private access to it, such as a friend.
+    auto scope_access_info = access_info;
+    if (has_caller_access_info && is_parent_access && scope_result.is_found() &&
+        access_kind == SemIR::AccessKind::Private) {
+      scope_access_info->highest_allowed_access =
+          HasPrivateAccessToExtendedScope(context, name_scope, specific_id)
+              ? SemIR::AccessKind::Private
+              : SemIR::AccessKind::Protected;
+    }
+
+    auto is_access_prohibited =
+        IsAccessProhibited(context, scope_access_info, access_kind);
 
     // Keep track of prohibited accesses, this will be useful for reporting
     // multiple prohibited accesses if we can't find a suitable lookup.
