@@ -24,9 +24,8 @@ namespace Carbon {
 // to objects that remain in the stack.
 //
 // As a stack, all insertions must be pushed onto the back of the stack, and
-// doing so is an O(1) operation. Peeking or popping the back of the stack is
-// also an O(1) operation. It is also possible to peek further into the stack,
-// but at a cost proportional to `log(distance from the back)`.
+// doing so is an O(1) operation. Popping the back of the stack and peeking into
+// the stack are also O(1) operations.
 //
 // The stack is implemented as an array of pointers to arrays. Each successive
 // array gains a larger capacity than the last by multiplicative factor, to
@@ -81,11 +80,8 @@ class StableStack {
       return *this;
     }
 
-    // TODO: We could reuse existing elements in `this` by calling `operator=`
-    // on them instead of destroying and reconstructing always.
-    //
-    // TODO: This is broken for assignment-from-subobject, where we would need
-    // to construct all of the new values before destroying the old.
+    // TODO: This is broken for assignment-from-subobject, where this would
+    // destroy the `rhs`.
     DestroyAll();
     chunks_ = std::exchange(rhs.chunks_, {});
     used_chunks_ = std::exchange(rhs.used_chunks_, 0);
@@ -100,7 +96,7 @@ class StableStack {
     auto [chunk, index] = GetIndexAtBack();
     return Get(chunk, index);
   }
-  auto PeekMutable() -> T& {
+  auto Peek() -> T& {
     CARBON_CHECK(!empty(), "Peek on an empty stack");
     auto [chunk, index] = GetIndexAtBack();
     return Get(chunk, index);
@@ -109,16 +105,13 @@ class StableStack {
   // Returns a reference to an element in the stack. By default it returns the
   // most recently pushed element at the back of the stack. But `n` may be used
   // to specify a distance from that element into the stack.
-  //
-  // This operation is O(1) when `n = 0` but otherwise has a cost proportional
-  // to `log(n)`.
   auto Peek(int32_t n) const -> const T& {
     CARBON_CHECK(!empty(), "Peek on an empty stack");
     CARBON_CHECK(n >= 0, "Peek index invalid");
     auto [chunk, index] = GetIndexFromBack(n);
     return Get(chunk, index);
   }
-  auto PeekMutable(int32_t n) -> T& {
+  auto Peek(int32_t n) -> T& {
     CARBON_CHECK(!empty(), "Peek on an empty stack");
     CARBON_CHECK(n >= 0, "Peek index invalid");
     auto [chunk, index] = GetIndexFromBack(n);
@@ -127,14 +120,14 @@ class StableStack {
 
   // Pushes a new element onto the back of the stack.
   auto Push(const T& t) -> void {
-    void* slot = PushSlot();
+    auto* slot = PushSlot();
     __asan_unpoison_memory_region(slot, sizeof(T));
-    std::construct_at<T>(reinterpret_cast<T*>(slot), t);
+    std::construct_at<T>(slot, t);
   }
   auto Push(T&& t) -> void {
-    void* slot = PushSlot();
+    auto* slot = PushSlot();
     __asan_unpoison_memory_region(slot, sizeof(T));
-    std::construct_at<T>(reinterpret_cast<T*>(slot), std::move(t));
+    std::construct_at<T>(slot, std::move(t));
   }
 
   // Removes the most recently pushed element from the back of the stack and
@@ -182,15 +175,13 @@ class StableStack {
     auto full_chunks_capacity = GetSumCapacity(full_chunks);
     return full_chunks_capacity + size_in_last_chunk_;
   }
-  // Compute the capacity of the stack. The total capacity is not cached, so
-  // this takes work proportional to `log(capacity of the stack)`.
+  // The number of elements that the stack can hold without requiring further
+  // allocation.
   auto capacity() const -> int32_t { return GetSumCapacity(chunks_.size()); }
 
   // Compares the contents of two stacks for equality.
   friend auto operator==(const StableStack& lhs, const StableStack& rhs) -> bool
-    requires requires(const T& l, const T& r) {
-      { l == r } -> std::convertible_to<bool>;
-    }
+    requires std::equality_comparable<T>
   {
     if (lhs.size() != rhs.size()) {
       return false;
@@ -231,7 +222,7 @@ class StableStack {
 
  private:
   struct Chunk {
-    void* array [[clang::require_explicit_initialization]];
+    T* array [[clang::require_explicit_initialization]];
     int32_t capacity [[clang::require_explicit_initialization]];
   };
 
@@ -275,20 +266,20 @@ class StableStack {
     auto used_chunks = std::exchange(used_chunks_, 0);
 
     for (auto i = 0; i < used_chunks - 1; ++i) {
-      auto* array = reinterpret_cast<T*>(chunks[i].array);
+      auto* array = chunks[i].array;
       auto capacity = chunks[i].capacity;
       std::destroy_n(array, capacity);
       std::allocator<T>().deallocate(array, capacity);
     }
     if (used_chunks) {
       auto i = used_chunks - 1;
-      auto* array = reinterpret_cast<T*>(chunks[i].array);
+      auto* array = chunks[i].array;
       auto capacity = chunks[i].capacity;
       std::destroy_n(array, size_in_last_chunk);
       std::allocator<T>().deallocate(array, capacity);
     }
     for (auto i = used_chunks; i < static_cast<int32_t>(chunks.size()); ++i) {
-      auto* array = reinterpret_cast<T*>(chunks[i].array);
+      auto* array = chunks[i].array;
       auto capacity = chunks[i].capacity;
       std::allocator<T>().deallocate(array, capacity);
     }
@@ -336,26 +327,26 @@ class StableStack {
     } else {
       CARBON_DCHECK(index < chunks_[chunk].capacity);
     }
-    return *std::launder(reinterpret_cast<T*>(chunks_[chunk].array) + index);
+    return chunks_[chunk].array[index];
   }
 
   // Allocate memory as needed to get a pointer that we can construct `T` into.
   // The pointer returned is still ASAN poisoned.
-  auto PushSlot() -> void* {
+  auto PushSlot() -> T* {
     if (empty()) {
-      auto& chunk = AddChunk();
+      auto& new_chunk = AddChunk();
       size_in_last_chunk_ = 1;
-      return chunk.array;
+      return new_chunk.array;
     }
     int32_t chunk = used_chunks_ - 1;
     if (size_in_last_chunk_ == chunks_[chunk].capacity) {
-      auto& chunk = AddChunk();
+      auto& new_chunk = AddChunk();
       size_in_last_chunk_ = 1;
-      return chunk.array;
+      return new_chunk.array;
     } else {
       int32_t index = size_in_last_chunk_;
       size_in_last_chunk_++;
-      return static_cast<T*>(chunks_[chunk].array) + index;
+      return chunks_[chunk].array + index;
     }
   }
 

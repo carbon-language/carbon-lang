@@ -98,7 +98,7 @@ class GenericRegionStack {
   // instructions for the current generic.
   auto PeekConstantsInGenericMap() -> ConstantsInGenericMap& {
     CARBON_CHECK(!Empty());
-    return constants_in_generic_stack_.PeekMutable();
+    return constants_in_generic_stack_.Peek();
   }
 
   // Returns the total number of instructions tracked by all pending generic

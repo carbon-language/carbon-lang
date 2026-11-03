@@ -127,10 +127,10 @@ TEST(StableStack, CopyConstructDestroy) {
     size = stack.size();
     constructed = destroyed = 0;
 
-    stack.Peek();
+    static_cast<const decltype(stack)&>(stack).Peek();
     EXPECT_EQ(constructed, 0);
     EXPECT_EQ(destroyed, 0);
-    stack.PeekMutable();
+    stack.Peek();
     EXPECT_EQ(constructed, 0);
     EXPECT_EQ(destroyed, 0);
   }
@@ -168,10 +168,10 @@ TEST(StableStack, MoveConstructDestroy) {
     size = stack.size();
     constructed = destroyed = 0;
 
-    stack.Peek();
+    static_cast<const decltype(stack)&>(stack).Peek();
     EXPECT_EQ(constructed, 0);
     EXPECT_EQ(destroyed, 0);
-    stack.PeekMutable();
+    stack.Peek();
     EXPECT_EQ(constructed, 0);
     EXPECT_EQ(destroyed, 0);
   }
@@ -351,27 +351,28 @@ TEST(StableStack, MoveStack) {
 
 TEST(StableStack, Peek) {
   StableStack<int> stack;
+  const auto& const_stack = stack;
   stack.Push(1);
 
-  decltype(auto) r = stack.Peek();
+  decltype(auto) r = const_stack.Peek();
   static_assert(std::same_as<decltype(r), const int&>);
 
-  decltype(auto) m = stack.PeekMutable();
+  decltype(auto) m = stack.Peek();
   static_assert(std::same_as<decltype(m), int&>);
 
   stack.Push(2);
+  EXPECT_EQ(const_stack.Peek(), 2);
   EXPECT_EQ(stack.Peek(), 2);
-  EXPECT_EQ(stack.PeekMutable(), 2);
-  stack.PeekMutable() = 4;
+  stack.Peek() = 4;
+  EXPECT_EQ(const_stack.Peek(), 4);
   EXPECT_EQ(stack.Peek(), 4);
-  EXPECT_EQ(stack.PeekMutable(), 4);
   EXPECT_EQ(stack.Pop(), 4);
 
+  EXPECT_EQ(const_stack.Peek(), 1);
   EXPECT_EQ(stack.Peek(), 1);
-  EXPECT_EQ(stack.PeekMutable(), 1);
-  stack.PeekMutable() = 3;
+  stack.Peek() = 3;
+  EXPECT_EQ(const_stack.Peek(), 3);
   EXPECT_EQ(stack.Peek(), 3);
-  EXPECT_EQ(stack.PeekMutable(), 3);
   EXPECT_EQ(stack.Pop(), 3);
 }
 
