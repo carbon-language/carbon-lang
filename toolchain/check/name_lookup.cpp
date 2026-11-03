@@ -286,15 +286,53 @@ static auto DiagnoseInvalidQualifiedNameAccess(
       .Emit();
 }
 
+// Returns whether the current access context is friended by
+// `target_scope_const_id`.
+static auto IsFriend(Context& context,
+                     const SemIR::ConstantId& target_scope_const_id) -> bool {
+  // Get the constant ID for the current access context.
+  auto access_context_scope_id = context.access_context();
+  if (!access_context_scope_id.has_value() ||
+      access_context_scope_id == SemIR::NameScopeId::AllowHighestAccessLevel) {
+    return false;
+  }
+  const auto& access_context =
+      context.name_scopes().Get(access_context_scope_id);
+  auto access_context_const_id =
+      context.constant_values().Get(access_context.inst_id());
+
+  // Get the `SemIR::Class` for the target scope. Return early if it's not a
+  // class.
+  auto target_inst_id =
+      context.constant_values().GetInstId(target_scope_const_id);
+  auto class_type = context.insts().TryGetAs<SemIR::ClassType>(target_inst_id);
+  if (!class_type) {
+    return false;
+  }
+  const auto& class_info = context.classes().Get(class_type->class_id);
+
+  return !!class_info.friend_scopes.Lookup(access_context_const_id);
+}
+
 // Returns whether the access is prohibited by the access modifiers.
+//
+// This takes friendship into account. If the current access context is
+// friended by `target_scope_const_id` then any non-hidden access is allowed.
 static auto IsAccessProhibited(Context& context,
                                std::optional<AccessInfo> access_info,
                                SemIR::AccessKind access_kind,
+                               SemIR::ConstantId target_scope_const_id,
                                bool is_parent_access) -> bool {
   // Namespace members are always available within the current library;
   // filtering of private names happens in import, not here.
-  if (!access_info || context.constant_values().InstIs<SemIR::Namespace>(
-                          access_info->constant_id)) {
+  if (!access_info || !access_info->constant_id.has_value() ||
+      context.constant_values().InstIs<SemIR::Namespace>(
+          access_info->constant_id)) {
+    return false;
+  }
+
+  if (IsFriend(context, target_scope_const_id) &&
+      access_kind < SemIR::AccessKind::Hidden) {
     return false;
   }
 
@@ -316,7 +354,8 @@ auto CheckAccess(Context& context, SemIR::LocId loc_id,
                  SemIR::LocId member_loc_id, SemIR::NameId name_id,
                  SemIR::AccessKind access_kind, bool is_parent_access,
                  AccessInfo access_info) -> void {
-  if (IsAccessProhibited(context, access_info, access_kind, is_parent_access)) {
+  if (IsAccessProhibited(context, access_info, access_kind,
+                         access_info.constant_id, is_parent_access)) {
     DiagnoseInvalidQualifiedNameAccess(context, loc_id, member_loc_id, name_id,
                                        access_kind, is_parent_access,
                                        access_info);
@@ -546,8 +585,9 @@ auto LookupQualifiedName(Context& context, SemIR::LocId loc_id,
                      .highest_allowed_access = SemIR::AccessKind::Protected};
     }
 
-    auto is_access_prohibited =
-        IsAccessProhibited(context, access_info, access_kind, is_parent_access);
+    auto is_access_prohibited = IsAccessProhibited(
+        context, access_info, access_kind,
+        context.constant_values().Get(name_scope.inst_id()), is_parent_access);
 
     // Keep track of prohibited accesses, this will be useful for reporting
     // multiple prohibited accesses if we can't find a suitable lookup.

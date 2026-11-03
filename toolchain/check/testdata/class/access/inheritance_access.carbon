@@ -282,6 +282,49 @@ fn G() {
     Cpp.F(&d);
 }
 
+// --- access_private_member_of_parent_friend.carbon
+library "[[@TEST_NAME]]";
+
+class Derived;
+
+base class Base {
+  friend Derived;
+  private var x: () = ();
+}
+
+class Derived {
+  extend base: Base;
+
+  fn F(self) {
+    self.x;
+  }
+}
+
+// --- access_private_member_of_parent_in_unrelated_friend_scope.carbon
+library "[[@TEST_NAME]]";
+
+class A(template T: type);
+
+base class Base {
+  friend A;
+
+  private fn F() {}
+};
+
+class A(template T: type) {
+  fn G() {
+    T.F();
+  }
+};
+
+class Derived {
+  extend base: Base;
+}
+
+fn H() {
+  A(Derived).G();
+}
+
 // CHECK:STDOUT: --- instance_protected_field_access.carbon
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
@@ -1916,5 +1959,305 @@ fn G() {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT:   %C => constants.%C.4da
 // CHECK:STDOUT:   %C.elem => constants.%C.elem.79b
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- access_private_member_of_parent_friend.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete]
+// CHECK:STDOUT:   %Base.elem: type = unbound_element_type %Base, %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %struct_type.x: type = struct_type {.x: %empty_tuple.type} [concrete]
+// CHECK:STDOUT:   %complete_type.9be: <witness> = complete_type_witness %struct_type.x [concrete]
+// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
+// CHECK:STDOUT:   %pattern_type.746: type = pattern_type %Derived [concrete]
+// CHECK:STDOUT:   %self.param_patt: %pattern_type.746 = value_param_pattern [concrete]
+// CHECK:STDOUT:   %self.patt: %pattern_type.746 = wrapper_binding_pattern self, %self.param_patt [concrete]
+// CHECK:STDOUT:   %Derived.F.type: type = fn_type @Derived.F [concrete]
+// CHECK:STDOUT:   %Derived.F: %Derived.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %struct_type.base.cae: type = struct_type {.base: %Base} [concrete]
+// CHECK:STDOUT:   %complete_type.c02: <witness> = complete_type_witness %struct_type.base.cae [concrete]
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .Derived = %Derived.decl.loc3
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %Derived.decl.loc3: type = class_decl @Derived [concrete = constants.%Derived] {} {}
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
+// CHECK:STDOUT:   %Derived.decl.loc10: type = class_decl @Derived [concrete = constants.%Derived] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
+// CHECK:STDOUT:   %.loc11: %Derived.elem = base_decl %Base.ref, element0 [concrete]
+// CHECK:STDOUT:   %Derived.F.decl: %Derived.F.type = fn_decl @Derived.F [concrete = constants.%Derived.F] {
+// CHECK:STDOUT:     %self.param_patt: %pattern_type.746 = value_param_pattern [concrete = constants.%self.param_patt]
+// CHECK:STDOUT:     %self.patt: %pattern_type.746 = wrapper_binding_pattern self, %self.param_patt [concrete = constants.%self.patt]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %self.param: %Derived = value_param call_param0
+// CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%Derived [concrete = constants.%Derived]
+// CHECK:STDOUT:     %self: %Derived = wrapper_binding self, %self.param
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.cae [concrete = constants.%complete_type.c02]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Base = <poisoned>
+// CHECK:STDOUT:   .base = %.loc11
+// CHECK:STDOUT:   .F = %Derived.F.decl
+// CHECK:STDOUT:   .x = <poisoned>
+// CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl.loc3 [concrete = constants.%Derived]
+// CHECK:STDOUT:   %field_decl: %Base.elem = field_decl x, element0, initializer = inst5A00001F, %.loc7_19.2 in [concrete] {
+// CHECK:STDOUT:     %.loc7_19.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc7_19.2: type = converted %.loc7_19.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %.loc7_24.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %empty_tuple: %empty_tuple.type = tuple_value () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc7_24.2: %empty_tuple.type = converted %.loc7_24.1, %empty_tuple [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x [concrete = constants.%complete_type.9be]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   .Derived = <poisoned>
+// CHECK:STDOUT:   .x [private] = %field_decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Derived.F(%self.param: %Derived) {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %self.ref: %Derived = name_ref self, %self
+// CHECK:STDOUT:   %x.ref: %Base.elem = name_ref x, @Base.%field_decl [concrete = @Base.%field_decl]
+// CHECK:STDOUT:   %.loc14_9.1: ref %Base = class_element_access %self.ref, element0
+// CHECK:STDOUT:   %.loc14_9.2: ref %Base = converted %self.ref, %.loc14_9.1
+// CHECK:STDOUT:   %.loc14_9.3: ref %empty_tuple.type = class_element_access %.loc14_9.2, element0
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: --- access_private_member_of_parent_in_unrelated_friend_scope.carbon
+// CHECK:STDOUT:
+// CHECK:STDOUT: constants {
+// CHECK:STDOUT:   type: type = facet_type <type> [concrete]
+// CHECK:STDOUT:   %.Self.frozen: type = symbolic_binding .Self [symbolic_self]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type type [concrete]
+// CHECK:STDOUT:   %T.patt: %pattern_type = symbolic_binding_pattern T, 0, template [template]
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0, template [template]
+// CHECK:STDOUT:   %A.type: type = parameterized_class_name_type @A [concrete]
+// CHECK:STDOUT:   %empty_tuple.type: type = tuple_type () [concrete]
+// CHECK:STDOUT:   %A.generic: %A.type = struct_value () [concrete]
+// CHECK:STDOUT:   %A.59f: type = class_type @A, @A(%T) [template]
+// CHECK:STDOUT:   %Base: type = class_type @Base [concrete]
+// CHECK:STDOUT:   %Base.F.type: type = fn_type @Base.F [concrete]
+// CHECK:STDOUT:   %Base.F: %Base.F.type = struct_value () [concrete]
+// CHECK:STDOUT:   %empty_struct_type: type = struct_type {} [concrete]
+// CHECK:STDOUT:   %complete_type.357: <witness> = complete_type_witness %empty_struct_type [concrete]
+// CHECK:STDOUT:   %A.G.type.f15: type = fn_type @A.G, @A(%T) [template]
+// CHECK:STDOUT:   %A.G.4e3: %A.G.type.f15 = struct_value () [template]
+// CHECK:STDOUT:   %.842: type = type_of_inst @A.G.%.loc13_6.3 [template]
+// CHECK:STDOUT:   %.58a: %.842 = splice_inst @A.G.%.loc13_6.3 [template]
+// CHECK:STDOUT:   %.7c9: type = type_of_inst @A.G.%.loc13_9.4 [template]
+// CHECK:STDOUT:   %.477: %.7c9 = splice_inst @A.G.%.loc13_9.4 [template]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.7c9 [template]
+// CHECK:STDOUT:   %.c27: %.7c9 = splice_inst @A.G.%.loc13_9.7 [template]
+// CHECK:STDOUT:   %Derived: type = class_type @Derived [concrete]
+// CHECK:STDOUT:   %Derived.elem: type = unbound_element_type %Derived, %Base [concrete]
+// CHECK:STDOUT:   %struct_type.base.cae: type = struct_type {.base: %Base} [concrete]
+// CHECK:STDOUT:   %complete_type.c02: <witness> = complete_type_witness %struct_type.base.cae [concrete]
+// CHECK:STDOUT:   %H.type: type = fn_type @H [concrete]
+// CHECK:STDOUT:   %H: %H.type = struct_value () [concrete]
+// CHECK:STDOUT:   %A.c3e: type = class_type @A, @A(%Derived) [concrete]
+// CHECK:STDOUT:   %A.G.type.e86: type = fn_type @A.G, @A(%Derived) [concrete]
+// CHECK:STDOUT:   %A.G.4bd: %A.G.type.e86 = struct_value () [concrete]
+// CHECK:STDOUT:   %A.G.specific_fn: <specific function> = specific_function %A.G.4bd, @A.G(%Derived) [concrete]
+// CHECK:STDOUT:   %inst.name_ref: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %F.ref: %Base.F.type = name_ref F, @Base.%Base.F.decl [concrete = %Base.F]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %inst.call: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %Base.F.call: init %empty_tuple.type = call %Base.F()
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %complete_type.782: <witness> = complete_type_witness %empty_tuple.type [concrete]
+// CHECK:STDOUT:   %inst.splice_block: <instruction> = inst_value [concrete] {
+// CHECK:STDOUT:     %.017: init %empty_tuple.type = splice_block %Base.F.call {}
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: imports {
+// CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
+// CHECK:STDOUT:     import Core//prelude
+// CHECK:STDOUT:     import Core//prelude/...
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: file {
+// CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
+// CHECK:STDOUT:     .Core = imports.%Core
+// CHECK:STDOUT:     .A = %A.decl.loc3
+// CHECK:STDOUT:     .Base = %Base.decl
+// CHECK:STDOUT:     .Derived = %Derived.decl
+// CHECK:STDOUT:     .H = %H.decl
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Core.import = import Core
+// CHECK:STDOUT:   %A.decl.loc3: %A.type = class_decl @A [concrete = constants.%A.generic] {
+// CHECK:STDOUT:     %T.patt.loc11: %pattern_type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc3 (constants.%T.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc3_21.1: type = splice_block %.loc3_21.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen.loc3: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc3_21.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc3_19.2: type = symbolic_binding T, 0, template [template = %T.loc3_19.1 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Base.decl: type = class_decl @Base [concrete = constants.%Base] {} {}
+// CHECK:STDOUT:   %A.decl.loc11: %A.type = class_decl @A [concrete = constants.%A.generic] {
+// CHECK:STDOUT:     %T.patt.loc11: %pattern_type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc3 (constants.%T.patt)]
+// CHECK:STDOUT:   } {
+// CHECK:STDOUT:     %.loc11_21.1: type = splice_block %.loc11_21.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen.loc11: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc11_21.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     }
+// CHECK:STDOUT:     %T.loc11: type = symbolic_binding T, 0, template [template = %T.loc3_19.1 (constants.%T)]
+// CHECK:STDOUT:   }
+// CHECK:STDOUT:   %Derived.decl: type = class_decl @Derived [concrete = constants.%Derived] {} {}
+// CHECK:STDOUT:   %H.decl: %H.type = fn_decl @H [concrete = constants.%H] {} {}
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic class @A(%T.loc3_19.2: type) {
+// CHECK:STDOUT:   %T.patt.loc3: %pattern_type = symbolic_binding_pattern T, 0, template [template = %T.patt.loc3 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc3_19.1: type = symbolic_binding T, 0, template [template = %T.loc3_19.1 (constants.%T)]
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %A.G.type: type = fn_type @A.G, @A(%T.loc3_19.1) [template = %A.G.type (constants.%A.G.type.f15)]
+// CHECK:STDOUT:   %A.G: @A.%A.G.type (%A.G.type.f15) = struct_value () [template = %A.G (constants.%A.G.4e3)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   class {
+// CHECK:STDOUT:     %A.G.decl: @A.%A.G.type (%A.G.type.f15) = fn_decl @A.G [template = @A.%A.G (constants.%A.G.4e3)] {} {}
+// CHECK:STDOUT:     %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:     complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT:   !members:
+// CHECK:STDOUT:     .Self = constants.%A.59f
+// CHECK:STDOUT:     .G = %A.G.decl
+// CHECK:STDOUT:     .T = <poisoned>
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Base {
+// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl.loc3 [concrete = constants.%A.generic]
+// CHECK:STDOUT:   %Base.F.decl: %Base.F.type = fn_decl @Base.F [concrete = constants.%Base.F] {} {}
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type.357]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Base
+// CHECK:STDOUT:   .A = <poisoned>
+// CHECK:STDOUT:   .F [private] = %Base.F.decl
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: class @Derived {
+// CHECK:STDOUT:   %Base.ref: type = name_ref Base, file.%Base.decl [concrete = constants.%Base]
+// CHECK:STDOUT:   %.loc18: %Derived.elem = base_decl %Base.ref, element0 [concrete]
+// CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.base.cae [concrete = constants.%complete_type.c02]
+// CHECK:STDOUT:   complete_type_witness = %complete_type
+// CHECK:STDOUT:
+// CHECK:STDOUT: !members:
+// CHECK:STDOUT:   .Self = constants.%Derived
+// CHECK:STDOUT:   .Base = <poisoned>
+// CHECK:STDOUT:   .base = %.loc18
+// CHECK:STDOUT:   .F = <poisoned>
+// CHECK:STDOUT:   extend %Base.ref
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @Base.F() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: generic fn @A.G(@A.%T.loc11: type) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T: type = symbolic_binding T, 0, template [template = %T (constants.%T)]
+// CHECK:STDOUT:   %.loc13_6.3: <instruction> = access_member_action %T.ref, F [template]
+// CHECK:STDOUT:   %.loc13_6.4: type = type_of_inst %.loc13_6.3 [template = %.loc13_6.4 (constants.%.842)]
+// CHECK:STDOUT:   %.loc13_6.5: @A.G.%.loc13_6.4 (%.842) = splice_inst %.loc13_6.3 [template = %.loc13_6.5 (constants.%.58a)]
+// CHECK:STDOUT:   %.loc13_9.4: <instruction> = call_action (%.loc13_6.2), false [template]
+// CHECK:STDOUT:   %.loc13_9.5: type = type_of_inst %.loc13_9.4 [template = %.loc13_9.5 (constants.%.7c9)]
+// CHECK:STDOUT:   %.loc13_9.6: @A.G.%.loc13_9.5 (%.7c9) = splice_inst %.loc13_9.4 [template = %.loc13_9.6 (constants.%.477)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %.loc13_9.5 [template = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %.loc13_9.7: <instruction> = convert_to_category_action %.loc13_9.2, element9 [template]
+// CHECK:STDOUT:   %.loc13_9.8: @A.G.%.loc13_9.5 (%.7c9) = splice_inst %.loc13_9.7 [template = %.loc13_9.8 (constants.%.c27)]
+// CHECK:STDOUT:
+// CHECK:STDOUT:   fn() {
+// CHECK:STDOUT:   !entry:
+// CHECK:STDOUT:     %.loc13_5: type = specific_constant @A.%T.loc11, @A(constants.%T) [template = %T (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %.loc13_5 [template = %T (constants.%T)]
+// CHECK:STDOUT:     %.loc13_6.1: type = type_of_inst %.loc13_6.3 [template = %.loc13_6.4 (constants.%.842)]
+// CHECK:STDOUT:     %.loc13_6.2: @A.G.%.loc13_6.4 (%.842) = splice_inst %.loc13_6.3 [template = %.loc13_6.5 (constants.%.58a)]
+// CHECK:STDOUT:     %.loc13_9.1: type = type_of_inst %.loc13_9.4 [template = %.loc13_9.5 (constants.%.7c9)]
+// CHECK:STDOUT:     %.loc13_9.2: @A.G.%.loc13_9.5 (%.7c9) = splice_inst %.loc13_9.4 [template = %.loc13_9.6 (constants.%.477)]
+// CHECK:STDOUT:     %.loc13_9.3: @A.G.%.loc13_9.5 (%.7c9) = splice_inst %.loc13_9.7 [template = %.loc13_9.8 (constants.%.c27)]
+// CHECK:STDOUT:     return
+// CHECK:STDOUT:   }
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: fn @H() {
+// CHECK:STDOUT: !entry:
+// CHECK:STDOUT:   %A.ref: %A.type = name_ref A, file.%A.decl.loc3 [concrete = constants.%A.generic]
+// CHECK:STDOUT:   %Derived.ref: type = name_ref Derived, file.%Derived.decl [concrete = constants.%Derived]
+// CHECK:STDOUT:   %A: type = class_type @A, @A(constants.%Derived) [concrete = constants.%A.c3e]
+// CHECK:STDOUT:   %.loc22: %A.G.type.e86 = specific_constant @A.%A.G.decl, @A(constants.%Derived) [concrete = constants.%A.G.4bd]
+// CHECK:STDOUT:   %G.ref: %A.G.type.e86 = name_ref G, %.loc22 [concrete = constants.%A.G.4bd]
+// CHECK:STDOUT:   %A.G.specific_fn: <specific function> = specific_function %G.ref, @A.G(constants.%Derived) [concrete = constants.%A.G.specific_fn]
+// CHECK:STDOUT:   %A.G.call: init %empty_tuple.type = call %A.G.specific_fn()
+// CHECK:STDOUT:   return
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%T) {
+// CHECK:STDOUT:   %T.patt.loc3 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc3_19.1 => constants.%T
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %A.G.type => constants.%A.G.type.f15
+// CHECK:STDOUT:   %A.G => constants.%A.G.4e3
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A.G(constants.%T) {}
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A(constants.%Derived) {
+// CHECK:STDOUT:   %T.patt.loc3 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc3_19.1 => constants.%Derived
+// CHECK:STDOUT:
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %A.G.type => constants.%A.G.type.e86
+// CHECK:STDOUT:   %A.G => constants.%A.G.4bd
+// CHECK:STDOUT: }
+// CHECK:STDOUT:
+// CHECK:STDOUT: specific @A.G(constants.%Derived) {
+// CHECK:STDOUT: !definition:
+// CHECK:STDOUT:   %T => constants.%Derived
+// CHECK:STDOUT:   %.loc13_6.3 => constants.%inst.name_ref
+// CHECK:STDOUT:   %.loc13_6.4 => constants.%Base.F.type
+// CHECK:STDOUT:   %.loc13_6.5 => constants.%Base.F
+// CHECK:STDOUT:   %.loc13_9.4 => constants.%inst.call
+// CHECK:STDOUT:   %.loc13_9.5 => constants.%empty_tuple.type
+// CHECK:STDOUT:   %.loc13_9.6 => <not constant>
+// CHECK:STDOUT:   %require_complete => constants.%complete_type.782
+// CHECK:STDOUT:   %.loc13_9.7 => constants.%inst.splice_block
+// CHECK:STDOUT:   %.loc13_9.8 => <not constant>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
