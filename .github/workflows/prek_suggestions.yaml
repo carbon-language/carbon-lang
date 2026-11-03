@@ -44,7 +44,7 @@ jobs:
             raw.githubusercontent.com:443
             release-assets.githubusercontent.com:443
 
-      - uses: reviewdog/action-setup@3f401fe1d58fe77e10d665ab713057375e39b887 # v1.3.0
+      - uses: reviewdog/action-setup@d8a7baabd7f3e8544ee4dbde3ee41d0011c3a93f # v1.5.0
         with:
           reviewdog_version: latest
 
@@ -53,7 +53,7 @@ jobs:
           persist-credentials: false
 
       - name: Download prek output
-        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: prek output
           github-token: ${{ secrets.GITHUB_TOKEN }}
