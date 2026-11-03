@@ -185,7 +185,7 @@ out-of-line definition would not match.
 To redeclare an `impl` after the end of the `class` scope it was declared
 in, that scope may be re-entered as part of the `impl` redeclaration, in the
 same way, except with parentheses around the name of the `impl`, as in
-`impl X.(as Y) { ... }`.
+`impl X.(Self as Y) { ... }`.
 See
 ["Declaring implementations" in the "Generics: details" design document](generics/details.md#declaring-implementations).
 

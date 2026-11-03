@@ -375,7 +375,7 @@ example:
 -   [Assignment statements](/docs/design/assignment.md) require the
     left-hand-side of the `=` to be a durable reference. This stronger
     requirement is enforced before the expression is rewritten to dispatch into
-    the `Carbon.Assign.Op` interface method.
+    the `Core.AssignWith.AssignWith` interface method.
 -   [Address-of expressions](#pointer-syntax) require their operand to be a
     durable reference and compute the address of the referenced object.
 -   [`ref` binding patterns](pattern_matching.md#name-binding-patterns) require
@@ -1422,10 +1422,10 @@ However, one important method can be called -- `.(ImplicitAs(T).Convert)()`.
 This implicitly converting a value expression for the type into its custom
 representation type. The customization of the representation above and
 `impls ReferenceImplicitAs where .T = T` causes the class to have a builtin
-`impl as ImplicitAs(T)` which converts to the representation type as a no-op,
-exposing the object created by calling `ReferenceImplicitAs.Convert` on the
-original reference expression, and preserved as a representation of the value
-expression.
+`impl Self as ImplicitAs(T)` which converts to the representation type as a
+no-op, exposing the object created by calling `ReferenceImplicitAs.Convert` on
+the original reference expression, and preserved as a representation of the
+value expression.
 
 Here is a more complete example of code using these features:
 
@@ -1451,13 +1451,11 @@ class String {
 
   private var capacity: i64;
 
-  impl as ReferenceImplicitAs where .T = StringView {
-    fn Op(ref self: const Self) -> StringView {
-      // Because this is called on the String object prior to it becoming
-      // a value, we can access an SSO buffer or other interior pointers
-      // of `self`.
-      return StringView.Make(self.data_ptr, self.size);
-    }
+  impl fn ReferenceImplicitAs.Convert(ref self: const Self) -> StringView {
+    // Because this is called on the String object prior to it becoming
+    // a value, we can access an SSO buffer or other interior pointers
+    // of `self`.
+    return StringView.Make(self.data_ptr, self.size);
   }
 
   // We can directly declare methods that take `self` as a `StringView` which
@@ -1504,11 +1502,11 @@ leverage a custom value representation or not.
 **Open question:** Beyond the specific syntax used where we currently have a
 placeholder `value_rep = T;`, we need to explore exactly what the best
 relationship is with the customization point. For example, should this syntax
-immediately forward declare `impl as ReferenceImplicitAs where .T = T`, thereby
-allowing an out-of-line definition of the `Convert` method and `... where _` to
-pick up the associated constant from the syntax. Alternatively, the syntactic
-marker might be integrated into the `impl` declaration for `ReferenceImplicitAs`
-itself.
+immediately forward declare `impl Self as ReferenceImplicitAs where .T = T`,
+thereby allowing an out-of-line definition of the `Convert` method and
+`... where _` to pick up the associated constant from the syntax. Alternatively,
+the syntactic marker might be integrated into the `impl` declaration for
+`ReferenceImplicitAs` itself.
 
 ## Alternatives considered
 

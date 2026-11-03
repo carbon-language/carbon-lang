@@ -380,7 +380,7 @@ interface SelfIface {
 class UsesSelf(T: type) {
   // Equivalent to `fn Make() -> UsesSelf(T)*;`
   fn Make() -> Self*;
-  impl as SelfIface;
+  impl Self as SelfIface;
 }
 
 // ✅ `T = i32` is substituted into the type of `UsesSelf(T).Make`,
