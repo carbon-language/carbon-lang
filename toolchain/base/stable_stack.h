@@ -187,33 +187,30 @@ class StableStack {
   friend auto operator==(const StableStack& lhs, const StableStack& rhs) -> bool
     requires std::equality_comparable<T>
   {
-    if (lhs.size() != rhs.size()) {
+    if (lhs.used_chunks_ != rhs.used_chunks_) {
+      return false;
+    }
+    if (lhs.size_in_last_chunk_ != rhs.size_in_last_chunk_) {
       return false;
     }
     if (lhs.empty()) {
       return true;
     }
-    CARBON_CHECK(lhs.used_chunks_ == rhs.used_chunks_);
     for (auto chunk = 0; chunk < lhs.used_chunks_ - 1; ++chunk) {
       const auto& l = lhs.chunks_[chunk];
       const auto& r = rhs.chunks_[chunk];
       CARBON_CHECK(l.capacity == r.capacity);
-      for (auto index = 0; index < l.capacity; ++index) {
-        if (!(lhs.Get(chunk, index) == rhs.Get(chunk, index))) {
-          return false;
-        }
+      if (!std::equal(l.array, l.array + l.capacity, r.array)) {
+        return false;
       }
     }
-    CARBON_CHECK(lhs.size_in_last_chunk_ == rhs.size_in_last_chunk_);
     {
       auto chunk = lhs.used_chunks_ - 1;
       const auto& l = lhs.chunks_[chunk];
       const auto& r = rhs.chunks_[chunk];
       CARBON_CHECK(l.capacity == r.capacity);
-      for (auto index = 0; index < lhs.size_in_last_chunk_; ++index) {
-        if (!(lhs.Get(chunk, index) == rhs.Get(chunk, index))) {
-          return false;
-        }
+      if (!std::equal(l.array, l.array + lhs.size_in_last_chunk_, r.array)) {
+        return false;
       }
     }
     return true;
@@ -237,26 +234,23 @@ class StableStack {
     }
 
     chunks_.reserve(used_chunks_);
-    for (int chunk = 0; chunk < used_chunks_ - 1; ++chunk) {
-      auto capacity = rhs.chunks_[chunk].capacity;
-      T* array = std::allocator<T>().allocate(capacity);
-      for (auto index = 0; index < capacity; ++index) {
-        T* slot = array + index;
-        std::construct_at(slot, rhs.Get(chunk, index));
-      }
-      chunks_.push_back({.array = array, .capacity = capacity});
+    for (auto chunk = 0; chunk < used_chunks_ - 1; ++chunk) {
+      auto rhs_array = rhs.chunks_[chunk].array;
+      auto rhs_capacity = rhs.chunks_[chunk].capacity;
+      T* array = std::allocator<T>().allocate(rhs_capacity);
+      std::uninitialized_copy_n(rhs_array, rhs_capacity, array);
+      chunks_.push_back({.array = array, .capacity = rhs_capacity});
     }
     {
       auto chunk = used_chunks_ - 1;
-      auto capacity = rhs.chunks_[chunk].capacity;
-      T* array = std::allocator<T>().allocate(capacity);
-      __asan_poison_memory_region(array + size_in_last_chunk_,
-                                  (capacity - size_in_last_chunk_) * sizeof(T));
-      for (auto index = 0; index < size_in_last_chunk_; ++index) {
-        T* slot = array + index;
-        std::construct_at(slot, rhs.Get(chunk, index));
-      }
-      chunks_.push_back({.array = array, .capacity = capacity});
+      auto rhs_array = rhs.chunks_[chunk].array;
+      auto rhs_capacity = rhs.chunks_[chunk].capacity;
+      T* array = std::allocator<T>().allocate(rhs_capacity);
+      std::uninitialized_copy_n(rhs_array, size_in_last_chunk_, array);
+      __asan_poison_memory_region(
+          array + size_in_last_chunk_,
+          (rhs_capacity - size_in_last_chunk_) * sizeof(T));
+      chunks_.push_back({.array = array, .capacity = rhs_capacity});
     }
   }
 
@@ -269,22 +263,23 @@ class StableStack {
     auto size_in_last_chunk = std::exchange(size_in_last_chunk_, 0);
     auto used_chunks = std::exchange(used_chunks_, 0);
 
-    for (auto i = 0; i < used_chunks - 1; ++i) {
-      auto* array = chunks[i].array;
-      auto capacity = chunks[i].capacity;
+    auto chunk = 0;
+    for (; chunk < used_chunks - 1; ++chunk) {
+      auto* array = chunks[chunk].array;
+      auto capacity = chunks[chunk].capacity;
       std::destroy_n(array, capacity);
       std::allocator<T>().deallocate(array, capacity);
     }
     if (used_chunks) {
-      auto i = used_chunks - 1;
-      auto* array = chunks[i].array;
-      auto capacity = chunks[i].capacity;
+      auto* array = chunks[chunk].array;
+      auto capacity = chunks[chunk].capacity;
       std::destroy_n(array, size_in_last_chunk);
       std::allocator<T>().deallocate(array, capacity);
+      ++chunk;
     }
-    for (auto i = used_chunks; i < static_cast<int32_t>(chunks.size()); ++i) {
-      auto* array = chunks[i].array;
-      auto capacity = chunks[i].capacity;
+    for (; chunk < static_cast<int32_t>(chunks.size()); ++chunk) {
+      auto* array = chunks[chunk].array;
+      auto capacity = chunks[chunk].capacity;
       std::allocator<T>().deallocate(array, capacity);
     }
 
