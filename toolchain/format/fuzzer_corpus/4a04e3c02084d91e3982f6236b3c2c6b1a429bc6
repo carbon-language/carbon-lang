@@ -1,0 +1,7 @@
+// A comment.
+fn F() {
+
+
+  var x: i32 = 1;
+
+}

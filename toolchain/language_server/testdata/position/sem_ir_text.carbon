@@ -228,12 +228,18 @@ fn Run(c: C, d: D) {
   "textDocument": {"uri": "file:/sem_ir_text.carbon"},
   "options": {"tabSize": 2, "insertSpaces": true}
 ]]
+[[@LSP-CALL:textDocument/rangeFormatting:
+  "textDocument": {"uri": "file:/sem_ir_text.carbon"},
+  "range": {"start": {"line": 0, "character": 0},
+            "end": {"line": 1, "character": 0}},
+  "options": {"tabSize": 2, "insertSpaces": true}
+]]
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDOUT: Content-Length: 432{{\r}}
+// CHECK:STDOUT: Content-Length: 479{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
@@ -243,6 +249,7 @@ fn Run(c: C, d: D) {
 // CHECK:STDOUT:       "declarationProvider": true,
 // CHECK:STDOUT:       "definitionProvider": true,
 // CHECK:STDOUT:       "documentFormattingProvider": true,
+// CHECK:STDOUT:       "documentRangeFormattingProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
 // CHECK:STDOUT:       "hoverProvider": true,
 // CHECK:STDOUT:       "implementationProvider": true,
@@ -591,10 +598,16 @@ fn Run(c: C, d: D) {
 // CHECK:STDOUT:   "id": 16,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": []
-// CHECK:STDOUT: }Content-Length: 52{{\r}}
+// CHECK:STDOUT: }Content-Length: 50{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 17,
+// CHECK:STDOUT:   "jsonrpc": "2.0",
+// CHECK:STDOUT:   "result": []
+// CHECK:STDOUT: }Content-Length: 52{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "id": 18,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": null
 // CHECK:STDOUT: }

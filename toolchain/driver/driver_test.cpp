@@ -590,5 +590,58 @@ TEST_F(DriverTest, TargetCpu) {
   test_output_stream_.TakeStr();
 }
 
+TEST_F(DriverTest, FormatOutput) {
+  auto scope = ScopedTempWorkingDir();
+
+  ASSERT_THAT(Filesystem::Cwd().WriteFileFromString("in_place.carbon",
+                                                    "fn  F ( ) {}\n"),
+              IsSuccess(_));
+
+  // Default behavior formats the file in place without writing to stdout.
+  EXPECT_TRUE(driver_.RunCommand({"format", "in_place.carbon"}).success)
+      << test_error_stream_.TakeStr();
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(Testing::ReadFile("in_place.carbon"),
+              IsSuccess(StrEq("fn F() {}\n")));
+
+  // Formatting an already-formatted file skips rewriting it on disk, preserving
+  // its inode and modification time.
+  auto before_stat = Filesystem::Cwd().Stat("in_place.carbon");
+  ASSERT_THAT(before_stat, IsSuccess(_));
+  EXPECT_TRUE(driver_.RunCommand({"format", "in_place.carbon"}).success)
+      << test_error_stream_.TakeStr();
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  auto after_stat = Filesystem::Cwd().Stat("in_place.carbon");
+  ASSERT_THAT(after_stat, IsSuccess(_));
+  EXPECT_EQ(before_stat->unix_inode(), after_stat->unix_inode());
+  EXPECT_EQ(before_stat->mtime(), after_stat->mtime());
+
+  // `--output=FILE` writes formatted output to `FILE` without modifying input.
+  ASSERT_THAT(
+      Filesystem::Cwd().WriteFileFromString("source.carbon", "fn  G ( ) {}\n"),
+      IsSuccess(_));
+  EXPECT_TRUE(
+      driver_.RunCommand({"format", "--output=dest.carbon", "source.carbon"})
+          .success)
+      << test_error_stream_.TakeStr();
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(Testing::ReadFile("source.carbon"),
+              IsSuccess(StrEq("fn  G ( ) {}\n")));
+  EXPECT_THAT(Testing::ReadFile("dest.carbon"),
+              IsSuccess(StrEq("fn G() {}\n")));
+
+  // `--output=-` supports multiple input files and writes all outputs to
+  // stdout.
+  EXPECT_TRUE(driver_
+                  .RunCommand({"format", "--output=-", "in_place.carbon",
+                               "source.carbon"})
+                  .success)
+      << test_error_stream_.TakeStr();
+  EXPECT_THAT(test_error_stream_.TakeStr(), StrEq(""));
+  EXPECT_THAT(test_output_stream_.TakeStr(), StrEq("fn F() {}\nfn G() {}\n"));
+}
+
 }  // namespace
 }  // namespace Carbon

@@ -79,6 +79,7 @@ IncomingMessages::IncomingMessages(clang::clangd::Transport* transport,
   AddCallHandler("textDocument/formatting", &HandleFormatting);
   AddCallHandler("textDocument/hover", &HandleHover);
   AddCallHandler("textDocument/implementation", &HandleImplementation);
+  AddCallHandler("textDocument/rangeFormatting", &HandleRangeFormatting);
   AddCallHandler("textDocument/references", &HandleReferences);
   AddCallHandler("textDocument/typeDefinition", &HandleTypeDefinition);
   AddCallHandler("initialize", &HandleInitialize);

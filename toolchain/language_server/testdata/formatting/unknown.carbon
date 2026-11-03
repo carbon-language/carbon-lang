@@ -9,6 +9,8 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/language_server/testdata/formatting/unknown.carbon
 // CHECK:STDERR: /test.carbon: warning: unknown file requested [LanguageServerFileUnknown]
 // CHECK:STDERR:
+// CHECK:STDERR: /test.carbon: warning: unknown file requested [LanguageServerFileUnknown]
+// CHECK:STDERR:
 
 // --- STDIN
 [[@LSP-CALL:initialize:"capabilities": {}]]
@@ -16,10 +18,16 @@
   "textDocument": {"uri": "file:/test.carbon"},
   "options": {"tabSize": 2, "insertSpaces": true}
 ]]
+[[@LSP-CALL:textDocument/rangeFormatting:
+  "textDocument": {"uri": "file:/test.carbon"},
+  "range": {"start": {"line": 0, "character": 0},
+            "end": {"line": 1, "character": 0}},
+  "options": {"tabSize": 2, "insertSpaces": true}
+]]
 [[@LSP-CALL:shutdown]]
 [[@LSP-NOTIFY:exit]]
 
-// CHECK:STDOUT: Content-Length: 432{{\r}}
+// CHECK:STDOUT: Content-Length: 479{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
@@ -29,6 +37,7 @@
 // CHECK:STDOUT:       "declarationProvider": true,
 // CHECK:STDOUT:       "definitionProvider": true,
 // CHECK:STDOUT:       "documentFormattingProvider": true,
+// CHECK:STDOUT:       "documentRangeFormattingProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
 // CHECK:STDOUT:       "hoverProvider": true,
 // CHECK:STDOUT:       "implementationProvider": true,
@@ -47,10 +56,19 @@
 // CHECK:STDOUT:   },
 // CHECK:STDOUT:   "id": 2,
 // CHECK:STDOUT:   "jsonrpc": "2.0"
+// CHECK:STDOUT: }Content-Length: 124{{\r}}
+// CHECK:STDOUT: {{\r}}
+// CHECK:STDOUT: {
+// CHECK:STDOUT:   "error": {
+// CHECK:STDOUT:     "code": -32602,
+// CHECK:STDOUT:     "message": "Unknown textDocument `/test.carbon`"
+// CHECK:STDOUT:   },
+// CHECK:STDOUT:   "id": 3,
+// CHECK:STDOUT:   "jsonrpc": "2.0"
 // CHECK:STDOUT: }Content-Length: 51{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
-// CHECK:STDOUT:   "id": 3,
+// CHECK:STDOUT:   "id": 4,
 // CHECK:STDOUT:   "jsonrpc": "2.0",
 // CHECK:STDOUT:   "result": null
 // CHECK:STDOUT: }

@@ -15,7 +15,7 @@
 
 // CHECK:STDERR: error: Input/output error [LanguageServerTransportError]
 // CHECK:STDERR:
-// CHECK:STDOUT: Content-Length: 432{{\r}}
+// CHECK:STDOUT: Content-Length: 479{{\r}}
 // CHECK:STDOUT: {{\r}}
 // CHECK:STDOUT: {
 // CHECK:STDOUT:   "id": 1,
@@ -25,6 +25,7 @@
 // CHECK:STDOUT:       "declarationProvider": true,
 // CHECK:STDOUT:       "definitionProvider": true,
 // CHECK:STDOUT:       "documentFormattingProvider": true,
+// CHECK:STDOUT:       "documentRangeFormattingProvider": true,
 // CHECK:STDOUT:       "documentSymbolProvider": true,
 // CHECK:STDOUT:       "hoverProvider": true,
 // CHECK:STDOUT:       "implementationProvider": true,
