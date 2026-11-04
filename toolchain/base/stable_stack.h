@@ -249,8 +249,13 @@ class StableStack {
   }
 
  private:
+  // The number of inline chunks. Either 0 or 1.
   static constexpr auto InlineChunks = InlineCapacity ? 1 : 0;
-  static constexpr auto FirstCapacity = InlineCapacity ? InlineCapacity : 4;
+  // The capacity of the first chunk, which will be the inline chunk if we have
+  // one. Otherwise, we use a hardcoded value. The default inline capacity falls
+  // to 0 when sizeof(T) is large, so start with a fairly small capacity for the
+  // first chunk in that case.
+  static constexpr auto FirstCapacity = InlineCapacity ? InlineCapacity : 2;
 
   // The total capacity of the first `num_chunks` chunks.
   static constexpr auto GetSumCapacity(int32_t num_chunks) -> int32_t {
