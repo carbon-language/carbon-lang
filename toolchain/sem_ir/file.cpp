@@ -103,6 +103,10 @@ File::File(const Parse::Tree* parse_tree, CheckIRId check_ir_id,
       InstType::TypeId,
       {.value_repr = {.kind = ValueRepr::Copy, .type_id = InstType::TypeId},
        .object_layout = SemIR::ObjectLayout::Empty()});
+  types_.SetComplete(
+      AutoType::TypeId,
+      {.value_repr = {.kind = ValueRepr::Copy, .type_id = InstType::TypeId},
+       .object_layout = SemIR::ObjectLayout::Empty()});
 
   auto empty_facet_type_id = declared_facet_types_.Add({});
   CARBON_CHECK(empty_facet_type_id == DeclaredFacetTypeId::Empty);

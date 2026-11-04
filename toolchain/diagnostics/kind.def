@@ -383,6 +383,9 @@ CARBON_DIAGNOSTIC_KIND(ObserveInWrongScope)
 // Let declaration checking.
 CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterLet)
 
+// Var declaration checking.
+CARBON_DIAGNOSTIC_KIND(ExpectedInitializerAfterAutoTypedVar)
+
 // Qualified declaration name checking.
 CARBON_DIAGNOSTIC_KIND(QualifiedDeclOutsidePackage)
 CARBON_DIAGNOSTIC_KIND(QualifiedDeclOutsideScopeEntity)

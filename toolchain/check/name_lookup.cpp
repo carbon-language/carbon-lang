@@ -150,17 +150,18 @@ auto LookupUnqualifiedName(Context& context, SemIR::LocId loc_id,
                     SemIR::GetTypeOfInstInSpecific(
                         context.sem_ir(), non_lexical_result.specific_id,
                         target_inst_id))) {
-          SemIR::InstId result_inst_id = GetAssociatedValue(
-              context, loc_id, scope.self_type_id(),
-              SemIR::GetConstantValueInSpecific(context.sem_ir(),
-                                                non_lexical_result.specific_id,
-                                                target_inst_id),
-              assoc_type->GetSpecificInterface());
-          non_lexical_result = {
-              .specific_id = SemIR::SpecificId::None,
-              .scope_result = SemIR::ScopeLookupResult::MakeFound(
-                  result_inst_id,
-                  non_lexical_result.scope_result.access_kind())};
+          auto assoc_entity_const_id = SemIR::GetConstantValueInSpecific(
+              context.sem_ir(), non_lexical_result.specific_id, target_inst_id);
+          if (assoc_entity_const_id.is_constant()) {
+            SemIR::InstId result_inst_id = GetAssociatedValue(
+                context, loc_id, scope.self_type_id(), assoc_entity_const_id,
+                assoc_type->GetSpecificInterface());
+            non_lexical_result = {
+                .specific_id = SemIR::SpecificId::None,
+                .scope_result = SemIR::ScopeLookupResult::MakeFound(
+                    result_inst_id,
+                    non_lexical_result.scope_result.access_kind())};
+          }
         }
       }
       return non_lexical_result;

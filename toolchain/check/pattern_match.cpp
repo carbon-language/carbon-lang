@@ -420,6 +420,9 @@ auto MatchContext::DoPostWork(State state,
       context_, entry.pattern_id, specific_id_stack_.back());
   auto value_id = PopResult();
   if (value_id.has_value()) {
+    if (scrutinee_type_id == SemIR::AutoType::TypeId) {
+      scrutinee_type_id = context_.insts().Get(value_id).type_id();
+    }
     value_id = Convert(context_, SemIR::LocId(value_id), value_id,
                        {.kind = ConversionKindFor(binding_pattern, entry),
                         .type_id = scrutinee_type_id});
@@ -456,6 +459,7 @@ auto MatchContext::DoPostWork(State state,
   auto bind_name = context_.insts().GetAs<SemIR::AnyBinding>(bind_name_id);
   CARBON_CHECK(!bind_name.value_id.has_value());
   bind_name.value_id = value_id;
+  bind_name.type_id = scrutinee_type_id;
   ReplaceInstBeforeConstantUse(context_, bind_name_id, bind_name);
   context_.inst_block_stack().AddInstId(bind_name_id);
 }
@@ -689,6 +693,12 @@ auto MatchContext::DoVarPreWorkImpl(State state,
       auto storage_id =
           context_.full_pattern_stack().GetLocalVarStorage(entry.pattern_id);
       if (scrutinee_id.has_value()) {
+        if (scrutinee_type_id == SemIR::AutoType::TypeId) {
+          auto storage = context_.insts().GetAs<SemIR::VarStorage>(storage_id);
+          storage.type_id = context_.insts().Get(scrutinee_id).type_id();
+          ReplaceInstBeforeConstantUse(context_, storage_id, storage);
+        }
+
         auto init_id =
             InitializeExisting(context_, SemIR::LocId(entry.pattern_id),
                                storage_id, scrutinee_id, /*for_return=*/false);
