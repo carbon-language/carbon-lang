@@ -273,6 +273,13 @@ class StableStack {
     return std::bit_width(((ucap + (FirstCapacity - 1)) / FirstCapacity));
   }
 
+  template <int32_t Capacity>
+  struct InlineChunk;
+
+  template <>
+  struct InlineChunk<0> {};
+
+  template <int32_t Capacity>
   struct InlineChunk {
     alignas(alignof(T)) char byte_array[InlineCapacity * sizeof(T)];
     auto array() -> T* { return reinterpret_cast<T*>(byte_array); }
@@ -288,6 +295,7 @@ class StableStack {
       __asan_poison_memory_region(byte_array, InlineCapacity * sizeof(T));
     }
   };
+
   struct Chunk {
     T* array [[clang::require_explicit_initialization]];
   };
@@ -418,19 +426,22 @@ class StableStack {
   // Allocate memory as needed to get a pointer that we can construct `T` into.
   // The pointer returned is still ASAN poisoned.
   auto PushSlot() -> T* {
-    if (used_chunks_ < InlineChunks) {
-      // Activate the `inline_` chunk and add a slot to it.
-      T* slot = inline_.array();
-      used_chunks_ = 1;
-      size_in_last_chunk_ = 1;
-      return slot;
-    }
+    if constexpr (InlineCapacity) {
+      if (used_chunks_ < InlineChunks) {
+        // Activate the `inline_` chunk and add a slot to it.
+        T* slot = inline_.array();
+        used_chunks_ = 1;
+        size_in_last_chunk_ = 1;
+        return slot;
+      }
 
-    if (used_chunks_ == InlineChunks && size_in_last_chunk_ < InlineCapacity) {
-      // Add a slot in the `inline_` chunk.
-      T* slot = inline_.array() + size_in_last_chunk_;
-      ++size_in_last_chunk_;
-      return slot;
+      if (used_chunks_ == InlineChunks &&
+          size_in_last_chunk_ < InlineCapacity) {
+        // Add a slot in the `inline_` chunk.
+        T* slot = inline_.array() + size_in_last_chunk_;
+        ++size_in_last_chunk_;
+        return slot;
+      }
     }
 
     if (used_chunks_ > InlineChunks &&
@@ -467,7 +478,7 @@ class StableStack {
     return heap_.back();
   }
 
-  InlineChunk inline_;
+  InlineChunk<InlineCapacity> inline_;
   llvm::SmallVector<Chunk, 0> heap_;
   // The number of chunks that are being used, which have at least one value
   // stored in them. The first chunk is always `inline_`, so `used_chunks_ - 1`
