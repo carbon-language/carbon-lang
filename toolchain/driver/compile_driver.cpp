@@ -157,6 +157,7 @@ auto CompilationUnit::GetCheckUnit() -> Check::Unit {
   };
   sem_ir_.emplace(&*parse_tree_, check_ir_id_, parse_tree_->packaging_decl(),
                   value_stores_, input_filename_);
+  inst_namer_getter_ = [this]() -> SemIR::InstNamer& { return GetInstNamer(); };
   return {.consumer = consumer_,
           .value_stores = &value_stores_,
           .timings = timings_ ? &*timings_ : nullptr,
@@ -198,7 +199,7 @@ auto CompilationUnit::RunLower() -> void {
     options.generate_inst_names = options_->dump_llvm_ir;
     module_ = Lower::LowerToLLVM(*llvm_context_, driver_env_->fs,
                                  cache_->tree_and_subtrees_getters(), *sem_ir_,
-                                 total_ir_count_, options);
+                                 total_ir_count_, get_inst_namer(), options);
   });
 }
 
@@ -430,6 +431,13 @@ auto CompilationUnit::GetParseTreeAndSubtrees() const
   return *parse_tree_and_subtrees_;
 }
 
+auto CompilationUnit::GetInstNamer() const -> SemIR::InstNamer& {
+  if (!inst_namer_) {
+    inst_namer_.emplace(&sem_ir(), cache_->total_ir_count());
+  }
+  return *inst_namer_;
+}
+
 auto CompilationUnit::LogCall(llvm::StringLiteral logging_label,
                               llvm::StringLiteral timing_label,
                               llvm::function_ref<auto()->void> fn) -> void {
@@ -636,7 +644,8 @@ auto CompileDriver::Compile(DriverEnv& driver_env) -> DriverResult {
   }
 
   Check::CheckParseTrees(check_units, cache_->tree_and_subtrees_getters(),
-                         cache_->short_file_names(), driver_env.fs, options,
+                         cache_->short_file_names(),
+                         cache_->inst_namer_getters(), driver_env.fs, options,
                          clang_invocation_);
   CARBON_VLOG_TO(driver_env.vlog_stream,
                  "*** Check::CheckParseTrees done ***\n");

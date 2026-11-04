@@ -318,6 +318,14 @@ class InstNamer {
 using ShortFileNameStore =
     FixedSizeValueStore<SemIR::CheckIRId, SemIR::InstNamer::Namespace::Name>;
 
+// A standard signature for a callback to support lazy construction.
+using GetInstNamerFn = llvm::function_ref<auto()->InstNamer&>;
+
+// The typical storage of `GetInstNamerFn`. Note this stores non-owning
+// references.
+using GetInstNamersStore =
+    FixedSizeValueStore<SemIR::CheckIRId, GetInstNamerFn>;
+
 }  // namespace Carbon::SemIR
 
 #endif  // CARBON_TOOLCHAIN_SEM_IR_INST_NAMER_H_
