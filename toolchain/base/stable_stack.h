@@ -452,10 +452,12 @@ class StableStack {
 
   InlineChunk inline_;
   llvm::SmallVector<Chunk, 0> heap_;
-  // The number of elements in `chunks_` that are being used, which have at
-  // least one value stored in them.
+  // The number of chunks that are being used, which have at least one value
+  // stored in them. The first chunk is always `inline_`, so `used_chunks_ - 1`
+  // gives the number of used chunks in `heap_`.
   int32_t used_chunks_ = 0;
-  // The number of values in the last used chunk in `chunks_`.
+  // The number of values in the last used chunk, either `inline_` or from
+  // `heap_`.
   int32_t size_in_last_chunk_ = 0;
 };
 
