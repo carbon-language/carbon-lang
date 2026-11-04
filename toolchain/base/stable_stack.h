@@ -81,8 +81,6 @@ class StableStack {
     std::uninitialized_move_n(rhs.inline_.array(), inline_size,
                               inline_.array());
     std::destroy_n(rhs.inline_.array(), inline_size);
-    __asan_poison_memory_region(rhs.inline_.array(),
-                                FirstChunkCapacity() * sizeof(T));
   }
   auto operator=(StableStack&& rhs) noexcept -> StableStack& {
     if (this == &rhs) {
@@ -101,8 +99,6 @@ class StableStack {
     std::uninitialized_move_n(rhs.inline_.array(), inline_size,
                               inline_.array());
     std::destroy_n(rhs.inline_.array(), inline_size);
-    __asan_poison_memory_region(rhs.inline_.array(),
-                                FirstChunkCapacity() * sizeof(T));
 
     heap_ = std::exchange(rhs.heap_, {});
     used_chunks_ = std::exchange(rhs.used_chunks_, 0);
