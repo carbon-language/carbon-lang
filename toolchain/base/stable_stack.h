@@ -197,11 +197,8 @@ class StableStack {
   auto empty() const -> bool { return used_chunks_ == 0; }
   // The number of elements pushed onto the stack.
   auto size() const -> int32_t {
-    if (used_chunks_ == 0) {
-      return 0;
-    }
-    auto full_chunks = used_chunks_ - 1;
-    auto full_chunks_capacity = GetSumCapacity(full_chunks);
+    auto full_chunks_capacity =
+        used_chunks_ > 0 ? GetSumCapacity(used_chunks_ - 1) : 0;
     return full_chunks_capacity + size_in_last_chunk_;
   }
   // The number of elements that the stack can hold without requiring further
