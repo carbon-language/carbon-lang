@@ -169,13 +169,8 @@ class StableStack {
     size_in_last_chunk_--;
     if (size_in_last_chunk_ == 0) {
       used_chunks_--;
-      if (used_chunks_ > 1) {
-        // The last chunk is a heap chunk.
-        auto used_heap_chunks = used_chunks_ - 1;
-        size_in_last_chunk_ = heap_[used_heap_chunks - InlineChunks].capacity;
-      } else if (used_chunks_ == 1) {
-        // The last chunk is the inline chunk (if we have one).
-        size_in_last_chunk_ = FirstCapacity;
+      if (used_chunks_ > 0) {
+        size_in_last_chunk_ = GetChunkCapacity(used_chunks_ - 1);
       } else {
         // Stack is empty now.
       }
@@ -191,9 +186,11 @@ class StableStack {
   // Ensure there is memory allocated to hold at least `reserve` elements.
   auto Reserve(int32_t reserve) -> void {
     auto current = capacity();
+    auto num_chunks = InlineChunks + heap_.size();
     while (current < reserve) {
-      const auto& new_chunk = AppendHeapChunk();
-      current += new_chunk.capacity;
+      AppendHeapChunk();
+      ++num_chunks;
+      current += GetChunkCapacity(num_chunks - 1);
     }
   }
 
@@ -237,8 +234,7 @@ class StableStack {
     for (auto chunk = InlineChunks; chunk < lhs.used_chunks_; ++chunk) {
       const T* lhs_array = lhs.heap_[chunk - InlineChunks].array;
       const T* rhs_array = rhs.heap_[chunk - InlineChunks].array;
-      int32_t cap = lhs.heap_[chunk - InlineChunks].capacity;
-      CARBON_CHECK(cap == rhs.heap_[chunk - InlineChunks].capacity);
+      int32_t cap = GetChunkCapacity(chunk);
       auto size = chunk < lhs.used_chunks_ - 1 ? cap : lhs.size_in_last_chunk_;
       if (!std::equal(lhs_array, lhs_array + size, rhs_array)) {
         return false;
@@ -259,6 +255,10 @@ class StableStack {
   // The total capacity of the first `num_chunks` chunks.
   static constexpr auto GetSumCapacity(int32_t num_chunks) -> int32_t {
     return ((1 << num_chunks) - 1) * FirstCapacity;
+  }
+  // The capacity of an individual chunk at index `chunk`.
+  static constexpr auto GetChunkCapacity(int32_t chunk) -> int32_t {
+    return FirstCapacity << chunk;
   }
   // Performs the inverse of GetSumCapacity.
   static constexpr auto NumChunksNeededForCapacity(int32_t cap) -> int32_t {
@@ -285,7 +285,6 @@ class StableStack {
   };
   struct Chunk {
     T* array [[clang::require_explicit_initialization]];
-    int32_t capacity [[clang::require_explicit_initialization]];
   };
 
   // Copy-constructs elements into this stack from `rhs`.
@@ -307,9 +306,9 @@ class StableStack {
     heap_.reserve(used_chunks_ - InlineChunks);
     for (auto chunk = InlineChunks; chunk < used_chunks_; ++chunk) {
       auto rhs_array = rhs.heap_[chunk - InlineChunks].array;
-      auto cap = rhs.heap_[chunk - InlineChunks].capacity;
+      auto cap = GetChunkCapacity(chunk);
       T* array = std::allocator<T>().allocate(cap);
-      heap_.push_back({.array = array, .capacity = cap});
+      heap_.push_back({.array = array});
       auto size = chunk < used_chunks_ - 1 ? cap : size_in_last_chunk_;
       std::uninitialized_copy_n(rhs_array, size, array);
       if (size < cap) {
@@ -353,14 +352,14 @@ class StableStack {
     auto chunk = InlineChunks;
     for (; chunk < used_chunks; ++chunk) {
       auto* array = heap_[chunk - InlineChunks].array;
-      auto cap = heap_[chunk - InlineChunks].capacity;
+      auto cap = GetChunkCapacity(chunk);
       auto size = chunk < used_chunks - 1 ? cap : size_in_last_chunk;
       std::destroy_n(array, size);
       std::allocator<T>().deallocate(array, cap);
     }
     for (; chunk - InlineChunks < static_cast<int32_t>(heap_.size()); ++chunk) {
       auto* array = heap_[chunk - InlineChunks].array;
-      auto cap = heap_[chunk - InlineChunks].capacity;
+      auto cap = GetChunkCapacity(chunk);
       std::allocator<T>().deallocate(array, cap);
     }
 
@@ -395,8 +394,7 @@ class StableStack {
     CARBON_DCHECK(chunk >= 0);
     CARBON_DCHECK(chunk < used_chunks_);
     CARBON_DCHECK(index >= 0);
-    auto cap =
-        chunk == 0 ? FirstCapacity : heap_[chunk - InlineChunks].capacity;
+    auto cap = GetChunkCapacity(chunk);
     auto size = chunk == used_chunks_ - 1 ? size_in_last_chunk_ : cap;
     CARBON_DCHECK(index < size,
                   "Getting index {0} past end of last chunk with size {1}",
@@ -415,35 +413,34 @@ class StableStack {
   // Allocate memory as needed to get a pointer that we can construct `T` into.
   // The pointer returned is still ASAN poisoned.
   auto PushSlot() -> T* {
-    if constexpr (InlineCapacity) {
-      if (used_chunks_ == 0) {
-        // Activate the `inline_` chunk and add a slot to it.
-        T* slot = inline_.array();
-        used_chunks_ = 1;
-        size_in_last_chunk_ = 1;
-        return slot;
-      }
-
-      if (used_chunks_ == 1 && size_in_last_chunk_ < InlineCapacity) {
-        // Add a slot in the `inline_` chunk.
-        T* slot = inline_.array() + size_in_last_chunk_;
-        ++size_in_last_chunk_;
-        return slot;
-      }
+    if (used_chunks_ < InlineChunks) {
+      // Activate the `inline_` chunk and add a slot to it.
+      T* slot = inline_.array();
+      used_chunks_ = 1;
+      size_in_last_chunk_ = 1;
+      return slot;
     }
 
-    int32_t last_chunk = used_chunks_ - 1;
-    if (last_chunk >= InlineChunks &&
-        size_in_last_chunk_ < heap_[last_chunk - InlineChunks].capacity) {
-      // Add a slot in the last used `heap_` chunk.
-      T* slot = heap_[last_chunk - InlineChunks].array + size_in_last_chunk_;
+    if (used_chunks_ == InlineChunks && size_in_last_chunk_ < InlineCapacity) {
+      // Add a slot in the `inline_` chunk.
+      T* slot = inline_.array() + size_in_last_chunk_;
       ++size_in_last_chunk_;
       return slot;
     }
 
-    if (used_chunks_ - InlineChunks < static_cast<int32_t>(heap_.size())) {
+    if (used_chunks_ > InlineChunks &&
+        size_in_last_chunk_ < GetChunkCapacity(used_chunks_ - 1)) {
+      // Add a slot in the last used `heap_` chunk.
+      T* slot =
+          heap_[used_chunks_ - 1 - InlineChunks].array + size_in_last_chunk_;
+      ++size_in_last_chunk_;
+      return slot;
+    }
+
+    auto next_heap_chunk = used_chunks_ - InlineChunks;
+    if (next_heap_chunk < static_cast<int32_t>(heap_.size())) {
       // Add a slot in an unused `heap_` chunk that already exists.
-      T* slot = heap_[used_chunks_ - InlineChunks].array;
+      T* slot = heap_[next_heap_chunk].array;
       ++used_chunks_;
       size_in_last_chunk_ = 1;
       return slot;
@@ -456,17 +453,12 @@ class StableStack {
     return new_chunk.array;
   }
   auto AppendHeapChunk() -> Chunk& {
-    int32_t next_cap;
     // We use a growth factor of 2 so that we can do bitshifts in
     // GetSumCapacity() to compute total capacity in O(1) time.
-    if constexpr (InlineCapacity) {
-      next_cap = heap_.empty() ? InlineCapacity * 2 : heap_.back().capacity * 2;
-    } else {
-      next_cap = heap_.empty() ? FirstCapacity : heap_.back().capacity * 2;
-    }
+    auto next_cap = GetChunkCapacity(InlineChunks + heap_.size()) * 2;
     T* array = std::allocator<T>().allocate(next_cap);
     __asan_poison_memory_region(array, next_cap * sizeof(T));
-    heap_.push_back({.array = array, .capacity = next_cap});
+    heap_.push_back({.array = array});
     return heap_.back();
   }
 
