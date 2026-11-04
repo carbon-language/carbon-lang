@@ -188,11 +188,8 @@ class StableStack {
   auto Reserve(int32_t reserve) -> void {
     auto current = capacity();
     while (current < reserve) {
-      auto capacity = NextChunkCapacity();
-      T* array = std::allocator<T>().allocate(capacity);
-      __asan_poison_memory_region(array, capacity * sizeof(T));
-      heap_.push_back({.array = array, .capacity = capacity});
-      current += capacity;
+      const auto& new_chunk = AppendHeapChunk();
+      current += new_chunk.capacity;
     }
   }
 
@@ -405,49 +402,54 @@ class StableStack {
   // Allocate memory as needed to get a pointer that we can construct `T` into.
   // The pointer returned is still ASAN poisoned.
   auto PushSlot() -> T* {
-    if (empty()) {
+    if (used_chunks_ == 0) {
+      // Activate the `inline_` chunk and add a slot to it.
       T* slot = inline_.array();
       used_chunks_ = 1;
       size_in_last_chunk_ = 1;
       return slot;
     }
+
     if (used_chunks_ == 1 && size_in_last_chunk_ < FirstChunkCapacity()) {
+      // Add a slot in the `inline_` chunk.
       T* slot = inline_.array() + size_in_last_chunk_;
       ++size_in_last_chunk_;
       return slot;
     }
 
-    int32_t chunk = used_chunks_ - 1;
-    auto cap = chunk == 0 ? FirstChunkCapacity() : heap_[chunk - 1].capacity;
-    if (size_in_last_chunk_ < cap) {
-      T* slot = heap_[chunk - 1].array + size_in_last_chunk_;
+    int32_t last_chunk = used_chunks_ - 1;
+    if (last_chunk >= 1 &&
+        size_in_last_chunk_ < heap_[last_chunk - 1].capacity) {
+      // Add a slot in the last used `heap_` chunk.
+      T* slot = heap_[last_chunk - 1].array + size_in_last_chunk_;
       ++size_in_last_chunk_;
       return slot;
     }
 
-    auto next_chunk = chunk + 1;
-    if (next_chunk - 1 < static_cast<int32_t>(heap_.size())) {
-      T* slot = heap_[next_chunk - 1].array;
+    if (used_chunks_ - 1 < static_cast<int32_t>(heap_.size())) {
+      // Add a slot in an unused `heap_` chunk that already exists.
+      T* slot = heap_[used_chunks_ - 1].array;
       ++used_chunks_;
       size_in_last_chunk_ = 1;
       return slot;
     }
 
-    auto next_cap = NextChunkCapacity();
-    T* array = std::allocator<T>().allocate(next_cap);
-    heap_.push_back({.array = array, .capacity = next_cap});
-    __asan_poison_memory_region(array, next_cap * sizeof(T));
+    // Add a slot in a new `heap_` chunk.
+    auto& new_chunk = AppendHeapChunk();
     ++used_chunks_;
     size_in_last_chunk_ = 1;
-    return array;
+    return new_chunk.array;
   }
-  // The individual capacity to use for the next chunk.
-  auto NextChunkCapacity() -> int32_t {
+  auto AppendHeapChunk() -> Chunk& {
     auto last_capacity =
         heap_.empty() ? FirstChunkCapacity() : heap_.back().capacity;
     // We use a growth factor of 2 so that we can do bitshifts in
     // GetSumCapacity() to compute total capacity in O(1) time.
-    return last_capacity * 2;
+    auto next_cap = last_capacity * 2;
+    T* array = std::allocator<T>().allocate(next_cap);
+    __asan_poison_memory_region(array, next_cap * sizeof(T));
+    heap_.push_back({.array = array, .capacity = next_cap});
+    return heap_.back();
   }
 
   InlineChunk inline_;
