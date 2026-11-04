@@ -384,14 +384,14 @@ class StableStack {
     CARBON_DCHECK(chunk >= 0);
     CARBON_DCHECK(chunk < used_chunks_);
     CARBON_DCHECK(index >= 0);
+    auto cap = chunk == 0 ? FirstChunkCapacity() : heap_[chunk - 1].capacity;
+    auto size = chunk == used_chunks_ - 1 ? size_in_last_chunk_ : cap;
+    CARBON_DCHECK(index < size,
+                  "Getting index {0} past end of last chunk with size {1}",
+                  index, size);
     if (chunk == 0) {
-      CARBON_DCHECK(index < FirstChunkCapacity());
       return inline_.array()[index];
-    } else if (chunk == used_chunks_ - 1) {
-      CARBON_DCHECK(index < size_in_last_chunk_);
-      return heap_[chunk - 1].array[index];
     } else {
-      CARBON_DCHECK(index < heap_[chunk - 1].capacity);
       return heap_[chunk - 1].array[index];
     }
   }
