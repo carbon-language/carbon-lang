@@ -123,7 +123,7 @@ fn CallF() {
 }
 
 
-// CHECK:STDOUT: --- assoc_const_self.carbon
+// CHECK:STDOUT: --- assoc_const_self.carbon ($assoc_const_self)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -318,7 +318,7 @@ fn CallF() {
 // CHECK:STDOUT:   %Self.as_type => constants.%i32
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_assoc_const_mismatch.carbon
+// CHECK:STDOUT: --- fail_assoc_const_mismatch.carbon ($fail_assoc_const_mismatch)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -437,7 +437,7 @@ fn CallF() {
 // CHECK:STDOUT:   %Self.as_type => constants.%empty_struct_type
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_assoc_const_not_constant_after_conversion.carbon
+// CHECK:STDOUT: --- fail_assoc_const_not_constant_after_conversion.carbon ($fail_assoc_const_not_constant_after_conversion)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -638,7 +638,7 @@ fn CallF() {
 // CHECK:STDOUT:   %Self.as_type => constants.%C
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_monomorphization_failure.carbon
+// CHECK:STDOUT: --- fail_monomorphization_failure.carbon ($fail_monomorphization_failure)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -830,7 +830,7 @@ fn CallF() {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.ace
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_constrained_fn.carbon
+// CHECK:STDOUT: --- fail_todo_constrained_fn.carbon ($fail_todo_constrained_fn)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

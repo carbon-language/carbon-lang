@@ -16,7 +16,7 @@ fn F(a: bool, b: bool, c: bool) -> i32 {
   return if a then if b then 1 else 2 else if c then 3 else 4;
 }
 
-// CHECK:STDOUT: --- nested.carbon
+// CHECK:STDOUT: --- nested.carbon ($nested)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

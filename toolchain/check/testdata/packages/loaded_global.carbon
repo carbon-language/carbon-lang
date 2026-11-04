@@ -42,7 +42,7 @@ var b: () = B();
 
 var package_b: () = package.B();
 
-// CHECK:STDOUT: --- implicit.carbon
+// CHECK:STDOUT: --- implicit.carbon ($implicit)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -59,7 +59,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @A();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- implicit.impl.carbon
+// CHECK:STDOUT: --- implicit.impl.carbon ($implicit.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -122,7 +122,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- same_package.carbon
+// CHECK:STDOUT: --- same_package.carbon ($same_package)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -139,7 +139,7 @@ var package_b: () = package.B();
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @B();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- same_package_importer.carbon
+// CHECK:STDOUT: --- same_package_importer.carbon ($same_package_importer)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

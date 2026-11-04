@@ -45,7 +45,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 fn LessEq(a: Core.FloatLiteral, b: Core.FloatLiteral) -> bool = "float.less_eq";
 
-// CHECK:STDOUT: --- float_less_eq.carbon
+// CHECK:STDOUT: --- float_less_eq.carbon ($float_less_eq)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

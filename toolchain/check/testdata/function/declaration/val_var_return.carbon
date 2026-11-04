@@ -124,7 +124,7 @@ fn G() {
   let unused x: i32 = F();
 }
 
-// CHECK:STDOUT: --- val_return.carbon
+// CHECK:STDOUT: --- val_return.carbon ($val_return)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -186,7 +186,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- var_return.carbon
+// CHECK:STDOUT: --- var_return.carbon ($var_return)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -250,7 +250,7 @@ fn G() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- val_return_definition.carbon
+// CHECK:STDOUT: --- val_return_definition.carbon ($val_return_definition)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -327,7 +327,7 @@ fn G() {
 // CHECK:STDOUT:   return %.loc7_11.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_val_return.carbon
+// CHECK:STDOUT: --- import_val_return.carbon ($import_val_return)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

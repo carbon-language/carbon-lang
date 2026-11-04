@@ -25,7 +25,7 @@ fn Main() -> i32 {
   return {} + 34;
 }
 
-// CHECK:STDOUT: --- fail_unimplemented_op.carbon
+// CHECK:STDOUT: --- fail_unimplemented_op.carbon ($fail_unimplemented_op)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

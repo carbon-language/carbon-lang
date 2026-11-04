@@ -14,7 +14,7 @@
 var a: i32 = (1);
 var b: i32 = ((2));
 
-// CHECK:STDOUT: --- parens.carbon
+// CHECK:STDOUT: --- parens.carbon ($parens)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

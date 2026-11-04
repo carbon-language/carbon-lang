@@ -242,7 +242,7 @@ fn F() {
 //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- self_impls_type.carbon
+// CHECK:STDOUT: --- self_impls_type.carbon ($self_impls_type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -338,7 +338,7 @@ fn F() {
 // CHECK:STDOUT:   %T.loc13_15.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_self_impls_error.carbon
+// CHECK:STDOUT: --- fail_self_impls_error.carbon ($fail_self_impls_error)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -386,7 +386,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @F(<error>) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- state_constraints.carbon
+// CHECK:STDOUT: --- state_constraints.carbon ($state_constraints)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -549,7 +549,7 @@ fn F() {
 // CHECK:STDOUT:   %W.loc16_17.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- associated_type_impls.carbon
+// CHECK:STDOUT: --- associated_type_impls.carbon ($associated_type_impls)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -619,7 +619,7 @@ fn F() {
 // CHECK:STDOUT:   %W.loc12_33.1 => constants.%W
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_error_in_constraint.carbon
+// CHECK:STDOUT: --- fail_error_in_constraint.carbon ($fail_error_in_constraint)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -659,7 +659,7 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @WithError(<error>) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_error_in_constraint.carbon
+// CHECK:STDOUT: --- import_error_in_constraint.carbon ($import_error_in_constraint)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

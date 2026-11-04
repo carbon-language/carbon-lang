@@ -63,49 +63,49 @@ package Package library "lib";
 // CHECK:STDERR:
 package Package library "lib";
 
-// CHECK:STDOUT: --- main1.carbon
+// CHECK:STDOUT: --- main1.carbon ($main1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main2.carbon
+// CHECK:STDOUT: --- fail_main2.carbon ($fail_main2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- main_lib1.carbon
+// CHECK:STDOUT: --- main_lib1.carbon ($main_lib1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_main_lib2.carbon
+// CHECK:STDOUT: --- fail_main_lib2.carbon ($fail_main_lib2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- package1.carbon
+// CHECK:STDOUT: --- package1.carbon ($package1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_package2.carbon
+// CHECK:STDOUT: --- fail_package2.carbon ($fail_package2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- package_lib1.carbon
+// CHECK:STDOUT: --- package_lib1.carbon ($package_lib1)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_package_lib2.carbon
+// CHECK:STDOUT: --- fail_package_lib2.carbon ($fail_package_lib2)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}

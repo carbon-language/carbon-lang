@@ -33,7 +33,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- call_qualifiers.carbon
+// CHECK:STDOUT: --- call_qualifiers.carbon ($call_qualifiers)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -56,7 +56,7 @@ fn Sub(a: Core.FloatLiteral, b: Core.FloatLiteral) -> Core.FloatLiteral = "float
 // CHECK:STDERR:
 let v1: Core.FloatLiteral = Sub(0x1.0p1024000000000, 0.0000000000000000001);
 
-// CHECK:STDOUT: --- float_literal_sub.carbon
+// CHECK:STDOUT: --- float_literal_sub.carbon ($float_literal_sub)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

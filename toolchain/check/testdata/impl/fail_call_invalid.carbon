@@ -31,7 +31,7 @@ fn InstanceCall(n: i32) {
 }
 
 
-// CHECK:STDOUT: --- fail_call_invalid.carbon
+// CHECK:STDOUT: --- fail_call_invalid.carbon ($fail_call_invalid)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

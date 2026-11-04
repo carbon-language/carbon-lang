@@ -27,7 +27,7 @@ fn Derived.H() {
   F();
 }
 
-// CHECK:STDOUT: --- base_function_unqualified.carbon
+// CHECK:STDOUT: --- base_function_unqualified.carbon ($base_function_unqualified)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

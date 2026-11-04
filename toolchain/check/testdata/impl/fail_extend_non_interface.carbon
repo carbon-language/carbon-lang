@@ -22,7 +22,7 @@ class C {
   extend impl as i32;
 }
 
-// CHECK:STDOUT: --- fail_extend_non_interface.carbon
+// CHECK:STDOUT: --- fail_extend_non_interface.carbon ($fail_extend_non_interface)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -24,7 +24,7 @@ fn G() {
   var unused c: C = Wrap(C).Make();
 }
 
-// CHECK:STDOUT: --- return_slot.carbon
+// CHECK:STDOUT: --- return_slot.carbon ($return_slot)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

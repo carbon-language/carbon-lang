@@ -59,7 +59,7 @@ fn G(generic T: Z) {
   F(C);
 }
 
-// CHECK:STDOUT: --- type_and_with_named_constraint_self.carbon
+// CHECK:STDOUT: --- type_and_with_named_constraint_self.carbon ($type_and_with_named_constraint_self)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -129,7 +129,7 @@ fn G(generic T: Z) {
 // CHECK:STDOUT:   %T.loc8_15.1 => constants.%T.f45530.2
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- compatible_constraints.carbon
+// CHECK:STDOUT: --- compatible_constraints.carbon ($compatible_constraints)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -64,7 +64,7 @@ var dyn_size: i32 = 64;
 // CHECK:STDERR:
 var dyn: Float(dyn_size);
 
-// CHECK:STDOUT: --- use_types.carbon
+// CHECK:STDOUT: --- use_types.carbon ($use_types)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -56,7 +56,7 @@ import library "impl_in_class_args";
 fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 
 
-// CHECK:STDOUT: --- types.carbon
+// CHECK:STDOUT: --- types.carbon ($types)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -205,7 +205,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %T.loc5_10.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- impl_in_interface_args.carbon
+// CHECK:STDOUT: --- impl_in_interface_args.carbon ($impl_in_interface_args)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -403,7 +403,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.af8
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_impl_in_interface_args.carbon
+// CHECK:STDOUT: --- use_impl_in_interface_args.carbon ($use_impl_in_interface_args)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -603,7 +603,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.278
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- impl_in_class_args.carbon
+// CHECK:STDOUT: --- impl_in_class_args.carbon ($impl_in_class_args)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -835,7 +835,7 @@ fn H(c: C(InClassArgs)) { c.(I(X).F)(); }
 // CHECK:STDOUT:   %self.patt => constants.%self.patt.aef
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_impl_in_class_args.carbon
+// CHECK:STDOUT: --- use_impl_in_class_args.carbon ($use_impl_in_class_args)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -44,7 +44,7 @@ impl package Foo library "[[@TEST_NAME]]";
 // CHECK:STDERR:
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDOUT: --- fail_no_api.impl.carbon
+// CHECK:STDOUT: --- fail_no_api.impl.carbon ($fail_no_api.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
@@ -53,7 +53,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_api_lib.impl.carbon
+// CHECK:STDOUT: --- fail_no_api_lib.impl.carbon ($fail_no_api_lib.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
@@ -62,7 +62,7 @@ impl library "[[@TEST_NAME]]";
 // CHECK:STDOUT:   %default.import = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_no_api_main_lib.impl.carbon
+// CHECK:STDOUT: --- fail_no_api_main_lib.impl.carbon ($fail_no_api_main_lib.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {

@@ -554,7 +554,7 @@ void f(const int n) {
 }
 ''';
 
-// CHECK:STDOUT: --- import_cpp_file_with_one_warning.carbon
+// CHECK:STDOUT: --- import_cpp_file_with_one_warning.carbon ($import_cpp_file_with_one_warning)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
@@ -562,7 +562,7 @@ void f(const int n) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_cpp_file_with_multiple_warnings.carbon
+// CHECK:STDOUT: --- import_cpp_file_with_multiple_warnings.carbon ($import_cpp_file_with_multiple_warnings)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
@@ -570,7 +570,7 @@ void f(const int n) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_multiple_cpp_files_with_warnings.carbon
+// CHECK:STDOUT: --- import_multiple_cpp_files_with_warnings.carbon ($import_multiple_cpp_files_with_warnings)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {
@@ -579,7 +579,7 @@ void f(const int n) {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_indirect_warning.carbon
+// CHECK:STDOUT: --- import_indirect_warning.carbon ($import_indirect_warning)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   %Cpp.import_cpp = import_cpp {

@@ -217,7 +217,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
   let unused a: i32 = m->is_volatile;
 }
 
-// CHECK:STDOUT: --- use_struct_fields.carbon
+// CHECK:STDOUT: --- use_struct_fields.carbon ($use_struct_fields)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -353,7 +353,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   return %.loc8_44 to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_union_fields.carbon
+// CHECK:STDOUT: --- use_union_fields.carbon ($use_union_fields)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -425,7 +425,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_non_bitfields_in_type_with_bitfields.carbon
+// CHECK:STDOUT: --- use_non_bitfields_in_type_with_bitfields.carbon ($use_non_bitfields_in_type_with_bitfields)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -481,7 +481,7 @@ fn Test(m: Cpp.UnsupportedMembers*) {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_use_bitfields.carbon
+// CHECK:STDOUT: --- fail_todo_use_bitfields.carbon ($fail_todo_use_bitfields)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -127,7 +127,7 @@ class D { extend base: C; }
 fn F(ref c: C);
 fn G(ref d: D) { F(ref d); }
 
-// CHECK:STDOUT: --- basics.carbon
+// CHECK:STDOUT: --- basics.carbon ($basics)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -224,7 +224,7 @@ fn G(ref d: D) { F(ref d); }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- class.carbon
+// CHECK:STDOUT: --- class.carbon ($class)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -22,7 +22,7 @@ class FAlias {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- impl_assoc_fn_as_alias.carbon
+// CHECK:STDOUT: --- impl_assoc_fn_as_alias.carbon ($impl_assoc_fn_as_alias)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

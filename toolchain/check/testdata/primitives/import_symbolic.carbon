@@ -194,7 +194,7 @@ fn F() -> u32 {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- import_bool.carbon
+// CHECK:STDOUT: --- import_bool.carbon ($import_bool)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -243,7 +243,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   return %bool.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_char.carbon
+// CHECK:STDOUT: --- import_char.carbon ($import_char)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -293,7 +293,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   return %char.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_char_literal.carbon
+// CHECK:STDOUT: --- import_char_literal.carbon ($import_char_literal)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -342,7 +342,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   return %Core.CharLiteral.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_float.carbon
+// CHECK:STDOUT: --- import_float.carbon ($import_float)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -400,7 +400,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   return %Float.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_float_literal.carbon
+// CHECK:STDOUT: --- import_float_literal.carbon ($import_float_literal)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -449,7 +449,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   return %Core.FloatLiteral.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_int.carbon
+// CHECK:STDOUT: --- import_int.carbon ($import_int)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -507,7 +507,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_int_literal.carbon
+// CHECK:STDOUT: --- import_int_literal.carbon ($import_int_literal)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -556,7 +556,7 @@ fn F() -> u32 {
 // CHECK:STDOUT:   return %Core.IntLiteral.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsigned_uint.carbon
+// CHECK:STDOUT: --- unsigned_uint.carbon ($unsigned_uint)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

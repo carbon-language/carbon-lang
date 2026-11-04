@@ -23,7 +23,7 @@ fn C(r#if: ()) -> () {
   return r#if;
 }
 
-// CHECK:STDOUT: --- raw_identifier.carbon
+// CHECK:STDOUT: --- raw_identifier.carbon ($raw_identifier)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

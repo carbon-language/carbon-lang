@@ -85,7 +85,7 @@ class C {
   }
 }
 
-// CHECK:STDOUT: --- member_access.carbon
+// CHECK:STDOUT: --- member_access.carbon ($member_access)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -426,7 +426,7 @@ class C {
 // CHECK:STDOUT:   %specific_impl_fn.loc15_12.2 => constants.%ptr.as.Copy.impl.Op.specific_fn
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- static_member_fn_call.carbon
+// CHECK:STDOUT: --- static_member_fn_call.carbon ($static_member_fn_call)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -43,7 +43,7 @@ fn CallF() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- local.carbon
+// CHECK:STDOUT: --- local.carbon ($local)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -86,7 +86,7 @@ fn CallF() {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_symbolic.carbon
+// CHECK:STDOUT: --- fail_todo_symbolic.carbon ($fail_todo_symbolic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @CallF();
 // CHECK:STDOUT:

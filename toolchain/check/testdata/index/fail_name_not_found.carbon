@@ -22,7 +22,7 @@ fn Main() {
   var unused b: i32 = a[0];
 }
 
-// CHECK:STDOUT: --- fail_name_not_found.carbon
+// CHECK:STDOUT: --- fail_name_not_found.carbon ($fail_name_not_found)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

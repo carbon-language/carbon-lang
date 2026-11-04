@@ -46,7 +46,7 @@ fn H() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- in_place_tuple_init.carbon
+// CHECK:STDOUT: --- in_place_tuple_init.carbon ($in_place_tuple_init)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -183,7 +183,7 @@ fn H() {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- nested_tuple_in_place.carbon
+// CHECK:STDOUT: --- nested_tuple_in_place.carbon ($nested_tuple_in_place)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

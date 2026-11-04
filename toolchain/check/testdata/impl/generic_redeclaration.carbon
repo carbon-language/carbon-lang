@@ -109,7 +109,7 @@ impl forall [T: type] T as I {
   }
 }
 
-// CHECK:STDOUT: --- same_self_and_interface.carbon
+// CHECK:STDOUT: --- same_self_and_interface.carbon ($same_self_and_interface)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -486,7 +486,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_same_self_and_interface_redefined.carbon
+// CHECK:STDOUT: --- fail_same_self_and_interface_redefined.carbon ($fail_same_self_and_interface_redefined)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -631,7 +631,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT:   %.loc18_27 => constants.%.d10
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_same_type_different_spelling.carbon
+// CHECK:STDOUT: --- fail_same_type_different_spelling.carbon ($fail_same_type_different_spelling)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -725,7 +725,7 @@ impl forall [T: type] T as I {
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_redefinition_generic_regions.carbon
+// CHECK:STDOUT: --- fail_redefinition_generic_regions.carbon ($fail_redefinition_generic_regions)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

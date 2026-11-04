@@ -80,7 +80,7 @@ fn F() {
   let unused c: Cpp.Other = Cpp.Enum.d;
 }
 
-// CHECK:STDOUT: --- import_enum.carbon
+// CHECK:STDOUT: --- import_enum.carbon ($import_enum)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

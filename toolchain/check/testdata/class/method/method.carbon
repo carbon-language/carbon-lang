@@ -62,7 +62,7 @@ fn CallGOnInitializingExpr() -> i32 {
   return Make().G();
 }
 
-// CHECK:STDOUT: --- method.carbon
+// CHECK:STDOUT: --- method.carbon ($method)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

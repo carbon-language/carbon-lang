@@ -155,7 +155,7 @@ private fn Redecl();
 
 private fn Redecl() {}
 
-// CHECK:STDOUT: --- def.carbon
+// CHECK:STDOUT: --- def.carbon ($def)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -175,7 +175,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward_with_def.carbon
+// CHECK:STDOUT: --- forward_with_def.carbon ($forward_with_def)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -196,7 +196,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward.carbon
+// CHECK:STDOUT: --- forward.carbon ($forward)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -213,7 +213,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Forward();
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- def.impl.carbon
+// CHECK:STDOUT: --- def.impl.carbon ($def.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -259,7 +259,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_local_def.carbon
+// CHECK:STDOUT: --- fail_local_def.carbon ($fail_local_def)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -295,7 +295,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_other_def.carbon
+// CHECK:STDOUT: --- fail_other_def.carbon ($fail_other_def)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -339,7 +339,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward_with_def.impl.carbon
+// CHECK:STDOUT: --- forward_with_def.impl.carbon ($forward_with_def.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -385,7 +385,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_local_forward_with_def.carbon
+// CHECK:STDOUT: --- fail_local_forward_with_def.carbon ($fail_local_forward_with_def)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -421,7 +421,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_other_forward_with_def.carbon
+// CHECK:STDOUT: --- fail_other_forward_with_def.carbon ($fail_other_forward_with_def)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -465,7 +465,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- forward.impl.carbon
+// CHECK:STDOUT: --- forward.impl.carbon ($forward.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -515,7 +515,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_local_forward.carbon
+// CHECK:STDOUT: --- fail_local_forward.carbon ($fail_local_forward)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -551,7 +551,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_other_forward.carbon
+// CHECK:STDOUT: --- fail_other_forward.carbon ($fail_other_forward)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -595,7 +595,7 @@ private fn Redecl() {}
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- todo_fail_private_on_redecl.carbon
+// CHECK:STDOUT: --- todo_fail_private_on_redecl.carbon ($todo_fail_private_on_redecl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

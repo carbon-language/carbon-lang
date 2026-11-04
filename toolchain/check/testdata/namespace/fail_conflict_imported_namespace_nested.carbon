@@ -46,7 +46,7 @@ namespace Other;
 // CHECK:STDERR:
 fn Other.Nested.F();
 
-// CHECK:STDOUT: --- fn.carbon
+// CHECK:STDOUT: --- fn.carbon ($fn)
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Core: <namespace> = namespace file.%Core.import, [concrete] {
@@ -64,7 +64,7 @@ fn Other.Nested.F();
 // CHECK:STDOUT:   %Nested: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_conflict.carbon
+// CHECK:STDOUT: --- fail_conflict.carbon ($fail_conflict)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

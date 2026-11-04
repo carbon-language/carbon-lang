@@ -20,7 +20,7 @@ fn Main() {
   Echo({});
 }
 
-// CHECK:STDOUT: --- empty_struct.carbon
+// CHECK:STDOUT: --- empty_struct.carbon ($empty_struct)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

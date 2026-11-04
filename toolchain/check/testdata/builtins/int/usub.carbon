@@ -35,7 +35,7 @@ let a: i32 = Sub(0, 0x7FFFFFFF);
 let b: i32 = Sub(Sub(0, 0x7FFFFFFF), 1);
 let c: i32 = Sub(Sub(0, 0x7FFFFFFF), 2);
 
-// CHECK:STDOUT: --- int_sub.carbon
+// CHECK:STDOUT: --- int_sub.carbon ($int_sub)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -46,7 +46,7 @@ fn F() -> () {
   return b;
 }
 
-// CHECK:STDOUT: --- global.carbon
+// CHECK:STDOUT: --- global.carbon ($global)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -65,7 +65,7 @@ fn F() -> () {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_local.carbon
+// CHECK:STDOUT: --- fail_local.carbon ($fail_local)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

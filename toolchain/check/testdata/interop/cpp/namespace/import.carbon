@@ -401,7 +401,7 @@ fn F() {
   MyNamespaceAlias.baz();
 }
 
-// CHECK:STDOUT: --- import_single.carbon
+// CHECK:STDOUT: --- import_single.carbon ($import_single)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -434,7 +434,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_multiple.carbon
+// CHECK:STDOUT: --- import_multiple.carbon ($import_multiple)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -500,7 +500,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_inline.carbon
+// CHECK:STDOUT: --- import_inline.carbon ($import_inline)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -533,7 +533,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_inline_ambiguity_not_triggered.carbon
+// CHECK:STDOUT: --- import_inline_ambiguity_not_triggered.carbon ($import_inline_ambiguity_not_triggered)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -590,7 +590,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- import_special_name_call_escpaed.carbon
+// CHECK:STDOUT: --- import_special_name_call_escpaed.carbon ($import_special_name_call_escpaed)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

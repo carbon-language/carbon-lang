@@ -30,7 +30,7 @@ fn F() {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- import_enum_member.carbon
+// CHECK:STDOUT: --- import_enum_member.carbon ($import_enum_member)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

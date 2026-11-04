@@ -243,7 +243,7 @@ interface Foo(a: const C);
 // CHECK:STDERR:
 interface Foo(a: const (const C)) {}
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon ($basic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -374,7 +374,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar.WithSelf(constants.%a, constants.%Self.3ee) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- spacing.carbon
+// CHECK:STDOUT: --- spacing.carbon ($spacing)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -452,7 +452,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_parens.carbon
+// CHECK:STDOUT: --- fail_parens.carbon ($fail_parens)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -544,7 +544,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_raw_identifier.carbon
+// CHECK:STDOUT: --- fail_raw_identifier.carbon ($fail_raw_identifier)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -636,7 +636,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- two_file.carbon
+// CHECK:STDOUT: --- two_file.carbon ($two_file)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -715,7 +715,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc8_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_todo_two_file.impl.carbon
+// CHECK:STDOUT: --- fail_todo_two_file.impl.carbon ($fail_todo_two_file.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -865,7 +865,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Bar.WithSelf(constants.%a, constants.%Self.3ee) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_name_mismatch.carbon
+// CHECK:STDOUT: --- fail_name_mismatch.carbon ($fail_name_mismatch)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -962,7 +962,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%b, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_alias.carbon
+// CHECK:STDOUT: --- fail_alias.carbon ($fail_alias)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1057,7 +1057,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_deduced_alias.carbon
+// CHECK:STDOUT: --- fail_deduced_alias.carbon ($fail_deduced_alias)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1152,7 +1152,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- alias_two_file.carbon
+// CHECK:STDOUT: --- alias_two_file.carbon ($alias_two_file)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1204,7 +1204,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:   %a.loc6_16.1 => constants.%a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_alias_two_file.impl.carbon
+// CHECK:STDOUT: --- fail_alias_two_file.impl.carbon ($fail_alias_two_file.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1298,7 +1298,7 @@ interface Foo(a: const (const C)) {}
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @Foo.WithSelf(constants.%a, constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_repeat_const.carbon
+// CHECK:STDOUT: --- fail_repeat_const.carbon ($fail_repeat_const)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

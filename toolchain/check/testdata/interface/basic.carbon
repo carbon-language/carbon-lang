@@ -21,7 +21,7 @@ interface ForwardDeclared {
   fn F();
 }
 
-// CHECK:STDOUT: --- basic.carbon
+// CHECK:STDOUT: --- basic.carbon ($basic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

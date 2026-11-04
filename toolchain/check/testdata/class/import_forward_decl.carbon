@@ -25,7 +25,7 @@ impl library "[[@TEST_NAME]]";
 class ForwardDecl {
 }
 
-// CHECK:STDOUT: --- a.carbon
+// CHECK:STDOUT: --- a.carbon ($a)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -50,7 +50,7 @@ class ForwardDecl {
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @ForwardDecl;
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- a.impl.carbon
+// CHECK:STDOUT: --- a.impl.carbon ($a.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

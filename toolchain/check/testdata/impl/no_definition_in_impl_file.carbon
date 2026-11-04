@@ -118,7 +118,7 @@ interface D {}
 // CHECK:STDERR:
 impl () as D;
 
-// CHECK:STDOUT: --- fail_decl_in_api_definition_in_impl.carbon
+// CHECK:STDOUT: --- fail_decl_in_api_definition_in_impl.carbon ($fail_decl_in_api_definition_in_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -157,7 +157,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_in_api_definition_in_impl.impl.carbon
+// CHECK:STDOUT: --- fail_decl_in_api_definition_in_impl.impl.carbon ($fail_decl_in_api_definition_in_impl.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -215,13 +215,13 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @A.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_decl_in_api.carbon
+// CHECK:STDOUT: --- use_decl_in_api.carbon ($use_decl_in_api)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_decl_in_api.impl.carbon
+// CHECK:STDOUT: --- use_decl_in_api.impl.carbon ($use_decl_in_api.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Main.A = import_ref Main//decl_in_api_definition_in_impl, A, unloaded
@@ -235,7 +235,7 @@ impl () as D;
 // CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_only_in_api.carbon
+// CHECK:STDOUT: --- fail_decl_only_in_api.carbon ($fail_decl_only_in_api)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -274,7 +274,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- decl_only_in_api.impl.carbon
+// CHECK:STDOUT: --- decl_only_in_api.impl.carbon ($decl_only_in_api.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -310,7 +310,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @B.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.carbon
+// CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.carbon ($fail_decl_in_api_decl_in_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -349,7 +349,7 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.impl.carbon
+// CHECK:STDOUT: --- fail_decl_in_api_decl_in_impl.impl.carbon ($fail_decl_in_api_decl_in_impl.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -395,13 +395,13 @@ impl () as D;
 // CHECK:STDOUT:
 // CHECK:STDOUT: specific @C.WithSelf(constants.%Self) {}
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- decl_only_in_impl.carbon
+// CHECK:STDOUT: --- decl_only_in_impl.carbon ($decl_only_in_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_decl_only_in_impl.impl.carbon
+// CHECK:STDOUT: --- fail_decl_only_in_impl.impl.carbon ($fail_decl_only_in_impl.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

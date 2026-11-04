@@ -103,7 +103,7 @@ fn F(n: Core.IntLiteral) {
   var unused a: MakeArray(i32, n);
 }
 
-// CHECK:STDOUT: --- use_types.carbon
+// CHECK:STDOUT: --- use_types.carbon ($use_types)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

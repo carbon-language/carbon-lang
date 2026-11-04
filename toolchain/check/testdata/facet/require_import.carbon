@@ -54,7 +54,7 @@ fn F(generic B: Y) {
   B.F();
 }
 
-// CHECK:STDOUT: --- a.impl.carbon
+// CHECK:STDOUT: --- a.impl.carbon ($a.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

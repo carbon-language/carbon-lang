@@ -17,7 +17,7 @@ fn F() -> i32 {
   return *&*&n;
 }
 
-// CHECK:STDOUT: --- address_of_deref.carbon
+// CHECK:STDOUT: --- address_of_deref.carbon ($address_of_deref)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

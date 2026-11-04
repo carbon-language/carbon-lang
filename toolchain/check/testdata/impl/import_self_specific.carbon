@@ -62,7 +62,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
   fn F(unused c: C(())) {}
 }
 
-// CHECK:STDOUT: --- impl_def.carbon
+// CHECK:STDOUT: --- impl_def.carbon ($impl_def)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -348,7 +348,7 @@ impl forall [N: E] D(N) as I where .Assoc = () {
 // CHECK:STDOUT:   %c.patt.loc24_9.2 => constants.%c.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- impl_use.carbon
+// CHECK:STDOUT: --- impl_use.carbon ($impl_use)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

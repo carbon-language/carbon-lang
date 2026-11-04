@@ -118,7 +118,7 @@ fn Use() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- add_partial.carbon
+// CHECK:STDOUT: --- add_partial.carbon ($add_partial)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -240,7 +240,7 @@ fn Use() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- remove_partial_in_init.carbon
+// CHECK:STDOUT: --- remove_partial_in_init.carbon ($remove_partial_in_init)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -343,7 +343,7 @@ fn Use() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc12_3.2(%self.param: ref %X) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- unsafe_remove_partial.carbon
+// CHECK:STDOUT: --- unsafe_remove_partial.carbon ($unsafe_remove_partial)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

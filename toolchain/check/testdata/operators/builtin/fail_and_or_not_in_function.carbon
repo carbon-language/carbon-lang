@@ -122,7 +122,7 @@ fn F() {
   }
 }
 
-// CHECK:STDOUT: --- fail_and.carbon
+// CHECK:STDOUT: --- fail_and.carbon ($fail_and)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -160,9 +160,9 @@ fn F() {
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_and_val.carbon
+// CHECK:STDOUT: --- fail_and_val.carbon ($fail_and_val)
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_or.carbon
+// CHECK:STDOUT: --- fail_or.carbon ($fail_or)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -200,9 +200,9 @@ fn F() {
 // CHECK:STDOUT:   return %type.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_or_val.carbon
+// CHECK:STDOUT: --- fail_or_val.carbon ($fail_or_val)
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_nested.carbon
+// CHECK:STDOUT: --- fail_nested.carbon ($fail_nested)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

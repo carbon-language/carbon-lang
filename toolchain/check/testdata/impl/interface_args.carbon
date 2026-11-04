@@ -110,7 +110,7 @@ fn InstanceC(a: A) -> C {
 }
 
 
-// CHECK:STDOUT: --- action.carbon
+// CHECK:STDOUT: --- action.carbon ($action)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -373,7 +373,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %self.patt.loc5_9.2 => constants.%self.patt.7cd
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- action.impl.carbon
+// CHECK:STDOUT: --- action.impl.carbon ($action.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -586,7 +586,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.f05
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_action.impl.carbon
+// CHECK:STDOUT: --- fail_action.impl.carbon ($fail_action.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -794,7 +794,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc0 => constants.%assoc0.933
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- factory.carbon
+// CHECK:STDOUT: --- factory.carbon ($factory)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1117,7 +1117,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %return.patt.loc8_19.2 => constants.%return.patt.911
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- factory.impl.carbon
+// CHECK:STDOUT: --- factory.impl.carbon ($factory.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1423,7 +1423,7 @@ fn InstanceC(a: A) -> C {
 // CHECK:STDOUT:   %assoc1 => constants.%assoc1.120
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_factory.impl.carbon
+// CHECK:STDOUT: --- fail_factory.impl.carbon ($fail_factory.impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

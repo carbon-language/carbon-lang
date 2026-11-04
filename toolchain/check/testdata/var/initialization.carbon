@@ -66,7 +66,7 @@ fn Main() {
   var unused x: A;
 }
 
-// CHECK:STDOUT: --- initialized.carbon
+// CHECK:STDOUT: --- initialized.carbon ($initialized)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -120,7 +120,7 @@ fn Main() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc8(%self.param: ref %empty_tuple.type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- uninitialized.carbon
+// CHECK:STDOUT: --- uninitialized.carbon ($uninitialized)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

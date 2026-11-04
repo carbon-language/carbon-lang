@@ -18,7 +18,7 @@ fn F(p: const (const (const i32*)*)) -> const i32 {
 }
 
 
-// CHECK:STDOUT: --- nested_const.carbon
+// CHECK:STDOUT: --- nested_const.carbon ($nested_const)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

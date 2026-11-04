@@ -229,6 +229,25 @@ class MultiUnitCache {
     return *tree_and_subtrees_getters_;
   }
 
+  auto short_file_names() -> const SemIR::ShortFileNameStore& {
+    if (!short_file_names_) {
+      short_file_names_.emplace(SemIR::ShortFileNameStore::MakeWithExplicitSize(
+          units_.size(), SemIR::InstNamer::Namespace::Name()));
+      for (const auto& [i, unit] : llvm::enumerate(units_)) {
+        std::string short_name;
+        if (unit->has_source()) {
+          std::filesystem::path file_path(
+              std::string_view(unit->source().filename()));
+          short_name = file_path.stem();
+        }
+        short_file_names_->Set(
+            SemIR::CheckIRId(i),
+            compilation_namespace_.AllocateName(std::move(short_name)));
+      }
+    }
+    return *short_file_names_;
+  }
+
  private:
   const CompileOptions* options_;
 
@@ -240,6 +259,12 @@ class MultiUnitCache {
 
   // For each unit, the `TreeAndSubtrees` getter. Used by lowering.
   std::optional<TreeAndSubtreesGettersStore> tree_and_subtrees_getters_;
+
+  // A shared namespace for allocating shorthand names for files.
+  SemIR::InstNamer::Namespace compilation_namespace_;
+
+  // For each unit, the shorthand name for its file.
+  std::optional<SemIR::ShortFileNameStore> short_file_names_;
 };
 
 // Helper class to compile C++ and Carbon input files. Used by the `build` and

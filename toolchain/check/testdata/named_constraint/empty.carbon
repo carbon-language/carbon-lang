@@ -31,7 +31,7 @@ fn G(generic T: Z, generic U: type, generic V: Empty) {
 }
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- empty.carbon
+// CHECK:STDOUT: --- empty.carbon ($empty)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

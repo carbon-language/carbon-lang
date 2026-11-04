@@ -27,7 +27,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- extend.carbon
+// CHECK:STDOUT: --- extend.carbon ($extend)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -43,7 +43,7 @@ fn F() {
   let unused b: Cpp.Enum = Cpp.b;
 }
 
-// CHECK:STDOUT: --- import_enum.carbon
+// CHECK:STDOUT: --- import_enum.carbon ($import_enum)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

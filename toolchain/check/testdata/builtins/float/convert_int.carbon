@@ -296,7 +296,7 @@ let nan_val: i32 = ConvertF64ToI32(Div(0.0, 0.0));
 let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- fail_overflow.carbon
+// CHECK:STDOUT: --- fail_overflow.carbon ($fail_overflow)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -596,7 +596,7 @@ let inf_val: i32 = ConvertF64ToI32(Div(1.0, 0.0));
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_nan_inf.carbon
+// CHECK:STDOUT: --- fail_nan_inf.carbon ($fail_nan_inf)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

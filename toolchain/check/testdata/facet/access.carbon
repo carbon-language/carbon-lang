@@ -493,7 +493,7 @@ fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
   return {};
 }
 
-// CHECK:STDOUT: --- access_assoc_fn.carbon
+// CHECK:STDOUT: --- access_assoc_fn.carbon ($access_assoc_fn)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -541,7 +541,7 @@ fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:   %T.loc8_17.1 => constants.%T
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- assoc_fn_using_self.carbon
+// CHECK:STDOUT: --- assoc_fn_using_self.carbon ($assoc_fn_using_self)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -598,7 +598,7 @@ fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:   %return.patt.loc8_22.2 => constants.%return.patt.2e6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- access_assoc_method.carbon
+// CHECK:STDOUT: --- access_assoc_method.carbon ($access_assoc_method)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -702,7 +702,7 @@ fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:   %return.patt.loc9_20.2 => constants.%return.patt.2e6
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- access_selfless_method.carbon
+// CHECK:STDOUT: --- access_selfless_method.carbon ($access_selfless_method)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -755,7 +755,7 @@ fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
 // CHECK:STDOUT:   %x.patt.loc8_15.2 => constants.%x.patt
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- access_assoc_method_indirect.carbon
+// CHECK:STDOUT: --- access_assoc_method_indirect.carbon ($access_assoc_method_indirect)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

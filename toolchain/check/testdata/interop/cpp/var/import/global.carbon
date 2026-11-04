@@ -80,7 +80,7 @@ fn MyF() {
   let unused local: Cpp.UnusupportedType = Cpp.unsupported_global;
 }
 
-// CHECK:STDOUT: --- import_global_scope.carbon
+// CHECK:STDOUT: --- import_global_scope.carbon ($import_global_scope)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -196,7 +196,7 @@ fn MyF() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_import_unsupported_type.carbon
+// CHECK:STDOUT: --- fail_import_unsupported_type.carbon ($fail_import_unsupported_type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

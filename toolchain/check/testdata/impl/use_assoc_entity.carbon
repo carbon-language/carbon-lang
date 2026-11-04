@@ -532,7 +532,7 @@ fn F() {
 }
 
 
-// CHECK:STDOUT: --- associated_type_in_method_signature.carbon
+// CHECK:STDOUT: --- associated_type_in_method_signature.carbon ($associated_type_in_method_signature)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -865,7 +865,7 @@ fn F() {
 // CHECK:STDOUT:   %return.patt.loc6_20.2 => constants.%return.patt.e4a
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- extend_impl_with_associated_type_in_signature.carbon
+// CHECK:STDOUT: --- extend_impl_with_associated_type_in_signature.carbon ($extend_impl_with_associated_type_in_signature)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1035,7 +1035,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_associated_fn_in_impl.carbon
+// CHECK:STDOUT: --- use_associated_fn_in_impl.carbon ($use_associated_fn_in_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1065,7 +1065,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_associated_constant_in_impl.carbon
+// CHECK:STDOUT: --- use_associated_constant_in_impl.carbon ($use_associated_constant_in_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1154,7 +1154,7 @@ fn F() {
 // CHECK:STDOUT:   return %Int.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- call_extend_fn.carbon
+// CHECK:STDOUT: --- call_extend_fn.carbon ($call_extend_fn)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1191,7 +1191,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_extend_constant.carbon
+// CHECK:STDOUT: --- use_extend_constant.carbon ($use_extend_constant)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1242,7 +1242,7 @@ fn F() {
 // CHECK:STDOUT:   return %.loc11_26
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- associated_fn_use_in_def_before_decl.carbon
+// CHECK:STDOUT: --- associated_fn_use_in_def_before_decl.carbon ($associated_fn_use_in_def_before_decl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -1272,7 +1272,7 @@ fn F() {
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- use_non-type_in_function.carbon
+// CHECK:STDOUT: --- use_non-type_in_function.carbon ($use_non-type_in_function)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

@@ -27,7 +27,7 @@ fn H() {
   G({});
 }
 
-// CHECK:STDOUT: --- assoc_const_in_generic.carbon
+// CHECK:STDOUT: --- assoc_const_in_generic.carbon ($assoc_const_in_generic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

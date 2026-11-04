@@ -30,7 +30,7 @@ class C;
 // CHECK:STDERR:
 fn F(unused n: C) {}
 
-// CHECK:STDOUT: --- fail_incomplete_type.carbon
+// CHECK:STDOUT: --- fail_incomplete_type.carbon ($fail_incomplete_type)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

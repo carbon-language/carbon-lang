@@ -47,7 +47,7 @@ fn G() {
 }
 
 
-// CHECK:STDOUT: --- canonical_query_self.carbon
+// CHECK:STDOUT: --- canonical_query_self.carbon ($canonical_query_self)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

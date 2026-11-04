@@ -100,7 +100,7 @@
 // CHECK:STDOUT:       identifiers:     {}
 // CHECK:STDOUT:       strings:         {}
 // CHECK:STDOUT: ...
-// CHECK:STDOUT: --- -
+// CHECK:STDOUT: --- - ($<stdin>)
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {}

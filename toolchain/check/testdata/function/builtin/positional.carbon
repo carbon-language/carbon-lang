@@ -46,7 +46,7 @@ fn Add -> i32 = "int.sadd";
 // CHECK:STDERR:
 fn Mul = "int.smul";
 
-// CHECK:STDOUT: --- fail_positional.carbon
+// CHECK:STDOUT: --- fail_positional.carbon ($fail_positional)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

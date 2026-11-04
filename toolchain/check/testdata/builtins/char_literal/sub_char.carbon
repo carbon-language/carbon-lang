@@ -29,7 +29,7 @@ let max: i32 = SubCharCharToI32('\u{10FFFF}', '\u{0}');
 let min: i32 = SubCharCharToI32('\u{0}', '\u{10FFFF}');
 //@dump-sem-ir-end
 
-// CHECK:STDOUT: --- sub_char.carbon
+// CHECK:STDOUT: --- sub_char.carbon ($sub_char)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

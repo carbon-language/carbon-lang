@@ -87,7 +87,7 @@ interface Generic(T: type) {}
 // CHECK:STDERR:
 fn F(unused generic T: Generic((), ())) {}
 
-// CHECK:STDOUT: --- generic.carbon
+// CHECK:STDOUT: --- generic.carbon ($generic)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -484,7 +484,7 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT: !definition:
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_mismatched_args.carbon
+// CHECK:STDOUT: --- fail_mismatched_args.carbon ($fail_mismatched_args)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
@@ -644,7 +644,7 @@ fn F(unused generic T: Generic((), ())) {}
 // CHECK:STDOUT:   %T.loc10_15.1 => constants.%T.ec1
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_args_count_mismatch.carbon
+// CHECK:STDOUT: --- fail_args_count_mismatch.carbon ($fail_args_count_mismatch)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]

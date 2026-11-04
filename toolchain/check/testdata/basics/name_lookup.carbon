@@ -43,7 +43,7 @@ fn F() {
   //@dump-sem-ir-end
 }
 
-// CHECK:STDOUT: --- fail_not_found.carbon
+// CHECK:STDOUT: --- fail_not_found.carbon ($fail_not_found)
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @Main() {
 // CHECK:STDOUT: !entry:
@@ -51,7 +51,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: --- fail_qualififier_unsupported.carbon
+// CHECK:STDOUT: --- fail_qualififier_unsupported.carbon ($fail_qualififier_unsupported)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete]

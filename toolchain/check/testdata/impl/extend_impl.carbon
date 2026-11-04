@@ -118,7 +118,7 @@ interface I {}
 // CHECK:STDERR:
 extend impl nonexistent* as I {}
 
-// CHECK:STDOUT: --- extend_impl.carbon
+// CHECK:STDOUT: --- extend_impl.carbon ($extend_impl)
 // CHECK:STDOUT:
 // CHECK:STDOUT: constants {
 // CHECK:STDOUT:   type: type = facet_type <type> [concrete]
