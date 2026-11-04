@@ -189,8 +189,8 @@ class StableStack {
     auto num_chunks = InlineChunks + heap_.size();
     while (current < reserve) {
       AppendHeapChunk();
+      current += GetChunkCapacity(num_chunks);
       ++num_chunks;
-      current += GetChunkCapacity(num_chunks - 1);
     }
   }
 

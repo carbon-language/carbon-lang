@@ -601,6 +601,19 @@ TEST(StableStack, DefaultInlineCapacity) {
 
   {
     // Can hold one of these in the inline capacity, so the default is 1.
+    StableStack<Bytes<24>> stack;
+    static_assert(sizeof(stack) > size_t{32} * 1);
+    static_assert(sizeof(stack) <= size_t{64});
+    EXPECT_EQ(stack.capacity(), 1);
+    stack.Push({});
+    stack.Push({});
+    // Growth factor of 2.
+    EXPECT_EQ(stack.capacity(), 1 + (1 * 2));
+    EXPECT_EQ(stack.size(), 2);
+  }
+
+  {
+    // Can hold one of these in the inline capacity, so the default is 1.
     StableStack<Bytes<32>> stack;
     static_assert(sizeof(stack) > size_t{32} * 1);
     static_assert(sizeof(stack) <= size_t{64});
