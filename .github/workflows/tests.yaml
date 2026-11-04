@@ -95,11 +95,11 @@ jobs:
             ${{ github.event_name == 'pull_request' &&
             github.event.pull_request.base.sha ||
             github.event.merge_group.base_sha }}
-          # The remote cache key is only used outside of PRs, so don't make it
-          # available to PR code.
+          # The remote cache key is only used outside of PRs, so only make it
+          # available on those events. PRs get an empty string.
           remote_cache_key:
-            ${{ github.event_name != 'pull_request' &&
-            secrets.CARBON_BUILDS_GITHUB || '' }}
+            ${{ (github.event_name != 'pull_request' &&
+            secrets.CARBON_BUILDS_GITHUB) || '' }}
           targets_file: ${{ runner.temp }}/targets
 
       # Build and run just the tests impacted by the PR or merge group.

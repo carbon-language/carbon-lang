@@ -15,9 +15,14 @@ name: 'Add prek suggestions'
 # files outside the PR's diff, where GitHub doesn't allow suggestions. So
 # instead, we commit the fixes directly to Dependabot's branch.
 #
+# A privileged `workflow_run` action is inherently risky, because it could be
+# tricked into running untrusted code from a PR. So neither job here runs
+# anything from the PR, and both treat prek's output as untrusted.
+#
 # This action is only run from the workflow file on the trunk branch. Changes to
 # this file will not take effect until they are merged to trunk.
 on:
+  # zizmor: ignore[dangerous-triggers] - {necessary to act on prek's results}
   workflow_run:
     workflows: [prek]
     types:
