@@ -88,8 +88,8 @@ class StableStack {
     return *this;
   }
 
-  // Moving the stack. The moved-from `rhs` stack will be left empty with no
-  // capacity.
+  // Moving the stack. The moved-from `rhs` stack will be left empty with only
+  // inline capacity.
   StableStack(StableStack&& rhs) noexcept
       : heap_(std::exchange(rhs.heap_, {})),
         used_chunks_(std::exchange(rhs.used_chunks_, 0)),
@@ -358,7 +358,7 @@ class StableStack {
       std::destroy_n(array, size);
       std::allocator<T>().deallocate(array, cap);
     }
-    for (; chunk + InlineChunks < static_cast<int32_t>(heap_.size()); ++chunk) {
+    for (; chunk - InlineChunks < static_cast<int32_t>(heap_.size()); ++chunk) {
       auto* array = heap_[chunk - InlineChunks].array;
       auto cap = heap_[chunk - InlineChunks].capacity;
       std::allocator<T>().deallocate(array, cap);

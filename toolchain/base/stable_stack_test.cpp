@@ -411,6 +411,47 @@ TEST(StableStack, Reserve) {
   EXPECT_EQ(stack.size(), capacity);
 }
 
+TEST(StableStack, ReserveWithoutInline) {
+  StableStack<int, 0> stack;
+  EXPECT_EQ(stack.capacity(), 0);
+
+  stack.Reserve(0);
+  EXPECT_EQ(stack.capacity(), 0);
+  stack.Reserve(1);
+  EXPECT_GT(stack.capacity(), 0);
+  auto capacity = stack.capacity();
+
+  stack.Reserve(capacity / 2);
+  EXPECT_EQ(stack.capacity(), capacity);
+  stack.Reserve(capacity);
+  EXPECT_EQ(stack.capacity(), capacity);
+
+  stack.Reserve(capacity + 2);
+  EXPECT_GE(stack.capacity(), capacity + 2);
+  capacity = stack.capacity();
+  stack.Reserve(1);
+  EXPECT_EQ(stack.capacity(), capacity);
+  stack.Reserve(2);
+  EXPECT_EQ(stack.capacity(), capacity);
+
+  stack.Reserve(capacity + 1000);
+  EXPECT_GE(stack.capacity(), capacity + 1000);
+  EXPECT_EQ(stack.size(), 0);
+  EXPECT_EQ(stack.empty(), true);
+
+  capacity = stack.capacity();
+  stack.Reserve(1);
+  EXPECT_EQ(stack.capacity(), capacity);
+  stack.Reserve(0);
+  EXPECT_EQ(stack.capacity(), capacity);
+
+  for (int i = 0; i < capacity; ++i) {
+    stack.Push(i);
+  }
+  EXPECT_EQ(stack.capacity(), capacity);
+  EXPECT_EQ(stack.size(), capacity);
+}
+
 TEST(StableStack, Equal) {
   StableStack<int> stack;
   StableStack<int> stack2;
