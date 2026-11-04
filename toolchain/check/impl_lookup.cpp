@@ -285,23 +285,6 @@ static auto TryGetSpecificWitnessIdForImpl(
   }
 
   LoadImportRef(context, impl.witness_id);
-  if (!impl.is_being_defined() && specific_id.has_value()) {
-    // If the impl definition can be resolved, eval will do it immediately;
-    // otherwise, it can be resolved by further specialization. This is used to
-    // resolve dependency chains when `MakeFinal` is returned without a concrete
-    // definition; particularly final impls with symbolic constants.
-    //
-    // Note we do not do this for lookups _inside_ the definition of the impl,
-    // as that creates a cycle where resolving the definition must resolve the
-    // definition.
-    AddInstInNoBlock(
-        context, loc_id,
-        SemIR::RequireSpecificDefinition{
-            .type_id = GetSingletonType(
-                context, SemIR::RequireSpecificDefinitionType::TypeInstId),
-            .specific_id = specific_id});
-  }
-
   return SemIR::GetConstantValueInSpecific(context.sem_ir(), specific_id,
                                            impl.witness_id);
 }

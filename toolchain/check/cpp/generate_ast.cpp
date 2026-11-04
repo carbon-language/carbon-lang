@@ -573,6 +573,27 @@ auto CarbonExternalASTSource::CompleteType(clang::TagDecl* tag_decl) -> void {
                                     virtual_fn.method_decl);
     }
   }
+
+  // Export friends.
+  for (auto friend_scope : class_info.friend_scopes.entries()) {
+    auto friend_inst_id = context_->constant_values().GetInstId(friend_scope);
+    if (auto friend_class_type =
+            context_->insts().TryGetAs<SemIR::ClassType>(friend_inst_id)) {
+      const auto& friend_class_info =
+          context_->classes().Get(friend_class_type->class_id);
+      if (const auto* friend_clang_decl = context_->clang_decls().Lookup(
+              friend_class_info.first_decl_id())) {
+        auto* friend_tag_decl =
+            llvm::cast<clang::TagDecl>(friend_clang_decl->decl());
+        auto* friend_tsi = context_->ast_context().getTrivialTypeSourceInfo(
+            context_->ast_context().getCanonicalTagType(friend_tag_decl));
+        clang::FriendDecl::Create(context_->ast_context(), class_decl,
+                                  /*L=*/clang::SourceLocation(), friend_tsi,
+                                  /*FL=*/clang::SourceLocation());
+      }
+    }
+    // TODO: support other kinds of friends.
+  }
 }
 
 auto CarbonExternalASTSource::layoutRecordType(

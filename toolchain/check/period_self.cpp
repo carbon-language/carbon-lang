@@ -101,14 +101,14 @@ class SubstPeriodSelfCallbacks : public SubstInstCallbacks {
     return SubstOperandsSkipType;
   }
 
-  auto Rebuild(SemIR::InstId orig_inst_id, SemIR::Inst new_inst)
+  auto Rebuild(SemIR::InstId /*orig_inst_id*/, SemIR::Inst new_inst)
       -> SemIR::InstId override {
     if (rebuild_callback_) {
       if (auto inst_id = rebuild_callback_(new_inst); inst_id.has_value()) {
         return inst_id;
       }
     }
-    return RebuildNewInst(SemIR::LocId(orig_inst_id), new_inst);
+    return RebuildNewInst(loc_id_, new_inst);
   }
 
  private:
