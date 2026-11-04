@@ -25,7 +25,7 @@ template <typename T>
 constexpr auto DefaultInlineCapacity() -> int32_t {
   auto base_size =
       // chunks_.
-      sizeof(llvm::SmallVector<T, 0>) +
+      sizeof(llvm::SmallVector<T*, 0>) +
       // used_chunks_.
       sizeof(int32_t) +
       // size_in_last_chunk_.
