@@ -131,7 +131,7 @@ jobs:
           PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
           # A CarbonInfraBot token that can push to this repository. A push with
           # `GITHUB_TOKEN` wouldn't trigger CI for the new commit.
-          PUSH_TOKEN: ${{ secrets.CARBON_INFRA_BOT_FOR_PREK_FIXES }}
+          PUSH_TOKEN: ${{ secrets.CARBON_INFRA_BOT_DEPENDABOT_FIXES }}
         run: |
           # Check the PR itself, rather than trusting the artifact.
           if [[ -z "$PR_NUMBER" ]]; then
@@ -169,7 +169,7 @@ jobs:
             exit 1
           fi
           if [[ -z "$PUSH_TOKEN" ]]; then
-            echo "::error::CARBON_INFRA_BOT_FOR_PREK_FIXES isn't available."
+            echo "::error::CARBON_INFRA_BOT_DEPENDABOT_FIXES isn't available."
             exit 1
           fi
 
