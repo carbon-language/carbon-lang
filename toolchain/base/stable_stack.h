@@ -75,34 +75,23 @@ class StableStack {
       : heap_(std::exchange(rhs.heap_, {})),
         used_chunks_(std::exchange(rhs.used_chunks_, 0)),
         size_in_last_chunk_(std::exchange(rhs.size_in_last_chunk_, 0)) {
-    auto inline_size =
-        used_chunks_ > 1 ? FirstChunkCapacity() : size_in_last_chunk_;
-    __asan_unpoison_memory_region(inline_.array(), inline_size * sizeof(T));
-    std::uninitialized_move_n(rhs.inline_.array(), inline_size,
-                              inline_.array());
-    std::destroy_n(rhs.inline_.array(), inline_size);
+    MoveConstructInlineChunkFrom(rhs);
   }
   auto operator=(StableStack&& rhs) noexcept -> StableStack& {
     if (this == &rhs) {
       return *this;
     }
 
+    // TODO: We could reuse existing elements in `inline_` by calling
+    // `operator=` on them instead of destroying and reconstructing always.
+    //
     // TODO: This is broken for assignment-from-subobject, where this would
     // destroy the `rhs`.
     DestroyAll();
-
-    // TODO: We could move-assign to existing elements in `inline_` instead of
-    // destroy and reconstructing.
-    auto inline_size =
-        rhs.used_chunks_ > 1 ? FirstChunkCapacity() : rhs.size_in_last_chunk_;
-    __asan_unpoison_memory_region(inline_.array(), inline_size * sizeof(T));
-    std::uninitialized_move_n(rhs.inline_.array(), inline_size,
-                              inline_.array());
-    std::destroy_n(rhs.inline_.array(), inline_size);
-
     heap_ = std::exchange(rhs.heap_, {});
     used_chunks_ = std::exchange(rhs.used_chunks_, 0);
     size_in_last_chunk_ = std::exchange(rhs.size_in_last_chunk_, 0);
+    MoveConstructInlineChunkFrom(rhs);
     return *this;
   }
 
@@ -309,6 +298,17 @@ class StableStack {
         __asan_poison_memory_region(array + size, (cap - size) * sizeof(T));
       }
     }
+  }
+
+  // Move-constructs elements that are stored inline in `rhs` into this stack,
+  // and destroys the inline elements in `rhs`.
+  auto MoveConstructInlineChunkFrom(StableStack& rhs) -> void {
+    auto inline_size =
+        used_chunks_ > 1 ? FirstChunkCapacity() : size_in_last_chunk_;
+    __asan_unpoison_memory_region(inline_.array(), inline_size * sizeof(T));
+    std::uninitialized_move_n(rhs.inline_.array(), inline_size,
+                              inline_.array());
+    std::destroy_n(rhs.inline_.array(), inline_size);
   }
 
   // Destroy all the elements in the stack and free the arrays in the chunks.
