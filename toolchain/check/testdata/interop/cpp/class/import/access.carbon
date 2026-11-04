@@ -1289,6 +1289,11 @@ class B {
 
 inline Cpp '''
 int F() {
+  // CHECK:STDERR: fail_access_private_parent_member_in_unrelated_fn.carbon:[[@LINE+5]]:14: error: 'x' is a private member of 'Carbon::Main::A' [CppInteropParseError]
+  // CHECK:STDERR: fail_access_private_parent_member_in_unrelated_fn.carbon:[[@LINE-10]]:23: note: implicitly declared private here [CppInteropParseNote]
+  // CHECK:STDERR:
+  // CHECK:STDERR: fail_access_private_parent_member_in_unrelated_fn.carbon:[[@LINE+2]]:3-14: warning: expression result unused [CppInteropParseWarning]
+  // CHECK:STDERR:
   Carbon::B::x;
 }
 ''';

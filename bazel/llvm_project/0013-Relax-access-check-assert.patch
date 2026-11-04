@@ -1,0 +1,25 @@
+From d34e994fb3cabd7216e163d413c9051af5cb589b Mon Sep 17 00:00:00 2001
+From: Nicholas Bishop <nicholasbishop@google.com>
+Date: Wed, 4 Nov 2026 13:38:18 -0500
+Subject: [PATCH] Relax access check assert
+
+---
+ clang/lib/Sema/SemaAccess.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/clang/lib/Sema/SemaAccess.cpp b/clang/lib/Sema/SemaAccess.cpp
+index cc2af8feb379..3ef7b431d327 100644
+--- a/clang/lib/Sema/SemaAccess.cpp
++++ b/clang/lib/Sema/SemaAccess.cpp
+@@ -1958,7 +1958,7 @@ static AccessResult IsAccessible(Sema &S, const EffectiveContext &EC,
+   if (!Path)
+     return AR_dependent;
+ 
+-  assert(Path->Access <= UnprivilegedAccess &&
++  assert(((Path->Access <= UnprivilegedAccess) || (Path->Access == AS_none)) &&
+          "access along best path worse than direct?");
+   if (Path->Access == AS_public)
+     return AR_accessible;
+-- 
+2.56.0.455.g6c5a503b38-goog
+
