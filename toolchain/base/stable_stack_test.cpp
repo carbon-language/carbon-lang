@@ -39,8 +39,9 @@ TEST(StableStack, Growth) {
   }
 }
 
-template <typename T, typename F>
-static auto GrowCapacityTimes(StableStack<T>& stack, int n, F factory) -> void {
+template <typename T, typename F, int32_t N>
+static auto GrowCapacityTimes(StableStack<T, N>& stack, int n, F factory)
+    -> void {
   while (n) {
     auto capacity = stack.capacity();
     while (stack.capacity() == capacity) {
@@ -444,10 +445,21 @@ TEST(StableStack, Equal) {
   }
 }
 
+TEST(StableStack, IncompleteType) {
+  struct S {
+    // The default inline capacity computation requires knowing the size of S
+    // which is incomplete here. Verify that we can pass 0 and use the
+    // StableStack type with an incomplete type.
+    StableStack<S, 0>* stack;
+  };
+  StableStack<S, 0> stack;
+  S _ = {.stack = &stack};
+}
+
 TEST(StableStack, EmptyDuringDestroy) {
   bool test_empty = false;
   struct S {
-    StableStack<S>* stack;
+    StableStack<S, 0>* stack;
     bool* test_empty;
 
     ~S() {
@@ -456,12 +468,124 @@ TEST(StableStack, EmptyDuringDestroy) {
       }
     }
   };
-  StableStack<S> stack;
+  StableStack<S, 0> stack;
   GrowCapacityTimes(
       stack, 3, [&] { return S{.stack = &stack, .test_empty = &test_empty}; });
 
   // `S` tests that `stack` appears empty while each `S` is destroyed.
   test_empty = true;
+}
+
+template <int32_t Size, int32_t Alignment = 1>
+struct Bytes {
+  alignas(Alignment) char a[Size];
+};
+
+TEST(StableStack, DefaultInlineCapacity) {
+  {
+    // Can hold five of these in the inline capacity, so the default is 5.
+    StableStack<Bytes<8>> stack;
+    static_assert(sizeof(stack) > size_t{10} * 5);
+    static_assert(sizeof(stack) <= size_t{64});
+    EXPECT_EQ(stack.capacity(), 5);
+    stack.Push({});
+    stack.Push({});
+    stack.Push({});
+    stack.Push({});
+    stack.Push({});
+    stack.Push({});
+    // Growth factor of 2.
+    EXPECT_EQ(stack.capacity(), 5 + (5 * 2));
+    EXPECT_EQ(stack.size(), 6);
+  }
+
+  {
+    // Can hold four of these in the inline capacity, so the default is 4.
+    StableStack<Bytes<10>> stack;
+    static_assert(sizeof(stack) > size_t{10} * 4);
+    static_assert(sizeof(stack) <= size_t{64});
+    EXPECT_EQ(stack.capacity(), 4);
+    stack.Push({});
+    stack.Push({});
+    stack.Push({});
+    stack.Push({});
+    stack.Push({});
+    // Growth factor of 2.
+    EXPECT_EQ(stack.capacity(), 4 + (4 * 2));
+    EXPECT_EQ(stack.size(), 5);
+  }
+
+  {
+    // Can hold three of these in the inline capacity, so the default is 3.
+    StableStack<Bytes<12>> stack;
+    static_assert(sizeof(stack) > size_t{10} * 3);
+    static_assert(sizeof(stack) <= size_t{64});
+    EXPECT_EQ(stack.capacity(), 3);
+    stack.Push({});
+    stack.Push({});
+    stack.Push({});
+    stack.Push({});
+    // Growth factor of 2.
+    EXPECT_EQ(stack.capacity(), 3 + (3 * 2));
+    EXPECT_EQ(stack.size(), 4);
+  }
+
+  // Can hold two of these in the inline capacity, so the default is 2.
+  {
+    StableStack<Bytes<16>> stack;
+    static_assert(sizeof(stack) > size_t{16} * 2);
+    static_assert(sizeof(stack) <= size_t{64});
+    EXPECT_EQ(stack.capacity(), 2);
+    stack.Push({});
+    stack.Push({});
+    stack.Push({});
+    // Growth factor of 2.
+    EXPECT_EQ(stack.capacity(), 2 + (2 * 2));
+    EXPECT_EQ(stack.size(), 3);
+  }
+
+  // Can hold two of these in the inline capacity, so the default is 2.
+  {
+    StableStack<Bytes<10, 16>> stack;
+    static_assert(sizeof(stack) > size_t{16} * 2);
+    static_assert(sizeof(stack) <= size_t{64});
+    EXPECT_EQ(stack.capacity(), 2);
+    stack.Push({});
+    stack.Push({});
+    stack.Push({});
+    // Growth factor of 2.
+    EXPECT_EQ(stack.capacity(), 2 + (2 * 2));
+    EXPECT_EQ(stack.size(), 3);
+  }
+
+  {
+    // Can hold one of these in the inline capacity, so the default is 1.
+    StableStack<Bytes<32>> stack;
+    static_assert(sizeof(stack) > size_t{32} * 1);
+    static_assert(sizeof(stack) <= size_t{64});
+    EXPECT_EQ(stack.capacity(), 1);
+    stack.Push({});
+    stack.Push({});
+    // Growth factor of 2.
+    EXPECT_EQ(stack.capacity(), 1 + (1 * 2));
+    EXPECT_EQ(stack.size(), 2);
+  }
+
+  {
+    // Too large to hold in the default inline capacity, so the default is 0.
+    StableStack<Bytes<64>> stack;
+    static_assert(sizeof(stack) <= 64);
+    EXPECT_EQ(stack.capacity(), 0);
+    stack.Push({});
+    auto cap = stack.capacity();
+    EXPECT_GT(cap, 0);
+    while (stack.capacity() == cap) {
+      stack.Push({});
+    }
+    // Growth factor of 2.
+    EXPECT_EQ(stack.capacity(), cap + (cap * 2));
+    EXPECT_EQ(stack.size(), cap + 1);
+  }
 }
 
 }  // namespace
