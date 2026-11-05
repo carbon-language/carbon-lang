@@ -113,9 +113,8 @@ class StableStack {
     return Get(chunk, index);
   }
 
-  // Returns a reference to an element in the stack. By default it returns the
-  // most recently pushed element at the back of the stack. But `n` may be used
-  // to specify a distance from that element into the stack.
+  // Returns a reference to an element in the stack at distance `n` from the
+  // back of the stack.
   auto Peek(int32_t n) const -> const T& {
     CARBON_CHECK(!empty(), "Peek on an empty stack");
     CARBON_CHECK(n >= 0, "Peek index invalid");

@@ -346,8 +346,8 @@ TEST(StableStack, MoveStack) {
 
     // Move construction.
     StableStack<Counter> stack2 = std::move(stack);
-    // Inline elements are constructed in `stack2` and destroyed in `stack`.
-    EXPECT_EQ(constructed, destroyed);
+    EXPECT_EQ(constructed, 0);
+    EXPECT_EQ(destroyed, 0);
     constructed = destroyed = 0;
 
     // Moving leaves the source empty.
@@ -372,8 +372,8 @@ TEST(StableStack, MoveStack) {
 
     // Move assignment to empty.
     stack3 = std::move(stack2);
-    // Inline elements are constructed in `stack3` and destroyed in `stack2`.
-    EXPECT_EQ(constructed, destroyed);
+    EXPECT_EQ(constructed, 0);
+    EXPECT_EQ(destroyed, 0);
     constructed = destroyed = 0;
 
     stack.Push(Counter(0, &constructed, &destroyed));
@@ -381,9 +381,9 @@ TEST(StableStack, MoveStack) {
 
     // Move assignment to non-empty. We destroy the LHS.
     stack = std::move(stack3);
-    // The single element in `stack` is destroyed. Then inline elements are
-    // destroyed in `stack3` and constructed in `stack`.
-    EXPECT_EQ(constructed + 1, destroyed);
+    // The single element in `stack` is destroyed.
+    EXPECT_EQ(constructed, 0);
+    EXPECT_EQ(destroyed, 1);
     constructed = destroyed = 0;
 
     // Move assignment from empty.
@@ -522,9 +522,8 @@ TEST(StableStack, Equal) {
 
 TEST(StableStack, IncompleteType) {
   struct S {
-    // The default inline capacity computation requires knowing the size of S
-    // which is incomplete here. Verify that we can pass 0 and use the
-    // StableStack type with an incomplete type.
+    // Ensure we can form the StableStack type with an incomplete type
+    // parameter.
     StableStack<S>* stack;
   };
   StableStack<S> stack;
@@ -550,11 +549,6 @@ TEST(StableStack, EmptyDuringDestroy) {
   // `S` tests that `stack` appears empty while each `S` is destroyed.
   test_empty = true;
 }
-
-template <int32_t Size, int32_t Alignment = 1>
-struct Bytes {
-  alignas(Alignment) char a[Size];
-};
 
 }  // namespace
 }  // namespace Carbon
