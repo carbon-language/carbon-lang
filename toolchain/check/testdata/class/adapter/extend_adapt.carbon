@@ -64,7 +64,7 @@ fn F(a: SomeClassAdapter) {
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·   ╰────┤ type `SomeClassAdapter` does not implement interface
   // CHECK:STDERR:        ·        │ `Core.ImplicitAs(SomeClass)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   a.F();
@@ -92,7 +92,7 @@ fn F(a: SomeClassAdapter) -> i32 {
   // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·          ╰────┤ type `SomeClassAdapter` does not implement interface
   // CHECK:STDERR:        ·               │ `Core.ImplicitAs(SomeClass)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a.b;
@@ -108,7 +108,11 @@ class StructAdapter {
 
 fn F(a: StructAdapter) -> i32 {
   // TODO: This should be allowed.
-  // CHECK:STDERR:        ╭─┤ fail_todo_adapt_struct.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR:        ╭─┤ fail_todo_adapt_struct.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR:        │ class StructAdapter {
+  // CHECK:STDERR:        · ──────────┬──────────
+  // CHECK:STDERR:        ·           ╰──┤ `StructAdapter` defined here [MemberNameNotFoundScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return a.b;
   // CHECK:STDERR:        ·          ━┳━
   // CHECK:STDERR:        ·           ┗━━┫ error: member name `b` not found in `StructAdapter`
@@ -151,7 +155,11 @@ class IntAdapter {
 
 fn F(a: IntAdapter) -> i32 {
   // Builtin types have no member names.
-  // CHECK:STDERR:        ╭─┤ fail_adapt_builtin.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR:        ╭─┤ fail_adapt_builtin.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR:        │ class IntAdapter {
+  // CHECK:STDERR:        · ─────────┬────────
+  // CHECK:STDERR:        ·          ╰──┤ `IntAdapter` defined here [MemberNameNotFoundScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return a.foo;
   // CHECK:STDERR:        ·          ━━┳━━
   // CHECK:STDERR:        ·            ┗━━┫ error: member name `foo` not found in `IntAdapter`

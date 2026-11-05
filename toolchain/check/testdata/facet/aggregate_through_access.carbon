@@ -57,13 +57,16 @@ interface Z {
   let X: type;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_todo_array_access_through_witness.carbon:[[@LINE+9]]:47
+// CHECK:STDERR:        ╭─┤ fail_todo_array_access_through_witness.carbon:[[@LINE+12]]:51
 // CHECK:STDERR: ->     │ fn F(generic T: Z where .X = array({}, 1)) -> T.X[0] {
-// CHECK:STDERR:        ·                                               ━━━┳━━
-// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-// CHECK:STDERR:        · ┃ error: cannot access member of interface `Core.IndexWith(Core.IntLiteral)` in
-// CHECK:STDERR:        · ┃        type `type` that does not implement that interface
-// CHECK:STDERR:        · ┃        [MissingImplInMemberAccess]
+// CHECK:STDERR:        ·                                               ─┬─ ┳
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: type `type` does not implement interface
+// CHECK:STDERR:        · ┃        `Core.IndexWith(Core.IntLiteral)`
+// CHECK:STDERR:        · ┃        [MissingImplForType]
+// CHECK:STDERR:        ·                                                ╰─────┤ indexing an object with
+// CHECK:STDERR:        ·                                                      │ type `type`
+// CHECK:STDERR:        ·                                                      │ [IndexedObjectType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: Z where .X = array({}, 1)) -> T.X[0] {

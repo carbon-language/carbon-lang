@@ -53,16 +53,16 @@ fn H(x: ());
 fn H(unused x: bool) {}
 
 fn I();
-// CHECK:STDERR:        ╭─┤ fail_decl_param_mismatch.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        ╭─┤ fail_decl_param_mismatch.carbon:[[@LINE+12]]:11
 // CHECK:STDERR:        │ fn I();
 // CHECK:STDERR:        · ───┬───
 // CHECK:STDERR:        ·    ╰──┤ previously declared with no return type
 // CHECK:STDERR:        ·       │ [FunctionRedeclReturnTypePreviousNoReturn]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn I() -> () { return (); }
-// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
-// CHECK:STDERR:        ·        ┗━━┫ error: function redeclaration differs because return type is `()`
-// CHECK:STDERR:        ·           ┃        [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR:        ·           ┳━
+// CHECK:STDERR:        ·           ┗━━┫ error: function redeclaration differs because return type is `()`
+// CHECK:STDERR:        ·              ┃        [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn I() -> () { return (); }
@@ -70,9 +70,9 @@ fn I() -> () { return (); }
 fn J() -> ();
 // CHECK:STDERR:        ╭─┤ fail_decl_param_mismatch.carbon:[[@LINE+12]]:1
 // CHECK:STDERR:        │ fn J() -> ();
-// CHECK:STDERR:        · ──────┬──────
-// CHECK:STDERR:        ·       ╰──┤ previously declared with return type `()`
-// CHECK:STDERR:        ·          │ [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ·           ─┬
+// CHECK:STDERR:        ·            ╰──┤ previously declared with return type `()`
+// CHECK:STDERR:        ·               │ [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn J() {}
 // CHECK:STDERR:        · ━━━┳━━━━
@@ -83,16 +83,16 @@ fn J() -> ();
 fn J() {}
 
 fn K() -> ();
-// CHECK:STDERR:        ╭─┤ fail_decl_param_mismatch.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        ╭─┤ fail_decl_param_mismatch.carbon:[[@LINE+12]]:11
 // CHECK:STDERR:        │ fn K() -> ();
-// CHECK:STDERR:        · ──────┬──────
-// CHECK:STDERR:        ·       ╰──┤ previously declared with return type `()`
-// CHECK:STDERR:        ·          │ [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ·           ─┬
+// CHECK:STDERR:        ·            ╰──┤ previously declared with return type `()`
+// CHECK:STDERR:        ·               │ [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn K() -> {} { return {}; }
-// CHECK:STDERR:        · ━━━━━━━┳━━━━━━
-// CHECK:STDERR:        ·        ┗━━┫ error: function redeclaration differs because return type is `{}`
-// CHECK:STDERR:        ·           ┃        [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR:        ·           ┳━
+// CHECK:STDERR:        ·           ┗━━┫ error: function redeclaration differs because return type is `{}`
+// CHECK:STDERR:        ·              ┃        [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn K() -> {} { return {}; }

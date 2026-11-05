@@ -60,7 +60,7 @@ fn Access(a: Adapter) -> i32 {
   // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·          ╰────┤ type `Adapter` does not implement interface
   // CHECK:STDERR:        ·               │ `Core.ImplicitAs(C(i32))`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a.x;
@@ -97,7 +97,7 @@ fn ImportedAccess(a: Adapter) -> i32 {
   // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·          ╰────┤ type `Adapter` does not implement interface
   // CHECK:STDERR:        ·               │ `Core.ImplicitAs(C(i32))`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a.x;

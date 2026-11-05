@@ -106,21 +106,19 @@ import Cpp library "postfix_inc_and_dec.h";
 
 fn F() {
   var postfix: Cpp.Postfix = Cpp.Postfix.Postfix();
-  // CHECK:STDERR:        ╭─┤ fail_postfix_calling_prefix.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_postfix_calling_prefix.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   ++postfix;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.Inc` in type `Cpp.Postfix`
-  // CHECK:STDERR:        ·      ┃        that does not implement that interface
-  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·   ━┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: type `Cpp.Postfix` does not implement interface `Core.Inc`
+  // CHECK:STDERR:        ·       ┃        [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ++postfix;
-  // CHECK:STDERR:        ╭─┤ fail_postfix_calling_prefix.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR:        ╭─┤ fail_postfix_calling_prefix.carbon:[[@LINE+7]]:3
   // CHECK:STDERR: ->     │   --postfix;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.Dec` in type `Cpp.Postfix`
-  // CHECK:STDERR:        ·      ┃        that does not implement that interface
-  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·   ━┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: type `Cpp.Postfix` does not implement interface `Core.Dec`
+  // CHECK:STDERR:        ·       ┃        [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   --postfix;
@@ -236,15 +234,15 @@ fn F() {
   var c: Cpp.BinaryC = {};
 
   // Simple assignment.
-  // CHECK:STDERR:        ╭─┤ fail_todo_import_assignment.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_assignment.carbon:[[@LINE+11]]:7
   // CHECK:STDERR: ->     │   c = 42;
-  // CHECK:STDERR:        ·   ┳━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Core.IntLiteral` to
-  // CHECK:STDERR:        ·   │  ┃        `Cpp.BinaryC`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.BinaryC)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·       ┳━
+  // CHECK:STDERR:        ·       ┗━━┫ error: cannot implicitly convert expression of type `Core.IntLiteral`
+  // CHECK:STDERR:        ·       │  ┃        to `Cpp.BinaryC`
+  // CHECK:STDERR:        ·       │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·       ╰────┤ type `Core.IntLiteral` does not implement interface
+  // CHECK:STDERR:        ·            │ `Core.ImplicitAs(Cpp.BinaryC)`
+  // CHECK:STDERR:        ·            │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c = 42;
@@ -275,25 +273,33 @@ import Cpp library "binary_operators.h";
 fn F() {
   let c1: Cpp.BinaryC = Cpp.BinaryC.BinaryC();
   // TODO: Include a list of non-viable candidate operators with this diagnostic.
-  // CHECK:STDERR:        ╭─┤ fail_call_with_wrong_type.carbon:[[@LINE+10]]:32
+  // CHECK:STDERR:        ╭─┤ fail_call_with_wrong_type.carbon:[[@LINE+14]]:35
   // CHECK:STDERR: ->     │   let unused c2: Cpp.BinaryC = c1 + 5;
-  // CHECK:STDERR:        ·                                ┳━━━━━
-  // CHECK:STDERR:        ·                                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                                   ┃        `Core.AddWith(Core.IntLiteral)` in
-  // CHECK:STDERR:        ·                                   ┃        type `Cpp.BinaryC` that does not
-  // CHECK:STDERR:        ·                                   ┃        implement that interface
-  // CHECK:STDERR:        ·                                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                                ─┬ ┳ ┬
+  // CHECK:STDERR:        ·                                 │ ┗━━━━┫ error: type `Cpp.BinaryC` does not
+  // CHECK:STDERR:        ·                                 │   │  ┃        implement interface
+  // CHECK:STDERR:        ·                                 │   │  ┃        `Core.AddWith(Core.IntLiteral)`
+  // CHECK:STDERR:        ·                                 │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                                 ╰────────┤ left operand has type `BinaryC`
+  // CHECK:STDERR:        ·                                     │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                                     ╰──────┤ right operand has type
+  // CHECK:STDERR:        ·                                            │ `Core.IntLiteral`
+  // CHECK:STDERR:        ·                                            │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c2: Cpp.BinaryC = c1 + 5;
-  // CHECK:STDERR:        ╭─┤ fail_call_with_wrong_type.carbon:[[@LINE+10]]:32
+  // CHECK:STDERR:        ╭─┤ fail_call_with_wrong_type.carbon:[[@LINE+14]]:34
   // CHECK:STDERR: ->     │   let unused c3: Cpp.BinaryC = 6 + c1;
-  // CHECK:STDERR:        ·                                ┳━━━━━
-  // CHECK:STDERR:        ·                                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                                   ┃        `Core.AddWith(Cpp.BinaryC)` in type
-  // CHECK:STDERR:        ·                                   ┃        `Core.IntLiteral` that does not
-  // CHECK:STDERR:        ·                                   ┃        implement that interface
-  // CHECK:STDERR:        ·                                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                                ┬ ┳ ┬─
+  // CHECK:STDERR:        ·                                │ ┗━━━━┫ error: type `Core.IntLiteral` does not
+  // CHECK:STDERR:        ·                                │   │  ┃        implement interface
+  // CHECK:STDERR:        ·                                │   │  ┃        `Core.AddWith(Cpp.BinaryC)`
+  // CHECK:STDERR:        ·                                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                                ╰────────┤ left operand has type
+  // CHECK:STDERR:        ·                                    │    │ `Core.IntLiteral`
+  // CHECK:STDERR:        ·                                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                                    ╰──────┤ right operand has type `BinaryC`
+  // CHECK:STDERR:        ·                                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c3: Cpp.BinaryC = 6 + c1;
@@ -552,16 +558,18 @@ import Cpp library "plus_with_string_view_conversion.h";
 fn F() {
   let s1: str = "hello";
   let s2: str = "world";
-  // CHECK:STDERR:        ╭─┤ fail_todo_import_plus_with_string_view_conversion.carbon:[[@LINE+12]]:46
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_plus_with_string_view_conversion.carbon:[[@LINE+14]]:49
   // CHECK:STDERR: ->     │   let unused c: Cpp.StringViewConvertibleC = s1 + s2;
-  // CHECK:STDERR:        ·                                              ┳━━━━━━
-  // CHECK:STDERR:        ·                                              ┗━━┫ error: cannot access member of
-  // CHECK:STDERR:        ·                                                 ┃        interface
-  // CHECK:STDERR:        ·                                                 ┃        `Core.AddWith(str)` in
-  // CHECK:STDERR:        ·                                                 ┃        type `str` that does
-  // CHECK:STDERR:        ·                                                 ┃        not implement that
-  // CHECK:STDERR:        ·                                                 ┃        interface
-  // CHECK:STDERR:        ·                                                 ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                                              ─┬ ┳ ┬─
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ │
+  // CHECK:STDERR:        · ┃ error: type `str` does not implement interface `Core.AddWith(str)`
+  // CHECK:STDERR:        · ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                                               ╰──────┤ left operand has type
+  // CHECK:STDERR:        ·                                                   │  │ `str`
+  // CHECK:STDERR:        ·                                                   │  │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                                                   ╰────┤ right operand has type
+  // CHECK:STDERR:        ·                                                        │ `str`
+  // CHECK:STDERR:        ·                                                        │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c: Cpp.StringViewConvertibleC = s1 + s2;
@@ -866,14 +874,17 @@ fn F() {
   //@dump-sem-ir-begin
   let c1: Cpp.GlobalOpN.C = Cpp.GlobalOpN.C.C();
   let c2: Cpp.GlobalOpN.C = Cpp.GlobalOpN.C.C();
-  // CHECK:STDERR:        ╭─┤ fail_todo_import_operands_in_namespace_operator_in_global.carbon:[[@LINE+10]]:36
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_operands_in_namespace_operator_in_global.carbon:[[@LINE+13]]:39
   // CHECK:STDERR: ->     │   let unused c3: Cpp.GlobalOpN.C = c1 + c2;
-  // CHECK:STDERR:        ·                                    ┳━━━━━━
-  // CHECK:STDERR:        ·                                    ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                                       ┃        `Core.AddWith(Cpp.GlobalOpN.C)`
-  // CHECK:STDERR:        ·                                       ┃        in type `Cpp.GlobalOpN.C` that
-  // CHECK:STDERR:        ·                                       ┃        does not implement that interface
-  // CHECK:STDERR:        ·                                       ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                                    ─┬ ┳ ─┬
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛  │
+  // CHECK:STDERR:        · ┃ error: type `Cpp.GlobalOpN.C` does not implement interface
+  // CHECK:STDERR:        · ┃        `Core.AddWith(Cpp.GlobalOpN.C)`
+  // CHECK:STDERR:        · ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                                     ╰───────┤ left operand has type `C`
+  // CHECK:STDERR:        ·                                          │  │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                                          ╰────┤ right operand has type `C`
+  // CHECK:STDERR:        ·                                               │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c3: Cpp.GlobalOpN.C = c1 + c2;
@@ -981,14 +992,18 @@ import Cpp library "not_found.h";
 fn F() {
   let c1: Cpp.NoOperators = Cpp.NoOperators.NoOperators();
   let c2: Cpp.NoOperators = Cpp.NoOperators.NoOperators();
-  // CHECK:STDERR:        ╭─┤ fail_import_not_found.carbon:[[@LINE+10]]:36
+  // CHECK:STDERR:        ╭─┤ fail_import_not_found.carbon:[[@LINE+14]]:39
   // CHECK:STDERR: ->     │   let unused c3: Cpp.NoOperators = c1 + c2;
-  // CHECK:STDERR:        ·                                    ┳━━━━━━
-  // CHECK:STDERR:        ·                                    ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                                       ┃        `Core.AddWith(Cpp.NoOperators)`
-  // CHECK:STDERR:        ·                                       ┃        in type `Cpp.NoOperators` that
-  // CHECK:STDERR:        ·                                       ┃        does not implement that interface
-  // CHECK:STDERR:        ·                                       ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                                    ─┬ ┳ ┬─
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛ │
+  // CHECK:STDERR:        · ┃ error: type `Cpp.NoOperators` does not implement interface
+  // CHECK:STDERR:        · ┃        `Core.AddWith(Cpp.NoOperators)`
+  // CHECK:STDERR:        · ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                                     ╰──────┤ left operand has type `NoOperators`
+  // CHECK:STDERR:        ·                                         │  │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                                         ╰────┤ right operand has type
+  // CHECK:STDERR:        ·                                              │ `NoOperators`
+  // CHECK:STDERR:        ·                                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c3: Cpp.NoOperators = c1 + c2;
@@ -1140,13 +1155,16 @@ using FailTemplateX = FailTemplateB<FailTemplateA<int>>;
 ''';
 
 fn F(x: Cpp.FailTemplateX) -> i32 {
-  // CHECK:STDERR:        ╭─┤ fail_indirect_template_instantiation_error.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR:        ╭─┤ fail_indirect_template_instantiation_error.carbon:[[@LINE+12]]:12
   // CHECK:STDERR: ->     │   return x + x;
-  // CHECK:STDERR:        ·          ┳━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·             ┃        `Core.AddWith(Cpp.FailTemplateB)` in type
-  // CHECK:STDERR:        ·             ┃        `Cpp.FailTemplateB` that does not implement that interface
-  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·          ┬ ┳ ┬
+  // CHECK:STDERR:        ·          │ ┗━━━━┫ error: type `Cpp.FailTemplateB` does not implement interface
+  // CHECK:STDERR:        ·          │   │  ┃        `Core.AddWith(Cpp.FailTemplateB)`
+  // CHECK:STDERR:        ·          │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·          ╰────────┤ left operand has type `FailTemplateX`
+  // CHECK:STDERR:        ·              │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·              ╰──────┤ right operand has type `FailTemplateX`
+  // CHECK:STDERR:        ·                     │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return x + x;
@@ -3161,10 +3179,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref: %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc20: type = splice_block %C.ref.loc20 [concrete = constants.%C] {
-// CHECK:STDOUT:     %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %GlobalOpN.ref.loc20: <namespace> = name_ref GlobalOpN, imports.%GlobalOpN [concrete = imports.%GlobalOpN]
-// CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc23: type = splice_block %C.ref.loc23 [concrete = constants.%C] {
+// CHECK:STDOUT:     %Cpp.ref.loc23: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %GlobalOpN.ref.loc23: <namespace> = name_ref GlobalOpN, imports.%GlobalOpN [concrete = imports.%GlobalOpN]
+// CHECK:STDOUT:     %C.ref.loc23: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c3: %C = wrapper_binding c3, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

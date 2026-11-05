@@ -40,7 +40,7 @@ interface I {
 // CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·            ╰────┤ type `Core.IntLiteral` does not implement interface
 // CHECK:STDERR:        ·                 │ `Core.ImplicitAs({})`
-// CHECK:STDERR:        ·                 │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                 │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl {} as I where .V = 0 {}

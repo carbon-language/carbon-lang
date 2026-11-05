@@ -316,7 +316,7 @@ fn F() {
   // CHECK:STDERR:        ·           │  ┃        `i16`
   // CHECK:STDERR:        ·           │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·           ╰────┤ type `i32` does not implement interface `Core.ImplicitAs(i16)`
-  // CHECK:STDERR:        ·                │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./short_param.h
   // CHECK:STDERR:        │ auto foo(short a) -> void;

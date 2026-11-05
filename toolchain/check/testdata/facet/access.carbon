@@ -155,7 +155,7 @@ fn F(generic U: Core.Destroy & I where .X = .Self) {
   // CHECK:STDERR:        ·   │  ┃        implementing `I`
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `U` does not implement interface `Core.ImplicitAs(I)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   u.(I.G)();
@@ -170,7 +170,7 @@ fn F(generic U: Core.Destroy & I where .X = .Self) {
   // CHECK:STDERR:        ·   │  ┃        implementing `I`
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `U` does not implement interface `Core.ImplicitAs(I)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   U.(I.G)().(I.G)();
@@ -414,7 +414,7 @@ fn F(generic V: Z(.Self)) {
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·   ╰────┤ type `{}` does not implement interface
   // CHECK:STDERR:        ·        │ `Core.As(V.(Z(V).Z1).(Y(V).Y1).(X.X1))`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   {} as V.(Z(V).Z1).(Y(V).Y1).(X.X1);
@@ -481,13 +481,21 @@ constraint NY(PeriodSelf: type) {
 // `(C as Y(T)).Y1` but we currently only look in `C`. See the TODO in
 // `TryFindValueInRewriteConstraints()`.
 fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
-  // CHECK:STDERR:        ╭─┤ fail_todo_find_access_value_in_facet_from_specific_interface.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_find_access_value_in_facet_from_specific_interface.carbon:[[@LINE+17]]:10
+  // CHECK:STDERR:        │ fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
+  // CHECK:STDERR:        ·                                               ┬──────────
+  // CHECK:STDERR:        ·                                               ╰──┤ return type of function is
+  // CHECK:STDERR:        ·                                                  │ `C.(Y(T).Y1)`
+  // CHECK:STDERR:        ·                                                  │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return {};
-  // CHECK:STDERR:        ·   ┳━━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `{}` to `C.(Y(T).Y1)`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `{}` does not implement interface `Core.ImplicitAs(C.(Y(T).Y1))`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `{}` to
+  // CHECK:STDERR:        ·          │  ┃        `C.(Y(T).Y1)`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `{}` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(C.(Y(T).Y1))`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return {};

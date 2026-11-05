@@ -18,7 +18,7 @@ fn F(unused x: C = {}, unused y: C = {}, unused z: C = {}) {}
 fn H(unused x: C = {}, (unused y: C = {}, unused z: C = {}) = ({}, {})) {}
 
 fn G() {
-  // CHECK:STDERR:        ╭─┤ fail_caller_too_many_arguments.carbon:[[@LINE+22]]:3
+  // CHECK:STDERR:        ╭─┤ fail_caller_too_many_arguments.carbon:[[@LINE+26]]:3
   // CHECK:STDERR:        │ fn F(unused x: C = {}, unused y: C = {}, unused z: C = {}) {}
   // CHECK:STDERR:        · ──────────────────────────────┬─────────────────────────────
   // CHECK:STDERR:        ·                               ╰──┤ calling function declared here
@@ -38,6 +38,10 @@ fn G() {
   // CHECK:STDERR:        ·                        │  ┃        [TuplePatternSizeDoesntMatchLiteral]
   // CHECK:STDERR:        ·                        ╰────┤ initializing function parameter
   // CHECK:STDERR:        ·                             │ [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   H({}, ({}, {}, {}));
+  // CHECK:STDERR:        ·         ──────┬─────
+  // CHECK:STDERR:        ·               ╰──┤ tuple literal has 3 elements [TupleLiteralElementCount]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F({}, {}, {}, {});

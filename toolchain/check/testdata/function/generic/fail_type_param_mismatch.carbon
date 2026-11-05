@@ -12,15 +12,16 @@
 
 fn F(generic T: type, generic U: type) {
   var p: T*;
-  // CHECK:STDERR:        ╭─┤ fail_type_param_mismatch.carbon:[[@LINE+11]]:21
+  // CHECK:STDERR:        ╭─┤ fail_type_param_mismatch.carbon:[[@LINE+12]]:21
   // CHECK:STDERR: ->     │   let unused n: U = *p;
-  // CHECK:STDERR:        ·                     ┳━
-  // CHECK:STDERR:        ·                     ┗━━┫ error: cannot implicitly convert expression of type `T`
-  // CHECK:STDERR:        ·                     │  ┃        to `U`
-  // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                     ╰────┤ type `T` does not implement interface
-  // CHECK:STDERR:        ·                          │ `Core.ImplicitAs(U)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·              ──┬─   ┳━
+  // CHECK:STDERR:        ·                │    ┗━━┫ error: cannot implicitly convert expression of type `T`
+  // CHECK:STDERR:        ·                │    │  ┃        to `U`
+  // CHECK:STDERR:        ·                │    │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                ╰─────────┤ initializing this binding [InPatternInit]
+  // CHECK:STDERR:        ·                     ╰──────┤ type `T` does not implement interface
+  // CHECK:STDERR:        ·                            │ `Core.ImplicitAs(U)`
+  // CHECK:STDERR:        ·                            │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused n: U = *p;

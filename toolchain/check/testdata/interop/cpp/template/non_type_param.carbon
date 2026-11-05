@@ -41,15 +41,16 @@ library "[[@TEST_NAME]]";
 
 import Cpp library "templates.h";
 
-// CHECK:STDERR:        ╭─┤ fail_int_param_mismatch.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        ╭─┤ fail_int_param_mismatch.carbon:[[@LINE+12]]:26
 // CHECK:STDERR: ->     │ var s: Cpp.Simple(456) = Cpp.MakeSimple123();
-// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        · ┗━━┫ error: cannot implicitly convert expression of type `Cpp.Simple` to
-// CHECK:STDERR:        · │  ┃        `Cpp.Simple`
-// CHECK:STDERR:        · │  ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╰────┤ type `Cpp.Simple` does not implement interface
-// CHECK:STDERR:        ·      │ `Core.ImplicitAs(Cpp.Simple)`
-// CHECK:STDERR:        ·      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · ───────────┬──────────   ┳━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·            │             ┗━━┫ error: cannot implicitly convert expression of
+// CHECK:STDERR:        ·            │             │  ┃        type `Cpp.Simple` to `Cpp.Simple`
+// CHECK:STDERR:        ·            │             │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·            ╰──────────────────┤ initializing this variable [InPatternInit]
+// CHECK:STDERR:        ·                          ╰──────┤ type `Cpp.Simple` does not implement interface
+// CHECK:STDERR:        ·                                 │ `Core.ImplicitAs(Cpp.Simple)`
+// CHECK:STDERR:        ·                                 │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var s: Cpp.Simple(456) = Cpp.MakeSimple123();
@@ -151,7 +152,7 @@ import Cpp library "templates.h";
 // CHECK:STDERR:        ·                          │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·                          ╰────┤ type `type` does not implement interface
 // CHECK:STDERR:        ·                               │ `Core.ImplicitAs(i32)`
-// CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                               │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoNonType(1, Cpp.A) = {};
@@ -172,7 +173,7 @@ var n: i32;
 // CHECK:STDERR:        ·                          │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·                          ╰────┤ type `i32*` does not implement interface
 // CHECK:STDERR:        ·                               │ `Core.ImplicitAs(i32)`
-// CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                               │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: Cpp.TwoNonType(1, &n) = {};

@@ -28,16 +28,19 @@ library "[[@TEST_NAME]]";
 
 fn F(generic T: type, generic U: type) -> T*;
 
-// CHECK:STDERR:        ╭─┤ fail_different_return_type.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        ╭─┤ fail_different_return_type.carbon:[[@LINE+15]]:43
 // CHECK:STDERR:        │ fn F(generic T: type, generic U: type) -> T*;
-// CHECK:STDERR:        · ──────────────────────┬──────────────────────
-// CHECK:STDERR:        ·                       ╰──┤ previously declared with return type `T*`
-// CHECK:STDERR:        ·                          │ [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ·                                           ┬─
+// CHECK:STDERR:        ·                                           ╰──┤ previously declared with return
+// CHECK:STDERR:        ·                                              │ type `T*`
+// CHECK:STDERR:        ·                                              │ [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn F(generic T: type, generic U: type) -> U* {
-// CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        ·           ┗━━┫ error: function redeclaration differs because return type is `U*`
-// CHECK:STDERR:        ·              ┃        [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR:        ·                                           ┳━
+// CHECK:STDERR:        ·                                           ┗━━┫ error: function redeclaration
+// CHECK:STDERR:        ·                                              ┃        differs because return
+// CHECK:STDERR:        ·                                              ┃        type is `U*`
+// CHECK:STDERR:        ·                                              ┃        [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic T: type, generic U: type) -> U* {
@@ -246,7 +249,7 @@ fn F(generic U: type, generic T: type) -> U* {
 // CHECK:STDOUT:   %pattern_type.423: type = pattern_type %ptr.18e [symbolic]
 // CHECK:STDOUT:   %return.param_patt.534: %pattern_type.423 = out_param_pattern [symbolic]
 // CHECK:STDOUT:   %return.patt.669: %pattern_type.423 = return_slot_pattern %return.param_patt.534, %ptr.18e [symbolic]
-// CHECK:STDOUT:   %F.type.eb3ec9.2: type = fn_type @F.loc18 [concrete]
+// CHECK:STDOUT:   %F.type.eb3ec9.2: type = fn_type @F.loc21 [concrete]
 // CHECK:STDOUT:   %F.7088cc.2: %F.type.eb3ec9.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.18e [symbolic]
 // CHECK:STDOUT: }
@@ -286,27 +289,27 @@ fn F(generic U: type, generic T: type) -> U* {
 // CHECK:STDOUT:     %return.param: ref @F.loc4.%ptr.loc4_44.1 (%ptr.e8f) = out_param call_param0
 // CHECK:STDOUT:     %return: ref @F.loc4.%ptr.loc4_44.1 (%ptr.e8f) = return_slot %return.param
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %F.decl.loc18: %F.type.eb3ec9.2 = fn_decl @F.loc18 [concrete = constants.%F.7088cc.2] {
-// CHECK:STDOUT:     %T.patt.loc18_15.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:     %U.patt.loc18_32.1: %pattern_type.9a5 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc18_32.2 (constants.%U.patt)]
-// CHECK:STDOUT:     %return.param_patt.loc18_44.1: @F.loc18.%pattern_type (%pattern_type.423) = out_param_pattern [symbolic = %return.param_patt.loc18_44.2 (constants.%return.param_patt.534)]
-// CHECK:STDOUT:     %return.patt.loc18_40.1: @F.loc18.%pattern_type (%pattern_type.423) = return_slot_pattern %return.param_patt.loc18_44.1, %ptr.loc18_44.2 [symbolic = %return.patt.loc18_40.2 (constants.%return.patt.669)]
+// CHECK:STDOUT:   %F.decl.loc21: %F.type.eb3ec9.2 = fn_decl @F.loc21 [concrete = constants.%F.7088cc.2] {
+// CHECK:STDOUT:     %T.patt.loc21_15.1: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:     %U.patt.loc21_32.1: %pattern_type.9a5 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc21_32.2 (constants.%U.patt)]
+// CHECK:STDOUT:     %return.param_patt.loc21_44.1: @F.loc21.%pattern_type (%pattern_type.423) = out_param_pattern [symbolic = %return.param_patt.loc21_44.2 (constants.%return.param_patt.534)]
+// CHECK:STDOUT:     %return.patt.loc21_40.1: @F.loc21.%pattern_type (%pattern_type.423) = return_slot_pattern %return.param_patt.loc21_44.1, %ptr.loc21_44.2 [symbolic = %return.patt.loc21_40.2 (constants.%return.patt.669)]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc18_32.2 [symbolic = %U.loc18_32.1 (constants.%U)]
-// CHECK:STDOUT:     %ptr.loc18_44.2: type = ptr_type %U.ref [symbolic = %ptr.loc18_44.1 (constants.%ptr.18e)]
-// CHECK:STDOUT:     %.loc18_44.2: Core.Form = init_form %ptr.loc18_44.2 [symbolic = %.loc18_44.1 (constants.%.6d8)]
-// CHECK:STDOUT:     %.loc18_17.1: type = splice_block %.loc18_17.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen.loc18_15: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc18_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %U.ref: type = name_ref U, %U.loc21_32.2 [symbolic = %U.loc21_32.1 (constants.%U)]
+// CHECK:STDOUT:     %ptr.loc21_44.2: type = ptr_type %U.ref [symbolic = %ptr.loc21_44.1 (constants.%ptr.18e)]
+// CHECK:STDOUT:     %.loc21_44.2: Core.Form = init_form %ptr.loc21_44.2 [symbolic = %.loc21_44.1 (constants.%.6d8)]
+// CHECK:STDOUT:     %.loc21_17.1: type = splice_block %.loc21_17.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen.loc21_15: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc21_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %T.loc18_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc18_15.1 (constants.%T)]
-// CHECK:STDOUT:     %.loc18_34.1: type = splice_block %.loc18_34.2 [concrete = type] {
-// CHECK:STDOUT:       %.Self.frozen.loc18_32: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:       %.loc18_34.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:     %T.loc21_15.2: type = symbolic_binding T, 0 [symbolic = %T.loc21_15.1 (constants.%T)]
+// CHECK:STDOUT:     %.loc21_34.1: type = splice_block %.loc21_34.2 [concrete = type] {
+// CHECK:STDOUT:       %.Self.frozen.loc21_32: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:       %.loc21_34.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:     }
-// CHECK:STDOUT:     %U.loc18_32.2: type = symbolic_binding U, 1 [symbolic = %U.loc18_32.1 (constants.%U)]
-// CHECK:STDOUT:     %return.param: ref @F.loc18.%ptr.loc18_44.1 (%ptr.18e) = out_param call_param0
-// CHECK:STDOUT:     %return: ref @F.loc18.%ptr.loc18_44.1 (%ptr.18e) = return_slot %return.param
+// CHECK:STDOUT:     %U.loc21_32.2: type = symbolic_binding U, 1 [symbolic = %U.loc21_32.1 (constants.%U)]
+// CHECK:STDOUT:     %return.param: ref @F.loc21.%ptr.loc21_44.1 (%ptr.18e) = out_param call_param0
+// CHECK:STDOUT:     %return: ref @F.loc21.%ptr.loc21_44.1 (%ptr.18e) = return_slot %return.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -324,24 +327,24 @@ fn F(generic U: type, generic T: type) -> U* {
 // CHECK:STDOUT:   fn() -> out %return.param: @F.loc4.%ptr.loc4_44.1 (%ptr.e8f);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: generic fn @F.loc18(%T.loc18_15.2: type, %U.loc18_32.2: type) {
-// CHECK:STDOUT:   %T.patt.loc18_15.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc18_15.2 (constants.%T.patt)]
-// CHECK:STDOUT:   %T.loc18_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc18_15.1 (constants.%T)]
-// CHECK:STDOUT:   %U.patt.loc18_32.2: %pattern_type.9a5 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc18_32.2 (constants.%U.patt)]
-// CHECK:STDOUT:   %U.loc18_32.1: type = symbolic_binding U, 1 [symbolic = %U.loc18_32.1 (constants.%U)]
-// CHECK:STDOUT:   %ptr.loc18_44.1: type = ptr_type %U.loc18_32.1 [symbolic = %ptr.loc18_44.1 (constants.%ptr.18e)]
-// CHECK:STDOUT:   %.loc18_44.1: Core.Form = init_form %ptr.loc18_44.1 [symbolic = %.loc18_44.1 (constants.%.6d8)]
-// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc18_44.1 [symbolic = %pattern_type (constants.%pattern_type.423)]
-// CHECK:STDOUT:   %return.param_patt.loc18_44.2: @F.loc18.%pattern_type (%pattern_type.423) = out_param_pattern [symbolic = %return.param_patt.loc18_44.2 (constants.%return.param_patt.534)]
-// CHECK:STDOUT:   %return.patt.loc18_40.2: @F.loc18.%pattern_type (%pattern_type.423) = return_slot_pattern %return.param_patt.loc18_44.2, %ptr.loc18_44.1 [symbolic = %return.patt.loc18_40.2 (constants.%return.patt.669)]
+// CHECK:STDOUT: generic fn @F.loc21(%T.loc21_15.2: type, %U.loc21_32.2: type) {
+// CHECK:STDOUT:   %T.patt.loc21_15.2: %pattern_type.9a5 = symbolic_binding_pattern T, 0 [symbolic = %T.patt.loc21_15.2 (constants.%T.patt)]
+// CHECK:STDOUT:   %T.loc21_15.1: type = symbolic_binding T, 0 [symbolic = %T.loc21_15.1 (constants.%T)]
+// CHECK:STDOUT:   %U.patt.loc21_32.2: %pattern_type.9a5 = symbolic_binding_pattern U, 1 [symbolic = %U.patt.loc21_32.2 (constants.%U.patt)]
+// CHECK:STDOUT:   %U.loc21_32.1: type = symbolic_binding U, 1 [symbolic = %U.loc21_32.1 (constants.%U)]
+// CHECK:STDOUT:   %ptr.loc21_44.1: type = ptr_type %U.loc21_32.1 [symbolic = %ptr.loc21_44.1 (constants.%ptr.18e)]
+// CHECK:STDOUT:   %.loc21_44.1: Core.Form = init_form %ptr.loc21_44.1 [symbolic = %.loc21_44.1 (constants.%.6d8)]
+// CHECK:STDOUT:   %pattern_type: type = pattern_type %ptr.loc21_44.1 [symbolic = %pattern_type (constants.%pattern_type.423)]
+// CHECK:STDOUT:   %return.param_patt.loc21_44.2: @F.loc21.%pattern_type (%pattern_type.423) = out_param_pattern [symbolic = %return.param_patt.loc21_44.2 (constants.%return.param_patt.534)]
+// CHECK:STDOUT:   %return.patt.loc21_40.2: @F.loc21.%pattern_type (%pattern_type.423) = return_slot_pattern %return.param_patt.loc21_44.2, %ptr.loc21_44.1 [symbolic = %return.patt.loc21_40.2 (constants.%return.patt.669)]
 // CHECK:STDOUT:
 // CHECK:STDOUT: !definition:
-// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc18_44.1 [symbolic = %require_complete (constants.%require_complete)]
+// CHECK:STDOUT:   %require_complete: <witness> = require_complete_type %ptr.loc21_44.1 [symbolic = %require_complete (constants.%require_complete)]
 // CHECK:STDOUT:
-// CHECK:STDOUT:   fn() -> out %return.param: @F.loc18.%ptr.loc18_44.1 (%ptr.18e) {
+// CHECK:STDOUT:   fn() -> out %return.param: @F.loc21.%ptr.loc21_44.1 (%ptr.18e) {
 // CHECK:STDOUT:   !entry:
 // CHECK:STDOUT:     %F.ref: %F.type.eb3ec9.1 = name_ref F, file.%F.decl.loc4 [concrete = constants.%F.7088cc.1]
-// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc18_15.2 [symbolic = %T.loc18_15.1 (constants.%T)]
+// CHECK:STDOUT:     %T.ref: type = name_ref T, %T.loc21_15.2 [symbolic = %T.loc21_15.1 (constants.%T)]
 // CHECK:STDOUT:     return <error>
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -358,16 +361,16 @@ fn F(generic U: type, generic T: type) -> U* {
 // CHECK:STDOUT:   %return.patt.loc4_40.2 => constants.%return.patt.d67
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: specific @F.loc18(constants.%T, constants.%U) {
-// CHECK:STDOUT:   %T.patt.loc18_15.2 => constants.%T.patt
-// CHECK:STDOUT:   %T.loc18_15.1 => constants.%T
-// CHECK:STDOUT:   %U.patt.loc18_32.2 => constants.%U.patt
-// CHECK:STDOUT:   %U.loc18_32.1 => constants.%U
-// CHECK:STDOUT:   %ptr.loc18_44.1 => constants.%ptr.18e
-// CHECK:STDOUT:   %.loc18_44.1 => constants.%.6d8
+// CHECK:STDOUT: specific @F.loc21(constants.%T, constants.%U) {
+// CHECK:STDOUT:   %T.patt.loc21_15.2 => constants.%T.patt
+// CHECK:STDOUT:   %T.loc21_15.1 => constants.%T
+// CHECK:STDOUT:   %U.patt.loc21_32.2 => constants.%U.patt
+// CHECK:STDOUT:   %U.loc21_32.1 => constants.%U
+// CHECK:STDOUT:   %ptr.loc21_44.1 => constants.%ptr.18e
+// CHECK:STDOUT:   %.loc21_44.1 => constants.%.6d8
 // CHECK:STDOUT:   %pattern_type => constants.%pattern_type.423
-// CHECK:STDOUT:   %return.param_patt.loc18_44.2 => constants.%return.param_patt.534
-// CHECK:STDOUT:   %return.patt.loc18_40.2 => constants.%return.patt.669
+// CHECK:STDOUT:   %return.param_patt.loc21_44.2 => constants.%return.param_patt.534
+// CHECK:STDOUT:   %return.patt.loc21_40.2 => constants.%return.patt.669
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_reorder.carbon

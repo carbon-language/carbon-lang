@@ -184,17 +184,24 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // extended to cover the loop body.
   range_id = ConvertToValueOrRefExpr(context, range_id);
 
+  // Locate the message at the range, which is what has to be iterable.
+  //
+  // TODO: Locate the message at the `for` keyword, which is what requires
+  // `Core.Iterate`, and attach a label with its type to the range, as the
+  // binary operators do. That needs the location of the `for` token, which no
+  // parse node here has.
+  MissingImplDiagnostic missing_iterate = {.loc_id = SemIR::LocId(range_id)};
+
   // Create the cursor variable.
-  // TODO: Produce a custom diagnostic if the range operand can't be used as a
-  // range.
   // TODO: We need to allocate the `VarStorage` before building the operator.
   // The current order risks violating the preconditions on `Initialize` and
   // risks violating the topological ordering of insts.
-  auto cursor_id =
-      BuildUnaryOperator(context, node_id,
-                         {.interface_name = CoreIdentifier::Iterate,
-                          .op_name = CoreIdentifier::NewCursor},
-                         range_id);
+  auto cursor_id = BuildUnaryOperator(
+      context, node_id,
+      {.interface_name = CoreIdentifier::Iterate,
+       .op_name = CoreIdentifier::NewCursor},
+      range_id, /*diagnose=*/true,
+      /*missing_impl_diagnostic_context=*/nullptr, missing_iterate);
   auto cursor_type_id = context.insts().Get(cursor_id).type_id();
   PendingBlock cursor_var_block(&context);
   auto cursor_var_id = cursor_var_block.AddInstWithCleanup<SemIR::VarStorage>(
@@ -226,12 +233,13 @@ auto HandleParseNode(Context& context, Parse::ForHeaderId node_id) -> bool {
   // Don't diagnose if the call to `Iterate.NewCursor` failed, since this call
   // will likely also fail for the same reason.
   // TODO: We should only perform the impl lookup once.
-  auto element_id =
-      BuildBinaryOperator(context, node_id,
-                          {.interface_name = CoreIdentifier::Iterate,
-                           .op_name = CoreIdentifier::Next},
-                          range_id, cursor_var_id,
-                          /*diagnose=*/cursor_id != SemIR::ErrorInst::InstId);
+  auto element_id = BuildBinaryOperator(
+      context, node_id,
+      {.interface_name = CoreIdentifier::Iterate,
+       .op_name = CoreIdentifier::Next},
+      range_id, cursor_var_id,
+      /*diagnose=*/cursor_id != SemIR::ErrorInst::InstId,
+      /*missing_impl_diagnostic_context=*/nullptr, missing_iterate);
   // We need to convert away from an initializing expression in order to call
   // `HasValue` and then separately pattern-match against the element.
   // TODO: Instead, form a `.Some(pattern_id)` pattern and pattern-match against

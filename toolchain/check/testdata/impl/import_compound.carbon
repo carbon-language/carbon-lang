@@ -54,7 +54,7 @@ fn NonInstanceCallImportFail(n: {.i: ()}) {
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `{.i: ()}` does not implement interface
   // CHECK:STDERR:        ·        │ `Core.ImplicitAs(NonInstance)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   n.(NonInstance.F)();
@@ -74,7 +74,7 @@ fn NonInstanceCallIndirectImport(p: {.i: ()}*) {
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `{.i: ()}` does not implement interface
   // CHECK:STDERR:        ·        │ `Core.ImplicitAs(NonInstance)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->(NonInstance.F)();

@@ -264,6 +264,8 @@ static auto ApplyExtendImplAs(Context& context, SemIR::LocId loc_id,
       CARBON_DIAGNOSTIC(
           ExtendImplOutsideClass, Error,
           "`extend impl` can only be used in an interface or class");
+      // No label is needed for the enclosing scope: every scope that reaches
+      // here is the package namespace, which is implicit.
       context.emitter().Emit(loc_id, ExtendImplOutsideClass);
     }
     return false;
@@ -871,6 +873,11 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                         SemIR::SpecificInterface);
       auto facet_type = context.insts().GetAs<SemIR::FacetType>(
           context.constant_values().GetConstantInstId(full_constraint_id));
+      // TODO: Attach a label to where this requirement was written: a
+      // `require impls` declaration, or an `impls` requirement in the facet
+      // type of the `impl as` or of a `require` declaration. The requirement
+      // comes from a canonical facet type with no location, so this needs
+      // best-effort re-sugaring.
       context.emitter().Emit(
           loc_id, IdentifiedRequireImplsNotImplemented,
           facet_type.declared_facet_type_id,
@@ -898,6 +905,10 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                         InstIdAsConstant, InstIdAsConstant, InstIdAsConstant);
       auto facet_type = context.insts().GetAs<SemIR::FacetType>(
           context.constant_values().GetConstantInstId(full_constraint_id));
+      // TODO: Attach a label to where this equality was written, in the facet
+      // type of the `impl as` or of a `require` declaration. As above, it
+      // comes from a canonical facet type with no location, so this needs
+      // best-effort re-sugaring.
       context.emitter().Emit(
           loc_id, IdentifiedRequireImplsNotEquivalent,
           facet_type.declared_facet_type_id,
@@ -947,12 +958,16 @@ auto CheckRequireDeclsSatisfied(Context& context, SemIR::LocId loc_id,
                         "implements {2}",
                         SemIR::SpecificInterface, SemIR::TypeId,
                         SemIR::DeclaredFacetTypeId);
-      context.emitter().Emit(
-          loc_id, InterfaceRequireImplsNotImplemented, impl.interface,
-          context.types().GetTypeIdForTypeConstantId(req_self_const_id),
-          context.constant_values()
-              .GetInstAs<SemIR::FacetType>(req_facet_type_const_id)
-              .declared_facet_type_id);
+      CARBON_DIAGNOSTIC_LABEL(RequireImplsDeclaredHere, Info,
+                              "required by this `require impls` declaration");
+      context.emitter()
+          .Build(loc_id, InterfaceRequireImplsNotImplemented, impl.interface,
+                 context.types().GetTypeIdForTypeConstantId(req_self_const_id),
+                 context.constant_values()
+                     .GetInstAs<SemIR::FacetType>(req_facet_type_const_id)
+                     .declared_facet_type_id)
+          .Attach(require.decl_id, RequireImplsDeclaredHere)
+          .Emit();
     }
     if (!result.has_value() || result.has_error_value()) {
       FillImplWitnessWithErrors(context, impl);

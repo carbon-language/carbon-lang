@@ -75,48 +75,56 @@ package FailNoImpl;
 class D {};
 
 fn TestLess(a: D, b: D) -> bool {
-  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+10]]:12
   // CHECK:STDERR: ->     │   return a < b;
-  // CHECK:STDERR:        ·          ┳━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.OrderedWith(D)` in
-  // CHECK:STDERR:        ·             ┃        type `D` that does not implement that interface
-  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·          ┬ ┳ ┬
+  // CHECK:STDERR:        ·          │ ┗━━━━┫ error: type `D` does not implement interface
+  // CHECK:STDERR:        ·          │   │  ┃        `Core.OrderedWith(D)`
+  // CHECK:STDERR:        ·          │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·          ╰────────┤ left operand has type `D` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·              ╰──────┤ right operand has type `D` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a < b;
 }
 
 fn TestLessEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+10]]:12
   // CHECK:STDERR: ->     │   return a <= b;
-  // CHECK:STDERR:        ·          ┳━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.OrderedWith(D)` in
-  // CHECK:STDERR:        ·             ┃        type `D` that does not implement that interface
-  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·          ┬ ━┳ ┬
+  // CHECK:STDERR:        ·          │  ┗━━━━┫ error: type `D` does not implement interface
+  // CHECK:STDERR:        ·          │    │  ┃        `Core.OrderedWith(D)`
+  // CHECK:STDERR:        ·          │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·          ╰─────────┤ left operand has type `D` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·               ╰──────┤ right operand has type `D` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a <= b;
 }
 
 fn TestGreater(a: D, b: D) -> bool {
-  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+10]]:12
   // CHECK:STDERR: ->     │   return a > b;
-  // CHECK:STDERR:        ·          ┳━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.OrderedWith(D)` in
-  // CHECK:STDERR:        ·             ┃        type `D` that does not implement that interface
-  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·          ┬ ┳ ┬
+  // CHECK:STDERR:        ·          │ ┗━━━━┫ error: type `D` does not implement interface
+  // CHECK:STDERR:        ·          │   │  ┃        `Core.OrderedWith(D)`
+  // CHECK:STDERR:        ·          │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·          ╰────────┤ left operand has type `D` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·              ╰──────┤ right operand has type `D` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a > b;
 }
 
 fn TestGreaterEqual(a: D, b: D) -> bool {
-  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR:        ╭─┤ fail_no_impl.carbon:[[@LINE+10]]:12
   // CHECK:STDERR: ->     │   return a >= b;
-  // CHECK:STDERR:        ·          ┳━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.OrderedWith(D)` in
-  // CHECK:STDERR:        ·             ┃        type `D` that does not implement that interface
-  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·          ┬ ━┳ ┬
+  // CHECK:STDERR:        ·          │  ┗━━━━┫ error: type `D` does not implement interface
+  // CHECK:STDERR:        ·          │    │  ┃        `Core.OrderedWith(D)`
+  // CHECK:STDERR:        ·          │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·          ╰─────────┤ left operand has type `D` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·               ╰──────┤ right operand has type `D` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a >= b;

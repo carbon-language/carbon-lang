@@ -49,7 +49,11 @@ fn ForgotReturnType() {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   returned var unused v: () = ();
-  // CHECK:STDERR:        ╭─┤ fail_forgot_return_type.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_forgot_return_type.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ fn ForgotReturnType() {
+  // CHECK:STDERR:        · ───────────┬───────────
+  // CHECK:STDERR:        ·            ╰──┤ there was no return type provided [ReturnTypeOmittedNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return var;
   // CHECK:STDERR:        ·   ━━━━━┳━━━━━
   // CHECK:STDERR:        ·        ┗━━┫ error: `return var;` with no `returned var` in scope

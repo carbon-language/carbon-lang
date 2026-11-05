@@ -21,7 +21,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ·         │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·         ╰────┤ type `()` does not implement interface
 // CHECK:STDERR:        ·              │ `Core.ImplicitAs(Core.Form)`
-// CHECK:STDERR:        ·              │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·              │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDERR:        ╭─┤ fail_todo_form_binding.carbon:[[@LINE+6]]:5

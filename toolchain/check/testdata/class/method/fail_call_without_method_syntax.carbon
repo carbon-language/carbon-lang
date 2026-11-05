@@ -66,7 +66,7 @@ fn WrongSelfType(o: Other) -> i32 {
   // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                    ╰────┤ type `Other` does not implement interface
   // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(Point)`
-  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                         │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return Point.Get(o);

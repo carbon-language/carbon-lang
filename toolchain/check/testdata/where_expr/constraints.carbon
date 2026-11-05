@@ -94,7 +94,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ·                                       ╰────┤ type `Core.IntLiteral` does not
 // CHECK:STDERR:        ·                                            │ implement interface
 // CHECK:STDERR:        ·                                            │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                            │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                            │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NonTypeImpls(generic U: type where 7 impls type);
@@ -116,7 +116,7 @@ library "[[@TEST_NAME]]";
 // CHECK:STDERR:        ·                                                        │ does not implement
 // CHECK:STDERR:        ·                                                        │ interface
 // CHECK:STDERR:        ·                                                        │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                                        │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                                        │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn ImplsNonType(generic U: type where .Self impls 7);

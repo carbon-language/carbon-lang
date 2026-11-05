@@ -11,7 +11,14 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_ref_return.carbon
 
 fn F() -> ref i32 {
-  // CHECK:STDERR:        ╭─┤ fail_ref_return.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR:        ╭─┤ fail_ref_return.carbon:[[@LINE+14]]:3
+  // CHECK:STDERR:        │ fn F() -> ref i32 {
+  // CHECK:STDERR:        ·           ───┬───
+  // CHECK:STDERR:        · ╭────────────╯
+  // CHECK:STDERR:        · │ return type of function is
+  // CHECK:STDERR:        · │ `<type component of form <cannot stringify inst6400002C: {kind: RefForm, arg0: inst64000029, type: type(inst(FormType))}>>`
+  // CHECK:STDERR:        · │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return 0;
   // CHECK:STDERR:        ·   ┳━━━━━━━━
   // CHECK:STDERR:        ·   ┗━━┫ error: cannot bind durable reference to non-reference value of type `i32`

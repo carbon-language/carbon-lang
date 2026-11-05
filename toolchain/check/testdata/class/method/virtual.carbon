@@ -478,7 +478,7 @@ class D1 {
   // CHECK:STDERR:        ·                        │            │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                        ╰─────────────────┤ type `T1*` does not implement
   // CHECK:STDERR:        ·                                     │    │ interface `Core.ImplicitAs(T2*)`
-  // CHECK:STDERR:        ·                                     │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                     │    │ [MissingImplForType]
   // CHECK:STDERR:        ·                                     ╰──────┤ initializing function parameter
   // CHECK:STDERR:        ·                                            │ [InCallToFunctionParam]
   // CHECK:STDERR:        ╰────
@@ -508,7 +508,7 @@ class Derived(T: type) {
   // CHECK:STDERR:        ·                       │             │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                       ╰──────────────────┤ type `T*` does not implement
   // CHECK:STDERR:        ·                                     │    │ interface `Core.ImplicitAs(T)`
-  // CHECK:STDERR:        ·                                     │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                     │    │ [MissingImplForType]
   // CHECK:STDERR:        ·                                     ╰──────┤ initializing function parameter
   // CHECK:STDERR:        ·                                            │ [InCallToFunctionParam]
   // CHECK:STDERR:        ╰────

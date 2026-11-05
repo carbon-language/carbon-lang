@@ -45,7 +45,7 @@ fn F() {
   // CHECK:STDERR:        ·       ┗━━┫ error: cannot convert expression of type `Cpp.Enum` to `i8` with `as`
   // CHECK:STDERR:        ·       │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·       ╰────┤ type `Cpp.Enum` does not implement interface `Core.As(i8)`
-  // CHECK:STDERR:        ·            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·            │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.Enum.a as i8;
@@ -56,7 +56,7 @@ fn F() {
   // CHECK:STDERR:        ·      ┗━━┫ error: cannot convert expression of type `Cpp.Enum` to `i32` with `as`
   // CHECK:STDERR:        ·      │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·      ╰────┤ type `Cpp.Enum` does not implement interface `Core.As(i32)`
-  // CHECK:STDERR:        ·           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·           │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.Enum.a as i32;
@@ -67,7 +67,7 @@ fn F() {
   // CHECK:STDERR:        ·       ┗━━┫ error: cannot convert expression of type `i8` to `Cpp.Enum` with `as`
   // CHECK:STDERR:        ·       │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·       ╰────┤ type `i8` does not implement interface `Core.As(Cpp.Enum)`
-  // CHECK:STDERR:        ·            │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·            │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (42 as i8) as Cpp.Enum;
@@ -78,7 +78,7 @@ fn F() {
   // CHECK:STDERR:        ·      ┗━━┫ error: cannot convert expression of type `i32` to `Cpp.Enum` with `as`
   // CHECK:STDERR:        ·      │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·      ╰────┤ type `i32` does not implement interface `Core.As(Cpp.Enum)`
-  // CHECK:STDERR:        ·           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·           │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (42 as i32) as Cpp.Enum;
@@ -91,7 +91,7 @@ fn F() {
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·   ╰────┤ type `Cpp.Enum` does not implement interface
   // CHECK:STDERR:        ·        │ `Core.As(Cpp.DifferentSize)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.a as Cpp.DifferentSize;

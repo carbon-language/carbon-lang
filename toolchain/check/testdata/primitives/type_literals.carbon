@@ -333,15 +333,16 @@ var test_f1000000000000: f1000000000000;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR:        ╭─┤ fail_non_type_as_type.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        ╭─┤ fail_non_type_as_type.carbon:[[@LINE+12]]:15
 // CHECK:STDERR: ->     │ var x: type = 42;
-// CHECK:STDERR:        · ┳━━━━━━━━━━
-// CHECK:STDERR:        · ┗━━┫ error: cannot implicitly convert non-type value of type `Core.IntLiteral`
-// CHECK:STDERR:        · │  ┃        to `type`
-// CHECK:STDERR:        · │  ┃        [ConversionFailureNonTypeToFacet]
-// CHECK:STDERR:        · ╰────┤ type `Core.IntLiteral` does not implement interface
-// CHECK:STDERR:        ·      │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · ─────┬─────   ┳━
+// CHECK:STDERR:        ·      │        ┗━━┫ error: cannot implicitly convert non-type value of type
+// CHECK:STDERR:        ·      │        │  ┃        `Core.IntLiteral` to `type`
+// CHECK:STDERR:        ·      │        │  ┃        [ConversionFailureNonTypeToFacet]
+// CHECK:STDERR:        ·      ╰─────────────┤ initializing this variable [InPatternInit]
+// CHECK:STDERR:        ·               ╰──────┤ type `Core.IntLiteral` does not implement interface
+// CHECK:STDERR:        ·                      │ `Core.ImplicitAs(type)`
+// CHECK:STDERR:        ·                      │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: type = 42;
@@ -352,68 +353,86 @@ library "[[@TEST_NAME]]";
 
 // Ensure that type literals get stringified properly.
 
-// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+9]]:1
+// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+12]]:21
 // CHECK:STDERR: ->     │ var test_i32: i32 = ();
-// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━━
-// CHECK:STDERR:        ·         ┗━━┫ error: cannot implicitly convert expression of type `()` to `i32`
-// CHECK:STDERR:        ·         │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·         ╰────┤ type `()` does not implement interface `Core.ImplicitAs(i32)`
-// CHECK:STDERR:        ·              │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · ────────┬────────   ┳━
+// CHECK:STDERR:        ·         │           ┗━━┫ error: cannot implicitly convert expression of type
+// CHECK:STDERR:        ·         │           │  ┃        `()` to `i32`
+// CHECK:STDERR:        ·         │           │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·         ╰────────────────┤ initializing this variable [InPatternInit]
+// CHECK:STDERR:        ·                     ╰──────┤ type `()` does not implement interface
+// CHECK:STDERR:        ·                            │ `Core.ImplicitAs(i32)`
+// CHECK:STDERR:        ·                            │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var test_i32: i32 = ();
 
-// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+9]]:1
+// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+12]]:21
 // CHECK:STDERR: ->     │ var test_f32: f32 = ();
-// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━━
-// CHECK:STDERR:        ·         ┗━━┫ error: cannot implicitly convert expression of type `()` to `f32`
-// CHECK:STDERR:        ·         │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·         ╰────┤ type `()` does not implement interface `Core.ImplicitAs(f32)`
-// CHECK:STDERR:        ·              │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · ────────┬────────   ┳━
+// CHECK:STDERR:        ·         │           ┗━━┫ error: cannot implicitly convert expression of type
+// CHECK:STDERR:        ·         │           │  ┃        `()` to `f32`
+// CHECK:STDERR:        ·         │           │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·         ╰────────────────┤ initializing this variable [InPatternInit]
+// CHECK:STDERR:        ·                     ╰──────┤ type `()` does not implement interface
+// CHECK:STDERR:        ·                            │ `Core.ImplicitAs(f32)`
+// CHECK:STDERR:        ·                            │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var test_f32: f32 = ();
 
-// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+9]]:1
+// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+12]]:21
 // CHECK:STDERR: ->     │ var test_u32: u32 = ();
-// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━━
-// CHECK:STDERR:        ·         ┗━━┫ error: cannot implicitly convert expression of type `()` to `u32`
-// CHECK:STDERR:        ·         │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·         ╰────┤ type `()` does not implement interface `Core.ImplicitAs(u32)`
-// CHECK:STDERR:        ·              │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · ────────┬────────   ┳━
+// CHECK:STDERR:        ·         │           ┗━━┫ error: cannot implicitly convert expression of type
+// CHECK:STDERR:        ·         │           │  ┃        `()` to `u32`
+// CHECK:STDERR:        ·         │           │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·         ╰────────────────┤ initializing this variable [InPatternInit]
+// CHECK:STDERR:        ·                     ╰──────┤ type `()` does not implement interface
+// CHECK:STDERR:        ·                            │ `Core.ImplicitAs(u32)`
+// CHECK:STDERR:        ·                            │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var test_u32: u32 = ();
 
-// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+9]]:1
+// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+12]]:23
 // CHECK:STDERR: ->     │ var test_bool: bool = ();
-// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━━
-// CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `()` to `bool`
-// CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·          ╰────┤ type `()` does not implement interface `Core.ImplicitAs(bool)`
-// CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · ─────────┬─────────   ┳━
+// CHECK:STDERR:        ·          │            ┗━━┫ error: cannot implicitly convert expression of type
+// CHECK:STDERR:        ·          │            │  ┃        `()` to `bool`
+// CHECK:STDERR:        ·          │            │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·          ╰─────────────────┤ initializing this variable [InPatternInit]
+// CHECK:STDERR:        ·                       ╰──────┤ type `()` does not implement interface
+// CHECK:STDERR:        ·                              │ `Core.ImplicitAs(bool)`
+// CHECK:STDERR:        ·                              │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var test_bool: bool = ();
 
-// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+9]]:1
+// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+12]]:23
 // CHECK:STDERR: ->     │ var test_char: char = ();
-// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━━
-// CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `()` to `char`
-// CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·          ╰────┤ type `()` does not implement interface `Core.ImplicitAs(char)`
-// CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · ─────────┬─────────   ┳━
+// CHECK:STDERR:        ·          │            ┗━━┫ error: cannot implicitly convert expression of type
+// CHECK:STDERR:        ·          │            │  ┃        `()` to `char`
+// CHECK:STDERR:        ·          │            │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·          ╰─────────────────┤ initializing this variable [InPatternInit]
+// CHECK:STDERR:        ·                       ╰──────┤ type `()` does not implement interface
+// CHECK:STDERR:        ·                              │ `Core.ImplicitAs(char)`
+// CHECK:STDERR:        ·                              │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var test_char: char = ();
 
-// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+9]]:1
+// CHECK:STDERR:        ╭─┤ fail_stringify_type_literals.carbon:[[@LINE+12]]:21
 // CHECK:STDERR: ->     │ var test_str: str = ();
-// CHECK:STDERR:        · ━━━━━━━━┳━━━━━━━━
-// CHECK:STDERR:        ·         ┗━━┫ error: cannot implicitly convert expression of type `()` to `str`
-// CHECK:STDERR:        ·         │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·         ╰────┤ type `()` does not implement interface `Core.ImplicitAs(str)`
-// CHECK:STDERR:        ·              │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · ────────┬────────   ┳━
+// CHECK:STDERR:        ·         │           ┗━━┫ error: cannot implicitly convert expression of type
+// CHECK:STDERR:        ·         │           │  ┃        `()` to `str`
+// CHECK:STDERR:        ·         │           │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·         ╰────────────────┤ initializing this variable [InPatternInit]
+// CHECK:STDERR:        ·                     ╰──────┤ type `()` does not implement interface
+// CHECK:STDERR:        ·                            │ `Core.ImplicitAs(str)`
+// CHECK:STDERR:        ·                            │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var test_str: str = ();

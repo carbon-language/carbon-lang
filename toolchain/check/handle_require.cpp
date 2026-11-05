@@ -45,7 +45,15 @@ auto HandleParseNode(Context& context, Parse::RequireIntroducerId node_id)
     CARBON_DIAGNOSTIC(
         RequireInWrongScope, Error,
         "`require` can only be used in an `interface` or `constraint`");
-    context.emitter().Emit(node_id, RequireInWrongScope);
+    auto diag = context.emitter().Build(node_id, RequireInWrongScope);
+    // Only attach a label when the enclosing scope has an explicit definition.
+    // The file scope's package namespace has no location.
+    if (context.insts().GetCanonicalLocId(scope_inst_id).has_value()) {
+      CARBON_DIAGNOSTIC_LABEL(RequireEnclosingScope, Info,
+                              "appears in this definition");
+      diag.Attach(scope_inst_id, RequireEnclosingScope);
+    }
+    diag.Emit();
     scope_inst_id = SemIR::ErrorInst::InstId;
   }
 
@@ -93,9 +101,17 @@ auto HandleParseNode(Context& context, Parse::RequireTypeImplsId node_id)
       CARBON_DIAGNOSTIC(RequireImplsExtendWithExplicitSelf, Error,
                         "`extend require impls` with explicit type");
       // TODO: If the explicit self-type matches a lookup of NameId::SelfType,
-      // add a note to the diagnostic: "remove the explicit `Self` type here",
-      // and continue without an ErrorInst. See ExtendImplSelfAsDefault.
-      context.emitter().Emit(self_node_id, RequireImplsExtendWithExplicitSelf);
+      // say to remove the explicit `Self` type and continue without an
+      // ErrorInst. See ExtendImplSelfAsDefault.
+      auto builder = context.emitter().Build(
+          self_node_id, RequireImplsExtendWithExplicitSelf);
+      if (introducer.modifier_node_id(ModifierOrder::Extend).has_value()) {
+        CARBON_DIAGNOSTIC_LABEL(RequireImplsExtendHere, Info,
+                                "`extend` supplies the type here");
+        builder.Attach(introducer.modifier_node_id(ModifierOrder::Extend),
+                       RequireImplsExtendHere);
+      }
+      builder.Emit();
     }
     self_type.inst_id = SemIR::ErrorInst::TypeInstId;
   }

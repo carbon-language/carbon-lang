@@ -151,11 +151,12 @@ let {.a = y: i32, _,} = {.a = 1, .b = ()};
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR:        ╭─┤ fail_no_matching_field.carbon:[[@LINE+7]]:20
+// CHECK:STDERR:        ╭─┤ fail_no_matching_field.carbon:[[@LINE+8]]:22
 // CHECK:STDERR: ->     │ let {.a = x: ()} = {.b = ()};
-// CHECK:STDERR:        ·                    ━━━━┳━━━━
-// CHECK:STDERR:        ·                        ┗━━┫ error: struct `{.a: ()}` has no field named `b`
-// CHECK:STDERR:        ·                           ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ·     ──────┬─────     ┳
+// CHECK:STDERR:        ·           │          ┗━━┫ error: struct `{.a: ()}` has no field named `b`
+// CHECK:STDERR:        ·           │             ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ·           ╰───────────────┤ initializing this pattern [InPatternInit]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = {.b = ()};
@@ -166,13 +167,14 @@ let {.a = x: ()} = {.b = ()};
 library "[[@TEST_NAME]]";
 var s: {.a: (), .b: ()} = {.a = (), .b = ()};
 //@dump-sem-ir-begin
-// CHECK:STDERR:        ╭─┤ fail_no_matching_field_ref.carbon:[[@LINE+9]]:20
+// CHECK:STDERR:        ╭─┤ fail_no_matching_field_ref.carbon:[[@LINE+10]]:20
 // CHECK:STDERR: ->     │ let {.c = x: ()} = s;
-// CHECK:STDERR:        ·                    ┳
-// CHECK:STDERR:        ·                    ┗━━┫ error: cannot convert from struct type
-// CHECK:STDERR:        ·                       ┃        `{.a: (), .b: ()}` to `{.c: ()}`: unexpected
-// CHECK:STDERR:        ·                       ┃        field `a` in source type
-// CHECK:STDERR:        ·                       ┃        [StructInitUnexpectedFieldInConversion]
+// CHECK:STDERR:        ·     ──────┬─────   ┳
+// CHECK:STDERR:        ·           │        ┗━━┫ error: cannot convert from struct type
+// CHECK:STDERR:        ·           │           ┃        `{.a: (), .b: ()}` to `{.c: ()}`: unexpected
+// CHECK:STDERR:        ·           │           ┃        field `a` in source type
+// CHECK:STDERR:        ·           │           ┃        [StructInitUnexpectedFieldInConversion]
+// CHECK:STDERR:        ·           ╰─────────────┤ initializing this pattern [InPatternInit]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.c = x: ()} = s;
@@ -184,11 +186,13 @@ let {.c = x: ()} = s;
 library "[[@TEST_NAME]]";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR:        ╭─┤ fail_unhandled_field.carbon:[[@LINE+7]]:20
+// CHECK:STDERR:        ╭─┤ fail_unhandled_field.carbon:[[@LINE+9]]:31
 // CHECK:STDERR: ->     │ let {.a = x: ()} = {.a = (), .b = true};
-// CHECK:STDERR:        ·                    ━━━━━━━━━┳━━━━━━━━━━
-// CHECK:STDERR:        ·                             ┗━━┫ error: struct `{.a: ()}` has no field named `b`
-// CHECK:STDERR:        ·                                ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ·     ──────┬─────              ┳
+// CHECK:STDERR:        ·           │                   ┗━━┫ error: struct `{.a: ()}` has no field named
+// CHECK:STDERR:        ·           │                      ┃        `b`
+// CHECK:STDERR:        ·           │                      ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ·           ╰────────────────────────┤ initializing this pattern [InPatternInit]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = {.a = (), .b = true};
@@ -287,15 +291,16 @@ class C{
 
 library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
-// CHECK:STDERR:        ╭─┤ fail_incorrect_field_type.carbon:[[@LINE+11]]:20
+// CHECK:STDERR:        ╭─┤ fail_incorrect_field_type.carbon:[[@LINE+12]]:26
 // CHECK:STDERR: ->     │ let {.a = x: ()} = {.a = {}};
-// CHECK:STDERR:        ·                    ┳━━━━━━━━
-// CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type `{}`
-// CHECK:STDERR:        ·                    │  ┃        to `()`
-// CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·                    ╰────┤ type `{}` does not implement interface
-// CHECK:STDERR:        ·                         │ `Core.ImplicitAs(())`
-// CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·     ──────┬─────         ┳━
+// CHECK:STDERR:        ·           │              ┗━━┫ error: cannot implicitly convert expression of
+// CHECK:STDERR:        ·           │              │  ┃        type `{}` to `()`
+// CHECK:STDERR:        ·           │              │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·           ╰───────────────────┤ initializing this pattern [InPatternInit]
+// CHECK:STDERR:        ·                          ╰──────┤ type `{}` does not implement interface
+// CHECK:STDERR:        ·                                 │ `Core.ImplicitAs(())`
+// CHECK:STDERR:        ·                                 │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = {.a = {}};
@@ -305,15 +310,16 @@ let {.a = x: ()} = {.a = {}};
 
 library "[[@TEST_NAME]]";
 //@dump-sem-ir-begin
-// CHECK:STDERR:        ╭─┤ fail_incorrect_scrutinee_type.carbon:[[@LINE+11]]:5
+// CHECK:STDERR:        ╭─┤ fail_incorrect_scrutinee_type.carbon:[[@LINE+12]]:20
 // CHECK:STDERR: ->     │ let {.a = x: ()} = ((), ());
-// CHECK:STDERR:        ·     ┳━━━━━━━━━━━
-// CHECK:STDERR:        ·     ┗━━┫ error: cannot implicitly convert expression of type `((), ())` to
-// CHECK:STDERR:        ·     │  ┃        `{.a: ()}`
-// CHECK:STDERR:        ·     │  ┃        [ConversionFailure]
-// CHECK:STDERR:        ·     ╰────┤ type `((), ())` does not implement interface
-// CHECK:STDERR:        ·          │ `Core.ImplicitAs({.a: ()})`
-// CHECK:STDERR:        ·          │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·     ──────┬─────   ┳━━━━━━━
+// CHECK:STDERR:        ·           │        ┗━━┫ error: cannot implicitly convert expression of type
+// CHECK:STDERR:        ·           │        │  ┃        `((), ())` to `{.a: ()}`
+// CHECK:STDERR:        ·           │        │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·           ╰─────────────┤ initializing this pattern [InPatternInit]
+// CHECK:STDERR:        ·                    ╰──────┤ type `((), ())` does not implement interface
+// CHECK:STDERR:        ·                           │ `Core.ImplicitAs({.a: ()})`
+// CHECK:STDERR:        ·                           │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let {.a = x: ()} = ((), ());
@@ -1114,14 +1120,14 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc12: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc13: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_27: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc12_28: %struct_type.b = struct_literal (%.loc12_27) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc13_27: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc13_28: %struct_type.b = struct_literal (%.loc13_27) [concrete = constants.%struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1141,7 +1147,7 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc14: %pattern_type.810 = struct_pattern (%x.patt) [concrete = constants.%.9cb]
+// CHECK:STDOUT:     %.loc15: %pattern_type.810 = struct_pattern (%x.patt) [concrete = constants.%.9cb]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1171,15 +1177,15 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: file {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc12: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc14: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc12_27: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc14_27: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
 // CHECK:STDOUT:   %true: bool = bool_literal true [concrete = constants.%true]
-// CHECK:STDOUT:   %.loc12_39: %struct_type.a.b = struct_literal (%.loc12_27, %true) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc14_39: %struct_type.a.b = struct_literal (%.loc14_27, %true) [concrete = constants.%struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1310,17 +1316,17 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc15_28: %empty_tuple.type = converted @__global_init.%.loc15_27, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_28: %empty_tuple.type = converted @__global_init.%.loc16_27, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc15_16: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc16_16: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
-// CHECK:STDOUT:   %.loc15_28: %struct_type.a.225 = struct_literal (%.loc15_27) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc16_27: %empty_struct_type = struct_literal () [concrete = constants.%empty_struct]
+// CHECK:STDOUT:   %.loc16_28: %struct_type.a.225 = struct_literal (%.loc16_27) [concrete = constants.%struct]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -1340,18 +1346,18 @@ let {.a = x: ()} = ((), ());
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc15_16.1: %struct_type.a = converted @__global_init.%.loc15_27, <error> [concrete = <error>]
+// CHECK:STDOUT:   %.loc16_16.1: %struct_type.a = converted @__global_init.%.loc16_27, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %x.patt: %pattern_type.cb1 = value_binding_pattern x [concrete = constants.%x.patt]
-// CHECK:STDOUT:     %.loc15_16.2: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
+// CHECK:STDOUT:     %.loc16_16.2: %pattern_type.e85 = struct_pattern (%x.patt) [concrete = constants.%.298]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %.loc15_22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:   %.loc15_27: %tuple.type = tuple_literal (%.loc15_22, %.loc15_26) [concrete = constants.%tuple]
+// CHECK:STDOUT:   %.loc16_22: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_26: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:   %.loc16_27: %tuple.type = tuple_literal (%.loc16_22, %.loc16_26) [concrete = constants.%tuple]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

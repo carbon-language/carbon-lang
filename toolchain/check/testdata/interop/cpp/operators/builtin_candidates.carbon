@@ -51,43 +51,48 @@ enum class EC { e1, e2, e3 };
 ''';
 
 fn TestEnumClass(a: Cpp.EC, b: Cpp.EC) {
-  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+9]]:19
+  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+11]]:21
   // CHECK:STDERR: ->     │   let _: Cpp.EC = a & b;
-  // CHECK:STDERR:        ·                   ┳━━━━
-  // CHECK:STDERR:        ·                   ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                      ┃        `Core.BitAndWith(Cpp.EC)` in type `Cpp.EC` that
-  // CHECK:STDERR:        ·                      ┃        does not implement that interface
-  // CHECK:STDERR:        ·                      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                   ┬ ┳ ┬
+  // CHECK:STDERR:        ·                   │ ┗━━━━┫ error: type `Cpp.EC` does not implement interface
+  // CHECK:STDERR:        ·                   │   │  ┃        `Core.BitAndWith(Cpp.EC)`
+  // CHECK:STDERR:        ·                   │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                   ╰────────┤ left operand has type `EC` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                       ╰──────┤ right operand has type `EC`
+  // CHECK:STDERR:        ·                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.EC = a & b;
-  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+9]]:19
+  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+11]]:21
   // CHECK:STDERR: ->     │   let _: Cpp.EC = a | b;
-  // CHECK:STDERR:        ·                   ┳━━━━
-  // CHECK:STDERR:        ·                   ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                      ┃        `Core.BitOrWith(Cpp.EC)` in type `Cpp.EC` that
-  // CHECK:STDERR:        ·                      ┃        does not implement that interface
-  // CHECK:STDERR:        ·                      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                   ┬ ┳ ┬
+  // CHECK:STDERR:        ·                   │ ┗━━━━┫ error: type `Cpp.EC` does not implement interface
+  // CHECK:STDERR:        ·                   │   │  ┃        `Core.BitOrWith(Cpp.EC)`
+  // CHECK:STDERR:        ·                   │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                   ╰────────┤ left operand has type `EC` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                       ╰──────┤ right operand has type `EC`
+  // CHECK:STDERR:        ·                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.EC = a | b;
-  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+9]]:19
+  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+11]]:21
   // CHECK:STDERR: ->     │   let _: Cpp.EC = a ^ b;
-  // CHECK:STDERR:        ·                   ┳━━━━
-  // CHECK:STDERR:        ·                   ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                      ┃        `Core.BitXorWith(Cpp.EC)` in type `Cpp.EC` that
-  // CHECK:STDERR:        ·                      ┃        does not implement that interface
-  // CHECK:STDERR:        ·                      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                   ┬ ┳ ┬
+  // CHECK:STDERR:        ·                   │ ┗━━━━┫ error: type `Cpp.EC` does not implement interface
+  // CHECK:STDERR:        ·                   │   │  ┃        `Core.BitXorWith(Cpp.EC)`
+  // CHECK:STDERR:        ·                   │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                   ╰────────┤ left operand has type `EC` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                       ╰──────┤ right operand has type `EC`
+  // CHECK:STDERR:        ·                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.EC = a ^ b;
-  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+9]]:19
+  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+8]]:19
   // CHECK:STDERR: ->     │   let _: Cpp.EC = ^a;
-  // CHECK:STDERR:        ·                   ┳━
-  // CHECK:STDERR:        ·                   ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                      ┃        `Core.BitComplement` in type `Cpp.EC` that does
-  // CHECK:STDERR:        ·                      ┃        not implement that interface
-  // CHECK:STDERR:        ·                      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                   ┳
+  // CHECK:STDERR:        ·                   ┗━━┫ error: type `Cpp.EC` does not implement interface
+  // CHECK:STDERR:        ·                      ┃        `Core.BitComplement`
+  // CHECK:STDERR:        ·                      ┃        [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.EC = ^a;
@@ -165,205 +170,241 @@ struct ConvertibleToFloat {
 
 fn TestInteger(a: Cpp.ConvertibleToInt, b: Cpp.ConvertibleToInt) {
   // Test arithmetic.
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: i32 = a + b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.AddWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.AddWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a + b;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: i32 = a - b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.SubWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.SubWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a - b;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: i32 = a * b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.MulWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.MulWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a * b;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: i32 = a / b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.DivWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.DivWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a / b;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: i32 = a % b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.ModWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.ModWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a % b;
 
   // Test bitwise.
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: i32 = a & b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.BitAndWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.BitAndWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a & b;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: i32 = a | b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.BitOrWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.BitOrWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a | b;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: i32 = a ^ b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.BitXorWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.BitXorWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a ^ b;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:18
   // CHECK:STDERR: ->     │   let _: i32 = a << b;
-  // CHECK:STDERR:        ·                ┳━━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.LeftShiftWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ━┳ ┬
+  // CHECK:STDERR:        ·                │  ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                │    │  ┃        interface
+  // CHECK:STDERR:        ·                │    │  ┃        `Core.LeftShiftWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰─────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                     │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                     ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                            │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a << b;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:18
   // CHECK:STDERR: ->     │   let _: i32 = a >> b;
-  // CHECK:STDERR:        ·                ┳━━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.RightShiftWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ━┳ ┬
+  // CHECK:STDERR:        ·                │  ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                │    │  ┃        interface
+  // CHECK:STDERR:        ·                │    │  ┃        `Core.RightShiftWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰─────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                     │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                     ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                            │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a >> b;
 
   // Test comparison.
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a == b);
-  // CHECK:STDERR:        ·                  ┳━━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.EqWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                     ┃        interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ━┳ ┬
+  // CHECK:STDERR:        ·                  │  ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                  │    │  ┃        interface `Core.EqWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                  │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰─────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                       │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                       ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a == b);
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a != b);
-  // CHECK:STDERR:        ·                  ┳━━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.EqWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                     ┃        interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ━┳ ┬
+  // CHECK:STDERR:        ·                  │  ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                  │    │  ┃        interface `Core.EqWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                  │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰─────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                       │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                       ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a != b);
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a < b);
-  // CHECK:STDERR:        ·                  ┳━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                     ┃        interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ┳ ┬
+  // CHECK:STDERR:        ·                  │ ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                  │   │  ┃        interface
+  // CHECK:STDERR:        ·                  │   │  ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                  │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                      │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                      ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                             │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a < b);
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a <= b);
-  // CHECK:STDERR:        ·                  ┳━━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                     ┃        interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ━┳ ┬
+  // CHECK:STDERR:        ·                  │  ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                  │    │  ┃        interface
+  // CHECK:STDERR:        ·                  │    │  ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                  │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰─────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                       │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                       ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a <= b);
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a > b);
-  // CHECK:STDERR:        ·                  ┳━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                     ┃        interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ┳ ┬
+  // CHECK:STDERR:        ·                  │ ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                  │   │  ┃        interface
+  // CHECK:STDERR:        ·                  │   │  ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                  │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                      │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                      ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                             │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a > b);
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a >= b);
-  // CHECK:STDERR:        ·                  ┳━━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
-  // CHECK:STDERR:        ·                     ┃        interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ━┳ ┬
+  // CHECK:STDERR:        ·                  │  ┗━━━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                  │    │  ┃        interface
+  // CHECK:STDERR:        ·                  │    │  ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)`
+  // CHECK:STDERR:        ·                  │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰─────────┤ left operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                       │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                       ╰──────┤ right operand has type `ConvertibleToInt`
+  // CHECK:STDERR:        ·                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a >= b);
 
   // Test unary.
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+9]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+8]]:16
   // CHECK:STDERR: ->     │   let _: i32 = -a;
-  // CHECK:STDERR:        ·                ┳━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface `Core.Negate` in
-  // CHECK:STDERR:        ·                   ┃        type `Cpp.ConvertibleToInt` that does not implement
-  // CHECK:STDERR:        ·                   ┃        that interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┳
+  // CHECK:STDERR:        ·                ┗━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                   ┃        interface `Core.Negate`
+  // CHECK:STDERR:        ·                   ┃        [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = -a;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+9]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+8]]:16
   // CHECK:STDERR: ->     │   let _: i32 = ^a;
-  // CHECK:STDERR:        ·                ┳━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.BitComplement` in type `Cpp.ConvertibleToInt`
-  // CHECK:STDERR:        ·                   ┃        that does not implement that interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┳
+  // CHECK:STDERR:        ·                ┗━━┫ error: type `Cpp.ConvertibleToInt` does not implement
+  // CHECK:STDERR:        ·                   ┃        interface `Core.BitComplement`
+  // CHECK:STDERR:        ·                   ┃        [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = ^a;
@@ -371,127 +412,152 @@ fn TestInteger(a: Cpp.ConvertibleToInt, b: Cpp.ConvertibleToInt) {
 
 fn TestFloat(a: Cpp.ConvertibleToFloat, b: Cpp.ConvertibleToFloat) {
   // Test arithmetic.
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: f32 = a + b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.AddWith(Cpp.ConvertibleToFloat)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToFloat` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToFloat` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.AddWith(Cpp.ConvertibleToFloat)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = a + b;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: f32 = a - b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.SubWith(Cpp.ConvertibleToFloat)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToFloat` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToFloat` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.SubWith(Cpp.ConvertibleToFloat)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = a - b;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: f32 = a * b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.MulWith(Cpp.ConvertibleToFloat)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToFloat` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToFloat` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.MulWith(Cpp.ConvertibleToFloat)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = a * b;
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+12]]:18
   // CHECK:STDERR: ->     │   let _: f32 = a / b;
-  // CHECK:STDERR:        ·                ┳━━━━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                   ┃        `Core.DivWith(Cpp.ConvertibleToFloat)` in type
-  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToFloat` that does not implement that
-  // CHECK:STDERR:        ·                   ┃        interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┬ ┳ ┬
+  // CHECK:STDERR:        ·                │ ┗━━━━┫ error: type `Cpp.ConvertibleToFloat` does not implement
+  // CHECK:STDERR:        ·                │   │  ┃        interface `Core.DivWith(Cpp.ConvertibleToFloat)`
+  // CHECK:STDERR:        ·                │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                ╰────────┤ left operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                    │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                    ╰──────┤ right operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                           │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = a / b;
 
   // Test comparison.
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a == b);
-  // CHECK:STDERR:        ·                  ┳━━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.EqWith(Cpp.ConvertibleToFloat)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
-  // CHECK:STDERR:        ·                     ┃        that interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ━┳ ┬
+  // CHECK:STDERR:        ·                  │  ┗━━━━┫ error: type `Cpp.ConvertibleToFloat` does not
+  // CHECK:STDERR:        ·                  │    │  ┃        implement interface
+  // CHECK:STDERR:        ·                  │    │  ┃        `Core.EqWith(Cpp.ConvertibleToFloat)`
+  // CHECK:STDERR:        ·                  │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰─────────┤ left operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                       │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                       ╰──────┤ right operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a == b);
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a != b);
-  // CHECK:STDERR:        ·                  ┳━━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.EqWith(Cpp.ConvertibleToFloat)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
-  // CHECK:STDERR:        ·                     ┃        that interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ━┳ ┬
+  // CHECK:STDERR:        ·                  │  ┗━━━━┫ error: type `Cpp.ConvertibleToFloat` does not
+  // CHECK:STDERR:        ·                  │    │  ┃        implement interface
+  // CHECK:STDERR:        ·                  │    │  ┃        `Core.EqWith(Cpp.ConvertibleToFloat)`
+  // CHECK:STDERR:        ·                  │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰─────────┤ left operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                       │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                       ╰──────┤ right operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a != b);
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a < b);
-  // CHECK:STDERR:        ·                  ┳━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
-  // CHECK:STDERR:        ·                     ┃        that interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ┳ ┬
+  // CHECK:STDERR:        ·                  │ ┗━━━━┫ error: type `Cpp.ConvertibleToFloat` does not
+  // CHECK:STDERR:        ·                  │   │  ┃        implement interface
+  // CHECK:STDERR:        ·                  │   │  ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)`
+  // CHECK:STDERR:        ·                  │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰────────┤ left operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                      │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                      ╰──────┤ right operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                             │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a < b);
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a <= b);
-  // CHECK:STDERR:        ·                  ┳━━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
-  // CHECK:STDERR:        ·                     ┃        that interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ━┳ ┬
+  // CHECK:STDERR:        ·                  │  ┗━━━━┫ error: type `Cpp.ConvertibleToFloat` does not
+  // CHECK:STDERR:        ·                  │    │  ┃        implement interface
+  // CHECK:STDERR:        ·                  │    │  ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)`
+  // CHECK:STDERR:        ·                  │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰─────────┤ left operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                       │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                       ╰──────┤ right operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a <= b);
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a > b);
-  // CHECK:STDERR:        ·                  ┳━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
-  // CHECK:STDERR:        ·                     ┃        that interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ┳ ┬
+  // CHECK:STDERR:        ·                  │ ┗━━━━┫ error: type `Cpp.ConvertibleToFloat` does not
+  // CHECK:STDERR:        ·                  │   │  ┃        implement interface
+  // CHECK:STDERR:        ·                  │   │  ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)`
+  // CHECK:STDERR:        ·                  │   │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰────────┤ left operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                      │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                      ╰──────┤ right operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                             │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a > b);
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+13]]:20
   // CHECK:STDERR: ->     │   let _: bool = (a >= b);
-  // CHECK:STDERR:        ·                  ┳━━━━━
-  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type
-  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
-  // CHECK:STDERR:        ·                     ┃        that interface
-  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                  ┬ ━┳ ┬
+  // CHECK:STDERR:        ·                  │  ┗━━━━┫ error: type `Cpp.ConvertibleToFloat` does not
+  // CHECK:STDERR:        ·                  │    │  ┃        implement interface
+  // CHECK:STDERR:        ·                  │    │  ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)`
+  // CHECK:STDERR:        ·                  │    │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                  ╰─────────┤ left operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                       │    │ [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                       ╰──────┤ right operand has type `ConvertibleToFloat`
+  // CHECK:STDERR:        ·                              │ [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a >= b);
 
   // Test unary.
-  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+9]]:16
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+8]]:16
   // CHECK:STDERR: ->     │   let _: f32 = -a;
-  // CHECK:STDERR:        ·                ┳━
-  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface `Core.Negate` in
-  // CHECK:STDERR:        ·                   ┃        type `Cpp.ConvertibleToFloat` that does not implement
-  // CHECK:STDERR:        ·                   ┃        that interface
-  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                ┳
+  // CHECK:STDERR:        ·                ┗━━┫ error: type `Cpp.ConvertibleToFloat` does not implement
+  // CHECK:STDERR:        ·                   ┃        interface `Core.Negate`
+  // CHECK:STDERR:        ·                   ┃        [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = -a;

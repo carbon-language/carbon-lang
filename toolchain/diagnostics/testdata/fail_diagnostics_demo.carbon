@@ -89,7 +89,7 @@ fn Tour(count: i32, flag: bool, cell: {.a: i32}, n: i32) -> i32 {
   // CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·            ╰────┤ type `str` does not implement interface
   // CHECK:STDERR:        ·                 │ `Core.ImplicitAs(Core.Optional(i32 as Core.OptionalStorage))`
-  // CHECK:STDERR:        ·                 │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                 │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Blend(0, "全角文字の幅も列で数えるので、下線はずれず、長すぎる行は両端を切り詰めて窓のように表示されます");
@@ -114,33 +114,35 @@ fn Tour(count: i32, flag: bool, cell: {.a: i32}, n: i32) -> i32 {
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var tint: i32 = missing;
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+32]]:10
-  // CHECK:STDERR: -> 149 │   return count * flag + cell[n] + -flag;
-  // CHECK:STDERR:        ·          ┳━━━━━━━━━━━
-  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface `Core.MulWith(bool)` in
-  // CHECK:STDERR:        ·             ┃        type `i32` that does not implement that interface
-  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+34]]:16
+  // CHECK:STDERR: -> 151 │   return count * flag + cell[n] + -flag;
+  // CHECK:STDERR:        ·          ──┬── ┳ ┬───
+  // CHECK:STDERR:        ·            │   ┗━━━━┫ error: type `i32` does not implement interface
+  // CHECK:STDERR:        ·            │     │  ┃        `Core.MulWith(bool)`
+  // CHECK:STDERR:        ·            │     │  ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·            ╰──────────┤ left operand has type `i32` [BinaryOperatorLhsType]
+  // CHECK:STDERR:        ·                  ╰──────┤ right operand has type `bool` [BinaryOperatorRhsType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+24]]:25
-  // CHECK:STDERR: -> 149 │   return count * flag + cell[n] + -flag;
-  // CHECK:STDERR:        ·                         ┳━━━━━━
-  // CHECK:STDERR:        ·                         ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                            ┃        `Core.IndexWith(i32)` in type `{.a: i32}`
-  // CHECK:STDERR:        ·                            ┃        that does not implement that interface
-  // CHECK:STDERR:        ·                            ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+24]]:30
+  // CHECK:STDERR: -> 151 │   return count * flag + cell[n] + -flag;
+  // CHECK:STDERR:        ·                         ──┬─ ┳
+  // CHECK:STDERR:        ·                           │  ┗━━┫ error: type `{.a: i32}` does not implement
+  // CHECK:STDERR:        ·                           │     ┃        interface `Core.IndexWith(i32)`
+  // CHECK:STDERR:        ·                           │     ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·                           ╰───────┤ indexing an object with type `{.a: i32}`
+  // CHECK:STDERR:        ·                                   │ [IndexedObjectType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+15]]:35
-  // CHECK:STDERR: -> 149 │   return count * flag + cell[n] + -flag;
-  // CHECK:STDERR:        ·                                   ┳━━━━
-  // CHECK:STDERR:        ·                                   ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·                                      ┃        `Core.Negate` in type `bool` that
-  // CHECK:STDERR:        ·                                      ┃        does not implement that interface
-  // CHECK:STDERR:        ·                                      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE+14]]:35
+  // CHECK:STDERR: -> 151 │   return count * flag + cell[n] + -flag;
+  // CHECK:STDERR:        ·                                   ┳
+  // CHECK:STDERR:        ·                                   ┗━━┫ error: type `bool` does not implement
+  // CHECK:STDERR:        ·                                      ┃        interface `Core.Negate`
+  // CHECK:STDERR:        ·                                      ┃        [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE-27]]:7
+  // CHECK:STDERR:        ╭─┤ fail_diagnostics_demo.carbon:[[@LINE-29]]:7
   // CHECK:STDERR: -> 116 │   var tint: i32 = missing;
   // CHECK:STDERR:        ·       ━━━━┳━━━━
   // CHECK:STDERR:        ·           ┗━━┫ warning: binding `tint` unused [UnusedBinding]

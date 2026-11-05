@@ -24,49 +24,63 @@ class AdaptCopyable {
 }
 
 fn F(c: AdaptCopyable) -> AdaptCopyable {
-  // CHECK:STDERR:        ╭─┤ fail_adapt_copyable.carbon:[[@LINE+10]]:26
+  // CHECK:STDERR:        ╭─┤ fail_adapt_copyable.carbon:[[@LINE+11]]:26
   // CHECK:STDERR: ->     │   var d: AdaptCopyable = c;
-  // CHECK:STDERR:        ·                          ┳
-  // CHECK:STDERR:        ·                          ┗━━┫ error: cannot copy value of type `AdaptCopyable`
-  // CHECK:STDERR:        ·                          │  ┃        [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·                          ╰────┤ type `AdaptCopyable` does not implement
-  // CHECK:STDERR:        ·                               │ interface `Core.Copy`
-  // CHECK:STDERR:        ·                               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·   ──────────┬─────────   ┳
+  // CHECK:STDERR:        ·             │            ┗━━┫ error: cannot copy value of type `AdaptCopyable`
+  // CHECK:STDERR:        ·             │            │  ┃        [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·             ╰─────────────────┤ initializing this variable [InPatternInit]
+  // CHECK:STDERR:        ·                          ╰──────┤ type `AdaptCopyable` does not implement
+  // CHECK:STDERR:        ·                                 │ interface `Core.Copy`
+  // CHECK:STDERR:        ·                                 │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var d: AdaptCopyable = c;
-  // CHECK:STDERR:        ╭─┤ fail_adapt_copyable.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR:        ╭─┤ fail_adapt_copyable.carbon:[[@LINE+14]]:10
+  // CHECK:STDERR:        │ fn F(c: AdaptCopyable) -> AdaptCopyable {
+  // CHECK:STDERR:        ·                           ──────┬──────
+  // CHECK:STDERR:        ·                                 ╰──┤ return type of function is `AdaptCopyable`
+  // CHECK:STDERR:        ·                                    │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return d;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `AdaptCopyable`
   // CHECK:STDERR:        ·          │  ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ·          ╰────┤ type `AdaptCopyable` does not implement interface `Core.Copy`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return d;
 }
 
 fn InTuple(c: (AdaptCopyable, u32)) -> (AdaptCopyable, u32) {
-  // CHECK:STDERR:        ╭─┤ fail_adapt_copyable.carbon:[[@LINE+11]]:33
+  // CHECK:STDERR:        ╭─┤ fail_adapt_copyable.carbon:[[@LINE+13]]:33
   // CHECK:STDERR: ->     │   var d: (AdaptCopyable, u32) = c;
-  // CHECK:STDERR:        ·                                 ┳
-  // CHECK:STDERR:        ·                                 ┗━━┫ error: cannot copy value of type
-  // CHECK:STDERR:        ·                                 │  ┃        `AdaptCopyable`
-  // CHECK:STDERR:        ·                                 │  ┃        [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·                                 ╰────┤ type `AdaptCopyable` does not implement
-  // CHECK:STDERR:        ·                                      │ interface `Core.Copy`
-  // CHECK:STDERR:        ·                                      │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·   ─────────────┬─────────────   ┳
+  // CHECK:STDERR:        ·                │                ┗━━┫ error: cannot copy value of type
+  // CHECK:STDERR:        ·                │                │  ┃        `AdaptCopyable`
+  // CHECK:STDERR:        ·                │                │  ┃        [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·                ╰─────────────────────┤ initializing this variable
+  // CHECK:STDERR:        ·                                 │    │ [InPatternInit]
+  // CHECK:STDERR:        ·                                 ╰──────┤ type `AdaptCopyable` does not implement
+  // CHECK:STDERR:        ·                                        │ interface `Core.Copy`
+  // CHECK:STDERR:        ·                                        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var d: (AdaptCopyable, u32) = c;
-  // CHECK:STDERR:        ╭─┤ fail_adapt_copyable.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR:        ╭─┤ fail_adapt_copyable.carbon:[[@LINE+15]]:10
+  // CHECK:STDERR:        │ fn InTuple(c: (AdaptCopyable, u32)) -> (AdaptCopyable, u32) {
+  // CHECK:STDERR:        ·                                        ┬───────────────────
+  // CHECK:STDERR:        ·                                        ╰──┤ return type of function is
+  // CHECK:STDERR:        ·                                           │ `(AdaptCopyable, u32)`
+  // CHECK:STDERR:        ·                                           │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return d;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `AdaptCopyable`
   // CHECK:STDERR:        ·          │  ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ·          ╰────┤ type `AdaptCopyable` does not implement interface `Core.Copy`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return d;
@@ -103,25 +117,31 @@ class AdaptNoncopyable {
 }
 
 fn G(a: AdaptNoncopyable) -> AdaptNoncopyable {
-  // CHECK:STDERR:        ╭─┤ fail_adapt_not_copyable.carbon:[[@LINE+11]]:29
+  // CHECK:STDERR:        ╭─┤ fail_adapt_not_copyable.carbon:[[@LINE+12]]:29
   // CHECK:STDERR: ->     │   var b: AdaptNoncopyable = a;
-  // CHECK:STDERR:        ·                             ┳
-  // CHECK:STDERR:        ·                             ┗━━┫ error: cannot copy value of type
-  // CHECK:STDERR:        ·                             │  ┃        `AdaptNoncopyable`
-  // CHECK:STDERR:        ·                             │  ┃        [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·                             ╰────┤ type `AdaptNoncopyable` does not implement
-  // CHECK:STDERR:        ·                                  │ interface `Core.Copy`
-  // CHECK:STDERR:        ·                                  │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·   ───────────┬───────────   ┳
+  // CHECK:STDERR:        ·              │              ┗━━┫ error: cannot copy value of type
+  // CHECK:STDERR:        ·              │              │  ┃        `AdaptNoncopyable`
+  // CHECK:STDERR:        ·              │              │  ┃        [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·              ╰───────────────────┤ initializing this variable [InPatternInit]
+  // CHECK:STDERR:        ·                             ╰──────┤ type `AdaptNoncopyable` does not implement
+  // CHECK:STDERR:        ·                                    │ interface `Core.Copy`
+  // CHECK:STDERR:        ·                                    │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var b: AdaptNoncopyable = a;
-  // CHECK:STDERR:        ╭─┤ fail_adapt_not_copyable.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR:        ╭─┤ fail_adapt_not_copyable.carbon:[[@LINE+14]]:10
+  // CHECK:STDERR:        │ fn G(a: AdaptNoncopyable) -> AdaptNoncopyable {
+  // CHECK:STDERR:        ·                              ─┬──────────────
+  // CHECK:STDERR:        ·                               ╰──┤ return type of function is `AdaptNoncopyable`
+  // CHECK:STDERR:        ·                                  │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return b;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `AdaptNoncopyable`
   // CHECK:STDERR:        ·          │  ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ·          ╰────┤ type `AdaptNoncopyable` does not implement interface `Core.Copy`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return b;
@@ -148,20 +168,26 @@ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
   // CHECK:STDERR:        ·                  │                  │  ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ·                  ╰───────────────────────┤ type `Noncopyable` does not implement
   // CHECK:STDERR:        ·                                     │    │ interface `Core.Copy`
-  // CHECK:STDERR:        ·                                     │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                                     │    │ [MissingImplForType]
   // CHECK:STDERR:        ·                                     ╰──────┤ in copy of
   // CHECK:STDERR:        ·                                            │ `AdaptNoncopyableIndirect`
   // CHECK:STDERR:        ·                                            │ [InCopy]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var b: AdaptNoncopyableIndirect = a;
-  // CHECK:STDERR:        ╭─┤ fail_adapt_not_copyable_indirect.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR:        ╭─┤ fail_adapt_not_copyable_indirect.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR:        │ fn H(a: AdaptNoncopyableIndirect) -> AdaptNoncopyableIndirect {
+  // CHECK:STDERR:        ·                                      ┬───────────────────────
+  // CHECK:STDERR:        ·                                      ╰──┤ return type of function is
+  // CHECK:STDERR:        ·                                         │ `AdaptNoncopyableIndirect`
+  // CHECK:STDERR:        ·                                         │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return b;
   // CHECK:STDERR:        ·   ━━━━┳━━┯━
   // CHECK:STDERR:        ·       ┗━━━━━┫ error: cannot copy value of type `Noncopyable`
   // CHECK:STDERR:        ·       │  │  ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ·       ╰───────┤ type `Noncopyable` does not implement interface `Core.Copy`
-  // CHECK:STDERR:        ·          │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          │    │ [MissingImplForType]
   // CHECK:STDERR:        ·          ╰──────┤ in copy of `AdaptNoncopyableIndirect` [InCopy]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
@@ -216,7 +242,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc19_3.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.2: type = fn_type @SubobjectDestroy.WithSelf.Op.loc20_3.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.2: %SubobjectDestroy.WithSelf.Op.type.6870fd.2 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.2: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.2), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.f53: %SubobjectDestroy.type = facet_value %AdaptCopyable, (%custom_witness.b80ef6.2) [concrete]
@@ -239,10 +265,10 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %InTuple: %InTuple.type = struct_value () [concrete]
 // CHECK:STDOUT:   %d.patt.883: %pattern_type.848 = ref_binding_pattern d [concrete]
 // CHECK:STDOUT:   %d.var_patt.66d: %pattern_type.848 = var_pattern %d.patt.883 [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc44_3.1 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc52_3.1 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc44_3.2 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.4: type = fn_type @SubobjectDestroy.WithSelf.Op.loc52_3.2 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.4: %SubobjectDestroy.WithSelf.Op.type.6870fd.4 = struct_value () [concrete]
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.439: %SubobjectDestroy.type = facet_value %u32, (%custom_witness.b80ef6.3) [concrete]
@@ -301,19 +327,19 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %c.param_patt: %pattern_type.848 = value_param_pattern [concrete = constants.%c.param_patt.47e]
 // CHECK:STDOUT:     %c.patt: %pattern_type.848 = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt.fe5]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.848 = out_param_pattern [concrete = constants.%return.param_patt.117]
-// CHECK:STDOUT:     %return.patt: %pattern_type.848 = return_slot_pattern %return.param_patt, %.loc32_59.2 [concrete = constants.%return.patt.77a]
+// CHECK:STDOUT:     %return.patt: %pattern_type.848 = return_slot_pattern %return.param_patt, %.loc38_59.2 [concrete = constants.%return.patt.77a]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %AdaptCopyable.ref.loc32_41: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
-// CHECK:STDOUT:     %u32.loc32_56: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:     %.loc32_59.1: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc32_41, %u32.loc32_56) [concrete = constants.%tuple.0f9]
-// CHECK:STDOUT:     %.loc32_59.2: type = converted %.loc32_59.1, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
-// CHECK:STDOUT:     %.loc32_59.3: Core.Form = init_form %.loc32_59.2 [concrete = constants.%.70b]
+// CHECK:STDOUT:     %AdaptCopyable.ref.loc38_41: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
+// CHECK:STDOUT:     %u32.loc38_56: type = type_literal constants.%u32 [concrete = constants.%u32]
+// CHECK:STDOUT:     %.loc38_59.1: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc38_41, %u32.loc38_56) [concrete = constants.%tuple.0f9]
+// CHECK:STDOUT:     %.loc38_59.2: type = converted %.loc38_59.1, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
+// CHECK:STDOUT:     %.loc38_59.3: Core.Form = init_form %.loc38_59.2 [concrete = constants.%.70b]
 // CHECK:STDOUT:     %c.param: %tuple.type.c35 = value_param call_param0
-// CHECK:STDOUT:     %.loc32_34.1: type = splice_block %.loc32_34.3 [concrete = constants.%tuple.type.c35] {
-// CHECK:STDOUT:       %AdaptCopyable.ref.loc32_16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
-// CHECK:STDOUT:       %u32.loc32_31: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:       %.loc32_34.2: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc32_16, %u32.loc32_31) [concrete = constants.%tuple.0f9]
-// CHECK:STDOUT:       %.loc32_34.3: type = converted %.loc32_34.2, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
+// CHECK:STDOUT:     %.loc38_34.1: type = splice_block %.loc38_34.3 [concrete = constants.%tuple.type.c35] {
+// CHECK:STDOUT:       %AdaptCopyable.ref.loc38_16: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
+// CHECK:STDOUT:       %u32.loc38_31: type = type_literal constants.%u32 [concrete = constants.%u32]
+// CHECK:STDOUT:       %.loc38_34.2: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc38_16, %u32.loc38_31) [concrete = constants.%tuple.0f9]
+// CHECK:STDOUT:       %.loc38_34.3: type = converted %.loc38_34.2, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %c: %tuple.type.c35 = wrapper_binding c, %c.param
 // CHECK:STDOUT:     %return.param: ref %tuple.type.c35 = out_param call_param1
@@ -336,38 +362,38 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %d.var: ref %AdaptCopyable = var_storage %d.var_patt
 // CHECK:STDOUT:   %c.ref: %AdaptCopyable = name_ref c, %c
 // CHECK:STDOUT:   assign %d.var, <error>
-// CHECK:STDOUT:   %AdaptCopyable.ref.loc19: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
+// CHECK:STDOUT:   %AdaptCopyable.ref.loc20: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
 // CHECK:STDOUT:   %d: ref %AdaptCopyable = wrapper_binding d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %d.patt: %pattern_type.3b9 = ref_binding_pattern d [concrete = constants.%d.patt.467]
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.3b9 = var_pattern %d.patt [concrete = constants.%d.var_patt.b13]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.ref: ref %AdaptCopyable = name_ref d, %d
-// CHECK:STDOUT:   %.loc29: %AdaptCopyable = acquire_value %d.ref
-// CHECK:STDOUT:   %Destroy.facet.loc19_3.1: %Destroy.type = facet_value constants.%AdaptCopyable, (constants.%DestroyImpl.impl_witness.da7, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.11a]
-// CHECK:STDOUT:   %.loc19_3.1: %Destroy.type = converted constants.%AdaptCopyable, %Destroy.facet.loc19_3.1 [concrete = constants.%Destroy.facet.11a]
-// CHECK:STDOUT:   %Destroy.facet.loc19_3.2: %Destroy.type = facet_value constants.%AdaptCopyable, (constants.%DestroyImpl.impl_witness.da7, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.11a]
-// CHECK:STDOUT:   %.loc19_3.2: %Destroy.type = converted constants.%AdaptCopyable, %Destroy.facet.loc19_3.2 [concrete = constants.%Destroy.facet.11a]
+// CHECK:STDOUT:   %.loc35: %AdaptCopyable = acquire_value %d.ref
+// CHECK:STDOUT:   %Destroy.facet.loc20_3.1: %Destroy.type = facet_value constants.%AdaptCopyable, (constants.%DestroyImpl.impl_witness.da7, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.11a]
+// CHECK:STDOUT:   %.loc20_3.1: %Destroy.type = converted constants.%AdaptCopyable, %Destroy.facet.loc20_3.1 [concrete = constants.%Destroy.facet.11a]
+// CHECK:STDOUT:   %Destroy.facet.loc20_3.2: %Destroy.type = facet_value constants.%AdaptCopyable, (constants.%DestroyImpl.impl_witness.da7, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.11a]
+// CHECK:STDOUT:   %.loc20_3.2: %Destroy.type = converted constants.%AdaptCopyable, %Destroy.facet.loc20_3.2 [concrete = constants.%Destroy.facet.11a]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet.11a) [concrete = constants.%SelfDestruct.specific_fn.97c]
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%d.var)
 // CHECK:STDOUT:   return <error>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc19_3.1(%self.param: ref %i32) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc20_3.1(%self.param: ref %i32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc19_3.2(%self.param: ref %AdaptCopyable) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc20_3.2(%self.param: ref %AdaptCopyable) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @InTuple(%c.param: %tuple.type.c35) -> out %return.param: %tuple.type.c35 {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %d.var: ref %tuple.type.c35 = var_storage %d.var_patt
 // CHECK:STDOUT:   %c.ref: %tuple.type.c35 = name_ref c, %c
-// CHECK:STDOUT:   %tuple.elem0.loc44: %AdaptCopyable = tuple_access %c.ref, element0
+// CHECK:STDOUT:   %tuple.elem0.loc52: %AdaptCopyable = tuple_access %c.ref, element0
 // CHECK:STDOUT:   assign %d.var, <error>
-// CHECK:STDOUT:   %.loc44_29.1: type = splice_block %.loc44_29.3 [concrete = constants.%tuple.type.c35] {
-// CHECK:STDOUT:     %AdaptCopyable.ref.loc44: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
-// CHECK:STDOUT:     %u32.loc44: type = type_literal constants.%u32 [concrete = constants.%u32]
-// CHECK:STDOUT:     %.loc44_29.2: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc44, %u32.loc44) [concrete = constants.%tuple.0f9]
-// CHECK:STDOUT:     %.loc44_29.3: type = converted %.loc44_29.2, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
+// CHECK:STDOUT:   %.loc52_29.1: type = splice_block %.loc52_29.3 [concrete = constants.%tuple.type.c35] {
+// CHECK:STDOUT:     %AdaptCopyable.ref.loc52: type = name_ref AdaptCopyable, file.%AdaptCopyable.decl [concrete = constants.%AdaptCopyable]
+// CHECK:STDOUT:     %u32.loc52: type = type_literal constants.%u32 [concrete = constants.%u32]
+// CHECK:STDOUT:     %.loc52_29.2: %tuple.type.693 = tuple_literal (%AdaptCopyable.ref.loc52, %u32.loc52) [concrete = constants.%tuple.0f9]
+// CHECK:STDOUT:     %.loc52_29.3: type = converted %.loc52_29.2, constants.%tuple.type.c35 [concrete = constants.%tuple.type.c35]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d: ref %tuple.type.c35 = wrapper_binding d, %d.var
 // CHECK:STDOUT:   name_binding_decl {
@@ -375,37 +401,37 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %d.var_patt: %pattern_type.848 = var_pattern %d.patt [concrete = constants.%d.var_patt.66d]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %d.ref: ref %tuple.type.c35 = name_ref d, %d
-// CHECK:STDOUT:   %tuple.elem0.loc54: ref %AdaptCopyable = tuple_access %d.ref, element0
-// CHECK:STDOUT:   %.loc54: %AdaptCopyable = acquire_value %tuple.elem0.loc54
-// CHECK:STDOUT:   %Destroy.facet.loc44_3.1: %Destroy.type = facet_value constants.%tuple.type.c35, (constants.%DestroyImpl.impl_witness.2ab, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet.aca]
-// CHECK:STDOUT:   %.loc44_3.1: %Destroy.type = converted constants.%tuple.type.c35, %Destroy.facet.loc44_3.1 [concrete = constants.%Destroy.facet.aca]
-// CHECK:STDOUT:   %Destroy.facet.loc44_3.2: %Destroy.type = facet_value constants.%tuple.type.c35, (constants.%DestroyImpl.impl_witness.2ab, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet.aca]
-// CHECK:STDOUT:   %.loc44_3.2: %Destroy.type = converted constants.%tuple.type.c35, %Destroy.facet.loc44_3.2 [concrete = constants.%Destroy.facet.aca]
+// CHECK:STDOUT:   %tuple.elem0.loc68: ref %AdaptCopyable = tuple_access %d.ref, element0
+// CHECK:STDOUT:   %.loc68: %AdaptCopyable = acquire_value %tuple.elem0.loc68
+// CHECK:STDOUT:   %Destroy.facet.loc52_3.1: %Destroy.type = facet_value constants.%tuple.type.c35, (constants.%DestroyImpl.impl_witness.2ab, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet.aca]
+// CHECK:STDOUT:   %.loc52_3.1: %Destroy.type = converted constants.%tuple.type.c35, %Destroy.facet.loc52_3.1 [concrete = constants.%Destroy.facet.aca]
+// CHECK:STDOUT:   %Destroy.facet.loc52_3.2: %Destroy.type = facet_value constants.%tuple.type.c35, (constants.%DestroyImpl.impl_witness.2ab, constants.%custom_witness.b80ef6.4) [concrete = constants.%Destroy.facet.aca]
+// CHECK:STDOUT:   %.loc52_3.2: %Destroy.type = converted constants.%tuple.type.c35, %Destroy.facet.loc52_3.2 [concrete = constants.%Destroy.facet.aca]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet.aca) [concrete = constants.%SelfDestruct.specific_fn.f48]
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%d.var)
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc44_3.1(%self.param: ref %u32) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc52_3.1(%self.param: ref %u32) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc44_3.2(%self.param: ref %tuple.type.c35) {
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc52_3.2(%self.param: ref %tuple.type.c35) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %int_1: Core.IntLiteral = int_value 1 [concrete = constants.%int_1]
 // CHECK:STDOUT:   %tuple.elem1: ref %u32 = tuple_access %self.param, element1
-// CHECK:STDOUT:   %Destroy.facet.loc44_3.1: %Destroy.type = facet_value constants.%u32, (constants.%DestroyImpl.impl_witness.ee7, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.35c]
-// CHECK:STDOUT:   %.loc44_3.1: %Destroy.type = converted constants.%u32, %Destroy.facet.loc44_3.1 [concrete = constants.%Destroy.facet.35c]
-// CHECK:STDOUT:   %Destroy.facet.loc44_3.2: %Destroy.type = facet_value constants.%u32, (constants.%DestroyImpl.impl_witness.ee7, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.35c]
-// CHECK:STDOUT:   %.loc44_3.2: %Destroy.type = converted constants.%u32, %Destroy.facet.loc44_3.2 [concrete = constants.%Destroy.facet.35c]
+// CHECK:STDOUT:   %Destroy.facet.loc52_3.1: %Destroy.type = facet_value constants.%u32, (constants.%DestroyImpl.impl_witness.ee7, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.35c]
+// CHECK:STDOUT:   %.loc52_3.1: %Destroy.type = converted constants.%u32, %Destroy.facet.loc52_3.1 [concrete = constants.%Destroy.facet.35c]
+// CHECK:STDOUT:   %Destroy.facet.loc52_3.2: %Destroy.type = facet_value constants.%u32, (constants.%DestroyImpl.impl_witness.ee7, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.35c]
+// CHECK:STDOUT:   %.loc52_3.2: %Destroy.type = converted constants.%u32, %Destroy.facet.loc52_3.2 [concrete = constants.%Destroy.facet.35c]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.1: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet.35c) [concrete = constants.%SelfDestruct.specific_fn.a73]
-// CHECK:STDOUT:   %SelfDestruct.call.loc44_3.1: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%tuple.elem1)
+// CHECK:STDOUT:   %SelfDestruct.call.loc52_3.1: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%tuple.elem1)
 // CHECK:STDOUT:   %int_0: Core.IntLiteral = int_value 0 [concrete = constants.%int_0]
 // CHECK:STDOUT:   %tuple.elem0: ref %AdaptCopyable = tuple_access %self.param, element0
-// CHECK:STDOUT:   %Destroy.facet.loc44_3.3: %Destroy.type = facet_value constants.%AdaptCopyable, (constants.%DestroyImpl.impl_witness.da7, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.11a]
-// CHECK:STDOUT:   %.loc44_3.3: %Destroy.type = converted constants.%AdaptCopyable, %Destroy.facet.loc44_3.3 [concrete = constants.%Destroy.facet.11a]
-// CHECK:STDOUT:   %Destroy.facet.loc44_3.4: %Destroy.type = facet_value constants.%AdaptCopyable, (constants.%DestroyImpl.impl_witness.da7, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.11a]
-// CHECK:STDOUT:   %.loc44_3.4: %Destroy.type = converted constants.%AdaptCopyable, %Destroy.facet.loc44_3.4 [concrete = constants.%Destroy.facet.11a]
+// CHECK:STDOUT:   %Destroy.facet.loc52_3.3: %Destroy.type = facet_value constants.%AdaptCopyable, (constants.%DestroyImpl.impl_witness.da7, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.11a]
+// CHECK:STDOUT:   %.loc52_3.3: %Destroy.type = converted constants.%AdaptCopyable, %Destroy.facet.loc52_3.3 [concrete = constants.%Destroy.facet.11a]
+// CHECK:STDOUT:   %Destroy.facet.loc52_3.4: %Destroy.type = facet_value constants.%AdaptCopyable, (constants.%DestroyImpl.impl_witness.da7, constants.%custom_witness.b80ef6.2) [concrete = constants.%Destroy.facet.11a]
+// CHECK:STDOUT:   %.loc52_3.4: %Destroy.type = converted constants.%AdaptCopyable, %Destroy.facet.loc52_3.4 [concrete = constants.%Destroy.facet.11a]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn.2: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet.11a) [concrete = constants.%SelfDestruct.specific_fn.97c]
-// CHECK:STDOUT:   %SelfDestruct.call.loc44_3.2: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%tuple.elem0)
+// CHECK:STDOUT:   %SelfDestruct.call.loc52_3.2: init %empty_tuple.type = call %SelfDestruct.specific_fn.2(%tuple.elem0)
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
@@ -823,7 +849,7 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc24_3.3 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc25_3.3 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.7fa: %SubobjectDestroy.type = facet_value %AdaptNoncopyable, (%custom_witness.b80ef6.3) [concrete]
@@ -895,28 +921,28 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:   %b.var: ref %AdaptNoncopyable = var_storage %b.var_patt
 // CHECK:STDOUT:   %a.ref: %AdaptNoncopyable = name_ref a, %a
 // CHECK:STDOUT:   assign %b.var, <error>
-// CHECK:STDOUT:   %AdaptNoncopyable.ref.loc24: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [concrete = constants.%AdaptNoncopyable]
+// CHECK:STDOUT:   %AdaptNoncopyable.ref.loc25: type = name_ref AdaptNoncopyable, file.%AdaptNoncopyable.decl [concrete = constants.%AdaptNoncopyable]
 // CHECK:STDOUT:   %b: ref %AdaptNoncopyable = wrapper_binding b, %b.var
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %b.patt: %pattern_type.d14 = ref_binding_pattern b [concrete = constants.%b.patt]
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.d14 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.ref: ref %AdaptNoncopyable = name_ref b, %b
-// CHECK:STDOUT:   %.loc34: %AdaptNoncopyable = acquire_value %b.ref
-// CHECK:STDOUT:   %Destroy.facet.loc24_3.1: %Destroy.type = facet_value constants.%AdaptNoncopyable, (constants.%DestroyImpl.impl_witness.9f4, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc24_3.1: %Destroy.type = converted constants.%AdaptNoncopyable, %Destroy.facet.loc24_3.1 [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %Destroy.facet.loc24_3.2: %Destroy.type = facet_value constants.%AdaptNoncopyable, (constants.%DestroyImpl.impl_witness.9f4, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
-// CHECK:STDOUT:   %.loc24_3.2: %Destroy.type = converted constants.%AdaptNoncopyable, %Destroy.facet.loc24_3.2 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc40: %AdaptNoncopyable = acquire_value %b.ref
+// CHECK:STDOUT:   %Destroy.facet.loc25_3.1: %Destroy.type = facet_value constants.%AdaptNoncopyable, (constants.%DestroyImpl.impl_witness.9f4, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc25_3.1: %Destroy.type = converted constants.%AdaptNoncopyable, %Destroy.facet.loc25_3.1 [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %Destroy.facet.loc25_3.2: %Destroy.type = facet_value constants.%AdaptNoncopyable, (constants.%DestroyImpl.impl_witness.9f4, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet]
+// CHECK:STDOUT:   %.loc25_3.2: %Destroy.type = converted constants.%AdaptNoncopyable, %Destroy.facet.loc25_3.2 [concrete = constants.%Destroy.facet]
 // CHECK:STDOUT:   %SelfDestruct.specific_fn: <specific function> = specific_function constants.%SelfDestruct, @SelfDestruct(constants.%Destroy.facet) [concrete = constants.%SelfDestruct.specific_fn]
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%b.var)
 // CHECK:STDOUT:   return <error> to %return.param
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc24_3.1(%self.param: ref %empty_struct_type) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc25_3.1(%self.param: ref %empty_struct_type) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc24_3.2(%self.param: ref %Noncopyable) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc25_3.2(%self.param: ref %Noncopyable) = "no_op";
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc24_3.3(%self.param: ref %AdaptNoncopyable) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc25_3.3(%self.param: ref %AdaptNoncopyable) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_adapt_not_copyable_indirect.carbon
 // CHECK:STDOUT:
@@ -1078,19 +1104,19 @@ fn InTuple(c: (AdaptStruct, u32)) -> (AdaptStruct, u32) {
 // CHECK:STDOUT:     %b.var_patt: %pattern_type.be3 = var_pattern %b.patt [concrete = constants.%b.var_patt]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %b.ref: ref %AdaptNoncopyableIndirect = name_ref b, %b
-// CHECK:STDOUT:   %.loc38_11.1: ref %tuple.type.71d = as_compatible %b.ref
-// CHECK:STDOUT:   %tuple.elem0.loc38_11.1: ref %i32 = tuple_access %.loc38_11.1, element0
-// CHECK:STDOUT:   %.loc38_11.2: %i32 = acquire_value %tuple.elem0.loc38_11.1
-// CHECK:STDOUT:   %impl.elem0.loc38: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
-// CHECK:STDOUT:   %bound_method.loc38_11.1: <bound method> = bound_method %.loc38_11.2, %impl.elem0.loc38
-// CHECK:STDOUT:   %specific_fn.loc38: <specific function> = specific_function %impl.elem0.loc38, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc38_11.2: <bound method> = bound_method %.loc38_11.2, %specific_fn.loc38
-// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc38: init %i32 = call %bound_method.loc38_11.2(%.loc38_11.2)
-// CHECK:STDOUT:   %.loc38_11.3: ref %tuple.type.71d = as_compatible %return.param
-// CHECK:STDOUT:   %tuple.elem0.loc38_11.2: ref %i32 = tuple_access %.loc38_11.3, element0
-// CHECK:STDOUT:   %.loc38_11.4: init %i32 to %tuple.elem0.loc38_11.2 = in_place_init %Int.as.Copy.impl.Op.call.loc38
-// CHECK:STDOUT:   %tuple.elem1.loc38: ref %Noncopyable = tuple_access %.loc38_11.1, element1
-// CHECK:STDOUT:   %.loc38_11.5: %Noncopyable = acquire_value %tuple.elem1.loc38
+// CHECK:STDOUT:   %.loc44_11.1: ref %tuple.type.71d = as_compatible %b.ref
+// CHECK:STDOUT:   %tuple.elem0.loc44_11.1: ref %i32 = tuple_access %.loc44_11.1, element0
+// CHECK:STDOUT:   %.loc44_11.2: %i32 = acquire_value %tuple.elem0.loc44_11.1
+// CHECK:STDOUT:   %impl.elem0.loc44: %.2b9 = impl_witness_access constants.%Copy.impl_witness.8af, element0 [concrete = constants.%Int.as.Copy.impl.Op.cae]
+// CHECK:STDOUT:   %bound_method.loc44_11.1: <bound method> = bound_method %.loc44_11.2, %impl.elem0.loc44
+// CHECK:STDOUT:   %specific_fn.loc44: <specific function> = specific_function %impl.elem0.loc44, @Int.as.Copy.impl.Op(constants.%int_32) [concrete = constants.%Int.as.Copy.impl.Op.specific_fn]
+// CHECK:STDOUT:   %bound_method.loc44_11.2: <bound method> = bound_method %.loc44_11.2, %specific_fn.loc44
+// CHECK:STDOUT:   %Int.as.Copy.impl.Op.call.loc44: init %i32 = call %bound_method.loc44_11.2(%.loc44_11.2)
+// CHECK:STDOUT:   %.loc44_11.3: ref %tuple.type.71d = as_compatible %return.param
+// CHECK:STDOUT:   %tuple.elem0.loc44_11.2: ref %i32 = tuple_access %.loc44_11.3, element0
+// CHECK:STDOUT:   %.loc44_11.4: init %i32 to %tuple.elem0.loc44_11.2 = in_place_init %Int.as.Copy.impl.Op.call.loc44
+// CHECK:STDOUT:   %tuple.elem1.loc44: ref %Noncopyable = tuple_access %.loc44_11.1, element1
+// CHECK:STDOUT:   %.loc44_11.5: %Noncopyable = acquire_value %tuple.elem1.loc44
 // CHECK:STDOUT:   %Destroy.facet.loc27_3.1: %Destroy.type = facet_value constants.%AdaptNoncopyableIndirect, (constants.%DestroyImpl.impl_witness.860, constants.%custom_witness.b80ef6.5) [concrete = constants.%Destroy.facet.1f2]
 // CHECK:STDOUT:   %.loc27_3.4: %Destroy.type = converted constants.%AdaptNoncopyableIndirect, %Destroy.facet.loc27_3.1 [concrete = constants.%Destroy.facet.1f2]
 // CHECK:STDOUT:   %Destroy.facet.loc27_3.2: %Destroy.type = facet_value constants.%AdaptNoncopyableIndirect, (constants.%DestroyImpl.impl_witness.860, constants.%custom_witness.b80ef6.5) [concrete = constants.%Destroy.facet.1f2]

@@ -36,7 +36,7 @@ class D {}
 // CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert expression of type `D` to `C`
 // CHECK:STDERR:        ·              │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·              ╰────┤ type `D` does not implement interface `Core.ImplicitAs(C)`
-// CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                   │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn K(x: C = {} as D);
@@ -143,7 +143,7 @@ impl C as Core.As(D) {
 // CHECK:STDERR:        ·              ┗━━┫ error: cannot implicitly convert expression of type `C` to `D`
 // CHECK:STDERR:        ·              │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·              ╰────┤ type `C` does not implement interface `Core.ImplicitAs(D)`
-// CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                   │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(a: D = {} as C);

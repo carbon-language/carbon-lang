@@ -26,12 +26,13 @@ eval fn F() -> i32 { return 3; }
 
 // Ensure we get an error about the over-sized initializer and aren't just
 // treating all `eval fn` calls as silent errors.
-// CHECK:STDERR:        ╭─┤ fail_call_wrong_value.carbon:[[@LINE+8]]:26
+// CHECK:STDERR:        ╭─┤ fail_call_wrong_value.carbon:[[@LINE+9]]:26
 // CHECK:STDERR: ->     │ var a: array(i32, F()) = (0, 1, 2, 3);
-// CHECK:STDERR:        ·                          ┳━━━━━━━━━━━
-// CHECK:STDERR:        ·                          ┗━━┫ error: cannot initialize array of 3 elements from
-// CHECK:STDERR:        ·                             ┃        4 initializers
-// CHECK:STDERR:        ·                             ┃        [ArrayInitFromLiteralArgCountMismatch]
+// CHECK:STDERR:        · ───────────┬──────────   ┳━━━━━━━━━━━
+// CHECK:STDERR:        ·            │             ┗━━┫ error: cannot initialize array of 3 elements from
+// CHECK:STDERR:        ·            │                ┃        4 initializers
+// CHECK:STDERR:        ·            │                ┃        [ArrayInitFromLiteralArgCountMismatch]
+// CHECK:STDERR:        ·            ╰──────────────────┤ initializing this variable [InPatternInit]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var a: array(i32, F()) = (0, 1, 2, 3);

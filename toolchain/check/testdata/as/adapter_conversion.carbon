@@ -140,7 +140,7 @@ fn F(a: A) {
   // CHECK:STDERR:        ·             │            │  ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ·             ╰─────────────────┤ type `Noncopyable` does not implement interface
   // CHECK:STDERR:        ·                          │    │ `Core.Copy`
-  // CHECK:STDERR:        ·                          │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          │    │ [MissingImplForType]
   // CHECK:STDERR:        ·                          ╰──────┤ in copy of `A` [InCopy]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
@@ -169,7 +169,7 @@ class B {
 // CHECK:STDERR:        ·            │  ┃        `as`
 // CHECK:STDERR:        ·            │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·            ╰────┤ type `{.x: ()}` does not implement interface `Core.As(B)`
-// CHECK:STDERR:        ·                 │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                 │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var b: B = {.x = ()} as B;

@@ -143,13 +143,20 @@ library "[[@TEST_NAME]]";
 base class C { }
 
 fn G(p: partial C*) -> C* {
-  // CHECK:STDERR:        ╭─┤ fail_convert_to_nonpartial.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_convert_to_nonpartial.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR:        │ fn G(p: partial C*) -> C* {
+  // CHECK:STDERR:        ·                        ─┬
+  // CHECK:STDERR:        ·                         ╰──┤ return type of function is `C*`
+  // CHECK:STDERR:        ·                            │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ━┳━━━━━━━
-  // CHECK:STDERR:        ·    ┗━━┫ error: cannot implicitly convert expression of type `partial C*` to `C*`
-  // CHECK:STDERR:        ·    │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·    ╰────┤ type `partial C*` does not implement interface `Core.ImplicitAs(C*)`
-  // CHECK:STDERR:        ·         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `partial C*`
+  // CHECK:STDERR:        ·          │  ┃        to `C*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `partial C*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(C*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;

@@ -13,13 +13,13 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/index/fail_non_tuple_access.carbon
 
 fn Main() {
-  // CHECK:STDERR:        ╭─┤ fail_non_tuple_access.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_non_tuple_access.carbon:[[@LINE+9]]:5
   // CHECK:STDERR: ->     │   0[1];
-  // CHECK:STDERR:        ·   ┳━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface
-  // CHECK:STDERR:        ·      ┃        `Core.IndexWith(Core.IntLiteral)` in type `Core.IntLiteral` that
-  // CHECK:STDERR:        ·      ┃        does not implement that interface
-  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·   ┬ ┳
+  // CHECK:STDERR:        ·   │ ┗━━┫ error: type `Core.IntLiteral` does not implement interface
+  // CHECK:STDERR:        ·   │    ┃        `Core.IndexWith(Core.IntLiteral)`
+  // CHECK:STDERR:        ·   │    ┃        [MissingImplForType]
+  // CHECK:STDERR:        ·   ╰──────┤ indexing an object with type `Core.IntLiteral` [IndexedObjectType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   0[1];

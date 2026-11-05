@@ -15,13 +15,14 @@ class X {
 
 fn F(x: X) {
   // TODO: Decide on rules for when classes are copyable.
-  // CHECK:STDERR:        ╭─┤ fail_not_copyable.carbon:[[@LINE+9]]:21
+  // CHECK:STDERR:        ╭─┤ fail_not_copyable.carbon:[[@LINE+10]]:21
   // CHECK:STDERR: ->     │   var unused y: X = x;
-  // CHECK:STDERR:        ·                     ┳
-  // CHECK:STDERR:        ·                     ┗━━┫ error: cannot copy value of type `X`
-  // CHECK:STDERR:        ·                     │  ┃        [CopyOfUncopyableType]
-  // CHECK:STDERR:        ·                     ╰────┤ type `X` does not implement interface `Core.Copy`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·   ───────┬───────   ┳
+  // CHECK:STDERR:        ·          │          ┗━━┫ error: cannot copy value of type `X`
+  // CHECK:STDERR:        ·          │          │  ┃        [CopyOfUncopyableType]
+  // CHECK:STDERR:        ·          ╰───────────────┤ initializing this variable [InPatternInit]
+  // CHECK:STDERR:        ·                     ╰──────┤ type `X` does not implement interface `Core.Copy`
+  // CHECK:STDERR:        ·                            │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused y: X = x;

@@ -20,7 +20,7 @@
 // CHECK:STDERR:        ·        │  ┃        [ConversionFailureNonTypeToFacet]
 // CHECK:STDERR:        ·        ╰────┤ type `{.a: Core.IntLiteral}` does not implement interface
 // CHECK:STDERR:        ·             │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·             │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: {.a = 1};

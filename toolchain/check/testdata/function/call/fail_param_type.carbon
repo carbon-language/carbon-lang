@@ -27,7 +27,7 @@ fn F() {
   // CHECK:STDERR:        ·     │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·     ╰────┤ type `Core.FloatLiteral` does not implement interface
   // CHECK:STDERR:        ·          │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   G(1.0);

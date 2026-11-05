@@ -55,15 +55,16 @@ var c_bad: C((1, 2, 3)) = F();
 
 impl package Implicit;
 
-// CHECK:STDERR:        ╭─┤ fail_bad_value.impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR:        ╭─┤ fail_bad_value.impl.carbon:[[@LINE+12]]:24
 // CHECK:STDERR: ->     │ var c_bad: C((3, 4)) = F();
-// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        · ┗━━┫ error: cannot implicitly convert expression of type `C((1, 2))` to
-// CHECK:STDERR:        · │  ┃        `C((3, 4))`
-// CHECK:STDERR:        · │  ┃        [ConversionFailure]
-// CHECK:STDERR:        · ╰────┤ type `C((1, 2))` does not implement interface
-// CHECK:STDERR:        ·      │ `Core.ImplicitAs(C((3, 4)))`
-// CHECK:STDERR:        ·      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · ──────────┬─────────   ┳━━
+// CHECK:STDERR:        ·           │            ┗━━┫ error: cannot implicitly convert expression of type
+// CHECK:STDERR:        ·           │            │  ┃        `C((1, 2))` to `C((3, 4))`
+// CHECK:STDERR:        ·           │            │  ┃        [ConversionFailure]
+// CHECK:STDERR:        ·           ╰─────────────────┤ initializing this variable [InPatternInit]
+// CHECK:STDERR:        ·                        ╰──────┤ type `C((1, 2))` does not implement interface
+// CHECK:STDERR:        ·                               │ `Core.ImplicitAs(C((3, 4)))`
+// CHECK:STDERR:        ·                               │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c_bad: C((3, 4)) = F();

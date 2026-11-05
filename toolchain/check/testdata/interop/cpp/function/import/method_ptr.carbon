@@ -125,18 +125,20 @@ import Cpp library "method_ptr.h";
 fn F(ref c: Cpp.C);
 
 fn G() {
-  // CHECK:STDERR:        ╭─┤ fail_pass_function_for_method.carbon:[[@LINE+14]]:39
+  // CHECK:STDERR:        ╭─┤ fail_pass_function_for_method.carbon:[[@LINE+16]]:39
   // CHECK:STDERR:        │ fn F(ref c: Cpp.C);
   // CHECK:STDERR:        · ─────────┬─────────
   // CHECK:STDERR:        ·          ╰──┤ function exported with pointer type `void (*)(class C &)`
   // CHECK:STDERR:        ·             │ [ExportedFromFunction]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   var unused ptr: Cpp.MethodPtrType = F;
-  // CHECK:STDERR:        ·                                       ┳
-  // CHECK:STDERR:        ·                                       ┗━━┫ error: can't convert exported
-  // CHECK:STDERR:        ·                                          ┃        function pointer to
-  // CHECK:STDERR:        ·                                          ┃        `void (C::*)(void) const`
-  // CHECK:STDERR:        ·                                          ┃        [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR:        ·   ────────────────┬────────────────   ┳
+  // CHECK:STDERR:        ·                   │                   ┗━━┫ error: can't convert exported
+  // CHECK:STDERR:        ·                   │                      ┃        function pointer to
+  // CHECK:STDERR:        ·                   │                      ┃        `void (C::*)(void) const`
+  // CHECK:STDERR:        ·                   │                      ┃        [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR:        ·                   ╰────────────────────────┤ initializing this variable
+  // CHECK:STDERR:        ·                                            │ [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = F;
@@ -152,7 +154,7 @@ class C {
 }
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_wrong_parent_type.carbon:[[@LINE+15]]:39
+  // CHECK:STDERR:        ╭─┤ fail_wrong_parent_type.carbon:[[@LINE+17]]:39
   // CHECK:STDERR:        │   fn Method(self);
   // CHECK:STDERR:        ·   ┬───────────────
   // CHECK:STDERR:        ·   ╰──┤ function exported with pointer type
@@ -160,11 +162,13 @@ fn F() {
   // CHECK:STDERR:        ·      │ [ExportedFromFunction]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   var unused ptr: Cpp.MethodPtrType = C.Method;
-  // CHECK:STDERR:        ·                                       ┳━━━━━━━
-  // CHECK:STDERR:        ·                                       ┗━━┫ error: can't convert exported member
-  // CHECK:STDERR:        ·                                          ┃        function pointer to
-  // CHECK:STDERR:        ·                                          ┃        `void (C::*)(void) const`
-  // CHECK:STDERR:        ·                                          ┃        [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR:        ·   ────────────────┬────────────────   ┳━━━━━━━
+  // CHECK:STDERR:        ·                   │                   ┗━━┫ error: can't convert exported member
+  // CHECK:STDERR:        ·                   │                      ┃        function pointer to
+  // CHECK:STDERR:        ·                   │                      ┃        `void (C::*)(void) const`
+  // CHECK:STDERR:        ·                   │                      ┃        [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR:        ·                   ╰────────────────────────┤ initializing this variable
+  // CHECK:STDERR:        ·                                            │ [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = C.Method;
@@ -185,7 +189,7 @@ using MethodPtrType = void(Carbon::C::*)(float) const;
 
 fn G() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR:        ╭─┤ fail_type_mismatch.carbon:[[@LINE+15]]:39
+  // CHECK:STDERR:        ╭─┤ fail_type_mismatch.carbon:[[@LINE+17]]:39
   // CHECK:STDERR:        │   fn Method(self, i: i32);
   // CHECK:STDERR:        ·   ┬───────────────────────
   // CHECK:STDERR:        ·   ╰──┤ function exported with pointer type
@@ -193,11 +197,13 @@ fn G() {
   // CHECK:STDERR:        ·      │ [ExportedFromFunction]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   var unused ptr: Cpp.MethodPtrType = C.Method;
-  // CHECK:STDERR:        ·                                       ━━━━┳━━━
+  // CHECK:STDERR:        ·   ────────────────┬────────────────   ━━━━┳━━━
   // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
   // CHECK:STDERR:        · ┃ error: can't convert exported member function pointer to
   // CHECK:STDERR:        · ┃        `void (Carbon::Main::C::*)(float) const`
   // CHECK:STDERR:        · ┃        [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR:        ·                   ╰──────────────────────────┤ initializing this variable
+  // CHECK:STDERR:        ·                                              │ [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused ptr: Cpp.MethodPtrType = C.Method;
@@ -479,7 +485,7 @@ fn G() {
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc30 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.6870fd.3: type = fn_type @SubobjectDestroy.WithSelf.Op.loc32 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f1ee.3: %SubobjectDestroy.WithSelf.Op.type.6870fd.3 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80ef6.3: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f1ee.3), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.886: %SubobjectDestroy.type = facet_value %.659, (%custom_witness.b80ef6.3) [concrete]
@@ -502,7 +508,7 @@ fn G() {
 // CHECK:STDOUT:   %C.ref: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   %Method.ref: %C.Method.type = name_ref Method, @C.%C.Method.decl [concrete = constants.%C.Method]
 // CHECK:STDOUT:   assign %ptr.var, <error>
-// CHECK:STDOUT:   %.loc30_22: type = splice_block %MethodPtrType.ref [concrete = constants.%.659] {
+// CHECK:STDOUT:   %.loc32_22: type = splice_block %MethodPtrType.ref [concrete = constants.%.659] {
 // CHECK:STDOUT:     %Cpp.ref: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
 // CHECK:STDOUT:     %MethodPtrType.ref: type = name_ref MethodPtrType, constants.%.659 [concrete = constants.%.659]
 // CHECK:STDOUT:   }
@@ -511,10 +517,10 @@ fn G() {
 // CHECK:STDOUT:     %ptr.patt: %pattern_type.4b7 = ref_binding_pattern ptr [concrete = constants.%ptr.patt]
 // CHECK:STDOUT:     %ptr.var_patt: %pattern_type.4b7 = var_pattern %ptr.patt [concrete = constants.%ptr.var_patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc30_3.1: %Destroy.type = facet_value constants.%.659, (constants.%DestroyImpl.impl_witness.381, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.f79]
-// CHECK:STDOUT:   %.loc30_3.1: %Destroy.type = converted constants.%.659, %Destroy.facet.loc30_3.1 [concrete = constants.%Destroy.facet.f79]
-// CHECK:STDOUT:   %Destroy.facet.loc30_3.2: %Destroy.type = facet_value constants.%.659, (constants.%DestroyImpl.impl_witness.381, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.f79]
-// CHECK:STDOUT:   %.loc30_3.2: %Destroy.type = converted constants.%.659, %Destroy.facet.loc30_3.2 [concrete = constants.%Destroy.facet.f79]
+// CHECK:STDOUT:   %Destroy.facet.loc32_3.1: %Destroy.type = facet_value constants.%.659, (constants.%DestroyImpl.impl_witness.381, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.f79]
+// CHECK:STDOUT:   %.loc32_3.1: %Destroy.type = converted constants.%.659, %Destroy.facet.loc32_3.1 [concrete = constants.%Destroy.facet.f79]
+// CHECK:STDOUT:   %Destroy.facet.loc32_3.2: %Destroy.type = facet_value constants.%.659, (constants.%DestroyImpl.impl_witness.381, constants.%custom_witness.b80ef6.3) [concrete = constants.%Destroy.facet.f79]
+// CHECK:STDOUT:   %.loc32_3.2: %Destroy.type = converted constants.%.659, %Destroy.facet.loc32_3.2 [concrete = constants.%Destroy.facet.f79]
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT:   %SelfDestruct.call: init %empty_tuple.type = call %SelfDestruct.specific_fn(%ptr.var)
 // CHECK:STDOUT:   <elided>
@@ -523,10 +529,10 @@ fn G() {
 // CHECK:STDOUT: fn @C.Method__carbon_thunk(%self.param: ref %C, %_.param: ref %i32) {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %.loc30_40.1: %C = acquire_value %self.param
-// CHECK:STDOUT:   %.loc30_40.2: %i32 = acquire_value %_.param
+// CHECK:STDOUT:   %.loc32_40.1: %C = acquire_value %self.param
+// CHECK:STDOUT:   %.loc32_40.2: %i32 = acquire_value %_.param
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc30(%self.param: ref %.659) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc32(%self.param: ref %.659) = "no_op";
 // CHECK:STDOUT:

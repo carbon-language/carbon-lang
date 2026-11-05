@@ -116,7 +116,7 @@ class OverloadX {
   // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.Y` does not implement interface
   // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.X)`
-  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       │    │ [MissingImplForType]
   // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
   // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
   // CHECK:STDERR:        ╰────
@@ -129,7 +129,7 @@ class OverloadX {
   // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.Y` does not implement interface
   // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.X)`
-  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       │    │ [MissingImplForType]
   // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
   // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
   // CHECK:STDERR:        ┆
@@ -154,7 +154,7 @@ class OverloadY {
   // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.X` does not implement interface
   // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.Y)`
-  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       │    │ [MissingImplForType]
   // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
   // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
   // CHECK:STDERR:        ╰────
@@ -167,7 +167,7 @@ class OverloadY {
   // CHECK:STDERR:        ·                  │    │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                  ╰─────────┤ type `Cpp.X` does not implement interface
   // CHECK:STDERR:        ·                       │    │ `Core.ImplicitAs(Cpp.Y)`
-  // CHECK:STDERR:        ·                       │    │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       │    │ [MissingImplForType]
   // CHECK:STDERR:        ·                       ╰──────┤ initializing function parameter
   // CHECK:STDERR:        ·                              │ [InCallToFunctionParam]
   // CHECK:STDERR:        ┆

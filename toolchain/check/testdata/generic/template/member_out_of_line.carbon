@@ -41,15 +41,15 @@ fn Class(template T: type).F(n: T.U) -> T.U {
   return n;
 }
 
-// CHECK:STDERR:        ╭─┤ fail_todo_basic.carbon:[[@LINE+14]]:1
+// CHECK:STDERR:        ╭─┤ fail_todo_basic.carbon:[[@LINE+14]]:39
 // CHECK:STDERR:        │   fn G(self) -> T;
-// CHECK:STDERR:        ·   ────────┬───────
-// CHECK:STDERR:        ·           ╰──┤ previously declared with return type `T`
-// CHECK:STDERR:        ·              │ [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ·                 ┬
+// CHECK:STDERR:        ·                 ╰──┤ previously declared with return type `T`
+// CHECK:STDERR:        ·                    │ [FunctionRedeclReturnTypePrevious]
 // CHECK:STDERR:        ┆
 // CHECK:STDERR: ->     │ fn Class(template T: type).G(self) -> T.U {
-// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━
-// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        ·                                       ━┳━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: function redeclaration differs because return type is
 // CHECK:STDERR:        · ┃        `<splice of <cannot stringify inst780000DE: {kind: ConvertToValueAction, arg0: inst780000DB, arg1: inst(TypeType), type: type(inst(InstType))}>>`
 // CHECK:STDERR:        · ┃        [FunctionRedeclReturnTypeDiffers]

@@ -89,6 +89,9 @@ static auto ResolveCalleeInCall(Context& context, SemIR::LocId loc_id,
         "interface|=3:generic constraint}"
         " declared here",
         Diagnostics::IntAsSelect);
+    // TODO: Locate the message at the argument list, where the count it reports
+    // comes from. That needs the call's argument-list parse node to be
+    // reachable from the callee resolution.
     context.emitter()
         .Build(loc_id, CallArgCountMismatch, arg_ids.size(),
                static_cast<int>(entity_kind_for_diagnostic), expected_args_size)

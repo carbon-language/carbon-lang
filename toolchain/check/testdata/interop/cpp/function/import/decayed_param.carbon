@@ -82,7 +82,7 @@ fn F() {
   // CHECK:STDERR:        ·                     │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                     ╰────┤ type `Cpp.nullptr_t` does not implement interface
   // CHECK:STDERR:        ·                          │ `Core.ImplicitAs(<C++ type int (*)(int)>)`
-  // CHECK:STDERR:        ·                          │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                          │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR:        ├─┤ ./params.h
   // CHECK:STDERR:        │ void TakesFunction(int f(int));

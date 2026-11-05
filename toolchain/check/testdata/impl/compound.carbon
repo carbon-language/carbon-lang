@@ -56,7 +56,7 @@ fn NonInstanceCall2(n: {.b: ()}) {
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `{.b: ()}` does not implement interface
   // CHECK:STDERR:        ·        │ `Core.ImplicitAs(NonInstance2)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   n.(NonInstance2.F2)();
@@ -84,7 +84,7 @@ fn NonInstanceCallIndirect(p: {.c: ()}*) {
   // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·   ╰────┤ type `{.c: ()}` does not implement interface
   // CHECK:STDERR:        ·        │ `Core.ImplicitAs(NonInstance3)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·        │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->(NonInstance3.F3)();

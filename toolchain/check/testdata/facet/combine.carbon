@@ -31,7 +31,15 @@ impl C as B {
 fn F() {
   // TODO: This error message is wrong here, we are not using `extend`.
 
-  // CHECK:STDERR:        ╭─┤ fail_name_collision.carbon:[[@LINE+8]]:14
+  // CHECK:STDERR:        ╭─┤ fail_name_collision.carbon:[[@LINE+16]]:14
+  // CHECK:STDERR:        │   fn G();
+  // CHECK:STDERR:        ·   ───┬───
+  // CHECK:STDERR:        ·      ╰──┤ candidate `G` declared here [NameAmbiguousCandidate]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   fn G();
+  // CHECK:STDERR:        ·   ───┬───
+  // CHECK:STDERR:        ·      ╰──┤ candidate `G` declared here [NameAmbiguousCandidate]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   ({} as C).((A & B).G)();
   // CHECK:STDERR:        ·              ┳━━━━━━━━
   // CHECK:STDERR:        ·              ┗━━┫ error: ambiguous use of name `G` found in multiple extended
@@ -188,16 +196,19 @@ interface J {}
 interface K {}
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ fail_compare_not_equal.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_compare_not_equal.carbon:[[@LINE+15]]:3
   // CHECK:STDERR:        │ fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
   // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────
   // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
   // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Same(Type(I & J), Type(K & I & J));
-  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·           ┗━━┫ error: inconsistent deductions for value of generic parameter `T`
-  // CHECK:STDERR:        ·              ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━┳┯━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                    ┗━━━┫ error: inconsistent deductions for value of generic
+  // CHECK:STDERR:        ·                     │  ┃        parameter `T`
+  // CHECK:STDERR:        ·                     │  ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        ·                     ╰────┤ conflicting value for `T` deduced from this argument
+  // CHECK:STDERR:        ·                          │ [DeductionInconsistentArg]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Same(Type(I & J), Type(K & I & J));
@@ -214,16 +225,20 @@ interface I {}
 interface J(T: type) {}
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ fail_compare_not_equal_parameterized.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_compare_not_equal_parameterized.carbon:[[@LINE+16]]:3
   // CHECK:STDERR:        │ fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
   // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────
   // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
   // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Same(Type(I & J(())), Type(J({}) & I));
-  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·           ┗━━┫ error: inconsistent deductions for value of generic parameter `T`
-  // CHECK:STDERR:        ·              ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━┳━━┯━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                      ┗━━━━━┫ error: inconsistent deductions for value of generic
+  // CHECK:STDERR:        ·                         │  ┃        parameter `T`
+  // CHECK:STDERR:        ·                         │  ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        ·                         ╰────┤ conflicting value for `T` deduced from this
+  // CHECK:STDERR:        ·                              │ argument
+  // CHECK:STDERR:        ·                              │ [DeductionInconsistentArg]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Same(Type(I & J(())), Type(J({}) & I));
@@ -240,16 +255,20 @@ interface I {}
 interface J(T: type) {}
 
 fn Test() {
-  // CHECK:STDERR:        ╭─┤ fail_compare_not_equal_parameterized_extra.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        ╭─┤ fail_compare_not_equal_parameterized_extra.carbon:[[@LINE+16]]:3
   // CHECK:STDERR:        │ fn Same[T: type](unused a: WrapType(T), unused b: WrapType(T)) {}
   // CHECK:STDERR:        · ─────────────────────────┬──────────────────────────────────────
   // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
   // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   Same(Type(I & J(())), Type(J(()) & J({}) & I));
-  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·           ┗━━┫ error: inconsistent deductions for value of generic parameter `T`
-  // CHECK:STDERR:        ·              ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                         ┗━━┫ error: inconsistent deductions for value of generic
+  // CHECK:STDERR:        ·                         │  ┃        parameter `T`
+  // CHECK:STDERR:        ·                         │  ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        ·                         ╰────┤ conflicting value for `T` deduced from this
+  // CHECK:STDERR:        ·                              │ argument
+  // CHECK:STDERR:        ·                              │ [DeductionInconsistentArg]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Same(Type(I & J(())), Type(J(()) & J({}) & I));

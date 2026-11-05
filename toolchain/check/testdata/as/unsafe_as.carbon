@@ -25,7 +25,7 @@ fn Convert(a: A) -> B {
   // CHECK:STDERR:        ·          │  ┃        `unsafe as`
   // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·          ╰────┤ type `A` does not implement interface `Core.UnsafeAs(B)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a unsafe as B;

@@ -62,13 +62,14 @@ impl C as Core.IndexWith(SubscriptType) where .ElementType = ElementType {
 }
 
 let c: C = {};
-// CHECK:STDERR:        ╭─┤ fail_invalid_subscript_type.carbon:[[@LINE+9]]:22
+// CHECK:STDERR:        ╭─┤ fail_invalid_subscript_type.carbon:[[@LINE+10]]:24
 // CHECK:STDERR: ->     │ let x: ElementType = c[0];
-// CHECK:STDERR:        ·                      ┳━━━
-// CHECK:STDERR:        ·                      ┗━━┫ error: cannot access member of interface
-// CHECK:STDERR:        ·                         ┃        `Core.IndexWith(Core.IntLiteral)` in type `C`
-// CHECK:STDERR:        ·                         ┃        that does not implement that interface
-// CHECK:STDERR:        ·                         ┃        [MissingImplInMemberAccess]
+// CHECK:STDERR:        ·                      ┬ ┳
+// CHECK:STDERR:        ·                      │ ┗━━┫ error: type `C` does not implement interface
+// CHECK:STDERR:        ·                      │    ┃        `Core.IndexWith(Core.IntLiteral)`
+// CHECK:STDERR:        ·                      │    ┃        [MissingImplForType]
+// CHECK:STDERR:        ·                      ╰──────┤ indexing an object with type `C`
+// CHECK:STDERR:        ·                             │ [IndexedObjectType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let x: ElementType = c[0];
@@ -80,13 +81,13 @@ library "[[@TEST_NAME]]";
 class C { }
 
 let c: C = {};
-// CHECK:STDERR:        ╭─┤ fail_index_with_not_implemented.carbon:[[@LINE+9]]:14
+// CHECK:STDERR:        ╭─┤ fail_index_with_not_implemented.carbon:[[@LINE+9]]:16
 // CHECK:STDERR: ->     │ let x: i32 = c[0];
-// CHECK:STDERR:        ·              ┳━━━
-// CHECK:STDERR:        ·              ┗━━┫ error: cannot access member of interface
-// CHECK:STDERR:        ·                 ┃        `Core.IndexWith(Core.IntLiteral)` in type `C` that does
-// CHECK:STDERR:        ·                 ┃        not implement that interface
-// CHECK:STDERR:        ·                 ┃        [MissingImplInMemberAccess]
+// CHECK:STDERR:        ·              ┬ ┳
+// CHECK:STDERR:        ·              │ ┗━━┫ error: type `C` does not implement interface
+// CHECK:STDERR:        ·              │    ┃        `Core.IndexWith(Core.IntLiteral)`
+// CHECK:STDERR:        ·              │    ┃        [MissingImplForType]
+// CHECK:STDERR:        ·              ╰──────┤ indexing an object with type `C` [IndexedObjectType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let x: i32 = c[0];

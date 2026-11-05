@@ -60,7 +60,7 @@ fn TakeNonConst(p: X*);
 // CHECK:STDERR:        ·                                      │  ┃        [ConversionFailure]
 // CHECK:STDERR:        ·                                      ╰────┤ type `const X*` does not implement
 // CHECK:STDERR:        ·                                           │ interface `Core.ImplicitAs(X*)`
-// CHECK:STDERR:        ·                                           │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                           │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Const(p: const X*) { TakeNonConst(p); }
@@ -90,7 +90,7 @@ fn NonConstNonConst(p: X**) {
   // CHECK:STDERR:        ·                  │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                  ╰────┤ type `X**` does not implement interface
   // CHECK:STDERR:        ·                       │ `Core.ImplicitAs(const (const X*)*)`
-  // CHECK:STDERR:        ·                       │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   TakeConstConst(p);
@@ -112,7 +112,7 @@ fn ConstNonConst(p: const (X*)*) {
   // CHECK:STDERR:        ·                  │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                  ╰────┤ type `const (X*)*` does not implement interface
   // CHECK:STDERR:        ·                       │ `Core.ImplicitAs(const (const X*)*)`
-  // CHECK:STDERR:        ·                       │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                       │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   TakeConstConst(p);
@@ -142,7 +142,7 @@ fn TakeNonConstConst(p: (const X*)*);
 // CHECK:STDERR:        ·                                                 │  ┃        [ConversionFailure]
 // CHECK:STDERR:        · ╭───────────────────────────────────────────────╯
 // CHECK:STDERR:        · │ type `X**` does not implement interface `Core.ImplicitAs(const X**)`
-// CHECK:STDERR:        · │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        · │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NonConstNonConst(p: X**) { TakeNonConstConst(p); }

@@ -194,12 +194,14 @@ using MyCallbackType = void(*)(int);
 fn MyCallback(generic arg: i32);
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_convert_generic_arg.carbon:[[@LINE+8]]:43
+  // CHECK:STDERR:        ╭─┤ fail_convert_generic_arg.carbon:[[@LINE+10]]:43
   // CHECK:STDERR: ->     │   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
-  // CHECK:STDERR:        ·                                           ━━━━━┳━━━━
+  // CHECK:STDERR:        ·   ──────────────────┬──────────────────   ━━━━━┳━━━━
   // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
   // CHECK:STDERR:        · ┃ error: semantics TODO: `binding maps to a non-type template parameter`
   // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ·                     ╰─────────────────────────────┤ initializing this variable
+  // CHECK:STDERR:        ·                                                   │ [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
@@ -215,18 +217,20 @@ using MyCallbackType = void(*)(int);
 fn MyCallback(arg: i32) -> i32;
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_convert_type_mismatch.carbon:[[@LINE+14]]:43
+  // CHECK:STDERR:        ╭─┤ fail_convert_type_mismatch.carbon:[[@LINE+16]]:43
   // CHECK:STDERR:        │ fn MyCallback(arg: i32) -> i32;
   // CHECK:STDERR:        · ───────────────┬───────────────
   // CHECK:STDERR:        ·                ╰──┤ function exported with pointer type `int (*)(int)`
   // CHECK:STDERR:        ·                   │ [ExportedFromFunction]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
-  // CHECK:STDERR:        ·                                           ┳━━━━━━━━━
-  // CHECK:STDERR:        ·                                           ┗━━┫ error: can't convert exported
-  // CHECK:STDERR:        ·                                              ┃        function pointer to
-  // CHECK:STDERR:        ·                                              ┃        `void (*)(int)`
-  // CHECK:STDERR:        ·                                              ┃        [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR:        ·   ──────────────────┬──────────────────   ┳━━━━━━━━━
+  // CHECK:STDERR:        ·                     │                     ┗━━┫ error: can't convert exported
+  // CHECK:STDERR:        ·                     │                        ┃        function pointer to
+  // CHECK:STDERR:        ·                     │                        ┃        `void (*)(int)`
+  // CHECK:STDERR:        ·                     │                        ┃        [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR:        ·                     ╰──────────────────────────┤ initializing this variable
+  // CHECK:STDERR:        ·                                                │ [InPatternInit]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;

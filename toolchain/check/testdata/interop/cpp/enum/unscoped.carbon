@@ -36,28 +36,30 @@ library "[[@TEST_NAME]]";
 import Cpp library "enum.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_wrong_enum.carbon:[[@LINE+11]]:29
+  // CHECK:STDERR:        ╭─┤ fail_wrong_enum.carbon:[[@LINE+12]]:29
   // CHECK:STDERR: ->     │   let unused c: Cpp.Other = Cpp.Enum.c;
-  // CHECK:STDERR:        ·                             ┳━━━━━━━━━
-  // CHECK:STDERR:        ·                             ┗━━┫ error: cannot implicitly convert expression of
-  // CHECK:STDERR:        ·                             │  ┃        type `Cpp.Enum` to `Cpp.Other`
-  // CHECK:STDERR:        ·                             │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                             ╰────┤ type `Cpp.Enum` does not implement interface
-  // CHECK:STDERR:        ·                                  │ `Core.ImplicitAs(Cpp.Other)`
-  // CHECK:STDERR:        ·                                  │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·              ──────┬─────   ┳━━━━━━━━━
+  // CHECK:STDERR:        ·                    │        ┗━━┫ error: cannot implicitly convert expression of
+  // CHECK:STDERR:        ·                    │        │  ┃        type `Cpp.Enum` to `Cpp.Other`
+  // CHECK:STDERR:        ·                    │        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                    ╰─────────────┤ initializing this binding [InPatternInit]
+  // CHECK:STDERR:        ·                             ╰──────┤ type `Cpp.Enum` does not implement
+  // CHECK:STDERR:        ·                                    │ interface `Core.ImplicitAs(Cpp.Other)`
+  // CHECK:STDERR:        ·                                    │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c: Cpp.Other = Cpp.Enum.c;
 
-  // CHECK:STDERR:        ╭─┤ fail_wrong_enum.carbon:[[@LINE+11]]:30
+  // CHECK:STDERR:        ╭─┤ fail_wrong_enum.carbon:[[@LINE+12]]:30
   // CHECK:STDERR: ->     │   let unused c2: Cpp.Other = Cpp.c;
-  // CHECK:STDERR:        ·                              ┳━━━━
-  // CHECK:STDERR:        ·                              ┗━━┫ error: cannot implicitly convert expression of
-  // CHECK:STDERR:        ·                              │  ┃        type `Cpp.Enum` to `Cpp.Other`
-  // CHECK:STDERR:        ·                              │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·                              ╰────┤ type `Cpp.Enum` does not implement interface
-  // CHECK:STDERR:        ·                                   │ `Core.ImplicitAs(Cpp.Other)`
-  // CHECK:STDERR:        ·                                   │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·              ──────┬──────   ┳━━━━
+  // CHECK:STDERR:        ·                    │         ┗━━┫ error: cannot implicitly convert expression of
+  // CHECK:STDERR:        ·                    │         │  ┃        type `Cpp.Enum` to `Cpp.Other`
+  // CHECK:STDERR:        ·                    │         │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                    ╰──────────────┤ initializing this binding [InPatternInit]
+  // CHECK:STDERR:        ·                              ╰──────┤ type `Cpp.Enum` does not implement
+  // CHECK:STDERR:        ·                                     │ interface `Core.ImplicitAs(Cpp.Other)`
+  // CHECK:STDERR:        ·                                     │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c2: Cpp.Other = Cpp.c;
@@ -70,11 +72,16 @@ library "[[@TEST_NAME]]";
 import Cpp library "enum.h";
 
 fn F() {
-  // CHECK:STDERR:        ╭─┤ fail_non_enum_member.carbon:[[@LINE+7]]:29
+  // CHECK:STDERR:        ╭─┤ fail_non_enum_member.carbon:[[@LINE+12]]:29
   // CHECK:STDERR: ->     │   let unused c: Cpp.Other = Cpp.Enum.d;
   // CHECK:STDERR:        ·                             ━┳━━━━━━━━
   // CHECK:STDERR:        ·                              ┗━━┫ error: member name `d` not found in `Cpp.Enum`
   // CHECK:STDERR:        ·                                 ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./enum.h
+  // CHECK:STDERR:        │ enum Enum { a, b, c };
+  // CHECK:STDERR:        ·      ┬
+  // CHECK:STDERR:        ·      ╰──┤ `Cpp.Enum` defined here [MemberNameNotFoundScope]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c: Cpp.Other = Cpp.Enum.d;

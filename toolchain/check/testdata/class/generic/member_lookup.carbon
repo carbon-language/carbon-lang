@@ -53,7 +53,11 @@ class Derived(T: type) {
 }
 
 fn AccessMissingBase[T: type](x: Base(T)) -> T {
-  // CHECK:STDERR:        ╭─┤ fail_no_member.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR:        ╭─┤ fail_no_member.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR:        │ base class Base(T: type) {
+  // CHECK:STDERR:        · ─────────────┬────────────
+  // CHECK:STDERR:        ·              ╰──┤ `Base(T)` defined here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return x.nonesuch;
   // CHECK:STDERR:        ·          ━━━━━┳━━━━
   // CHECK:STDERR:        ·               ┗━━┫ error: member name `nonesuch` not found in `Base(T)`
@@ -64,7 +68,11 @@ fn AccessMissingBase[T: type](x: Base(T)) -> T {
 }
 
 fn AccessMissingDerived[T: type](x: Derived(T)) -> T {
-  // CHECK:STDERR:        ╭─┤ fail_no_member.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR:        ╭─┤ fail_no_member.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR:        │ class Derived(T: type) {
+  // CHECK:STDERR:        · ────────────┬───────────
+  // CHECK:STDERR:        ·             ╰──┤ `Derived(T)` defined here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return x.nonesuch;
   // CHECK:STDERR:        ·          ━━━━━┳━━━━
   // CHECK:STDERR:        ·               ┗━━┫ error: member name `nonesuch` not found in `Derived(T)`
@@ -75,7 +83,11 @@ fn AccessMissingDerived[T: type](x: Derived(T)) -> T {
 }
 
 fn AccessMissingConcrete(x: Derived(i32)) -> i32 {
-  // CHECK:STDERR:        ╭─┤ fail_no_member.carbon:[[@LINE+7]]:10
+  // CHECK:STDERR:        ╭─┤ fail_no_member.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR:        │ class Derived(T: type) {
+  // CHECK:STDERR:        · ────────────┬───────────
+  // CHECK:STDERR:        ·             ╰──┤ `Derived(i32)` defined here [MemberNameNotFoundSpecificScope]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return x.nonesuch;
   // CHECK:STDERR:        ·          ━━━━━┳━━━━
   // CHECK:STDERR:        ·               ┗━━┫ error: member name `nonesuch` not found in `Derived(i32)`

@@ -83,7 +83,13 @@ library "[[@TEST_NAME]]";
 import Cpp library "types.h";
 
 fn CopyDeletedCopy(c: Cpp.DeletedCopy) -> Cpp.DeletedCopy {
-  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+12]]:10
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+18]]:10
+  // CHECK:STDERR:        │ fn CopyDeletedCopy(c: Cpp.DeletedCopy) -> Cpp.DeletedCopy {
+  // CHECK:STDERR:        ·                                           ┬──────────────
+  // CHECK:STDERR:        ·                                           ╰──┤ return type of function is
+  // CHECK:STDERR:        ·                                              │ `DeletedCopy`
+  // CHECK:STDERR:        ·                                              │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return c;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: attempt to use a deleted function [CppInteropParseError]
@@ -99,7 +105,12 @@ fn CopyDeletedCopy(c: Cpp.DeletedCopy) -> Cpp.DeletedCopy {
 }
 
 fn CopyMoveOnly(c: Cpp.MoveOnly) -> Cpp.MoveOnly {
-  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+13]]:10
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+18]]:10
+  // CHECK:STDERR:        │ fn CopyMoveOnly(c: Cpp.MoveOnly) -> Cpp.MoveOnly {
+  // CHECK:STDERR:        ·                                     ──┬─────────
+  // CHECK:STDERR:        ·                                       ╰──┤ return type of function is `MoveOnly`
+  // CHECK:STDERR:        ·                                          │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return c;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: attempt to use a deleted function [CppInteropParseError]
@@ -116,7 +127,13 @@ fn CopyMoveOnly(c: Cpp.MoveOnly) -> Cpp.MoveOnly {
 }
 
 fn CopyDeletedMove(c: Cpp.DeletedMove) -> Cpp.DeletedMove {
-  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+13]]:10
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+19]]:10
+  // CHECK:STDERR:        │ fn CopyDeletedMove(c: Cpp.DeletedMove) -> Cpp.DeletedMove {
+  // CHECK:STDERR:        ·                                           ┬──────────────
+  // CHECK:STDERR:        ·                                           ╰──┤ return type of function is
+  // CHECK:STDERR:        ·                                              │ `DeletedMove`
+  // CHECK:STDERR:        ·                                              │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return c;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: attempt to use a deleted function [CppInteropParseError]
@@ -134,13 +151,19 @@ fn CopyDeletedMove(c: Cpp.DeletedMove) -> Cpp.DeletedMove {
 
 fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+15]]:10
+  // CHECK:STDERR:        │ fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
+  // CHECK:STDERR:        ·                                             ┬───────────────
+  // CHECK:STDERR:        ·                                             ╰──┤ return type of function is
+  // CHECK:STDERR:        ·                                                │ `NonConstCopy`
+  // CHECK:STDERR:        ·                                                │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return c;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `NonConstCopy`
   // CHECK:STDERR:        ·          │  ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ·          ╰────┤ type `Cpp.NonConstCopy` does not implement interface `Core.Copy`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
@@ -148,14 +171,20 @@ fn CopyNonConstCopy(c: Cpp.NonConstCopy) -> Cpp.NonConstCopy {
 
 fn CopyAmbiguousCopy(c: Cpp.AmbiguousCopy) -> Cpp.AmbiguousCopy {
   // TODO: List candidates here.
-  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+10]]:10
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR:        │ fn CopyAmbiguousCopy(c: Cpp.AmbiguousCopy) -> Cpp.AmbiguousCopy {
+  // CHECK:STDERR:        ·                                               ┬────────────────
+  // CHECK:STDERR:        ·                                               ╰──┤ return type of function is
+  // CHECK:STDERR:        ·                                                  │ `AmbiguousCopy`
+  // CHECK:STDERR:        ·                                                  │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return c;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot copy value of type `AmbiguousCopy`
   // CHECK:STDERR:        ·          │  ┃        [CopyOfUncopyableType]
   // CHECK:STDERR:        ·          ╰────┤ type `Cpp.AmbiguousCopy` does not implement interface
   // CHECK:STDERR:        ·               │ `Core.Copy`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c;
@@ -163,7 +192,13 @@ fn CopyAmbiguousCopy(c: Cpp.AmbiguousCopy) -> Cpp.AmbiguousCopy {
 
 fn CopyPrivateCopy(c: Cpp.PrivateCopy) -> Cpp.PrivateCopy {
   // TODO: Note is missing location.
-  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+13]]:10
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+19]]:10
+  // CHECK:STDERR:        │ fn CopyPrivateCopy(c: Cpp.PrivateCopy) -> Cpp.PrivateCopy {
+  // CHECK:STDERR:        ·                                           ┬──────────────
+  // CHECK:STDERR:        ·                                           ╰──┤ return type of function is
+  // CHECK:STDERR:        ·                                              │ `PrivateCopy`
+  // CHECK:STDERR:        ·                                              │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return c;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot access private member `PrivateCopy` of type
@@ -181,7 +216,13 @@ fn CopyPrivateCopy(c: Cpp.PrivateCopy) -> Cpp.PrivateCopy {
 
 fn CopyProtectedCopy(c: Cpp.ProtectedCopy) -> Cpp.ProtectedCopy {
   // TODO: Note is missing location.
-  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+13]]:10
+  // CHECK:STDERR:        ╭─┤ fail_copy_noncopyable.carbon:[[@LINE+19]]:10
+  // CHECK:STDERR:        │ fn CopyProtectedCopy(c: Cpp.ProtectedCopy) -> Cpp.ProtectedCopy {
+  // CHECK:STDERR:        ·                                               ┬────────────────
+  // CHECK:STDERR:        ·                                               ╰──┤ return type of function is
+  // CHECK:STDERR:        ·                                                  │ `ProtectedCopy`
+  // CHECK:STDERR:        ·                                                  │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return c;
   // CHECK:STDERR:        ·          ┳
   // CHECK:STDERR:        ·          ┗━━┫ error: cannot access protected member `ProtectedCopy` of type

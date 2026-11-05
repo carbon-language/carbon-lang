@@ -16,12 +16,12 @@ library "[[@TEST_NAME]]";
 
 fn Run() {
   // TODO: These diagnostics could be better.
-  // CHECK:STDERR:        ╭─┤ fail_not_range.carbon:[[@LINE+8]]:7
+  // CHECK:STDERR:        ╭─┤ fail_not_range.carbon:[[@LINE+8]]:24
   // CHECK:STDERR: ->     │   for (unused c: {} in {}) {
-  // CHECK:STDERR:        ·       ┳━━━━━━━━━━━━━━━━━━━
-  // CHECK:STDERR:        ·       ┗━━┫ error: cannot access member of interface `Core.Iterate` in type `{}`
-  // CHECK:STDERR:        ·          ┃        that does not implement that interface
-  // CHECK:STDERR:        ·          ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ·                        ┳━
+  // CHECK:STDERR:        ·                        ┗━━┫ error: type `{}` does not implement interface
+  // CHECK:STDERR:        ·                           ┃        `Core.Iterate`
+  // CHECK:STDERR:        ·                           ┃        [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   for (unused c: {} in {}) {

@@ -60,7 +60,7 @@ fn F(p: Adapter(X)*) {
   // CHECK:STDERR:        ·                      │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·                      ╰────┤ type `Adapter(X)` does not implement interface
   // CHECK:STDERR:        ·                           │ `Core.As(X*)`
-  // CHECK:STDERR:        ·                           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                           │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused x: X* = *p as X*;

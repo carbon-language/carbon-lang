@@ -55,7 +55,7 @@ fn Test(d: D) -> i32 {
   // CHECK:STDERR:        ·                │  │ [ConversionFailure]
   // CHECK:STDERR:        ·                ╰────┤ type `D` does not implement interface
   // CHECK:STDERR:        ·                     │ `Core.ImplicitAs(i32)`
-  // CHECK:STDERR:        ·                     │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                     │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return F(d);
   // CHECK:STDERR:        ·          ┳
@@ -195,7 +195,7 @@ fn Test(d: D) {
   // CHECK:STDERR:        ·              ╰──┤ cannot convert expression of type `D` to `i32` with `as`
   // CHECK:STDERR:        ·              │  │ [ConversionFailure]
   // CHECK:STDERR:        ·              ╰────┤ type `D` does not implement interface `Core.As(i32)`
-  // CHECK:STDERR:        ·                   │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                   │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   let _: i32 = AsI32(d);
   // CHECK:STDERR:        ·                ━━┳━━
@@ -248,7 +248,7 @@ fn Test(d: D) {
   // CHECK:STDERR:        ·                 ╰──┤ cannot convert expression of type `D` to `i32` with `as`
   // CHECK:STDERR:        ·                 │  │ [ConversionFailure]
   // CHECK:STDERR:        ·                 ╰────┤ type `D` does not implement interface `Core.As(i32)`
-  // CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                      │ [MissingImplForType]
   // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   AsType(d, i32);
   // CHECK:STDERR:        ·   ━━━┳━━

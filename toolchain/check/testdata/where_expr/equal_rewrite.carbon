@@ -189,7 +189,7 @@ interface I {
 // CHECK:STDERR:        ·                                                        │ does not implement
 // CHECK:STDERR:        ·                                                        │ interface
 // CHECK:STDERR:        ·                                                        │ `Core.ImplicitAs(type)`
-// CHECK:STDERR:        ·                                                        │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ·                                                        │ [MissingImplForType]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn RewriteTypeMismatch(generic X: I where .Member = 2);
@@ -245,35 +245,40 @@ interface E {
 // Testing how these types get stringified in error messages.
 
 // TODO: This should be a compile-time binding, once that is supported.
-// CHECK:STDERR:        ╭─┤ fail_type_does_not_implement_where.carbon:[[@LINE+9]]:42
+// CHECK:STDERR:        ╭─┤ fail_type_does_not_implement_where.carbon:[[@LINE+11]]:42
 // CHECK:STDERR: ->     │ let H: (E where .F = bool and .G = ()) = f64;
-// CHECK:STDERR:        ·                                          ━┳━
+// CHECK:STDERR:        ·     ─────────────────┬────────────────   ━┳━
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: cannot convert type `f64` into type implementing
 // CHECK:STDERR:        · ┃        `E where .(E.F) = bool and .(E.G) = ()`
 // CHECK:STDERR:        · ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ·                      ╰───────────────────────┤ initializing this binding
+// CHECK:STDERR:        ·                                              │ [InPatternInit]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let H: (E where .F = bool and .G = ()) = f64;
 
-// CHECK:STDERR:        ╭─┤ fail_type_does_not_implement_where.carbon:[[@LINE+9]]:45
+// CHECK:STDERR:        ╭─┤ fail_type_does_not_implement_where.carbon:[[@LINE+11]]:45
 // CHECK:STDERR: ->     │ let J: ((E where .F = {}) where .G = i32) = bool;
-// CHECK:STDERR:        ·                                             ━━┳━
+// CHECK:STDERR:        ·     ──────────────────┬──────────────────   ━━┳━
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: cannot convert type `bool` into type implementing
 // CHECK:STDERR:        · ┃        `E where .(E.F) = {} and .(E.G) = i32`
 // CHECK:STDERR:        · ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ·                       ╰──────────────────────────┤ initializing this binding
+// CHECK:STDERR:        ·                                                  │ [InPatternInit]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let J: ((E where .F = {}) where .G = i32) = bool;
 
-// CHECK:STDERR:        ╭─┤ fail_type_does_not_implement_where.carbon:[[@LINE+9]]:33
+// CHECK:STDERR:        ╭─┤ fail_type_does_not_implement_where.carbon:[[@LINE+10]]:33
 // CHECK:STDERR: ->     │ let K: (E where .F = .Self.G) = bool;
-// CHECK:STDERR:        ·                                 ┳━━━
-// CHECK:STDERR:        ·                                 ┗━━┫ error: cannot convert type `bool` into type
-// CHECK:STDERR:        ·                                    ┃        implementing
-// CHECK:STDERR:        ·                                    ┃        `E where .(E.F) = .(E.G)`
-// CHECK:STDERR:        ·                                    ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ·     ────────────┬────────────   ┳━━━
+// CHECK:STDERR:        ·                 │               ┗━━┫ error: cannot convert type `bool` into type
+// CHECK:STDERR:        ·                 │                  ┃        implementing
+// CHECK:STDERR:        ·                 │                  ┃        `E where .(E.F) = .(E.G)`
+// CHECK:STDERR:        ·                 │                  ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ·                 ╰────────────────────┤ initializing this binding [InPatternInit]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let K: (E where .F = .Self.G) = bool;

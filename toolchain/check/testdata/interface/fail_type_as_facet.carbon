@@ -20,7 +20,7 @@ interface I {
   // CHECK:STDERR:        ·                 │  ┃        [ConversionFailureNonTypeToFacet]
   // CHECK:STDERR:        ·                 ╰────┤ type `Self.(TODO: element 0 in incomplete Self as I)`
   // CHECK:STDERR:        ·                      │ does not implement interface `Core.ImplicitAs(type)`
-  // CHECK:STDERR:        ·                      │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                      │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F[X: T](x: X);

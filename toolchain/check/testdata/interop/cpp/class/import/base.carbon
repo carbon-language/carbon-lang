@@ -156,146 +156,214 @@ library "[[@TEST_NAME]]";
 import Cpp library "multiple_inheritance.h";
 
 fn ConvertA(p: Cpp.C*) -> Cpp.A* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR:        │ fn ConvertA(p: Cpp.C*) -> Cpp.A* {
+  // CHECK:STDERR:        ·                           ───┬──
+  // CHECK:STDERR:        ·                              ╰──┤ return type of function is `A*`
+  // CHECK:STDERR:        ·                                 │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ━━━┳━━━━━
-  // CHECK:STDERR:        ·      ┗━━┫ error: cannot implicitly convert expression of type `C*` to `Cpp.A*`
-  // CHECK:STDERR:        ·      │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·      ╰────┤ type `Cpp.C*` does not implement interface `Core.ImplicitAs(Cpp.A*)`
-  // CHECK:STDERR:        ·           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `C*` to
+  // CHECK:STDERR:        ·          │  ┃        `Cpp.A*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.C*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.A*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertB(p: Cpp.C*) -> Cpp.B* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR:        │ fn ConvertB(p: Cpp.C*) -> Cpp.B* {
+  // CHECK:STDERR:        ·                           ───┬──
+  // CHECK:STDERR:        ·                              ╰──┤ return type of function is `B*`
+  // CHECK:STDERR:        ·                                 │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ━━━┳━━━━━
-  // CHECK:STDERR:        ·      ┗━━┫ error: cannot implicitly convert expression of type `C*` to `Cpp.B*`
-  // CHECK:STDERR:        ·      │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·      ╰────┤ type `Cpp.C*` does not implement interface `Core.ImplicitAs(Cpp.B*)`
-  // CHECK:STDERR:        ·           │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `C*` to
+  // CHECK:STDERR:        ·          │  ┃        `Cpp.B*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.C*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.B*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertOneNonEmptyBaseToEmpty1(p: Cpp.OneNonEmptyBase*) -> Cpp.Empty1* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+18]]:10
+  // CHECK:STDERR:        │ fn ConvertOneNonEmptyBaseToEmpty1(p: Cpp.OneNonEmptyBase*) -> Cpp.Empty1* {
+  // CHECK:STDERR:        ·                                                               ┬──────────
+  // CHECK:STDERR:        ·                                                               ╰──┤ return type
+  // CHECK:STDERR:        ·                                                                  │ of function
+  // CHECK:STDERR:        ·                                                                  │ is `Empty1*`
+  // CHECK:STDERR:        ·                                                                  │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `OneNonEmptyBase*` to
-  // CHECK:STDERR:        ·   │  ┃        `Cpp.Empty1*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.OneNonEmptyBase*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.Empty1*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·          │  ┃        `OneNonEmptyBase*` to `Cpp.Empty1*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.OneNonEmptyBase*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.Empty1*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertOneNonEmptyBaseToEmpty2(p: Cpp.OneNonEmptyBase*) -> Cpp.Empty2* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+18]]:10
+  // CHECK:STDERR:        │ fn ConvertOneNonEmptyBaseToEmpty2(p: Cpp.OneNonEmptyBase*) -> Cpp.Empty2* {
+  // CHECK:STDERR:        ·                                                               ┬──────────
+  // CHECK:STDERR:        ·                                                               ╰──┤ return type
+  // CHECK:STDERR:        ·                                                                  │ of function
+  // CHECK:STDERR:        ·                                                                  │ is `Empty2*`
+  // CHECK:STDERR:        ·                                                                  │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `OneNonEmptyBase*` to
-  // CHECK:STDERR:        ·   │  ┃        `Cpp.Empty2*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.OneNonEmptyBase*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.Empty2*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·          │  ┃        `OneNonEmptyBase*` to `Cpp.Empty2*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.OneNonEmptyBase*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.Empty2*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertTwoNonEmptyBasesToA(p: Cpp.TwoNonEmptyBases*) -> Cpp.A* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+17]]:10
+  // CHECK:STDERR:        │ fn ConvertTwoNonEmptyBasesToA(p: Cpp.TwoNonEmptyBases*) -> Cpp.A* {
+  // CHECK:STDERR:        ·                                                            ┬─────
+  // CHECK:STDERR:        ·                                                            ╰──┤ return type of
+  // CHECK:STDERR:        ·                                                               │ function is `A*`
+  // CHECK:STDERR:        ·                                                               │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `TwoNonEmptyBases*`
-  // CHECK:STDERR:        ·   │  ┃        to `Cpp.A*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.TwoNonEmptyBases*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.A*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·          │  ┃        `TwoNonEmptyBases*` to `Cpp.A*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.TwoNonEmptyBases*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.A*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertTwoNonEmptyBasesToB(p: Cpp.TwoNonEmptyBases*) -> Cpp.B* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+17]]:10
+  // CHECK:STDERR:        │ fn ConvertTwoNonEmptyBasesToB(p: Cpp.TwoNonEmptyBases*) -> Cpp.B* {
+  // CHECK:STDERR:        ·                                                            ┬─────
+  // CHECK:STDERR:        ·                                                            ╰──┤ return type of
+  // CHECK:STDERR:        ·                                                               │ function is `B*`
+  // CHECK:STDERR:        ·                                                               │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `TwoNonEmptyBases*`
-  // CHECK:STDERR:        ·   │  ┃        to `Cpp.B*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.TwoNonEmptyBases*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.B*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·          │  ┃        `TwoNonEmptyBases*` to `Cpp.B*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.TwoNonEmptyBases*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.B*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertOnePolymorphicBaseToA(p: Cpp.OnePolymorphicBase*) -> Cpp.A* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+18]]:10
+  // CHECK:STDERR:        │ fn ConvertOnePolymorphicBaseToA(p: Cpp.OnePolymorphicBase*) -> Cpp.A* {
+  // CHECK:STDERR:        ·                                                                ┬─────
+  // CHECK:STDERR:        ·                                                                ╰──┤ return type
+  // CHECK:STDERR:        ·                                                                   │ of function
+  // CHECK:STDERR:        ·                                                                   │ is `A*`
+  // CHECK:STDERR:        ·                                                                   │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `OnePolymorphicBase*`
-  // CHECK:STDERR:        ·   │  ┃        to `Cpp.A*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.OnePolymorphicBase*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.A*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·          │  ┃        `OnePolymorphicBase*` to `Cpp.A*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.OnePolymorphicBase*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.A*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertOnePolymorphicBaseToB(p: Cpp.OnePolymorphicBase*) -> Cpp.B* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+18]]:10
+  // CHECK:STDERR:        │ fn ConvertOnePolymorphicBaseToB(p: Cpp.OnePolymorphicBase*) -> Cpp.B* {
+  // CHECK:STDERR:        ·                                                                ┬─────
+  // CHECK:STDERR:        ·                                                                ╰──┤ return type
+  // CHECK:STDERR:        ·                                                                   │ of function
+  // CHECK:STDERR:        ·                                                                   │ is `B*`
+  // CHECK:STDERR:        ·                                                                   │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `OnePolymorphicBase*`
-  // CHECK:STDERR:        ·   │  ┃        to `Cpp.B*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.OnePolymorphicBase*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.B*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·          │  ┃        `OnePolymorphicBase*` to `Cpp.B*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.OnePolymorphicBase*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.B*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertTwoPolymorphicBasesToPolymorphic1(p: Cpp.TwoPolymorphicBases*) -> Cpp.Polymorphic1* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+18]]:10
+  // CHECK:STDERR:        │ ...hicBasesToPolymorphic1(p: Cpp.TwoPolymorphicBases*) -> Cpp.Polymorphic1* {
+  // CHECK:STDERR:        ·                                                           ┬────────────────
+  // CHECK:STDERR:        ·                                                           ╰──┤ return type of
+  // CHECK:STDERR:        ·                                                              │ function is
+  // CHECK:STDERR:        ·                                                              │ `Polymorphic1*`
+  // CHECK:STDERR:        ·                                                              │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·   │  ┃        `TwoPolymorphicBases*` to `Cpp.Polymorphic1*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.TwoPolymorphicBases*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.Polymorphic1*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·          │  ┃        `TwoPolymorphicBases*` to `Cpp.Polymorphic1*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.TwoPolymorphicBases*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.Polymorphic1*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertTwoPolymorphicBasesToPolymorphic2(p: Cpp.TwoPolymorphicBases*) -> Cpp.Polymorphic2* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_multiple_inheritance.carbon:[[@LINE+18]]:10
+  // CHECK:STDERR:        │ ...hicBasesToPolymorphic2(p: Cpp.TwoPolymorphicBases*) -> Cpp.Polymorphic2* {
+  // CHECK:STDERR:        ·                                                           ┬────────────────
+  // CHECK:STDERR:        ·                                                           ╰──┤ return type of
+  // CHECK:STDERR:        ·                                                              │ function is
+  // CHECK:STDERR:        ·                                                              │ `Polymorphic2*`
+  // CHECK:STDERR:        ·                                                              │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type
-  // CHECK:STDERR:        ·   │  ┃        `TwoPolymorphicBases*` to `Cpp.Polymorphic2*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.TwoPolymorphicBases*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.Polymorphic2*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·          │  ┃        `TwoPolymorphicBases*` to `Cpp.Polymorphic2*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.TwoPolymorphicBases*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.Polymorphic2*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
@@ -344,15 +412,20 @@ library "[[@TEST_NAME]]";
 import Cpp library "virtual_inheritance.h";
 
 fn Convert(p: Cpp.VirtB*) -> Cpp.VirtA* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_virtual_inheritance.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_virtual_inheritance.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR:        │ fn Convert(p: Cpp.VirtB*) -> Cpp.VirtA* {
+  // CHECK:STDERR:        ·                              ─────┬────
+  // CHECK:STDERR:        ·                                   ╰──┤ return type of function is `VirtA*`
+  // CHECK:STDERR:        ·                                      │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `VirtB*` to
-  // CHECK:STDERR:        ·   │  ┃        `Cpp.VirtA*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.VirtB*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.VirtA*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `VirtB*` to
+  // CHECK:STDERR:        ·          │  ┃        `Cpp.VirtA*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.VirtB*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.VirtA*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
@@ -383,60 +456,80 @@ library "[[@TEST_NAME]]";
 import Cpp library "diamond.h";
 
 fn ConvertBA(p: Cpp.DiamondB*) -> Cpp.DiamondA* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_diamond.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_diamond.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR:        │ fn ConvertBA(p: Cpp.DiamondB*) -> Cpp.DiamondA* {
+  // CHECK:STDERR:        ·                                   ───┬─────────
+  // CHECK:STDERR:        ·                                      ╰──┤ return type of function is `DiamondA*`
+  // CHECK:STDERR:        ·                                         │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `DiamondB*` to
-  // CHECK:STDERR:        ·   │  ┃        `Cpp.DiamondA*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.DiamondB*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.DiamondA*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `DiamondB*` to
+  // CHECK:STDERR:        ·          │  ┃        `Cpp.DiamondA*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.DiamondB*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.DiamondA*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertCA(p: Cpp.DiamondC*) -> Cpp.DiamondA* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_diamond.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_diamond.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR:        │ fn ConvertCA(p: Cpp.DiamondC*) -> Cpp.DiamondA* {
+  // CHECK:STDERR:        ·                                   ───┬─────────
+  // CHECK:STDERR:        ·                                      ╰──┤ return type of function is `DiamondA*`
+  // CHECK:STDERR:        ·                                         │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `DiamondC*` to
-  // CHECK:STDERR:        ·   │  ┃        `Cpp.DiamondA*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.DiamondC*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.DiamondA*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `DiamondC*` to
+  // CHECK:STDERR:        ·          │  ┃        `Cpp.DiamondA*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.DiamondC*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.DiamondA*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertDB(p: Cpp.DiamondD*) -> Cpp.DiamondB* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_diamond.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_diamond.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR:        │ fn ConvertDB(p: Cpp.DiamondD*) -> Cpp.DiamondB* {
+  // CHECK:STDERR:        ·                                   ───┬─────────
+  // CHECK:STDERR:        ·                                      ╰──┤ return type of function is `DiamondB*`
+  // CHECK:STDERR:        ·                                         │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `DiamondD*` to
-  // CHECK:STDERR:        ·   │  ┃        `Cpp.DiamondB*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.DiamondD*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.DiamondB*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `DiamondD*` to
+  // CHECK:STDERR:        ·          │  ┃        `Cpp.DiamondB*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.DiamondD*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.DiamondB*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
 
 fn ConvertDC(p: Cpp.DiamondD*) -> Cpp.DiamondC* {
-  // CHECK:STDERR:        ╭─┤ fail_todo_use_diamond.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        ╭─┤ fail_todo_use_diamond.carbon:[[@LINE+16]]:10
+  // CHECK:STDERR:        │ fn ConvertDC(p: Cpp.DiamondD*) -> Cpp.DiamondC* {
+  // CHECK:STDERR:        ·                                   ───┬─────────
+  // CHECK:STDERR:        ·                                      ╰──┤ return type of function is `DiamondC*`
+  // CHECK:STDERR:        ·                                         │ [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
   // CHECK:STDERR: ->     │   return p;
-  // CHECK:STDERR:        ·   ┳━━━━━━━━
-  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `DiamondD*` to
-  // CHECK:STDERR:        ·   │  ┃        `Cpp.DiamondC*`
-  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
-  // CHECK:STDERR:        ·   ╰────┤ type `Cpp.DiamondD*` does not implement interface
-  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.DiamondC*)`
-  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot implicitly convert expression of type `DiamondD*` to
+  // CHECK:STDERR:        ·          │  ┃        `Cpp.DiamondC*`
+  // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·          ╰────┤ type `Cpp.DiamondD*` does not implement interface
+  // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.DiamondC*)`
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
@@ -451,7 +544,7 @@ fn AccessBA(d: Cpp.DiamondD) -> i32 {
   // CHECK:STDERR:        ·           │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·           ╰────┤ type `Cpp.DiamondD` does not implement interface
   // CHECK:STDERR:        ·                │ `Core.As(Cpp.DiamondB)`
-  // CHECK:STDERR:        ·                │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return (d as Cpp.DiamondB).b;
@@ -466,7 +559,7 @@ fn AccessCA(d: Cpp.DiamondD) -> i32 {
   // CHECK:STDERR:        ·           │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·           ╰────┤ type `Cpp.DiamondD` does not implement interface
   // CHECK:STDERR:        ·                │ `Core.As(Cpp.DiamondC)`
-  // CHECK:STDERR:        ·                │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·                │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return (d as Cpp.DiamondC).b;
@@ -481,7 +574,7 @@ fn AccessDB(d: Cpp.DiamondD) -> i32 {
   // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·          ╰────┤ type `Cpp.DiamondD` does not implement interface
   // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.DiamondB)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return d.b;
@@ -496,7 +589,7 @@ fn AccessDC(d: Cpp.DiamondD) -> i32 {
   // CHECK:STDERR:        ·          │  ┃        [ConversionFailure]
   // CHECK:STDERR:        ·          ╰────┤ type `Cpp.DiamondD` does not implement interface
   // CHECK:STDERR:        ·               │ `Core.ImplicitAs(Cpp.DiamondC)`
-  // CHECK:STDERR:        ·               │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ·               │ [MissingImplForType]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return d.c;
@@ -513,12 +606,17 @@ library "[[@TEST_NAME]]";
 import Cpp library "final.h";
 
 class B {
-  // CHECK:STDERR:        ╭─┤ fail_derive_from_final.carbon:[[@LINE+8]]:16
+  // CHECK:STDERR:        ╭─┤ fail_derive_from_final.carbon:[[@LINE+13]]:16
   // CHECK:STDERR: ->     │   extend base: Cpp.FinalA;
   // CHECK:STDERR:        ·                ┳━━━━━━━━━
   // CHECK:STDERR:        ·                ┗━━┫ error: deriving from final type `FinalA`; base type must be
   // CHECK:STDERR:        ·                   ┃        an `abstract` or `base` class
   // CHECK:STDERR:        ·                   ┃        [BaseIsFinal]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./final.h
+  // CHECK:STDERR:        │ struct FinalA final {};
+  // CHECK:STDERR:        ·        ┬
+  // CHECK:STDERR:        ·        ╰──┤ declared without `abstract` or `base` here [BaseClassNotInheritable]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend base: Cpp.FinalA;
@@ -535,12 +633,17 @@ library "[[@TEST_NAME]]";
 import Cpp library "union.h";
 
 class V {
-  // CHECK:STDERR:        ╭─┤ fail_derive_from_union.carbon:[[@LINE+8]]:16
+  // CHECK:STDERR:        ╭─┤ fail_derive_from_union.carbon:[[@LINE+13]]:16
   // CHECK:STDERR: ->     │   extend base: Cpp.U;
   // CHECK:STDERR:        ·                ┳━━━━
   // CHECK:STDERR:        ·                ┗━━┫ error: deriving from final type `U`; base type must be an
   // CHECK:STDERR:        ·                   ┃        `abstract` or `base` class
   // CHECK:STDERR:        ·                   ┃        [BaseIsFinal]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ ./union.h
+  // CHECK:STDERR:        │ union U {};
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ declared without `abstract` or `base` here [BaseClassNotInheritable]
   // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend base: Cpp.U;
