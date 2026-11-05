@@ -85,17 +85,14 @@ git_override(
     build_file_content = "# empty",
     # We pin to specific upstream commits and try to track top-of-tree
     # reasonably closely rather than pinning to a specific release.
-    # HEAD as of 2026-10-08.
-    commit = "b08e005995ed29a2f89aa9a3f599a9d45db65523",
+    # HEAD as of 2026-11-02.
+    commit = "c744694c6ae1d12bbf7d0447b4bc91ee94a1904c",
     patch_cmds = ["echo \"module(name='llvm-raw')\" > MODULE.bazel"],
     patch_strip = 1,
     patches = [
         "//bazel/llvm_project:0001_Patch_for_mallinfo2_when_using_Bazel_build_system.patch",
-        "//bazel/llvm_project:0002_Added_Bazel_build_for_compiler_rt_fuzzer.patch",
-        "//bazel/llvm_project:0004_Introduce_basic_sources_exporting_for_libunwind.patch",
-        "//bazel/llvm_project:0005_Introduce_basic_sources_exporting_for_libcxx_and_libcxxabi.patch",
-        "//bazel/llvm_project:0006_Add_more_libc_math_excludes.patch",
         "//bazel/llvm_project:0012_Drop_dependencies_on_linux_uapi_and_pyyaml.patch",
+        "//bazel/llvm_project:0013_Exclude_additional_libc_math_builtins.patch",
     ],
     remote = "https://github.com/llvm/llvm-project.git",
 )
