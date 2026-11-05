@@ -335,6 +335,8 @@ auto FileContext::LowerGlobalVariables(SemIR::InstBlockId inst_block_id)
       }
       auto* llvm_var = GetOrCreateGlobalBinding(inst_id);
       if (!llvm_var) {
+        // The absence of a variable indicates that no storage is required for
+        // this value -- that is, it has an empty value representation.
         continue;
       }
       // For a type with a pointer value representation, the lowered constant
