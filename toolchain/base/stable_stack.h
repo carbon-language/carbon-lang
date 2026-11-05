@@ -85,7 +85,6 @@ class StableStack {
     // TODO: This is broken for assignment-from-subobject, where we would need
     // to construct all of the new values before destroying the old.
     DestroyAll();
-    chunks_.clear();
     used_chunks_ = rhs.used_chunks_;
     size_in_last_chunk_ = rhs.size_in_last_chunk_;
     CopyConstructFrom(rhs);
@@ -253,6 +252,8 @@ class StableStack {
   }
   // The capacity of an individual chunk at index `chunk`.
   static constexpr auto GetChunkCapacity(int32_t chunk) -> int32_t {
+    // We use a growth factor of 2 so that we can do bitshifts in
+    // GetSumCapacity() to compute total capacity in O(1) time.
     return FirstCapacity << chunk;
   }
   // Performs the inverse of GetSumCapacity.
@@ -293,12 +294,10 @@ class StableStack {
   // Copy-constructs elements into this stack from `rhs`.
   auto CopyConstructFrom(const StableStack& rhs) -> void {
     if (rhs.empty()) {
-      if constexpr (InlineCapacity) {
-        chunks_.push_back({.array = inline_.array()});
-      }
       return;
     }
 
+    chunks_.clear();
     chunks_.reserve(used_chunks_);
     for (auto chunk = 0; chunk < used_chunks_; ++chunk) {
       T* rhs_array = rhs.chunks_[chunk].array;
@@ -343,31 +342,28 @@ class StableStack {
     // to use the stack mid-destruction.
     auto size_in_last_chunk = std::exchange(size_in_last_chunk_, 0);
     auto used_chunks = std::exchange(used_chunks_, 0);
-
-    if (used_chunks == 0) {
-      return;
+    auto chunks = std::exchange(chunks_, {});
+    if constexpr (InlineCapacity) {
+      chunks_.push_back({.array = inline_.array()});
     }
 
-    auto chunk = 0;
-    for (; chunk < used_chunks; ++chunk) {
-      auto* array = chunks_[chunk].array;
+    for (auto chunk = 0; chunk < static_cast<int32_t>(chunks.size()); ++chunk) {
+      auto* array = chunks[chunk].array;
       auto cap = GetChunkCapacity(chunk);
-      auto size = chunk < used_chunks - 1 ? cap : size_in_last_chunk;
-      std::destroy_n(array, size);
+      if (chunk < used_chunks - 1) {
+        std::destroy_n(array, cap);
+      } else if (chunk == used_chunks - 1) {
+        std::destroy_n(array, size_in_last_chunk);
+      }
       if (chunk < InlineChunks) {
         __asan_poison_memory_region(array, InlineCapacity * sizeof(T));
       } else {
         std::allocator<T>().deallocate(array, cap);
       }
     }
-    for (; chunk < static_cast<int32_t>(chunks_.size()); ++chunk) {
-      auto* array = chunks_[chunk].array;
-      auto cap = GetChunkCapacity(chunk);
-      std::allocator<T>().deallocate(array, cap);
-    }
 
-    CARBON_CHECK(empty(),
-                 "Insertion into StableStack while destroying its elements");
+    CARBON_CHECK(chunks_.size() == InlineChunks && used_chunks_ == 0,
+                 "Mutation of StableStack while destroying its elements");
   }
 
   // Get the index of the element at the back of the stack. This is an O(1)
@@ -435,9 +431,7 @@ class StableStack {
   }
   auto AppendHeapChunk() -> Chunk& {
     CARBON_CHECK(chunks_.size() >= InlineChunks);
-    // We use a growth factor of 2 so that we can do bitshifts in
-    // GetSumCapacity() to compute total capacity in O(1) time.
-    auto next_cap = GetChunkCapacity(chunks_.size()) * 2;
+    auto next_cap = GetChunkCapacity(chunks_.size());
     T* array = std::allocator<T>().allocate(next_cap);
     __asan_poison_memory_region(array, next_cap * sizeof(T));
     chunks_.push_back({.array = array});
