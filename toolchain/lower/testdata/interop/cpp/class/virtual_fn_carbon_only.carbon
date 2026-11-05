@@ -101,7 +101,7 @@ fn F() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_Cf__carbon_thunk.Z.Main(ptr noundef nonnull align 8 dereferenceable(8) %self) #3 !dbg !41 {
+// CHECK:STDOUT: define linkonce_odr void @_Cf__carbon_thunk.Z.Main(ptr noundef nonnull align 8 dereferenceable(8) %self) #3 !dbg !41 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   call void @_Cf.Z.Main(ptr %self), !dbg !43
 // CHECK:STDOUT:   ret void, !dbg !43

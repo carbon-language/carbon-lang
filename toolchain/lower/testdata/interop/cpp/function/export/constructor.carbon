@@ -84,7 +84,7 @@ void f() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_COneArg__carbon_thunk.OneArg.Main(ptr noundef nonnull align 1 %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) unnamed_addr #5 !dbg !19 {
+// CHECK:STDOUT: define linkonce_odr void @_COneArg__carbon_thunk.OneArg.Main(ptr noundef nonnull align 1 %_, ptr noundef nonnull align 4 dereferenceable(4) %_1) unnamed_addr #5 !dbg !19 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %.loc6_28.2 = load i32, ptr %_1, align 4, !dbg !22
 // CHECK:STDOUT:   call void @_COneArg.OneArg.Main(ptr %_, i32 %.loc6_28.2), !dbg !22

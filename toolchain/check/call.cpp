@@ -195,23 +195,21 @@ static auto BuildCalleeSpecificFunction(
     // This is an associated function in an interface; the callee is the
     // specific function in the impl that corresponds to the specific function
     // we deduced.
-    callee_id =
-        GetOrAddInst(context, SemIR::LocId(generic_callee_id),
-                     SemIR::SpecificImplFunction{
-                         .type_id = GetSingletonType(
-                             context, SemIR::SpecificFunctionType::TypeInstId),
-                         .callee_id = generic_callee_id,
-                         .specific_id = callee_specific_id});
+    callee_id = GetOrAddInst<SemIR::SpecificImplFunction>(
+        context, SemIR::LocId(generic_callee_id),
+        {.type_id =
+             GetSingletonType(context, SemIR::SpecificFunctionType::TypeInstId),
+         .callee_id = generic_callee_id,
+         .specific_id = callee_specific_id});
   } else {
     // This is a regular generic function. The callee is the specific function
     // we deduced.
-    callee_id =
-        GetOrAddInst(context, SemIR::LocId(generic_callee_id),
-                     SemIR::SpecificFunction{
-                         .type_id = GetSingletonType(
-                             context, SemIR::SpecificFunctionType::TypeInstId),
-                         .callee_id = generic_callee_id,
-                         .specific_id = callee_specific_id});
+    callee_id = GetOrAddInst<SemIR::SpecificFunction>(
+        context, SemIR::LocId(generic_callee_id),
+        {.type_id =
+             GetSingletonType(context, SemIR::SpecificFunctionType::TypeInstId),
+         .callee_id = generic_callee_id,
+         .specific_id = callee_specific_id});
   }
 
   // Add the `self` argument back if there was one.

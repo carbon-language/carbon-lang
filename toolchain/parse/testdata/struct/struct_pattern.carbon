@@ -32,6 +32,10 @@ let {.x = 1, .y = 2};
 
 let {.x = y: i32, _} = {};
 
+// --- struct_pattern_discard_with_comma.carbon
+
+let {.x = y: i32, _, } = {};
+
 // --- struct_pattern_unnamed.carbon
 
 let {.x = _: i32} = {};
@@ -196,22 +200,23 @@ let {.x x:i32} = {};
 // --- fail_struct_pattern_token_after_underscore.carbon
 
 // CHECK:STDERR:        ╭─┤ fail_struct_pattern_token_after_underscore.carbon:[[@LINE+8]]:20
-// CHECK:STDERR: ->     │ let {.x = x: i32, _,} = {};
+// CHECK:STDERR: ->     │ let {.x = x: i32, _. } = {};
 // CHECK:STDERR:        ·                    ┳
-// CHECK:STDERR:        ·                    ┗━━┫ error: unexpected token `,` after `_` in struct pattern,
+// CHECK:STDERR:        ·                    ┗━━┫ error: unexpected token `.` after `_` in struct pattern,
 // CHECK:STDERR:        ·                       ┃        expected `}`
 // CHECK:STDERR:        ·                       ┃        [ExpectedCloseAfterUnderscore]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-let {.x = x: i32, _,} = {};
+let {.x = x: i32, _. } = {};
 
 // --- fail_struct_pattern_underscore_not_last.carbon
 
-// CHECK:STDERR:        ╭─┤ fail_struct_pattern_underscore_not_last.carbon:[[@LINE+7]]:6
+// CHECK:STDERR:        ╭─┤ fail_struct_pattern_underscore_not_last.carbon:[[@LINE+8]]:8
 // CHECK:STDERR: ->     │ let{_, .x = x: i32} = {};
-// CHECK:STDERR:        ·      ┳
-// CHECK:STDERR:        ·      ┗━━┫ error: unexpected token `,` after `_` in struct pattern, expected `}`
-// CHECK:STDERR:        ·         ┃        [ExpectedCloseAfterUnderscore]
+// CHECK:STDERR:        ·        ┳
+// CHECK:STDERR:        ·        ┗━━┫ error: unexpected token `.` after `,` in struct pattern with `_`
+// CHECK:STDERR:        ·           ┃        field, expected `}`
+// CHECK:STDERR:        ·           ┃        [ExpectedCloseAfterUnderscore]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let{_, .x = x: i32} = {};
@@ -490,7 +495,28 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─StructPatternDesignatedField '='
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
-// CHECK:STDOUT:   │ │ ├─UnderscoreName '_'
+// CHECK:STDOUT:   │ │ ├─PatternListUnderscoreField '_'
+// CHECK:STDOUT:   │ ├─StructPattern '}'
+// CHECK:STDOUT:   │ ├─LetInitializer '='
+// CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
+// CHECK:STDOUT:   │ ├─StructLiteral '}'
+// CHECK:STDOUT:   ├─LetDecl ';'
+// CHECK:STDOUT:   ├─FileEnd ''
+// CHECK:STDOUT:   (root)
+// CHECK:STDOUT: - filename: struct_pattern_discard_with_comma.carbon
+// CHECK:STDOUT:   ╭─FileStart ''
+// CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
+// CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
+// CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
+// CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'
+// CHECK:STDOUT:   │ │ │ │ ╭─IdentifierNameNotBeforeSignature 'y'
+// CHECK:STDOUT:   │ │ │ │ ├─BindingPatternTypeStart ':'
+// CHECK:STDOUT:   │ │ │ │ ├─IntTypeLiteral 'i32'
+// CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
+// CHECK:STDOUT:   │ │ ├─StructPatternDesignatedField '='
+// CHECK:STDOUT:   │ │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ ├─PatternListUnderscoreField '_'
+// CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ ├─StructPattern '}'
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -868,8 +894,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   │ │ │ ├─LetBindingPattern ':'
 // CHECK:STDOUT:   │ │ ├─StructPatternDesignatedField '='
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
-// CHECK:STDOUT:   │ │ ├─UnderscoreName '_' has_error
-// CHECK:STDOUT:   │ │ ├─PatternListComma ','
+// CHECK:STDOUT:   │ │ ├─PatternListUnderscoreField '_' has_error
 // CHECK:STDOUT:   │ ├─StructPattern '}' has_error
 // CHECK:STDOUT:   │ ├─LetInitializer '='
 // CHECK:STDOUT:   │ │ ╭─StructLiteralStart '{'
@@ -881,7 +906,7 @@ let {var _: i32} = {};
 // CHECK:STDOUT:   ╭─FileStart ''
 // CHECK:STDOUT:   │ ╭─LetIntroducer 'let'
 // CHECK:STDOUT:   │ │ ╭─StructPatternStart '{'
-// CHECK:STDOUT:   │ │ ├─UnderscoreName '_' has_error
+// CHECK:STDOUT:   │ │ ├─PatternListUnderscoreField '_' has_error
 // CHECK:STDOUT:   │ │ ├─PatternListComma ','
 // CHECK:STDOUT:   │ │ │   ╭─IdentifierNameNotBeforeSignature 'x'
 // CHECK:STDOUT:   │ │ │ ╭─StructFieldDesignator '.'

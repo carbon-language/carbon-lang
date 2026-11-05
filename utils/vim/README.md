@@ -23,12 +23,19 @@ and submit pull requests to the main repository.
 
 ## Manual Installation
 
-### Vim Users
-
 From the current directory `utils/vim`, please run the following commands to
 install the syntax file.
+
+### Vim Users
 
 ```
 mkdir -p ~/.vim/syntax && cp syntax/carbon.vim ~/.vim/syntax/
 mkdir -p ~/.vim/ftdetect && cp ftdetect/carbon.vim ~/.vim/ftdetect/
+```
+
+### Neovim Users
+
+```
+mkdir -p ~/.config/nvim/syntax && cp syntax/carbon.vim ~/.config/nvim/syntax/
+mkdir -p ~/.config/nvim/ftdetect && cp ftdetect/carbon.vim ~/.config/nvim/ftdetect/
 ```

@@ -31,7 +31,7 @@ class Class(template T: type) {
 // CHECK:STDERR:        ·                              ━━━┳━━
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: type
-// CHECK:STDERR:        · ┃        `<pattern for <splice of <cannot stringify inst7800007F: {kind: ConvertToValueAction, arg0: inst7800007C, arg1: inst(TypeType), type: type(inst(InstType))}>>>`
+// CHECK:STDERR:        · ┃        `<pattern for <splice of <cannot stringify inst7800007E: {kind: ConvertToValueAction, arg0: inst7800007B, arg1: inst(TypeType), type: type(inst(InstType))}>>>`
 // CHECK:STDERR:        · ┃        of parameter 1 in redeclaration differs from previous parameter type
 // CHECK:STDERR:        · ┃        `<pattern for T>`
 // CHECK:STDERR:        · ┃        [RedeclParamDiffersType]
@@ -51,7 +51,7 @@ fn Class(template T: type).F(n: T.U) -> T.U {
 // CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━
 // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━┛
 // CHECK:STDERR:        · ┃ error: function redeclaration differs because return type is
-// CHECK:STDERR:        · ┃        `<splice of <cannot stringify inst780000DF: {kind: ConvertToValueAction, arg0: inst780000DC, arg1: inst(TypeType), type: type(inst(InstType))}>>`
+// CHECK:STDERR:        · ┃        `<splice of <cannot stringify inst780000DE: {kind: ConvertToValueAction, arg0: inst780000DB, arg1: inst(TypeType), type: type(inst(InstType))}>>`
 // CHECK:STDERR:        · ┃        [FunctionRedeclReturnTypeDiffers]
 // CHECK:STDERR:        ╰────
 // CHECK:STDERR:

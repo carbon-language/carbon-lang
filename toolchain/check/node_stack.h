@@ -483,6 +483,7 @@ class NodeStack {
       case Parse::NodeKind::TemplateBindingName:
       case Parse::NodeKind::TupleLiteralStart:
       case Parse::NodeKind::TuplePatternStart:
+      case Parse::NodeKind::PatternListUnderscoreField:
       case Parse::NodeKind::VariableInitializer:
       case Parse::NodeKind::VariableIntroducer:
       case Parse::NodeKind::InlineImportBody:
