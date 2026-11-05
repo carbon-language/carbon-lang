@@ -92,7 +92,7 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT: source_filename = "empty_class.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @C.val = internal constant {} zeroinitializer
-// CHECK:STDOUT: @_Cc.Main = external global {}
+// CHECK:STDOUT: @_Cc.Main = constant {} zeroinitializer
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_CSink.Main(ptr)
@@ -138,7 +138,7 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT: ; ModuleID = 'copy_and_runtime_init.carbon'
 // CHECK:STDOUT: source_filename = "copy_and_runtime_init.carbon"
 // CHECK:STDOUT:
-// CHECK:STDOUT: @_Ca.Main = external global i32
+// CHECK:STDOUT: @_Ca.Main = constant i32 0
 // CHECK:STDOUT: @_Cb.Main = global i32 0
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
@@ -269,7 +269,7 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT: source_filename = "ref_and_class_scope.carbon"
 // CHECK:STDOUT:
 // CHECK:STDOUT: @_Cbacking.Main = global i32 0
-// CHECK:STDOUT: @_Ck.Holder.Main = external global i32
+// CHECK:STDOUT: @_Ck.Holder.Main = constant i32 42
 // CHECK:STDOUT: @_Cr_runtime.Main = global ptr null
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:

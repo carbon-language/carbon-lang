@@ -113,6 +113,7 @@ fn Z() -> i32 { return z; }
 // CHECK:STDOUT: @_Cv.Main = global { i32, i32 } zeroinitializer
 // CHECK:STDOUT: @_Cy.Main = global i32 0
 // CHECK:STDOUT: @_Cz.Main = global { i32, i32 } zeroinitializer
+// CHECK:STDOUT: @_Cx.Main = constant i32 3
 // CHECK:STDOUT: @tuple.380.loc4_1 = internal constant { i32, i32 } { i32 1, i32 2 }
 // CHECK:STDOUT: @tuple.da0.loc8_1 = internal constant { i32, i32 } { i32 5, i32 6 }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]

@@ -29,6 +29,7 @@ fn F() {
 // CHECK:STDOUT: @VehicleType.val.c4d = internal constant { i2 } zeroinitializer
 // CHECK:STDOUT: @VehicleType.val.df0 = internal constant { i2 } { i2 1 }
 // CHECK:STDOUT: @VehicleType.val.8cc = internal constant { i2 } { i2 -2 }
+// CHECK:STDOUT: @_Cglobal_vehicle.Main = constant { i2 } zeroinitializer
 // CHECK:STDOUT: @VehicleType.val.df0.Car.ref = internal constant { i2 } { i2 1 }
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:

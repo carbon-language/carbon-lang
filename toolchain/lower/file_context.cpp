@@ -295,8 +295,7 @@ auto FileContext::GetOrCreateFunctionInfo(
 auto FileContext::LowerGlobalVariables(SemIR::InstBlockId inst_block_id)
     -> void {
   for (auto inst_id : sem_ir().inst_blocks().Get(inst_block_id)) {
-    // Only `VarStorage` indicates a global variable declaration in the
-    // top instruction block.
+    // `VarStorage` indicates a global variable declaration.
     if (auto var = sem_ir().insts().TryGetAs<SemIR::VarStorage>(inst_id)) {
       // Get the global variable declaration. We created this when lowering the
       // constant unless the variable is unnamed, in which case we need to
@@ -315,6 +314,38 @@ auto FileContext::LowerGlobalVariables(SemIR::InstBlockId inst_block_id)
       global_variables_.Insert(inst_id, llvm_var);
       llvm_var->setInitializer(
           llvm::Constant::getNullValue(llvm_var->getValueType()));
+      continue;
+    }
+
+    // A non-constant global `let` binding is placed outside `__global_init`
+    // only if its initializer is constant. In that case, statically initialize
+    // its global storage rather than initializing it in `__global_init`.
+    if (auto binding =
+            sem_ir().insts().TryGetAs<SemIR::WrapperBinding>(inst_id)) {
+      const auto& entity_name =
+          sem_ir().entity_names().Get(binding->entity_name_id);
+      if (entity_name.name_id == SemIR::NameId::Underscore ||
+          sem_ir().constant_values().Get(inst_id).is_constant()) {
+        continue;
+      }
+      auto value_const_id = sem_ir().constant_values().Get(binding->value_id);
+      if (!value_const_id.is_concrete()) {
+        // TODO: Support non-constant `let` bindings in generic classes.
+        continue;
+      }
+      auto* llvm_var = GetOrCreateGlobalBinding(inst_id);
+      if (!llvm_var) {
+        continue;
+      }
+      // For a type with a pointer value representation, the lowered constant
+      // is the object representation, which is what the global holds.
+      auto* init =
+          constants_.Get(sem_ir().constant_values().GetInstId(value_const_id));
+      CARBON_CHECK(init->getType() == llvm_var->getValueType(),
+                   "Constant initializer type mismatch for {0}", *binding);
+      llvm_var->setInitializer(init);
+      // A value binding is immutable.
+      llvm_var->setConstant(true);
     }
   }
 }
