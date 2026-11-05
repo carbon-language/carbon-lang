@@ -39,6 +39,25 @@ TEST(StableStack, Growth) {
   }
 }
 
+TEST(StableStack, Emplace) {
+  enum Constructor { Default, Ints, String };
+  struct S {
+    S() : ctor(Default) {}
+    S(int /*a*/, int /*b*/) : ctor(Ints) {}
+    explicit S(const char* /*s*/) : ctor(String) {}
+
+    Constructor ctor;
+  };
+
+  StableStack<S> stack;
+  stack.Emplace();
+  EXPECT_EQ(stack.Peek().ctor, Default);
+  stack.Emplace(1, 2);
+  EXPECT_EQ(stack.Peek().ctor, Ints);
+  stack.Emplace("hi");
+  EXPECT_EQ(stack.Peek().ctor, String);
+}
+
 template <typename T, typename F, int32_t N>
 static auto GrowCapacityTimes(StableStack<T, N>& stack, int n, F factory)
     -> void {
@@ -220,7 +239,7 @@ TEST(StableStack, CopyStack) {
     constructed = destroyed = 0;
 
     EXPECT_EQ(stack.size(), stack2.size());
-    EXPECT_LE(stack.capacity(), stack2.capacity());
+    EXPECT_LE(stack2.capacity(), stack.capacity());
     for (auto i = 0; i < size; ++i) {
       EXPECT_EQ(stack.Peek(i), stack2.Peek(i));
     }

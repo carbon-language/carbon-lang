@@ -591,7 +591,8 @@ static auto ThawPeriodSelfInRequirements(Context& context,
 }
 
 auto HandleParseNode(Context& context, Parse::WhereExprId node_id) -> bool {
-  auto where_loc = context.where_stack().Pop().loc_id;
+  auto where_loc = context.where_stack().Peek().loc_id;
+  context.where_stack().Pop();
   // Remove `PeriodSelf` from name lookup, undoing the `Push` done for the
   // `WhereOperand`.
   context.scope_stack().Pop(/*check_unused=*/true);

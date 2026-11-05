@@ -163,6 +163,15 @@ class StableStack {
     std::construct_at<T>(slot, std::move(t));
   }
 
+  // Pushes a new element onto the back of the stack, constructed in place from
+  // the given arguments.
+  template <typename... Args>
+  auto Emplace(Args&&... args) -> void {
+    auto* slot = PushSlot();
+    __asan_unpoison_memory_region(slot, sizeof(T));
+    std::construct_at<T>(slot, std::forward<Args>(args)...);
+  }
+
   // Removes the most recently pushed element from the back of the stack and
   // returns it.
   auto Pop() -> T {
@@ -273,7 +282,7 @@ class StableStack {
 
   template <int32_t Capacity>
   struct InlineChunk {
-    alignas(alignof(T)) char byte_array[InlineCapacity * sizeof(T)];
+    alignas(alignof(T)) std::byte byte_array[Capacity * sizeof(T)];
     auto array() -> T* { return reinterpret_cast<T*>(byte_array); }
     auto array() const -> const T* {
       return reinterpret_cast<const T*>(byte_array);
@@ -283,9 +292,9 @@ class StableStack {
       // TODO: Remove the #if when we move to C++23.
 #if defined(__cpp_lib_start_lifetime_as) && \
     __cpp_lib_start_lifetime_as >= 202207L
-      std::start_lifetime_as_array<T>(byte_array, InlineCapacity);
+      std::start_lifetime_as_array<T>(byte_array, Capacity);
 #endif
-      __asan_poison_memory_region(byte_array, InlineCapacity * sizeof(T));
+      __asan_poison_memory_region(byte_array, Capacity * sizeof(T));
     }
   };
 
