@@ -308,7 +308,9 @@ class Context {
     SemIR::LocId loc_id;
   };
 
-  auto where_stack() -> StableStack<WhereStackEntry>& { return where_stack_; }
+  auto where_stack() -> StableStack<WhereStackEntry, 4>& {
+    return where_stack_;
+  }
 
   auto binding_type_where_count() -> int32_t& {
     return binding_type_where_count_;
@@ -643,7 +645,7 @@ class Context {
 
   // Tracks information about constraints in the current `where` expression
   // being checked so that they can be used by later constraints.
-  StableStack<WhereStackEntry> where_stack_;
+  StableStack<WhereStackEntry, 4> where_stack_;
 
   // Counts the number of `where` expressions in the type of the binding
   // currently being checked.

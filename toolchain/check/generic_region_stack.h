@@ -34,9 +34,8 @@ class GenericRegionStack {
  public:
   explicit GenericRegionStack(llvm::raw_ostream* vlog_stream)
       : vlog_stream_(vlog_stream) {
-    // Reserve a large enough stack that we typically won't need to allocate
-    // again.
-    constants_in_generic_stack_.Reserve(4);
+    // Trigger the allocation of the first capacity specified in the type.
+    constants_in_generic_stack_.Reserve(1);
   }
 
   struct PendingGeneric {
@@ -133,7 +132,9 @@ class GenericRegionStack {
   // Mapping from constant InstIds to the corresponding InstIds in the eval
   // blocks for each enclosing generic. We reserve this to a suitable size in
   // the constructor.
-  StableStack<ConstantsInGenericMap> constants_in_generic_stack_;
+  //
+  // We choose an initial capacity that typically won't need to allocate again.
+  StableStack<ConstantsInGenericMap, 8> constants_in_generic_stack_;
 };
 
 }  // namespace Carbon::Check
