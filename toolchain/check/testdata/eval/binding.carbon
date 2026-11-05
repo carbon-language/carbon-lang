@@ -33,12 +33,20 @@ library "[[@TEST_NAME]]";
 let a: i32 = 3;
 
 eval fn G() -> i32 {
-  // CHECK:STDERR: fail_global.carbon:[[@LINE+1]]:10: error: expression is runtime; expected constant [EvalRequiresConstantValue]
+  // CHECK:STDERR:        ╭─┤ fail_global.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR: ->     │   return a;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: expression is runtime; expected constant
+  // CHECK:STDERR:        ·             ┃        [EvalRequiresConstantValue]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ let n: array(i32, G()) = (1, 2, 3);
+  // CHECK:STDERR:        ·                   ─┬─
+  // CHECK:STDERR:        ·                    ╰──┤ in call to G here [InCallToEvalFn]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   return a;
 }
 
-// CHECK:STDERR: fail_global.carbon:[[@LINE+2]]:19-21: note: in call to G here [InCallToEvalFn]
-// CHECK:STDERR:
 let n: array(i32, G()) = (1, 2, 3);
 
 // --- fail_runtime_value.carbon
@@ -50,12 +58,20 @@ fn F() -> i32;
 let a: i32 = F();
 
 eval fn G() -> i32 {
-  // CHECK:STDERR: fail_runtime_value.carbon:[[@LINE+1]]:10: error: expression is runtime; expected constant [EvalRequiresConstantValue]
+  // CHECK:STDERR:        ╭─┤ fail_runtime_value.carbon:[[@LINE+11]]:10
+  // CHECK:STDERR: ->     │   return a;
+  // CHECK:STDERR:        ·          ┳
+  // CHECK:STDERR:        ·          ┗━━┫ error: expression is runtime; expected constant
+  // CHECK:STDERR:        ·             ┃        [EvalRequiresConstantValue]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ let n: array(i32, G()) = (1, 2, 3);
+  // CHECK:STDERR:        ·                   ─┬─
+  // CHECK:STDERR:        ·                    ╰──┤ in call to G here [InCallToEvalFn]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   return a;
 }
 
-// CHECK:STDERR: fail_runtime_value.carbon:[[@LINE+2]]:19-21: note: in call to G here [InCallToEvalFn]
-// CHECK:STDERR:
 let n: array(i32, G()) = (1, 2, 3);
 
 // CHECK:STDOUT: --- local.carbon

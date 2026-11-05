@@ -28,13 +28,28 @@ var x: f64 = Add(2.2, 2.3);
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-26: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooFew(a: f64) -> f64 = "float.add";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: invalid signature for builtin function "float.add"
+// CHECK:STDERR:        ·                 ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooFew(a: f64) -> f64 = "float.add";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-43: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.add";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: invalid signature for builtin function "float.add"
+// CHECK:STDERR:        ·                      ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooMany(a: f64, b: f64, c: f64) -> f64 = "float.add";
-// CHECK:STDERR: fail_bad_decl.carbon:[[@LINE+2]]:1-42: error: invalid signature for builtin function "float.add" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_decl.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn BadReturnType(a: f64, b: f64) -> bool = "float.add";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: invalid signature for builtin function "float.add"
+// CHECK:STDERR:        ·                      ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn BadReturnType(a: f64, b: f64) -> bool = "float.add";
 fn JustRight(a: f64, b: f64) -> f64 = "float.add";

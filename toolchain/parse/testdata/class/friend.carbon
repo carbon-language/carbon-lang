@@ -17,7 +17,12 @@ class Foo {
 // --- fail_todo_qualified.carbon
 
 class Baz {
-  // CHECK:STDERR: fail_todo_qualified.carbon:[[@LINE+2]]:11: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╭─┤ fail_todo_qualified.carbon:[[@LINE+7]]:11
+  // CHECK:STDERR: ->     │   friend P.Q;
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: `friend` declarations must end with a `;`
+  // CHECK:STDERR:        ·              ┃        [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend P.Q;
 }
@@ -25,31 +30,57 @@ class Baz {
 // --- fail_bad_syntax.carbon
 
 class A {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:9: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
+  // CHECK:STDERR:        ╭─┤ fail_bad_syntax.carbon:[[@LINE+7]]:9
+  // CHECK:STDERR: ->     │   friend;
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected identifier for friend declaration
+  // CHECK:STDERR:        ·            ┃        [ExpectedIdentifierForFriend]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend;
 }
 
 class B {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:11: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╭─┤ fail_bad_syntax.carbon:[[@LINE+7]]:11
+  // CHECK:STDERR: ->     │   friend X extra_token;
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: `friend` declarations must end with a `;`
+  // CHECK:STDERR:        ·              ┃        [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend X extra_token;
 }
 
 class C {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:9: error: expected identifier for friend declaration [ExpectedIdentifierForFriend]
+  // CHECK:STDERR:        ╭─┤ fail_bad_syntax.carbon:[[@LINE+7]]:9
+  // CHECK:STDERR: ->     │   friend
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected identifier for friend declaration
+  // CHECK:STDERR:        ·            ┃        [ExpectedIdentifierForFriend]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend
 }
 
 class D {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:11: error: `friend` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╭─┤ fail_bad_syntax.carbon:[[@LINE+7]]:11
+  // CHECK:STDERR: ->     │   friend X
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: `friend` declarations must end with a `;`
+  // CHECK:STDERR:        ·              ┃        [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend X
 }
 
 class E {
-  // CHECK:STDERR: fail_bad_syntax.carbon:[[@LINE+2]]:10-14: error: expected identifier for friend declaration; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierForFriend]
+  // CHECK:STDERR:        ╭─┤ fail_bad_syntax.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   friend class;
+  // CHECK:STDERR:        ·          ┳━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: expected identifier for friend declaration; prefix reserved
+  // CHECK:STDERR:        ·             ┃        word with `r#` to form a valid identifier
+  // CHECK:STDERR:        ·             ┃        [ExpectedIdentifierForFriend]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   friend class;
 }

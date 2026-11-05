@@ -12,19 +12,39 @@
 
 class Class {
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+2]]:3-9: error: `default` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
+  // CHECK:STDERR:        ╭─┤ fail_field_modifiers.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   default var j: i32;
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: `default` not allowed on `var` declaration
+  // CHECK:STDERR:        ·         ┃        [ModifierNotAllowedOnDeclaration]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   default var j: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+2]]:3-7: error: `final` not allowed on `var` declaration [ModifierNotAllowedOnDeclaration]
+  // CHECK:STDERR:        ╭─┤ fail_field_modifiers.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   final var k: i32;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: `final` not allowed on `var` declaration
+  // CHECK:STDERR:        ·        ┃        [ModifierNotAllowedOnDeclaration]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   final var k: i32;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+2]]:3-9: error: `default` not allowed; requires interface scope [ModifierRequiresInterface]
+  // CHECK:STDERR:        ╭─┤ fail_field_modifiers.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   default let l: i32 = 0;
+  // CHECK:STDERR:        ·   ━━━┳━━━
+  // CHECK:STDERR:        ·      ┗━━┫ error: `default` not allowed; requires interface scope
+  // CHECK:STDERR:        ·         ┃        [ModifierRequiresInterface]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   default let l: i32 = 0;
 
-  // CHECK:STDERR: fail_field_modifiers.carbon:[[@LINE+2]]:3-7: error: `final` not allowed; requires interface scope [ModifierRequiresInterface]
+  // CHECK:STDERR:        ╭─┤ fail_field_modifiers.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   final let m: i32 = 1;
+  // CHECK:STDERR:        ·   ━━┳━━
+  // CHECK:STDERR:        ·     ┗━━┫ error: `final` not allowed; requires interface scope
+  // CHECK:STDERR:        ·        ┃        [ModifierRequiresInterface]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   final let m: i32 = 1;
 }

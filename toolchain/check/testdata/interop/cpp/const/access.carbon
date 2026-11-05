@@ -37,10 +37,22 @@ const S& Get();
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+5]]:3-13: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:        ╭─┤ fail_const_member_assign.carbon:[[@LINE+17]]:3
+  // CHECK:STDERR: ->     │   Cpp.Get().x = 123;
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+3]]:3-19: error: cannot implicitly convert expression of type `Core.IntLiteral` to `const i32` [ConversionFailure]
-  // CHECK:STDERR: fail_const_member_assign.carbon:[[@LINE+2]]:3-19: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(const i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_const_member_assign.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   Cpp.Get().x = 123;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Core.IntLiteral` to
+  // CHECK:STDERR:        ·   │  ┃        `const i32`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
+  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(const i32)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.Get().x = 123;
 }
@@ -57,7 +69,11 @@ const S& Get();
 ''';
 
 fn F() {
-  // CHECK:STDERR: fail_const_member_assign_cast.carbon:[[@LINE+2]]:3-13: error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:        ╭─┤ fail_const_member_assign_cast.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   Cpp.Get().x = 123 as i32;
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: expression is not assignable [AssignmentToNonAssignable]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.Get().x = 123 as i32;
 }

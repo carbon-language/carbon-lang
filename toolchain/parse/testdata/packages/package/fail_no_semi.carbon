@@ -8,7 +8,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/packages/package/fail_no_semi.carbon
 
-// CHECK:STDERR: fail_no_semi.carbon:[[@LINE+2]]:17: error: `package` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_no_semi.carbon:[[@LINE+7]]:17
+// CHECK:STDERR: ->     │ package Geometry
+// CHECK:STDERR:        ·                 ┳
+// CHECK:STDERR:        ·                 ┗━━┫ error: `package` declarations must end with a `;`
+// CHECK:STDERR:        ·                    ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 package Geometry
 

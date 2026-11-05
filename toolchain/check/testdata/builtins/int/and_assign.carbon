@@ -26,7 +26,12 @@ fn Call(ref a: i32, b: i32) {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_unsized.carbon:[[@LINE+2]]:1-56: error: invalid signature for builtin function "int.and_assign" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_unsized.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.and_assign";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: invalid signature for builtin function "int.and_assign"
+// CHECK:STDERR:        ·                 ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.and_assign";
 
@@ -34,7 +39,12 @@ fn Builtin(ref a: Core.IntLiteral, b: Core.IntLiteral) = "int.and_assign";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_not_ptr.carbon:[[@LINE+2]]:1-27: error: invalid signature for builtin function "int.and_assign" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_not_ptr.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn NotRef(a: i32, b: i32) = "int.and_assign";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: invalid signature for builtin function "int.and_assign"
+// CHECK:STDERR:        ·                 ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn NotRef(a: i32, b: i32) = "int.and_assign";
 
@@ -44,7 +54,12 @@ fn NotRef(a: i32, b: i32) = "int.and_assign";
 //
 // library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_not_ptr.carbon:[[@LINE+2]]:1-35: error: invalid signature for builtin function "int.and_assign" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_not_ptr.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn MixedTypes(ref a: i32, b: i64) = "int.and_assign";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: invalid signature for builtin function "int.and_assign"
+// CHECK:STDERR:        ·                 ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn MixedTypes(ref a: i32, b: i64) = "int.and_assign";
 

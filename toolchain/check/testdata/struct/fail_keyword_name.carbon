@@ -10,14 +10,32 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_keyword_name.carbon
 
-// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+2]]:13-17: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
+// CHECK:STDERR:        ╭─┤ fail_keyword_name.carbon:[[@LINE+8]]:13
+// CHECK:STDERR: ->     │ fn F() -> {.class: i32};
+// CHECK:STDERR:        ·             ┳━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: expected identifier after `.`; prefix reserved word with
+// CHECK:STDERR:        ·                ┃        `r#` to form a valid identifier
+// CHECK:STDERR:        ·                ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> {.class: i32};
 
-// CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+2]]:13-18: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
+// CHECK:STDERR:        ╭─┤ fail_keyword_name.carbon:[[@LINE+8]]:13
+// CHECK:STDERR: ->     │ fn G() -> {.return: i32} {
+// CHECK:STDERR:        ·             ┳━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: expected identifier after `.`; prefix reserved word with
+// CHECK:STDERR:        ·                ┃        `r#` to form a valid identifier
+// CHECK:STDERR:        ·                ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G() -> {.return: i32} {
-  // CHECK:STDERR: fail_keyword_name.carbon:[[@LINE+2]]:12-17: error: expected identifier after `.`; prefix reserved word with `r#` to form a valid identifier [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╭─┤ fail_keyword_name.carbon:[[@LINE+8]]:12
+  // CHECK:STDERR: ->     │   return {.return = 5};
+  // CHECK:STDERR:        ·            ┳━━━━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: expected identifier after `.`; prefix reserved word with
+  // CHECK:STDERR:        ·               ┃        `r#` to form a valid identifier
+  // CHECK:STDERR:        ·               ┃        [ExpectedIdentifierAfterPeriodOrArrow]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return {.return = 5};
 };

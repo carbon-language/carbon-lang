@@ -36,7 +36,13 @@ library "[[@TEST_NAME]]";
 import library "int_to_float_checked";
 
 //@dump-sem-ir-begin
-// CHECK:STDERR: fail_lossy.carbon:[[@LINE+2]]:18-50: error: integer value 123456789 cannot be represented exactly in floating-point type `f32` [IntLossyConversionToFloat]
+// CHECK:STDERR:        ╭─┤ fail_lossy.carbon:[[@LINE+8]]:18
+// CHECK:STDERR: ->     │ let lossy: f32 = ConvertIntLiteralToF32(123456789);
+// CHECK:STDERR:        ·                  ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: integer value 123456789 cannot be represented
+// CHECK:STDERR:        ·                     ┃        exactly in floating-point type `f32`
+// CHECK:STDERR:        ·                     ┃        [IntLossyConversionToFloat]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let lossy: f32 = ConvertIntLiteralToF32(123456789);
 //@dump-sem-ir-end
@@ -59,10 +65,10 @@ let lossy: f32 = ConvertIntLiteralToF32(123456789);
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
-// CHECK:STDOUT:   %.loc7_50.1: %f32.3bc = value_of_initializer @__global_init.%ConvertIntLiteralToF32.call [concrete = <error>]
-// CHECK:STDOUT:   %.loc7_50.2: %f32.3bc = converted @__global_init.%ConvertIntLiteralToF32.call, %.loc7_50.1 [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_50.1: %f32.3bc = value_of_initializer @__global_init.%ConvertIntLiteralToF32.call [concrete = <error>]
+// CHECK:STDOUT:   %.loc13_50.2: %f32.3bc = converted @__global_init.%ConvertIntLiteralToF32.call, %.loc13_50.1 [concrete = <error>]
 // CHECK:STDOUT:   %f32: type = type_literal constants.%f32.3bc [concrete = constants.%f32.3bc]
-// CHECK:STDOUT:   %lossy: %f32.3bc = wrapper_binding lossy, %.loc7_50.2 [concrete = <error>]
+// CHECK:STDOUT:   %lossy: %f32.3bc = wrapper_binding lossy, %.loc13_50.2 [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %lossy.patt: %pattern_type.239 = value_binding_pattern lossy [concrete = constants.%lossy.patt]
 // CHECK:STDOUT:   }

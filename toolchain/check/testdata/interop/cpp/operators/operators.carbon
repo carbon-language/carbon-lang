@@ -69,12 +69,25 @@ import Cpp library "prefix_inc_and_dec.h";
 
 fn F() {
   var prefix: Cpp.Prefix = Cpp.Prefix.Prefix();
-  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+4]]:9: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╭─┤ fail_prefix_calling_postfix.carbon:[[@LINE+13]]:9
+  // CHECK:STDERR: ->     │   prefix++;
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+2]]:3-11: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_prefix_calling_postfix.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   prefix++;
+  // CHECK:STDERR:        ·   ━━━━┳━━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: semantics TODO: `handle invalid parse trees in `check``
+  // CHECK:STDERR:        ·          ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   prefix++;
-  // CHECK:STDERR: fail_prefix_calling_postfix.carbon:[[@LINE+2]]:9: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╭─┤ fail_prefix_calling_postfix.carbon:[[@LINE+6]]:9
+  // CHECK:STDERR: ->     │   prefix--;
+  // CHECK:STDERR:        ·         ┳
+  // CHECK:STDERR:        ·         ┗━━┫ error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   prefix--;
 }
@@ -93,10 +106,22 @@ import Cpp library "postfix_inc_and_dec.h";
 
 fn F() {
   var postfix: Cpp.Postfix = Cpp.Postfix.Postfix();
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+2]]:3-11: error: cannot access member of interface `Core.Inc` in type `Cpp.Postfix` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_postfix_calling_prefix.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   ++postfix;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.Inc` in type `Cpp.Postfix`
+  // CHECK:STDERR:        ·      ┃        that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   ++postfix;
-  // CHECK:STDERR: fail_postfix_calling_prefix.carbon:[[@LINE+2]]:3-11: error: cannot access member of interface `Core.Dec` in type `Cpp.Postfix` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_postfix_calling_prefix.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   --postfix;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Core.Dec` in type `Cpp.Postfix`
+  // CHECK:STDERR:        ·      ┃        that does not implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   --postfix;
 }
@@ -211,8 +236,16 @@ fn F() {
   var c: Cpp.BinaryC = {};
 
   // Simple assignment.
-  // CHECK:STDERR: fail_todo_import_assignment.carbon:[[@LINE+3]]:3-8: error: cannot implicitly convert expression of type `Core.IntLiteral` to `Cpp.BinaryC` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_import_assignment.carbon:[[@LINE+2]]:3-8: note: type `Core.IntLiteral` does not implement interface `Core.ImplicitAs(Cpp.BinaryC)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_assignment.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   c = 42;
+  // CHECK:STDERR:        ·   ┳━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `Core.IntLiteral` to
+  // CHECK:STDERR:        ·   │  ┃        `Cpp.BinaryC`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·   ╰────┤ type `Core.IntLiteral` does not implement interface
+  // CHECK:STDERR:        ·        │ `Core.ImplicitAs(Cpp.BinaryC)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c = 42;
 }
@@ -242,10 +275,26 @@ import Cpp library "binary_operators.h";
 fn F() {
   let c1: Cpp.BinaryC = Cpp.BinaryC.BinaryC();
   // TODO: Include a list of non-viable candidate operators with this diagnostic.
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+2]]:32-37: error: cannot access member of interface `Core.AddWith(Core.IntLiteral)` in type `Cpp.BinaryC` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_call_with_wrong_type.carbon:[[@LINE+10]]:32
+  // CHECK:STDERR: ->     │   let unused c2: Cpp.BinaryC = c1 + 5;
+  // CHECK:STDERR:        ·                                ┳━━━━━
+  // CHECK:STDERR:        ·                                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                                   ┃        `Core.AddWith(Core.IntLiteral)` in
+  // CHECK:STDERR:        ·                                   ┃        type `Cpp.BinaryC` that does not
+  // CHECK:STDERR:        ·                                   ┃        implement that interface
+  // CHECK:STDERR:        ·                                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c2: Cpp.BinaryC = c1 + 5;
-  // CHECK:STDERR: fail_call_with_wrong_type.carbon:[[@LINE+2]]:32-37: error: cannot access member of interface `Core.AddWith(Cpp.BinaryC)` in type `Core.IntLiteral` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_call_with_wrong_type.carbon:[[@LINE+10]]:32
+  // CHECK:STDERR: ->     │   let unused c3: Cpp.BinaryC = 6 + c1;
+  // CHECK:STDERR:        ·                                ┳━━━━━
+  // CHECK:STDERR:        ·                                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                                   ┃        `Core.AddWith(Cpp.BinaryC)` in type
+  // CHECK:STDERR:        ·                                   ┃        `Core.IntLiteral` that does not
+  // CHECK:STDERR:        ·                                   ┃        implement that interface
+  // CHECK:STDERR:        ·                                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c3: Cpp.BinaryC = 6 + c1;
 }
@@ -265,9 +314,20 @@ void operator+(AmbiguousC, short);
 ''';
 
 fn Test(c: Cpp.AmbiguousC) {
-  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE+4]]:5: error: use of overloaded operator '+' is ambiguous (with operand types 'const AmbiguousC' and 'int') [CppInteropParseError]
-  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-6]]:6: note: candidate function [CppInteropParseNote]
-  // CHECK:STDERR: fail_ambiguous.carbon:[[@LINE-6]]:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_ambiguous.carbon:[[@LINE+15]]:5
+  // CHECK:STDERR:        │ void operator+(AmbiguousC, char);
+  // CHECK:STDERR:        ·      ┬
+  // CHECK:STDERR:        ·      ╰──┤ candidate function [CppInteropParseNote]
+  // CHECK:STDERR:        │ void operator+(AmbiguousC, short);
+  // CHECK:STDERR:        ·      ┬
+  // CHECK:STDERR:        ·      ╰──┤ candidate function [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   c + 1;
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: use of overloaded operator '+' is ambiguous (with operand types
+  // CHECK:STDERR:        ·        ┃        'const AmbiguousC' and 'int')
+  // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c + 1;
 }
@@ -283,10 +343,23 @@ void operator+(DeletedC, void*) = delete;
 ''';
 
 fn Test(c: Cpp.DeletedC) {
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE+5]]:5: error: overload resolution selected deleted operator '+' [CppInteropParseError]
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-6]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-6]]:6: note: candidate function not viable [CppInteropParseNote]
-  // CHECK:STDERR: fail_deleted.carbon:[[@LINE-7]]:26-30: note: no known conversion from 'int' to 'void *' for 2nd argument [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ╭─┤ fail_deleted.carbon:[[@LINE+18]]:5
+  // CHECK:STDERR:        │ void operator+(DeletedC, int) = delete;
+  // CHECK:STDERR:        ·      ┬
+  // CHECK:STDERR:        ·      ╰──┤ candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:        │ void operator+(DeletedC, void*) = delete;
+  // CHECK:STDERR:        ·      ┬                   ┬────
+  // CHECK:STDERR:        ·      ╰──────────────────────┤ candidate function not viable
+  // CHECK:STDERR:        ·                          │  │ [CppInteropParseNote]
+  // CHECK:STDERR:        ·                          ╰────┤ no known conversion from 'int' to 'void *' for
+  // CHECK:STDERR:        ·                               │ 2nd argument
+  // CHECK:STDERR:        ·                               │ [CppInteropParseNoteReason]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   c + 1;
+  // CHECK:STDERR:        ·     ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: overload resolution selected deleted operator '+'
+  // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c + 1;
 }
@@ -317,12 +390,26 @@ fn F() {
   let unused greater_than: bool = c1 > c2;
 
   // Rewrite.
-  // CHECK:STDERR: fail_todo_rewrite_spaceship.carbon:[[@LINE+2]]:32-38: error: semantics TODO: `Rewriting operator< using operator<=> is not supported` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_rewrite_spaceship.carbon:[[@LINE+9]]:32
+  // CHECK:STDERR: ->     │   let unused less_than: bool = c1 < c2;
+  // CHECK:STDERR:        ·                                ━━━┳━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `Rewriting operator< using operator<=> is not supported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused less_than: bool = c1 < c2;
 
   // Rewrite.
-  // CHECK:STDERR: fail_todo_rewrite_spaceship.carbon:[[@LINE+2]]:44-51: error: semantics TODO: `Rewriting operator>= using operator<=> is not supported` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_rewrite_spaceship.carbon:[[@LINE+9]]:44
+  // CHECK:STDERR: ->     │   let unused greater_than_or_equal: bool = c1 >= c2;
+  // CHECK:STDERR:        ·                                            ━━━━┳━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `Rewriting operator>= using operator<=> is not supported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused greater_than_or_equal: bool = c1 >= c2;
 
@@ -346,9 +433,19 @@ auto operator<(CDel lhs, BaseDel rhs) -> bool;
 
 fn F(c: Cpp.CDel) -> bool {
   // Note that we mention `operator '<=>'` in the diagnostic.
-  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE+4]]:12: error: overload resolution selected deleted operator '<=>' [CppInteropParseError]
-  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-7]]:6: note: candidate function has been explicitly deleted [CppInteropParseNote]
-  // CHECK:STDERR: fail_rewrite_deleted.carbon:[[@LINE-7]]:6: note: candidate function [CppInteropParseNote]
+  // CHECK:STDERR:        ╭─┤ fail_rewrite_deleted.carbon:[[@LINE+14]]:12
+  // CHECK:STDERR:        │ auto operator<=>(CDel lhs, CDel rhs) -> std::strong_ordering = delete;
+  // CHECK:STDERR:        ·      ┬
+  // CHECK:STDERR:        ·      ╰──┤ candidate function has been explicitly deleted [CppInteropParseNote]
+  // CHECK:STDERR:        │ auto operator<(CDel lhs, BaseDel rhs) -> bool;
+  // CHECK:STDERR:        ·      ┬
+  // CHECK:STDERR:        ·      ╰──┤ candidate function [CppInteropParseNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   return c < c;
+  // CHECK:STDERR:        ·            ┳
+  // CHECK:STDERR:        ·            ┗━━┫ error: overload resolution selected deleted operator '<=>'
+  // CHECK:STDERR:        ·               ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return c < c;
 }
@@ -376,7 +473,14 @@ fn F() {
   let unused equal: bool = c1 == c2;
 
   // Rewrite.
-  // CHECK:STDERR: fail_todo_rewrite_equal.carbon:[[@LINE+2]]:32-39: error: semantics TODO: `Rewriting operator!= using operator== is not supported` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_rewrite_equal.carbon:[[@LINE+9]]:32
+  // CHECK:STDERR: ->     │   let unused not_equal: bool = c1 != c2;
+  // CHECK:STDERR:        ·                                ━━━━┳━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO:
+  // CHECK:STDERR:        · ┃        `Rewriting operator!= using operator== is not supported`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused not_equal: bool = c1 != c2;
   //@dump-sem-ir-end
@@ -448,7 +552,17 @@ import Cpp library "plus_with_string_view_conversion.h";
 fn F() {
   let s1: str = "hello";
   let s2: str = "world";
-  // CHECK:STDERR: fail_todo_import_plus_with_string_view_conversion.carbon:[[@LINE+2]]:46-52: error: cannot access member of interface `Core.AddWith(str)` in type `str` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_plus_with_string_view_conversion.carbon:[[@LINE+12]]:46
+  // CHECK:STDERR: ->     │   let unused c: Cpp.StringViewConvertibleC = s1 + s2;
+  // CHECK:STDERR:        ·                                              ┳━━━━━━
+  // CHECK:STDERR:        ·                                              ┗━━┫ error: cannot access member of
+  // CHECK:STDERR:        ·                                                 ┃        interface
+  // CHECK:STDERR:        ·                                                 ┃        `Core.AddWith(str)` in
+  // CHECK:STDERR:        ·                                                 ┃        type `str` that does
+  // CHECK:STDERR:        ·                                                 ┃        not implement that
+  // CHECK:STDERR:        ·                                                 ┃        interface
+  // CHECK:STDERR:        ·                                                 ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c: Cpp.StringViewConvertibleC = s1 + s2;
 }
@@ -493,31 +607,73 @@ fn F() {
   var c: Cpp.UnsupportedUnaryC = Cpp.UnsupportedUnaryC.UnsupportedUnaryC();
 
   // Arithmetic.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+6]]:36: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+22]]:36
+  // CHECK:STDERR: ->     │   let plus: Cpp.UnsupportedUnaryC = +c;
+  // CHECK:STDERR:        ·                                    ┳
+  // CHECK:STDERR:        ·                                    ┗━━┫ error: expected expression
+  // CHECK:STDERR:        ·                                       ┃        [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:37: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+15]]:37
+  // CHECK:STDERR: ->     │   let plus: Cpp.UnsupportedUnaryC = +c;
+  // CHECK:STDERR:        ·                                     ┳
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:38: error: whitespace missing after binary operator [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+8]]:38
+  // CHECK:STDERR: ->     │   let plus: Cpp.UnsupportedUnaryC = +c;
+  // CHECK:STDERR:        ·                                      ┳
+  // CHECK:STDERR:        ·                                      ┗━━┫ error: whitespace missing after binary
+  // CHECK:STDERR:        ·                                         ┃        operator
+  // CHECK:STDERR:        ·                                         ┃        [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let plus: Cpp.UnsupportedUnaryC = +c;
 
   // Increment and Decrement.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:4: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+6]]:4
+  // CHECK:STDERR: ->     │   c++;
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c++;
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:4: error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+6]]:4
+  // CHECK:STDERR: ->     │   c--;
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expected `;` after expression statement [ExpectedExprSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c--;
 
   // Bitwise.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+4]]:41: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+15]]:41
+  // CHECK:STDERR: ->     │   let not_value: Cpp.UnsupportedUnaryC = ~c;
+  // CHECK:STDERR:        ·                                         ┳
+  // CHECK:STDERR:        ·                                         ┗━━┫ error: expected expression
+  // CHECK:STDERR:        ·                                            ┃        [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:41: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+8]]:41
+  // CHECK:STDERR: ->     │   let not_value: Cpp.UnsupportedUnaryC = ~c;
+  // CHECK:STDERR:        ·                                         ┳
+  // CHECK:STDERR:        ·                                         ┗━━┫ error: `let` declarations must end
+  // CHECK:STDERR:        ·                                            ┃        with a `;`
+  // CHECK:STDERR:        ·                                            ┃        [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let not_value: Cpp.UnsupportedUnaryC = ~c;
 
   // Logical.
-  // CHECK:STDERR: fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+2]]:51: error: `let` declarations must end with a `;` [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_unary_operators.carbon:[[@LINE+9]]:51
+  // CHECK:STDERR: ->     │   let not_result: Cpp.UnsupportedUnaryC = operator!(c1);
+  // CHECK:STDERR:        ·                                                   ┳
+  // CHECK:STDERR:        ·                                                   ┗━━┫ error: `let` declarations
+  // CHECK:STDERR:        ·                                                      ┃        must end with a
+  // CHECK:STDERR:        ·                                                      ┃        `;`
+  // CHECK:STDERR:        ·                                                      ┃        [ExpectedDeclSemi]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let not_result: Cpp.UnsupportedUnaryC = operator!(c1);
 
@@ -552,24 +708,80 @@ fn F() {
   var c1: Cpp.UnsupportedBinaryC = Cpp.UnsupportedBinaryC.UnsupportedBinaryC();
 
   // Logical.
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:44-51: error: name `operator` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+34]]:44
+  // CHECK:STDERR: ->     │   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
+  // CHECK:STDERR:        ·                                            ┳━━━━━━━
+  // CHECK:STDERR:        ·                                            ┗━━┫ error: name `operator` not found
+  // CHECK:STDERR:        ·                                               ┃        [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+6]]:52: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+27]]:52
+  // CHECK:STDERR: ->     │   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
+  // CHECK:STDERR:        ·                                                    ┳
+  // CHECK:STDERR:        ·                                                    ┗━━┫ error: whitespace
+  // CHECK:STDERR:        ·                                                       ┃        missing around
+  // CHECK:STDERR:        ·                                                       ┃        binary operator
+  // CHECK:STDERR:        ·                                                       ┃        [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+4]]:59-60: error: name `c2` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+18]]:59
+  // CHECK:STDERR: ->     │   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
+  // CHECK:STDERR:        ·                                                           ┳━
+  // CHECK:STDERR:        ·                                                           ┗━━┫ error: name `c2`
+  // CHECK:STDERR:        ·                                                              ┃        not found
+  // CHECK:STDERR:        ·                                                              ┃        [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+2]]:53: error: cannot take the address of non-reference expression [AddrOfNonRef]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+10]]:53
+  // CHECK:STDERR: ->     │   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
+  // CHECK:STDERR:        ·                                                     ┳
+  // CHECK:STDERR:        ·                                                     ┗━━┫ error: cannot take the
+  // CHECK:STDERR:        ·                                                        ┃        address of
+  // CHECK:STDERR:        ·                                                        ┃        non-reference
+  // CHECK:STDERR:        ·                                                        ┃        expression
+  // CHECK:STDERR:        ·                                                        ┃        [AddrOfNonRef]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let and_result: Cpp.UnsupportedBinaryC = operator&&(c1, c2);
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+10]]:43-50: error: name `operator` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+40]]:43
+  // CHECK:STDERR: ->     │   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
+  // CHECK:STDERR:        ·                                           ━┳━━━━━━
+  // CHECK:STDERR:        ·                                            ┗━━┫ error: name `operator` not found
+  // CHECK:STDERR:        ·                                               ┃        [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+8]]:51: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+33]]:51
+  // CHECK:STDERR: ->     │   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
+  // CHECK:STDERR:        ·                                                   ┳
+  // CHECK:STDERR:        ·                                                   ┗━━┫ error: whitespace missing
+  // CHECK:STDERR:        ·                                                      ┃        around binary
+  // CHECK:STDERR:        ·                                                      ┃        operator
+  // CHECK:STDERR:        ·                                                      ┃        [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+6]]:52: error: expected expression [ExpectedExpr]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+24]]:52
+  // CHECK:STDERR: ->     │   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
+  // CHECK:STDERR:        ·                                                    ┳
+  // CHECK:STDERR:        ·                                                    ┗━━┫ error: expected
+  // CHECK:STDERR:        ·                                                       ┃        expression
+  // CHECK:STDERR:        ·                                                       ┃        [ExpectedExpr]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+4]]:52: error: whitespace missing around binary operator [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+16]]:52
+  // CHECK:STDERR: ->     │   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
+  // CHECK:STDERR:        ·                                                    ┳
+  // CHECK:STDERR:        ·                                                    ┗━━┫ error: whitespace
+  // CHECK:STDERR:        ·                                                       ┃        missing around
+  // CHECK:STDERR:        ·                                                       ┃        binary operator
+  // CHECK:STDERR:        ·                                                       ┃        [BinaryOperatorRequiresWhitespace]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+2]]:52: error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_unsupported_binary_operators.carbon:[[@LINE+7]]:52
+  // CHECK:STDERR: ->     │   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
+  // CHECK:STDERR:        ·                                                    ┳
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO: `handle invalid parse trees in `check`` [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let or_result: Cpp.UnsupportedBinaryC = operator||(c1, c2);
 }
@@ -654,7 +866,15 @@ fn F() {
   //@dump-sem-ir-begin
   let c1: Cpp.GlobalOpN.C = Cpp.GlobalOpN.C.C();
   let c2: Cpp.GlobalOpN.C = Cpp.GlobalOpN.C.C();
-  // CHECK:STDERR: fail_todo_import_operands_in_namespace_operator_in_global.carbon:[[@LINE+2]]:36-42: error: cannot access member of interface `Core.AddWith(Cpp.GlobalOpN.C)` in type `Cpp.GlobalOpN.C` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_import_operands_in_namespace_operator_in_global.carbon:[[@LINE+10]]:36
+  // CHECK:STDERR: ->     │   let unused c3: Cpp.GlobalOpN.C = c1 + c2;
+  // CHECK:STDERR:        ·                                    ┳━━━━━━
+  // CHECK:STDERR:        ·                                    ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                                       ┃        `Core.AddWith(Cpp.GlobalOpN.C)`
+  // CHECK:STDERR:        ·                                       ┃        in type `Cpp.GlobalOpN.C` that
+  // CHECK:STDERR:        ·                                       ┃        does not implement that interface
+  // CHECK:STDERR:        ·                                       ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c3: Cpp.GlobalOpN.C = c1 + c2;
   //@dump-sem-ir-end
@@ -761,7 +981,15 @@ import Cpp library "not_found.h";
 fn F() {
   let c1: Cpp.NoOperators = Cpp.NoOperators.NoOperators();
   let c2: Cpp.NoOperators = Cpp.NoOperators.NoOperators();
-  // CHECK:STDERR: fail_import_not_found.carbon:[[@LINE+2]]:36-42: error: cannot access member of interface `Core.AddWith(Cpp.NoOperators)` in type `Cpp.NoOperators` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_import_not_found.carbon:[[@LINE+10]]:36
+  // CHECK:STDERR: ->     │   let unused c3: Cpp.NoOperators = c1 + c2;
+  // CHECK:STDERR:        ·                                    ┳━━━━━━
+  // CHECK:STDERR:        ·                                    ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                                       ┃        `Core.AddWith(Cpp.NoOperators)`
+  // CHECK:STDERR:        ·                                       ┃        in type `Cpp.NoOperators` that
+  // CHECK:STDERR:        ·                                       ┃        does not implement that interface
+  // CHECK:STDERR:        ·                                       ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused c3: Cpp.NoOperators = c1 + c2;
 }
@@ -784,9 +1012,20 @@ library "[[@TEST_NAME]]";
 import Cpp library "incomplete.h";
 
 fn F() {
-  // CHECK:STDERR: fail_import_incomplete_unary.carbon:[[@LINE+4]]:34-57: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
-  // CHECK:STDERR: included from: fail_import_incomplete_unary.carbon:[[@LINE-4]]:10 [InCppInclude]
-  // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_import_incomplete_unary.carbon:[[@LINE+15]]:34
+  // CHECK:STDERR: ->     │   let unused result_unary: i32 = -*Cpp.CreateIncomplete();
+  // CHECK:STDERR:        ·                                  ┳━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                                  ┗━━┫ error: looking up a C++ operator with
+  // CHECK:STDERR:        ·                                     ┃        incomplete operand type
+  // CHECK:STDERR:        ·                                     ┃        `Cpp.Incomplete`
+  // CHECK:STDERR:        ·                                     ┃        [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete_unary.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./incomplete.h
+  // CHECK:STDERR:        │ class Incomplete;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused result_unary: i32 = -*Cpp.CreateIncomplete();
 }
@@ -799,9 +1038,20 @@ import Cpp library "incomplete.h";
 
 fn F() {
   var complete: Cpp.Complete = Cpp.Complete.Complete();
-  // CHECK:STDERR: fail_import_incomplete_binary.carbon:[[@LINE+4]]:35-68: error: looking up a C++ operator with incomplete operand type `Cpp.Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
-  // CHECK:STDERR: included from: fail_import_incomplete_binary.carbon:[[@LINE-5]]:10 [InCppInclude]
-  // CHECK:STDERR: ./incomplete.h:2:7: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_import_incomplete_binary.carbon:[[@LINE+15]]:35
+  // CHECK:STDERR: ->     │   let unused result_binary: i32 = complete + *Cpp.CreateIncomplete();
+  // CHECK:STDERR:        ·                                   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                                   ┗━━┫ error: looking up a C++ operator with
+  // CHECK:STDERR:        ·                                      ┃        incomplete operand type
+  // CHECK:STDERR:        ·                                      ┃        `Cpp.Incomplete`
+  // CHECK:STDERR:        ·                                      ┃        [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_import_incomplete_binary.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./incomplete.h
+  // CHECK:STDERR:        │ class Incomplete;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused result_binary: i32 = complete + *Cpp.CreateIncomplete();
 }
@@ -825,8 +1075,17 @@ fn CreateIncomplete() -> Incomplete*;
 
 fn F() {
   var complete: Cpp.CompleteCpp = Cpp.CompleteCpp.CompleteCpp();
-  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE+3]]:28-57: error: looking up a C++ operator with incomplete operand type `Incomplete` [IncompleteOperandTypeInCppOperatorLookup]
-  // CHECK:STDERR: fail_incomplete_operand_carbon_type.carbon:[[@LINE-6]]:1-17: note: class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_incomplete_operand_carbon_type.carbon:[[@LINE+12]]:28
+  // CHECK:STDERR:        │ class Incomplete;
+  // CHECK:STDERR:        · ────────┬────────
+  // CHECK:STDERR:        ·         ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   let unused result: i32 = *CreateIncomplete() + complete;
+  // CHECK:STDERR:        ·                            ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·                            ┗━━┫ error: looking up a C++ operator with incomplete
+  // CHECK:STDERR:        ·                               ┃        operand type `Incomplete`
+  // CHECK:STDERR:        ·                               ┃        [IncompleteOperandTypeInCppOperatorLookup]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused result: i32 = *CreateIncomplete() + complete;
 }
@@ -860,7 +1119,20 @@ library "[[@TEST_NAME]]";
 import Cpp inline '''
 template<typename T> struct FailTemplateB {};
 template<typename T> struct FailTemplateA {
-  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+1]]:19: error: type 'int' cannot be used prior to '::' because it has no members [CppInteropParseError]
+  // CHECK:STDERR:        ╭─┤ fail_indirect_template_instantiation_error.carbon:[[@LINE+14]]:19
+  // CHECK:STDERR: ->     │   friend typename T::error operator+(FailTemplateB<FailTemplateA>, FailTem...
+  // CHECK:STDERR:        ·                   ┳
+  // CHECK:STDERR:        ·                   ┗━━┫ error: type 'int' cannot be used prior to '::' because it
+  // CHECK:STDERR:        ·                      ┃        has no members
+  // CHECK:STDERR:        ·                      ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   return x + x;
+  // CHECK:STDERR:        ·            ┬
+  // CHECK:STDERR:        ·            ╰──┤ in instantiation of template class 'FailTemplateA<int>'
+  // CHECK:STDERR:        ·               │ requested here
+  // CHECK:STDERR:        ·               │ [CppInteropParseNote]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   friend typename T::error operator+(FailTemplateB<FailTemplateA>, FailTemplateB<FailTemplateA>);
 };
 
@@ -868,9 +1140,14 @@ using FailTemplateX = FailTemplateB<FailTemplateA<int>>;
 ''';
 
 fn F(x: Cpp.FailTemplateX) -> i32 {
-  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+4]]:12: note: in instantiation of template class 'FailTemplateA<int>' requested here [CppInteropParseNote]
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_indirect_template_instantiation_error.carbon:[[@LINE+2]]:10-14: error: cannot access member of interface `Core.AddWith(Cpp.FailTemplateB)` in type `Cpp.FailTemplateB` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_indirect_template_instantiation_error.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR: ->     │   return x + x;
+  // CHECK:STDERR:        ·          ┳━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·             ┃        `Core.AddWith(Cpp.FailTemplateB)` in type
+  // CHECK:STDERR:        ·             ┃        `Cpp.FailTemplateB` that does not implement that interface
+  // CHECK:STDERR:        ·             ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return x + x;
 }
@@ -2152,7 +2429,7 @@ fn F() {
 // CHECK:STDOUT:   %T.09f: %SubobjectDestroy.type = symbolic_binding T, 0 [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.type.dea: type = fn_type @T.as_type.as.DestroyImpl.impl.Op, @T.as_type.as.DestroyImpl.impl(%T.09f) [symbolic]
 // CHECK:STDOUT:   %T.as_type.as.DestroyImpl.impl.Op.6e5: %T.as_type.as.DestroyImpl.impl.Op.type.dea = struct_value () [symbolic]
-// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.687: type = fn_type @SubobjectDestroy.WithSelf.Op.loc32 [concrete]
+// CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.type.687: type = fn_type @SubobjectDestroy.WithSelf.Op.loc46 [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.WithSelf.Op.30f: %SubobjectDestroy.WithSelf.Op.type.687 = struct_value () [concrete]
 // CHECK:STDOUT:   %custom_witness.b80: <witness> = custom_witness (%SubobjectDestroy.WithSelf.Op.30f), @SubobjectDestroy [concrete]
 // CHECK:STDOUT:   %SubobjectDestroy.facet.a87: %SubobjectDestroy.type = facet_value bool, (%custom_witness.b80) [concrete]
@@ -2249,45 +2526,45 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater_than.patt: %pattern_type.831 = value_binding_pattern greater_than [concrete = constants.%greater_than.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.ref.loc24: ref %C = name_ref c1, %c1
-// CHECK:STDOUT:   %c2.ref.loc24: ref %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc24: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %c1.ref.loc31: ref %C = name_ref c1, %c1
+// CHECK:STDOUT:   %c2.ref.loc31: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc31: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %less_than: bool = wrapper_binding less_than, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than.patt: %pattern_type.831 = value_binding_pattern less_than [concrete = constants.%less_than.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.ref.loc29: ref %C = name_ref c1, %c1
-// CHECK:STDOUT:   %c2.ref.loc29: ref %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc29: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %c1.ref.loc43: ref %C = name_ref c1, %c1
+// CHECK:STDOUT:   %c2.ref.loc43: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc43: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %greater_than_or_equal: bool = wrapper_binding greater_than_or_equal, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %greater_than_or_equal.patt: %pattern_type.831 = value_binding_pattern greater_than_or_equal [concrete = constants.%greater_than_or_equal.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.ref.loc32: ref %C = name_ref c1, %c1
-// CHECK:STDOUT:   %c2.ref.loc32: ref %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc32_41.1: %C = acquire_value %c1.ref.loc32
-// CHECK:STDOUT:   %.loc32_47.1: %C = acquire_value %c2.ref.loc32
-// CHECK:STDOUT:   %.loc32_41.2: ref %C = value_as_ref %.loc32_41.1
-// CHECK:STDOUT:   %addr.loc32_44.1: %ptr.0a2 = addr_of %.loc32_41.2
-// CHECK:STDOUT:   %.loc32_47.2: ref %C = value_as_ref %.loc32_47.1
-// CHECK:STDOUT:   %addr.loc32_44.2: %ptr.0a2 = addr_of %.loc32_47.2
-// CHECK:STDOUT:   %.loc32_44.1: ref bool = temporary_storage
-// CHECK:STDOUT:   %addr.loc32_44.3: %ptr.bb2 = addr_of %.loc32_44.1
-// CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessEqual__carbon_thunk.decl(%addr.loc32_44.1, %addr.loc32_44.2, %addr.loc32_44.3)
-// CHECK:STDOUT:   %.loc32_44.2: init bool to %.loc32_44.1 = mark_in_place_init %operator_LessEqual__carbon_thunk.call
-// CHECK:STDOUT:   %.loc32_44.3: ref bool = temporary %.loc32_44.1, %.loc32_44.2
-// CHECK:STDOUT:   %.loc32_44.4: bool = acquire_value %.loc32_44.3
-// CHECK:STDOUT:   %.loc32_34: type = type_literal bool [concrete = bool]
-// CHECK:STDOUT:   %less_than_or_equal: bool = wrapper_binding less_than_or_equal, %.loc32_44.4
+// CHECK:STDOUT:   %c1.ref.loc46: ref %C = name_ref c1, %c1
+// CHECK:STDOUT:   %c2.ref.loc46: ref %C = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc46_41.1: %C = acquire_value %c1.ref.loc46
+// CHECK:STDOUT:   %.loc46_47.1: %C = acquire_value %c2.ref.loc46
+// CHECK:STDOUT:   %.loc46_41.2: ref %C = value_as_ref %.loc46_41.1
+// CHECK:STDOUT:   %addr.loc46_44.1: %ptr.0a2 = addr_of %.loc46_41.2
+// CHECK:STDOUT:   %.loc46_47.2: ref %C = value_as_ref %.loc46_47.1
+// CHECK:STDOUT:   %addr.loc46_44.2: %ptr.0a2 = addr_of %.loc46_47.2
+// CHECK:STDOUT:   %.loc46_44.1: ref bool = temporary_storage
+// CHECK:STDOUT:   %addr.loc46_44.3: %ptr.bb2 = addr_of %.loc46_44.1
+// CHECK:STDOUT:   %operator_LessEqual__carbon_thunk.call: init %empty_tuple.type = call imports.%operator_LessEqual__carbon_thunk.decl(%addr.loc46_44.1, %addr.loc46_44.2, %addr.loc46_44.3)
+// CHECK:STDOUT:   %.loc46_44.2: init bool to %.loc46_44.1 = mark_in_place_init %operator_LessEqual__carbon_thunk.call
+// CHECK:STDOUT:   %.loc46_44.3: ref bool = temporary %.loc46_44.1, %.loc46_44.2
+// CHECK:STDOUT:   %.loc46_44.4: bool = acquire_value %.loc46_44.3
+// CHECK:STDOUT:   %.loc46_34: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %less_than_or_equal: bool = wrapper_binding less_than_or_equal, %.loc46_44.4
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %less_than_or_equal.patt: %pattern_type.831 = value_binding_pattern less_than_or_equal [concrete = constants.%less_than_or_equal.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %Destroy.facet.loc32_44.1: %Destroy.type = facet_value bool, (constants.%DestroyImpl.impl_witness.778, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet.e68]
-// CHECK:STDOUT:   %.loc32_44.5: %Destroy.type = converted bool, %Destroy.facet.loc32_44.1 [concrete = constants.%Destroy.facet.e68]
-// CHECK:STDOUT:   %Destroy.facet.loc32_44.2: %Destroy.type = facet_value bool, (constants.%DestroyImpl.impl_witness.778, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet.e68]
-// CHECK:STDOUT:   %.loc32_44.6: %Destroy.type = converted bool, %Destroy.facet.loc32_44.2 [concrete = constants.%Destroy.facet.e68]
+// CHECK:STDOUT:   %Destroy.facet.loc46_44.1: %Destroy.type = facet_value bool, (constants.%DestroyImpl.impl_witness.778, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet.e68]
+// CHECK:STDOUT:   %.loc46_44.5: %Destroy.type = converted bool, %Destroy.facet.loc46_44.1 [concrete = constants.%Destroy.facet.e68]
+// CHECK:STDOUT:   %Destroy.facet.loc46_44.2: %Destroy.type = facet_value bool, (constants.%DestroyImpl.impl_witness.778, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet.e68]
+// CHECK:STDOUT:   %.loc46_44.6: %Destroy.type = converted bool, %Destroy.facet.loc46_44.2 [concrete = constants.%Destroy.facet.e68]
 // CHECK:STDOUT:   <elided>
-// CHECK:STDOUT:   %SelfDestruct.call.loc32: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%.loc32_44.3)
+// CHECK:STDOUT:   %SelfDestruct.call.loc46: init %empty_tuple.type = call %SelfDestruct.specific_fn.1(%.loc46_44.3)
 // CHECK:STDOUT:   %Destroy.facet.loc19_38.1: %Destroy.type = facet_value bool, (constants.%DestroyImpl.impl_witness.778, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet.e68]
 // CHECK:STDOUT:   %.loc19_38.5: %Destroy.type = converted bool, %Destroy.facet.loc19_38.1 [concrete = constants.%Destroy.facet.e68]
 // CHECK:STDOUT:   %Destroy.facet.loc19_38.2: %Destroy.type = facet_value bool, (constants.%DestroyImpl.impl_witness.778, constants.%custom_witness.b80) [concrete = constants.%Destroy.facet.e68]
@@ -2309,7 +2586,7 @@ fn F() {
 // CHECK:STDOUT:   <elided>
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
-// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc32(%self.param: ref bool) = "no_op";
+// CHECK:STDOUT: fn @SubobjectDestroy.WithSelf.Op.loc46(%self.param: ref bool) = "no_op";
 // CHECK:STDOUT:
 // CHECK:STDOUT: --- fail_todo_rewrite_equal.carbon
 // CHECK:STDOUT:
@@ -2430,9 +2707,9 @@ fn F() {
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %equal.patt: %pattern_type.831 = value_binding_pattern equal [concrete = constants.%equal.patt]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %c1.ref.loc21: ref %EqualC = name_ref c1, %c1
-// CHECK:STDOUT:   %c2.ref.loc21: ref %EqualC = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc21: type = type_literal bool [concrete = bool]
+// CHECK:STDOUT:   %c1.ref.loc28: ref %EqualC = name_ref c1, %c1
+// CHECK:STDOUT:   %c2.ref.loc28: ref %EqualC = name_ref c2, %c2
+// CHECK:STDOUT:   %.loc28: type = type_literal bool [concrete = bool]
 // CHECK:STDOUT:   %not_equal: bool = wrapper_binding not_equal, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %not_equal.patt: %pattern_type.831 = value_binding_pattern not_equal [concrete = constants.%not_equal.patt]
@@ -2884,10 +3161,10 @@ fn F() {
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c1.ref: %C = name_ref c1, %c1
 // CHECK:STDOUT:   %c2.ref: %C = name_ref c2, %c2
-// CHECK:STDOUT:   %.loc12: type = splice_block %C.ref.loc12 [concrete = constants.%C] {
-// CHECK:STDOUT:     %Cpp.ref.loc12: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
-// CHECK:STDOUT:     %GlobalOpN.ref.loc12: <namespace> = name_ref GlobalOpN, imports.%GlobalOpN [concrete = imports.%GlobalOpN]
-// CHECK:STDOUT:     %C.ref.loc12: type = name_ref C, imports.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %.loc20: type = splice_block %C.ref.loc20 [concrete = constants.%C] {
+// CHECK:STDOUT:     %Cpp.ref.loc20: <namespace> = name_ref Cpp, imports.%Cpp [concrete = imports.%Cpp]
+// CHECK:STDOUT:     %GlobalOpN.ref.loc20: <namespace> = name_ref GlobalOpN, imports.%GlobalOpN [concrete = imports.%GlobalOpN]
+// CHECK:STDOUT:     %C.ref.loc20: type = name_ref C, imports.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %c3: %C = wrapper_binding c3, <error> [concrete = <error>]
 // CHECK:STDOUT:   name_binding_decl {

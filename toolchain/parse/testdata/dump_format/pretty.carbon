@@ -11,7 +11,12 @@
 
 // --- fail_pretty.carbon
 
-// CHECK:STDERR: fail_pretty.carbon:[[@LINE+2]]:9: error: expected `.field: field_type` or `.field = value` [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╭─┤ fail_pretty.carbon:[[@LINE+7]]:9
+// CHECK:STDERR: ->     │ var x: {,} = {};
+// CHECK:STDERR:        ·         ┳
+// CHECK:STDERR:        ·         ┗━━┫ error: expected `.field: field_type` or `.field = value`
+// CHECK:STDERR:        ·            ┃        [ExpectedStructLiteralField]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: {,} = {};
 

@@ -10,31 +10,71 @@
 
 fn F(n: i32) {
   // No ordering between `not` and `as`.
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+2]]:12-13: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_as.carbon:[[@LINE+8]]:12
+  // CHECK:STDERR: ->     │   not true as bool;
+  // CHECK:STDERR:        ·            ┳━
+  // CHECK:STDERR:        ·            ┗━━┫ error: parentheses are required to disambiguate operator
+  // CHECK:STDERR:        ·               ┃        precedence
+  // CHECK:STDERR:        ·               ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   not true as bool;
 
   // No ordering between mathematical binary operators and `as`.
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+2]]:9-10: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_as.carbon:[[@LINE+7]]:9
+  // CHECK:STDERR: ->     │   1 + 1 as i32;
+  // CHECK:STDERR:        ·         ┳━
+  // CHECK:STDERR:        ·         ┗━━┫ error: parentheses are required to disambiguate operator precedence
+  // CHECK:STDERR:        ·            ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   1 + 1 as i32;
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+2]]:9-10: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_as.carbon:[[@LINE+7]]:9
+  // CHECK:STDERR: ->     │   5 % 2 as i32;
+  // CHECK:STDERR:        ·         ┳━
+  // CHECK:STDERR:        ·         ┗━━┫ error: parentheses are required to disambiguate operator precedence
+  // CHECK:STDERR:        ·            ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   5 % 2 as i32;
 
   // No ordering between logical binary operators and `as`.
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+2]]:12-14: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_as.carbon:[[@LINE+8]]:12
+  // CHECK:STDERR: ->     │   3 as i32 and true;
+  // CHECK:STDERR:        ·            ┳━━
+  // CHECK:STDERR:        ·            ┗━━┫ error: parentheses are required to disambiguate operator
+  // CHECK:STDERR:        ·               ┃        precedence
+  // CHECK:STDERR:        ·               ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   3 as i32 and true;
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+2]]:14-15: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_as.carbon:[[@LINE+8]]:14
+  // CHECK:STDERR: ->     │   false or 4 as i32;
+  // CHECK:STDERR:        ·              ┳━
+  // CHECK:STDERR:        ·              ┗━━┫ error: parentheses are required to disambiguate operator
+  // CHECK:STDERR:        ·                 ┃        precedence
+  // CHECK:STDERR:        ·                 ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   false or 4 as i32;
 
   // No ordering between relational binary operators and `as`.
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+2]]:12-13: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_as.carbon:[[@LINE+8]]:12
+  // CHECK:STDERR: ->     │   6 as i32 == 7;
+  // CHECK:STDERR:        ·            ┳━
+  // CHECK:STDERR:        ·            ┗━━┫ error: parentheses are required to disambiguate operator
+  // CHECK:STDERR:        ·               ┃        precedence
+  // CHECK:STDERR:        ·               ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   6 as i32 == 7;
-  // CHECK:STDERR: fail_precedence_as.carbon:[[@LINE+2]]:10-11: error: parentheses are required to disambiguate operator precedence [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╭─┤ fail_precedence_as.carbon:[[@LINE+8]]:10
+  // CHECK:STDERR: ->     │   8 <= 9 as i32;
+  // CHECK:STDERR:        ·          ┳━
+  // CHECK:STDERR:        ·          ┗━━┫ error: parentheses are required to disambiguate operator
+  // CHECK:STDERR:        ·             ┃        precedence
+  // CHECK:STDERR:        ·             ┃        [OperatorRequiresParentheses]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   8 <= 9 as i32;
 }

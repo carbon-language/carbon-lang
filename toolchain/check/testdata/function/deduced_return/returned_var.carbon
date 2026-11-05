@@ -79,12 +79,21 @@ library "[[@TEST_NAME]]";
 
 fn F(b: bool) -> auto {
   if (b) {
-    // CHECK:STDERR: fail_return_before_returned_var.carbon:[[@LINE+2]]:5-16: error: cannot implicitly convert expression of type `bool` to `i32` [ConversionFailure]
-    // CHECK:STDERR: fail_return_before_returned_var.carbon:[[@LINE+1]]:5-16: note: type `bool` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+    // CHECK:STDERR:        ╭─┤ fail_return_before_returned_var.carbon:[[@LINE+13]]:5
+    // CHECK:STDERR: ->     │     return true;
+    // CHECK:STDERR:        ·     ━━━━┳━━━━━━━
+    // CHECK:STDERR:        ·         ┗━━┫ error: cannot implicitly convert expression of type `bool` to `i32`
+    // CHECK:STDERR:        ·         │  ┃        [ConversionFailure]
+    // CHECK:STDERR:        ·         ╰────┤ type `bool` does not implement interface `Core.ImplicitAs(i32)`
+    // CHECK:STDERR:        ·              │ [MissingImplInMemberAccessInContext]
+    // CHECK:STDERR:        │   }
+    // CHECK:STDERR:        │   returned var r: i32 = 0;
+    // CHECK:STDERR:        ·                   ─┬─
+    // CHECK:STDERR:        ·                    ╰──┤ return type deduced as `i32` [ReturnTypeDeducedAs]
+    // CHECK:STDERR:        ╰────
+    // CHECK:STDERR:
     return true;
   }
-  // CHECK:STDERR: fail_return_before_returned_var.carbon:[[@LINE+2]]:19-21: note: return type deduced as `i32` [ReturnTypeDeducedAs]
-  // CHECK:STDERR:
   returned var r: i32 = 0;
   return var;
 }
@@ -97,8 +106,17 @@ fn F(b: bool) -> auto {
     returned var r: i32 = 0;
     return var;
   }
-  // CHECK:STDERR: fail_returned_var_mismatch.carbon:[[@LINE+3]]:19-22: error: type `bool` of `returned var` does not match return type of enclosing function [ReturnedVarWrongType]
-  // CHECK:STDERR: fail_returned_var_mismatch.carbon:[[@LINE-4]]:21-23: note: return type of function is `i32` [ReturnTypeHereNote]
+  // CHECK:STDERR:        ╭─┤ fail_returned_var_mismatch.carbon:[[@LINE+12]]:19
+  // CHECK:STDERR:        │     returned var r: i32 = 0;
+  // CHECK:STDERR:        ·                     ─┬─
+  // CHECK:STDERR:        ·                      ╰──┤ return type of function is `i32` [ReturnTypeHereNote]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   returned var s: bool = true;
+  // CHECK:STDERR:        ·                   ┳━━━
+  // CHECK:STDERR:        ·                   ┗━━┫ error: type `bool` of `returned var` does not match
+  // CHECK:STDERR:        ·                      ┃        return type of enclosing function
+  // CHECK:STDERR:        ·                      ┃        [ReturnedVarWrongType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   returned var s: bool = true;
   return var;
