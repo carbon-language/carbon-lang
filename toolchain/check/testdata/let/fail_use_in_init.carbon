@@ -13,10 +13,20 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/let/fail_use_in_init.carbon
 
 fn F() {
-  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+5]]:23: error: `a` used before initialization [UsedBeforeInitialization]
+  // CHECK:STDERR:        ╭─┤ fail_use_in_init.carbon:[[@LINE+15]]:23
+  // CHECK:STDERR: ->     │   let unused a: i32 = a;
+  // CHECK:STDERR:        ·                       ┳
+  // CHECK:STDERR:        ·                       ┗━━┫ error: `a` used before initialization
+  // CHECK:STDERR:        ·                          ┃        [UsedBeforeInitialization]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+3]]:14-19: error: variable `a` marked `unused` but used [UnusedButUsed]
-  // CHECK:STDERR: fail_use_in_init.carbon:[[@LINE+2]]:23: note: usage here [UnusedButUsedHere]
+  // CHECK:STDERR:        ╭─┤ fail_use_in_init.carbon:[[@LINE+8]]:14
+  // CHECK:STDERR: ->     │   let unused a: i32 = a;
+  // CHECK:STDERR:        ·              ━━━┳━━   ┬
+  // CHECK:STDERR:        ·                 ┗━━━━━━━━┫ error: variable `a` marked `unused` but used
+  // CHECK:STDERR:        ·                       │  ┃        [UnusedButUsed]
+  // CHECK:STDERR:        ·                       ╰────┤ usage here [UnusedButUsedHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let unused a: i32 = a;
 }

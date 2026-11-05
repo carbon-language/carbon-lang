@@ -195,7 +195,13 @@ constraint N(V: type) {
 
 // `C impls N(.Z1)` gives `.Z1 impls Y(C)`.
 //
-// CHECK:STDERR: fail_early_impl_named_constraint_gives_wrong_witness_for_different_self.carbon:[[@LINE+2]]:58-72: error: cannot convert type `.(Z(.Self).Z1)` into type implementing `Y(.Self)` [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ╭─┤ fail_early_impl_named_constraint_gives_wrong_witness_for_different_self.carbon:[[@LINE+8]]:58
+// CHECK:STDERR: ->     │ fn F(generic _: Z(.Self) where C impls N(.Z1) and .Z2 = (.Z1 as Y(.Self))) {}
+// CHECK:STDERR:        ·                                                          ━━━━━━━┳━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: cannot convert type `.(Z(.Self).Z1)` into type implementing `Y(.Self)`
+// CHECK:STDERR:        · ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(generic _: Z(.Self) where C impls N(.Z1) and .Z2 = (.Z1 as Y(.Self))) {}
 
@@ -265,8 +271,20 @@ interface S(T: type);
 // there should be replaced during the conversion. We show that it was replaced
 // because the `C impls Z(.Self)` constraint does not satisfy `C as Z(C)` so the
 // conversion fails.
-// CHECK:STDERR: fail_early_impls_with_period_self_replaced.carbon:[[@LINE+3]]:56-63: error: cannot convert type `C` into type implementing `Z(.Self)` [ConversionFailureTypeToFacet]
-// CHECK:STDERR: fail_early_impls_with_period_self_replaced.carbon:[[@LINE-10]]:1-25: note: while deducing parameters of generic declared here [DeductionGenericHere]
+// CHECK:STDERR:        ╭─┤ fail_early_impls_with_period_self_replaced.carbon:[[@LINE+15]]:56
+// CHECK:STDERR:        │ class NeedZ(V: Z(.Self));
+// CHECK:STDERR:        · ────────────┬────────────
+// CHECK:STDERR:        ·             ╰──┤ while deducing parameters of generic declared here
+// CHECK:STDERR:        ·                │ [DeductionGenericHere]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ ...sed generic T: type where C impls Z(.Self) and NeedZ(C) impls S(.Self)) {}
+// CHECK:STDERR:        ·                                                   ┳━━━━━━━
+// CHECK:STDERR:        ·                                                   ┗━━┫ error: cannot convert
+// CHECK:STDERR:        ·                                                      ┃        type `C` into type
+// CHECK:STDERR:        ·                                                      ┃        implementing
+// CHECK:STDERR:        ·                                                      ┃        `Z(.Self)`
+// CHECK:STDERR:        ·                                                      ┃        [ConversionFailureTypeToFacet]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused generic T: type where C impls Z(.Self) and NeedZ(C) impls S(.Self)) {}
 

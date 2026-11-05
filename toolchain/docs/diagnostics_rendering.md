@@ -58,10 +58,9 @@ The audience for a rendered diagnostic is a person glancing at an error. Editors
 get diagnostics from the [language server](/toolchain/language_server) as
 structure, so editor integration is out of scope, and so is what a complete
 build should give an agent, which is a separate question. A build log gets one
-line per fact from [`--no-diagnostic-snippets`](#the-compact-form), and a golden
-test file gets the drawing without the parts that a moved line would re-render,
-from
-[`--no-diagnostic-line-numbers`](#testing).
+line per fact from [`--no-diagnostic-snippets`](#the-compact-form), and golden
+test files use [`--diagnostic-line-numbers=first`](#testing), which drops the
+line numbers that change when a line moves.
 
 ## What a diagnostic is made of
 
@@ -720,9 +719,10 @@ interleaves with another writer.
     `COLORFGBG` by default and assumed dark otherwise.
 -   `--no-diagnostic-snippets` renders every diagnostic in
     [the compact form](#the-compact-form).
--   `--no-diagnostic-line-numbers` withholds the gutter's numbers and names any
-    later file without a position, leaving the layout the same as the numbered
-    one. This is the form [golden files capture](#testing).
+-   `--diagnostic-line-numbers=first` keeps the line and column only in the
+    first location row. The gutter has no numbers, and every later location
+    shows only its filename. The layout doesn't change.
+    [Golden files](#testing) use this form.
 -   `--include-diagnostic-kind` appends each part's kind, `[NameNotFound]`,
     dim. Tests match on it.
 
@@ -738,12 +738,13 @@ renders without crashing.
 File tests cover the rendering end to end. `toolchain/diagnostics/testdata`
 keeps full numbering, and its `fail_rendering.carbon` checks the ASCII form.
 Every other `file_test` runs with `--terminal-unicode=always` and
-`--no-diagnostic-line-numbers`, so its goldens are the frames nearly every
-terminal gets, with one location apiece, the leading location row's, which
-autoupdate maintains as a `[[@LINE...]]` offset. Full numbering would make a
-golden depend on the positions of its own `CHECK` lines, and a location row in a
-second file names lines no offset can express. The rows above the leading
-location row, the path, take its location in
+`--diagnostic-line-numbers=first`. Its goldens show the box drawing that nearly
+every terminal supports, and one line number per frame, in the leading location
+row, which autoupdate rewrites as a `[[@LINE...]]` offset. Adding a `CHECK` line
+changes the number of every source line below it, which would change the
+gutter's numbers. A frame's `CHECK` lines are all in the leading location row's
+file, so a location in another file has no offset from them. The rows above the
+leading location row, the path, take its location in
 `ToolchainFileTest::FinalizeCheckLines` so a frame moves as one block.
 
 Goldens differ from what a user sees in two ways: every file test also passes

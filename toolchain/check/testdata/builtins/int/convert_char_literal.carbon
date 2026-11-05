@@ -40,15 +40,33 @@ alias IntLiteral = MakeIntLiteral();
 
 fn ConvertFromIntLiteral(n: IntLiteral) -> CharLiteral = "int.convert_char_literal";
 
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:22-46: error: integer value -1 is not a valid Unicode code point [InvalidCharLiteralValue]
+// CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let a: CharLiteral = ConvertFromIntLiteral(-1);
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: integer value -1 is not a valid Unicode code
+// CHECK:STDERR:        ·                         ┃        point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralValue]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let a: CharLiteral = ConvertFromIntLiteral(-1);
 
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:22-50: error: integer value 55296 is not a valid Unicode code point [InvalidCharLiteralValue]
+// CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let b: CharLiteral = ConvertFromIntLiteral(0xD800);
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: integer value 55296 is not a valid Unicode code
+// CHECK:STDERR:        ·                         ┃        point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralValue]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: CharLiteral = ConvertFromIntLiteral(0xD800);
 
-// CHECK:STDERR: fail_invalid.carbon:[[@LINE+2]]:22-52: error: integer value 1114112 is not a valid Unicode code point [InvalidCharLiteralValue]
+// CHECK:STDERR:        ╭─┤ fail_invalid.carbon:[[@LINE+8]]:22
+// CHECK:STDERR: ->     │ let c: CharLiteral = ConvertFromIntLiteral(0x110000);
+// CHECK:STDERR:        ·                      ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: integer value 1114112 is not a valid Unicode
+// CHECK:STDERR:        ·                         ┃        code point
+// CHECK:STDERR:        ·                         ┃        [InvalidCharLiteralValue]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let c: CharLiteral = ConvertFromIntLiteral(0x110000);
 

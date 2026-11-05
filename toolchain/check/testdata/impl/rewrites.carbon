@@ -28,7 +28,13 @@ interface I { let X: type; }
 interface J {}
 
 // .X does not impl J.
-// CHECK:STDERR: fail_rewrite_in_facet_type_before_missing_impl.carbon:[[@LINE+2]]:1-59: error: constraint `I where () impls J and .(I.X) = ()` being implemented requires that `()` implements `J` [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR:        ╭─┤ fail_rewrite_in_facet_type_before_missing_impl.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl forall [T: type] T as I where .X = () and .X impls J {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: constraint `I where () impls J and .(I.X) = ()` being implemented
+// CHECK:STDERR:        ·    ┃        requires that `()` implements `J`
+// CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall [T: type] T as I where .X = () and .X impls J {}
 
@@ -51,7 +57,13 @@ interface I { let X: type; }
 interface J {}
 
 // .X does not impl J.
-// CHECK:STDERR: fail_rewrite_in_facet_type_after_missing_impl.carbon:[[@LINE+2]]:1-59: error: constraint `I where .(I.X) impls J and .(I.X) = ()` being implemented requires that `()` implements `J` [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR:        ╭─┤ fail_rewrite_in_facet_type_after_missing_impl.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl forall [T: type] T as I where .X impls J and .X = () {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: constraint `I where .(I.X) impls J and .(I.X) = ()` being
+// CHECK:STDERR:        ·    ┃        implemented requires that `()` implements `J`
+// CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall [T: type] T as I where .X impls J and .X = () {}
 
@@ -81,7 +93,13 @@ constraint GivesI {
 }
 
 // .X does not impl J.
-// CHECK:STDERR: fail_rewrite_in_named_constraint_missing_impl.carbon:[[@LINE+2]]:1-52: error: constraint `GivesI where .(I.X) impls J` being implemented requires that `()` implements `J` [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR:        ╭─┤ fail_rewrite_in_named_constraint_missing_impl.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl forall [T: type] T as GivesI where .X impls J {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: constraint `GivesI where .(I.X) impls J` being implemented requires
+// CHECK:STDERR:        ·    ┃        that `()` implements `J`
+// CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall [T: type] T as GivesI where .X impls J {}
 
@@ -113,7 +131,13 @@ constraint GivesI {
 }
 
 // .X does not impl J.
-// CHECK:STDERR: fail_rewrite_and_impls_in_named_constraint_missing_impl.carbon:[[@LINE+2]]:1-35: error: constraint `GivesI` being implemented requires that `()` implements `J` [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR:        ╭─┤ fail_rewrite_and_impls_in_named_constraint_missing_impl.carbon:[[@LINE+8]]:1
+// CHECK:STDERR: ->     │ impl forall [T: type] T as GivesI {}
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: constraint `GivesI` being implemented requires that `()` implements
+// CHECK:STDERR:        ·    ┃        `J`
+// CHECK:STDERR:        ·    ┃        [IdentifiedRequireImplsNotImplemented]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl forall [T: type] T as GivesI {}
 

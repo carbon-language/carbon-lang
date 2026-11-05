@@ -37,10 +37,23 @@ var s: String = '''py // A trailing comment with ', #, and " in it.
 
 // --- AUTOUPDATE-SPLIT
 
-// CHECK:STDERR: fail_indent_mismatch.carbon:3:1: error: indentation does not match that of the closing `'''` in multi-line string literal [MismatchedIndentInString]
-// CHECK:STDERR: fail_indent_mismatch.carbon:4:1-2: note: closing `'''` is indented to here [ClosingDelimiterIndent]
+// CHECK:STDERR:        ╭─┤ fail_indent_mismatch.carbon:3:1
+// CHECK:STDERR: ->     │ a
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: indentation does not match that of the closing `'''` in multi-line
+// CHECK:STDERR:        ·    ┃        string literal
+// CHECK:STDERR:        ·    ┃        [MismatchedIndentInString]
+// CHECK:STDERR:        │   '''
+// CHECK:STDERR:        · ─┬
+// CHECK:STDERR:        ·  ╰──┤ closing `'''` is indented to here [ClosingDelimiterIndent]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_quotes.carbon:2:1: error: use `'''` delimiters for a multi-line string literal, not `"""` [MultiLineStringWithDoubleQuotes]
+// CHECK:STDERR:        ╭─┤ fail_quotes.carbon:2:1
+// CHECK:STDERR: ->     │ """
+// CHECK:STDERR:        · ━┳━
+// CHECK:STDERR:        ·  ┗━━┫ error: use `'''` delimiters for a multi-line string literal, not `"""`
+// CHECK:STDERR:        ·     ┃        [MultiLineStringWithDoubleQuotes]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 // CHECK:STDOUT: - filename: fail_indent_mismatch.carbon
 // CHECK:STDOUT:   tokens:

@@ -34,16 +34,34 @@ var c: C({.a = 1, .b = 2}) = F();
 // --- fail_bad_type.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_type.impl.carbon:[[@LINE+3]]:14-29: error: struct `{.a: i32, .b: i32}` has no field named `c` [StructInitUnexpectedFieldInLiteral]
-// CHECK:STDERR: implicit.carbon:8:9-29: note: initializing generic parameter `S` declared here [InitializingGenericParam]
+// CHECK:STDERR:        ╭─┤ fail_bad_type.impl.carbon:[[@LINE+13]]:14
+// CHECK:STDERR: ->     │ var c_bad: C({.c = 1, .d = 2}) = F();
+// CHECK:STDERR:        ·              ━━━━━┳━━━━━━━━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: struct `{.a: i32, .b: i32}` has no field named `c`
+// CHECK:STDERR:        ·                      ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ implicit.carbon
+// CHECK:STDERR:        │ class C(S: {.a: i32, .b: i32}) {}
+// CHECK:STDERR:        ·         ──────────┬──────────
+// CHECK:STDERR:        ·                   ╰──┤ initializing generic parameter `S` declared here
+// CHECK:STDERR:        ·                      │ [InitializingGenericParam]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c_bad: C({.c = 1, .d = 2}) = F();
 
 // --- fail_bad_value.impl.carbon
 
 impl package Implicit;
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+3]]:1-30: error: cannot implicitly convert expression of type `C({.a = 1, .b = 2})` to `C({.a = 3, .b = 4})` [ConversionFailure]
-// CHECK:STDERR: fail_bad_value.impl.carbon:[[@LINE+2]]:1-30: note: type `C({.a = 1, .b = 2})` does not implement interface `Core.ImplicitAs(C({.a = 3, .b = 4}))` [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╭─┤ fail_bad_value.impl.carbon:[[@LINE+11]]:1
+// CHECK:STDERR: ->     │ var c_bad: C({.a = 3, .b = 4}) = F();
+// CHECK:STDERR:        · ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        · ┗━━┫ error: cannot implicitly convert expression of type `C({.a = 1, .b = 2})`
+// CHECK:STDERR:        · │  ┃        to `C({.a = 3, .b = 4})`
+// CHECK:STDERR:        · │  ┃        [ConversionFailure]
+// CHECK:STDERR:        · ╰────┤ type `C({.a = 1, .b = 2})` does not implement interface
+// CHECK:STDERR:        ·      │ `Core.ImplicitAs(C({.a = 3, .b = 4}))`
+// CHECK:STDERR:        ·      │ [MissingImplInMemberAccessInContext]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var c_bad: C({.a = 3, .b = 4}) = F();
 

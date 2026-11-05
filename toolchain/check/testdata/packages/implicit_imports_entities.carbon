@@ -131,14 +131,23 @@ var o1: Other.O1 = {};
 
 library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_import_conflict.impl.carbon [InImport]
+// CHECK:STDERR:        ├─┤ import_conflict.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ import Other library "o1";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: duplicate name `Other` being declared in the same scope
+// CHECK:STDERR:        ·                 ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ local_other.carbon
+// CHECK:STDERR:        │ class Other {}
+// CHECK:STDERR:        · ──────┬──────
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 import Other library "o1";
 
 // --- fail_import_conflict.impl.carbon
 
-// CHECK:STDERR: imported from: fail_import_conflict.impl.carbon:[[@LINE+4]]:1 [InImport]
-// CHECK:STDERR: import_conflict.carbon:4:1-26: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: local_other.carbon:4:1-13: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR:
 impl library "[[@TEST_NAME]]";
 
 import library "local_other";
@@ -153,8 +162,17 @@ import library "local_other";
 
 impl library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_conflict_reverse.impl.carbon:[[@LINE+3]]:1-26: error: duplicate name `Other` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: local_other.carbon:4:1-13: note: name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╭─┤ fail_import_conflict_reverse.impl.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ import Other library "o1";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━┳━━━━━━━━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: duplicate name `Other` being declared in the same scope
+// CHECK:STDERR:        ·                 ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ local_other.carbon
+// CHECK:STDERR:        │ class Other {}
+// CHECK:STDERR:        · ──────┬──────
+// CHECK:STDERR:        ·       ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Other library "o1";
 
@@ -748,8 +766,8 @@ import Other library "o1";
 // CHECK:STDOUT:   package: <namespace> = namespace [concrete] {
 // CHECK:STDOUT:     .Other = imports.%Other
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %default.import.loc6_31.1 = import <none>
-// CHECK:STDOUT:   %default.import.loc6_31.2 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_31.1 = import <none>
+// CHECK:STDOUT:   %default.import.loc2_31.2 = import <none>
 // CHECK:STDOUT:   %Other.import = import Other
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

@@ -66,10 +66,10 @@ jobs:
 
       # We want to automatically create github suggestions for prek file
       # changes for a pull request. But `pull_request` actions never have write
-      # permissions to the repository, so we create the suggestions in a separate
-      # privileged `workflow_run` action in prek_suggestions.yaml. Here,
-      # we upload the diffs and event configuration to an artifact for use by
-      # that action.
+      # permissions to the repository, so we create the suggestions (or, for
+      # Dependabot PRs, commit the fixes) in a separate privileged `workflow_run`
+      # action in prek_suggestions.yaml. Here, we upload the diffs and event
+      # configuration to an artifact for use by that action.
       - name: Collect prek output
         if: failure()
         run: |

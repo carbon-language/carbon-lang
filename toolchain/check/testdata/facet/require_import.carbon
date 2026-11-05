@@ -43,7 +43,13 @@ fn F(generic B: Y) {
   // Y` since the identified facet type doesn't include Z. We need to be able to
   // find a symbolic facet from the require decl in Y during impl lookup.
   //
-  // CHECK:STDERR: fail_todo_symbolic_facet_interface_requires_interface.carbon:[[@LINE+2]]:3-5: error: cannot access member of interface `Z(B)` in type `B` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_todo_symbolic_facet_interface_requires_interface.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   B.F();
+  // CHECK:STDERR:        ·   ┳━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot access member of interface `Z(B)` in type `B` that does not
+  // CHECK:STDERR:        ·      ┃        implement that interface
+  // CHECK:STDERR:        ·      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   B.F();
 }

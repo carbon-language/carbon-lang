@@ -15,8 +15,16 @@
 interface I;
 
 class C {
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE+3]]:3-19: error: `extend impl as` incomplete facet type `I` [ExtendImplAsIncomplete]
-  // CHECK:STDERR: fail_extend_undefined_interface.carbon:[[@LINE-4]]:1-12: note: interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR:        ╭─┤ fail_extend_undefined_interface.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR:        │ interface I;
+  // CHECK:STDERR:        · ──────┬─────
+  // CHECK:STDERR:        ·       ╰──┤ interface was forward declared here [InterfaceForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   extend impl as I;
+  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: `extend impl as` incomplete facet type `I`
+  // CHECK:STDERR:        ·              ┃        [ExtendImplAsIncomplete]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend impl as I;
 }
@@ -55,7 +63,7 @@ fn F(c: C) {
 // CHECK:STDOUT:     %c.patt: %pattern_type = wrapper_binding_pattern c, %c.param_patt [concrete = constants.%c.patt]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %c.param: %C = value_param call_param0
-// CHECK:STDOUT:     %C.ref.loc24: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %C.ref.loc32: type = name_ref C, file.%C.decl [concrete = constants.%C]
 // CHECK:STDOUT:     %c: %C = wrapper_binding c, %c.param
 // CHECK:STDOUT:   }
 // CHECK:STDOUT: }
@@ -69,7 +77,7 @@ fn F(c: C) {
 // CHECK:STDOUT:     %Self.ref: type = name_ref Self, constants.%C [concrete = constants.%C]
 // CHECK:STDOUT:     %I.ref: type = name_ref I, file.%I.decl [concrete = constants.%I.type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc21: <witness> = impl_self_witness @C.as.I.impl.%Self.ref, @I [concrete = constants.%.b7f]
+// CHECK:STDOUT:   %.loc29: <witness> = impl_self_witness @C.as.I.impl.%Self.ref, @I [concrete = constants.%.b7f]
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%empty_struct_type [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
 // CHECK:STDOUT:
@@ -82,10 +90,10 @@ fn F(c: C) {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F(%c.param: %C) {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %C.ref.loc25: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:   %F.ref.loc25: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:   %C.ref.loc33: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:   %F.ref.loc33: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   %c.ref: %C = name_ref c, %c
-// CHECK:STDOUT:   %F.ref.loc26: <error> = name_ref F, <error> [concrete = <error>]
+// CHECK:STDOUT:   %F.ref.loc34: <error> = name_ref F, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

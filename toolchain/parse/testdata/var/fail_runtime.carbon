@@ -8,15 +8,38 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/parse/testdata/var/fail_runtime.carbon
 
-// CHECK:STDERR: fail_runtime.carbon:[[@LINE+10]]:5-11: error: `runtime` is redundant here; this binding is runtime by default [RedundantRuntimeModifier]
+// CHECK:STDERR:        ╭─┤ fail_runtime.carbon:[[@LINE+33]]:5
+// CHECK:STDERR: ->     │ var runtime u:|
+// CHECK:STDERR:        ·     ━┳━━━━━
+// CHECK:STDERR:        ·      ┗━━┫ error: `runtime` is redundant here; this binding is runtime by default
+// CHECK:STDERR:        ·         ┃        [RedundantRuntimeModifier]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_runtime.carbon:[[@LINE+8]]:15: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╭─┤ fail_runtime.carbon:[[@LINE+26]]:15
+// CHECK:STDERR: ->     │ var runtime u:|
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_runtime.carbon:[[@LINE+6]]:15: error: whitespace missing before binary operator [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR:        ╭─┤ fail_runtime.carbon:[[@LINE+20]]:15
+// CHECK:STDERR: ->     │ var runtime u:|
+// CHECK:STDERR:        ·               ┳
+// CHECK:STDERR:        ·               ┗━━┫ error: whitespace missing before binary operator
+// CHECK:STDERR:        ·                  ┃        [BinaryOperatorRequiresWhitespace]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_runtime.carbon:[[@LINE+4]]:16: error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╭─┤ fail_runtime.carbon:[[@LINE+13]]:16
+// CHECK:STDERR: ->     │ var runtime u:|
+// CHECK:STDERR:        ·                ┳
+// CHECK:STDERR:        ·                ┗━━┫ error: expected expression [ExpectedExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_runtime.carbon:[[@LINE+2]]:16: error: `var` declarations must end with a `;` [ExpectedDeclSemi]
+// CHECK:STDERR:        ╭─┤ fail_runtime.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ var runtime u:|
+// CHECK:STDERR:        ·                ┳
+// CHECK:STDERR:        ·                ┗━━┫ error: `var` declarations must end with a `;`
+// CHECK:STDERR:        ·                   ┃        [ExpectedDeclSemi]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var runtime u:|
 

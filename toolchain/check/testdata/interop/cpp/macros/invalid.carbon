@@ -15,7 +15,11 @@
 library "[[@TEST_NAME]]";
 
 import Cpp inline '''
-// CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+2]]:1: error: unknown type name 'error' [CppInteropParseError]
+// CHECK:STDERR:        ╭─┤ fail_macro_with_error.carbon:[[@LINE+6]]:1
+// CHECK:STDERR: ->     │ error has_error;
+// CHECK:STDERR:        · ┳
+// CHECK:STDERR:        · ┗━━┫ error: unknown type name 'error' [CppInteropParseError]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 error has_error;
 #define macro_with_error has_error.member
@@ -23,10 +27,21 @@ error has_error;
 
 fn F() {
   //@dump-sem-ir-begin
-  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+5]]:3-22: error: failed to parse macro Cpp.macro_with_error to a valid constant expression [InCppMacroEvaluation]
-  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+4]]:3-22: note: in `Cpp` name lookup for `macro_with_error` [InCppNameLookup]
+  // CHECK:STDERR:        ╭─┤ fail_macro_with_error.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR: ->     │   Cpp.macro_with_error;
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: failed to parse macro Cpp.macro_with_error to a valid constant
+  // CHECK:STDERR:        ·   │  ┃        expression
+  // CHECK:STDERR:        ·   │  ┃        [InCppMacroEvaluation]
+  // CHECK:STDERR:        ·   ╰────┤ in `Cpp` name lookup for `macro_with_error` [InCppNameLookup]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_macro_with_error.carbon:[[@LINE+2]]:3-22: error: member name `macro_with_error` not found in `Cpp` [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╭─┤ fail_macro_with_error.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   Cpp.macro_with_error;
+  // CHECK:STDERR:        ·   ━━━━━━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: member name `macro_with_error` not found in `Cpp`
+  // CHECK:STDERR:        ·                ┃        [MemberNameNotFoundInInstScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.macro_with_error;
   //@dump-sem-ir-end

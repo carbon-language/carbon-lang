@@ -20,6 +20,24 @@
 
 package Other library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_conflict_on_export_import.carbon [InImport]
+// CHECK:STDERR:        ├─┤ base.carbon:[[@LINE+17]]:1
+// CHECK:STDERR: ->     │ class C {
+// CHECK:STDERR:        · ━━━━┳━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: duplicate name `C` being declared in the same scope
+// CHECK:STDERR:        ·        ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ conflict.carbon
+// CHECK:STDERR:        │ fn C() {}
+// CHECK:STDERR:        · ────┬───
+// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_conflict_on_export_import.carbon
+// CHECK:STDERR:        │ alias C = Other.C;
+// CHECK:STDERR:        ·           ───┬───
+// CHECK:STDERR:        ·              ╰──┤ in name lookup for `C` [InNameLookup]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 class C {
   var x: ();
 };
@@ -28,6 +46,24 @@ class C {
 
 package Other library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_conflict_on_export_name.carbon [InImport]
+// CHECK:STDERR:        ├─┤ conflict.carbon:[[@LINE+17]]:1
+// CHECK:STDERR: ->     │ fn C() {}
+// CHECK:STDERR:        · ━━━━┳━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: duplicate name `C` being declared in the same scope
+// CHECK:STDERR:        ·        ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ base.carbon
+// CHECK:STDERR:        │ class C {
+// CHECK:STDERR:        · ────┬────
+// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_conflict_on_export_name.carbon
+// CHECK:STDERR:        │ alias C = Other.C;
+// CHECK:STDERR:        ·           ───┬───
+// CHECK:STDERR:        ·              ╰──┤ in name lookup for `C` [InNameLookup]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn C() {}
 
 // --- export_import.carbon
@@ -157,28 +193,18 @@ import Other library "conflict";
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_conflict_on_export_import.carbon:[[@LINE+3]]:1 [InImport]
-// CHECK:STDERR: base.carbon:4:1-9: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: conflict.carbon:4:1-8: note: name is previously declared here [NameDeclPrevious]
 import Other library "export_import";
 import Other library "conflict";
 
-// CHECK:STDERR: fail_conflict_on_export_import.carbon:[[@LINE+2]]:11-17: note: in name lookup for `C` [InNameLookup]
-// CHECK:STDERR:
 alias C = Other.C;
 
 // --- fail_conflict_on_export_name.carbon
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_conflict_on_export_name.carbon:[[@LINE+3]]:1 [InImport]
-// CHECK:STDERR: conflict.carbon:4:1-8: error: duplicate name `C` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: base.carbon:4:1-9: note: name is previously declared here [NameDeclPrevious]
 import Other library "export_name";
 import Other library "conflict";
 
-// CHECK:STDERR: fail_conflict_on_export_name.carbon:[[@LINE+2]]:11-17: note: in name lookup for `C` [InNameLookup]
-// CHECK:STDERR:
 alias C = Other.C;
 
 // CHECK:STDOUT: --- base.carbon
@@ -201,9 +227,9 @@ alias C = Other.C;
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: class @C {
-// CHECK:STDOUT:   %field_decl: %C.elem = field_decl x, element0, %.loc5_11.2 in [concrete] {
-// CHECK:STDOUT:     %.loc5_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
-// CHECK:STDOUT:     %.loc5_11.2: type = converted %.loc5_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
+// CHECK:STDOUT:   %field_decl: %C.elem = field_decl x, element0, %.loc23_11.2 in [concrete] {
+// CHECK:STDOUT:     %.loc23_11.1: %empty_tuple.type = tuple_literal () [concrete = constants.%empty_tuple]
+// CHECK:STDOUT:     %.loc23_11.2: type = converted %.loc23_11.1, constants.%empty_tuple.type [concrete = constants.%empty_tuple.type]
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %complete_type: <witness> = complete_type_witness constants.%struct_type.x [concrete = constants.%complete_type]
 // CHECK:STDOUT:   complete_type_witness = %complete_type
@@ -284,9 +310,9 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc24_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0cc = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.d09 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.d09 = import_ref Other//base, loc23_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -317,9 +343,9 @@ alias C = Other.C;
 // CHECK:STDOUT:
 // CHECK:STDOUT: imports {
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc24_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0cc = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.d09 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.d09 = import_ref Other//base, loc23_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -395,9 +421,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc24_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0cc = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.d09 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.d09 = import_ref Other//base, loc23_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -465,9 +491,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc24_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0cc = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.d09 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.d09 = import_ref Other//base, loc23_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {
@@ -535,9 +561,9 @@ alias C = Other.C;
 // CHECK:STDOUT:     import Other//base
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Other.C: type = import_ref Other//base, C, loaded [concrete = constants.%C]
-// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc6_1, loaded [concrete = constants.%complete_type]
+// CHECK:STDOUT:   %Other.import_ref.56d: <witness> = import_ref Other//base, loc24_1, loaded [concrete = constants.%complete_type]
 // CHECK:STDOUT:   %Other.import_ref.0cc = import_ref Other//base, inst{{[0-9A-F]+}} [no loc], unloaded
-// CHECK:STDOUT:   %Other.import_ref.d09 = import_ref Other//base, loc5_8, unloaded
+// CHECK:STDOUT:   %Other.import_ref.d09 = import_ref Other//base, loc23_8, unloaded
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: file {

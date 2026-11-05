@@ -118,9 +118,26 @@ library "[[@TEST_NAME]]";
 
 import Cpp inline '''c++
 struct LessReturnsBoolish {
-  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+3]]:8: error: cannot implicitly convert expression of type `i32` to `bool` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+2]]:8: note: type `i32` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:3-38: note: while building thunk to match the signature of this function [ThunkSignature]
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR: ->     │   auto operator<(LessReturnsBoolish) const -> int;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `i32` to `bool`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `i32` does not implement interface `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
+  // CHECK:STDERR:        │   fn Less(self, other: Other) -> bool;
+  // CHECK:STDERR:        ·   ─────────────┬──────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   auto operator<(LessReturnsBoolish) const -> int;
   auto operator<=(LessReturnsBoolish) const -> bool;
   auto operator>(LessReturnsBoolish) const -> bool;
@@ -129,6 +146,28 @@ struct LessReturnsBoolish {
 
 struct LessEqualReturnsBoolish {
   auto operator<(LessEqualReturnsBoolish) const -> bool;
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR: ->     │   auto operator<=(LessEqualReturnsBoolish) const -> int*;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type
+  // CHECK:STDERR:        ·        │  ┃        `Core.Optional(i32* as Core.OptionalStorage)` to `bool`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `Core.Optional(i32* as Core.OptionalStorage)` does not
+  // CHECK:STDERR:        ·             │ implement interface `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
+  // CHECK:STDERR:        │   fn LessOrEquivalent(self, other: Other) -> bool;
+  // CHECK:STDERR:        ·   ─────────────┬──────────────────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   auto operator<=(LessEqualReturnsBoolish) const -> int*;
   auto operator>(LessEqualReturnsBoolish) const -> bool;
   auto operator>=(LessEqualReturnsBoolish) const -> bool;
@@ -139,6 +178,28 @@ struct GreaterEqualReturnsBoolish {
   auto operator<(GreaterEqualReturnsBoolish) const -> bool;
   auto operator<=(GreaterEqualReturnsBoolish) const -> bool;
   auto operator>(GreaterEqualReturnsBoolish) const -> bool;
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+22]]:8
+  // CHECK:STDERR: ->     │   auto operator>=(GreaterEqualReturnsBoolish) const -> Result;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `Cpp.Result` to
+  // CHECK:STDERR:        ·        │  ┃        `bool`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `Cpp.Result` does not implement interface
+  // CHECK:STDERR:        ·             │ `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
+  // CHECK:STDERR:        │   fn GreaterOrEquivalent(self, other: Other) -> bool;
+  // CHECK:STDERR:        ·   ─────────────┬─────────────────────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   auto operator>=(GreaterEqualReturnsBoolish) const -> Result;
 };
 
@@ -154,45 +215,93 @@ struct GreaterReturnsBoolish {
 };
 
 struct AllReturnBoolish {
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR: ->     │   auto operator<(AllReturnBoolish) const -> double;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `f64` to `bool`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `f64` does not implement interface `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
+  // CHECK:STDERR:        │   fn Less(self, other: Other) -> bool;
+  // CHECK:STDERR:        ·   ─────────────┬──────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   auto operator<(AllReturnBoolish) const -> double;
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR: ->     │   auto operator<=(AllReturnBoolish) const -> double;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `f64` to `bool`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `f64` does not implement interface `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
+  // CHECK:STDERR:        │   fn LessOrEquivalent(self, other: Other) -> bool;
+  // CHECK:STDERR:        ·   ─────────────┬──────────────────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   auto operator<=(AllReturnBoolish) const -> double;
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR: ->     │   auto operator>(AllReturnBoolish) const -> double;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `f64` to `bool`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `f64` does not implement interface `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
+  // CHECK:STDERR:        │   fn Greater(self, other: Other) -> bool;
+  // CHECK:STDERR:        ·   ─────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   auto operator>(AllReturnBoolish) const -> double;
+  // CHECK:STDERR:        ╭─┤ fail_todo_returns_boolish.carbon:[[@LINE+20]]:8
+  // CHECK:STDERR: ->     │   auto operator>=(AllReturnBoolish) const -> double;
+  // CHECK:STDERR:        ·        ┳
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `f64` to `bool`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `f64` does not implement interface `Core.ImplicitAs(bool)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ {{.*}}/prelude/operators/comparison.carbon
+  // CHECK:STDERR:        │   fn GreaterOrEquivalent(self, other: Other) -> bool;
+  // CHECK:STDERR:        ·   ─────────────┬─────────────────────────────────────
+  // CHECK:STDERR:        ·                ╰──┤ while building thunk to match the signature of this function
+  // CHECK:STDERR:        ·                   │ [ThunkSignature]
+  // CHECK:STDERR:        ╰────
+  // CHECK:STDERR:
   auto operator>=(AllReturnBoolish) const -> double;
 };
 ''';
 
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+32]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-34]]:8: error: cannot implicitly convert expression of type `Core.Optional(i32* as Core.OptionalStorage)` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-35]]:8: note: type `Core.Optional(i32* as Core.OptionalStorage)` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3-50: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+27]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-29]]:8: error: cannot implicitly convert expression of type `Cpp.Result` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-30]]:8: note: type `Cpp.Result` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:31:3-53: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+22]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-19]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-20]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:28:3-38: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+17]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-23]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-24]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:29:3-50: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+12]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-27]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-28]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:30:3-41: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+7]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-31]]:8: error: cannot implicitly convert expression of type `f64` to `bool` [ConversionFailure]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE-32]]:8: note: type `f64` does not implement interface `Core.ImplicitAs(bool)` [MissingImplInMemberAccessInContext]
-// CHECK:STDERR: {{.*}}/prelude/operators/comparison.carbon:31:3-53: note: while building thunk to match the signature of this function [ThunkSignature]
-// CHECK:STDERR: fail_todo_returns_boolish.carbon:[[@LINE+2]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
-// CHECK:STDERR:
 fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
   x < y;
   x <= y;
@@ -276,33 +385,93 @@ fn Test(missing_less: Cpp.MissingLess,
         no_relevant_members: Cpp.NoRelevantMembers,
         less_returns_void: Cpp.LessReturnsVoid,
         less_non_const: Cpp.LessNonConst) {
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-41: error: cannot convert type `Cpp.MissingLess` into type implementing `Core.OrderedWith(Cpp.MissingLess)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-15]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   OrderedWith(missing_less, missing_less);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.MissingLess` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.OrderedWith(Cpp.MissingLess)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   OrderedWith(missing_less, missing_less);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-53: error: cannot convert type `Cpp.MissingLessEqual` into type implementing `Core.OrderedWith(Cpp.MissingLessEqual)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-20]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   OrderedWith(missing_less_equal, missing_less_equal);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.MissingLessEqual` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.OrderedWith(Cpp.MissingLessEqual)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   OrderedWith(missing_less_equal, missing_less_equal);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-47: error: cannot convert type `Cpp.MissingGreater` into type implementing `Core.OrderedWith(Cpp.MissingGreater)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-25]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   OrderedWith(missing_greater, missing_greater);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.MissingGreater` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.OrderedWith(Cpp.MissingGreater)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   OrderedWith(missing_greater, missing_greater);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-59: error: cannot convert type `Cpp.MissingGreaterEqual` into type implementing `Core.OrderedWith(Cpp.MissingGreaterEqual)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-30]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   OrderedWith(missing_greater_equal, missing_greater_equal);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.MissingGreaterEqual` into type
+  // CHECK:STDERR:        ·      ┃        implementing `Core.OrderedWith(Cpp.MissingGreaterEqual)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   OrderedWith(missing_greater_equal, missing_greater_equal);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-55: error: cannot convert type `Cpp.NoRelevantMembers` into type implementing `Core.OrderedWith(Cpp.NoRelevantMembers)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-35]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   OrderedWith(no_relevant_members, no_relevant_members);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.NoRelevantMembers` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.OrderedWith(Cpp.NoRelevantMembers)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   OrderedWith(no_relevant_members, no_relevant_members);
 
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE+3]]:3-51: error: cannot convert type `Cpp.LessReturnsVoid` into type implementing `Core.OrderedWith(Cpp.LessReturnsVoid)` [ConversionFailureTypeToFacet]
-  // CHECK:STDERR: fail_never_valid.carbon:[[@LINE-40]]:1-61: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_never_valid.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │ fn OrderedWith[U: type, T: Core.OrderedWith(U)](x: T, y: U) {
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   OrderedWith(less_returns_void, less_returns_void);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert type `Cpp.LessReturnsVoid` into type implementing
+  // CHECK:STDERR:        ·      ┃        `Core.OrderedWith(Cpp.LessReturnsVoid)`
+  // CHECK:STDERR:        ·      ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   OrderedWith(less_returns_void, less_returns_void);
 

@@ -16,23 +16,41 @@
 fn F() {
   // Create diagnostics containing string references, and trigger reallocation
   // of the string table.
-  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+2]]:3-13: error: name `undeclared1` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_flush_errors.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   undeclared1;
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: name `undeclared1` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   undeclared1;
 
   // Add the name into the string table from the tokenized buffer's string
   // literal storage. Use a hex escape to ensure that the tokenized buffer
   // allocates separate storage for the result.
-  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+2]]:3-18: error: `Core.String` implicitly referenced here, but package `Core` not found [CoreNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_flush_errors.carbon:[[@LINE+8]]:3
+  // CHECK:STDERR: ->     │   "undec\x6Cared2";
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: `Core.String` implicitly referenced here, but package `Core` not
+  // CHECK:STDERR:        ·      ┃        found
+  // CHECK:STDERR:        ·      ┃        [CoreNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   "undec\x6Cared2";
-  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+2]]:3-13: error: name `undeclared2` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_flush_errors.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   undeclared2;
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: name `undeclared2` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   undeclared2;
 
   // Add the name into the string table via a declaration rather than an expression.
   if (true) { let unused undeclared3: () = (); }
-  // CHECK:STDERR: fail_flush_errors.carbon:[[@LINE+2]]:3-13: error: name `undeclared3` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_flush_errors.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   undeclared3;
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: name `undeclared3` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   undeclared3;
 }

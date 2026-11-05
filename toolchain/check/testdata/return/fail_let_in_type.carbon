@@ -13,23 +13,51 @@
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/return/fail_let_in_type.carbon
 
 let x: type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+2]]:13: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR:        ╭─┤ fail_let_in_type.carbon:[[@LINE+7]]:13
+// CHECK:STDERR: ->     │ fn Six() -> x { return 6; }
+// CHECK:STDERR:        ·             ┳
+// CHECK:STDERR:        ·             ┗━━┫ error: cannot evaluate type expression
+// CHECK:STDERR:        ·                ┃        [TypeExprEvaluationFailure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn Six() -> x { return 6; }
 
 // TODO: This should probably work.
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+2]]:13-19: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_let_in_type.carbon:[[@LINE+9]]:13
+// CHECK:STDERR: ->     │ let generic y: type = i32;
+// CHECK:STDERR:        ·             ━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        ``let` compile time binding outside function or interface`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let generic y: type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+2]]:19: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR:        ╭─┤ fail_let_in_type.carbon:[[@LINE+7]]:19
+// CHECK:STDERR: ->     │ fn HalfDozen() -> y { return 6; }
+// CHECK:STDERR:        ·                   ┳
+// CHECK:STDERR:        ·                   ┗━━┫ error: cannot evaluate type expression
+// CHECK:STDERR:        ·                      ┃        [TypeExprEvaluationFailure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn HalfDozen() -> y { return 6; }
 
 // TODO: This should work.
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+2]]:5-20: error: semantics TODO: ``let` compile time binding outside function or interface` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_let_in_type.carbon:[[@LINE+8]]:5
+// CHECK:STDERR: ->     │ let template z: type = i32;
+// CHECK:STDERR:        ·     ┳━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·     ┗━━┫ error: semantics TODO:
+// CHECK:STDERR:        ·        ┃        ``let` compile time binding outside function or interface`
+// CHECK:STDERR:        ·        ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let template z: type = i32;
-// CHECK:STDERR: fail_let_in_type.carbon:[[@LINE+2]]:28: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+// CHECK:STDERR:        ╭─┤ fail_let_in_type.carbon:[[@LINE+7]]:28
+// CHECK:STDERR: ->     │ fn FirstPerfectNumber() -> z { return 6; }
+// CHECK:STDERR:        ·                            ┳
+// CHECK:STDERR:        ·                            ┗━━┫ error: cannot evaluate type expression
+// CHECK:STDERR:        ·                               ┃        [TypeExprEvaluationFailure]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn FirstPerfectNumber() -> z { return 6; }
 
@@ -86,11 +114,11 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:     %x.ref: type = name_ref x, file.%x
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc23_16.1: type = splice_block %.loc23_16.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc23: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc23_16.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %.loc35_16.1: type = splice_block %.loc35_16.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self.frozen.loc35: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc35_16.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %y: type = wrapper_binding y, @__global_init.%i32.loc23
+// CHECK:STDOUT:   %y: type = wrapper_binding y, @__global_init.%i32.loc35
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %y.patt: %pattern_type.9a5 = value_binding_pattern y [concrete = constants.%y.patt]
 // CHECK:STDOUT:   }
@@ -100,11 +128,11 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT:     %y.ref: type = name_ref y, file.%y
 // CHECK:STDOUT:     %return: <error> = return_slot <error>
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %.loc31_17.1: type = splice_block %.loc31_17.2 [concrete = type] {
-// CHECK:STDOUT:     %.Self.frozen.loc31: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
-// CHECK:STDOUT:     %.loc31_17.2: type = type_literal type [concrete = type]
+// CHECK:STDOUT:   %.loc54_17.1: type = splice_block %.loc54_17.2 [concrete = type] {
+// CHECK:STDOUT:     %.Self.frozen.loc54: type = symbolic_binding .Self [symbolic_self = constants.%.Self.frozen]
+// CHECK:STDOUT:     %.loc54_17.2: type = type_literal type [concrete = type]
 // CHECK:STDOUT:   }
-// CHECK:STDOUT:   %z: type = wrapper_binding z, @__global_init.%i32.loc31
+// CHECK:STDOUT:   %z: type = wrapper_binding z, @__global_init.%i32.loc54
 // CHECK:STDOUT:   name_binding_decl {
 // CHECK:STDOUT:     %z.patt: %pattern_type.9a5 = value_binding_pattern z [concrete = constants.%z.patt]
 // CHECK:STDOUT:   }
@@ -137,8 +165,8 @@ fn FirstPerfectNumber() -> z { return 6; }
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %i32.loc15: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %i32.loc23: type = type_literal constants.%i32 [concrete = constants.%i32]
-// CHECK:STDOUT:   %i32.loc31: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc35: type = type_literal constants.%i32 [concrete = constants.%i32]
+// CHECK:STDOUT:   %i32.loc54: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

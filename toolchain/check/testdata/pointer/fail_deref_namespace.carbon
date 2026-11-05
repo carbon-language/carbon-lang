@@ -15,10 +15,18 @@
 namespace A;
 
 fn F() {
-  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+2]]:4: error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR:        ╭─┤ fail_deref_namespace.carbon:[[@LINE+6]]:4
+  // CHECK:STDERR: ->     │   *A;
+  // CHECK:STDERR:        ·    ┳
+  // CHECK:STDERR:        ·    ┗━━┫ error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   *A;
-  // CHECK:STDERR: fail_deref_namespace.carbon:[[@LINE+2]]:3: error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR:        ╭─┤ fail_deref_namespace.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   A->foo;
+  // CHECK:STDERR:        ·   ┳
+  // CHECK:STDERR:        ·   ┗━━┫ error: expression cannot be used as a value [UseOfNonExprAsValue]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   A->foo;
 }
@@ -51,10 +59,10 @@ fn F() {
 // CHECK:STDOUT:
 // CHECK:STDOUT: fn @F() {
 // CHECK:STDOUT: !entry:
-// CHECK:STDOUT:   %A.ref.loc20: <namespace> = name_ref A, file.%A [concrete = file.%A]
-// CHECK:STDOUT:   %.loc20: ref <error> = deref <error> [concrete = <error>]
-// CHECK:STDOUT:   %A.ref.loc23: <namespace> = name_ref A, file.%A [concrete = file.%A]
-// CHECK:STDOUT:   %.loc23: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc24: <namespace> = name_ref A, file.%A [concrete = file.%A]
+// CHECK:STDOUT:   %.loc24: ref <error> = deref <error> [concrete = <error>]
+// CHECK:STDOUT:   %A.ref.loc31: <namespace> = name_ref A, file.%A [concrete = file.%A]
+// CHECK:STDOUT:   %.loc31: ref <error> = deref <error> [concrete = <error>]
 // CHECK:STDOUT:   %foo.ref: <error> = name_ref foo, <error> [concrete = <error>]
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

@@ -50,7 +50,12 @@ class Class {
   var field: i32 = 123;
 }
 
-// CHECK:STDERR: fail_field_initializer_invalid_name.carbon:[[@LINE+2]]:16-35: error: struct `Class` has no field named `not_a_field` [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╭─┤ fail_field_initializer_invalid_name.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ var C: Class = {.not_a_field = 456};
+// CHECK:STDERR:        ·                ━━━━━━┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                      ┗━━┫ error: struct `Class` has no field named `not_a_field`
+// CHECK:STDERR:        ·                         ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var C: Class = {.not_a_field = 456};
 
@@ -58,8 +63,16 @@ var C: Class = {.not_a_field = 456};
 library "[[@TEST_NAME]]";
 
 class Class {
-  // CHECK:STDERR: fail_field_initializer_wrong_type.carbon:[[@LINE+3]]:20-21: error: cannot implicitly convert expression of type `()` to `i32` [ConversionFailure]
-  // CHECK:STDERR: fail_field_initializer_wrong_type.carbon:[[@LINE+2]]:20-21: note: type `()` does not implement interface `Core.ImplicitAs(i32)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_field_initializer_wrong_type.carbon:[[@LINE+11]]:20
+  // CHECK:STDERR: ->     │   var field: i32 = ();
+  // CHECK:STDERR:        ·                    ┳━
+  // CHECK:STDERR:        ·                    ┗━━┫ error: cannot implicitly convert expression of type `()`
+  // CHECK:STDERR:        ·                    │  ┃        to `i32`
+  // CHECK:STDERR:        ·                    │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·                    ╰────┤ type `()` does not implement interface
+  // CHECK:STDERR:        ·                         │ `Core.ImplicitAs(i32)`
+  // CHECK:STDERR:        ·                         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var field: i32 = ();
 }
@@ -69,7 +82,13 @@ library "[[@TEST_NAME]]";
 
 var x: i32;
 class Class {
-  // CHECK:STDERR: fail_field_initializer_not_constant.carbon:[[@LINE+2]]:20: error: semantics TODO: `field initializer is not constant` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_field_initializer_not_constant.carbon:[[@LINE+8]]:20
+  // CHECK:STDERR: ->     │   var field: i32 = x;
+  // CHECK:STDERR:        ·                    ┳
+  // CHECK:STDERR:        ·                    ┗━━┫ error: semantics TODO:
+  // CHECK:STDERR:        ·                       ┃        `field initializer is not constant`
+  // CHECK:STDERR:        ·                       ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var field: i32 = x;
 }

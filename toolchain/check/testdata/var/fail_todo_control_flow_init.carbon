@@ -16,11 +16,32 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_if_true.carbon:[[@LINE+6]]:13-19: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_if_true.carbon:[[@LINE+27]]:13
+// CHECK:STDERR: ->     │ var x: () = if true then () else ();
+// CHECK:STDERR:        ·             ━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_if_true.carbon:[[@LINE+4]]:21-27: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_if_true.carbon:[[@LINE+18]]:21
+// CHECK:STDERR: ->     │ var x: () = if true then () else ();
+// CHECK:STDERR:        ·                     ━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_if_true.carbon:[[@LINE+2]]:13-35: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_if_true.carbon:[[@LINE+9]]:13
+// CHECK:STDERR: ->     │ var x: () = if true then () else ();
+// CHECK:STDERR:        ·             ━━━━━━━━━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: () = if true then () else ();
 
@@ -28,11 +49,32 @@ var x: () = if true then () else ();
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_if_false.carbon:[[@LINE+6]]:14-21: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_if_false.carbon:[[@LINE+27]]:14
+// CHECK:STDERR: ->     │ var x2: () = if false then () else ();
+// CHECK:STDERR:        ·              ━━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_if_false.carbon:[[@LINE+4]]:23-29: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_if_false.carbon:[[@LINE+18]]:23
+// CHECK:STDERR: ->     │ var x2: () = if false then () else ();
+// CHECK:STDERR:        ·                       ━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_if_false.carbon:[[@LINE+2]]:14-37: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_if_false.carbon:[[@LINE+9]]:14
+// CHECK:STDERR: ->     │ var x2: () = if false then () else ();
+// CHECK:STDERR:        ·              ━━━━━━━━━━━━┳━━━━━━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x2: () = if false then () else ();
 
@@ -40,9 +82,23 @@ var x2: () = if false then () else ();
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_true_or_false.carbon:[[@LINE+4]]:15-21: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_true_or_false.carbon:[[@LINE+18]]:15
+// CHECK:STDERR: ->     │ var y: bool = true or false;
+// CHECK:STDERR:        ·               ━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_true_or_false.carbon:[[@LINE+2]]:15-27: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_true_or_false.carbon:[[@LINE+9]]:15
+// CHECK:STDERR: ->     │ var y: bool = true or false;
+// CHECK:STDERR:        ·               ━━━━━━┳━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var y: bool = true or false;
 
@@ -50,9 +106,23 @@ var y: bool = true or false;
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_false_or_true.carbon:[[@LINE+4]]:16-23: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_false_or_true.carbon:[[@LINE+18]]:16
+// CHECK:STDERR: ->     │ var y2: bool = false or true;
+// CHECK:STDERR:        ·                ━━━━┳━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_false_or_true.carbon:[[@LINE+2]]:16-28: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_false_or_true.carbon:[[@LINE+9]]:16
+// CHECK:STDERR: ->     │ var y2: bool = false or true;
+// CHECK:STDERR:        ·                ━━━━━━┳━━━━━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var y2: bool = false or true;
 
