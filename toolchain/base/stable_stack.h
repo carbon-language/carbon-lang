@@ -6,6 +6,7 @@
 #define CARBON_TOOLCHAIN_BASE_STABLE_STACK_H_
 
 #include <algorithm>
+#include <bit>
 #include <concepts>
 #include <cstdint>
 #include <memory>
@@ -280,7 +281,8 @@ class StableStack {
 
     InlineChunk() {
       // TODO: Remove the #if when we move to C++23.
-#if __has_cpp_attribute(__cpp_lib_start_lifetime_as)
+#if defined(__cpp_lib_start_lifetime_as) && \
+    __cpp_lib_start_lifetime_as >= 202207L
       std::start_lifetime_as_array<T>(byte_array, InlineCapacity);
 #endif
       __asan_poison_memory_region(byte_array, InlineCapacity * sizeof(T));
@@ -294,6 +296,10 @@ class StableStack {
   // Copy-constructs elements into this stack from `rhs`.
   auto CopyConstructFrom(const StableStack& rhs) -> void {
     if (rhs.empty()) {
+      if constexpr (InlineCapacity) {
+        chunks_.clear();
+        chunks_.push_back({.array = inline_.array()});
+      }
       return;
     }
 
@@ -331,7 +337,8 @@ class StableStack {
 
       __asan_unpoison_memory_region(array, size * sizeof(T));
       std::uninitialized_move_n(rhs_array, size, array);
-      std::destroy_n(array, size);
+      std::destroy_n(rhs_array, size);
+      __asan_poison_memory_region(rhs_array, size * sizeof(T));
     }
   }
 
@@ -380,10 +387,10 @@ class StableStack {
       -> std::pair<int32_t /*chunk*/, int32_t /*index*/> {
     // Given a capacity, we can tell how many chunks would be needed. So we
     // compute the number of chunks needed to hold a stack with capacity for
-    // exactly `i` elements. Then the last element in that stack is the index we
-    // want to compute.
-    auto capacity_to_hold_i = i + 1;
-    auto num_chunks = NumChunksNeededForCapacity(capacity_to_hold_i);
+    // exactly `i + 1` elements, so that `i` is the last element. Then the last
+    // element in that stack is the index we want to compute.
+    auto capacity_to_hold_index_i = i + 1;
+    auto num_chunks = NumChunksNeededForCapacity(capacity_to_hold_index_i);
     auto capacity_before_chunk = GetSumCapacity(num_chunks - 1);
     return {num_chunks - 1, i - capacity_before_chunk};
   }
