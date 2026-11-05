@@ -241,8 +241,8 @@ fn DoThing() {
 // CHECK:STDOUT: attributes #8 = { inlinehint mustprogress nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!40}
-// CHECK:STDOUT: !llvm.module.flags = !{!115, !116, !117, !7, !8}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!119}
+// CHECK:STDOUT: !llvm.module.flags = !{!115, !116, !117, !118, !7, !8}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!120}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !0 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !1 = !{!"omnipotent char", !0, i64 0}
@@ -314,9 +314,10 @@ fn DoThing() {
 // CHECK:STDOUT: !109 = !{!"p1 _ZTSN6Carbon4Main7DerivedE", !2, i64 0}
 // CHECK:STDOUT: !110 = !{!109, !109, i64 0}
 // CHECK:STDOUT: !112 = !{!"int", !1, i64 0}
-// CHECK:STDOUT: !115 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !116 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !117 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !118 = !{!"__libc_errno", !112, i64 0}
-// CHECK:STDOUT: !119 = !{!118, !112, i64 0}
+// CHECK:STDOUT: !115 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !116 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !117 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !118 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !119 = !{!"__libc_errno", !112, i64 0}
+// CHECK:STDOUT: !120 = !{!119, !112, i64 0}
 // CHECK:STDOUT:
