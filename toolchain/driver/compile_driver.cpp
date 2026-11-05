@@ -284,7 +284,7 @@ auto CompilationUnit::RunOptimize(
                                     /*DebugLogging=*/false);
   si.registerCallbacks(pic);
 
-  llvm::PassBuilder builder(target_machine_.get(), pto,
+  llvm::PassBuilder builder(module_->getContext(), target_machine_.get(), pto,
                             /*PGOOpt=*/std::nullopt, &pic);
 
   // TODO: Add an AssignmentTrackingPass for at least `--optimize=debug`.

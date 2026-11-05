@@ -272,8 +272,8 @@ fn GetRefs() {
 // CHECK:STDOUT: attributes #5 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT:
 // CHECK:STDOUT: !llvm.dbg.cu = !{!19}
-// CHECK:STDOUT: !llvm.module.flags = !{!81, !82, !83, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!85}
+// CHECK:STDOUT: !llvm.module.flags = !{!81, !82, !83, !84, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!86}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -325,11 +325,12 @@ fn GetRefs() {
 // CHECK:STDOUT: !78 = !{!"int", !73, i64 0}
 // CHECK:STDOUT: !79 = !{!"p1 int", !74, i64 0}
 // CHECK:STDOUT: !80 = !{!79, !79, i64 0}
-// CHECK:STDOUT: !81 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !82 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !83 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !84 = !{!"__libc_errno", !78, i64 0}
-// CHECK:STDOUT: !85 = !{!84, !78, i64 0}
+// CHECK:STDOUT: !81 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !82 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !83 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !84 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !85 = !{!"__libc_errno", !78, i64 0}
+// CHECK:STDOUT: !86 = !{!85, !78, i64 0}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'pass_references_via_thunk.carbon'
@@ -343,35 +344,35 @@ fn GetRefs() {
 // CHECK:STDOUT: @C.val.loc20_20.3 = internal constant {} zeroinitializer
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CPassRefs.Main() #0 !dbg !88 {
+// CHECK:STDOUT: define void @_CPassRefs.Main() #0 !dbg !89 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !89
-// CHECK:STDOUT:   %.loc20_18.2.temp = alloca {}, align 1, !dbg !94
-// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !98
-// CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !103
-// CHECK:STDOUT:   %.loc26_23.2.temp = alloca i32, align 4, !dbg !105
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !89
-// CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c"(ptr %c.var), !dbg !89
-// CHECK:STDOUT:   call void @_Z8TakeCRefR1C10ForceThunk.carbon_thunk.r(ptr %c.var), !dbg !93
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_18.2.temp), !dbg !94
-// CHECK:STDOUT:   call void @_Z9TakeCRRefRK1C10ForceThunk.carbon_thunk._(ptr @C.val.loc20_20.3), !dbg !95
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4d2f117a5a2332f0(ptr @C.val), !dbg !94
-// CHECK:STDOUT:   call void @_Z13TakeConstCRefRK1C10ForceThunk.carbon_thunk._(ptr %c.var), !dbg !97
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !98
-// CHECK:STDOUT:   store i32 poison, ptr %n.var, align 4, !dbg !98
-// CHECK:STDOUT:   call void @_Z10TakeIntRefRi10ForceThunk.carbon_thunk.r(ptr %n.var), !dbg !102
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !103
-// CHECK:STDOUT:   store i32 42, ptr %_.var, align 4, !dbg !103
-// CHECK:STDOUT:   call void @_Z11TakeIntRRefOi10ForceThunk.carbon_thunk.v(ptr %_.var), !dbg !104
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %_.var), !dbg !103
-// CHECK:STDOUT:   %.loc26_23.1 = load i32, ptr %n.var, align 4, !dbg !105
-// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_23.2.temp), !dbg !105
-// CHECK:STDOUT:   store i32 %.loc26_23.1, ptr %.loc26_23.2.temp, align 4, !dbg !105
-// CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi10ForceThunk.carbon_thunk._(ptr %.loc26_23.2.temp), !dbg !106
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc26_23.2.temp), !dbg !105
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %n.var), !dbg !98
-// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4d2f117a5a2332f0(ptr %c.var), !dbg !89
-// CHECK:STDOUT:   ret void, !dbg !107
+// CHECK:STDOUT:   %c.var = alloca {}, align 1, !dbg !90
+// CHECK:STDOUT:   %.loc20_18.2.temp = alloca {}, align 1, !dbg !95
+// CHECK:STDOUT:   %n.var = alloca i32, align 4, !dbg !99
+// CHECK:STDOUT:   %_.var = alloca i32, align 4, !dbg !104
+// CHECK:STDOUT:   %.loc26_23.2.temp = alloca i32, align 4, !dbg !106
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %c.var), !dbg !90
+// CHECK:STDOUT:   call void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c"(ptr %c.var), !dbg !90
+// CHECK:STDOUT:   call void @_Z8TakeCRefR1C10ForceThunk.carbon_thunk.r(ptr %c.var), !dbg !94
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc20_18.2.temp), !dbg !95
+// CHECK:STDOUT:   call void @_Z9TakeCRRefRK1C10ForceThunk.carbon_thunk._(ptr @C.val.loc20_20.3), !dbg !96
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4d2f117a5a2332f0(ptr @C.val), !dbg !95
+// CHECK:STDOUT:   call void @_Z13TakeConstCRefRK1C10ForceThunk.carbon_thunk._(ptr %c.var), !dbg !98
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %n.var), !dbg !99
+// CHECK:STDOUT:   store i32 poison, ptr %n.var, align 4, !dbg !99
+// CHECK:STDOUT:   call void @_Z10TakeIntRefRi10ForceThunk.carbon_thunk.r(ptr %n.var), !dbg !103
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %_.var), !dbg !104
+// CHECK:STDOUT:   store i32 42, ptr %_.var, align 4, !dbg !104
+// CHECK:STDOUT:   call void @_Z11TakeIntRRefOi10ForceThunk.carbon_thunk.v(ptr %_.var), !dbg !105
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %_.var), !dbg !104
+// CHECK:STDOUT:   %.loc26_23.1 = load i32, ptr %n.var, align 4, !dbg !106
+// CHECK:STDOUT:   call void @llvm.lifetime.start.p0(ptr %.loc26_23.2.temp), !dbg !106
+// CHECK:STDOUT:   store i32 %.loc26_23.1, ptr %.loc26_23.2.temp, align 4, !dbg !106
+// CHECK:STDOUT:   call void @_Z15TakeConstIntRefRKi10ForceThunk.carbon_thunk._(ptr %.loc26_23.2.temp), !dbg !107
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %.loc26_23.2.temp), !dbg !106
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.f127f30143696d51(ptr %n.var), !dbg !99
+// CHECK:STDOUT:   call void @_CSelfDestruct.Core.4d2f117a5a2332f0(ptr %c.var), !dbg !90
+// CHECK:STDOUT:   ret void, !dbg !108
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress nounwind uwtable
@@ -384,10 +385,10 @@ fn GetRefs() {
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline nounwind
-// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !108 {
+// CHECK:STDOUT: define weak_odr void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr sret({}) %return) #2 !dbg !109 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %return), !dbg !110
-// CHECK:STDOUT:   ret void, !dbg !110
+// CHECK:STDOUT:   call void @_ZN1CC1Ev.carbon_thunk.(ptr %return), !dbg !111
+// CHECK:STDOUT:   ret void, !dbg !111
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -396,7 +397,7 @@ fn GetRefs() {
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !76
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !76, !nonnull !130
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !76, !nonnull !131
 // CHECK:STDOUT:   call void @_Z8TakeCRefR1C10ForceThunk(ptr noundef nonnull align 1 dereferenceable(1) %1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -429,7 +430,7 @@ fn GetRefs() {
 // CHECK:STDOUT:   %.addr = alloca ptr, align 8
 // CHECK:STDOUT:   %agg.tmp = alloca %class.ForceThunk, align 1
 // CHECK:STDOUT:   store ptr %0, ptr %.addr, align 8, !tbaa !80
-// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !80, !nonnull !130, !align !132
+// CHECK:STDOUT:   %1 = load ptr, ptr %.addr, align 8, !tbaa !80, !nonnull !131, !align !133
 // CHECK:STDOUT:   call void @_Z10TakeIntRefRi10ForceThunk(ptr noundef nonnull align 4 dereferenceable(4) %1)
 // CHECK:STDOUT:   ret void
 // CHECK:STDOUT: }
@@ -460,19 +461,19 @@ fn GetRefs() {
 // CHECK:STDOUT: declare void @llvm.lifetime.start.p0(ptr captures(none)) #4
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c"(ptr sret({}) %return) #0 !dbg !111 {
-// CHECK:STDOUT:   call void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr %return), !dbg !114
-// CHECK:STDOUT:   ret void, !dbg !115
+// CHECK:STDOUT: define linkonce_odr void @"_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c"(ptr sret({}) %return) #0 !dbg !112 {
+// CHECK:STDOUT:   call void @"_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp"(ptr %return), !dbg !115
+// CHECK:STDOUT:   ret void, !dbg !116
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.4d2f117a5a2332f0(ptr %t) #0 !dbg !116 {
-// CHECK:STDOUT:   ret void, !dbg !121
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.4d2f117a5a2332f0(ptr %t) #0 !dbg !117 {
+// CHECK:STDOUT:   ret void, !dbg !122
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #0 !dbg !123 {
-// CHECK:STDOUT:   ret void, !dbg !128
+// CHECK:STDOUT: define linkonce_odr void @_CSelfDestruct.Core.f127f30143696d51(ptr %t) #0 !dbg !124 {
+// CHECK:STDOUT:   ret void, !dbg !129
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare void @_Z8TakeCRefR1C10ForceThunk(ptr noundef nonnull align 1 dereferenceable(1)) #5
@@ -499,9 +500,9 @@ fn GetRefs() {
 // CHECK:STDOUT: attributes #4 = { nocallback nofree nosync nounwind willreturn memory(argmem: readwrite) }
 // CHECK:STDOUT: attributes #5 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!87}
-// CHECK:STDOUT: !llvm.module.flags = !{!81, !82, !83, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!85}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!88}
+// CHECK:STDOUT: !llvm.module.flags = !{!81, !82, !83, !84, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!86}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -525,41 +526,42 @@ fn GetRefs() {
 // CHECK:STDOUT: !78 = !{!"int", !73, i64 0}
 // CHECK:STDOUT: !79 = !{!"p1 int", !74, i64 0}
 // CHECK:STDOUT: !80 = !{!79, !79, i64 0}
-// CHECK:STDOUT: !81 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !82 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !83 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !84 = !{!"__libc_errno", !78, i64 0}
-// CHECK:STDOUT: !85 = !{!84, !78, i64 0}
-// CHECK:STDOUT: !86 = !DIFile(filename: "pass_references_via_thunk.carbon", directory: "")
-// CHECK:STDOUT: !87 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !86, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !88 = distinct !DISubprogram(name: "PassRefs", linkageName: "_CPassRefs.Main", scope: null, file: !86, line: 17, type: !22, spFlags: DISPFlagDefinition, unit: !87)
-// CHECK:STDOUT: !89 = !DILocation(line: 18, column: 3, scope: !88)
-// CHECK:STDOUT: !93 = !DILocation(line: 19, column: 3, scope: !88)
-// CHECK:STDOUT: !94 = !DILocation(line: 20, column: 17, scope: !88)
-// CHECK:STDOUT: !95 = !DILocation(line: 20, column: 3, scope: !88)
-// CHECK:STDOUT: !97 = !DILocation(line: 21, column: 3, scope: !88)
-// CHECK:STDOUT: !98 = !DILocation(line: 23, column: 3, scope: !88)
-// CHECK:STDOUT: !102 = !DILocation(line: 24, column: 3, scope: !88)
-// CHECK:STDOUT: !103 = !DILocation(line: 13, column: 23, scope: !88)
-// CHECK:STDOUT: !104 = !DILocation(line: 25, column: 3, scope: !88)
-// CHECK:STDOUT: !105 = !DILocation(line: 26, column: 23, scope: !88)
-// CHECK:STDOUT: !106 = !DILocation(line: 26, column: 3, scope: !88)
-// CHECK:STDOUT: !107 = !DILocation(line: 17, column: 1, scope: !88)
-// CHECK:STDOUT: !108 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp", scope: null, file: !86, line: 5, type: !27, spFlags: DISPFlagDefinition, unit: !87)
-// CHECK:STDOUT: !110 = !DILocation(line: 5, column: 7, scope: !108)
-// CHECK:STDOUT: !111 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !4, line: 9, type: !27, spFlags: DISPFlagDefinition, unit: !87)
-// CHECK:STDOUT: !114 = !DILocation(line: 9, column: 28, scope: !111)
-// CHECK:STDOUT: !115 = !DILocation(line: 9, column: 21, scope: !111)
-// CHECK:STDOUT: !116 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4d2f117a5a2332f0", scope: null, file: !10, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !87, retainedNodes: !122)
-// CHECK:STDOUT: !117 = !DILocalVariable(arg: 1, scope: !116, type: !23)
-// CHECK:STDOUT: !121 = !DILocation(line: 32, column: 1, scope: !116)
-// CHECK:STDOUT: !122 = !{!117}
-// CHECK:STDOUT: !123 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !29, spFlags: DISPFlagDefinition, unit: !87, retainedNodes: !129)
-// CHECK:STDOUT: !124 = !DILocalVariable(arg: 1, scope: !123, type: !20)
-// CHECK:STDOUT: !128 = !DILocation(line: 32, column: 1, scope: !123)
-// CHECK:STDOUT: !129 = !{!124}
-// CHECK:STDOUT: !130 = !{}
-// CHECK:STDOUT: !132 = !{i64 4}
+// CHECK:STDOUT: !81 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !82 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !83 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !84 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !85 = !{!"__libc_errno", !78, i64 0}
+// CHECK:STDOUT: !86 = !{!85, !78, i64 0}
+// CHECK:STDOUT: !87 = !DIFile(filename: "pass_references_via_thunk.carbon", directory: "")
+// CHECK:STDOUT: !88 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !87, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !89 = distinct !DISubprogram(name: "PassRefs", linkageName: "_CPassRefs.Main", scope: null, file: !87, line: 17, type: !22, spFlags: DISPFlagDefinition, unit: !88)
+// CHECK:STDOUT: !90 = !DILocation(line: 18, column: 3, scope: !89)
+// CHECK:STDOUT: !94 = !DILocation(line: 19, column: 3, scope: !89)
+// CHECK:STDOUT: !95 = !DILocation(line: 20, column: 17, scope: !89)
+// CHECK:STDOUT: !96 = !DILocation(line: 20, column: 3, scope: !89)
+// CHECK:STDOUT: !98 = !DILocation(line: 21, column: 3, scope: !89)
+// CHECK:STDOUT: !99 = !DILocation(line: 23, column: 3, scope: !89)
+// CHECK:STDOUT: !103 = !DILocation(line: 24, column: 3, scope: !89)
+// CHECK:STDOUT: !104 = !DILocation(line: 13, column: 23, scope: !89)
+// CHECK:STDOUT: !105 = !DILocation(line: 25, column: 3, scope: !89)
+// CHECK:STDOUT: !106 = !DILocation(line: 26, column: 23, scope: !89)
+// CHECK:STDOUT: !107 = !DILocation(line: 26, column: 3, scope: !89)
+// CHECK:STDOUT: !108 = !DILocation(line: 17, column: 1, scope: !89)
+// CHECK:STDOUT: !109 = distinct !DISubprogram(name: "Op", linkageName: "_COp:thunk:Default.dc3dd9c349162a91.Core:C.Cpp", scope: null, file: !87, line: 5, type: !27, spFlags: DISPFlagDefinition, unit: !88)
+// CHECK:STDOUT: !111 = !DILocation(line: 5, column: 7, scope: !109)
+// CHECK:STDOUT: !112 = distinct !DISubprogram(name: "Op", linkageName: "_COp.51f3fb62cb986374:DefaultOrUnformed.Core.67b28f83c7cfd60c", scope: null, file: !4, line: 9, type: !27, spFlags: DISPFlagDefinition, unit: !88)
+// CHECK:STDOUT: !115 = !DILocation(line: 9, column: 28, scope: !112)
+// CHECK:STDOUT: !116 = !DILocation(line: 9, column: 21, scope: !112)
+// CHECK:STDOUT: !117 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.4d2f117a5a2332f0", scope: null, file: !10, line: 32, type: !25, spFlags: DISPFlagDefinition, unit: !88, retainedNodes: !123)
+// CHECK:STDOUT: !118 = !DILocalVariable(arg: 1, scope: !117, type: !23)
+// CHECK:STDOUT: !122 = !DILocation(line: 32, column: 1, scope: !117)
+// CHECK:STDOUT: !123 = !{!118}
+// CHECK:STDOUT: !124 = distinct !DISubprogram(name: "SelfDestruct", linkageName: "_CSelfDestruct.Core.f127f30143696d51", scope: null, file: !10, line: 32, type: !29, spFlags: DISPFlagDefinition, unit: !88, retainedNodes: !130)
+// CHECK:STDOUT: !125 = !DILocalVariable(arg: 1, scope: !124, type: !20)
+// CHECK:STDOUT: !129 = !DILocation(line: 32, column: 1, scope: !124)
+// CHECK:STDOUT: !130 = !{!125}
+// CHECK:STDOUT: !131 = !{}
+// CHECK:STDOUT: !133 = !{i64 4}
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'return_references.carbon'
@@ -568,15 +570,15 @@ fn GetRefs() {
 // CHECK:STDOUT: target triple = "x86_64-unknown-linux-gnu"
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CGetRefs.Main() #0 !dbg !135 {
+// CHECK:STDOUT: define void @_CGetRefs.Main() #0 !dbg !136 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ReturnCRef.call = call ptr @_Z10ReturnCRefv(), !dbg !136
-// CHECK:STDOUT:   %ReturnCRRef.call = call ptr @_Z11ReturnCRRefv(), !dbg !139
-// CHECK:STDOUT:   %ReturnConstCRef.call = call ptr @_Z15ReturnConstCRefv(), !dbg !142
-// CHECK:STDOUT:   %ReturnIntRef.call = call ptr @_Z12ReturnIntRefv(), !dbg !145
-// CHECK:STDOUT:   %ReturnIntRRef.call = call ptr @_Z13ReturnIntRRefv(), !dbg !148
-// CHECK:STDOUT:   %ReturnConstIntRef.call = call ptr @_Z17ReturnConstIntRefv(), !dbg !151
-// CHECK:STDOUT:   ret void, !dbg !154
+// CHECK:STDOUT:   %ReturnCRef.call = call ptr @_Z10ReturnCRefv(), !dbg !137
+// CHECK:STDOUT:   %ReturnCRRef.call = call ptr @_Z11ReturnCRRefv(), !dbg !140
+// CHECK:STDOUT:   %ReturnConstCRef.call = call ptr @_Z15ReturnConstCRefv(), !dbg !143
+// CHECK:STDOUT:   %ReturnIntRef.call = call ptr @_Z12ReturnIntRefv(), !dbg !146
+// CHECK:STDOUT:   %ReturnIntRRef.call = call ptr @_Z13ReturnIntRRefv(), !dbg !149
+// CHECK:STDOUT:   %ReturnConstIntRef.call = call ptr @_Z17ReturnConstIntRefv(), !dbg !152
+// CHECK:STDOUT:   ret void, !dbg !155
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: declare noundef nonnull align 1 dereferenceable(1) ptr @_Z10ReturnCRefv() #1
@@ -594,9 +596,9 @@ fn GetRefs() {
 // CHECK:STDOUT: attributes #0 = { nounwind }
 // CHECK:STDOUT: attributes #1 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!134}
-// CHECK:STDOUT: !llvm.module.flags = !{!81, !82, !83, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!85}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!135}
+// CHECK:STDOUT: !llvm.module.flags = !{!81, !82, !83, !84, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!86}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -605,21 +607,22 @@ fn GetRefs() {
 // CHECK:STDOUT: !72 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !73 = !{!"omnipotent char", !72, i64 0}
 // CHECK:STDOUT: !78 = !{!"int", !73, i64 0}
-// CHECK:STDOUT: !81 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !82 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !83 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !84 = !{!"__libc_errno", !78, i64 0}
-// CHECK:STDOUT: !85 = !{!84, !78, i64 0}
-// CHECK:STDOUT: !133 = !DIFile(filename: "return_references.carbon", directory: "")
-// CHECK:STDOUT: !134 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !133, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !135 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !133, line: 16, type: !22, spFlags: DISPFlagDefinition, unit: !134)
-// CHECK:STDOUT: !136 = !DILocation(line: 17, column: 22, scope: !135)
-// CHECK:STDOUT: !139 = !DILocation(line: 18, column: 22, scope: !135)
-// CHECK:STDOUT: !142 = !DILocation(line: 19, column: 28, scope: !135)
-// CHECK:STDOUT: !145 = !DILocation(line: 21, column: 20, scope: !135)
-// CHECK:STDOUT: !148 = !DILocation(line: 22, column: 20, scope: !135)
-// CHECK:STDOUT: !151 = !DILocation(line: 23, column: 26, scope: !135)
-// CHECK:STDOUT: !154 = !DILocation(line: 16, column: 1, scope: !135)
+// CHECK:STDOUT: !81 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !82 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !83 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !84 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !85 = !{!"__libc_errno", !78, i64 0}
+// CHECK:STDOUT: !86 = !{!85, !78, i64 0}
+// CHECK:STDOUT: !134 = !DIFile(filename: "return_references.carbon", directory: "")
+// CHECK:STDOUT: !135 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !134, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !136 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !134, line: 16, type: !22, spFlags: DISPFlagDefinition, unit: !135)
+// CHECK:STDOUT: !137 = !DILocation(line: 17, column: 22, scope: !136)
+// CHECK:STDOUT: !140 = !DILocation(line: 18, column: 22, scope: !136)
+// CHECK:STDOUT: !143 = !DILocation(line: 19, column: 28, scope: !136)
+// CHECK:STDOUT: !146 = !DILocation(line: 21, column: 20, scope: !136)
+// CHECK:STDOUT: !149 = !DILocation(line: 22, column: 20, scope: !136)
+// CHECK:STDOUT: !152 = !DILocation(line: 23, column: 26, scope: !136)
+// CHECK:STDOUT: !155 = !DILocation(line: 16, column: 1, scope: !136)
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; ---
 // CHECK:STDOUT: ; ModuleID = 'return_references_via_thunk.carbon'
@@ -630,15 +633,15 @@ fn GetRefs() {
 // CHECK:STDOUT: %class.ForceThunk.23 = type { i8 }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define void @_CGetRefs.Main() #0 !dbg !157 {
+// CHECK:STDOUT: define void @_CGetRefs.Main() #0 !dbg !158 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %ReturnCRef__carbon_thunk.call = call ptr @_Z10ReturnCRef10ForceThunk.carbon_thunk.(), !dbg !158
-// CHECK:STDOUT:   %ReturnCRRef__carbon_thunk.call = call ptr @_Z11ReturnCRRef10ForceThunk.carbon_thunk.(), !dbg !161
-// CHECK:STDOUT:   %ReturnConstCRef__carbon_thunk.call = call ptr @_Z15ReturnConstCRef10ForceThunk.carbon_thunk.(), !dbg !164
-// CHECK:STDOUT:   %ReturnIntRef__carbon_thunk.call = call ptr @_Z12ReturnIntRef10ForceThunk.carbon_thunk.(), !dbg !167
-// CHECK:STDOUT:   %ReturnIntRRef__carbon_thunk.call = call ptr @_Z13ReturnIntRRef10ForceThunk.carbon_thunk.(), !dbg !170
-// CHECK:STDOUT:   %ReturnConstIntRef__carbon_thunk.call = call ptr @_Z17ReturnConstIntRef10ForceThunk.carbon_thunk.(), !dbg !173
-// CHECK:STDOUT:   ret void, !dbg !176
+// CHECK:STDOUT:   %ReturnCRef__carbon_thunk.call = call ptr @_Z10ReturnCRef10ForceThunk.carbon_thunk.(), !dbg !159
+// CHECK:STDOUT:   %ReturnCRRef__carbon_thunk.call = call ptr @_Z11ReturnCRRef10ForceThunk.carbon_thunk.(), !dbg !162
+// CHECK:STDOUT:   %ReturnConstCRef__carbon_thunk.call = call ptr @_Z15ReturnConstCRef10ForceThunk.carbon_thunk.(), !dbg !165
+// CHECK:STDOUT:   %ReturnIntRef__carbon_thunk.call = call ptr @_Z12ReturnIntRef10ForceThunk.carbon_thunk.(), !dbg !168
+// CHECK:STDOUT:   %ReturnIntRRef__carbon_thunk.call = call ptr @_Z13ReturnIntRRef10ForceThunk.carbon_thunk.(), !dbg !171
+// CHECK:STDOUT:   %ReturnConstIntRef__carbon_thunk.call = call ptr @_Z17ReturnConstIntRef10ForceThunk.carbon_thunk.(), !dbg !174
+// CHECK:STDOUT:   ret void, !dbg !177
 // CHECK:STDOUT: }
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: alwaysinline mustprogress uwtable
@@ -705,9 +708,9 @@ fn GetRefs() {
 // CHECK:STDOUT: attributes #1 = { alwaysinline mustprogress uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT: attributes #2 = { "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 // CHECK:STDOUT:
-// CHECK:STDOUT: !llvm.dbg.cu = !{!156}
-// CHECK:STDOUT: !llvm.module.flags = !{!81, !82, !83, !2, !3}
-// CHECK:STDOUT: !llvm.errno.tbaa = !{!85}
+// CHECK:STDOUT: !llvm.dbg.cu = !{!157}
+// CHECK:STDOUT: !llvm.module.flags = !{!81, !82, !83, !84, !2, !3}
+// CHECK:STDOUT: !llvm.errno.tbaa = !{!86}
 // CHECK:STDOUT:
 // CHECK:STDOUT: !2 = !{i32 7, !"Dwarf Version", i32 5}
 // CHECK:STDOUT: !3 = !{i32 2, !"Debug Info Version", i32 3}
@@ -716,19 +719,20 @@ fn GetRefs() {
 // CHECK:STDOUT: !72 = !{!"Simple C++ TBAA"}
 // CHECK:STDOUT: !73 = !{!"omnipotent char", !72, i64 0}
 // CHECK:STDOUT: !78 = !{!"int", !73, i64 0}
-// CHECK:STDOUT: !81 = !{i32 8, !"PIC Level", i32 2}
-// CHECK:STDOUT: !82 = !{i32 7, !"PIE Level", i32 2}
-// CHECK:STDOUT: !83 = !{i32 7, !"uwtable", i32 2}
-// CHECK:STDOUT: !84 = !{!"__libc_errno", !78, i64 0}
-// CHECK:STDOUT: !85 = !{!84, !78, i64 0}
-// CHECK:STDOUT: !155 = !DIFile(filename: "return_references_via_thunk.carbon", directory: "")
-// CHECK:STDOUT: !156 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !155, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !157 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !155, line: 17, type: !22, spFlags: DISPFlagDefinition, unit: !156)
-// CHECK:STDOUT: !158 = !DILocation(line: 18, column: 22, scope: !157)
-// CHECK:STDOUT: !161 = !DILocation(line: 19, column: 22, scope: !157)
-// CHECK:STDOUT: !164 = !DILocation(line: 20, column: 28, scope: !157)
-// CHECK:STDOUT: !167 = !DILocation(line: 22, column: 20, scope: !157)
-// CHECK:STDOUT: !170 = !DILocation(line: 23, column: 20, scope: !157)
-// CHECK:STDOUT: !173 = !DILocation(line: 24, column: 26, scope: !157)
-// CHECK:STDOUT: !176 = !DILocation(line: 17, column: 1, scope: !157)
+// CHECK:STDOUT: !81 = !{i32 2, !"debugger-tuning", !"gdb"}
+// CHECK:STDOUT: !82 = !{i32 8, !"PIC Level", i32 2}
+// CHECK:STDOUT: !83 = !{i32 7, !"PIE Level", i32 2}
+// CHECK:STDOUT: !84 = !{i32 7, !"uwtable", i32 2}
+// CHECK:STDOUT: !85 = !{!"__libc_errno", !78, i64 0}
+// CHECK:STDOUT: !86 = !{!85, !78, i64 0}
+// CHECK:STDOUT: !156 = !DIFile(filename: "return_references_via_thunk.carbon", directory: "")
+// CHECK:STDOUT: !157 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !156, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
+// CHECK:STDOUT: !158 = distinct !DISubprogram(name: "GetRefs", linkageName: "_CGetRefs.Main", scope: null, file: !156, line: 17, type: !22, spFlags: DISPFlagDefinition, unit: !157)
+// CHECK:STDOUT: !159 = !DILocation(line: 18, column: 22, scope: !158)
+// CHECK:STDOUT: !162 = !DILocation(line: 19, column: 22, scope: !158)
+// CHECK:STDOUT: !165 = !DILocation(line: 20, column: 28, scope: !158)
+// CHECK:STDOUT: !168 = !DILocation(line: 22, column: 20, scope: !158)
+// CHECK:STDOUT: !171 = !DILocation(line: 23, column: 20, scope: !158)
+// CHECK:STDOUT: !174 = !DILocation(line: 24, column: 26, scope: !158)
+// CHECK:STDOUT: !177 = !DILocation(line: 17, column: 1, scope: !158)
 // CHECK:STDOUT:
