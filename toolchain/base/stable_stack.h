@@ -38,9 +38,18 @@ namespace Carbon {
 // Like a std::vector, the stack does not free memory after Pop(). This means
 // the stack retains capacity for holding the maximum number of values it ever
 // held.
+//
+// TODO: The FirstCapacity being in the type allows for some simplifications
+// internally where we can assume two stacks of the same type have the same
+// chunk sizes. The typical use of StableStack is currently that we have one
+// StableStack type for a given `T`, as they all have the same FirstCapacity. If
+// we end up with many different StableStack types for the same `T` with
+// different FirstCapacity, we should consider moving it to a runtime value.
 template <typename T, int32_t FirstCapacity = 32>
 class StableStack {
   static_assert(FirstCapacity > 0);
+  static_assert(std::has_single_bit(static_cast<uint32_t>(FirstCapacity)),
+                "FirstCapacity must be a power of 2");
 
  public:
   StableStack() = default;
@@ -237,7 +246,9 @@ class StableStack {
     // Given this formula, we solve for `num_chunks`.
     // cap = ((1 << num_chunks) - 1) * FirstCapacity;
     auto ucap = static_cast<uint32_t>(cap);
-    return std::bit_width(((ucap + (FirstCapacity - 1)) / FirstCapacity));
+    // Shifting by this simulates division by FirstCapacity.
+    auto division = std::bit_width(static_cast<uint32_t>(FirstCapacity - 1));
+    return std::bit_width((ucap + (FirstCapacity - 1)) >> division);
   }
 
   struct Chunk {
