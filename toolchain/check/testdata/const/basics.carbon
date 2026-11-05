@@ -32,7 +32,13 @@ class C;
 
 // OK, `const (const C)` is the same type as `const C`.
 //@dump-sem-ir-begin
-// CHECK:STDERR: collapse.carbon:[[@LINE+2]]:23-37: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
+// CHECK:STDERR:        ╭─┤ collapse.carbon:[[@LINE+8]]:23
+// CHECK:STDERR: ->     │ fn F(p: const C**) -> const (const C)** {
+// CHECK:STDERR:        ·                       ┳━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                       ┗━━┫ warning: `const` applied repeatedly to the same type
+// CHECK:STDERR:        ·                          ┃          has no additional effect
+// CHECK:STDERR:        ·                          ┃          [RepeatedConst]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(p: const C**) -> const (const C)** {
   return p;
@@ -44,11 +50,23 @@ library "[[@TEST_NAME]]";
 
 class C;
 
-// CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+2]]:9-23: warning: `const` applied repeatedly to the same type has no additional effect [RepeatedConst]
+// CHECK:STDERR:        ╭─┤ fail_collapse_in_error.carbon:[[@LINE+8]]:9
+// CHECK:STDERR: ->     │ fn G(p: const (const C)**) -> C** {
+// CHECK:STDERR:        ·         ┳━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·         ┗━━┫ warning: `const` applied repeatedly to the same type has no
+// CHECK:STDERR:        ·            ┃          additional effect
+// CHECK:STDERR:        ·            ┃          [RepeatedConst]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G(p: const (const C)**) -> C** {
-  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+3]]:3-11: error: cannot implicitly convert expression of type `const C**` to `C**` [ConversionFailure]
-  // CHECK:STDERR: fail_collapse_in_error.carbon:[[@LINE+2]]:3-11: note: type `const C**` does not implement interface `Core.ImplicitAs(C**)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_collapse_in_error.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   return p;
+  // CHECK:STDERR:        ·   ━┳━━━━━━━
+  // CHECK:STDERR:        ·    ┗━━┫ error: cannot implicitly convert expression of type `const C**` to `C**`
+  // CHECK:STDERR:        ·    │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·    ╰────┤ type `const C**` does not implement interface `Core.ImplicitAs(C**)`
+  // CHECK:STDERR:        ·         │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return p;
 }
@@ -106,9 +124,18 @@ class X {
 }
 
 fn PassConstReferenceToReference(p: const X*) {
-  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+4]]:3-17: error: cannot implicitly convert expression of type `const X` to `X` [ConversionFailure]
-  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE+3]]:3-17: note: type `const X` does not implement interface `Core.ImplicitAs(X)` [MissingImplInMemberAccessInContext]
-  // CHECK:STDERR: fail_remove_while_forming_reference.carbon:[[@LINE-6]]:15-22: note: initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ╭─┤ fail_remove_while_forming_reference.carbon:[[@LINE+13]]:3
+  // CHECK:STDERR:        │   fn TakeSelf(ref self);
+  // CHECK:STDERR:        ·               ────┬───
+  // CHECK:STDERR:        ·                   ╰──┤ initializing function parameter [InCallToFunctionParam]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   p->(X.TakeSelf)();
+  // CHECK:STDERR:        ·   ━━━━━┳━━━━━━━━━
+  // CHECK:STDERR:        ·        ┗━━┫ error: cannot implicitly convert expression of type `const X` to `X`
+  // CHECK:STDERR:        ·        │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·        ╰────┤ type `const X` does not implement interface `Core.ImplicitAs(X)`
+  // CHECK:STDERR:        ·             │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   p->(X.TakeSelf)();
 }
@@ -123,21 +150,48 @@ interface J {}
 // type. The operand of `const` is parenthesized if it's a facet type formed
 // with `&` or `where`.
 fn F() -> const (I & J);
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+3]]:1-13: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-2]]:1-24: note: previously declared with return type `const (I & J)` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ╭─┤ fail_print_const_facet_type.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ fn F() -> const (I & J);
+// CHECK:STDERR:        · ────────────┬───────────
+// CHECK:STDERR:        ·             ╰──┤ previously declared with return type `const (I & J)`
+// CHECK:STDERR:        ·                │ [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn F() -> {};
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: function redeclaration differs because return type is `{}`
+// CHECK:STDERR:        ·          ┃        [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> {};
 
 fn G() -> const (I where .T = ());
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+3]]:1-13: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-2]]:1-34: note: previously declared with return type `const (I where .(I.T) = ())` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ╭─┤ fail_print_const_facet_type.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ fn G() -> const (I where .T = ());
+// CHECK:STDERR:        · ─────────┬────────────────────────
+// CHECK:STDERR:        ·          ╰──┤ previously declared with return type `const (I where .(I.T) = ())`
+// CHECK:STDERR:        ·             │ [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn G() -> {};
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: function redeclaration differs because return type is `{}`
+// CHECK:STDERR:        ·          ┃        [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G() -> {};
 
 // No parentheses are needed for a single interface.
 fn H() -> const I;
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE+3]]:1-13: error: function redeclaration differs because return type is `{}` [FunctionRedeclReturnTypeDiffers]
-// CHECK:STDERR: fail_print_const_facet_type.carbon:[[@LINE-2]]:1-18: note: previously declared with return type `const I` [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ╭─┤ fail_print_const_facet_type.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │ fn H() -> const I;
+// CHECK:STDERR:        · ─────────┬────────
+// CHECK:STDERR:        ·          ╰──┤ previously declared with return type `const I`
+// CHECK:STDERR:        ·             │ [FunctionRedeclReturnTypePrevious]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn H() -> {};
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: function redeclaration differs because return type is `{}`
+// CHECK:STDERR:        ·          ┃        [FunctionRedeclReturnTypeDiffers]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn H() -> {};
 
@@ -309,20 +363,20 @@ fn H() -> {};
 // CHECK:STDOUT:     %p.param_patt: %pattern_type.803 = value_param_pattern [concrete = constants.%p.param_patt]
 // CHECK:STDOUT:     %p.patt: %pattern_type.803 = wrapper_binding_pattern p, %p.param_patt [concrete = constants.%p.patt]
 // CHECK:STDOUT:     %return.param_patt: %pattern_type.803 = out_param_pattern [concrete = constants.%return.param_patt.934]
-// CHECK:STDOUT:     %return.patt: %pattern_type.803 = return_slot_pattern %return.param_patt, %ptr.loc9_39 [concrete = constants.%return.patt.895]
+// CHECK:STDOUT:     %return.patt: %pattern_type.803 = return_slot_pattern %return.param_patt, %ptr.loc15_39 [concrete = constants.%return.patt.895]
 // CHECK:STDOUT:   } {
-// CHECK:STDOUT:     %C.ref.loc9_36: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:     %const.loc9_30: type = const_type %C.ref.loc9_36 [concrete = constants.%const.13f]
-// CHECK:STDOUT:     %const.loc9_23: type = const_type %const.loc9_30 [concrete = constants.%const.13f]
-// CHECK:STDOUT:     %ptr.loc9_38: type = ptr_type %const.loc9_23 [concrete = constants.%ptr.77f]
-// CHECK:STDOUT:     %ptr.loc9_39: type = ptr_type %ptr.loc9_38 [concrete = constants.%ptr.0c8]
-// CHECK:STDOUT:     %.loc9_39: Core.Form = init_form %ptr.loc9_39 [concrete = constants.%.5f5]
+// CHECK:STDOUT:     %C.ref.loc15_36: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:     %const.loc15_30: type = const_type %C.ref.loc15_36 [concrete = constants.%const.13f]
+// CHECK:STDOUT:     %const.loc15_23: type = const_type %const.loc15_30 [concrete = constants.%const.13f]
+// CHECK:STDOUT:     %ptr.loc15_38: type = ptr_type %const.loc15_23 [concrete = constants.%ptr.77f]
+// CHECK:STDOUT:     %ptr.loc15_39: type = ptr_type %ptr.loc15_38 [concrete = constants.%ptr.0c8]
+// CHECK:STDOUT:     %.loc15_39: Core.Form = init_form %ptr.loc15_39 [concrete = constants.%.5f5]
 // CHECK:STDOUT:     %p.param: %ptr.0c8 = value_param call_param0
-// CHECK:STDOUT:     %.loc9_17: type = splice_block %ptr.loc9_17 [concrete = constants.%ptr.0c8] {
-// CHECK:STDOUT:       %C.ref.loc9_15: type = name_ref C, file.%C.decl [concrete = constants.%C]
-// CHECK:STDOUT:       %const.loc9_9: type = const_type %C.ref.loc9_15 [concrete = constants.%const.13f]
-// CHECK:STDOUT:       %ptr.loc9_16: type = ptr_type %const.loc9_9 [concrete = constants.%ptr.77f]
-// CHECK:STDOUT:       %ptr.loc9_17: type = ptr_type %ptr.loc9_16 [concrete = constants.%ptr.0c8]
+// CHECK:STDOUT:     %.loc15_17: type = splice_block %ptr.loc15_17 [concrete = constants.%ptr.0c8] {
+// CHECK:STDOUT:       %C.ref.loc15_15: type = name_ref C, file.%C.decl [concrete = constants.%C]
+// CHECK:STDOUT:       %const.loc15_9: type = const_type %C.ref.loc15_15 [concrete = constants.%const.13f]
+// CHECK:STDOUT:       %ptr.loc15_16: type = ptr_type %const.loc15_9 [concrete = constants.%ptr.77f]
+// CHECK:STDOUT:       %ptr.loc15_17: type = ptr_type %ptr.loc15_16 [concrete = constants.%ptr.0c8]
 // CHECK:STDOUT:     }
 // CHECK:STDOUT:     %p: %ptr.0c8 = wrapper_binding p, %p.param
 // CHECK:STDOUT:     %return.param: ref %ptr.0c8 = out_param call_param1
@@ -334,10 +388,10 @@ fn H() -> {};
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %p.ref: %ptr.0c8 = name_ref p, %p
 // CHECK:STDOUT:   %impl.elem0: %.a9c = impl_witness_access constants.%Copy.impl_witness.9f0, element0 [concrete = constants.%ptr.as.Copy.impl.Op.e7f]
-// CHECK:STDOUT:   %bound_method.loc10_10.1: <bound method> = bound_method %p.ref, %impl.elem0
+// CHECK:STDOUT:   %bound_method.loc16_10.1: <bound method> = bound_method %p.ref, %impl.elem0
 // CHECK:STDOUT:   %specific_fn: <specific function> = specific_function %impl.elem0, @ptr.as.Copy.impl.Op(constants.%ptr.77f) [concrete = constants.%ptr.as.Copy.impl.Op.specific_fn]
-// CHECK:STDOUT:   %bound_method.loc10_10.2: <bound method> = bound_method %p.ref, %specific_fn
-// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.0c8 = call %bound_method.loc10_10.2(%p.ref)
+// CHECK:STDOUT:   %bound_method.loc16_10.2: <bound method> = bound_method %p.ref, %specific_fn
+// CHECK:STDOUT:   %ptr.as.Copy.impl.Op.call: init %ptr.0c8 = call %bound_method.loc16_10.2(%p.ref)
 // CHECK:STDOUT:   return %ptr.as.Copy.impl.Op.call
 // CHECK:STDOUT: }
 // CHECK:STDOUT:

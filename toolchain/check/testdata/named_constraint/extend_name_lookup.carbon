@@ -42,7 +42,12 @@ constraint W {
 fn F(generic T: W) {
   // Does not extend Z.
 interface Y { fn YF(); }
-  // CHECK:STDERR: fail_name_lookup_in_constraint_does_not_extend.carbon:[[@LINE+2]]:3-6: error: member name `ZF` not found in `W` [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR:        ╭─┤ fail_name_lookup_in_constraint_does_not_extend.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   T.ZF();
+  // CHECK:STDERR:        ·   ━━┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: member name `ZF` not found in `W`
+  // CHECK:STDERR:        ·        ┃        [MemberNameNotFoundInSpecificScope]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   T.ZF();
 }
@@ -80,11 +85,19 @@ constraint W {
 
 fn F(generic T: type where .Self impls W) {
   // T does not extend Z.
-  // CHECK:STDERR: fail_name_lookup_in_facet_type_does_not_extend.carbon:[[@LINE+2]]:3-6: error: member name `ZF` not found [MemberNameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_name_lookup_in_facet_type_does_not_extend.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   T.ZF();
+  // CHECK:STDERR:        ·   ━━┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: member name `ZF` not found [MemberNameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   T.ZF();
   // T does not extend Y.
-  // CHECK:STDERR: fail_name_lookup_in_facet_type_does_not_extend.carbon:[[@LINE+2]]:3-6: error: member name `YF` not found [MemberNameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_name_lookup_in_facet_type_does_not_extend.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   T.YF();
+  // CHECK:STDERR:        ·   ━━┳━
+  // CHECK:STDERR:        ·     ┗━━┫ error: member name `YF` not found [MemberNameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   T.YF();
 }

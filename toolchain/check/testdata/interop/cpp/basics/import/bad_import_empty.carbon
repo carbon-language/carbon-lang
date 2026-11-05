@@ -18,6 +18,10 @@
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_import_cpp_library_empty.carbon:[[@LINE+2]]:10: error: empty filename [CppInteropParseError]
+// CHECK:STDERR:        ╭─┤ fail_import_cpp_library_empty.carbon:[[@LINE+6]]:10
+// CHECK:STDERR: ->     │ #include ""
+// CHECK:STDERR:        ·          ┳
+// CHECK:STDERR:        ·          ┗━━┫ error: empty filename [CppInteropParseError]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 import Cpp library "";

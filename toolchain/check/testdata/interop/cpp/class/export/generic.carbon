@@ -45,7 +45,12 @@ void FSpecific() {
 library "[[@TEST_NAME]]";
 import Cpp;
 
-// CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+2]]:1-33: error: semantics TODO: `failed to map specific type arg to C++` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_unsupported_specific_arg.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ class UnsupportedClass(T: type) {
+// CHECK:STDERR:        · ━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·             ┗━━┫ error: semantics TODO: `failed to map specific type arg to C++`
+// CHECK:STDERR:        ·                ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 class UnsupportedClass(T: type) {
   var t: T;
@@ -54,9 +59,19 @@ alias AliasEmptyTuple = UnsupportedClass(());
 
 inline Cpp '''
 void FUnsupported() {
-  // CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+4]]:11: error: semantics TODO: `interop with unsupported type` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_unsupported_specific_arg.carbon:[[@LINE+14]]:11
+  // CHECK:STDERR: ->     │   Carbon::AliasEmptyTuple a;
+  // CHECK:STDERR:        ·           ┳
+  // CHECK:STDERR:        ·           ┗━━┫ error: semantics TODO: `interop with unsupported type`
+  // CHECK:STDERR:        ·              ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
-  // CHECK:STDERR: fail_unsupported_specific_arg.carbon:[[@LINE+2]]:11: error: no type named 'AliasEmptyTuple' in namespace 'Carbon' [CppInteropParseError]
+  // CHECK:STDERR:        ╭─┤ fail_unsupported_specific_arg.carbon:[[@LINE+7]]:11
+  // CHECK:STDERR: ->     │   Carbon::AliasEmptyTuple a;
+  // CHECK:STDERR:        ·   ───────╴╻
+  // CHECK:STDERR:        ·           ┗━━┫ error: no type named 'AliasEmptyTuple' in namespace 'Carbon'
+  // CHECK:STDERR:        ·              ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Carbon::AliasEmptyTuple a;
   a.t = 123;
@@ -68,7 +83,12 @@ library "[[@TEST_NAME]]";
 import Cpp;
 
 class ClassWithMethod(T: type) {
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+2]]:3-25: error: semantics TODO: `non-class non-namespace name scope` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_todo_generic_class_method_call.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   fn M(unused ref self) {}
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━┳━━━━━━━━━━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: semantics TODO: `non-class non-namespace name scope`
+  // CHECK:STDERR:        ·                 ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn M(unused ref self) {}
 }
@@ -76,7 +96,12 @@ class ClassWithMethod(T: type) {
 inline Cpp '''
 void FMethodCall() {
   Carbon::ClassWithMethod<int> c;
-  // CHECK:STDERR: fail_todo_generic_class_method_call.carbon:[[@LINE+2]]:5: error: no member named 'M' in 'Carbon::Main::ClassWithMethod<int>' [CppInteropParseError]
+  // CHECK:STDERR:        ╭─┤ fail_todo_generic_class_method_call.carbon:[[@LINE+7]]:5
+  // CHECK:STDERR: ->     │   c.M();
+  // CHECK:STDERR:        ·   ─ ┳
+  // CHECK:STDERR:        ·     ┗━━┫ error: no member named 'M' in 'Carbon::Main::ClassWithMethod<int>'
+  // CHECK:STDERR:        ·        ┃        [CppInteropParseError]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   c.M();
 }

@@ -27,8 +27,17 @@ constraint J(N: i32) {
   require impls L(N);
 }
 
-// CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE+3]]:1-18: error: facet type `J(-1)` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
-// CHECK:STDERR: fail_error_in_identifying_require_facet_type.carbon:[[@LINE-7]]:30: note: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:        ╭─┤ fail_error_in_identifying_require_facet_type.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │   require impls K(Array(i32, N));
+// CHECK:STDERR:        ·                              ┬
+// CHECK:STDERR:        ·                              ╰──┤ array bound of -1 is negative
+// CHECK:STDERR:        ·                                 │ [ArrayBoundNegative]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl {} as J(-1) {}
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: facet type `J(-1)` cannot be identified in `impl as`
+// CHECK:STDERR:        ·             ┃        [ImplOfUnidentifiedFacetType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl {} as J(-1) {}
 
@@ -46,8 +55,17 @@ constraint J(N: i32) {
   extend require impls K(Array(i32, N));
 }
 
-// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+3]]:1-18: error: facet type `J(-1)` cannot be identified in `impl as` [ImplOfUnidentifiedFacetType]
-// CHECK:STDERR: fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE-4]]:24-39: note: array bound of -1 is negative [ArrayBoundNegative]
+// CHECK:STDERR:        ╭─┤ fail_error_in_identifying_extend_require_facet_type.carbon:[[@LINE+12]]:1
+// CHECK:STDERR:        │   extend require impls K(Array(i32, N));
+// CHECK:STDERR:        ·                        ────────┬───────
+// CHECK:STDERR:        ·                                ╰──┤ array bound of -1 is negative
+// CHECK:STDERR:        ·                                   │ [ArrayBoundNegative]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ impl {} as J(-1) {}
+// CHECK:STDERR:        · ━━━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·          ┗━━┫ error: facet type `J(-1)` cannot be identified in `impl as`
+// CHECK:STDERR:        ·             ┃        [ImplOfUnidentifiedFacetType]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 impl {} as J(-1) {}
 
@@ -80,10 +98,28 @@ constraint S(N: Core.IntLiteral) {
 fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z2 impls Y) {}
 
 fn G(generic T: Y) {
-  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE+5]]:3-10: error: constructed invalid specific for `S(N) where .(CanFailToMonomorphize(N).Z2) impls Y` from argument [SubstitutingGenericParamType]
-  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-17]]:24-47: note: `CanFailToMonomorphize(N)` evaluates to incomplete type `CanFailToMonomorphize(-1)` [IncompleteTypeInMonomorphization]
-  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-23]]:21: note: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR: fail_monomorphization_during_period_self_substitution.carbon:[[@LINE-6]]:1-69: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_monomorphization_during_period_self_substitution.carbon:[[@LINE+23]]:3
+  // CHECK:STDERR:        │   let Z1: Array((), N);
+  // CHECK:STDERR:        ·                     ┬
+  // CHECK:STDERR:        ·                     ╰──┤ array bound of -1 is negative [ArrayBoundNegative]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │   extend require impls CanFailToMonomorphize(N);
+  // CHECK:STDERR:        ·                        ┬───────────────────────
+  // CHECK:STDERR:        ·                        ╰──┤ `CanFailToMonomorphize(N)` evaluates to incomplete
+  // CHECK:STDERR:        ·                           │ type `CanFailToMonomorphize(-1)`
+  // CHECK:STDERR:        ·                           │ [IncompleteTypeInMonomorphization]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z2 impls Y) {}
+  // CHECK:STDERR:        · ─────────────────────────┬───────────────────────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(-1, T);
+  // CHECK:STDERR:        ·   ┳━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: constructed invalid specific for
+  // CHECK:STDERR:        ·      ┃        `S(N) where .(CanFailToMonomorphize(N).Z2) impls Y` from argument
+  // CHECK:STDERR:        ·      ┃        [SubstitutingGenericParamType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(-1, T);
 };
@@ -106,9 +142,22 @@ constraint S(N: Core.IntLiteral) {
 fn F(generic N: Core.IntLiteral, generic _: S(N)) {}
 
 fn G(generic T: Z) {
-  // CHECK:STDERR: fail_monomorphization_identify_in_call.carbon:[[@LINE+4]]:3-10: error: facet type `S(-1)` can not be identified [ImplLookupInUnidentifiedFacetType]
-  // CHECK:STDERR: fail_monomorphization_identify_in_call.carbon:[[@LINE-7]]:24-49: note: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR: fail_monomorphization_identify_in_call.carbon:[[@LINE-5]]:1-51: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_monomorphization_identify_in_call.carbon:[[@LINE+17]]:3
+  // CHECK:STDERR:        │   extend require impls Z where .Z1 = Array((), N);
+  // CHECK:STDERR:        ·                        ─────────────┬────────────
+  // CHECK:STDERR:        ·                                     ╰──┤ array bound of -1 is negative
+  // CHECK:STDERR:        ·                                        │ [ArrayBoundNegative]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ fn F(generic N: Core.IntLiteral, generic _: S(N)) {}
+  // CHECK:STDERR:        · ─────────────────────────┬─────────────────────────
+  // CHECK:STDERR:        ·                          ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                             │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(-1, T);
+  // CHECK:STDERR:        ·   ━━━━┳━━━
+  // CHECK:STDERR:        ·       ┗━━┫ error: facet type `S(-1)` can not be identified
+  // CHECK:STDERR:        ·          ┃        [ImplLookupInUnidentifiedFacetType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(-1, T);
 };
@@ -131,9 +180,21 @@ constraint S(N: Core.IntLiteral) {
 fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z1 = Array((), N)) {}
 
 fn G(generic T: Z) {
-  // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE+4]]:3-10: error: constructed invalid specific for `S(N) where .(Z.Z1) = <builtin array((), N)>` from argument [SubstitutingGenericParamType]
-  // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE-4]]:42-73: note: array bound of -1 is negative [ArrayBoundNegative]
-  // CHECK:STDERR: fail_monomorphization_during_deduction_in_call.carbon:[[@LINE-5]]:1-76: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_monomorphization_during_deduction_in_call.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR:        │ fn F(generic N: Core.IntLiteral, generic _: S(N) where .Z1 = Array((), N)) {}
+  // CHECK:STDERR:        · ──────────────────────────────────────┬──┬──────────────────────────────────
+  // CHECK:STDERR:        ·                                       ╰─────┤ while deducing parameters of
+  // CHECK:STDERR:        ·                                          │  │ generic declared here
+  // CHECK:STDERR:        ·                                          │  │ [DeductionGenericHere]
+  // CHECK:STDERR:        ·                                          ╰────┤ array bound of -1 is negative
+  // CHECK:STDERR:        ·                                               │ [ArrayBoundNegative]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   F(-1, T);
+  // CHECK:STDERR:        ·   ┳━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: constructed invalid specific for
+  // CHECK:STDERR:        ·      ┃        `S(N) where .(Z.Z1) = <builtin array((), N)>` from argument
+  // CHECK:STDERR:        ·      ┃        [SubstitutingGenericParamType]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   F(-1, T);
 };

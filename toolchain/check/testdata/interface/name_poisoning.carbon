@@ -44,12 +44,20 @@ interface I;
 
 namespace N;
 // Use `package.I` and poison `N.I`.
-// CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+1]]:19: error: name `I` used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR:        ╭─┤ fail_declare_after_poison.carbon:[[@LINE+11]]:19
+// CHECK:STDERR: ->     │ fn N.F(generic x: I);
+// CHECK:STDERR:        ·                   ┳
+// CHECK:STDERR:        ·                   ┗━━┫ error: name `I` used before it was declared
+// CHECK:STDERR:        ·                      ┃        [NameUseBeforeDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │ interface N.I {}
+// CHECK:STDERR:        ·             ┬
+// CHECK:STDERR:        ·             ╰──┤ declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn N.F(generic x: I);
 
 // Failure: N.I declared after it was poisoned.
-// CHECK:STDERR: fail_declare_after_poison.carbon:[[@LINE+2]]:13: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR:
 interface N.I {}
 
 // --- fail_use_poison.carbon
@@ -62,7 +70,12 @@ namespace N;
 // Use `package.I` and poison `N.I`.
 fn N.F1(generic x: I);
 
-// CHECK:STDERR: fail_use_poison.carbon:[[@LINE+2]]:20-22: error: member name `I` not found in `N` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_use_poison.carbon:[[@LINE+7]]:20
+// CHECK:STDERR: ->     │ fn N.F2(generic x: N.I);
+// CHECK:STDERR:        ·                    ━┳━
+// CHECK:STDERR:        ·                     ┗━━┫ error: member name `I` not found in `N`
+// CHECK:STDERR:        ·                        ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn N.F2(generic x: N.I);
 
@@ -74,14 +87,27 @@ interface I;
 
 namespace N;
 // Use `package.I` and poison `N.I`.
-// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+1]]:20: error: name `I` used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR:        ╭─┤ fail_use_declaration_after_poison.carbon:[[@LINE+11]]:20
+// CHECK:STDERR: ->     │ fn N.F1(generic x: I);
+// CHECK:STDERR:        ·                    ┳
+// CHECK:STDERR:        ·                    ┗━━┫ error: name `I` used before it was declared
+// CHECK:STDERR:        ·                       ┃        [NameUseBeforeDecl]
+// CHECK:STDERR:        │
+// CHECK:STDERR:        │ interface N.I;
+// CHECK:STDERR:        ·             ┬
+// CHECK:STDERR:        ·             ╰──┤ declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn N.F1(generic x: I);
 
-// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+2]]:13: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR:
 interface N.I;
 
-// CHECK:STDERR: fail_use_declaration_after_poison.carbon:[[@LINE+2]]:20-22: error: member name `I` not found in `N` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_use_declaration_after_poison.carbon:[[@LINE+7]]:20
+// CHECK:STDERR: ->     │ fn N.F2(generic x: N.I);
+// CHECK:STDERR:        ·                    ━┳━
+// CHECK:STDERR:        ·                     ┗━━┫ error: member name `I` not found in `N`
+// CHECK:STDERR:        ·                        ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn N.F2(generic x: N.I);
 
@@ -92,8 +118,12 @@ library "[[@TEST_NAME]]";
 interface I;
 namespace N;
 
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+3]]:13: error: name `I` used before it was declared [NameUseBeforeDecl]
-// CHECK:STDERR: fail_alias.carbon:[[@LINE+2]]:9: note: declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR:        ╭─┤ fail_alias.carbon:[[@LINE+7]]:13
+// CHECK:STDERR: ->     │ alias N.I = I;
+// CHECK:STDERR:        ·         ┬   ┳
+// CHECK:STDERR:        ·         │   ┗━━┫ error: name `I` used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR:        ·         ╰────────┤ declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 alias N.I = I;
 
@@ -110,21 +140,45 @@ interface I2 {
       // * `I2.I1`
       // * `I2.I3.I1`
       // * `I2.I3.I4.I1`
-      // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+1]]:23-24: error: name `I1` used before it was declared [NameUseBeforeDecl]
+      // CHECK:STDERR:        ╭─┤ fail_poison_multiple_scopes.carbon:[[@LINE+33]]:23
+      // CHECK:STDERR: ->     │       fn F(generic x: I1);
+      // CHECK:STDERR:        ·                       ━┳
+      // CHECK:STDERR:        ·                        ┗━━┫ error: name `I1` used before it was declared
+      // CHECK:STDERR:        ·                           ┃        [NameUseBeforeDecl]
+      // CHECK:STDERR:        │
+      // CHECK:STDERR:        │       interface I1;
+      // CHECK:STDERR:        ·                 ─┬
+      // CHECK:STDERR:        ·                  ╰──┤ declared here [NameUseBeforeDeclNote]
+      // CHECK:STDERR:        ╰────
+      // CHECK:STDERR:
+      // CHECK:STDERR:        ╭─┤ fail_poison_multiple_scopes.carbon:[[@LINE+22]]:23
+      // CHECK:STDERR: ->     │       fn F(generic x: I1);
+      // CHECK:STDERR:        ·                       ━┳
+      // CHECK:STDERR:        ·                        ┗━━┫ error: name `I1` used before it was declared
+      // CHECK:STDERR:        ·                           ┃        [NameUseBeforeDecl]
+      // CHECK:STDERR:        ┆
+      // CHECK:STDERR:        │     interface I1;
+      // CHECK:STDERR:        ·               ─┬
+      // CHECK:STDERR:        ·                ╰──┤ declared here [NameUseBeforeDeclNote]
+      // CHECK:STDERR:        ╰────
+      // CHECK:STDERR:
+      // CHECK:STDERR:        ╭─┤ fail_poison_multiple_scopes.carbon:[[@LINE+11]]:23
+      // CHECK:STDERR: ->     │       fn F(generic x: I1);
+      // CHECK:STDERR:        ·                       ━┳
+      // CHECK:STDERR:        ·                        ┗━━┫ error: name `I1` used before it was declared
+      // CHECK:STDERR:        ·                           ┃        [NameUseBeforeDecl]
+      // CHECK:STDERR:        ┆
+      // CHECK:STDERR:        │   interface I1;
+      // CHECK:STDERR:        ·             ─┬
+      // CHECK:STDERR:        ·              ╰──┤ declared here [NameUseBeforeDeclNote]
+      // CHECK:STDERR:        ╰────
+      // CHECK:STDERR:
       fn F(generic x: I1);
 
-      // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:17-18: note: declared here [NameUseBeforeDeclNote]
-      // CHECK:STDERR:
-      // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-4]]:23-24: error: name `I1` used before it was declared [NameUseBeforeDecl]
       interface I1;
     }
-    // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+3]]:15-16: note: declared here [NameUseBeforeDeclNote]
-    // CHECK:STDERR:
-    // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE-9]]:23-24: error: name `I1` used before it was declared [NameUseBeforeDecl]
     interface I1;
   }
-  // CHECK:STDERR: fail_poison_multiple_scopes.carbon:[[@LINE+2]]:13-14: note: declared here [NameUseBeforeDeclNote]
-  // CHECK:STDERR:
   interface I1;
 }
 
@@ -149,18 +203,38 @@ library "[[@TEST_NAME]]";
 
 namespace N;
 // `package.I` and `N.I` poisoned when not found.
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:19: error: name `I` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_poison_when_lookup_fails.carbon:[[@LINE+28]]:19
+// CHECK:STDERR: ->     │ fn N.F(generic x: I);
+// CHECK:STDERR:        ·                   ┳
+// CHECK:STDERR:        ·                   ┗━━┫ error: name `I` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+1]]:19: error: name `I` used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR:        ╭─┤ fail_poison_when_lookup_fails.carbon:[[@LINE+22]]:19
+// CHECK:STDERR: ->     │ fn N.F(generic x: I);
+// CHECK:STDERR:        ·                   ┳
+// CHECK:STDERR:        ·                   ┗━━┫ error: name `I` used before it was declared
+// CHECK:STDERR:        ·                      ┃        [NameUseBeforeDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │ interface I;
+// CHECK:STDERR:        ·           ┬
+// CHECK:STDERR:        ·           ╰──┤ declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
+// CHECK:STDERR:        ╭─┤ fail_poison_when_lookup_fails.carbon:[[@LINE+11]]:19
+// CHECK:STDERR: ->     │ fn N.F(generic x: I);
+// CHECK:STDERR:        ·                   ┳
+// CHECK:STDERR:        ·                   ┗━━┫ error: name `I` used before it was declared
+// CHECK:STDERR:        ·                      ┃        [NameUseBeforeDecl]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        │ interface N.I;
+// CHECK:STDERR:        ·             ┬
+// CHECK:STDERR:        ·             ╰──┤ declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn N.F(generic x: I);
 
 // TODO: We should ideally only produce one diagnostic here.
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+3]]:11: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR:
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE-5]]:19: error: name `I` used before it was declared [NameUseBeforeDecl]
 interface I;
-// CHECK:STDERR: fail_poison_when_lookup_fails.carbon:[[@LINE+2]]:13: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR:
 interface N.I;
 
 // --- fail_poison_with_lexical_result.carbon
@@ -171,11 +245,19 @@ fn F() {
   interface I1 {}
 
   class C {
-    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+1]]:12-13: error: name `I1` used before it was declared [NameUseBeforeDecl]
+    // CHECK:STDERR:        ╭─┤ fail_poison_with_lexical_result.carbon:[[@LINE+11]]:12
+    // CHECK:STDERR: ->     │     var v: I1;
+    // CHECK:STDERR:        ·            ━┳
+    // CHECK:STDERR:        ·             ┗━━┫ error: name `I1` used before it was declared
+    // CHECK:STDERR:        ·                ┃        [NameUseBeforeDecl]
+    // CHECK:STDERR:        │
+    // CHECK:STDERR:        │     interface I1;
+    // CHECK:STDERR:        ·               ─┬
+    // CHECK:STDERR:        ·                ╰──┤ declared here [NameUseBeforeDeclNote]
+    // CHECK:STDERR:        ╰────
+    // CHECK:STDERR:
     var v: I1;
 
-    // CHECK:STDERR: fail_poison_with_lexical_result.carbon:[[@LINE+2]]:15-16: note: declared here [NameUseBeforeDeclNote]
-    // CHECK:STDERR:
     interface I1;
   }
 }

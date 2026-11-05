@@ -19,21 +19,41 @@ alias A = C;
 
 // The diagnostics below should refer to `A`, not `C`.
 
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+3]]:15-21: error: missing return value [ReturnStatementMissingExpr]
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+2]]:11: note: return type of function is `A` [ReturnTypeHereNote]
+// CHECK:STDERR:        ╭─┤ fail_alias_nested_in_type.carbon:[[@LINE+7]]:15
+// CHECK:STDERR: ->     │ fn F() -> A { return; }
+// CHECK:STDERR:        ·           ┬   ━━━┳━━━
+// CHECK:STDERR:        ·           │      ┗━━┫ error: missing return value [ReturnStatementMissingExpr]
+// CHECK:STDERR:        ·           ╰───────────┤ return type of function is `A` [ReturnTypeHereNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F() -> A { return; }
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+3]]:16-22: error: missing return value [ReturnStatementMissingExpr]
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+2]]:11-12: note: return type of function is `A*` [ReturnTypeHereNote]
+// CHECK:STDERR:        ╭─┤ fail_alias_nested_in_type.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ fn G() -> A* { return; }
+// CHECK:STDERR:        ·           ─┬   ━━━┳━━━
+// CHECK:STDERR:        ·            │      ┗━━┫ error: missing return value [ReturnStatementMissingExpr]
+// CHECK:STDERR:        ·            ╰───────────┤ return type of function is `A*` [ReturnTypeHereNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn G() -> A* { return; }
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+3]]:22-28: error: missing return value [ReturnStatementMissingExpr]
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+2]]:11-18: note: return type of function is `const A*` [ReturnTypeHereNote]
+// CHECK:STDERR:        ╭─┤ fail_alias_nested_in_type.carbon:[[@LINE+9]]:22
+// CHECK:STDERR: ->     │ fn H() -> const A* { return; }
+// CHECK:STDERR:        ·           ────┬───   ━━━┳━━━
+// CHECK:STDERR:        ·               │         ┗━━┫ error: missing return value
+// CHECK:STDERR:        ·               │            ┃        [ReturnStatementMissingExpr]
+// CHECK:STDERR:        ·               ╰──────────────┤ return type of function is `const A*`
+// CHECK:STDERR:        ·                              │ [ReturnTypeHereNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn H() -> const A* { return; }
 // TODO: Preserve type sugar in generic arguments, such as for `Core.Array`.
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+3]]:26-32: error: missing return value [ReturnStatementMissingExpr]
-// CHECK:STDERR: fail_alias_nested_in_type.carbon:[[@LINE+2]]:11-22: note: return type of function is `array(C, 42)` [ReturnTypeHereNote]
+// CHECK:STDERR:        ╭─┤ fail_alias_nested_in_type.carbon:[[@LINE+9]]:26
+// CHECK:STDERR: ->     │ fn I() -> array(A, 42) { return; }
+// CHECK:STDERR:        ·           ──────┬─────   ━━━┳━━━
+// CHECK:STDERR:        ·                 │           ┗━━┫ error: missing return value
+// CHECK:STDERR:        ·                 │              ┃        [ReturnStatementMissingExpr]
+// CHECK:STDERR:        ·                 ╰────────────────┤ return type of function is `array(C, 42)`
+// CHECK:STDERR:        ·                                  │ [ReturnTypeHereNote]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn I() -> array(A, 42) { return; }
 
@@ -51,12 +71,21 @@ fn MakePtr() -> A*;
 
 fn F() {
   // The type of a call is the declared return type of the callee.
-  // CHECK:STDERR: fail_alias_in_type_of_expr.carbon:[[@LINE+2]]:3-19: error: type `A*` does not support qualified expressions [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╭─┤ fail_alias_in_type_of_expr.carbon:[[@LINE+7]]:3
+  // CHECK:STDERR: ->     │   MakePtr().missing;
+  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: type `A*` does not support qualified expressions
+  // CHECK:STDERR:        ·              ┃        [QualifiedExprUnsupported]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   MakePtr().missing;
 
   // The type of a dereference is the pointee type of the pointer's type.
-  // CHECK:STDERR: fail_alias_in_type_of_expr.carbon:[[@LINE+2]]:3-16: error: value of type `A` is not callable [CallToNonCallable]
+  // CHECK:STDERR:        ╭─┤ fail_alias_in_type_of_expr.carbon:[[@LINE+6]]:3
+  // CHECK:STDERR: ->     │   (*MakePtr())();
+  // CHECK:STDERR:        ·   ━━━━━━━┳━━━━━━
+  // CHECK:STDERR:        ·          ┗━━┫ error: value of type `A` is not callable [CallToNonCallable]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   (*MakePtr())();
 }

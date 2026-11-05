@@ -61,7 +61,14 @@ fn F(a: bool, b: bool) {
 library "[[@TEST_NAME]]";
 
 let a: bool = true;
-// CHECK:STDERR: fail_todo_control_flow_file_scope.carbon:[[@LINE+2]]:15-20: error: semantics TODO: `Control flow expressions are currently only supported inside functions.` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_control_flow_file_scope.carbon:[[@LINE+9]]:15
+// CHECK:STDERR: ->     │ let b: typeof(a or a) = false;
+// CHECK:STDERR:        ·               ━━━┳━━
+// CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━┛
+// CHECK:STDERR:        · ┃ error: semantics TODO:
+// CHECK:STDERR:        · ┃        `Control flow expressions are currently only supported inside functions.`
+// CHECK:STDERR:        · ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let b: typeof(a or a) = false;
 
@@ -100,8 +107,17 @@ class C {}
 fn G[T: type](x: T, unused y: typeof(x)) {}
 
 fn Call() {
-  // CHECK:STDERR: fail_generic_mismatch.carbon:[[@LINE+3]]:3-18: error: inconsistent deductions for value of generic parameter `T` [DeductionInconsistent]
-  // CHECK:STDERR: fail_generic_mismatch.carbon:[[@LINE-4]]:1-42: note: while deducing parameters of generic declared here [DeductionGenericHere]
+  // CHECK:STDERR:        ╭─┤ fail_generic_mismatch.carbon:[[@LINE+12]]:3
+  // CHECK:STDERR:        │ fn G[T: type](x: T, unused y: typeof(x)) {}
+  // CHECK:STDERR:        · ─────────────────────┬────────────────────
+  // CHECK:STDERR:        ·                      ╰──┤ while deducing parameters of generic declared here
+  // CHECK:STDERR:        ·                         │ [DeductionGenericHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   G(true, {} as C);
+  // CHECK:STDERR:        ·   ━━━━━━━━┳━━━━━━━
+  // CHECK:STDERR:        ·           ┗━━┫ error: inconsistent deductions for value of generic parameter `T`
+  // CHECK:STDERR:        ·              ┃        [DeductionInconsistent]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   G(true, {} as C);
 }
@@ -110,7 +126,11 @@ fn Call() {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_undeclared.carbon:[[@LINE+2]]:15-24: error: name `undeclared` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_undeclared.carbon:[[@LINE+6]]:15
+// CHECK:STDERR: ->     │ var x: typeof(undeclared);
+// CHECK:STDERR:        ·               ━━━━━┳━━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: name `undeclared` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: typeof(undeclared);
 

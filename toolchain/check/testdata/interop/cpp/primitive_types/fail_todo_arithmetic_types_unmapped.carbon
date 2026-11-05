@@ -20,6 +20,12 @@ import Cpp inline '''
 auto GetWC() -> wchar_t;
 ''';
 
-// CHECK:STDERR: fail_todo_wide_char_t.carbon:[[@LINE+2]]:32-42: error: semantics TODO: `Unsupported: return type: wchar_t` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_todo_wide_char_t.carbon:[[@LINE+8]]:32
+// CHECK:STDERR: ->     │ fn CallGetWC() -> u32 { return Cpp.GetWC(); }
+// CHECK:STDERR:        ·                                ┳━━━━━━━━━━
+// CHECK:STDERR:        ·                                ┗━━┫ error: semantics TODO:
+// CHECK:STDERR:        ·                                   ┃        `Unsupported: return type: wchar_t`
+// CHECK:STDERR:        ·                                   ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn CallGetWC() -> u32 { return Cpp.GetWC(); }

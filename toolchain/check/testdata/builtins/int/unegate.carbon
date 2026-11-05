@@ -31,11 +31,21 @@ fn RuntimeCallIsValid(a: u32, unused b: u32) -> u32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:1-20: error: invalid signature for builtin function "int.unegate" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooFew() -> u32 = "int.unegate";
+// CHECK:STDERR:        · ━━━━━━━━━━┳━━━━━━━━━
+// CHECK:STDERR:        ·           ┗━━┫ error: invalid signature for builtin function "int.unegate"
+// CHECK:STDERR:        ·              ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooFew() -> u32 = "int.unegate";
 
-// CHECK:STDERR: fail_too_few.carbon:[[@LINE+2]]:25-32: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR:        ╭─┤ fail_too_few.carbon:[[@LINE+7]]:25
+// CHECK:STDERR: ->     │ var too_few: array(u32, TooFew());
+// CHECK:STDERR:        ·                         ━━━━┳━━━
+// CHECK:STDERR:        ·                             ┗━━┫ error: array bound is not a constant
+// CHECK:STDERR:        ·                                ┃        [InvalidArrayExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var too_few: array(u32, TooFew());
 
@@ -47,11 +57,21 @@ fn RuntimeCallIsValidTooFew() -> u32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:1-35: error: invalid signature for builtin function "int.unegate" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn TooMany(a: u32, b: u32) -> u32 = "int.unegate";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: invalid signature for builtin function "int.unegate"
+// CHECK:STDERR:        ·                    ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn TooMany(a: u32, b: u32) -> u32 = "int.unegate";
 
-// CHECK:STDERR: fail_too_many.carbon:[[@LINE+2]]:26-38: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR:        ╭─┤ fail_too_many.carbon:[[@LINE+7]]:26
+// CHECK:STDERR: ->     │ var too_many: array(u32, TooMany(1, 2));
+// CHECK:STDERR:        ·                          ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·                                ┗━━┫ error: array bound is not a constant
+// CHECK:STDERR:        ·                                   ┃        [InvalidArrayExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var too_many: array(u32, TooMany(1, 2));
 
@@ -63,11 +83,21 @@ fn RuntimeCallIsValidTooMany(a: u32, b: u32) -> u32 {
 
 library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:1-34: error: invalid signature for builtin function "int.unegate" [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╭─┤ fail_bad_return_type.carbon:[[@LINE+7]]:1
+// CHECK:STDERR: ->     │ fn BadReturnType(a: u32) -> bool = "int.unegate";
+// CHECK:STDERR:        · ━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                 ┗━━┫ error: invalid signature for builtin function "int.unegate"
+// CHECK:STDERR:        ·                    ┃        [InvalidBuiltinSignature]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn BadReturnType(a: u32) -> bool = "int.unegate";
 
-// CHECK:STDERR: fail_bad_return_type.carbon:[[@LINE+2]]:33-48: error: array bound is not a constant [InvalidArrayExpr]
+// CHECK:STDERR:        ╭─┤ fail_bad_return_type.carbon:[[@LINE+7]]:33
+// CHECK:STDERR: ->     │ var bad_return_type: array(u32, BadReturnType(1));
+// CHECK:STDERR:        ·                                 ━━━━━━━┳━━━━━━━━
+// CHECK:STDERR:        ·                                        ┗━━┫ error: array bound is not a constant
+// CHECK:STDERR:        ·                                           ┃        [InvalidArrayExpr]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var bad_return_type: array(u32, BadReturnType(1));
 
@@ -81,8 +111,17 @@ library "[[@TEST_NAME]]";
 
 fn Negate(a: u32) -> u32 = "int.unegate";
 
-// CHECK:STDERR: fail_bad_call.carbon:[[@LINE+3]]:26-37: error: 2 arguments passed to function expecting 1 argument [CallArgCountMismatch]
-// CHECK:STDERR: fail_bad_call.carbon:[[@LINE-3]]:1-26: note: calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ╭─┤ fail_bad_call.carbon:[[@LINE+12]]:26
+// CHECK:STDERR:        │ fn Negate(a: u32) -> u32 = "int.unegate";
+// CHECK:STDERR:        · ─────────────┬────────────
+// CHECK:STDERR:        ·              ╰──┤ calling function declared here [InCallToEntity]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ var bad_call: array(u32, Negate(1, 2));
+// CHECK:STDERR:        ·                          ┳━━━━━━━━━━━
+// CHECK:STDERR:        ·                          ┗━━┫ error: 2 arguments passed to function expecting 1
+// CHECK:STDERR:        ·                             ┃        argument
+// CHECK:STDERR:        ·                             ┃        [CallArgCountMismatch]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var bad_call: array(u32, Negate(1, 2));
 

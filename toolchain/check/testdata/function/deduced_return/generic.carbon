@@ -108,8 +108,17 @@ library "[[@TEST_NAME]]";
 
 fn F[T: Core.Copy](x: T, b: bool) -> auto {
   if (b) {
-    // CHECK:STDERR: fail_recursion_before_deduced.carbon:[[@LINE+3]]:12-22: error: call to `F` before its return type is known [CallBeforeReturnTypeDeduced]
-    // CHECK:STDERR: fail_recursion_before_deduced.carbon:[[@LINE-3]]:1-43: note: return type of `F` is deduced from its definition [ReturnTypeDeducedFromDefinition]
+    // CHECK:STDERR:        ╭─┤ fail_recursion_before_deduced.carbon:[[@LINE+12]]:12
+    // CHECK:STDERR:        │ fn F[T: Core.Copy](x: T, b: bool) -> auto {
+    // CHECK:STDERR:        · ─────────────────────┬─────────────────────
+    // CHECK:STDERR:        ·                      ╰──┤ return type of `F` is deduced from its definition
+    // CHECK:STDERR:        ·                         │ [ReturnTypeDeducedFromDefinition]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     return F(x, false);
+    // CHECK:STDERR:        ·            ━━━━━┳━━━━━
+    // CHECK:STDERR:        ·                 ┗━━┫ error: call to `F` before its return type is known
+    // CHECK:STDERR:        ·                    ┃        [CallBeforeReturnTypeDeduced]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     return F(x, false);
   }
@@ -122,8 +131,17 @@ library "[[@TEST_NAME]]";
 fn F[T: Core.Copy](x: T, b: bool) -> auto {
   returned var r: T = x;
   if (b) {
-    // CHECK:STDERR: fail_recursion_with_different_arguments.carbon:[[@LINE+3]]:5-22: error: call to `F` before its return type is known [CallBeforeReturnTypeDeduced]
-    // CHECK:STDERR: fail_recursion_with_different_arguments.carbon:[[@LINE-4]]:1-43: note: return type of `F` is deduced from its definition [ReturnTypeDeducedFromDefinition]
+    // CHECK:STDERR:        ╭─┤ fail_recursion_with_different_arguments.carbon:[[@LINE+12]]:5
+    // CHECK:STDERR:        │ fn F[T: Core.Copy](x: T, b: bool) -> auto {
+    // CHECK:STDERR:        · ─────────────────────┬─────────────────────
+    // CHECK:STDERR:        ·                      ╰──┤ return type of `F` is deduced from its definition
+    // CHECK:STDERR:        ·                         │ [ReturnTypeDeducedFromDefinition]
+    // CHECK:STDERR:        ┆
+    // CHECK:STDERR: ->     │     F(0 as i32, false);
+    // CHECK:STDERR:        ·     ━━━━━━━━━┳━━━━━━━━
+    // CHECK:STDERR:        ·              ┗━━┫ error: call to `F` before its return type is known
+    // CHECK:STDERR:        ·                 ┃        [CallBeforeReturnTypeDeduced]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     F(0 as i32, false);
   }

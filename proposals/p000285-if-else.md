@@ -59,11 +59,11 @@ A few syntaxes that are likely to influence `if`/`else` are:
 
     ```python
     if x:
-      print("x is true");
+        print("x is true")
     elif y:
-      print("y is true");
+        print("y is true")
     else:
-      print("Neither was true");
+        print("Neither was true")
     ```
 
 -   Swift

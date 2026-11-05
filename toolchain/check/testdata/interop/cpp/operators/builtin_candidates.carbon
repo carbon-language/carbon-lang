@@ -51,16 +51,44 @@ enum class EC { e1, e2, e3 };
 ''';
 
 fn TestEnumClass(a: Cpp.EC, b: Cpp.EC) {
-  // CHECK:STDERR: fail_enum_class_bitwise_operators.carbon:[[@LINE+2]]:19-23: error: cannot access member of interface `Core.BitAndWith(Cpp.EC)` in type `Cpp.EC` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+9]]:19
+  // CHECK:STDERR: ->     │   let _: Cpp.EC = a & b;
+  // CHECK:STDERR:        ·                   ┳━━━━
+  // CHECK:STDERR:        ·                   ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                      ┃        `Core.BitAndWith(Cpp.EC)` in type `Cpp.EC` that
+  // CHECK:STDERR:        ·                      ┃        does not implement that interface
+  // CHECK:STDERR:        ·                      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.EC = a & b;
-  // CHECK:STDERR: fail_enum_class_bitwise_operators.carbon:[[@LINE+2]]:19-23: error: cannot access member of interface `Core.BitOrWith(Cpp.EC)` in type `Cpp.EC` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+9]]:19
+  // CHECK:STDERR: ->     │   let _: Cpp.EC = a | b;
+  // CHECK:STDERR:        ·                   ┳━━━━
+  // CHECK:STDERR:        ·                   ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                      ┃        `Core.BitOrWith(Cpp.EC)` in type `Cpp.EC` that
+  // CHECK:STDERR:        ·                      ┃        does not implement that interface
+  // CHECK:STDERR:        ·                      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.EC = a | b;
-  // CHECK:STDERR: fail_enum_class_bitwise_operators.carbon:[[@LINE+2]]:19-23: error: cannot access member of interface `Core.BitXorWith(Cpp.EC)` in type `Cpp.EC` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+9]]:19
+  // CHECK:STDERR: ->     │   let _: Cpp.EC = a ^ b;
+  // CHECK:STDERR:        ·                   ┳━━━━
+  // CHECK:STDERR:        ·                   ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                      ┃        `Core.BitXorWith(Cpp.EC)` in type `Cpp.EC` that
+  // CHECK:STDERR:        ·                      ┃        does not implement that interface
+  // CHECK:STDERR:        ·                      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.EC = a ^ b;
-  // CHECK:STDERR: fail_enum_class_bitwise_operators.carbon:[[@LINE+2]]:19-20: error: cannot access member of interface `Core.BitComplement` in type `Cpp.EC` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_enum_class_bitwise_operators.carbon:[[@LINE+9]]:19
+  // CHECK:STDERR: ->     │   let _: Cpp.EC = ^a;
+  // CHECK:STDERR:        ·                   ┳━
+  // CHECK:STDERR:        ·                   ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                      ┃        `Core.BitComplement` in type `Cpp.EC` that does
+  // CHECK:STDERR:        ·                      ┃        not implement that interface
+  // CHECK:STDERR:        ·                      ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: Cpp.EC = ^a;
 }
@@ -137,105 +165,334 @@ struct ConvertibleToFloat {
 
 fn TestInteger(a: Cpp.ConvertibleToInt, b: Cpp.ConvertibleToInt) {
   // Test arithmetic.
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.AddWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = a + b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.AddWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a + b;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.SubWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = a - b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.SubWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a - b;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.MulWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = a * b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.MulWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a * b;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.DivWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = a / b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.DivWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a / b;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.ModWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = a % b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.ModWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a % b;
 
   // Test bitwise.
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.BitAndWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = a & b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.BitAndWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a & b;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.BitOrWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = a | b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.BitOrWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a | b;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.BitXorWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = a ^ b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.BitXorWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a ^ b;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-21: error: cannot access member of interface `Core.LeftShiftWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = a << b;
+  // CHECK:STDERR:        ·                ┳━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.LeftShiftWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a << b;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-21: error: cannot access member of interface `Core.RightShiftWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = a >> b;
+  // CHECK:STDERR:        ·                ┳━━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.RightShiftWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = a >> b;
 
   // Test comparison.
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-23: error: cannot access member of interface `Core.EqWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a == b);
+  // CHECK:STDERR:        ·                  ┳━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.EqWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                     ┃        interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a == b);
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-23: error: cannot access member of interface `Core.EqWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a != b);
+  // CHECK:STDERR:        ·                  ┳━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.EqWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                     ┃        interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a != b);
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.OrderedWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a < b);
+  // CHECK:STDERR:        ·                  ┳━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                     ┃        interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a < b);
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-23: error: cannot access member of interface `Core.OrderedWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a <= b);
+  // CHECK:STDERR:        ·                  ┳━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                     ┃        interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a <= b);
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.OrderedWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a > b);
+  // CHECK:STDERR:        ·                  ┳━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                     ┃        interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a > b);
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-23: error: cannot access member of interface `Core.OrderedWith(Cpp.ConvertibleToInt)` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a >= b);
+  // CHECK:STDERR:        ·                  ┳━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToInt)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToInt` that does not implement that
+  // CHECK:STDERR:        ·                     ┃        interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a >= b);
 
   // Test unary.
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-17: error: cannot access member of interface `Core.Negate` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+9]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = -a;
+  // CHECK:STDERR:        ·                ┳━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface `Core.Negate` in
+  // CHECK:STDERR:        ·                   ┃        type `Cpp.ConvertibleToInt` that does not implement
+  // CHECK:STDERR:        ·                   ┃        that interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = -a;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-17: error: cannot access member of interface `Core.BitComplement` in type `Cpp.ConvertibleToInt` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+9]]:16
+  // CHECK:STDERR: ->     │   let _: i32 = ^a;
+  // CHECK:STDERR:        ·                ┳━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.BitComplement` in type `Cpp.ConvertibleToInt`
+  // CHECK:STDERR:        ·                   ┃        that does not implement that interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: i32 = ^a;
 }
 
 fn TestFloat(a: Cpp.ConvertibleToFloat, b: Cpp.ConvertibleToFloat) {
   // Test arithmetic.
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.AddWith(Cpp.ConvertibleToFloat)` in type `Cpp.ConvertibleToFloat` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: f32 = a + b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.AddWith(Cpp.ConvertibleToFloat)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToFloat` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = a + b;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.SubWith(Cpp.ConvertibleToFloat)` in type `Cpp.ConvertibleToFloat` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: f32 = a - b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.SubWith(Cpp.ConvertibleToFloat)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToFloat` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = a - b;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.MulWith(Cpp.ConvertibleToFloat)` in type `Cpp.ConvertibleToFloat` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: f32 = a * b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.MulWith(Cpp.ConvertibleToFloat)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToFloat` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = a * b;
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-20: error: cannot access member of interface `Core.DivWith(Cpp.ConvertibleToFloat)` in type `Cpp.ConvertibleToFloat` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:16
+  // CHECK:STDERR: ->     │   let _: f32 = a / b;
+  // CHECK:STDERR:        ·                ┳━━━━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                   ┃        `Core.DivWith(Cpp.ConvertibleToFloat)` in type
+  // CHECK:STDERR:        ·                   ┃        `Cpp.ConvertibleToFloat` that does not implement that
+  // CHECK:STDERR:        ·                   ┃        interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = a / b;
 
   // Test comparison.
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-23: error: cannot access member of interface `Core.EqWith(Cpp.ConvertibleToFloat)` in type `Cpp.ConvertibleToFloat` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a == b);
+  // CHECK:STDERR:        ·                  ┳━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.EqWith(Cpp.ConvertibleToFloat)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
+  // CHECK:STDERR:        ·                     ┃        that interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a == b);
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-23: error: cannot access member of interface `Core.EqWith(Cpp.ConvertibleToFloat)` in type `Cpp.ConvertibleToFloat` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a != b);
+  // CHECK:STDERR:        ·                  ┳━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.EqWith(Cpp.ConvertibleToFloat)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
+  // CHECK:STDERR:        ·                     ┃        that interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a != b);
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type `Cpp.ConvertibleToFloat` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a < b);
+  // CHECK:STDERR:        ·                  ┳━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
+  // CHECK:STDERR:        ·                     ┃        that interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a < b);
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-23: error: cannot access member of interface `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type `Cpp.ConvertibleToFloat` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a <= b);
+  // CHECK:STDERR:        ·                  ┳━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
+  // CHECK:STDERR:        ·                     ┃        that interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a <= b);
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-22: error: cannot access member of interface `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type `Cpp.ConvertibleToFloat` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a > b);
+  // CHECK:STDERR:        ·                  ┳━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
+  // CHECK:STDERR:        ·                     ┃        that interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a > b);
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:18-23: error: cannot access member of interface `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type `Cpp.ConvertibleToFloat` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+10]]:18
+  // CHECK:STDERR: ->     │   let _: bool = (a >= b);
+  // CHECK:STDERR:        ·                  ┳━━━━━
+  // CHECK:STDERR:        ·                  ┗━━┫ error: cannot access member of interface
+  // CHECK:STDERR:        ·                     ┃        `Core.OrderedWith(Cpp.ConvertibleToFloat)` in type
+  // CHECK:STDERR:        ·                     ┃        `Cpp.ConvertibleToFloat` that does not implement
+  // CHECK:STDERR:        ·                     ┃        that interface
+  // CHECK:STDERR:        ·                     ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: bool = (a >= b);
 
   // Test unary.
-  // CHECK:STDERR: fail_convert_all_operands.carbon:[[@LINE+2]]:16-17: error: cannot access member of interface `Core.Negate` in type `Cpp.ConvertibleToFloat` that does not implement that interface [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╭─┤ fail_convert_all_operands.carbon:[[@LINE+9]]:16
+  // CHECK:STDERR: ->     │   let _: f32 = -a;
+  // CHECK:STDERR:        ·                ┳━
+  // CHECK:STDERR:        ·                ┗━━┫ error: cannot access member of interface `Core.Negate` in
+  // CHECK:STDERR:        ·                   ┃        type `Cpp.ConvertibleToFloat` that does not implement
+  // CHECK:STDERR:        ·                   ┃        that interface
+  // CHECK:STDERR:        ·                   ┃        [MissingImplInMemberAccess]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   let _: f32 = -a;
 }

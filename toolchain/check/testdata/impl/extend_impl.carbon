@@ -38,7 +38,11 @@ library "[[@TEST_NAME]]";
 interface I {}
 
 class C {
-  // CHECK:STDERR: fail_extend_impl_nonexistent.carbon:[[@LINE+2]]:15-25: error: name `nonexistent` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_extend_impl_nonexistent.carbon:[[@LINE+6]]:15
+  // CHECK:STDERR: ->     │   extend impl nonexistent as I {}
+  // CHECK:STDERR:        ·               ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·                    ┗━━┫ error: name `nonexistent` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend impl nonexistent as I {}
 
@@ -57,13 +61,22 @@ library "[[@TEST_NAME]]";
 interface I {}
 
 class C {
-  // CHECK:STDERR: fail_impl_nonexistent.carbon:[[@LINE+2]]:8-18: error: name `nonexistent` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_impl_nonexistent.carbon:[[@LINE+6]]:8
+  // CHECK:STDERR: ->     │   impl nonexistent as I {}
+  // CHECK:STDERR:        ·        ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: name `nonexistent` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   impl nonexistent as I {}
 
   fn F() {
     // The name lookup error still happens, since the `require` is not `extend`.
-    // CHECK:STDERR: fail_impl_nonexistent.carbon:[[@LINE+2]]:5-10: error: member name `A` not found in `C` [MemberNameNotFoundInInstScope]
+    // CHECK:STDERR:        ╭─┤ fail_impl_nonexistent.carbon:[[@LINE+7]]:5
+    // CHECK:STDERR: ->     │     Self.A;
+    // CHECK:STDERR:        ·     ━━━┳━━
+    // CHECK:STDERR:        ·        ┗━━┫ error: member name `A` not found in `C`
+    // CHECK:STDERR:        ·           ┃        [MemberNameNotFoundInInstScope]
+    // CHECK:STDERR:        ╰────
     // CHECK:STDERR:
     Self.A;
   }
@@ -76,7 +89,11 @@ library "[[@TEST_NAME]]";
 interface I {}
 
 class C {
-  // CHECK:STDERR: fail_extend_impl_nonexistent_pointer.carbon:[[@LINE+2]]:15-25: error: name `nonexistent` not found [NameNotFound]
+  // CHECK:STDERR:        ╭─┤ fail_extend_impl_nonexistent_pointer.carbon:[[@LINE+6]]:15
+  // CHECK:STDERR: ->     │   extend impl nonexistent* as I {}
+  // CHECK:STDERR:        ·               ━━━━━┳━━━━━
+  // CHECK:STDERR:        ·                    ┗━━┫ error: name `nonexistent` not found [NameNotFound]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   extend impl nonexistent* as I {}
 
@@ -93,7 +110,11 @@ class C {
 library "[[@TEST_NAME]]";
 
 interface I {}
-// CHECK:STDERR: fail_extend_impl_nonexistent_outside_class.carbon:[[@LINE+2]]:13-23: error: name `nonexistent` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_extend_impl_nonexistent_outside_class.carbon:[[@LINE+6]]:13
+// CHECK:STDERR: ->     │ extend impl nonexistent* as I {}
+// CHECK:STDERR:        ·             ━━━━━┳━━━━━
+// CHECK:STDERR:        ·                  ┗━━┫ error: name `nonexistent` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 extend impl nonexistent* as I {}
 

@@ -19,8 +19,14 @@ class B {
 }
 
 fn AccessBInA(a: A) -> i32 {
-  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+3]]:10-16: error: cannot implicitly convert expression of type `A` to `B` [ConversionFailure]
-  // CHECK:STDERR: fail_compound_type_mismatch.carbon:[[@LINE+2]]:10-16: note: type `A` does not implement interface `Core.ImplicitAs(B)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_compound_type_mismatch.carbon:[[@LINE+9]]:10
+  // CHECK:STDERR: ->     │   return a.(B.b);
+  // CHECK:STDERR:        ·          ━━━┳━━━
+  // CHECK:STDERR:        ·             ┗━━┫ error: cannot implicitly convert expression of type `A` to `B`
+  // CHECK:STDERR:        ·             │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·             ╰────┤ type `A` does not implement interface `Core.ImplicitAs(B)`
+  // CHECK:STDERR:        ·                  │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a.(B.b);
 }

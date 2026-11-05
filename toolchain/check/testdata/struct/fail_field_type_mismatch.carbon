@@ -12,7 +12,12 @@
 // TIP: To dump output, run:
 // TIP:   bazel run //toolchain/testing:file_test -- --dump_output --file_tests=toolchain/check/testdata/struct/fail_field_type_mismatch.carbon
 
-// CHECK:STDERR: fail_field_type_mismatch.carbon:[[@LINE+2]]:20-29: error: struct `{.a: i32}` has no field named `b` [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╭─┤ fail_field_type_mismatch.carbon:[[@LINE+7]]:20
+// CHECK:STDERR: ->     │ var x: {.a: i32} = {.b = 1.0};
+// CHECK:STDERR:        ·                    ━━━━━┳━━━━
+// CHECK:STDERR:        ·                         ┗━━┫ error: struct `{.a: i32}` has no field named `b`
+// CHECK:STDERR:        ·                            ┃        [StructInitUnexpectedFieldInLiteral]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var x: {.a: i32} = {.b = 1.0};
 
@@ -49,7 +54,7 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT:   }
 // CHECK:STDOUT:   %Core.import = import Core
 // CHECK:STDOUT:   %x.var: ref %struct_type.a = var_storage %x.var_patt [concrete]
-// CHECK:STDOUT:   %.loc17: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
+// CHECK:STDOUT:   %.loc22: type = splice_block %struct_type.a [concrete = constants.%struct_type.a] {
 // CHECK:STDOUT:     %i32: type = type_literal constants.%i32 [concrete = constants.%i32]
 // CHECK:STDOUT:     %struct_type.a: type = struct_type {.a: %i32} [concrete = constants.%struct_type.a]
 // CHECK:STDOUT:   }
@@ -63,7 +68,7 @@ var x: {.a: i32} = {.b = 1.0};
 // CHECK:STDOUT: fn @__global_init() {
 // CHECK:STDOUT: !entry:
 // CHECK:STDOUT:   %float: Core.FloatLiteral = float_literal_value 10e-1 [concrete = constants.%float]
-// CHECK:STDOUT:   %.loc17: %struct_type.b = struct_literal (%float) [concrete = constants.%struct]
+// CHECK:STDOUT:   %.loc22: %struct_type.b = struct_literal (%float) [concrete = constants.%struct]
 // CHECK:STDOUT:   assign file.%x.var, <error>
 // CHECK:STDOUT:   return
 // CHECK:STDOUT: }

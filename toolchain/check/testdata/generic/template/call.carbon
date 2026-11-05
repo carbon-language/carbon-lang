@@ -20,8 +20,17 @@ fn F[template G: type](H: G, x: X) {
 }
 fn TakeX(unused x: X) {}
 
-// CHECK:STDERR: fail_todo_dependent_call_nonconst_arg.carbon:[[@LINE+3]]:21: error: unable to monomorphize specific `F(<type of TakeX>)` [ResolvingSpecificHere]
-// CHECK:STDERR: fail_todo_dependent_call_nonconst_arg.carbon:[[@LINE-5]]:3-6: note: value of type `<type of TakeX>` is not callable [CallToNonCallable]
+// CHECK:STDERR:        ╭─┤ fail_todo_dependent_call_nonconst_arg.carbon:[[@LINE+12]]:21
+// CHECK:STDERR:        │   H(x);
+// CHECK:STDERR:        ·   ──┬─
+// CHECK:STDERR:        ·     ╰──┤ value of type `<type of TakeX>` is not callable [CallToNonCallable]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn GoodCall(x: X) { F(TakeX, x); }
+// CHECK:STDERR:        ·                     ┳
+// CHECK:STDERR:        ·                     ┗━━┫ error: unable to monomorphize specific
+// CHECK:STDERR:        ·                        ┃        `F(<type of TakeX>)`
+// CHECK:STDERR:        ·                        ┃        [ResolvingSpecificHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn GoodCall(x: X) { F(TakeX, x); }
 
@@ -36,7 +45,16 @@ fn F[template G: type](H: G, x: X) {
 fn TakeY(unused y: Y) {}
 
 // TODO: should fail, but not because of UseOfNonExprAsValue
-// CHECK:STDERR: fail_dependent_call_nonconst_arg_wrong_type.carbon:[[@LINE+3]]:20: error: unable to monomorphize specific `F(<type of TakeY>)` [ResolvingSpecificHere]
-// CHECK:STDERR: fail_dependent_call_nonconst_arg_wrong_type.carbon:[[@LINE-6]]:3-6: note: value of type `<type of TakeY>` is not callable [CallToNonCallable]
+// CHECK:STDERR:        ╭─┤ fail_dependent_call_nonconst_arg_wrong_type.carbon:[[@LINE+12]]:20
+// CHECK:STDERR:        │   H(x);
+// CHECK:STDERR:        ·   ──┬─
+// CHECK:STDERR:        ·     ╰──┤ value of type `<type of TakeY>` is not callable [CallToNonCallable]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR: ->     │ fn BadCall(x: X) { F(TakeY, x); }
+// CHECK:STDERR:        ·                    ┳
+// CHECK:STDERR:        ·                    ┗━━┫ error: unable to monomorphize specific
+// CHECK:STDERR:        ·                       ┃        `F(<type of TakeY>)`
+// CHECK:STDERR:        ·                       ┃        [ResolvingSpecificHere]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn BadCall(x: X) { F(TakeY, x); }

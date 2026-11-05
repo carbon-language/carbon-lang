@@ -39,7 +39,12 @@ fn F(a: array({}, 3)) -> {} {
 library "[[@TEST_NAME]]";
 
 fn F(a: array({}, 3)) -> {} {
-  // CHECK:STDERR: fail_out_of_bound_non_literal.carbon:[[@LINE+2]]:12-29: error: array index `3` is past the end of type `array({}, 3)` [ArrayIndexOutOfBounds]
+  // CHECK:STDERR:        ╭─┤ fail_out_of_bound_non_literal.carbon:[[@LINE+7]]:12
+  // CHECK:STDERR: ->     │   return a[{.index = 3}.index];
+  // CHECK:STDERR:        ·            ━━━┳━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: array index `3` is past the end of type `array({}, 3)`
+  // CHECK:STDERR:        ·                  ┃        [ArrayIndexOutOfBounds]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return a[{.index = 3}.index];
 }

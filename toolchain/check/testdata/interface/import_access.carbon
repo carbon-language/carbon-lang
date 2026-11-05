@@ -53,7 +53,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "def";
 
-// CHECK:STDERR: fail_local_def.carbon:[[@LINE+2]]:16-18: error: name `Def` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_local_def.carbon:[[@LINE+6]]:16
+// CHECK:STDERR: ->     │ fn F(unused i: Def) {}
+// CHECK:STDERR:        ·                ━┳━
+// CHECK:STDERR:        ·                 ┗━━┫ error: name `Def` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused i: Def) {}
 
@@ -63,7 +67,12 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "def";
 
-// CHECK:STDERR: fail_other_def.carbon:[[@LINE+2]]:16-23: error: member name `Def` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_other_def.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ fn F(unused i: Test.Def) {}
+// CHECK:STDERR:        ·                ━━━━┳━━━
+// CHECK:STDERR:        ·                    ┗━━┫ error: member name `Def` not found in `Test`
+// CHECK:STDERR:        ·                       ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused i: Test.Def) {}
 
@@ -79,7 +88,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward_with_def";
 
-// CHECK:STDERR: fail_local_forward_with_def.carbon:[[@LINE+2]]:16-29: error: name `ForwardWithDef` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_local_forward_with_def.carbon:[[@LINE+6]]:16
+// CHECK:STDERR: ->     │ fn F(unused i: ForwardWithDef) {}
+// CHECK:STDERR:        ·                ━━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·                       ┗━━┫ error: name `ForwardWithDef` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused i: ForwardWithDef) {}
 
@@ -89,7 +102,12 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward_with_def";
 
-// CHECK:STDERR: fail_other_forward_with_def.carbon:[[@LINE+2]]:16-34: error: member name `ForwardWithDef` not found in `Test` [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╭─┤ fail_other_forward_with_def.carbon:[[@LINE+7]]:16
+// CHECK:STDERR: ->     │ fn F(unused i: Test.ForwardWithDef) {}
+// CHECK:STDERR:        ·                ━━━━━┳━━━━━━━━━━━━━
+// CHECK:STDERR:        ·                     ┗━━┫ error: member name `ForwardWithDef` not found in `Test`
+// CHECK:STDERR:        ·                        ┃        [MemberNameNotFoundInInstScope]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused i: Test.ForwardWithDef) {}
 
@@ -97,13 +115,25 @@ fn F(unused i: Test.ForwardWithDef) {}
 
 impl package Test library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+3]]:16-22: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_todo_forward.impl.carbon:[[@LINE+17]]:16
+// CHECK:STDERR: ->     │ fn F(unused i: Forward*) {}
+// CHECK:STDERR:        ·                ━━━┳━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+1]]:16-22: error: name `Forward` used before it was declared [NameUseBeforeDecl]
+// CHECK:STDERR:        ╭─┤ fail_todo_forward.impl.carbon:[[@LINE+11]]:16
+// CHECK:STDERR: ->     │ fn F(unused i: Forward*) {}
+// CHECK:STDERR:        ·                ━━━┳━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: name `Forward` used before it was declared
+// CHECK:STDERR:        ·                      ┃        [NameUseBeforeDecl]
+// CHECK:STDERR:        │
+// CHECK:STDERR:        │ interface Forward {}
+// CHECK:STDERR:        ·           ───┬───
+// CHECK:STDERR:        ·              ╰──┤ declared here [NameUseBeforeDeclNote]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 fn F(unused i: Forward*) {}
 
-// CHECK:STDERR: fail_todo_forward.impl.carbon:[[@LINE+2]]:11-17: note: declared here [NameUseBeforeDeclNote]
-// CHECK:STDERR:
 interface Forward {}
 
 // --- fail_local_forward.carbon
@@ -112,7 +142,11 @@ package Test library "[[@TEST_NAME]]";
 
 import library "forward";
 
-// CHECK:STDERR: fail_local_forward.carbon:[[@LINE+2]]:16-22: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_local_forward.carbon:[[@LINE+6]]:16
+// CHECK:STDERR: ->     │ fn F(unused i: Forward*) {}
+// CHECK:STDERR:        ·                ━━━┳━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused i: Forward*) {}
 
@@ -122,7 +156,11 @@ package Other library "[[@TEST_NAME]]";
 
 import Test library "forward";
 
-// CHECK:STDERR: fail_other_forward.carbon:[[@LINE+2]]:16-22: error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR:        ╭─┤ fail_other_forward.carbon:[[@LINE+6]]:16
+// CHECK:STDERR: ->     │ fn F(unused i: Forward*) {}
+// CHECK:STDERR:        ·                ━━━┳━━━
+// CHECK:STDERR:        ·                   ┗━━┫ error: name `Forward` not found [NameNotFound]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 fn F(unused i: Forward*) {}
 
@@ -459,7 +497,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.patt: <error> = wrapper_binding_pattern i, %i.param_patt [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc7: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %.loc21: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
@@ -505,7 +543,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.patt: <error> = wrapper_binding_pattern i, %i.param_patt [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc8: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %.loc12: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
@@ -544,7 +582,7 @@ private interface Redecl {}
 // CHECK:STDOUT:     %i.patt: <error> = wrapper_binding_pattern i, %i.param_patt [concrete = <error>]
 // CHECK:STDOUT:   } {
 // CHECK:STDOUT:     %i.param: <error> = value_param call_param0
-// CHECK:STDOUT:     %.loc8: type = splice_block %ptr [concrete = <error>] {
+// CHECK:STDOUT:     %.loc12: type = splice_block %ptr [concrete = <error>] {
 // CHECK:STDOUT:       %Forward.ref: <error> = name_ref Forward, <error> [concrete = <error>]
 // CHECK:STDOUT:       %ptr: type = ptr_type <error> [concrete = <error>]
 // CHECK:STDOUT:     }
