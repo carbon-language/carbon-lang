@@ -67,6 +67,7 @@ jobs:
             formulae.brew.sh:443
             github.com:443
             go.dev:443
+            index.crates.io:443
             mirror.bazel.build:443
             mirrors.kernel.org:443
             nodejs.org:443
@@ -79,6 +80,8 @@ jobs:
             release-assets.githubusercontent.com:443
             releases.astral.sh:443
             releases.bazel.build:443
+            static.crates.io:443
+            static.rust-lang.org:443
             storage.googleapis.com:443
             uploads.github.com:443
             www.googleapis.com:443

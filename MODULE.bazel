@@ -20,6 +20,11 @@ of:
         `MODULE.bazel.lock`; create a PR with those changes in order to include
         the host platform.
 
+`bazel mod deps` evaluates every module extension, but reuses results recorded
+in `MODULE.bazel.lock`. Re-evaluating some extensions can be expensive; for
+example, the Rust crates newer protobuf versions depend on require downloading
+a Rust toolchain.
+
 For updates, run `scripts/query_module_versions.py` to list the latest package
 versions.
 """

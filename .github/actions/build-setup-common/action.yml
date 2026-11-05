@@ -135,8 +135,9 @@ runs:
         # more reliably succeed without retrying "permanent" errors.
         #
         # Disable lockfile updates, because some actions want to see
-        # differences.
-        ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
-          mod --lockfile_mode=off deps
+        # differences. This avoids `bazel mod deps`, which evaluates every
+        # module extension; without the lockfile, that includes expensive ones
+        # that builds don't use, like the Rust crates newer protobuf versions
+        # depend on.
         ./scripts/run_bazel.py --attempts=5 --retry-all-errors \
           cquery --lockfile_mode=off //... | wc -l
