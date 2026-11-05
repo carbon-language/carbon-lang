@@ -83,12 +83,14 @@ In Python, a line is a
 parentheses are an idiomatic way to create multi-line statements. Semicolons may
 be used to explicitly separate statements. For example:
 
+<!-- rumdl-disable -->
 ```python
 value = (
   "text"
 )
 a = 1; b = 2; c = 3
 ```
+<!-- rumdl-enable -->
 
 Swift allows some statements to wrap lines, although multiple statements on the
 same line (`x = 1 x = 1`) require a semicolon. The detailed rules aren't
@@ -101,6 +103,7 @@ documents that line-breaks are treated as whitespace. However, there are
 observable ways the behavior can lead to small mistakes; these may may often be
 caught by the compiler, but will sometimes be missed. For example:
 
+<!-- rumdl-disable -->
 ```swift
 // One statement in Swift, but two in Python and Kotlin.
 var x = 1
@@ -115,6 +118,7 @@ Make() ()
 Make()
 ()
 ```
+<!-- rumdl-enable -->
 
 Kotlin permits a newline to be used to terminate statements instead of a
 semicolon. Kotlin's grammar
@@ -122,12 +126,14 @@ semicolon. Kotlin's grammar
 the places where newlines can appear (see mentions of `NL` in the grammar), and
 doesn't allow newlines in places where they would introduce ambiguity.
 
+<!-- rumdl-disable -->
 ```kotlin
 // This is unambiguously parsed as two statements, because
 // a newline is not permitted before a `+` operator.
 var x = 1
 + 1
 ```
+<!-- rumdl-enable -->
 
 In JavaScript and TypeScript, semicolons are part of the formal syntax, and
 ECMAScript provides

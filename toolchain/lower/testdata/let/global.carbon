@@ -346,7 +346,7 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT: @llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 0, ptr @_C__global_init.Main, ptr null }]
 // CHECK:STDOUT:
 // CHECK:STDOUT: ; Function Attrs: nounwind
-// CHECK:STDOUT: define i32 @"_Cfn:enclosed.964569dbcbd2ff73"() #0 !dbg !88 {
+// CHECK:STDOUT: define i32 @"_Cfn:enclosed.b0cc8ae043738921"() #0 !dbg !88 {
 // CHECK:STDOUT: entry:
 // CHECK:STDOUT:   %a.var = alloca [3 x i32], align 4, !dbg !91
 // CHECK:STDOUT:   %j.var = alloca i32, align 4, !dbg !94
@@ -497,7 +497,7 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT: ; Function Attrs: nounwind
 // CHECK:STDOUT: define internal void @_C__global_init.Main() #0 !dbg !128 {
 // CHECK:STDOUT: entry:
-// CHECK:STDOUT:   %fn.call = call i32 @"_Cfn:enclosed.964569dbcbd2ff73"(), !dbg !129
+// CHECK:STDOUT:   %fn.call = call i32 @"_Cfn:enclosed.b0cc8ae043738921"(), !dbg !129
 // CHECK:STDOUT:   store i32 %fn.call, ptr @_Cn.Main, align 4, !dbg !130
 // CHECK:STDOUT:   ret void, !dbg !131
 // CHECK:STDOUT: }
@@ -599,7 +599,7 @@ let n: i32 = fn () -> i32 {
 // CHECK:STDOUT: !45 = !DISubroutineType(types: !44)
 // CHECK:STDOUT: !86 = !DIFile(filename: "for_in_local_fn.carbon", directory: "")
 // CHECK:STDOUT: !87 = distinct !DICompileUnit(language: DW_LANG_C_plus_plus, file: !86, producer: "carbon", isOptimized: false, runtimeVersion: 0, emissionKind: FullDebug)
-// CHECK:STDOUT: !88 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.964569dbcbd2ff73", scope: null, file: !86, line: 3, type: !22, spFlags: DISPFlagDefinition, unit: !87)
+// CHECK:STDOUT: !88 = distinct !DISubprogram(linkageName: "_Cfn:enclosed.b0cc8ae043738921", scope: null, file: !86, line: 3, type: !22, spFlags: DISPFlagDefinition, unit: !87)
 // CHECK:STDOUT: !91 = !DILocation(line: 4, column: 3, scope: !88)
 // CHECK:STDOUT: !92 = !DILocation(line: 4, column: 26, scope: !88)
 // CHECK:STDOUT: !94 = !DILocation(line: 5, column: 3, scope: !88)

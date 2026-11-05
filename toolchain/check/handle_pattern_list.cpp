@@ -154,10 +154,6 @@ auto HandleParseNode(Context& context, Parse::StructPatternId node_id) -> bool {
     EndExprRegionForPattern(context, context.node_stack());
   }
 
-  if (context.node_stack().PeekIs(Parse::NodeKind::UnderscoreName)) {
-    return context.TODO(node_id, "Struct pattern underscore field");
-  }
-
   if (!context.node_stack().PeekIs(Parse::NodeCategory::MemberName)) {
     // Remove the last parameter from the node stack before collecting names.
     context.param_and_arg_refs_stack().EndNoPop(
@@ -231,6 +227,11 @@ auto HandleParseNode(Context& context,
   // pending at the end of handling for a pattern.
   BeginExprRegionForPattern(context);
   return true;
+}
+
+auto HandleParseNode(Context& context,
+                     Parse::PatternListUnderscoreFieldId node_id) -> bool {
+  return context.TODO(node_id, "Struct pattern underscore field");
 }
 
 auto HandleParseNode(Context& context, Parse::PatternListCommaId /*node_id*/)
