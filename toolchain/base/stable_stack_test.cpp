@@ -545,7 +545,7 @@ TEST(StableStack, DefaultInlineCapacity) {
   {
     // Can hold four of these in the inline capacity, so the default is 4.
     StableStack<Bytes<8>> stack;
-    static_assert(sizeof(stack) > size_t{10} * 5);
+    static_assert(sizeof(stack) > size_t{8} * 4);
     static_assert(sizeof(stack) <= size_t{64});
     EXPECT_EQ(stack.capacity(), 4);
     stack.Push({});
@@ -576,7 +576,7 @@ TEST(StableStack, DefaultInlineCapacity) {
   {
     // Can hold two of these in the inline capacity, so the default is 2.
     StableStack<Bytes<12>> stack;
-    static_assert(sizeof(stack) > size_t{10} * 3);
+    static_assert(sizeof(stack) > size_t{12} * 2);
     static_assert(sizeof(stack) <= size_t{64});
     EXPECT_EQ(stack.capacity(), 2);
     stack.Push({});
