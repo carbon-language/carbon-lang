@@ -79,18 +79,47 @@ TEST(StableStack, PushPop) {
   stack.Push(i++);
   EXPECT_EQ(stack.size(), i);
 
-  EXPECT_EQ(stack.Pop(), --i);
+  EXPECT_EQ(stack.Peek(), --i);
+  stack.Pop();
   EXPECT_EQ(stack.size(), i);
 
   // Drops below the last capacity jump.
-  EXPECT_EQ(stack.Pop(), --i);
+  EXPECT_EQ(stack.Peek(), --i);
+  stack.Pop();
   EXPECT_EQ(stack.size(), i);
 
   stack.Push(i++);
   EXPECT_EQ(stack.size(), i);
 
   while (i) {
-    EXPECT_EQ(stack.Pop(), --i);
+    EXPECT_EQ(stack.Peek(), --i);
+    stack.Pop();
+    EXPECT_EQ(stack.size(), i);
+  }
+  EXPECT_EQ(stack.empty(), true);
+}
+
+TEST(StableStack, PushPopVal) {
+  StableStack<int> stack;
+  int i = 0;
+  GrowCapacityTimes(stack, 3, [&i] { return i++; });
+  EXPECT_EQ(stack.size(), i);
+
+  stack.Push(i++);
+  EXPECT_EQ(stack.size(), i);
+
+  EXPECT_EQ(stack.PopVal(), --i);
+  EXPECT_EQ(stack.size(), i);
+
+  // Drops below the last capacity jump.
+  EXPECT_EQ(stack.PopVal(), --i);
+  EXPECT_EQ(stack.size(), i);
+
+  stack.Push(i++);
+  EXPECT_EQ(stack.size(), i);
+
+  while (i) {
+    EXPECT_EQ(stack.PopVal(), --i);
     EXPECT_EQ(stack.size(), i);
   }
   EXPECT_EQ(stack.empty(), true);
@@ -103,7 +132,7 @@ TEST(StableStack, EmptyPushPop) {
   EXPECT_EQ(stack.size(), 1);
   EXPECT_EQ(stack.empty(), false);
 
-  EXPECT_EQ(stack.Pop(), 1);
+  EXPECT_EQ(stack.PopVal(), 1);
   EXPECT_EQ(stack.size(), 0);
   EXPECT_EQ(stack.empty(), true);
 
@@ -111,7 +140,7 @@ TEST(StableStack, EmptyPushPop) {
   EXPECT_EQ(stack.size(), 1);
   EXPECT_EQ(stack.empty(), false);
 
-  EXPECT_EQ(stack.Pop(), 2);
+  EXPECT_EQ(stack.PopVal(), 2);
   EXPECT_EQ(stack.size(), 0);
   EXPECT_EQ(stack.empty(), true);
 }
@@ -385,14 +414,14 @@ TEST(StableStack, Peek) {
   stack.Peek() = 4;
   EXPECT_EQ(const_stack.Peek(), 4);
   EXPECT_EQ(stack.Peek(), 4);
-  EXPECT_EQ(stack.Pop(), 4);
+  EXPECT_EQ(stack.PopVal(), 4);
 
   EXPECT_EQ(const_stack.Peek(), 1);
   EXPECT_EQ(stack.Peek(), 1);
   stack.Peek() = 3;
   EXPECT_EQ(const_stack.Peek(), 3);
   EXPECT_EQ(stack.Peek(), 3);
-  EXPECT_EQ(stack.Pop(), 3);
+  EXPECT_EQ(stack.PopVal(), 3);
 }
 
 TEST(StableStack, Reserve) {

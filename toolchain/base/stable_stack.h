@@ -172,22 +172,26 @@ class StableStack {
     std::construct_at<T>(slot, std::forward<Args>(args)...);
   }
 
-  // Removes the most recently pushed element from the back of the stack and
-  // returns it.
-  auto Pop() -> T {
+  // Removes the most recently pushed element from the back of the stack.
+  auto Pop() -> void {
     CARBON_CHECK(!empty(), "Pop on an empty stack");
     auto [chunk, index] = GetIndexAtBack();
     auto& ref = Get(chunk, index);
 
-    size_in_last_chunk_--;
-    if (size_in_last_chunk_ == 0) {
-      used_chunks_--;
-      if (used_chunks_ > 0) {
-        size_in_last_chunk_ = GetChunkCapacity(used_chunks_ - 1);
-      } else {
-        // Stack is empty now.
-      }
-    }
+    ShrinkSize();
+
+    std::destroy_at(&ref);
+    __asan_poison_memory_region(&ref, sizeof(T));
+  }
+
+  // Removes the most recently pushed element from the back of the stack and
+  // returns it.
+  auto PopVal() -> T {
+    CARBON_CHECK(!empty(), "Pop on an empty stack");
+    auto [chunk, index] = GetIndexAtBack();
+    auto& ref = Get(chunk, index);
+
+    ShrinkSize();
 
     auto cleanup = llvm::scope_exit([&] {
       std::destroy_at(&ref);
@@ -452,6 +456,20 @@ class StableStack {
     __asan_poison_memory_region(array, next_cap * sizeof(T));
     chunks_.push_back({.array = array});
     return chunks_.back();
+  }
+
+  // Shrinks the recorded size of the stack by one. Does not actually destroy
+  // anything.
+  auto ShrinkSize() -> void {
+    size_in_last_chunk_--;
+    if (size_in_last_chunk_ == 0) {
+      used_chunks_--;
+      if (used_chunks_ > 0) {
+        size_in_last_chunk_ = GetChunkCapacity(used_chunks_ - 1);
+      } else {
+        // Stack is empty now.
+      }
+    }
   }
 
   InlineChunk<InlineCapacity> inline_;
