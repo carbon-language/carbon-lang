@@ -22,6 +22,18 @@ runs:
         # to save time.
         large-packages: false
 
+    # The image's Android environment variables still point into the SDK and
+    # NDK deleted above, which confuses tools that look for them, such as
+    # rules_android. `$GITHUB_ENV` can't unset variables, so set them to empty,
+    # which rules_android treats as unset.
+    - name: Clear Android environment variables
+      shell: bash
+      run: |
+        for var in ANDROID_HOME ANDROID_SDK_ROOT ANDROID_NDK ANDROID_NDK_HOME \
+            ANDROID_NDK_LATEST_HOME ANDROID_NDK_ROOT; do
+          echo "$var=" >> "$GITHUB_ENV"
+        done
+
     # Select the LLVM release - by the cache key and the download.
     - name: Select LLVM release
       shell: bash
