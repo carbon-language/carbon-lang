@@ -146,10 +146,11 @@ For exhaustive function examples:
 
     ```python
     def sum(a, b):
-      return a + b
+        return a + b
+
 
     def sum(a: int, b: int) -> int:
-      return a + b
+        return a + b
     ```
 
 -   R
