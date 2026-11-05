@@ -1106,7 +1106,7 @@ auto Lexer::MakeLinesFromBlocks(llvm::StringRef source_text, ssize_t& start,
                                 ssize_t& search_start) -> void {
   const char* const text = source_text.data();
   const ssize_t size = source_text.size();
-  constexpr int BlockSize = SourceBlock::Size;
+  constexpr ssize_t BlockSize = SourceBlock::Size;
   constexpr int DecodedPerStep = 4;
 
   // Buffer the 32-bit byte offset following each `'\n'` (`int32_t` matches
