@@ -126,8 +126,22 @@ fn F() {
 
 // --- forward_decl.h
 
-// CHECK:STDERR: error: calling function with incomplete return type 'Incomplete' [CppInteropParseError]
-// CHECK:STDERR: ./forward_decl.h:[[@LINE+1]]:7: note: forward declaration of 'Incomplete' [CppInteropParseNote]
+// CHECK:STDERR: ->     ╭─┤ <no location>
+// CHECK:STDERR:        · ┗━━┫ error: calling function with incomplete return type 'Incomplete'
+// CHECK:STDERR:        ·    ┃        [CppInteropParseError]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ ./forward_decl.h:[[@LINE+12]]:7
+// CHECK:STDERR:        │ class Incomplete;
+// CHECK:STDERR:        ·       ┬
+// CHECK:STDERR:        ·       ╰──┤ forward declaration of 'Incomplete' [CppInteropParseNote]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fail_use_forward_decl.carbon
+// CHECK:STDERR:        │   Cpp.ReturnCallback()();
+// CHECK:STDERR:        ·   ───────────┬──────────
+// CHECK:STDERR:        ·              ╰──┤ in thunk for C++ function pointer type used here
+// CHECK:STDERR:        ·                 │ [InCppFunctionPointerThunk]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 class Incomplete;
 
 using CallbackType = Incomplete (*)();
@@ -151,12 +165,21 @@ library "[[@TEST_NAME]]";
 import Cpp library "forward_decl.h";
 
 fn F() {
-  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+7]]:3-24: note: in thunk for C++ function pointer type used here [InCppFunctionPointerThunk]
-  // CHECK:STDERR:
-  // CHECK:STDERR: fail_use_forward_decl.carbon:[[@LINE+5]]:3-24: error: function returns incomplete type `Cpp.Incomplete` [IncompleteTypeInFunctionReturnType]
-  // CHECK:STDERR: included from: fail_use_forward_decl.carbon:[[@LINE-6]]:10 [InCppInclude]
-  // CHECK:STDERR: ./forward_decl.h:4:7: note: class was forward declared here [ClassForwardDeclaredHere]
-  // CHECK:STDERR: note: return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ╭─┤ fail_use_forward_decl.carbon:[[@LINE+16]]:3
+  // CHECK:STDERR: ->     │   Cpp.ReturnCallback()();
+  // CHECK:STDERR:        ·   ━━━━━━━━━━━┳━━━━━━━━━━
+  // CHECK:STDERR:        ·              ┗━━┫ error: function returns incomplete type `Cpp.Incomplete`
+  // CHECK:STDERR:        ·                 ┃        [IncompleteTypeInFunctionReturnType]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        │ ╭── included from: fail_use_forward_decl.carbon [InCppInclude]
+  // CHECK:STDERR:        ├─┤ ./forward_decl.h
+  // CHECK:STDERR:        │ class Incomplete;
+  // CHECK:STDERR:        ·       ┬
+  // CHECK:STDERR:        ·       ╰──┤ class was forward declared here [ClassForwardDeclaredHere]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR:        ├─┤ <no location>
+  // CHECK:STDERR:        · ╰──┤ return type declared here [IncompleteReturnTypeHere]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   Cpp.ReturnCallback()();
 }
@@ -171,7 +194,13 @@ using MyCallbackType = void(*)(int);
 fn MyCallback(generic arg: i32);
 
 fn F() {
-  // CHECK:STDERR: fail_convert_generic_arg.carbon:[[@LINE+2]]:43-52: error: semantics TODO: `binding maps to a non-type template parameter` [SemanticsTodo]
+  // CHECK:STDERR:        ╭─┤ fail_convert_generic_arg.carbon:[[@LINE+8]]:43
+  // CHECK:STDERR: ->     │   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
+  // CHECK:STDERR:        ·                                           ━━━━━┳━━━━
+  // CHECK:STDERR:        · ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+  // CHECK:STDERR:        · ┃ error: semantics TODO: `binding maps to a non-type template parameter`
+  // CHECK:STDERR:        · ┃        [SemanticsTodo]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
 }
@@ -186,8 +215,19 @@ using MyCallbackType = void(*)(int);
 fn MyCallback(arg: i32) -> i32;
 
 fn F() {
-  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE+3]]:43-52: error: can't convert exported function pointer to `void (*)(int)` [ExportedFunctionPtrTypeMismatch]
-  // CHECK:STDERR: fail_convert_type_mismatch.carbon:[[@LINE-4]]:1-31: note: function exported with pointer type `int (*)(int)` [ExportedFromFunction]
+  // CHECK:STDERR:        ╭─┤ fail_convert_type_mismatch.carbon:[[@LINE+14]]:43
+  // CHECK:STDERR:        │ fn MyCallback(arg: i32) -> i32;
+  // CHECK:STDERR:        · ───────────────┬───────────────
+  // CHECK:STDERR:        ·                ╰──┤ function exported with pointer type `int (*)(int)`
+  // CHECK:STDERR:        ·                   │ [ExportedFromFunction]
+  // CHECK:STDERR:        ┆
+  // CHECK:STDERR: ->     │   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
+  // CHECK:STDERR:        ·                                           ┳━━━━━━━━━
+  // CHECK:STDERR:        ·                                           ┗━━┫ error: can't convert exported
+  // CHECK:STDERR:        ·                                              ┃        function pointer to
+  // CHECK:STDERR:        ·                                              ┃        `void (*)(int)`
+  // CHECK:STDERR:        ·                                              ┃        [ExportedFunctionPtrTypeMismatch]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   var unused fn_ptr: Cpp.MyCallbackType = MyCallback;
 }

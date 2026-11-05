@@ -148,16 +148,30 @@ fn F(generic U: Core.Destroy & I where .X = .Self) {
   // member lookup, but can't call methods without `self`. See the
   // `compound_access_through_call_with_self_param.carbon` test for the former.
   //
-  // CHECK:STDERR: fail_compound_access_through_call.carbon:[[@LINE+3]]:3-9: error: cannot implicitly convert non-type value of type `U` into type implementing `I` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_compound_access_through_call.carbon:[[@LINE+2]]:3-9: note: type `U` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_compound_access_through_call.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR: ->     │   u.(I.G)();
+  // CHECK:STDERR:        ·   ┳━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `U` into type
+  // CHECK:STDERR:        ·   │  ┃        implementing `I`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·   ╰────┤ type `U` does not implement interface `Core.ImplicitAs(I)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   u.(I.G)();
 
   // This is the same as the above, since G() returns a non-type value of type
   // `U`.
   //
-  // CHECK:STDERR: fail_compound_access_through_call.carbon:[[@LINE+3]]:3-17: error: cannot implicitly convert non-type value of type `U` into type implementing `I` [ConversionFailureNonTypeToFacet]
-  // CHECK:STDERR: fail_compound_access_through_call.carbon:[[@LINE+2]]:3-17: note: type `U` does not implement interface `Core.ImplicitAs(I)` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_compound_access_through_call.carbon:[[@LINE+10]]:3
+  // CHECK:STDERR: ->     │   U.(I.G)().(I.G)();
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert non-type value of type `U` into type
+  // CHECK:STDERR:        ·   │  ┃        implementing `I`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailureNonTypeToFacet]
+  // CHECK:STDERR:        ·   ╰────┤ type `U` does not implement interface `Core.ImplicitAs(I)`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   U.(I.G)().(I.G)();
 }
@@ -193,7 +207,12 @@ fn Id[U: type](x: U) -> U { return Id(x); }
 impl () as I where .T = () {}
 // Type of member expr is associated entity type,
 // but value is not constant.
-// CHECK:STDERR: fail_non_const_associated.carbon:[[@LINE+2]]:8-19: error: semantics TODO: `Non-constant associated entity value` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_non_const_associated.carbon:[[@LINE+7]]:8
+// CHECK:STDERR: ->     │ var v: ().(Id(I.T));
+// CHECK:STDERR:        ·        ━━━━━━┳━━━━━
+// CHECK:STDERR:        ·              ┗━━┫ error: semantics TODO: `Non-constant associated entity value`
+// CHECK:STDERR:        ·                 ┃        [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 var v: ().(Id(I.T));
 
@@ -204,7 +223,12 @@ fn Id[U: type](x: U) -> U { return Id(x); }
 
 interface J {
   let T: type;
-  // CHECK:STDERR: fail_non_const_associated_in_interface.carbon:[[@LINE+2]]:13-17: error: cannot evaluate type expression [TypeExprEvaluationFailure]
+  // CHECK:STDERR:        ╭─┤ fail_non_const_associated_in_interface.carbon:[[@LINE+7]]:13
+  // CHECK:STDERR: ->     │   fn F() -> Id(T);
+  // CHECK:STDERR:        ·             ━━┳━━
+  // CHECK:STDERR:        ·               ┗━━┫ error: cannot evaluate type expression
+  // CHECK:STDERR:        ·                  ┃        [TypeExprEvaluationFailure]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F() -> Id(T);
 }
@@ -216,7 +240,11 @@ interface I {
   let T: type;
 }
 
-// CHECK:STDERR: fail_alias_to_non_const_assoc_entity.carbon:[[@LINE+2]]:8-11: error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
+// CHECK:STDERR:        ╭─┤ fail_alias_to_non_const_assoc_entity.carbon:[[@LINE+6]]:8
+// CHECK:STDERR: ->     │ let x: auto = I.T;
+// CHECK:STDERR:        ·        ━━┳━
+// CHECK:STDERR:        ·          ┗━━┫ error: semantics TODO: `HandleAutoTypeLiteral` [SemanticsTodo]
+// CHECK:STDERR:        ╰────
 // CHECK:STDERR:
 let x: auto = I.T;
 
@@ -244,7 +272,13 @@ import library "to_import";
 interface J {
   // extend I;
   alias V = U;
-  // CHECK:STDERR: fail_access_alias_in_imported_library.carbon:[[@LINE+2]]:13: error: cannot convert type `Self` that implements `J` into type implementing `I` [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_access_alias_in_imported_library.carbon:[[@LINE+8]]:13
+  // CHECK:STDERR: ->     │   fn F() -> V;
+  // CHECK:STDERR:        ·             ┳
+  // CHECK:STDERR:        ·             ┗━━┫ error: cannot convert type `Self` that implements `J` into type
+  // CHECK:STDERR:        ·                ┃        implementing `I`
+  // CHECK:STDERR:        ·                ┃        [ConversionFailureFacetToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   fn F() -> V;
 }
@@ -372,8 +406,16 @@ fn F(generic V: Z(.Self)) {
   //
   // TODO: The identified facet type `NX` includes `X` and should provide a
   // same-type constraint `X.X1 == {}` which would allow this conversion.
-  // CHECK:STDERR: fail_todo_find_access_value_in_second_nested_access.carbon:[[@LINE+3]]:3-36: error: cannot convert expression of type `{}` to `V.(Z(V).Z1).(Y(V).Y1).(X.X1)` with `as` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_find_access_value_in_second_nested_access.carbon:[[@LINE+2]]:3-36: note: type `{}` does not implement interface `Core.As(V.(Z(V).Z1).(Y(V).Y1).(X.X1))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_todo_find_access_value_in_second_nested_access.carbon:[[@LINE+11]]:3
+  // CHECK:STDERR: ->     │   {} as V.(Z(V).Z1).(Y(V).Y1).(X.X1);
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot convert expression of type `{}` to
+  // CHECK:STDERR:        ·   │  ┃        `V.(Z(V).Z1).(Y(V).Y1).(X.X1)` with `as`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·   ╰────┤ type `{}` does not implement interface
+  // CHECK:STDERR:        ·        │ `Core.As(V.(Z(V).Z1).(Y(V).Y1).(X.X1))`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   {} as V.(Z(V).Z1).(Y(V).Y1).(X.X1);
 }
@@ -411,7 +453,13 @@ fn F(generic V: Z(.Self) where .Z0 impls NY(())
   //
   // TODO: The identified facet type `NX` includes `X` and should provide a
   // same-type constraint `X.X1 == V` which would allow this conversion.
-  // CHECK:STDERR: fail_todo_find_access_value_in_third_nested_access.carbon:[[@LINE+2]]:9-33: error: cannot convert type `V.(Z(V).Z1).(Y.Y1)` into type implementing `X` [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╭─┤ fail_todo_find_access_value_in_third_nested_access.carbon:[[@LINE+8]]:9
+  // CHECK:STDERR: ->     │   {} as V.(Z(V).Z1).(Y.Y1).(X.X1);
+  // CHECK:STDERR:        ·         ┳━━━━━━━━━━━━━━━━━━━━━━━━
+  // CHECK:STDERR:        ·         ┗━━┫ error: cannot convert type `V.(Z(V).Z1).(Y.Y1)` into type
+  // CHECK:STDERR:        ·            ┃        implementing `X`
+  // CHECK:STDERR:        ·            ┃        [ConversionFailureTypeToFacet]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   {} as V.(Z(V).Z1).(Y.Y1).(X.X1);
 }
@@ -433,8 +481,14 @@ constraint NY(PeriodSelf: type) {
 // `(C as Y(T)).Y1` but we currently only look in `C`. See the TODO in
 // `TryFindValueInRewriteConstraints()`.
 fn F(generic T: Z where C impls NY(.Self)) -> C.(Y(T).Y1) {
-  // CHECK:STDERR: fail_todo_find_access_value_in_facet_from_specific_interface.carbon:[[@LINE+3]]:3-12: error: cannot implicitly convert expression of type `{}` to `C.(Y(T).Y1)` [ConversionFailure]
-  // CHECK:STDERR: fail_todo_find_access_value_in_facet_from_specific_interface.carbon:[[@LINE+2]]:3-12: note: type `{}` does not implement interface `Core.ImplicitAs(C.(Y(T).Y1))` [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╭─┤ fail_todo_find_access_value_in_facet_from_specific_interface.carbon:[[@LINE+9]]:3
+  // CHECK:STDERR: ->     │   return {};
+  // CHECK:STDERR:        ·   ┳━━━━━━━━━
+  // CHECK:STDERR:        ·   ┗━━┫ error: cannot implicitly convert expression of type `{}` to `C.(Y(T).Y1)`
+  // CHECK:STDERR:        ·   │  ┃        [ConversionFailure]
+  // CHECK:STDERR:        ·   ╰────┤ type `{}` does not implement interface `Core.ImplicitAs(C.(Y(T).Y1))`
+  // CHECK:STDERR:        ·        │ [MissingImplInMemberAccessInContext]
+  // CHECK:STDERR:        ╰────
   // CHECK:STDERR:
   return {};
 }

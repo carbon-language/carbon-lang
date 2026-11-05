@@ -22,6 +22,19 @@ fn NS() {}
 
 package Example library "[[@TEST_NAME]]";
 
+// CHECK:STDERR:        ╷ ╭── imported from: fail_conflict.carbon [InImport]
+// CHECK:STDERR:        ├─┤ namespace.carbon:[[@LINE+12]]:1
+// CHECK:STDERR: ->     │ namespace NS;
+// CHECK:STDERR:        · ━━━━━━┳━━━━━━
+// CHECK:STDERR:        ·       ┗━━┫ error: duplicate name `NS` being declared in the same scope
+// CHECK:STDERR:        ·          ┃        [NameDeclDuplicate]
+// CHECK:STDERR:        ┆
+// CHECK:STDERR:        ├─┤ fn.carbon
+// CHECK:STDERR:        │ fn NS() {}
+// CHECK:STDERR:        · ────┬────
+// CHECK:STDERR:        ·     ╰──┤ name is previously declared here [NameDeclPrevious]
+// CHECK:STDERR:        ╰────
+// CHECK:STDERR:
 namespace NS;
 fn NS.Foo() {}
 
@@ -29,10 +42,6 @@ fn NS.Foo() {}
 
 package Example library "[[@TEST_NAME]]";
 
-// CHECK:STDERR: imported from: fail_conflict.carbon:[[@LINE+4]]:1 [InImport]
-// CHECK:STDERR: namespace.carbon:4:1-13: error: duplicate name `NS` being declared in the same scope [NameDeclDuplicate]
-// CHECK:STDERR: fn.carbon:4:1-9: note: name is previously declared here [NameDeclPrevious]
-// CHECK:STDERR:
 import library "fn";
 import library "namespace";
 
